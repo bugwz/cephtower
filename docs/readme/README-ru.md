@@ -9,7 +9,7 @@
 <div align="center">
 
 [![Go](https://img.shields.io/badge/Go-Backend-00ADD8?logo=go)](../../backend/go.mod)
-[![Vue](https://img.shields.io/badge/Vue-Frontend-42B883?logo=vue.js)](../../frontend/package.json)
+[![React](https://img.shields.io/badge/React-Frontend-61DAFB?logo=react)](../../frontend/package.json)
 [![Ceph](https://img.shields.io/badge/Ceph-Dashboard%20API-EF5C55)](https://docs.ceph.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](../../LICENSE)
 [![Многоязычный](https://img.shields.io/badge/Многоязычный-yellow)](../../README.md)
@@ -22,12 +22,12 @@
 
 </div>
 
-CephTower — это проект с backend на Go и frontend на Vue для управления кластерами Ceph через Ceph Manager Dashboard API.
+CephTower — это проект с backend на Go и frontend на React и Ant Design для управления кластерами Ceph через Ceph Manager Dashboard API.
 
 ## 1. Возможности
 
 - HTTP API на Go с проверкой состояния и сводкой кластера.
-- Консоль управления на Vue 3, Vite и TypeScript.
+- Консоль управления на React, Ant Design, Vite и TypeScript.
 - Клиентский слой для аутентификации и вызовов Ceph Dashboard API.
 - Лицензия MIT.
 
@@ -47,7 +47,7 @@ npm run dev
 
 ```text
 backend/     Go API сервис
-frontend/    Vue Web консоль
+frontend/    React Web консоль
   public/ceph-tower-logo.svg    Общий логотип для README и frontend
 docs/        Архитектура, многоязычные README файлы и локальные справочные материалы
 ```

@@ -3,7 +3,7 @@
 Cephtower is split into two applications:
 
 - `backend`: exposes a stable management API for the web console and talks to the Ceph Manager Dashboard API.
-- `frontend`: provides the Vue-based cluster operations console.
+- `frontend`: provides the React and Ant Design based cluster operations console.
 
 The backend keeps Ceph Dashboard authentication and API compatibility concerns behind `internal/integrations/ceph`. The frontend should call only Cephtower backend routes under `/api`.
 

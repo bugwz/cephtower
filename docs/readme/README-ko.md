@@ -9,7 +9,7 @@
 <div align="center">
 
 [![Go](https://img.shields.io/badge/Go-Backend-00ADD8?logo=go)](../../backend/go.mod)
-[![Vue](https://img.shields.io/badge/Vue-Frontend-42B883?logo=vue.js)](../../frontend/package.json)
+[![React](https://img.shields.io/badge/React-Frontend-61DAFB?logo=react)](../../frontend/package.json)
 [![Ceph](https://img.shields.io/badge/Ceph-Dashboard%20API-EF5C55)](https://docs.ceph.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](../../LICENSE)
 [![다국어](https://img.shields.io/badge/다국어-yellow)](../../README.md)
@@ -22,12 +22,12 @@
 
 </div>
 
-CephTower는 Ceph Manager Dashboard API를 통해 Ceph 클러스터를 관리하기 위한 Go 백엔드와 Vue 프런트엔드 프로젝트입니다.
+CephTower는 Ceph Manager Dashboard API를 통해 Ceph 클러스터를 관리하기 위한 Go 백엔드와 React 및 Ant Design 프런트엔드 프로젝트입니다.
 
 ## 1. 기능
 
 - 상태 확인과 클러스터 요약 엔드포인트를 제공하는 Go HTTP API 서비스.
-- Vue 3, Vite, TypeScript 기반 관리 콘솔.
+- React, Ant Design, Vite, TypeScript 기반 관리 콘솔.
 - Ceph Dashboard API 인증과 호출을 분리한 클라이언트 계층.
 - MIT 라이선스.
 
@@ -47,7 +47,7 @@ npm run dev
 
 ```text
 backend/     Go API 서비스
-frontend/    Vue Web 콘솔
+frontend/    React Web 콘솔
   public/ceph-tower-logo.svg    README와 frontend가 공유하는 로고
 docs/        아키텍처 문서, 다국어 README 파일, 로컬 참고 자료
 ```

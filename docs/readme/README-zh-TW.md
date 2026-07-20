@@ -9,7 +9,7 @@
 <div align="center">
 
 [![Go](https://img.shields.io/badge/Go-Backend-00ADD8?logo=go)](../../backend/go.mod)
-[![Vue](https://img.shields.io/badge/Vue-Frontend-42B883?logo=vue.js)](../../frontend/package.json)
+[![React](https://img.shields.io/badge/React-Frontend-61DAFB?logo=react)](../../frontend/package.json)
 [![Ceph](https://img.shields.io/badge/Ceph-Dashboard%20API-EF5C55)](https://docs.ceph.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](../../LICENSE)
 [![多語言](https://img.shields.io/badge/多語言-yellow)](../../README.md)
@@ -22,12 +22,12 @@
 
 </div>
 
-CephTower 是一個使用 Go 後端與 Vue 前端建構的 Ceph 叢集管理專案，透過 Ceph Manager Dashboard API 管理整個 Ceph 叢集。
+CephTower 是一個使用 Go 後端與 React 前端建構的 Ceph 叢集管理專案，透過 Ceph Manager Dashboard API 管理整個 Ceph 叢集。
 
 ## 1. 功能特性
 
 - Go HTTP API 服務，提供健康檢查與叢集摘要介面。
-- Vue 3、Vite、TypeScript 管理控制台。
+- React、Ant Design、Vite、TypeScript 管理控制台。
 - 封裝 Ceph Dashboard API 認證與後續叢集操作邊界。
 - 採用 MIT 開源協議。
 
@@ -47,7 +47,7 @@ npm run dev
 
 ```text
 backend/     Go API 服務
-frontend/    Vue Web 控制台
+frontend/    React Web 控制台
   public/ceph-tower-logo.svg    README 與前端共用 logo
 docs/        架構說明、多語言 README 文件與本地參考資料
 ```

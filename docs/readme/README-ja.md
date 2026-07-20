@@ -9,7 +9,7 @@
 <div align="center">
 
 [![Go](https://img.shields.io/badge/Go-Backend-00ADD8?logo=go)](../../backend/go.mod)
-[![Vue](https://img.shields.io/badge/Vue-Frontend-42B883?logo=vue.js)](../../frontend/package.json)
+[![React](https://img.shields.io/badge/React-Frontend-61DAFB?logo=react)](../../frontend/package.json)
 [![Ceph](https://img.shields.io/badge/Ceph-Dashboard%20API-EF5C55)](https://docs.ceph.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](../../LICENSE)
 [![多言語](https://img.shields.io/badge/多言語-yellow)](../../README.md)
@@ -22,12 +22,12 @@
 
 </div>
 
-CephTower は、Ceph Manager Dashboard API を通じて Ceph クラスターを管理するための Go バックエンドと Vue フロントエンドのプロジェクトです。
+CephTower は、Ceph Manager Dashboard API を通じて Ceph クラスターを管理するための Go バックエンドと React / Ant Design フロントエンドのプロジェクトです。
 
 ## 1. 機能
 
 - ヘルスチェックとクラスター概要 API を備えた Go HTTP サービス。
-- Vue 3、Vite、TypeScript による管理コンソール。
+- React、Ant Design、Vite、TypeScript による管理コンソール。
 - Ceph Dashboard API の認証と今後の管理機能を分離したクライアント層。
 - MIT ライセンス。
 
@@ -47,7 +47,7 @@ npm run dev
 
 ```text
 backend/     Go API サービス
-frontend/    Vue Web コンソール
+frontend/    React Web コンソール
   public/ceph-tower-logo.svg    README とフロントエンド共通のロゴ
 docs/        アーキテクチャ、多言語 README、ローカル参考資料
 ```

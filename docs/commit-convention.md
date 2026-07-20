@@ -82,7 +82,7 @@ Rules:
 [CHORE]: Initialize project structure
 
 - Add Go backend service skeleton with configuration and HTTP API packages
-- Add Vue frontend scaffold with Vite, TypeScript, and initial cluster overview UI
+- Add React frontend scaffold with Ant Design, Vite, and TypeScript
 - Add MIT license, README, Makefile, and repository ignore rules
 ```
 

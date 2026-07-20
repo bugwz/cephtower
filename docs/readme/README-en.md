@@ -9,7 +9,7 @@
 <div align="center">
 
 [![Go](https://img.shields.io/badge/Go-Backend-00ADD8?logo=go)](../../backend/go.mod)
-[![Vue](https://img.shields.io/badge/Vue-Frontend-42B883?logo=vue.js)](../../frontend/package.json)
+[![React](https://img.shields.io/badge/React-Frontend-61DAFB?logo=react)](../../frontend/package.json)
 [![Ceph](https://img.shields.io/badge/Ceph-Dashboard%20API-EF5C55)](https://docs.ceph.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](../../LICENSE)
 [![Multilingual](https://img.shields.io/badge/Multilingual-yellow)](../../README.md)
@@ -22,12 +22,12 @@
 
 </div>
 
-CephTower is a Go backend and Vue frontend project for managing Ceph clusters through the Ceph Manager Dashboard API.
+CephTower is a Go backend and React frontend project for managing Ceph clusters through the Ceph Manager Dashboard API.
 
 ## 1. Features
 
 - Go HTTP API service with health check and cluster summary endpoints.
-- Vue 3, Vite, and TypeScript based management console.
+- React, Ant Design, Vite, and TypeScript based management console.
 - Ceph Dashboard API client boundary for authentication and future cluster operations.
 - MIT licensed.
 
@@ -47,7 +47,7 @@ npm run dev
 
 ```text
 backend/     Go API service
-frontend/    Vue web console
+frontend/    React web console
   public/ceph-tower-logo.svg    Shared README and frontend logo
 docs/        Architecture notes, multilingual README files, and local references
 ```
