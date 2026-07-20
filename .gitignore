@@ -7,6 +7,9 @@ backend/coverage.out
 backend/.cache/
 .gocache/
 
+# Local runtime data
+/app/
+
 # Node / Vue
 frontend/node_modules/
 frontend/dist/

@@ -27,4 +27,21 @@ func TestOpenSQLiteCreatesDatabaseAndMigrates(t *testing.T) {
 	if !db.Migrator().HasTable(&Setting{}) {
 		t.Fatal("settings table was not migrated")
 	}
+	if !db.Migrator().HasTable(&User{}) {
+		t.Fatal("users table was not migrated")
+	}
+	if !db.Migrator().HasTable(&UserSession{}) {
+		t.Fatal("user_sessions table was not migrated")
+	}
+	if !db.Migrator().HasTable(&PasswordResetCode{}) {
+		t.Fatal("password_reset_codes table was not migrated")
+	}
+
+	var users int64
+	if err := db.Model(&User{}).Count(&users).Error; err != nil {
+		t.Fatalf("count users: %v", err)
+	}
+	if users != 0 {
+		t.Fatalf("users = %d, want empty database before setup", users)
+	}
 }

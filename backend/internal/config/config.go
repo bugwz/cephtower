@@ -9,9 +9,11 @@ import (
 )
 
 type Config struct {
+	Path     string
 	HTTPAddr string
 	Ceph     CephDashboardConfig
 	Database DatabaseConfig
+	SMTP     SMTPConfig
 }
 
 type CephDashboardConfig struct {
@@ -25,6 +27,14 @@ type DatabaseConfig struct {
 	Engine string
 	SQLite SQLiteConfig
 	MySQL  MySQLConfig
+}
+
+type SMTPConfig struct {
+	Host     string
+	Port     int
+	Username string
+	Password string
+	From     string
 }
 
 type SQLiteConfig struct {
@@ -62,6 +72,13 @@ type fileConfig struct {
 			Params   string `yaml:"params"`
 		} `yaml:"mysql"`
 	} `yaml:"database"`
+	SMTP struct {
+		Host     string `yaml:"host"`
+		Port     int    `yaml:"port"`
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+		From     string `yaml:"from"`
+	} `yaml:"smtp"`
 }
 
 func Load(path string) (Config, error) {
@@ -90,6 +107,7 @@ func Load(path string) (Config, error) {
 	}
 
 	return Config{
+		Path:     path,
 		HTTPAddr: httpAddr,
 		Ceph: CephDashboardConfig{
 			BaseURL:     strings.TrimRight(strings.TrimSpace(raw.Ceph.BaseURL), "/"),
@@ -98,34 +116,105 @@ func Load(path string) (Config, error) {
 			InsecureTLS: raw.Ceph.InsecureTLS,
 		},
 		Database: database,
+		SMTP: SMTPConfig{
+			Host:     strings.TrimSpace(raw.SMTP.Host),
+			Port:     raw.SMTP.Port,
+			Username: strings.TrimSpace(raw.SMTP.Username),
+			Password: raw.SMTP.Password,
+			From:     strings.TrimSpace(raw.SMTP.From),
+		},
 	}, nil
 }
 
+func SaveDatabase(path string, database DatabaseConfig) error {
+	if strings.TrimSpace(path) == "" {
+		path = "config/config.yaml"
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read config file %q: %w", path, err)
+	}
+
+	var raw fileConfig
+	if err := yaml.Unmarshal(data, &raw); err != nil {
+		return fmt.Errorf("parse config file %q: %w", path, err)
+	}
+
+	raw.Database.Engine = database.Engine
+	raw.Database.SQLite.Path = database.SQLite.Path
+	raw.Database.MySQL.Host = database.MySQL.Host
+	raw.Database.MySQL.Port = database.MySQL.Port
+	raw.Database.MySQL.Username = database.MySQL.Username
+	raw.Database.MySQL.Password = database.MySQL.Password
+	raw.Database.MySQL.Database = database.MySQL.Database
+	raw.Database.MySQL.Params = database.MySQL.Params
+
+	normalized, err := normalizeDatabaseConfig(raw)
+	if err != nil {
+		return err
+	}
+	raw.Database.Engine = normalized.Engine
+	raw.Database.SQLite.Path = normalized.SQLite.Path
+	raw.Database.MySQL.Host = normalized.MySQL.Host
+	raw.Database.MySQL.Port = normalized.MySQL.Port
+	raw.Database.MySQL.Username = normalized.MySQL.Username
+	raw.Database.MySQL.Password = normalized.MySQL.Password
+	raw.Database.MySQL.Database = normalized.MySQL.Database
+	raw.Database.MySQL.Params = normalized.MySQL.Params
+
+	output, err := yaml.Marshal(&raw)
+	if err != nil {
+		return fmt.Errorf("marshal config file %q: %w", path, err)
+	}
+	if err := os.WriteFile(path, output, 0o600); err != nil {
+		return fmt.Errorf("write config file %q: %w", path, err)
+	}
+	return nil
+}
+
 func normalizeDatabaseConfig(raw fileConfig) (DatabaseConfig, error) {
-	engine := strings.ToLower(strings.TrimSpace(raw.Database.Engine))
+	return NormalizeDatabaseConfig(DatabaseConfig{
+		Engine: raw.Database.Engine,
+		SQLite: SQLiteConfig{
+			Path: raw.Database.SQLite.Path,
+		},
+		MySQL: MySQLConfig{
+			Host:     raw.Database.MySQL.Host,
+			Port:     raw.Database.MySQL.Port,
+			Username: raw.Database.MySQL.Username,
+			Password: raw.Database.MySQL.Password,
+			Database: raw.Database.MySQL.Database,
+			Params:   raw.Database.MySQL.Params,
+		},
+	})
+}
+
+func NormalizeDatabaseConfig(cfg DatabaseConfig) (DatabaseConfig, error) {
+	engine := strings.ToLower(strings.TrimSpace(cfg.Engine))
 	if engine == "" {
 		engine = "sqlite"
 	}
 	if engine != "sqlite" && engine != "mysql" {
-		return DatabaseConfig{}, fmt.Errorf("unsupported database engine %q", raw.Database.Engine)
+		return DatabaseConfig{}, fmt.Errorf("unsupported database engine %q", cfg.Engine)
 	}
 
-	sqlitePath := strings.TrimSpace(raw.Database.SQLite.Path)
+	sqlitePath := strings.TrimSpace(cfg.SQLite.Path)
 	if sqlitePath == "" {
 		sqlitePath = "data/cephtower.db"
 	}
 
-	mysqlHost := strings.TrimSpace(raw.Database.MySQL.Host)
+	mysqlHost := strings.TrimSpace(cfg.MySQL.Host)
 	if mysqlHost == "" {
 		mysqlHost = "127.0.0.1"
 	}
 
-	mysqlPort := raw.Database.MySQL.Port
+	mysqlPort := cfg.MySQL.Port
 	if mysqlPort == 0 {
 		mysqlPort = 3306
 	}
 
-	mysqlParams := strings.TrimSpace(raw.Database.MySQL.Params)
+	mysqlParams := strings.TrimSpace(cfg.MySQL.Params)
 	if mysqlParams == "" {
 		mysqlParams = "charset=utf8mb4&parseTime=True&loc=Local"
 	}
@@ -138,9 +227,9 @@ func normalizeDatabaseConfig(raw fileConfig) (DatabaseConfig, error) {
 		MySQL: MySQLConfig{
 			Host:     mysqlHost,
 			Port:     mysqlPort,
-			Username: raw.Database.MySQL.Username,
-			Password: raw.Database.MySQL.Password,
-			Database: raw.Database.MySQL.Database,
+			Username: strings.TrimSpace(cfg.MySQL.Username),
+			Password: cfg.MySQL.Password,
+			Database: strings.TrimSpace(cfg.MySQL.Database),
 			Params:   mysqlParams,
 		},
 	}, nil

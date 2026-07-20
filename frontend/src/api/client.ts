@@ -2,8 +2,25 @@ export type ApiRecord = Record<string, unknown>
 
 const apiBaseUrl = '/api/v1/ceph'
 
+let authToken = localStorage.getItem('cephtower.auth.token') ?? ''
+
+export function setAuthToken(token: string) {
+  authToken = token
+  if (token) {
+    localStorage.setItem('cephtower.auth.token', token)
+  } else {
+    localStorage.removeItem('cephtower.auth.token')
+  }
+}
+
+export function getAuthToken() {
+  return authToken
+}
+
 export async function request<T>(path: string): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`)
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined
+  })
   if (!response.ok) {
     const message = await response.text()
     throw new Error(message || `Request failed: ${response.status}`)
@@ -63,4 +80,3 @@ export function numberValue(value: unknown): number | undefined {
 
   return undefined
 }
-

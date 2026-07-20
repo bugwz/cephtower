@@ -24,14 +24,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("open database: %v", err)
 	}
+
+	cephClient := ceph.NewDashboardClient(cfg.Ceph)
+	server := api.NewServer(cfg, cephClient, db)
 	defer func() {
-		if err := store.Close(db); err != nil {
+		if err := server.Close(); err != nil {
 			log.Printf("close database: %v", err)
 		}
 	}()
-
-	cephClient := ceph.NewDashboardClient(cfg.Ceph)
-	server := api.NewServer(cfg, cephClient)
 
 	log.Printf("cephtower database engine: %s", cfg.Database.Engine)
 	log.Printf("cephtower backend listening on %s", cfg.HTTPAddr)

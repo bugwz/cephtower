@@ -1,4 +1,4 @@
-export type PageKey = 'overview' | 'cluster' | 'services' | 'storage' | 'configuration' | 'logs'
+export type PageKey = 'overview' | 'cluster' | 'services' | 'storage' | 'configuration' | 'logs' | 'users'
 
 export { OverviewPage } from './OverviewPage'
 export { ClusterPage } from './ClusterPage'
@@ -6,4 +6,6 @@ export { ServicesPage } from './ServicesPage'
 export { StoragePage } from './StoragePage'
 export { ConfigurationPage } from './ConfigurationPage'
 export { LogsPage } from './LogsPage'
-
+export { LoginPage } from './LoginPage'
+export { InitializationPage } from './InitializationPage'
+export { UserManagementPage } from './UserManagementPage'

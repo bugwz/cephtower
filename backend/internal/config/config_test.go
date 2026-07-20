@@ -37,6 +37,9 @@ database:
 	if cfg.HTTPAddr != ":9090" {
 		t.Fatalf("HTTPAddr = %q, want %q", cfg.HTTPAddr, ":9090")
 	}
+	if cfg.Path != path {
+		t.Fatalf("Path = %q, want %q", cfg.Path, path)
+	}
 	if cfg.Ceph.BaseURL != "https://ceph.example.com" {
 		t.Fatalf("Ceph.BaseURL = %q, want trimmed URL", cfg.Ceph.BaseURL)
 	}
@@ -60,6 +63,62 @@ database:
 	}
 	if cfg.Database.MySQL.Params != "charset=utf8mb4&parseTime=True&loc=Asia%2FShanghai" {
 		t.Fatalf("Database.MySQL.Params = %q, want configured params", cfg.Database.MySQL.Params)
+	}
+}
+
+func TestSaveDatabaseRewritesDatabaseConfig(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	data := []byte(`http_addr: ":9090"
+ceph_dashboard:
+  base_url: https://ceph.example.com
+database:
+  engine: sqlite
+  sqlite:
+    path: data/old.db
+smtp:
+  host: smtp.example.com
+`)
+
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatalf("write config fixture: %v", err)
+	}
+
+	err := SaveDatabase(path, DatabaseConfig{
+		Engine: "mysql",
+		SQLite: SQLiteConfig{
+			Path: "data/new.db",
+		},
+		MySQL: MySQLConfig{
+			Host:     "db.example.com",
+			Port:     3307,
+			Username: "tower",
+			Password: "secret",
+			Database: "cephtower",
+			Params:   "charset=utf8mb4",
+		},
+	})
+	if err != nil {
+		t.Fatalf("SaveDatabase() returned error: %v", err)
+	}
+
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load() returned error: %v", err)
+	}
+	if cfg.HTTPAddr != ":9090" || cfg.SMTP.Host != "smtp.example.com" {
+		t.Fatalf("non-database fields were not preserved: %#v", cfg)
+	}
+	if cfg.Database.Engine != "mysql" {
+		t.Fatalf("Database.Engine = %q, want mysql", cfg.Database.Engine)
+	}
+	if cfg.Database.SQLite.Path != "data/new.db" {
+		t.Fatalf("Database.SQLite.Path = %q, want data/new.db", cfg.Database.SQLite.Path)
+	}
+	if cfg.Database.MySQL.Host != "db.example.com" || cfg.Database.MySQL.Port != 3307 {
+		t.Fatalf("unexpected MySQL address: %#v", cfg.Database.MySQL)
+	}
+	if cfg.Database.MySQL.Username != "tower" || cfg.Database.MySQL.Password != "secret" {
+		t.Fatalf("unexpected MySQL credentials: %#v", cfg.Database.MySQL)
 	}
 }
 
