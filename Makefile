@@ -4,7 +4,7 @@ BIN_DIR := bin
 APP_NAME := cephtower
 CONFIG ?= ../config/config.yaml
 FRONTEND_PORT ?= 36901
-BACKEND_STATIC_DIR := $(BACKEND_DIR)/internal/httpapi/static/dist
+BACKEND_STATIC_DIR := $(BACKEND_DIR)/internal/frontend/dist
 
 .PHONY: build build-backend build-frontend run run-backend run-frontend backend-dev backend-test frontend-dev frontend-build generate-ceph-client
 

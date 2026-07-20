@@ -5,9 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	"cephtower/backend/internal/ceph"
+	"cephtower/backend/internal/api"
 	"cephtower/backend/internal/config"
-	"cephtower/backend/internal/httpapi"
+	"cephtower/backend/internal/integrations/ceph"
+	"cephtower/backend/internal/store"
 )
 
 func main() {
@@ -19,9 +20,20 @@ func main() {
 		log.Fatalf("load config: %v", err)
 	}
 
-	cephClient := ceph.NewDashboardClient(cfg.Ceph)
-	server := httpapi.NewServer(cfg, cephClient)
+	db, err := store.Open(cfg.Database)
+	if err != nil {
+		log.Fatalf("open database: %v", err)
+	}
+	defer func() {
+		if err := store.Close(db); err != nil {
+			log.Printf("close database: %v", err)
+		}
+	}()
 
+	cephClient := ceph.NewDashboardClient(cfg.Ceph)
+	server := api.NewServer(cfg, cephClient)
+
+	log.Printf("cephtower database engine: %s", cfg.Database.Engine)
 	log.Printf("cephtower backend listening on %s", cfg.HTTPAddr)
 	if err := http.ListenAndServe(cfg.HTTPAddr, server.Routes()); err != nil {
 		log.Fatalf("server stopped: %v", err)

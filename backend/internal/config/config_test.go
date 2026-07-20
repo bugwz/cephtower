@@ -14,6 +14,15 @@ ceph_dashboard:
   username: admin
   password: change-me
   insecure_tls: true
+database:
+  engine: mysql
+  mysql:
+    host: db.example.com
+    port: 3307
+    username: cephtower
+    password: db-secret
+    database: cephtower
+    params: charset=utf8mb4&parseTime=True&loc=Asia%2FShanghai
 `)
 
 	if err := os.WriteFile(path, data, 0o600); err != nil {
@@ -37,9 +46,24 @@ ceph_dashboard:
 	if !cfg.Ceph.InsecureTLS {
 		t.Fatal("Ceph.InsecureTLS = false, want true")
 	}
+	if cfg.Database.Engine != "mysql" {
+		t.Fatalf("Database.Engine = %q, want mysql", cfg.Database.Engine)
+	}
+	if cfg.Database.MySQL.Host != "db.example.com" || cfg.Database.MySQL.Port != 3307 {
+		t.Fatalf("unexpected MySQL address: %#v", cfg.Database.MySQL)
+	}
+	if cfg.Database.MySQL.Username != "cephtower" || cfg.Database.MySQL.Password != "db-secret" {
+		t.Fatalf("unexpected MySQL credentials: %#v", cfg.Database.MySQL)
+	}
+	if cfg.Database.MySQL.Database != "cephtower" {
+		t.Fatalf("Database.MySQL.Database = %q, want cephtower", cfg.Database.MySQL.Database)
+	}
+	if cfg.Database.MySQL.Params != "charset=utf8mb4&parseTime=True&loc=Asia%2FShanghai" {
+		t.Fatalf("Database.MySQL.Params = %q, want configured params", cfg.Database.MySQL.Params)
+	}
 }
 
-func TestLoadDefaultsHTTPAddr(t *testing.T) {
+func TestLoadDefaults(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.yaml")
 	data := []byte(`ceph_dashboard:
   base_url: https://ceph.example.com
@@ -56,5 +80,32 @@ func TestLoadDefaultsHTTPAddr(t *testing.T) {
 
 	if cfg.HTTPAddr != ":36900" {
 		t.Fatalf("HTTPAddr = %q, want default :36900", cfg.HTTPAddr)
+	}
+	if cfg.Database.Engine != "sqlite" {
+		t.Fatalf("Database.Engine = %q, want default sqlite", cfg.Database.Engine)
+	}
+	if cfg.Database.SQLite.Path != "data/cephtower.db" {
+		t.Fatalf("Database.SQLite.Path = %q, want default data/cephtower.db", cfg.Database.SQLite.Path)
+	}
+	if cfg.Database.MySQL.Host != "127.0.0.1" || cfg.Database.MySQL.Port != 3306 {
+		t.Fatalf("unexpected default MySQL address: %#v", cfg.Database.MySQL)
+	}
+	if cfg.Database.MySQL.Params != "charset=utf8mb4&parseTime=True&loc=Local" {
+		t.Fatalf("Database.MySQL.Params = %q, want default params", cfg.Database.MySQL.Params)
+	}
+}
+
+func TestLoadRejectsUnsupportedDatabaseEngine(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	data := []byte(`database:
+  engine: postgres
+`)
+
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatalf("write config fixture: %v", err)
+	}
+
+	if _, err := Load(path); err == nil {
+		t.Fatal("Load() returned nil error, want unsupported engine error")
 	}
 }

@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"cephtower/backend/internal/ceph/endpoints"
-	"cephtower/backend/internal/ceph/typed"
 	"cephtower/backend/internal/config"
+	"cephtower/backend/internal/integrations/ceph/endpoints"
+	"cephtower/backend/internal/integrations/ceph/typed"
 )
 
 const (
