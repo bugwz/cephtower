@@ -6,7 +6,7 @@ CONFIG ?= ../config/config.yaml
 FRONTEND_PORT ?= 36901
 BACKEND_STATIC_DIR := $(BACKEND_DIR)/internal/httpapi/static/dist
 
-.PHONY: build build-backend build-frontend run run-backend run-frontend backend-dev backend-test frontend-dev frontend-build
+.PHONY: build build-backend build-frontend run run-backend run-frontend backend-dev backend-test frontend-dev frontend-build generate-ceph-client
 
 build: build-frontend build-backend
 
@@ -36,6 +36,9 @@ backend-dev: run-backend
 
 backend-test:
 	cd $(BACKEND_DIR) && go test ./...
+
+generate-ceph-client:
+	ruby tools/generate_ceph_dashboard_client.rb
 
 frontend-dev: run-frontend
 
