@@ -1,15 +1,33 @@
+import { request, type ApiRecord } from './client'
+
+export interface TaskSummary {
+  name?: string
+  begin_time?: string
+  end_time?: string
+  duration?: number
+  progress?: number
+  success?: boolean
+  ret_value?: string
+  exception?: string
+  metadata?: ApiRecord
+}
+
 export interface ClusterSummary {
   health_status: string
   version?: string
+  mgr_id?: string
+  mgr_host?: string
+  have_mon_connection?: string
+  executing_tasks?: string[]
+  finished_tasks?: TaskSummary[]
+  rbd_mirroring?: Record<string, number>
 }
 
-const apiBaseUrl = '/api'
-
-export async function getClusterSummary(): Promise<ClusterSummary> {
-  const response = await fetch(`${apiBaseUrl}/v1/cluster/summary`)
-  if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`)
-  }
-
-  return response.json()
+export function getClusterSummary(): Promise<ClusterSummary> {
+  return request<ClusterSummary>('/cluster/summary')
 }
+
+export function getClusterHealth(): Promise<ApiRecord> {
+  return request<ApiRecord>('/cluster/health/full')
+}
+

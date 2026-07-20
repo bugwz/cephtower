@@ -1,25 +1,20 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 
+	"cephtower/backend/internal/api/v1"
 	"cephtower/backend/internal/config"
 	"cephtower/backend/internal/frontend"
-	"cephtower/backend/internal/integrations/ceph"
 )
-
-type CephClient interface {
-	ClusterSummary(ctx context.Context) (ceph.ClusterSummary, error)
-}
 
 type Server struct {
 	cfg  config.Config
-	ceph CephClient
+	ceph v1.CephClient
 }
 
-func NewServer(cfg config.Config, cephClient CephClient) *Server {
+func NewServer(cfg config.Config, cephClient v1.CephClient) *Server {
 	return &Server{
 		cfg:  cfg,
 		ceph: cephClient,
@@ -29,7 +24,7 @@ func NewServer(cfg config.Config, cephClient CephClient) *Server {
 func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", s.healthz)
-	mux.HandleFunc("GET /api/v1/cluster/summary", s.clusterSummary)
+	v1.RegisterRoutes(mux, s.ceph)
 	mux.HandleFunc("/api/", http.NotFound)
 	mux.Handle("/", frontend.Handler())
 
@@ -40,16 +35,6 @@ func (s *Server) healthz(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{
 		"status": "ok",
 	})
-}
-
-func (s *Server) clusterSummary(w http.ResponseWriter, r *http.Request) {
-	summary, err := s.ceph.ClusterSummary(r.Context())
-	if err != nil {
-		writeError(w, http.StatusBadGateway, err)
-		return
-	}
-
-	writeJSON(w, http.StatusOK, summary)
 }
 
 func withCORS(next http.Handler) http.Handler {
@@ -70,10 +55,4 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(payload)
-}
-
-func writeError(w http.ResponseWriter, status int, err error) {
-	writeJSON(w, status, map[string]string{
-		"error": err.Error(),
-	})
 }

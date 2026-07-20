@@ -23,14 +23,14 @@ build-frontend:
 run:
 	@trap 'kill 0' INT TERM EXIT; \
 	(cd $(BACKEND_DIR) && go run ./cmd -config $(CONFIG)) & \
-	(cd $(FRONTEND_DIR) && npm run dev -- --host 0.0.0.0 --port $(FRONTEND_PORT)) & \
+	(cd $(FRONTEND_DIR) && npm run dev -- --host 0.0.0.0 --port $(FRONTEND_PORT) --strictPort) & \
 	wait
 
 run-backend:
 	cd $(BACKEND_DIR) && go run ./cmd -config $(CONFIG)
 
 run-frontend:
-	cd $(FRONTEND_DIR) && npm run dev -- --host 0.0.0.0 --port $(FRONTEND_PORT)
+	cd $(FRONTEND_DIR) && npm run dev -- --host 0.0.0.0 --port $(FRONTEND_PORT) --strictPort
 
 backend-dev: run-backend
 
