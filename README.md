@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="frontend/public/ceph-tower-logo.svg" alt="CephTower logo" width="128" height="128">
+
 # CephTower
 
 </div>
@@ -84,6 +86,8 @@ CephTower/
 │   │   ├── App.vue               # 应用主界面
 │   │   ├── main.ts               # 前端入口
 │   │   └── styles.css            # 全局样式
+│   ├── public/
+│   │   └── ceph-tower-logo.svg   # README 与前端共用 logo
 │   ├── package.json              # 前端依赖和脚本
 │   ├── tsconfig.json             # TypeScript 配置
 │   └── vite.config.ts            # Vite 配置

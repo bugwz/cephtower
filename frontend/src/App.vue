@@ -21,9 +21,9 @@ onMounted(async () => {
   <main class="shell">
     <aside class="sidebar">
       <div class="brand">
-        <span class="brand-mark">C</span>
+        <img class="brand-mark" src="/ceph-tower-logo.svg" alt="CephTower logo" />
         <div>
-          <strong>Cephtower</strong>
+          <strong>CephTower</strong>
           <small>Ceph 管理控制台</small>
         </div>
       </div>
