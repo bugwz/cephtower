@@ -1,0 +1,6 @@
+http_addr: ":36900"
+ceph_dashboard:
+  base_url: https://ceph.example.com
+  username: admin
+  password: change-me
+  insecure_tls: false
