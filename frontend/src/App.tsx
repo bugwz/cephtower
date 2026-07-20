@@ -111,7 +111,7 @@ export default function App() {
       theme={{
         algorithm: theme.defaultAlgorithm,
         token: {
-          colorPrimary: '#0f766e',
+          colorPrimary: '#43bf8f',
           borderRadius: 8,
           fontSize: 13,
           fontSizeHeading1: 24,
@@ -136,7 +136,7 @@ export default function App() {
           Table: {
             cellFontSize: 12,
             cellFontSizeMD: 12,
-            headerBg: '#f7fafc'
+            headerBg: '#f3fbf8'
           },
           Button: {
             fontWeight: 700

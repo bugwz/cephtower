@@ -158,7 +158,7 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
               )}
             </div>
             <div hidden={step !== 1}>
-              <Form.Item name="admin_username" label="默认管理员用户名" rules={[{ required: true, message: '请输入用户名' }]}>
+              <Form.Item name="admin_username" label="管理员用户名" rules={[{ required: true, message: '请输入用户名' }]}>
                 <Input prefix={<UserOutlined />} autoComplete="username" />
               </Form.Item>
               <Form.Item

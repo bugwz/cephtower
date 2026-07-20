@@ -1,23 +1,23 @@
-http_addr: ":36900"
+http_addr: :36900
 ceph_dashboard:
-  base_url: https://ceph.example.com
-  username: admin
-  password: change-me
-  insecure_tls: false
-database:
-  engine: sqlite
-  sqlite:
-    path: app/data/cephtower.db
-  mysql:
-    host: 127.0.0.1
-    port: 3306
-    username: cephtower
+    base_url: https://ceph.example.com
+    username: admin
     password: change-me
-    database: cephtower
-    params: charset=utf8mb4&parseTime=True&loc=Local
+    insecure_tls: false
+database:
+    engine: sqlite
+    sqlite:
+        path: app/data/cephtower.db
+    mysql:
+        host: 127.0.0.1
+        port: 3306
+        username: ""
+        password: ""
+        database: ""
+        params: charset=utf8mb4&parseTime=True&loc=Local
 smtp:
-  host: ""
-  port: 587
-  username: ""
-  password: ""
-  from: ""
+    host: ""
+    port: 587
+    username: ""
+    password: ""
+    from: ""
