@@ -39,14 +39,13 @@ import {
 import { Badge, Button, Dropdown, Input, Layout, Menu, Space, Typography } from 'antd'
 import type { MenuProps } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import type { FocusEvent, MouseEvent, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import type { UserAccount } from '../api/auth'
 import { NAV_SECTIONS, type NavIcon, type PageKey } from '../navigation'
 
 const { Content, Header, Sider } = Layout
 const { Text } = Typography
 
-let suppressCollapsedFlyout = false
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'cephtower.sidebarCollapsed'
 const APP_VERSION = '0.1.0'
 const GITHUB_REPOSITORY_URL = 'https://github.com/bugwz/cephtower'
@@ -61,10 +60,8 @@ interface AppLayoutProps {
 
 export function AppLayout({ activePage, onPageChange, user, onLogout, children }: AppLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(readStoredSidebarCollapsed)
-  const [openFlyoutKey, setOpenFlyoutKey] = useState<string | null>(null)
-  const collapsedMenuRef = useRef<HTMLElement | null>(null)
-  const collapsedHoverArmed = useRef(!sidebarCollapsed)
-  const hasPointerIntent = useRef(false)
+  const [menuOpenKeys, setMenuOpenKeys] = useState<string[]>([])
+  const collapsedHoverArmed = useRef(false)
   const displayName = user.display_name || user.username
   const roleLabel = user.role === 'admin' ? '管理员' : '普通用户'
   const permissionSummary = user.role === 'admin' ? '全部权限' : `${user.permissions.length} 项权限`
@@ -72,6 +69,7 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
   const navSections = buildNavSections(user)
   const navItems = buildNavItems(navSections)
   const defaultOpenKeys = getDefaultOpenKeys(navSections, activePage)
+  const defaultOpenKeysKey = defaultOpenKeys.join('|')
   const userDropdownItems: MenuProps['items'] = [
     {
       key: 'account',
@@ -110,14 +108,18 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
   ]
 
   useEffect(() => {
-    function handlePointerMove(event: PointerEvent) {
-      if (!didPointerActuallyMove(event.movementX, event.movementY)) {
-        return
-      }
+    if (sidebarCollapsed) {
+      collapsedHoverArmed.current = false
+      setMenuOpenKeys([])
+      return
+    }
 
-      hasPointerIntent.current = true
-      const collapsedMenu = collapsedMenuRef.current
-      if (!collapsedMenu || !(event.target instanceof Node) || !collapsedMenu.contains(event.target)) {
+    setMenuOpenKeys(defaultOpenKeys)
+  }, [activePage, defaultOpenKeysKey, sidebarCollapsed])
+
+  useEffect(() => {
+    function handlePointerMove(event: PointerEvent) {
+      if (didPointerActuallyMove(event.movementX, event.movementY)) {
         collapsedHoverArmed.current = true
       }
     }
@@ -126,71 +128,24 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
     return () => window.removeEventListener('pointermove', handlePointerMove)
   }, [])
 
-  function handleCollapsedPageChange(event: MouseEvent<HTMLButtonElement>, page: PageKey) {
-    event.currentTarget.blur()
-    suppressCollapsedFlyout = true
-    setOpenFlyoutKey(null)
-    onPageChange(page)
-  }
-
-  function openCollapsedFlyout(section: NavSection) {
-    if (section.children.length === 1) {
+  function handleMenuOpenChange(nextOpenKeys: string[]) {
+    if (sidebarCollapsed && !collapsedHoverArmed.current) {
       return
     }
 
-    if (collapsedHoverArmed.current && !suppressCollapsedFlyout && !section.children.every((item) => item.disabled)) {
-      setOpenFlyoutKey(section.key)
-    }
+    setMenuOpenKeys(nextOpenKeys)
   }
 
-  function handleCollapsedItemMouseEnter(event: MouseEvent<HTMLDivElement>, section: NavSection) {
-    if (!hasPointerIntent.current) {
-      return
+  function handleMenuClick(key: string) {
+    if (sidebarCollapsed) {
+      setMenuOpenKeys([])
     }
 
-    openCollapsedFlyout(section)
-  }
-
-  function handleCollapsedItemMouseMove(event: MouseEvent<HTMLDivElement>, section: NavSection) {
-    if (didPointerActuallyMove(event.movementX, event.movementY)) {
-      hasPointerIntent.current = true
-      openCollapsedFlyout(section)
-    }
-  }
-
-  function toggleCollapsedFlyout(section: NavSection) {
-    if (section.children.length === 1) {
-      const [item] = section.children
-      if (!item.disabled) {
-        onPageChange(item.key)
-      }
-      return
-    }
-
-    if (section.children.every((item) => item.disabled)) {
-      return
-    }
-
-    collapsedHoverArmed.current = true
-    suppressCollapsedFlyout = false
-    setOpenFlyoutKey((currentKey) => (currentKey === section.key ? null : section.key))
-  }
-
-  function handleCollapsedItemBlur(event: FocusEvent<HTMLDivElement>) {
-    if (!event.currentTarget.contains(event.relatedTarget)) {
-      closeCollapsedFlyout()
-    }
-  }
-
-  function closeCollapsedFlyout() {
-    collapsedHoverArmed.current = true
-    suppressCollapsedFlyout = false
-    setOpenFlyoutKey(null)
+    onPageChange(key as PageKey)
   }
 
   function handleSidebarCollapsedToggle() {
-    closeCollapsedFlyout()
-    collapsedHoverArmed.current = true
+    collapsedHoverArmed.current = false
     setSidebarCollapsed((collapsed) => {
       const nextCollapsed = !collapsed
       storeSidebarCollapsed(nextCollapsed)
@@ -224,67 +179,20 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
             </div>
           </div>
           <div className="sidebar-nav-stack">
-            {!sidebarCollapsed ? (
             <Menu
-                className="sidebar-menu"
-                mode="inline"
-                defaultOpenKeys={defaultOpenKeys}
-                selectedKeys={[activePage]}
-                items={navItems}
-                onClick={({ key }) => onPageChange(key as PageKey)}
-              />
-            ) : null}
-            <nav ref={collapsedMenuRef} className="collapsed-sidebar-menu" aria-label="折叠菜单" aria-hidden={!sidebarCollapsed}>
-              {navSections.map((section) => (
-                <div
-                  key={section.key}
-                  className={`collapsed-nav-item${section.children.some((item) => item.key === activePage) ? ' collapsed-nav-item-active' : ''}${openFlyoutKey === section.key ? ' collapsed-nav-item-open' : ''}`}
-                  onMouseEnter={(event) => handleCollapsedItemMouseEnter(event, section)}
-                  onMouseMove={(event) => handleCollapsedItemMouseMove(event, section)}
-                  onMouseLeave={closeCollapsedFlyout}
-                  onBlur={handleCollapsedItemBlur}
-                >
-                  <button
-                    type="button"
-                    className="collapsed-nav-button"
-                    disabled={section.children.every((item) => item.disabled)}
-                    tabIndex={sidebarCollapsed ? 0 : -1}
-                    title={section.label}
-                    aria-haspopup={section.children.length > 1 ? 'menu' : undefined}
-                    aria-expanded={section.children.length > 1 ? openFlyoutKey === section.key : undefined}
-                    onClick={() => toggleCollapsedFlyout(section)}
-                  >
-                    {section.icon}
-                  </button>
-                  {section.children.length > 1 ? (
-                    <div className="collapsed-nav-flyout" role="menu" aria-label={section.label}>
-                      <div className="collapsed-nav-flyout-title">{section.label}</div>
-                      <div className="collapsed-nav-flyout-list">
-                        {section.children.map((item) => (
-                          <button
-                            key={item.key}
-                            type="button"
-                            className={`collapsed-nav-flyout-option${activePage === item.key ? ' collapsed-nav-flyout-option-active' : ''}`}
-                            disabled={item.disabled}
-                            role="menuitem"
-                            tabIndex={sidebarCollapsed ? 0 : -1}
-                            onClick={(event) => handleCollapsedPageChange(event, item.key)}
-                          >
-                            {item.icon}
-                            <span>{item.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ))}
-            </nav>
+              className="sidebar-menu"
+              mode={sidebarCollapsed ? 'vertical' : 'inline'}
+              openKeys={menuOpenKeys}
+              selectedKeys={[activePage]}
+              items={navItems}
+              onOpenChange={handleMenuOpenChange}
+              onPointerDownCapture={() => {
+                collapsedHoverArmed.current = true
+              }}
+              onClick={({ key }) => handleMenuClick(key)}
+            />
           </div>
           <div className="sidebar-footer">
-            <div className="sidebar-version">
-              <Text strong>v{APP_VERSION}</Text>
-            </div>
             <Button
               className="sidebar-github-button"
               href={GITHUB_REPOSITORY_URL}
@@ -294,6 +202,9 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
               title="打开 GitHub 仓库"
               aria-label="打开 GitHub 仓库"
             />
+            <div className="sidebar-version">
+              <Text strong>v{APP_VERSION}</Text>
+            </div>
           </div>
         </div>
       </Sider>
@@ -375,6 +286,7 @@ function buildNavItems(sections: NavSection[]): MenuProps['items'] {
       key: section.key,
       icon: section.icon,
       label: section.label,
+      popupClassName: 'sidebar-menu-popup',
       children: section.children.map((item) => ({
         key: item.key,
         icon: item.icon,
