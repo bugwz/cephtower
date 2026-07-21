@@ -1,4 +1,10 @@
-import { getAuthToken } from './client'
+import {
+  getAuthToken,
+  notifyApiError,
+  readApiResponse,
+  toApiErrorDetail,
+  type ApiRequestInit
+} from './client'
 
 export interface CephCluster {
   id: number
@@ -73,20 +79,22 @@ export async function updateCluster(id: number, payload: CephClusterPayload): Pr
   })
 }
 
-async function clusterRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),
-      ...init?.headers
+async function clusterRequest<T>(path: string, init?: ApiRequestInit): Promise<T> {
+  const { suppressErrorNotification, ...fetchInit } = init ?? {}
+  try {
+    const response = await fetch(`${apiBaseUrl}${path}`, {
+      ...fetchInit,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),
+        ...fetchInit.headers
+      }
+    })
+    return await readApiResponse<T>(response)
+  } catch (err) {
+    if (!suppressErrorNotification) {
+      notifyApiError(toApiErrorDetail(err, path))
     }
-  })
-  const text = await response.text()
-  const payload = text ? JSON.parse(text) : {}
-  if (!response.ok) {
-    const message = payload?.error ?? text ?? `Request failed: ${response.status}`
-    throw new Error(message)
+    throw err
   }
-  return payload as T
 }

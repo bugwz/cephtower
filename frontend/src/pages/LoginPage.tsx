@@ -1,5 +1,5 @@
 import { KeyOutlined, LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons'
-import { Alert, Button, Checkbox, Form, Input, Typography, message } from 'antd'
+import { Button, Checkbox, Form, Input, Typography, message } from 'antd'
 import { useEffect, useState } from 'react'
 import { confirmPasswordReset, login, requestPasswordReset, type UserAccount } from '../api/auth'
 
@@ -15,7 +15,6 @@ interface LoginPageProps {
 export function LoginPage({ mode, onLogin, onForgotPassword, onPasswordResetComplete }: LoginPageProps) {
   const [loading, setLoading] = useState(false)
   const [resetLoading, setResetLoading] = useState(false)
-  const [error, setError] = useState('')
   const [resetCountdown, setResetCountdown] = useState(0)
   const [resetForm] = Form.useForm()
 
@@ -33,12 +32,11 @@ export function LoginPage({ mode, onLogin, onForgotPassword, onPasswordResetComp
 
   async function submit(values: { username: string; password: string }) {
     setLoading(true)
-    setError('')
     try {
       const response = await login(values.username, values.password)
       onLogin(response.user)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '登录失败')
+    } catch {
+      // API errors are shown by the global notifier.
     } finally {
       setLoading(false)
     }
@@ -46,16 +44,13 @@ export function LoginPage({ mode, onLogin, onForgotPassword, onPasswordResetComp
 
   async function sendCode() {
     setResetLoading(true)
-    setError('')
     try {
       const { account } = await resetForm.validateFields(['account'])
       const response = await requestPasswordReset(account)
       message.success(response.message)
       setResetCountdown(90)
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message)
-      }
+    } catch {
+      // Field validation stays inline; API errors are shown by the global notifier.
     } finally {
       setResetLoading(false)
     }
@@ -63,7 +58,6 @@ export function LoginPage({ mode, onLogin, onForgotPassword, onPasswordResetComp
 
   async function resetPassword(values: { account: string; code: string; new_password: string; confirm_password: string }) {
     setLoading(true)
-    setError('')
     try {
       const response = await confirmPasswordReset({
         account: values.account,
@@ -74,8 +68,8 @@ export function LoginPage({ mode, onLogin, onForgotPassword, onPasswordResetComp
       resetForm.resetFields()
       setResetCountdown(0)
       onPasswordResetComplete()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '重设密码失败')
+    } catch {
+      // API errors are shown by the global notifier.
     } finally {
       setLoading(false)
     }
@@ -99,7 +93,6 @@ export function LoginPage({ mode, onLogin, onForgotPassword, onPasswordResetComp
       <section className="login-panel login-form-panel">
         <div className="login-card">
           <Title level={2}>{mode === 'login' ? '登录' : '忘记密码'}</Title>
-          {error && <Alert type="error" showIcon message={error} />}
           {mode === 'login' ? (
             <Form layout="vertical" onFinish={submit} className="login-form">
               <Form.Item name="username" rules={[{ required: true, message: '请输入用户名' }]}>
@@ -113,10 +106,7 @@ export function LoginPage({ mode, onLogin, onForgotPassword, onPasswordResetComp
                 <Button
                   type="link"
                   className="forgot-link"
-                  onClick={() => {
-                    setError('')
-                    onForgotPassword()
-                  }}
+                  onClick={onForgotPassword}
                 >
                   忘记密码？
                 </Button>

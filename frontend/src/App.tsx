@@ -2,6 +2,7 @@ import { ConfigProvider, theme } from 'antd'
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { currentUser, hasStoredToken, logout, setupStatus, type SetupDatabaseConfig, type UserAccount } from './api/auth'
+import { ApiErrorNotifier } from './components/ApiErrorNotifier'
 import { AppLayout } from './layout/AppLayout'
 import { NAV_PAGES, pagePaths } from './navigation'
 import {
@@ -129,8 +130,9 @@ export default function App() {
         }
       }}
     >
+      <ApiErrorNotifier />
       {checkingSession ? (
-        <div className="session-check">正在检查系统状态...</div>
+        <div className="session-check" aria-label="正在检查系统状态" aria-busy="true" />
       ) : setupRequired ? (
         <Routes>
           <Route path="/initialize" element={<InitializationPage database={setupDatabase} onComplete={handleSetupComplete} />} />

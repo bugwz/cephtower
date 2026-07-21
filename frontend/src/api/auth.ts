@@ -1,4 +1,11 @@
-import { getAuthToken, setAuthToken } from './client'
+import {
+  getAuthToken,
+  notifyApiError,
+  readApiResponse,
+  setAuthToken,
+  toApiErrorDetail,
+  type ApiRequestInit
+} from './client'
 
 export type UserRole = 'admin' | 'user'
 
@@ -45,14 +52,13 @@ interface LoginResponse {
 const authBaseUrl = '/api/v1'
 
 export async function login(username: string, password: string): Promise<LoginResponse> {
-  const response = await fetch(`${authBaseUrl}/auth/login`, {
+  return requestPublic<LoginResponse>('/auth/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
+  }).then((payload) => {
+    setAuthToken(payload.token)
+    return payload
   })
-  const payload = await readJSON<LoginResponse>(response)
-  setAuthToken(payload.token)
-  return payload
 }
 
 export async function currentUser(): Promise<UserAccount> {
@@ -60,7 +66,7 @@ export async function currentUser(): Promise<UserAccount> {
 }
 
 export async function setupStatus(): Promise<SetupStatus> {
-  return requestPublic<SetupStatus>('/setup/status')
+  return requestPublic<SetupStatus>('/setup/status', { suppressErrorNotification: true })
 }
 
 export async function initializeSetup(payload: {
@@ -149,35 +155,41 @@ export function hasStoredToken() {
   return Boolean(getAuthToken())
 }
 
-async function requestAuth<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${authBaseUrl}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),
-      ...init?.headers
+async function requestAuth<T>(path: string, init?: ApiRequestInit): Promise<T> {
+  const { suppressErrorNotification, ...fetchInit } = init ?? {}
+  try {
+    const response = await fetch(`${authBaseUrl}${path}`, {
+      ...fetchInit,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),
+        ...fetchInit.headers
+      }
+    })
+    return await readApiResponse<T>(response)
+  } catch (err) {
+    if (!suppressErrorNotification) {
+      notifyApiError(toApiErrorDetail(err, path))
     }
-  })
-  return readJSON<T>(response)
-}
-
-async function requestPublic<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${authBaseUrl}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...init?.headers
-    }
-  })
-  return readJSON<T>(response)
-}
-
-async function readJSON<T>(response: Response): Promise<T> {
-  const text = await response.text()
-  const payload = text ? JSON.parse(text) : {}
-  if (!response.ok) {
-    const message = payload?.error ?? text ?? `Request failed: ${response.status}`
-    throw new Error(message)
+    throw err
   }
-  return payload as T
+}
+
+async function requestPublic<T>(path: string, init?: ApiRequestInit): Promise<T> {
+  const { suppressErrorNotification, ...fetchInit } = init ?? {}
+  try {
+    const response = await fetch(`${authBaseUrl}${path}`, {
+      ...fetchInit,
+      headers: {
+        'Content-Type': 'application/json',
+        ...fetchInit.headers
+      }
+    })
+    return await readApiResponse<T>(response)
+  } catch (err) {
+    if (!suppressErrorNotification) {
+      notifyApiError(toApiErrorDetail(err, path))
+    }
+    throw err
+  }
 }

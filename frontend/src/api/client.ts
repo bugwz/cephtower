@@ -1,8 +1,19 @@
 export type ApiRecord = Record<string, unknown>
 
 const apiBaseUrl = '/api/v1/ceph'
+const apiErrorEventName = 'cephtower:api-error'
 
 let authToken = localStorage.getItem('cephtower.auth.token') ?? ''
+
+export interface ApiRequestInit extends RequestInit {
+  suppressErrorNotification?: boolean
+}
+
+export interface ApiErrorDetail {
+  message: string
+  status?: number
+  path?: string
+}
 
 export function setAuthToken(token: string) {
   authToken = token
@@ -17,16 +28,24 @@ export function getAuthToken() {
   return authToken
 }
 
-export async function request<T>(path: string): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    headers: authToken ? { Authorization: `Bearer ${authToken}` } : undefined
-  })
-  if (!response.ok) {
-    const message = await response.text()
-    throw new Error(message || `Request failed: ${response.status}`)
-  }
+export async function request<T>(path: string, init?: ApiRequestInit): Promise<T> {
+  const { suppressErrorNotification, ...fetchInit } = init ?? {}
+  try {
+    const response = await fetch(`${apiBaseUrl}${path}`, {
+      ...fetchInit,
+      headers: {
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        ...fetchInit.headers
+      }
+    })
 
-  return response.json() as Promise<T>
+    return await readApiResponse<T>(response)
+  } catch (err) {
+    if (!suppressErrorNotification) {
+      notifyApiError(toApiErrorDetail(err, path))
+    }
+    throw err
+  }
 }
 
 export function asArray(payload: unknown): ApiRecord[] {
@@ -79,4 +98,74 @@ export function numberValue(value: unknown): number | undefined {
   }
 
   return undefined
+}
+
+export async function readApiResponse<T>(response: Response): Promise<T> {
+  const text = await response.text()
+  const { payload, invalidJSON } = parseJSON(text)
+
+  if (!response.ok) {
+    throw new Error(extractErrorMessage(payload, text, response.status))
+  }
+
+  if (invalidJSON) {
+    throw new Error('后端接口返回的数据格式不正确')
+  }
+
+  return (payload ?? {}) as T
+}
+
+export function notifyApiError(detail: ApiErrorDetail) {
+  window.dispatchEvent(new CustomEvent<ApiErrorDetail>(apiErrorEventName, { detail }))
+}
+
+export function subscribeApiErrors(listener: (detail: ApiErrorDetail) => void) {
+  const handler = (event: Event) => {
+    listener((event as CustomEvent<ApiErrorDetail>).detail)
+  }
+
+  window.addEventListener(apiErrorEventName, handler)
+  return () => window.removeEventListener(apiErrorEventName, handler)
+}
+
+export function toApiErrorDetail(err: unknown, path?: string): ApiErrorDetail {
+  return {
+    message: formatApiErrorMessage(err),
+    path
+  }
+}
+
+function parseJSON(text: string): { payload: unknown; invalidJSON: boolean } {
+  if (!text) {
+    return { payload: undefined, invalidJSON: false }
+  }
+
+  try {
+    return { payload: JSON.parse(text), invalidJSON: false }
+  } catch {
+    return { payload: undefined, invalidJSON: true }
+  }
+}
+
+function extractErrorMessage(payload: unknown, text: string, status: number): string {
+  if (isRecord(payload)) {
+    const message = payload.error ?? payload.message
+    if (typeof message === 'string' && message.trim()) {
+      return message
+    }
+  }
+
+  return text || `Request failed: ${status}`
+}
+
+function formatApiErrorMessage(err: unknown): string {
+  if (!(err instanceof Error)) {
+    return '后端接口调用失败'
+  }
+
+  if (err instanceof TypeError && /failed to fetch|networkerror|load failed/i.test(err.message)) {
+    return '无法连接后端服务，请检查网络或后端服务状态'
+  }
+
+  return err.message || '后端接口调用失败'
 }

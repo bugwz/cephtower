@@ -1629,3 +1629,51 @@
 .ant-alert-icon {
   font-size: var(--font-lg) !important;
 }
+
+.api-error-path {
+  margin-top: 4px;
+  color: #637a80;
+  font-size: 12px;
+}
+
+.api-error-notification.ant-notification-notice {
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  padding: 12px 14px;
+  border-radius: 8px;
+}
+
+.api-error-notification .ant-notification-notice-message {
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.api-error-notification .ant-notification-notice-description {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.api-error-notification .api-error-path {
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .api-error-notification.ant-notification-notice {
+    width: 300px;
+    max-width: calc(100vw - 28px);
+    padding: 11px 13px;
+  }
+}
+
+@media (max-width: 520px) {
+  .api-error-notification.ant-notification-notice {
+    width: calc(100vw - 24px);
+    padding: 10px 12px;
+  }
+
+  .api-error-notification .ant-notification-notice-message {
+    font-size: 12px;
+  }
+}

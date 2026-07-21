@@ -29,10 +29,6 @@ body {
 }
 
 .session-check {
-  display: grid;
   min-height: 100vh;
-  place-items: center;
-  color: #53616b;
-  font-weight: 700;
+  background: #fbfdfe;
 }
-
