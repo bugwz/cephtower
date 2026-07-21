@@ -1,14 +1,14 @@
 import { Card, Tabs, Timeline, Typography } from 'antd'
 import { useCallback } from 'react'
-import { asArray, isRecord, textValue } from '../api/client'
-import { listLogs } from '../api/resources'
-import { DataTable } from '../components/DataTable'
-import { Page } from '../components/Page'
-import { useResource } from '../hooks'
+import { asArray, isRecord, textValue } from '../../api/client'
+import { listLogs } from '../../api/resources'
+import { DataTable } from '../../components/DataTable'
+import { Page } from '../../components/Page'
+import { useResource } from '../../hooks'
 
 const { Text } = Typography
 
-export function LogsPage() {
+export function RuntimeLogsPage() {
   const loader = useCallback(() => listLogs(), [])
   const { data, loading, error, refresh } = useResource(loader)
   const audit = asArray(data?.audit_log ?? data?.audit ?? [])
@@ -94,4 +94,3 @@ function LogTimeline({ rows }: { rows: Record<string, unknown>[] }) {
     />
   )
 }
-

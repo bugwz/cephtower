@@ -1,12 +1,12 @@
 import { Button, Card, Progress, Space, Statistic, Tag, Typography } from 'antd'
 import { ReloadOutlined, WarningOutlined } from '@ant-design/icons'
 import { useCallback } from 'react'
-import { getClusterHealth, getClusterSummary } from '../api/cluster'
-import { isRecord, textValue } from '../api/client'
-import { listHosts, listOSDs, listPools, listServices } from '../api/resources'
-import { HealthBadge } from '../components/HealthBadge'
-import { Page } from '../components/Page'
-import { useResource } from '../hooks'
+import { getClusterHealth, getClusterSummary } from '../../api/cluster'
+import { isRecord, textValue } from '../../api/client'
+import { listHosts, listOSDs, listPools, listServices } from '../../api/resources'
+import { HealthBadge } from '../../components/HealthBadge'
+import { Page } from '../../components/Page'
+import { useResource } from '../../hooks'
 
 const { Text } = Typography
 

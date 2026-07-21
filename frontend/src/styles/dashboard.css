@@ -15,12 +15,14 @@
   color: #16323a;
 }
 
-.app-sidebar .ant-layout-sider-children {
+.app-sidebar:not(.app-sidebar-collapsed) .ant-layout-sider-children {
   height: 100%;
+  width: calc(100% + 12px);
   overflow: hidden;
 }
 
 .app-sidebar-collapsed .ant-layout-sider-children {
+  height: 100%;
   overflow: visible;
 }
 
@@ -29,6 +31,7 @@
   height: 100%;
   width: 200px;
   min-width: 200px;
+  overflow: hidden;
 }
 
 .sidebar-collapse-button.ant-btn {
@@ -156,14 +159,45 @@
 }
 
 .sidebar-nav-stack {
-  position: relative;
+  position: absolute;
+  top: calc(clamp(52px, 2.6vw, 60px) + clamp(16px, 0.9vw, 22px));
+  right: -12px;
+  bottom: 24px;
+  left: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-color: #9bdcc4 transparent;
+  scrollbar-width: thin;
+}
+
+.sidebar-nav-stack::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav-stack::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav-stack::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #9bdcc4;
+}
+
+.app-sidebar-collapsed .sidebar-nav-stack {
+  right: 0;
+  bottom: 30px;
+  overflow: visible;
+  padding-right: 0;
 }
 
 .sidebar-menu.ant-menu {
   border-inline-end: 0 !important;
   background: transparent;
   color: #51676e;
-  padding-bottom: 116px;
+  width: calc(100% - 6px);
+  padding-bottom: 8px;
   opacity: 1;
   transform: translateX(0);
   transition:
@@ -470,12 +504,15 @@
 
 .sidebar-footer {
   position: absolute;
-  right: 18px;
-  bottom: clamp(16px, 1vw, 24px);
-  left: 18px;
-  display: grid;
-  gap: 9px;
-  padding-top: 16px;
+  right: 12px;
+  bottom: 0;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 24px;
+  min-height: 24px;
+  padding-top: 0;
   border-top: 1px solid #dce8ec;
   opacity: 1;
   transform: translateY(0);
@@ -485,24 +522,60 @@
 }
 
 .app-sidebar-collapsed .sidebar-footer {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(8px);
+  right: 0;
+  left: 0;
+  justify-content: center;
+  border-top: 0;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
-.sidebar-footer > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
+.app-sidebar-collapsed .sidebar-version {
+  justify-items: center;
+}
+
+.sidebar-version {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
 }
 
 .sidebar-footer .ant-typography {
   color: #6f858c;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  line-height: 1.1;
 }
 
 .sidebar-footer strong.ant-typography {
   color: #17313a;
+  font-size: 10px;
+}
+
+.sidebar-github-button.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #35515a;
+  font-size: 15px;
+  box-shadow: none;
+}
+
+.sidebar-github-button.ant-btn:hover {
+  background: transparent;
+  color: #168766;
+}
+
+.app-sidebar-collapsed .sidebar-github-button.ant-btn {
+  display: none;
 }
 
 .main-shell {
@@ -815,6 +888,35 @@
 
 .overview-metrics {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.demo-actionbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.demo-metrics {
+  margin-bottom: 18px;
+}
+
+.demo-stat-value {
+  margin: 4px 0 6px;
+  color: #17313a;
+  font-size: clamp(24px, 1.1vw + 18px, 34px);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.demo-inline-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  margin: 4px 0 6px;
+  color: #168766;
+  font-size: var(--font-lg);
 }
 
 .content-grid {

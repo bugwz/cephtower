@@ -1,18 +1,18 @@
 import { EditOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Button, Card, Checkbox, Form, Input, InputNumber, Modal, Space, Switch, Table, Tag, Typography, message } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { textValue } from '../api/client'
+import { textValue } from '../../api/client'
 import {
   createCluster,
   listClusters,
   updateCluster,
   type CephCluster,
   type CephClusterPayload
-} from '../api/clusters'
-import { listConfiguration } from '../api/resources'
-import { DataTable } from '../components/DataTable'
-import { Page } from '../components/Page'
-import { useResource } from '../hooks'
+} from '../../api/clusters'
+import { listConfiguration } from '../../api/resources'
+import { DataTable } from '../../components/DataTable'
+import { Page } from '../../components/Page'
+import { useResource } from '../../hooks'
 
 const { Text } = Typography
 
@@ -38,7 +38,7 @@ interface ClusterFormValues {
   command_timeout_seconds?: number
 }
 
-export function ConfigurationPage() {
+export function ClusterManagementPage() {
   const [keyword, setKeyword] = useState('')
   const loader = useCallback(() => listConfiguration(), [])
   const { data, loading, error, refresh } = useResource(loader)
@@ -131,7 +131,7 @@ export function ConfigurationPage() {
 
   return (
     <Page
-      title="配置中心"
+      title="集群管理"
       description="管理 Ceph 集群连接信息，并查看当前集群配置项。"
       loading={loading || clusterLoading}
       error={clusterError || error}

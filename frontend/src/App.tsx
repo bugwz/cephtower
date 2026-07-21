@@ -3,28 +3,13 @@ import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { currentUser, hasStoredToken, logout, setupStatus, type SetupDatabaseConfig, type UserAccount } from './api/auth'
 import { AppLayout } from './layout/AppLayout'
+import { NAV_PAGES, pagePaths } from './navigation'
 import {
-  ClusterPage,
-  ConfigurationPage,
   InitializationPage,
   LoginPage,
-  LogsPage,
-  OverviewPage,
-  ServicesPage,
-  StoragePage,
-  UserManagementPage,
+  pageComponents,
   type PageKey
 } from './pages'
-
-const pagePaths: Record<PageKey, string> = {
-  overview: '/overview',
-  cluster: '/cluster',
-  services: '/services',
-  storage: '/storage',
-  configuration: '/configuration',
-  logs: '/logs',
-  users: '/users'
-}
 
 export default function App() {
   const navigate = useNavigate()
@@ -154,8 +139,8 @@ export default function App() {
       ) : user ? (
         <Routes>
           <Route path="/" element={<Navigate to={pagePaths.overview} replace />} />
-          {(Object.keys(pagePaths) as PageKey[]).map((page) => (
-            <Route key={page} path={pagePaths[page]} element={renderAppPage(page)} />
+          {NAV_PAGES.map((page) => (
+            <Route key={page.key} path={page.path} element={renderAppPage(page.key)} />
           ))}
           <Route path="/login" element={<Navigate to={pagePaths.overview} replace />} />
           <Route path="/initialize" element={<Navigate to={pagePaths.overview} replace />} />
@@ -195,20 +180,6 @@ export default function App() {
 }
 
 function renderPage(page: PageKey) {
-  switch (page) {
-    case 'cluster':
-      return <ClusterPage />
-    case 'services':
-      return <ServicesPage />
-    case 'storage':
-      return <StoragePage />
-    case 'configuration':
-      return <ConfigurationPage />
-    case 'logs':
-      return <LogsPage />
-    case 'users':
-      return <UserManagementPage />
-    default:
-      return <OverviewPage />
-  }
+  const PageComponent = pageComponents[page]
+  return <PageComponent />
 }

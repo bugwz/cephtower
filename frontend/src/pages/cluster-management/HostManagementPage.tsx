@@ -1,11 +1,11 @@
 import { Card, Tabs, Tag } from 'antd'
 import { useCallback } from 'react'
-import { listHosts, listOSDFlags, listOSDs } from '../api/resources'
-import { DataTable } from '../components/DataTable'
-import { Page } from '../components/Page'
-import { useResource } from '../hooks'
+import { listHosts, listOSDFlags, listOSDs } from '../../api/resources'
+import { DataTable } from '../../components/DataTable'
+import { Page } from '../../components/Page'
+import { useResource } from '../../hooks'
 
-export function ClusterPage() {
+export function HostManagementPage() {
   const loader = useCallback(async () => {
     const [hosts, osds, flags] = await Promise.all([listHosts(), listOSDs(), listOSDFlags()])
     return { hosts, osds, flags }
@@ -14,7 +14,7 @@ export function ClusterPage() {
 
   return (
     <Page
-      title="集群资源"
+      title="主机管理"
       description="围绕 Ceph 集群的主机、OSD 和关键运行标志组织巡检视图。"
       loading={loading}
       error={error}
@@ -81,4 +81,3 @@ export function ClusterPage() {
     </Page>
   )
 }
-

@@ -7,8 +7,8 @@ import {
 } from '@ant-design/icons'
 import { Button, Card, Form, Input, Modal, Select, Space, Switch, Table, Tag, Typography, message } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
-import { createUser, listUsers, updateUser, type UserAccount, type UserRole } from '../api/auth'
-import { Page } from '../components/Page'
+import { createUser, listUsers, updateUser, type UserAccount, type UserRole } from '../../api/auth'
+import { Page } from '../../components/Page'
 
 const { Text } = Typography
 

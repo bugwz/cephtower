@@ -1,6 +1,6 @@
 import { Card, Descriptions, Tabs, Tag, Typography } from 'antd'
 import { useCallback } from 'react'
-import { textValue } from '../api/client'
+import { textValue } from '../../api/client'
 import {
   getBlockMirroringSummary,
   listBlockImages,
@@ -9,14 +9,14 @@ import {
   listObjectGateways,
   listObjectUsers,
   listPools
-} from '../api/resources'
-import { DataTable } from '../components/DataTable'
-import { Page } from '../components/Page'
-import { useResource } from '../hooks'
+} from '../../api/resources'
+import { DataTable } from '../../components/DataTable'
+import { Page } from '../../components/Page'
+import { useResource } from '../../hooks'
 
 const { Text } = Typography
 
-export function StoragePage() {
+export function StorageManagementPage() {
   const loader = useCallback(async () => {
     const [pools, images, mirroring, filesystems, gateways, users, buckets] = await Promise.all([
       listPools(),
@@ -172,4 +172,3 @@ export function StoragePage() {
     </Page>
   )
 }
-

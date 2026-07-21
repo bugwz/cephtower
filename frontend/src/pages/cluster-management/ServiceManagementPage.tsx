@@ -1,11 +1,11 @@
 import { Card, Tabs } from 'antd'
 import { useCallback } from 'react'
-import { listDaemons, listServices } from '../api/resources'
-import { DataTable } from '../components/DataTable'
-import { Page } from '../components/Page'
-import { useResource } from '../hooks'
+import { listDaemons, listServices } from '../../api/resources'
+import { DataTable } from '../../components/DataTable'
+import { Page } from '../../components/Page'
+import { useResource } from '../../hooks'
 
-export function ServicesPage() {
+export function ServiceManagementPage() {
   const loader = useCallback(async () => {
     const [services, daemons] = await Promise.all([listServices(), listDaemons()])
     return { services, daemons }
@@ -67,4 +67,3 @@ export function ServicesPage() {
     </Page>
   )
 }
-

@@ -1,20 +1,39 @@
 import {
   AppstoreOutlined,
+  ApartmentOutlined,
+  ApiOutlined,
   BarChartOutlined,
   BellOutlined,
+  BranchesOutlined,
   CloudServerOutlined,
-  CodeOutlined,
+  CloudSyncOutlined,
+  ClusterOutlined,
+  ControlOutlined,
   DatabaseOutlined,
   DownOutlined,
   DoubleLeftOutlined,
   DoubleRightOutlined,
-  FileTextOutlined,
+  FolderOutlined,
+  FundOutlined,
+  GatewayOutlined,
+  GithubOutlined,
+  GlobalOutlined,
+  GoldOutlined,
   HddOutlined,
+  HistoryOutlined,
+  InboxOutlined,
+  LineChartOutlined,
+  LinkOutlined,
   LogoutOutlined,
   MailOutlined,
+  PartitionOutlined,
+  ProfileOutlined,
+  ReconciliationOutlined,
   SearchOutlined,
   SettingOutlined,
   SafetyCertificateOutlined,
+  SlidersOutlined,
+  StopOutlined,
   TeamOutlined
 } from '@ant-design/icons'
 import { Badge, Button, Dropdown, Input, Layout, Menu, Space, Typography } from 'antd'
@@ -22,23 +41,15 @@ import type { MenuProps } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import type { FocusEvent, MouseEvent, ReactNode } from 'react'
 import type { UserAccount } from '../api/auth'
-import type { PageKey } from '../pages'
+import { findNavPage, findNavSection, NAV_SECTIONS, type NavIcon, type PageKey } from '../navigation'
 
 const { Content, Header, Sider } = Layout
 const { Text } = Typography
 
 let suppressCollapsedFlyout = false
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'cephtower.sidebarCollapsed'
-
-const pageTitles: Record<PageKey, string> = {
-  overview: '集群 / 总览',
-  cluster: '集群 / 资源',
-  services: '集群 / 服务',
-  storage: '存储 / 管理',
-  configuration: '系统 / 配置',
-  logs: '系统 / 日志',
-  users: '系统设置 / 用户管理'
-}
+const APP_VERSION = '0.1.0'
+const GITHUB_REPOSITORY_URL = 'https://github.com/bugwz/cephtower'
 
 interface AppLayoutProps {
   activePage: PageKey
@@ -61,6 +72,9 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
   const navSections = buildNavSections(user)
   const navItems = buildNavItems(navSections)
   const defaultOpenKeys = getDefaultOpenKeys(navSections, activePage)
+  const activeSection = findNavSection(activePage)
+  const activeNavPage = findNavPage(activePage)
+  const pageTitle = activeSection && activeNavPage ? `${activeSection.label} / ${activeNavPage.label}` : 'CephTower'
   const userDropdownItems: MenuProps['items'] = [
     {
       key: 'account',
@@ -202,7 +216,7 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
           </div>
           <div className="sidebar-nav-stack">
             {!sidebarCollapsed ? (
-              <Menu
+            <Menu
                 className="sidebar-menu"
                 mode="inline"
                 defaultOpenKeys={defaultOpenKeys}
@@ -256,26 +270,26 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
               ))}
             </nav>
           </div>
-          <div className="sidebar-footer" aria-hidden={sidebarCollapsed}>
-            <div>
-              <Text>Mgr</Text>
-              <Text strong>mgr.a · node-01</Text>
+          <div className="sidebar-footer">
+            <div className="sidebar-version">
+              <Text strong>v{APP_VERSION}</Text>
             </div>
-            <div>
-              <Text>MON</Text>
-              <Text strong>已连接</Text>
-            </div>
-            <div>
-              <Text>API</Text>
-              <Text strong>/api/v1</Text>
-            </div>
+            <Button
+              className="sidebar-github-button"
+              href={GITHUB_REPOSITORY_URL}
+              target="_blank"
+              rel="noreferrer"
+              icon={<GithubOutlined />}
+              title="打开 GitHub 仓库"
+              aria-label="打开 GitHub 仓库"
+            />
           </div>
         </div>
       </Sider>
       <Layout className="main-shell">
         <Header className="topbar">
           <Text strong className="breadcrumb-text">
-            {pageTitles[activePage]}
+            {pageTitle}
           </Text>
           <Space size={14} className="topbar-tools">
             <Input
@@ -318,7 +332,7 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
 }
 
 type NavChild = {
-  key: PageKey | string
+  key: PageKey
   icon: ReactNode
   label: string
   disabled?: boolean
@@ -389,43 +403,85 @@ function buildNavSections(user: UserAccount): NavSection[] {
   const canReadStorage = isAdmin || user.permissions.includes('storage:read')
   const canReadSystem = isAdmin || user.permissions.includes('system:read')
 
-  return [
-    {
-      key: 'monitor-section',
-      icon: <AppstoreOutlined />,
-      label: '监控',
-      children: [
-        { key: 'overview', icon: <AppstoreOutlined />, label: '集群总览', disabled: !canReadCluster },
-        { key: 'cluster', icon: <CloudServerOutlined />, label: '主机 / OSD', disabled: !canReadCluster },
-        { key: 'services', icon: <CodeOutlined />, label: '守护进程', disabled: !canReadCluster }
-      ]
-    },
-    {
-      key: 'storage-section',
-      icon: <DatabaseOutlined />,
-      label: '存储',
-      children: [
-        { key: 'storage', icon: <DatabaseOutlined />, label: '存储管理', disabled: !canReadStorage },
-        { key: 'logs', icon: <FileTextOutlined />, label: '运行日志', disabled: !canReadSystem }
-      ]
-    },
-    {
-      key: 'system-section',
-      icon: <SettingOutlined />,
-      label: '系统设置',
-      children: [
-        { key: 'configuration', icon: <SettingOutlined />, label: '配置中心', disabled: !canReadSystem },
-        { key: 'users', icon: <TeamOutlined />, label: '用户管理', disabled: !isAdmin }
-      ]
-    },
-    {
-      key: 'later-section',
-      icon: <BarChartOutlined />,
-      label: '更多（后续）',
-      children: [
-        { key: 'monitoring', icon: <BarChartOutlined />, label: '监控入口', disabled: true },
-        { key: 'hardware', icon: <HddOutlined />, label: '硬件资产', disabled: true }
-      ]
-    }
-  ]
+  return NAV_SECTIONS.map((section) => ({
+    key: section.key,
+    icon: renderNavIcon(section.icon),
+    label: section.label,
+    children: section.children.map((item) => ({
+      key: item.key,
+      icon: renderNavIcon(item.icon),
+      label: item.label,
+      disabled:
+        (item.permission === 'cluster' && !canReadCluster) ||
+        (item.permission === 'storage' && !canReadStorage) ||
+        (item.permission === 'system' && !canReadSystem)
+    }))
+  }))
+}
+
+function renderNavIcon(icon: NavIcon) {
+  switch (icon) {
+    case 'overview':
+      return <AppstoreOutlined />
+    case 'cluster':
+      return <ClusterOutlined />
+    case 'host':
+      return <CloudServerOutlined />
+    case 'mon':
+      return <FundOutlined />
+    case 'mgr':
+      return <ControlOutlined />
+    case 'osd':
+      return <HddOutlined />
+    case 'mds':
+      return <ApartmentOutlined />
+    case 'block':
+      return <DatabaseOutlined />
+    case 'pool':
+      return <GoldOutlined />
+    case 'rbd':
+      return <InboxOutlined />
+    case 'sync':
+      return <CloudSyncOutlined />
+    case 'iscsi':
+      return <LinkOutlined />
+    case 'nvme':
+      return <ApiOutlined />
+    case 'file':
+      return <FolderOutlined />
+    case 'cephfs':
+      return <PartitionOutlined />
+    case 'nfs':
+      return <GlobalOutlined />
+    case 'smb':
+      return <ProfileOutlined />
+    case 'object':
+      return <CloudServerOutlined />
+    case 'bucket':
+      return <InboxOutlined />
+    case 'gateway':
+      return <GatewayOutlined />
+    case 'site':
+      return <BranchesOutlined />
+    case 'user':
+      return <TeamOutlined />
+    case 'monitor':
+      return <BarChartOutlined />
+    case 'metrics':
+      return <LineChartOutlined />
+    case 'logs':
+      return <HistoryOutlined />
+    case 'alert':
+      return <BellOutlined />
+    case 'rule':
+      return <ReconciliationOutlined />
+    case 'silence':
+      return <StopOutlined />
+    case 'system':
+      return <SettingOutlined />
+    case 'config':
+      return <SlidersOutlined />
+    case 'data':
+      return <DatabaseOutlined />
+  }
 }
