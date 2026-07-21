@@ -6,8 +6,10 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"cephtower/backend/internal/config"
+	"cephtower/backend/internal/integrations/ceph"
 	"cephtower/backend/internal/store"
 	"gorm.io/gorm"
 )
@@ -56,6 +58,36 @@ func TestDatabaseCephClientUsesEnabledDashboardCluster(t *testing.T) {
 	}
 	if authCalls != 1 {
 		t.Fatalf("auth calls = %d, want 1", authCalls)
+	}
+}
+
+func TestDatabaseCephClientListsHostsFromSnapshot(t *testing.T) {
+	db := openDatabaseCephClientTestDB(t)
+	cluster := store.CephCluster{
+		Name:             "primary",
+		Enabled:          true,
+		DashboardEnabled: true,
+	}
+	if err := db.Create(&cluster).Error; err != nil {
+		t.Fatalf("create cluster: %v", err)
+	}
+	if err := db.Create(&store.CephResourceSnapshot{
+		ClusterID:    cluster.ID,
+		Category:     snapshotHosts,
+		ResourceKey:  "all",
+		Payload:      `[{"hostname":"node-a","addr":"10.0.0.1"},{"hostname":"node-b","addr":"10.0.0.2"}]`,
+		LastSyncedAt: time.Now(),
+	}).Error; err != nil {
+		t.Fatalf("create snapshot: %v", err)
+	}
+
+	client := newDatabaseCephClient(func() *gorm.DB { return db })
+	hosts, err := client.ListHosts(context.Background(), ceph.ListHostsOptions{Search: "node-b"})
+	if err != nil {
+		t.Fatalf("ListHosts() returned error: %v", err)
+	}
+	if len(hosts) != 1 || hosts[0].Hostname != "node-b" {
+		t.Fatalf("hosts = %#v, want node-b from snapshot", hosts)
 	}
 }
 

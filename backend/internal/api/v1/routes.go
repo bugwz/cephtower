@@ -10,6 +10,8 @@ func RegisterRoutes(mux *http.ServeMux, cephClient CephClient) {
 	registerClusterRoutes(mux, api)
 	registerHostRoutes(mux, api)
 	registerOSDRoutes(mux, api)
+	registerMonitorRoutes(mux, api)
+	registerMgrRoutes(mux, api)
 	registerDaemonRoutes(mux, api)
 	registerServiceRoutes(mux, api)
 	registerPoolRoutes(mux, api)

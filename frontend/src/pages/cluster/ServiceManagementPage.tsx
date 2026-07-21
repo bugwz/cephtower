@@ -15,18 +15,17 @@ export function ServiceManagementPage() {
   return (
     <Page
       title="服务与守护进程"
-      description="对应 Ceph Dashboard 的 Services 和 Daemons，用于查看编排服务和 daemon 状态。"
       loading={loading}
       error={error}
-      onRefresh={refresh}
     >
-      <Tabs
-        items={[
-          {
-            key: 'services',
-            label: '服务',
-            children: (
-              <Card>
+      <Card className="page-surface-card" title="服务与守护进程">
+        <Tabs
+          items={[
+            {
+              key: 'services',
+              label: '服务',
+              children: (
+                <div className="embedded-panel">
                 <DataTable
                   data={data?.services ?? []}
                   rowKeyCandidates={['service_name', 'service_id', 'name']}
@@ -39,14 +38,14 @@ export function ServiceManagementPage() {
                     { key: 'size', title: '目标数' }
                   ]}
                 />
-              </Card>
-            )
-          },
-          {
-            key: 'daemons',
-            label: '守护进程',
-            children: (
-              <Card>
+                </div>
+              )
+            },
+            {
+              key: 'daemons',
+              label: '守护进程',
+              children: (
+                <div className="embedded-panel">
                 <DataTable
                   data={data?.daemons ?? []}
                   rowKeyCandidates={['daemon_name', 'name', 'hostname']}
@@ -59,11 +58,12 @@ export function ServiceManagementPage() {
                     { key: 'container_image_name', title: '镜像' }
                   ]}
                 />
-              </Card>
-            )
-          }
-        ]}
-      />
+                </div>
+              )
+            }
+          ]}
+        />
+      </Card>
     </Page>
   )
 }

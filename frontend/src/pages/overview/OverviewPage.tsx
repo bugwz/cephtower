@@ -123,15 +123,18 @@ export function OverviewPage() {
   const activeTrendData = ioTrends[activeTrend]
 
   return (
-    <Page
-      title="总览"
-      description="基于 Ceph summary、health、OSD、PG 与 Prometheus 指标维度的模拟仪表盘"
-    >
-      <div className="overview-dashboard">
-        <div className="overview-toolbar dashboard-toolbar">
+    <Page title="总览">
+      <Card
+        className="page-surface-card overview-surface-card"
+        title="集群总览"
+        extra={
+          <>
           <Tag className="dashboard-version">{dashboardData.version}</Tag>
           <Button icon={<ReloadOutlined />}>刷新</Button>
-        </div>
+          </>
+        }
+      >
+        <div className="overview-dashboard">
 
         <section className="dashboard-hero">
           <Card className="dashboard-health-card">
@@ -337,7 +340,8 @@ export function OverviewPage() {
             </div>
           </Card>
         </section>
-      </div>
+        </div>
+      </Card>
     </Page>
   )
 }

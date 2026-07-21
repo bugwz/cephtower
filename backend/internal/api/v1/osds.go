@@ -12,6 +12,9 @@ func registerOSDRoutes(mux *http.ServeMux, api *API) {
 	mux.HandleFunc("GET /api/v1/ceph/osds/{id}", api.osdDetails)
 	mux.HandleFunc("GET /api/v1/ceph/osds/{id}/devices", api.proxyCephGETPath("/api/osd/{id}/devices", "id"))
 	mux.HandleFunc("GET /api/v1/ceph/osds/{id}/histogram", api.proxyCephGETPath("/api/osd/{id}/histogram", "id"))
+	mux.HandleFunc("PUT /api/v1/ceph/osds/{id}/mark", api.proxyCephPath(http.MethodPut, "/api/osd/{id}/mark", "id"))
+	mux.HandleFunc("POST /api/v1/ceph/osds/{id}/reweight", api.proxyCephPath(http.MethodPost, "/api/osd/{id}/reweight", "id"))
+	mux.HandleFunc("POST /api/v1/ceph/osds/{id}/scrub", api.proxyCephPath(http.MethodPost, "/api/osd/{id}/scrub", "id"))
 	mux.HandleFunc("GET /api/v1/ceph/osds/{id}/smart", api.proxyCephGETPath("/api/osd/{id}/smart", "id"))
 }
 

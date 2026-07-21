@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"cephtower/backend/internal/api/v1"
 	"cephtower/backend/internal/config"
@@ -15,10 +16,11 @@ import (
 )
 
 type Server struct {
-	mu   sync.RWMutex
-	cfg  config.Config
-	ceph v1.CephClient
-	db   *gorm.DB
+	mu         sync.RWMutex
+	cfg        config.Config
+	ceph       v1.CephClient
+	db         *gorm.DB
+	syncCancel context.CancelFunc
 }
 
 func NewServer(cfg config.Config, cephClient v1.CephClient, db *gorm.DB) *Server {
@@ -28,12 +30,16 @@ func NewServer(cfg config.Config, cephClient v1.CephClient, db *gorm.DB) *Server
 	}
 	if cephClient == nil {
 		cephClient = newDatabaseCephClient(server.database)
+		server.startCephResourceSync()
 	}
 	server.ceph = cephClient
 	return server
 }
 
 func (s *Server) Close() error {
+	if s.syncCancel != nil {
+		s.syncCancel()
+	}
 	return store.Close(s.database())
 }
 
@@ -132,4 +138,24 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(payload)
+}
+
+func (s *Server) startCephResourceSync() {
+	ctx, cancel := context.WithCancel(context.Background())
+	s.syncCancel = cancel
+	syncer := newCephResourceSyncer(s.database)
+
+	go func() {
+		syncer.Sync(ctx)
+		ticker := time.NewTicker(time.Minute)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				syncer.Sync(ctx)
+			}
+		}
+	}()
 }

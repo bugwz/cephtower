@@ -47,62 +47,65 @@ export function DemoPage({ pageKey }: { pageKey: PageKey }) {
   const records = buildDemoRecords(title, sectionLabel)
 
   return (
-    <Page title={title} description={`${sectionLabel} / ${title} · demo 页面`}>
-      <div className="demo-actionbar">
-        <Button type="primary" icon={<CheckCircleOutlined />}>
-          新建
-        </Button>
-        <Button icon={<ClockCircleOutlined />}>刷新</Button>
-      </div>
-
-      <div className="metrics-grid demo-metrics">
-        <Card>
-          <Text type="secondary" className="metric-label">
-            资源数量
-          </Text>
-          <div className="demo-stat-value">{8 + (seed % 17)}</div>
-          <Text type="secondary">{sectionLabel} 当前 demo 资源</Text>
-        </Card>
-        <Card>
-          <Text type="secondary" className="metric-label">
-            可用率
-          </Text>
-          <div className="demo-stat-value">{completion}%</div>
-          <Progress percent={completion} showInfo={false} strokeColor="#23933f" />
-        </Card>
-        <Card>
-          <Text type="secondary" className="metric-label">
-            接入状态
-          </Text>
-          <div className="demo-inline-status">
-            <DeploymentUnitOutlined />
-            <Text strong>已接入</Text>
-          </div>
-          <Text type="secondary">等待真实 API 对接</Text>
-        </Card>
-        <Card>
-          <Text type="secondary" className="metric-label">
-            API 范围
-          </Text>
-          <div className="demo-inline-status">
-            <ApiOutlined />
-            <Text strong>/api/v1</Text>
-          </div>
-          <Text type="secondary">按模块补充请求封装</Text>
-        </Card>
-      </div>
-
+    <Page title={title}>
       <Card
-        title={
-          <div>
+        className="page-surface-card"
+        title={title}
+        extra={
+          <>
+            <Button type="primary" icon={<CheckCircleOutlined />}>
+              新建
+            </Button>
+            <Button icon={<ClockCircleOutlined />}>刷新</Button>
+          </>
+        }
+      >
+        <div className="metrics-grid demo-metrics">
+          <Card>
+            <Text type="secondary" className="metric-label">
+              资源数量
+            </Text>
+            <div className="demo-stat-value">{8 + (seed % 17)}</div>
+            <Text type="secondary">{sectionLabel} 当前 demo 资源</Text>
+          </Card>
+          <Card>
+            <Text type="secondary" className="metric-label">
+              可用率
+            </Text>
+            <div className="demo-stat-value">{completion}%</div>
+            <Progress percent={completion} showInfo={false} strokeColor="#23933f" />
+          </Card>
+          <Card>
+            <Text type="secondary" className="metric-label">
+              接入状态
+            </Text>
+            <div className="demo-inline-status">
+              <DeploymentUnitOutlined />
+              <Text strong>已接入</Text>
+            </div>
+            <Text type="secondary">等待真实 API 对接</Text>
+          </Card>
+          <Card>
+            <Text type="secondary" className="metric-label">
+              API 范围
+            </Text>
+            <div className="demo-inline-status">
+              <ApiOutlined />
+              <Text strong>/api/v1</Text>
+            </div>
+            <Text type="secondary">按模块补充请求封装</Text>
+          </Card>
+        </div>
+
+        <section className="embedded-panel">
+          <div className="embedded-panel-title">
             <Text strong>{title}列表</Text>
             <Text type="secondary" className="card-subtitle">
               demo 数据，用于验证导航与页面结构
             </Text>
           </div>
-        }
-      >
-        <Table columns={columns} dataSource={records} pagination={false} size="middle" />
+          <Table columns={columns} dataSource={records} pagination={false} size="middle" />
+        </section>
       </Card>
     </Page>
   )

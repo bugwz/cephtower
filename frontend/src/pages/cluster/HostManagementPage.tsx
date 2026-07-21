@@ -15,18 +15,17 @@ export function HostManagementPage() {
   return (
     <Page
       title="主机管理"
-      description="围绕 Ceph 集群的主机、OSD 和关键运行标志组织巡检视图。"
       loading={loading}
       error={error}
-      onRefresh={refresh}
     >
-      <Tabs
-        items={[
-          {
-            key: 'hosts',
-            label: '主机',
-            children: (
-              <Card>
+      <Card className="page-surface-card" title="主机管理">
+        <Tabs
+          items={[
+            {
+              key: 'hosts',
+              label: '主机',
+              children: (
+                <div className="embedded-panel">
                 <DataTable
                   data={data?.hosts ?? []}
                   rowKeyCandidates={['hostname', 'addr']}
@@ -39,14 +38,14 @@ export function HostManagementPage() {
                     { key: 'service_instances', title: '服务实例' }
                   ]}
                 />
-              </Card>
-            )
-          },
-          {
-            key: 'osds',
-            label: 'OSD',
-            children: (
-              <Card>
+                </div>
+              )
+            },
+            {
+              key: 'osds',
+              label: 'OSD',
+              children: (
+                <div className="embedded-panel">
                 <DataTable
                   data={data?.osds ?? []}
                   rowKeyCandidates={['id', 'osd', 'service_id', 'name']}
@@ -60,24 +59,25 @@ export function HostManagementPage() {
                     { key: 'stats', title: '容量/统计' }
                   ]}
                 />
-              </Card>
-            )
-          },
-          {
-            key: 'flags',
-            label: 'OSD Flags',
-            children: (
-              <Card>
+                </div>
+              )
+            },
+            {
+              key: 'flags',
+              label: 'OSD Flags',
+              children: (
+                <div className="embedded-panel">
                 {(data?.flags ?? []).length ? (
                   data?.flags.map((flag) => <Tag key={flag}>{flag}</Tag>)
                 ) : (
                   <span className="muted">未设置 OSD flags</span>
                 )}
-              </Card>
-            )
-          }
-        ]}
-      />
+                </div>
+              )
+            }
+          ]}
+        />
+      </Card>
     </Page>
   )
 }

@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react'
 import type { PageKey } from '../navigation'
-import { BlockPoolsPage, ImageMirroringPage, IscsiPage, NvmeTcpPage, RbdImagesPage } from './storage-block/pages'
+import { BlockPoolsPage, ImageMirroringPage, IscsiPage, NvmeTcpPage, RbdImagesPage } from './block/pages'
 import {
   ClusterManagementPage,
   HostManagementPage,
@@ -8,8 +8,8 @@ import {
   MgrManagementPage,
   MonManagementPage,
   OsdManagementPage
-} from './cluster-management/pages'
-import { CephfsPage, FilePoolsPage, NfsPage, SmbPage } from './storage-file/pages'
+} from './cluster/pages'
+import { CephfsPage, FilePoolsPage, NfsPage, SmbPage } from './file/pages'
 import {
   AlertListPage,
   AlertRulesPage,
@@ -17,7 +17,7 @@ import {
   MonitorOverviewPage,
   PerformanceMetricsPage,
   RuntimeLogsPage
-} from './monitoring-alerting/pages'
+} from './monitoring/pages'
 import {
   BucketManagementPage,
   GatewayManagementPage,
@@ -25,9 +25,9 @@ import {
   ObjectStorageConfigPage,
   RgwOverviewPage,
   RgwUsersPage
-} from './storage-object/pages'
+} from './object/pages'
 import { OverviewPage } from './overview/OverviewPage'
-import { DataManagementPage, SystemInfoPage, SystemUsersPage } from './system-management/pages'
+import { DataManagementPage, SystemInfoPage, SystemUsersPage } from './system/pages'
 
 export type { PageKey } from '../navigation'
 
@@ -35,7 +35,7 @@ export { OverviewPage } from './overview/OverviewPage'
 export { DemoPage } from './DemoPage'
 export { LoginPage } from './LoginPage'
 export { InitializationPage } from './InitializationPage'
-export { UserManagementPage } from './system-management/UserManagementPage'
+export { UserManagementPage } from './system/UserManagementPage'
 
 export const pageComponents: Record<PageKey, ComponentType> = {
   overview: OverviewPage,

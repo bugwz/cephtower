@@ -7,7 +7,13 @@
 .app-sidebar {
   --sidebar-symbol-size: 16px;
   --sidebar-motion: 260ms cubic-bezier(0.22, 1, 0.36, 1);
-  position: relative;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
   z-index: 30;
   border-right: 1px solid #dce8ec;
   background: linear-gradient(180deg, #f3fbf8 0%, #eaf5f7 100%) !important;
@@ -586,20 +592,25 @@
 }
 
 .topbar {
+  --content-max-width: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   height: clamp(52px, 2.6vw, 60px);
-  padding: 0 var(--space-page-x);
+  padding: 0;
   border-bottom: 1px solid #d8ece6;
   background: rgb(251 253 254 / 88%);
   box-shadow: 0 1px 0 rgb(67 191 143 / 8%);
   backdrop-filter: blur(12px);
 }
 
-.breadcrumb-text.ant-typography {
-  color: #17313a;
-  font-size: var(--font-lg);
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-page-x);
 }
 
 .topbar-tools {
@@ -804,8 +815,62 @@
 }
 
 .app-content {
+  --content-max-width: none;
+  --surface-card-x: clamp(16px, 1.1vw, 24px);
   min-width: 0;
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
   padding: var(--space-page-y) var(--space-page-x) clamp(22px, 1.4vw, 32px);
+}
+
+.page-content-block {
+  min-width: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.page-content-body {
+  min-width: 0;
+}
+
+.page-surface-card.ant-card > .ant-card-head {
+  padding: 0 var(--surface-card-x);
+}
+
+.page-surface-card.ant-card > .ant-card-body {
+  padding: clamp(14px, 0.85vw, 20px) var(--surface-card-x) clamp(16px, 1vw, 24px);
+}
+
+.page-surface-card > .ant-card-head .ant-card-extra {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.page-surface-card > .ant-card-head .ant-card-extra > * {
+  flex: 0 0 auto;
+}
+
+.embedded-panel {
+  min-width: 0;
+  padding: clamp(12px, 0.7vw, 18px) clamp(12px, 0.8vw, 20px);
+  border: 1px solid #e0ece8;
+  border-radius: 8px;
+  background: #fbfefd;
+}
+
+.embedded-panel-title {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  color: #17313a;
+  font-size: var(--font-md);
+  font-weight: 800;
 }
 
 .page-header {
@@ -1406,6 +1471,66 @@
   justify-content: center;
 }
 
+.storage-placeholder-page .ant-tabs {
+  margin-top: 4px;
+}
+
+.placeholder-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid #d8ece6;
+  border-radius: 8px;
+  background: #f7fcfa;
+}
+
+.placeholder-summary > div:nth-child(2) {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.placeholder-summary-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: #e0f6ed;
+  color: #168766;
+  font-size: 20px;
+}
+
+.placeholder-metrics .ant-card-body {
+  min-height: 132px;
+}
+
+.placeholder-stat-value {
+  margin: 4px 0 6px;
+  color: #17313a;
+  font-size: clamp(22px, 0.9vw + 18px, 30px);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.placeholder-name-cell {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.placeholder-name-cell .ant-typography {
+  margin: 0;
+}
+
+.placeholder-detail-panel {
+  margin-top: 14px;
+}
+
 .metric-label.ant-typography {
   display: block;
   margin-bottom: clamp(8px, 0.5vw, 12px);
@@ -1527,6 +1652,124 @@
   font-weight: 700;
 }
 
+.ant-modal-root {
+  --modal-viewport-gap: 32px;
+}
+
+.ant-modal-root .ant-modal {
+  top: var(--modal-viewport-gap);
+  max-width: calc(100vw - (var(--modal-viewport-gap) * 2));
+  padding-bottom: var(--modal-viewport-gap);
+}
+
+.ant-modal-root .ant-modal-content {
+  display: flex;
+  max-height: calc(100vh - (var(--modal-viewport-gap) * 2));
+  flex-direction: column;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ant-modal-root .ant-modal-body {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.cluster-modal .ant-modal-content {
+  border-radius: 10px;
+  padding: 0;
+}
+
+.cluster-modal .ant-modal-header {
+  margin: 0;
+  padding: 22px 26px 14px;
+  border-bottom: 1px solid #e3efec;
+}
+
+.cluster-modal .ant-modal-title {
+  color: #17313a;
+  font-size: var(--font-lg);
+  font-weight: 800;
+}
+
+.cluster-modal .ant-modal-close {
+  top: 17px;
+  right: 18px;
+}
+
+.cluster-modal .ant-modal-body {
+  padding: 18px 26px 6px;
+}
+
+.cluster-modal .ant-modal-footer {
+  margin: 0;
+  padding: 14px 26px 20px;
+  border-top: 1px solid #e3efec;
+  border-radius: 0 0 10px 10px;
+  background: #fbfefd;
+}
+
+.cluster-form {
+  display: grid;
+  gap: 14px;
+}
+
+.cluster-form-section {
+  padding: 14px 16px 2px;
+  border: 1px solid #e2eeeb;
+  border-radius: 8px;
+  background: #fbfefd;
+}
+
+.cluster-form-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cluster-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 16px;
+}
+
+.cluster-form .ant-form-item {
+  margin-bottom: 14px;
+}
+
+.cluster-form .ant-form-item-label {
+  padding-bottom: 5px;
+}
+
+.cluster-form .ant-form-item-label > label {
+  color: #273f47;
+  font-size: var(--font-sm);
+  font-weight: 700;
+}
+
+.form-field-full,
+.cluster-form-checkbox {
+  grid-column: 1 / -1;
+}
+
+.cluster-form-switch {
+  align-self: end;
+}
+
+.cluster-form-switch .ant-form-item-control-input {
+  min-height: 38px;
+}
+
+.compact-form-item {
+  margin-bottom: 0 !important;
+}
+
+.full-width-input {
+  width: 100%;
+}
+
 .user-cell {
   display: grid;
   gap: 3px;
@@ -1605,10 +1848,41 @@
   background: #f3fbf8 !important;
   color: #45686e !important;
   font-weight: 800 !important;
+  text-align: center !important;
 }
 
 .ant-table-cell {
   max-width: 340px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.ant-table-cell .ant-space {
+  justify-content: center;
+}
+
+.ant-table-cell .ant-tag {
+  margin-inline: 2px;
+}
+
+.ant-table-cell .ant-input {
+  text-align: center;
+}
+
+.ant-table-cell .ant-select {
+  text-align: center;
+}
+
+.ant-table-cell .ant-select-selector {
+  justify-content: center;
+}
+
+.ant-table-cell .ant-select-selection-overflow {
+  justify-content: center;
+}
+
+.ant-table-cell .user-cell {
+  justify-items: center;
 }
 
 .ant-alert {

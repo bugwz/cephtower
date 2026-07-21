@@ -78,12 +78,11 @@ export function UserManagementPage() {
   return (
     <Page
       title="用户管理"
-      description="管理 CephTower 本地用户、角色、访问权限和账号启停。"
       loading={loading}
       error={error}
-      onRefresh={load}
     >
       <Card
+        className="page-surface-card"
         title="系统用户"
         extra={
           <Space>

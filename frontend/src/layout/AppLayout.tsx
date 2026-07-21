@@ -41,7 +41,7 @@ import type { MenuProps } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import type { FocusEvent, MouseEvent, ReactNode } from 'react'
 import type { UserAccount } from '../api/auth'
-import { findNavPage, findNavSection, NAV_SECTIONS, type NavIcon, type PageKey } from '../navigation'
+import { NAV_SECTIONS, type NavIcon, type PageKey } from '../navigation'
 
 const { Content, Header, Sider } = Layout
 const { Text } = Typography
@@ -72,14 +72,6 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
   const navSections = buildNavSections(user)
   const navItems = buildNavItems(navSections)
   const defaultOpenKeys = getDefaultOpenKeys(navSections, activePage)
-  const activeSection = findNavSection(activePage)
-  const activeNavPage = findNavPage(activePage)
-  const pageTitle =
-    activeSection && activeNavPage
-      ? activeSection.label === activeNavPage.label
-        ? activeNavPage.label
-        : `${activeSection.label} / ${activeNavPage.label}`
-      : 'CephTower'
   const userDropdownItems: MenuProps['items'] = [
     {
       key: 'account',
@@ -307,44 +299,47 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
       </Sider>
       <Layout className="main-shell">
         <Header className="topbar">
-          <Text strong className="breadcrumb-text">
-            {pageTitle}
-          </Text>
-          <Space size={14} className="topbar-tools">
-            <Input
-              className="global-search"
-              prefix={<SearchOutlined />}
-              suffix={<span className="shortcut-key">/</span>}
-              placeholder="搜索主机、池、OSD..."
-            />
-            <Button className="icon-button" icon={<AppstoreOutlined />} />
-            <Badge dot offset={[-4, 4]}>
-              <Button className="icon-button" icon={<BellOutlined />} />
-            </Badge>
-            <Dropdown
-              menu={{
-                items: userDropdownItems,
-                onClick: ({ key }) => {
-                  if (key === 'logout') {
-                    onLogout()
+          <div className="topbar-inner">
+            <Space size={14} className="topbar-tools">
+              <Input
+                className="global-search"
+                prefix={<SearchOutlined />}
+                suffix={<span className="shortcut-key">/</span>}
+                placeholder="搜索主机、池、OSD..."
+              />
+              <Button className="icon-button" icon={<AppstoreOutlined />} />
+              <Badge dot offset={[-4, 4]}>
+                <Button className="icon-button" icon={<BellOutlined />} />
+              </Badge>
+              <Dropdown
+                menu={{
+                  items: userDropdownItems,
+                  onClick: ({ key }) => {
+                    if (key === 'logout') {
+                      onLogout()
+                    }
                   }
-                }
-              }}
-              placement="bottomRight"
-              trigger={['click']}
-            >
-              <Button className="user-button" aria-label="打开用户菜单">
-                <img className="user-logo user-logo-topbar" src="/admin-user-logo.svg" alt="" aria-hidden="true" />
-                <span className="user-button-copy">
-                  <span className="user-button-name">{displayName}</span>
-                  <span className="user-button-role">{roleLabel}</span>
-                </span>
-                <DownOutlined className="user-button-caret" />
-              </Button>
-            </Dropdown>
-          </Space>
+                }}
+                placement="bottomRight"
+                trigger={['click']}
+              >
+                <Button className="user-button" aria-label="打开用户菜单">
+                  <img className="user-logo user-logo-topbar" src="/admin-user-logo.svg" alt="" aria-hidden="true" />
+                  <span className="user-button-copy">
+                    <span className="user-button-name">{displayName}</span>
+                    <span className="user-button-role">{roleLabel}</span>
+                  </span>
+                  <DownOutlined className="user-button-caret" />
+                </Button>
+              </Dropdown>
+            </Space>
+          </div>
         </Header>
-        <Content className="app-content">{children}</Content>
+        <Content className="app-content">
+          <section className="page-content-block">
+            <div className="page-content-body">{children}</div>
+          </section>
+        </Content>
       </Layout>
     </Layout>
   )

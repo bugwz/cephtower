@@ -37,6 +37,19 @@ type CephCluster struct {
 	UpdatedAt             time.Time
 }
 
+type CephResourceSnapshot struct {
+	ID           uint        `gorm:"primaryKey"`
+	ClusterID    uint        `gorm:"not null;uniqueIndex:idx_ceph_resource_snapshot"`
+	Cluster      CephCluster `gorm:"constraint:OnDelete:CASCADE"`
+	Category     string      `gorm:"size:64;not null;uniqueIndex:idx_ceph_resource_snapshot"`
+	ResourceKey  string      `gorm:"size:256;not null;uniqueIndex:idx_ceph_resource_snapshot"`
+	Payload      string      `gorm:"type:longtext;not null"`
+	LastSyncedAt time.Time   `gorm:"not null;index"`
+	LastError    string      `gorm:"type:text;not null;default:''"`
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
 type User struct {
 	ID           uint   `gorm:"primaryKey"`
 	Username     string `gorm:"uniqueIndex;size:64;not null"`
