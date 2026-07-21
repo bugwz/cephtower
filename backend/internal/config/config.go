@@ -4,40 +4,21 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Path        string
-	HTTPAddr    string
-	Logging     LoggingConfig
-	Ceph        CephDashboardConfig
-	CephCommand CephCommandConfig
-	Database    DatabaseConfig
-	SMTP        SMTPConfig
+	Path     string
+	HTTPAddr string
+	Logging  LoggingConfig
+	Database DatabaseConfig
+	SMTP     SMTPConfig
 }
 
 type LoggingConfig struct {
 	Level  string
 	Format string
-}
-
-type CephDashboardConfig struct {
-	BaseURL     string
-	Username    string
-	Password    string
-	InsecureTLS bool
-}
-
-type CephCommandConfig struct {
-	Bin     string
-	Cluster string
-	Conf    string
-	Name    string
-	Keyring string
-	Timeout time.Duration
 }
 
 type DatabaseConfig struct {
@@ -73,20 +54,6 @@ type fileConfig struct {
 		Level  string `yaml:"level"`
 		Format string `yaml:"format"`
 	} `yaml:"logging"`
-	Ceph struct {
-		BaseURL     string `yaml:"base_url"`
-		Username    string `yaml:"username"`
-		Password    string `yaml:"password"`
-		InsecureTLS bool   `yaml:"insecure_tls"`
-	} `yaml:"ceph_dashboard"`
-	CephCommand struct {
-		Bin     string `yaml:"bin"`
-		Cluster string `yaml:"cluster"`
-		Conf    string `yaml:"conf"`
-		Name    string `yaml:"name"`
-		Keyring string `yaml:"keyring"`
-		Timeout string `yaml:"timeout"`
-	} `yaml:"ceph_command,omitempty"`
 	Database struct {
 		Engine string `yaml:"engine"`
 		SQLite struct {
@@ -134,10 +101,6 @@ func Load(path string) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	cephCommand, err := normalizeCephCommandConfig(raw)
-	if err != nil {
-		return Config{}, err
-	}
 	logging, err := normalizeLoggingConfig(raw)
 	if err != nil {
 		return Config{}, err
@@ -147,14 +110,7 @@ func Load(path string) (Config, error) {
 		Path:     path,
 		HTTPAddr: httpAddr,
 		Logging:  logging,
-		Ceph: CephDashboardConfig{
-			BaseURL:     strings.TrimRight(strings.TrimSpace(raw.Ceph.BaseURL), "/"),
-			Username:    raw.Ceph.Username,
-			Password:    raw.Ceph.Password,
-			InsecureTLS: raw.Ceph.InsecureTLS,
-		},
-		CephCommand: cephCommand,
-		Database:    database,
+		Database: database,
 		SMTP: SMTPConfig{
 			Host:     strings.TrimSpace(raw.SMTP.Host),
 			Port:     raw.SMTP.Port,
@@ -236,34 +192,6 @@ func normalizeLoggingConfig(raw fileConfig) (LoggingConfig, error) {
 	return LoggingConfig{
 		Level:  level,
 		Format: format,
-	}, nil
-}
-
-func normalizeCephCommandConfig(raw fileConfig) (CephCommandConfig, error) {
-	bin := strings.TrimSpace(raw.CephCommand.Bin)
-	if bin == "" {
-		bin = "ceph"
-	}
-
-	timeout := 15 * time.Second
-	if value := strings.TrimSpace(raw.CephCommand.Timeout); value != "" {
-		parsed, err := time.ParseDuration(value)
-		if err != nil {
-			return CephCommandConfig{}, fmt.Errorf("invalid ceph_command timeout %q: %w", value, err)
-		}
-		if parsed <= 0 {
-			return CephCommandConfig{}, fmt.Errorf("invalid ceph_command timeout %q: must be positive", value)
-		}
-		timeout = parsed
-	}
-
-	return CephCommandConfig{
-		Bin:     bin,
-		Cluster: strings.TrimSpace(raw.CephCommand.Cluster),
-		Conf:    strings.TrimSpace(raw.CephCommand.Conf),
-		Name:    strings.TrimSpace(raw.CephCommand.Name),
-		Keyring: strings.TrimSpace(raw.CephCommand.Keyring),
-		Timeout: timeout,
 	}, nil
 }
 

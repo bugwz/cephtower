@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"cephtower/backend/internal/config"
 	"cephtower/backend/internal/integrations/ceph/dashboard/endpoints"
 	"cephtower/backend/internal/integrations/ceph/dashboard/typed"
 )
@@ -26,6 +25,13 @@ const (
 )
 
 var ErrDashboardNotConfigured = errors.New("ceph dashboard base URL is not configured")
+
+type Config struct {
+	BaseURL     string
+	Username    string
+	Password    string
+	InsecureTLS bool
+}
 
 type DashboardClient struct {
 	baseURL  string
@@ -63,7 +69,7 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("ceph dashboard %s %s failed: %s: %s", e.Method, e.URL, e.Status, e.Body)
 }
 
-func NewDashboardClient(cfg config.CephDashboardConfig) *DashboardClient {
+func NewDashboardClient(cfg Config) *DashboardClient {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	if cfg.InsecureTLS {
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
@@ -80,7 +86,7 @@ func NewDashboardClient(cfg config.CephDashboardConfig) *DashboardClient {
 	}
 }
 
-func NewDashboardClientWithHTTPClient(cfg config.CephDashboardConfig, httpClient *http.Client) *DashboardClient {
+func NewDashboardClientWithHTTPClient(cfg Config, httpClient *http.Client) *DashboardClient {
 	c := NewDashboardClient(cfg)
 	if httpClient != nil {
 		c.client = httpClient

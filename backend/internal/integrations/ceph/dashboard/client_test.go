@@ -13,7 +13,6 @@ import (
 	"strings"
 	"testing"
 
-	"cephtower/backend/internal/config"
 	"cephtower/backend/internal/integrations/ceph/dashboard/typed"
 	"gopkg.in/yaml.v3"
 )
@@ -54,7 +53,7 @@ func TestClusterSummaryUsesDashboardSummaryWithToken(t *testing.T) {
 		}
 	})
 
-	client := NewDashboardClientWithHTTPClient(config.CephDashboardConfig{
+	client := NewDashboardClientWithHTTPClient(Config{
 		BaseURL:  "https://ceph.example.com",
 		Username: "admin",
 		Password: "password",
@@ -105,7 +104,7 @@ func TestDoRefreshesTokenAfterUnauthorized(t *testing.T) {
 		}
 	})
 
-	client := NewDashboardClientWithHTTPClient(config.CephDashboardConfig{
+	client := NewDashboardClientWithHTTPClient(Config{
 		BaseURL:  "https://ceph.example.com",
 		Username: "admin",
 		Password: "password",
@@ -131,7 +130,7 @@ func TestGeneratedOperationRendersPathAndQuery(t *testing.T) {
 	})
 
 	client := NewDashboardClientWithHTTPClient(
-		config.CephDashboardConfig{BaseURL: "https://ceph.example.com"},
+		Config{BaseURL: "https://ceph.example.com"},
 		&http.Client{Transport: transport},
 	)
 	payload, err := client.API().GetHostByHostnameDevices(context.Background(), OperationRequest{
@@ -167,7 +166,7 @@ func TestTypedOperationUsesTypedRequestAndResponse(t *testing.T) {
 	})
 
 	client := NewDashboardClientWithHTTPClient(
-		config.CephDashboardConfig{BaseURL: "https://ceph.example.com"},
+		Config{BaseURL: "https://ceph.example.com"},
 		&http.Client{Transport: transport},
 	)
 	response, err := client.TypedAPI().PutHostByHostname(context.Background(), typed.PutHostByHostnameRequest{
@@ -185,7 +184,7 @@ func TestTypedOperationUsesTypedRequestAndResponse(t *testing.T) {
 }
 
 func TestGeneratedOperationRequiresPathParams(t *testing.T) {
-	client := NewDashboardClient(config.CephDashboardConfig{BaseURL: "https://ceph.example.com"})
+	client := NewDashboardClient(Config{BaseURL: "https://ceph.example.com"})
 	_, err := client.API().GetHostByHostnameDevices(context.Background(), OperationRequest{})
 	if err == nil {
 		t.Fatal("GetHostByHostnameDevices() error = nil, want missing path parameter error")
@@ -197,7 +196,7 @@ func TestGeneratedOperationRequiresPathParams(t *testing.T) {
 
 func TestAPIErrorIncludesStatusAndBody(t *testing.T) {
 	client := NewDashboardClientWithHTTPClient(
-		config.CephDashboardConfig{BaseURL: "https://ceph.example.com"},
+		Config{BaseURL: "https://ceph.example.com"},
 		&http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
 			return testStringResponse(http.StatusForbidden, "permission denied"), nil
 		})},

@@ -9,13 +9,20 @@ import (
 	"os/exec"
 	"strings"
 	"time"
-
-	"cephtower/backend/internal/config"
 )
 
 var ErrCommandNotConfigured = errors.New("ceph command binary is not configured")
 
 const defaultTimeout = 15 * time.Second
+
+type Config struct {
+	Bin     string
+	Cluster string
+	Conf    string
+	Name    string
+	Keyring string
+	Timeout time.Duration
+}
 
 type CommandClient struct {
 	bin     string
@@ -63,7 +70,7 @@ func (e *CommandError) Error() string {
 	)
 }
 
-func NewCommandClient(cfg config.CephCommandConfig) *CommandClient {
+func NewCommandClient(cfg Config) *CommandClient {
 	bin := strings.TrimSpace(cfg.Bin)
 	timeout := cfg.Timeout
 	if timeout <= 0 {
@@ -81,7 +88,7 @@ func NewCommandClient(cfg config.CephCommandConfig) *CommandClient {
 	}
 }
 
-func NewCommandClientWithRunner(cfg config.CephCommandConfig, runner CommandRunner) *CommandClient {
+func NewCommandClientWithRunner(cfg Config, runner CommandRunner) *CommandClient {
 	c := NewCommandClient(cfg)
 	if runner != nil {
 		c.run = runner

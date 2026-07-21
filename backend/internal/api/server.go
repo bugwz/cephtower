@@ -22,11 +22,15 @@ type Server struct {
 }
 
 func NewServer(cfg config.Config, cephClient v1.CephClient, db *gorm.DB) *Server {
-	return &Server{
-		cfg:  cfg,
-		ceph: cephClient,
-		db:   db,
+	server := &Server{
+		cfg: cfg,
+		db:  db,
 	}
+	if cephClient == nil {
+		cephClient = newDatabaseCephClient(server.database)
+	}
+	server.ceph = cephClient
+	return server
 }
 
 func (s *Server) Close() error {

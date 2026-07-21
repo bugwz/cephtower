@@ -7,14 +7,12 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"cephtower/backend/internal/config"
 )
 
 func TestCommandRunBuildsCephArgs(t *testing.T) {
 	var gotBin string
 	var gotArgs []string
-	client := NewCommandClientWithRunner(config.CephCommandConfig{
+	client := NewCommandClientWithRunner(Config{
 		Bin:     "/usr/bin/ceph",
 		Cluster: "prod",
 		Conf:    "/etc/ceph/prod.conf",
@@ -52,7 +50,7 @@ func TestCommandRunBuildsCephArgs(t *testing.T) {
 }
 
 func TestCommandJSONDecodesStdout(t *testing.T) {
-	client := NewCommandClientWithRunner(config.CephCommandConfig{Bin: "ceph"}, func(_ context.Context, bin string, args []string, _ []byte) (CommandResult, error) {
+	client := NewCommandClientWithRunner(Config{Bin: "ceph"}, func(_ context.Context, bin string, args []string, _ []byte) (CommandResult, error) {
 		return CommandResult{
 			Bin:    bin,
 			Args:   args,
@@ -73,7 +71,7 @@ func TestCommandJSONDecodesStdout(t *testing.T) {
 
 func TestCommandRunDoesNotDuplicateFormatArg(t *testing.T) {
 	var gotArgs []string
-	client := NewCommandClientWithRunner(config.CephCommandConfig{Bin: "ceph"}, func(_ context.Context, bin string, args []string, _ []byte) (CommandResult, error) {
+	client := NewCommandClientWithRunner(Config{Bin: "ceph"}, func(_ context.Context, bin string, args []string, _ []byte) (CommandResult, error) {
 		gotArgs = append([]string(nil), args...)
 		return CommandResult{Bin: bin, Args: args}, nil
 	})
@@ -93,7 +91,7 @@ func TestCommandRunDoesNotDuplicateFormatArg(t *testing.T) {
 }
 
 func TestCommandRunReturnsCommandErrorForNonZeroExit(t *testing.T) {
-	client := NewCommandClientWithRunner(config.CephCommandConfig{Bin: "ceph"}, func(_ context.Context, bin string, args []string, _ []byte) (CommandResult, error) {
+	client := NewCommandClientWithRunner(Config{Bin: "ceph"}, func(_ context.Context, bin string, args []string, _ []byte) (CommandResult, error) {
 		return CommandResult{
 			Bin:      bin,
 			Args:     args,
@@ -114,7 +112,7 @@ func TestCommandRunReturnsCommandErrorForNonZeroExit(t *testing.T) {
 
 func TestCommandConvenienceMethodsBuildDocumentedCommands(t *testing.T) {
 	var calls [][]string
-	client := NewCommandClientWithRunner(config.CephCommandConfig{Bin: "ceph"}, func(_ context.Context, bin string, args []string, _ []byte) (CommandResult, error) {
+	client := NewCommandClientWithRunner(Config{Bin: "ceph"}, func(_ context.Context, bin string, args []string, _ []byte) (CommandResult, error) {
 		calls = append(calls, append([]string(nil), args...))
 		return CommandResult{Bin: bin, Args: args, Stdout: []byte(`[]`)}, nil
 	})
@@ -149,7 +147,7 @@ func TestCommandConvenienceMethodsBuildDocumentedCommands(t *testing.T) {
 
 func TestGenericCommandHelpersCoverUnwrappedCommands(t *testing.T) {
 	var calls [][]string
-	client := NewCommandClientWithRunner(config.CephCommandConfig{Bin: "ceph"}, func(_ context.Context, bin string, args []string, _ []byte) (CommandResult, error) {
+	client := NewCommandClientWithRunner(Config{Bin: "ceph"}, func(_ context.Context, bin string, args []string, _ []byte) (CommandResult, error) {
 		calls = append(calls, append([]string(nil), args...))
 		return CommandResult{Bin: bin, Args: args, Stdout: []byte(`{"ok":true}`)}, nil
 	})
@@ -173,7 +171,7 @@ func TestGenericCommandHelpersCoverUnwrappedCommands(t *testing.T) {
 func TestCommandWriteOperationsBuildArgsAndInput(t *testing.T) {
 	var gotArgs []string
 	var gotInput []byte
-	client := NewCommandClientWithRunner(config.CephCommandConfig{Bin: "ceph"}, func(_ context.Context, bin string, args []string, input []byte) (CommandResult, error) {
+	client := NewCommandClientWithRunner(Config{Bin: "ceph"}, func(_ context.Context, bin string, args []string, input []byte) (CommandResult, error) {
 		gotArgs = append([]string(nil), args...)
 		gotInput = append([]byte(nil), input...)
 		return CommandResult{Bin: bin, Args: args}, nil
@@ -195,7 +193,7 @@ func TestCommandWriteOperationsBuildArgsAndInput(t *testing.T) {
 
 func TestExpandedCommandMethodsBuildExpectedArgs(t *testing.T) {
 	var calls [][]string
-	client := NewCommandClientWithRunner(config.CephCommandConfig{Bin: "ceph"}, func(_ context.Context, bin string, args []string, _ []byte) (CommandResult, error) {
+	client := NewCommandClientWithRunner(Config{Bin: "ceph"}, func(_ context.Context, bin string, args []string, _ []byte) (CommandResult, error) {
 		calls = append(calls, append([]string(nil), args...))
 		return CommandResult{Bin: bin, Args: args, Stdout: []byte(`{}`)}, nil
 	})
