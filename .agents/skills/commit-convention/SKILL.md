@@ -29,20 +29,22 @@ For the complete policy, read
 Use:
 
 ```text
-[TYPE]: Summary
+type: summary
 
-- Change detail
-- Another change detail
+- change detail
+- another change detail
 ```
 
 Rules:
 
 - Write all commit content in English.
-- `TYPE` must be uppercase and enclosed in square brackets.
-- The summary after `]: ` must start with an uppercase letter.
+- `type` must be lowercase and must not be enclosed in square brackets.
+- Separate the type and summary with `: `.
+- The summary after `: ` must start with a lowercase letter.
 - Leave exactly one blank line between the title and body.
 - The body is required.
 - Every body bullet must start with `- `.
+- The description after `- ` must start with a lowercase letter.
 - Do not insert blank lines between body bullets.
 - Keep each body line at or below 90 characters.
 - Wrap longer bullet text with continuation lines indented by two spaces.
@@ -55,22 +57,22 @@ Rules:
 
 Allowed types:
 
-`FEAT`, `FIX`, `DOCS`, `STYLE`, `REFACTOR`, `TEST`, `CHORE`, `BUILD`, `CI`,
-`PERF`, `REVERT`.
+`feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `build`, `ci`,
+`perf`, `revert`.
 
 Examples:
 
 ```text
-[DOCS]: Move multilingual readmes under docs
+docs: move multilingual readmes under docs
 
-- Move translated README files into the docs/readme directory
-- Update root README links so each language points to the new location
+- move translated README files into the docs/readme directory
+- update root README links so each language points to the new location
 ```
 
 ```text
-[DOCS]: Clarify commit body wrapping
+docs: clarify commit body wrapping
 
-- Document how long commit body bullets should wrap when they exceed the line length
+- document how long commit body bullets should wrap when they exceed the line length
   limit enforced by the project commit convention
 ```
 

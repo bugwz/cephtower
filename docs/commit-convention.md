@@ -34,21 +34,23 @@ Before committing:
 Use this format for every commit:
 
 ```text
-[TYPE]: Summary
+type: summary
 
-- Change detail
-- Another change detail
+- change detail
+- another change detail
 ```
 
 Rules:
 
 - Write all commit content in English.
-- The title must be `[TYPE]: Summary`.
-- `TYPE` must be uppercase and enclosed in square brackets.
-- The summary after `]: ` must start with an uppercase letter.
+- The title must be `type: summary`.
+- `type` must be lowercase and must not be enclosed in square brackets.
+- Separate the type and summary with `: `.
+- The summary after `: ` must start with a lowercase letter.
 - Leave exactly one blank line between the title and the body.
 - The body is required.
 - Each body bullet must start with `- `.
+- The description after `- ` must start with a lowercase letter.
 - Each body bullet should describe a concrete change detail.
 - Do not insert blank lines between body bullets.
 - Keep each body line at or below 90 characters.
@@ -64,42 +66,42 @@ Rules:
 
 | Type | Meaning |
 |------|---------|
-| `FEAT` | User-facing feature or new capability |
-| `FIX` | Bug fix |
-| `DOCS` | Documentation-only change |
-| `STYLE` | Formatting or visual style change without behavior change |
-| `REFACTOR` | Code restructuring without behavior change |
-| `TEST` | Test additions or test-only changes |
-| `CHORE` | Repository maintenance |
-| `BUILD` | Build system or dependency change |
-| `CI` | CI workflow change |
-| `PERF` | Performance improvement |
-| `REVERT` | Revert a previous commit |
+| `feat` | User-facing feature or new capability |
+| `fix` | Bug fix |
+| `docs` | Documentation-only change |
+| `style` | Formatting or visual style change without behavior change |
+| `refactor` | Code restructuring without behavior change |
+| `test` | Test additions or test-only changes |
+| `chore` | Repository maintenance |
+| `build` | Build system or dependency change |
+| `ci` | CI workflow change |
+| `perf` | Performance improvement |
+| `revert` | Revert a previous commit |
 
 ## 5. Examples
 
 ```text
-[CHORE]: Initialize project structure
+chore: initialize project structure
 
-- Add Go backend service skeleton with configuration and HTTP API packages
-- Add React frontend scaffold with Ant Design, Vite, and TypeScript
-- Add MIT license, README, Makefile, and repository ignore rules
+- add Go backend service skeleton with configuration and HTTP API packages
+- add React frontend scaffold with Ant Design, Vite, and TypeScript
+- add MIT license, README, Makefile, and repository ignore rules
 ```
 
 ```text
-[DOCS]: Update agent commit convention
+docs: update agent commit convention
 
-- Add shared commit message policy for Codex and Claude Code project entry files
-- Require uppercase commit types, English summaries, and bullet-based commit bodies
-- Document the 90-character line limit for each body bullet
+- add shared commit message policy for Codex and Claude Code project entry files
+- require lowercase commit types, English summaries, and bullet-based commit bodies
+- document the 90-character line limit for each body bullet
 ```
 
 Wrapped body bullet example:
 
 ```text
-[DOCS]: Clarify commit body wrapping
+docs: clarify commit body wrapping
 
-- Document how long commit body bullets should wrap when they exceed the line length
+- document how long commit body bullets should wrap when they exceed the line length
   limit enforced by the project commit convention
 ```
 
