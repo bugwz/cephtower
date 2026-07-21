@@ -1,23 +1,52 @@
+# 含义：后端 HTTP 服务监听地址；默认值：:36900；可选值：合法的 host:port 或 :port
 http_addr: :36900
+# 含义：日志配置；默认值：level=info, format=txt；可选值：见下方子项
+logging:
+    # 含义：日志级别，低于该级别的日志不会输出；默认值：info；可选值：debug, info, warn, error
+    level: info
+    # 含义：日志输出格式；默认值：txt；可选值：txt, json
+    format: txt
+# 含义：Ceph Dashboard 连接配置；默认值：无；可选值：见下方子项
 ceph_dashboard:
+    # 含义：Ceph Dashboard 基础 URL；默认值：无；可选值：http 或 https URL
     base_url: https://ceph.example.com
+    # 含义：Ceph Dashboard 用户名；默认值：无；可选值：任意有效用户名
     username: admin
+    # 含义：Ceph Dashboard 密码；默认值：无；可选值：任意有效密码
     password: change-me
+    # 含义：是否跳过 Ceph Dashboard TLS 证书校验；默认值：false；可选值：true, false
     insecure_tls: false
+# 含义：数据库配置；默认值：engine=sqlite；可选值：见下方子项
 database:
+    # 含义：数据库引擎；默认值：sqlite；可选值：sqlite, mysql
     engine: sqlite
+    # 含义：SQLite 数据库配置；默认值：path=data/cephtower.db；可选值：见下方子项
     sqlite:
+        # 含义：SQLite 数据库文件路径；默认值：data/cephtower.db；可选值：合法文件路径
         path: app/data/cephtower.db
+    # 含义：MySQL 数据库配置，仅 engine=mysql 时使用；默认值：见下方子项；可选值：见下方子项
     mysql:
+        # 含义：MySQL 主机地址；默认值：127.0.0.1；可选值：合法主机名或 IP 地址
         host: 127.0.0.1
+        # 含义：MySQL 端口；默认值：3306；可选值：1-65535
         port: 3306
+        # 含义：MySQL 用户名；默认值：空字符串；可选值：任意有效用户名
         username: ""
+        # 含义：MySQL 密码；默认值：空字符串；可选值：任意有效密码
         password: ""
+        # 含义：MySQL 数据库名；默认值：空字符串；可选值：任意有效数据库名
         database: ""
+        # 含义：MySQL DSN 查询参数；默认值：charset=utf8mb4&parseTime=True&loc=Local；可选值：合法 DSN 查询参数
         params: charset=utf8mb4&parseTime=True&loc=Local
+# 含义：SMTP 邮件配置，用于发送密码重置验证码；默认值：host为空时禁用邮件发送；可选值：见下方子项
 smtp:
+    # 含义：SMTP 服务器地址；默认值：空字符串；可选值：合法主机名或 IP 地址
     host: ""
+    # 含义：SMTP 服务器端口；默认值：587；可选值：1-65535
     port: 587
+    # 含义：SMTP 用户名；默认值：空字符串；可选值：任意有效用户名
     username: ""
+    # 含义：SMTP 密码；默认值：空字符串；可选值：任意有效密码
     password: ""
+    # 含义：发件人地址，为空时使用 smtp.username；默认值：空字符串；可选值：合法邮箱地址
     from: ""

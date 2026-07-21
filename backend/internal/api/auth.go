@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"math/big"
 	"net/http"
 	"net/smtp"
@@ -532,7 +532,12 @@ func toUserResponse(user store.User) userResponse {
 func (s *Server) sendPasswordResetCode(user store.User, code string) error {
 	cfg := s.currentConfig()
 	if strings.TrimSpace(cfg.SMTP.Host) == "" {
-		log.Printf("cephtower password reset code for %s <%s>: %s", user.Username, user.Email, code)
+		slog.Info(
+			"cephtower password reset code",
+			"username", user.Username,
+			"email", user.Email,
+			"code", code,
+		)
 		return nil
 	}
 

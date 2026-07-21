@@ -12,10 +12,16 @@ import (
 type Config struct {
 	Path        string
 	HTTPAddr    string
+	Logging     LoggingConfig
 	Ceph        CephDashboardConfig
 	CephCommand CephCommandConfig
 	Database    DatabaseConfig
 	SMTP        SMTPConfig
+}
+
+type LoggingConfig struct {
+	Level  string
+	Format string
 }
 
 type CephDashboardConfig struct {
@@ -63,7 +69,11 @@ type MySQLConfig struct {
 
 type fileConfig struct {
 	HTTPAddr string `yaml:"http_addr"`
-	Ceph     struct {
+	Logging  struct {
+		Level  string `yaml:"level"`
+		Format string `yaml:"format"`
+	} `yaml:"logging"`
+	Ceph struct {
 		BaseURL     string `yaml:"base_url"`
 		Username    string `yaml:"username"`
 		Password    string `yaml:"password"`
@@ -128,10 +138,15 @@ func Load(path string) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	logging, err := normalizeLoggingConfig(raw)
+	if err != nil {
+		return Config{}, err
+	}
 
 	return Config{
 		Path:     path,
 		HTTPAddr: httpAddr,
+		Logging:  logging,
 		Ceph: CephDashboardConfig{
 			BaseURL:     strings.TrimRight(strings.TrimSpace(raw.Ceph.BaseURL), "/"),
 			Username:    raw.Ceph.Username,
@@ -195,6 +210,33 @@ func SaveDatabase(path string, database DatabaseConfig) error {
 		return fmt.Errorf("write config file %q: %w", path, err)
 	}
 	return nil
+}
+
+func normalizeLoggingConfig(raw fileConfig) (LoggingConfig, error) {
+	level := strings.ToLower(strings.TrimSpace(raw.Logging.Level))
+	if level == "" {
+		level = "info"
+	}
+	switch level {
+	case "debug", "info", "warn", "error":
+	default:
+		return LoggingConfig{}, fmt.Errorf("unsupported logging level %q", raw.Logging.Level)
+	}
+
+	format := strings.ToLower(strings.TrimSpace(raw.Logging.Format))
+	if format == "" {
+		format = "txt"
+	}
+	switch format {
+	case "txt", "json":
+	default:
+		return LoggingConfig{}, fmt.Errorf("unsupported logging format %q", raw.Logging.Format)
+	}
+
+	return LoggingConfig{
+		Level:  level,
+		Format: format,
+	}, nil
 }
 
 func normalizeCephCommandConfig(raw fileConfig) (CephCommandConfig, error) {

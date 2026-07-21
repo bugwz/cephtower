@@ -2,12 +2,14 @@ package main
 
 import (
 	"flag"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"cephtower/backend/internal/api"
 	"cephtower/backend/internal/config"
 	"cephtower/backend/internal/integrations/ceph/dashboard"
+	"cephtower/backend/internal/logging"
 	"cephtower/backend/internal/store"
 )
 
@@ -17,25 +19,33 @@ func main() {
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {
-		log.Fatalf("load config: %v", err)
+		slog.Error("load config", "error", err)
+		os.Exit(1)
+	}
+
+	if _, err := logging.Install(cfg.Logging); err != nil {
+		slog.Error("configure logging", "error", err)
+		os.Exit(1)
 	}
 
 	db, err := store.Open(cfg.Database)
 	if err != nil {
-		log.Fatalf("open database: %v", err)
+		slog.Error("open database", "error", err)
+		os.Exit(1)
 	}
 
 	cephClient := dashboard.NewDashboardClient(cfg.Ceph)
 	server := api.NewServer(cfg, cephClient, db)
 	defer func() {
 		if err := server.Close(); err != nil {
-			log.Printf("close database: %v", err)
+			slog.Error("close database", "error", err)
 		}
 	}()
 
-	log.Printf("cephtower database engine: %s", cfg.Database.Engine)
-	log.Printf("cephtower backend listening on %s", cfg.HTTPAddr)
+	slog.Info("cephtower database configured", "engine", cfg.Database.Engine)
+	slog.Info("cephtower backend listening", "addr", cfg.HTTPAddr)
 	if err := http.ListenAndServe(cfg.HTTPAddr, server.Routes()); err != nil {
-		log.Fatalf("server stopped: %v", err)
+		slog.Error("server stopped", "error", err)
+		os.Exit(1)
 	}
 }

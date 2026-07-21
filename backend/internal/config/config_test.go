@@ -10,6 +10,9 @@ import (
 func TestLoadReadsConfigFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.yaml")
 	data := []byte(`http_addr: ":9090"
+logging:
+  level: debug
+  format: json
 ceph_dashboard:
   base_url: https://ceph.example.com/
   username: admin
@@ -47,6 +50,9 @@ database:
 	}
 	if cfg.Path != path {
 		t.Fatalf("Path = %q, want %q", cfg.Path, path)
+	}
+	if cfg.Logging.Level != "debug" || cfg.Logging.Format != "json" {
+		t.Fatalf("Logging = %#v, want debug/json", cfg.Logging)
 	}
 	if cfg.Ceph.BaseURL != "https://ceph.example.com" {
 		t.Fatalf("Ceph.BaseURL = %q, want trimmed URL", cfg.Ceph.BaseURL)
@@ -172,6 +178,9 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Database.MySQL.Params != "charset=utf8mb4&parseTime=True&loc=Local" {
 		t.Fatalf("Database.MySQL.Params = %q, want default params", cfg.Database.MySQL.Params)
 	}
+	if cfg.Logging.Level != "info" || cfg.Logging.Format != "txt" {
+		t.Fatalf("Logging defaults = %#v, want info/txt", cfg.Logging)
+	}
 	if cfg.CephCommand.Bin != "ceph" || cfg.CephCommand.Timeout != 15*time.Second {
 		t.Fatalf("CephCommand defaults = %#v, want ceph binary and 15s timeout", cfg.CephCommand)
 	}
@@ -204,5 +213,35 @@ func TestLoadRejectsInvalidCephCommandTimeout(t *testing.T) {
 
 	if _, err := Load(path); err == nil {
 		t.Fatal("Load() returned nil error, want invalid ceph command timeout error")
+	}
+}
+
+func TestLoadRejectsUnsupportedLoggingLevel(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	data := []byte(`logging:
+  level: verbose
+`)
+
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatalf("write config fixture: %v", err)
+	}
+
+	if _, err := Load(path); err == nil {
+		t.Fatal("Load() returned nil error, want unsupported logging level error")
+	}
+}
+
+func TestLoadRejectsUnsupportedLoggingFormat(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	data := []byte(`logging:
+  format: xml
+`)
+
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatalf("write config fixture: %v", err)
+	}
+
+	if _, err := Load(path); err == nil {
+		t.Fatal("Load() returned nil error, want unsupported logging format error")
 	}
 }
