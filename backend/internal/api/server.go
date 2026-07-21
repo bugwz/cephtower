@@ -38,6 +38,7 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /healthz", s.healthz)
 	s.registerAuthRoutes(mux)
 	s.registerSetupRoutes(mux)
+	s.registerClusterRoutes(mux)
 	v1.RegisterRoutes(mux, s.ceph)
 	mux.HandleFunc("/api/", http.NotFound)
 	mux.Handle("/", frontend.Handler())

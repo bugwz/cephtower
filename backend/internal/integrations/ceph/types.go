@@ -61,6 +61,13 @@ type ListHostsOptions struct {
 	IncludeServiceInstances *bool
 }
 
+type ListOSDsOptions struct {
+	Offset *int
+	Limit  *int
+	Search string
+	Sort   string
+}
+
 type HostRequest struct {
 	Hostname string   `json:"hostname,omitempty"`
 	Addr     string   `json:"addr,omitempty"`

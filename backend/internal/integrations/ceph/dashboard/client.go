@@ -1,4 +1,4 @@
-package ceph
+package dashboard
 
 import (
 	"bytes"
@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"cephtower/backend/internal/config"
-	"cephtower/backend/internal/integrations/ceph/endpoints"
-	"cephtower/backend/internal/integrations/ceph/typed"
+	"cephtower/backend/internal/integrations/ceph/dashboard/endpoints"
+	"cephtower/backend/internal/integrations/ceph/dashboard/typed"
 )
 
 const (

@@ -7,7 +7,7 @@ import (
 
 	"cephtower/backend/internal/api"
 	"cephtower/backend/internal/config"
-	"cephtower/backend/internal/integrations/ceph"
+	"cephtower/backend/internal/integrations/ceph/dashboard"
 	"cephtower/backend/internal/store"
 )
 
@@ -25,7 +25,7 @@ func main() {
 		log.Fatalf("open database: %v", err)
 	}
 
-	cephClient := ceph.NewDashboardClient(cfg.Ceph)
+	cephClient := dashboard.NewDashboardClient(cfg.Ceph)
 	server := api.NewServer(cfg, cephClient, db)
 	defer func() {
 		if err := server.Close(); err != nil {

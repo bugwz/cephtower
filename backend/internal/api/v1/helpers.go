@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"cephtower/backend/internal/integrations/ceph"
+	"cephtower/backend/internal/integrations/ceph/dashboard"
 )
 
 func intQuery(query url.Values, name string) *int {
@@ -73,7 +73,7 @@ func writeError(w http.ResponseWriter, status int, err error) {
 }
 
 func writeCephError(w http.ResponseWriter, err error) {
-	var apiErr *ceph.APIError
+	var apiErr *dashboard.APIError
 	if errors.As(err, &apiErr) {
 		status := apiErr.StatusCode
 		if status == 0 {

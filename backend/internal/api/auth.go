@@ -421,6 +421,9 @@ func canAccessPath(user store.User, path string) bool {
 	if strings.HasPrefix(path, "/api/v1/users") {
 		return false
 	}
+	if strings.HasPrefix(path, "/api/v1/clusters") {
+		return false
+	}
 
 	switch {
 	case strings.Contains(path, "/configuration"), strings.Contains(path, "/logs"):

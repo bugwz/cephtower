@@ -1,4 +1,4 @@
-package ceph
+package dashboard
 
 import (
 	"context"
@@ -6,13 +6,6 @@ import (
 	"net/url"
 	"strconv"
 )
-
-type ListOSDsOptions struct {
-	Offset *int
-	Limit  *int
-	Search string
-	Sort   string
-}
 
 func (c *DashboardClient) ListOSDs(ctx context.Context, options ListOSDsOptions) ([]map[string]any, error) {
 	var payload []map[string]any

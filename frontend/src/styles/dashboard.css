@@ -952,6 +952,16 @@
   width: 260px;
 }
 
+.page-stack {
+  width: 100%;
+}
+
+.form-section-title {
+  color: #173e45;
+  font-size: var(--font-md);
+  font-weight: 700;
+}
+
 .user-cell {
   display: grid;
   gap: 3px;

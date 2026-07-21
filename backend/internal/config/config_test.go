@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestLoadReadsConfigFile(t *testing.T) {
@@ -14,6 +15,13 @@ ceph_dashboard:
   username: admin
   password: change-me
   insecure_tls: true
+ceph_command:
+  bin: /usr/bin/ceph
+  cluster: prod
+  conf: /etc/ceph/prod.conf
+  name: client.cephtower
+  keyring: /etc/ceph/ceph.client.cephtower.keyring
+  timeout: 30s
 database:
   engine: mysql
   mysql:
@@ -48,6 +56,18 @@ database:
 	}
 	if !cfg.Ceph.InsecureTLS {
 		t.Fatal("Ceph.InsecureTLS = false, want true")
+	}
+	if cfg.CephCommand.Bin != "/usr/bin/ceph" {
+		t.Fatalf("CephCommand.Bin = %q, want configured binary", cfg.CephCommand.Bin)
+	}
+	if cfg.CephCommand.Cluster != "prod" || cfg.CephCommand.Conf != "/etc/ceph/prod.conf" {
+		t.Fatalf("unexpected Ceph command cluster config: %#v", cfg.CephCommand)
+	}
+	if cfg.CephCommand.Name != "client.cephtower" || cfg.CephCommand.Keyring != "/etc/ceph/ceph.client.cephtower.keyring" {
+		t.Fatalf("unexpected Ceph command auth config: %#v", cfg.CephCommand)
+	}
+	if cfg.CephCommand.Timeout != 30*time.Second {
+		t.Fatalf("CephCommand.Timeout = %s, want 30s", cfg.CephCommand.Timeout)
 	}
 	if cfg.Database.Engine != "mysql" {
 		t.Fatalf("Database.Engine = %q, want mysql", cfg.Database.Engine)
@@ -152,6 +172,9 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Database.MySQL.Params != "charset=utf8mb4&parseTime=True&loc=Local" {
 		t.Fatalf("Database.MySQL.Params = %q, want default params", cfg.Database.MySQL.Params)
 	}
+	if cfg.CephCommand.Bin != "ceph" || cfg.CephCommand.Timeout != 15*time.Second {
+		t.Fatalf("CephCommand defaults = %#v, want ceph binary and 15s timeout", cfg.CephCommand)
+	}
 }
 
 func TestLoadRejectsUnsupportedDatabaseEngine(t *testing.T) {
@@ -166,5 +189,20 @@ func TestLoadRejectsUnsupportedDatabaseEngine(t *testing.T) {
 
 	if _, err := Load(path); err == nil {
 		t.Fatal("Load() returned nil error, want unsupported engine error")
+	}
+}
+
+func TestLoadRejectsInvalidCephCommandTimeout(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	data := []byte(`ceph_command:
+  timeout: soon
+`)
+
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		t.Fatalf("write config fixture: %v", err)
+	}
+
+	if _, err := Load(path); err == nil {
+		t.Fatal("Load() returned nil error, want invalid ceph command timeout error")
 	}
 }

@@ -14,6 +14,29 @@ type Setting struct {
 	UpdatedAt time.Time
 }
 
+type CephCluster struct {
+	ID                    uint   `gorm:"primaryKey"`
+	Name                  string `gorm:"uniqueIndex;size:128;not null"`
+	Description           string `gorm:"type:text;not null;default:''"`
+	FSID                  string `gorm:"size:64;index"`
+	Enabled               bool   `gorm:"not null;default:true;index"`
+	DashboardEnabled      bool   `gorm:"not null;default:false"`
+	DashboardBaseURL      string `gorm:"size:512"`
+	DashboardUsername     string `gorm:"size:128"`
+	DashboardPassword     string `gorm:"type:text"`
+	DashboardInsecureTLS  bool   `gorm:"not null;default:false"`
+	CommandEnabled        bool   `gorm:"not null;default:false"`
+	CommandBin            string `gorm:"size:256;not null;default:'ceph'"`
+	CommandCluster        string `gorm:"size:128"`
+	CommandConf           string `gorm:"size:512"`
+	CommandName           string `gorm:"size:128"`
+	CommandKeyring        string `gorm:"size:512"`
+	CommandKeyringContent string `gorm:"type:text"`
+	CommandTimeoutSeconds int    `gorm:"not null;default:15"`
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+}
+
 type User struct {
 	ID           uint   `gorm:"primaryKey"`
 	Username     string `gorm:"uniqueIndex;size:64;not null"`

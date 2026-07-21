@@ -1,4 +1,4 @@
-package ceph
+package dashboard
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"testing"
 
 	"cephtower/backend/internal/config"
-	"cephtower/backend/internal/integrations/ceph/typed"
+	"cephtower/backend/internal/integrations/ceph/dashboard/typed"
 	"gopkg.in/yaml.v3"
 )
 
@@ -217,7 +217,7 @@ func TestAPIErrorIncludesStatusAndBody(t *testing.T) {
 }
 
 func TestGeneratedClientCoversOpenAPIOperations(t *testing.T) {
-	openapiPath := filepath.Clean("../../../../docs/references/ceph/src/pybind/mgr/dashboard/openapi.yaml")
+	openapiPath := filepath.Clean("../../../../../docs/references/ceph/src/pybind/mgr/dashboard/openapi.yaml")
 	data, err := os.ReadFile(openapiPath)
 	if err != nil {
 		t.Fatalf("read openapi fixture: %v", err)

@@ -1,4 +1,4 @@
-package ceph
+package dashboard
 
 import "regexp"
 
