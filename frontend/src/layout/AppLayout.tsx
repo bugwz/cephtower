@@ -60,6 +60,7 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
   const lastLoginLabel = formatDateTime(user.last_login_at)
   const navSections = buildNavSections(user)
   const navItems = buildNavItems(navSections)
+  const defaultOpenKeys = getDefaultOpenKeys(navSections, activePage)
   const userDropdownItems: MenuProps['items'] = [
     {
       key: 'account',
@@ -98,12 +99,12 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
   ]
 
   useEffect(() => {
-    function markPointerIntent() {
-      hasPointerIntent.current = true
-    }
-
     function handlePointerMove(event: PointerEvent) {
-      markPointerIntent()
+      if (!didPointerActuallyMove(event.movementX, event.movementY)) {
+        return
+      }
+
+      hasPointerIntent.current = true
       const collapsedMenu = collapsedMenuRef.current
       if (!collapsedMenu || !(event.target instanceof Node) || !collapsedMenu.contains(event.target)) {
         collapsedHoverArmed.current = true
@@ -135,8 +136,9 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
     openCollapsedFlyout(section)
   }
 
-  function handleCollapsedItemMouseMove(section: NavSection) {
-    if (hasPointerIntent.current) {
+  function handleCollapsedItemMouseMove(event: MouseEvent<HTMLDivElement>, section: NavSection) {
+    if (didPointerActuallyMove(event.movementX, event.movementY)) {
+      hasPointerIntent.current = true
       openCollapsedFlyout(section)
     }
   }
@@ -199,21 +201,23 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
             </div>
           </div>
           <div className="sidebar-nav-stack">
-            <Menu
-              className="sidebar-menu"
-              mode="inline"
-              defaultOpenKeys={['monitor-section', 'storage-section', 'system-section']}
-              selectedKeys={[activePage]}
-              items={navItems}
-              onClick={({ key }) => onPageChange(key as PageKey)}
-            />
+            {!sidebarCollapsed ? (
+              <Menu
+                className="sidebar-menu"
+                mode="inline"
+                defaultOpenKeys={defaultOpenKeys}
+                selectedKeys={[activePage]}
+                items={navItems}
+                onClick={({ key }) => onPageChange(key as PageKey)}
+              />
+            ) : null}
             <nav ref={collapsedMenuRef} className="collapsed-sidebar-menu" aria-label="折叠菜单" aria-hidden={!sidebarCollapsed}>
               {navSections.map((section) => (
                 <div
                   key={section.key}
                   className={`collapsed-nav-item${section.children.some((item) => item.key === activePage) ? ' collapsed-nav-item-active' : ''}${openFlyoutKey === section.key ? ' collapsed-nav-item-open' : ''}`}
                   onMouseEnter={(event) => handleCollapsedItemMouseEnter(event, section)}
-                  onMouseMove={() => handleCollapsedItemMouseMove(section)}
+                  onMouseMove={(event) => handleCollapsedItemMouseMove(event, section)}
                   onMouseLeave={closeCollapsedFlyout}
                   onBlur={handleCollapsedItemBlur}
                 >
@@ -339,6 +343,15 @@ function buildNavItems(sections: NavSection[]): MenuProps['items'] {
       disabled: item.disabled
     }))
   })) satisfies MenuProps['items']
+}
+
+function getDefaultOpenKeys(sections: NavSection[], activePage: PageKey) {
+  const activeSection = sections.find((section) => section.children.some((item) => item.key === activePage))
+  return activeSection ? [activeSection.key] : []
+}
+
+function didPointerActuallyMove(movementX: number, movementY: number) {
+  return Math.abs(movementX) + Math.abs(movementY) > 0
 }
 
 function readStoredSidebarCollapsed() {
