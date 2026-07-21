@@ -74,7 +74,12 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
   const defaultOpenKeys = getDefaultOpenKeys(navSections, activePage)
   const activeSection = findNavSection(activePage)
   const activeNavPage = findNavPage(activePage)
-  const pageTitle = activeSection && activeNavPage ? `${activeSection.label} / ${activeNavPage.label}` : 'CephTower'
+  const pageTitle =
+    activeSection && activeNavPage
+      ? activeSection.label === activeNavPage.label
+        ? activeNavPage.label
+        : `${activeSection.label} / ${activeNavPage.label}`
+      : 'CephTower'
   const userDropdownItems: MenuProps['items'] = [
     {
       key: 'account',
@@ -137,6 +142,10 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
   }
 
   function openCollapsedFlyout(section: NavSection) {
+    if (section.children.length === 1) {
+      return
+    }
+
     if (collapsedHoverArmed.current && !suppressCollapsedFlyout && !section.children.every((item) => item.disabled)) {
       setOpenFlyoutKey(section.key)
     }
@@ -158,6 +167,14 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
   }
 
   function toggleCollapsedFlyout(section: NavSection) {
+    if (section.children.length === 1) {
+      const [item] = section.children
+      if (!item.disabled) {
+        onPageChange(item.key)
+      }
+      return
+    }
+
     if (section.children.every((item) => item.disabled)) {
       return
     }
@@ -241,31 +258,33 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
                     disabled={section.children.every((item) => item.disabled)}
                     tabIndex={sidebarCollapsed ? 0 : -1}
                     title={section.label}
-                    aria-haspopup="menu"
-                    aria-expanded={openFlyoutKey === section.key}
+                    aria-haspopup={section.children.length > 1 ? 'menu' : undefined}
+                    aria-expanded={section.children.length > 1 ? openFlyoutKey === section.key : undefined}
                     onClick={() => toggleCollapsedFlyout(section)}
                   >
                     {section.icon}
                   </button>
-                  <div className="collapsed-nav-flyout" role="menu" aria-label={section.label}>
-                    <div className="collapsed-nav-flyout-title">{section.label}</div>
-                    <div className="collapsed-nav-flyout-list">
-                      {section.children.map((item) => (
-                        <button
-                          key={item.key}
-                          type="button"
-                          className={`collapsed-nav-flyout-option${activePage === item.key ? ' collapsed-nav-flyout-option-active' : ''}`}
-                          disabled={item.disabled}
-                          role="menuitem"
-                          tabIndex={sidebarCollapsed ? 0 : -1}
-                          onClick={(event) => handleCollapsedPageChange(event, item.key as PageKey)}
-                        >
-                          {item.icon}
-                          <span>{item.label}</span>
-                        </button>
-                      ))}
+                  {section.children.length > 1 ? (
+                    <div className="collapsed-nav-flyout" role="menu" aria-label={section.label}>
+                      <div className="collapsed-nav-flyout-title">{section.label}</div>
+                      <div className="collapsed-nav-flyout-list">
+                        {section.children.map((item) => (
+                          <button
+                            key={item.key}
+                            type="button"
+                            className={`collapsed-nav-flyout-option${activePage === item.key ? ' collapsed-nav-flyout-option-active' : ''}`}
+                            disabled={item.disabled}
+                            role="menuitem"
+                            tabIndex={sidebarCollapsed ? 0 : -1}
+                            onClick={(event) => handleCollapsedPageChange(event, item.key)}
+                          >
+                            {item.icon}
+                            <span>{item.label}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
                 </div>
               ))}
             </nav>
@@ -346,21 +365,35 @@ type NavSection = {
 }
 
 function buildNavItems(sections: NavSection[]): MenuProps['items'] {
-  return sections.map((section) => ({
-    key: section.key,
-    icon: section.icon,
-    label: section.label,
-    children: section.children.map((item) => ({
-      key: item.key,
-      icon: item.icon,
-      label: item.label,
-      disabled: item.disabled
-    }))
-  })) satisfies MenuProps['items']
+  return sections.map((section) => {
+    if (section.children.length === 1) {
+      const [item] = section.children
+      return {
+        key: item.key,
+        icon: section.icon,
+        label: section.label,
+        disabled: item.disabled
+      }
+    }
+
+    return {
+      key: section.key,
+      icon: section.icon,
+      label: section.label,
+      children: section.children.map((item) => ({
+        key: item.key,
+        icon: item.icon,
+        label: item.label,
+        disabled: item.disabled
+      }))
+    }
+  }) satisfies MenuProps['items']
 }
 
 function getDefaultOpenKeys(sections: NavSection[], activePage: PageKey) {
-  const activeSection = sections.find((section) => section.children.some((item) => item.key === activePage))
+  const activeSection = sections.find(
+    (section) => section.children.length > 1 && section.children.some((item) => item.key === activePage)
+  )
   return activeSection ? [activeSection.key] : []
 }
 
