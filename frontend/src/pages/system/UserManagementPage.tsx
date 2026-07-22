@@ -5,9 +5,10 @@ import {
   SaveOutlined,
   UserAddOutlined
 } from '@ant-design/icons'
-import { Button, Card, Form, Input, Modal, Select, Space, Switch, Table, Tag, Typography, message } from 'antd'
+import { Button, Card, Form, Input, Select, Space, Switch, Table, Tag, Typography, message } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { createUser, listUsers, updateUser, type UserAccount, type UserRole } from '../../api/auth'
+import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
 
 const { Text } = Typography
@@ -186,7 +187,7 @@ export function UserManagementPage() {
         />
       </Card>
 
-      <Modal
+      <DraggableModal
         title="新建用户"
         open={createOpen}
         onCancel={() => setCreateOpen(false)}
@@ -231,9 +232,9 @@ export function UserManagementPage() {
             <Switch />
           </Form.Item>
         </Form>
-      </Modal>
+      </DraggableModal>
 
-      <Modal
+      <DraggableModal
         title={`重设密码${passwordTarget ? `：${passwordTarget.username}` : ''}`}
         open={Boolean(passwordTarget)}
         onCancel={() => setPasswordTarget(null)}
@@ -246,7 +247,7 @@ export function UserManagementPage() {
             <Input.Password />
           </Form.Item>
         </Form>
-      </Modal>
+      </DraggableModal>
     </Page>
   )
 }

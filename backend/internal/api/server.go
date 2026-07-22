@@ -16,17 +16,19 @@ import (
 )
 
 type Server struct {
-	mu         sync.RWMutex
-	cfg        config.Config
-	ceph       v1.CephClient
-	db         *gorm.DB
-	syncCancel context.CancelFunc
+	mu                sync.RWMutex
+	cfg               config.Config
+	ceph              v1.CephClient
+	db                *gorm.DB
+	syncCancel        context.CancelFunc
+	clusterDiscoverer func(context.Context, *gorm.DB, *store.CephCluster) error
 }
 
 func NewServer(cfg config.Config, cephClient v1.CephClient, db *gorm.DB) *Server {
 	server := &Server{
-		cfg: cfg,
-		db:  db,
+		cfg:               cfg,
+		db:                db,
+		clusterDiscoverer: discoverAndSyncCephCluster,
 	}
 	if cephClient == nil {
 		cephClient = newDatabaseCephClient(server.database)
@@ -50,7 +52,9 @@ func (s *Server) Routes() http.Handler {
 	s.registerSetupRoutes(mux)
 	s.registerClusterRoutes(mux)
 	v1.RegisterRoutes(mux, s.ceph)
-	mux.HandleFunc("/api/", http.NotFound)
+	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+	})
 	mux.Handle("/", frontend.Handler())
 
 	return withCORS(s.withAuth(mux))
@@ -136,8 +140,58 @@ func isPublicAPIPath(path string) bool {
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(payload)
+	w.WriteHeader(httpStatusForAPIResponse(status))
+	_ = json.NewEncoder(w).Encode(apiResponseForStatus(status, payload))
+}
+
+func httpStatusForAPIResponse(status int) int {
+	if status == http.StatusUnauthorized || status == http.StatusForbidden || status >= http.StatusInternalServerError {
+		return status
+	}
+	return http.StatusOK
+}
+
+type apiResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    any    `json:"data"`
+}
+
+func apiResponseForStatus(status int, payload any) apiResponse {
+	if status >= http.StatusBadRequest {
+		return apiResponse{
+			Code:    status,
+			Message: responseMessage(payload, http.StatusText(status)),
+			Data:    nil,
+		}
+	}
+
+	return apiResponse{
+		Code:    0,
+		Message: responseMessage(payload, "success"),
+		Data:    payload,
+	}
+}
+
+func responseMessage(payload any, fallback string) string {
+	if values, ok := payload.(map[string]string); ok {
+		for _, key := range []string{"message", "error"} {
+			if message := strings.TrimSpace(values[key]); message != "" {
+				return message
+			}
+		}
+	}
+	if values, ok := payload.(map[string]any); ok {
+		for _, key := range []string{"message", "error"} {
+			if message, ok := values[key].(string); ok && strings.TrimSpace(message) != "" {
+				return strings.TrimSpace(message)
+			}
+		}
+	}
+	if action, ok := payload.(clusterActionResponse); ok && strings.TrimSpace(action.Message) != "" {
+		return strings.TrimSpace(action.Message)
+	}
+	return fallback
 }
 
 func (s *Server) startCephResourceSync() {

@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -52,7 +51,7 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
 		Initialized bool           `json:"initialized"`
 		Database    map[string]any `json:"database"`
 	}
-	if err := json.Unmarshal(recorder.Body.Bytes(), &status); err != nil {
+	if err := decodeAPIResponseData(recorder, &status); err != nil {
 		t.Fatalf("decode setup status: %v", err)
 	}
 	if status.Initialized || status.Database == nil {
@@ -86,8 +85,8 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
 	}`)
 	recorder = httptest.NewRecorder()
 	server.Routes().ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/api/v1/setup/initialize", bytes.NewReader(payload)))
-	if recorder.Code != http.StatusCreated {
-		t.Fatalf("initialize = %d, want 201: %s", recorder.Code, recorder.Body.String())
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("initialize = %d, want 200: %s", recorder.Code, recorder.Body.String())
 	}
 
 	var admin store.User
@@ -100,8 +99,15 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
 
 	recorder = httptest.NewRecorder()
 	server.Routes().ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/api/v1/setup/initialize", bytes.NewReader(payload)))
-	if recorder.Code != http.StatusConflict {
-		t.Fatalf("second initialize = %d, want 409: %s", recorder.Code, recorder.Body.String())
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("second initialize = %d, want 200: %s", recorder.Code, recorder.Body.String())
+	}
+	envelope, err := decodeAPIResponseEnvelope(recorder)
+	if err != nil {
+		t.Fatalf("decode second initialize response: %v", err)
+	}
+	if envelope.Code != http.StatusConflict {
+		t.Fatalf("second initialize code = %d, want 409: %s", envelope.Code, recorder.Body.String())
 	}
 
 	recorder = httptest.NewRecorder()
@@ -113,7 +119,7 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
 		Initialized bool           `json:"initialized"`
 		Database    map[string]any `json:"database"`
 	}{}
-	if err := json.Unmarshal(recorder.Body.Bytes(), &status); err != nil {
+	if err := decodeAPIResponseData(recorder, &status); err != nil {
 		t.Fatalf("decode setup status after init: %v", err)
 	}
 	if !status.Initialized || status.Database != nil {

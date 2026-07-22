@@ -1645,24 +1645,18 @@
   background: #fbfefd;
 }
 
+.draggable-modal-shell {
+  touch-action: none;
+}
+
+.draggable-modal-shell .ant-modal-header {
+  cursor: move;
+  user-select: none;
+}
+
 .cluster-form {
   display: grid;
   gap: 14px;
-}
-
-.cluster-form-section {
-  padding: 14px 16px 2px;
-  border: 1px solid #e2eeeb;
-  border-radius: 8px;
-  background: #fbfefd;
-}
-
-.cluster-form-section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
 }
 
 .cluster-form-grid {

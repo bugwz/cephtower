@@ -16,13 +16,15 @@ import {
   setMgrModuleEnabled
 } from '../../api/resources'
 import { DataTable } from '../../components/DataTable'
+import { draggableModalRender } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
 import { ClusterManagementPage } from './ClusterManagementPage'
+import { ClusterDetailPage } from './ClusterDetailPage'
 import { HostManagementPage } from './HostManagementPage'
 import { ServiceManagementPage } from './ServiceManagementPage'
 
-export { ClusterManagementPage, HostManagementPage }
+export { ClusterDetailPage, ClusterManagementPage, HostManagementPage }
 
 export function MonManagementPage() {
   const loader = useCallback(async () => {
@@ -151,6 +153,7 @@ export function OsdManagementPage() {
       Modal.confirm({
         title: `调整 OSD ${id} 权重`,
         content: <ReweightForm osdID={id} refresh={refresh} />,
+        modalRender: draggableModalRender,
         icon: null,
         okButtonProps: { style: { display: 'none' } },
         cancelText: '关闭'

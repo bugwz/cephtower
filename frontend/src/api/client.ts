@@ -112,6 +112,18 @@ export async function readApiResponse<T>(response: Response): Promise<T> {
     throw new Error('后端接口返回的数据格式不正确')
   }
 
+  if (isRecord(payload) && 'code' in payload && 'message' in payload && 'data' in payload) {
+    const code = numberValue(payload.code)
+    const message = typeof payload.message === 'string' ? payload.message : ''
+    if (code !== undefined && code !== 0) {
+      throw new Error(message || `Request failed: ${code}`)
+    }
+    if (payload.data !== null && payload.data !== undefined) {
+      return payload.data as T
+    }
+    return { message } as T
+  }
+
   return (payload ?? {}) as T
 }
 
@@ -148,6 +160,13 @@ function parseJSON(text: string): { payload: unknown; invalidJSON: boolean } {
 }
 
 function extractErrorMessage(payload: unknown, text: string, status: number): string {
+  if (isRecord(payload) && 'code' in payload && 'message' in payload && 'data' in payload) {
+    const message = payload.message
+    if (typeof message === 'string' && message.trim()) {
+      return message
+    }
+  }
+
   if (isRecord(payload)) {
     const message = payload.error ?? payload.message
     if (typeof message === 'string' && message.trim()) {

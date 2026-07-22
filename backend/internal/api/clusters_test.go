@@ -2,7 +2,9 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -11,6 +13,7 @@ import (
 
 	"cephtower/backend/internal/config"
 	"cephtower/backend/internal/store"
+	"gorm.io/gorm"
 )
 
 func TestClusterRoutesManageCephConnections(t *testing.T) {
@@ -23,109 +26,67 @@ func TestClusterRoutesManageCephConnections(t *testing.T) {
 
 	createPayload := []byte(`{
 		"name": "primary",
-		"description": "production ceph",
-		"fsid": "00000000-0000-0000-0000-000000000001",
-		"enabled": true,
-		"dashboard": {
-			"enabled": true,
-			"base_url": "https://ceph.example.com:8443/",
-			"username": "admin",
-			"password": "dashboard-secret",
-			"insecure_tls": true
-		},
-		"command": {
-			"enabled": true,
-			"bin": "ceph",
-			"cluster": "ceph",
-			"conf": "/etc/ceph/ceph.conf",
-			"name": "client.admin",
-			"keyring": "/etc/ceph/ceph.client.admin.keyring",
-			"keyring_content": "[client.admin]\nkey = command-secret",
-			"timeout_seconds": 30
-		}
+		"keyring": "command-secret",
+		"dashboard_username": "admin",
+		"dashboard_password": "dashboard-secret"
 	}`)
 
 	recorder := clusterAPIRequest(server, http.MethodPost, "/api/v1/clusters", adminToken, createPayload)
-	if recorder.Code != http.StatusCreated {
-		t.Fatalf("create cluster = %d, want 201: %s", recorder.Code, recorder.Body.String())
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("create cluster = %d, want 200: %s", recorder.Code, recorder.Body.String())
 	}
-	var created cephClusterResponse
-	if err := json.Unmarshal(recorder.Body.Bytes(), &created); err != nil {
+	var createResponse clusterActionResponse
+	if err := decodeAPIResponseData(recorder, &createResponse); err != nil {
 		t.Fatalf("decode created cluster: %v", err)
 	}
-	if !created.Dashboard.PasswordSet || !created.Command.KeyringContentSet {
-		t.Fatalf("created = %#v, want masked secrets marked as set", created)
-	}
-	if created.Dashboard.BaseURL != "https://ceph.example.com:8443" {
-		t.Fatalf("dashboard base_url = %q, want trimmed URL", created.Dashboard.BaseURL)
+	if createResponse.Message == "" {
+		t.Fatalf("create response = %#v, want message", createResponse)
 	}
 	if bytes.Contains(recorder.Body.Bytes(), []byte("dashboard-secret")) || bytes.Contains(recorder.Body.Bytes(), []byte("command-secret")) {
 		t.Fatalf("response leaked cluster secrets: %s", recorder.Body.String())
 	}
 
+	recorder = clusterAPIRequest(server, http.MethodGet, "/api/v1/clusters", adminToken, nil)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("list clusters after create = %d, want 200: %s", recorder.Code, recorder.Body.String())
+	}
+	var clusters []cephClusterResponse
+	if err := decodeAPIResponseData(recorder, &clusters); err != nil {
+		t.Fatalf("decode cluster list after create: %v", err)
+	}
+	if len(clusters) != 1 || clusters[0].Name != "primary" || !clusters[0].Dashboard.PasswordSet || !clusters[0].Command.KeyringContentSet {
+		t.Fatalf("clusters = %#v, want created cluster with masked secrets marked as set", clusters)
+	}
+	if clusters[0].Command.Bin != "ceph" || clusters[0].Command.Name != "client.admin" || clusters[0].Command.TimeoutSeconds != 15 {
+		t.Fatalf("cluster command = %#v, want default ceph client.admin command", clusters[0].Command)
+	}
+
 	updatePayload := []byte(`{
 		"name": "primary-renamed",
-		"enabled": true,
-		"dashboard": {
-			"enabled": true,
-			"base_url": "https://ceph.example.com:8443",
-			"username": "admin"
-		},
-		"command": {
-			"enabled": true,
-			"bin": "ceph",
-			"timeout_seconds": 45
-		}
+		"keyring": "",
+		"dashboard_username": "admin",
+		"dashboard_password": ""
 	}`)
 	recorder = clusterAPIRequest(server, http.MethodPut, "/api/v1/clusters/1", adminToken, updatePayload)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("update cluster = %d, want 200: %s", recorder.Code, recorder.Body.String())
 	}
-	var updated cephClusterResponse
-	if err := json.Unmarshal(recorder.Body.Bytes(), &updated); err != nil {
+	var updateResponse clusterActionResponse
+	if err := decodeAPIResponseData(recorder, &updateResponse); err != nil {
 		t.Fatalf("decode updated cluster: %v", err)
 	}
-	if updated.Name != "primary-renamed" || !updated.Dashboard.PasswordSet || !updated.Command.KeyringContentSet || updated.Command.TimeoutSeconds != 45 {
-		t.Fatalf("updated = %#v, want renamed cluster with retained secrets", updated)
-	}
-
-	clearPayload := []byte(`{
-		"name": "primary-renamed",
-		"enabled": true,
-		"dashboard": {
-			"enabled": true,
-			"base_url": "https://ceph.example.com:8443",
-			"username": "admin",
-			"clear_secret": true
-		},
-		"command": {
-			"enabled": true,
-			"bin": "ceph",
-			"clear_secret": true,
-			"timeout_seconds": 45
-		}
-	}`)
-	recorder = clusterAPIRequest(server, http.MethodPut, "/api/v1/clusters/1", adminToken, clearPayload)
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("clear cluster secrets = %d, want 200: %s", recorder.Code, recorder.Body.String())
-	}
-	var cleared cephClusterResponse
-	if err := json.Unmarshal(recorder.Body.Bytes(), &cleared); err != nil {
-		t.Fatalf("decode cleared cluster: %v", err)
-	}
-	if cleared.Dashboard.PasswordSet || cleared.Command.KeyringContentSet {
-		t.Fatalf("cleared = %#v, want secret markers cleared", cleared)
+	if updateResponse.Message == "" {
+		t.Fatalf("update response = %#v, want message", updateResponse)
 	}
 
 	recorder = clusterAPIRequest(server, http.MethodGet, "/api/v1/clusters", adminToken, nil)
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("list clusters = %d, want 200: %s", recorder.Code, recorder.Body.String())
 	}
-	var clusters []cephClusterResponse
-	if err := json.Unmarshal(recorder.Body.Bytes(), &clusters); err != nil {
+	if err := decodeAPIResponseData(recorder, &clusters); err != nil {
 		t.Fatalf("decode cluster list: %v", err)
 	}
-	if len(clusters) != 1 || clusters[0].Name != "primary-renamed" {
+	if len(clusters) != 1 || clusters[0].Name != "primary-renamed" || !clusters[0].Dashboard.PasswordSet || !clusters[0].Command.KeyringContentSet {
 		t.Fatalf("clusters = %#v, want updated cluster in list", clusters)
 	}
 }
@@ -141,6 +102,74 @@ func TestClusterRoutesRequireAdministrator(t *testing.T) {
 	recorder := clusterAPIRequest(server, http.MethodGet, "/api/v1/clusters", userToken, nil)
 	if recorder.Code != http.StatusForbidden {
 		t.Fatalf("list clusters as user = %d, want 403", recorder.Code)
+	}
+}
+
+func TestCreateClusterStoresDiscoveredCephResources(t *testing.T) {
+	server, adminToken := newClusterAPITestServer(t, store.UserRoleAdmin)
+	defer func() {
+		if err := server.Close(); err != nil {
+			t.Fatalf("Close() returned error: %v", err)
+		}
+	}()
+	server.clusterDiscoverer = func(ctx context.Context, db *gorm.DB, cluster *store.CephCluster) error {
+		cluster.FSID = "11111111-1111-1111-1111-111111111111"
+		cluster.DashboardBaseURL = "https://mgr.example.com:8443"
+		if err := db.WithContext(ctx).Save(cluster).Error; err != nil {
+			return err
+		}
+		return saveSnapshot(ctx, db, cluster.ID, snapshotHosts, "all", []map[string]any{
+			{"hostname": "node-1", "addr": "10.0.0.1"},
+		})
+	}
+
+	payload := []byte(`{
+		"name": "discovered",
+		"keyring": "command-secret",
+		"dashboard_username": "admin",
+		"dashboard_password": "dashboard-secret"
+	}`)
+
+	recorder := clusterAPIRequest(server, http.MethodPost, "/api/v1/clusters", adminToken, payload)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("create discovered cluster = %d, want 200: %s", recorder.Code, recorder.Body.String())
+	}
+	var createResponse clusterActionResponse
+	if err := decodeAPIResponseData(recorder, &createResponse); err != nil {
+		t.Fatalf("decode created cluster: %v", err)
+	}
+	if createResponse.Message == "" {
+		t.Fatalf("create response = %#v, want message", createResponse)
+	}
+
+	var created store.CephCluster
+	if err := server.database().Where("name = ?", "discovered").First(&created).Error; err != nil {
+		t.Fatalf("load created cluster: %v", err)
+	}
+	if created.FSID != "11111111-1111-1111-1111-111111111111" || created.DashboardBaseURL != "https://mgr.example.com:8443" {
+		t.Fatalf("created = %#v, want discovered fsid and dashboard base url", created)
+	}
+
+	var snapshot store.CephResourceSnapshot
+	if err := server.database().
+		Where("cluster_id = ? AND category = ? AND resource_key = ?", created.ID, snapshotHosts, "all").
+		First(&snapshot).Error; err != nil {
+		t.Fatalf("load discovered hosts snapshot: %v", err)
+	}
+	if !bytes.Contains([]byte(snapshot.Payload), []byte("node-1")) {
+		t.Fatalf("hosts snapshot payload = %s, want discovered host", snapshot.Payload)
+	}
+
+	recorder = clusterAPIRequest(server, http.MethodGet, "/api/v1/clusters/1", adminToken, nil)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("get discovered cluster detail = %d, want 200: %s", recorder.Code, recorder.Body.String())
+	}
+	var detail cephClusterDetailResponse
+	if err := decodeAPIResponseData(recorder, &detail); err != nil {
+		t.Fatalf("decode cluster detail: %v", err)
+	}
+	if detail.Cluster.ID != created.ID || len(detail.Snapshots) != 1 || detail.Snapshots[0].Category != snapshotHosts {
+		t.Fatalf("detail = %#v, want cluster and discovered snapshot", detail)
 	}
 }
 
@@ -184,7 +213,11 @@ func newClusterAPITestServer(t *testing.T, role string) (*Server, string) {
 		t.Fatalf("create session: %v", err)
 	}
 
-	return NewServer(cfg, nil, db), token
+	server := NewServer(cfg, nil, db)
+	server.clusterDiscoverer = func(_ context.Context, _ *gorm.DB, _ *store.CephCluster) error {
+		return nil
+	}
+	return server, token
 }
 
 func clusterAPIRequest(server *Server, method, path, token string, body []byte) *httptest.ResponseRecorder {
@@ -193,4 +226,27 @@ func clusterAPIRequest(server *Server, method, path, token string, body []byte) 
 	request.Header.Set("Authorization", "Bearer "+token)
 	server.Routes().ServeHTTP(recorder, request)
 	return recorder
+}
+
+func decodeAPIResponseData(recorder *httptest.ResponseRecorder, out any) error {
+	response, err := decodeAPIResponseEnvelope(recorder)
+	if err != nil {
+		return err
+	}
+	if response.Code != 0 {
+		return errors.New(response.Message)
+	}
+	return json.Unmarshal(response.Data, out)
+}
+
+type apiResponseEnvelope struct {
+	Code    int             `json:"code"`
+	Message string          `json:"message"`
+	Data    json.RawMessage `json:"data"`
+}
+
+func decodeAPIResponseEnvelope(recorder *httptest.ResponseRecorder) (apiResponseEnvelope, error) {
+	var response apiResponseEnvelope
+	err := json.Unmarshal(recorder.Body.Bytes(), &response)
+	return response, err
 }

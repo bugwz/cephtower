@@ -33,30 +33,28 @@ export interface CephCluster {
   updated_at: string
 }
 
-export interface CephClusterPayload {
+export interface CephClusterFormPayload {
   name: string
-  description?: string
-  fsid?: string
-  enabled: boolean
-  dashboard: {
-    enabled: boolean
-    base_url?: string
-    username?: string
-    password?: string
-    clear_secret?: boolean
-    insecure_tls?: boolean
-  }
-  command: {
-    enabled: boolean
-    bin?: string
-    cluster?: string
-    conf?: string
-    name?: string
-    keyring?: string
-    keyring_content?: string
-    clear_secret?: boolean
-    timeout_seconds?: number
-  }
+  dashboard_username?: string
+  dashboard_password?: string
+  keyring?: string
+}
+
+export interface ClusterActionResponse {
+  message: string
+}
+
+export interface CephResourceSnapshot {
+  category: string
+  resource_key: string
+  payload: unknown
+  last_synced_at: string
+  last_error: string
+}
+
+export interface CephClusterDetail {
+  cluster: CephCluster
+  snapshots: CephResourceSnapshot[]
 }
 
 const apiBaseUrl = '/api/v1'
@@ -65,17 +63,21 @@ export async function listClusters(): Promise<CephCluster[]> {
   return clusterRequest<CephCluster[]>('/clusters')
 }
 
-export async function createCluster(payload: CephClusterPayload): Promise<CephCluster> {
-  return clusterRequest<CephCluster>('/clusters', {
+export async function getClusterDetail(id: number | string): Promise<CephClusterDetail> {
+  return clusterRequest<CephClusterDetail>(`/clusters/${id}`)
+}
+
+export async function createCluster(values: CephClusterFormPayload): Promise<ClusterActionResponse> {
+  return clusterRequest<ClusterActionResponse>('/clusters', {
     method: 'POST',
-    body: JSON.stringify(payload)
+    body: JSON.stringify(values)
   })
 }
 
-export async function updateCluster(id: number, payload: CephClusterPayload): Promise<CephCluster> {
-  return clusterRequest<CephCluster>(`/clusters/${id}`, {
+export async function updateCluster(id: number, values: CephClusterFormPayload): Promise<ClusterActionResponse> {
+  return clusterRequest<ClusterActionResponse>(`/clusters/${id}`, {
     method: 'PUT',
-    body: JSON.stringify(payload)
+    body: JSON.stringify(values)
   })
 }
 

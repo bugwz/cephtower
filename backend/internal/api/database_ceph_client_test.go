@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -20,12 +21,12 @@ func TestDatabaseCephClientUsesEnabledDashboardCluster(t *testing.T) {
 		switch r.URL.Path {
 		case "/api/auth":
 			authCalls++
-			writeJSON(w, http.StatusCreated, map[string]any{"token": "test-token"})
+			writeTestJSON(w, http.StatusCreated, map[string]any{"token": "test-token"})
 		case "/api/summary":
 			if got := r.Header.Get("Authorization"); got != "Bearer test-token" {
 				t.Fatalf("Authorization = %q, want bearer token", got)
 			}
-			writeJSON(w, http.StatusOK, map[string]any{
+			writeTestJSON(w, http.StatusOK, map[string]any{
 				"health_status": "HEALTH_OK",
 				"version":       "20.2.2",
 			})
@@ -121,4 +122,10 @@ func openDatabaseCephClientTestDB(t *testing.T) *gorm.DB {
 		}
 	})
 	return db
+}
+
+func writeTestJSON(w http.ResponseWriter, status int, payload any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(payload)
 }

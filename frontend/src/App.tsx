@@ -1,4 +1,5 @@
 import { ConfigProvider, theme } from 'antd'
+import type React from 'react'
 import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { currentUser, hasStoredToken, logout, setupStatus, type SetupDatabaseConfig, type UserAccount } from './api/auth'
@@ -7,6 +8,7 @@ import { AppLayout } from './layout/AppLayout'
 import { NAV_PAGES, pagePaths } from './navigation'
 import {
   InitializationPage,
+  ClusterDetailPage,
   LoginPage,
   pageComponents,
   type PageKey
@@ -92,6 +94,18 @@ export default function App() {
     )
   }
 
+  function renderStandaloneAppPage(activePage: PageKey, content: React.ReactNode) {
+    if (!user) {
+      return <Navigate to="/login" replace />
+    }
+
+    return (
+      <AppLayout activePage={activePage} onPageChange={(nextPage) => navigate(pagePaths[nextPage])} user={user} onLogout={handleLogout}>
+        {content}
+      </AppLayout>
+    )
+  }
+
   return (
     <ConfigProvider
       theme={{
@@ -144,6 +158,7 @@ export default function App() {
           {NAV_PAGES.map((page) => (
             <Route key={page.key} path={page.path} element={renderAppPage(page.key)} />
           ))}
+          <Route path="/cluster/clusters/:id" element={renderStandaloneAppPage('clusterManagement', <ClusterDetailPage />)} />
           <Route path="/login" element={<Navigate to={pagePaths.overview} replace />} />
           <Route path="/initialize" element={<Navigate to={pagePaths.overview} replace />} />
           <Route path="/password-reset" element={<Navigate to={pagePaths.overview} replace />} />
