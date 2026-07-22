@@ -59,9 +59,8 @@ type clusterActionResponse struct {
 }
 
 type cephClusterDetailResponse struct {
-	Cluster   cephClusterResponse         `json:"cluster"`
-	Discovery cephClusterDiscoveryDetail  `json:"discovery"`
-	Snapshots []cephResourceSnapshotEntry `json:"snapshots"`
+	Cluster   cephClusterResponse        `json:"cluster"`
+	Discovery cephClusterDiscoveryDetail `json:"discovery"`
 }
 
 type cephClusterDiscoveryDetail struct {
@@ -89,14 +88,6 @@ type cephDiscoveredRecord struct {
 type cephClusterOSDFlagEntry struct {
 	Name         string    `json:"name"`
 	DiscoveredAt time.Time `json:"discovered_at"`
-}
-
-type cephResourceSnapshotEntry struct {
-	Category     string    `json:"category"`
-	ResourceKey  string    `json:"resource_key"`
-	Payload      any       `json:"payload"`
-	LastSyncedAt time.Time `json:"last_synced_at"`
-	LastError    string    `json:"last_error"`
 }
 
 func (s *Server) registerClusterRoutes(mux *http.ServeMux) {
@@ -144,6 +135,9 @@ func (s *Server) createCluster(w http.ResponseWriter, r *http.Request) {
 		if err := tx.Create(&cluster).Error; err != nil {
 			return err
 		}
+		if err := ensureDefaultSystemSettings(r.Context(), tx); err != nil {
+			return err
+		}
 		return s.discoverCephCluster(r.Context(), tx, &cluster)
 	})
 	if err != nil {
@@ -168,15 +162,9 @@ func (s *Server) getCluster(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	snapshots, err := s.clusterSnapshots(r.Context(), cluster.ID)
-	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		return
-	}
 	writeJSON(w, http.StatusOK, cephClusterDetailResponse{
 		Cluster:   toCephClusterResponse(cluster),
 		Discovery: discovery,
-		Snapshots: snapshots,
 	})
 }
 
@@ -204,6 +192,9 @@ func (s *Server) updateCluster(w http.ResponseWriter, r *http.Request) {
 
 	err = s.database().WithContext(r.Context()).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Save(&cluster).Error; err != nil {
+			return err
+		}
+		if err := ensureDefaultSystemSettings(r.Context(), tx); err != nil {
 			return err
 		}
 		return s.discoverCephCluster(r.Context(), tx, &cluster)
@@ -312,7 +303,6 @@ func (s *Server) discoverCephCluster(ctx context.Context, db *gorm.DB, cluster *
 
 func deleteCephClusterResources(ctx context.Context, db *gorm.DB, clusterID uint) error {
 	models := []any{
-		&store.CephResourceSnapshot{},
 		&store.CephClusterHost{},
 		&store.CephClusterOSD{},
 		&store.CephClusterOSDFlag{},
@@ -323,6 +313,19 @@ func deleteCephClusterResources(ctx context.Context, db *gorm.DB, clusterID uint
 		&store.CephClusterMDS{},
 		&store.CephClusterMgrModule{},
 		&store.CephClusterConfiguration{},
+		&store.CephDataFetchRun{},
+		&store.CephClusterSummary{},
+		&store.CephClusterHealthCheck{},
+		&store.CephPool{},
+		&store.CephRBDImage{},
+		&store.CephFilesystem{},
+		&store.CephRGWDaemon{},
+		&store.CephRGWUser{},
+		&store.CephRGWBucket{},
+		&store.CephNVMeoFGateway{},
+		&store.CephNVMeoFSubsystem{},
+		&store.CephISCSITarget{},
+		&store.CephNFSExport{},
 	}
 	for _, model := range models {
 		if err := db.WithContext(ctx).Where("cluster_id = ?", clusterID).Delete(model).Error; err != nil {
@@ -484,33 +487,6 @@ func jsonPayload(payload string) any {
 		return payload
 	}
 	return decoded
-}
-
-func (s *Server) clusterSnapshots(ctx context.Context, clusterID uint) ([]cephResourceSnapshotEntry, error) {
-	var snapshots []store.CephResourceSnapshot
-	if err := s.database().
-		WithContext(ctx).
-		Where("cluster_id = ?", clusterID).
-		Order("category asc, resource_key asc").
-		Find(&snapshots).Error; err != nil {
-		return nil, err
-	}
-
-	response := make([]cephResourceSnapshotEntry, 0, len(snapshots))
-	for _, snapshot := range snapshots {
-		var payload any
-		if err := json.Unmarshal([]byte(snapshot.Payload), &payload); err != nil {
-			payload = snapshot.Payload
-		}
-		response = append(response, cephResourceSnapshotEntry{
-			Category:     snapshot.Category,
-			ResourceKey:  snapshot.ResourceKey,
-			Payload:      payload,
-			LastSyncedAt: snapshot.LastSyncedAt,
-			LastError:    snapshot.LastError,
-		})
-	}
-	return response, nil
 }
 
 func toCephClusterResponse(cluster store.CephCluster) cephClusterResponse {

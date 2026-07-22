@@ -6,6 +6,7 @@ backend/bin/
 backend/coverage.out
 backend/.cache/
 .gocache/
+.build/go-cache/
 
 # Local runtime data
 /app/

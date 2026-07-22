@@ -1,4 +1,5 @@
 import { DemoPage } from '../DemoPage'
+import { DataFetchSettingsPage } from './DataFetchSettingsPage'
 import { UserManagementPage } from './UserManagementPage'
 
 export function SystemInfoPage() {
@@ -10,5 +11,5 @@ export function SystemUsersPage() {
 }
 
 export function DataManagementPage() {
-  return <DemoPage pageKey="dataManagement" />
+  return <DataFetchSettingsPage />
 }

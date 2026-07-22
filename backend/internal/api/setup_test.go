@@ -125,4 +125,12 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
 	if !status.Initialized || status.Database != nil {
 		t.Fatalf("status after init = %#v, want initialized response without database config", status)
 	}
+
+	var settingCount int64
+	if err := server.database().Model(&store.Setting{}).Where("`key` LIKE ?", dataFetchSettingPrefix+"%").Count(&settingCount).Error; err != nil {
+		t.Fatalf("count default data fetch settings: %v", err)
+	}
+	if settingCount == 0 {
+		t.Fatal("default data fetch settings were not initialized")
+	}
 }

@@ -46,14 +46,6 @@ export interface ClusterActionResponse {
   message: string
 }
 
-export interface CephResourceSnapshot {
-  category: string
-  resource_key: string
-  payload: unknown
-  last_synced_at: string
-  last_error: string
-}
-
 export interface CephClusterDiscovery {
   hosts: CephDiscoveredRecord[]
   osds: CephDiscoveredRecord[]
@@ -82,7 +74,6 @@ export interface CephDiscoveredRecord {
 export interface CephClusterDetail {
   cluster: CephCluster
   discovery: CephClusterDiscovery
-  snapshots: CephResourceSnapshot[]
 }
 
 const apiBaseUrl = '/api/v1'

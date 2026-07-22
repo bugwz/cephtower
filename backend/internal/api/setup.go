@@ -139,6 +139,9 @@ func (s *Server) initializeSetup(w http.ResponseWriter, r *http.Request) {
 		if err := tx.Create(&admin).Error; err != nil {
 			return err
 		}
+		if err := ensureDefaultSystemSettings(r.Context(), tx); err != nil {
+			return err
+		}
 		return config.SaveDatabase(currentCfg.Path, databaseCfg)
 	}); err != nil {
 		_ = store.Close(newDB)

@@ -485,6 +485,289 @@ func saveDiscoveredConfiguration(ctx context.Context, db *gorm.DB, clusterID uin
 	replaceDiscoveredRecords(ctx, db, clusterID, &store.CephClusterConfiguration{}, records)
 }
 
+func saveDiscoveredSummary(ctx context.Context, db *gorm.DB, clusterID uint, payload json.RawMessage) error {
+	var summary map[string]any
+	if err := json.Unmarshal(payload, &summary); err != nil {
+		return err
+	}
+	now := time.Now()
+	record := store.CephClusterSummary{
+		ClusterID:         clusterID,
+		HealthStatus:      firstStringField(summary, "health_status"),
+		Version:           firstStringField(summary, "version"),
+		MgrID:             firstStringField(summary, "mgr_id"),
+		MgrHost:           firstStringField(summary, "mgr_host"),
+		HaveMonConnection: boolField(summary, "have_mon_connection"),
+		ExecutingTasks:    mustJSON(summary["executing_tasks"]),
+		FinishedTasks:     mustJSON(summary["finished_tasks"]),
+		Payload:           string(payload),
+		DiscoveredAt:      now,
+	}
+	return db.WithContext(ctx).
+		Where("cluster_id = ?", clusterID).
+		Assign(record).
+		FirstOrCreate(&record).Error
+}
+
+func saveDiscoveredHealthChecks(ctx context.Context, db *gorm.DB, clusterID uint, payload json.RawMessage) int {
+	var health map[string]any
+	if err := json.Unmarshal(payload, &health); err != nil {
+		return 0
+	}
+	checks := mapField(health, "checks")
+	now := time.Now()
+	records := make([]store.CephClusterHealthCheck, 0, len(checks))
+	for name, value := range checks {
+		check, ok := value.(map[string]any)
+		if !ok {
+			continue
+		}
+		records = append(records, store.CephClusterHealthCheck{
+			ClusterID:    clusterID,
+			Name:         name,
+			Severity:     firstStringField(check, "severity"),
+			Summary:      firstStringField(check, "summary"),
+			Detail:       mustJSON(check["detail"]),
+			Muted:        boolField(check, "muted"),
+			Count:        intField(check, "count"),
+			Payload:      mustJSON(check),
+			DiscoveredAt: now,
+		})
+	}
+	replaceDiscoveredRecords(ctx, db, clusterID, &store.CephClusterHealthCheck{}, records)
+	return len(records)
+}
+
+func saveDiscoveredPools(ctx context.Context, db *gorm.DB, clusterID uint, pools []map[string]any) int {
+	now := time.Now()
+	records := make([]store.CephPool, 0, len(pools))
+	seen := map[string]bool{}
+	for index, pool := range pools {
+		name := firstStringField(pool, "pool_name", "name")
+		if name == "" {
+			name = fmt.Sprintf("pool-%d", index)
+		}
+		if seen[name] {
+			continue
+		}
+		seen[name] = true
+		stats := mapField(pool, "stats")
+		records = append(records, store.CephPool{
+			ClusterID:           clusterID,
+			PoolID:              firstStringField(pool, "pool", "pool_id"),
+			PoolName:            name,
+			Type:                firstStringField(pool, "type"),
+			Size:                intField(pool, "size"),
+			MinSize:             intField(pool, "min_size"),
+			PGNum:               intField(pool, "pg_num"),
+			PGPlacementNum:      intField(pool, "pg_placement_num"),
+			PGAutoscaleMode:     firstStringField(pool, "pg_autoscale_mode"),
+			CrushRule:           firstStringField(pool, "crush_rule"),
+			ErasureCodeProfile:  firstStringField(pool, "erasure_code_profile"),
+			ApplicationMetadata: mustJSON(pool["application_metadata"]),
+			QuotaMaxBytes:       int64Field(pool, "quota_max_bytes"),
+			QuotaMaxObjects:     int64Field(pool, "quota_max_objects"),
+			UsedBytes:           firstInt64Field(stats, "bytes_used", "stored", "used_bytes"),
+			MaxAvailBytes:       firstInt64Field(stats, "max_avail", "max_avail_bytes"),
+			Objects:             firstInt64Field(stats, "objects", "num_objects"),
+			Payload:             mustJSON(pool),
+			DiscoveredAt:        now,
+		})
+	}
+	replaceDiscoveredRecords(ctx, db, clusterID, &store.CephPool{}, records)
+	return len(records)
+}
+
+func saveDiscoveredRBDImages(ctx context.Context, db *gorm.DB, clusterID uint, images []map[string]any) int {
+	now := time.Now()
+	var records []store.CephRBDImage
+	seen := map[string]bool{}
+	for index, item := range images {
+		poolName := firstStringField(item, "pool_name", "pool")
+		values := stringList(item["value"])
+		if len(values) == 0 {
+			values = []string{firstStringField(item, "name", "image", "image_name")}
+		}
+		for _, imageName := range values {
+			imageName = strings.TrimSpace(imageName)
+			if imageName == "" {
+				imageName = fmt.Sprintf("image-%d", index)
+			}
+			imageSpec := imageName
+			if poolName != "" {
+				imageSpec = poolName + "/" + imageName
+			}
+			if seen[imageSpec] {
+				continue
+			}
+			seen[imageSpec] = true
+			records = append(records, store.CephRBDImage{
+				ClusterID:    clusterID,
+				PoolName:     poolName,
+				Namespace:    firstStringField(item, "namespace"),
+				ImageName:    imageName,
+				ImageSpec:    imageSpec,
+				ImageID:      firstStringField(item, "id", "image_id"),
+				SizeBytes:    int64Field(item, "size"),
+				ObjectSize:   intField(item, "obj_size"),
+				Features:     mustJSON(item["features"]),
+				Parent:       mustJSON(item["parent"]),
+				Snapshots:    mustJSON(item["snapshots"]),
+				MirrorMode:   firstStringField(item, "mirror_mode"),
+				Trash:        boolField(item, "trash"),
+				Payload:      mustJSON(item),
+				DiscoveredAt: now,
+			})
+		}
+	}
+	replaceDiscoveredRecords(ctx, db, clusterID, &store.CephRBDImage{}, records)
+	return len(records)
+}
+
+func saveDiscoveredFilesystems(ctx context.Context, db *gorm.DB, clusterID uint, filesystems []map[string]any) int {
+	now := time.Now()
+	records := make([]store.CephFilesystem, 0, len(filesystems))
+	seen := map[string]bool{}
+	for index, fs := range filesystems {
+		mdsmap := mapField(fs, "mdsmap")
+		name := firstStringField(fs, "name", "fs_name")
+		if name == "" {
+			name = firstStringField(mdsmap, "fs_name", "name")
+		}
+		fsID := firstStringField(fs, "id", "fs_id")
+		if fsID == "" {
+			fsID = firstStringField(mdsmap, "fs_id")
+		}
+		if fsID == "" {
+			fsID = fmt.Sprintf("fs-%d", index)
+		}
+		if seen[fsID] {
+			continue
+		}
+		seen[fsID] = true
+		records = append(records, store.CephFilesystem{
+			ClusterID:    clusterID,
+			FSID:         fsID,
+			Name:         name,
+			MetadataPool: firstStringField(fs, "metadata_pool"),
+			DataPools:    mustJSON(fs["data_pools"]),
+			MDSMap:       mustJSON(mdsmap),
+			StandbyCount: intField(fs, "standby_count"),
+			ClientCount:  intField(fs, "client_count"),
+			UsedBytes:    int64Field(fs, "used_bytes"),
+			AvailBytes:   int64Field(fs, "avail_bytes"),
+			Payload:      mustJSON(fs),
+			DiscoveredAt: now,
+		})
+	}
+	replaceDiscoveredRecords(ctx, db, clusterID, &store.CephFilesystem{}, records)
+	return len(records)
+}
+
+func saveDiscoveredRGWDaemons(ctx context.Context, db *gorm.DB, clusterID uint, daemons []map[string]any) int {
+	now := time.Now()
+	records := make([]store.CephRGWDaemon, 0, len(daemons))
+	seen := map[string]bool{}
+	for index, daemon := range daemons {
+		serviceID := firstStringField(daemon, "id", "service_id", "daemon_id", "name")
+		if serviceID == "" {
+			serviceID = fmt.Sprintf("rgw-%d", index)
+		}
+		if seen[serviceID] {
+			continue
+		}
+		seen[serviceID] = true
+		records = append(records, store.CephRGWDaemon{
+			ClusterID:      clusterID,
+			ServiceID:      serviceID,
+			Hostname:       firstStringField(daemon, "hostname", "host"),
+			ZoneName:       firstStringField(daemon, "zone_name", "zone"),
+			FrontendConfig: firstStringField(daemon, "frontend_config", "frontend"),
+			Version:        firstStringField(daemon, "version", "ceph_version"),
+			Payload:        mustJSON(daemon),
+			DiscoveredAt:   now,
+		})
+	}
+	replaceDiscoveredRecords(ctx, db, clusterID, &store.CephRGWDaemon{}, records)
+	return len(records)
+}
+
+func saveDiscoveredRGWUsers(ctx context.Context, db *gorm.DB, clusterID uint, users []map[string]any) int {
+	now := time.Now()
+	records := make([]store.CephRGWUser, 0, len(users))
+	seen := map[string]bool{}
+	for index, user := range users {
+		uid := firstStringField(user, "uid", "user_id", "id")
+		if uid == "" {
+			uid = fmt.Sprintf("user-%d", index)
+		}
+		if seen[uid] {
+			continue
+		}
+		seen[uid] = true
+		records = append(records, store.CephRGWUser{
+			ClusterID:    clusterID,
+			UID:          uid,
+			DisplayName:  firstStringField(user, "display_name", "name"),
+			Email:        firstStringField(user, "email"),
+			Suspended:    boolField(user, "suspended"),
+			MaxBuckets:   intField(user, "max_buckets"),
+			Subusers:     mustJSON(user["subusers"]),
+			KeysRedacted: mustJSON(redactedKeys(user["keys"])),
+			Caps:         mustJSON(user["caps"]),
+			Quota:        mustJSON(user["quota"]),
+			Stats:        mustJSON(user["stats"]),
+			Payload:      mustJSON(redactRGWSecrets(user)),
+			DiscoveredAt: now,
+		})
+	}
+	replaceDiscoveredRecords(ctx, db, clusterID, &store.CephRGWUser{}, records)
+	return len(records)
+}
+
+func saveDiscoveredRGWBuckets(ctx context.Context, db *gorm.DB, clusterID uint, buckets []map[string]any) int {
+	now := time.Now()
+	records := make([]store.CephRGWBucket, 0, len(buckets))
+	seen := map[string]bool{}
+	for index, bucket := range buckets {
+		name := firstStringField(bucket, "bucket", "name")
+		if name == "" {
+			name = fmt.Sprintf("bucket-%d", index)
+		}
+		tenant := firstStringField(bucket, "tenant")
+		key := tenant + "\x00" + name
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		stats := mapField(bucket, "stats")
+		records = append(records, store.CephRGWBucket{
+			ClusterID:     clusterID,
+			Tenant:        tenant,
+			Bucket:        name,
+			Owner:         firstStringField(bucket, "owner", "uid"),
+			Zonegroup:     firstStringField(bucket, "zonegroup"),
+			PlacementRule: firstStringField(bucket, "placement_rule"),
+			Versioning:    firstStringField(bucket, "versioning"),
+			ObjectCount:   firstInt64Field(bucket, "num_objects", "object_count"),
+			UsedBytes:     firstInt64Field(bucket, "size", "used_bytes"),
+			Quota:         mustJSON(bucket["quota"]),
+			Lifecycle:     mustJSON(bucket["lifecycle"]),
+			Encryption:    mustJSON(bucket["encryption"]),
+			Payload:       mustJSON(bucket),
+			DiscoveredAt:  now,
+		})
+		if records[len(records)-1].ObjectCount == 0 {
+			records[len(records)-1].ObjectCount = firstInt64Field(stats, "num_objects", "objects")
+		}
+		if records[len(records)-1].UsedBytes == 0 {
+			records[len(records)-1].UsedBytes = firstInt64Field(stats, "size", "size_actual", "bytes_used")
+		}
+	}
+	replaceDiscoveredRecords(ctx, db, clusterID, &store.CephRGWBucket{}, records)
+	return len(records)
+}
+
 func replaceDiscoveredRecords[T any](ctx context.Context, db *gorm.DB, clusterID uint, model any, records []T) {
 	if err := db.WithContext(ctx).Where("cluster_id = ?", clusterID).Delete(model).Error; err != nil {
 		return
@@ -687,6 +970,91 @@ func stringSliceField(record map[string]any, key string) []string {
 		return nil
 	}
 	return stringList(value)
+}
+
+func boolField(record map[string]any, key string) bool {
+	switch value := record[key].(type) {
+	case bool:
+		return value
+	case string:
+		return strings.EqualFold(value, "true") || value == "1" || strings.EqualFold(value, "yes")
+	case float64:
+		return value != 0
+	case int:
+		return value != 0
+	default:
+		return false
+	}
+}
+
+func intField(record map[string]any, key string) int {
+	return int(int64Field(record, key))
+}
+
+func int64Field(record map[string]any, key string) int64 {
+	switch value := record[key].(type) {
+	case int:
+		return int64(value)
+	case int64:
+		return value
+	case float64:
+		return int64(value)
+	case json.Number:
+		number, _ := value.Int64()
+		return number
+	case string:
+		var number int64
+		_, _ = fmt.Sscanf(strings.TrimSpace(value), "%d", &number)
+		return number
+	default:
+		return 0
+	}
+}
+
+func firstInt64Field(record map[string]any, keys ...string) int64 {
+	for _, key := range keys {
+		if value := int64Field(record, key); value != 0 {
+			return value
+		}
+	}
+	return 0
+}
+
+func redactRGWSecrets(record map[string]any) map[string]any {
+	copied := map[string]any{}
+	for key, value := range record {
+		if key == "keys" {
+			copied[key] = redactedKeys(value)
+			continue
+		}
+		copied[key] = value
+	}
+	return copied
+}
+
+func redactedKeys(value any) any {
+	keys, ok := value.([]any)
+	if !ok {
+		return value
+	}
+	redacted := make([]any, 0, len(keys))
+	for _, item := range keys {
+		key, ok := item.(map[string]any)
+		if !ok {
+			redacted = append(redacted, item)
+			continue
+		}
+		copied := map[string]any{}
+		for name, field := range key {
+			if strings.Contains(strings.ToLower(name), "secret") {
+				copied[name] = ""
+				continue
+			}
+			copied[name] = field
+		}
+		redacted = append(redacted, copied)
+	}
+	return redacted
 }
 
 func stringList(value any) []string {

@@ -25,26 +25,6 @@ CREATE TABLE IF NOT EXISTS `ceph_cluster` (
 CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_cluster_name`
   ON `ceph_cluster` (`name`);
 
-CREATE TABLE IF NOT EXISTS `ceph_resource_snapshot` (
-  `id` integer PRIMARY KEY AUTOINCREMENT,
-  `cluster_id` integer NOT NULL,
-  `category` text NOT NULL,
-  `resource_key` text NOT NULL,
-  `payload` longtext NOT NULL,
-  `last_synced_at` datetime NOT NULL,
-  `last_error` text NOT NULL DEFAULT '',
-  `created_at` datetime,
-  `updated_at` datetime,
-  CONSTRAINT `fk_ceph_resource_snapshot_cluster`
-    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_resource_snapshot`
-  ON `ceph_resource_snapshot` (`cluster_id`, `category`, `resource_key`);
-
-CREATE INDEX IF NOT EXISTS `idx_ceph_resource_snapshot_last_synced_at`
-  ON `ceph_resource_snapshot` (`last_synced_at`);
-
 CREATE TABLE IF NOT EXISTS `ceph_cluster_host` (
   `id` integer PRIMARY KEY AUTOINCREMENT,
   `cluster_id` integer NOT NULL,
@@ -221,6 +201,307 @@ CREATE TABLE IF NOT EXISTS `ceph_cluster_configuration` (
 
 CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_cluster_configuration`
   ON `ceph_cluster_configuration` (`cluster_id`, `who`, `name`);
+
+CREATE TABLE IF NOT EXISTS `ceph_data_fetch_run` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `cluster_id` integer NOT NULL,
+  `module` text NOT NULL,
+  `status` text NOT NULL,
+  `source` text NOT NULL,
+  `started_at` datetime NOT NULL,
+  `finished_at` datetime,
+  `duration_ms` integer,
+  `records_upserted` integer NOT NULL DEFAULT 0,
+  `records_deleted` integer NOT NULL DEFAULT 0,
+  `error` text NOT NULL DEFAULT '',
+  `created_at` datetime,
+  CONSTRAINT `fk_ceph_data_fetch_run_cluster`
+    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS `idx_ceph_data_fetch_run_cluster_id`
+  ON `ceph_data_fetch_run` (`cluster_id`);
+
+CREATE INDEX IF NOT EXISTS `idx_ceph_data_fetch_run_module`
+  ON `ceph_data_fetch_run` (`module`);
+
+CREATE INDEX IF NOT EXISTS `idx_ceph_data_fetch_run_started_at`
+  ON `ceph_data_fetch_run` (`started_at`);
+
+CREATE TABLE IF NOT EXISTS `ceph_cluster_summary` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `cluster_id` integer NOT NULL,
+  `health_status` text,
+  `version` text,
+  `mgr_id` text,
+  `mgr_host` text,
+  `have_mon_connection` numeric NOT NULL DEFAULT false,
+  `executing_tasks` longtext NOT NULL,
+  `finished_tasks` longtext NOT NULL,
+  `payload` longtext NOT NULL,
+  `discovered_at` datetime NOT NULL,
+  `created_at` datetime,
+  `updated_at` datetime,
+  CONSTRAINT `fk_ceph_cluster_summary_cluster`
+    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_cluster_summary_cluster_id`
+  ON `ceph_cluster_summary` (`cluster_id`);
+
+CREATE TABLE IF NOT EXISTS `ceph_cluster_health_check` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `cluster_id` integer NOT NULL,
+  `name` text NOT NULL,
+  `severity` text,
+  `summary` text,
+  `detail` longtext NOT NULL,
+  `muted` numeric NOT NULL DEFAULT false,
+  `count` integer,
+  `payload` longtext NOT NULL,
+  `discovered_at` datetime NOT NULL,
+  `created_at` datetime,
+  `updated_at` datetime,
+  CONSTRAINT `fk_ceph_cluster_health_check_cluster`
+    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_cluster_health_check`
+  ON `ceph_cluster_health_check` (`cluster_id`, `name`);
+
+CREATE TABLE IF NOT EXISTS `ceph_pool` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `cluster_id` integer NOT NULL,
+  `pool_id` text,
+  `pool_name` text NOT NULL,
+  `type` text,
+  `size` integer,
+  `min_size` integer,
+  `pg_num` integer,
+  `pg_placement_num` integer,
+  `pg_autoscale_mode` text,
+  `crush_rule` text,
+  `erasure_code_profile` text,
+  `application_metadata` longtext NOT NULL,
+  `quota_max_bytes` integer,
+  `quota_max_objects` integer,
+  `used_bytes` integer,
+  `max_avail_bytes` integer,
+  `objects` integer,
+  `payload` longtext NOT NULL,
+  `discovered_at` datetime NOT NULL,
+  `created_at` datetime,
+  `updated_at` datetime,
+  CONSTRAINT `fk_ceph_pool_cluster`
+    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_pool`
+  ON `ceph_pool` (`cluster_id`, `pool_name`);
+
+CREATE TABLE IF NOT EXISTS `ceph_rbd_image` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `cluster_id` integer NOT NULL,
+  `pool_name` text NOT NULL,
+  `namespace` text,
+  `image_name` text NOT NULL,
+  `image_spec` text NOT NULL,
+  `image_id` text,
+  `size_bytes` integer,
+  `object_size` integer,
+  `features` longtext NOT NULL,
+  `stripe_count` integer,
+  `stripe_unit` integer,
+  `parent` longtext NOT NULL,
+  `snapshots` longtext NOT NULL,
+  `mirror_mode` text,
+  `trash` numeric NOT NULL DEFAULT false,
+  `payload` longtext NOT NULL,
+  `discovered_at` datetime NOT NULL,
+  `created_at` datetime,
+  `updated_at` datetime,
+  CONSTRAINT `fk_ceph_rbd_image_cluster`
+    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_rbd_image`
+  ON `ceph_rbd_image` (`cluster_id`, `image_spec`);
+
+CREATE TABLE IF NOT EXISTS `ceph_filesystem` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `cluster_id` integer NOT NULL,
+  `fs_id` text NOT NULL,
+  `name` text NOT NULL,
+  `metadata_pool` text,
+  `data_pools` longtext NOT NULL,
+  `mds_map` longtext NOT NULL,
+  `standby_count` integer,
+  `client_count` integer,
+  `used_bytes` integer,
+  `avail_bytes` integer,
+  `payload` longtext NOT NULL,
+  `discovered_at` datetime NOT NULL,
+  `created_at` datetime,
+  `updated_at` datetime,
+  CONSTRAINT `fk_ceph_filesystem_cluster`
+    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_filesystem`
+  ON `ceph_filesystem` (`cluster_id`, `fs_id`);
+
+CREATE TABLE IF NOT EXISTS `ceph_rgw_daemon` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `cluster_id` integer NOT NULL,
+  `service_id` text NOT NULL,
+  `hostname` text,
+  `zone_name` text,
+  `frontend_config` text,
+  `version` text,
+  `payload` longtext NOT NULL,
+  `discovered_at` datetime NOT NULL,
+  `created_at` datetime,
+  `updated_at` datetime,
+  CONSTRAINT `fk_ceph_rgw_daemon_cluster`
+    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_rgw_daemon`
+  ON `ceph_rgw_daemon` (`cluster_id`, `service_id`);
+
+CREATE TABLE IF NOT EXISTS `ceph_rgw_user` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `cluster_id` integer NOT NULL,
+  `uid` text NOT NULL,
+  `display_name` text,
+  `email` text,
+  `suspended` numeric NOT NULL DEFAULT false,
+  `max_buckets` integer,
+  `subusers` longtext NOT NULL,
+  `keys_redacted` longtext NOT NULL,
+  `caps` longtext NOT NULL,
+  `quota` longtext NOT NULL,
+  `stats` longtext NOT NULL,
+  `payload` longtext NOT NULL,
+  `discovered_at` datetime NOT NULL,
+  `created_at` datetime,
+  `updated_at` datetime,
+  CONSTRAINT `fk_ceph_rgw_user_cluster`
+    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_rgw_user`
+  ON `ceph_rgw_user` (`cluster_id`, `uid`);
+
+CREATE TABLE IF NOT EXISTS `ceph_rgw_bucket` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `cluster_id` integer NOT NULL,
+  `tenant` text,
+  `bucket` text NOT NULL,
+  `owner` text,
+  `zonegroup` text,
+  `placement_rule` text,
+  `versioning` text,
+  `object_count` integer,
+  `used_bytes` integer,
+  `quota` longtext NOT NULL,
+  `lifecycle` longtext NOT NULL,
+  `encryption` longtext NOT NULL,
+  `payload` longtext NOT NULL,
+  `discovered_at` datetime NOT NULL,
+  `created_at` datetime,
+  `updated_at` datetime,
+  CONSTRAINT `fk_ceph_rgw_bucket_cluster`
+    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_rgw_bucket`
+  ON `ceph_rgw_bucket` (`cluster_id`, `tenant`, `bucket`);
+
+CREATE TABLE IF NOT EXISTS `ceph_nvmeof_gateway` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `cluster_id` integer NOT NULL,
+  `group_name` text NOT NULL,
+  `hostname` text NOT NULL,
+  `tr_addr` text NOT NULL,
+  `status` text,
+  `version` text,
+  `listeners` longtext NOT NULL,
+  `stats` longtext NOT NULL,
+  `payload` longtext NOT NULL,
+  `discovered_at` datetime NOT NULL,
+  `created_at` datetime,
+  `updated_at` datetime,
+  CONSTRAINT `fk_ceph_nvmeof_gateway_cluster`
+    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_nvmeof_gateway`
+  ON `ceph_nvmeof_gateway` (`cluster_id`, `group_name`, `hostname`, `tr_addr`);
+
+CREATE TABLE IF NOT EXISTS `ceph_nvmeof_subsystem` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `cluster_id` integer NOT NULL,
+  `nqn` text NOT NULL,
+  `serial_number` text,
+  `model_number` text,
+  `max_namespaces` integer,
+  `namespaces` longtext NOT NULL,
+  `hosts` longtext NOT NULL,
+  `listeners` longtext NOT NULL,
+  `connections` longtext NOT NULL,
+  `payload` longtext NOT NULL,
+  `discovered_at` datetime NOT NULL,
+  `created_at` datetime,
+  `updated_at` datetime,
+  CONSTRAINT `fk_ceph_nvmeof_subsystem_cluster`
+    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_nvmeof_subsystem`
+  ON `ceph_nvmeof_subsystem` (`cluster_id`, `nqn`);
+
+CREATE TABLE IF NOT EXISTS `ceph_iscsi_target` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `cluster_id` integer NOT NULL,
+  `target_iqn` text NOT NULL,
+  `portals` longtext NOT NULL,
+  `disks` longtext NOT NULL,
+  `clients` longtext NOT NULL,
+  `groups` longtext NOT NULL,
+  `payload` longtext NOT NULL,
+  `discovered_at` datetime NOT NULL,
+  `created_at` datetime,
+  `updated_at` datetime,
+  CONSTRAINT `fk_ceph_iscsi_target_cluster`
+    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_iscsi_target`
+  ON `ceph_iscsi_target` (`cluster_id`, `target_iqn`);
+
+CREATE TABLE IF NOT EXISTS `ceph_nfs_export` (
+  `id` integer PRIMARY KEY AUTOINCREMENT,
+  `cluster_id` integer NOT NULL,
+  `nfs_cluster_id` text NOT NULL,
+  `export_id` text NOT NULL,
+  `path` text,
+  `pseudo` text,
+  `access_type` text,
+  `squash` text,
+  `protocols` longtext NOT NULL,
+  `transports` longtext NOT NULL,
+  `fsal` longtext NOT NULL,
+  `payload` longtext NOT NULL,
+  `discovered_at` datetime NOT NULL,
+  `created_at` datetime,
+  `updated_at` datetime,
+  CONSTRAINT `fk_ceph_nfs_export_cluster`
+    FOREIGN KEY (`cluster_id`) REFERENCES `ceph_cluster` (`id`) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS `idx_ceph_nfs_export`
+  ON `ceph_nfs_export` (`cluster_id`, `nfs_cluster_id`, `export_id`);
 
 CREATE TABLE IF NOT EXISTS `user` (
   `id` integer PRIMARY KEY AUTOINCREMENT,

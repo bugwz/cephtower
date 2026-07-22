@@ -2,7 +2,7 @@ import { ArrowLeftOutlined, DeleteOutlined, ExclamationCircleOutlined, ReloadOut
 import { Button, Card, Descriptions, Modal, Space, Table, Tag, Typography, message } from 'antd'
 import { useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { deleteCluster, getClusterDetail, type CephDiscoveredRecord, type CephResourceSnapshot } from '../../api/clusters'
+import { deleteCluster, getClusterDetail, type CephDiscoveredRecord } from '../../api/clusters'
 import { textValue } from '../../api/client'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
@@ -118,46 +118,6 @@ export function ClusterDetailPage() {
             />
           </Space>
         </Card>
-
-        <Card className="page-surface-card" title="资源快照">
-          <Table
-            size="middle"
-            rowKey={(row) => `${row.category}:${row.resource_key}`}
-            dataSource={data?.snapshots ?? []}
-            pagination={{ pageSize: 8, showSizeChanger: false }}
-            expandable={{
-              expandedRowRender: (row) => (
-                <Paragraph className="snapshot-payload" copyable>
-                  {formatSnapshotPayload(row.payload)}
-                </Paragraph>
-              )
-            }}
-            columns={[
-              { title: '类别', dataIndex: 'category' },
-              { title: '资源键', dataIndex: 'resource_key' },
-              {
-                title: '同步状态',
-                key: 'sync_status',
-                render: (_, row) => row.last_error ? <Tag color="error">失败</Tag> : <Tag color="success">成功</Tag>
-              },
-              {
-                title: '最后同步',
-                dataIndex: 'last_synced_at',
-                render: (value: string) => value ? new Date(value).toLocaleString() : '-'
-              },
-              {
-                title: '错误信息',
-                dataIndex: 'last_error',
-                render: (value: string) => value ? <Text type="danger">{value}</Text> : <Text type="secondary">-</Text>
-              },
-              {
-                title: '数据预览',
-                dataIndex: 'payload',
-                render: (value: unknown) => textValue(previewSnapshotPayload(value))
-              }
-            ]}
-          />
-        </Card>
       </Space>
     </Page>
   )
@@ -204,7 +164,7 @@ function previewSnapshotPayload(payload: unknown) {
   return payload
 }
 
-function formatSnapshotPayload(payload: CephResourceSnapshot['payload']) {
+function formatSnapshotPayload(payload: unknown) {
   try {
     return JSON.stringify(payload, null, 2)
   } catch {

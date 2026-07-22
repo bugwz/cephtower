@@ -163,7 +163,7 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     children: [
       { key: 'systemInfo', label: '系统信息', path: '/system/info', icon: 'system', permission: 'system' },
       { key: 'systemUsers', label: '用户管理', path: '/system/users', icon: 'user', permission: 'system' },
-      { key: 'dataManagement', label: '数据管理', path: '/system/data', icon: 'data', permission: 'system' }
+      { key: 'dataManagement', label: '配置管理', path: '/system/data', icon: 'config', permission: 'system' }
     ]
   }
 ]

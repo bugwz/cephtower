@@ -30,9 +30,6 @@ func TestOpenSQLiteCreatesDatabaseAndMigrates(t *testing.T) {
 	if !db.Migrator().HasTable(&CephCluster{}) {
 		t.Fatal("ceph_cluster table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephResourceSnapshot{}) {
-		t.Fatal("ceph_resource_snapshot table was not migrated")
-	}
 	if !db.Migrator().HasTable(&CephClusterHost{}) {
 		t.Fatal("ceph_cluster_host table was not migrated")
 	}
@@ -62,6 +59,15 @@ func TestOpenSQLiteCreatesDatabaseAndMigrates(t *testing.T) {
 	}
 	if !db.Migrator().HasTable(&CephClusterConfiguration{}) {
 		t.Fatal("ceph_cluster_configuration table was not migrated")
+	}
+	if !db.Migrator().HasTable(&CephDataFetchRun{}) {
+		t.Fatal("ceph_data_fetch_run table was not migrated")
+	}
+	if !db.Migrator().HasTable(&CephPool{}) {
+		t.Fatal("ceph_pool table was not migrated")
+	}
+	if !db.Migrator().HasTable(&CephRBDImage{}) {
+		t.Fatal("ceph_rbd_image table was not migrated")
 	}
 	if !db.Migrator().HasTable(&User{}) {
 		t.Fatal("user table was not migrated")

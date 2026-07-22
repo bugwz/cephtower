@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	"time"
 
 	"cephtower/backend/internal/api/v1"
 	"cephtower/backend/internal/config"
@@ -32,7 +31,7 @@ func NewServer(cfg config.Config, cephClient v1.CephClient, db *gorm.DB) *Server
 	}
 	if cephClient == nil {
 		cephClient = newDatabaseCephClient(server.database)
-		server.startCephResourceSync()
+		server.startCephDataFetchScheduler()
 	}
 	server.ceph = cephClient
 	return server
@@ -51,6 +50,7 @@ func (s *Server) Routes() http.Handler {
 	s.registerAuthRoutes(mux)
 	s.registerSetupRoutes(mux)
 	s.registerClusterRoutes(mux)
+	s.registerSystemConfigRoutes(mux)
 	v1.RegisterRoutes(mux, s.ceph)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
@@ -192,24 +192,4 @@ func responseMessage(payload any, fallback string) string {
 		return strings.TrimSpace(action.Message)
 	}
 	return fallback
-}
-
-func (s *Server) startCephResourceSync() {
-	ctx, cancel := context.WithCancel(context.Background())
-	s.syncCancel = cancel
-	syncer := newCephResourceSyncer(s.database)
-
-	go func() {
-		syncer.Sync(ctx)
-		ticker := time.NewTicker(time.Minute)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				syncer.Sync(ctx)
-			}
-		}
-	}()
 }

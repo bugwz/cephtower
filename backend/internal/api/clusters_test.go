@@ -126,15 +126,6 @@ func TestDeleteClusterRemovesDiscoveredResources(t *testing.T) {
 	if err := server.database().Create(&cluster).Error; err != nil {
 		t.Fatalf("create cluster: %v", err)
 	}
-	if err := server.database().Create(&store.CephResourceSnapshot{
-		ClusterID:    cluster.ID,
-		Category:     snapshotHosts,
-		ResourceKey:  "all",
-		Payload:      `[]`,
-		LastSyncedAt: time.Now(),
-	}).Error; err != nil {
-		t.Fatalf("create resource snapshot: %v", err)
-	}
 	if err := server.database().Create(&store.CephClusterHost{
 		ClusterID:    cluster.ID,
 		Hostname:     "node-1",
@@ -167,9 +158,9 @@ func TestDeleteClusterRemovesDiscoveredResources(t *testing.T) {
 	}
 
 	assertModelCount(t, server.database(), &store.CephCluster{}, 0)
-	assertModelCount(t, server.database(), &store.CephResourceSnapshot{}, 0)
 	assertModelCount(t, server.database(), &store.CephClusterHost{}, 0)
 	assertModelCount(t, server.database(), &store.CephClusterMon{}, 0)
+	assertModelCount(t, server.database(), &store.CephDataFetchRun{}, 0)
 }
 
 func TestCreateClusterStoresDiscoveredCephInventory(t *testing.T) {
@@ -226,12 +217,12 @@ func TestCreateClusterStoresDiscoveredCephInventory(t *testing.T) {
 		t.Fatalf("host payload = %s, want discovered host", host.Payload)
 	}
 
-	var snapshotCount int64
-	if err := server.database().Model(&store.CephResourceSnapshot{}).Where("cluster_id = ?", created.ID).Count(&snapshotCount).Error; err != nil {
-		t.Fatalf("count resource snapshots: %v", err)
+	var settingCount int64
+	if err := server.database().Model(&store.Setting{}).Where("`key` LIKE ?", dataFetchSettingPrefix+"%").Count(&settingCount).Error; err != nil {
+		t.Fatalf("count system data fetch settings: %v", err)
 	}
-	if snapshotCount != 0 {
-		t.Fatalf("resource snapshots = %d, want none from cluster discovery", snapshotCount)
+	if settingCount == 0 {
+		t.Fatalf("system data fetch settings = %d, want defaults from cluster creation", settingCount)
 	}
 
 	recorder = clusterAPIRequest(server, http.MethodGet, "/api/v1/clusters/1", adminToken, nil)
@@ -242,8 +233,8 @@ func TestCreateClusterStoresDiscoveredCephInventory(t *testing.T) {
 	if err := decodeAPIResponseData(recorder, &detail); err != nil {
 		t.Fatalf("decode cluster detail: %v", err)
 	}
-	if detail.Cluster.ID != created.ID || len(detail.Discovery.Hosts) != 1 || len(detail.Snapshots) != 0 {
-		t.Fatalf("detail = %#v, want cluster and discovered inventory without resource snapshots", detail)
+	if detail.Cluster.ID != created.ID || len(detail.Discovery.Hosts) != 1 {
+		t.Fatalf("detail = %#v, want cluster and discovered inventory", detail)
 	}
 }
 
