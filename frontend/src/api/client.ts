@@ -1,6 +1,6 @@
 export type ApiRecord = Record<string, unknown>
 
-const apiBaseUrl = '/api/v1/ceph'
+const apiBaseUrl = '/api/v1'
 const apiErrorEventName = 'cephtower:api-error'
 
 let authToken = localStorage.getItem('cephtower.auth.token') ?? ''

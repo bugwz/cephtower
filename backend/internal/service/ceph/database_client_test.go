@@ -1,4 +1,4 @@
-package api
+package ceph
 
 import (
 	"context"
@@ -42,7 +42,7 @@ func TestDatabaseCephClientUsesLocalClusterSummary(t *testing.T) {
 		t.Fatalf("create cluster summary: %v", err)
 	}
 
-	client := newDatabaseCephClient(func() *gorm.DB { return db })
+	client := NewDatabaseCephClient(func() *gorm.DB { return db })
 	summary, err := client.ClusterSummary(context.Background())
 	if err != nil {
 		t.Fatalf("ClusterSummary() returned error: %v", err)
@@ -87,7 +87,7 @@ func TestDatabaseCephClientListsHostsFromDatabase(t *testing.T) {
 		t.Fatalf("create host: %v", err)
 	}
 
-	client := newDatabaseCephClient(func() *gorm.DB { return db })
+	client := NewDatabaseCephClient(func() *gorm.DB { return db })
 	hosts, err := client.ListHosts(context.Background(), ceph.ListHostsOptions{Search: "node-b"})
 	if err != nil {
 		t.Fatalf("ListHosts() returned error: %v", err)
@@ -99,7 +99,7 @@ func TestDatabaseCephClientListsHostsFromDatabase(t *testing.T) {
 
 func TestDatabaseCephClientReturnsUnknownSummaryWithoutDashboardCluster(t *testing.T) {
 	db := openDatabaseCephClientTestDB(t)
-	client := newDatabaseCephClient(func() *gorm.DB { return db })
+	client := NewDatabaseCephClient(func() *gorm.DB { return db })
 
 	summary, err := client.ClusterSummary(context.Background())
 	if err != nil {
@@ -112,7 +112,7 @@ func TestDatabaseCephClientReturnsUnknownSummaryWithoutDashboardCluster(t *testi
 
 func TestDatabaseCephClientReturnsUnknownHealthWithoutDashboardCluster(t *testing.T) {
 	db := openDatabaseCephClientTestDB(t)
-	client := newDatabaseCephClient(func() *gorm.DB { return db })
+	client := NewDatabaseCephClient(func() *gorm.DB { return db })
 
 	health, err := client.HealthFull(context.Background())
 	if err != nil {
@@ -129,7 +129,7 @@ func TestDatabaseCephClientReturnsUnknownHealthWithoutDashboardCluster(t *testin
 
 func TestDatabaseCephClientRawMonitorReturnsEmptyWithoutCluster(t *testing.T) {
 	db := openDatabaseCephClientTestDB(t)
-	client := newDatabaseCephClient(func() *gorm.DB { return db })
+	client := NewDatabaseCephClient(func() *gorm.DB { return db })
 
 	payload, err := client.Raw(context.Background(), http.MethodGet, "/api/monitor", nil, nil)
 	if err != nil {
@@ -147,7 +147,7 @@ func TestDatabaseCephClientRawMonitorReturnsEmptyWithoutCluster(t *testing.T) {
 
 func TestDatabaseCephClientRawLocalGETsReturnEmptyWithoutCluster(t *testing.T) {
 	db := openDatabaseCephClientTestDB(t)
-	client := newDatabaseCephClient(func() *gorm.DB { return db })
+	client := NewDatabaseCephClient(func() *gorm.DB { return db })
 	paths := []string{
 		"/api/service",
 		"/api/service/known_types",
@@ -226,7 +226,7 @@ func TestDatabaseCephClientRawMonitorUsesDatabaseRecords(t *testing.T) {
 		t.Fatalf("create out-quorum mon: %v", err)
 	}
 
-	client := newDatabaseCephClient(func() *gorm.DB { return db })
+	client := NewDatabaseCephClient(func() *gorm.DB { return db })
 	payload, err := client.Raw(context.Background(), http.MethodGet, "/api/monitor", nil, nil)
 	if err != nil {
 		t.Fatalf("Raw() returned error: %v", err)

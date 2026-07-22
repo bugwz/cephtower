@@ -1,4 +1,4 @@
-package v1
+package api
 
 import (
 	"context"
@@ -20,10 +20,22 @@ func TestCephV1Routes(t *testing.T) {
 		},
 	}
 	mux := http.NewServeMux()
-	RegisterRoutes(mux, client)
+	server := &Server{ceph: client}
+	server.registerAPIRouter(mux)
+
+	t.Run("healthz is under api v1", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/healthz", nil)
+		rr := httptest.NewRecorder()
+
+		mux.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Fatalf("status = %d, want %d: %s", rr.Code, http.StatusOK, rr.Body.String())
+		}
+	})
 
 	t.Run("list hosts maps query options", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/ceph/hosts?limit=5&offset=2&facts=true&include_service_instances=true&search=node&sort=hostname", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/host?limit=5&offset=2&facts=true&include_service_instances=true&search=node&sort=hostname", nil)
 		rr := httptest.NewRecorder()
 
 		mux.ServeHTTP(rr, req)
@@ -49,7 +61,7 @@ func TestCephV1Routes(t *testing.T) {
 	})
 
 	t.Run("proxy maps project pool route", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPut, "/api/v1/ceph/pools/rbd?stats=true", strings.NewReader(`{"application_metadata":"rbd"}`))
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/pool/rbd?stats=true", strings.NewReader(`{"application_metadata":"rbd"}`))
 		req.Header.Set("Content-Type", "application/json")
 		rr := httptest.NewRecorder()
 

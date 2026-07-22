@@ -1,11 +1,11 @@
 import { Card, Tabs } from 'antd'
 import { useCallback } from 'react'
-import { listDaemons, listServices } from '../../api/resources'
+import { listDaemons, listServices } from '../../api/resource'
 import { DataTable } from '../../components/DataTable'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
 
-export function ServiceManagementPage() {
+export function ServicePage() {
   const loader = useCallback(async () => {
     const [services, daemons] = await Promise.all([listServices(), listDaemons()])
     return { services, daemons }

@@ -97,7 +97,7 @@ export async function initializeSetup(payload: {
 }
 
 export async function listUsers(): Promise<UserAccount[]> {
-  return requestAuth<UserAccount[]>('/users')
+  return requestAuth<UserAccount[]>('/user')
 }
 
 export async function createUser(payload: {
@@ -109,7 +109,7 @@ export async function createUser(payload: {
   password: string
   enabled: boolean
 }): Promise<UserAccount> {
-  return requestAuth<UserAccount>('/users', {
+  return requestAuth<UserAccount>('/user', {
     method: 'POST',
     body: JSON.stringify(payload)
   })
@@ -123,7 +123,7 @@ export async function updateUser(id: number, payload: Partial<{
   password: string
   enabled: boolean
 }>): Promise<UserAccount> {
-  return requestAuth<UserAccount>(`/users/${id}`, {
+  return requestAuth<UserAccount>(`/user/${id}`, {
     method: 'PATCH',
     body: JSON.stringify(payload)
   })

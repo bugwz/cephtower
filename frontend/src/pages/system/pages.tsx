@@ -1,15 +1,15 @@
 import { DemoPage } from '../DemoPage'
-import { DataFetchSettingsPage } from './DataFetchSettingsPage'
-import { UserManagementPage } from './UserManagementPage'
+import { DataPage } from './DataPage'
+import { UserPage } from './UserPage'
 
 export function SystemInfoPage() {
   return <DemoPage pageKey="systemInfo" />
 }
 
 export function SystemUsersPage() {
-  return <UserManagementPage />
+  return <UserPage />
 }
 
 export function DataManagementPage() {
-  return <DataFetchSettingsPage />
+  return <DataPage />
 }

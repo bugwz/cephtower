@@ -1,4 +1,4 @@
-package api
+package ceph
 
 import (
 	"context"
@@ -19,7 +19,7 @@ type databaseCephClient struct {
 	database func() *gorm.DB
 }
 
-func newDatabaseCephClient(database func() *gorm.DB) *databaseCephClient {
+func NewDatabaseCephClient(database func() *gorm.DB) *databaseCephClient {
 	return &databaseCephClient{database: database}
 }
 
@@ -801,8 +801,7 @@ func (c *databaseCephClient) fetchModule(ctx context.Context, module string) {
 		return
 	}
 	go func() {
-		server := &Server{db: c.database()}
-		_, _ = server.fetchClusterModule(context.WithoutCancel(ctx), clusterID, module)
+		_, _ = RunDataFetchModule(context.WithoutCancel(ctx), c.database, clusterID, module)
 	}()
 }
 

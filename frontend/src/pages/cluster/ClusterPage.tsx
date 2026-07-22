@@ -7,7 +7,7 @@ import {
   listClusters,
   updateCluster,
   type CephCluster
-} from '../../api/clusters'
+} from '../../api/cluster'
 import { Page } from '../../components/Page'
 import { DraggableModal } from '../../components/DraggableModal'
 
@@ -21,7 +21,7 @@ interface ClusterFormValues {
   keyring?: string
 }
 
-export function ClusterManagementPage() {
+export function ClusterPage() {
   const navigate = useNavigate()
   const [clusters, setClusters] = useState<CephCluster[]>([])
   const [clusterLoading, setClusterLoading] = useState(true)
@@ -161,7 +161,7 @@ export function ClusterManagementPage() {
                   <Button icon={<EditOutlined />} onClick={() => openEditCluster(cluster)}>
                     编辑
                   </Button>
-                  <Button onClick={() => navigate(`/cluster/clusters/${cluster.id}`)}>
+                  <Button onClick={() => navigate(`/cluster/cluster/${cluster.id}`)}>
                     详情
                   </Button>
                 </Space>

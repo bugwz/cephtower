@@ -41,7 +41,7 @@ interface DataFetchConfigRow extends DataFetchConfig {
   updated_at: string
 }
 
-export function DataFetchSettingsPage() {
+export function DataPage() {
   const [settings, setSettings] = useState<DataFetchConfigRow[]>([])
   const [runs, setRuns] = useState<DataFetchRun[]>([])
   const [loading, setLoading] = useState(true)

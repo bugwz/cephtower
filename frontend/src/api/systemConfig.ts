@@ -1,4 +1,10 @@
-import { request } from './client'
+import {
+  getAuthToken,
+  notifyApiError,
+  readApiResponse,
+  toApiErrorDetail,
+  type ApiRequestInit
+} from './client'
 
 export interface SystemSetting {
   key: string
@@ -35,28 +41,50 @@ export interface DataFetchRun {
 
 export function listSystemSettings(prefix?: string): Promise<SystemSetting[]> {
   const query = prefix ? `?prefix=${encodeURIComponent(prefix)}` : ''
-  return request<SystemSetting[]>(`/system/config/settings${query}`)
+  return systemRequest<SystemSetting[]>(`/system/config/setting${query}`)
 }
 
 export function updateSystemSetting(key: string, value: string): Promise<SystemSetting> {
-  return request<SystemSetting>(`/system/config/settings/${encodeURIComponent(key)}`, {
+  return systemRequest<SystemSetting>(`/system/config/setting/${encodeURIComponent(key)}`, {
     method: 'PUT',
     body: JSON.stringify({ value })
   })
 }
 
 export function runDataFetchModule(module: string): Promise<{ message: string }> {
-  return request<{ message: string }>(`/system/config/data-fetch/${encodeURIComponent(module)}/run`, {
+  return systemRequest<{ message: string }>(`/system/config/data-fetch/${encodeURIComponent(module)}/run`, {
     method: 'POST'
   })
 }
 
 export function listDataFetchRuns(limit = 50): Promise<DataFetchRun[]> {
-  return request<DataFetchRun[]>(`/system/config/data-fetch/runs?limit=${limit}`)
+  return systemRequest<DataFetchRun[]>(`/system/config/data-fetch/run?limit=${limit}`)
 }
 
 export function resetSystemConfigDefaults(): Promise<{ message: string }> {
-  return request<{ message: string }>('/system/config/defaults/reset', {
+  return systemRequest<{ message: string }>('/system/config/default/reset', {
     method: 'POST'
   })
+}
+
+const systemBaseUrl = '/api/v1'
+
+async function systemRequest<T>(path: string, init?: ApiRequestInit): Promise<T> {
+  const { suppressErrorNotification, ...fetchInit } = init ?? {}
+  try {
+    const response = await fetch(`${systemBaseUrl}${path}`, {
+      ...fetchInit,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),
+        ...fetchInit.headers
+      }
+    })
+    return await readApiResponse<T>(response)
+  } catch (err) {
+    if (!suppressErrorNotification) {
+      notifyApiError(toApiErrorDetail(err, path))
+    }
+    throw err
+  }
 }

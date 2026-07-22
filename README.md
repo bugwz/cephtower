@@ -211,7 +211,7 @@ make backend-test
 |------|------|----------|
 | 服务入口 | `backend/cmd/server` | 加载配置、初始化客户端、启动 HTTP 服务 |
 | 配置模块 | `backend/internal/config` | 读取配置文件并生成运行配置 |
-| Ceph 客户端 | `backend/internal/ceph` | 封装 Ceph Dashboard API 调用 |
+| Ceph 服务层 | `backend/internal/service/ceph` | 编排 Ceph 数据同步、调度和数据库适配 |
 | HTTP API | `backend/internal/httpapi` | 暴露前端所需的 REST API |
 
 ### 6.2 前端分层

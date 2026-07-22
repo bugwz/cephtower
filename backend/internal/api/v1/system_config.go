@@ -1,4 +1,4 @@
-package api
+package v1
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"cephtower/backend/internal/service/ceph"
 	"cephtower/backend/internal/store"
 	"gorm.io/gorm"
 )
@@ -37,24 +38,16 @@ type dataFetchRunResponse struct {
 	CreatedAt       time.Time  `json:"created_at"`
 }
 
-func (s *Server) registerSystemConfigRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /api/v1/system/config/settings", s.listSystemSettings)
-	mux.HandleFunc("PUT /api/v1/system/config/settings/{key}", s.updateSystemSetting)
-	mux.HandleFunc("POST /api/v1/system/config/defaults/reset", s.resetSystemConfigDefaults)
-	mux.HandleFunc("POST /api/v1/system/config/data-fetch/{module}/run", s.runDataFetchModuleNow)
-	mux.HandleFunc("GET /api/v1/system/config/data-fetch/runs", s.listDataFetchRuns)
-}
-
-func (s *Server) listSystemSettings(w http.ResponseWriter, r *http.Request) {
+func (api *API) ListSystemSettings(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
-	if err := ensureDefaultSystemSettings(r.Context(), s.database()); err != nil {
+	if err := ceph.EnsureDefaultSystemSettings(r.Context(), api.database()); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
 	var settings []store.Setting
-	query := s.database().WithContext(r.Context()).Order("`key` asc")
+	query := api.database().WithContext(r.Context()).Order("`key` asc")
 	if prefix := strings.TrimSpace(r.URL.Query().Get("prefix")); prefix != "" {
 		query = query.Where("`key` LIKE ?", prefix+"%")
 	}
@@ -73,7 +66,7 @@ func (s *Server) listSystemSettings(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, response)
 }
 
-func (s *Server) updateSystemSetting(w http.ResponseWriter, r *http.Request) {
+func (api *API) UpdateSystemSetting(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
@@ -86,16 +79,16 @@ func (s *Server) updateSystemSetting(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &req) {
 		return
 	}
-	if strings.HasPrefix(key, dataFetchSettingPrefix) {
-		var config dataFetchConfig
+	if strings.HasPrefix(key, ceph.DataFetchSettingPrefix) {
+		var config ceph.DataFetchConfig
 		if err := json.Unmarshal([]byte(req.Value), &config); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "data fetch setting value must be valid JSON"})
 			return
 		}
 		if config.Module == "" {
-			config.Module = strings.TrimPrefix(key, dataFetchSettingPrefix)
+			config.Module = strings.TrimPrefix(key, ceph.DataFetchSettingPrefix)
 		}
-		if config.Module != strings.TrimPrefix(key, dataFetchSettingPrefix) {
+		if config.Module != strings.TrimPrefix(key, ceph.DataFetchSettingPrefix) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "data fetch setting module must match setting key"})
 			return
 		}
@@ -103,11 +96,16 @@ func (s *Server) updateSystemSetting(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
 		}
-		normalizeDataFetchConfig(&config)
-		req.Value = mustJSON(config)
+		ceph.NormalizeDataFetchConfig(&config)
+		data, err := json.Marshal(config)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		req.Value = string(data)
 	}
 	setting := store.Setting{Key: key, Value: req.Value}
-	if err := s.database().WithContext(r.Context()).
+	if err := api.database().WithContext(r.Context()).
 		Where("`key` = ?", key).
 		Assign(store.Setting{Value: req.Value}).
 		FirstOrCreate(&setting).Error; err != nil {
@@ -121,15 +119,15 @@ func (s *Server) updateSystemSetting(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *Server) resetSystemConfigDefaults(w http.ResponseWriter, r *http.Request) {
+func (api *API) ResetSystemConfigDefaults(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
-	if err := s.database().WithContext(r.Context()).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("`key` LIKE ?", dataFetchSettingPrefix+"%").Delete(&store.Setting{}).Error; err != nil {
+	if err := api.database().WithContext(r.Context()).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("`key` LIKE ?", ceph.DataFetchSettingPrefix+"%").Delete(&store.Setting{}).Error; err != nil {
 			return err
 		}
-		return ensureDefaultSystemSettings(r.Context(), tx)
+		return ceph.EnsureDefaultSystemSettings(r.Context(), tx)
 	}); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
@@ -137,12 +135,12 @@ func (s *Server) resetSystemConfigDefaults(w http.ResponseWriter, r *http.Reques
 	writeJSON(w, http.StatusOK, map[string]string{"message": "系统配置已恢复默认"})
 }
 
-func (s *Server) runDataFetchModuleNow(w http.ResponseWriter, r *http.Request) {
+func (api *API) RunDataFetchModuleNow(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
 	module := strings.TrimSpace(r.PathValue("module"))
-	config, ok, err := dataFetchConfigByModule(r.Context(), s.database(), module)
+	config, ok, err := dataFetchConfigByModule(r.Context(), api.database(), module)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
@@ -152,20 +150,21 @@ func (s *Server) runDataFetchModuleNow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var clusters []store.CephCluster
-	if err := s.database().WithContext(r.Context()).Order("id asc").Find(&clusters).Error; err != nil {
+	if err := api.database().WithContext(r.Context()).Order("id asc").Find(&clusters).Error; err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
 	ctx := context.WithoutCancel(r.Context())
+	service := ceph.NewService(api.database)
 	go func() {
 		for _, cluster := range clusters {
-			_ = s.runDataFetchConfig(ctx, cluster.ID, config)
+			_ = service.RunDataFetchConfig(ctx, cluster.ID, config)
 		}
 	}()
 	writeJSON(w, http.StatusAccepted, map[string]string{"message": "数据获取任务已启动"})
 }
 
-func (s *Server) listDataFetchRuns(w http.ResponseWriter, r *http.Request) {
+func (api *API) ListDataFetchRuns(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
@@ -176,7 +175,7 @@ func (s *Server) listDataFetchRuns(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	var runs []store.CephDataFetchRun
-	query := s.database().WithContext(r.Context()).Order("started_at desc").Limit(limit)
+	query := api.database().WithContext(r.Context()).Order("started_at desc").Limit(limit)
 	if clusterID := strings.TrimSpace(r.URL.Query().Get("cluster_id")); clusterID != "" {
 		query = query.Where("cluster_id = ?", clusterID)
 	}
@@ -194,27 +193,27 @@ func (s *Server) listDataFetchRuns(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, response)
 }
 
-func dataFetchConfigByModule(ctx context.Context, db *gorm.DB, module string) (dataFetchConfig, bool, error) {
+func dataFetchConfigByModule(ctx context.Context, db *gorm.DB, module string) (ceph.DataFetchConfig, bool, error) {
 	var setting store.Setting
-	err := db.WithContext(ctx).Where("`key` = ?", dataFetchSettingKey(module)).First(&setting).Error
+	err := db.WithContext(ctx).Where("`key` = ?", ceph.DataFetchSettingKey(module)).First(&setting).Error
 	if err == gorm.ErrRecordNotFound {
-		return dataFetchConfig{}, false, nil
+		return ceph.DataFetchConfig{}, false, nil
 	}
 	if err != nil {
-		return dataFetchConfig{}, false, err
+		return ceph.DataFetchConfig{}, false, err
 	}
-	var config dataFetchConfig
+	var config ceph.DataFetchConfig
 	if err := json.Unmarshal([]byte(setting.Value), &config); err != nil {
-		return dataFetchConfig{}, false, err
+		return ceph.DataFetchConfig{}, false, err
 	}
 	if config.Module == "" {
 		config.Module = module
 	}
-	normalizeDataFetchConfig(&config)
+	ceph.NormalizeDataFetchConfig(&config)
 	return config, true, nil
 }
 
-func validateDataFetchConfig(config dataFetchConfig) error {
+func validateDataFetchConfig(config ceph.DataFetchConfig) error {
 	if strings.TrimSpace(config.Module) == "" {
 		return errInvalidSystemConfig("module is required")
 	}
@@ -227,7 +226,7 @@ func validateDataFetchConfig(config dataFetchConfig) error {
 	if config.JitterSeconds < 0 {
 		return errInvalidSystemConfig("jitter_seconds cannot be negative")
 	}
-	if config.FetchSource != fetchSourceCommand && config.FetchSource != fetchSourceDashboard && config.FetchSource != "mixed" {
+	if config.FetchSource != "command" && config.FetchSource != "dashboard" && config.FetchSource != "mixed" {
 		return errInvalidSystemConfig("fetch_source must be command, dashboard or mixed")
 	}
 	if config.MaxRetries < 0 {

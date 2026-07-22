@@ -20,7 +20,7 @@ const permissionOptions = [
   { label: '用户管理', value: 'user:manage' }
 ]
 
-export function UserManagementPage() {
+export function UserPage() {
   const [users, setUsers] = useState<UserAccount[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

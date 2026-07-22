@@ -1,4 +1,4 @@
-package api
+package ceph
 
 import (
 	"context"
@@ -14,13 +14,15 @@ import (
 	"gorm.io/gorm"
 )
 
+type ClusterDiscoverer func(context.Context, *gorm.DB, *store.CephCluster) error
+
 const (
-	defaultCephCommandBin            = "ceph"
-	defaultCephCommandName           = "client.admin"
-	defaultCephCommandTimeoutSeconds = 15
+	DefaultCephCommandBin            = "ceph"
+	DefaultCephCommandName           = "client.admin"
+	DefaultCephCommandTimeoutSeconds = 15
 )
 
-func discoverAndSyncCephCluster(ctx context.Context, db *gorm.DB, cluster *store.CephCluster) error {
+func DiscoverAndSyncCephCluster(ctx context.Context, db *gorm.DB, cluster *store.CephCluster) error {
 	if cluster == nil {
 		return nil
 	}
@@ -115,7 +117,7 @@ func commandClientForCluster(cluster *store.CephCluster) (*command.CommandClient
 		cleanup()
 		return nil, func() {}, err
 	}
-	if _, err := file.WriteString(keyringFileContent(defaultCephCommandName, cluster.Keyring)); err != nil {
+	if _, err := file.WriteString(keyringFileContent(DefaultCephCommandName, cluster.Keyring)); err != nil {
 		_ = file.Close()
 		cleanup()
 		return nil, func() {}, err
@@ -125,13 +127,13 @@ func commandClientForCluster(cluster *store.CephCluster) (*command.CommandClient
 		return nil, func() {}, err
 	}
 
-	timeout := time.Duration(defaultCephCommandTimeoutSeconds) * time.Second
+	timeout := time.Duration(DefaultCephCommandTimeoutSeconds) * time.Second
 	client := command.NewCommandClient(command.Config{
-		Bin:     defaultCephCommandBin,
+		Bin:     DefaultCephCommandBin,
 		Cluster: "",
 		Conf:    "",
 		MonHost: cluster.MonitorHost,
-		Name:    defaultCephCommandName,
+		Name:    DefaultCephCommandName,
 		Keyring: keyring,
 		Timeout: timeout,
 	})

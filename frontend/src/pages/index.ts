@@ -3,8 +3,8 @@ import type { PageKey } from '../navigation'
 import { BlockPoolsPage, ImageMirroringPage, IscsiPage, NvmeTcpPage, RbdImagesPage } from './block/pages'
 import {
   ClusterDetailPage,
-  ClusterManagementPage,
-  HostManagementPage,
+  ClusterPage,
+  HostPage,
   MdsManagementPage,
   MgrManagementPage,
   MonManagementPage,
@@ -36,13 +36,13 @@ export { OverviewPage } from './overview/OverviewPage'
 export { DemoPage } from './DemoPage'
 export { LoginPage } from './LoginPage'
 export { InitializationPage } from './InitializationPage'
-export { UserManagementPage } from './system/UserManagementPage'
+export { UserPage } from './system/UserPage'
 export { ClusterDetailPage } from './cluster/ClusterDetailPage'
 
 export const pageComponents: Record<PageKey, ComponentType> = {
   overview: OverviewPage,
-  clusterManagement: ClusterManagementPage,
-  hostManagement: HostManagementPage,
+  clusterManagement: ClusterPage,
+  hostManagement: HostPage,
   monManagement: MonManagementPage,
   mgrManagement: MgrManagementPage,
   osdManagement: OsdManagementPage,

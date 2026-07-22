@@ -2,7 +2,7 @@ import { ArrowLeftOutlined, DeleteOutlined, ExclamationCircleOutlined, ReloadOut
 import { Button, Card, Descriptions, Modal, Space, Table, Tag, Typography, message } from 'antd'
 import { useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { deleteCluster, getClusterDetail, type CephDiscoveredRecord } from '../../api/clusters'
+import { deleteCluster, getClusterDetail, type CephDiscoveredRecord } from '../../api/cluster'
 import { textValue } from '../../api/client'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
@@ -30,7 +30,7 @@ export function ClusterDetailPage() {
       async onOk() {
         const result = await deleteCluster(cluster.id)
         message.success(result.message || '集群连接已删除')
-        navigate('/cluster/clusters')
+        navigate('/cluster/cluster')
       }
     })
   }
@@ -43,7 +43,7 @@ export function ClusterDetailPage() {
           title={cluster?.name ?? '集群详情'}
           extra={
             <Space>
-              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/cluster/clusters')}>
+              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/cluster/cluster')}>
                 返回
               </Button>
               <Button icon={<ReloadOutlined />} loading={loading} onClick={refresh}>

@@ -14,17 +14,17 @@ import {
   reweightOSD,
   scrubOSD,
   setMgrModuleEnabled
-} from '../../api/resources'
+} from '../../api/resource'
 import { DataTable } from '../../components/DataTable'
 import { draggableModalRender } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
-import { ClusterManagementPage } from './ClusterManagementPage'
 import { ClusterDetailPage } from './ClusterDetailPage'
-import { HostManagementPage } from './HostManagementPage'
-import { ServiceManagementPage } from './ServiceManagementPage'
+import { ClusterPage } from './ClusterPage'
+import { HostPage } from './HostPage'
+import { ServicePage } from './ServicePage'
 
-export { ClusterDetailPage, ClusterManagementPage, HostManagementPage }
+export { ClusterDetailPage, ClusterPage, HostPage, ServicePage }
 
 export function MonManagementPage() {
   const loader = useCallback(async () => {

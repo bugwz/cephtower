@@ -1,4 +1,4 @@
-package api
+package v1
 
 import (
 	"errors"
@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"cephtower/backend/internal/config"
+	"cephtower/backend/internal/service/ceph"
 	"cephtower/backend/internal/store"
 	"gorm.io/gorm"
 )
@@ -48,13 +49,8 @@ type setupInitializeRequest struct {
 	} `json:"admin"`
 }
 
-func (s *Server) registerSetupRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /api/v1/setup/status", s.setupStatus)
-	mux.HandleFunc("POST /api/v1/setup/initialize", s.initializeSetup)
-}
-
-func (s *Server) setupStatus(w http.ResponseWriter, _ *http.Request) {
-	db := s.database()
+func (api *API) SetupStatus(w http.ResponseWriter, _ *http.Request) {
+	db := api.database()
 	initialized, err := hasUsers(db)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
@@ -63,12 +59,12 @@ func (s *Server) setupStatus(w http.ResponseWriter, _ *http.Request) {
 
 	response := map[string]any{"initialized": initialized}
 	if !initialized {
-		response["database"] = setupDatabaseFromConfig(s.currentConfig().Database)
+		response["database"] = setupDatabaseFromConfig(api.currentConfig().Database)
 	}
 	writeJSON(w, http.StatusOK, response)
 }
 
-func (s *Server) initializeSetup(w http.ResponseWriter, r *http.Request) {
+func (api *API) InitializeSetup(w http.ResponseWriter, r *http.Request) {
 	var req setupInitializeRequest
 	if !decodeJSON(w, r, &req) {
 		return
@@ -85,31 +81,26 @@ func (s *Server) initializeSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.mu.Lock()
-	currentDB := s.db
-	currentCfg := s.cfg
+	currentDB := api.database()
+	currentCfg := api.currentConfig()
 	currentHasUsers, err := hasUsers(currentDB)
 	if err != nil {
-		s.mu.Unlock()
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
 	if currentHasUsers {
-		s.mu.Unlock()
 		writeJSON(w, http.StatusConflict, map[string]string{"error": "system has already been initialized"})
 		return
 	}
 
 	databaseCfg, err := normalizeSetupDatabase(req, currentCfg.Database)
 	if err != nil {
-		s.mu.Unlock()
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 
 	newDB, err := store.Open(databaseCfg)
 	if err != nil {
-		s.mu.Unlock()
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
@@ -117,13 +108,11 @@ func (s *Server) initializeSetup(w http.ResponseWriter, r *http.Request) {
 	targetHasUsers, err := hasUsers(newDB)
 	if err != nil {
 		_ = store.Close(newDB)
-		s.mu.Unlock()
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
 	if targetHasUsers {
 		_ = store.Close(newDB)
-		s.mu.Unlock()
 		writeJSON(w, http.StatusConflict, map[string]string{"error": "selected database has already been initialized"})
 		return
 	}
@@ -131,7 +120,6 @@ func (s *Server) initializeSetup(w http.ResponseWriter, r *http.Request) {
 	admin, err := buildSetupAdmin(username, email, req.Admin.Password)
 	if err != nil {
 		_ = store.Close(newDB)
-		s.mu.Unlock()
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
@@ -139,24 +127,21 @@ func (s *Server) initializeSetup(w http.ResponseWriter, r *http.Request) {
 		if err := tx.Create(&admin).Error; err != nil {
 			return err
 		}
-		if err := ensureDefaultSystemSettings(r.Context(), tx); err != nil {
+		if err := ceph.EnsureDefaultSystemSettings(r.Context(), tx); err != nil {
 			return err
 		}
 		return config.SaveDatabase(currentCfg.Path, databaseCfg)
 	}); err != nil {
 		_ = store.Close(newDB)
-		s.mu.Unlock()
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 
 	currentCfg.Database = databaseCfg
-	s.cfg = currentCfg
-	s.db = newDB
-	s.mu.Unlock()
+	previousDB := api.replaceDatabase(currentCfg, newDB)
 
-	if currentDB != newDB {
-		_ = store.Close(currentDB)
+	if previousDB != nil && previousDB != newDB {
+		_ = store.Close(previousDB)
 	}
 	writeJSON(w, http.StatusCreated, map[string]string{"message": "system initialized"})
 }

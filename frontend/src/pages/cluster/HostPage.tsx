@@ -1,11 +1,11 @@
 import { Card, Tabs, Tag } from 'antd'
 import { useCallback } from 'react'
-import { listHosts, listOSDFlags, listOSDs } from '../../api/resources'
+import { listHosts, listOSDFlags, listOSDs } from '../../api/resource'
 import { DataTable } from '../../components/DataTable'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
 
-export function HostManagementPage() {
+export function HostPage() {
   const loader = useCallback(async () => {
     const [hosts, osds, flags] = await Promise.all([listHosts(), listOSDs(), listOSDFlags()])
     return { hosts, osds, flags }

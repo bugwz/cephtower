@@ -10,6 +10,7 @@ import (
 	"cephtower/backend/internal/api/v1"
 	"cephtower/backend/internal/config"
 	"cephtower/backend/internal/frontend"
+	"cephtower/backend/internal/service/ceph"
 	"cephtower/backend/internal/store"
 	"gorm.io/gorm"
 )
@@ -20,18 +21,18 @@ type Server struct {
 	ceph              v1.CephClient
 	db                *gorm.DB
 	syncCancel        context.CancelFunc
-	clusterDiscoverer func(context.Context, *gorm.DB, *store.CephCluster) error
+	clusterDiscoverer ceph.ClusterDiscoverer
 }
 
 func NewServer(cfg config.Config, cephClient v1.CephClient, db *gorm.DB) *Server {
 	server := &Server{
 		cfg:               cfg,
 		db:                db,
-		clusterDiscoverer: discoverAndSyncCephCluster,
+		clusterDiscoverer: ceph.DiscoverAndSyncCephCluster,
 	}
 	if cephClient == nil {
-		cephClient = newDatabaseCephClient(server.database)
-		server.startCephDataFetchScheduler()
+		cephClient = ceph.NewDatabaseCephClient(server.database)
+		server.syncCancel = ceph.StartDataFetchScheduler(server.database)
 	}
 	server.ceph = cephClient
 	return server
@@ -46,24 +47,13 @@ func (s *Server) Close() error {
 
 func (s *Server) Routes() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /healthz", s.healthz)
-	s.registerAuthRoutes(mux)
-	s.registerSetupRoutes(mux)
-	s.registerClusterRoutes(mux)
-	s.registerSystemConfigRoutes(mux)
-	v1.RegisterRoutes(mux, s.ceph)
+	s.registerAPIRouter(mux)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 	})
 	mux.Handle("/", frontend.Handler())
 
 	return withCORS(s.withAuth(mux))
-}
-
-func (s *Server) healthz(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]string{
-		"status": "ok",
-	})
 }
 
 func (s *Server) currentConfig() config.Config {
@@ -103,35 +93,33 @@ func withCORS(next http.Handler) http.Handler {
 
 func (s *Server) withAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodOptions || r.URL.Path == "/healthz" || isPublicAPIPath(r.URL.Path) || !strings.HasPrefix(r.URL.Path, "/api/") {
+		if r.Method == http.MethodOptions || isPublicAPIPath(r.URL.Path) || !strings.HasPrefix(r.URL.Path, "/api/") {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		user, ok := s.userForRequest(r)
+		user, ok := v1.UserForRequest(s.database, r)
 		if !ok {
 			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "authentication required"})
 			return
 		}
-		if !canAccessPath(user, r.URL.Path) {
+		if !v1.CanAccessPath(user, r.URL.Path) {
 			writeJSON(w, http.StatusForbidden, map[string]string{"error": "permission denied"})
 			return
 		}
 
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), userContextKey{}, user)))
+		next.ServeHTTP(w, r.WithContext(v1.ContextWithUser(r.Context(), user)))
 	})
 }
 
-func currentUser(r *http.Request) (store.User, bool) {
-	user, ok := r.Context().Value(userContextKey{}).(store.User)
-	return user, ok
-}
-
-type userContextKey struct{}
-
 func isPublicAPIPath(path string) bool {
 	switch path {
-	case "/api/v1/auth/login", "/api/v1/auth/password-reset/request", "/api/v1/auth/password-reset/confirm", "/api/v1/setup/status", "/api/v1/setup/initialize":
+	case v1.PathPrefix + "/healthz",
+		v1.PathPrefix + "/auth/login",
+		v1.PathPrefix + "/auth/password-reset/request",
+		v1.PathPrefix + "/auth/password-reset/confirm",
+		v1.PathPrefix + "/setup/status",
+		v1.PathPrefix + "/setup/initialize":
 		return true
 	default:
 		return false
@@ -187,9 +175,6 @@ func responseMessage(payload any, fallback string) string {
 				return strings.TrimSpace(message)
 			}
 		}
-	}
-	if action, ok := payload.(clusterActionResponse); ok && strings.TrimSpace(action.Message) != "" {
-		return strings.TrimSpace(action.Message)
 	}
 	return fallback
 }

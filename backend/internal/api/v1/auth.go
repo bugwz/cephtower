@@ -1,6 +1,7 @@
-package api
+package v1
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -34,17 +35,7 @@ type userResponse struct {
 	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
-func (s *Server) registerAuthRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /api/v1/auth/login", s.login)
-	mux.HandleFunc("POST /api/v1/auth/password-reset/request", s.requestPasswordReset)
-	mux.HandleFunc("POST /api/v1/auth/password-reset/confirm", s.confirmPasswordReset)
-	mux.HandleFunc("GET /api/v1/auth/me", s.me)
-	mux.HandleFunc("GET /api/v1/users", s.listUsers)
-	mux.HandleFunc("POST /api/v1/users", s.createUser)
-	mux.HandleFunc("PATCH /api/v1/users/{id}", s.updateUser)
-}
-
-func (s *Server) login(w http.ResponseWriter, r *http.Request) {
+func (api *API) Login(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -60,7 +51,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user store.User
-	db := s.database()
+	db := api.database()
 	err := db.Where("username = ?", req.Username).First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid username or password"})
@@ -109,7 +100,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *Server) me(w http.ResponseWriter, r *http.Request) {
+func (api *API) Me(w http.ResponseWriter, r *http.Request) {
 	user, ok := currentUser(r)
 	if !ok {
 		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "authentication required"})
@@ -118,13 +109,13 @@ func (s *Server) me(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toUserResponse(user))
 }
 
-func (s *Server) listUsers(w http.ResponseWriter, r *http.Request) {
+func (api *API) ListUsers(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
 
 	var users []store.User
-	if err := s.database().Order("id asc").Find(&users).Error; err != nil {
+	if err := api.database().Order("id asc").Find(&users).Error; err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
@@ -136,7 +127,7 @@ func (s *Server) listUsers(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, response)
 }
 
-func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
+func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
@@ -159,14 +150,14 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
-	if err := s.database().Create(&user).Error; err != nil {
+	if err := api.database().Create(&user).Error; err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 	writeJSON(w, http.StatusCreated, toUserResponse(user))
 }
 
-func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
+func (api *API) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
 	}
@@ -190,7 +181,7 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user store.User
-	db := s.database()
+	db := api.database()
 	if err := db.First(&user, id).Error; err != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -260,7 +251,7 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, toUserResponse(user))
 }
 
-func (s *Server) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
+func (api *API) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Account string `json:"account"`
 	}
@@ -275,7 +266,7 @@ func (s *Server) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user store.User
-	db := s.database()
+	db := api.database()
 	err := db.Where("username = ? OR email = ?", account, account).First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		writeJSON(w, http.StatusOK, map[string]string{"message": "如果账号存在，验证码将发送到绑定邮箱"})
@@ -315,7 +306,7 @@ func (s *Server) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	if err := s.sendPasswordResetCode(user, code); err != nil {
+	if err := api.sendPasswordResetCode(user, code); err != nil {
 		writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error()})
 		return
 	}
@@ -323,7 +314,7 @@ func (s *Server) requestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "验证码已发送，请查收邮箱"})
 }
 
-func (s *Server) confirmPasswordReset(w http.ResponseWriter, r *http.Request) {
+func (api *API) ConfirmPasswordReset(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Account     string `json:"account"`
 		Code        string `json:"code"`
@@ -345,7 +336,7 @@ func (s *Server) confirmPasswordReset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user store.User
-	db := s.database()
+	db := api.database()
 	err := db.Where("username = ? OR email = ?", account, account).First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "验证码无效或已过期"})
@@ -384,19 +375,30 @@ func (s *Server) confirmPasswordReset(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "密码已重设，请使用新密码登录"})
 }
 
-func (s *Server) userForRequest(r *http.Request) (store.User, bool) {
+func UserForRequest(database func() *gorm.DB, r *http.Request) (store.User, bool) {
 	token := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
 	if token == "" || token == r.Header.Get("Authorization") {
 		return store.User{}, false
 	}
 
 	var session store.UserSession
-	err := s.database().Preload("User").Where("token = ? AND expires_at > ?", token, time.Now().UTC()).First(&session).Error
+	err := database().Preload("User").Where("token = ? AND expires_at > ?", token, time.Now().UTC()).First(&session).Error
 	if err != nil || !session.User.Enabled {
 		return store.User{}, false
 	}
 	return session.User, true
 }
+
+func ContextWithUser(ctx context.Context, user store.User) context.Context {
+	return context.WithValue(ctx, userContextKey{}, user)
+}
+
+func currentUser(r *http.Request) (store.User, bool) {
+	user, ok := r.Context().Value(userContextKey{}).(store.User)
+	return user, ok
+}
+
+type userContextKey struct{}
 
 func requireAdmin(w http.ResponseWriter, r *http.Request) bool {
 	user, ok := currentUser(r)
@@ -411,28 +413,43 @@ func requireAdmin(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
-func canAccessPath(user store.User, path string) bool {
+func CanAccessPath(user store.User, path string) bool {
 	if user.Role == store.UserRoleAdmin {
 		return true
 	}
-	if strings.HasPrefix(path, "/api/v1/auth/") {
+	if strings.HasPrefix(path, PathPrefix+"/auth/") {
 		return true
 	}
-	if strings.HasPrefix(path, "/api/v1/users") {
+	if path == PathPrefix+"/user" || strings.HasPrefix(path, PathPrefix+"/user/") {
 		return false
 	}
-	if strings.HasPrefix(path, "/api/v1/clusters") {
+	if isClusterManagementPath(path) {
 		return false
 	}
 
 	switch {
-	case strings.Contains(path, "/configuration"), strings.Contains(path, "/logs"):
+	case strings.Contains(path, "/configuration"), strings.Contains(path, "/log"):
 		return hasPermission(user, "system:read")
-	case strings.Contains(path, "/storage"), strings.Contains(path, "/pools"), strings.Contains(path, "/block"), strings.Contains(path, "/filesystems"), strings.Contains(path, "/object"):
+	case strings.Contains(path, "/storage"), strings.Contains(path, "/pool"), strings.Contains(path, "/block"), strings.Contains(path, "/filesystem"), strings.Contains(path, "/object"):
 		return hasPermission(user, "storage:read")
 	default:
 		return hasPermission(user, "cluster:read")
 	}
+}
+
+func isClusterManagementPath(path string) bool {
+	if path == PathPrefix+"/cluster" {
+		return true
+	}
+	if !strings.HasPrefix(path, PathPrefix+"/cluster/") {
+		return false
+	}
+	segment := strings.TrimPrefix(path, PathPrefix+"/cluster/")
+	if index := strings.IndexByte(segment, '/'); index >= 0 {
+		segment = segment[:index]
+	}
+	_, err := strconv.ParseUint(segment, 10, 64)
+	return err == nil
 }
 
 func hasPermission(user store.User, permission string) bool {
@@ -529,8 +546,8 @@ func toUserResponse(user store.User) userResponse {
 	}
 }
 
-func (s *Server) sendPasswordResetCode(user store.User, code string) error {
-	cfg := s.currentConfig()
+func (api *API) sendPasswordResetCode(user store.User, code string) error {
+	cfg := api.currentConfig()
 	if strings.TrimSpace(cfg.SMTP.Host) == "" {
 		slog.Info(
 			"cephtower password reset code",

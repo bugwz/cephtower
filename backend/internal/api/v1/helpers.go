@@ -134,5 +134,8 @@ func responseMessage(payload any, fallback string) string {
 			}
 		}
 	}
+	if action, ok := payload.(clusterActionResponse); ok && action.Message != "" {
+		return action.Message
+	}
 	return fallback
 }

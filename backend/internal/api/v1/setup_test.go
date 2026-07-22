@@ -1,7 +1,9 @@
-package api
+package v1
 
 import (
 	"bytes"
+	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -9,7 +11,9 @@ import (
 	"testing"
 
 	"cephtower/backend/internal/config"
+	"cephtower/backend/internal/service/ceph"
 	"cephtower/backend/internal/store"
+	"gorm.io/gorm"
 )
 
 func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
@@ -35,15 +39,32 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open() returned error: %v", err)
 	}
-	server := NewServer(cfg, nil, db)
+	currentCfg := cfg
+	currentDB := db
+	api := NewAPI(nil, Dependencies{
+		CurrentConfig: func() config.Config {
+			return currentCfg
+		},
+		Database: func() *gorm.DB {
+			return currentDB
+		},
+		ReplaceDatabase: func(cfg config.Config, db *gorm.DB) *gorm.DB {
+			previous := currentDB
+			currentCfg = cfg
+			currentDB = db
+			return previous
+		},
+	})
 	defer func() {
-		if err := server.Close(); err != nil {
-			t.Fatalf("Close() returned error: %v", err)
+		if currentDB != nil {
+			if err := store.Close(currentDB); err != nil {
+				t.Fatalf("Close() returned error: %v", err)
+			}
 		}
 	}()
 
 	recorder := httptest.NewRecorder()
-	server.Routes().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/setup/status", nil))
+	api.SetupStatus(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/setup/status", nil))
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("setup status = %d, want 200: %s", recorder.Code, recorder.Body.String())
 	}
@@ -84,13 +105,13 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
 		}
 	}`)
 	recorder = httptest.NewRecorder()
-	server.Routes().ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/api/v1/setup/initialize", bytes.NewReader(payload)))
+	api.InitializeSetup(recorder, httptest.NewRequest(http.MethodPost, "/api/v1/setup/initialize", bytes.NewReader(payload)))
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("initialize = %d, want 200: %s", recorder.Code, recorder.Body.String())
 	}
 
 	var admin store.User
-	if err := server.database().Where("username = ?", "admin").First(&admin).Error; err != nil {
+	if err := currentDB.Where("username = ?", "admin").First(&admin).Error; err != nil {
 		t.Fatalf("admin user was not created: %v", err)
 	}
 	if admin.Role != store.UserRoleAdmin || !admin.Enabled {
@@ -98,7 +119,7 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
 	}
 
 	recorder = httptest.NewRecorder()
-	server.Routes().ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/api/v1/setup/initialize", bytes.NewReader(payload)))
+	api.InitializeSetup(recorder, httptest.NewRequest(http.MethodPost, "/api/v1/setup/initialize", bytes.NewReader(payload)))
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("second initialize = %d, want 200: %s", recorder.Code, recorder.Body.String())
 	}
@@ -111,7 +132,7 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
 	}
 
 	recorder = httptest.NewRecorder()
-	server.Routes().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/setup/status", nil))
+	api.SetupStatus(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/setup/status", nil))
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("setup status after init = %d, want 200: %s", recorder.Code, recorder.Body.String())
 	}
@@ -127,10 +148,33 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
 	}
 
 	var settingCount int64
-	if err := server.database().Model(&store.Setting{}).Where("`key` LIKE ?", dataFetchSettingPrefix+"%").Count(&settingCount).Error; err != nil {
+	if err := currentDB.Model(&store.Setting{}).Where("`key` LIKE ?", ceph.DataFetchSettingPrefix+"%").Count(&settingCount).Error; err != nil {
 		t.Fatalf("count default data fetch settings: %v", err)
 	}
 	if settingCount == 0 {
 		t.Fatal("default data fetch settings were not initialized")
 	}
+}
+
+func decodeAPIResponseData(recorder *httptest.ResponseRecorder, out any) error {
+	response, err := decodeAPIResponseEnvelope(recorder)
+	if err != nil {
+		return err
+	}
+	if response.Code != 0 {
+		return errors.New(response.Message)
+	}
+	return json.Unmarshal(response.Data, out)
+}
+
+type apiResponseEnvelope struct {
+	Code    int             `json:"code"`
+	Message string          `json:"message"`
+	Data    json.RawMessage `json:"data"`
+}
+
+func decodeAPIResponseEnvelope(recorder *httptest.ResponseRecorder) (apiResponseEnvelope, error) {
+	var response apiResponseEnvelope
+	err := json.Unmarshal(recorder.Body.Bytes(), &response)
+	return response, err
 }

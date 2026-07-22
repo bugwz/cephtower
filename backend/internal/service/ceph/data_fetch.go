@@ -1,4 +1,4 @@
-package api
+package ceph
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	dataFetchSettingPrefix          = "ceph.data_fetch."
+	DataFetchSettingPrefix          = "ceph.data_fetch."
 	fetchModuleSummary              = "summary"
 	fetchModuleHealth               = "health"
 	fetchModuleHosts                = "hosts"
@@ -40,6 +40,14 @@ const (
 	fetchSourceDashboard            = "dashboard"
 )
 
+type Service struct {
+	database func() *gorm.DB
+}
+
+func NewService(database func() *gorm.DB) Service {
+	return Service{database: database}
+}
+
 type dataFetchModuleDefault struct {
 	module          string
 	source          string
@@ -47,7 +55,7 @@ type dataFetchModuleDefault struct {
 	priority        int
 }
 
-type dataFetchConfig struct {
+type DataFetchConfig struct {
 	Module              string `json:"module"`
 	Enabled             bool   `json:"enabled"`
 	IntervalSeconds     int    `json:"interval_seconds"`
@@ -86,31 +94,33 @@ var defaultDataFetchModules = []dataFetchModuleDefault{
 	{fetchModuleRGWBuckets, fetchSourceDashboard, 600, 180},
 }
 
-func (s *Server) startCephDataFetchScheduler() {
+func StartDataFetchScheduler(database func() *gorm.DB) context.CancelFunc {
+	service := Service{database: database}
 	ctx, cancel := context.WithCancel(context.Background())
-	s.syncCancel = cancel
 
 	go func() {
 		ticker := time.NewTicker(30 * time.Second)
 		defer ticker.Stop()
-		s.runDueDataFetchSettings(ctx)
+		service.runDueDataFetchSettings(ctx)
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				s.runDueDataFetchSettings(ctx)
+				service.runDueDataFetchSettings(ctx)
 			}
 		}
 	}()
+
+	return cancel
 }
 
-func (s *Server) runDueDataFetchSettings(ctx context.Context) {
-	db := s.database()
+func (service Service) runDueDataFetchSettings(ctx context.Context) {
+	db := service.database()
 	if db == nil {
 		return
 	}
-	if err := ensureDefaultSystemSettings(ctx, db); err != nil {
+	if err := EnsureDefaultSystemSettings(ctx, db); err != nil {
 		slog.Warn("ensure ceph data fetch settings", "error", err)
 		return
 	}
@@ -137,18 +147,18 @@ func (s *Server) runDueDataFetchSettings(ctx context.Context) {
 			if !due {
 				continue
 			}
-			if err := s.runDataFetchConfig(ctx, cluster.ID, config); err != nil {
+			if err := service.RunDataFetchConfig(ctx, cluster.ID, config); err != nil {
 				slog.Warn("run ceph data fetch", "cluster_id", cluster.ID, "module", config.Module, "error", err)
 			}
 		}
 	}
 }
 
-func ensureDefaultSystemSettings(ctx context.Context, db *gorm.DB) error {
+func EnsureDefaultSystemSettings(ctx context.Context, db *gorm.DB) error {
 	for _, item := range defaultDataFetchModules {
 		config := defaultDataFetchConfig(item)
 		setting := store.Setting{
-			Key:   dataFetchSettingKey(item.module),
+			Key:   DataFetchSettingKey(item.module),
 			Value: mustJSON(config),
 		}
 		if err := db.WithContext(ctx).Where("`key` = ?", setting.Key).FirstOrCreate(&setting).Error; err != nil {
@@ -158,8 +168,8 @@ func ensureDefaultSystemSettings(ctx context.Context, db *gorm.DB) error {
 	return nil
 }
 
-func defaultDataFetchConfig(item dataFetchModuleDefault) dataFetchConfig {
-	return dataFetchConfig{
+func defaultDataFetchConfig(item dataFetchModuleDefault) DataFetchConfig {
+	return DataFetchConfig{
 		Module:              item.module,
 		Enabled:             true,
 		IntervalSeconds:     item.intervalSeconds,
@@ -172,34 +182,34 @@ func defaultDataFetchConfig(item dataFetchModuleDefault) dataFetchConfig {
 	}
 }
 
-func dataFetchSettingKey(module string) string {
-	return dataFetchSettingPrefix + module
+func DataFetchSettingKey(module string) string {
+	return DataFetchSettingPrefix + module
 }
 
-func dataFetchConfigs(ctx context.Context, db *gorm.DB) ([]dataFetchConfig, error) {
+func dataFetchConfigs(ctx context.Context, db *gorm.DB) ([]DataFetchConfig, error) {
 	var settings []store.Setting
 	if err := db.WithContext(ctx).
-		Where("`key` LIKE ?", dataFetchSettingPrefix+"%").
+		Where("`key` LIKE ?", DataFetchSettingPrefix+"%").
 		Order("`key` asc").
 		Find(&settings).Error; err != nil {
 		return nil, err
 	}
-	configs := make([]dataFetchConfig, 0, len(settings))
+	configs := make([]DataFetchConfig, 0, len(settings))
 	for _, setting := range settings {
-		var config dataFetchConfig
+		var config DataFetchConfig
 		if err := json.Unmarshal([]byte(setting.Value), &config); err != nil {
 			continue
 		}
 		if config.Module == "" {
-			config.Module = setting.Key[len(dataFetchSettingPrefix):]
+			config.Module = setting.Key[len(DataFetchSettingPrefix):]
 		}
-		normalizeDataFetchConfig(&config)
+		NormalizeDataFetchConfig(&config)
 		configs = append(configs, config)
 	}
 	return configs, nil
 }
 
-func normalizeDataFetchConfig(config *dataFetchConfig) {
+func NormalizeDataFetchConfig(config *DataFetchConfig) {
 	if config.IntervalSeconds < 10 {
 		config.IntervalSeconds = 300
 	}
@@ -217,7 +227,7 @@ func normalizeDataFetchConfig(config *dataFetchConfig) {
 	}
 }
 
-func dataFetchDue(ctx context.Context, db *gorm.DB, clusterID uint, config dataFetchConfig) (bool, error) {
+func dataFetchDue(ctx context.Context, db *gorm.DB, clusterID uint, config DataFetchConfig) (bool, error) {
 	var latest store.CephDataFetchRun
 	err := db.WithContext(ctx).
 		Where("cluster_id = ? AND module = ?", clusterID, config.Module).
@@ -243,8 +253,8 @@ func dataFetchDue(ctx context.Context, db *gorm.DB, clusterID uint, config dataF
 	return time.Since(latest.StartedAt) >= interval, nil
 }
 
-func (s *Server) runDataFetchConfig(ctx context.Context, clusterID uint, config dataFetchConfig) error {
-	db := s.database()
+func (service Service) RunDataFetchConfig(ctx context.Context, clusterID uint, config DataFetchConfig) error {
+	db := service.database()
 	if db == nil {
 		return nil
 	}
@@ -266,7 +276,7 @@ func (s *Server) runDataFetchConfig(ctx context.Context, clusterID uint, config 
 	runCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	result, err := s.fetchClusterModule(runCtx, clusterID, config.Module)
+	result, err := service.fetchClusterModule(runCtx, clusterID, config.Module)
 	finishedAt := time.Now()
 	status := "success"
 	lastError := ""
@@ -287,8 +297,12 @@ func (s *Server) runDataFetchConfig(ctx context.Context, clusterID uint, config 
 	return err
 }
 
-func (s *Server) fetchClusterModule(ctx context.Context, clusterID uint, module string) (dataFetchResult, error) {
-	db := s.database()
+func RunDataFetchModule(ctx context.Context, database func() *gorm.DB, clusterID uint, module string) (dataFetchResult, error) {
+	return Service{database: database}.fetchClusterModule(ctx, clusterID, module)
+}
+
+func (service Service) fetchClusterModule(ctx context.Context, clusterID uint, module string) (dataFetchResult, error) {
+	db := service.database()
 	var cluster store.CephCluster
 	if err := db.WithContext(ctx).First(&cluster, clusterID).Error; err != nil {
 		return dataFetchResult{}, err

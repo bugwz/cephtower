@@ -158,7 +158,7 @@ export default function App() {
           {NAV_PAGES.map((page) => (
             <Route key={page.key} path={page.path} element={renderAppPage(page.key)} />
           ))}
-          <Route path="/cluster/clusters/:id" element={renderStandaloneAppPage('clusterManagement', <ClusterDetailPage />)} />
+          <Route path="/cluster/cluster/:id" element={renderStandaloneAppPage('clusterManagement', <ClusterDetailPage />)} />
           <Route path="/login" element={<Navigate to={pagePaths.overview} replace />} />
           <Route path="/initialize" element={<Navigate to={pagePaths.overview} replace />} />
           <Route path="/password-reset" element={<Navigate to={pagePaths.overview} replace />} />
