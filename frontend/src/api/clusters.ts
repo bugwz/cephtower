@@ -24,6 +24,7 @@ export interface CephCluster {
     bin: string
     cluster: string
     conf: string
+    monitor_host: string
     name: string
     keyring: string
     keyring_content_set: boolean
@@ -35,6 +36,7 @@ export interface CephCluster {
 
 export interface CephClusterFormPayload {
   name: string
+  monitor_host?: string
   dashboard_username?: string
   dashboard_password?: string
   keyring?: string
@@ -52,8 +54,34 @@ export interface CephResourceSnapshot {
   last_error: string
 }
 
+export interface CephClusterDiscovery {
+  hosts: CephDiscoveredRecord[]
+  osds: CephDiscoveredRecord[]
+  osd_flags: Array<{
+    name: string
+    discovered_at: string
+  }>
+  daemons: CephDiscoveredRecord[]
+  services: CephDiscoveredRecord[]
+  mons: CephDiscoveredRecord[]
+  mgrs: CephDiscoveredRecord[]
+  mdss: CephDiscoveredRecord[]
+  mgr_modules: CephDiscoveredRecord[]
+  configuration: CephDiscoveredRecord[]
+}
+
+export interface CephDiscoveredRecord {
+  key: string
+  type?: string
+  hostname?: string
+  status?: string
+  payload: unknown
+  discovered_at: string
+}
+
 export interface CephClusterDetail {
   cluster: CephCluster
+  discovery: CephClusterDiscovery
   snapshots: CephResourceSnapshot[]
 }
 
@@ -78,6 +106,12 @@ export async function updateCluster(id: number, values: CephClusterFormPayload):
   return clusterRequest<ClusterActionResponse>(`/clusters/${id}`, {
     method: 'PUT',
     body: JSON.stringify(values)
+  })
+}
+
+export async function deleteCluster(id: number | string): Promise<ClusterActionResponse> {
+  return clusterRequest<ClusterActionResponse>(`/clusters/${id}`, {
+    method: 'DELETE'
   })
 }
 

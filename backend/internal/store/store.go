@@ -35,7 +35,24 @@ func Open(cfg config.DatabaseConfig) (*gorm.DB, error) {
 		return nil, fmt.Errorf("ping %s database: %w", cfg.Engine, err)
 	}
 
-	if err := db.AutoMigrate(&Setting{}, &CephCluster{}, &CephResourceSnapshot{}, &User{}, &PasswordResetCode{}, &UserSession{}); err != nil {
+	if err := db.AutoMigrate(
+		&Setting{},
+		&CephCluster{},
+		&CephResourceSnapshot{},
+		&CephClusterHost{},
+		&CephClusterOSD{},
+		&CephClusterOSDFlag{},
+		&CephClusterDaemon{},
+		&CephClusterService{},
+		&CephClusterMon{},
+		&CephClusterMgr{},
+		&CephClusterMDS{},
+		&CephClusterMgrModule{},
+		&CephClusterConfiguration{},
+		&User{},
+		&PasswordResetCode{},
+		&UserSession{},
+	); err != nil {
 		_ = sqlDB.Close()
 		return nil, fmt.Errorf("migrate database schema: %w", err)
 	}

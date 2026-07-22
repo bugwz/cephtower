@@ -15,6 +15,7 @@ const { Text } = Typography
 
 interface ClusterFormValues {
   name: string
+  monitor_host?: string
   dashboard_username?: string
   dashboard_password?: string
   keyring?: string
@@ -27,6 +28,7 @@ export function ClusterManagementPage() {
   const [clusterError, setClusterError] = useState('')
   const [clusterModalOpen, setClusterModalOpen] = useState(false)
   const [editingCluster, setEditingCluster] = useState<CephCluster | null>(null)
+  const [clusterSubmitting, setClusterSubmitting] = useState(false)
   const [form] = Form.useForm<ClusterFormValues>()
 
   const loadClusters = useCallback(async () => {
@@ -56,6 +58,7 @@ export function ClusterManagementPage() {
     setEditingCluster(cluster)
     form.setFieldsValue({
       name: cluster.name,
+      monitor_host: cluster.command.monitor_host,
       dashboard_username: cluster.dashboard.username,
       dashboard_password: '',
       keyring: ''
@@ -64,14 +67,22 @@ export function ClusterManagementPage() {
   }
 
   async function submitCluster(values: ClusterFormValues) {
-    const result = editingCluster
-      ? await updateCluster(editingCluster.id, values)
-      : await createCluster(values)
+    if (clusterSubmitting) {
+      return
+    }
+    setClusterSubmitting(true)
+    try {
+      const result = editingCluster
+        ? await updateCluster(editingCluster.id, values)
+        : await createCluster(values)
 
-    setClusterModalOpen(false)
-    form.resetFields()
-    message.success(result.message || (editingCluster ? '集群连接已更新' : '集群连接已创建'))
-    await loadClusters()
+      setClusterModalOpen(false)
+      form.resetFields()
+      message.success(result.message || (editingCluster ? '集群连接已更新' : '集群连接已创建'))
+      await loadClusters()
+    } finally {
+      setClusterSubmitting(false)
+    }
   }
 
   return (
@@ -85,7 +96,7 @@ export function ClusterManagementPage() {
         title="集群管理"
         extra={
           <Space>
-            <Button icon={<ReloadOutlined />} onClick={loadClusters}>
+            <Button icon={<ReloadOutlined />} loading={clusterLoading} onClick={loadClusters}>
               刷新
             </Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={openCreateCluster}>
@@ -132,6 +143,7 @@ export function ClusterManagementPage() {
               render: (command: CephCluster['command']) => (
                 <Space>
                   <Tag color={command.enabled ? 'processing' : 'default'}>{command.enabled ? command.bin : '关闭'}</Tag>
+                  {command.monitor_host && <Tag color="blue">MON 已配置</Tag>}
                   {command.keyring_content_set && <Tag color="gold">Key 已保存</Tag>}
                 </Space>
               )
@@ -164,20 +176,35 @@ export function ClusterManagementPage() {
         className="cluster-modal"
         title={editingCluster ? `编辑集群：${editingCluster.name}` : '新建集群'}
         open={clusterModalOpen}
-        onCancel={() => setClusterModalOpen(false)}
+        onCancel={() => {
+          if (!clusterSubmitting) {
+            setClusterModalOpen(false)
+          }
+        }}
         onOk={() => form.submit()}
         okText="保存"
-        okButtonProps={{ icon: <SaveOutlined /> }}
+        confirmLoading={clusterSubmitting}
+        okButtonProps={{ icon: <SaveOutlined />, loading: clusterSubmitting }}
+        cancelButtonProps={{ disabled: clusterSubmitting }}
         cancelText="取消"
         destroyOnClose
         maskClosable={false}
       >
         <Form form={form} layout="vertical" initialValues={defaultClusterFormValues()} onFinish={submitCluster} className="cluster-form">
           <div className="cluster-form-grid">
-            <Form.Item name="name" label="集群名称" rules={[{ required: true, message: '请输入集群名称' }]}>
+            <Form.Item className="cluster-form-full" name="name" label="集群名称" rules={[{ required: true, message: '请输入集群名称' }]}>
               <Input placeholder="例如：production-ceph" />
             </Form.Item>
             <Form.Item
+              className="cluster-form-full"
+              name="monitor_host"
+              label="MON 地址"
+              rules={[{ required: true, message: '请输入 MON 地址' }]}
+            >
+              <Input placeholder="例如：10.0.0.11:6789,10.0.0.12:6789" />
+            </Form.Item>
+            <Form.Item
+              className="cluster-form-full"
               name="keyring"
               label="管理员密钥"
               rules={[{ required: !editingCluster?.command.keyring_content_set, message: '请输入 client.admin 密钥信息' }]}

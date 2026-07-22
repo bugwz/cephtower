@@ -1680,6 +1680,7 @@
 }
 
 .form-field-full,
+.cluster-form-full,
 .cluster-form-checkbox {
   grid-column: 1 / -1;
 }

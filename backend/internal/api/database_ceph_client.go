@@ -27,19 +27,22 @@ func (c *databaseCephClient) dashboardClient(ctx context.Context) (*dashboard.Da
 	var cluster store.CephCluster
 	err := c.database().
 		WithContext(ctx).
-		Where("enabled = ? AND dashboard_enabled = ?", true, true).
 		Order("id asc").
 		First(&cluster).
 		Error
 	if err != nil {
 		return nil, err
 	}
+	baseURL, err := dashboardBaseURLForCluster(ctx, &cluster)
+	if err != nil {
+		return nil, err
+	}
 
 	return dashboard.NewDashboardClient(dashboard.Config{
-		BaseURL:     cluster.DashboardBaseURL,
+		BaseURL:     baseURL,
 		Username:    cluster.DashboardUsername,
 		Password:    cluster.DashboardPassword,
-		InsecureTLS: cluster.DashboardInsecureTLS,
+		InsecureTLS: false,
 	}), nil
 }
 
@@ -301,7 +304,6 @@ func (c *databaseCephClient) rawSnapshot(ctx context.Context, category string, k
 
 	var cluster store.CephCluster
 	if err := c.database().WithContext(ctx).
-		Where("enabled = ? AND dashboard_enabled = ?", true, true).
 		Order("id asc").
 		First(&cluster).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

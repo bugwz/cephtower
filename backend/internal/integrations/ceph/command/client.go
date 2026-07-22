@@ -19,6 +19,7 @@ type Config struct {
 	Bin     string
 	Cluster string
 	Conf    string
+	MonHost string
 	Name    string
 	Keyring string
 	Timeout time.Duration
@@ -28,6 +29,7 @@ type CommandClient struct {
 	bin     string
 	cluster string
 	conf    string
+	monHost string
 	name    string
 	keyring string
 	timeout time.Duration
@@ -81,6 +83,7 @@ func NewCommandClient(cfg Config) *CommandClient {
 		bin:     bin,
 		cluster: strings.TrimSpace(cfg.Cluster),
 		conf:    strings.TrimSpace(cfg.Conf),
+		monHost: strings.TrimSpace(cfg.MonHost),
 		name:    strings.TrimSpace(cfg.Name),
 		keyring: strings.TrimSpace(cfg.Keyring),
 		timeout: timeout,
@@ -181,6 +184,9 @@ func (c *CommandClient) commandArgs(request CommandRequest) []string {
 	}
 	if c.conf != "" {
 		args = append(args, "--conf", c.conf)
+	}
+	if c.monHost != "" {
+		args = append(args, "--mon-host", c.monHost)
 	}
 	if c.name != "" {
 		args = append(args, "--name", c.name)

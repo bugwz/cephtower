@@ -1,6 +1,6 @@
 import { ReloadOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { Button, Card, Form, InputNumber, Modal, Space, Switch, Tabs, Tag, message } from 'antd'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { textValue, type ApiRecord } from '../../api/client'
 import {
   applyDaemonAction,
@@ -98,12 +98,21 @@ export function MgrManagementPage() {
     return { modules, daemons }
   }, [])
   const { data, loading, error, refresh } = useResource(loader)
+  const [pendingModule, setPendingModule] = useState('')
 
   async function toggleModule(row: ApiRecord, enabled: boolean) {
     const name = textValue(row.name, '')
-    await setMgrModuleEnabled(name, enabled)
-    message.success(enabled ? 'Mgr 模块已启用' : 'Mgr 模块已停用')
-    refresh()
+    if (!name || pendingModule) {
+      return
+    }
+    setPendingModule(name)
+    try {
+      await setMgrModuleEnabled(name, enabled)
+      message.success(enabled ? 'Mgr 模块已启用' : 'Mgr 模块已停用')
+      refresh()
+    } finally {
+      setPendingModule('')
+    }
   }
 
   return (
@@ -121,7 +130,21 @@ export function MgrManagementPage() {
                   rowKeyCandidates={['name']}
                   columns={[
                     { key: 'name', title: '模块' },
-                    { key: 'enabled', title: '启用', render: (value, row) => <Switch checked={Boolean(value)} disabled={Boolean(row.always_on)} onChange={(checked) => toggleModule(row, checked)} /> },
+                    {
+                      key: 'enabled',
+                      title: '启用',
+                      render: (value, row) => {
+                        const name = textValue(row.name, '')
+                        return (
+                          <Switch
+                            checked={Boolean(value)}
+                            disabled={Boolean(row.always_on) || (Boolean(pendingModule) && pendingModule !== name)}
+                            loading={pendingModule === name}
+                            onChange={(checked) => toggleModule(row, checked)}
+                          />
+                        )
+                      }
+                    },
                     { key: 'always_on', title: '常驻', render: (value) => <Tag color={value ? 'processing' : 'default'}>{value ? '是' : '否'}</Tag> },
                     { key: 'options', title: '配置项', render: (value) => textValue(value) }
                   ]}
@@ -147,6 +170,7 @@ export function OsdManagementPage() {
     return { osds, flags }
   }, [])
   const { data, loading, error, refresh } = useResource(loader)
+  const [pendingOSDAction, setPendingOSDAction] = useState('')
 
   async function runOSDAction(id: string, action: 'in' | 'out' | 'scrub' | 'deep-scrub' | 'reweight') {
     if (action === 'reweight') {
@@ -161,14 +185,23 @@ export function OsdManagementPage() {
       return
     }
 
-    if (action === 'scrub' || action === 'deep-scrub') {
-      await scrubOSD(id, action === 'deep-scrub')
-      message.success('Scrub 任务已提交')
-    } else {
-      await markOSD(id, action)
-      message.success(`OSD 已标记为 ${action}`)
+    const pendingKey = `${id}:${action}`
+    if (pendingOSDAction) {
+      return
     }
-    refresh()
+    setPendingOSDAction(pendingKey)
+    try {
+      if (action === 'scrub' || action === 'deep-scrub') {
+        await scrubOSD(id, action === 'deep-scrub')
+        message.success('Scrub 任务已提交')
+      } else {
+        await markOSD(id, action)
+        message.success(`OSD 已标记为 ${action}`)
+      }
+      refresh()
+    } finally {
+      setPendingOSDAction('')
+    }
   }
 
   return (
@@ -198,10 +231,10 @@ export function OsdManagementPage() {
                   const id = osdID(row)
                   return (
                     <Space>
-                      <Button size="small" onClick={() => runOSDAction(id, 'in')}>In</Button>
-                      <Button size="small" onClick={() => runOSDAction(id, 'out')}>Out</Button>
-                      <Button size="small" icon={<ThunderboltOutlined />} onClick={() => runOSDAction(id, 'scrub')}>Scrub</Button>
-                      <Button size="small" onClick={() => runOSDAction(id, 'reweight')}>权重</Button>
+                      <Button size="small" loading={pendingOSDAction === `${id}:in`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:in`} onClick={() => runOSDAction(id, 'in')}>In</Button>
+                      <Button size="small" loading={pendingOSDAction === `${id}:out`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:out`} onClick={() => runOSDAction(id, 'out')}>Out</Button>
+                      <Button size="small" icon={<ThunderboltOutlined />} loading={pendingOSDAction === `${id}:scrub`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:scrub`} onClick={() => runOSDAction(id, 'scrub')}>Scrub</Button>
+                      <Button size="small" disabled={Boolean(pendingOSDAction)} onClick={() => runOSDAction(id, 'reweight')}>权重</Button>
                     </Space>
                   )
                 }
@@ -262,11 +295,22 @@ export function MdsManagementPage() {
 }
 
 function DaemonTable({ data, refresh }: { data: ApiRecord[]; refresh: () => void }) {
+  const [pendingDaemonAction, setPendingDaemonAction] = useState('')
+
   async function runAction(row: ApiRecord, action: string) {
     const name = textValue(row.daemon_name || row.name, '')
-    await applyDaemonAction(name, action, action === 'restart')
-    message.success(`Daemon ${action} 已提交`)
-    refresh()
+    const pendingKey = `${name}:${action}`
+    if (!name || pendingDaemonAction) {
+      return
+    }
+    setPendingDaemonAction(pendingKey)
+    try {
+      await applyDaemonAction(name, action, action === 'restart')
+      message.success(`Daemon ${action} 已提交`)
+      refresh()
+    } finally {
+      setPendingDaemonAction('')
+    }
   }
 
   return (
@@ -283,13 +327,16 @@ function DaemonTable({ data, refresh }: { data: ApiRecord[]; refresh: () => void
           {
             key: 'actions',
             title: '操作',
-            render: (_, row) => (
-              <Space>
-                <Button size="small" icon={<ReloadOutlined />} onClick={() => runAction(row, 'restart')}>重启</Button>
-                <Button size="small" onClick={() => runAction(row, 'start')}>启动</Button>
-                <Button size="small" danger onClick={() => runAction(row, 'stop')}>停止</Button>
-              </Space>
-            )
+            render: (_, row) => {
+              const name = textValue(row.daemon_name || row.name, '')
+              return (
+                <Space>
+                  <Button size="small" icon={<ReloadOutlined />} loading={pendingDaemonAction === `${name}:restart`} disabled={Boolean(pendingDaemonAction) && pendingDaemonAction !== `${name}:restart`} onClick={() => runAction(row, 'restart')}>重启</Button>
+                  <Button size="small" loading={pendingDaemonAction === `${name}:start`} disabled={Boolean(pendingDaemonAction) && pendingDaemonAction !== `${name}:start`} onClick={() => runAction(row, 'start')}>启动</Button>
+                  <Button size="small" danger loading={pendingDaemonAction === `${name}:stop`} disabled={Boolean(pendingDaemonAction) && pendingDaemonAction !== `${name}:stop`} onClick={() => runAction(row, 'stop')}>停止</Button>
+                </Space>
+              )
+            }
           }
         ]}
       />
@@ -298,11 +345,21 @@ function DaemonTable({ data, refresh }: { data: ApiRecord[]; refresh: () => void
 }
 
 function ReweightForm({ osdID, refresh }: { osdID: string; refresh: () => void }) {
+  const [submitting, setSubmitting] = useState(false)
+
   async function submit(values: { weight: number }) {
-    await reweightOSD(osdID, values.weight)
-    message.success('OSD 权重调整已提交')
-    Modal.destroyAll()
-    refresh()
+    if (submitting) {
+      return
+    }
+    setSubmitting(true)
+    try {
+      await reweightOSD(osdID, values.weight)
+      message.success('OSD 权重调整已提交')
+      Modal.destroyAll()
+      refresh()
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -310,7 +367,9 @@ function ReweightForm({ osdID, refresh }: { osdID: string; refresh: () => void }
       <Form.Item name="weight" label="权重" rules={[{ required: true }]}>
         <InputNumber min={0} max={1} step={0.01} precision={2} />
       </Form.Item>
-      <Button type="primary" htmlType="submit">保存</Button>
+      <Button type="primary" htmlType="submit" loading={submitting}>
+        保存
+      </Button>
     </Form>
   )
 }

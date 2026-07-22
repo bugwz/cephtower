@@ -16,6 +16,7 @@ func TestCommandRunBuildsCephArgs(t *testing.T) {
 		Bin:     "/usr/bin/ceph",
 		Cluster: "prod",
 		Conf:    "/etc/ceph/prod.conf",
+		MonHost: "10.0.0.11:6789,10.0.0.12:6789",
 		Name:    "client.cephtower",
 		Keyring: "/etc/ceph/ceph.client.cephtower.keyring",
 		Timeout: time.Second,
@@ -39,6 +40,7 @@ func TestCommandRunBuildsCephArgs(t *testing.T) {
 	wantArgs := []string{
 		"--cluster", "prod",
 		"--conf", "/etc/ceph/prod.conf",
+		"--mon-host", "10.0.0.11:6789,10.0.0.12:6789",
 		"--name", "client.cephtower",
 		"--keyring", "/etc/ceph/ceph.client.cephtower.keyring",
 		"status",

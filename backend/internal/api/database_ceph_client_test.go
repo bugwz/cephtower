@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -17,7 +18,7 @@ import (
 
 func TestDatabaseCephClientUsesEnabledDashboardCluster(t *testing.T) {
 	var authCalls int
-	cephServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	cephServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/auth":
 			authCalls++
@@ -35,16 +36,15 @@ func TestDatabaseCephClientUsesEnabledDashboardCluster(t *testing.T) {
 		}
 	}))
 	defer cephServer.Close()
+	addFakeCephCommand(t, map[string]any{"dashboard": cephServer.URL})
 
 	db := openDatabaseCephClientTestDB(t)
 	if err := db.Create(&store.CephCluster{
-		Name:                 "primary",
-		Enabled:              true,
-		DashboardEnabled:     true,
-		DashboardBaseURL:     cephServer.URL,
-		DashboardUsername:    "admin",
-		DashboardPassword:    "password",
-		DashboardInsecureTLS: true,
+		Name:              "primary",
+		MonitorHost:       "10.0.0.11:6789",
+		Keyring:           "secret",
+		DashboardUsername: "admin",
+		DashboardPassword: "password",
 	}).Error; err != nil {
 		t.Fatalf("create cluster: %v", err)
 	}
@@ -65,9 +65,11 @@ func TestDatabaseCephClientUsesEnabledDashboardCluster(t *testing.T) {
 func TestDatabaseCephClientListsHostsFromSnapshot(t *testing.T) {
 	db := openDatabaseCephClientTestDB(t)
 	cluster := store.CephCluster{
-		Name:             "primary",
-		Enabled:          true,
-		DashboardEnabled: true,
+		Name:              "primary",
+		MonitorHost:       "10.0.0.11:6789",
+		Keyring:           "secret",
+		DashboardUsername: "admin",
+		DashboardPassword: "password",
 	}
 	if err := db.Create(&cluster).Error; err != nil {
 		t.Fatalf("create cluster: %v", err)
@@ -103,6 +105,22 @@ func TestDatabaseCephClientReturnsUnknownSummaryWithoutDashboardCluster(t *testi
 	if summary.HealthStatus != "unknown" {
 		t.Fatalf("HealthStatus = %q, want unknown", summary.HealthStatus)
 	}
+}
+
+func addFakeCephCommand(t *testing.T, payload any) {
+	t.Helper()
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal fake ceph payload: %v", err)
+	}
+	dir := t.TempDir()
+	path := filepath.Join(dir, "ceph")
+	script := "#!/bin/sh\nprintf '%s\\n' '" + string(data) + "'\n"
+	if err := os.WriteFile(path, []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake ceph command: %v", err)
+	}
+	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 }
 
 func openDatabaseCephClientTestDB(t *testing.T) *gorm.DB {

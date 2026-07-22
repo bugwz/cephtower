@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"cephtower/backend/internal/config"
+	"cephtower/backend/internal/integrations/ceph"
 	"cephtower/backend/internal/store"
 	"gorm.io/gorm"
 )
@@ -26,6 +27,7 @@ func TestClusterRoutesManageCephConnections(t *testing.T) {
 
 	createPayload := []byte(`{
 		"name": "primary",
+		"monitor_host": "10.0.0.11:6789,10.0.0.12:6789",
 		"keyring": "command-secret",
 		"dashboard_username": "admin",
 		"dashboard_password": "dashboard-secret"
@@ -63,6 +65,7 @@ func TestClusterRoutesManageCephConnections(t *testing.T) {
 
 	updatePayload := []byte(`{
 		"name": "primary-renamed",
+		"monitor_host": "",
 		"keyring": "",
 		"dashboard_username": "admin",
 		"dashboard_password": ""
@@ -105,7 +108,71 @@ func TestClusterRoutesRequireAdministrator(t *testing.T) {
 	}
 }
 
-func TestCreateClusterStoresDiscoveredCephResources(t *testing.T) {
+func TestDeleteClusterRemovesDiscoveredResources(t *testing.T) {
+	server, adminToken := newClusterAPITestServer(t, store.UserRoleAdmin)
+	defer func() {
+		if err := server.Close(); err != nil {
+			t.Fatalf("Close() returned error: %v", err)
+		}
+	}()
+
+	cluster := store.CephCluster{
+		Name:              "delete-me",
+		MonitorHost:       "10.0.0.11:6789",
+		Keyring:           "command-secret",
+		DashboardUsername: "admin",
+		DashboardPassword: "dashboard-secret",
+	}
+	if err := server.database().Create(&cluster).Error; err != nil {
+		t.Fatalf("create cluster: %v", err)
+	}
+	if err := server.database().Create(&store.CephResourceSnapshot{
+		ClusterID:    cluster.ID,
+		Category:     snapshotHosts,
+		ResourceKey:  "all",
+		Payload:      `[]`,
+		LastSyncedAt: time.Now(),
+	}).Error; err != nil {
+		t.Fatalf("create resource snapshot: %v", err)
+	}
+	if err := server.database().Create(&store.CephClusterHost{
+		ClusterID:    cluster.ID,
+		Hostname:     "node-1",
+		Labels:       `[]`,
+		Sources:      `{}`,
+		Payload:      `{"hostname":"node-1"}`,
+		DiscoveredAt: time.Now(),
+	}).Error; err != nil {
+		t.Fatalf("create discovered host: %v", err)
+	}
+	if err := server.database().Create(&store.CephClusterMon{
+		ClusterID:    cluster.ID,
+		Name:         "a",
+		Payload:      `{"name":"a"}`,
+		DiscoveredAt: time.Now(),
+	}).Error; err != nil {
+		t.Fatalf("create discovered mon: %v", err)
+	}
+
+	recorder := clusterAPIRequest(server, http.MethodDelete, "/api/v1/clusters/1", adminToken, nil)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("delete cluster = %d, want 200: %s", recorder.Code, recorder.Body.String())
+	}
+	var response clusterActionResponse
+	if err := decodeAPIResponseData(recorder, &response); err != nil {
+		t.Fatalf("decode delete response: %v", err)
+	}
+	if response.Message == "" {
+		t.Fatalf("delete response = %#v, want message", response)
+	}
+
+	assertModelCount(t, server.database(), &store.CephCluster{}, 0)
+	assertModelCount(t, server.database(), &store.CephResourceSnapshot{}, 0)
+	assertModelCount(t, server.database(), &store.CephClusterHost{}, 0)
+	assertModelCount(t, server.database(), &store.CephClusterMon{}, 0)
+}
+
+func TestCreateClusterStoresDiscoveredCephInventory(t *testing.T) {
 	server, adminToken := newClusterAPITestServer(t, store.UserRoleAdmin)
 	defer func() {
 		if err := server.Close(); err != nil {
@@ -113,18 +180,17 @@ func TestCreateClusterStoresDiscoveredCephResources(t *testing.T) {
 		}
 	}()
 	server.clusterDiscoverer = func(ctx context.Context, db *gorm.DB, cluster *store.CephCluster) error {
-		cluster.FSID = "11111111-1111-1111-1111-111111111111"
-		cluster.DashboardBaseURL = "https://mgr.example.com:8443"
-		if err := db.WithContext(ctx).Save(cluster).Error; err != nil {
-			return err
-		}
-		return saveSnapshot(ctx, db, cluster.ID, snapshotHosts, "all", []map[string]any{
-			{"hostname": "node-1", "addr": "10.0.0.1"},
+		saveDiscoveredHosts(ctx, db, cluster.ID, func() ([]ceph.Host, error) {
+			return []ceph.Host{
+				{Hostname: "node-1", Addr: "10.0.0.1"},
+			}, nil
 		})
+		return nil
 	}
 
 	payload := []byte(`{
 		"name": "discovered",
+		"monitor_host": "10.0.0.11:6789",
 		"keyring": "command-secret",
 		"dashboard_username": "admin",
 		"dashboard_password": "dashboard-secret"
@@ -146,18 +212,26 @@ func TestCreateClusterStoresDiscoveredCephResources(t *testing.T) {
 	if err := server.database().Where("name = ?", "discovered").First(&created).Error; err != nil {
 		t.Fatalf("load created cluster: %v", err)
 	}
-	if created.FSID != "11111111-1111-1111-1111-111111111111" || created.DashboardBaseURL != "https://mgr.example.com:8443" {
-		t.Fatalf("created = %#v, want discovered fsid and dashboard base url", created)
+	if created.MonitorHost != "10.0.0.11:6789" || created.Keyring != "command-secret" || created.DashboardUsername != "admin" || created.DashboardPassword != "dashboard-secret" {
+		t.Fatalf("created = %#v, want submitted cluster connection fields", created)
 	}
 
-	var snapshot store.CephResourceSnapshot
+	var host store.CephClusterHost
 	if err := server.database().
-		Where("cluster_id = ? AND category = ? AND resource_key = ?", created.ID, snapshotHosts, "all").
-		First(&snapshot).Error; err != nil {
-		t.Fatalf("load discovered hosts snapshot: %v", err)
+		Where("cluster_id = ? AND hostname = ?", created.ID, "node-1").
+		First(&host).Error; err != nil {
+		t.Fatalf("load discovered host: %v", err)
 	}
-	if !bytes.Contains([]byte(snapshot.Payload), []byte("node-1")) {
-		t.Fatalf("hosts snapshot payload = %s, want discovered host", snapshot.Payload)
+	if !bytes.Contains([]byte(host.Payload), []byte("node-1")) {
+		t.Fatalf("host payload = %s, want discovered host", host.Payload)
+	}
+
+	var snapshotCount int64
+	if err := server.database().Model(&store.CephResourceSnapshot{}).Where("cluster_id = ?", created.ID).Count(&snapshotCount).Error; err != nil {
+		t.Fatalf("count resource snapshots: %v", err)
+	}
+	if snapshotCount != 0 {
+		t.Fatalf("resource snapshots = %d, want none from cluster discovery", snapshotCount)
 	}
 
 	recorder = clusterAPIRequest(server, http.MethodGet, "/api/v1/clusters/1", adminToken, nil)
@@ -168,8 +242,20 @@ func TestCreateClusterStoresDiscoveredCephResources(t *testing.T) {
 	if err := decodeAPIResponseData(recorder, &detail); err != nil {
 		t.Fatalf("decode cluster detail: %v", err)
 	}
-	if detail.Cluster.ID != created.ID || len(detail.Snapshots) != 1 || detail.Snapshots[0].Category != snapshotHosts {
-		t.Fatalf("detail = %#v, want cluster and discovered snapshot", detail)
+	if detail.Cluster.ID != created.ID || len(detail.Discovery.Hosts) != 1 || len(detail.Snapshots) != 0 {
+		t.Fatalf("detail = %#v, want cluster and discovered inventory without resource snapshots", detail)
+	}
+}
+
+func assertModelCount(t *testing.T, db *gorm.DB, model any, want int64) {
+	t.Helper()
+
+	var got int64
+	if err := db.Model(model).Count(&got).Error; err != nil {
+		t.Fatalf("count %T: %v", model, err)
+	}
+	if got != want {
+		t.Fatalf("%T count = %d, want %d", model, got, want)
 	}
 }
 

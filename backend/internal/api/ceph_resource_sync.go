@@ -41,7 +41,7 @@ func (s *cephResourceSyncer) Sync(ctx context.Context) {
 
 	var clusters []store.CephCluster
 	if err := db.WithContext(ctx).
-		Where("enabled = ? AND dashboard_enabled = ?", true, true).
+		Order("id asc").
 		Find(&clusters).Error; err != nil {
 		slog.Warn("list ceph clusters for resource sync", "error", err)
 		return
@@ -55,11 +55,15 @@ func (s *cephResourceSyncer) Sync(ctx context.Context) {
 }
 
 func (s *cephResourceSyncer) syncCluster(ctx context.Context, db *gorm.DB, cluster store.CephCluster) error {
+	baseURL, err := dashboardBaseURLForCluster(ctx, &cluster)
+	if err != nil {
+		return err
+	}
 	client := dashboard.NewDashboardClient(dashboard.Config{
-		BaseURL:     cluster.DashboardBaseURL,
+		BaseURL:     baseURL,
 		Username:    cluster.DashboardUsername,
 		Password:    cluster.DashboardPassword,
-		InsecureTLS: cluster.DashboardInsecureTLS,
+		InsecureTLS: false,
 	})
 
 	hostOptions := ceph.ListHostsOptions{IncludeServiceInstances: boolPtr(true)}

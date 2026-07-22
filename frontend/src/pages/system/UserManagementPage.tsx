@@ -26,6 +26,9 @@ export function UserManagementPage() {
   const [error, setError] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
   const [passwordTarget, setPasswordTarget] = useState<UserAccount | null>(null)
+  const [createSubmitting, setCreateSubmitting] = useState(false)
+  const [passwordSubmitting, setPasswordSubmitting] = useState(false)
+  const [pendingUserUpdates, setPendingUserUpdates] = useState<Record<string, boolean>>({})
   const [createForm] = Form.useForm()
   const [passwordForm] = Form.useForm()
 
@@ -45,10 +48,22 @@ export function UserManagementPage() {
     load()
   }, [load])
 
-  async function patchUser(id: number, payload: Parameters<typeof updateUser>[1]) {
-    const updated = await updateUser(id, payload)
-    setUsers((current) => current.map((user) => (user.id === updated.id ? updated : user)))
-    message.success('用户已更新')
+  async function patchUser(id: number, payload: Parameters<typeof updateUser>[1], pendingKey = `${id}:update`) {
+    if (pendingUserUpdates[pendingKey]) {
+      return
+    }
+    setPendingUserUpdates((current) => ({ ...current, [pendingKey]: true }))
+    try {
+      const updated = await updateUser(id, payload)
+      setUsers((current) => current.map((user) => (user.id === updated.id ? updated : user)))
+      message.success('用户已更新')
+    } finally {
+      setPendingUserUpdates((current) => {
+        const next = { ...current }
+        delete next[pendingKey]
+        return next
+      })
+    }
   }
 
   async function submitCreate(values: {
@@ -60,20 +75,36 @@ export function UserManagementPage() {
     password: string
     enabled: boolean
   }) {
-    const user = await createUser({ ...values, enabled: values.enabled ?? true })
-    setUsers((current) => [...current, user])
-    setCreateOpen(false)
-    createForm.resetFields()
-    message.success('用户已创建')
+    if (createSubmitting) {
+      return
+    }
+    setCreateSubmitting(true)
+    try {
+      const user = await createUser({ ...values, enabled: values.enabled ?? true })
+      setUsers((current) => [...current, user])
+      setCreateOpen(false)
+      createForm.resetFields()
+      message.success('用户已创建')
+    } finally {
+      setCreateSubmitting(false)
+    }
   }
 
   async function resetPassword(values: { password: string }) {
     if (!passwordTarget) {
       return
     }
-    await patchUser(passwordTarget.id, { password: values.password })
-    setPasswordTarget(null)
-    passwordForm.resetFields()
+    if (passwordSubmitting) {
+      return
+    }
+    setPasswordSubmitting(true)
+    try {
+      await patchUser(passwordTarget.id, { password: values.password }, `${passwordTarget.id}:password`)
+      setPasswordTarget(null)
+      passwordForm.resetFields()
+    } finally {
+      setPasswordSubmitting(false)
+    }
   }
 
   return (
@@ -87,7 +118,7 @@ export function UserManagementPage() {
         title="系统用户"
         extra={
           <Space>
-            <Button icon={<ReloadOutlined />} onClick={load}>
+            <Button icon={<ReloadOutlined />} loading={loading} onClick={load}>
               刷新
             </Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
@@ -121,12 +152,13 @@ export function UserManagementPage() {
                   className="email-input"
                   value={email}
                   placeholder="未绑定邮箱"
+                  disabled={Boolean(pendingUserUpdates[`${user.id}:email`])}
                   onChange={(event) =>
                     setUsers((current) =>
                       current.map((item) => (item.id === user.id ? { ...item, email: event.target.value } : item))
                     )
                   }
-                  onBlur={(event) => patchUser(user.id, { email: event.target.value })}
+                  onBlur={(event) => patchUser(user.id, { email: event.target.value }, `${user.id}:email`)}
                 />
               )
             },
@@ -141,7 +173,9 @@ export function UserManagementPage() {
                     { label: '管理员', value: 'admin' },
                     { label: '普通用户', value: 'user' }
                   ]}
-                  onChange={(value) => patchUser(user.id, { role: value })}
+                  loading={Boolean(pendingUserUpdates[`${user.id}:role`])}
+                  disabled={Boolean(pendingUserUpdates[`${user.id}:role`])}
+                  onChange={(value) => patchUser(user.id, { role: value }, `${user.id}:role`)}
                 />
               )
             },
@@ -155,7 +189,9 @@ export function UserManagementPage() {
                   value={permissions}
                   options={permissionOptions}
                   maxTagCount="responsive"
-                  onChange={(value) => patchUser(user.id, { permissions: value })}
+                  loading={Boolean(pendingUserUpdates[`${user.id}:permissions`])}
+                  disabled={Boolean(pendingUserUpdates[`${user.id}:permissions`])}
+                  onChange={(value) => patchUser(user.id, { permissions: value }, `${user.id}:permissions`)}
                 />
               )
             },
@@ -164,7 +200,11 @@ export function UserManagementPage() {
               dataIndex: 'enabled',
               render: (enabled: boolean, user) => (
                 <Space>
-                  <Switch checked={enabled} onChange={(value) => patchUser(user.id, { enabled: value })} />
+                  <Switch
+                    checked={enabled}
+                    loading={Boolean(pendingUserUpdates[`${user.id}:enabled`])}
+                    onChange={(value) => patchUser(user.id, { enabled: value }, `${user.id}:enabled`)}
+                  />
                   <Tag color={enabled ? 'success' : 'default'}>{enabled ? '启用' : '禁用'}</Tag>
                 </Space>
               )
@@ -178,7 +218,11 @@ export function UserManagementPage() {
               title: '操作',
               key: 'actions',
               render: (_, user) => (
-                <Button icon={<KeyOutlined />} onClick={() => setPasswordTarget(user)}>
+                <Button
+                  icon={<KeyOutlined />}
+                  loading={Boolean(pendingUserUpdates[`${user.id}:password`])}
+                  onClick={() => setPasswordTarget(user)}
+                >
                   重设密码
                 </Button>
               )
@@ -190,10 +234,16 @@ export function UserManagementPage() {
       <DraggableModal
         title="新建用户"
         open={createOpen}
-        onCancel={() => setCreateOpen(false)}
+        onCancel={() => {
+          if (!createSubmitting) {
+            setCreateOpen(false)
+          }
+        }}
         onOk={() => createForm.submit()}
         okText="创建"
-        okButtonProps={{ icon: <UserAddOutlined /> }}
+        confirmLoading={createSubmitting}
+        okButtonProps={{ icon: <UserAddOutlined />, loading: createSubmitting }}
+        cancelButtonProps={{ disabled: createSubmitting }}
       >
         <Form
           form={createForm}
@@ -237,10 +287,16 @@ export function UserManagementPage() {
       <DraggableModal
         title={`重设密码${passwordTarget ? `：${passwordTarget.username}` : ''}`}
         open={Boolean(passwordTarget)}
-        onCancel={() => setPasswordTarget(null)}
+        onCancel={() => {
+          if (!passwordSubmitting) {
+            setPasswordTarget(null)
+          }
+        }}
         onOk={() => passwordForm.submit()}
         okText="保存"
-        okButtonProps={{ icon: <SaveOutlined /> }}
+        confirmLoading={passwordSubmitting}
+        okButtonProps={{ icon: <SaveOutlined />, loading: passwordSubmitting }}
+        cancelButtonProps={{ disabled: passwordSubmitting }}
       >
         <Form form={passwordForm} layout="vertical" onFinish={resetPassword}>
           <Form.Item name="password" label="新密码" rules={[{ required: true, min: 8 }]}>
