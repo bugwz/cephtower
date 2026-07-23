@@ -99,6 +99,69 @@ func TestInstallAppendsToLogFile(t *testing.T) {
 	}
 }
 
+func TestRotatingFileWriterCreatesTimestampedHistory(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "log", "cephtower.log")
+	writer, err := newRotatingFileWriter(path, "1day", "7days")
+	if err != nil {
+		t.Fatalf("newRotatingFileWriter() returned error: %v", err)
+	}
+	if _, err := writer.Write([]byte("first\n")); err != nil {
+		t.Fatalf("first Write() returned error: %v", err)
+	}
+
+	writer.nextRotationAt = writer.now().Add(-time.Second)
+	if _, err := writer.Write([]byte("second\n")); err != nil {
+		t.Fatalf("second Write() returned error: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("Close() returned error: %v", err)
+	}
+
+	current, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read current log: %v", err)
+	}
+	if string(current) != "second\n" {
+		t.Fatalf("current log = %q, want second entry", current)
+	}
+	history, err := filepath.Glob(filepath.Join(filepath.Dir(path), "cephtower-*.log"))
+	if err != nil || len(history) != 1 {
+		t.Fatalf("history files = %v, want one timestamped file", history)
+	}
+	if len(filepath.Base(history[0])) != len("cephtower-20260305122456.log") {
+		t.Fatalf("history file has unexpected name: %q", filepath.Base(history[0]))
+	}
+}
+
+func TestNextRotationAtUsesMidnight(t *testing.T) {
+	location := time.FixedZone("CST", 8*60*60)
+	start := time.Date(2026, 3, 5, 5, 0, 0, 0, location)
+	want := time.Date(2026, 3, 12, 0, 0, 0, 0, location)
+	if got := nextRotationAt(start, 7); !got.Equal(want) {
+		t.Fatalf("nextRotationAt() = %s, want %s", got, want)
+	}
+}
+
+func TestRotatingFileWriterRemovesExpiredHistory(t *testing.T) {
+	dir := t.TempDir()
+	oldPath := filepath.Join(dir, "cephtower-20200101000000.log")
+	if err := os.WriteFile(oldPath, []byte("old\n"), 0o600); err != nil {
+		t.Fatalf("write old history: %v", err)
+	}
+
+	writer, err := newRotatingFileWriter(filepath.Join(dir, "cephtower.log"), "7days", "28days")
+	if err != nil {
+		t.Fatalf("newRotatingFileWriter() returned error: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("Close() returned error: %v", err)
+	}
+	writer.runCleanup(time.Now())
+	if _, err := os.Stat(oldPath); !os.IsNotExist(err) {
+		t.Fatalf("expired history still exists, stat error: %v", err)
+	}
+}
+
 func TestNewLoggerHonorsConfiguredLevel(t *testing.T) {
 	var output bytes.Buffer
 	logger, err := NewLogger(config.LoggingConfig{Level: "warn", Format: "txt"}, &output)

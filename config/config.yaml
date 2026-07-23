@@ -30,6 +30,12 @@ log:
     # 可选配置：txt（文本格式）、json（JSON 格式）
     # 默认配置：txt
     format: "txt"
+    # 日志轮转周期，按本地时间零点轮转，支持 day、week、month 及其复数形式
+    # 默认配置：7days；周期到达后当前日志改名为带时间后缀的历史文件
+    rotation: "7days"
+    # 历史日志保留时间，超过该时间的历史文件会被自动删除
+    # 默认配置：70days
+    retention: "70days"
 
 # 数据库配置。服务启动时会自动执行数据库表结构迁移
 database:

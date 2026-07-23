@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -23,10 +24,12 @@ type ServerConfig struct {
 }
 
 type LoggingConfig struct {
-	Path   string
-	Output string
-	Level  string
-	Format string
+	Path      string
+	Output    string
+	Level     string
+	Format    string
+	Rotation  string
+	Retention string
 }
 
 type DatabaseConfig struct {
@@ -63,10 +66,12 @@ type fileConfig struct {
 		WorkDir string `yaml:"work_dir"`
 	} `yaml:"server"`
 	Logging struct {
-		Path   string `yaml:"path"`
-		Output string `yaml:"output"`
-		Level  string `yaml:"level"`
-		Format string `yaml:"format"`
+		Path      string `yaml:"path"`
+		Output    string `yaml:"output"`
+		Level     string `yaml:"level"`
+		Format    string `yaml:"format"`
+		Rotation  string `yaml:"rotation"`
+		Retention string `yaml:"retention"`
 	} `yaml:"log"`
 	Database struct {
 		Engine string `yaml:"engine"`
@@ -232,12 +237,56 @@ func normalizeLoggingConfig(raw fileConfig) (LoggingConfig, error) {
 		return LoggingConfig{}, fmt.Errorf("unsupported logging output %q", raw.Logging.Output)
 	}
 
+	rotation := strings.ToLower(strings.TrimSpace(raw.Logging.Rotation))
+	if rotation == "" {
+		rotation = "7days"
+	}
+	if _, err := ParseDuration(rotation); err != nil {
+		return LoggingConfig{}, fmt.Errorf("invalid logging rotation %q: %w", raw.Logging.Rotation, err)
+	}
+
+	retention := strings.ToLower(strings.TrimSpace(raw.Logging.Retention))
+	if retention == "" {
+		retention = "70days"
+	}
+	if _, err := ParseDuration(retention); err != nil {
+		return LoggingConfig{}, fmt.Errorf("invalid logging retention %q: %w", raw.Logging.Retention, err)
+	}
+
 	return LoggingConfig{
-		Level:  level,
-		Format: format,
-		Path:   path,
-		Output: output,
+		Level:     level,
+		Format:    format,
+		Path:      path,
+		Output:    output,
+		Rotation:  rotation,
+		Retention: retention,
 	}, nil
+}
+
+// ParseDuration parses whole-day durations such as 7days, 2weeks, and 1month.
+func ParseDuration(value string) (time.Duration, error) {
+	value = strings.ToLower(strings.TrimSpace(value))
+	var amount int64
+	var unit string
+	if _, err := fmt.Sscanf(value, "%d%s", &amount, &unit); err != nil || amount <= 0 {
+		return 0, fmt.Errorf("must be a positive number followed by a time unit")
+	}
+
+	var multiplier time.Duration
+	switch unit {
+	case "day", "days":
+		multiplier = 24 * time.Hour
+	case "week", "weeks":
+		multiplier = 7 * 24 * time.Hour
+	case "month", "months":
+		multiplier = 30 * 24 * time.Hour
+	default:
+		return 0, fmt.Errorf("unsupported time unit %q", unit)
+	}
+	if amount > int64((time.Duration(1<<63-1))/multiplier) {
+		return 0, fmt.Errorf("duration is too large")
+	}
+	return time.Duration(amount) * multiplier, nil
 }
 
 func normalizeDatabaseConfig(raw fileConfig) (DatabaseConfig, error) {

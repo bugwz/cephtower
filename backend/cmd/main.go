@@ -11,6 +11,7 @@ import (
 	"cephtower/backend/internal/api"
 	"cephtower/backend/internal/config"
 	"cephtower/backend/internal/logging"
+	"cephtower/backend/internal/scheduler"
 	"cephtower/backend/internal/store"
 )
 
@@ -29,6 +30,13 @@ func main() {
 		slog.Error("configure logging", "error", err)
 		os.Exit(1)
 	}
+	taskScheduler, err := scheduler.Start()
+	if err != nil {
+		_ = closeLog()
+		slog.Error("configure scheduled tasks", "error", err)
+		os.Exit(1)
+	}
+	defer taskScheduler.Stop()
 	defer func() {
 		if err := closeLog(); err != nil {
 			slog.Error("close log file", "error", err)

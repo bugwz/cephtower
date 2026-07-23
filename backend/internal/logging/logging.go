@@ -7,9 +7,12 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+	"sync"
 	"time"
 
+	"cephtower/backend/internal/app"
 	"cephtower/backend/internal/config"
 )
 
@@ -72,13 +75,16 @@ func (h *plainTextHandler) WithGroup(_ string) slog.Handler {
 }
 
 func Install(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger, func() error, error) {
+	app.Global.LogRetentionCleanup = nil
 	output := strings.ToLower(strings.TrimSpace(cfg.Output))
 	if output == "" {
 		output = "both"
 	}
 
 	var writer io.Writer = os.Stdout
-	var logFile *os.File
+	var fileWriter *rotatingFileWriter
+	var cleanupTask func(context.Context)
+	var err error
 	if output == "file" || output == "both" {
 		workDir := "./app"
 		if len(workDirs) > 0 && workDirs[0] != "" {
@@ -94,31 +100,212 @@ func Install(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger, func()
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			return nil, func() error { return nil }, fmt.Errorf("create log directory: %w", err)
 		}
-		logFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o600)
+		fileWriter, err = newRotatingFileWriter(path, cfg.Rotation, cfg.Retention)
 		if err != nil {
-			return nil, func() error { return nil }, fmt.Errorf("open log file %q: %w", path, err)
+			return nil, func() error { return nil }, err
 		}
 		if output == "file" {
-			writer = logFile
+			writer = fileWriter
 		} else {
-			writer = io.MultiWriter(os.Stdout, logFile)
+			writer = io.MultiWriter(os.Stdout, fileWriter)
 		}
+		cleanupTask = func(_ context.Context) { fileWriter.runCleanup(time.Now()) }
+		app.Global.LogRetentionCleanup = cleanupTask
 	}
 
 	logger, err := NewLogger(cfg, writer)
 	if err != nil {
-		if logFile != nil {
-			_ = logFile.Close()
+		if fileWriter != nil {
+			_ = fileWriter.Close()
 		}
 		return nil, func() error { return nil }, err
 	}
 	slog.SetDefault(logger)
 	return logger, func() error {
-		if logFile != nil {
-			return logFile.Close()
+		if fileWriter != nil {
+			return fileWriter.Close()
 		}
 		return nil
 	}, nil
+}
+
+type rotatingFileWriter struct {
+	mu             sync.Mutex
+	file           *os.File
+	path           string
+	rotationDays   int
+	retentionDays  int
+	nextRotationAt time.Time
+	now            func() time.Time
+}
+
+func newRotatingFileWriter(path, rotation, retention string) (*rotatingFileWriter, error) {
+	if strings.TrimSpace(rotation) == "" {
+		rotation = "7days"
+	}
+	if strings.TrimSpace(retention) == "" {
+		retention = "70days"
+	}
+	rotateEvery, err := config.ParseDuration(rotation)
+	if err != nil {
+		return nil, fmt.Errorf("parse logging rotation: %w", err)
+	}
+	retainFor, err := config.ParseDuration(retention)
+	if err != nil {
+		return nil, fmt.Errorf("parse logging retention: %w", err)
+	}
+	rotationDays := int(rotateEvery / (24 * time.Hour))
+	retentionDays := int(retainFor / (24 * time.Hour))
+
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return nil, fmt.Errorf("create log directory: %w", err)
+	}
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o600)
+	if err != nil {
+		return nil, fmt.Errorf("open log file %q: %w", path, err)
+	}
+	now := time.Now()
+	fileStart := now
+	if info, statErr := file.Stat(); statErr == nil && info.Size() > 0 {
+		fileStart = info.ModTime()
+	}
+	if historyStart, found := latestHistoryStart(path, now.Location()); found {
+		fileStart = historyStart
+	}
+	writer := &rotatingFileWriter{
+		file:           file,
+		path:           path,
+		rotationDays:   rotationDays,
+		retentionDays:  retentionDays,
+		nextRotationAt: nextRotationAt(fileStart, rotationDays),
+		now:            time.Now,
+	}
+	if !writer.now().Before(writer.nextRotationAt) {
+		if err := writer.rotate(writer.now()); err != nil {
+			_ = file.Close()
+			return nil, err
+		}
+	}
+	return writer, nil
+}
+
+func (w *rotatingFileWriter) Write(data []byte) (int, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	now := w.now()
+	if !now.Before(w.nextRotationAt) {
+		if err := w.rotate(now); err != nil {
+			return 0, err
+		}
+	}
+	return w.file.Write(data)
+}
+
+func (w *rotatingFileWriter) Close() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.file == nil {
+		return nil
+	}
+	err := w.file.Close()
+	w.file = nil
+	return err
+}
+
+func (w *rotatingFileWriter) rotate(now time.Time) error {
+	if err := w.file.Close(); err != nil {
+		return fmt.Errorf("close log file before rotation: %w", err)
+	}
+	historyPath := w.historyPath(now)
+	if err := os.Rename(w.path, historyPath); err != nil {
+		return fmt.Errorf("rotate log file: %w", err)
+	}
+	file, err := os.OpenFile(w.path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o600)
+	if err != nil {
+		return fmt.Errorf("reopen log file after rotation: %w", err)
+	}
+	w.file = file
+	w.nextRotationAt = nextRotationAt(now, w.rotationDays)
+	return nil
+}
+
+func (w *rotatingFileWriter) runCleanup(now time.Time) {
+	if err := w.removeExpired(now); err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "clean historical log files: %v\n", err)
+	}
+}
+
+func nextRotationAt(start time.Time, rotationDays int) time.Time {
+	startOfDay := startOfDay(start)
+	return startOfDay.AddDate(0, 0, rotationDays)
+}
+
+func startOfDay(value time.Time) time.Time {
+	year, month, day := value.Date()
+	return time.Date(year, month, day, 0, 0, 0, 0, value.Location())
+}
+
+func latestHistoryStart(path string, location *time.Location) (time.Time, bool) {
+	ext := filepath.Ext(path)
+	base := strings.TrimSuffix(filepath.Base(path), ext)
+	paths, err := filepath.Glob(filepath.Join(filepath.Dir(path), base+"-*"+ext))
+	if err != nil {
+		return time.Time{}, false
+	}
+	var latest time.Time
+	for _, historyPath := range paths {
+		name := strings.TrimSuffix(filepath.Base(historyPath), ext)
+		stamp := strings.TrimPrefix(name, base+"-")
+		if len(stamp) < len("20060102150405") {
+			continue
+		}
+		createdAt, parseErr := time.ParseInLocation("20060102150405", stamp[:len("20060102150405")], location)
+		if parseErr == nil && createdAt.After(latest) {
+			latest = createdAt
+		}
+	}
+	return latest, !latest.IsZero()
+}
+
+func (w *rotatingFileWriter) historyPath(now time.Time) string {
+	ext := filepath.Ext(w.path)
+	base := strings.TrimSuffix(w.path, ext)
+	path := base + "-" + now.Format("20060102150405") + ext
+	for index := 1; ; index++ {
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			return path
+		}
+		path = fmt.Sprintf("%s-%d%s", base+"-"+now.Format("20060102150405"), index, ext)
+	}
+}
+
+func (w *rotatingFileWriter) removeExpired(now time.Time) error {
+	ext := filepath.Ext(w.path)
+	base := strings.TrimSuffix(filepath.Base(w.path), ext)
+	pattern := filepath.Join(filepath.Dir(w.path), base+"-*"+ext)
+	paths, err := filepath.Glob(pattern)
+	if err != nil {
+		return fmt.Errorf("find historical log files: %w", err)
+	}
+	cutoff := startOfDay(now).AddDate(0, 0, -w.retentionDays)
+	sort.Strings(paths)
+	for _, path := range paths {
+		name := strings.TrimSuffix(filepath.Base(path), ext)
+		stamp := strings.TrimPrefix(name, base+"-")
+		if len(stamp) < len("20060102150405") {
+			continue
+		}
+		stamp = stamp[:len("20060102150405")]
+		createdAt, err := time.ParseInLocation("20060102150405", stamp, now.Location())
+		if err != nil || !createdAt.Before(cutoff) {
+			continue
+		}
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("remove expired log file %q: %w", path, err)
+		}
+	}
+	return nil
 }
 
 func parseLevel(value string) (slog.Level, error) {

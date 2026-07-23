@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestLoadReadsConfigFile(t *testing.T) {
@@ -14,6 +15,8 @@ func TestLoadReadsConfigFile(t *testing.T) {
 log:
   level: debug
   format: json
+  rotation: 2weeks
+  retention: 3days
 database:
   engine: mysql
   mysql:
@@ -43,7 +46,7 @@ database:
 	if cfg.Path != path {
 		t.Fatalf("Path = %q, want %q", cfg.Path, path)
 	}
-	if cfg.Logging.Level != "debug" || cfg.Logging.Format != "json" || cfg.Logging.Path != "log/cephtower.log" || cfg.Logging.Output != "both" {
+	if cfg.Logging.Level != "debug" || cfg.Logging.Format != "json" || cfg.Logging.Path != "log/cephtower.log" || cfg.Logging.Output != "both" || cfg.Logging.Rotation != "2weeks" || cfg.Logging.Retention != "3days" {
 		t.Fatalf("Logging = %#v, want debug/json", cfg.Logging)
 	}
 	if cfg.Database.Engine != "mysql" {
@@ -60,6 +63,30 @@ database:
 	}
 	if cfg.Database.MySQL.Params != "charset=utf8mb4&parseTime=True&loc=Asia%2FShanghai" {
 		t.Fatalf("Database.MySQL.Params = %q, want configured params", cfg.Database.MySQL.Params)
+	}
+}
+
+func TestParseDurationSupportsSingularAndPluralUnits(t *testing.T) {
+	tests := map[string]time.Duration{
+		"1day":   24 * time.Hour,
+		"7days":  7 * 24 * time.Hour,
+		"1week":  7 * 24 * time.Hour,
+		"2weeks": 14 * 24 * time.Hour,
+		"1month": 30 * 24 * time.Hour,
+	}
+	for value, want := range tests {
+		got, err := ParseDuration(value)
+		if err != nil || got != want {
+			t.Errorf("ParseDuration(%q) = %v, %v; want %v", value, got, err, want)
+		}
+	}
+}
+
+func TestParseDurationRejectsUnsupportedValues(t *testing.T) {
+	for _, value := range []string{"0days", "days", "1.5days", "1hour"} {
+		if _, err := ParseDuration(value); err == nil {
+			t.Errorf("ParseDuration(%q) returned nil error", value)
+		}
 	}
 }
 
@@ -147,7 +174,7 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Database.MySQL.Params != "charset=utf8mb4&parseTime=True&loc=Local" {
 		t.Fatalf("Database.MySQL.Params = %q, want default params", cfg.Database.MySQL.Params)
 	}
-	if cfg.Logging.Level != "info" || cfg.Logging.Format != "txt" || cfg.Logging.Path != "log/cephtower.log" || cfg.Logging.Output != "both" {
+	if cfg.Logging.Level != "info" || cfg.Logging.Format != "txt" || cfg.Logging.Path != "log/cephtower.log" || cfg.Logging.Output != "both" || cfg.Logging.Rotation != "7days" || cfg.Logging.Retention != "70days" {
 		t.Fatalf("Logging defaults = %#v, want info/txt", cfg.Logging)
 	}
 }
