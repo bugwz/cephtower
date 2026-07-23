@@ -10,13 +10,21 @@ import (
 
 type Config struct {
 	Path     string
-	HTTPAddr string
+	Server   ServerConfig
 	Logging  LoggingConfig
 	Database DatabaseConfig
 	SMTP     SMTPConfig
 }
 
+type ServerConfig struct {
+	Address string
+	Port    int
+	WorkDir string
+}
+
 type LoggingConfig struct {
+	Path   string
+	Output string
 	Level  string
 	Format string
 }
@@ -49,11 +57,17 @@ type MySQLConfig struct {
 }
 
 type fileConfig struct {
-	HTTPAddr string `yaml:"http_addr"`
-	Logging  struct {
+	Server struct {
+		Address string `yaml:"address"`
+		Port    int    `yaml:"port"`
+		WorkDir string `yaml:"work_dir"`
+	} `yaml:"server"`
+	Logging struct {
+		Path   string `yaml:"path"`
+		Output string `yaml:"output"`
 		Level  string `yaml:"level"`
 		Format string `yaml:"format"`
-	} `yaml:"logging"`
+	} `yaml:"log"`
 	Database struct {
 		Engine string `yaml:"engine"`
 		SQLite struct {
@@ -92,9 +106,15 @@ func Load(path string) (Config, error) {
 		return Config{}, fmt.Errorf("parse config file %q: %w", path, err)
 	}
 
-	httpAddr := strings.TrimSpace(raw.HTTPAddr)
-	if httpAddr == "" {
-		httpAddr = ":36900"
+	server := normalizeServerConfig(raw)
+	if server.WorkDir == "" {
+		server.WorkDir = "./app"
+	}
+	if server.Address == "" {
+		server.Address = "0.0.0.0"
+	}
+	if server.Port == 0 {
+		server.Port = 36900
 	}
 
 	database, err := normalizeDatabaseConfig(raw)
@@ -108,7 +128,7 @@ func Load(path string) (Config, error) {
 
 	return Config{
 		Path:     path,
-		HTTPAddr: httpAddr,
+		Server:   server,
 		Logging:  logging,
 		Database: database,
 		SMTP: SMTPConfig{
@@ -119,6 +139,14 @@ func Load(path string) (Config, error) {
 			From:     strings.TrimSpace(raw.SMTP.From),
 		},
 	}, nil
+}
+
+func normalizeServerConfig(raw fileConfig) ServerConfig {
+	return ServerConfig{
+		WorkDir: strings.TrimSpace(raw.Server.WorkDir),
+		Address: strings.TrimSpace(raw.Server.Address),
+		Port:    raw.Server.Port,
+	}
 }
 
 func SaveDatabase(path string, database DatabaseConfig) error {
@@ -189,9 +217,26 @@ func normalizeLoggingConfig(raw fileConfig) (LoggingConfig, error) {
 		return LoggingConfig{}, fmt.Errorf("unsupported logging format %q", raw.Logging.Format)
 	}
 
+	path := strings.TrimSpace(raw.Logging.Path)
+	if path == "" {
+		path = "log/cephtower.log"
+	}
+
+	output := strings.ToLower(strings.TrimSpace(raw.Logging.Output))
+	if output == "" {
+		output = "both"
+	}
+	switch output {
+	case "stdout", "file", "both":
+	default:
+		return LoggingConfig{}, fmt.Errorf("unsupported logging output %q", raw.Logging.Output)
+	}
+
 	return LoggingConfig{
 		Level:  level,
 		Format: format,
+		Path:   path,
+		Output: output,
 	}, nil
 }
 
@@ -223,7 +268,7 @@ func NormalizeDatabaseConfig(cfg DatabaseConfig) (DatabaseConfig, error) {
 
 	sqlitePath := strings.TrimSpace(cfg.SQLite.Path)
 	if sqlitePath == "" {
-		sqlitePath = "data/cephtower.db"
+		sqlitePath = "data/db/cephtower.db"
 	}
 
 	mysqlHost := strings.TrimSpace(cfg.MySQL.Host)

@@ -1,11 +1,31 @@
 package store
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
 	"cephtower/backend/internal/config"
 )
+
+func TestOpenSQLiteResolvesRelativePathUnderWorkDir(t *testing.T) {
+	workDir := t.TempDir()
+	db, err := Open(config.DatabaseConfig{
+		Engine: EngineSQLite,
+		SQLite: config.SQLiteConfig{Path: "data/cephtower.db"},
+	}, workDir)
+	if err != nil {
+		t.Fatalf("Open() returned error: %v", err)
+	}
+	if err := Close(db); err != nil {
+		t.Fatalf("Close() returned error: %v", err)
+	}
+
+	dbPath := filepath.Join(workDir, "data", "cephtower.db")
+	if _, err := os.Stat(dbPath); err != nil {
+		t.Fatalf("SQLite database was not created under work directory: %v", err)
+	}
+}
 
 func TestOpenSQLiteCreatesDatabaseAndMigrates(t *testing.T) {
 	dbPath := filepath.Join(t.TempDir(), "nested", "cephtower.db")

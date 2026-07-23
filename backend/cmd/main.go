@@ -3,8 +3,10 @@ package main
 import (
 	"flag"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
+	"strconv"
 
 	"cephtower/backend/internal/api"
 	"cephtower/backend/internal/config"
@@ -22,12 +24,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	if _, err := logging.Install(cfg.Logging); err != nil {
+	_, closeLog, err := logging.Install(cfg.Logging, cfg.Server.WorkDir)
+	if err != nil {
 		slog.Error("configure logging", "error", err)
 		os.Exit(1)
 	}
+	defer func() {
+		if err := closeLog(); err != nil {
+			slog.Error("close log file", "error", err)
+		}
+	}()
 
-	db, err := store.Open(cfg.Database)
+	db, err := store.Open(cfg.Database, cfg.Server.WorkDir)
 	if err != nil {
 		slog.Error("open database", "error", err)
 		os.Exit(1)
@@ -41,8 +49,9 @@ func main() {
 	}()
 
 	slog.Info("cephtower database configured", "engine", cfg.Database.Engine)
-	slog.Info("cephtower backend listening", "addr", cfg.HTTPAddr)
-	if err := http.ListenAndServe(cfg.HTTPAddr, server.Routes()); err != nil {
+	listenAddr := net.JoinHostPort(cfg.Server.Address, strconv.Itoa(cfg.Server.Port))
+	slog.Info("cephtower backend listening", "addr", listenAddr)
+	if err := http.ListenAndServe(listenAddr, server.Routes()); err != nil {
 		slog.Error("server stopped", "error", err)
 		os.Exit(1)
 	}

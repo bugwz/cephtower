@@ -8,8 +8,10 @@ import (
 
 func TestLoadReadsConfigFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.yaml")
-	data := []byte(`http_addr: ":9090"
-logging:
+	data := []byte(`server:
+  address: 127.0.0.1
+  port: 9090
+log:
   level: debug
   format: json
 database:
@@ -32,13 +34,16 @@ database:
 		t.Fatalf("Load() returned error: %v", err)
 	}
 
-	if cfg.HTTPAddr != ":9090" {
-		t.Fatalf("HTTPAddr = %q, want %q", cfg.HTTPAddr, ":9090")
+	if cfg.Server.Address != "127.0.0.1" || cfg.Server.Port != 9090 {
+		t.Fatalf("Server = %#v, want 127.0.0.1:9090", cfg.Server)
+	}
+	if cfg.Server.WorkDir != "./app" {
+		t.Fatalf("Server.WorkDir = %q, want ./app", cfg.Server.WorkDir)
 	}
 	if cfg.Path != path {
 		t.Fatalf("Path = %q, want %q", cfg.Path, path)
 	}
-	if cfg.Logging.Level != "debug" || cfg.Logging.Format != "json" {
+	if cfg.Logging.Level != "debug" || cfg.Logging.Format != "json" || cfg.Logging.Path != "log/cephtower.log" || cfg.Logging.Output != "both" {
 		t.Fatalf("Logging = %#v, want debug/json", cfg.Logging)
 	}
 	if cfg.Database.Engine != "mysql" {
@@ -60,7 +65,9 @@ database:
 
 func TestSaveDatabaseRewritesDatabaseConfig(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.yaml")
-	data := []byte(`http_addr: ":9090"
+	data := []byte(`server:
+  address: 127.0.0.1
+  port: 9090
 database:
   engine: sqlite
   sqlite:
@@ -95,7 +102,7 @@ smtp:
 	if err != nil {
 		t.Fatalf("Load() returned error: %v", err)
 	}
-	if cfg.HTTPAddr != ":9090" || cfg.SMTP.Host != "smtp.example.com" {
+	if cfg.Server.Address != "127.0.0.1" || cfg.Server.Port != 9090 || cfg.SMTP.Host != "smtp.example.com" {
 		t.Fatalf("non-database fields were not preserved: %#v", cfg)
 	}
 	if cfg.Database.Engine != "mysql" {
@@ -125,14 +132,14 @@ func TestLoadDefaults(t *testing.T) {
 		t.Fatalf("Load() returned error: %v", err)
 	}
 
-	if cfg.HTTPAddr != ":36900" {
-		t.Fatalf("HTTPAddr = %q, want default :36900", cfg.HTTPAddr)
+	if cfg.Server.WorkDir != "./app" || cfg.Server.Address != "0.0.0.0" || cfg.Server.Port != 36900 {
+		t.Fatalf("Server = %#v, want default 0.0.0.0:36900", cfg.Server)
 	}
 	if cfg.Database.Engine != "sqlite" {
 		t.Fatalf("Database.Engine = %q, want default sqlite", cfg.Database.Engine)
 	}
-	if cfg.Database.SQLite.Path != "data/cephtower.db" {
-		t.Fatalf("Database.SQLite.Path = %q, want default data/cephtower.db", cfg.Database.SQLite.Path)
+	if cfg.Database.SQLite.Path != "data/db/cephtower.db" {
+		t.Fatalf("Database.SQLite.Path = %q, want default data/db/cephtower.db", cfg.Database.SQLite.Path)
 	}
 	if cfg.Database.MySQL.Host != "127.0.0.1" || cfg.Database.MySQL.Port != 3306 {
 		t.Fatalf("unexpected default MySQL address: %#v", cfg.Database.MySQL)
@@ -140,7 +147,7 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Database.MySQL.Params != "charset=utf8mb4&parseTime=True&loc=Local" {
 		t.Fatalf("Database.MySQL.Params = %q, want default params", cfg.Database.MySQL.Params)
 	}
-	if cfg.Logging.Level != "info" || cfg.Logging.Format != "txt" {
+	if cfg.Logging.Level != "info" || cfg.Logging.Format != "txt" || cfg.Logging.Path != "log/cephtower.log" || cfg.Logging.Output != "both" {
 		t.Fatalf("Logging defaults = %#v, want info/txt", cfg.Logging)
 	}
 }
@@ -162,7 +169,7 @@ func TestLoadRejectsUnsupportedDatabaseEngine(t *testing.T) {
 
 func TestLoadRejectsUnsupportedLoggingLevel(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.yaml")
-	data := []byte(`logging:
+	data := []byte(`log:
   level: verbose
 `)
 
@@ -177,7 +184,7 @@ func TestLoadRejectsUnsupportedLoggingLevel(t *testing.T) {
 
 func TestLoadRejectsUnsupportedLoggingFormat(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.yaml")
-	data := []byte(`logging:
+	data := []byte(`log:
   format: xml
 `)
 

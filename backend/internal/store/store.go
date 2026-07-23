@@ -15,8 +15,12 @@ const (
 	EngineMySQL  = "mysql"
 )
 
-func Open(cfg config.DatabaseConfig) (*gorm.DB, error) {
-	dialector, err := dialector(cfg)
+func Open(cfg config.DatabaseConfig, workDirs ...string) (*gorm.DB, error) {
+	workDir := "./app"
+	if len(workDirs) > 0 && workDirs[0] != "" {
+		workDir = workDirs[0]
+	}
+	dialector, err := dialector(cfg, workDir)
 	if err != nil {
 		return nil, err
 	}
@@ -87,10 +91,10 @@ func Close(db *gorm.DB) error {
 	return nil
 }
 
-func dialector(cfg config.DatabaseConfig) (gorm.Dialector, error) {
+func dialector(cfg config.DatabaseConfig, workDir string) (gorm.Dialector, error) {
 	switch cfg.Engine {
 	case EngineSQLite:
-		return sqlitestore.Dialector(cfg.SQLite)
+		return sqlitestore.Dialector(cfg.SQLite, workDir)
 	case EngineMySQL:
 		return mysqlstore.Dialector(cfg.MySQL)
 	default:

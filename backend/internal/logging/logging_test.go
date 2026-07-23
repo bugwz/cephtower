@@ -3,6 +3,8 @@ package logging
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -29,6 +31,42 @@ func TestNewLoggerWritesSingleLineJSON(t *testing.T) {
 	}
 	if entry["time"] == "" || entry["level"] != "INFO" || entry["msg"] != "backend started" {
 		t.Fatalf("unexpected json log entry: %#v", entry)
+	}
+}
+
+func TestInstallAppendsToLogFile(t *testing.T) {
+	workDir := t.TempDir()
+	cfg := config.LoggingConfig{
+		Level:  "info",
+		Format: "txt",
+		Path:   "log/cephtower.log",
+		Output: "file",
+	}
+
+	logger, closeLog, err := Install(cfg, workDir)
+	if err != nil {
+		t.Fatalf("Install() returned error: %v", err)
+	}
+	logger.Info("first entry")
+	if err := closeLog(); err != nil {
+		t.Fatalf("closeLog() returned error: %v", err)
+	}
+
+	logger, closeLog, err = Install(cfg, workDir)
+	if err != nil {
+		t.Fatalf("second Install() returned error: %v", err)
+	}
+	logger.Info("second entry")
+	if err := closeLog(); err != nil {
+		t.Fatalf("second closeLog() returned error: %v", err)
+	}
+
+	data, err := os.ReadFile(filepath.Join(workDir, "log", "cephtower.log"))
+	if err != nil {
+		t.Fatalf("read log file: %v", err)
+	}
+	if !strings.Contains(string(data), "first entry") || !strings.Contains(string(data), "second entry") {
+		t.Fatalf("log file was not appended: %q", data)
 	}
 }
 

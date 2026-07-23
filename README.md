@@ -111,11 +111,14 @@ CephTower/
 调整唯一配置文件 `config/config.yaml`：
 
 ```yaml
-http_addr: ":36900"
+server:
+  address: "0.0.0.0"
+  port: 36900
+  work_dir: "./app"
 ceph_dashboard:
-  base_url: https://ceph.example.com
-  username: admin
-  password: change-me
+  base_url: "https://ceph.example.com"
+  username: "admin"
+  password: "change-me"
   insecure_tls: false
 ```
 
