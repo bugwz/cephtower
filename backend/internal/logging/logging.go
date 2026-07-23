@@ -1,12 +1,14 @@
 package logging
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"cephtower/backend/internal/config"
 )
@@ -21,11 +23,19 @@ func NewLogger(cfg config.LoggingConfig, output io.Writer) (*slog.Logger, error)
 		return nil, err
 	}
 
-	options := &slog.HandlerOptions{Level: level}
+	options := &slog.HandlerOptions{
+		Level: level,
+		ReplaceAttr: func(_ []string, attr slog.Attr) slog.Attr {
+			if attr.Key == slog.TimeKey && attr.Value.Kind() == slog.KindTime {
+				return slog.String(slog.TimeKey, attr.Value.Time().Format(time.RFC3339))
+			}
+			return attr
+		},
+	}
 	var handler slog.Handler
 	switch strings.ToLower(strings.TrimSpace(cfg.Format)) {
 	case "", "txt":
-		handler = slog.NewTextHandler(output, options)
+		handler = newPlainTextHandler(output, options)
 	case "json":
 		handler = slog.NewJSONHandler(output, options)
 	default:
@@ -33,6 +43,32 @@ func NewLogger(cfg config.LoggingConfig, output io.Writer) (*slog.Logger, error)
 	}
 
 	return slog.New(handler), nil
+}
+
+type plainTextHandler struct {
+	level  slog.Leveler
+	output io.Writer
+}
+
+func newPlainTextHandler(output io.Writer, options *slog.HandlerOptions) slog.Handler {
+	return &plainTextHandler{level: options.Level, output: output}
+}
+
+func (h *plainTextHandler) Enabled(_ context.Context, level slog.Level) bool {
+	return level >= h.level.Level()
+}
+
+func (h *plainTextHandler) Handle(_ context.Context, record slog.Record) error {
+	_, err := fmt.Fprintf(h.output, "%s %s %s\n", record.Time.Format(time.RFC3339), record.Level, record.Message)
+	return err
+}
+
+func (h *plainTextHandler) WithAttrs(_ []slog.Attr) slog.Handler {
+	return h
+}
+
+func (h *plainTextHandler) WithGroup(_ string) slog.Handler {
+	return h
 }
 
 func Install(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger, func() error, error) {

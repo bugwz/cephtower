@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"cephtower/backend/internal/config"
 )
@@ -29,8 +30,36 @@ func TestNewLoggerWritesSingleLineJSON(t *testing.T) {
 	if err := json.Unmarshal([]byte(lines[0]), &entry); err != nil {
 		t.Fatalf("json log line is invalid: %v; line: %q", err, lines[0])
 	}
-	if entry["time"] == "" || entry["level"] != "INFO" || entry["msg"] != "backend started" {
+	if entry["time"] == "" || strings.Contains(entry["time"], ".") || entry["level"] != "INFO" || entry["msg"] != "backend started" {
 		t.Fatalf("unexpected json log entry: %#v", entry)
+	}
+}
+
+func TestNewLoggerWritesPlainTextWithoutFieldNames(t *testing.T) {
+	var output bytes.Buffer
+	logger, err := NewLogger(config.LoggingConfig{Level: "info", Format: "txt"}, &output)
+	if err != nil {
+		t.Fatalf("NewLogger() returned error: %v", err)
+	}
+
+	logger.Info("backend started", "engine", "sqlite")
+
+	line := strings.TrimSpace(output.String())
+	parts := strings.SplitN(line, " ", 3)
+	if len(parts) != 3 {
+		t.Fatalf("plain text log should contain time, level, and message: %q", line)
+	}
+	if _, err := time.Parse(time.RFC3339Nano, parts[0]); err != nil {
+		t.Fatalf("plain text log time is invalid: %v; line: %q", err, line)
+	}
+	if parts[1] != "INFO" || parts[2] != "backend started" {
+		t.Fatalf("unexpected plain text log: %q", line)
+	}
+	if strings.Contains(parts[0], ".") {
+		t.Fatalf("plain text log time contains fractional seconds: %q", line)
+	}
+	if strings.Contains(line, "time=") || strings.Contains(line, "level=") || strings.Contains(line, "msg=") {
+		t.Fatalf("plain text log contains field names: %q", line)
 	}
 }
 
