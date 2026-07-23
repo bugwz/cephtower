@@ -121,7 +121,7 @@ export default function App() {
           controlHeightLG: 38,
           controlHeightSM: 28,
           fontFamily:
-            'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+            '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", sans-serif'
         },
         components: {
           Card: {
@@ -139,7 +139,7 @@ export default function App() {
             headerBg: '#f3fbf8'
           },
           Button: {
-            fontWeight: 700
+            fontWeight: 500
           }
         }
       }}

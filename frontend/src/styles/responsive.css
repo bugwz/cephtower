@@ -1,7 +1,7 @@
 @media (min-width: 1800px) {
   .topbar,
   .app-content {
-    --content-max-width: 1840px;
+    --content-max-width: 2200px;
   }
 
   .overview-metrics {
@@ -12,8 +12,47 @@
 @media (min-width: 2600px) {
   .topbar,
   .app-content {
-    --content-max-width: 2200px;
+    --content-max-width: 2400px;
   }
+}
+
+/* Keep wide displays filled without allowing cards and text to become oversized. */
+@media (min-width: 1800px) {
+  .topbar {
+    width: 100%;
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  .app-content {
+    padding-right: clamp(24px, 1.25vw, 36px);
+    padding-left: clamp(24px, 1.25vw, 36px);
+  }
+}
+
+/* Do not let browsers synthesize heavy glyphs when a platform font has no weight variant. */
+body .app-shell *,
+body .login-shell * {
+  font-synthesis: none;
+  font-weight: 400 !important;
+}
+
+/* A restrained hierarchy keeps labels legible while avoiding the heavy 2K-screen look. */
+body .app-shell .brand .ant-typography,
+body .app-shell .page-header h1.ant-typography,
+body .app-shell .dashboard-health-head h2,
+body .app-shell .ant-statistic-content,
+body .app-shell .capacity-ring strong {
+  font-weight: 600 !important;
+}
+
+body .app-shell .ant-card-head-title,
+body .app-shell .page-header .ant-btn,
+body .app-shell .overview-toolbar .ant-btn,
+body .app-shell .ant-btn,
+body .app-shell .sidebar-menu .ant-menu-item,
+body .app-shell .sidebar-menu .ant-menu-submenu-title {
+  font-weight: 500 !important;
 }
 
 @media (min-width: 1024px) and (max-width: 1512px) {
