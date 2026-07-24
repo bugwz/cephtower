@@ -62,6 +62,8 @@ func apiRouterRoutes(api *v1.API) []apiRoute {
 
 		{"GET", "/cluster", api.ListClusters},
 		{"POST", "/cluster", api.CreateCluster},
+		{"GET", "/cluster/{id}/credentials/keyring", api.GetClusterKeyring},
+		{"GET", "/cluster/{id}/credentials/dashboard-password", api.GetClusterDashboardPassword},
 		{"GET", "/cluster/{id}", api.GetCluster},
 		{"PUT", "/cluster/{id}", api.UpdateCluster},
 		{"DELETE", "/cluster/{id}", api.DeleteCluster},

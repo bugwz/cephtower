@@ -62,6 +62,30 @@ func TestClusterRoutesManageCephConnections(t *testing.T) {
 		t.Fatalf("cluster command = %#v, want default ceph client.admin command", clusters[0].Command)
 	}
 
+	recorder = clusterAPIRequest(api.GetClusterKeyring, http.MethodGet, "/api/v1/cluster/1/credentials/keyring", admin, nil, map[string]string{"id": "1"})
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("get cluster keyring = %d, want 200: %s", recorder.Code, recorder.Body.String())
+	}
+	var keyring map[string]string
+	if err := decodeAPIResponseData(recorder, &keyring); err != nil {
+		t.Fatalf("decode cluster keyring: %v", err)
+	}
+	if keyring["keyring"] != "command-secret" || len(keyring) != 1 {
+		t.Fatalf("keyring = %#v, want only stored keyring", keyring)
+	}
+
+	recorder = clusterAPIRequest(api.GetClusterDashboardPassword, http.MethodGet, "/api/v1/cluster/1/credentials/dashboard-password", admin, nil, map[string]string{"id": "1"})
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("get cluster dashboard password = %d, want 200: %s", recorder.Code, recorder.Body.String())
+	}
+	var dashboardPassword map[string]string
+	if err := decodeAPIResponseData(recorder, &dashboardPassword); err != nil {
+		t.Fatalf("decode cluster dashboard password: %v", err)
+	}
+	if dashboardPassword["dashboard_password"] != "dashboard-secret" || len(dashboardPassword) != 1 {
+		t.Fatalf("dashboard password = %#v, want only stored password", dashboardPassword)
+	}
+
 	updatePayload := []byte(`{
 		"name": "primary-renamed",
 		"monitor_host": "",

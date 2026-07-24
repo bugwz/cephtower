@@ -117,6 +117,16 @@ export async function getClusterDetail(id: number | string): Promise<CephCluster
   return clusterRequest<CephClusterDetail>(`/cluster/${id}`)
 }
 
+export async function getClusterKeyring(id: number | string): Promise<string> {
+  const response = await clusterRequest<{ keyring: string }>(`/cluster/${id}/credentials/keyring`)
+  return response.keyring
+}
+
+export async function getClusterDashboardPassword(id: number | string): Promise<string> {
+  const response = await clusterRequest<{ dashboard_password: string }>(`/cluster/${id}/credentials/dashboard-password`)
+  return response.dashboard_password
+}
+
 export async function createCluster(values: CephClusterFormPayload): Promise<ClusterActionResponse> {
   return clusterRequest<ClusterActionResponse>('/cluster', {
     method: 'POST',

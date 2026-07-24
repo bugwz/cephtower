@@ -1,9 +1,10 @@
-import { EditOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, Space, Table, Tag, Typography, message } from 'antd'
+import { EyeInvisibleOutlined, EyeOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
+import { Button, Card, Form, Input, Space, Table, Typography, message } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   createCluster,
+  getClusterDashboardPassword,
+  getClusterKeyring,
   listClusters,
   updateCluster,
   type CephCluster
@@ -22,13 +23,14 @@ interface ClusterFormValues {
 }
 
 export function ClusterPage() {
-  const navigate = useNavigate()
   const [clusters, setClusters] = useState<CephCluster[]>([])
   const [clusterLoading, setClusterLoading] = useState(true)
   const [clusterError, setClusterError] = useState('')
   const [clusterModalOpen, setClusterModalOpen] = useState(false)
   const [editingCluster, setEditingCluster] = useState<CephCluster | null>(null)
   const [clusterSubmitting, setClusterSubmitting] = useState(false)
+  const [visibleSecrets, setVisibleSecrets] = useState<Record<number, Partial<Record<keyof ClusterSecrets, boolean>>>>({})
+  const [clusterSecrets, setClusterSecrets] = useState<Record<number, Partial<ClusterSecrets>>>({})
   const [form] = Form.useForm<ClusterFormValues>()
 
   const loadClusters = useCallback(async () => {
@@ -54,18 +56,6 @@ export function ClusterPage() {
     setClusterModalOpen(true)
   }
 
-  function openEditCluster(cluster: CephCluster) {
-    setEditingCluster(cluster)
-    form.setFieldsValue({
-      name: cluster.name,
-      monitor_host: cluster.command.monitor_host,
-      dashboard_username: cluster.dashboard.username,
-      dashboard_password: '',
-      keyring: ''
-    })
-    setClusterModalOpen(true)
-  }
-
   async function submitCluster(values: ClusterFormValues) {
     if (clusterSubmitting) {
       return
@@ -83,6 +73,29 @@ export function ClusterPage() {
     } finally {
       setClusterSubmitting(false)
     }
+  }
+
+  async function toggleSecret(clusterID: number, secret: keyof ClusterSecrets) {
+    const currentVisibility = Boolean(visibleSecrets[clusterID]?.[secret])
+    if (!currentVisibility && !clusterSecrets[clusterID]?.[secret]) {
+      const value = secret === 'keyring'
+        ? await getClusterKeyring(clusterID)
+        : await getClusterDashboardPassword(clusterID)
+      setClusterSecrets((current) => ({
+        ...current,
+        [clusterID]: {
+          ...current[clusterID],
+          [secret]: value
+        }
+      }))
+    }
+    setVisibleSecrets((current) => ({
+      ...current,
+      [clusterID]: {
+        ...current[clusterID],
+        [secret]: !currentVisibility
+      }
+    }))
   }
 
   return (
@@ -113,60 +126,46 @@ export function ClusterPage() {
           scroll={{ x: true }}
           columns={[
             {
-              title: '集群',
+              title: '集群名称',
               key: 'cluster',
               render: (_, cluster) => (
                 <div className="user-cell">
                   <Text strong>{cluster.name}</Text>
-                  <Text type="secondary">{cluster.description || cluster.fsid || '未填写描述'}</Text>
                 </div>
               )
             },
             {
-              title: '状态',
-              dataIndex: 'enabled',
-              render: (enabled: boolean) => <Tag color={enabled ? 'success' : 'default'}>{enabled ? '启用' : '禁用'}</Tag>
+              title: 'MON 地址',
+              dataIndex: ['command', 'monitor_host']
             },
             {
-              title: 'Dashboard API',
-              dataIndex: 'dashboard',
-              render: (dashboard: CephCluster['dashboard']) => (
-                <Space>
-                  <Tag color={dashboard.enabled ? 'processing' : 'default'}>{dashboard.enabled ? '启用' : '关闭'}</Tag>
-                  {dashboard.password_set && <Tag color="gold">密码已保存</Tag>}
-                </Space>
-              )
-            },
-            {
-              title: 'Ceph 命令',
-              dataIndex: 'command',
-              render: (command: CephCluster['command']) => (
-                <Space>
-                  <Tag color={command.enabled ? 'processing' : 'default'}>{command.enabled ? command.bin : '关闭'}</Tag>
-                  {command.monitor_host && <Tag color="blue">MON 已配置</Tag>}
-                  {command.keyring_content_set && <Tag color="gold">Key 已保存</Tag>}
-                </Space>
-              )
-            },
-            {
-              title: '更新时间',
-              dataIndex: 'updated_at',
-              render: (value: string) => new Date(value).toLocaleString()
-            },
-            {
-              title: '操作',
-              key: 'actions',
+              title: '密钥',
+              key: 'keyring',
               render: (_, cluster) => (
-                <Space>
-                  <Button icon={<EditOutlined />} onClick={() => openEditCluster(cluster)}>
-                    编辑
-                  </Button>
-                  <Button onClick={() => navigate(`/cluster/cluster/${cluster.id}`)}>
-                    详情
-                  </Button>
-                </Space>
+                <SecretValue
+                  value={clusterSecrets[cluster.id]?.keyring}
+                  visible={Boolean(visibleSecrets[cluster.id]?.keyring)}
+                  configured={cluster.command.keyring_content_set}
+                  onToggle={() => toggleSecret(cluster.id, 'keyring')}
+                />
               )
-            }
+            },
+            {
+              title: 'Dashboard 用户',
+              dataIndex: ['dashboard', 'username']
+            },
+            {
+              title: '密码',
+              key: 'dashboard_password',
+              render: (_, cluster) => (
+                <SecretValue
+                  value={clusterSecrets[cluster.id]?.dashboard_password}
+                  visible={Boolean(visibleSecrets[cluster.id]?.dashboard_password)}
+                  configured={cluster.dashboard.password_set}
+                  onToggle={() => toggleSecret(cluster.id, 'dashboard_password')}
+                />
+              )
+            },
           ]}
         />
       </Card>
@@ -225,6 +224,40 @@ export function ClusterPage() {
         </Form>
       </DraggableModal>
     </Page>
+  )
+}
+
+interface ClusterSecrets {
+  keyring: string
+  dashboard_password: string
+}
+
+function SecretValue({
+  value,
+  visible,
+  configured,
+  onToggle
+}: {
+  value?: string
+  visible: boolean
+  configured: boolean
+  onToggle: () => void
+}) {
+  if (!configured) {
+    return <Text type="secondary">未配置</Text>
+  }
+
+  return (
+    <Space size={4}>
+      <Text>{visible ? value || '—' : '••••••••'}</Text>
+      <Button
+        type="text"
+        size="small"
+        aria-label={visible ? '隐藏内容' : '查看内容'}
+        icon={visible ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+        onClick={onToggle}
+      />
+    </Space>
   )
 }
 

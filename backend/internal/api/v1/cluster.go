@@ -161,6 +161,32 @@ func (api *API) GetCluster(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (api *API) GetClusterKeyring(w http.ResponseWriter, r *http.Request) {
+	if !requireAdmin(w, r) {
+		return
+	}
+
+	cluster, ok := api.clusterByID(w, r)
+	if !ok {
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"keyring": cluster.Keyring})
+}
+
+func (api *API) GetClusterDashboardPassword(w http.ResponseWriter, r *http.Request) {
+	if !requireAdmin(w, r) {
+		return
+	}
+
+	cluster, ok := api.clusterByID(w, r)
+	if !ok {
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"dashboard_password": cluster.DashboardPassword})
+}
+
 func (api *API) UpdateCluster(w http.ResponseWriter, r *http.Request) {
 	if !requireAdmin(w, r) {
 		return
