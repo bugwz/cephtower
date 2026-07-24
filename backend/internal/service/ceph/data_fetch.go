@@ -42,10 +42,15 @@ const (
 
 type Service struct {
 	database func() *gorm.DB
+	workDir  string
 }
 
-func NewService(database func() *gorm.DB) Service {
-	return Service{database: database}
+func NewService(database func() *gorm.DB, workDirs ...string) Service {
+	workDir := ""
+	if len(workDirs) > 0 {
+		workDir = workDirs[0]
+	}
+	return Service{database: database, workDir: workDir}
 }
 
 type dataFetchModuleDefault struct {
@@ -94,8 +99,12 @@ var defaultDataFetchModules = []dataFetchModuleDefault{
 	{fetchModuleRGWBuckets, fetchSourceDashboard, 600, 180},
 }
 
-func StartDataFetchScheduler(database func() *gorm.DB) context.CancelFunc {
-	service := Service{database: database}
+func StartDataFetchScheduler(database func() *gorm.DB, workDirs ...string) context.CancelFunc {
+	workDir := ""
+	if len(workDirs) > 0 {
+		workDir = workDirs[0]
+	}
+	service := Service{database: database, workDir: workDir}
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
@@ -310,20 +319,20 @@ func (service Service) fetchClusterModule(ctx context.Context, clusterID uint, m
 
 	switch module {
 	case fetchModuleSummary:
-		payload, err := dashboardRaw(ctx, &cluster, http.MethodGet, "/api/summary", nil, nil)
+		payload, err := dashboardRaw(ctx, service.workDir, &cluster, http.MethodGet, "/api/summary", nil, nil)
 		if err != nil {
 			return dataFetchResult{source: fetchSourceDashboard}, err
 		}
 		return dataFetchResult{source: fetchSourceDashboard, recordsUpserted: 1}, saveDiscoveredSummary(ctx, db, cluster.ID, payload)
 	case fetchModuleHealth:
-		payload, err := dashboardRaw(ctx, &cluster, http.MethodGet, "/api/health/full", nil, nil)
+		payload, err := dashboardRaw(ctx, service.workDir, &cluster, http.MethodGet, "/api/health/full", nil, nil)
 		if err != nil {
 			return dataFetchResult{source: fetchSourceDashboard}, err
 		}
 		count := saveDiscoveredHealthChecks(ctx, db, cluster.ID, payload)
 		return dataFetchResult{source: fetchSourceDashboard, recordsUpserted: count}, nil
 	case fetchModuleHosts:
-		return commandFetch(ctx, db, &cluster, module, func(client *command.CommandClient) error {
+		return commandFetch(ctx, service.workDir, db, &cluster, module, func(client *command.CommandClient) error {
 			saveDiscoveredHosts(ctx, db, cluster.ID, func() ([]ceph.Host, error) {
 				hosts, err := client.OrchHosts(ctx, command.OrchHostListOptions{Detail: true})
 				if err == nil {
@@ -338,7 +347,7 @@ func (service Service) fetchClusterModule(ctx context.Context, clusterID uint, m
 			return nil
 		})
 	case fetchModuleOSDs:
-		return commandFetch(ctx, db, &cluster, module, func(client *command.CommandClient) error {
+		return commandFetch(ctx, service.workDir, db, &cluster, module, func(client *command.CommandClient) error {
 			saveDiscoveredOSDs(ctx, db, cluster.ID, func() ([]map[string]any, error) {
 				daemons, err := client.OrchPS(ctx, command.OrchPSOptions{DaemonType: "osd"})
 				if err == nil {
@@ -353,7 +362,7 @@ func (service Service) fetchClusterModule(ctx context.Context, clusterID uint, m
 			return nil
 		})
 	case fetchModuleOSDFlags:
-		return commandFetch(ctx, db, &cluster, module, func(client *command.CommandClient) error {
+		return commandFetch(ctx, service.workDir, db, &cluster, module, func(client *command.CommandClient) error {
 			saveDiscoveredOSDFlags(ctx, db, cluster.ID, func() ([]string, error) {
 				dump, err := client.OSDDump(ctx)
 				if err != nil {
@@ -364,49 +373,49 @@ func (service Service) fetchClusterModule(ctx context.Context, clusterID uint, m
 			return nil
 		})
 	case fetchModuleDaemons:
-		return commandFetch(ctx, db, &cluster, module, func(client *command.CommandClient) error {
+		return commandFetch(ctx, service.workDir, db, &cluster, module, func(client *command.CommandClient) error {
 			saveDiscoveredDaemons(ctx, db, cluster.ID, func() ([]map[string]any, error) {
 				return client.OrchPS(ctx, command.OrchPSOptions{})
 			})
 			return nil
 		})
 	case fetchModuleServices:
-		return commandFetch(ctx, db, &cluster, module, func(client *command.CommandClient) error {
+		return commandFetch(ctx, service.workDir, db, &cluster, module, func(client *command.CommandClient) error {
 			saveDiscoveredServices(ctx, db, cluster.ID, func() ([]map[string]any, error) {
 				return client.OrchList(ctx, command.OrchListOptions{})
 			})
 			return nil
 		})
 	case fetchModuleMonitors:
-		return commandFetch(ctx, db, &cluster, module, func(client *command.CommandClient) error {
+		return commandFetch(ctx, service.workDir, db, &cluster, module, func(client *command.CommandClient) error {
 			saveDiscoveredMons(ctx, db, cluster.ID, func() (map[string]any, error) {
 				return client.MonDump(ctx)
 			})
 			return nil
 		})
 	case fetchModuleManagers:
-		return commandFetch(ctx, db, &cluster, module, func(client *command.CommandClient) error {
+		return commandFetch(ctx, service.workDir, db, &cluster, module, func(client *command.CommandClient) error {
 			saveDiscoveredMgrs(ctx, db, cluster.ID, func() (map[string]any, error) {
 				return client.MgrDump(ctx)
 			})
 			return nil
 		})
 	case fetchModuleMDS:
-		return commandFetch(ctx, db, &cluster, module, func(client *command.CommandClient) error {
+		return commandFetch(ctx, service.workDir, db, &cluster, module, func(client *command.CommandClient) error {
 			saveDiscoveredMDSs(ctx, db, cluster.ID, func() (map[string]any, error) {
 				return client.FSDump(ctx)
 			})
 			return nil
 		})
 	case fetchModuleMgrModules:
-		return commandFetch(ctx, db, &cluster, module, func(client *command.CommandClient) error {
+		return commandFetch(ctx, service.workDir, db, &cluster, module, func(client *command.CommandClient) error {
 			saveDiscoveredMgrModules(ctx, db, cluster.ID, func() (map[string]any, error) {
 				return client.MgrModuleList(ctx)
 			})
 			return nil
 		})
 	case fetchModuleClusterConfiguration:
-		return commandFetch(ctx, db, &cluster, module, func(client *command.CommandClient) error {
+		return commandFetch(ctx, service.workDir, db, &cluster, module, func(client *command.CommandClient) error {
 			saveDiscoveredConfiguration(ctx, db, cluster.ID, func() ([]map[string]any, error) {
 				return client.ConfigDump(ctx)
 			})
@@ -414,24 +423,24 @@ func (service Service) fetchClusterModule(ctx context.Context, clusterID uint, m
 		})
 	case fetchModulePools:
 		values := url.Values{"stats": []string{"true"}}
-		return dashboardFetchArray(ctx, db, &cluster, module, "/api/pool", values, saveDiscoveredPools)
+		return dashboardFetchArray(ctx, service.workDir, db, &cluster, module, "/api/pool", values, saveDiscoveredPools)
 	case fetchModuleRBDImages:
-		return dashboardFetchArray(ctx, db, &cluster, module, "/api/block/image", nil, saveDiscoveredRBDImages)
+		return dashboardFetchArray(ctx, service.workDir, db, &cluster, module, "/api/block/image", nil, saveDiscoveredRBDImages)
 	case fetchModuleCephFS:
-		return dashboardFetchArray(ctx, db, &cluster, module, "/api/cephfs", nil, saveDiscoveredFilesystems)
+		return dashboardFetchArray(ctx, service.workDir, db, &cluster, module, "/api/cephfs", nil, saveDiscoveredFilesystems)
 	case fetchModuleRGWDaemons:
-		return dashboardFetchArray(ctx, db, &cluster, module, "/api/rgw/daemon", nil, saveDiscoveredRGWDaemons)
+		return dashboardFetchArray(ctx, service.workDir, db, &cluster, module, "/api/rgw/daemon", nil, saveDiscoveredRGWDaemons)
 	case fetchModuleRGWUsers:
-		return dashboardFetchArray(ctx, db, &cluster, module, "/api/rgw/user", nil, saveDiscoveredRGWUsers)
+		return dashboardFetchArray(ctx, service.workDir, db, &cluster, module, "/api/rgw/user", nil, saveDiscoveredRGWUsers)
 	case fetchModuleRGWBuckets:
-		return dashboardFetchArray(ctx, db, &cluster, module, "/api/rgw/bucket", nil, saveDiscoveredRGWBuckets)
+		return dashboardFetchArray(ctx, service.workDir, db, &cluster, module, "/api/rgw/bucket", nil, saveDiscoveredRGWBuckets)
 	default:
 		return dataFetchResult{}, fmt.Errorf("unsupported ceph data fetch module %q", module)
 	}
 }
 
-func commandFetch(ctx context.Context, db *gorm.DB, cluster *store.CephCluster, module string, run func(*command.CommandClient) error) (dataFetchResult, error) {
-	client, cleanup, err := commandClientForCluster(cluster)
+func commandFetch(ctx context.Context, workDir string, db *gorm.DB, cluster *store.CephCluster, module string, run func(*command.CommandClient) error) (dataFetchResult, error) {
+	client, cleanup, err := commandClientForCluster(workDir, cluster)
 	if err != nil {
 		return dataFetchResult{source: fetchSourceCommand}, err
 	}
@@ -443,8 +452,8 @@ func commandFetch(ctx context.Context, db *gorm.DB, cluster *store.CephCluster, 
 	return dataFetchResult{source: fetchSourceCommand, recordsUpserted: count}, nil
 }
 
-func dashboardFetchArray(ctx context.Context, db *gorm.DB, cluster *store.CephCluster, module string, path string, query url.Values, save func(context.Context, *gorm.DB, uint, []map[string]any) int) (dataFetchResult, error) {
-	payload, err := dashboardRaw(ctx, cluster, http.MethodGet, path, query, nil)
+func dashboardFetchArray(ctx context.Context, workDir string, db *gorm.DB, cluster *store.CephCluster, module string, path string, query url.Values, save func(context.Context, *gorm.DB, uint, []map[string]any) int) (dataFetchResult, error) {
+	payload, err := dashboardRaw(ctx, workDir, cluster, http.MethodGet, path, query, nil)
 	if err != nil {
 		return dataFetchResult{source: fetchSourceDashboard}, err
 	}
@@ -453,8 +462,8 @@ func dashboardFetchArray(ctx context.Context, db *gorm.DB, cluster *store.CephCl
 	return dataFetchResult{source: fetchSourceDashboard, recordsUpserted: count}, nil
 }
 
-func dashboardRaw(ctx context.Context, cluster *store.CephCluster, method string, path string, query url.Values, body any) (json.RawMessage, error) {
-	baseURL, err := dashboardBaseURLForCluster(ctx, cluster)
+func dashboardRaw(ctx context.Context, workDir string, cluster *store.CephCluster, method string, path string, query url.Values, body any) (json.RawMessage, error) {
+	baseURL, err := dashboardBaseURLForCluster(ctx, workDir, cluster)
 	if err != nil {
 		return nil, err
 	}

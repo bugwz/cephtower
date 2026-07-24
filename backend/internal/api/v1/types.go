@@ -35,26 +35,29 @@ type CephClient interface {
 }
 
 type API struct {
-	ceph              CephClient
-	currentConfig     func() config.Config
-	database          func() *gorm.DB
-	replaceDatabase   func(config.Config, *gorm.DB) *gorm.DB
-	clusterDiscoverer cephservice.ClusterDiscoverer
+	ceph                  CephClient
+	currentConfig         func() config.Config
+	database              func() *gorm.DB
+	replaceDatabase       func(config.Config, *gorm.DB) *gorm.DB
+	clusterDiscoverer     cephservice.ClusterDiscoverer
+	clusterRuntimeCleaner func(context.Context, uint) error
 }
 
 func NewAPI(cephClient CephClient, deps Dependencies) *API {
 	return &API{
-		ceph:              cephClient,
-		currentConfig:     deps.CurrentConfig,
-		database:          deps.Database,
-		replaceDatabase:   deps.ReplaceDatabase,
-		clusterDiscoverer: deps.ClusterDiscoverer,
+		ceph:                  cephClient,
+		currentConfig:         deps.CurrentConfig,
+		database:              deps.Database,
+		replaceDatabase:       deps.ReplaceDatabase,
+		clusterDiscoverer:     deps.ClusterDiscoverer,
+		clusterRuntimeCleaner: deps.ClusterRuntimeCleaner,
 	}
 }
 
 type Dependencies struct {
-	CurrentConfig     func() config.Config
-	Database          func() *gorm.DB
-	ReplaceDatabase   func(config.Config, *gorm.DB) *gorm.DB
-	ClusterDiscoverer cephservice.ClusterDiscoverer
+	CurrentConfig         func() config.Config
+	Database              func() *gorm.DB
+	ReplaceDatabase       func(config.Config, *gorm.DB) *gorm.DB
+	ClusterDiscoverer     cephservice.ClusterDiscoverer
+	ClusterRuntimeCleaner func(context.Context, uint) error
 }

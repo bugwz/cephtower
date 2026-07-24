@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"sync"
 	"time"
-
-	"cephtower/backend/internal/app"
 )
 
 type Schedule func(time.Time) time.Time
 type Task func(context.Context)
+
+var (
+	systemTaskMu            sync.Mutex
+	logRetentionCleanupTask Task
+)
 
 type Scheduler struct {
 	mu       sync.Mutex
@@ -46,15 +49,24 @@ func New() *Scheduler {
 }
 
 // Start creates the system scheduler and registers all recurring system tasks.
+func RegisterLogRetentionCleanup(task Task) {
+	systemTaskMu.Lock()
+	defer systemTaskMu.Unlock()
+	logRetentionCleanupTask = task
+}
+
 func Start() (*Scheduler, error) {
 	scheduler := New()
-	if app.Global.LogRetentionCleanup != nil {
+	systemTaskMu.Lock()
+	cleanupTask := logRetentionCleanupTask
+	systemTaskMu.Unlock()
+	if cleanupTask != nil {
 		cleanupAt := nextDailyAt(1)
 		if err := scheduler.Register(
 			"log-retention-cleanup",
 			cleanupAt(time.Now()),
 			cleanupAt,
-			app.Global.LogRetentionCleanup,
+			cleanupTask,
 		); err != nil {
 			scheduler.Stop()
 			return nil, err

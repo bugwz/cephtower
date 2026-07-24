@@ -1,9 +1,12 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"cephtower/backend/internal/api/v1"
+	"cephtower/backend/internal/config"
+	"cephtower/backend/internal/service/ceph"
 )
 
 type apiRoute struct {
@@ -18,6 +21,9 @@ func (s *Server) registerAPIRouter(mux *http.ServeMux) {
 		Database:          s.database,
 		ReplaceDatabase:   s.replaceDatabase,
 		ClusterDiscoverer: s.clusterDiscoverer,
+		ClusterRuntimeCleaner: func(ctx context.Context, clusterID uint) error {
+			return ceph.DeleteCephClusterRuntimeFiles(config.ResolveRuntimeDir(s.currentConfig()), clusterID)
+		},
 	})
 
 	for _, route := range apiRouterRoutes(api) {

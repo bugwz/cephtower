@@ -219,6 +219,12 @@ func (api *API) DeleteCluster(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
+	if api.clusterRuntimeCleaner != nil {
+		if err := api.clusterRuntimeCleaner(r.Context(), cluster.ID); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+	}
 	writeJSON(w, http.StatusOK, clusterActionResponse{Message: "集群连接已删除"})
 }
 

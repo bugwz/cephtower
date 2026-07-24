@@ -13,6 +13,8 @@ func TestLoadReadsConfigFile(t *testing.T) {
   address: 127.0.0.1
   port: 9090
 log:
+  dir: custom-log
+  file: application.log
   level: debug
   format: json
   rotation: 2weeks
@@ -26,6 +28,8 @@ database:
     password: db-secret
     database: cephtower
     params: charset=utf8mb4&parseTime=True&loc=Asia%2FShanghai
+runtime:
+  dir: data/custom-runtime
 `)
 
 	if err := os.WriteFile(path, data, 0o600); err != nil {
@@ -40,13 +44,16 @@ database:
 	if cfg.Server.Address != "127.0.0.1" || cfg.Server.Port != 9090 {
 		t.Fatalf("Server = %#v, want 127.0.0.1:9090", cfg.Server)
 	}
-	if cfg.Server.WorkDir != "./app" {
-		t.Fatalf("Server.WorkDir = %q, want ./app", cfg.Server.WorkDir)
+	if cfg.Server.Dir != "./app" {
+		t.Fatalf("Server.Dir = %q, want ./app", cfg.Server.Dir)
+	}
+	if cfg.Runtime.Dir != "data/custom-runtime" {
+		t.Fatalf("Runtime.Dir = %q, want data/custom-runtime", cfg.Runtime.Dir)
 	}
 	if cfg.Path != path {
 		t.Fatalf("Path = %q, want %q", cfg.Path, path)
 	}
-	if cfg.Logging.Level != "debug" || cfg.Logging.Format != "json" || cfg.Logging.Path != "log/cephtower.log" || cfg.Logging.Output != "both" || cfg.Logging.Rotation != "2weeks" || cfg.Logging.Retention != "3days" {
+	if cfg.Logging.Level != "debug" || cfg.Logging.Format != "json" || cfg.Logging.Dir != "custom-log" || cfg.Logging.File != "application.log" || cfg.Logging.Output != "both" || cfg.Logging.Rotation != "2weeks" || cfg.Logging.Retention != "3days" {
 		t.Fatalf("Logging = %#v, want debug/json", cfg.Logging)
 	}
 	if cfg.Database.Engine != "mysql" {
@@ -159,11 +166,14 @@ func TestLoadDefaults(t *testing.T) {
 		t.Fatalf("Load() returned error: %v", err)
 	}
 
-	if cfg.Server.WorkDir != "./app" || cfg.Server.Address != "0.0.0.0" || cfg.Server.Port != 36900 {
+	if cfg.Server.Dir != "./app" || cfg.Server.Address != "0.0.0.0" || cfg.Server.Port != 36900 {
 		t.Fatalf("Server = %#v, want default 0.0.0.0:36900", cfg.Server)
 	}
 	if cfg.Database.Engine != "sqlite" {
 		t.Fatalf("Database.Engine = %q, want default sqlite", cfg.Database.Engine)
+	}
+	if cfg.Runtime.Dir != "data/runtime" {
+		t.Fatalf("Runtime.Dir = %q, want default data/runtime", cfg.Runtime.Dir)
 	}
 	if cfg.Database.SQLite.Path != "data/db/cephtower.db" {
 		t.Fatalf("Database.SQLite.Path = %q, want default data/db/cephtower.db", cfg.Database.SQLite.Path)
@@ -174,8 +184,24 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.Database.MySQL.Params != "charset=utf8mb4&parseTime=True&loc=Local" {
 		t.Fatalf("Database.MySQL.Params = %q, want default params", cfg.Database.MySQL.Params)
 	}
-	if cfg.Logging.Level != "info" || cfg.Logging.Format != "txt" || cfg.Logging.Path != "log/cephtower.log" || cfg.Logging.Output != "both" || cfg.Logging.Rotation != "7days" || cfg.Logging.Retention != "70days" {
+	if cfg.Logging.Level != "info" || cfg.Logging.Format != "txt" || cfg.Logging.Dir != "log" || cfg.Logging.File != "cephtower.log" || cfg.Logging.Output != "both" || cfg.Logging.Rotation != "7days" || cfg.Logging.Retention != "70days" {
 		t.Fatalf("Logging defaults = %#v, want info/txt", cfg.Logging)
+	}
+}
+
+func TestResolveRuntimeDir(t *testing.T) {
+	if got := ResolveRuntimeDir(Config{
+		Server:  ServerConfig{Dir: "./app"},
+		Runtime: RuntimeConfig{Dir: "data/runtime"},
+	}); got != filepath.Join("app", "data", "runtime") {
+		t.Fatalf("ResolveRuntimeDir() = %q, want app/data/runtime", got)
+	}
+
+	if got := ResolveRuntimeDir(Config{
+		Server:  ServerConfig{Dir: "./app"},
+		Runtime: RuntimeConfig{Dir: "/var/lib/cephtower/runtime"},
+	}); got != "/var/lib/cephtower/runtime" {
+		t.Fatalf("ResolveRuntimeDir() = %q, want absolute runtime path", got)
 	}
 }
 

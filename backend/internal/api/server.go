@@ -25,14 +25,17 @@ type Server struct {
 }
 
 func NewServer(cfg config.Config, cephClient v1.CephClient, db *gorm.DB) *Server {
+	runtimeDir := config.ResolveRuntimeDir(cfg)
 	server := &Server{
-		cfg:               cfg,
-		db:                db,
-		clusterDiscoverer: ceph.DiscoverAndSyncCephCluster,
+		cfg: cfg,
+		db:  db,
+		clusterDiscoverer: func(ctx context.Context, db *gorm.DB, cluster *store.CephCluster) error {
+			return ceph.DiscoverAndSyncCephClusterWithWorkDir(ctx, db, cluster, runtimeDir)
+		},
 	}
 	if cephClient == nil {
-		cephClient = ceph.NewDatabaseCephClient(server.database)
-		server.syncCancel = ceph.StartDataFetchScheduler(server.database)
+		cephClient = ceph.NewDatabaseCephClient(server.database, runtimeDir)
+		server.syncCancel = ceph.StartDataFetchScheduler(server.database, runtimeDir)
 	}
 	server.ceph = cephClient
 	return server

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	appconfig "cephtower/backend/internal/config"
 	"cephtower/backend/internal/service/ceph"
 	"cephtower/backend/internal/store"
 	"gorm.io/gorm"
@@ -155,7 +156,7 @@ func (api *API) RunDataFetchModuleNow(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := context.WithoutCancel(r.Context())
-	service := ceph.NewService(api.database)
+	service := ceph.NewService(api.database, appconfig.ResolveRuntimeDir(api.currentConfig()))
 	go func() {
 		for _, cluster := range clusters {
 			_ = service.RunDataFetchConfig(ctx, cluster.ID, config)

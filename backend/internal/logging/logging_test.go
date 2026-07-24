@@ -68,7 +68,8 @@ func TestInstallAppendsToLogFile(t *testing.T) {
 	cfg := config.LoggingConfig{
 		Level:  "info",
 		Format: "txt",
-		Path:   "log/cephtower.log",
+		Dir:    "log",
+		File:   "cephtower.log",
 		Output: "file",
 	}
 

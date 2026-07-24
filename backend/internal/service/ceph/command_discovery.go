@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,11 +25,15 @@ const (
 )
 
 func DiscoverAndSyncCephCluster(ctx context.Context, db *gorm.DB, cluster *store.CephCluster) error {
+	return DiscoverAndSyncCephClusterWithWorkDir(ctx, db, cluster, "")
+}
+
+func DiscoverAndSyncCephClusterWithWorkDir(ctx context.Context, db *gorm.DB, cluster *store.CephCluster, workDir string) error {
 	if cluster == nil {
 		return nil
 	}
 
-	client, cleanup, err := commandClientForCluster(cluster)
+	client, cleanup, err := commandClientForCluster(workDir, cluster)
 	if err != nil {
 		return err
 	}
@@ -99,49 +105,66 @@ func DiscoverAndSyncCephCluster(ctx context.Context, db *gorm.DB, cluster *store
 		return client.ConfigDump(ctx)
 	})
 
+	if err := SyncCephClusterRuntimeFiles(workDir, cluster); err != nil {
+		return fmt.Errorf("persist ceph runtime files: %w", err)
+	}
 	return nil
 }
 
-func commandClientForCluster(cluster *store.CephCluster) (*command.CommandClient, func(), error) {
+func commandClientForCluster(workDir string, cluster *store.CephCluster) (*command.CommandClient, func(), error) {
+	paths := cephClusterRuntimePaths(workDir, cluster.ID)
 	cleanup := func() {}
-	file, err := os.CreateTemp("", "cephtower-ceph-keyring-*")
-	if err != nil {
-		return nil, cleanup, err
-	}
-	keyring := file.Name()
-	cleanup = func() {
-		_ = os.Remove(file.Name())
-	}
-	if err := file.Chmod(0o600); err != nil {
-		_ = file.Close()
-		cleanup()
-		return nil, func() {}, err
-	}
-	if _, err := file.WriteString(keyringFileContent(DefaultCephCommandName, cluster.Keyring)); err != nil {
-		_ = file.Close()
-		cleanup()
-		return nil, func() {}, err
-	}
-	if err := file.Close(); err != nil {
-		cleanup()
-		return nil, func() {}, err
+	confPath := paths.confPath
+	keyringPath := paths.keyringPath
+	confMatches := runtimeFileMatches(confPath, cephConfigContent(cluster.MonitorHost))
+	keyringMatches := runtimeFileMatches(keyringPath, keyringFileContent(DefaultCephCommandName, cluster.Keyring))
+	if !confMatches || !keyringMatches {
+		fallbackDir := filepath.Join(os.TempDir(), "cephtower")
+		if err := os.MkdirAll(fallbackDir, 0o700); err != nil {
+			return nil, cleanup, fmt.Errorf("create ceph fallback directory: %w", err)
+		}
+		cleanupFiles := make([]string, 0, 2)
+		if !confMatches {
+			fallbackPath, err := writeTempRuntimeFile(fallbackDir, fmt.Sprintf("cluster-%d-conf-*", cluster.ID), cephConfigContent(cluster.MonitorHost))
+			if err != nil {
+				return nil, cleanup, err
+			}
+			confPath = fallbackPath
+			cleanupFiles = append(cleanupFiles, fallbackPath)
+		}
+		if !keyringMatches {
+			fallbackPath, err := writeTempRuntimeFile(fallbackDir, fmt.Sprintf("cluster-%d-keyring-*", cluster.ID), keyringFileContent(DefaultCephCommandName, cluster.Keyring))
+			if err != nil {
+				for _, path := range cleanupFiles {
+					_ = os.Remove(path)
+				}
+				return nil, cleanup, err
+			}
+			keyringPath = fallbackPath
+			cleanupFiles = append(cleanupFiles, fallbackPath)
+		}
+		cleanup = func() {
+			for _, path := range cleanupFiles {
+				_ = os.Remove(path)
+			}
+		}
 	}
 
 	timeout := time.Duration(DefaultCephCommandTimeoutSeconds) * time.Second
 	client := command.NewCommandClient(command.Config{
 		Bin:     DefaultCephCommandBin,
 		Cluster: "",
-		Conf:    "",
-		MonHost: cluster.MonitorHost,
+		Conf:    confPath,
+		MonHost: "",
 		Name:    DefaultCephCommandName,
-		Keyring: keyring,
+		Keyring: keyringPath,
 		Timeout: timeout,
 	})
 	return client, cleanup, nil
 }
 
-func dashboardBaseURLForCluster(ctx context.Context, cluster *store.CephCluster) (string, error) {
-	client, cleanup, err := commandClientForCluster(cluster)
+func dashboardBaseURLForCluster(ctx context.Context, workDir string, cluster *store.CephCluster) (string, error) {
+	client, cleanup, err := commandClientForCluster(workDir, cluster)
 	if err != nil {
 		return "", err
 	}
@@ -156,6 +179,110 @@ func dashboardBaseURLForCluster(ctx context.Context, cluster *store.CephCluster)
 		return "", fmt.Errorf("dashboard service address was not found from ceph mgr services")
 	}
 	return baseURL, nil
+}
+
+type cephClusterRuntimeFilePaths struct {
+	dir         string
+	confPath    string
+	keyringPath string
+}
+
+func cephClusterRuntimePaths(workDir string, clusterID uint) cephClusterRuntimeFilePaths {
+	dir := filepath.Join(workDir, "ceph", strconv.FormatUint(uint64(clusterID), 10))
+	return cephClusterRuntimeFilePaths{
+		dir:         dir,
+		confPath:    filepath.Join(dir, "ceph.conf"),
+		keyringPath: filepath.Join(dir, "ceph.client.admin.keyring"),
+	}
+}
+
+func SyncCephClusterRuntimeFiles(workDir string, cluster *store.CephCluster) error {
+	if cluster == nil {
+		return nil
+	}
+	paths := cephClusterRuntimePaths(workDir, cluster.ID)
+	if err := os.MkdirAll(paths.dir, 0o700); err != nil {
+		return fmt.Errorf("create ceph runtime directory: %w", err)
+	}
+	if err := syncRuntimeFile(paths.confPath, cephConfigContent(cluster.MonitorHost)); err != nil {
+		return fmt.Errorf("sync ceph config: %w", err)
+	}
+	if err := syncRuntimeFile(paths.keyringPath, keyringFileContent(DefaultCephCommandName, cluster.Keyring)); err != nil {
+		return fmt.Errorf("sync ceph keyring: %w", err)
+	}
+	return nil
+}
+
+func DeleteCephClusterRuntimeFiles(workDir string, clusterID uint) error {
+	paths := cephClusterRuntimePaths(workDir, clusterID)
+	if err := os.RemoveAll(paths.dir); err != nil {
+		return fmt.Errorf("remove ceph runtime directory: %w", err)
+	}
+	return nil
+}
+
+func SyncCephRuntimeFiles(ctx context.Context, db *gorm.DB, workDir string) error {
+	var clusters []store.CephCluster
+	if err := db.WithContext(ctx).Order("id asc").Find(&clusters).Error; err != nil {
+		return err
+	}
+	for index := range clusters {
+		if err := SyncCephClusterRuntimeFiles(workDir, &clusters[index]); err != nil {
+			return fmt.Errorf("sync ceph cluster %d runtime files: %w", clusters[index].ID, err)
+		}
+	}
+	return nil
+}
+
+func cephConfigContent(monitorHost string) string {
+	return fmt.Sprintf("[global]\nmon host = %s\n", strings.TrimSpace(monitorHost))
+}
+
+func syncRuntimeFile(path, content string) error {
+	current, err := os.ReadFile(path)
+	if err == nil && string(current) == content {
+		return os.Chmod(path, 0o600)
+	}
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+	return os.WriteFile(path, []byte(content), 0o600)
+}
+
+func writeTempRuntimeFile(dir, pattern, content string) (string, error) {
+	file, err := os.CreateTemp(dir, pattern)
+	if err != nil {
+		return "", fmt.Errorf("create ceph fallback file: %w", err)
+	}
+	path := file.Name()
+	if err := file.Chmod(0o600); err != nil {
+		_ = file.Close()
+		_ = os.Remove(path)
+		return "", err
+	}
+	if _, err := file.WriteString(content); err != nil {
+		_ = file.Close()
+		_ = os.Remove(path)
+		return "", err
+	}
+	if err := file.Close(); err != nil {
+		_ = os.Remove(path)
+		return "", err
+	}
+	return path, nil
+}
+
+func regularFileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().IsRegular()
+}
+
+func runtimeFileMatches(path, expected string) bool {
+	if !regularFileExists(path) {
+		return false
+	}
+	content, err := os.ReadFile(path)
+	return err == nil && string(content) == expected
 }
 
 func keyringFileContent(entity string, key string) string {

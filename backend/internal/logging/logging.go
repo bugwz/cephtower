@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"cephtower/backend/internal/app"
 	"cephtower/backend/internal/config"
+	"cephtower/backend/internal/scheduler"
 )
 
 func NewLogger(cfg config.LoggingConfig, output io.Writer) (*slog.Logger, error) {
@@ -75,7 +75,6 @@ func (h *plainTextHandler) WithGroup(_ string) slog.Handler {
 }
 
 func Install(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger, func() error, error) {
-	app.Global.LogRetentionCleanup = nil
 	output := strings.ToLower(strings.TrimSpace(cfg.Output))
 	if output == "" {
 		output = "both"
@@ -90,13 +89,18 @@ func Install(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger, func()
 		if len(workDirs) > 0 && workDirs[0] != "" {
 			workDir = workDirs[0]
 		}
-		path := cfg.Path
-		if path == "" {
-			path = "log/cephtower.log"
+		dir := cfg.Dir
+		if dir == "" {
+			dir = "log"
 		}
-		if !filepath.IsAbs(path) {
-			path = filepath.Join(workDir, path)
+		if !filepath.IsAbs(dir) {
+			dir = filepath.Join(workDir, dir)
 		}
+		file := cfg.File
+		if file == "" {
+			file = "cephtower.log"
+		}
+		path := filepath.Join(dir, file)
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			return nil, func() error { return nil }, fmt.Errorf("create log directory: %w", err)
 		}
@@ -110,7 +114,6 @@ func Install(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger, func()
 			writer = io.MultiWriter(os.Stdout, fileWriter)
 		}
 		cleanupTask = func(_ context.Context) { fileWriter.runCleanup(time.Now()) }
-		app.Global.LogRetentionCleanup = cleanupTask
 	}
 
 	logger, err := NewLogger(cfg, writer)
@@ -121,6 +124,7 @@ func Install(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger, func()
 		return nil, func() error { return nil }, err
 	}
 	slog.SetDefault(logger)
+	scheduler.RegisterLogRetentionCleanup(cleanupTask)
 	return logger, func() error {
 		if fileWriter != nil {
 			return fileWriter.Close()

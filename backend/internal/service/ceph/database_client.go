@@ -17,10 +17,15 @@ import (
 
 type databaseCephClient struct {
 	database func() *gorm.DB
+	workDir  string
 }
 
-func NewDatabaseCephClient(database func() *gorm.DB) *databaseCephClient {
-	return &databaseCephClient{database: database}
+func NewDatabaseCephClient(database func() *gorm.DB, workDirs ...string) *databaseCephClient {
+	workDir := ""
+	if len(workDirs) > 0 {
+		workDir = workDirs[0]
+	}
+	return &databaseCephClient{database: database, workDir: workDir}
 }
 
 func (c *databaseCephClient) dashboardClient(ctx context.Context) (*dashboard.DashboardClient, error) {
@@ -33,7 +38,7 @@ func (c *databaseCephClient) dashboardClient(ctx context.Context) (*dashboard.Da
 	if err != nil {
 		return nil, err
 	}
-	baseURL, err := dashboardBaseURLForCluster(ctx, &cluster)
+	baseURL, err := dashboardBaseURLForCluster(ctx, c.workDir, &cluster)
 	if err != nil {
 		return nil, err
 	}

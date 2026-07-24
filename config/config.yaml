@@ -11,13 +11,16 @@ server:
     # 服务运行目录。相对路径按本地运行目录解析，绝对路径按绝对路径使用
     # 可选配置：任意存在或可创建的目录路径
     # 默认配置：./app
-    work_dir: "./app"
+    dir: "./app"
 
 # 日志配置
 log:
-    # 日志文件输出路径。相对路径按 server.work_dir 解析，绝对路径按绝对路径使用
-    # 默认配置：log/cephtower.log
-    path: "log/cephtower.log"
+    # 日志文件目录。相对路径按 server.dir 解析，绝对路径按绝对路径使用
+    # 默认配置：log
+    dir: "log"
+    # 日志文件名
+    # 默认配置：cephtower.log
+    file: "cephtower.log"
     # 日志输出模式
     # 可选配置：stdout（标准输出）、file（日志文件）、both（标准输出和日志文件）
     # 默认配置：both
@@ -37,6 +40,12 @@ log:
     # 默认配置：70days
     retention: "70days"
 
+# 运行时文件配置。相对路径按 server.dir 解析
+runtime:
+    # Ceph 配置、keyring 等运行时文件的存储目录
+    # 默认路径：data/runtime；实际路径为 server.dir/data/runtime
+    dir: "data/runtime"
+
 # 数据库配置。服务启动时会自动执行数据库表结构迁移
 database:
     # 数据库类型
@@ -48,8 +57,8 @@ database:
     sqlite:
         # SQLite 数据库文件路径；父目录不存在时会自动创建
         # 可选配置：本地文件路径、:memory: 或 file: 开头的 SQLite DSN
-        # 相对路径按 server.work_dir 解析，绝对路径按绝对路径使用
-        # 程序默认配置：data/db/cephtower.db；实际路径为 work_dir/data/db/cephtower.db
+        # 相对路径按 server.dir 解析，绝对路径按绝对路径使用
+        # 程序默认配置：data/db/cephtower.db；实际路径为 server.dir/data/db/cephtower.db
         path: "data/db/cephtower.db"
 
     # MySQL 数据库配置。engine 为 mysql 时生效

@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -14,17 +15,19 @@ type Config struct {
 	Server   ServerConfig
 	Logging  LoggingConfig
 	Database DatabaseConfig
+	Runtime  RuntimeConfig
 	SMTP     SMTPConfig
 }
 
 type ServerConfig struct {
 	Address string
 	Port    int
-	WorkDir string
+	Dir     string
 }
 
 type LoggingConfig struct {
-	Path      string
+	Dir       string
+	File      string
 	Output    string
 	Level     string
 	Format    string
@@ -36,6 +39,10 @@ type DatabaseConfig struct {
 	Engine string
 	SQLite SQLiteConfig
 	MySQL  MySQLConfig
+}
+
+type RuntimeConfig struct {
+	Dir string
 }
 
 type SMTPConfig struct {
@@ -63,10 +70,12 @@ type fileConfig struct {
 	Server struct {
 		Address string `yaml:"address"`
 		Port    int    `yaml:"port"`
-		WorkDir string `yaml:"work_dir"`
+		Dir     string `yaml:"dir"`
 	} `yaml:"server"`
 	Logging struct {
-		Path      string `yaml:"path"`
+		Dir       string `yaml:"dir"`
+		File      string `yaml:"file"`
+		Path      string `yaml:"path"` // backward compatibility with older configs
 		Output    string `yaml:"output"`
 		Level     string `yaml:"level"`
 		Format    string `yaml:"format"`
@@ -87,6 +96,9 @@ type fileConfig struct {
 			Params   string `yaml:"params"`
 		} `yaml:"mysql"`
 	} `yaml:"database"`
+	Runtime struct {
+		Dir string `yaml:"dir"`
+	} `yaml:"runtime"`
 	SMTP struct {
 		Host     string `yaml:"host"`
 		Port     int    `yaml:"port"`
@@ -112,8 +124,8 @@ func Load(path string) (Config, error) {
 	}
 
 	server := normalizeServerConfig(raw)
-	if server.WorkDir == "" {
-		server.WorkDir = "./app"
+	if server.Dir == "" {
+		server.Dir = "./app"
 	}
 	if server.Address == "" {
 		server.Address = "0.0.0.0"
@@ -130,12 +142,14 @@ func Load(path string) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	runtime := normalizeRuntimeConfig(raw)
 
 	return Config{
 		Path:     path,
 		Server:   server,
 		Logging:  logging,
 		Database: database,
+		Runtime:  runtime,
 		SMTP: SMTPConfig{
 			Host:     strings.TrimSpace(raw.SMTP.Host),
 			Port:     raw.SMTP.Port,
@@ -146,9 +160,32 @@ func Load(path string) (Config, error) {
 	}, nil
 }
 
+func normalizeRuntimeConfig(raw fileConfig) RuntimeConfig {
+	dir := strings.TrimSpace(raw.Runtime.Dir)
+	if dir == "" {
+		dir = "data/runtime"
+	}
+	return RuntimeConfig{Dir: dir}
+}
+
+func ResolveRuntimeDir(cfg Config) string {
+	dir := strings.TrimSpace(cfg.Runtime.Dir)
+	if dir == "" {
+		dir = "data/runtime"
+	}
+	if filepath.IsAbs(dir) {
+		return dir
+	}
+	workDir := cfg.Server.Dir
+	if workDir == "" {
+		workDir = "."
+	}
+	return filepath.Join(workDir, dir)
+}
+
 func normalizeServerConfig(raw fileConfig) ServerConfig {
 	return ServerConfig{
-		WorkDir: strings.TrimSpace(raw.Server.WorkDir),
+		Dir:     strings.TrimSpace(raw.Server.Dir),
 		Address: strings.TrimSpace(raw.Server.Address),
 		Port:    raw.Server.Port,
 	}
@@ -222,9 +259,18 @@ func normalizeLoggingConfig(raw fileConfig) (LoggingConfig, error) {
 		return LoggingConfig{}, fmt.Errorf("unsupported logging format %q", raw.Logging.Format)
 	}
 
-	path := strings.TrimSpace(raw.Logging.Path)
-	if path == "" {
-		path = "log/cephtower.log"
+	dir := strings.TrimSpace(raw.Logging.Dir)
+	file := strings.TrimSpace(raw.Logging.File)
+	if dir == "" && file == "" && strings.TrimSpace(raw.Logging.Path) != "" {
+		legacyPath := strings.TrimSpace(raw.Logging.Path)
+		dir = filepath.Dir(legacyPath)
+		file = filepath.Base(legacyPath)
+	}
+	if dir == "" {
+		dir = "log"
+	}
+	if file == "" {
+		file = "cephtower.log"
 	}
 
 	output := strings.ToLower(strings.TrimSpace(raw.Logging.Output))
@@ -256,7 +302,8 @@ func normalizeLoggingConfig(raw fileConfig) (LoggingConfig, error) {
 	return LoggingConfig{
 		Level:     level,
 		Format:    format,
-		Path:      path,
+		Dir:       dir,
+		File:      file,
 		Output:    output,
 		Rotation:  rotation,
 		Retention: retention,

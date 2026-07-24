@@ -99,7 +99,7 @@ func (api *API) InitializeSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newDB, err := store.Open(databaseCfg, currentCfg.Server.WorkDir)
+	newDB, err := store.Open(databaseCfg, currentCfg.Server.Dir)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
