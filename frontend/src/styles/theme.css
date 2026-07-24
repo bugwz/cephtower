@@ -1,7 +1,7 @@
 :root {
   --app-font-family:
-    -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC",
-    "Segoe UI", sans-serif;
+    "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "DengXian",
+    -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans CJK SC", sans-serif;
   --font-xs: clamp(10px, 0.08vw + 9.8px, 11px);
   --font-sm: clamp(11px, 0.1vw + 10.6px, 12px);
   --font-md: clamp(12px, 0.12vw + 11.5px, 13.5px);

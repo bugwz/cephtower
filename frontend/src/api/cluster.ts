@@ -18,6 +18,7 @@ export interface CephCluster {
     enabled: boolean
     base_url: string
     username: string
+    password: string
     password_set: boolean
     insecure_tls: boolean
   }
@@ -115,16 +116,6 @@ export async function listClusters(): Promise<CephCluster[]> {
 
 export async function getClusterDetail(id: number | string): Promise<CephClusterDetail> {
   return clusterRequest<CephClusterDetail>(`/cluster/${id}`)
-}
-
-export async function getClusterKeyring(id: number | string): Promise<string> {
-  const response = await clusterRequest<{ keyring: string }>(`/cluster/${id}/credentials/keyring`)
-  return response.keyring
-}
-
-export async function getClusterDashboardPassword(id: number | string): Promise<string> {
-  const response = await clusterRequest<{ dashboard_password: string }>(`/cluster/${id}/credentials/dashboard-password`)
-  return response.dashboard_password
 }
 
 export async function createCluster(values: CephClusterFormPayload): Promise<ClusterActionResponse> {

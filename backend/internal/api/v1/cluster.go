@@ -31,6 +31,7 @@ type dashboardConnectionResponse struct {
 	Enabled     bool   `json:"enabled"`
 	BaseURL     string `json:"base_url"`
 	Username    string `json:"username"`
+	Password    string `json:"password"`
 	PasswordSet bool   `json:"password_set"`
 	InsecureTLS bool   `json:"insecure_tls"`
 }
@@ -159,32 +160,6 @@ func (api *API) GetCluster(w http.ResponseWriter, r *http.Request) {
 		Cluster:   toCephClusterResponse(cluster),
 		Discovery: discovery,
 	})
-}
-
-func (api *API) GetClusterKeyring(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
-		return
-	}
-
-	cluster, ok := api.clusterByID(w, r)
-	if !ok {
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]string{"keyring": cluster.Keyring})
-}
-
-func (api *API) GetClusterDashboardPassword(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
-		return
-	}
-
-	cluster, ok := api.clusterByID(w, r)
-	if !ok {
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]string{"dashboard_password": cluster.DashboardPassword})
 }
 
 func (api *API) UpdateCluster(w http.ResponseWriter, r *http.Request) {
@@ -521,6 +496,7 @@ func toCephClusterResponse(cluster store.CephCluster) cephClusterResponse {
 			Enabled:     true,
 			BaseURL:     "",
 			Username:    cluster.DashboardUsername,
+			Password:    cluster.DashboardPassword,
 			PasswordSet: cluster.DashboardPassword != "",
 			InsecureTLS: false,
 		},
@@ -531,7 +507,7 @@ func toCephClusterResponse(cluster store.CephCluster) cephClusterResponse {
 			Conf:              "",
 			MonitorHost:       cluster.MonitorHost,
 			Name:              ceph.DefaultCephCommandName,
-			Keyring:           "",
+			Keyring:           cluster.Keyring,
 			KeyringContentSet: cluster.Keyring != "",
 			TimeoutSeconds:    ceph.DefaultCephCommandTimeoutSeconds,
 		},

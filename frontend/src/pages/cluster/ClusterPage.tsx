@@ -1,10 +1,9 @@
-import { EyeInvisibleOutlined, EyeOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
+import { EditOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Button, Card, Form, Input, Space, Table, Typography, message } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   createCluster,
-  getClusterDashboardPassword,
-  getClusterKeyring,
   listClusters,
   updateCluster,
   type CephCluster
@@ -23,14 +22,13 @@ interface ClusterFormValues {
 }
 
 export function ClusterPage() {
+  const navigate = useNavigate()
   const [clusters, setClusters] = useState<CephCluster[]>([])
   const [clusterLoading, setClusterLoading] = useState(true)
   const [clusterError, setClusterError] = useState('')
   const [clusterModalOpen, setClusterModalOpen] = useState(false)
   const [editingCluster, setEditingCluster] = useState<CephCluster | null>(null)
   const [clusterSubmitting, setClusterSubmitting] = useState(false)
-  const [visibleSecrets, setVisibleSecrets] = useState<Record<number, Partial<Record<keyof ClusterSecrets, boolean>>>>({})
-  const [clusterSecrets, setClusterSecrets] = useState<Record<number, Partial<ClusterSecrets>>>({})
   const [form] = Form.useForm<ClusterFormValues>()
 
   const loadClusters = useCallback(async () => {
@@ -56,6 +54,18 @@ export function ClusterPage() {
     setClusterModalOpen(true)
   }
 
+  function openEditCluster(cluster: CephCluster) {
+    setEditingCluster(cluster)
+    form.setFieldsValue({
+      name: cluster.name,
+      monitor_host: cluster.command.monitor_host,
+      dashboard_username: cluster.dashboard.username,
+      dashboard_password: '',
+      keyring: ''
+    })
+    setClusterModalOpen(true)
+  }
+
   async function submitCluster(values: ClusterFormValues) {
     if (clusterSubmitting) {
       return
@@ -73,29 +83,6 @@ export function ClusterPage() {
     } finally {
       setClusterSubmitting(false)
     }
-  }
-
-  async function toggleSecret(clusterID: number, secret: keyof ClusterSecrets) {
-    const currentVisibility = Boolean(visibleSecrets[clusterID]?.[secret])
-    if (!currentVisibility && !clusterSecrets[clusterID]?.[secret]) {
-      const value = secret === 'keyring'
-        ? await getClusterKeyring(clusterID)
-        : await getClusterDashboardPassword(clusterID)
-      setClusterSecrets((current) => ({
-        ...current,
-        [clusterID]: {
-          ...current[clusterID],
-          [secret]: value
-        }
-      }))
-    }
-    setVisibleSecrets((current) => ({
-      ...current,
-      [clusterID]: {
-        ...current[clusterID],
-        [secret]: !currentVisibility
-      }
-    }))
   }
 
   return (
@@ -121,13 +108,15 @@ export function ClusterPage() {
         <Table
           size="middle"
           rowKey="id"
+          tableLayout="fixed"
           dataSource={clusters}
           pagination={{ pageSize: 6, showSizeChanger: false }}
-          scroll={{ x: true }}
+          scroll={{ x: 1220 }}
           columns={[
             {
               title: '集群名称',
               key: 'cluster',
+              width: 180,
               render: (_, cluster) => (
                 <div className="user-cell">
                   <Text strong>{cluster.name}</Text>
@@ -136,36 +125,41 @@ export function ClusterPage() {
             },
             {
               title: 'MON 地址',
-              dataIndex: ['command', 'monitor_host']
+              dataIndex: ['command', 'monitor_host'],
+              width: 240,
             },
             {
               title: '密钥',
-              key: 'keyring',
-              render: (_, cluster) => (
-                <SecretValue
-                  value={clusterSecrets[cluster.id]?.keyring}
-                  visible={Boolean(visibleSecrets[cluster.id]?.keyring)}
-                  configured={cluster.command.keyring_content_set}
-                  onToggle={() => toggleSecret(cluster.id, 'keyring')}
-                />
-              )
+              dataIndex: ['command', 'keyring'],
+              width: 220,
+              ellipsis: true
             },
             {
               title: 'Dashboard 用户',
-              dataIndex: ['dashboard', 'username']
+              dataIndex: ['dashboard', 'username'],
+              width: 180
             },
             {
               title: '密码',
-              key: 'dashboard_password',
-              render: (_, cluster) => (
-                <SecretValue
-                  value={clusterSecrets[cluster.id]?.dashboard_password}
-                  visible={Boolean(visibleSecrets[cluster.id]?.dashboard_password)}
-                  configured={cluster.dashboard.password_set}
-                  onToggle={() => toggleSecret(cluster.id, 'dashboard_password')}
-                />
-              )
+              dataIndex: ['dashboard', 'password'],
+              width: 220,
+              ellipsis: true
             },
+            {
+              title: '操作',
+              key: 'actions',
+              width: 180,
+              render: (_, cluster) => (
+                <Space>
+                  <Button icon={<EditOutlined />} onClick={() => openEditCluster(cluster)}>
+                    编辑
+                  </Button>
+                  <Button onClick={() => navigate(`/cluster/cluster/${cluster.id}`)}>
+                    详情
+                  </Button>
+                </Space>
+              )
+            }
           ]}
         />
       </Card>
@@ -224,40 +218,6 @@ export function ClusterPage() {
         </Form>
       </DraggableModal>
     </Page>
-  )
-}
-
-interface ClusterSecrets {
-  keyring: string
-  dashboard_password: string
-}
-
-function SecretValue({
-  value,
-  visible,
-  configured,
-  onToggle
-}: {
-  value?: string
-  visible: boolean
-  configured: boolean
-  onToggle: () => void
-}) {
-  if (!configured) {
-    return <Text type="secondary">未配置</Text>
-  }
-
-  return (
-    <Space size={4}>
-      <Text>{visible ? value || '—' : '••••••••'}</Text>
-      <Button
-        type="text"
-        size="small"
-        aria-label={visible ? '隐藏内容' : '查看内容'}
-        icon={visible ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-        onClick={onToggle}
-      />
-    </Space>
   )
 }
 
