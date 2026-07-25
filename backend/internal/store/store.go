@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -10,12 +11,53 @@ import (
 	sqlitestore "cephtower/backend/internal/store/sqlite"
 )
 
+// ErrRecordNotFound is returned when a single-record lookup has no result.
+var ErrRecordNotFound = gorm.ErrRecordNotFound
+
+// Database is the project-owned persistence handle. GORM never crosses this
+// package boundary; callers use domain operations defined in the Store files.
+type Database struct {
+	db *gorm.DB
+}
+
+func wrap(db *gorm.DB) *Database {
+	if db == nil {
+		return nil
+	}
+	return &Database{db: db}
+}
+func (d *Database) Transaction(fn func(*Database) error) error {
+	return d.db.Transaction(func(tx *gorm.DB) error { return fn(wrap(tx)) })
+}
+
+// Insert, FindRecord and CountRecords are small Store operations used for
+// polymorphic discovery models and black-box persistence tests. They expose no
+// ORM query object outside this package.
+func (d *Database) Insert(ctx context.Context, value any) error {
+	return d.db.WithContext(ctx).Create(value).Error
+}
+func (d *Database) FindRecord(ctx context.Context, filters map[string]any, dest any) error {
+	query := d.db.WithContext(ctx)
+	for field, value := range filters {
+		query = query.Where(field+" = ?", value)
+	}
+	return query.First(dest).Error
+}
+func (d *Database) CountRecords(ctx context.Context, model any, filters map[string]any) (int64, error) {
+	query := d.db.WithContext(ctx).Model(model)
+	for field, value := range filters {
+		query = query.Where(field+" = ?", value)
+	}
+	var count int64
+	return count, query.Count(&count).Error
+}
+
 const (
 	EngineSQLite = "sqlite"
 	EngineMySQL  = "mysql"
 )
 
-func Open(cfg config.DatabaseConfig, workDirs ...string) (*gorm.DB, error) {
+func Open(cfg config.DatabaseConfig, workDirs ...string) (*Database, error) {
 	workDir := "./app"
 	if len(workDirs) > 0 && workDirs[0] != "" {
 		workDir = workDirs[0]
@@ -39,49 +81,20 @@ func Open(cfg config.DatabaseConfig, workDirs ...string) (*gorm.DB, error) {
 		return nil, fmt.Errorf("ping %s database: %w", cfg.Engine, err)
 	}
 
-	if err := db.AutoMigrate(
-		&Setting{},
-		&CephCluster{},
-		&CephClusterHost{},
-		&CephClusterOSD{},
-		&CephClusterOSDFlag{},
-		&CephClusterDaemon{},
-		&CephClusterService{},
-		&CephClusterMon{},
-		&CephClusterMgr{},
-		&CephClusterMDS{},
-		&CephClusterMgrModule{},
-		&CephClusterConfiguration{},
-		&CephDataFetchRun{},
-		&CephClusterSummary{},
-		&CephClusterHealthCheck{},
-		&CephPool{},
-		&CephRBDImage{},
-		&CephFilesystem{},
-		&CephRGWDaemon{},
-		&CephRGWUser{},
-		&CephRGWBucket{},
-		&CephNVMeoFGateway{},
-		&CephNVMeoFSubsystem{},
-		&CephISCSITarget{},
-		&CephNFSExport{},
-		&User{},
-		&PasswordResetCode{},
-		&UserSession{},
-	); err != nil {
+	if err := migrate(db); err != nil {
 		_ = sqlDB.Close()
 		return nil, fmt.Errorf("migrate database schema: %w", err)
 	}
 
-	return db, nil
+	return wrap(db), nil
 }
 
-func Close(db *gorm.DB) error {
+func Close(db *Database) error {
 	if db == nil {
 		return nil
 	}
 
-	sqlDB, err := db.DB()
+	sqlDB, err := db.db.DB()
 	if err != nil {
 		return fmt.Errorf("get sql database handle: %w", err)
 	}

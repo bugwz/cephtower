@@ -1,0 +1,28 @@
+package collector
+
+const (
+	DataFetchSettingPrefix          = "ceph.data_fetch."
+	fetchModuleSummary              = "summary"
+	fetchModuleHealth               = "health"
+	fetchModuleHosts                = "hosts"
+	fetchModuleOSDs                 = "osds"
+	fetchModuleOSDFlags             = "osd_flags"
+	fetchModuleDaemons              = "daemons"
+	fetchModuleServices             = "services"
+	fetchModuleMonitors             = "monitors"
+	fetchModuleManagers             = "managers"
+	fetchModuleMDS                  = "mds"
+	fetchModuleMgrModules           = "mgr_modules"
+	fetchModuleClusterConfiguration = "cluster_configuration"
+	fetchModulePools                = "pools"
+	fetchModuleRBDImages            = "rbd_images"
+	fetchModuleCephFS               = "cephfs"
+	fetchModuleRGWDaemons           = "rgw_daemons"
+	fetchModuleRGWUsers             = "rgw_users"
+	fetchModuleRGWBuckets           = "rgw_buckets"
+	fetchModuleSettings             = "settings"
+	fetchModuleFeatureToggles       = "feature_toggles"
+	fetchModuleIntegrationStatus    = "integration_status"
+	fetchSourceCommand              = "command"
+	fetchSourceDashboard            = "dashboard"
+)

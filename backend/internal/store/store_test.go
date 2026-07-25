@@ -1,12 +1,37 @@
 package store
 
 import (
+	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"cephtower/backend/internal/config"
 )
+
+func TestTransactionRollsBackDomainWrites(t *testing.T) {
+	db, err := Open(config.DatabaseConfig{Engine: EngineSQLite, SQLite: config.SQLiteConfig{Path: filepath.Join(t.TempDir(), "rollback.db")}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer Close(db)
+	wantErr := errors.New("rollback")
+	err = db.Transaction(func(tx *Database) error {
+		user := User{Username: "rollback", DisplayName: "Rollback", Role: UserRoleAdmin, Permissions: "[]", PasswordHash: "hash", Enabled: true}
+		if err := tx.CreateUser(context.Background(), &user); err != nil {
+			return err
+		}
+		return wantErr
+	})
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("Transaction() error = %v", err)
+	}
+	hasUsers, err := db.HasUsers(context.Background())
+	if err != nil || hasUsers {
+		t.Fatalf("HasUsers() = %v, %v; want false", hasUsers, err)
+	}
+}
 
 func TestOpenSQLiteResolvesRelativePathUnderWorkDir(t *testing.T) {
 	workDir := t.TempDir()
@@ -44,63 +69,63 @@ func TestOpenSQLiteCreatesDatabaseAndMigrates(t *testing.T) {
 		}
 	}()
 
-	if !db.Migrator().HasTable(&Setting{}) {
+	if !db.db.Migrator().HasTable(&Setting{}) {
 		t.Fatal("setting table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephCluster{}) {
+	if !db.db.Migrator().HasTable(&CephCluster{}) {
 		t.Fatal("ceph_cluster table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephClusterHost{}) {
+	if !db.db.Migrator().HasTable(&CephClusterHost{}) {
 		t.Fatal("ceph_cluster_host table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephClusterOSD{}) {
+	if !db.db.Migrator().HasTable(&CephClusterOSD{}) {
 		t.Fatal("ceph_cluster_osd table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephClusterOSDFlag{}) {
+	if !db.db.Migrator().HasTable(&CephClusterOSDFlag{}) {
 		t.Fatal("ceph_cluster_osd_flag table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephClusterDaemon{}) {
+	if !db.db.Migrator().HasTable(&CephClusterDaemon{}) {
 		t.Fatal("ceph_cluster_daemon table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephClusterService{}) {
+	if !db.db.Migrator().HasTable(&CephClusterService{}) {
 		t.Fatal("ceph_cluster_service table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephClusterMon{}) {
+	if !db.db.Migrator().HasTable(&CephClusterMon{}) {
 		t.Fatal("ceph_cluster_mon table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephClusterMgr{}) {
+	if !db.db.Migrator().HasTable(&CephClusterMgr{}) {
 		t.Fatal("ceph_cluster_mgr table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephClusterMDS{}) {
+	if !db.db.Migrator().HasTable(&CephClusterMDS{}) {
 		t.Fatal("ceph_cluster_mds table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephClusterMgrModule{}) {
+	if !db.db.Migrator().HasTable(&CephClusterMgrModule{}) {
 		t.Fatal("ceph_cluster_mgr_module table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephClusterConfiguration{}) {
+	if !db.db.Migrator().HasTable(&CephClusterConfiguration{}) {
 		t.Fatal("ceph_cluster_configuration table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephDataFetchRun{}) {
+	if !db.db.Migrator().HasTable(&CephDataFetchRun{}) {
 		t.Fatal("ceph_data_fetch_run table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephPool{}) {
+	if !db.db.Migrator().HasTable(&CephPool{}) {
 		t.Fatal("ceph_pool table was not migrated")
 	}
-	if !db.Migrator().HasTable(&CephRBDImage{}) {
+	if !db.db.Migrator().HasTable(&CephRBDImage{}) {
 		t.Fatal("ceph_rbd_image table was not migrated")
 	}
-	if !db.Migrator().HasTable(&User{}) {
+	if !db.db.Migrator().HasTable(&User{}) {
 		t.Fatal("user table was not migrated")
 	}
-	if !db.Migrator().HasTable(&UserSession{}) {
+	if !db.db.Migrator().HasTable(&UserSession{}) {
 		t.Fatal("user_session table was not migrated")
 	}
-	if !db.Migrator().HasTable(&PasswordResetCode{}) {
+	if !db.db.Migrator().HasTable(&PasswordResetCode{}) {
 		t.Fatal("password_reset_code table was not migrated")
 	}
 
 	var users int64
-	if err := db.Model(&User{}).Count(&users).Error; err != nil {
+	if err := db.db.Model(&User{}).Count(&users).Error; err != nil {
 		t.Fatalf("count users: %v", err)
 	}
 	if users != 0 {
@@ -114,11 +139,11 @@ func TestOpenSQLiteCreatesDatabaseAndMigrates(t *testing.T) {
 		DashboardUsername: "admin",
 		DashboardPassword: "secret",
 	}
-	if err := db.Create(&cluster).Error; err != nil {
+	if err := db.db.Create(&cluster).Error; err != nil {
 		t.Fatalf("create ceph cluster: %v", err)
 	}
 	var saved CephCluster
-	if err := db.Where("name = ?", "primary").First(&saved).Error; err != nil {
+	if err := db.db.Where("name = ?", "primary").First(&saved).Error; err != nil {
 		t.Fatalf("load ceph cluster: %v", err)
 	}
 	if saved.MonitorHost == "" || saved.Keyring == "" || saved.DashboardUsername != "admin" || saved.DashboardPassword != "secret" {

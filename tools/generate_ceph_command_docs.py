@@ -1239,7 +1239,7 @@ def write_docs(commands: dict[tuple[str, str, str], Command]) -> None:
         "> 本文档由 `tools/generate_ceph_command_docs.py` 生成。",
         "",
         "本文档整理 Ceph monitor/mgr command table 与 mgr Python 模块声明的 `ceph ...` 命令，",
-        "用于后续在 `backend/internal/integrations/ceph` 中新增直接执行 Ceph CLI 的能力。",
+        "用于后续在 `backend/internal/integration/ceph` 中新增直接执行 Ceph CLI 的能力。",
         "",
         "## 返回约定",
         "",

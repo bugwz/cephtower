@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"cephtower/backend/internal/config"
-	"cephtower/backend/internal/scheduler"
 )
 
 func NewLogger(cfg config.LoggingConfig, output io.Writer) (*slog.Logger, error) {
@@ -75,6 +74,13 @@ func (h *plainTextHandler) WithGroup(_ string) slog.Handler {
 }
 
 func Install(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger, func() error, error) {
+	logger, _, closeLog, err := InstallManaged(cfg, workDirs...)
+	return logger, closeLog, err
+}
+
+// InstallManaged installs the process logger and exposes file retention cleanup
+// so the application can register it with its task manager explicitly.
+func InstallManaged(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger, func(context.Context) error, func() error, error) {
 	output := strings.ToLower(strings.TrimSpace(cfg.Output))
 	if output == "" {
 		output = "both"
@@ -82,7 +88,7 @@ func Install(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger, func()
 
 	var writer io.Writer = os.Stdout
 	var fileWriter *rotatingFileWriter
-	var cleanupTask func(context.Context)
+	var cleanupTask func(context.Context) error
 	var err error
 	if output == "file" || output == "both" {
 		workDir := "./app"
@@ -102,18 +108,21 @@ func Install(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger, func()
 		}
 		path := filepath.Join(dir, file)
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			return nil, func() error { return nil }, fmt.Errorf("create log directory: %w", err)
+			return nil, nil, func() error { return nil }, fmt.Errorf("create log directory: %w", err)
 		}
 		fileWriter, err = newRotatingFileWriter(path, cfg.Rotation, cfg.Retention)
 		if err != nil {
-			return nil, func() error { return nil }, err
+			return nil, nil, func() error { return nil }, err
 		}
 		if output == "file" {
 			writer = fileWriter
 		} else {
 			writer = io.MultiWriter(os.Stdout, fileWriter)
 		}
-		cleanupTask = func(_ context.Context) { fileWriter.runCleanup(time.Now()) }
+		cleanupTask = func(_ context.Context) error {
+			fileWriter.runCleanup(time.Now())
+			return nil
+		}
 	}
 
 	logger, err := NewLogger(cfg, writer)
@@ -121,11 +130,10 @@ func Install(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger, func()
 		if fileWriter != nil {
 			_ = fileWriter.Close()
 		}
-		return nil, func() error { return nil }, err
+		return nil, nil, func() error { return nil }, err
 	}
 	slog.SetDefault(logger)
-	scheduler.RegisterLogRetentionCleanup(cleanupTask)
-	return logger, func() error {
+	return logger, cleanupTask, func() error {
 		if fileWriter != nil {
 			return fileWriter.Close()
 		}

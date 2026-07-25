@@ -4,7 +4,7 @@ BIN_DIR := bin
 APP_NAME := cephtower
 CONFIG ?= config/config.yaml
 FRONTEND_PORT ?= 36901
-BACKEND_STATIC_DIR := $(BACKEND_DIR)/internal/frontend/dist
+BACKEND_STATIC_DIR := $(BACKEND_DIR)/internal/webui/frontend/dist
 DEV_BACKEND_BIN := $(BIN_DIR)/$(APP_NAME)-dev
 GO_MIN_VERSION := 1.26
 NODE_MIN_MAJOR := 20
@@ -61,7 +61,7 @@ ensure-frontend-deps: check-frontend-env
 
 build: check-env build-frontend build-backend
 
-build-backend: check-backend-env
+build-backend: check-backend-env build-frontend
 	mkdir -p $(BIN_DIR)
 	cd $(BACKEND_DIR) && go build -o ../$(BIN_DIR)/$(APP_NAME) ./cmd
 
@@ -90,7 +90,7 @@ run-frontend: ensure-frontend-deps
 
 backend-dev: run-backend
 
-backend-test: check-backend-env
+backend-test: check-backend-env build-frontend
 	cd $(BACKEND_DIR) && go test ./...
 
 generate-ceph-client:

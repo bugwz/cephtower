@@ -7,9 +7,10 @@ require 'yaml'
 
 ROOT = File.expand_path('..', __dir__)
 OPENAPI_PATH = File.join(ROOT, 'docs/references/ceph/src/pybind/mgr/dashboard/openapi.yaml')
-CEPH_DIR = File.join(ROOT, 'backend/internal/integrations/ceph')
-ENDPOINTS_DIR = File.join(CEPH_DIR, 'endpoints')
-TYPED_DIR = File.join(CEPH_DIR, 'typed')
+CEPH_DIR = File.join(ROOT, 'backend/internal/integration/ceph')
+DASHBOARD_DIR = File.join(CEPH_DIR, 'dashboard')
+ENDPOINTS_DIR = File.join(DASHBOARD_DIR, 'endpoints')
+TYPED_DIR = File.join(DASHBOARD_DIR, 'typed')
 HTTP_METHODS = %w[get post put patch delete].freeze
 GO_KEYWORDS = Set.new(%w[
   break default func interface select case defer go map struct chan else goto package

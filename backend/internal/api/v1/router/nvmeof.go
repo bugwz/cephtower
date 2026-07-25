@@ -1,0 +1,48 @@
+package router
+
+import "cephtower/backend/internal/api/v1/handler"
+
+func nvmeofRoutes(h *handler.Handler) []Route {
+	return []Route{
+		{"GET", "/nvmeof/gateway", h.ListNVMeOFGateways},
+		{"GET", "/nvmeof/gateway/group", h.ListNVMeOFGatewayGroups},
+		{"GET", "/nvmeof/gateway/listener-info/{nqn}", h.GetNVMeOFListenerInfo},
+		{"GET", "/nvmeof/gateway/log-level", h.GetNVMeOFGatewayLogLevel},
+		{"PUT", "/nvmeof/gateway/log-level", h.UpdateNVMeOFGatewayLogLevel},
+		{"GET", "/nvmeof/gateway/stats", h.GetNVMeOFGatewayStats},
+		{"GET", "/nvmeof/gateway/version", h.GetNVMeOFGatewayVersion},
+		{"GET", "/nvmeof/spdk/log-level", h.GetNVMeOFSPDKLogLevel},
+		{"PUT", "/nvmeof/spdk/log-level", h.UpdateNVMeOFSPDKLogLevel},
+		{"PUT", "/nvmeof/spdk/log-level/disable", h.DisableNVMeOFSPDKLogLevel},
+		{"GET", "/nvmeof/subsystem", h.ListNVMeOFSubsystems},
+		{"POST", "/nvmeof/subsystem", h.CreateNVMeOFSubsystem},
+		{"GET", "/nvmeof/subsystem/{nqn}", h.GetNVMeOFSubsystem},
+		{"DELETE", "/nvmeof/subsystem/{nqn}", h.DeleteNVMeOFSubsystem},
+		{"GET", "/nvmeof/subsystem/{nqn}/connection", h.ListNVMeOFSubsystemConnections},
+		{"GET", "/nvmeof/subsystem/{nqn}/host", h.ListNVMeOFSubsystemHosts},
+		{"POST", "/nvmeof/subsystem/{nqn}/host", h.AddNVMeOFSubsystemHost},
+		{"DELETE", "/nvmeof/subsystem/{nqn}/host/{host_nqn}", h.RemoveNVMeOFSubsystemHost},
+		{"PUT", "/nvmeof/subsystem/{nqn}/host/{host_nqn}/change-controller-key", h.ChangeNVMeOFHostControllerKey},
+		{"PUT", "/nvmeof/subsystem/{nqn}/host/{host_nqn}/change-key", h.ChangeNVMeOFHostKey},
+		{"PUT", "/nvmeof/subsystem/{nqn}/host/{host_nqn}/delete-controller-key", h.DeleteNVMeOFHostControllerKey},
+		{"PUT", "/nvmeof/subsystem/{nqn}/host/{host_nqn}/delete-key", h.DeleteNVMeOFHostKey},
+		{"GET", "/nvmeof/subsystem/{nqn}/listener", h.ListNVMeOFListeners},
+		{"POST", "/nvmeof/subsystem/{nqn}/listener", h.CreateNVMeOFListener},
+		{"DELETE", "/nvmeof/subsystem/{nqn}/listener/{host_name}/{traddr}/{trsvcid}", h.DeleteNVMeOFListener},
+		{"GET", "/nvmeof/subsystem/{nqn}/namespace", h.ListNVMeOFNamespaces},
+		{"POST", "/nvmeof/subsystem/{nqn}/namespace", h.CreateNVMeOFNamespace},
+		{"GET", "/nvmeof/subsystem/{nqn}/namespace/{nsid}", h.GetNVMeOFNamespace},
+		{"PATCH", "/nvmeof/subsystem/{nqn}/namespace/{nsid}", h.UpdateNVMeOFNamespace},
+		{"DELETE", "/nvmeof/subsystem/{nqn}/namespace/{nsid}", h.DeleteNVMeOFNamespace},
+		{"PUT", "/nvmeof/subsystem/{nqn}/namespace/{nsid}/add-host", h.AddNVMeOFNamespaceHost},
+		{"PUT", "/nvmeof/subsystem/{nqn}/namespace/{nsid}/change-load-balancing-group", h.ChangeNVMeOFNamespaceLoadBalancingGroup},
+		{"PUT", "/nvmeof/subsystem/{nqn}/namespace/{nsid}/change-visibility", h.ChangeNVMeOFNamespaceVisibility},
+		{"PUT", "/nvmeof/subsystem/{nqn}/namespace/{nsid}/delete-host", h.DeleteNVMeOFNamespaceHost},
+		{"GET", "/nvmeof/subsystem/{nqn}/namespace/{nsid}/io-stats", h.GetNVMeOFNamespaceIOStats},
+		{"PUT", "/nvmeof/subsystem/{nqn}/namespace/{nsid}/refresh-size", h.RefreshNVMeOFNamespaceSize},
+		{"PUT", "/nvmeof/subsystem/{nqn}/namespace/{nsid}/resize", h.ResizeNVMeOFNamespace},
+		{"PUT", "/nvmeof/subsystem/{nqn}/namespace/{nsid}/set-auto-resize", h.SetNVMeOFNamespaceAutoResize},
+		{"PUT", "/nvmeof/subsystem/{nqn}/namespace/{nsid}/set-qos", h.SetNVMeOFNamespaceQoS},
+		{"PUT", "/nvmeof/subsystem/{nqn}/namespace/{nsid}/set-rbd-trash-image", h.SetNVMeOFNamespaceRBDTrashImage},
+	}
+}
