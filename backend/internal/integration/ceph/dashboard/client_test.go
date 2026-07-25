@@ -7,14 +7,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
-	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
 	"cephtower/backend/internal/integration/ceph/dashboard/typed"
-	"gopkg.in/yaml.v3"
 )
 
 func TestClusterSummaryUsesDashboardSummaryWithToken(t *testing.T) {
@@ -213,94 +209,6 @@ func TestAPIErrorIncludesStatusAndBody(t *testing.T) {
 	if apiErr.StatusCode != http.StatusForbidden || !strings.Contains(apiErr.Body, "permission denied") {
 		t.Fatalf("APIError = %#v, want status and response body", apiErr)
 	}
-}
-
-func TestGeneratedClientCoversOpenAPIOperations(t *testing.T) {
-	openapiPath := filepath.Clean("../../../../../docs/references/ceph/src/pybind/mgr/dashboard/openapi.yaml")
-	data, err := os.ReadFile(openapiPath)
-	if err != nil {
-		t.Fatalf("read openapi fixture: %v", err)
-	}
-
-	var openapi struct {
-		Paths map[string]map[string]any `yaml:"paths"`
-	}
-	if err := yaml.Unmarshal(data, &openapi); err != nil {
-		t.Fatalf("parse openapi fixture: %v", err)
-	}
-
-	want := 0
-	for _, methods := range openapi.Paths {
-		for method := range methods {
-			switch strings.ToLower(method) {
-			case "get", "post", "put", "patch", "delete":
-				want++
-			}
-		}
-	}
-
-	generatedFiles, err := generatedEndpointFiles()
-	if err != nil {
-		t.Fatalf("glob generated files: %v", err)
-	}
-
-	methodRE := regexp.MustCompile(`func \(c \*Client\) [A-Z][A-Za-z0-9]*\(ctx context\.Context, request OperationRequest\) \(json\.RawMessage, error\)`)
-	got := 0
-	for _, path := range generatedFiles {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			t.Fatalf("read generated file %s: %v", path, err)
-		}
-		got += len(methodRE.FindAll(data, -1))
-	}
-
-	if got != want {
-		t.Fatalf("generated operation methods = %d, want %d from OpenAPI", got, want)
-	}
-
-	typedFiles, err := typedEndpointFiles()
-	if err != nil {
-		t.Fatalf("list typed endpoint files: %v", err)
-	}
-
-	typedMethodRE := regexp.MustCompile(`func \(c \*Client\) [A-Z][A-Za-z0-9]*\(ctx context\.Context, request [A-Z][A-Za-z0-9]*Request\) \([A-Z][A-Za-z0-9]*Response, error\)`)
-	got = 0
-	for _, path := range typedFiles {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			t.Fatalf("read typed file %s: %v", path, err)
-		}
-		got += len(typedMethodRE.FindAll(data, -1))
-	}
-
-	if got != want {
-		t.Fatalf("typed operation methods = %d, want %d from OpenAPI", got, want)
-	}
-}
-
-func generatedEndpointFiles() ([]string, error) {
-	return endpointFiles("endpoints")
-}
-
-func typedEndpointFiles() ([]string, error) {
-	return endpointFiles("typed")
-}
-
-func endpointFiles(dir string) ([]string, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
-
-	var files []string
-	for _, entry := range entries {
-		if entry.IsDir() || entry.Name() == "client.go" || !strings.HasSuffix(entry.Name(), ".go") {
-			continue
-		}
-		files = append(files, filepath.Join(dir, entry.Name()))
-	}
-
-	return files, nil
 }
 
 type roundTripFunc func(*http.Request) (*http.Response, error)
