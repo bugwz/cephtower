@@ -2,7 +2,9 @@ BACKEND_DIR := backend
 FRONTEND_DIR := frontend
 BIN_DIR := bin
 APP_NAME := cephtower
-CONFIG ?= config/config.yaml
+CONFIG ?= app/config/config.yaml
+RUN_CONFIG := app/config/config.yaml
+CONFIG_TEMPLATE := config/config.yaml
 FRONTEND_PORT ?= 36901
 BACKEND_STATIC_DIR := $(BACKEND_DIR)/internal/webui/frontend/dist
 DEV_BACKEND_BIN := $(BIN_DIR)/$(APP_NAME)-dev
@@ -10,7 +12,7 @@ GO_MIN_VERSION := 1.26
 NODE_MIN_MAJOR := 20
 NPM_MIN_MAJOR := 10
 
-.PHONY: check-env check-backend-env check-frontend-env ensure-frontend-deps build build-backend build-frontend run run-backend run-frontend test backend-dev backend-test frontend-dev frontend-build generate-ceph-client
+.PHONY: check-env check-backend-env check-frontend-env ensure-frontend-deps ensure-run-config build build-backend build-frontend run run-backend run-frontend test backend-dev backend-test frontend-dev frontend-build generate-ceph-client
 
 check-env: check-backend-env check-frontend-env
 
@@ -71,7 +73,16 @@ build-frontend: ensure-frontend-deps
 	mkdir -p $(BACKEND_STATIC_DIR)
 	cp -R $(FRONTEND_DIR)/dist/. $(BACKEND_STATIC_DIR)/
 
-run: check-env ensure-frontend-deps
+ensure-run-config:
+	@if [ ! -f "$(RUN_CONFIG)" ]; then \
+		mkdir -p "$$(dirname "$(RUN_CONFIG)")"; \
+		tmp="$(RUN_CONFIG).tmp"; \
+		awk 'BEGIN { in_server = 0 } /^server:/ { in_server = 1 } in_server && /^    dir:/ { $$0 = "    dir: \"./app\""; in_server = 0 } { print }' "$(CONFIG_TEMPLATE)" > "$$tmp"; \
+		mv "$$tmp" "$(RUN_CONFIG)"; \
+		echo "Created $(RUN_CONFIG) from $(CONFIG_TEMPLATE)."; \
+	fi
+
+run: ensure-run-config check-env ensure-frontend-deps
 	@set -e; \
 	mkdir -p $(BIN_DIR); \
 	(cd $(BACKEND_DIR) && go build -o ../$(DEV_BACKEND_BIN) ./cmd); \

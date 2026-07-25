@@ -10,8 +10,8 @@ server:
     port: 36900
     # 服务运行目录。相对路径按本地运行目录解析，绝对路径按绝对路径使用
     # 可选配置：任意存在或可创建的目录路径
-    # 默认配置：./app
-    dir: "./app"
+    # 默认配置：/opt/cephtower
+    dir: "/opt/cephtower"
 
 # 日志配置
 log:
@@ -69,19 +69,23 @@ database:
         # MySQL 服务端口
         # 默认配置：3306
         port: 3306
-        # MySQL 登录用户名；使用 MySQL 时必填
-        # 默认配置：空（无默认用户名）
-        username: ""
+        # MySQL 登录用户名
+        # 默认配置：root
+        username: "root"
         # MySQL 登录密码；使用 MySQL 时按实际账号填写
         # 默认配置：空
         password: ""
-        # 要连接的数据库名称；使用 MySQL 时必填
-        # 默认配置：空（无默认数据库）
-        database: ""
+        # 要连接的数据库名称
+        # 默认配置：cephtower
+        database: "cephtower"
         # MySQL 连接参数，多个参数使用 & 分隔
         # 可选配置：任意 go-sql-driver/mysql 支持的 URL 查询参数
         # 默认配置：charset=utf8mb4&parseTime=True&loc=Local
         params: "charset=utf8mb4&parseTime=True&loc=Local"
+        # TLS 连接模式
+        # 可选配置：false（禁用）、true（验证证书）、skip-verify（不验证证书）、preferred（优先 TLS）
+        # 默认配置：false
+        tls: "false"
 
 # SMTP 邮件配置，用于需要发送邮件的功能
 # 当前版本未配置 SMTP 时不会自动补齐以下字段；请按邮件服务商要求填写
@@ -91,7 +95,7 @@ smtp:
     host: ""
     # SMTP 服务器端口
     # 可选配置：按服务商填写，常见值为 25、465（SSL）或 587（STARTTLS）
-    # 默认配置：当前示例为 587；若省略则程序值为 0
+    # 默认配置：587
     port: 587
     # SMTP 登录用户名
     # 默认配置：空

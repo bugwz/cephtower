@@ -35,12 +35,29 @@ export interface SetupDatabaseConfig {
     password_set: boolean
     database: string
     params: string
+    tls: 'false' | 'true' | 'skip-verify' | 'preferred'
   }
 }
 
 export interface SetupStatus {
   initialized: boolean
   database?: SetupDatabaseConfig
+}
+
+export interface SetupDatabaseInput {
+  engine: 'sqlite' | 'mysql'
+  sqlite: {
+    path: string
+  }
+  mysql: {
+    host: string
+    port: number
+    username: string
+    password: string
+    database: string
+    params: string
+    tls: 'false' | 'true' | 'skip-verify' | 'preferred'
+  }
 }
 
 interface LoginResponse {
@@ -69,21 +86,16 @@ export async function setupStatus(): Promise<SetupStatus> {
   return requestPublic<SetupStatus>('/setup/status', { suppressErrorNotification: true })
 }
 
+export async function testSetupDatabase(payload: SetupDatabaseInput): Promise<{ message: string }> {
+  return requestPublic<{ message: string }>('/setup/database/test', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    suppressErrorNotification: true
+  })
+}
+
 export async function initializeSetup(payload: {
-  database: {
-    engine: 'sqlite' | 'mysql'
-    sqlite: {
-      path: string
-    }
-    mysql: {
-      host: string
-      port: number
-      username: string
-      password: string
-      database: string
-      params: string
-    }
-  }
+  database: SetupDatabaseInput
   admin: {
     username: string
     email: string

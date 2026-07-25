@@ -27,6 +27,7 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
     path: ` + dbPath + `
   mysql:
     password: configured-secret
+    tls: skip-verify
 `)
 	if err := os.WriteFile(configPath, configData, 0o600); err != nil {
 		t.Fatalf("write config fixture: %v", err)
@@ -75,6 +76,20 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
 	if mysqlConfig["password"] != "configured-secret" {
 		t.Fatalf("status mysql password = %#v, want configured-secret", mysqlConfig["password"])
 	}
+	if mysqlConfig["tls"] != "skip-verify" {
+		t.Fatalf("status mysql tls = %#v, want skip-verify", mysqlConfig["tls"])
+	}
+
+	testPayload := []byte(`{
+		"engine": "sqlite",
+		"sqlite": {"path": ":memory:"},
+		"mysql": {}
+	}`)
+	recorder = httptest.NewRecorder()
+	h.TestSetupDatabase(recorder, httptest.NewRequest(http.MethodPost, "/api/v1/setup/database/test", bytes.NewReader(testPayload)))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("test database = %d, want 200: %s", recorder.Code, recorder.Body.String())
+	}
 
 	payload := []byte(`{
 		"database": {
@@ -85,7 +100,8 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
 				"port": 3306,
 				"username": "cephtower",
 				"database": "cephtower",
-				"params": "charset=utf8mb4&parseTime=True&loc=Local"
+				"params": "charset=utf8mb4&parseTime=True&loc=Local",
+				"tls": "true"
 			}
 		},
 		"admin": {
@@ -135,6 +151,12 @@ func TestSetupInitializeIsOnlyAvailableBeforeUsersExist(t *testing.T) {
 	}
 	if !status.Initialized || status.Database != nil {
 		t.Fatalf("status after init = %#v, want initialized response without database config", status)
+	}
+
+	recorder = httptest.NewRecorder()
+	h.TestSetupDatabase(recorder, httptest.NewRequest(http.MethodPost, "/api/v1/setup/database/test", bytes.NewReader(testPayload)))
+	if recorder.Code != http.StatusConflict {
+		t.Fatalf("test database after init = %d, want 409: %s", recorder.Code, recorder.Body.String())
 	}
 
 	settings, err := currentDB.ListSettings(context.Background(), service.DataFetchSettingPrefix)

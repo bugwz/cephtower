@@ -39,6 +39,22 @@ func (s *Service) Status(ctx context.Context) (bool, config.DatabaseConfig, erro
 	return initialized, s.current().Database, err
 }
 
+func (s *Service) TestDatabase(ctx context.Context, database config.DatabaseConfig) error {
+	initialized, err := hasUsers(ctx, s.database.Current())
+	if err != nil {
+		return err
+	}
+	if initialized {
+		return ErrAlreadyInitialized
+	}
+
+	database, err = config.NormalizeDatabaseConfig(database)
+	if err != nil {
+		return err
+	}
+	return store.TestConnection(ctx, database, s.current().Server.Dir)
+}
+
 func (s *Service) Initialize(ctx context.Context, input Input) error {
 	input.Username = strings.TrimSpace(input.Username)
 	input.Email = strings.TrimSpace(input.Email)

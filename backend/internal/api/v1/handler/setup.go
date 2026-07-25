@@ -21,28 +21,49 @@ type SetupDatabaseResponse struct {
 		PasswordSet bool   `json:"password_set"`
 		Database    string `json:"database"`
 		Params      string `json:"params"`
+		TLS         string `json:"tls"`
 	} `json:"mysql"`
 }
+type SetupDatabaseRequest struct {
+	Engine string `json:"engine"`
+	SQLite struct {
+		Path string `json:"path"`
+	} `json:"sqlite"`
+	MySQL struct {
+		Host     string `json:"host"`
+		Port     int    `json:"port"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+		Database string `json:"database"`
+		Params   string `json:"params"`
+		TLS      string `json:"tls"`
+	} `json:"mysql"`
+}
+
 type SetupInitializeRequest struct {
-	Database struct {
-		Engine string `json:"engine"`
-		SQLite struct {
-			Path string `json:"path"`
-		} `json:"sqlite"`
-		MySQL struct {
-			Host     string `json:"host"`
-			Port     int    `json:"port"`
-			Username string `json:"username"`
-			Password string `json:"password"`
-			Database string `json:"database"`
-			Params   string `json:"params"`
-		} `json:"mysql"`
-	} `json:"database"`
-	Admin struct {
+	Database SetupDatabaseRequest `json:"database"`
+	Admin    struct {
 		Username string `json:"username"`
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	} `json:"admin"`
+}
+
+func (h *Handler) TestSetupDatabase(w http.ResponseWriter, r *http.Request) {
+	var request SetupDatabaseRequest
+	if !decodeJSON(w, r, &request) {
+		return
+	}
+
+	err := h.setup.TestDatabase(r.Context(), setupDatabaseConfigFromRequest(request))
+	switch {
+	case errors.Is(err, setupservice.ErrAlreadyInitialized):
+		writeError(w, http.StatusConflict, err)
+	case err != nil:
+		writeError(w, http.StatusBadRequest, err)
+	default:
+		writeJSON(w, http.StatusOK, MessageResponse{Message: "database connection succeeded"})
+	}
 }
 
 func (h *Handler) SetupStatus(w http.ResponseWriter, r *http.Request) {
@@ -63,7 +84,7 @@ func (h *Handler) InitializeSetup(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &request) {
 		return
 	}
-	input := setupservice.Input{Database: config.DatabaseConfig{Engine: request.Database.Engine, SQLite: config.SQLiteConfig{Path: request.Database.SQLite.Path}, MySQL: config.MySQLConfig{Host: request.Database.MySQL.Host, Port: request.Database.MySQL.Port, Username: request.Database.MySQL.Username, Password: request.Database.MySQL.Password, Database: request.Database.MySQL.Database, Params: request.Database.MySQL.Params}}, Username: request.Admin.Username, Email: request.Admin.Email, Password: request.Admin.Password}
+	input := setupservice.Input{Database: setupDatabaseConfigFromRequest(request.Database), Username: request.Admin.Username, Email: request.Admin.Email, Password: request.Admin.Password}
 	err := h.setup.Initialize(r.Context(), input)
 	switch {
 	case errors.Is(err, setupservice.ErrAlreadyInitialized), errors.Is(err, setupservice.ErrTargetInitialized):
@@ -74,6 +95,18 @@ func (h *Handler) InitializeSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusCreated, map[string]string{"message": "system initialized"})
+}
+
+func setupDatabaseConfigFromRequest(request SetupDatabaseRequest) config.DatabaseConfig {
+	return config.DatabaseConfig{
+		Engine: request.Engine,
+		SQLite: config.SQLiteConfig{Path: request.SQLite.Path},
+		MySQL: config.MySQLConfig{
+			Host: request.MySQL.Host, Port: request.MySQL.Port,
+			Username: request.MySQL.Username, Password: request.MySQL.Password,
+			Database: request.MySQL.Database, Params: request.MySQL.Params, TLS: request.MySQL.TLS,
+		},
+	}
 }
 
 func setupDatabaseFromConfig(cfg config.DatabaseConfig) SetupDatabaseResponse {
@@ -87,6 +120,7 @@ func setupDatabaseFromConfig(cfg config.DatabaseConfig) SetupDatabaseResponse {
 	result.MySQL.PasswordSet = cfg.MySQL.Password != ""
 	result.MySQL.Database = cfg.MySQL.Database
 	result.MySQL.Params = cfg.MySQL.Params
+	result.MySQL.TLS = cfg.MySQL.TLS
 	return result
 }
 

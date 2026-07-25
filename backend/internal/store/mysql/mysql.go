@@ -42,6 +42,7 @@ func DSN(cfg config.MySQLConfig) (string, error) {
 	mysqlConfig.Addr = net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port))
 	mysqlConfig.DBName = cfg.Database
 	mysqlConfig.Params = params
+	mysqlConfig.TLSConfig = cfg.TLS
 
 	return mysqlConfig.FormatDSN(), nil
 }

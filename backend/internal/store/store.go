@@ -58,10 +58,7 @@ const (
 )
 
 func Open(cfg config.DatabaseConfig, workDirs ...string) (*Database, error) {
-	workDir := "./app"
-	if len(workDirs) > 0 && workDirs[0] != "" {
-		workDir = workDirs[0]
-	}
+	workDir := databaseWorkDir(workDirs)
 	dialector, err := dialector(cfg, workDir)
 	if err != nil {
 		return nil, err
@@ -87,6 +84,35 @@ func Open(cfg config.DatabaseConfig, workDirs ...string) (*Database, error) {
 	}
 
 	return wrap(db), nil
+}
+
+// TestConnection verifies database connectivity without running migrations.
+func TestConnection(ctx context.Context, cfg config.DatabaseConfig, workDirs ...string) error {
+	dialector, err := dialector(cfg, databaseWorkDir(workDirs))
+	if err != nil {
+		return err
+	}
+
+	db, err := gorm.Open(dialector, &gorm.Config{DisableAutomaticPing: true})
+	if err != nil {
+		return fmt.Errorf("open %s database: %w", cfg.Engine, err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		return fmt.Errorf("get sql database handle: %w", err)
+	}
+	defer sqlDB.Close()
+	if err := sqlDB.PingContext(ctx); err != nil {
+		return fmt.Errorf("ping %s database: %w", cfg.Engine, err)
+	}
+	return nil
+}
+
+func databaseWorkDir(workDirs []string) string {
+	if len(workDirs) > 0 && workDirs[0] != "" {
+		return workDirs[0]
+	}
+	return "./app"
 }
 
 func Close(db *Database) error {

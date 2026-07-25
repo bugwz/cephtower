@@ -19,6 +19,7 @@ func TestRegisterV1Routes(t *testing.T) {
 		wantPattern string
 	}{
 		{name: "health uses version prefix", method: http.MethodGet, path: "/api/v1/healthz", wantPattern: "GET /api/v1/healthz"},
+		{name: "setup database test is registered", method: http.MethodPost, path: "/api/v1/setup/database/test", wantPattern: "POST /api/v1/setup/database/test"},
 		{name: "setting uses singular path", method: http.MethodGet, path: "/api/v1/setting", wantPattern: "GET /api/v1/setting"},
 		{name: "plural setting path is absent", method: http.MethodGet, path: "/api/v1/settings", wantPattern: ""},
 	}

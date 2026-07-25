@@ -1,7 +1,7 @@
 import { LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons'
-import { Alert, Button, Form, Input, InputNumber, Radio, Steps, Typography, message } from 'antd'
-import { useMemo, useState } from 'react'
-import { initializeSetup, type SetupDatabaseConfig } from '../api/auth'
+import { Alert, Button, Form, Input, InputNumber, Radio, Select, Steps, Typography, message } from 'antd'
+import { useMemo, useRef, useState } from 'react'
+import { initializeSetup, testSetupDatabase, type SetupDatabaseConfig, type SetupDatabaseInput } from '../api/auth'
 import { TowerIllustration } from './LoginPage'
 
 const { Text, Title } = Typography
@@ -20,6 +20,7 @@ interface InitializationFormValues {
   mysql_password: string
   mysql_database: string
   mysql_params: string
+  mysql_tls: 'false' | 'true' | 'skip-verify' | 'preferred'
   admin_username: string
   admin_email: string
   admin_password: string
@@ -30,6 +31,8 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
   const [form] = Form.useForm<InitializationFormValues>()
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [testingDatabase, setTestingDatabase] = useState(false)
+  const databaseTestRunning = useRef(false)
   const [error, setError] = useState('')
   const initialValues = useMemo(
     () => ({
@@ -37,11 +40,13 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
       sqlite_path: database?.sqlite.path ?? 'data/cephtower.db',
       mysql_host: database?.mysql.host ?? '127.0.0.1',
       mysql_port: database?.mysql.port ?? 3306,
-      mysql_username: database?.mysql.username ?? 'cephtower',
+      mysql_username: database?.mysql.username ?? 'root',
       mysql_password: database?.mysql.password ?? '',
       mysql_database: database?.mysql.database ?? 'cephtower',
       mysql_params: database?.mysql.params ?? 'charset=utf8mb4&parseTime=True&loc=Local',
-      admin_username: 'admin'
+      mysql_tls: database?.mysql.tls ?? 'false',
+      admin_username: 'admin',
+      admin_email: 'admin@admin.com'
     }),
     [database]
   )
@@ -49,14 +54,30 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
 
   async function nextStep() {
     setError('')
-    const fields =
-      step === 0
-        ? engine === 'sqlite'
-          ? ['engine', 'sqlite_path']
-          : ['engine', 'mysql_host', 'mysql_port', 'mysql_username', 'mysql_password', 'mysql_database', 'mysql_params']
-        : ['admin_username', 'admin_email', 'admin_password', 'admin_confirm_password']
+    const fields = step === 0 ? databaseFields(engine) : ['admin_username', 'admin_email', 'admin_password', 'admin_confirm_password']
     await form.validateFields(fields as Array<keyof InitializationFormValues>)
     setStep((current) => current + 1)
+  }
+
+  async function testDatabase() {
+    if (databaseTestRunning.current) {
+      return
+    }
+    databaseTestRunning.current = true
+    setTestingDatabase(true)
+    setError('')
+    try {
+      await form.validateFields(databaseFields(engine))
+      await testSetupDatabase(databaseInput(form.getFieldsValue(), engine))
+      message.success('数据库连接成功')
+    } catch (err) {
+      if (err instanceof Error) {
+        message.error(err.message || '数据库连接失败')
+      }
+    } finally {
+      databaseTestRunning.current = false
+      setTestingDatabase(false)
+    }
   }
 
   async function submit() {
@@ -65,27 +86,14 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
     try {
       const values = await form.validateFields()
       await initializeSetup({
-        database: {
-          engine: values.engine,
-          sqlite: {
-            path: values.sqlite_path
-          },
-          mysql: {
-            host: values.mysql_host,
-            port: values.mysql_port,
-            username: values.mysql_username,
-            password: values.mysql_password,
-            database: values.mysql_database,
-            params: values.mysql_params
-          }
-        },
+        database: databaseInput(values, values.engine),
         admin: {
           username: values.admin_username,
           email: values.admin_email,
           password: values.admin_password
         }
       })
-      message.success('初始化完成，请登录')
+      message.success('初始化完成！')
       onComplete()
     } catch (err) {
       setError(err instanceof Error ? err.message : '初始化失败')
@@ -148,9 +156,21 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
                       <Input.Password autoComplete="new-password" />
                     </Form.Item>
                   </div>
-                  <Form.Item name="mysql_database" label="数据库名" rules={[{ required: true, message: '请输入数据库名' }]}>
-                    <Input />
-                  </Form.Item>
+                  <div className="setup-grid">
+                    <Form.Item name="mysql_database" label="数据库名" rules={[{ required: true, message: '请输入数据库名' }]}>
+                      <Input />
+                    </Form.Item>
+                    <Form.Item name="mysql_tls" label="TLS 模式" rules={[{ required: true, message: '请选择 TLS 模式' }]}>
+                      <Select
+                        options={[
+                          { value: 'false', label: '禁用' },
+                          { value: 'true', label: '启用并验证证书' },
+                          { value: 'skip-verify', label: '启用但不验证证书' },
+                          { value: 'preferred', label: '优先 TLS，允许回退' }
+                        ]}
+                      />
+                    </Form.Item>
+                  </div>
                   <Form.Item name="mysql_params" label="连接参数" rules={[{ required: true, message: '请输入连接参数' }]}>
                     <Input />
                   </Form.Item>
@@ -208,6 +228,7 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
                       {setupSummaryItem('密码', form.getFieldValue('mysql_password'))}
                       {setupSummaryItem('数据库名', form.getFieldValue('mysql_database'))}
                       {setupSummaryItem('连接参数', form.getFieldValue('mysql_params'))}
+                      {setupSummaryItem('TLS 模式', mysqlTLSLabel(form.getFieldValue('mysql_tls')))}
                     </>
                   )}
                 </div>
@@ -226,8 +247,13 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
                   上一步
                 </Button>
               )}
+              {step === 0 && (
+                <Button loading={testingDatabase} onClick={testDatabase} disabled={loading || testingDatabase}>
+                  测试连接
+                </Button>
+              )}
               {step < 2 ? (
-                <Button type="primary" onClick={nextStep}>
+                <Button type="primary" onClick={nextStep} disabled={testingDatabase}>
                   下一步
                 </Button>
               ) : (
@@ -241,6 +267,37 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
       </section>
     </main>
   )
+}
+
+function databaseFields(engine: InitializationFormValues['engine']): Array<keyof InitializationFormValues> {
+  return engine === 'sqlite'
+    ? ['engine', 'sqlite_path']
+    : ['engine', 'mysql_host', 'mysql_port', 'mysql_username', 'mysql_password', 'mysql_database', 'mysql_params', 'mysql_tls']
+}
+
+function databaseInput(values: Partial<InitializationFormValues>, engine: InitializationFormValues['engine']): SetupDatabaseInput {
+  return {
+    engine,
+    sqlite: { path: values.sqlite_path ?? '' },
+    mysql: {
+      host: values.mysql_host ?? '',
+      port: values.mysql_port ?? 0,
+      username: values.mysql_username ?? '',
+      password: values.mysql_password ?? '',
+      database: values.mysql_database ?? '',
+      params: values.mysql_params ?? '',
+      tls: values.mysql_tls ?? 'false'
+    }
+  }
+}
+
+function mysqlTLSLabel(value: InitializationFormValues['mysql_tls']) {
+  return {
+    false: '禁用',
+    true: '启用并验证证书',
+    'skip-verify': '启用但不验证证书',
+    preferred: '优先 TLS，允许回退'
+  }[value]
 }
 
 function setupSummaryItem(label: string, value: unknown) {

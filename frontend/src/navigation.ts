@@ -96,10 +96,10 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     children: [
       { key: 'clusterManagement', label: '集群管理', path: '/cluster/cluster', icon: 'cluster', permission: 'cluster' },
       { key: 'hostManagement', label: '主机管理', path: '/cluster/host', icon: 'host', permission: 'cluster' },
-      { key: 'monManagement', label: 'MON管理', path: '/cluster/mon', icon: 'mon', permission: 'cluster' },
-      { key: 'mgrManagement', label: 'MGR管理', path: '/cluster/mgr', icon: 'mgr', permission: 'cluster' },
-      { key: 'osdManagement', label: 'OSD管理', path: '/cluster/osd', icon: 'osd', permission: 'cluster' },
-      { key: 'mdsManagement', label: 'MDS管理', path: '/cluster/mds', icon: 'mds', permission: 'cluster' }
+      { key: 'monManagement', label: 'MON 管理', path: '/cluster/mon', icon: 'mon', permission: 'cluster' },
+      { key: 'mgrManagement', label: 'MGR 管理', path: '/cluster/mgr', icon: 'mgr', permission: 'cluster' },
+      { key: 'osdManagement', label: 'OSD 管理', path: '/cluster/osd', icon: 'osd', permission: 'cluster' },
+      { key: 'mdsManagement', label: 'MDS 管理', path: '/cluster/mds', icon: 'mds', permission: 'cluster' }
     ]
   },
   {
@@ -109,7 +109,7 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     icon: 'block',
     children: [
       { key: 'blockPools', label: '存储池', path: '/block/pool', icon: 'pool', permission: 'storage' },
-      { key: 'rbdImages', label: 'RBD镜像', path: '/block/rbd-image', icon: 'rbd', permission: 'storage' },
+      { key: 'rbdImages', label: 'RBD 镜像', path: '/block/rbd-image', icon: 'rbd', permission: 'storage' },
       { key: 'imageMirroring', label: '镜像同步', path: '/block/mirroring', icon: 'sync', permission: 'storage' },
       { key: 'iscsi', label: 'iSCSI', path: '/block/iscsi', icon: 'iscsi', permission: 'storage' },
       { key: 'nvmeTcp', label: 'NVMe/TCP', path: '/block/nvme-tcp', icon: 'nvme', permission: 'storage' }
@@ -133,9 +133,9 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     path: '/object',
     icon: 'object',
     children: [
-      { key: 'rgwOverview', label: 'RGW总览', path: '/object/rgw-overview', icon: 'object', permission: 'storage' },
+      { key: 'rgwOverview', label: 'RGW 总览', path: '/object/rgw-overview', icon: 'object', permission: 'storage' },
       { key: 'rgwUsers', label: '用户管理', path: '/object/user', icon: 'user', permission: 'storage' },
-      { key: 'bucketManagement', label: 'Bucket管理', path: '/object/bucket', icon: 'bucket', permission: 'storage' },
+      { key: 'bucketManagement', label: 'Bucket 管理', path: '/object/bucket', icon: 'bucket', permission: 'storage' },
       { key: 'gatewayManagement', label: '网关管理', path: '/object/gateway', icon: 'gateway', permission: 'storage' },
       { key: 'multisite', label: '多站点', path: '/object/multisite', icon: 'site', permission: 'storage' },
       { key: 'objectStorageConfig', label: '对象存储配置', path: '/object/configuration', icon: 'config', permission: 'storage' }

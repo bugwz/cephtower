@@ -10,12 +10,13 @@ import (
 	"time"
 
 	"cephtower/backend/internal/app"
+	"cephtower/backend/internal/config"
 )
 
 const shutdownTimeout = 15 * time.Second
 
 func main() {
-	configPath := flag.String("config", "config/config.yaml", "Path to the YAML configuration file")
+	configPath := flag.String("config", config.DefaultPath, "Path to the YAML configuration file")
 	flag.Parse()
 
 	application, err := app.New(*configPath)

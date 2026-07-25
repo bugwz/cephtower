@@ -28,7 +28,7 @@ func (h *Handler) WithAuth(next http.Handler) http.Handler {
 
 func isPublicAPIPath(path string) bool {
 	switch path {
-	case "/api/v1/healthz", "/api/v1/readyz", "/api/v1/auth/login", "/api/v1/auth/password-reset/request", "/api/v1/auth/password-reset/confirm", "/api/v1/setup/status", "/api/v1/setup/initialize":
+	case "/api/v1/healthz", "/api/v1/readyz", "/api/v1/auth/login", "/api/v1/auth/password-reset/request", "/api/v1/auth/password-reset/confirm", "/api/v1/setup/status", "/api/v1/setup/database/test", "/api/v1/setup/initialize":
 		return true
 	default:
 		return false

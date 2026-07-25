@@ -71,7 +71,7 @@ CephTower 是一个用于支持管理 Ceph 集群的 Web 控制台项目，后�
 ```text
 CephTower/
 ├── config/                       # 运行配置目录
-│   └── config.yaml               # 唯一运行配置
+│   └── config.yaml               # 带注释的参考配置
 ├── backend/                      # Go HTTP API 服务
 │   ├── cmd/
 │   │   └── server/               # 后端服务入口
@@ -108,19 +108,13 @@ CephTower/
 
 ### 3.1 后端服务
 
-调整唯一配置文件 `config/config.yaml`：
+服务默认读取 `/opt/cephtower/config/config.yaml`，启动时配置文件必须存在。无论系统
+是否已经初始化，服务都会先加载该配置，并将数据库配置展示在初始化界面。初始化
+提交后仅更新对应的数据库字段值，保留注释、格式和其他配置。
 
-```yaml
-server:
-  address: "0.0.0.0"
-  port: 36900
-  work_dir: "./app"
-ceph_dashboard:
-  base_url: "https://ceph.example.com"
-  username: "admin"
-  password: "change-me"
-  insecure_tls: false
-```
+执行 `make run` 时，如果 `app/config/config.yaml` 不存在，会从带注释的参考配置
+`config/config.yaml` 创建一份开发配置，并将其中的运行目录改为 `./app`。已有开发
+配置不会被覆盖。
 
 启动后端：
 
@@ -132,7 +126,7 @@ make backend-dev
 
 ```bash
 cd backend
-go run ./cmd/server -config ../config/config.yaml
+go run ./cmd -config ../app/config/config.yaml
 ```
 
 ### 3.2 前端控制台
@@ -229,7 +223,7 @@ make backend-test
 
 ### 6.3 Ceph Dashboard 集成
 
-- 后端通过 `config/config.yaml` 指定 Dashboard API 地址
+- 后端通过 `app/config/config.yaml` 加载本地运行配置
 - 通过 `ceph_dashboard.username` 和 `ceph_dashboard.password` 完成认证
 - 默认开启 TLS 校验，开发环境可通过 `ceph_dashboard.insecure_tls` 临时跳过
 - 前端不直接持有 Ceph Dashboard 凭证，只访问 CephTower 后端 API
