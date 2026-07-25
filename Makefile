@@ -10,7 +10,7 @@ GO_MIN_VERSION := 1.26
 NODE_MIN_MAJOR := 20
 NPM_MIN_MAJOR := 10
 
-.PHONY: check-env check-backend-env check-frontend-env ensure-frontend-deps build build-backend build-frontend run run-backend run-frontend backend-dev backend-test frontend-dev frontend-build generate-ceph-client
+.PHONY: check-env check-backend-env check-frontend-env ensure-frontend-deps build build-backend build-frontend run run-backend run-frontend test backend-dev backend-test frontend-dev frontend-build generate-ceph-client
 
 check-env: check-backend-env check-frontend-env
 
@@ -89,6 +89,8 @@ run-frontend: ensure-frontend-deps
 	cd $(FRONTEND_DIR) && npm run dev -- --host 0.0.0.0 --port $(FRONTEND_PORT) --strictPort
 
 backend-dev: run-backend
+
+test: backend-test
 
 backend-test: check-backend-env build-frontend
 	cd $(BACKEND_DIR) && go test ./...

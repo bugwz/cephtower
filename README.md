@@ -163,6 +163,7 @@ npm run dev
 | 命令 | 描述 |
 |------|------|
 | `make backend-dev` | 启动 Go 后端服务 |
+| `make test` | 运行完整测试和前端构建校验 |
 | `make backend-test` | 运行后端测试 |
 | `make frontend-dev` | 启动 React 开发服务 |
 | `make frontend-build` | 构建前端产物 |
