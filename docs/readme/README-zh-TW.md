@@ -127,7 +127,6 @@ Ceph 叢集憑證不寫入此 YAML，而是在初始化後經由叢集管理儲�
 | `make test` | 執行後端測試與前端建置驗證 |
 | `make test-backend` | 執行 `go test ./...` |
 | `make test-frontend` | 執行前端型別檢查與 Vite 建置驗證 |
-| `ruby tools/generate_ceph_dashboard_client.rb` | 從本機資料重新產生 Ceph Dashboard 用戶端 |
 
 可用 `CONFIG=/path/to/config.yaml` 覆寫後端設定，或以 `FRONTEND_PORT=連接埠`
 覆寫 `make run` 使用的前端連接埠。

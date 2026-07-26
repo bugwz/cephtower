@@ -1,11 +1,16 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# Generated outputs:
+# - docs/ceph/apis/index.md
+# - docs/ceph/apis/compatibility.md
+# - docs/ceph/apis/endpoints/*.md
+
 require 'fileutils'
 require 'set'
 require 'yaml'
 
-ROOT = File.expand_path('..', __dir__)
+ROOT = File.expand_path('../..', __dir__)
 OPENAPI_PATH = File.join(ROOT, 'docs/references/ceph/src/pybind/mgr/dashboard/openapi.yaml')
 CMAKE_PATH = File.join(ROOT, 'docs/references/ceph/CMakeLists.txt')
 OUT_DIR = File.join(ROOT, 'docs/ceph/apis')
@@ -322,7 +327,7 @@ def write_category(category, operations, version, version_indexes)
   out << "# Ceph #{version} Dashboard API - #{title}"
   out << ""
   out << "> 来源：`docs/references/ceph/src/pybind/mgr/dashboard/openapi.yaml`。"
-  out << "> 本文档由 `tools/generate_ceph_dashboard_api_docs.rb` 生成，按 `/api/#{category}` 路径域归类。"
+  out << "> 本文档由 Ceph Dashboard API 文档生成器自动生成，按 `/api/#{category}` 路径域归类。"
   out << "> 版本支持扫描范围：#{CEPH_VERSIONS.join(', ')}。"
   out << ""
   out << "## 接口目录"

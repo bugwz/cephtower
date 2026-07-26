@@ -128,7 +128,6 @@ DB 및 런타임 디렉터리 접근을 제한하고 프로덕션에서 적절�
 | `make test` | 백엔드 테스트와 프런트엔드 빌드 검증 실행 |
 | `make test-backend` | `go test ./...` 실행 |
 | `make test-frontend` | 프런트엔드 타입 검사와 빌드 실행 |
-| `ruby tools/generate_ceph_dashboard_client.rb` | 로컬 자료에서 Ceph Dashboard 클라이언트 재생성 |
 
 `CONFIG=/path/to/config.yaml`로 백엔드 구성을, `FRONTEND_PORT=포트`로 `make run`의
 프런트엔드 포트를 변경할 수 있습니다.

@@ -130,7 +130,6 @@ usa validación TLS adecuada en producción.
 | `make test` | ejecutar pruebas backend y validar el build frontend |
 | `make test-backend` | ejecutar `go test ./...` |
 | `make test-frontend` | comprobar tipos y compilar el frontend |
-| `ruby tools/generate_ceph_dashboard_client.rb` | regenerar el cliente Dashboard desde referencias locales |
 
 Usa `CONFIG=/path/to/config.yaml` para la configuración backend o `FRONTEND_PORT=puerto` para
 el puerto frontend de `make run`.

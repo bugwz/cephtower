@@ -132,7 +132,6 @@ runtime directories, and use appropriate TLS validation in production.
 | `make test` | run the backend tests and frontend build validation |
 | `make test-backend` | run `go test ./...` |
 | `make test-frontend` | type-check and build the frontend for validation |
-| `ruby tools/generate_ceph_dashboard_client.rb` | regenerate the Ceph Dashboard client from local references |
 
 Override the backend configuration with `CONFIG=/path/to/config.yaml`, or the frontend port
 used by `make run` with `FRONTEND_PORT=port`.

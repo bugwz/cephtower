@@ -129,7 +129,6 @@ Restrinja acesso à configuração, banco e arquivos de execução e use valida�
 | `make test` | executar testes backend e validar o build frontend |
 | `make test-backend` | executar `go test ./...` |
 | `make test-frontend` | verificar tipos e compilar o frontend |
-| `ruby tools/generate_ceph_dashboard_client.rb` | regenerar cliente Dashboard a partir das referências locais |
 
 Use `CONFIG=/path/to/config.yaml` para a configuração backend ou `FRONTEND_PORT=porta` para a
 porta frontend usada por `make run`.

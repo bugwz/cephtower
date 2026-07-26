@@ -1,6 +1,6 @@
 # Influx
 
-> 自动生成；请修改 `tools/generate_ceph_command_docs.py` 后重新生成。
+> 本文档由 Ceph 命令文档生成器自动生成，请勿手动修改。
 
 ## `ceph influx config-set`
 

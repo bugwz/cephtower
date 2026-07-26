@@ -131,7 +131,6 @@ Ceph 集群凭据不写在该 YAML 中，而是在初始化完成后通过集群
 | `make test` | 运行后端测试和前端构建校验 |
 | `make test-backend` | 运行 `go test ./...` |
 | `make test-frontend` | 执行前端类型检查和 Vite 构建校验 |
-| `ruby tools/generate_ceph_dashboard_client.rb` | 从本地资料重新生成 Ceph Dashboard 客户端代码 |
 
 可通过 `CONFIG=/path/to/config.yaml` 覆盖后端配置，通过 `FRONTEND_PORT=端口` 覆盖
 `make run` 使用的前端端口。

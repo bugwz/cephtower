@@ -1,7 +1,7 @@
 # Ceph 命令参考
 
 > 来源：`docs/references/ceph` 的 Git tags：`v16.2.15`、`v17.2.9`、`v18.2.8`、`v19.2.5`、`v20.2.2`。
-> 本文档由 `tools/generate_ceph_command_docs.py` 生成。
+> 本文档由 Ceph 命令文档生成器自动生成。
 
 本文档整理 Ceph monitor/mgr command table 与 mgr Python 模块声明的 `ceph ...` 命令，
 用于后续在 `backend/internal/integration/ceph` 中新增直接执行 Ceph CLI 的能力。

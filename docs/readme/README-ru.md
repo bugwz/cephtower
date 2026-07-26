@@ -129,7 +129,6 @@ make build
 | `make test` | запустить тесты backend и проверку сборки frontend |
 | `make test-backend` | выполнить `go test ./...` |
 | `make test-frontend` | проверить типы и собрать frontend |
-| `ruby tools/generate_ceph_dashboard_client.rb` | пересоздать клиент Dashboard из локальных материалов |
 
 Используйте `CONFIG=/path/to/config.yaml` для конфигурации backend или `FRONTEND_PORT=порт`
 для порта frontend команды `make run`.

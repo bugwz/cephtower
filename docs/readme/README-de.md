@@ -130,7 +130,6 @@ einschränken und in Produktion eine geeignete TLS-Prüfung verwenden.
 | `make test` | Backend-Tests und Frontend-Buildprüfung ausführen |
 | `make test-backend` | `go test ./...` ausführen |
 | `make test-frontend` | Frontend-Typprüfung und Build ausführen |
-| `ruby tools/generate_ceph_dashboard_client.rb` | Dashboard-Client aus lokalen Referenzen neu erzeugen |
 
 Mit `CONFIG=/path/to/config.yaml` wird die Backend-Konfiguration, mit `FRONTEND_PORT=Port` der
 Frontend-Port von `make run` überschrieben.

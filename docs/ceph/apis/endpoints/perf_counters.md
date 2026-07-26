@@ -1,7 +1,7 @@
 # Ceph 20.2.2 Dashboard API - 性能计数器
 
 > 来源：`docs/references/ceph/src/pybind/mgr/dashboard/openapi.yaml`。
-> 本文档由 `tools/generate_ceph_dashboard_api_docs.rb` 生成，按 `/api/perf_counters` 路径域归类。
+> 本文档由 Ceph Dashboard API 文档生成器自动生成，按 `/api/perf_counters` 路径域归类。
 > 版本支持扫描范围：v16.2.15, v17.2.9, v18.2.8, v19.2.5, v20.2.2。
 
 ## 接口目录

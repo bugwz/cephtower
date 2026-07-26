@@ -130,7 +130,6 @@ Ceph 認証情報は YAML ではなく、初期化後にクラスター管理か
 | `make test` | バックエンドテストとフロントエンドビルド検証を実行 |
 | `make test-backend` | `go test ./...` を実行 |
 | `make test-frontend` | 型検査とフロントエンドビルドを実行 |
-| `ruby tools/generate_ceph_dashboard_client.rb` | ローカル資料から Ceph Dashboard クライアントを再生成 |
 
 `CONFIG=/path/to/config.yaml` で設定を、`FRONTEND_PORT=ポート` で `make run` の
 フロントエンドポートを変更できます。
