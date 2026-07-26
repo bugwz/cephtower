@@ -15,7 +15,9 @@ backend/.cache/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
-backend/internal/webui/frontend/dist/
+backend/internal/webui/frontend/dist/*
+backend/internal/webui/frontend/dist/.*
+!backend/internal/webui/frontend/dist/.keep
 
 # Local reference material
 docs/references/

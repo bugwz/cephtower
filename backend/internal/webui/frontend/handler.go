@@ -8,12 +8,19 @@ import (
 	"strings"
 )
 
-//go:embed dist
+//go:embed all:dist
 var staticFiles embed.FS
 
 func Handler() http.Handler {
+	return handler(staticFiles)
+}
+
+func handler(staticFiles fs.FS) http.Handler {
 	dist, err := fs.Sub(staticFiles, "dist")
 	if err != nil {
+		return http.NotFoundHandler()
+	}
+	if !staticFileExists(dist, "/index.html") {
 		return http.NotFoundHandler()
 	}
 

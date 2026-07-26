@@ -70,6 +70,7 @@ build-backend: check-backend-env build-frontend
 build-frontend: test-frontend
 	rm -rf $(BACKEND_STATIC_DIR)
 	mkdir -p $(BACKEND_STATIC_DIR)
+	touch $(BACKEND_STATIC_DIR)/.keep
 	cp -R $(FRONTEND_DIR)/dist/. $(BACKEND_STATIC_DIR)/
 
 ensure-run-config:
