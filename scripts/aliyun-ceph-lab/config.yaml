@@ -1,0 +1,284 @@
+# 含义：调用阿里云 OpenAPI 时使用的 AccessKey 或 STS 临时访问凭证。
+# 可选值：包含 AccessKey ID、AccessKey Secret 和可选 STS SecurityToken 的对象。
+# 默认值：所有字段为空；实际运行前必须填写有效凭证。
+credentials:
+  # 含义：调用阿里云 ECS 和 VPC OpenAPI 时用于请求签名的 AccessKey ID。
+  # 可选值：具有所需 RAM 权限的账号或 RAM 用户 AccessKey ID；不允许为空字符串。
+  # 默认值：""；运行 validate、create、list 或 delete 前必须填写。
+  access_key_id: ""
+  # 含义：与 access_key_id 配对的 AccessKey Secret，用于生成 OpenAPI 请求签名。
+  # 可选值：对应 AccessKey ID 的有效 Secret；不允许为空字符串，也不会写入状态文件或日志。
+  # 默认值：""；运行 validate、create、list 或 delete 前必须填写。
+  access_key_secret: ""
+  # 含义：使用 STS 临时 AccessKey 时一同提交的安全令牌，长期 AccessKey 不需要该字段。
+  # 可选值：与临时 AccessKey 配套且未过期的 STS SecurityToken，或空字符串 ""。
+  # 默认值：""；长期 AccessKey 保持为空，STS 临时凭证必须填写。
+  security_token: ""
+# 含义：集群身份、阿里云地域和 OpenAPI 客户端连接配置。
+# 可选值：包含名称、地域、可用区以及可选 ECS/VPC 自定义端点的对象。
+# 默认值：当前模板使用名为 "ceph-dev" 的新加坡 B 可用区集群。
+cluster:
+  # 含义：集群标识，用于实例名称、云资源名称、标签和本地状态文件名。
+  # 可选值：以字母开头、长度为 2～64，只包含字母、数字、下划线或短横线的唯一名称。
+  # 默认值：工具无内置默认值；当前模板为 "ceph-dev"。
+  name: "ceph-dev"
+  # 含义：ECS、VPC、交换机和安全组所在的阿里云地域 ID。
+  # 可选值：当前账号可用的阿里云地域 ID，例如 "ap-southeast-1" 或 "cn-hangzhou"。
+  # 默认值：工具无内置默认值；当前模板为 "ap-southeast-1"。
+  region_id: "ap-southeast-1"
+  # 含义：nodes 中所有 ECS 和自动创建交换机所在的可用区 ID。
+  # 可选值：region_id 地域内支持目标实例规格和磁盘类型的可用区 ID。
+  # 默认值：工具无内置默认值；当前模板为 "ap-southeast-1b"。
+  zone_id: "ap-southeast-1b"
+  # 含义：覆盖 ECS OpenAPI 客户端使用的服务端点，主要用于代理、专线或测试环境。
+  # 可选值：有效 ECS OpenAPI endpoint 域名，或空字符串 "" 使用地域默认端点。
+  # 默认值：""。
+  ecs_endpoint: ""
+  # 含义：覆盖 VPC OpenAPI 客户端使用的服务端点，主要用于代理、专线或测试环境。
+  # 可选值：有效 VPC OpenAPI endpoint 域名，或空字符串 "" 使用地域默认端点。
+  # 默认值：""。
+  vpc_endpoint: ""
+# 含义：VPC、交换机和安全组的选择、发现、创建、复用及销毁策略。
+# 可选值：包含资源 ID、CIDR 和自动管理开关的对象。
+# 默认值：资源 ID 留空，优先复用约定名称前缀的资源，找不到时自动创建。
+network:
+  # 含义：指定要使用的 VPC；留空时从交换机或安全组推断，否则检索名称以 "ceph-vpc-" 开头的 VPC。
+  # 可选值：cluster.region_id 地域内有效的 "vpc-..." ID，或空字符串 ""。
+  # 默认值：""；没有可复用资源时创建名为 "ceph-vpc-<cluster.name>" 的 VPC。
+  vpc_id: ""
+  # 含义：指定要使用的交换机；留空时检索名称以 "ceph-switch-" 开头的兼容交换机。
+  # 可选值：cluster.zone_id 内有效且可用 IP 数不少于 nodes 节点数的 "vsw-..." ID，或 ""。
+  # 默认值：""；没有可复用资源时创建名为 "ceph-switch-<cluster.name>" 的交换机。
+  v_switch_id: ""
+  # 含义：指定 nodes 中所有 ECS 使用的安全组；留空时检索名称以 "ceph-security-group-" 开头的安全组。
+  # 可选值：目标 VPC 内有效的 "sg-..." ID，或空字符串 ""。
+  # 默认值：""；没有可复用资源时创建名为 "ceph-security-group-<cluster.name>" 的安全组。
+  security_group_id: ""
+  # 含义：没有合适网络资源时，是否允许创建新的 VPC、交换机或安全组。
+  # 可选值：true 或 false。
+  # 默认值：true。
+  auto_create: true
+  # 含义：是否检索并复用名称具有 ceph-vpc-、ceph-switch-、ceph-security-group- 前缀的网络资源。
+  # 可选值：true 或 false；同名资源优先，其次按资源 ID 稳定选择；false 表示不检索。
+  # 默认值：true。
+  reuse_managed_resources: true
+  # 含义：自动创建 VPC 时使用的主 IPv4 CIDR，也用于筛选可复用的托管 VPC。
+  # 可选值：有效 IPv4 CIDR，工具限制掩码为 /16～/28；建议使用不冲突的 RFC 1918 私网地址。
+  # 默认值："172.31.0.0/16"。
+  vpc_cidr: "172.31.0.0/16"
+  # 含义：自动创建交换机时使用的 IPv4 CIDR。
+  # 可选值：属于 vpc_cidr、掩码为 /16～/29 且不与 VPC 中已有网段冲突的 IPv4 CIDR。
+  # 默认值："172.31.0.0/24"。
+  v_switch_cidr: "172.31.0.0/24"
+  # 含义：托管安全组允许访问 SSH、Ceph Dashboard 和 Ceph 核心服务端口的来源 IPv4 网段。
+  # 可选值：有效 IPv4 CIDR；"0.0.0.0/0" 表示所有 IPv4，生产环境建议改为可信出口的 "/32" 网段。
+  # 默认值："0.0.0.0/0"，开放 TCP 22、3300、6789、6800～7568 和 8443 供临时实验使用。
+  ssh_source_cidr: "0.0.0.0/0"
+  # 含义：手动 delete 时是否删除本次运行创建且已空闲的安全组、交换机和 VPC。
+  # 可选值：true 删除本次创建的网络，false 保留带统一前缀的网络供后续集群复用。
+  # 默认值：false；复用或显式指定的网络资源始终不会被删除。
+  cleanup_created_resources: false
+# 含义：nodes 中所有 ECS 的公共创建参数，由后端严格映射到 RunInstances SDK 请求。
+# 可选值：包含镜像、CPU、元数据、系统盘和公网带宽配置的对象。
+# 默认值：当前模板采用 ecs.g7a.xlarge 兼容的 CentOS Stream 9、ESSD PL0 和按流量公网。
+ecs:
+  # 含义：nodes 中所有 ECS 使用的系统镜像 ID。
+  # 可选值：cluster.region_id 中可用且兼容目标实例规格的公共、自定义、共享或云市场镜像 ID。
+  # 默认值：工具无内置默认值；当前模板为 CentOS Stream 9 镜像。
+  image_id: "centos_stream_9_x64_20G_alibase_20260616.vhd"
+  # 含义：覆盖实例规格默认的 CPU 拓扑；删除整个 cpu_options 可让 ECS 自动选择。
+  # 可选值：省略该对象，或同时提供 core_count 和 threads_per_core。
+  # 默认值：工具内为省略；当前模板使用 2 核、每核 2 线程。
+  cpu_options:
+    # 含义：每台 ECS 启用的物理 CPU 核心数。
+    # 可选值：大于 0 且受 nodes.instance_type 支持的整数。
+    # 默认值：对象存在时无内置默认值；当前模板为 2。
+    core_count: 2
+    # 含义：每个物理 CPU 核心启用的线程数。
+    # 可选值：大于 0 且受 nodes.instance_type 支持的整数，常见值为 1 或 2。
+    # 默认值：对象存在时无内置默认值；当前模板为 2。
+    threads_per_core: 2
+  # 含义：访问实例元数据服务时是否强制使用 IMDSv2 会话令牌。
+  # 可选值："optional"、"required"，或 "" 表示不向 ECS API 传递该参数。
+  # 默认值：ECS API 通常为 "optional"；当前模板为 "optional"。
+  http_tokens: "optional"
+  # 含义：控制 ECS 实例是否启用安全加固策略。
+  # 可选值："Active"、"Deactive"，或 "" 表示不向 ECS API 传递该参数。
+  # 默认值：ECS API 为 "Active"；当前模板为 "Active"。
+  security_enhancement_strategy: "Active"
+  # 含义：每台 ECS 的系统盘配置。
+  # 可选值：包含 category、performance_level 和 size_gib 的对象。
+  # 默认值：40 GiB ESSD PL0。
+  system_disk:
+    # 含义：系统盘的云盘类别。
+    # 可选值：可用区和规格支持的类别，例如 "cloud_essd"、"cloud_auto" 或 "cloud_efficiency"。
+    # 默认值："cloud_essd"。
+    category: "cloud_essd"
+    # 含义：系统盘为 ESSD 时使用的性能等级；类别不支持时应设为空字符串。
+    # 可选值："PL0"、"PL1"、"PL2"、"PL3" 或 ""，并受类别、容量和地域约束。
+    # 默认值：工具内为 ""；当前模板为 "PL0"。
+    performance_level: "PL0"
+    # 含义：每台 ECS 系统盘的容量，单位 GiB。
+    # 可选值：大于 0 且不小于镜像大小、符合云盘类别和实例规格限制的整数。
+    # 默认值：40。
+    size_gib: 40
+  # 含义：每台 ECS 的公网带宽和计费配置。
+  # 可选值：包含 charge_type 和 max_bandwidth_out_mbps 的对象。
+  # 默认值：按流量计费，公网出带宽上限 100 Mbit/s。
+  internet:
+    # 含义：ECS 公网出方向带宽的计费方式。
+    # 可选值："PayByTraffic" 按流量计费或 "PayByBandwidth" 按固定带宽计费。
+    # 默认值："PayByTraffic"。
+    charge_type: "PayByTraffic"
+    # 含义：公网出方向带宽上限，单位 Mbit/s；大于 0 时用于分配公网 IP 和 SSH 初始化。
+    # 可选值：大于 0 且不超过地域、账号和计费方式限制的整数。
+    # 默认值：当前模板为 100。
+    max_bandwidth_out_mbps: 100
+# 含义：工具连接 ECS 并执行初始化与部署脚本时使用的 SSH 凭证。
+# 可选值：包含 user 和 password 的对象；不支持密钥对登录。
+# 默认值：root 用户和运行时自动生成的 10 位密码。
+ssh:
+  # 含义：执行初始化脚本和部署脚本时使用的 SSH 登录用户名。
+  # 可选值：仅支持 "root"；其他值会在创建任何云资源前校验失败。
+  # 默认值："root"；RunInstances 不传 ImageOptions，使用 ECS 默认的 root 登录模式。
+  user: "root"
+  # 含义：通过 RunInstances.Password 设置并供工具连接所有 ECS 节点的 SSH 登录密码。
+  # 可选值："" 表示自动生成，或指定 8～30 个 ASCII 字符且至少满足四类字符中的三类。
+  # 默认值：""；create 生成 10 位强密码，并在创建前和所有节点进入 Running 后分别打印。
+  password: ""
+# 含义：临时实验环境的自动释放和各阶段等待策略。
+# 可选值：包含 max_runtime 和 wait_timeout 的对象。
+# 默认值：最长运行 6 小时，每个等待阶段超时 15 分钟。
+lifecycle:
+  # 含义：ECS 最长运行时间，工具据此设置云端 AutoReleaseTime，防止资源长期计费。
+  # 可选值：Go duration 格式且范围为 "30m"～"26280h"，例如 "90m"、"6h" 或 "24h"。
+  # 默认值："6h"。
+  max_runtime: "6h"
+  # 含义：等待网络、ECS 启动、SSH 初始化以及各 Ceph 就绪阶段使用的单阶段超时时间。
+  # 可选值：任意大于 0 的 Go duration，例如 "5m"、"15m" 或 "1h"。
+  # 默认值："15m"。
+  wait_timeout: "15m"
+# 含义：ECS 进入 Running 后执行的本地脚本入口。
+# 可选值：包含节点初始化脚本和 Ceph 部署脚本路径的对象。
+# 默认值：使用 hooks 目录中的两个内置脚本。
+hooks:
+  # 含义：在 nodes 中每台 ECS 上分别执行的开发环境初始化脚本路径。
+  # 可选值：可读脚本的绝对路径，或相对于配置文件目录的路径。
+  # 默认值："hooks/init-node.sh"。
+  init_script: "hooks/init-node.sh"
+  # 含义：初始化完成后在第一台 ECS 上执行的 cephadm 集群部署脚本路径。
+  # 可选值：可读脚本的绝对路径，或相对于配置文件目录的路径。
+  # 默认值："hooks/deploy-ceph.sh"；仅当 nodes 至少包含 3 台机器时执行。
+  deploy_script: "hooks/deploy-ceph.sh"
+# 含义：定义要创建的全部 Ceph 节点及各自的 ECS 规格和数据盘，工具按列表逐项创建。
+# 可选值：至少包含 1 个名称唯一的节点对象；节点数量没有固定为 3。
+# 默认值：当前模板包含 3 个 ecs.g7a.xlarge 节点，每台附加两块 100 GiB ESSD PL0。
+nodes:
+  # 含义：第一台节点的主机名、ECS 实例名和集群内唯一标识。
+  # 可选值：以字母开头、长度为 2～64，只包含字母、数字、下划线或短横线的名称。
+  # 默认值："ceph-node-1"。
+  - name: "ceph-node-1"
+    # 含义：第一台节点使用的 ECS 实例规格。
+    # 可选值：目标地域和可用区中有库存且支持所选镜像、CPU 拓扑和磁盘的规格 ID。
+    # 默认值："ecs.g7a.xlarge"。
+    instance_type: "ecs.g7a.xlarge"
+    # 含义：第一台节点附加的数据盘列表，后续用于 cephadm 创建 OSD。
+    # 可选值：零个或多个受 ECS RunInstances 支持的数据盘对象。
+    # 默认值：两块 100 GiB ESSD PL0。
+    data_disks:
+      # 含义：第一块数据盘的云盘类别。
+      # 可选值：可用区和实例规格支持的类别，例如 "cloud_essd"、"cloud_auto" 或 "cloud_efficiency"。
+      # 默认值："cloud_essd"。
+      - category: "cloud_essd"
+        # 含义：第一块数据盘为 ESSD 时使用的性能等级。
+        # 可选值："PL0"、"PL1"、"PL2"、"PL3" 或 ""，并受类别、容量和地域约束。
+        # 默认值："PL0"。
+        performance_level: "PL0"
+        # 含义：第一块数据盘容量，单位 GiB。
+        # 可选值：大于 0 且符合云盘类别、性能等级和地域限制的整数。
+        # 默认值：100。
+        size_gib: 100
+      # 含义：第二块数据盘的云盘类别。
+      # 可选值：可用区和实例规格支持的类别，例如 "cloud_essd"、"cloud_auto" 或 "cloud_efficiency"。
+      # 默认值："cloud_essd"。
+      - category: "cloud_essd"
+        # 含义：第二块数据盘为 ESSD 时使用的性能等级。
+        # 可选值："PL0"、"PL1"、"PL2"、"PL3" 或 ""，并受类别、容量和地域约束。
+        # 默认值："PL0"。
+        performance_level: "PL0"
+        # 含义：第二块数据盘容量，单位 GiB。
+        # 可选值：大于 0 且符合云盘类别、性能等级和地域限制的整数。
+        # 默认值：100。
+        size_gib: 100
+  # 含义：第二台节点的主机名、ECS 实例名和集群内唯一标识。
+  # 可选值：以字母开头、长度为 2～64，只包含字母、数字、下划线或短横线的名称。
+  # 默认值："ceph-node-2"。
+  - name: "ceph-node-2"
+    # 含义：第二台节点使用的 ECS 实例规格。
+    # 可选值：目标地域和可用区中有库存且支持所选镜像、CPU 拓扑和磁盘的规格 ID。
+    # 默认值："ecs.g7a.xlarge"。
+    instance_type: "ecs.g7a.xlarge"
+    # 含义：第二台节点附加的数据盘列表，后续用于 cephadm 创建 OSD。
+    # 可选值：零个或多个受 ECS RunInstances 支持的数据盘对象。
+    # 默认值：两块 100 GiB ESSD PL0。
+    data_disks:
+      # 含义：第一块数据盘的云盘类别。
+      # 可选值：可用区和实例规格支持的类别，例如 "cloud_essd"、"cloud_auto" 或 "cloud_efficiency"。
+      # 默认值："cloud_essd"。
+      - category: "cloud_essd"
+        # 含义：第一块数据盘为 ESSD 时使用的性能等级。
+        # 可选值："PL0"、"PL1"、"PL2"、"PL3" 或 ""，并受类别、容量和地域约束。
+        # 默认值："PL0"。
+        performance_level: "PL0"
+        # 含义：第一块数据盘容量，单位 GiB。
+        # 可选值：大于 0 且符合云盘类别、性能等级和地域限制的整数。
+        # 默认值：100。
+        size_gib: 100
+      # 含义：第二块数据盘的云盘类别。
+      # 可选值：可用区和实例规格支持的类别，例如 "cloud_essd"、"cloud_auto" 或 "cloud_efficiency"。
+      # 默认值："cloud_essd"。
+      - category: "cloud_essd"
+        # 含义：第二块数据盘为 ESSD 时使用的性能等级。
+        # 可选值："PL0"、"PL1"、"PL2"、"PL3" 或 ""，并受类别、容量和地域约束。
+        # 默认值："PL0"。
+        performance_level: "PL0"
+        # 含义：第二块数据盘容量，单位 GiB。
+        # 可选值：大于 0 且符合云盘类别、性能等级和地域限制的整数。
+        # 默认值：100。
+        size_gib: 100
+  # 含义：第三台节点的主机名、ECS 实例名和集群内唯一标识。
+  # 可选值：以字母开头、长度为 2～64，只包含字母、数字、下划线或短横线的名称。
+  # 默认值："ceph-node-3"。
+  - name: "ceph-node-3"
+    # 含义：第三台节点使用的 ECS 实例规格。
+    # 可选值：目标地域和可用区中有库存且支持所选镜像、CPU 拓扑和磁盘的规格 ID。
+    # 默认值："ecs.g7a.xlarge"。
+    instance_type: "ecs.g7a.xlarge"
+    # 含义：第三台节点附加的数据盘列表，后续用于 cephadm 创建 OSD。
+    # 可选值：零个或多个受 ECS RunInstances 支持的数据盘对象。
+    # 默认值：两块 100 GiB ESSD PL0。
+    data_disks:
+      # 含义：第一块数据盘的云盘类别。
+      # 可选值：可用区和实例规格支持的类别，例如 "cloud_essd"、"cloud_auto" 或 "cloud_efficiency"。
+      # 默认值："cloud_essd"。
+      - category: "cloud_essd"
+        # 含义：第一块数据盘为 ESSD 时使用的性能等级。
+        # 可选值："PL0"、"PL1"、"PL2"、"PL3" 或 ""，并受类别、容量和地域约束。
+        # 默认值："PL0"。
+        performance_level: "PL0"
+        # 含义：第一块数据盘容量，单位 GiB。
+        # 可选值：大于 0 且符合云盘类别、性能等级和地域限制的整数。
+        # 默认值：100。
+        size_gib: 100
+      # 含义：第二块数据盘的云盘类别。
+      # 可选值：可用区和实例规格支持的类别，例如 "cloud_essd"、"cloud_auto" 或 "cloud_efficiency"。
+      # 默认值："cloud_essd"。
+      - category: "cloud_essd"
+        # 含义：第二块数据盘为 ESSD 时使用的性能等级。
+        # 可选值："PL0"、"PL1"、"PL2"、"PL3" 或 ""，并受类别、容量和地域约束。
+        # 默认值："PL0"。
+        performance_level: "PL0"
+        # 含义：第二块数据盘容量，单位 GiB。
+        # 可选值：大于 0 且符合云盘类别、性能等级和地域限制的整数。
+        # 默认值：100。
+        size_gib: 100
