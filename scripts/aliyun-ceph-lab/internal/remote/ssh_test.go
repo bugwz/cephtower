@@ -39,7 +39,7 @@ func TestHostLogUsesSafeFilenameAndSecurePermissions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	writeHostLogHeader(file, "TEST", "diagnostic output")
+	writeHostLogf(file, "INFO", "diagnostic %s", "output")
 	if err := file.Close(); err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +48,7 @@ func TestHostLogUsesSafeFilenameAndSecurePermissions(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(raw), "[TEST] diagnostic output") {
+	if !strings.Contains(string(raw), "INFO diagnostic output") {
 		t.Fatalf("unexpected host log: %q", raw)
 	}
 	info, err := os.Stat(path)
@@ -150,7 +150,7 @@ func TestRecoveredScriptResultUsesRemoteExitStatus(t *testing.T) {
 	if err := recoveredScriptResult(&output, "init-node.sh", 0, transportErr); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(output.String(), "[RECOVERED]") {
+	if !strings.Contains(output.String(), "INFO remote script recovered") {
 		t.Fatalf("recovery output = %q", output.String())
 	}
 	if err := recoveredScriptResult(io.Discard, "init-node.sh", 7, transportErr); err == nil ||

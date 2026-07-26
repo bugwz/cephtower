@@ -7,13 +7,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"math/big"
 	"net/smtp"
 	"strings"
 	"time"
 
 	"cephtower/backend/internal/config"
+	"cephtower/backend/internal/logging"
 	"cephtower/backend/internal/store"
 )
 
@@ -262,7 +262,7 @@ func PermissionsJSON(permissions []string, role string) string {
 func (s *Service) sendPasswordResetCode(user store.User, code string) error {
 	cfg := s.currentConfig()
 	if strings.TrimSpace(cfg.SMTP.Host) == "" {
-		slog.Info("cephtower password reset code", "username", user.Username, "email", user.Email, "code", code)
+		logging.Warnf("password reset email not sent because SMTP is not configured: user_id=%d", user.ID)
 		return nil
 	}
 	port := cfg.SMTP.Port

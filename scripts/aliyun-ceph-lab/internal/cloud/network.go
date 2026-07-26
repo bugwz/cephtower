@@ -700,7 +700,6 @@ func waitFor(ctx context.Context, check func() (bool, error), description string
 			logging.Infof("network: %s completed after %d check(s)", description, checks)
 			return nil
 		}
-		logging.Infof("network: %s is still pending (check %d); checking again in 3s", description, checks)
 		select {
 		case <-ctx.Done():
 			return fmt.Errorf("wait for %s: %w", description, ctx.Err())

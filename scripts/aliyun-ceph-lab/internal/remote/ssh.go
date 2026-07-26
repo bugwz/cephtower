@@ -50,7 +50,7 @@ func (s *SSH) Wait(ctx context.Context, host, hostname string) error {
 		return err
 	}
 	defer logFile.Close()
-	writeHostLogHeader(logFile, "WAIT", "waiting for SSH connectivity")
+	writeHostLogf(logFile, "INFO", "waiting for SSH connectivity")
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 	var lastErr error
@@ -59,17 +59,19 @@ func (s *SSH) Wait(ctx context.Context, host, hostname string) error {
 		attempt++
 		var stdout, stderr bytes.Buffer
 		if err := s.run(ctx, host, "true", nil, &stdout, &stderr); err == nil {
-			writeHostLogHeader(logFile, "READY", fmt.Sprintf("SSH connected on attempt %d", attempt))
+			writeHostLogf(logFile, "INFO", "SSH connected on attempt %d", attempt)
 			logging.Infof("ssh: connection to %s succeeded on attempt %d", host, attempt)
 			return nil
 		} else {
 			lastErr = fmt.Errorf("%w: %s", err, strings.TrimSpace(stderr.String()))
-			writeHostLogHeader(logFile, "RETRY", fmt.Sprintf("attempt %d failed: %v", attempt, lastErr))
-			logging.Infof("ssh: connection to %s not ready on attempt %d: %v; retrying in 5s", host, attempt, lastErr)
+			writeHostLogf(logFile, "WARN", "SSH attempt %d failed: %v", attempt, lastErr)
+			if attempt == 1 || attempt%6 == 0 {
+				logging.Warnf("ssh: connection to %s not ready after %d attempt(s): %v", host, attempt, lastErr)
+			}
 		}
 		select {
 		case <-ctx.Done():
-			writeHostLogHeader(logFile, "TIMEOUT", fmt.Sprintf("SSH wait ended: %v; last error: %v", ctx.Err(), lastErr))
+			writeHostLogf(logFile, "ERROR", "SSH wait ended: %v; last error: %v", ctx.Err(), lastErr)
 			return fmt.Errorf("wait for SSH on %s: %w (last error: %v)", host, ctx.Err(), lastErr)
 		case <-ticker.C:
 		}
@@ -77,7 +79,6 @@ func (s *SSH) Wait(ctx context.Context, host, hostname string) error {
 }
 
 func (s *SSH) RunScript(ctx context.Context, host, hostname, scriptPath string, environment map[string]string) error {
-	logging.Infof("ssh: reading script %s for host %s", scriptPath, host)
 	script, err := os.ReadFile(scriptPath)
 	if err != nil {
 		return fmt.Errorf("read script %s: %w", scriptPath, err)
@@ -115,17 +116,16 @@ func (s *SSH) RunScript(ctx context.Context, host, hostname, scriptPath string, 
 		return err
 	}
 	defer logFile.Close()
-	writeHostLogHeader(logFile, "START", fmt.Sprintf("script=%s remote_log=%s", scriptName, remoteLogPath))
+	writeHostLogf(logFile, "INFO", "script started: script=%s remote_log=%s", scriptName, remoteLogPath)
 	output := &synchronizedWriter{writer: io.MultiWriter(os.Stdout, logFile)}
 	logging.Infof("ssh: starting %s on %s; remote log=%s", scriptName, host, remoteLogPath)
 	if err := s.runTrackedScript(
 		ctx, host, remoteCommand, payload, output, remoteStatusPath, scriptName,
 	); err != nil {
-		writeHostLogHeader(logFile, "FAILED", fmt.Sprintf("script=%s error=%v remote_log=%s", scriptName, err, remoteLogPath))
-		logging.Infof("ssh: %s failed on %s: %v; remote log=%s", scriptName, host, err, remoteLogPath)
+		writeHostLogf(logFile, "ERROR", "script failed: script=%s error=%v remote_log=%s", scriptName, err, remoteLogPath)
 		return fmt.Errorf("run %s on %s: %w (remote log: %s)", scriptName, host, err, remoteLogPath)
 	}
-	writeHostLogHeader(logFile, "DONE", fmt.Sprintf("script=%s remote_log=%s", scriptName, remoteLogPath))
+	writeHostLogf(logFile, "INFO", "script completed: script=%s remote_log=%s", scriptName, remoteLogPath)
 	logging.Infof("ssh: completed %s on %s; remote log=%s", scriptName, host, remoteLogPath)
 	return nil
 }
@@ -148,7 +148,7 @@ func remoteScriptCommand(logPath, statusPath string) string {
 		"trap 'rm -f \"$script_path\"' EXIT && " +
 		"cat >\"$script_path\" && chmod 0700 \"$script_path\" && " +
 		"bash -o pipefail -c " + shellQuote(
-		"{ printf '\\n[%s] [START] remote hook\\n' \"$(date --iso-8601=seconds)\"; "+
+		"{ printf '\\n[%s] INFO remote hook started\\n' \"$(date --iso-8601=seconds)\"; "+
 			"bash \"$1\"; rc=$?; printf '[%s] [EXIT] status=%s\\n' \"$(date --iso-8601=seconds)\" \"$rc\"; "+
 			"printf '%s\\n' \"$rc\" >\"$2.tmp\"; chmod 0600 \"$2.tmp\"; mv -f \"$2.tmp\" \"$2\"; "+
 			"exit \"$rc\"; } "+
@@ -197,15 +197,21 @@ func (s *SSH) runTrackedScript(
 			)
 		case <-ticker.C:
 			elapsed := time.Since(started).Round(time.Second)
-			_, _ = fmt.Fprintf(output,
-				"\n[%s] [RUNNING] script=%s elapsed=%s; checking remote completion status\n",
-				time.Now().Format(time.RFC3339), scriptName, elapsed,
+			_ = logging.Writef(
+				output,
+				"INFO",
+				"remote script running: script=%s elapsed=%s; checking completion status",
+				scriptName,
+				elapsed,
 			)
 			status, complete, probeErr := s.probeScriptStatus(ctx, host, statusPath)
 			if probeErr != nil {
-				_, _ = fmt.Fprintf(output,
-					"[%s] [RUNNING] script=%s status probe failed: %v; continuing to wait\n",
-					time.Now().Format(time.RFC3339), scriptName, probeErr,
+				_ = logging.Writef(
+					output,
+					"WARN",
+					"remote script status probe failed; continuing to wait: script=%s error=%v",
+					scriptName,
+					probeErr,
 				)
 				continue
 			}
@@ -214,9 +220,11 @@ func (s *SSH) runTrackedScript(
 				waitErr := <-done
 				return recoveredScriptResult(output, scriptName, status, waitErr)
 			}
-			_, _ = fmt.Fprintf(output,
-				"[%s] [RUNNING] script=%s remote status=pending\n",
-				time.Now().Format(time.RFC3339), scriptName,
+			_ = logging.Writef(
+				output,
+				"INFO",
+				"remote script status pending: script=%s",
+				scriptName,
 			)
 		case <-ctx.Done():
 			_ = client.Close()
@@ -235,25 +243,33 @@ func (s *SSH) waitForRemoteScriptCompletion(
 	started time.Time,
 	transportErr error,
 ) error {
-	_, _ = fmt.Fprintf(output,
-		"\n[%s] [RECONNECTING] script=%s SSH transport ended: %v; polling remote run status\n",
-		time.Now().Format(time.RFC3339), scriptName, transportErr,
+	_ = logging.Writef(
+		output,
+		"WARN",
+		"SSH transport ended; polling remote script status: script=%s error=%v",
+		scriptName,
+		transportErr,
 	)
 	ticker := time.NewTicker(scriptHeartbeatInterval)
 	defer ticker.Stop()
 	for {
 		status, complete, probeErr := s.probeScriptStatus(ctx, host, statusPath)
 		if probeErr != nil {
-			_, _ = fmt.Fprintf(output,
-				"[%s] [RECONNECTING] script=%s status probe failed: %v\n",
-				time.Now().Format(time.RFC3339), scriptName, probeErr,
+			_ = logging.Writef(
+				output,
+				"WARN",
+				"remote script status probe failed while reconnecting: script=%s error=%v",
+				scriptName,
+				probeErr,
 			)
 		} else if complete {
 			return recoveredScriptResult(output, scriptName, status, transportErr)
 		} else {
-			_, _ = fmt.Fprintf(output,
-				"[%s] [RECONNECTING] script=%s remote status=pending elapsed=%s\n",
-				time.Now().Format(time.RFC3339), scriptName,
+			_ = logging.Writef(
+				output,
+				"INFO",
+				"remote script status pending after reconnect: script=%s elapsed=%s",
+				scriptName,
 				time.Since(started).Round(time.Second),
 			)
 		}
@@ -297,9 +313,11 @@ func recoveredScriptResult(output io.Writer, scriptName string, status int, wait
 	if status != 0 {
 		return fmt.Errorf("remote script exited with status %d after SSH transport error: %v", status, waitErr)
 	}
-	_, _ = fmt.Fprintf(output,
-		"[%s] [RECOVERED] script=%s completed remotely with status=0 after SSH transport interruption\n",
-		time.Now().Format(time.RFC3339), scriptName,
+	_ = logging.Writef(
+		output,
+		"INFO",
+		"remote script recovered after SSH transport interruption: script=%s status=0",
+		scriptName,
 	)
 	return nil
 }
@@ -347,8 +365,8 @@ func safeHostFilename(host string) string {
 	return value.String()
 }
 
-func writeHostLogHeader(file *os.File, phase, message string) {
-	_, _ = fmt.Fprintf(file, "\n[%s] [%s] %s\n", time.Now().Format(time.RFC3339), phase, message)
+func writeHostLogf(file *os.File, level, format string, args ...any) {
+	_ = logging.Writef(file, level, format, args...)
 	_ = file.Sync()
 }
 

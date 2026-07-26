@@ -1,9 +1,26 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+logf() {
+	local level="$1" format="$2"
+	shift 2
+	printf '[%s] %s ' "$(date --iso-8601=seconds)" "${level}"
+	printf "${format}" "$@"
+	printf '\n'
+}
+
+infof() {
+	logf INFO "$@"
+}
+
+errorf() {
+	logf ERROR "$@" >&2
+}
+
 report_error() {
 	local status=$?
-	echo "ERROR: deploy-ceph.sh failed on ${HOSTNAME:-unknown} at line ${BASH_LINENO[0]}: ${BASH_COMMAND} (exit ${status})" >&2
+	errorf 'deploy-ceph.sh failed: host=%s line=%s command=%s exit_status=%d' \
+		"${HOSTNAME:-unknown}" "${BASH_LINENO[0]}" "${BASH_COMMAND}" "${status}"
 	exit "${status}"
 }
 trap report_error ERR
@@ -19,7 +36,7 @@ required=(
 )
 for name in "${required[@]}"; do
 	if [[ -z "${!name:-}" ]]; then
-		echo "missing required environment variable: ${name}" >&2
+		errorf 'missing required environment variable: name=%s' "${name}"
 		exit 1
 	fi
 done
@@ -30,20 +47,23 @@ IFS=',' read -r -a private_ips <<<"${CEPH_LAB_PRIVATE_IPS}"
 IFS=',' read -r -a data_disk_counts <<<"${CEPH_LAB_DATA_DISK_COUNTS}"
 node_count="${#node_names[@]}"
 if (( node_count < 3 )); then
-	echo "Ceph deployment requires at least 3 nodes; got ${node_count}" >&2
+	errorf 'Ceph deployment requires at least 3 nodes: node_count=%d' "${node_count}"
 	exit 1
 fi
 if (( ${#public_ips[@]} != node_count || ${#private_ips[@]} != node_count || ${#data_disk_counts[@]} != node_count )); then
-	echo "node metadata counts differ" >&2
+	errorf 'node metadata counts differ: nodes=%d public_ips=%d private_ips=%d data_disk_counts=%d' \
+		"${node_count}" "${#public_ips[@]}" "${#private_ips[@]}" "${#data_disk_counts[@]}"
 	exit 1
 fi
 if [[ "${CEPH_LAB_BOOTSTRAP_NODE_NAME}" != "${node_names[0]}" ]]; then
-	echo "bootstrap node ${CEPH_LAB_BOOTSTRAP_NODE_NAME} is not the first configured node ${node_names[0]}" >&2
+	errorf 'bootstrap node is not the first configured node: bootstrap=%s first_node=%s' \
+		"${CEPH_LAB_BOOTSTRAP_NODE_NAME}" "${node_names[0]}"
 	exit 1
 fi
 current_hostname="$(hostname -s)"
 if [[ "${current_hostname}" != "${CEPH_LAB_BOOTSTRAP_NODE_NAME}" ]]; then
-	echo "deployment hook must run on first node ${CEPH_LAB_BOOTSTRAP_NODE_NAME}; current host is ${current_hostname}" >&2
+	errorf 'deployment hook must run on bootstrap node: bootstrap=%s current_host=%s' \
+		"${CEPH_LAB_BOOTSTRAP_NODE_NAME}" "${current_hostname}"
 	exit 1
 fi
 
@@ -53,13 +73,13 @@ wait_until() {
 	local deadline=$((SECONDS + CEPH_LAB_WAIT_TIMEOUT_SECONDS))
 	while ! "$@"; do
 		if (( SECONDS >= deadline )); then
-			echo "timed out waiting for ${description}" >&2
+			errorf 'timed out waiting for %s' "${description}"
 			return 1
 		fi
-		echo "waiting for ${description}; retrying in 10s"
+		infof 'waiting for %s; retrying in 10s' "${description}"
 		sleep 10
 	done
-	echo "ready: ${description}"
+	infof 'ready: %s' "${description}"
 }
 
 ssh_options=(-o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=yes -o IdentityFile=/root/.ssh/id_ed25519)
@@ -102,23 +122,25 @@ for index in "${!node_names[@]}"; do
 	osd_devices_by_node[index]="${devices}"
 	IFS=',' read -r -a node_devices <<<"${devices}"
 	if (( ${#node_devices[@]} != data_disk_counts[index] )); then
-		echo "${node_names[$index]} reported ${#node_devices[@]} OSD device(s), expected ${data_disk_counts[$index]}" >&2
+		errorf 'OSD device count differs: node=%s reported=%d expected=%d' \
+			"${node_names[$index]}" "${#node_devices[@]}" "${data_disk_counts[$index]}"
 		exit 1
 	fi
 	expected_osds=$((expected_osds + ${#node_devices[@]}))
 done
 
-echo "Ceph deployment metadata (Ceph traffic uses private IPs; public IPs are for external access):"
-printf '%-24s %-16s %-16s %s\n' HOSTNAME PRIVATE_IP PUBLIC_IP OSD_DEVICES
+infof '%s' 'Ceph deployment metadata (Ceph traffic uses private IPs; public IPs are for external access):'
+infof '%-24s %-16s %-16s %s' HOSTNAME PRIVATE_IP PUBLIC_IP OSD_DEVICES
 for index in "${!node_names[@]}"; do
-	printf '%-24s %-16s %-16s %s\n' "${node_names[$index]}" "${private_ips[$index]}" "${public_ips[$index]}" "${osd_devices_by_node[$index]:-(none)}"
+	infof '%-24s %-16s %-16s %s' \
+		"${node_names[$index]}" "${private_ips[$index]}" "${public_ips[$index]}" "${osd_devices_by_node[$index]:-(none)}"
 done
-echo "bootstrap host: ${node_names[0]} (private ${private_ips[0]}, public ${public_ips[0]})"
-echo "external Dashboard URL after bootstrap: https://${public_ips[0]}:8443/"
-echo "expected OSD count: ${expected_osds}"
+infof 'bootstrap host: name=%s private_ip=%s public_ip=%s' "${node_names[0]}" "${private_ips[0]}" "${public_ips[0]}"
+infof 'external Dashboard URL after bootstrap: https://%s:8443/' "${public_ips[0]}"
+infof 'expected OSD count: %d' "${expected_osds}"
 
 if ceph status >/dev/null 2>&1 && ceph orch status >/dev/null 2>&1; then
-	echo "ready: existing Ceph cluster and orchestrator; skipping bootstrap"
+	infof '%s' 'ready: existing Ceph cluster and orchestrator; skipping bootstrap'
 else
 	cephadm bootstrap --mon-ip "${private_ips[0]}"
 fi
@@ -149,7 +171,7 @@ for index in "${!node_names[@]}"; do
 		continue
 	fi
 	if orchestrator_has_host "${node_names[$index]}"; then
-		echo "ready: ${node_names[$index]} is already registered with the orchestrator"
+		infof 'ready: node %s is already registered with the orchestrator' "${node_names[$index]}"
 	else
 		ceph orch host add "${node_names[$index]}" "${private_ips[$index]}"
 	fi
@@ -233,4 +255,4 @@ cluster_healthy() {
 }
 wait_until "Ceph cluster health to become HEALTH_OK" cluster_healthy
 ceph status
-echo "Ceph cluster ${CEPH_LAB_CLUSTER_NAME} deployment completed"
+infof 'Ceph cluster deployment completed: cluster=%s' "${CEPH_LAB_CLUSTER_NAME}"

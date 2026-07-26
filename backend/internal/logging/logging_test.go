@@ -3,6 +3,7 @@ package logging
 import (
 	"bytes"
 	"encoding/json"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +13,24 @@ import (
 	"cephtower/backend/internal/config"
 )
 
+func TestInfofFormatsSingleMessage(t *testing.T) {
+	var output bytes.Buffer
+	logger, err := NewLogger(config.LoggingConfig{Level: "info", Format: "txt"}, &output)
+	if err != nil {
+		t.Fatalf("NewLogger() returned error: %v", err)
+	}
+	previous := slog.Default()
+	slog.SetDefault(logger)
+	t.Cleanup(func() { slog.SetDefault(previous) })
+
+	Infof("backend listening: addr=%s database_engine=%s", "127.0.0.1:36900", "sqlite")
+
+	line := strings.TrimSpace(output.String())
+	if !strings.HasSuffix(line, "INFO backend listening: addr=127.0.0.1:36900 database_engine=sqlite") {
+		t.Fatalf("unexpected formatted log line: %q", line)
+	}
+}
+
 func TestNewLoggerWritesSingleLineJSON(t *testing.T) {
 	var output bytes.Buffer
 	logger, err := NewLogger(config.LoggingConfig{Level: "info", Format: "json"}, &output)
@@ -19,7 +38,7 @@ func TestNewLoggerWritesSingleLineJSON(t *testing.T) {
 		t.Fatalf("NewLogger() returned error: %v", err)
 	}
 
-	logger.Info("backend started")
+	logf(logger, slog.LevelInfo, "backend %s", "started")
 
 	lines := strings.Split(strings.TrimSpace(output.String()), "\n")
 	if len(lines) != 1 {
@@ -35,14 +54,22 @@ func TestNewLoggerWritesSingleLineJSON(t *testing.T) {
 	}
 }
 
-func TestNewLoggerWritesPlainTextWithoutFieldNames(t *testing.T) {
+func TestNewLoggerWritesPlainTextWithContext(t *testing.T) {
 	var output bytes.Buffer
 	logger, err := NewLogger(config.LoggingConfig{Level: "info", Format: "txt"}, &output)
 	if err != nil {
 		t.Fatalf("NewLogger() returned error: %v", err)
 	}
 
-	logger.Info("backend started", "engine", "sqlite")
+	logf(
+		logger.With("component", "api").WithGroup("database").With(
+			"engine", "sqlite",
+			"error", "connection refused",
+		),
+		slog.LevelInfo,
+		"backend %s",
+		"started",
+	)
 
 	line := strings.TrimSpace(output.String())
 	parts := strings.SplitN(line, " ", 3)
@@ -52,7 +79,7 @@ func TestNewLoggerWritesPlainTextWithoutFieldNames(t *testing.T) {
 	if _, err := time.Parse(time.RFC3339Nano, parts[0]); err != nil {
 		t.Fatalf("plain text log time is invalid: %v; line: %q", err, line)
 	}
-	if parts[1] != "INFO" || parts[2] != "backend started" {
+	if parts[1] != "INFO" || !strings.HasPrefix(parts[2], "backend started ") {
 		t.Fatalf("unexpected plain text log: %q", line)
 	}
 	if strings.Contains(parts[0], ".") {
@@ -60,6 +87,15 @@ func TestNewLoggerWritesPlainTextWithoutFieldNames(t *testing.T) {
 	}
 	if strings.Contains(line, "time=") || strings.Contains(line, "level=") || strings.Contains(line, "msg=") {
 		t.Fatalf("plain text log contains field names: %q", line)
+	}
+	for _, field := range []string{
+		"component=api",
+		"database.engine=sqlite",
+		`database.error="connection refused"`,
+	} {
+		if !strings.Contains(line, field) {
+			t.Fatalf("plain text log is missing %q: %q", field, line)
+		}
 	}
 }
 
@@ -77,7 +113,7 @@ func TestInstallAppendsToLogFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Install() returned error: %v", err)
 	}
-	logger.Info("first entry")
+	logf(logger, slog.LevelInfo, "%s entry", "first")
 	if err := closeLog(); err != nil {
 		t.Fatalf("closeLog() returned error: %v", err)
 	}
@@ -86,7 +122,7 @@ func TestInstallAppendsToLogFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("second Install() returned error: %v", err)
 	}
-	logger.Info("second entry")
+	logf(logger, slog.LevelInfo, "%s entry", "second")
 	if err := closeLog(); err != nil {
 		t.Fatalf("second closeLog() returned error: %v", err)
 	}
@@ -157,7 +193,9 @@ func TestRotatingFileWriterRemovesExpiredHistory(t *testing.T) {
 	if err := writer.Close(); err != nil {
 		t.Fatalf("Close() returned error: %v", err)
 	}
-	writer.runCleanup(time.Now())
+	if err := writer.runCleanup(time.Now()); err != nil {
+		t.Fatalf("runCleanup() returned error: %v", err)
+	}
 	if _, err := os.Stat(oldPath); !os.IsNotExist(err) {
 		t.Fatalf("expired history still exists, stat error: %v", err)
 	}
@@ -170,8 +208,8 @@ func TestNewLoggerHonorsConfiguredLevel(t *testing.T) {
 		t.Fatalf("NewLogger() returned error: %v", err)
 	}
 
-	logger.Info("hidden")
-	logger.Warn("visible")
+	logf(logger, slog.LevelInfo, "%s", "hidden")
+	logf(logger, slog.LevelWarn, "%s", "visible")
 
 	logOutput := output.String()
 	if strings.Contains(logOutput, "hidden") {

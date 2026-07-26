@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,6 +10,7 @@ import (
 
 	"cephtower/backend/internal/app"
 	"cephtower/backend/internal/config"
+	"cephtower/backend/internal/logging"
 )
 
 const shutdownTimeout = 15 * time.Second
@@ -21,7 +21,7 @@ func main() {
 
 	application, err := app.New(*configPath)
 	if err != nil {
-		slog.Error("initialize application", "error", err)
+		logging.Errorf("application initialization failed: config_path=%q error=%v", *configPath, err)
 		os.Exit(1)
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -30,12 +30,12 @@ func main() {
 		closeCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()
 		if err := application.Close(closeCtx); err != nil {
-			slog.Error("close application", "error", err)
+			logging.Errorf("shutdown cleanup failed: error=%v", err)
 		}
 	}()
 
 	if err := application.Run(ctx); err != nil {
-		slog.Error("server stopped", "error", err)
+		logging.Errorf("HTTP server stopped unexpectedly: error=%v", err)
 		os.Exit(1)
 	}
 }

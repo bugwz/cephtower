@@ -53,7 +53,6 @@ func New(cfg *config.Config, statePath string) (*Manager, error) {
 }
 
 func (m *Manager) Create(ctx context.Context) error {
-	logging.Infof("create: checking state path %s", m.StatePath)
 	if _, err := os.Stat(m.StatePath); err == nil {
 		return fmt.Errorf("state already exists at %s; delete the existing lab first", m.StatePath)
 	} else if !errors.Is(err, os.ErrNotExist) {
@@ -70,7 +69,6 @@ func (m *Manager) Create(ctx context.Context) error {
 	}
 	initScript := m.Config.ResolvePath(m.Config.InitScript)
 	deployScript := m.Config.ResolvePath(m.Config.DeployScript)
-	logging.Infof("create: checking hook scripts %s and %s", initScript, deployScript)
 	for _, path := range []string{initScript, deployScript} {
 		if info, err := os.Stat(path); err != nil {
 			return fmt.Errorf("inspect hook %s: %w", path, err)
@@ -78,7 +76,6 @@ func (m *Manager) Create(ctx context.Context) error {
 			return fmt.Errorf("hook %s is not a regular file", path)
 		}
 	}
-	m.printSSHPassword("before creating cloud resources")
 
 	now := time.Now().UTC()
 	expiresAt := now.Add(m.Config.MaxRuntimeDuration()).Add(59 * time.Second).Truncate(time.Minute)
@@ -86,12 +83,10 @@ func (m *Manager) Create(ctx context.Context) error {
 		Version: state.Version, ClusterName: m.Config.ClusterName, RegionID: m.Config.RegionID,
 		CreatedAt: now, ExpiresAt: expiresAt,
 	}
-	logging.Infof("create: saving initial state; automatic release=%s", expiresAt.Format(time.RFC3339))
 	if err := state.Save(m.StatePath, current); err != nil {
 		return err
 	}
 	networkCtx, cancel := context.WithTimeout(ctx, m.Config.WaitTimeoutDuration())
-	logging.Infof("create: discovering or creating VPC, vSwitch, and security group")
 	network, err := m.Cloud.EnsureNetwork(networkCtx, m.Config, current.CreatedAt, func(value state.Network) error {
 		current.Network = value
 		return state.Save(m.StatePath, current)
@@ -132,7 +127,6 @@ func (m *Manager) Create(ctx context.Context) error {
 	if err := state.Save(m.StatePath, current); err != nil {
 		return err
 	}
-	m.printSSHPassword("after ECS resources became Running")
 
 	initCtx, cancel := context.WithTimeout(ctx, m.Config.WaitTimeoutDuration())
 	logging.Infof("create: starting SSH initialization on %d node(s)", len(current.Nodes))
@@ -141,7 +135,6 @@ func (m *Manager) Create(ctx context.Context) error {
 		cancel()
 		return fmt.Errorf("generate cluster SSH key: %w", err)
 	}
-	logging.Infof("create: generated a new SSH key pair for this cluster creation")
 	if err := m.initializeNodes(initCtx, current, initScript, privateKey, publicKey); err != nil {
 		cancel()
 		return fmt.Errorf("initialize nodes: %w; run delete --yes or wait for automatic release", err)
@@ -172,39 +165,25 @@ func (m *Manager) Create(ctx context.Context) error {
 	logging.Infof("create: deployment hook completed on %s", first.Name)
 	return nil
 }
-
-func (m *Manager) printSSHPassword(phase string) {
-	source := "configured"
-	if m.Config.SSHPasswordWasGenerated() {
-		source = "generated"
-	}
-	logging.Infof("[sensitive] SSH password (%s, %s): %s", source, phase, m.Config.SSHPassword)
-}
-
 func (m *Manager) List() (*state.State, error) {
-	logging.Infof("resources: loading state from %s", m.StatePath)
 	current, err := state.Load(m.StatePath)
 	if err != nil {
 		return nil, err
 	}
-	logging.Infof("resources: refreshing %d recorded node(s) from ECS", len(current.Nodes))
 	if err := m.refresh(current); err != nil {
 		return nil, err
 	}
 	if err := state.Save(m.StatePath, current); err != nil {
 		return nil, err
 	}
-	logging.Infof("resources: refreshed state saved to %s", m.StatePath)
 	return current, nil
 }
 
 func (m *Manager) Delete(ctx context.Context) error {
-	logging.Infof("delete: loading state from %s", m.StatePath)
 	current, err := state.Load(m.StatePath)
 	if err != nil {
 		return err
 	}
-	logging.Infof("delete: querying %d recorded ECS instance(s)", len(current.Nodes))
 	instances, err := m.Cloud.Describe(current.RegionID, instanceIDs(current.Nodes))
 	if err != nil {
 		return err
@@ -251,21 +230,18 @@ func (m *Manager) Delete(ctx context.Context) error {
 	if err := cleanupLocalState(m.StatePath, m.SSH.KnownHostsPath); err != nil {
 		return err
 	}
-	logging.Infof("delete: local state cleanup completed")
 	return nil
 }
 
 func cleanupLocalState(statePath, knownHostsPath string) error {
 	stateDir := filepath.Clean(filepath.Dir(statePath))
 	if filepath.Base(stateDir) == ".state" {
-		logging.Infof("delete: removing local state directory %s", stateDir)
 		if err := os.RemoveAll(stateDir); err != nil {
 			return fmt.Errorf("remove state directory: %w", err)
 		}
 		return nil
 	}
 
-	logging.Infof("delete: removing local state file %s", statePath)
 	if err := os.Remove(statePath); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("remove state: %w", err)
 	}
@@ -279,6 +255,7 @@ func (m *Manager) waitInstancesReleased(ctx context.Context, current *state.Stat
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 	emptyChecks := 0
+	lastRemaining := -1
 	for {
 		instances, err := m.Cloud.Describe(current.RegionID, instanceIDs(current.Nodes))
 		if err != nil {
@@ -286,14 +263,16 @@ func (m *Manager) waitInstancesReleased(ctx context.Context, current *state.Stat
 		}
 		if len(instances) == 0 {
 			emptyChecks++
-			logging.Infof("delete: no instances found (confirmation %d/2)", emptyChecks)
 			if emptyChecks >= 2 {
 				logging.Infof("delete: all recorded instances are released")
 				return nil
 			}
 		} else {
 			emptyChecks = 0
-			logging.Infof("delete: %d instance(s) still present; checking again in 5s", len(instances))
+			if len(instances) != lastRemaining {
+				logging.Infof("delete: waiting for %d instance(s) to be released", len(instances))
+				lastRemaining = len(instances)
+			}
 		}
 		select {
 		case <-ctx.Done():
@@ -306,6 +285,7 @@ func (m *Manager) waitInstancesReleased(ctx context.Context, current *state.Stat
 func (m *Manager) waitUntilRunning(ctx context.Context, current *state.State) error {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
+	lastSummary := ""
 	for {
 		if err := m.refresh(current); err != nil {
 			return err
@@ -321,7 +301,11 @@ func (m *Manager) waitUntilRunning(ctx context.Context, current *state.State) er
 			logging.Infof("create: all %d instance(s) are Running and have required IP addresses", len(current.Nodes))
 			return nil
 		}
-		logging.Infof("create: instance status check: %s; checking again in 5s", nodeStatusSummary(current.Nodes))
+		summary := nodeStatusSummary(current.Nodes)
+		if summary != lastSummary {
+			logging.Infof("create: waiting for instances: %s", summary)
+			lastSummary = summary
+		}
 		if err := state.Save(m.StatePath, current); err != nil {
 			return err
 		}
@@ -377,11 +361,9 @@ func (m *Manager) initializeNodes(
 	publicKey string,
 ) error {
 	for _, node := range current.Nodes {
-		logging.Infof("create: waiting for SSH on %s (%s)", node.Name, node.PublicIP)
 		if err := m.SSH.Wait(ctx, node.PublicIP, node.Name); err != nil {
 			return err
 		}
-		logging.Infof("create: SSH is ready on %s (%s)", node.Name, node.PublicIP)
 	}
 
 	var wg sync.WaitGroup
@@ -392,7 +374,6 @@ func (m *Manager) initializeNodes(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			logging.Infof("create: initializing node %s with %s", node.Name, filepath.Base(scriptPath))
 			if err := m.SSH.RunScript(ctx, node.PublicIP, node.Name, scriptPath, map[string]string{
 				"CEPH_LAB_CLUSTER_NAME":           m.Config.ClusterName,
 				"CEPH_LAB_NODE_NAME":              node.Name,
@@ -406,7 +387,6 @@ func (m *Manager) initializeNodes(
 				errorsByNode <- err
 				return
 			}
-			logging.Infof("create: initialization completed on %s", node.Name)
 		}()
 	}
 	wg.Wait()

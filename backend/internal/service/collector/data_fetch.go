@@ -3,9 +3,9 @@ package collector
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash/fnv"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"time"
@@ -13,39 +13,37 @@ import (
 	"cephtower/backend/internal/integration/ceph"
 	"cephtower/backend/internal/integration/ceph/command"
 	"cephtower/backend/internal/integration/ceph/dashboard"
+	"cephtower/backend/internal/logging"
 	"cephtower/backend/internal/store"
 )
 
 // RunDueDataFetchSettings executes one due-check pass. Scheduling and process
 // lifecycle are owned by the task manager rather than this service.
 func (service Service) RunDueDataFetchSettings(ctx context.Context) error {
-	service.runDueDataFetchSettings(ctx)
-	return nil
+	return service.runDueDataFetchSettings(ctx)
 }
 
 func (service Service) RunDue(ctx context.Context) error {
 	return service.RunDueDataFetchSettings(ctx)
 }
 
-func (service Service) runDueDataFetchSettings(ctx context.Context) {
+func (service Service) runDueDataFetchSettings(ctx context.Context) error {
 	db := service.database()
 	if db == nil {
-		return
+		return nil
 	}
 	if err := EnsureDefaultSystemSettings(ctx, db); err != nil {
-		slog.Warn("ensure ceph data fetch settings", "error", err)
-		return
+		return fmt.Errorf("ensure Ceph data fetch settings: %w", err)
 	}
 	configs, err := dataFetchConfigs(ctx, db)
 	if err != nil {
-		slog.Warn("list ceph data fetch settings", "error", err)
-		return
+		return fmt.Errorf("list Ceph data fetch settings: %w", err)
 	}
 	clusters, err := db.ListClusters(ctx)
 	if err != nil {
-		slog.Warn("list ceph clusters for data fetch", "error", err)
-		return
+		return fmt.Errorf("list Ceph clusters for data fetch: %w", err)
 	}
+	var runErrors []error
 	for _, cluster := range clusters {
 		for _, config := range configs {
 			if !config.Enabled {
@@ -53,17 +51,22 @@ func (service Service) runDueDataFetchSettings(ctx context.Context) {
 			}
 			due, err := dataFetchDue(ctx, db, cluster.ID, config)
 			if err != nil {
-				slog.Warn("check ceph data fetch due", "cluster_id", cluster.ID, "module", config.Module, "error", err)
+				runErrors = append(runErrors, fmt.Errorf(
+					"check cluster %d module %q schedule: %w", cluster.ID, config.Module, err,
+				))
 				continue
 			}
 			if !due {
 				continue
 			}
 			if err := service.RunDataFetchConfig(ctx, cluster.ID, config); err != nil {
-				slog.Warn("run ceph data fetch", "cluster_id", cluster.ID, "module", config.Module, "error", err)
+				runErrors = append(runErrors, fmt.Errorf(
+					"fetch cluster %d module %q: %w", cluster.ID, config.Module, err,
+				))
 			}
 		}
 	}
+	return errors.Join(runErrors...)
 }
 
 func EnsureDefaultSystemSettings(ctx context.Context, db *store.Database) error {
@@ -106,6 +109,7 @@ func dataFetchConfigs(ctx context.Context, db *store.Database) ([]DataFetchConfi
 	for _, setting := range settings {
 		var config DataFetchConfig
 		if err := json.Unmarshal([]byte(setting.Value), &config); err != nil {
+			logging.Warnf("invalid Ceph data fetch setting ignored: setting_key=%q error=%v", setting.Key, err)
 			continue
 		}
 		if config.Module == "" {
@@ -177,7 +181,9 @@ func (service Service) RunDataFetchConfig(ctx context.Context, clusterID uint, c
 		StartedAt: startedAt,
 		Error:     "",
 	}
-	_ = db.CreateDataFetchRun(ctx, &run)
+	if err := db.CreateDataFetchRun(ctx, &run); err != nil {
+		return fmt.Errorf("create data fetch run: %w", err)
+	}
 
 	timeout := time.Duration(config.TimeoutSeconds) * time.Second
 	if timeout <= 0 {
@@ -203,7 +209,9 @@ func (service Service) RunDataFetchConfig(ctx context.Context, clusterID uint, c
 		"records_deleted":  result.recordsDeleted,
 		"error":            lastError,
 	}
-	_ = db.FinishDataFetchRun(ctx, run.ID, runUpdates)
+	if finishErr := db.FinishDataFetchRun(ctx, run.ID, runUpdates); finishErr != nil {
+		err = errors.Join(err, fmt.Errorf("finish data fetch run: %w", finishErr))
+	}
 	return err
 }
 
@@ -219,10 +227,18 @@ func (service Service) fetchWithRetry(ctx context.Context, clusterID uint, confi
 			break
 		}
 		backoff := time.Duration(config.RetryBackoffSeconds) * time.Second * time.Duration(attempt+1)
+		logging.Warnf(
+			"Ceph data fetch attempt failed; retrying: cluster_id=%d module=%q attempt=%d/%d retry_in=%s error=%v",
+			clusterID,
+			config.Module,
+			attempt+1,
+			config.MaxRetries+1,
+			backoff,
+			err,
+		)
 		if backoff <= 0 {
 			continue
 		}
-		slog.Warn("retry ceph data fetch", "cluster_id", clusterID, "module", config.Module, "attempt", attempt+2, "error", err)
 		timer := time.NewTimer(backoff)
 		select {
 		case <-ctx.Done():

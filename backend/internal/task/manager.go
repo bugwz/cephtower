@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"sync"
 	"time"
+
+	"cephtower/backend/internal/logging"
 )
 
 var (
@@ -50,7 +51,7 @@ func (m *Manager) Register(name string, firstAt time.Time, schedule Schedule, jo
 	}
 	return m.scheduler.Register(name, firstAt, schedule, func(context.Context) {
 		if err := m.Submit(name, job); err != nil && !errors.Is(err, ErrTaskRunning) {
-			slog.Warn("submit scheduled task", "task_name", name, "error", err)
+			logging.Warnf("scheduled task submission failed: task_name=%q error=%v", name, err)
 		}
 	})
 }
@@ -98,21 +99,38 @@ func (m *Manager) Stop() {
 func (m *Manager) run(name string, job Job) {
 	defer m.wg.Done()
 	startedAt := time.Now()
-	status := "success"
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			status = "panic"
-			slog.Error("task panicked", "task_name", name, "panic", recovered)
+			logging.Errorf(
+				"task panicked: task_name=%q duration_ms=%d panic=%v",
+				name,
+				time.Since(startedAt).Milliseconds(),
+				recovered,
+			)
 		}
 		m.mu.Lock()
 		delete(m.running, name)
 		m.mu.Unlock()
-		slog.Info("task finished", "task_name", name, "status", status, "duration", time.Since(startedAt))
 	}()
 
-	slog.Info("task started", "task_name", name)
+	logging.Debugf("task started: task_name=%q", name)
 	if err := job(m.ctx); err != nil {
-		status = "failed"
-		slog.Warn("task failed", "task_name", name, "error", err)
+		durationMS := time.Since(startedAt).Milliseconds()
+		if errors.Is(err, context.Canceled) && m.ctx.Err() != nil {
+			logging.Debugf(
+				"task canceled during shutdown: task_name=%q duration_ms=%d error=%v",
+				name, durationMS, err,
+			)
+		} else {
+			logging.Warnf(
+				"task failed: task_name=%q duration_ms=%d error=%v",
+				name, durationMS, err,
+			)
+		}
+		return
 	}
+	logging.Debugf(
+		"task finished: task_name=%q duration_ms=%d",
+		name, time.Since(startedAt).Milliseconds(),
+	)
 }

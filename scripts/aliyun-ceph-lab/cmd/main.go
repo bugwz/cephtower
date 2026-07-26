@@ -39,7 +39,7 @@ and optionally credentials.security_token in the YAML configuration.
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
-		logging.Infof("command failed: %v", err)
+		logging.Errorf("command failed: %v", err)
 		os.Exit(1)
 	}
 }
@@ -95,32 +95,25 @@ func run(args []string) error {
 	if flags.NArg() != 0 {
 		return fmt.Errorf("unexpected arguments: %v", flags.Args())
 	}
-	logging.Infof("%s: command started", command)
-	logging.Infof("%s: loading configuration from %s", command, *configPath)
 	cfg, err := config.Load(*configPath)
 	if err != nil {
 		return err
 	}
-	logging.Infof("%s: configuration loaded for cluster %s with %d node(s)", command, cfg.ClusterName, len(cfg.Nodes))
 	if command == "validate" {
-		logging.Infof("validate: checking Alibaba Cloud credentials")
 		if err := cfg.ValidateCloudCredentials(); err != nil {
 			return err
 		}
 		logging.Infof("validate: configuration is valid; cluster=%s nodes=%d max-runtime=%s", cfg.ClusterName, len(cfg.Nodes), cfg.MaxRuntime)
 		return nil
 	}
-	logging.Infof("%s: initializing Alibaba Cloud clients", command)
 	manager, err := lab.New(cfg, *statePath)
 	if err != nil {
 		return err
 	}
-	logging.Infof("%s: using state file %s", command, manager.StatePath)
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	switch command {
 	case "create":
-		logging.Infof("create: starting resource creation")
 		if err := manager.Create(ctx); err != nil {
 			return err
 		}
@@ -131,7 +124,6 @@ func run(args []string) error {
 		logging.Infof("create: lab is ready; automatic release=%s state=%s", current.ExpiresAt.Format(time.RFC3339), manager.StatePath)
 		return printJSON(newCreateOutput(current))
 	case "list":
-		logging.Infof("list: querying recorded resources")
 		current, err := manager.List()
 		if err != nil {
 			return err

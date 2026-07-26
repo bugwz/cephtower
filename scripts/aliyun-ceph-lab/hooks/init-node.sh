@@ -1,9 +1,26 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+logf() {
+	local level="$1" format="$2"
+	shift 2
+	printf '[%s] %s ' "$(date --iso-8601=seconds)" "${level}"
+	printf "${format}" "$@"
+	printf '\n'
+}
+
+infof() {
+	logf INFO "$@"
+}
+
+errorf() {
+	logf ERROR "$@" >&2
+}
+
 report_error() {
 	local status=$?
-	echo "ERROR: init-node.sh failed on ${HOSTNAME:-unknown} at line ${BASH_LINENO[0]}: ${BASH_COMMAND} (exit ${status})" >&2
+	errorf 'init-node.sh failed: host=%s line=%s command=%s exit_status=%d' \
+		"${HOSTNAME:-unknown}" "${BASH_LINENO[0]}" "${BASH_COMMAND}" "${status}"
 	exit "${status}"
 }
 trap report_error ERR
@@ -20,7 +37,7 @@ required=(
 )
 for name in "${required[@]}"; do
 	if [[ -z "${!name:-}" ]]; then
-		echo "missing required environment variable: ${name}" >&2
+		errorf 'missing required environment variable: name=%s' "${name}"
 		exit 1
 	fi
 done
@@ -29,11 +46,11 @@ ssh_public_key_base64="${CEPH_LAB_SSH_PUBLIC_KEY_BASE64}"
 unset CEPH_LAB_SSH_PRIVATE_KEY_BASE64 CEPH_LAB_SSH_PUBLIC_KEY_BASE64
 
 if ! command -v dnf >/dev/null 2>&1; then
-	echo "dnf is required by the Aliyun Ceph node initialization script" >&2
+	errorf '%s' 'dnf is required by the Aliyun Ceph node initialization script'
 	exit 1
 fi
 if ! command -v ssh >/dev/null 2>&1; then
-	echo "openssh-clients must be present before SSH initialization starts" >&2
+	errorf '%s' 'openssh-clients must be present before SSH initialization starts'
 	exit 1
 fi
 
@@ -58,7 +75,8 @@ IFS=',' read -r -a private_ips <<<"${CEPH_LAB_PRIVATE_IPS}"
 if (( ${#node_names[@]} == ${#public_ips[@]} && ${#node_names[@]} == ${#private_ips[@]} )); then
 	:
 else
-	echo "node name, public IP, and private IP counts differ" >&2
+	errorf 'node metadata counts differ: nodes=%d public_ips=%d private_ips=%d' \
+		"${#node_names[@]}" "${#public_ips[@]}" "${#private_ips[@]}"
 	exit 1
 fi
 
@@ -127,10 +145,12 @@ mapfile -t candidates < <(
 	done
 )
 if (( ${#candidates[@]} < CEPH_LAB_DATA_DISK_COUNT )); then
-	echo "found ${#candidates[@]} eligible data disk(s), expected ${CEPH_LAB_DATA_DISK_COUNT}" >&2
+	errorf 'not enough eligible data disks: found=%d expected=%d' \
+		"${#candidates[@]}" "${CEPH_LAB_DATA_DISK_COUNT}"
 	exit 1
 fi
 printf '%s\n' "${candidates[@]:0:CEPH_LAB_DATA_DISK_COUNT}" > /etc/ceph-lab/osd-devices
 chmod 0644 /etc/ceph-lab/osd-devices
 
-echo "initialized ${CEPH_LAB_NODE_NAME} for ${CEPH_LAB_CLUSTER_NAME}; hostnames use private IPs; public IPs remain available for external access"
+infof 'node initialized: node=%s cluster=%s; hostnames use private IPs; public IPs remain available for external access' \
+	"${CEPH_LAB_NODE_NAME}" "${CEPH_LAB_CLUSTER_NAME}"

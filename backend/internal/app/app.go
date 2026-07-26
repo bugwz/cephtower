@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
 	"strconv"
@@ -36,7 +35,6 @@ const (
 // App owns the process-level dependencies and their lifecycle.
 type App struct {
 	config     config.Config
-	logger     *slog.Logger
 	tasks      *task.Manager
 	apiServer  *api.Server
 	database   *store.Manager
@@ -54,7 +52,7 @@ func New(configPath string) (*App, error) {
 		return nil, fmt.Errorf("load config: %w", err)
 	}
 
-	logger, logCleanup, closeLog, err := logging.InstallManaged(cfg.Logging, cfg.Server.Dir)
+	_, logCleanup, closeLog, err := logging.InstallManaged(cfg.Logging, cfg.Server.Dir)
 	if err != nil {
 		return nil, fmt.Errorf("configure logging: %w", err)
 	}
@@ -135,7 +133,6 @@ func New(configPath string) (*App, error) {
 	listenAddr := net.JoinHostPort(cfg.Server.Address, strconv.Itoa(cfg.Server.Port))
 	return &App{
 		config:    cfg,
-		logger:    logger,
 		tasks:     taskManager,
 		apiServer: apiServer,
 		database:  databaseManager,
@@ -157,8 +154,11 @@ func (a *App) Run(ctx context.Context) error {
 		return fmt.Errorf("app is not initialized")
 	}
 
-	a.logger.Info("cephtower database configured", "engine", a.config.Database.Engine)
-	a.logger.Info("cephtower backend listening", "addr", a.httpServer.Addr)
+	logging.Infof(
+		"backend listening: addr=%s database_engine=%s",
+		a.httpServer.Addr,
+		a.config.Database.Engine,
+	)
 
 	errCh := make(chan error, 1)
 	go func() {

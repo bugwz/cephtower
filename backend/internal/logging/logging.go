@@ -8,12 +8,33 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"cephtower/backend/internal/config"
 )
+
+func Debugf(format string, args ...any) {
+	logf(slog.Default(), slog.LevelDebug, format, args...)
+}
+
+func Infof(format string, args ...any) {
+	logf(slog.Default(), slog.LevelInfo, format, args...)
+}
+
+func Warnf(format string, args ...any) {
+	logf(slog.Default(), slog.LevelWarn, format, args...)
+}
+
+func Errorf(format string, args ...any) {
+	logf(slog.Default(), slog.LevelError, format, args...)
+}
+
+func logf(logger *slog.Logger, level slog.Level, format string, args ...any) {
+	logger.Log(context.Background(), level, fmt.Sprintf(format, args...))
+}
 
 func NewLogger(cfg config.LoggingConfig, output io.Writer) (*slog.Logger, error) {
 	if output == nil {
@@ -48,12 +69,26 @@ func NewLogger(cfg config.LoggingConfig, output io.Writer) (*slog.Logger, error)
 }
 
 type plainTextHandler struct {
-	level  slog.Leveler
-	output io.Writer
+	level       slog.Leveler
+	output      io.Writer
+	replaceAttr func([]string, slog.Attr) slog.Attr
+	attrs       []plainTextAttr
+	groups      []string
+	mu          *sync.Mutex
+}
+
+type plainTextAttr struct {
+	groups []string
+	attr   slog.Attr
 }
 
 func newPlainTextHandler(output io.Writer, options *slog.HandlerOptions) slog.Handler {
-	return &plainTextHandler{level: options.Level, output: output}
+	return &plainTextHandler{
+		level:       options.Level,
+		output:      output,
+		replaceAttr: options.ReplaceAttr,
+		mu:          &sync.Mutex{},
+	}
 }
 
 func (h *plainTextHandler) Enabled(_ context.Context, level slog.Level) bool {
@@ -61,16 +96,98 @@ func (h *plainTextHandler) Enabled(_ context.Context, level slog.Level) bool {
 }
 
 func (h *plainTextHandler) Handle(_ context.Context, record slog.Record) error {
-	_, err := fmt.Fprintf(h.output, "%s %s %s\n", record.Time.Format(time.RFC3339), record.Level, record.Message)
+	var line strings.Builder
+	fmt.Fprintf(&line, "%s %s %s", record.Time.Format(time.RFC3339), record.Level, record.Message)
+	for _, item := range h.attrs {
+		h.appendAttr(&line, item.groups, item.attr)
+	}
+	record.Attrs(func(attr slog.Attr) bool {
+		h.appendAttr(&line, h.groups, attr)
+		return true
+	})
+	line.WriteByte('\n')
+
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	_, err := io.WriteString(h.output, line.String())
 	return err
 }
 
-func (h *plainTextHandler) WithAttrs(_ []slog.Attr) slog.Handler {
-	return h
+func (h *plainTextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	clone := h.clone()
+	for _, attr := range attrs {
+		clone.attrs = append(clone.attrs, plainTextAttr{
+			groups: append([]string(nil), h.groups...),
+			attr:   attr,
+		})
+	}
+	return clone
 }
 
-func (h *plainTextHandler) WithGroup(_ string) slog.Handler {
-	return h
+func (h *plainTextHandler) WithGroup(name string) slog.Handler {
+	if name == "" {
+		return h
+	}
+	clone := h.clone()
+	clone.groups = append(clone.groups, name)
+	return clone
+}
+
+func (h *plainTextHandler) clone() *plainTextHandler {
+	clone := *h
+	clone.attrs = append([]plainTextAttr(nil), h.attrs...)
+	clone.groups = append([]string(nil), h.groups...)
+	return &clone
+}
+
+func (h *plainTextHandler) appendAttr(line *strings.Builder, groups []string, attr slog.Attr) {
+	attr.Value = attr.Value.Resolve()
+	if attr.Value.Kind() == slog.KindGroup {
+		if attr.Key != "" {
+			groups = append(append([]string(nil), groups...), attr.Key)
+		}
+		for _, child := range attr.Value.Group() {
+			h.appendAttr(line, groups, child)
+		}
+		return
+	}
+	if h.replaceAttr != nil {
+		attr = h.replaceAttr(groups, attr)
+	}
+	if attr.Key == "" {
+		return
+	}
+
+	key := attr.Key
+	if len(groups) > 0 {
+		key = strings.Join(groups, ".") + "." + key
+	}
+	line.WriteByte(' ')
+	line.WriteString(quoteLogValue(key))
+	line.WriteByte('=')
+	line.WriteString(formatLogValue(attr.Value))
+}
+
+func formatLogValue(value slog.Value) string {
+	switch value.Kind() {
+	case slog.KindString:
+		return quoteLogValue(value.String())
+	case slog.KindTime:
+		return quoteLogValue(value.Time().Format(time.RFC3339))
+	case slog.KindDuration:
+		return value.Duration().String()
+	case slog.KindAny:
+		return quoteLogValue(fmt.Sprint(value.Any()))
+	default:
+		return value.String()
+	}
+}
+
+func quoteLogValue(value string) string {
+	if value == "" || strings.ContainsAny(value, " \t\r\n=\"") {
+		return strconv.Quote(value)
+	}
+	return value
 }
 
 func Install(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger, func() error, error) {
@@ -119,10 +236,7 @@ func InstallManaged(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger,
 		} else {
 			writer = io.MultiWriter(os.Stdout, fileWriter)
 		}
-		cleanupTask = func(_ context.Context) error {
-			fileWriter.runCleanup(time.Now())
-			return nil
-		}
+		cleanupTask = func(_ context.Context) error { return fileWriter.runCleanup(time.Now()) }
 	}
 
 	logger, err := NewLogger(cfg, writer)
@@ -242,10 +356,8 @@ func (w *rotatingFileWriter) rotate(now time.Time) error {
 	return nil
 }
 
-func (w *rotatingFileWriter) runCleanup(now time.Time) {
-	if err := w.removeExpired(now); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "clean historical log files: %v\n", err)
-	}
+func (w *rotatingFileWriter) runCleanup(now time.Time) error {
+	return w.removeExpired(now)
 }
 
 func nextRotationAt(start time.Time, rotationDays int) time.Time {
