@@ -11,8 +11,8 @@ Key constraints:
 - Never revert, discard, or overwrite unrelated user changes.
 - Prefer small, atomic commits with one clear purpose.
 - Run relevant checks before committing:
-  - Backend changes: `make backend-test`
-  - Frontend changes: `make frontend-build` after dependencies are installed
+  - Backend changes: `make test-backend`
+  - Frontend changes: `make test-frontend` after dependencies are installed
   - Documentation-only changes: no build is required
 - Use the commit message format `type: summary`, followed by a blank line and body
   bullets.

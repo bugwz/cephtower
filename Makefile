@@ -12,7 +12,7 @@ GO_MIN_VERSION := 1.26
 NODE_MIN_MAJOR := 20
 NPM_MIN_MAJOR := 10
 
-.PHONY: check-env check-backend-env check-frontend-env ensure-frontend-deps ensure-run-config build build-backend build-frontend run run-backend run-frontend test backend-dev backend-test frontend-dev frontend-build generate-ceph-client
+.PHONY: check-env check-backend-env check-frontend-env ensure-frontend-deps ensure-run-config build build-backend build-frontend run run-backend run-frontend test test-backend test-frontend
 
 check-env: check-backend-env check-frontend-env
 
@@ -67,8 +67,7 @@ build-backend: check-backend-env build-frontend
 	mkdir -p $(BIN_DIR)
 	cd $(BACKEND_DIR) && go build -o ../$(BIN_DIR)/$(APP_NAME) ./cmd
 
-build-frontend: ensure-frontend-deps
-	cd $(FRONTEND_DIR) && npm run build
+build-frontend: test-frontend
 	rm -rf $(BACKEND_STATIC_DIR)
 	mkdir -p $(BACKEND_STATIC_DIR)
 	cp -R $(FRONTEND_DIR)/dist/. $(BACKEND_STATIC_DIR)/
@@ -99,16 +98,10 @@ run-backend: check-backend-env
 run-frontend: ensure-frontend-deps
 	cd $(FRONTEND_DIR) && npm run dev -- --host 0.0.0.0 --port $(FRONTEND_PORT) --strictPort
 
-backend-dev: run-backend
+test: test-backend test-frontend
 
-test: backend-test
-
-backend-test: check-backend-env build-frontend
+test-backend: check-backend-env
 	cd $(BACKEND_DIR) && go test ./...
 
-generate-ceph-client:
-	ruby tools/generate_ceph_dashboard_client.rb
-
-frontend-dev: run-frontend
-
-frontend-build: build-frontend
+test-frontend: ensure-frontend-deps
+	cd $(FRONTEND_DIR) && npm run build

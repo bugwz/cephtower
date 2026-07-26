@@ -16,8 +16,8 @@ When the user asks to create or prepare a commit in this repository, follow thes
 3. Review the diff for files that may be staged.
 4. Stage only files related to the user's request.
 5. Run relevant checks:
-   - Backend changes: `make backend-test`
-   - Frontend changes: `make frontend-build` when dependencies are installed
+   - Backend changes: `make test-backend`
+   - Frontend changes: `make test-frontend` when dependencies are installed
    - Documentation-only changes: no build is required
 6. Commit with the required message format.
 
