@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gorm.io/driver/sqlite"
+	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
 
 	"cephtower/backend/internal/config"

@@ -105,7 +105,17 @@ make build
 ./bin/cephtower -config /path/to/config.yaml
 ```
 
-可执行文件位于 `bin/cephtower`。未传入 `-config` 时默认读取
+`make build` 会生成当前系统和架构对应的可执行文件，位于 `bin/cephtower`。`make release`
+会生成 `RELEASE_TARGETS` 中所有平台对应的发布文件，位于 `dist/`，默认产物命名格式如下：
+
+- `dist/cephtower-<version>-<sha>-darwin-amd64`
+- `dist/cephtower-<version>-<sha>-darwin-arm64`
+- `dist/cephtower-<version>-<sha>-linux-amd64`
+- `dist/cephtower-<version>-<sha>-linux-arm64`
+- `dist/cephtower-<version>-<sha>-windows-amd64.exe`
+- `dist/cephtower-<version>-<sha>-windows-arm64.exe`
+
+未传入 `-config` 时默认读取
 `/opt/cephtower/config/config.yaml`；配置文件必须在进程启动前存在。
 
 ## 5. 配置
@@ -133,8 +143,9 @@ make build
 | `make run` | 同时启动开发后端和前端 |
 | `make run-backend` | 构建并启动后端，使用 `CONFIG` 指定配置路径 |
 | `make run-frontend` | 在 `36901` 端口启动 Vite |
-| `make build` | 构建前端并生成内嵌 UI 的 `bin/cephtower` |
+| `make build` | 构建前端并生成当前系统架构、内嵌 UI 的 `bin/cephtower` |
 | `make build-frontend` | 类型检查、构建前端并同步内嵌资源 |
+| `make release` | 构建前端并生成 `RELEASE_TARGETS` 中所有平台对应的发布二进制 |
 | `make test` | 运行后端测试和前端构建校验 |
 | `make test-backend` | 运行 `go test ./...` |
 | `make test-frontend` | 执行前端类型检查和 Vite 构建校验 |

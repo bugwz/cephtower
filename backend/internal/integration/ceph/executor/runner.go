@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
-	"syscall"
 	"time"
 
 	"cephtower/backend/internal/security"
@@ -88,7 +87,7 @@ func (r *Runner) Run(ctx context.Context, access ClusterAccess, spec CommandSpec
 		args = append([]string{"--conf", conf, "--name", access.ClientUsername, "--keyring", keyring}, args...)
 	}
 	cmd := exec.Command(path, args...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	configureCommandProcess(cmd)
 	cmd.Stdin = bytes.NewReader(spec.Stdin)
 	stdout := &limitedBuffer{remaining: max}
 	stderr := &limitedBuffer{remaining: max}
@@ -104,7 +103,7 @@ func (r *Runner) Run(ctx context.Context, access ClusterAccess, spec CommandSpec
 	select {
 	case waitErr = <-done:
 	case <-runCtx.Done():
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		_ = killCommandProcess(cmd)
 		waitErr = <-done
 	}
 	result := CommandResult{Stdout: stdout.Bytes(), Stderr: stderr.Bytes(), ExitCode: 0, Duration: time.Since(started), RedactedArgs: redactArgs(spec, args)}

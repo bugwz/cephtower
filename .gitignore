@@ -2,6 +2,7 @@
 
 # Go
 bin/
+dist/
 backend/bin/
 backend/coverage.out
 backend/.cache/
