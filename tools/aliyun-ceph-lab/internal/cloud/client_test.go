@@ -76,13 +76,13 @@ func TestManagedNetworkResourceNames(t *testing.T) {
 func TestLabSecurityGroupPermissions(t *testing.T) {
 	t.Parallel()
 	permissions := labSecurityGroupPermissions("0.0.0.0/0")
-	if len(permissions) != 5 {
-		t.Fatalf("permission count = %d, want 5", len(permissions))
+	if len(permissions) != 6 {
+		t.Fatalf("permission count = %d, want 6", len(permissions))
 	}
 
 	wantPorts := map[string]bool{
 		"22/22": false, "8443/8443": false, "3300/3300": false,
-		"6789/6789": false, "6800/7568": false,
+		"6789/6789": false, "6800/7568": false, "36900/36900": false,
 	}
 	for _, permission := range permissions {
 		port := stringValue(permission.PortRange)
@@ -101,4 +101,19 @@ func TestLabSecurityGroupPermissions(t *testing.T) {
 			t.Fatalf("missing public port range %s", port)
 		}
 	}
+}
+
+func TestLabSecurityGroupPermissionsRestrictCephTowerToConfiguredSource(t *testing.T) {
+	t.Parallel()
+	permissions := labSecurityGroupPermissions("203.0.113.10/32")
+	for _, permission := range permissions {
+		if stringValue(permission.PortRange) != "36900/36900" {
+			continue
+		}
+		if stringValue(permission.SourceCidrIp) != "203.0.113.10/32" {
+			t.Fatalf("CephTower source CIDR = %q, want 203.0.113.10/32", stringValue(permission.SourceCidrIp))
+		}
+		return
+	}
+	t.Fatal("missing CephTower HTTP permission")
 }

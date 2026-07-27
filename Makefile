@@ -11,6 +11,7 @@ BACKEND_STATIC_DIR := $(BACKEND_DIR)/internal/webui/frontend/dist
 DEV_BACKEND_BIN := $(BIN_DIR)/$(APP_NAME)-dev
 CGO_ENABLED ?= 0
 RELEASE_TARGETS ?= darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64
+RELEASE_BUILD_TARGETS := $(if $(TARGET),$(TARGET),$(RELEASE_TARGETS))
 VERSION ?= $(shell cat VERSION 2>/dev/null || echo 0.0.0)
 GIT_SHA ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
 GO_MIN_VERSION := 1.26
@@ -83,7 +84,7 @@ build-frontend: test-frontend
 release: check-env build-frontend
 	mkdir -p $(RELEASE_DIR)
 	@set -e; \
-	for target in $(RELEASE_TARGETS); do \
+	for target in $(RELEASE_BUILD_TARGETS); do \
 		goos=$${target%/*}; \
 		goarch=$${target#*/}; \
 		suffix=""; \

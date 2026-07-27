@@ -144,7 +144,7 @@ type Network struct {
 	ReuseManagedResources   *bool  `yaml:"reuse_managed_resources,omitempty"`
 	VPCCIDR                 string `yaml:"vpc_cidr,omitempty"`
 	VSwitchCIDR             string `yaml:"v_switch_cidr,omitempty"`
-	SSHSourceCIDR           string `yaml:"ssh_source_cidr,omitempty"`
+	AccessSourceCIDR        string `yaml:"access_source_cidr,omitempty"`
 	CleanupCreatedResources *bool  `yaml:"cleanup_created_resources,omitempty"`
 }
 
@@ -241,8 +241,8 @@ func (c *Config) applyDefaultsAndValidate() error {
 	if c.Network.VSwitchCIDR == "" {
 		c.Network.VSwitchCIDR = "172.31.0.0/24"
 	}
-	if c.Network.SSHSourceCIDR == "" {
-		c.Network.SSHSourceCIDR = "0.0.0.0/0"
+	if c.Network.AccessSourceCIDR == "" {
+		c.Network.AccessSourceCIDR = "0.0.0.0/0"
 	}
 	if c.InitScript == "" {
 		c.InitScript = "hooks/init-node.sh"
@@ -287,10 +287,10 @@ func (c *Config) applyDefaultsAndValidate() error {
 		vSwitchPrefix.Bits() < vpcPrefix.Bits() || vSwitchPrefix.Bits() > 29 {
 		return errors.New("network.v_switch_cidr must be a /16 to /29 IPv4 subnet of network.vpc_cidr")
 	}
-	if c.Network.SSHSourceCIDR != "" {
-		sshPrefix, parseErr := netip.ParsePrefix(c.Network.SSHSourceCIDR)
-		if parseErr != nil || !sshPrefix.Addr().Is4() {
-			return errors.New("network.ssh_source_cidr must be a valid IPv4 CIDR")
+	if c.Network.AccessSourceCIDR != "" {
+		accessPrefix, parseErr := netip.ParsePrefix(c.Network.AccessSourceCIDR)
+		if parseErr != nil || !accessPrefix.Addr().Is4() {
+			return errors.New("network.access_source_cidr must be a valid IPv4 CIDR")
 		}
 	}
 	if (c.VSwitchID == "" || c.SecurityGroupID == "") && !c.NetworkAutoCreate() && !c.NetworkReuseManagedResources() {

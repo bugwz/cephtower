@@ -203,7 +203,7 @@ func (c *Client) EnsureNetwork(
 			logging.Infof("network: reusing managed security group %s", item.ID)
 			selectedSecurityGroup = &item
 			result.SecurityGroupID = item.ID
-			if cfg.Network.SSHSourceCIDR != "" {
+			if cfg.Network.AccessSourceCIDR != "" {
 				if err := c.authorizeLabSecurityGroup(ctx, cfg, item.ID, tokenTime); err != nil {
 					return result, err
 				}
@@ -214,8 +214,8 @@ func (c *Client) EnsureNetwork(
 		if !cfg.NetworkAutoCreate() {
 			return result, errors.New("no managed security group was found and network.auto_create is false")
 		}
-		if cfg.Network.SSHSourceCIDR == "" {
-			return result, errors.New("network.ssh_source_cidr is required to create a security group")
+		if cfg.Network.AccessSourceCIDR == "" {
+			return result, errors.New("network.access_source_cidr is required to create a security group")
 		}
 		id, err := c.createSecurityGroup(ctx, cfg, result.VPCID, tokenTime)
 		if err != nil {
@@ -613,7 +613,7 @@ func (c *Client) authorizeLabSecurityGroup(ctx context.Context, cfg *config.Conf
 	_, err := c.ecs.AuthorizeSecurityGroupWithOptions(&ecs.AuthorizeSecurityGroupRequest{
 		RegionId: dara.String(cfg.RegionID), SecurityGroupId: dara.String(id),
 		ClientToken: dara.String(clientToken(cfg.ClusterName, "security-rules", tokenTime)),
-		Permissions: labSecurityGroupPermissions(cfg.Network.SSHSourceCIDR),
+		Permissions: labSecurityGroupPermissions(cfg.Network.AccessSourceCIDR),
 	}, c.runtime)
 	if err != nil {
 		return fmt.Errorf("AuthorizeSecurityGroup %s: %w", id, err)
@@ -622,7 +622,7 @@ func (c *Client) authorizeLabSecurityGroup(ctx context.Context, cfg *config.Conf
 }
 
 func labSecurityGroupPermissions(sourceCIDR string) []*ecs.AuthorizeSecurityGroupRequestPermissions {
-	tcpRule := func(portRange, description string) *ecs.AuthorizeSecurityGroupRequestPermissions {
+	tcpRule := func(portRange, sourceCIDR, description string) *ecs.AuthorizeSecurityGroupRequestPermissions {
 		return &ecs.AuthorizeSecurityGroupRequestPermissions{
 			IpProtocol: dara.String("TCP"), NicType: dara.String("intranet"),
 			PortRange: dara.String(portRange), SourceCidrIp: dara.String(sourceCIDR),
@@ -632,11 +632,12 @@ func labSecurityGroupPermissions(sourceCIDR string) []*ecs.AuthorizeSecurityGrou
 	}
 
 	return []*ecs.AuthorizeSecurityGroupRequestPermissions{
-		tcpRule("22/22", "SSH access from configured source CIDR"),
-		tcpRule("8443/8443", "Ceph Dashboard HTTPS from configured source CIDR"),
-		tcpRule("3300/3300", "Ceph monitor v2 from configured source CIDR"),
-		tcpRule("6789/6789", "Ceph monitor v1 from configured source CIDR"),
-		tcpRule("6800/7568", "Ceph daemon ports from configured source CIDR"),
+		tcpRule("22/22", sourceCIDR, "SSH access from configured source CIDR"),
+		tcpRule("8443/8443", sourceCIDR, "Ceph Dashboard HTTPS from configured source CIDR"),
+		tcpRule("3300/3300", sourceCIDR, "Ceph monitor v2 from configured source CIDR"),
+		tcpRule("6789/6789", sourceCIDR, "Ceph monitor v1 from configured source CIDR"),
+		tcpRule("6800/7568", sourceCIDR, "Ceph daemon ports from configured source CIDR"),
+		tcpRule("36900/36900", sourceCIDR, "CephTower HTTP service from configured source CIDR"),
 	}
 }
 

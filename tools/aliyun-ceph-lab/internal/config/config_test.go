@@ -70,8 +70,8 @@ func TestDefaultMatchesSingaporeLaunchAdvisorConfiguration(t *testing.T) {
 	if !cfg.SSHPasswordWasGenerated() || validateSSHPassword(cfg.SSHPassword) != nil {
 		t.Fatalf("unexpected generated SSH password: %q", cfg.SSHPassword)
 	}
-	if cfg.Network.SSHSourceCIDR != "0.0.0.0/0" {
-		t.Fatalf("unexpected default security group source CIDR: %q", cfg.Network.SSHSourceCIDR)
+	if cfg.Network.AccessSourceCIDR != "0.0.0.0/0" {
+		t.Fatalf("unexpected default security group source CIDR: %q", cfg.Network.AccessSourceCIDR)
 	}
 	if cfg.AccessKeyID != "" || cfg.AccessKeySecret != "" || cfg.SecurityToken != "" {
 		t.Fatal("the default configuration must not contain real cloud credentials")
@@ -255,7 +255,7 @@ func TestLoadAllowsAutomaticNetworkCreation(t *testing.T) {
   zone_id: cn-test-a
 network:
   auto_create: true
-  ssh_source_cidr: 203.0.113.10/32
+  access_source_cidr: 203.0.113.10/32
 ecs:
   image_id: img-test
   internet:
@@ -278,8 +278,8 @@ nodes:
 	if !cfg.NetworkAutoCreate() || cfg.VSwitchID != "" || cfg.SecurityGroupID != "" {
 		t.Fatalf("unexpected automatic network config: %#v", cfg.Network)
 	}
-	if cfg.Network.SSHSourceCIDR != "203.0.113.10/32" {
-		t.Fatalf("configured security group source CIDR was changed: %q", cfg.Network.SSHSourceCIDR)
+	if cfg.Network.AccessSourceCIDR != "203.0.113.10/32" {
+		t.Fatalf("configured security group source CIDR was changed: %q", cfg.Network.AccessSourceCIDR)
 	}
 }
 
@@ -310,7 +310,7 @@ nodes:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !cfg.NetworkReuseManagedResources() || cfg.SecurityGroupID != "" || cfg.Network.SSHSourceCIDR != "0.0.0.0/0" {
+	if !cfg.NetworkReuseManagedResources() || cfg.SecurityGroupID != "" || cfg.Network.AccessSourceCIDR != "0.0.0.0/0" {
 		t.Fatalf("unexpected managed security group config: %#v", cfg.Network)
 	}
 }

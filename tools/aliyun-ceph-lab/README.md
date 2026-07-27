@@ -147,7 +147,7 @@ credentials:
 - `lifecycle.max_runtime`：云端自动释放时间，支持 Go duration，例如 `90m`、`6h`。
 - `lifecycle.wait_timeout`：等待 ECS、SSH、hook 和 Ceph 阶段就绪的超时时间。
 - `ssh.password`：为空时自动生成 10 位 ECS 合规密码；也可显式填写 8 到 30 字符密码。
-- `network.ssh_source_cidr`：管理入口来源 CIDR，默认 `0.0.0.0/0` 只适合临时实验。
+- `network.access_source_cidr`：管理入口来源 CIDR，默认 `0.0.0.0/0` 只适合临时实验。
 - `network.cleanup_created_resources`：为 `true` 时，删除 ECS 后继续删除本次创建的安全组、交换机和 VPC。
 
 ## 网络
@@ -166,9 +166,10 @@ credentials:
 - VSwitch：`ceph-switch-`
 - 安全组：`ceph-security-group-`
 
-托管安全组会允许 `ssh_source_cidr` 访问：
+托管安全组会允许 `access_source_cidr` 访问：
 
 - TCP 22：SSH
+- TCP 36900：CephTower HTTP 服务
 - TCP 8443：Ceph Dashboard
 - TCP 3300、6789：Ceph Monitor
 - TCP 6800-7568：Ceph Manager、OSD、MDS
@@ -182,7 +183,7 @@ credentials:
 - 工具只删除状态文件中记录的实例 ID，不按名称扫描删除其他资源。
 - 只有本次运行创建的网络资源，才可能在手动删除时被清理。
 - `.state/` 包含状态文件、known_hosts 和节点日志，不会提交到 Git。
-- `0.0.0.0/0` 会把 SSH、Dashboard 和 Ceph 端口暴露给整个 IPv4 互联网。
+- `0.0.0.0/0` 会把 SSH、CephTower HTTP、Dashboard 和 Ceph 端口暴露给整个 IPv4 互联网。
 
 ## 日志
 
