@@ -8,7 +8,7 @@ Console Web d’administration de clusters Ceph
 
 [![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go)](../../backend/go.mod)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](../../frontend/package.json)
-[![Ceph](https://img.shields.io/badge/Ceph-Dashboard%20API-EF5C55)](https://docs.ceph.com/)
+[![Ceph](https://img.shields.io/badge/Ceph-Native%20API-EF5C55)](https://docs.ceph.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](../../LICENSE)
 
 [简体中文](../../README.md) | [繁體中文](README-zh-TW.md) | [English](README-en.md) | [日本語](README-ja.md) | [**Français**](README-fr.md) | [Deutsch](README-de.md) | [Español](README-es.md) | [Português](README-pt.md) | [Русский](README-ru.md) | [한국어](README-ko.md)
@@ -16,7 +16,7 @@ Console Web d’administration de clusters Ceph
 </div>
 
 CephTower associe un backend Go à un frontend React / Ant Design afin de gérer un ou plusieurs
-clusters Ceph via l’API Ceph Dashboard et les commandes Ceph. Le backend fournit une API REST
+clusters Ceph via les commandes Ceph et les protocoles natifs. Le backend fournit une API REST
 versionnée, la persistance, la collecte en arrière-plan et une interface Web intégrée. Le frontend
 accède toujours au backend via le chemin même origine `/api`.
 
@@ -24,10 +24,10 @@ accède toujours au backend via le chemin même origine `/api`.
 
 - Assistant initial : choix de SQLite ou MySQL, test de connexion et création de l’administrateur.
 - Authentification : sessions Bearer Token de 12 heures, rôles administrateur/utilisateur, droits fins de lecture et de gestion des utilisateurs ; réinitialisation par code e-mail si SMTP est configuré.
-- Connexions multiclusters : stockage des adresses MON, de la clé `client.admin` et des identifiants Dashboard ; découverte et cache automatiques des hôtes, démons, services, MON, MGR, MDS, OSD, modules Mgr et de la configuration.
+- Connexions multiclusters : stockage des adresses MON, de la clé `client.admin` et des identifiants CephX chiffres ; découverte et cache automatiques des hôtes, démons, services, MON, MGR, MDS, OSD, modules Mgr et de la configuration.
 - Interface cluster : connexions et détails, hôtes, MON, MGR, OSD et MDS ; bascule des modules Mgr, actions sur les démons et opérations OSD in/out, reweight et scrub.
 - Collecte : source, intervalle, délai, tentatives et priorité par module, exécution manuelle et historique.
-- Intégrations backend : cluster, Pool/RBD, CephFS/NFS/SMB, RGW, iSCSI, NVMe-oF, Prometheus/Grafana, ainsi que les utilisateurs, rôles et paramètres Dashboard.
+- Intégrations backend : cluster, Pool/RBD, CephFS/NFS/SMB, RGW, iSCSI, NVMe-oF, Prometheus/Grafana, ainsi que les utilisateurs et rôles CephTower ainsi que les intégrations natives.
 - Le build de production intègre le frontend dans l’exécutable Go ; un seul service HTTP fournit UI et API.
 
 > [!IMPORTANT]
@@ -47,7 +47,7 @@ CephTower/
 │       ├── api/v1/              # routes et handlers REST
 │       ├── service/             # auth, cluster, collecte, paramètres et initialisation
 │       ├── store/               # GORM, migrations et stockage SQLite/MySQL
-│       ├── integration/ceph/    # clients Dashboard et commandes Ceph
+│       ├── integration/ceph/    # clients de commandes, passerelles et supervision Ceph
 │       ├── task/                # tâches en arrière-plan et planification
 │       └── webui/               # ressources frontend intégrées
 ├── frontend/src/                # console React, routes, pages et clients API
@@ -67,7 +67,7 @@ Voir [docs/architecture.md](../architecture.md) pour les couches et le cycle de 
 | Node.js | 20 | développement et build frontend |
 | npm | 10 | gestion des dépendances frontend |
 | Chaîne C | adaptée au système | requise par le pilote SQLite CGO |
-| Ceph | API Dashboard activée | nécessite aussi des adresses MON et un keyring suffisamment privilégié |
+| Ceph | Ceph 20.2.2+ | nécessite aussi des adresses MON et un CephX client keys suffisamment privilégié |
 | MySQL | facultatif | uniquement sans la base SQLite par défaut |
 
 ## 4. Démarrage rapide
@@ -111,7 +111,7 @@ Consultez [config/config.yaml](../../config/config.yaml) pour toutes les options
 |---|---|
 | `server` | adresse, port et répertoire d’exécution (défauts : `0.0.0.0:36900`, `/opt/cephtower`) |
 | `log` | sortie, niveau, format, rotation et rétention |
-| `runtime` | fichiers de configuration Ceph, keyrings et fichiers d’exécution |
+| `runtime` | fichiers de configuration Ceph, CephX client keys et fichiers d’exécution |
 | `database` | fichier SQLite ou connexion/TLS MySQL ; migrations automatiques au démarrage |
 | `smtp` | service e-mail facultatif pour la réinitialisation des mots de passe |
 

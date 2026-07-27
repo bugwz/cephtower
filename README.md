@@ -8,29 +8,34 @@ Ceph 集群 Web 管理控制台
 
 [![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go)](backend/go.mod)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](frontend/package.json)
-[![Ceph](https://img.shields.io/badge/Ceph-Dashboard%20API-EF5C55)](https://docs.ceph.com/)
+[![Ceph](https://img.shields.io/badge/Ceph-Native%20API-EF5C55)](https://docs.ceph.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 [**简体中文**](README.md) | [繁體中文](docs/readme/README-zh-TW.md) | [English](docs/readme/README-en.md) | [日本語](docs/readme/README-ja.md) | [Français](docs/readme/README-fr.md) | [Deutsch](docs/readme/README-de.md) | [Español](docs/readme/README-es.md) | [Português](docs/readme/README-pt.md) | [Русский](docs/readme/README-ru.md) | [한국어](docs/readme/README-ko.md)
 
 </div>
 
-CephTower 使用 Go 后端和 React / Ant Design 前端，通过 Ceph Dashboard API 与
-Ceph 命令管理一个或多个 Ceph 集群。后端提供版本化 REST API、持久化、后台采集
+CephTower 使用 Go 后端和 React / Ant Design 前端，通过 Ceph 原生命令和网关协议
+管理一个或多个 Ceph 集群。后端提供版本化 REST API、持久化、后台采集
 任务和内嵌 Web UI，前端始终通过同源 `/api` 访问后端。
 
 ## 1. 当前能力与状态
 
-- 首次启动向导：选择 SQLite 或 MySQL，测试连接并创建管理员账户。
+- 首次启动：部署时选择 SQLite 或 MySQL，全新数据库通过 bootstrap API 创建首个管理员。
 - 身份认证：12 小时 Bearer Token 会话、管理员/普通用户、细粒度读取与用户管理权限；
   配置 SMTP 后可使用邮件验证码重置密码。
-- 多集群连接：保存 MON 地址、`client.admin` 密钥和 Dashboard 凭据，自动发现并缓存
+- 多集群连接：保存 MON 地址和加密的 CephX client key，自动发现并缓存
   主机、守护进程、服务、MON、MGR、MDS、OSD、Mgr 模块与集群配置。
 - 集群界面：集群连接与详情、主机、MON、MGR、OSD 和 MDS 管理；支持 Mgr 模块开关、
   守护进程操作以及 OSD in/out、reweight 和 scrub 等操作。
-- 数据采集：按模块配置采集来源、周期、超时、重试与优先级，也可立即运行并查看记录。
+- 数据采集：按 fast、topology、storage、inventory、configuration 模块分层收敛；手动
+  refresh 也进入 durable operation，并区分成功空结果与可选能力暂时不可用。
 - 后端集成：覆盖集群、Pool/RBD、CephFS/NFS/SMB、RGW、iSCSI、NVMe-oF、
-  Prometheus/Grafana、Dashboard 用户/角色与配置等 API。
+  Prometheus/Alertmanager/Grafana 等原生 API；CephTower 用户和角色由自身 RBAC 管理。
+- 操作安全：所有 Ceph mutation 使用持久化 operation、幂等键、语义锁、审计哈希链和
+  pre/post-check；高风险动作必须提交未过期 plan，并在 worker 执行前再次检查。
+- API 契约：请求按 action 严格校验并拒绝未知字段；OpenAPI 为每条路由声明具体响应 DTO，
+  所有 JSON 和 SSE event 的顶层固定为 `code`、`message`、`data`。
 - 交付方式：生产构建将前端产物嵌入 Go 可执行文件，由同一 HTTP 服务提供 UI 和 API。
 
 > [!IMPORTANT]
@@ -48,7 +53,7 @@ CephTower/
 │       ├── api/v1/              # REST 路由与处理器
 │       ├── service/             # 认证、集群、采集、设置与初始化业务
 │       ├── store/               # GORM、迁移及 SQLite/MySQL 存储
-│       ├── integration/ceph/    # Ceph Dashboard 与命令客户端
+│       ├── integration/ceph/    # Ceph 命令、网关和监控协议客户端
 │       ├── task/                # 后台任务与调度
 │       └── webui/               # 内嵌前端资源
 ├── frontend/src/                # React 控制台、路由、页面与 API 客户端
@@ -68,7 +73,7 @@ CephTower/
 | Node.js | 20 | 前端开发和构建 |
 | npm | 10 | 前端依赖管理 |
 | C 编译工具链 | 系统适配版本 | SQLite 驱动使用 CGO |
-| Ceph | 启用 Dashboard API | 集群接入还需 MON 地址和具有足够权限的 keyring |
+| Ceph | 20.2.2+ | 需要 MON 地址和具有足够权限的 CephX client key；无需启用 Dashboard |
 | MySQL | 可选 | 不使用默认 SQLite 时需要 |
 
 ## 4. 快速开始
@@ -85,8 +90,8 @@ make run
 - 后端与生产 Web 入口：<http://localhost:36900>
 - Vite 开发服务器：<http://localhost:36901>（`/api` 代理到后端）
 
-首次访问会跳转至 `/initialize`。完成数据库和管理员初始化后，在集群管理中添加 Ceph
-连接。若要分别启动服务，先运行 `make ensure-run-config`，再在两个终端中运行：
+全新数据库通过 `POST /api/v1/bootstrap/admin` 一次性创建首个管理员，随后在集群管理中
+添加 Ceph 连接。若要分别启动服务，先运行 `make ensure-run-config`，再在两个终端中运行：
 
 ```bash
 make run-backend
@@ -111,12 +116,14 @@ make build
 |---|---|
 | `server` | 监听地址、端口和运行目录（默认 `0.0.0.0:36900`、`/opt/cephtower`） |
 | `log` | 输出目标、级别、格式、轮转与保留时间 |
-| `runtime` | Ceph 配置和 keyring 等运行时文件目录 |
+| `runtime` | 任务期间生成的临时 Ceph 配置目录；凭据文件会在任务结束时删除 |
 | `database` | SQLite 文件或 MySQL 连接与 TLS 选项；启动时自动迁移 |
 | `smtp` | 可选的密码重置邮件服务 |
 
-Ceph 集群凭据不写在该 YAML 中，而是在初始化完成后通过集群管理保存到数据库。请限制
-配置、数据库和运行时目录的访问权限，并在生产环境中启用适当的 TLS 校验。
+`database.encryption_key` 必须是 32 个 ASCII 字符。`make run` 首次创建本地配置时会安全
+生成该值，生产部署必须自行配置并长期保存。Ceph 集群和外部 endpoint 凭据不写在该 YAML
+中，而是使用 XChaCha20-Poly1305 加密后存入数据库。请限制配置、数据库和运行时目录的
+访问权限，并在生产环境中启用适当的 TLS 校验。
 
 ## 6. 常用命令
 
@@ -143,12 +150,15 @@ API 前缀为 `/api/v1`。无需认证的基础端点包括：
 |---|---|---|
 | `GET` | `/api/v1/healthz` | 进程存活检查 |
 | `GET` | `/api/v1/readyz` | 初始化就绪检查 |
-| `GET` | `/api/v1/setup/status` | 首次启动状态 |
+| `GET` | `/api/v1/bootstrap` | 是否需要创建首个管理员 |
+| `POST` | `/api/v1/bootstrap/admin` | 创建首个管理员 |
 | `POST` | `/api/v1/auth/login` | 登录并获取 Token |
 
-除初始化、登录和密码重置端点外，API 请求需要
-`Authorization: Bearer <token>`。路由源码位于 `backend/internal/api/v1/router/`；Ceph
-集成范围与兼容性说明见 [docs/ceph/apis/index.md](docs/ceph/apis/index.md)。
+除 bootstrap 和登录端点外，API 请求需要 `Authorization: Bearer <token>`。完整生成契约见
+[backend/api/openapi-v1.yaml](backend/api/openapi-v1.yaml)，路由源码位于
+`backend/internal/api/v1/router/`。外部 endpoint 和凭据通过集群作用域 API 配置；读请求
+直接使用 Prometheus、Alertmanager、Grafana、S3、iSCSI 或 NVMe-oF 原生协议，不经过
+Ceph Dashboard。
 
 ## 8. 开发与贡献
 

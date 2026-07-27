@@ -1,0 +1,1 @@
+{"nodes":[{"id":0,"name":"osd.0","type":"osd","status":"up","crush_weight":1.0,"device_class":"hdd"}]}

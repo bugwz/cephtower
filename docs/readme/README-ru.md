@@ -8,7 +8,7 @@
 
 [![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go)](../../backend/go.mod)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](../../frontend/package.json)
-[![Ceph](https://img.shields.io/badge/Ceph-Dashboard%20API-EF5C55)](https://docs.ceph.com/)
+[![Ceph](https://img.shields.io/badge/Ceph-Native%20API-EF5C55)](https://docs.ceph.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](../../LICENSE)
 
 [简体中文](../../README.md) | [繁體中文](README-zh-TW.md) | [English](README-en.md) | [日本語](README-ja.md) | [Français](README-fr.md) | [Deutsch](README-de.md) | [Español](README-es.md) | [Português](README-pt.md) | [**Русский**](README-ru.md) | [한국어](README-ko.md)
@@ -16,7 +16,7 @@
 </div>
 
 CephTower объединяет backend на Go и frontend на React / Ant Design для управления одним или
-несколькими кластерами Ceph через Ceph Dashboard API и команды Ceph. Backend предоставляет
+несколькими кластерами Ceph через native Ceph APIs и команды Ceph. Backend предоставляет
 версионированный REST API, хранение данных, фоновый сбор и встроенный Web UI. Frontend всегда
 обращается к backend по same-origin пути `/api`.
 
@@ -24,10 +24,10 @@ CephTower объединяет backend на Go и frontend на React / Ant Desi
 
 - Мастер первого запуска: выбор SQLite/MySQL, проверка соединения и создание администратора.
 - Аутентификация: 12-часовые сессии Bearer Token, роли администратора/пользователя, раздельные права чтения и управления пользователями; сброс пароля по коду e-mail при настройке SMTP.
-- Подключение нескольких кластеров: хранение адресов MON, ключа `client.admin` и данных Dashboard; автоматическое обнаружение и кэширование хостов, демонов, сервисов, MON, MGR, MDS, OSD, модулей Mgr и конфигурации.
+- Подключение нескольких кластеров: хранение адресов MON, ключа `client.admin` и зашифрованных данных CephX; автоматическое обнаружение и кэширование хостов, демонов, сервисов, MON, MGR, MDS, OSD, модулей Mgr и конфигурации.
 - Интерфейс кластера: подключения и сведения, хосты, MON, MGR, OSD и MDS; переключение модулей Mgr, действия с демонами и операции OSD in/out, reweight и scrub.
 - Сбор данных: источник, интервал, тайм-аут, повторы и приоритет по модулям, ручной запуск и история.
-- Интеграции backend: кластер, Pool/RBD, CephFS/NFS/SMB, RGW, iSCSI, NVMe-oF, Prometheus/Grafana, а также пользователи, роли и настройки Dashboard.
+- Интеграции backend: кластер, Pool/RBD, CephFS/NFS/SMB, RGW, iSCSI, NVMe-oF, Prometheus/Grafana, а также пользователи и роли CephTower и нативные интеграции.
 - Production-сборка встраивает frontend в исполняемый файл Go; один HTTP-сервис отдает UI и API.
 
 > [!IMPORTANT]
@@ -46,7 +46,7 @@ CephTower/
 │       ├── api/v1/              # REST-маршруты и обработчики
 │       ├── service/             # авторизация, кластеры, сбор, настройки и инициализация
 │       ├── store/               # GORM, миграции и SQLite/MySQL
-│       ├── integration/ceph/    # клиенты Dashboard и команд Ceph
+│       ├── integration/ceph/    # клиенты команд, шлюзов и мониторинга Ceph
 │       ├── task/                # фоновые задачи и планирование
 │       └── webui/               # встроенные ресурсы frontend
 ├── frontend/src/                # React-консоль, маршруты, страницы и API-клиенты
@@ -66,7 +66,7 @@ CephTower/
 | Node.js | 20 | разработка и сборка frontend |
 | npm | 10 | зависимости frontend |
 | C toolchain | подходящий для ОС | требуется драйвером SQLite CGO |
-| Ceph | Dashboard API включен | также нужны адреса MON и keyring с достаточными правами |
+| Ceph | native Ceph APIs включен | также нужны адреса MON и CephX client keys с достаточными правами |
 | MySQL | необязательно | только вместо SQLite по умолчанию |
 
 ## 4. Быстрый старт
@@ -109,7 +109,7 @@ make build
 |---|---|
 | `server` | адрес, порт и рабочий каталог (по умолчанию `0.0.0.0:36900`, `/opt/cephtower`) |
 | `log` | вывод, уровень, формат, ротация и срок хранения |
-| `runtime` | конфигурация Ceph, keyrings и прочие runtime-файлы |
+| `runtime` | конфигурация Ceph, CephX client keys и прочие runtime-файлы |
 | `database` | SQLite или соединение/TLS MySQL; миграции выполняются при запуске |
 | `smtp` | необязательная почта для сброса пароля |
 

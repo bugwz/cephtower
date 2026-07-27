@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"sort"
 
 	"cephtower/backend/internal/api/v1/handler"
 )
@@ -14,32 +15,93 @@ type Route struct {
 	Handler http.HandlerFunc
 }
 
-// Register binds the v1 route table to the versioned HTTP handlers.
 func Register(mux *http.ServeMux, h *handler.Handler) {
-	registerRoutes(mux, healthRoutes(h))
-	registerRoutes(mux, authRoutes(h))
-	registerRoutes(mux, setupRoutes(h))
-	registerRoutes(mux, systemConfigRoutes(h))
-	registerRoutes(mux, clusterRoutes(h))
-	registerRoutes(mux, hostRoutes(h))
-	registerRoutes(mux, osdRoutes(h))
-	registerRoutes(mux, daemonRoutes(h))
-	registerRoutes(mux, proxyRoutes(h))
-	registerRoutes(mux, settingRoutes(h))
-	registerRoutes(mux, grafanaRoutes(h))
-	registerRoutes(mux, prometheusRoutes(h))
-	registerRoutes(mux, rgwRoutes(h))
-	registerRoutes(mux, iscsiRoutes(h))
-	registerRoutes(mux, nfsRoutes(h))
-	registerRoutes(mux, dashboardOperationsRoutes(h))
-	registerRoutes(mux, configurationRoutes(h))
-	registerRoutes(mux, nvmeofRoutes(h))
-	registerRoutes(mux, smbRoutes(h))
-	registerRoutes(mux, dashboardIdentityRoutes(h))
+	groups := [][]Route{
+		healthRoutes(h),
+		authRoutes(h),
+		rbacRoutes(h),
+		clusterRoutes(h),
+		credentialRoutes(h),
+		endpointRoutes(h),
+		overviewRoutes(h),
+		hostRoutes(h),
+		serviceRoutes(h),
+		daemonRoutes(h),
+		upgradeRoutes(h),
+		monitorRoutes(h),
+		managerRoutes(h),
+		managerModuleRoutes(h),
+		deviceRoutes(h),
+		osdRoutes(h),
+		crushRoutes(h),
+		erasureCodeProfileRoutes(h),
+		poolRoutes(h),
+		rbdRoutes(h),
+		cephfsRoutes(h),
+		rgwRoutes(h),
+		nfsRoutes(h),
+		smbRoutes(h),
+		nvmeofRoutes(h),
+		iscsiRoutes(h),
+		configurationRoutes(h),
+		logsRoutes(h),
+		metricRoutes(h),
+		alertRoutes(h),
+		grafanaRoutes(h),
+		operationRoutes(h),
+		auditRoutes(h),
+	}
+	for _, routes := range groups {
+		registerRoutes(mux, h, routes)
+	}
 }
 
-func registerRoutes(mux *http.ServeMux, routes []Route) {
+func registerRoutes(mux *http.ServeMux, h *handler.Handler, routes []Route) {
 	for _, route := range routes {
-		mux.HandleFunc(route.Method+" "+pathPrefix+route.Path, route.Handler)
+		mux.Handle(route.Method+" "+pathPrefix+route.Path, h.PrepareRoute(route.Handler))
 	}
+}
+
+func ReadRoutesForContract(h *handler.Handler) []Route {
+	var all []Route
+	groups := [][]Route{
+		healthRoutes(h),
+		authRoutes(h),
+		rbacRoutes(h),
+		clusterRoutes(h),
+		credentialRoutes(h),
+		endpointRoutes(h),
+		overviewRoutes(h),
+		hostRoutes(h),
+		serviceRoutes(h),
+		daemonRoutes(h),
+		upgradeRoutes(h),
+		monitorRoutes(h),
+		managerRoutes(h),
+		managerModuleRoutes(h),
+		deviceRoutes(h),
+		osdRoutes(h),
+		crushRoutes(h),
+		erasureCodeProfileRoutes(h),
+		poolRoutes(h),
+		rbdRoutes(h),
+		cephfsRoutes(h),
+		rgwRoutes(h),
+		nfsRoutes(h),
+		smbRoutes(h),
+		nvmeofRoutes(h),
+		iscsiRoutes(h),
+		configurationRoutes(h),
+		logsRoutes(h),
+		metricRoutes(h),
+		alertRoutes(h),
+		grafanaRoutes(h),
+		operationRoutes(h),
+		auditRoutes(h),
+	}
+	for _, group := range groups {
+		all = append(all, group...)
+	}
+	sort.Slice(all, func(i, j int) bool { return all[i].Path+all[i].Method < all[j].Path+all[j].Method })
+	return all
 }

@@ -26,7 +26,6 @@ type CreateUserInput struct {
 	DisplayName string
 	Email       string
 	Role        string
-	Permissions []string
 	Password    string
 	Enabled     *bool
 }
@@ -35,7 +34,6 @@ type UpdateUserInput struct {
 	DisplayName *string
 	Email       *string
 	Role        *string
-	Permissions []string
 	Password    *string
 	Enabled     *bool
 }

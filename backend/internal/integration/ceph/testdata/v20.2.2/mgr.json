@@ -1,0 +1,1 @@
+{"available":true,"active_name":"ceph-node-1.x","active_addr":"192.0.2.11:6800","standbys":[{"name":"ceph-node-2.y"}]}

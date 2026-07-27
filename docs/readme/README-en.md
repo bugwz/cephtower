@@ -8,7 +8,7 @@ Web management console for Ceph clusters
 
 [![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go)](../../backend/go.mod)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](../../frontend/package.json)
-[![Ceph](https://img.shields.io/badge/Ceph-Dashboard%20API-EF5C55)](https://docs.ceph.com/)
+[![Ceph](https://img.shields.io/badge/Ceph-Native%20API-EF5C55)](https://docs.ceph.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](../../LICENSE)
 
 [简体中文](../../README.md) | [繁體中文](README-zh-TW.md) | [**English**](README-en.md) | [日本語](README-ja.md) | [Français](README-fr.md) | [Deutsch](README-de.md) | [Español](README-es.md) | [Português](README-pt.md) | [Русский](README-ru.md) | [한국어](README-ko.md)
@@ -16,18 +16,18 @@ Web management console for Ceph clusters
 </div>
 
 CephTower combines a Go backend with a React/Ant Design frontend to manage one or more
-Ceph clusters through the Ceph Dashboard API and Ceph commands. The backend provides a
+Ceph clusters through the native Ceph APIs and Ceph commands. The backend provides a
 versioned REST API, persistence, background collection, and an embedded web UI. The
 frontend always accesses the backend through the same-origin `/api` path.
 
 ## 1. Current capabilities and status
 
 - First-run wizard for selecting SQLite or MySQL, testing the connection, and creating an administrator.
-- Authentication with 12-hour Bearer Token sessions, administrator/user roles, granular read and user-management permissions, and email-code password reset when SMTP is configured.
-- Multi-cluster connections storing MON addresses, `client.admin` keys, and Dashboard credentials; automatic discovery and caching of hosts, daemons, services, MONs, MGRs, MDSs, OSDs, Mgr modules, and cluster configuration.
+- Authentication with 12-hour Bearer Token sessions, administrator/user roles, and email-code password reset when SMTP is configured.
+- Multi-cluster connections storing MON addresses, `client.admin` keys, and encrypted CephX credentials; automatic discovery and caching of hosts, daemons, services, MONs, MGRs, MDSs, OSDs, Mgr modules, and cluster configuration.
 - Cluster UI for connections and details, hosts, MON, MGR, OSD, and MDS, including Mgr module toggles, daemon actions, and OSD in/out, reweight, and scrub operations.
 - Per-module data collection settings for source, interval, timeout, retry, and priority, with manual runs and run history.
-- Backend integrations for clusters, Pool/RBD, CephFS/NFS/SMB, RGW, iSCSI, NVMe-oF, Prometheus/Grafana, and Dashboard users, roles, and configuration.
+- Backend integrations for clusters, Pool/RBD, CephFS/NFS/SMB, RGW, iSCSI, NVMe-oF, Prometheus/Grafana, and CephTower users, roles, and native integration configuration.
 - Production builds embed the frontend in the Go executable so one HTTP service delivers both UI and API.
 
 > [!IMPORTANT]
@@ -46,7 +46,7 @@ CephTower/
 │       ├── api/v1/              # REST routes and handlers
 │       ├── service/             # auth, cluster, collector, settings, and setup logic
 │       ├── store/               # GORM, migrations, and SQLite/MySQL storage
-│       ├── integration/ceph/    # Ceph Dashboard and command clients
+│       ├── integration/ceph/    # Ceph command, gateway, and monitoring clients
 │       ├── task/                # background jobs and scheduling
 │       └── webui/               # embedded frontend assets
 ├── frontend/src/                # React console, routes, pages, and API clients
@@ -66,7 +66,7 @@ See [docs/architecture.md](../architecture.md) for layering and lifecycle detail
 | Node.js | 20 | frontend development and builds |
 | npm | 10 | frontend dependency management |
 | C toolchain | OS-appropriate | required by the CGO SQLite driver |
-| Ceph | Dashboard API enabled | connection also requires MON addresses and a sufficiently privileged keyring |
+| Ceph | native Ceph APIs enabled | connection also requires MON addresses and a sufficiently privileged CephX client keys |
 | MySQL | optional | only when not using the default SQLite database |
 
 ## 4. Quick start
@@ -111,7 +111,7 @@ See [config/config.yaml](../../config/config.yaml) for all options and defaults.
 |---|---|
 | `server` | listen address, port, and runtime directory (defaults: `0.0.0.0:36900`, `/opt/cephtower`) |
 | `log` | output, level, format, rotation, and retention |
-| `runtime` | directory for Ceph configuration, keyrings, and other runtime files |
+| `runtime` | directory for Ceph configuration, CephX client keys, and other runtime files |
 | `database` | SQLite file or MySQL connection/TLS settings; migrations run at startup |
 | `smtp` | optional mail service for password resets |
 

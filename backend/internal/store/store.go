@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"gorm.io/gorm"
 
@@ -17,17 +18,18 @@ var ErrRecordNotFound = gorm.ErrRecordNotFound
 // Database is the project-owned persistence handle. GORM never crosses this
 // package boundary; callers use domain operations defined in the Store files.
 type Database struct {
-	db *gorm.DB
+	db      *gorm.DB
+	auditMu *sync.Mutex
 }
 
 func wrap(db *gorm.DB) *Database {
 	if db == nil {
 		return nil
 	}
-	return &Database{db: db}
+	return &Database{db: db, auditMu: &sync.Mutex{}}
 }
 func (d *Database) Transaction(fn func(*Database) error) error {
-	return d.db.Transaction(func(tx *gorm.DB) error { return fn(wrap(tx)) })
+	return d.db.Transaction(func(tx *gorm.DB) error { return fn(&Database{db: tx, auditMu: d.auditMu}) })
 }
 
 // Insert, FindRecord and CountRecords are small Store operations used for
@@ -49,7 +51,8 @@ func (d *Database) CountRecords(ctx context.Context, model any, filters map[stri
 		query = query.Where(field+" = ?", value)
 	}
 	var count int64
-	return count, query.Count(&count).Error
+	err := query.Count(&count).Error
+	return count, err
 }
 
 const (
@@ -76,6 +79,12 @@ func Open(cfg config.DatabaseConfig, workDirs ...string) (*Database, error) {
 	if err := sqlDB.Ping(); err != nil {
 		_ = sqlDB.Close()
 		return nil, fmt.Errorf("ping %s database: %w", cfg.Engine, err)
+	}
+	if cfg.Engine == EngineSQLite {
+		if err := db.Exec("PRAGMA foreign_keys = ON").Error; err != nil {
+			_ = sqlDB.Close()
+			return nil, fmt.Errorf("enable sqlite foreign keys: %w", err)
+		}
 	}
 
 	if err := migrate(db); err != nil {

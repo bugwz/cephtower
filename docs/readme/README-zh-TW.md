@@ -8,14 +8,14 @@ Ceph 叢集 Web 管理控制台
 
 [![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go)](../../backend/go.mod)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](../../frontend/package.json)
-[![Ceph](https://img.shields.io/badge/Ceph-Dashboard%20API-EF5C55)](https://docs.ceph.com/)
+[![Ceph](https://img.shields.io/badge/Ceph-Native%20API-EF5C55)](https://docs.ceph.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](../../LICENSE)
 
 [简体中文](../../README.md) | [**繁體中文**](README-zh-TW.md) | [English](README-en.md) | [日本語](README-ja.md) | [Français](README-fr.md) | [Deutsch](README-de.md) | [Español](README-es.md) | [Português](README-pt.md) | [Русский](README-ru.md) | [한국어](README-ko.md)
 
 </div>
 
-CephTower 使用 Go 後端與 React / Ant Design 前端，透過 Ceph Dashboard API 和
+CephTower 使用 Go 後端與 React / Ant Design 前端，透過 native Ceph APIs 和
 Ceph 指令管理一個或多個 Ceph 叢集。後端提供版本化 REST API、持久化、背景資料
 擷取及內嵌 Web UI；前端一律經由同源 `/api` 存取後端。
 
@@ -23,10 +23,10 @@ Ceph 指令管理一個或多個 Ceph 叢集。後端提供版本化 REST API、
 
 - 首次啟動精靈：選擇 SQLite 或 MySQL、測試連線並建立管理員。
 - 身分驗證：12 小時 Bearer Token 工作階段、管理員/一般使用者角色、細緻的讀取與使用者管理權限；設定 SMTP 後可用郵件驗證碼重設密碼。
-- 多叢集連線：儲存 MON 位址、`client.admin` 金鑰與 Dashboard 憑證，自動探索並快取主機、守護程序、服務、MON、MGR、MDS、OSD、Mgr 模組及叢集設定。
+- 多叢集連線：儲存 MON 位址、`client.admin` 金鑰與 加密的 CephX 憑證，自動探索並快取主機、守護程序、服務、MON、MGR、MDS、OSD、Mgr 模組及叢集設定。
 - 叢集介面：叢集連線與詳細資料、主機、MON、MGR、OSD 和 MDS 管理；支援 Mgr 模組切換、守護程序動作及 OSD in/out、reweight、scrub。
 - 資料擷取：依模組設定來源、週期、逾時、重試與優先順序，也可立即執行並查看紀錄。
-- 後端整合：涵蓋叢集、Pool/RBD、CephFS/NFS/SMB、RGW、iSCSI、NVMe-oF、Prometheus/Grafana，以及 Dashboard 使用者、角色與設定 API。
+- 後端整合：涵蓋叢集、Pool/RBD、CephFS/NFS/SMB、RGW、iSCSI、NVMe-oF、Prometheus/Grafana，以及 CephTower 使用者、角色與原生整合 API。
 - 交付方式：正式環境建置會將前端嵌入 Go 執行檔，由同一 HTTP 服務提供 UI 與 API。
 
 > [!IMPORTANT]
@@ -44,7 +44,7 @@ CephTower/
 │       ├── api/v1/              # REST 路由與處理器
 │       ├── service/             # 驗證、叢集、擷取、設定與初始化邏輯
 │       ├── store/               # GORM、遷移與 SQLite/MySQL 儲存
-│       ├── integration/ceph/    # Ceph Dashboard 與指令用戶端
+│       ├── integration/ceph/    # Ceph 指令、閘道與監控用戶端
 │       ├── task/                # 背景工作與排程
 │       └── webui/               # 內嵌前端資源
 ├── frontend/src/                # React 控制台、路由、頁面與 API 用戶端
@@ -64,7 +64,7 @@ CephTower/
 | Node.js | 20 | 前端開發與建置 |
 | npm | 10 | 前端相依套件管理 |
 | C 編譯工具鏈 | 適用於作業系統的版本 | SQLite 驅動程式使用 CGO |
-| Ceph | 已啟用 Dashboard API | 還需 MON 位址與具足夠權限的 keyring |
+| Ceph | 已啟用 native Ceph APIs | 還需 MON 位址與具足夠權限的 CephX client keys |
 | MySQL | 選用 | 不使用預設 SQLite 時需要 |
 
 ## 4. 快速開始
@@ -107,7 +107,7 @@ make build
 |---|---|
 | `server` | 監聽位址、連接埠與執行目錄（預設 `0.0.0.0:36900`、`/opt/cephtower`） |
 | `log` | 輸出、層級、格式、輪替與保留時間 |
-| `runtime` | Ceph 設定、keyring 等執行階段檔案目錄 |
+| `runtime` | Ceph 設定、CephX client keys 等執行階段檔案目錄 |
 | `database` | SQLite 檔案或 MySQL 連線/TLS；啟動時自動遷移 |
 | `smtp` | 選用的密碼重設郵件服務 |
 

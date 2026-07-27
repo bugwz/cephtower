@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"cephtower/backend/internal/security"
 	"gopkg.in/yaml.v3"
 )
 
@@ -63,9 +64,10 @@ type LoggingConfig struct {
 }
 
 type DatabaseConfig struct {
-	Engine string       `yaml:"engine"`
-	SQLite SQLiteConfig `yaml:"sqlite"`
-	MySQL  MySQLConfig  `yaml:"mysql"`
+	EncryptionKey string       `yaml:"encryption_key"`
+	Engine        string       `yaml:"engine"`
+	SQLite        SQLiteConfig `yaml:"sqlite"`
+	MySQL         MySQLConfig  `yaml:"mysql"`
 }
 
 type RuntimeConfig struct {
@@ -118,8 +120,9 @@ type fileConfig struct {
 		Retention string `yaml:"retention"`
 	} `yaml:"log"`
 	Database struct {
-		Engine string `yaml:"engine"`
-		SQLite struct {
+		EncryptionKey string `yaml:"encryption_key"`
+		Engine        string `yaml:"engine"`
+		SQLite        struct {
 			Path string `yaml:"path"`
 		} `yaml:"sqlite"`
 		MySQL struct {
@@ -289,6 +292,7 @@ func updateDatabaseValues(data []byte, database DatabaseConfig) ([]byte, error) 
 		value string
 		tag   string
 	}{
+		{[]string{"encryption_key"}, database.EncryptionKey, "!!str"},
 		{[]string{"engine"}, database.Engine, "!!str"},
 		{[]string{"sqlite", "path"}, database.SQLite.Path, "!!str"},
 		{[]string{"mysql", "host"}, database.MySQL.Host, "!!str"},
@@ -331,6 +335,9 @@ func updateDatabaseValues(data []byte, database DatabaseConfig) ([]byte, error) 
 	databaseLines := make([]string, 0)
 	if _, ok := missing["engine"]; ok {
 		databaseLines = append(databaseLines, yamlLine(databaseIndent, "engine", database.Engine, "!!str"))
+	}
+	if _, ok := missing["encryption_key"]; ok {
+		databaseLines = append([]string{yamlLine(databaseIndent, "encryption_key", database.EncryptionKey, "!!str")}, databaseLines...)
 	}
 
 	sqliteNode := mappingValue(databaseNode, "sqlite")
@@ -708,7 +715,8 @@ func ParseDuration(value string) (time.Duration, error) {
 
 func normalizeDatabaseConfig(raw fileConfig) (DatabaseConfig, error) {
 	return NormalizeDatabaseConfig(DatabaseConfig{
-		Engine: raw.Database.Engine,
+		EncryptionKey: raw.Database.EncryptionKey,
+		Engine:        raw.Database.Engine,
 		SQLite: SQLiteConfig{
 			Path: raw.Database.SQLite.Path,
 		},
@@ -725,6 +733,9 @@ func normalizeDatabaseConfig(raw fileConfig) (DatabaseConfig, error) {
 }
 
 func NormalizeDatabaseConfig(cfg DatabaseConfig) (DatabaseConfig, error) {
+	if err := security.ValidateDatabaseEncryptionKey(cfg.EncryptionKey); err != nil {
+		return DatabaseConfig{}, err
+	}
 	engine := strings.ToLower(strings.TrimSpace(cfg.Engine))
 	if engine == "" {
 		engine = defaultDatabaseEngine
@@ -774,7 +785,8 @@ func NormalizeDatabaseConfig(cfg DatabaseConfig) (DatabaseConfig, error) {
 	}
 
 	return DatabaseConfig{
-		Engine: engine,
+		EncryptionKey: cfg.EncryptionKey,
+		Engine:        engine,
 		SQLite: SQLiteConfig{
 			Path: sqlitePath,
 		},

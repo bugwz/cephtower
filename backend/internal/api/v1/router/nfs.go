@@ -4,11 +4,14 @@ import "cephtower/backend/internal/api/v1/handler"
 
 func nfsRoutes(h *handler.Handler) []Route {
 	return []Route{
-		{"GET", "/nfs/settings", h.GetNFSSettings},
-		{"PUT", "/nfs/settings", h.UpdateNFSSettings},
-		{"GET", "/nfs/cluster", h.ListNFSClusters},
-		{"GET", "/nfs/export", h.ListNFSExports},
+		{"GET", "/nfs/clusters", h.ListNFSClusters},
+		{"POST", "/nfs/cluster", h.CreateNFSCluster},
+		{"GET", "/nfs/cluster", h.GetNFSCluster},
+		{"DELETE", "/nfs/cluster", h.DeleteNFSCluster},
+		{"GET", "/nfs/exports", h.ListNFSExports},
 		{"POST", "/nfs/export", h.CreateNFSExport},
-		{"DELETE", "/nfs/export/{cluster_id}/{id}", h.DeleteNFSExport},
+		{"GET", "/nfs/export", h.GetNFSExport},
+		{"PATCH", "/nfs/export", h.UpdateNFSExport},
+		{"DELETE", "/nfs/export", h.DeleteNFSExport},
 	}
 }

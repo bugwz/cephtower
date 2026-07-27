@@ -4,392 +4,191 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 
 	clusterservice "cephtower/backend/internal/service/cluster"
-	service "cephtower/backend/internal/service/collector"
 	"cephtower/backend/internal/store"
 )
 
-type CephClusterResponse struct {
-	ID          uint                        `json:"id"`
-	Name        string                      `json:"name"`
-	Description string                      `json:"description"`
-	FSID        string                      `json:"fsid"`
-	Enabled     bool                        `json:"enabled"`
-	Dashboard   DashboardConnectionResponse `json:"dashboard"`
-	Command     CommandConnectionResponse   `json:"command"`
-	CreatedAt   time.Time                   `json:"created_at"`
-	UpdatedAt   time.Time                   `json:"updated_at"`
+type clusterCreateRequest struct {
+	Name             string `json:"name"`
+	MonitorAddresses string `json:"monitor_addresses"`
+	ClientUsername   string `json:"client_username"`
+	ClientKey        string `json:"client_key"`
 }
 
-type DashboardConnectionResponse struct {
-	Enabled     bool   `json:"enabled"`
-	BaseURL     string `json:"base_url"`
-	Username    string `json:"username"`
-	Password    string `json:"password"`
-	PasswordSet bool   `json:"password_set"`
-	InsecureTLS bool   `json:"insecure_tls"`
+type clusterUpdateRequest struct {
+	ClusterID        uint64  `json:"cluster_id"`
+	Name             *string `json:"name,omitempty"`
+	MonitorAddresses *string `json:"monitor_addresses,omitempty"`
+	ClientUsername   *string `json:"client_username,omitempty"`
+	ClientKey        *string `json:"client_key,omitempty"`
 }
 
-type CommandConnectionResponse struct {
-	Enabled           bool   `json:"enabled"`
-	Bin               string `json:"bin"`
-	Cluster           string `json:"cluster"`
-	Conf              string `json:"conf"`
-	MonitorHost       string `json:"monitor_host"`
-	Name              string `json:"name"`
-	Keyring           string `json:"keyring"`
-	KeyringContentSet bool   `json:"keyring_content_set"`
-	TimeoutSeconds    int    `json:"timeout_seconds"`
+type clusterDeleteRequest struct {
+	ClusterID        uint64 `json:"cluster_id"`
+	DeleteCachedData bool   `json:"delete_cached_data"`
 }
 
-type CephClusterRequest struct {
-	Name              string `json:"name"`
-	MonitorHost       string `json:"monitor_host"`
-	Keyring           string `json:"keyring"`
-	DashboardUsername string `json:"dashboard_username"`
-	DashboardPassword string `json:"dashboard_password"`
+type clusterIDRequest struct {
+	ClusterID uint64 `json:"cluster_id"`
 }
 
-type CephClusterDetailResponse struct {
-	Cluster   CephClusterResponse                `json:"cluster"`
-	Discovery CephClusterDiscoveryDetailResponse `json:"discovery"`
+type clusterDTO struct {
+	ClusterID        uint64    `json:"cluster_id"`
+	Name             string    `json:"name"`
+	MonitorAddresses string    `json:"monitor_addresses"`
+	ClientUsername   string    `json:"client_username"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
 
-type CephClusterDiscoveryDetailResponse struct {
-	Hosts         []CephDiscoveredRecordResponse    `json:"hosts"`
-	OSDs          []CephDiscoveredRecordResponse    `json:"osds"`
-	OSDFlags      []CephClusterOSDFlagEntryResponse `json:"osd_flags"`
-	Daemons       []CephDiscoveredRecordResponse    `json:"daemons"`
-	Services      []CephDiscoveredRecordResponse    `json:"services"`
-	Mons          []CephDiscoveredRecordResponse    `json:"mons"`
-	Mgrs          []CephDiscoveredRecordResponse    `json:"mgrs"`
-	MDSs          []CephDiscoveredRecordResponse    `json:"mdss"`
-	MgrModules    []CephDiscoveredRecordResponse    `json:"mgr_modules"`
-	Configuration []CephDiscoveredRecordResponse    `json:"configuration"`
-}
-
-type CephDiscoveredRecordResponse struct {
-	Key          string    `json:"key"`
-	Type         string    `json:"type,omitempty"`
-	Hostname     string    `json:"hostname,omitempty"`
-	Status       string    `json:"status,omitempty"`
-	Payload      any       `json:"payload"`
-	DiscoveredAt time.Time `json:"discovered_at"`
-}
-
-type CephClusterOSDFlagEntryResponse struct {
-	Name         string    `json:"name"`
-	DiscoveredAt time.Time `json:"discovered_at"`
-}
-
-type ClusterVersionResponse struct {
-	Version string `json:"version"`
+type capabilityDTO struct {
+	Name       string    `json:"name"`
+	Supported  bool      `json:"supported"`
+	Reason     *string   `json:"reason"`
+	Version    *string   `json:"version"`
+	Details    any       `json:"details"`
+	ObservedAt time.Time `json:"observed_at"`
 }
 
 func (h *Handler) ListClusters(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
-		return
-	}
-
-	clusters, err := h.clusters.List(r.Context())
+	rows, err := h.Clusters.List(r.Context())
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		WriteError(w, r, 500, "store_error", err.Error(), false, nil)
 		return
 	}
-
-	response := make([]CephClusterResponse, 0, len(clusters))
-	for _, cluster := range clusters {
-		response = append(response, toCephClusterResponse(cluster))
+	items := make([]clusterDTO, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, toClusterDTO(row))
 	}
-	writeJSON(w, http.StatusOK, response)
+	WriteSuccess(w, 200, "success", map[string]any{"items": items, "pagination": map[string]any{"next_cursor": nil}, "meta": map[string]string{"request_id": RequestID(r)}})
 }
 
 func (h *Handler) CreateCluster(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	var request clusterCreateRequest
+	if !DecodeStrict(w, r, &request) {
 		return
 	}
-
-	var req CephClusterRequest
-	if !decodeJSON(w, r, &req) {
+	user, _ := CurrentUser(r)
+	_, operation, err := h.Clusters.Create(r.Context(), clusterservice.CreateInput{Name: request.Name, MonitorAddresses: request.MonitorAddresses, ClientUsername: request.ClientUsername, ClientKey: request.ClientKey}, &user.ID, user.Username, RequestID(r), r.Header.Get("Idempotency-Key"))
+	if err != nil {
+		WriteError(w, r, 400, "invalid_request", err.Error(), false, nil)
 		return
 	}
-
-	if err := h.clusters.Create(r.Context(), clusterInput(req)); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
-	}
-	writeJSON(w, http.StatusCreated, MessageResponse{Message: "集群连接已创建"})
+	w.Header().Set("Location", "/api/v1/operation")
+	WriteSuccess(w, 202, "accepted", operationDTO(operation))
 }
 
 func (h *Handler) GetCluster(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	var request clusterIDRequest
+	if !DecodeStrict(w, r, &request) {
 		return
 	}
-
-	id, ok := clusterID(w, r)
-	if !ok {
+	id := request.ClusterID
+	if id == 0 {
+		WriteError(w, r, 400, "invalid_request", "cluster_id is required", false, nil)
 		return
 	}
-	detail, err := h.clusters.Get(r.Context(), id)
+	row, err := h.Clusters.Get(r.Context(), id)
 	if err != nil {
-		writeClusterError(w, err, http.StatusInternalServerError)
+		clusterError(w, r, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, CephClusterDetailResponse{
-		Cluster:   toCephClusterResponse(detail.Cluster),
-		Discovery: toDiscoveryResponse(detail.Discovery),
-	})
+	WriteSuccess(w, 200, "success", toClusterDTO(row))
 }
 
 func (h *Handler) UpdateCluster(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	var request clusterUpdateRequest
+	if !DecodeStrict(w, r, &request) {
 		return
 	}
-
-	id, ok := clusterID(w, r)
-	if !ok {
+	id := request.ClusterID
+	if id == 0 {
+		WriteError(w, r, 400, "invalid_request", "cluster_id is required", false, nil)
 		return
 	}
-
-	var req CephClusterRequest
-	if !decodeJSON(w, r, &req) {
+	user, _ := CurrentUser(r)
+	operation, err := h.Clusters.Update(r.Context(), id, clusterservice.UpdateInput{Name: request.Name, MonitorAddresses: request.MonitorAddresses, ClientUsername: request.ClientUsername, ClientKey: request.ClientKey}, &user.ID, user.Username, RequestID(r), r.Header.Get("Idempotency-Key"))
+	if err != nil {
+		clusterError(w, r, err)
 		return
 	}
-	if err := h.clusters.Update(r.Context(), id, clusterInput(req)); err != nil {
-		writeClusterError(w, err, http.StatusBadRequest)
-		return
-	}
-	writeJSON(w, http.StatusOK, MessageResponse{Message: "集群连接已更新"})
+	acceptedOperation(w, r, id, operation)
 }
 
 func (h *Handler) DeleteCluster(w http.ResponseWriter, r *http.Request) {
-	if !requireAdmin(w, r) {
+	var request clusterDeleteRequest
+	if !DecodeStrict(w, r, &request) {
 		return
 	}
-
-	id, ok := clusterID(w, r)
-	if !ok {
+	id := request.ClusterID
+	if id == 0 || !request.DeleteCachedData {
+		WriteError(w, r, 400, "invalid_request", "cluster_id and delete_cached_data=true are required", false, nil)
 		return
 	}
-
-	if err := h.clusters.Delete(r.Context(), id); err != nil {
-		writeClusterError(w, err, http.StatusInternalServerError)
-		return
-	}
-	writeJSON(w, http.StatusOK, MessageResponse{Message: "集群连接已删除"})
-}
-
-func (h *Handler) ClusterSummary(w http.ResponseWriter, r *http.Request) {
-	summary, err := h.ceph.ClusterSummary(r.Context())
+	user, _ := CurrentUser(r)
+	operation, err := h.Clusters.Delete(r.Context(), id, request.DeleteCachedData, &user.ID, user.Username, RequestID(r), r.Header.Get("Idempotency-Key"))
 	if err != nil {
-		writeCephError(w, err)
+		clusterError(w, r, err)
 		return
 	}
-
-	writeJSON(w, http.StatusOK, summary)
+	acceptedOperation(w, r, id, operation)
 }
 
-func (h *Handler) ClusterVersion(w http.ResponseWriter, r *http.Request) {
-	version, err := h.ceph.Version(r.Context())
+func (h *Handler) ProbeCluster(w http.ResponseWriter, r *http.Request) {
+	var request clusterIDRequest
+	if !DecodeStrict(w, r, &request) {
+		return
+	}
+	id := request.ClusterID
+	if id == 0 {
+		WriteError(w, r, 400, "invalid_request", "cluster_id is required", false, nil)
+		return
+	}
+	user, _ := CurrentUser(r)
+	operation, err := h.Clusters.Probe(r.Context(), id, &user.ID, user.Username, RequestID(r), r.Header.Get("Idempotency-Key"))
 	if err != nil {
-		writeCephError(w, err)
+		clusterError(w, r, err)
 		return
 	}
-
-	writeJSON(w, http.StatusOK, ClusterVersionResponse{Version: version})
+	acceptedOperation(w, r, id, operation)
 }
 
-func (h *Handler) ClusterHealthMinimal(w http.ResponseWriter, r *http.Request) {
-	health, err := h.ceph.HealthMinimal(r.Context())
+func (h *Handler) Capabilities(w http.ResponseWriter, r *http.Request) {
+	var request clusterIDRequest
+	if !DecodeStrict(w, r, &request) {
+		return
+	}
+	id := request.ClusterID
+	if id == 0 {
+		WriteError(w, r, 400, "invalid_request", "cluster_id is required", false, nil)
+		return
+	}
+	rows, err := h.Clusters.Capabilities(r.Context(), id)
 	if err != nil {
-		writeCephError(w, err)
+		clusterError(w, r, err)
 		return
 	}
-
-	writeJSON(w, http.StatusOK, health)
-}
-
-func clusterID(w http.ResponseWriter, r *http.Request) (uint, bool) {
-	id, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
-	if err != nil || id == 0 {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid cluster id"})
-		return 0, false
-	}
-	return uint(id), true
-}
-
-func clusterInput(req CephClusterRequest) clusterservice.Input {
-	return clusterservice.Input{
-		Name:              req.Name,
-		MonitorHost:       req.MonitorHost,
-		Keyring:           req.Keyring,
-		DashboardUsername: req.DashboardUsername,
-		DashboardPassword: req.DashboardPassword,
-	}
-}
-
-func writeClusterError(w http.ResponseWriter, err error, fallbackStatus int) {
-	if errors.Is(err, clusterservice.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
-		return
-	}
-	writeJSON(w, fallbackStatus, map[string]string{"error": err.Error()})
-}
-
-func toDiscoveryResponse(discovery clusterservice.Discovery) CephClusterDiscoveryDetailResponse {
-	detail := CephClusterDiscoveryDetailResponse{}
-	for _, host := range discovery.Hosts {
-		detail.Hosts = append(detail.Hosts, CephDiscoveredRecordResponse{
-			Key:          host.Hostname,
-			Hostname:     host.Hostname,
-			Status:       host.Status,
-			Payload:      jsonPayload(host.Payload),
-			DiscoveredAt: host.DiscoveredAt,
-		})
-	}
-
-	for _, osd := range discovery.OSDs {
-		detail.OSDs = append(detail.OSDs, CephDiscoveredRecordResponse{
-			Key:          osd.OSDID,
-			Hostname:     osd.Hostname,
-			Status:       osd.Status,
-			Payload:      jsonPayload(osd.Payload),
-			DiscoveredAt: osd.DiscoveredAt,
-		})
-	}
-
-	for _, flag := range discovery.OSDFlags {
-		detail.OSDFlags = append(detail.OSDFlags, CephClusterOSDFlagEntryResponse{
-			Name:         flag.Name,
-			DiscoveredAt: flag.DiscoveredAt,
-		})
-	}
-
-	for _, daemon := range discovery.Daemons {
-		detail.Daemons = append(detail.Daemons, CephDiscoveredRecordResponse{
-			Key:          daemon.Name,
-			Type:         daemon.DaemonType,
-			Hostname:     daemon.Hostname,
-			Status:       daemon.Status,
-			Payload:      jsonPayload(daemon.Payload),
-			DiscoveredAt: daemon.DiscoveredAt,
-		})
-	}
-
-	for _, service := range discovery.Services {
-		detail.Services = append(detail.Services, CephDiscoveredRecordResponse{
-			Key:          service.ServiceName,
-			Type:         service.ServiceType,
-			Payload:      jsonPayload(service.Payload),
-			DiscoveredAt: service.DiscoveredAt,
-		})
-	}
-
-	for _, mon := range discovery.Mons {
-		detail.Mons = append(detail.Mons, CephDiscoveredRecordResponse{
-			Key:          mon.Name,
-			Type:         mon.Rank,
-			Status:       mon.Status,
-			Payload:      jsonPayload(mon.Payload),
-			DiscoveredAt: mon.DiscoveredAt,
-		})
-	}
-
-	for _, mgr := range discovery.Mgrs {
-		detail.Mgrs = append(detail.Mgrs, CephDiscoveredRecordResponse{
-			Key:          mgr.Name,
-			Hostname:     mgr.Hostname,
-			Status:       mgr.Status,
-			Payload:      jsonPayload(mgr.Payload),
-			DiscoveredAt: mgr.DiscoveredAt,
-		})
-	}
-
-	for _, mds := range discovery.MDSs {
-		detail.MDSs = append(detail.MDSs, CephDiscoveredRecordResponse{
-			Key:          mds.Name,
-			Type:         mds.Filesystem,
-			Hostname:     mds.Hostname,
-			Status:       mds.State,
-			Payload:      jsonPayload(mds.Payload),
-			DiscoveredAt: mds.DiscoveredAt,
-		})
-	}
-
-	for _, module := range discovery.MgrModules {
-		status := "disabled"
-		if module.Enabled {
-			status = "enabled"
+	items := make([]capabilityDTO, 0, len(rows))
+	for _, row := range rows {
+		var details any
+		if row.DetailsJSON != nil {
+			_ = json.Unmarshal([]byte(*row.DetailsJSON), &details)
 		}
-		detail.MgrModules = append(detail.MgrModules, CephDiscoveredRecordResponse{
-			Key:          module.Name,
-			Status:       status,
-			Payload:      jsonPayload(module.Payload),
-			DiscoveredAt: module.DiscoveredAt,
-		})
+		items = append(items, capabilityDTO{Name: row.Name, Supported: row.Supported, Reason: row.Reason, Version: row.Version, Details: details, ObservedAt: row.ObservedAt})
 	}
-
-	for _, config := range discovery.Configuration {
-		detail.Configuration = append(detail.Configuration, CephDiscoveredRecordResponse{
-			Key:          strings.TrimSpace(config.Who + " " + config.Name),
-			Type:         config.Level,
-			Payload:      jsonPayload(config.Payload),
-			DiscoveredAt: config.DiscoveredAt,
-		})
-	}
-
-	return detail
+	WriteSuccess(w, 200, "success", map[string]any{"items": items, "pagination": map[string]any{"next_cursor": nil}, "meta": map[string]string{"request_id": RequestID(r)}})
 }
 
-func jsonPayload(payload string) any {
-	var decoded any
-	if err := json.Unmarshal([]byte(payload), &decoded); err != nil {
-		return payload
-	}
-	return decoded
+func toClusterDTO(row store.CephCluster) clusterDTO {
+	return clusterDTO{ClusterID: row.ID, Name: row.Name, MonitorAddresses: row.MonitorAddresses, ClientUsername: row.ClientUsername, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}
 }
 
-func toCephClusterResponse(cluster store.CephCluster) CephClusterResponse {
-	return CephClusterResponse{
-		ID:          cluster.ID,
-		Name:        cluster.Name,
-		Description: "",
-		FSID:        "",
-		Enabled:     true,
-		Dashboard: DashboardConnectionResponse{
-			Enabled:     true,
-			BaseURL:     "",
-			Username:    cluster.DashboardUsername,
-			Password:    cluster.DashboardPassword,
-			PasswordSet: cluster.DashboardPassword != "",
-			InsecureTLS: false,
-		},
-		Command: CommandConnectionResponse{
-			Enabled:           true,
-			Bin:               service.DefaultCephCommandBin,
-			Cluster:           "",
-			Conf:              "",
-			MonitorHost:       cluster.MonitorHost,
-			Name:              service.DefaultCephCommandName,
-			Keyring:           cluster.Keyring,
-			KeyringContentSet: cluster.Keyring != "",
-			TimeoutSeconds:    service.DefaultCephCommandTimeoutSeconds,
-		},
-		CreatedAt: cluster.CreatedAt,
-		UpdatedAt: cluster.UpdatedAt,
-	}
-}
-
-func (h *Handler) ClusterHealthFull(w http.ResponseWriter, r *http.Request) {
-	health, err := h.ceph.HealthFull(r.Context())
-	if err != nil {
-		writeCephError(w, err)
+func clusterError(w http.ResponseWriter, r *http.Request, err error) {
+	if errors.Is(err, clusterservice.ErrNotFound) {
+		WriteError(w, r, 404, "cluster_not_found", "cluster was not found", false, nil)
 		return
 	}
-
-	writeJSON(w, http.StatusOK, health)
+	WriteError(w, r, 400, "invalid_request", err.Error(), false, nil)
 }

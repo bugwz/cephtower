@@ -8,14 +8,14 @@ Ceph 클러스터용 웹 관리 콘솔
 
 [![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go)](../../backend/go.mod)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](../../frontend/package.json)
-[![Ceph](https://img.shields.io/badge/Ceph-Dashboard%20API-EF5C55)](https://docs.ceph.com/)
+[![Ceph](https://img.shields.io/badge/Ceph-Native%20API-EF5C55)](https://docs.ceph.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](../../LICENSE)
 
 [简体中文](../../README.md) | [繁體中文](README-zh-TW.md) | [English](README-en.md) | [日本語](README-ja.md) | [Français](README-fr.md) | [Deutsch](README-de.md) | [Español](README-es.md) | [Português](README-pt.md) | [Русский](README-ru.md) | [**한국어**](README-ko.md)
 
 </div>
 
-CephTower는 Go 백엔드와 React / Ant Design 프런트엔드를 사용하여 Ceph Dashboard API와
+CephTower는 Go 백엔드와 React / Ant Design 프런트엔드를 사용하여 native Ceph APIs와
 Ceph 명령으로 하나 이상의 Ceph 클러스터를 관리합니다. 백엔드는 버전이 지정된 REST API,
 영속성, 백그라운드 수집 및 내장 Web UI를 제공하며 프런트엔드는 동일 출처 `/api`를 사용합니다.
 
@@ -23,10 +23,10 @@ Ceph 명령으로 하나 이상의 Ceph 클러스터를 관리합니다. 백엔�
 
 - 최초 실행 마법사: SQLite/MySQL 선택, 연결 테스트, 관리자 계정 생성.
 - 인증: 12시간 Bearer Token 세션, 관리자/일반 사용자 역할, 세분화된 읽기 및 사용자 관리 권한. SMTP 구성 시 이메일 코드로 비밀번호 재설정 가능.
-- 다중 클러스터 연결: MON 주소, `client.admin` 키와 Dashboard 자격 증명을 저장하고 호스트, 데몬, 서비스, MON, MGR, MDS, OSD, Mgr 모듈 및 클러스터 설정을 자동 검색·캐시.
+- 다중 클러스터 연결: MON 주소, `client.admin` 키와 암호화된 CephX 자격 증명을 저장하고 호스트, 데몬, 서비스, MON, MGR, MDS, OSD, Mgr 모듈 및 클러스터 설정을 자동 검색·캐시.
 - 클러스터 UI: 연결/상세 정보, 호스트, MON, MGR, OSD, MDS 관리. Mgr 모듈 전환, 데몬 작업, OSD in/out, reweight, scrub 지원.
 - 데이터 수집: 모듈별 소스, 주기, 시간 제한, 재시도, 우선순위를 설정하고 즉시 실행 및 기록 확인 가능.
-- 백엔드 통합: 클러스터, Pool/RBD, CephFS/NFS/SMB, RGW, iSCSI, NVMe-oF, Prometheus/Grafana, Dashboard 사용자·역할·설정 API.
+- 백엔드 통합: 클러스터, Pool/RBD, CephFS/NFS/SMB, RGW, iSCSI, NVMe-oF, Prometheus/Grafana, CephTower 사용자·역할 및 네이티브 통합 API.
 - 프로덕션 빌드는 프런트엔드를 Go 실행 파일에 내장하여 하나의 HTTP 서비스로 UI와 API를 제공.
 
 > [!IMPORTANT]
@@ -45,7 +45,7 @@ CephTower/
 │       ├── api/v1/              # REST 라우트와 핸들러
 │       ├── service/             # 인증, 클러스터, 수집, 설정, 초기화
 │       ├── store/               # GORM, 마이그레이션, SQLite/MySQL
-│       ├── integration/ceph/    # Ceph Dashboard 및 명령 클라이언트
+│       ├── integration/ceph/    # Ceph 명령, 게이트웨이 및 모니터링 클라이언트
 │       ├── task/                # 백그라운드 작업과 스케줄링
 │       └── webui/               # 내장 프런트엔드 자산
 ├── frontend/src/                # React 콘솔, 라우트, 페이지, API 클라이언트
@@ -65,7 +65,7 @@ CephTower/
 | Node.js | 20 | 프런트엔드 개발과 빌드 |
 | npm | 10 | 의존성 관리 |
 | C 툴체인 | OS에 맞는 버전 | CGO SQLite 드라이버에 필요 |
-| Ceph | Dashboard API 활성화 | MON 주소와 충분한 권한의 keyring도 필요 |
+| Ceph | native Ceph APIs 활성화 | MON 주소와 충분한 권한의 CephX client keys도 필요 |
 | MySQL | 선택 사항 | 기본 SQLite를 사용하지 않을 때 필요 |
 
 ## 4. 빠른 시작
@@ -108,7 +108,7 @@ make build
 |---|---|
 | `server` | 수신 주소, 포트, 런타임 디렉터리(기본 `0.0.0.0:36900`, `/opt/cephtower`) |
 | `log` | 출력, 수준, 형식, 순환, 보존 기간 |
-| `runtime` | Ceph 구성, keyring 등 런타임 파일 디렉터리 |
+| `runtime` | Ceph 구성, CephX client keys 등 런타임 파일 디렉터리 |
 | `database` | SQLite 파일 또는 MySQL 연결/TLS. 시작 시 자동 마이그레이션 |
 | `smtp` | 선택적 비밀번호 재설정 메일 서비스 |
 

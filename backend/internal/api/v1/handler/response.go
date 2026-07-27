@@ -2,183 +2,64 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
 	"net/http"
-	"net/url"
-	"strconv"
-
-	cephproxyservice "cephtower/backend/internal/service/cephproxy"
 )
 
-func intQuery(query url.Values, name string) *int {
-	value := query.Get(name)
-	if value == "" {
-		return nil
-	}
-
-	parsed, err := strconv.Atoi(value)
-	if err != nil {
-		return nil
-	}
-
-	return &parsed
-}
-
-func boolQuery(query url.Values, name string) *bool {
-	value := query.Get(name)
-	if value == "" {
-		return nil
-	}
-
-	parsed, err := strconv.ParseBool(value)
-	if err != nil {
-		return nil
-	}
-
-	return &parsed
-}
-
-func decodeRequestJSON(w http.ResponseWriter, r *http.Request, out any) bool {
-	decoder := json.NewDecoder(r.Body)
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(out); err != nil {
-		writeError(w, http.StatusBadRequest, err)
-		return false
-	}
-
-	return true
-}
-
-func writeJSON(w http.ResponseWriter, status int, payload any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(httpStatusForAPIResponse(status))
-	_ = json.NewEncoder(w).Encode(apiResponseForStatus(status, payload))
-}
-
-// WriteJSON writes the shared API response envelope for server middleware.
-func WriteJSON(w http.ResponseWriter, status int, payload any) {
-	writeJSON(w, status, payload)
-}
-
-func writeRawJSON(w http.ResponseWriter, status int, payload json.RawMessage) {
-	if len(payload) == 0 {
-		writeJSON(w, status, nil)
-		return
-	}
-
-	var data any
-	if err := json.Unmarshal(payload, &data); err != nil {
-		data = payload
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(httpStatusForAPIResponse(status))
-	_ = json.NewEncoder(w).Encode(apiResponseForStatus(status, data))
-}
-
-func httpStatusForAPIResponse(status int) int {
-	return status
-}
-
-func writeError(w http.ResponseWriter, status int, err error) {
-	writeJSON(w, status, errorResponse{Error: err.Error()})
-}
-
-func writeCephError(w http.ResponseWriter, err error) {
-	if status, ok := cephproxyservice.ErrorStatus(err); ok {
-		if status == 0 {
-			status = http.StatusBadGateway
-		}
-		writeError(w, status, err)
-		return
-	}
-
-	writeError(w, http.StatusBadGateway, err)
-}
-
-type apiResponse struct {
+type APIResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Data    any    `json:"data"`
 }
 
-type messageResponse struct {
-	Message string `json:"message"`
+type APIErrorData struct {
+	ErrorCode string         `json:"error_code"`
+	Retryable bool           `json:"retryable"`
+	Details   map[string]any `json:"details,omitempty"`
+	RequestID string         `json:"request_id"`
 }
 
-type errorResponse struct {
-	Error string `json:"error"`
-}
-
-// dashboardRequest is the normalized input passed to Dashboard-backed
-// handlers. Dashboard APIs intentionally retain their JSON body because the
-// payload schema is owned by the connected Ceph version.
-type dashboardRequest struct {
-	PathParameters dashboardPathParameters
-	Query          url.Values
-	Body           json.RawMessage
-}
-
-type dashboardPathParameters map[string]string
-
-// dashboardResponse preserves Dashboard's version-dependent JSON payload
-// within CephTower's common API response envelope.
-type dashboardResponse struct {
-	Code    int             `json:"code"`
-	Message string          `json:"message"`
-	Data    json.RawMessage `json:"data"`
-}
-
-func writeDashboardJSON(w http.ResponseWriter, status int, payload json.RawMessage) {
-	if len(payload) == 0 {
-		payload = json.RawMessage("null")
+func WriteSuccess(w http.ResponseWriter, status int, message string, data any) {
+	if message == "" {
+		message = "success"
 	}
+	write(w, status, APIResponse{Code: 0, Message: message, Data: data})
+}
+
+func WriteError(w http.ResponseWriter, r *http.Request, status int, errorCode, message string, retryable bool, details map[string]any) {
+	if message == "" {
+		message = http.StatusText(status)
+	}
+	write(w, status, APIResponse{Code: status, Message: message, Data: APIErrorData{ErrorCode: errorCode, Retryable: retryable, Details: details, RequestID: RequestID(r)}})
+}
+
+func WriteJSON(w http.ResponseWriter, status int, payload any) {
+	if status >= 400 {
+		WriteError(w, &http.Request{}, status, "http_error", fmt.Sprint(payload), false, nil)
+		return
+	}
+	WriteSuccess(w, status, "success", payload)
+}
+
+func write(w http.ResponseWriter, status int, response APIResponse) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(httpStatusForAPIResponse(status))
-	_ = json.NewEncoder(w).Encode(dashboardResponse{
-		Code:    0,
-		Message: "success",
-		Data:    payload,
-	})
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
-func apiResponseForStatus(status int, payload any) apiResponse {
-	if status >= http.StatusBadRequest {
-		return apiResponse{
-			Code:    status,
-			Message: responseMessage(payload, http.StatusText(status)),
-			Data:    nil,
-		}
+func DecodeStrict(w http.ResponseWriter, r *http.Request, out any) bool {
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(out); err != nil {
+		WriteError(w, r, http.StatusBadRequest, "invalid_request", err.Error(), false, nil)
+		return false
 	}
-
-	return apiResponse{
-		Code:    0,
-		Message: responseMessage(payload, "success"),
-		Data:    payload,
+	var extra any
+	if err := decoder.Decode(&extra); !errors.Is(err, io.EOF) {
+		WriteError(w, r, http.StatusBadRequest, "invalid_request", "request body must contain one JSON value", false, nil)
+		return false
 	}
-}
-
-func responseMessage(payload any, fallback string) string {
-	if response, ok := payload.(messageResponse); ok && response.Message != "" {
-		return response.Message
-	}
-	if response, ok := payload.(errorResponse); ok && response.Error != "" {
-		return response.Error
-	}
-	if values, ok := payload.(map[string]string); ok {
-		for _, key := range []string{"message", "error"} {
-			if message := values[key]; message != "" {
-				return message
-			}
-		}
-	}
-	if values, ok := payload.(map[string]any); ok {
-		for _, key := range []string{"message", "error"} {
-			if message, ok := values[key].(string); ok && message != "" {
-				return message
-			}
-		}
-	}
-	if action, ok := payload.(MessageResponse); ok && action.Message != "" {
-		return action.Message
-	}
-	return fallback
+	return true
 }

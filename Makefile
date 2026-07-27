@@ -9,6 +9,8 @@ FRONTEND_PORT ?= 36901
 BACKEND_STATIC_DIR := $(BACKEND_DIR)/internal/webui/frontend/dist
 DEV_BACKEND_BIN := $(BIN_DIR)/$(APP_NAME)-dev
 GO_MIN_VERSION := 1.26
+GO_CACHE ?= $(CURDIR)/.gocache
+GO_MODULE_CACHE ?= $(CURDIR)/.gomodcache
 NODE_MIN_MAJOR := 20
 NPM_MIN_MAJOR := 10
 
@@ -65,7 +67,7 @@ build: check-env build-frontend build-backend
 
 build-backend: check-backend-env build-frontend
 	mkdir -p $(BIN_DIR)
-	cd $(BACKEND_DIR) && go build -o ../$(BIN_DIR)/$(APP_NAME) ./cmd
+	cd $(BACKEND_DIR) && env GOCACHE=$(GO_CACHE) GOMODCACHE=$(GO_MODULE_CACHE) go build -o ../$(BIN_DIR)/$(APP_NAME) ./cmd
 
 build-frontend: test-frontend
 	rm -rf $(BACKEND_STATIC_DIR)
@@ -75,17 +77,15 @@ build-frontend: test-frontend
 
 ensure-run-config:
 	@if [ ! -f "$(RUN_CONFIG)" ]; then \
-		mkdir -p "$$(dirname "$(RUN_CONFIG)")"; \
-		tmp="$(RUN_CONFIG).tmp"; \
-		awk 'BEGIN { in_server = 0 } /^server:/ { in_server = 1 } in_server && /^    dir:/ { $$0 = "    dir: \"./app\""; in_server = 0 } { print }' "$(CONFIG_TEMPLATE)" > "$$tmp"; \
-		mv "$$tmp" "$(RUN_CONFIG)"; \
+		cd $(BACKEND_DIR) && env GOCACHE=$(GO_CACHE) GOMODCACHE=$(GO_MODULE_CACHE) go run ./tools/config-init \
+			-template ../$(CONFIG_TEMPLATE) -target ../$(RUN_CONFIG) -server-dir ./app; \
 		echo "Created $(RUN_CONFIG) from $(CONFIG_TEMPLATE)."; \
 	fi
 
 run: ensure-run-config check-env ensure-frontend-deps
 	@set -e; \
 	mkdir -p $(BIN_DIR); \
-	(cd $(BACKEND_DIR) && go build -o ../$(DEV_BACKEND_BIN) ./cmd); \
+	(cd $(BACKEND_DIR) && env GOCACHE=$(GO_CACHE) GOMODCACHE=$(GO_MODULE_CACHE) go build -o ../$(DEV_BACKEND_BIN) ./cmd); \
 	trap 'kill 0' INT TERM EXIT; \
 	(./$(DEV_BACKEND_BIN) -config $(CONFIG)) & \
 	(cd $(FRONTEND_DIR) && npm run dev -- --host 0.0.0.0 --port $(FRONTEND_PORT) --strictPort) & \
@@ -93,7 +93,7 @@ run: ensure-run-config check-env ensure-frontend-deps
 
 run-backend: check-backend-env
 	mkdir -p $(BIN_DIR)
-	cd $(BACKEND_DIR) && go build -o ../$(DEV_BACKEND_BIN) ./cmd
+	cd $(BACKEND_DIR) && env GOCACHE=$(GO_CACHE) GOMODCACHE=$(GO_MODULE_CACHE) go build -o ../$(DEV_BACKEND_BIN) ./cmd
 	./$(DEV_BACKEND_BIN) -config $(CONFIG)
 
 run-frontend: ensure-frontend-deps
@@ -102,7 +102,8 @@ run-frontend: ensure-frontend-deps
 test: test-backend test-frontend
 
 test-backend: check-backend-env
-	cd $(BACKEND_DIR) && go test ./...
+	cd $(BACKEND_DIR) && env GOCACHE=$(GO_CACHE) GOMODCACHE=$(GO_MODULE_CACHE) go test ./...
+	cd $(BACKEND_DIR) && env GOCACHE=$(GO_CACHE) GOMODCACHE=$(GO_MODULE_CACHE) go run ./tools/openapi-gen -check -output api/openapi-v1.yaml
 
 test-frontend: ensure-frontend-deps
 	cd $(FRONTEND_DIR) && npm run build

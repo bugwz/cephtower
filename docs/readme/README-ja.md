@@ -8,7 +8,7 @@ Ceph クラスター用 Web 管理コンソール
 
 [![Go](https://img.shields.io/badge/Go-1.26+-00ADD8?logo=go)](../../backend/go.mod)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](../../frontend/package.json)
-[![Ceph](https://img.shields.io/badge/Ceph-Dashboard%20API-EF5C55)](https://docs.ceph.com/)
+[![Ceph](https://img.shields.io/badge/Ceph-Native%20API-EF5C55)](https://docs.ceph.com/)
 [![License](https://img.shields.io/badge/License-MIT-green)](../../LICENSE)
 
 [简体中文](../../README.md) | [繁體中文](README-zh-TW.md) | [English](README-en.md) | [**日本語**](README-ja.md) | [Français](README-fr.md) | [Deutsch](README-de.md) | [Español](README-es.md) | [Português](README-pt.md) | [Русский](README-ru.md) | [한국어](README-ko.md)
@@ -16,7 +16,7 @@ Ceph クラスター用 Web 管理コンソール
 </div>
 
 CephTower は Go バックエンドと React / Ant Design フロントエンドを組み合わせ、
-Ceph Dashboard API と Ceph コマンドを通じて複数の Ceph クラスターを管理します。
+native Ceph APIs と Ceph コマンドを通じて複数の Ceph クラスターを管理します。
 バックエンドはバージョン付き REST API、永続化、バックグラウンド収集、組み込み
 Web UI を提供し、フロントエンドは同一オリジンの `/api` のみを使用します。
 
@@ -24,10 +24,10 @@ Web UI を提供し、フロントエンドは同一オリジンの `/api` の�
 
 - 初回起動ウィザード：SQLite/MySQL の選択、接続テスト、管理者作成。
 - 認証：12 時間の Bearer Token セッション、管理者/一般ユーザーロール、読み取り・ユーザー管理権限。SMTP 設定時はメールコードでパスワードをリセット可能。
-- 複数クラスター接続：MON アドレス、`client.admin` キー、Dashboard 認証情報を保存し、ホスト、デーモン、サービス、MON、MGR、MDS、OSD、Mgr モジュール、クラスター設定を自動検出・キャッシュ。
+- 複数クラスター接続：MON アドレス、`client.admin` キー、暗号化された CephX 認証情報を保存し、ホスト、デーモン、サービス、MON、MGR、MDS、OSD、Mgr モジュール、クラスター設定を自動検出・キャッシュ。
 - クラスター UI：接続と詳細、ホスト、MON、MGR、OSD、MDS 管理。Mgr モジュール切替、デーモン操作、OSD in/out、reweight、scrub をサポート。
 - データ収集：モジュールごとに取得元、周期、タイムアウト、再試行、優先度を設定し、手動実行と履歴確認が可能。
-- バックエンド統合：クラスター、Pool/RBD、CephFS/NFS/SMB、RGW、iSCSI、NVMe-oF、Prometheus/Grafana、Dashboard のユーザー、ロール、設定 API。
+- バックエンド統合：クラスター、Pool/RBD、CephFS/NFS/SMB、RGW、iSCSI、NVMe-oF、Prometheus/Grafana、CephTower のユーザー、ロール、ネイティブ統合 API。
 - 本番ビルドではフロントエンドを Go 実行ファイルに埋め込み、単一 HTTP サービスで UI と API を配信。
 
 > [!IMPORTANT]
@@ -46,7 +46,7 @@ CephTower/
 │       ├── api/v1/              # REST ルートとハンドラー
 │       ├── service/             # 認証、クラスター、収集、設定、初期化
 │       ├── store/               # GORM、マイグレーション、SQLite/MySQL
-│       ├── integration/ceph/    # Ceph Dashboard・コマンドクライアント
+│       ├── integration/ceph/    # Ceph コマンド・ゲートウェイ・監視クライアント
 │       ├── task/                # バックグラウンドジョブとスケジュール
 │       └── webui/               # 組み込みフロントエンド資産
 ├── frontend/src/                # React コンソール、ルート、ページ、API クライアント
@@ -66,7 +66,7 @@ CephTower/
 | Node.js | 20 | フロントエンド開発とビルド |
 | npm | 10 | 依存関係管理 |
 | C ツールチェーン | OS 対応版 | CGO SQLite ドライバーに必要 |
-| Ceph | Dashboard API 有効 | MON アドレスと十分な権限の keyring も必要 |
+| Ceph | native Ceph APIs 有効 | MON アドレスと十分な権限の CephX client keys も必要 |
 | MySQL | 任意 | デフォルトの SQLite を使わない場合 |
 
 ## 4. クイックスタート
@@ -110,7 +110,7 @@ make build
 |---|---|
 | `server` | リッスン先、ポート、実行ディレクトリ（既定：`0.0.0.0:36900`、`/opt/cephtower`） |
 | `log` | 出力、レベル、形式、ローテーション、保持期間 |
-| `runtime` | Ceph 設定、keyring などの実行時ファイル |
+| `runtime` | Ceph 設定、CephX client keys などの実行時ファイル |
 | `database` | SQLite または MySQL 接続/TLS。起動時に自動マイグレーション |
 | `smtp` | パスワードリセット用の任意メールサービス |
 

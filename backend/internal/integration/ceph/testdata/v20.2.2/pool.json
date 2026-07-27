@@ -1,0 +1,1 @@
+[{"pool":1,"pool_name":"cephfs.metadata","type":1,"size":3,"min_size":2,"pg_num":1,"pg_placement_num":1,"crush_rule":"replicated_rule"}]

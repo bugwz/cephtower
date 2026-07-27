@@ -2,66 +2,71 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
+	"net/http"
+	"net/url"
 
 	authservice "cephtower/backend/internal/service/auth"
-	cephproxyservice "cephtower/backend/internal/service/cephproxy"
 	clusterservice "cephtower/backend/internal/service/cluster"
-	settingsservice "cephtower/backend/internal/service/settings"
-	setupservice "cephtower/backend/internal/service/setup"
+	endpointservice "cephtower/backend/internal/service/endpoint"
+	operationservice "cephtower/backend/internal/service/operation"
 	"cephtower/backend/internal/store"
 )
 
-type CephClient = cephproxyservice.Client
-
 type Handler struct {
-	ceph           CephClient
-	clusters       *clusterservice.Service
-	auth           AuthService
-	settings       *settingsservice.Service
-	systemSettings *settingsservice.SystemService
-	setup          *setupservice.Service
+	Auth       *authservice.Service
+	Clusters   *clusterservice.Service
+	Operations *operationservice.Service
+	Endpoints  *endpointservice.Service
+	External   ExternalReader
+	Database   func() *store.Database
 }
 
-func New(cephClient CephClient, deps Dependencies) *Handler {
-	settingsService := deps.SettingsService
-	if settingsService == nil && cephClient != nil {
-		settingsService = settingsservice.New(cephClient, nil)
-	}
-	return &Handler{
-		ceph: cephClient, clusters: deps.ClusterService, auth: deps.AuthService,
-		settings: settingsService, systemSettings: deps.SystemSettingsService,
-		setup: deps.SetupService,
-	}
+type ExternalReader interface {
+	Read(context.Context, uint64, string, string, url.Values) (any, error)
 }
 
 type Dependencies struct {
-	ClusterService        *clusterservice.Service
-	AuthService           AuthService
-	SettingsService       *settingsservice.Service
-	SystemSettingsService *settingsservice.SystemService
-	SetupService          *setupservice.Service
+	Auth       *authservice.Service
+	Clusters   *clusterservice.Service
+	Operations *operationservice.Service
+	Endpoints  *endpointservice.Service
+	External   ExternalReader
+	Database   func() *store.Database
 }
 
-type AuthService interface {
-	Login(context.Context, string, string) (authservice.LoginResult, error)
-	UserForToken(context.Context, string) (store.User, error)
-	ListUsers(context.Context) ([]store.User, error)
-	CreateUser(context.Context, authservice.CreateUserInput) (store.User, error)
-	UpdateUser(context.Context, uint, authservice.UpdateUserInput) (store.User, error)
-	RequestPasswordReset(context.Context, string) error
-	ConfirmPasswordReset(context.Context, string, string, string) error
+func New(deps Dependencies) *Handler {
+	return &Handler{Auth: deps.Auth, Clusters: deps.Clusters, Operations: deps.Operations, Endpoints: deps.Endpoints, External: deps.External, Database: deps.Database}
 }
 
-type TaskSubmitter func(string, func(context.Context) error) error
+type userContextKey struct{}
 
-type MessageResponse struct {
-	Message string `json:"message"`
+type clusterContextKey struct{}
+
+type requestIDContextKey struct{}
+
+func WithUser(ctx context.Context, user store.User) context.Context {
+	return context.WithValue(ctx, userContextKey{}, user)
 }
 
-type ErrorResponse struct {
-	Error string `json:"error"`
+func CurrentUser(r *http.Request) (store.User, bool) {
+	user, ok := r.Context().Value(userContextKey{}).(store.User)
+	return user, ok
 }
 
-type RawJSONRequest = json.RawMessage
-type RawJSONResponse = json.RawMessage
+func WithClusterID(ctx context.Context, id uint64) context.Context {
+	return context.WithValue(ctx, clusterContextKey{}, id)
+}
+
+func ClusterID(r *http.Request) (uint64, bool) {
+	id, ok := r.Context().Value(clusterContextKey{}).(uint64)
+	return id, ok
+}
+
+func WithRequestID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, requestIDContextKey{}, id)
+}
+
+func RequestID(r *http.Request) string {
+	id, _ := r.Context().Value(requestIDContextKey{}).(string)
+	return id
+}

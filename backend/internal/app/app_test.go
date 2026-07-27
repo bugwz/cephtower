@@ -2,28 +2,27 @@ package app
 
 import (
 	"context"
-	"sync/atomic"
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
-
-	"cephtower/backend/internal/task"
+	"time"
 )
 
-func TestCloseIsIdempotent(t *testing.T) {
-	var logCloses atomic.Int32
-	application := &App{
-		tasks: task.NewManager(1),
-		closeLog: func() error {
-			logCloses.Add(1)
-			return nil
-		},
-	}
-	if err := application.Close(context.Background()); err != nil {
+func TestNewComposesOfflineRuntime(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "config.yaml")
+	data := fmt.Sprintf("server:\n  address: 127.0.0.1\n  port: 36900\n  dir: %q\nlog:\n  output: stdout\ndatabase:\n  encryption_key: 0123456789abcdefghijklmnopqrstuv\n  engine: sqlite\n  sqlite:\n    path: data/cephtower.db\n", dir)
+	if err := os.WriteFile(configPath, []byte(data), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := application.Close(context.Background()); err != nil {
+	application, err := New(configPath)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if got := logCloses.Load(); got != 1 {
-		t.Fatalf("log close count = %d, want 1", got)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := application.Close(ctx); err != nil {
+		t.Fatal(err)
 	}
 }

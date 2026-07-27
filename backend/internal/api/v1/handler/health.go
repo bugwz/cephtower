@@ -2,23 +2,14 @@ package handler
 
 import "net/http"
 
-func (h *Handler) Healthz(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusOK, HealthResponse{Status: "ok"})
+func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
+	WriteSuccess(w, http.StatusOK, "success", map[string]string{"status": "ok"})
 }
 
-func (h *Handler) Readyz(w http.ResponseWriter, r *http.Request) {
-	if h.setup == nil {
-		writeJSON(w, http.StatusServiceUnavailable, HealthResponse{Status: "not_ready"})
+func (h *Handler) Ready(w http.ResponseWriter, r *http.Request) {
+	if h.Database == nil || h.Database() == nil {
+		WriteError(w, r, http.StatusServiceUnavailable, "not_ready", "database is unavailable", true, nil)
 		return
 	}
-	initialized, _, err := h.setup.Status(r.Context())
-	if err != nil || !initialized {
-		writeJSON(w, http.StatusServiceUnavailable, HealthResponse{Status: "not_ready"})
-		return
-	}
-	writeJSON(w, http.StatusOK, HealthResponse{Status: "ready"})
-}
-
-type HealthResponse struct {
-	Status string `json:"status"`
+	WriteSuccess(w, http.StatusOK, "success", map[string]string{"status": "ready"})
 }

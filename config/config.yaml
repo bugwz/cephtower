@@ -48,6 +48,9 @@ runtime:
 
 # 数据库配置。服务启动时会自动执行数据库表结构迁移
 database:
+    # 数据库敏感字段加密密钥；部署时必须填写 32 个 ASCII 字符
+    encryption_key: ""
+
     # 数据库类型
     # 可选配置：sqlite、mysql
     # 默认配置：sqlite

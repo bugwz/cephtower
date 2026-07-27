@@ -4,14 +4,15 @@ import "cephtower/backend/internal/api/v1/handler"
 
 func osdRoutes(h *handler.Handler) []Route {
 	return []Route{
-		{"GET", "/osd", h.ListOSDs},
-		{"GET", "/osd/flag", h.OSDFlags},
-		{"GET", "/osd/{id}", h.OSDDetails},
-		{"GET", "/osd/{id}/device", h.ProxyPath},
-		{"GET", "/osd/{id}/histogram", h.ProxyPath},
-		{"PUT", "/osd/{id}/mark", h.ProxyPath},
-		{"POST", "/osd/{id}/reweight", h.ProxyPath},
-		{"POST", "/osd/{id}/scrub", h.ProxyPath},
-		{"GET", "/osd/{id}/smart", h.ProxyPath},
+		{"GET", "/osds", h.ListOSDs},
+		{"GET", "/osd", h.GetOSD},
+		{"GET", "/osd/flag", h.GetOSDFlag},
+		{"PATCH", "/osd/flag", h.UpdateOSDFlag},
+		{"POST", "/osd/action", h.RunOSDAction},
+		{"POST", "/osd/removal/check", h.CheckOSDRemoval},
+		{"DELETE", "/osd", h.DeleteOSD},
+		{"GET", "/osd/removals", h.ListOSDRemovals},
+		{"POST", "/osd/deployment/preview", h.PreviewOSDDeployment},
+		{"POST", "/osd/deployment", h.CreateOSDDeployment},
 	}
 }

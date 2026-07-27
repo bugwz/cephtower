@@ -1,0 +1,1 @@
+[{"daemon_name":"mgr.ceph-node-1.x","daemon_type":"mgr","hostname":"ceph-node-1","status_desc":"running","version":"20.2.2","container_image_name":"quay.io/ceph/ceph:v20.2.2"}]

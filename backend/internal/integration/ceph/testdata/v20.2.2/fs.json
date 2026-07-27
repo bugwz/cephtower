@@ -1,0 +1,1 @@
+{"standbys":[{"name":"mds.standby"}],"filesystems":[{"mdsmap":{"fs_name":"cephfs","id":1,"max_mds":1,"in":[0],"up":{"mds_0":123},"info":{"gid_123":{"name":"mds.active","rank":0,"state":"up:active"}}}}]}

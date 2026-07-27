@@ -1,0 +1,1 @@
+[{"device_id":"device-1","hostname":"ceph-node-1","path":"/dev/sdb","available":true,"rejected_reasons":[],"device_type":"hdd","model":"fixture-disk","vendor":"fixture","serial":"SANITIZED","size_bytes":107374182400,"rotational":true,"metadata":{"source":"sanitized-fixture"}}]
