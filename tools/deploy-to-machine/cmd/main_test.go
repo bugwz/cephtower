@@ -1,11 +1,43 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestHelpOnlyDocumentsConfigAndReplace(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	if err := run([]string{"-h"}, strings.NewReader(""), &stdout, &stderr); err != nil {
+		t.Fatal(err)
+	}
+	usage := stdout.String()
+	for _, want := range []string{"--config", "--replace"} {
+		if !strings.Contains(usage, want) {
+			t.Fatalf("help output missing %q:\n%s", want, usage)
+		}
+	}
+	for _, unwanted := range []string{
+		"--host",
+		"--port",
+		"--user",
+		"--password",
+		"--known-hosts",
+		"--app-config",
+		"--release-dir",
+		"--non-interactive",
+	} {
+		if strings.Contains(usage, unwanted) {
+			t.Fatalf("help output still documents %q:\n%s", unwanted, usage)
+		}
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("help wrote to stderr:\n%s", stderr.String())
+	}
+}
 
 func TestParseReplace(t *testing.T) {
 	got, err := parseReplace("bin, conf,config,data,log")

@@ -56,18 +56,17 @@ type targetConfig struct {
 }
 
 type appConfig struct {
-	Config     string `yaml:"config"`
-	ReleaseDir string `yaml:"release_dir"`
+	Config     string
+	ReleaseDir string
 }
 
 type options struct {
-	RepoRoot       string
-	ToolDir        string
-	ConfigPath     string
-	Target         targetConfig
-	App            appConfig
-	Replace        replaceSet
-	NonInteractive bool
+	RepoRoot   string
+	ToolDir    string
+	ConfigPath string
+	Target     targetConfig
+	App        appConfig
+	Replace    replaceSet
 }
 
 type labState struct {
@@ -127,8 +126,11 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		return err
 	}
 	toolDir := filepath.Join(repoRoot, "tools", "deploy-to-machine")
-	opts, err := parseOptions(args, repoRoot, toolDir)
+	opts, err := parseOptions(args, repoRoot, toolDir, stdout)
 	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
 		return err
 	}
 
@@ -211,7 +213,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	return nil
 }
 
-func parseOptions(args []string, repoRoot, toolDir string) (options, error) {
+func parseOptions(args []string, repoRoot, toolDir string, output io.Writer) (options, error) {
 	defaults := options{
 		RepoRoot: repoRoot,
 		ToolDir:  toolDir,
@@ -226,17 +228,15 @@ func parseOptions(args []string, repoRoot, toolDir string) (options, error) {
 		},
 	}
 	flags := flag.NewFlagSet("deploy-to-machine", flag.ContinueOnError)
-	flags.SetOutput(os.Stdout)
+	flags.SetOutput(output)
+	flags.Usage = func() {
+		fmt.Fprintf(flags.Output(), "Usage: deploy-to-machine [--config path] [--replace list]\n\n")
+		fmt.Fprintln(flags.Output(), "Options:")
+		fmt.Fprintf(flags.Output(), "  --config path   deploy YAML configuration (default %s)\n", defaults.ConfigPath)
+		fmt.Fprintln(flags.Output(), "  --replace list  remote directories to replace: bin,conf,data,log,all")
+	}
 	configPath := flags.String("config", defaults.ConfigPath, "deploy YAML configuration")
-	host := flags.String("host", "", "target SSH host or IP")
-	port := flags.Int("port", 0, "target SSH port")
-	user := flags.String("user", "", "target SSH user")
-	password := flags.String("password", "", "target SSH password")
-	knownHosts := flags.String("known-hosts", "", "known_hosts file path")
-	appConfigPath := flags.String("app-config", "", "CephTower config.yaml path")
-	releaseDir := flags.String("release-dir", "", "CephTower release artifact directory")
 	replaceValue := flags.String("replace", "", "remote directories to replace: bin,conf,data,log,all")
-	nonInteractive := flags.Bool("non-interactive", false, "fail instead of prompting for lab node selection")
 	if err := flags.Parse(args); err != nil {
 		return options{}, err
 	}
@@ -245,33 +245,25 @@ func parseOptions(args []string, repoRoot, toolDir string) (options, error) {
 	}
 
 	opts := defaults
-	opts.ConfigPath = *configPath
+	opts.ConfigPath = resolvePath(*configPath, toolDir)
+	configDir := toolDir
 	if opts.ConfigPath != "" {
-		cfg, err := loadDeployConfig(resolvePath(opts.ConfigPath, toolDir))
+		cfg, err := loadDeployConfig(opts.ConfigPath)
 		if err != nil {
 			return options{}, err
 		}
+		configDir = filepath.Dir(opts.ConfigPath)
 		opts.Target = mergeDeployConfig(opts.Target, cfg)
 	}
-	overrideString(&opts.Target.Host, *host)
-	if *port != 0 {
-		opts.Target.Port = *port
-	}
-	overrideString(&opts.Target.User, *user)
-	overrideString(&opts.Target.Password, *password)
-	overrideString(&opts.Target.KnownHosts, *knownHosts)
-	overrideString(&opts.App.Config, *appConfigPath)
-	overrideString(&opts.App.ReleaseDir, *releaseDir)
-	opts.NonInteractive = *nonInteractive
 
 	replace, err := parseReplace(*replaceValue)
 	if err != nil {
 		return options{}, err
 	}
 	opts.Replace = replace
-	opts.Target.KnownHosts = resolvePath(opts.Target.KnownHosts, toolDir)
-	opts.App.Config = resolvePath(opts.App.Config, toolDir)
-	opts.App.ReleaseDir = resolvePath(opts.App.ReleaseDir, toolDir)
+	opts.Target.KnownHosts = resolvePath(opts.Target.KnownHosts, configDir)
+	opts.App.Config = resolvePath(opts.App.Config, configDir)
+	opts.App.ReleaseDir = resolvePath(opts.App.ReleaseDir, configDir)
 	return opts, nil
 }
 
@@ -400,7 +392,7 @@ func chooseLabTarget(opts options, stdin io.Reader, stdout io.Writer) (targetCon
 	}
 	nodes := flattenDiscoveredNodes(machines)
 	if len(nodes) == 0 {
-		return targetConfig{}, errors.New("no machines found; configure --host or create the aliyun lab first")
+		return targetConfig{}, errors.New("no machines found; configure host in deploy YAML or create the aliyun lab first")
 	}
 	fmt.Fprintln(stdout, "Available machines:")
 	for i, node := range nodes {
@@ -412,9 +404,6 @@ func chooseLabTarget(opts options, stdin io.Reader, stdout io.Writer) (targetCon
 		if host == "" {
 			fmt.Fprintln(stdout, "     warning: no SSH host or public IP is recorded for this node")
 		}
-	}
-	if opts.NonInteractive {
-		return targetConfig{}, errors.New("target host is not configured and --non-interactive was set")
 	}
 	fmt.Fprint(stdout, "Select a machine by number: ")
 	var line string

@@ -19,15 +19,15 @@
 
 ## 使用方式
 
-直接指定机器：
+复制 `config.yaml` 为 `config.local.yaml` 后填写固定机器信息，再部署：
 
 ```bash
 cd tools/deploy-to-machine
-go run ./cmd --host 203.0.113.10 --user root --password 'secret'
+go run ./cmd --config config.local.yaml
 ```
 
-不指定 `host` 时，工具会自动扫描 `tools/aliyun-ceph-lab/.state/*.json`，
-列出已记录的机器并让用户通过序号选择：
+配置文件中不指定 `host` 时，工具会自动扫描
+`tools/aliyun-ceph-lab/.state/*.json`，列出已记录的机器并让用户通过序号选择：
 
 ```bash
 cd tools/deploy-to-machine
@@ -57,8 +57,18 @@ YAML 顶层：
 - `password`：目标机器 SSH 密码；自动选择 lab 机器时从状态文件读取。
 - `known_hosts`：部署工具使用的 SSH known_hosts 文件。
 
-应用配置和 release 目录不写入 YAML。默认使用仓库根目录下的 `config/config.yaml`
-和 `dist/`；需要覆盖时使用 `--app-config` 和 `--release-dir`。
+应用配置固定使用仓库根目录下的 `config/config.yaml`，release 产物目录固定使用
+仓库根目录下的 `dist/`。
+
+命令行只提供 `--config` 和 `--replace`：
+
+```text
+Usage: deploy-to-machine [--config path] [--replace list]
+
+Options:
+  --config path   deploy YAML configuration
+  --replace list  remote directories to replace: bin,conf,data,log,all
+```
 
 工具日志输出到 stderr，格式与 `aliyun-ceph-lab` 一致：
 
