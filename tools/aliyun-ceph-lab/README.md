@@ -202,34 +202,97 @@ credentials:
 
 `list` 和 `create` 的最终 JSON 会包含节点 SSH 连接信息和本地日志路径。
 
-## Hook 环境变量
+## Hook 参数
+
+默认情况下，`go run ./cmd create` 会按下面的参数形式调用 hook。也可以把 hook
+复制到机器上手工执行：
+
+```bash
+sudo bash init-node.sh --help
+sudo bash deploy-ceph.sh --help
+```
 
 ### init-node.sh
 
-每台节点都会执行，可读取：
+每台节点都会执行，需要传入：
 
-- `CEPH_LAB_CLUSTER_NAME`
-- `CEPH_LAB_NODE_NAME`
-- `CEPH_LAB_NODE_NAMES`
-- `CEPH_LAB_PUBLIC_IPS`
-- `CEPH_LAB_PRIVATE_IPS`
-- `CEPH_LAB_DATA_DISK_COUNT`
-- `CEPH_LAB_SSH_PRIVATE_KEY_BASE64`
-- `CEPH_LAB_SSH_PUBLIC_KEY_BASE64`
+- `--cluster-name`：集群名，例如 `ceph-dev`。
+- `--node-name`：当前节点主机名，例如 `ceph-node-1`。
+- `--node-names`：按集群顺序排列的节点主机名，逗号分隔。
+- `--public-ips`：按同一顺序排列的公网 IP，逗号分隔。
+- `--private-ips`：按同一顺序排列的私网 IP，逗号分隔。
+- `--data-disk-count`：当前节点数据盘数量。
+- `--ssh-private-key-base64`：集群共享 SSH 私钥的 base64 内容。
+- `--ssh-public-key-base64`：集群共享 SSH 公钥的 base64 内容。
+
+手工执行时，所有节点需要使用同一对集群 SSH key。可以先生成一次：
+
+```bash
+ssh-keygen -t ed25519 -f ceph_lab_ed25519 -N '' -C ceph-dev
+base64 -w0 ceph_lab_ed25519
+base64 -w0 ceph_lab_ed25519.pub
+```
+
+macOS 上可用：
+
+```bash
+base64 -i ceph_lab_ed25519 | tr -d '\n'
+base64 -i ceph_lab_ed25519.pub | tr -d '\n'
+```
+
+示例：
+
+```bash
+sudo bash init-node.sh \
+  --cluster-name ceph-dev \
+  --node-name ceph-node-1 \
+  --node-names ceph-node-1,ceph-node-2,ceph-node-3 \
+  --public-ips 8.8.8.1,8.8.8.2,8.8.8.3 \
+  --private-ips 172.31.0.10,172.31.0.11,172.31.0.12 \
+  --data-disk-count 2 \
+  --ssh-private-key-base64 '<base64 of ceph_lab_ed25519>' \
+  --ssh-public-key-base64 '<base64 of ceph_lab_ed25519.pub>'
+```
+
+复制到第二、第三台机器时，只需要改：
+
+- `--node-name`
+- `--data-disk-count`
 
 ### deploy-ceph.sh
 
-只在第一台节点执行，可读取：
+只在第一台节点执行，需要传入：
 
-- `CEPH_LAB_CLUSTER_NAME`
-- `CEPH_LAB_BOOTSTRAP_NODE_NAME`
-- `CEPH_LAB_NODE_NAMES`
-- `CEPH_LAB_PUBLIC_IPS`
-- `CEPH_LAB_PRIVATE_IPS`
-- `CEPH_LAB_DATA_DISK_COUNTS`
-- `CEPH_LAB_WAIT_TIMEOUT_SECONDS`
+- `--cluster-name`：集群名，例如 `ceph-dev`。
+- `--bootstrap-node-name`：第一台/bootstrap 节点主机名。
+- `--node-names`：按集群顺序排列的节点主机名，逗号分隔。
+- `--public-ips`：按同一顺序排列的公网 IP，逗号分隔。
+- `--private-ips`：按同一顺序排列的私网 IP，逗号分隔。
+- `--data-disk-counts`：按同一顺序排列的每台节点数据盘数量，逗号分隔。
+- `--wait-timeout-seconds`：每个就绪等待步骤的超时时间，例如 `900`。
 
 部署脚本使用私网 IP 做 Ceph 内部通信，并输出 `https://<第一台公网IP>:8443/` 作为 Dashboard 外部入口。
+
+部署脚本必须在所有节点的 `init-node.sh` 成功完成后，只在第一台节点执行。示例：
+
+```bash
+sudo bash deploy-ceph.sh \
+  --cluster-name ceph-dev \
+  --bootstrap-node-name ceph-node-1 \
+  --node-names ceph-node-1,ceph-node-2,ceph-node-3 \
+  --public-ips 8.8.8.1,8.8.8.2,8.8.8.3 \
+  --private-ips 172.31.0.10,172.31.0.11,172.31.0.12 \
+  --data-disk-counts 2,2,2 \
+  --wait-timeout-seconds 900
+```
+
+手工执行顺序：
+
+1. 准备三台机器，确保主机名分别匹配 `--node-names`。
+2. 把 `init-node.sh` 复制到每台机器。
+3. 在每台机器执行 `sudo bash init-node.sh ...`，并调整当前节点参数。
+4. 把 `deploy-ceph.sh` 放到第一台机器。
+5. 在第一台机器执行 `sudo bash deploy-ceph.sh ...`。
 
 ## 故障处理
 

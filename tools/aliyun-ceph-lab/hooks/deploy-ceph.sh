@@ -4,9 +4,138 @@ set -Eeuo pipefail
 logf() {
 	local level="$1" format="$2"
 	shift 2
-	printf '[%s] %s ' "$(date --iso-8601=seconds)" "${level}"
+	printf '[%s] %s ' "$(timestamp)" "${level}"
 	printf "${format}" "$@"
 	printf '\n'
+}
+
+timestamp() {
+	date --iso-8601=seconds 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z
+}
+
+usage() {
+	cat <<'EOF'
+Usage:
+  sudo bash deploy-ceph.sh --cluster-name NAME --bootstrap-node-name NAME \
+    --node-names CSV --public-ips CSV --private-ips CSV \
+    --data-disk-counts CSV --wait-timeout-seconds N
+
+Run this script only on the first/bootstrap node after init-node.sh has
+completed successfully on every node.
+
+Options:
+  --cluster-name NAME             Cluster name, for example ceph-dev.
+  --bootstrap-node-name NAME      First/bootstrap node hostname.
+  --node-names CSV                Comma-separated hostnames in cluster order.
+  --public-ips CSV                Comma-separated public IPs in the same order.
+  --private-ips CSV               Comma-separated private IPs in the same order.
+  --data-disk-counts CSV          Comma-separated data disk counts in the same order.
+  --wait-timeout-seconds N        Timeout for each readiness wait, for example 900.
+  -h, --help                      Show this help.
+
+Example:
+  sudo bash deploy-ceph.sh \
+    --cluster-name ceph-dev \
+    --bootstrap-node-name ceph-node-1 \
+    --node-names ceph-node-1,ceph-node-2,ceph-node-3 \
+    --public-ips 8.8.8.1,8.8.8.2,8.8.8.3 \
+    --private-ips 172.31.0.10,172.31.0.11,172.31.0.12 \
+    --data-disk-counts 2,2,2 \
+    --wait-timeout-seconds 900
+
+Manual run order:
+  1. Copy init-node.sh and deploy-ceph.sh to the nodes.
+  2. Run init-node.sh on every node with that node's --node-name and
+     --data-disk-count.
+  3. Run deploy-ceph.sh on --bootstrap-node-name only.
+EOF
+}
+
+require_option_value() {
+	local option="$1" remaining="$2"
+	if (( remaining < 2 )); then
+		errorf '%s requires a value' "${option}"
+		exit 1
+	fi
+}
+
+parse_args() {
+	while (($# > 0)); do
+		case "$1" in
+			-h | --help)
+				usage
+				exit 0
+				;;
+			--cluster-name)
+				require_option_value "$1" "$#"
+				CEPH_LAB_CLUSTER_NAME="${2:-}"
+				shift 2
+				;;
+			--cluster-name=*)
+				CEPH_LAB_CLUSTER_NAME="${1#--cluster-name=}"
+				shift
+				;;
+			--bootstrap-node-name)
+				require_option_value "$1" "$#"
+				CEPH_LAB_BOOTSTRAP_NODE_NAME="${2:-}"
+				shift 2
+				;;
+			--bootstrap-node-name=*)
+				CEPH_LAB_BOOTSTRAP_NODE_NAME="${1#--bootstrap-node-name=}"
+				shift
+				;;
+			--node-names)
+				require_option_value "$1" "$#"
+				CEPH_LAB_NODE_NAMES="${2:-}"
+				shift 2
+				;;
+			--node-names=*)
+				CEPH_LAB_NODE_NAMES="${1#--node-names=}"
+				shift
+				;;
+			--public-ips)
+				require_option_value "$1" "$#"
+				CEPH_LAB_PUBLIC_IPS="${2:-}"
+				shift 2
+				;;
+			--public-ips=*)
+				CEPH_LAB_PUBLIC_IPS="${1#--public-ips=}"
+				shift
+				;;
+			--private-ips)
+				require_option_value "$1" "$#"
+				CEPH_LAB_PRIVATE_IPS="${2:-}"
+				shift 2
+				;;
+			--private-ips=*)
+				CEPH_LAB_PRIVATE_IPS="${1#--private-ips=}"
+				shift
+				;;
+			--data-disk-counts)
+				require_option_value "$1" "$#"
+				CEPH_LAB_DATA_DISK_COUNTS="${2:-}"
+				shift 2
+				;;
+			--data-disk-counts=*)
+				CEPH_LAB_DATA_DISK_COUNTS="${1#--data-disk-counts=}"
+				shift
+				;;
+			--wait-timeout-seconds)
+				require_option_value "$1" "$#"
+				CEPH_LAB_WAIT_TIMEOUT_SECONDS="${2:-}"
+				shift 2
+				;;
+			--wait-timeout-seconds=*)
+				CEPH_LAB_WAIT_TIMEOUT_SECONDS="${1#--wait-timeout-seconds=}"
+				shift
+				;;
+			*)
+				errorf 'unknown argument: %s' "$1"
+				usage >&2
+				exit 1
+				;;
+		esac
+	done
 }
 
 infof() {
@@ -25,18 +154,34 @@ report_error() {
 }
 trap report_error ERR
 
+parse_args "$@"
+
+trace_command() {
+	local command="$1"
+	[[ -n "${command}" ]] || return 0
+	case "${command}" in
+		trace_command* | logf* | timestamp* | infof* | errorf* | report_error* | printf\ * | shift\ * | local\ * | return\ * | exit\ *)
+			return 0
+			;;
+	esac
+	logf COMMAND '%s' "${command}" || true
+}
+trap 'trace_command "${BASH_COMMAND}"' DEBUG
+
 required=(
-	CEPH_LAB_CLUSTER_NAME
-	CEPH_LAB_BOOTSTRAP_NODE_NAME
-	CEPH_LAB_NODE_NAMES
-	CEPH_LAB_PUBLIC_IPS
-	CEPH_LAB_PRIVATE_IPS
-	CEPH_LAB_DATA_DISK_COUNTS
-	CEPH_LAB_WAIT_TIMEOUT_SECONDS
+	"--cluster-name:CEPH_LAB_CLUSTER_NAME"
+	"--bootstrap-node-name:CEPH_LAB_BOOTSTRAP_NODE_NAME"
+	"--node-names:CEPH_LAB_NODE_NAMES"
+	"--public-ips:CEPH_LAB_PUBLIC_IPS"
+	"--private-ips:CEPH_LAB_PRIVATE_IPS"
+	"--data-disk-counts:CEPH_LAB_DATA_DISK_COUNTS"
+	"--wait-timeout-seconds:CEPH_LAB_WAIT_TIMEOUT_SECONDS"
 )
-for name in "${required[@]}"; do
+for item in "${required[@]}"; do
+	option="${item%%:*}"
+	name="${item#*:}"
 	if [[ -z "${!name:-}" ]]; then
-		errorf 'missing required environment variable: name=%s' "${name}"
+		errorf 'missing required option: option=%s' "${option}"
 		exit 1
 	fi
 done

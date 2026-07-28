@@ -74,6 +74,7 @@ func TestRemoteScriptCommandStreamsToSecureRemoteLog(t *testing.T) {
 		"/var/log/ceph-lab/init-node.sh.log",
 		"/var/log/ceph-lab/status/test.status",
 		"/var/log/ceph-lab/status/test.pid",
+		[]string{"--cluster-name", "ceph-dev", "--node-name", "ceph-node-1"},
 	)
 	for _, want := range []string{
 		"install -d -m 0755 /var/log/ceph-lab /var/log/ceph-lab/status",
@@ -81,8 +82,11 @@ func TestRemoteScriptCommandStreamsToSecureRemoteLog(t *testing.T) {
 		"mktemp /tmp/ceph-lab-hook.XXXXXX",
 		"cat >\"$script_path\"",
 		"nohup bash -o pipefail -c",
+		"bash \"$1\" \"${@:5}\"",
 		">> \"$4\" 2>&1",
 		"started:%s",
+		"--cluster-name",
+		"ceph-dev",
 		"/var/log/ceph-lab/init-node.sh.log",
 		"/var/log/ceph-lab/status/test.status",
 		"/var/log/ceph-lab/status/test.pid",
@@ -102,7 +106,7 @@ func TestRemoteScriptCommandMaterializesScriptBeforeExecution(t *testing.T) {
 	logPath := filepath.Join(dir, "deploy-ceph.sh.log")
 	statusPath := filepath.Join(dir, "deploy-ceph.status")
 	pidPath := filepath.Join(dir, "deploy-ceph.pid")
-	command := remoteScriptCommand(logPath, statusPath, pidPath)
+	command := remoteScriptCommand(logPath, statusPath, pidPath, []string{"--flag", "value with spaces"})
 	command = strings.Replace(command,
 		"install -d -m 0755 /var/log/ceph-lab /var/log/ceph-lab/status && ", "", 1)
 	command = strings.ReplaceAll(command,

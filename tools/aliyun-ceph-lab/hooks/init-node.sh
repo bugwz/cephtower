@@ -4,9 +4,148 @@ set -Eeuo pipefail
 logf() {
 	local level="$1" format="$2"
 	shift 2
-	printf '[%s] %s ' "$(date --iso-8601=seconds)" "${level}"
+	printf '[%s] %s ' "$(timestamp)" "${level}"
 	printf "${format}" "$@"
 	printf '\n'
+}
+
+timestamp() {
+	date --iso-8601=seconds 2>/dev/null || date +%Y-%m-%dT%H:%M:%S%z
+}
+
+usage() {
+	cat <<'EOF'
+Usage:
+  sudo bash init-node.sh --cluster-name NAME --node-name NAME \
+    --node-names CSV --public-ips CSV --private-ips CSV \
+    --data-disk-count N --ssh-private-key-base64 VALUE \
+    --ssh-public-key-base64 VALUE
+
+Options:
+  --cluster-name NAME              Cluster name, for example ceph-dev.
+  --node-name NAME                 Current node hostname, for example ceph-node-1.
+  --node-names CSV                 Comma-separated hostnames in cluster order.
+  --public-ips CSV                 Comma-separated public IPs in the same order.
+  --private-ips CSV                Comma-separated private IPs in the same order.
+  --data-disk-count N              Number of data disks on this node.
+  --ssh-private-key-base64 VALUE   Shared cluster SSH private key, base64 encoded.
+  --ssh-public-key-base64 VALUE    Shared cluster SSH public key, base64 encoded.
+  -h, --help                       Show this help.
+
+Example:
+  sudo bash init-node.sh \
+    --cluster-name ceph-dev \
+    --node-name ceph-node-1 \
+    --node-names ceph-node-1,ceph-node-2,ceph-node-3 \
+    --public-ips 8.8.8.1,8.8.8.2,8.8.8.3 \
+    --private-ips 172.31.0.10,172.31.0.11,172.31.0.12 \
+    --data-disk-count 2 \
+    --ssh-private-key-base64 '<base64 of shared private key>' \
+    --ssh-public-key-base64 '<base64 of shared public key>'
+
+Generate the shared key pair before running init-node.sh on any node:
+  ssh-keygen -t ed25519 -f ceph_lab_ed25519 -N '' -C ceph-dev
+  base64 -w0 ceph_lab_ed25519
+  base64 -w0 ceph_lab_ed25519.pub
+
+On macOS, use: base64 -i ceph_lab_ed25519 | tr -d '\n'
+EOF
+}
+
+require_option_value() {
+	local option="$1" remaining="$2"
+	if (( remaining < 2 )); then
+		errorf '%s requires a value' "${option}"
+		exit 1
+	fi
+}
+
+parse_args() {
+	while (($# > 0)); do
+		case "$1" in
+			-h | --help)
+				usage
+				exit 0
+				;;
+			--cluster-name)
+				require_option_value "$1" "$#"
+				CEPH_LAB_CLUSTER_NAME="${2:-}"
+				shift 2
+				;;
+			--cluster-name=*)
+				CEPH_LAB_CLUSTER_NAME="${1#--cluster-name=}"
+				shift
+				;;
+			--node-name)
+				require_option_value "$1" "$#"
+				CEPH_LAB_NODE_NAME="${2:-}"
+				shift 2
+				;;
+			--node-name=*)
+				CEPH_LAB_NODE_NAME="${1#--node-name=}"
+				shift
+				;;
+			--node-names)
+				require_option_value "$1" "$#"
+				CEPH_LAB_NODE_NAMES="${2:-}"
+				shift 2
+				;;
+			--node-names=*)
+				CEPH_LAB_NODE_NAMES="${1#--node-names=}"
+				shift
+				;;
+			--public-ips)
+				require_option_value "$1" "$#"
+				CEPH_LAB_PUBLIC_IPS="${2:-}"
+				shift 2
+				;;
+			--public-ips=*)
+				CEPH_LAB_PUBLIC_IPS="${1#--public-ips=}"
+				shift
+				;;
+			--private-ips)
+				require_option_value "$1" "$#"
+				CEPH_LAB_PRIVATE_IPS="${2:-}"
+				shift 2
+				;;
+			--private-ips=*)
+				CEPH_LAB_PRIVATE_IPS="${1#--private-ips=}"
+				shift
+				;;
+			--data-disk-count)
+				require_option_value "$1" "$#"
+				CEPH_LAB_DATA_DISK_COUNT="${2:-}"
+				shift 2
+				;;
+			--data-disk-count=*)
+				CEPH_LAB_DATA_DISK_COUNT="${1#--data-disk-count=}"
+				shift
+				;;
+			--ssh-private-key-base64)
+				require_option_value "$1" "$#"
+				CEPH_LAB_SSH_PRIVATE_KEY_BASE64="${2:-}"
+				shift 2
+				;;
+			--ssh-private-key-base64=*)
+				CEPH_LAB_SSH_PRIVATE_KEY_BASE64="${1#--ssh-private-key-base64=}"
+				shift
+				;;
+			--ssh-public-key-base64)
+				require_option_value "$1" "$#"
+				CEPH_LAB_SSH_PUBLIC_KEY_BASE64="${2:-}"
+				shift 2
+				;;
+			--ssh-public-key-base64=*)
+				CEPH_LAB_SSH_PUBLIC_KEY_BASE64="${1#--ssh-public-key-base64=}"
+				shift
+				;;
+			*)
+				errorf 'unknown argument: %s' "$1"
+				usage >&2
+				exit 1
+				;;
+		esac
+	done
 }
 
 infof() {
@@ -25,19 +164,35 @@ report_error() {
 }
 trap report_error ERR
 
+parse_args "$@"
+
+trace_command() {
+	local command="$1"
+	[[ -n "${command}" ]] || return 0
+	case "${command}" in
+		trace_command* | logf* | timestamp* | infof* | errorf* | report_error* | printf\ * | shift\ * | local\ * | return\ * | exit\ *)
+			return 0
+			;;
+	esac
+	logf COMMAND '%s' "${command}" || true
+}
+trap 'trace_command "${BASH_COMMAND}"' DEBUG
+
 required=(
-	CEPH_LAB_CLUSTER_NAME
-	CEPH_LAB_NODE_NAME
-	CEPH_LAB_NODE_NAMES
-	CEPH_LAB_PUBLIC_IPS
-	CEPH_LAB_PRIVATE_IPS
-	CEPH_LAB_DATA_DISK_COUNT
-	CEPH_LAB_SSH_PRIVATE_KEY_BASE64
-	CEPH_LAB_SSH_PUBLIC_KEY_BASE64
+	"--cluster-name:CEPH_LAB_CLUSTER_NAME"
+	"--node-name:CEPH_LAB_NODE_NAME"
+	"--node-names:CEPH_LAB_NODE_NAMES"
+	"--public-ips:CEPH_LAB_PUBLIC_IPS"
+	"--private-ips:CEPH_LAB_PRIVATE_IPS"
+	"--data-disk-count:CEPH_LAB_DATA_DISK_COUNT"
+	"--ssh-private-key-base64:CEPH_LAB_SSH_PRIVATE_KEY_BASE64"
+	"--ssh-public-key-base64:CEPH_LAB_SSH_PUBLIC_KEY_BASE64"
 )
-for name in "${required[@]}"; do
+for item in "${required[@]}"; do
+	option="${item%%:*}"
+	name="${item#*:}"
 	if [[ -z "${!name:-}" ]]; then
-		errorf 'missing required environment variable: name=%s' "${name}"
+		errorf 'missing required option: option=%s' "${option}"
 		exit 1
 	fi
 done

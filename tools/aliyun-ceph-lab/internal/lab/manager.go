@@ -139,29 +139,35 @@ func (m *Manager) Create(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("generate cluster SSH key: %w", err)
 	}
-	if err := m.initializeNodes(ctx, current, initScript, privateKey, publicKey); err != nil {
+	nodeConnections, err := m.initializeNodes(ctx, current, initScript, privateKey, publicKey)
+	if err != nil {
 		return fmt.Errorf("initialize nodes: %w; run delete --yes or wait for automatic release", err)
 	}
+	defer closeNodeConnections(nodeConnections)
 	logging.Infof("create: SSH initialization completed on all %d node(s)", len(current.Nodes))
 	if len(current.Nodes) < 3 {
 		logging.Infof("create: skipping Ceph deployment because %d node(s) were configured; at least 3 are required", len(current.Nodes))
 		return nil
 	}
 	first := current.Nodes[0]
-	env := map[string]string{
-		"CEPH_LAB_CLUSTER_NAME":         m.Config.ClusterName,
-		"CEPH_LAB_BOOTSTRAP_NODE_NAME":  first.Name,
-		"CEPH_LAB_NODE_NAMES":           joinNodeField(current.Nodes, func(node state.Node) string { return node.Name }),
-		"CEPH_LAB_PUBLIC_IPS":           joinNodeField(current.Nodes, func(node state.Node) string { return node.PublicIP }),
-		"CEPH_LAB_PRIVATE_IPS":          joinNodeField(current.Nodes, func(node state.Node) string { return node.PrivateIP }),
-		"CEPH_LAB_DATA_DISK_COUNTS":     joinDataDiskCounts(m.Config.Nodes),
-		"CEPH_LAB_WAIT_TIMEOUT_SECONDS": fmt.Sprintf("%d", int(m.Config.WaitTimeoutDuration().Seconds())),
+	args := []string{
+		"--cluster-name", m.Config.ClusterName,
+		"--bootstrap-node-name", first.Name,
+		"--node-names", joinNodeField(current.Nodes, func(node state.Node) string { return node.Name }),
+		"--public-ips", joinNodeField(current.Nodes, func(node state.Node) string { return node.PublicIP }),
+		"--private-ips", joinNodeField(current.Nodes, func(node state.Node) string { return node.PrivateIP }),
+		"--data-disk-counts", joinDataDiskCounts(m.Config.Nodes),
+		"--wait-timeout-seconds", fmt.Sprintf("%d", int(m.Config.WaitTimeoutDuration().Seconds())),
 	}
 	logging.Infof("create: running deployment hook on first node %s (%s)", first.Name, first.PublicIP)
 	deploymentStages := time.Duration(2*len(current.Nodes) + 6)
 	deployCtx, deployCancel := context.WithTimeout(ctx, deploymentStages*m.Config.WaitTimeoutDuration())
 	defer deployCancel()
-	if err := m.SSH.RunScript(deployCtx, first.PublicIP, first.Name, deployScript, env); err != nil {
+	deployConnection, ok := nodeConnections[first.Name]
+	if !ok {
+		return fmt.Errorf("missing established SSH connection for bootstrap node %s", first.Name)
+	}
+	if err := deployConnection.RunScript(deployCtx, deployScript, args); err != nil {
 		return fmt.Errorf("run ceph deployment hook: %w", err)
 	}
 	logging.Infof("create: deployment hook completed on %s", first.Name)
@@ -373,13 +379,17 @@ func (m *Manager) initializeNodes(
 	scriptPath string,
 	privateKey string,
 	publicKey string,
-) error {
+) (map[string]*remote.HostConnection, error) {
+	connections := make(map[string]*remote.HostConnection, len(current.Nodes))
 	sshCtx, cancel := context.WithTimeout(ctx, m.Config.WaitTimeoutDuration())
 	for _, node := range current.Nodes {
-		if err := m.SSH.Wait(sshCtx, node.PublicIP, node.Name); err != nil {
+		connection, err := m.SSH.Connect(sshCtx, node.PublicIP, node.Name)
+		if err != nil {
 			cancel()
-			return err
+			closeNodeConnections(connections)
+			return nil, err
 		}
+		connections[node.Name] = connection
 	}
 	cancel()
 
@@ -393,15 +403,20 @@ func (m *Manager) initializeNodes(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := m.SSH.RunScript(scriptCtx, node.PublicIP, node.Name, scriptPath, map[string]string{
-				"CEPH_LAB_CLUSTER_NAME":           m.Config.ClusterName,
-				"CEPH_LAB_NODE_NAME":              node.Name,
-				"CEPH_LAB_NODE_NAMES":             joinNodeField(current.Nodes, func(item state.Node) string { return item.Name }),
-				"CEPH_LAB_PUBLIC_IPS":             joinNodeField(current.Nodes, func(item state.Node) string { return item.PublicIP }),
-				"CEPH_LAB_PRIVATE_IPS":            joinNodeField(current.Nodes, func(item state.Node) string { return item.PrivateIP }),
-				"CEPH_LAB_DATA_DISK_COUNT":        fmt.Sprintf("%d", len(m.Config.Nodes[index].DataDisks)),
-				"CEPH_LAB_SSH_PRIVATE_KEY_BASE64": privateKey,
-				"CEPH_LAB_SSH_PUBLIC_KEY_BASE64":  publicKey,
+			connection, ok := connections[node.Name]
+			if !ok {
+				errorsByNode <- fmt.Errorf("missing established SSH connection for node %s", node.Name)
+				return
+			}
+			if err := connection.RunScript(scriptCtx, scriptPath, []string{
+				"--cluster-name", m.Config.ClusterName,
+				"--node-name", node.Name,
+				"--node-names", joinNodeField(current.Nodes, func(item state.Node) string { return item.Name }),
+				"--public-ips", joinNodeField(current.Nodes, func(item state.Node) string { return item.PublicIP }),
+				"--private-ips", joinNodeField(current.Nodes, func(item state.Node) string { return item.PrivateIP }),
+				"--data-disk-count", fmt.Sprintf("%d", len(m.Config.Nodes[index].DataDisks)),
+				"--ssh-private-key-base64", privateKey,
+				"--ssh-public-key-base64", publicKey,
 			}); err != nil {
 				errorsByNode <- err
 				return
@@ -416,9 +431,23 @@ func (m *Manager) initializeNodes(
 	}
 	if len(messages) > 0 {
 		sort.Strings(messages)
-		return errors.New(strings.Join(messages, "; "))
+		closeNodeConnections(connections)
+		return nil, errors.New(strings.Join(messages, "; "))
 	}
-	return nil
+	return connections, nil
+}
+
+func closeNodeConnections(connections map[string]*remote.HostConnection) {
+	names := make([]string, 0, len(connections))
+	for name := range connections {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		if err := connections[name].Close(); err != nil {
+			logging.Warnf("ssh: close connection for %s: %v", name, err)
+		}
+	}
 }
 
 func nodeStatusSummary(nodes []state.Node) string {
