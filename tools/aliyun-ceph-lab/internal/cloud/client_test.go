@@ -1,8 +1,11 @@
 package cloud
 
 import (
+	"io"
 	"testing"
 	"time"
+
+	tea "github.com/alibabacloud-go/tea/tea"
 
 	"cephtower/tools/aliyun-ceph-lab/internal/config"
 )
@@ -28,6 +31,19 @@ func TestClientTokenIsStableAndBounded(t *testing.T) {
 	}
 	if first == clientToken("test-lab", "node-2", expiresAt) {
 		t.Fatal("clientToken() did not change for a different node")
+	}
+}
+
+func TestRetryableCloudErrorClassification(t *testing.T) {
+	t.Parallel()
+	if !isRetryableCloudError(io.EOF) {
+		t.Fatal("EOF should be treated as retryable")
+	}
+	if !isRetryableCloudError(tea.NewSDKError(map[string]interface{}{"statusCode": 500})) {
+		t.Fatal("SDK 5xx should be treated as retryable")
+	}
+	if isRetryableCloudError(tea.NewSDKError(map[string]interface{}{"statusCode": 400})) {
+		t.Fatal("SDK 4xx should not be treated as retryable")
 	}
 }
 

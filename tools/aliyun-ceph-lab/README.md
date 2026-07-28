@@ -145,7 +145,7 @@ credentials:
 常用配置项：
 
 - `lifecycle.max_runtime`：云端自动释放时间，支持 Go duration，例如 `90m`、`6h`。
-- `lifecycle.wait_timeout`：等待 ECS、SSH、hook 和 Ceph 阶段就绪的超时时间。
+- `lifecycle.wait_timeout`：等待 ECS、SSH 和 Ceph 阶段就绪的基础超时时间；节点初始化 hook 最多等待该值的 2 倍。
 - `ssh.password`：为空时自动生成 10 位 ECS 合规密码；也可显式填写 8 到 30 字符密码。
 - `network.access_source_cidr`：管理入口来源 CIDR，默认 `0.0.0.0/0` 只适合临时实验。
 - `network.cleanup_created_resources`：为 `true` 时，删除 ECS 后继续删除本次创建的安全组、交换机和 VPC。
@@ -195,7 +195,8 @@ credentials:
 
 远端日志：
 
-- hook 输出会通过 `tee` 追加到 ECS 的 `/var/log/ceph-lab/<脚本名>.log`。
+- hook 会在 ECS 后台脱离 SSH 会话执行，输出写入 `/var/log/ceph-lab/<脚本名>.log`。
+- 本地节点日志会轮询并同步远端 hook 日志；短暂 SSH 断开不会中断正在运行的 hook。
 - 远端日志权限为 `0600`。
 - Ceph 部署只在第一台机器执行，完整部署日志在第一台机器的 `deploy-ceph.sh.log`。
 
@@ -236,6 +237,7 @@ credentials:
 - 实例 ID 会逐台写入状态文件，可立即执行 `delete --yes` 清理。
 - 实例仍有云端自动释放时间，本地进程退出不影响到期释放。
 - SSH 连接失败、脚本失败行号、命令和退出码会同时写入终端和节点日志。
+- 如果远端 hook 进程退出但没有写出状态文件，create 会尽早报错而不是等完整超时。
 - 初始化要求镜像预装 `openssh-clients`；hook 不会升级当前 SSH 会话依赖的 OpenSSH。
 
 ## RAM Action

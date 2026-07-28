@@ -129,3 +129,16 @@ func TestCleanupLocalStateDoesNotRemoveCustomParentDirectory(t *testing.T) {
 		}
 	}
 }
+
+func TestStateHasCloudResources(t *testing.T) {
+	t.Parallel()
+	if stateHasCloudResources(&state.State{Network: state.Network{VPCID: "vpc-reused"}}) {
+		t.Fatal("reused network IDs should not force state retention")
+	}
+	if !stateHasCloudResources(&state.State{Network: state.Network{CreatedVPC: true}}) {
+		t.Fatal("created network resources should force state retention")
+	}
+	if !stateHasCloudResources(&state.State{Nodes: []state.Node{{InstanceID: "i-test"}}}) {
+		t.Fatal("created ECS nodes should force state retention")
+	}
+}

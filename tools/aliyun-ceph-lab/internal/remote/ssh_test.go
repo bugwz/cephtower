@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -72,16 +73,19 @@ func TestRemoteScriptCommandStreamsToSecureRemoteLog(t *testing.T) {
 	command := remoteScriptCommand(
 		"/var/log/ceph-lab/init-node.sh.log",
 		"/var/log/ceph-lab/status/test.status",
+		"/var/log/ceph-lab/status/test.pid",
 	)
 	for _, want := range []string{
 		"install -d -m 0755 /var/log/ceph-lab /var/log/ceph-lab/status",
 		"chmod 0600",
 		"mktemp /tmp/ceph-lab-hook.XXXXXX",
 		"cat >\"$script_path\"",
-		"bash -o pipefail -c",
-		"tee -a",
+		"nohup bash -o pipefail -c",
+		">> \"$4\" 2>&1",
+		"started:%s",
 		"/var/log/ceph-lab/init-node.sh.log",
 		"/var/log/ceph-lab/status/test.status",
+		"/var/log/ceph-lab/status/test.pid",
 	} {
 		if !strings.Contains(command, want) {
 			t.Fatalf("remoteScriptCommand() = %q, want substring %q", command, want)
@@ -97,7 +101,8 @@ func TestRemoteScriptCommandMaterializesScriptBeforeExecution(t *testing.T) {
 	dir := t.TempDir()
 	logPath := filepath.Join(dir, "deploy-ceph.sh.log")
 	statusPath := filepath.Join(dir, "deploy-ceph.status")
-	command := remoteScriptCommand(logPath, statusPath)
+	pidPath := filepath.Join(dir, "deploy-ceph.pid")
+	command := remoteScriptCommand(logPath, statusPath, pidPath)
 	command = strings.Replace(command,
 		"install -d -m 0755 /var/log/ceph-lab /var/log/ceph-lab/status && ", "", 1)
 	command = strings.ReplaceAll(command,
@@ -109,9 +114,10 @@ func TestRemoteScriptCommandMaterializesScriptBeforeExecution(t *testing.T) {
 	if err != nil {
 		t.Fatalf("remote script failed: %v: %s", err, output)
 	}
-	if !strings.Contains(string(output), "before\nafter\n") {
-		t.Fatalf("remote script did not continue after a command consumed stdin: %q", output)
+	if !strings.Contains(string(output), "started:") {
+		t.Fatalf("remote start output = %q, want runner PID", output)
 	}
+	waitForFile(t, statusPath)
 	logged, err := os.ReadFile(logPath)
 	if err != nil {
 		t.Fatal(err)
@@ -125,6 +131,13 @@ func TestRemoteScriptCommandMaterializesScriptBeforeExecution(t *testing.T) {
 	}
 	if got := strings.TrimSpace(string(status)); got != "0" {
 		t.Fatalf("remote status = %q, want 0", got)
+	}
+	info, err := os.Stat(pidPath)
+	if err != nil {
+		t.Fatalf("remote pid file was not retained: %v", err)
+	}
+	if got := info.Mode().Perm(); got != 0o600 {
+		t.Fatalf("remote pid permissions = %o, want 600", got)
 	}
 }
 
@@ -156,6 +169,22 @@ func TestRecoveredScriptResultUsesRemoteExitStatus(t *testing.T) {
 	if err := recoveredScriptResult(io.Discard, "init-node.sh", 7, transportErr); err == nil ||
 		!strings.Contains(err.Error(), "status 7") {
 		t.Fatalf("non-zero remote status error = %v", err)
+	}
+}
+
+func waitForFile(t *testing.T, path string) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		if _, err := os.Stat(path); err == nil {
+			return
+		} else if !os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("timed out waiting for %s", path)
+		}
+		time.Sleep(25 * time.Millisecond)
 	}
 }
 

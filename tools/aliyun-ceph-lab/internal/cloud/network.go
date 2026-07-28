@@ -245,9 +245,11 @@ func (c *Client) DeleteNetwork(
 ) error {
 	if network.CreatedSecurityGroup && network.SecurityGroupID != "" {
 		logging.Infof("network: deleting security group %s", network.SecurityGroupID)
-		if _, err := c.ecs.DeleteSecurityGroupWithOptions(&ecs.DeleteSecurityGroupRequest{
-			RegionId: dara.String(regionID), SecurityGroupId: dara.String(network.SecurityGroupID),
-		}, c.runtime); err != nil {
+		if _, err := withCloudRetry(ctx, "DeleteSecurityGroup "+network.SecurityGroupID, func() (*ecs.DeleteSecurityGroupResponse, error) {
+			return c.ecs.DeleteSecurityGroupWithOptions(&ecs.DeleteSecurityGroupRequest{
+				RegionId: dara.String(regionID), SecurityGroupId: dara.String(network.SecurityGroupID),
+			}, c.runtime)
+		}); err != nil {
 			return fmt.Errorf("DeleteSecurityGroup %s: %w", network.SecurityGroupID, err)
 		}
 		network.CreatedSecurityGroup = false
@@ -257,9 +259,11 @@ func (c *Client) DeleteNetwork(
 	}
 	if network.CreatedVSwitch && network.VSwitchID != "" {
 		logging.Infof("network: deleting vSwitch %s", network.VSwitchID)
-		if _, err := c.vpc.DeleteVSwitchWithOptions(&vpc.DeleteVSwitchRequest{
-			RegionId: dara.String(regionID), VSwitchId: dara.String(network.VSwitchID),
-		}, c.runtime); err != nil {
+		if _, err := withCloudRetry(ctx, "DeleteVSwitch "+network.VSwitchID, func() (*vpc.DeleteVSwitchResponse, error) {
+			return c.vpc.DeleteVSwitchWithOptions(&vpc.DeleteVSwitchRequest{
+				RegionId: dara.String(regionID), VSwitchId: dara.String(network.VSwitchID),
+			}, c.runtime)
+		}); err != nil {
 			return fmt.Errorf("DeleteVSwitch %s: %w", network.VSwitchID, err)
 		}
 		if err := c.waitVSwitchDeleted(ctx, regionID, network.VSwitchID); err != nil {
@@ -272,9 +276,11 @@ func (c *Client) DeleteNetwork(
 	}
 	if network.CreatedVPC && network.VPCID != "" {
 		logging.Infof("network: deleting VPC %s", network.VPCID)
-		if _, err := c.vpc.DeleteVpcWithOptions(&vpc.DeleteVpcRequest{
-			RegionId: dara.String(regionID), VpcId: dara.String(network.VPCID),
-		}, c.runtime); err != nil {
+		if _, err := withCloudRetry(ctx, "DeleteVpc "+network.VPCID, func() (*vpc.DeleteVpcResponse, error) {
+			return c.vpc.DeleteVpcWithOptions(&vpc.DeleteVpcRequest{
+				RegionId: dara.String(regionID), VpcId: dara.String(network.VPCID),
+			}, c.runtime)
+		}); err != nil {
 			return fmt.Errorf("DeleteVpc %s: %w", network.VPCID, err)
 		}
 		network.CreatedVPC = false
@@ -289,9 +295,11 @@ func (c *Client) describeVPC(ctx context.Context, regionID, id string) (vpcInfo,
 	if err := ctx.Err(); err != nil {
 		return vpcInfo{}, err
 	}
-	response, err := c.vpc.DescribeVpcsWithOptions(&vpc.DescribeVpcsRequest{
-		RegionId: dara.String(regionID), VpcId: dara.String(id), PageSize: dara.Int32(50),
-	}, c.runtime)
+	response, err := withCloudRetry(ctx, "DescribeVpcs "+id, func() (*vpc.DescribeVpcsResponse, error) {
+		return c.vpc.DescribeVpcsWithOptions(&vpc.DescribeVpcsRequest{
+			RegionId: dara.String(regionID), VpcId: dara.String(id), PageSize: dara.Int32(50),
+		}, c.runtime)
+	})
 	if err != nil {
 		return vpcInfo{}, fmt.Errorf("DescribeVpcs %s: %w", id, err)
 	}
@@ -311,10 +319,12 @@ func (c *Client) findManagedVPC(ctx context.Context, cfg *config.Config) (vpcInf
 		if err := ctx.Err(); err != nil {
 			return vpcInfo{}, false, err
 		}
-		response, err := c.vpc.DescribeVpcsWithOptions(&vpc.DescribeVpcsRequest{
-			RegionId: dara.String(cfg.RegionID), PageNumber: dara.Int32(page),
-			PageSize: dara.Int32(50), IsDefault: dara.Bool(false),
-		}, c.runtime)
+		response, err := withCloudRetry(ctx, fmt.Sprintf("DescribeVpcs page %d", page), func() (*vpc.DescribeVpcsResponse, error) {
+			return c.vpc.DescribeVpcsWithOptions(&vpc.DescribeVpcsRequest{
+				RegionId: dara.String(cfg.RegionID), PageNumber: dara.Int32(page),
+				PageSize: dara.Int32(50), IsDefault: dara.Bool(false),
+			}, c.runtime)
+		})
 		if err != nil {
 			return vpcInfo{}, false, fmt.Errorf("find VPC with prefix %s: %w", vpcNamePrefix, err)
 		}
@@ -351,17 +361,19 @@ func (c *Client) createVPC(ctx context.Context, cfg *config.Config, tokenTime ti
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
-	response, err := c.vpc.CreateVpcWithOptions(&vpc.CreateVpcRequest{
-		RegionId:    dara.String(cfg.RegionID),
-		CidrBlock:   dara.String(cfg.Network.VPCCIDR),
-		VpcName:     dara.String(resourceName(vpcNamePrefix, cfg.ClusterName)),
-		Description: dara.String("Ceph lab network managed by CephTower"),
-		ClientToken: dara.String(clientToken(cfg.ClusterName, "vpc", tokenTime)),
-		Tag: []*vpc.CreateVpcRequestTag{
-			{Key: dara.String(managedByTagKey), Value: dara.String(managedByTagValue)},
-			{Key: dara.String(clusterTagKey), Value: dara.String(cfg.ClusterName)},
-		},
-	}, c.runtime)
+	response, err := withCloudRetry(ctx, "CreateVpc", func() (*vpc.CreateVpcResponse, error) {
+		return c.vpc.CreateVpcWithOptions(&vpc.CreateVpcRequest{
+			RegionId:    dara.String(cfg.RegionID),
+			CidrBlock:   dara.String(cfg.Network.VPCCIDR),
+			VpcName:     dara.String(resourceName(vpcNamePrefix, cfg.ClusterName)),
+			Description: dara.String("Ceph lab network managed by CephTower"),
+			ClientToken: dara.String(clientToken(cfg.ClusterName, "vpc", tokenTime)),
+			Tag: []*vpc.CreateVpcRequestTag{
+				{Key: dara.String(managedByTagKey), Value: dara.String(managedByTagValue)},
+				{Key: dara.String(clusterTagKey), Value: dara.String(cfg.ClusterName)},
+			},
+		}, c.runtime)
+	})
 	if err != nil {
 		return "", fmt.Errorf("CreateVpc: %w", err)
 	}
@@ -375,9 +387,11 @@ func (c *Client) describeVSwitch(ctx context.Context, regionID, id string) (vSwi
 	if err := ctx.Err(); err != nil {
 		return vSwitchInfo{}, err
 	}
-	response, err := c.vpc.DescribeVSwitchesWithOptions(&vpc.DescribeVSwitchesRequest{
-		RegionId: dara.String(regionID), VSwitchId: dara.String(id), PageSize: dara.Int32(50),
-	}, c.runtime)
+	response, err := withCloudRetry(ctx, "DescribeVSwitches "+id, func() (*vpc.DescribeVSwitchesResponse, error) {
+		return c.vpc.DescribeVSwitchesWithOptions(&vpc.DescribeVSwitchesRequest{
+			RegionId: dara.String(regionID), VSwitchId: dara.String(id), PageSize: dara.Int32(50),
+		}, c.runtime)
+	})
 	if err != nil {
 		return vSwitchInfo{}, fmt.Errorf("DescribeVSwitches %s: %w", id, err)
 	}
@@ -403,10 +417,12 @@ func (c *Client) findManagedVSwitch(ctx context.Context, cfg *config.Config, vpc
 		if err := ctx.Err(); err != nil {
 			return vSwitchInfo{}, false, err
 		}
-		response, err := c.vpc.DescribeVSwitchesWithOptions(&vpc.DescribeVSwitchesRequest{
-			RegionId: dara.String(cfg.RegionID), VpcId: dara.String(vpcID), ZoneId: dara.String(cfg.ZoneID),
-			PageNumber: dara.Int32(page), PageSize: dara.Int32(50),
-		}, c.runtime)
+		response, err := withCloudRetry(ctx, fmt.Sprintf("DescribeVSwitches page %d", page), func() (*vpc.DescribeVSwitchesResponse, error) {
+			return c.vpc.DescribeVSwitchesWithOptions(&vpc.DescribeVSwitchesRequest{
+				RegionId: dara.String(cfg.RegionID), VpcId: dara.String(vpcID), ZoneId: dara.String(cfg.ZoneID),
+				PageNumber: dara.Int32(page), PageSize: dara.Int32(50),
+			}, c.runtime)
+		})
 		if err != nil {
 			return vSwitchInfo{}, false, fmt.Errorf("find vSwitch with prefix %s: %w", vSwitchNamePrefix, err)
 		}
@@ -467,19 +483,21 @@ func (c *Client) createVSwitch(ctx context.Context, cfg *config.Config, vpcID st
 	if !cidrContains(vpcItem.CIDR, cfg.Network.VSwitchCIDR) {
 		return "", fmt.Errorf("configured vSwitch CIDR %s is not a subnet of VPC %s CIDR %s", cfg.Network.VSwitchCIDR, vpcID, vpcItem.CIDR)
 	}
-	response, err := c.vpc.CreateVSwitchWithOptions(&vpc.CreateVSwitchRequest{
-		RegionId:    dara.String(cfg.RegionID),
-		ZoneId:      dara.String(cfg.ZoneID),
-		VpcId:       dara.String(vpcID),
-		CidrBlock:   dara.String(cfg.Network.VSwitchCIDR),
-		VSwitchName: dara.String(resourceName(vSwitchNamePrefix, cfg.ClusterName)),
-		Description: dara.String("Ceph lab subnet managed by CephTower"),
-		ClientToken: dara.String(clientToken(cfg.ClusterName, "vswitch", tokenTime)),
-		Tag: []*vpc.CreateVSwitchRequestTag{
-			{Key: dara.String(managedByTagKey), Value: dara.String(managedByTagValue)},
-			{Key: dara.String(clusterTagKey), Value: dara.String(cfg.ClusterName)},
-		},
-	}, c.runtime)
+	response, err := withCloudRetry(ctx, "CreateVSwitch", func() (*vpc.CreateVSwitchResponse, error) {
+		return c.vpc.CreateVSwitchWithOptions(&vpc.CreateVSwitchRequest{
+			RegionId:    dara.String(cfg.RegionID),
+			ZoneId:      dara.String(cfg.ZoneID),
+			VpcId:       dara.String(vpcID),
+			CidrBlock:   dara.String(cfg.Network.VSwitchCIDR),
+			VSwitchName: dara.String(resourceName(vSwitchNamePrefix, cfg.ClusterName)),
+			Description: dara.String("Ceph lab subnet managed by CephTower"),
+			ClientToken: dara.String(clientToken(cfg.ClusterName, "vswitch", tokenTime)),
+			Tag: []*vpc.CreateVSwitchRequestTag{
+				{Key: dara.String(managedByTagKey), Value: dara.String(managedByTagValue)},
+				{Key: dara.String(clusterTagKey), Value: dara.String(cfg.ClusterName)},
+			},
+		}, c.runtime)
+	})
 	if err != nil {
 		return "", fmt.Errorf("CreateVSwitch: %w", err)
 	}
@@ -509,9 +527,11 @@ func (c *Client) describeSecurityGroup(ctx context.Context, regionID, id string)
 	if err := ctx.Err(); err != nil {
 		return securityGroupInfo{}, err
 	}
-	response, err := c.ecs.DescribeSecurityGroupsWithOptions(&ecs.DescribeSecurityGroupsRequest{
-		RegionId: dara.String(regionID), SecurityGroupId: dara.String(id), MaxResults: dara.Int32(100),
-	}, c.runtime)
+	response, err := withCloudRetry(ctx, "DescribeSecurityGroups "+id, func() (*ecs.DescribeSecurityGroupsResponse, error) {
+		return c.ecs.DescribeSecurityGroupsWithOptions(&ecs.DescribeSecurityGroupsRequest{
+			RegionId: dara.String(regionID), SecurityGroupId: dara.String(id), MaxResults: dara.Int32(100),
+		}, c.runtime)
+	})
 	if err != nil {
 		return securityGroupInfo{}, fmt.Errorf("DescribeSecurityGroups %s: %w", id, err)
 	}
@@ -543,7 +563,9 @@ func (c *Client) findManagedSecurityGroup(ctx context.Context, cfg *config.Confi
 		if nextToken != "" {
 			request.NextToken = dara.String(nextToken)
 		}
-		response, err := c.ecs.DescribeSecurityGroupsWithOptions(request, c.runtime)
+		response, err := withCloudRetry(ctx, "DescribeSecurityGroups managed", func() (*ecs.DescribeSecurityGroupsResponse, error) {
+			return c.ecs.DescribeSecurityGroupsWithOptions(request, c.runtime)
+		})
 		if err != nil {
 			return securityGroupInfo{}, false, fmt.Errorf(
 				"find security group with prefix %s: %w", securityGroupNamePrefix, err,
@@ -585,18 +607,20 @@ func (c *Client) createSecurityGroup(ctx context.Context, cfg *config.Config, vp
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
-	response, err := c.ecs.CreateSecurityGroupWithOptions(&ecs.CreateSecurityGroupRequest{
-		RegionId:          dara.String(cfg.RegionID),
-		VpcId:             dara.String(vpcID),
-		SecurityGroupName: dara.String(resourceName(securityGroupNamePrefix, cfg.ClusterName)),
-		SecurityGroupType: dara.String("normal"),
-		Description:       dara.String("Ceph lab security group managed by CephTower"),
-		ClientToken:       dara.String(clientToken(cfg.ClusterName, "security-group", tokenTime)),
-		Tag: []*ecs.CreateSecurityGroupRequestTag{
-			{Key: dara.String(managedByTagKey), Value: dara.String(managedByTagValue)},
-			{Key: dara.String(clusterTagKey), Value: dara.String(cfg.ClusterName)},
-		},
-	}, c.runtime)
+	response, err := withCloudRetry(ctx, "CreateSecurityGroup", func() (*ecs.CreateSecurityGroupResponse, error) {
+		return c.ecs.CreateSecurityGroupWithOptions(&ecs.CreateSecurityGroupRequest{
+			RegionId:          dara.String(cfg.RegionID),
+			VpcId:             dara.String(vpcID),
+			SecurityGroupName: dara.String(resourceName(securityGroupNamePrefix, cfg.ClusterName)),
+			SecurityGroupType: dara.String("normal"),
+			Description:       dara.String("Ceph lab security group managed by CephTower"),
+			ClientToken:       dara.String(clientToken(cfg.ClusterName, "security-group", tokenTime)),
+			Tag: []*ecs.CreateSecurityGroupRequestTag{
+				{Key: dara.String(managedByTagKey), Value: dara.String(managedByTagValue)},
+				{Key: dara.String(clusterTagKey), Value: dara.String(cfg.ClusterName)},
+			},
+		}, c.runtime)
+	})
 	if err != nil {
 		return "", fmt.Errorf("CreateSecurityGroup: %w", err)
 	}
@@ -610,11 +634,13 @@ func (c *Client) authorizeLabSecurityGroup(ctx context.Context, cfg *config.Conf
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	_, err := c.ecs.AuthorizeSecurityGroupWithOptions(&ecs.AuthorizeSecurityGroupRequest{
-		RegionId: dara.String(cfg.RegionID), SecurityGroupId: dara.String(id),
-		ClientToken: dara.String(clientToken(cfg.ClusterName, "security-rules", tokenTime)),
-		Permissions: labSecurityGroupPermissions(cfg.Network.AccessSourceCIDR),
-	}, c.runtime)
+	_, err := withCloudRetry(ctx, "AuthorizeSecurityGroup "+id, func() (*ecs.AuthorizeSecurityGroupResponse, error) {
+		return c.ecs.AuthorizeSecurityGroupWithOptions(&ecs.AuthorizeSecurityGroupRequest{
+			RegionId: dara.String(cfg.RegionID), SecurityGroupId: dara.String(id),
+			ClientToken: dara.String(clientToken(cfg.ClusterName, "security-rules", tokenTime)),
+			Permissions: labSecurityGroupPermissions(cfg.Network.AccessSourceCIDR),
+		}, c.runtime)
+	})
 	if err != nil {
 		return fmt.Errorf("AuthorizeSecurityGroup %s: %w", id, err)
 	}
@@ -643,9 +669,11 @@ func labSecurityGroupPermissions(sourceCIDR string) []*ecs.AuthorizeSecurityGrou
 
 func (c *Client) waitVPCAvailable(ctx context.Context, regionID, id string) error {
 	return waitFor(ctx, func() (bool, error) {
-		response, err := c.vpc.DescribeVpcsWithOptions(&vpc.DescribeVpcsRequest{
-			RegionId: dara.String(regionID), VpcId: dara.String(id), PageSize: dara.Int32(50),
-		}, c.runtime)
+		response, err := withCloudRetry(ctx, "DescribeVpcs "+id, func() (*vpc.DescribeVpcsResponse, error) {
+			return c.vpc.DescribeVpcsWithOptions(&vpc.DescribeVpcsRequest{
+				RegionId: dara.String(regionID), VpcId: dara.String(id), PageSize: dara.Int32(50),
+			}, c.runtime)
+		})
 		if err != nil {
 			return false, err
 		}
@@ -656,9 +684,11 @@ func (c *Client) waitVPCAvailable(ctx context.Context, regionID, id string) erro
 
 func (c *Client) waitVSwitchAvailable(ctx context.Context, regionID, zoneID, id string) error {
 	return waitFor(ctx, func() (bool, error) {
-		response, err := c.vpc.DescribeVSwitchesWithOptions(&vpc.DescribeVSwitchesRequest{
-			RegionId: dara.String(regionID), VSwitchId: dara.String(id), PageSize: dara.Int32(50),
-		}, c.runtime)
+		response, err := withCloudRetry(ctx, "DescribeVSwitches "+id, func() (*vpc.DescribeVSwitchesResponse, error) {
+			return c.vpc.DescribeVSwitchesWithOptions(&vpc.DescribeVSwitchesRequest{
+				RegionId: dara.String(regionID), VSwitchId: dara.String(id), PageSize: dara.Int32(50),
+			}, c.runtime)
+		})
 		if err != nil {
 			return false, err
 		}
@@ -676,9 +706,11 @@ func (c *Client) waitVSwitchAvailable(ctx context.Context, regionID, zoneID, id 
 
 func (c *Client) waitVSwitchDeleted(ctx context.Context, regionID, id string) error {
 	return waitFor(ctx, func() (bool, error) {
-		response, err := c.vpc.DescribeVSwitchesWithOptions(&vpc.DescribeVSwitchesRequest{
-			RegionId: dara.String(regionID), VSwitchId: dara.String(id), PageSize: dara.Int32(50),
-		}, c.runtime)
+		response, err := withCloudRetry(ctx, "DescribeVSwitches "+id, func() (*vpc.DescribeVSwitchesResponse, error) {
+			return c.vpc.DescribeVSwitchesWithOptions(&vpc.DescribeVSwitchesRequest{
+				RegionId: dara.String(regionID), VSwitchId: dara.String(id), PageSize: dara.Int32(50),
+			}, c.runtime)
+		})
 		if err != nil {
 			return false, err
 		}

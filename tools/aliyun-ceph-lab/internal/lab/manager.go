@@ -93,6 +93,12 @@ func (m *Manager) Create(ctx context.Context) error {
 	})
 	cancel()
 	if err != nil {
+		if !stateHasCloudResources(current) {
+			if cleanupErr := cleanupLocalState(m.StatePath, m.SSH.KnownHostsPath); cleanupErr != nil {
+				return fmt.Errorf("prepare network: %w; cleanup empty state: %v", err, cleanupErr)
+			}
+			return fmt.Errorf("prepare network: %w", err)
+		}
 		return fmt.Errorf("prepare network: %w; created resources are recorded in %s", err, m.StatePath)
 	}
 	current.Network = network
@@ -103,7 +109,7 @@ func (m *Manager) Create(ctx context.Context) error {
 
 	for index, node := range m.Config.Nodes {
 		logging.Infof("create: creating node %d/%d %s (%s); automatic release=%s", index+1, len(m.Config.Nodes), node.Name, node.InstanceType, expiresAt.Format(time.RFC3339))
-		instanceID, err := m.Cloud.RunNode(m.Config, node, expiresAt)
+		instanceID, err := m.Cloud.RunNode(ctx, m.Config, node, expiresAt)
 		if err != nil {
 			return fmt.Errorf("%w; created instance IDs remain protected by auto-release and are recorded in %s", err, m.StatePath)
 		}
@@ -128,18 +134,14 @@ func (m *Manager) Create(ctx context.Context) error {
 		return err
 	}
 
-	initCtx, cancel := context.WithTimeout(ctx, m.Config.WaitTimeoutDuration())
 	logging.Infof("create: starting SSH initialization on %d node(s)", len(current.Nodes))
 	privateKey, publicKey, err := generateClusterSSHKey(m.Config.ClusterName)
 	if err != nil {
-		cancel()
 		return fmt.Errorf("generate cluster SSH key: %w", err)
 	}
-	if err := m.initializeNodes(initCtx, current, initScript, privateKey, publicKey); err != nil {
-		cancel()
+	if err := m.initializeNodes(ctx, current, initScript, privateKey, publicKey); err != nil {
 		return fmt.Errorf("initialize nodes: %w; run delete --yes or wait for automatic release", err)
 	}
-	cancel()
 	logging.Infof("create: SSH initialization completed on all %d node(s)", len(current.Nodes))
 	if len(current.Nodes) < 3 {
 		logging.Infof("create: skipping Ceph deployment because %d node(s) were configured; at least 3 are required", len(current.Nodes))
@@ -170,7 +172,7 @@ func (m *Manager) List() (*state.State, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := m.refresh(current); err != nil {
+	if err := m.refresh(context.Background(), current); err != nil {
 		return nil, err
 	}
 	if err := state.Save(m.StatePath, current); err != nil {
@@ -184,7 +186,7 @@ func (m *Manager) Delete(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	instances, err := m.Cloud.Describe(current.RegionID, instanceIDs(current.Nodes))
+	instances, err := m.Cloud.Describe(ctx, current.RegionID, instanceIDs(current.Nodes))
 	if err != nil {
 		return err
 	}
@@ -199,7 +201,7 @@ func (m *Manager) Delete(ctx context.Context) error {
 			continue
 		}
 		logging.Infof("delete: releasing node %s (%s)", node.Name, node.InstanceID)
-		if err := m.Cloud.Delete(node.InstanceID); err != nil {
+		if err := m.Cloud.Delete(ctx, node.InstanceID); err != nil {
 			failures = append(failures, err.Error())
 		} else {
 			logging.Infof("delete: release request accepted for %s (%s)", node.Name, node.InstanceID)
@@ -251,13 +253,25 @@ func cleanupLocalState(statePath, knownHostsPath string) error {
 	return nil
 }
 
+func stateHasCloudResources(current *state.State) bool {
+	if current == nil {
+		return false
+	}
+	if len(current.Nodes) > 0 {
+		return true
+	}
+	return current.Network.CreatedVPC ||
+		current.Network.CreatedVSwitch ||
+		current.Network.CreatedSecurityGroup
+}
+
 func (m *Manager) waitInstancesReleased(ctx context.Context, current *state.State) error {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 	emptyChecks := 0
 	lastRemaining := -1
 	for {
-		instances, err := m.Cloud.Describe(current.RegionID, instanceIDs(current.Nodes))
+		instances, err := m.Cloud.Describe(ctx, current.RegionID, instanceIDs(current.Nodes))
 		if err != nil {
 			return err
 		}
@@ -287,7 +301,7 @@ func (m *Manager) waitUntilRunning(ctx context.Context, current *state.State) er
 	defer ticker.Stop()
 	lastSummary := ""
 	for {
-		if err := m.refresh(current); err != nil {
+		if err := m.refresh(ctx, current); err != nil {
 			return err
 		}
 		allRunning := true
@@ -317,8 +331,8 @@ func (m *Manager) waitUntilRunning(ctx context.Context, current *state.State) er
 	}
 }
 
-func (m *Manager) refresh(current *state.State) error {
-	instances, err := m.Cloud.Describe(current.RegionID, instanceIDs(current.Nodes))
+func (m *Manager) refresh(ctx context.Context, current *state.State) error {
+	instances, err := m.Cloud.Describe(ctx, current.RegionID, instanceIDs(current.Nodes))
 	if err != nil {
 		return err
 	}
@@ -360,12 +374,17 @@ func (m *Manager) initializeNodes(
 	privateKey string,
 	publicKey string,
 ) error {
+	sshCtx, cancel := context.WithTimeout(ctx, m.Config.WaitTimeoutDuration())
 	for _, node := range current.Nodes {
-		if err := m.SSH.Wait(ctx, node.PublicIP, node.Name); err != nil {
+		if err := m.SSH.Wait(sshCtx, node.PublicIP, node.Name); err != nil {
+			cancel()
 			return err
 		}
 	}
+	cancel()
 
+	scriptCtx, cancel := context.WithTimeout(ctx, 2*m.Config.WaitTimeoutDuration())
+	defer cancel()
 	var wg sync.WaitGroup
 	errorsByNode := make(chan error, len(current.Nodes))
 	for index, node := range current.Nodes {
@@ -374,7 +393,7 @@ func (m *Manager) initializeNodes(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if err := m.SSH.RunScript(ctx, node.PublicIP, node.Name, scriptPath, map[string]string{
+			if err := m.SSH.RunScript(scriptCtx, node.PublicIP, node.Name, scriptPath, map[string]string{
 				"CEPH_LAB_CLUSTER_NAME":           m.Config.ClusterName,
 				"CEPH_LAB_NODE_NAME":              node.Name,
 				"CEPH_LAB_NODE_NAMES":             joinNodeField(current.Nodes, func(item state.Node) string { return item.Name }),
