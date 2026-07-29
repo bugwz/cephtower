@@ -67,7 +67,8 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
   const permissionSummary = isAdminRole(user.role) ? '全部权限' : `${user.permissions.length} 项权限`
   const lastLoginLabel = formatDateTime(user.last_login_at)
   const navSections = buildNavSections(user)
-  const navItems = buildNavItems(navSections)
+  const navItems = buildNavItems(navSections, sidebarCollapsed)
+  const rootMenuKeys = getRootMenuKeys(navSections)
   const defaultOpenKeys = getDefaultOpenKeys(navSections, activePage)
   const defaultOpenKeysKey = defaultOpenKeys.join('|')
   const userDropdownItems: MenuProps['items'] = [
@@ -133,7 +134,7 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
       return
     }
 
-    setMenuOpenKeys(nextOpenKeys)
+    setMenuOpenKeys((currentOpenKeys) => getSingleOpenMenuKeys(nextOpenKeys, currentOpenKeys, rootMenuKeys))
   }
 
   function handleMenuClick(key: string) {
@@ -259,7 +260,7 @@ type NavSection = {
   children: NavChild[]
 }
 
-function buildNavItems(sections: NavSection[]): MenuProps['items'] {
+function buildNavItems(sections: NavSection[], includePopupTitle = false): MenuProps['items'] {
   return sections.map((section) => {
     if (section.children.length === 1) {
       const [item] = section.children
@@ -276,14 +277,36 @@ function buildNavItems(sections: NavSection[]): MenuProps['items'] {
       icon: section.icon,
       label: section.label,
       popupClassName: 'sidebar-menu-popup',
-      children: section.children.map((item) => ({
-        key: item.key,
-        icon: item.icon,
-        label: item.label,
-        disabled: item.disabled
-      }))
+      children: includePopupTitle ? buildPopupNavItems(section) : buildNavChildItems(section.children)
     }
   }) satisfies MenuProps['items']
+}
+
+function buildPopupNavItems(section: NavSection) {
+  return [
+    {
+      key: `${section.key}-popup-title`,
+      className: 'sidebar-menu-popup-title-item',
+      icon: section.icon,
+      label: section.label,
+      disabled: true
+    },
+    {
+      key: `${section.key}-popup-divider`,
+      className: 'sidebar-menu-popup-divider',
+      type: 'divider'
+    },
+    ...buildNavChildItems(section.children)
+  ] satisfies NonNullable<MenuProps['items']>
+}
+
+function buildNavChildItems(children: NavChild[]) {
+  return children.map((item) => ({
+    key: item.key,
+    icon: item.icon,
+    label: item.label,
+    disabled: item.disabled
+  }))
 }
 
 function getDefaultOpenKeys(sections: NavSection[], activePage: PageKey) {
@@ -291,6 +314,20 @@ function getDefaultOpenKeys(sections: NavSection[], activePage: PageKey) {
     (section) => section.children.length > 1 && section.children.some((item) => item.key === activePage)
   )
   return activeSection ? [activeSection.key] : []
+}
+
+function getRootMenuKeys(sections: NavSection[]) {
+  return sections.filter((section) => section.children.length > 1).map((section) => section.key)
+}
+
+function getSingleOpenMenuKeys(nextOpenKeys: string[], currentOpenKeys: string[], rootMenuKeys: string[]) {
+  const latestOpenKey = nextOpenKeys.find((key) => !currentOpenKeys.includes(key))
+
+  if (!latestOpenKey || !rootMenuKeys.includes(latestOpenKey)) {
+    return nextOpenKeys.filter((key) => rootMenuKeys.includes(key)).slice(-1)
+  }
+
+  return [latestOpenKey]
 }
 
 function didPointerActuallyMove(movementX: number, movementY: number) {
