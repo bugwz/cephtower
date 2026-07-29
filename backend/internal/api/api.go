@@ -25,5 +25,5 @@ func (a *API) Routes() http.Handler {
 		handler.WriteJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
 	})
 	mux.Handle("/", webui.WebUIHandler())
-	return withCORS(mux)
+	return withCORS(withMethodOverride(mux))
 }

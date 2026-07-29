@@ -10,7 +10,6 @@ func clusterRoutes(h *handler.Handler) []Route {
 		{"PATCH", "/cluster", h.UpdateCluster},
 		{"DELETE", "/cluster", h.DeleteCluster},
 		{"POST", "/cluster/probe", h.ProbeCluster},
-		{"POST", "/cluster/refresh", h.RefreshCluster},
 		{"GET", "/cluster/capabilities", h.Capabilities},
 	}
 }

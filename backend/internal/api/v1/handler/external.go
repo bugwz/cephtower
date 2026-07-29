@@ -29,9 +29,10 @@ func (h *Handler) ReadExternal(kind string) http.HandlerFunc {
 		} else if kind == "nvmeof_listener" || kind == "nvmeof_host" || kind == "nvmeof_connection" {
 			key = optionalStringBody(body, "nqn", "subsystem_nqn")
 		}
+		annotateAudit(r, kind+".read", kind, key, "", &clusterID)
 		data, err := h.External.Read(r.Context(), clusterID, kind, key, r.URL.Query())
 		if err != nil {
-			var operationError *cephdomain.OperationError
+			var operationError *cephdomain.ActionError
 			if errors.As(err, &operationError) {
 				status := http.StatusBadGateway
 				if operationError.Code == "invalid_request" || operationError.Code == "invalid_credential" || operationError.Code == "invalid_endpoint" {

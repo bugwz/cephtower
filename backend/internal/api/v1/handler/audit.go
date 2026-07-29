@@ -24,8 +24,6 @@ type auditEventDTO struct {
 	Outcome          string    `json:"outcome"`
 	HTTPStatus       *int      `json:"http_status"`
 	ErrorCode        *string   `json:"error_code"`
-	PlanID           *string   `json:"plan_id"`
-	OperationID      *string   `json:"operation_id"`
 	BeforeGeneration *uint64   `json:"before_generation"`
 	AfterGeneration  *uint64   `json:"after_generation"`
 	Parameters       any       `json:"parameters"`
@@ -62,7 +60,20 @@ func (h *Handler) ListAuditEvents(w http.ResponseWriter, r *http.Request) {
 		if row.DetailsJSON != nil {
 			_ = json.Unmarshal([]byte(*row.DetailsJSON), &details)
 		}
-		items = append(items, auditEventDTO{ID: row.ID, OccurredAt: row.OccurredAt, EventType: row.EventType, RequestID: row.RequestID, ActorUsername: row.ActorUsername, ClusterID: row.ClusterID, ClusterName: row.ClusterName, Action: row.Action, ResourceKind: row.ResourceKind, ResourceKey: row.ResourceKey, Risk: row.Risk, Outcome: row.Outcome, HTTPStatus: row.HTTPStatus, ErrorCode: row.ErrorCode, PlanID: row.PlanID, OperationID: row.OperationID, BeforeGeneration: row.BeforeGeneration, AfterGeneration: row.AfterGeneration, Parameters: parameters, Details: details, EventHash: row.EventHash})
+		items = append(items, auditEventDTO{ID: row.ID, OccurredAt: row.OccurredAt, EventType: row.EventType, RequestID: row.RequestID, ActorUsername: row.ActorUsername, ClusterID: row.ClusterID, ClusterName: row.ClusterName, Action: row.Action, ResourceKind: row.ResourceKind, ResourceKey: row.ResourceKey, Risk: row.Risk, Outcome: row.Outcome, HTTPStatus: row.HTTPStatus, ErrorCode: row.ErrorCode, BeforeGeneration: row.BeforeGeneration, AfterGeneration: row.AfterGeneration, Parameters: parameters, Details: details, EventHash: row.EventHash})
 	}
 	WriteSuccess(w, 200, "success", map[string]any{"items": items, "pagination": map[string]any{"next_cursor": nil}, "meta": map[string]string{"request_id": RequestID(r)}})
+}
+
+func optionalUintQuery(w http.ResponseWriter, r *http.Request, name string) (*uint64, bool) {
+	raw := r.URL.Query().Get(name)
+	if raw == "" {
+		return nil, true
+	}
+	value, err := strconv.ParseUint(raw, 10, 64)
+	if err != nil || value == 0 {
+		WriteError(w, r, http.StatusBadRequest, "invalid_request", name+" must be a positive integer", false, nil)
+		return nil, false
+	}
+	return &value, true
 }

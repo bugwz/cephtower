@@ -37,7 +37,7 @@ func TestRouteContract(t *testing.T) {
 
 func allowedClusterManagementPath(path string) bool {
 	switch path {
-	case "/cluster/probe", "/cluster/refresh", "/cluster/capabilities":
+	case "/cluster/probe", "/cluster/capabilities":
 		return true
 	default:
 		return false

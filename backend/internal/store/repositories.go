@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"sort"
 	"strconv"
 	"time"
 
@@ -82,12 +81,6 @@ type ResourceFilter struct {
 	AfterID                                   uint64
 }
 
-type OperationFilter struct {
-	Status, Action, ResourceKind, ResourceKey string
-	ActorUserID                               *uint64
-	Limit                                     int
-}
-
 type AuditFilter struct {
 	ActorUsername, Action, ResourceKind, ResourceKey string
 	ActorUserID                                      *uint64
@@ -114,10 +107,12 @@ func (d *Database) ListResources(ctx context.Context, clusterID uint64, filter R
 	var rows []CephResourceRecord
 	return rows, query.Order("id asc").Limit(limit + 1).Find(&rows).Error
 }
+
 func (d *Database) FindResource(ctx context.Context, clusterID uint64, kind, key string) (CephResourceRecord, error) {
 	var row CephResourceRecord
 	return row, d.db.WithContext(ctx).Where("cluster_id = ? AND kind = ? AND natural_key = ?", clusterID, kind, key).First(&row).Error
 }
+
 func (d *Database) UpsertResources(ctx context.Context, rows []CephResourceRecord) error {
 	if len(rows) == 0 {
 		return nil
@@ -126,198 +121,6 @@ func (d *Database) UpsertResources(ctx context.Context, rows []CephResourceRecor
 		Columns:   []clause.Column{{Name: "cluster_id"}, {Name: "kind"}, {Name: "natural_key"}},
 		DoUpdates: clause.AssignmentColumns([]string{"parent_kind", "parent_key", "name", "status", "generation", "resource_version", "source", "source_version", "observed_at", "stale_at", "payload_schema_version", "payload_json", "updated_at"}),
 	}).Create(&rows).Error
-}
-
-func (d *Database) CreateOperation(ctx context.Context, operation *CephOperation, event *CephOperationEvent, audit *AuditEvent) error {
-	d.auditMu.Lock()
-	defer d.auditMu.Unlock()
-	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(operation).Error; err != nil {
-			return err
-		}
-		if event != nil {
-			event.OperationID = operation.ID
-			if err := tx.Create(event).Error; err != nil {
-				return err
-			}
-		}
-		if audit != nil {
-			audit.OperationID = &operation.ID
-			if err := createAuditEvent(tx, audit); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}
-func (d *Database) FindOperation(ctx context.Context, id string) (CephOperation, error) {
-	var row CephOperation
-	return row, d.db.WithContext(ctx).Where("id = ?", id).First(&row).Error
-}
-func (d *Database) FindIdempotentOperation(ctx context.Context, scopeHash string) (CephOperation, error) {
-	var row CephOperation
-	return row, d.db.WithContext(ctx).Where("idempotency_scope_hash = ?", scopeHash).First(&row).Error
-}
-func (d *Database) ListOperations(ctx context.Context, clusterID uint64, status, action string, limit int) ([]CephOperation, error) {
-	return d.ListOperationsFiltered(ctx, clusterID, OperationFilter{Status: status, Action: action, Limit: limit})
-}
-func (d *Database) ListOperationsFiltered(ctx context.Context, clusterID uint64, filter OperationFilter) ([]CephOperation, error) {
-	q := d.db.WithContext(ctx).Where("cluster_id = ?", clusterID)
-	for column, value := range map[string]string{"status": filter.Status, "action": filter.Action, "resource_kind": filter.ResourceKind, "resource_key": filter.ResourceKey} {
-		if value != "" {
-			q = q.Where(column+" = ?", value)
-		}
-	}
-	if filter.ActorUserID != nil {
-		q = q.Where("actor_user_id = ?", *filter.ActorUserID)
-	}
-	limit := filter.Limit
-	if limit <= 0 {
-		limit = 50
-	}
-	if limit > 500 {
-		limit = 500
-	}
-	var rows []CephOperation
-	return rows, q.Order("created_at desc").Limit(limit).Find(&rows).Error
-}
-func (d *Database) CountNonTerminalOperations(ctx context.Context, clusterID uint64, excludeID string) (int64, error) {
-	query := d.db.WithContext(ctx).Model(&CephOperation{}).Where("cluster_id = ? AND status NOT IN ?", clusterID, []string{"succeeded", "failed", "cancelled", "needs_review"})
-	if excludeID != "" {
-		query = query.Where("id <> ?", excludeID)
-	}
-	var count int64
-	err := query.Count(&count).Error
-	return count, err
-}
-func (d *Database) ListOperationEvents(ctx context.Context, operationID string) ([]CephOperationEvent, error) {
-	var rows []CephOperationEvent
-	return rows, d.db.WithContext(ctx).Where("operation_id = ?", operationID).Order("sequence asc").Find(&rows).Error
-}
-
-func (d *Database) ListClusterOperationEventsAfter(ctx context.Context, clusterID, afterID uint64, limit int) ([]CephOperationEvent, error) {
-	if limit <= 0 || limit > 500 {
-		limit = 100
-	}
-	var rows []CephOperationEvent
-	query := d.db.WithContext(ctx).Table("ceph_operation_event AS event").Select("event.*").Joins("JOIN ceph_operation AS operation ON operation.id = event.operation_id").Where("operation.cluster_id = ? AND event.id > ?", clusterID, afterID).Order("event.id asc").Limit(limit)
-	return rows, query.Scan(&rows).Error
-}
-
-func (d *Database) ClaimQueuedOperation(ctx context.Context, now time.Time, perClusterLimit int) (CephOperation, error) {
-	if perClusterLimit <= 0 {
-		perClusterLimit = 2
-	}
-	var claimed CephOperation
-	err := d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var candidate CephOperation
-		query := tx.Table("ceph_operation AS candidate").Select("candidate.*").
-			Where("candidate.status = ? AND candidate.scheduled_at <= ?", "queued", now).
-			Where("candidate.cluster_id IS NULL OR (SELECT COUNT(*) FROM ceph_operation AS active WHERE active.cluster_id = candidate.cluster_id AND active.status IN ?) < ?", []string{"running", "cancel_requested", "recovering"}, perClusterLimit).
-			Order("candidate.scheduled_at asc, candidate.created_at asc")
-		if err := query.Take(&candidate).Error; err != nil {
-			return err
-		}
-		result := tx.Model(&CephOperation{}).Where("id = ? AND status = ?", candidate.ID, "queued").Updates(map[string]any{"status": "running", "stage": "pre_check", "started_at": now, "heartbeat_at": now, "attempt": gorm.Expr("attempt + 1"), "updated_at": now})
-		if result.Error != nil {
-			return result.Error
-		}
-		if result.RowsAffected != 1 {
-			return gorm.ErrRecordNotFound
-		}
-		return tx.Where("id = ?", candidate.ID).First(&claimed).Error
-	})
-	return claimed, err
-}
-func (d *Database) UpdateOperation(ctx context.Context, id string, updates map[string]any) error {
-	updates["updated_at"] = time.Now().UTC()
-	return d.db.WithContext(ctx).Model(&CephOperation{}).Where("id = ?", id).Updates(updates).Error
-}
-func (d *Database) AppendOperationEvent(ctx context.Context, event *CephOperationEvent) error {
-	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var max *uint64
-		if err := tx.Model(&CephOperationEvent{}).Where("operation_id = ?", event.OperationID).Select("MAX(sequence)").Scan(&max).Error; err != nil {
-			return err
-		}
-		event.Sequence = 1
-		if max != nil {
-			event.Sequence = *max + 1
-		}
-		return tx.Create(event).Error
-	})
-}
-func (d *Database) RecoverOperations(ctx context.Context, staleBefore, timeNow time.Time) error {
-	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		stale := tx.Model(&CephOperation{}).Where("status IN ? AND (heartbeat_at IS NULL OR heartbeat_at < ?)", []string{"running", "recovering", "cancel_requested"}, staleBefore)
-		if err := stale.Where("risk = ?", "low").Updates(map[string]any{"status": "queued", "stage": "recovering", "scheduled_at": timeNow, "started_at": nil, "heartbeat_at": nil, "updated_at": timeNow}).Error; err != nil {
-			return err
-		}
-		return tx.Model(&CephOperation{}).Where("status IN ? AND risk <> ? AND (heartbeat_at IS NULL OR heartbeat_at < ?)", []string{"running", "recovering", "cancel_requested"}, "low", staleBefore).Updates(map[string]any{"status": "needs_review", "stage": "recovery", "error_code": "worker_interrupted", "error_message": "worker stopped before completion", "retryable": true, "completed_at": timeNow, "updated_at": timeNow}).Error
-	})
-}
-
-func (d *Database) RenewOperationLease(ctx context.Context, operationID string, now, leaseExpiresAt time.Time) error {
-	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		result := tx.Model(&CephOperation{}).Where("id = ? AND status IN ?", operationID, []string{"running", "cancel_requested"}).Updates(map[string]any{"heartbeat_at": now, "updated_at": now})
-		if result.Error != nil {
-			return result.Error
-		}
-		if result.RowsAffected != 1 {
-			return gorm.ErrRecordNotFound
-		}
-		return tx.Model(&CephOperationLock{}).Where("operation_id = ?", operationID).Updates(map[string]any{"lease_expires_at": leaseExpiresAt, "updated_at": now}).Error
-	})
-}
-
-func (d *Database) AcquireLocks(ctx context.Context, operation CephOperation, keys []CephOperationLock, now time.Time) error {
-	sort.Slice(keys, func(i, j int) bool { return keys[i].LockKey < keys[j].LockKey })
-	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		for i := range keys {
-			keys[i].OperationID = operation.ID
-			keys[i].ClusterID = *operation.ClusterID
-			keys[i].AcquiredAt = now
-			keys[i].UpdatedAt = now
-			takeover := tx.Model(&CephOperationLock{}).Where("lock_key = ? AND lease_expires_at <= ?", keys[i].LockKey, now).Updates(map[string]any{"cluster_id": keys[i].ClusterID, "resource_kind": keys[i].ResourceKind, "resource_key": keys[i].ResourceKey, "operation_id": keys[i].OperationID, "fencing_token": gorm.Expr("fencing_token + 1"), "lease_expires_at": keys[i].LeaseExpiresAt, "acquired_at": now, "updated_at": now})
-			if takeover.Error != nil {
-				return takeover.Error
-			}
-			if takeover.RowsAffected == 1 {
-				continue
-			}
-			keys[i].FencingToken = 1
-			if err := tx.Create(&keys[i]).Error; err != nil {
-				return errors.New("resource is locked")
-			}
-		}
-		return nil
-	})
-}
-func (d *Database) ReleaseLocks(ctx context.Context, operationID string) error {
-	return d.db.WithContext(ctx).Where("operation_id = ?", operationID).Delete(&CephOperationLock{}).Error
-}
-
-func (d *Database) CreatePlan(ctx context.Context, plan *CephActionPlan) error {
-	return d.db.WithContext(ctx).Create(plan).Error
-}
-func (d *Database) FindPlan(ctx context.Context, id string) (CephActionPlan, error) {
-	var row CephActionPlan
-	return row, d.db.WithContext(ctx).Where("id = ?", id).First(&row).Error
-}
-func (d *Database) ConsumePlan(ctx context.Context, id string, actorUserID *uint64, clusterID uint64, action, resourceKind, resourceKey string, generation uint64, now time.Time) error {
-	result := d.db.WithContext(ctx).Model(&CephActionPlan{}).Where("id = ? AND status = ? AND risk = ? AND expires_at > ? AND cluster_id = ? AND action = ? AND resource_kind = ? AND resource_key = ? AND resource_generation = ?", id, "valid", "high", now, clusterID, action, resourceKind, resourceKey, generation)
-	if actorUserID == nil {
-		result = result.Where("actor_user_id IS NULL")
-	} else {
-		result = result.Where("actor_user_id = ?", *actorUserID)
-	}
-	result = result.Updates(map[string]any{"status": "consumed", "consumed_at": now})
-	if result.Error != nil {
-		return result.Error
-	}
-	if result.RowsAffected != 1 {
-		return gorm.ErrRecordNotFound
-	}
-	return nil
 }
 
 func (d *Database) UpsertObservation(ctx context.Context, row *CephClusterObservation) error {
@@ -599,14 +402,14 @@ func createAuditEvent(tx *gorm.DB, row *AuditEvent) error {
 		row.PreviousHash = &previousHash
 	}
 	payload, err := json.Marshal(struct {
-		ID                                                                                                uint64
-		OccurredAt                                                                                        time.Time `json:"occurred_at"`
-		EventType, RequestID, ActorUsername, Action, Outcome                                              string
-		ActorUserID, ClusterID, BeforeGeneration, AfterGeneration                                         *uint64
-		HTTPStatus                                                                                        *int
-		ClusterName, ResourceKind, ResourceKey, Risk, ErrorCode, SourceIP, UserAgent, PlanID, OperationID *string
-		ParametersJSON, DetailsJSON, PreviousHash                                                         *string
-	}{row.ID, row.OccurredAt.UTC(), row.EventType, row.RequestID, row.ActorUsername, row.Action, row.Outcome, row.ActorUserID, row.ClusterID, row.BeforeGeneration, row.AfterGeneration, row.HTTPStatus, row.ClusterName, row.ResourceKind, row.ResourceKey, row.Risk, row.ErrorCode, row.SourceIP, row.UserAgent, row.PlanID, row.OperationID, row.ParametersJSON, row.DetailsJSON, row.PreviousHash})
+		ID                                                                           uint64
+		OccurredAt                                                                   time.Time `json:"occurred_at"`
+		EventType, RequestID, ActorUsername, Action, Outcome                         string
+		ActorUserID, ClusterID, BeforeGeneration, AfterGeneration                    *uint64
+		HTTPStatus                                                                   *int
+		ClusterName, ResourceKind, ResourceKey, Risk, ErrorCode, SourceIP, UserAgent *string
+		ParametersJSON, DetailsJSON, PreviousHash                                    *string
+	}{row.ID, row.OccurredAt.UTC(), row.EventType, row.RequestID, row.ActorUsername, row.Action, row.Outcome, row.ActorUserID, row.ClusterID, row.BeforeGeneration, row.AfterGeneration, row.HTTPStatus, row.ClusterName, row.ResourceKind, row.ResourceKey, row.Risk, row.ErrorCode, row.SourceIP, row.UserAgent, row.ParametersJSON, row.DetailsJSON, row.PreviousHash})
 	if err != nil {
 		return err
 	}

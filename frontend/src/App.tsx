@@ -13,6 +13,7 @@ import {
   pageComponents,
   type PageKey
 } from './pages'
+import { ClusterProvider } from './state/ClusterContext'
 
 export default function App() {
   const navigate = useNavigate()
@@ -131,7 +132,11 @@ export default function App() {
           },
           Menu: {
             itemHeight: 38,
-            fontSize: 13
+            fontSize: 13,
+            itemBg: '#ffffff',
+            itemHoverBg: '#f3f4f6',
+            itemActiveBg: '#f3f4f6',
+            itemSelectedBg: '#d5efe3'
           },
           Table: {
             cellFontSize: 12,
@@ -145,53 +150,55 @@ export default function App() {
       }}
     >
       <ApiErrorNotifier />
-      {checkingSession ? (
-        <div className="session-check" aria-label="正在检查系统状态" aria-busy="true" />
-      ) : setupRequired ? (
-        <Routes>
-          <Route path="/initialize" element={<InitializationPage database={setupDatabase} onComplete={handleSetupComplete} />} />
-          <Route path="*" element={<Navigate to="/initialize" replace />} />
-        </Routes>
-      ) : user ? (
-        <Routes>
-          <Route path="/" element={<Navigate to={pagePaths.overview} replace />} />
-          {NAV_PAGES.map((page) => (
-            <Route key={page.key} path={page.path} element={renderAppPage(page.key)} />
-          ))}
-          <Route path="/cluster/cluster/:id" element={renderStandaloneAppPage('clusterManagement', <ClusterDetailPage />)} />
-          <Route path="/login" element={<Navigate to={pagePaths.overview} replace />} />
-          <Route path="/initialize" element={<Navigate to={pagePaths.overview} replace />} />
-          <Route path="/password-reset" element={<Navigate to={pagePaths.overview} replace />} />
-          <Route path="*" element={<Navigate to={pagePaths.overview} replace />} />
-        </Routes>
-      ) : (
-        <Routes>
-          <Route
-            path="/login"
-            element={
-              <LoginPage
-                mode="login"
-                onLogin={handleLogin}
-                onForgotPassword={() => navigate('/password-reset')}
-                onPasswordResetComplete={() => navigate('/login', { replace: true })}
-              />
-            }
-          />
-          <Route
-            path="/password-reset"
-            element={
-              <LoginPage
-                mode="reset"
-                onLogin={handleLogin}
-                onForgotPassword={() => navigate('/password-reset')}
-                onPasswordResetComplete={() => navigate('/login', { replace: true })}
-              />
-            }
-          />
-          <Route path="/initialize" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      )}
+      <ClusterProvider enabled={Boolean(user)}>
+        {checkingSession ? (
+          <div className="session-check" aria-label="正在检查系统状态" aria-busy="true" />
+        ) : setupRequired ? (
+          <Routes>
+            <Route path="/bootstrap" element={<InitializationPage database={setupDatabase} onComplete={handleSetupComplete} />} />
+            <Route path="*" element={<Navigate to="/bootstrap" replace />} />
+          </Routes>
+        ) : user ? (
+          <Routes>
+            <Route path="/" element={<Navigate to={pagePaths.overview} replace />} />
+            {NAV_PAGES.map((page) => (
+              <Route key={page.key} path={page.path} element={renderAppPage(page.key)} />
+            ))}
+            <Route path="/cluster/cluster/:id" element={renderStandaloneAppPage('clusterManagement', <ClusterDetailPage />)} />
+            <Route path="/login" element={<Navigate to={pagePaths.overview} replace />} />
+            <Route path="/bootstrap" element={<Navigate to={pagePaths.overview} replace />} />
+            <Route path="/password-reset" element={<Navigate to={pagePaths.overview} replace />} />
+            <Route path="*" element={<Navigate to={pagePaths.overview} replace />} />
+          </Routes>
+        ) : (
+          <Routes>
+            <Route
+              path="/login"
+              element={
+                <LoginPage
+                  mode="login"
+                  onLogin={handleLogin}
+                  onForgotPassword={() => navigate('/password-reset')}
+                  onPasswordResetComplete={() => navigate('/login', { replace: true })}
+                />
+              }
+            />
+            <Route
+              path="/password-reset"
+              element={
+                <LoginPage
+                  mode="reset"
+                  onLogin={handleLogin}
+                  onForgotPassword={() => navigate('/password-reset')}
+                  onPasswordResetComplete={() => navigate('/login', { replace: true })}
+                />
+              }
+            />
+            <Route path="/bootstrap" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        )}
+      </ClusterProvider>
     </ConfigProvider>
   )
 }

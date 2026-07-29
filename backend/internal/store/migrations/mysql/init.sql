@@ -90,65 +90,18 @@ CREATE TABLE ceph_collection_run (
  INDEX idx_collection_status_started(status,started_at), INDEX idx_collection_finished(finished_at),
  FOREIGN KEY(cluster_id) REFERENCES ceph_cluster(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
-CREATE TABLE ceph_action_plan (
- id VARCHAR(36) PRIMARY KEY, cluster_id BIGINT UNSIGNED NOT NULL, actor_user_id BIGINT UNSIGNED NULL,
- actor_username VARCHAR(128) NOT NULL, request_id VARCHAR(64) NOT NULL, action VARCHAR(128) NOT NULL,
- resource_kind VARCHAR(64) NOT NULL, resource_key VARCHAR(512) NOT NULL, resource_generation BIGINT UNSIGNED NOT NULL,
- risk VARCHAR(16) NOT NULL, status VARCHAR(32) NOT NULL, request_json LONGTEXT NOT NULL,
- blockers_json LONGTEXT NOT NULL, warnings_json LONGTEXT NOT NULL, expires_at DATETIME(6) NOT NULL,
- consumed_at DATETIME(6) NULL, created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
- INDEX idx_plan_resource(cluster_id,resource_kind,resource_key), INDEX idx_plan_actor_created(actor_user_id,created_at),
- INDEX idx_plan_status_expiry(status,expires_at), INDEX idx_plan_request(request_id),
- FOREIGN KEY(cluster_id) REFERENCES ceph_cluster(id) ON DELETE CASCADE, FOREIGN KEY(actor_user_id) REFERENCES user(id) ON DELETE SET NULL
-) ENGINE=InnoDB;
-CREATE TABLE ceph_operation (
- id VARCHAR(36) PRIMARY KEY, cluster_id BIGINT UNSIGNED NULL, cluster_name VARCHAR(128) NOT NULL,
- actor_user_id BIGINT UNSIGNED NULL, actor_username VARCHAR(128) NOT NULL, plan_id VARCHAR(36) NULL,
- retry_of_id VARCHAR(36) NULL, request_id VARCHAR(64) NOT NULL, action VARCHAR(128) NOT NULL,
- resource_kind VARCHAR(64) NOT NULL, resource_key VARCHAR(512) NOT NULL, resource_generation BIGINT UNSIGNED NULL,
- risk VARCHAR(16) NOT NULL, status VARCHAR(32) NOT NULL DEFAULT 'queued', stage VARCHAR(64) NOT NULL DEFAULT 'queued',
- progress INT NOT NULL DEFAULT 0 CHECK(progress BETWEEN 0 AND 100), attempt INT NOT NULL DEFAULT 0,
- max_attempts INT NOT NULL DEFAULT 1, idempotency_key_hash VARCHAR(64) NULL,
- idempotency_scope_hash VARCHAR(64) NULL UNIQUE, request_json LONGTEXT NOT NULL, result_json LONGTEXT NULL,
- error_code VARCHAR(64) NULL, error_message LONGTEXT NULL, error_details_json LONGTEXT NULL,
- retryable BOOLEAN NOT NULL DEFAULT FALSE, cancel_requested_at DATETIME(6) NULL, scheduled_at DATETIME(6) NOT NULL,
- started_at DATETIME(6) NULL, heartbeat_at DATETIME(6) NULL, completed_at DATETIME(6) NULL,
- created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
- INDEX idx_operation_cluster_status_created(cluster_id,status,created_at), INDEX idx_operation_actor_created(actor_user_id,created_at),
- INDEX idx_operation_resource_created(resource_kind,resource_key,created_at), INDEX idx_operation_status_scheduled(status,scheduled_at),
- INDEX idx_operation_heartbeat(heartbeat_at), INDEX idx_operation_plan(plan_id), INDEX idx_operation_retry_of(retry_of_id),
- INDEX idx_operation_request(request_id), FOREIGN KEY(cluster_id) REFERENCES ceph_cluster(id) ON DELETE SET NULL,
- FOREIGN KEY(actor_user_id) REFERENCES user(id) ON DELETE SET NULL, FOREIGN KEY(plan_id) REFERENCES ceph_action_plan(id) ON DELETE SET NULL,
- FOREIGN KEY(retry_of_id) REFERENCES ceph_operation(id) ON DELETE SET NULL
-) ENGINE=InnoDB;
-CREATE TABLE ceph_operation_event (
- id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, operation_id VARCHAR(36) NOT NULL, sequence BIGINT UNSIGNED NOT NULL,
- event_type VARCHAR(32) NOT NULL, stage VARCHAR(64) NOT NULL, progress INT NULL,
- message LONGTEXT NOT NULL, data_json LONGTEXT NULL, error_code VARCHAR(64) NULL,
- created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), UNIQUE KEY uq_operation_event(operation_id,sequence),
- INDEX idx_event_operation_created(operation_id,created_at), INDEX idx_event_created(created_at),
- FOREIGN KEY(operation_id) REFERENCES ceph_operation(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
-CREATE TABLE ceph_operation_lock (
- lock_key VARCHAR(191) PRIMARY KEY, cluster_id BIGINT UNSIGNED NOT NULL, resource_kind VARCHAR(64) NOT NULL,
- resource_key VARCHAR(512) NOT NULL, operation_id VARCHAR(36) NOT NULL, fencing_token BIGINT UNSIGNED NOT NULL,
- lease_expires_at DATETIME(6) NOT NULL, acquired_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
- updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), INDEX idx_lock_resource(cluster_id,resource_kind,resource_key),
- INDEX idx_lock_operation(operation_id), INDEX idx_lock_expiry(lease_expires_at),
- FOREIGN KEY(cluster_id) REFERENCES ceph_cluster(id) ON DELETE CASCADE, FOREIGN KEY(operation_id) REFERENCES ceph_operation(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
 CREATE TABLE audit_event (
  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, occurred_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
  event_type VARCHAR(32) NOT NULL, request_id VARCHAR(64) NOT NULL, actor_user_id BIGINT UNSIGNED NULL,
  actor_username VARCHAR(128) NOT NULL, cluster_id BIGINT UNSIGNED NULL, cluster_name VARCHAR(128) NULL,
  action VARCHAR(128) NOT NULL, resource_kind VARCHAR(64) NULL, resource_key VARCHAR(512) NULL,
  risk VARCHAR(16) NULL, outcome VARCHAR(32) NOT NULL, http_status INT NULL, error_code VARCHAR(64) NULL,
- source_ip VARCHAR(64) NULL, user_agent VARCHAR(512) NULL, plan_id VARCHAR(36) NULL, operation_id VARCHAR(36) NULL,
+ source_ip VARCHAR(64) NULL, user_agent VARCHAR(512) NULL,
  before_generation BIGINT UNSIGNED NULL, after_generation BIGINT UNSIGNED NULL, parameters_json LONGTEXT NULL,
  details_json LONGTEXT NULL, previous_hash VARCHAR(64) NULL, event_hash VARCHAR(64) NOT NULL UNIQUE,
  INDEX idx_audit_occurred(occurred_at), INDEX idx_audit_actor_occurred(actor_user_id,occurred_at),
  INDEX idx_audit_cluster_occurred(cluster_id,occurred_at), INDEX idx_audit_action_occurred(action,occurred_at),
  INDEX idx_audit_resource_occurred(resource_kind,resource_key,occurred_at), INDEX idx_audit_request(request_id),
- INDEX idx_audit_operation(operation_id), FOREIGN KEY(actor_user_id) REFERENCES user(id) ON DELETE SET NULL,
+ FOREIGN KEY(actor_user_id) REFERENCES user(id) ON DELETE SET NULL,
  FOREIGN KEY(cluster_id) REFERENCES ceph_cluster(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;

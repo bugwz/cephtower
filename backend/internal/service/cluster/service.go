@@ -11,12 +11,14 @@ import (
 	cephdomain "cephtower/backend/internal/domain/ceph"
 	cephprovider "cephtower/backend/internal/integration/ceph"
 	"cephtower/backend/internal/integration/ceph/connection"
+	"cephtower/backend/internal/integration/ceph/executor"
 	"cephtower/backend/internal/security"
-	operationservice "cephtower/backend/internal/service/operation"
 	"cephtower/backend/internal/store"
 )
 
 var ErrNotFound = errors.New("cluster not found")
+
+const asyncProbeTimeout = 5 * time.Minute
 
 type CreateInput struct{ Name, MonitorAddresses, ClientUsername, ClientKey string }
 type UpdateInput struct {
@@ -26,18 +28,11 @@ type UpdateInput struct {
 type Service struct {
 	database      func() *store.Database
 	encryptionKey string
-	operations    *operationservice.Service
 	provider      cephprovider.ClusterProvider
 }
 
-func New(database func() *store.Database, encryptionKey string, operations *operationservice.Service, provider cephprovider.ClusterProvider) *Service {
-	s := &Service{database: database, encryptionKey: encryptionKey, operations: operations, provider: provider}
-	if operations != nil {
-		_ = operations.Register("cluster.probe", s.probeOperation)
-		_ = operations.Register("cluster.update", s.probeOperation)
-		_ = operations.Register("cluster.delete", s.deleteOperation)
-	}
-	return s
+func New(database func() *store.Database, encryptionKey string, provider cephprovider.ClusterProvider) *Service {
+	return &Service{database: database, encryptionKey: encryptionKey, provider: provider}
 }
 func (s *Service) List(ctx context.Context) ([]store.CephCluster, error) {
 	return s.database().ListClusters(ctx)
@@ -49,91 +44,91 @@ func (s *Service) Get(ctx context.Context, id uint64) (store.CephCluster, error)
 	}
 	return row, err
 }
-func (s *Service) Create(ctx context.Context, input CreateInput, actorUserID *uint64, actor, requestID, idempotencyKey string) (store.CephCluster, store.CephOperation, error) {
+func (s *Service) Create(ctx context.Context, input CreateInput) (store.CephCluster, cephdomain.ActionResult, error) {
 	name, mon, user, key, err := validateCreate(input)
 	if err != nil {
-		return store.CephCluster{}, store.CephOperation{}, err
+		return store.CephCluster{}, cephdomain.ActionResult{}, err
 	}
 	if _, err := connection.ParseMonitorAddresses(mon); err != nil {
-		return store.CephCluster{}, store.CephOperation{}, fmt.Errorf("invalid monitor addresses: %w", err)
+		return store.CephCluster{}, cephdomain.ActionResult{}, fmt.Errorf("invalid monitor addresses: %w", err)
 	}
 	encrypted, err := security.Encrypt([]byte(key), s.encryptionKey)
 	if err != nil {
-		return store.CephCluster{}, store.CephOperation{}, err
+		return store.CephCluster{}, cephdomain.ActionResult{}, err
 	}
 	now := time.Now().UTC()
 	row := store.CephCluster{Name: name, MonitorAddresses: mon, ClientUsername: user, ClientKey: encrypted, CreatedAt: now, UpdatedAt: now}
 	if err := s.database().CreateCluster(ctx, &row); err != nil {
-		return store.CephCluster{}, store.CephOperation{}, err
+		return store.CephCluster{}, cephdomain.ActionResult{}, err
 	}
-	operation, err := s.operations.Enqueue(ctx, operationservice.Request{ClusterID: &row.ID, ClusterName: row.Name, ActorUserID: actorUserID, ActorUsername: actor, RequestID: requestID, Action: "cluster.probe", ResourceKind: "cluster", ResourceKey: fmt.Sprintf("%d", row.ID), Risk: cephdomain.RiskLow, IdempotencyKey: idempotencyKey, Parameters: map[string]any{"cluster_id": row.ID}, LockKeys: []operationservice.LockKey{{Kind: "cluster", Key: fmt.Sprintf("%d", row.ID)}}})
-	if err != nil {
-		_ = s.database().DeleteCluster(ctx, &row)
-		return store.CephCluster{}, store.CephOperation{}, err
-	}
-	return row, operation, nil
+	s.scheduleProbe(row)
+	return row, clusterSavedResult(row.ID), nil
 }
-func (s *Service) Update(ctx context.Context, id uint64, input UpdateInput, actorUserID *uint64, actor, requestID, idempotencyKey string) (store.CephOperation, error) {
+func (s *Service) Update(ctx context.Context, id uint64, input UpdateInput) (cephdomain.ActionResult, error) {
 	row, err := s.Get(ctx, id)
 	if err != nil {
-		return store.CephOperation{}, err
+		return cephdomain.ActionResult{}, err
 	}
-	parameters := map[string]any{}
+	candidate := row
 	if input.Name != nil {
 		value := strings.TrimSpace(*input.Name)
 		if value == "" {
-			return store.CephOperation{}, fmt.Errorf("name must not be empty")
+			return cephdomain.ActionResult{}, fmt.Errorf("name must not be empty")
 		}
-		parameters["name"] = value
+		candidate.Name = value
 	}
 	if input.MonitorAddresses != nil {
 		value := strings.TrimSpace(*input.MonitorAddresses)
 		if _, err := connection.ParseMonitorAddresses(value); err != nil {
-			return store.CephOperation{}, fmt.Errorf("invalid monitor addresses: %w", err)
+			return cephdomain.ActionResult{}, fmt.Errorf("invalid monitor addresses: %w", err)
 		}
-		parameters["monitor_addresses"] = value
+		candidate.MonitorAddresses = value
 	}
 	if input.ClientUsername != nil {
 		value := strings.TrimSpace(*input.ClientUsername)
 		if !strings.HasPrefix(value, "client.") {
-			return store.CephOperation{}, fmt.Errorf("client_username must start with client.")
+			return cephdomain.ActionResult{}, fmt.Errorf("client_username must start with client.")
 		}
-		parameters["client_username"] = value
+		candidate.ClientUsername = value
 	}
 	if input.ClientKey != nil {
 		if *input.ClientKey == "" {
-			return store.CephOperation{}, fmt.Errorf("client_key must not be empty")
+			return cephdomain.ActionResult{}, fmt.Errorf("client_key must not be empty")
 		}
-		parameters["client_key"] = *input.ClientKey
+		candidate.ClientKey, err = security.Encrypt([]byte(*input.ClientKey), s.encryptionKey)
+		if err != nil {
+			return cephdomain.ActionResult{}, err
+		}
 	}
-	if len(parameters) == 0 {
-		return store.CephOperation{}, fmt.Errorf("at least one field is required")
+	if candidate == row {
+		return cephdomain.ActionResult{}, fmt.Errorf("at least one field is required")
 	}
-	return s.operations.Enqueue(ctx, operationservice.Request{ClusterID: &row.ID, ClusterName: row.Name, ActorUserID: actorUserID, ActorUsername: actor, RequestID: requestID, Action: "cluster.update", ResourceKind: "cluster", ResourceKey: fmt.Sprintf("%d", row.ID), Risk: cephdomain.RiskMedium, IdempotencyKey: idempotencyKey, Parameters: parameters})
+	candidate.UpdatedAt = time.Now().UTC()
+	if err := s.database().SaveCluster(ctx, &candidate); err != nil {
+		return cephdomain.ActionResult{}, err
+	}
+	s.scheduleProbe(candidate)
+	return clusterSavedResult(candidate.ID), nil
 }
-func (s *Service) Delete(ctx context.Context, id uint64, deleteCachedData bool, actorUserID *uint64, actor, requestID, idempotencyKey string) (store.CephOperation, error) {
+func (s *Service) Delete(ctx context.Context, id uint64, deleteCachedData bool) (cephdomain.ActionResult, error) {
 	if !deleteCachedData {
-		return store.CephOperation{}, fmt.Errorf("delete_cached_data=true is required")
+		return cephdomain.ActionResult{}, fmt.Errorf("delete_cached_data=true is required")
 	}
 	row, err := s.Get(ctx, id)
 	if err != nil {
-		return store.CephOperation{}, err
+		return cephdomain.ActionResult{}, err
 	}
-	active, err := s.database().CountNonTerminalOperations(ctx, id, "")
-	if err != nil {
-		return store.CephOperation{}, err
+	if err := s.database().DeleteCluster(ctx, &row); err != nil {
+		return cephdomain.ActionResult{}, err
 	}
-	if active != 0 {
-		return store.CephOperation{}, fmt.Errorf("cluster has %d non-terminal operations", active)
-	}
-	return s.operations.Enqueue(ctx, operationservice.Request{ClusterID: &row.ID, ClusterName: row.Name, ActorUserID: actorUserID, ActorUsername: actor, RequestID: requestID, Action: "cluster.delete", ResourceKind: "cluster", ResourceKey: fmt.Sprintf("%d", row.ID), Risk: cephdomain.RiskMedium, IdempotencyKey: idempotencyKey, Parameters: map[string]any{"delete_cached_data": true}})
+	return cephdomain.ActionResult{Details: map[string]any{"deleted": true}}, nil
 }
-func (s *Service) Probe(ctx context.Context, id uint64, actorUserID *uint64, actor, requestID, idempotencyKey string) (store.CephOperation, error) {
+func (s *Service) Probe(ctx context.Context, id uint64) (cephdomain.ActionResult, error) {
 	row, err := s.Get(ctx, id)
 	if err != nil {
-		return store.CephOperation{}, err
+		return cephdomain.ActionResult{}, err
 	}
-	return s.operations.Enqueue(ctx, operationservice.Request{ClusterID: &row.ID, ClusterName: row.Name, ActorUserID: actorUserID, ActorUsername: actor, RequestID: requestID, Action: "cluster.probe", ResourceKind: "cluster", ResourceKey: fmt.Sprintf("%d", row.ID), Risk: cephdomain.RiskLow, IdempotencyKey: idempotencyKey, Parameters: map[string]any{"probe": true}})
+	return s.applyProbe(ctx, row, row, false)
 }
 func (s *Service) Capabilities(ctx context.Context, id uint64) ([]store.CephClusterCapability, error) {
 	if _, err := s.Get(ctx, id); err != nil {
@@ -148,68 +143,30 @@ func (s *Service) Access(ctx context.Context, id uint64) (cephprovider.ClusterAc
 	}
 	return s.accessForRow(row)
 }
-func (s *Service) probeOperation(ctx context.Context, operation store.CephOperation) (cephdomain.OperationResult, error) {
-	if operation.ClusterID == nil {
-		return cephdomain.OperationResult{}, fmt.Errorf("cluster operation has no cluster")
-	}
-	row, err := s.Get(ctx, *operation.ClusterID)
-	if err != nil {
-		return cephdomain.OperationResult{}, err
-	}
-	candidate := row
-	if operation.Action == "cluster.update" {
-		var stored any
-		if err := json.Unmarshal([]byte(operation.RequestJSON), &stored); err != nil {
-			return cephdomain.OperationResult{}, err
-		}
-		stored, err = security.UnprotectJSON(stored, s.encryptionKey)
-		if err != nil {
-			return cephdomain.OperationResult{}, &cephdomain.OperationError{Code: "invalid_credential", Message: "cluster update secrets could not be decrypted"}
-		}
-		parameters, ok := stored.(map[string]any)
-		if !ok {
-			return cephdomain.OperationResult{}, fmt.Errorf("cluster update parameters are invalid")
-		}
-		if value, ok := parameters["name"].(string); ok {
-			candidate.Name = value
-		}
-		if value, ok := parameters["monitor_addresses"].(string); ok {
-			candidate.MonitorAddresses = value
-		}
-		if value, ok := parameters["client_username"].(string); ok {
-			candidate.ClientUsername = value
-		}
-		if value, ok := parameters["client_key"].(string); ok {
-			candidate.ClientKey, err = security.Encrypt([]byte(value), s.encryptionKey)
-			if err != nil {
-				return cephdomain.OperationResult{}, err
-			}
-		}
-	}
+func (s *Service) applyProbe(ctx context.Context, row, candidate store.CephCluster, saveCandidate bool) (cephdomain.ActionResult, error) {
 	access, err := s.accessForRow(candidate)
 	if err != nil {
-		return cephdomain.OperationResult{}, err
+		return cephdomain.ActionResult{}, err
 	}
 	result, err := s.provider.Probe(ctx, access)
 	access.ClientKey = ""
 	now := time.Now().UTC()
 	if err != nil {
-		code := "ceph_unavailable"
-		message := security.Redact(err.Error())
-		_ = s.database().UpsertObservation(ctx, &store.CephClusterObservation{ClusterID: *operation.ClusterID, Status: "unavailable", Enabled: true, LastErrorCode: &code, LastErrorMessage: &message, ObservedAt: &now, UpdatedAt: now})
-		return cephdomain.OperationResult{}, &cephdomain.OperationError{Code: code, Message: message, Retryable: true}
+		code, message := probeFailure(err)
+		_ = s.database().UpsertObservation(ctx, &store.CephClusterObservation{ClusterID: row.ID, Status: "unavailable", Enabled: true, LastErrorCode: &code, LastErrorMessage: &message, ObservedAt: &now, UpdatedAt: now})
+		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: code, Message: message, Retryable: true}
 	}
-	if operation.Action == "cluster.update" {
+	if saveCandidate {
 		candidate.UpdatedAt = now
 		if err := s.database().SaveCluster(ctx, &candidate); err != nil {
-			return cephdomain.OperationResult{}, err
+			return cephdomain.ActionResult{}, err
 		}
 	}
 	version := result.Version
 	fsid := result.FSID
-	observation := store.CephClusterObservation{ClusterID: *operation.ClusterID, FSID: &fsid, CephVersion: &version, Status: "available", Enabled: true, Generation: 1, LastSeenAt: &now, ObservedAt: &now, UpdatedAt: now}
+	observation := store.CephClusterObservation{ClusterID: row.ID, FSID: &fsid, CephVersion: &version, Status: "available", Enabled: true, Generation: 1, LastSeenAt: &now, ObservedAt: &now, UpdatedAt: now}
 	if err := s.database().UpsertObservation(ctx, &observation); err != nil {
-		return cephdomain.OperationResult{}, err
+		return cephdomain.ActionResult{}, err
 	}
 	caps := make([]store.CephClusterCapability, 0, len(result.Capabilities))
 	for _, capability := range result.Capabilities {
@@ -226,13 +183,26 @@ func (s *Service) probeOperation(ctx context.Context, operation store.CephOperat
 			value := string(encoded)
 			details = &value
 		}
-		caps = append(caps, store.CephClusterCapability{ClusterID: *operation.ClusterID, Name: capability.Name, Supported: capability.Supported, Reason: reason, Version: version, DetailsJSON: details, ObservedAt: now, UpdatedAt: now})
+		caps = append(caps, store.CephClusterCapability{ClusterID: row.ID, Name: capability.Name, Supported: capability.Supported, Reason: reason, Version: version, DetailsJSON: details, ObservedAt: now, UpdatedAt: now})
 	}
 	if err := s.database().UpsertCapabilities(ctx, caps); err != nil {
-		return cephdomain.OperationResult{}, err
+		return cephdomain.ActionResult{}, err
 	}
-	return cephdomain.OperationResult{ResourceURL: fmt.Sprintf("/api/v1/cluster/%d", *operation.ClusterID), Details: map[string]any{"fsid": result.FSID, "ceph_version": result.Version}}, nil
+	return cephdomain.ActionResult{ResourceURL: fmt.Sprintf("/api/v1/cluster/%d", row.ID), Details: map[string]any{"fsid": result.FSID, "ceph_version": result.Version}}, nil
 }
+
+func (s *Service) scheduleProbe(row store.CephCluster) {
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), asyncProbeTimeout)
+		defer cancel()
+		_, _ = s.applyProbe(ctx, row, row, false)
+	}()
+}
+
+func clusterSavedResult(clusterID uint64) cephdomain.ActionResult {
+	return cephdomain.ActionResult{ResourceURL: fmt.Sprintf("/api/v1/cluster/%d", clusterID)}
+}
+
 func (s *Service) accessForRow(row store.CephCluster) (cephprovider.ClusterAccess, error) {
 	plain, err := security.Decrypt(row.ClientKey, s.encryptionKey)
 	if err != nil {
@@ -244,29 +214,18 @@ func (s *Service) accessForRow(row store.CephCluster) (cephprovider.ClusterAcces
 	}
 	return cephprovider.ClusterAccess{MonitorAddresses: row.MonitorAddresses, ClientUsername: row.ClientUsername, ClientKey: key}, nil
 }
-func (s *Service) deleteOperation(ctx context.Context, operation store.CephOperation) (cephdomain.OperationResult, error) {
-	if operation.ClusterID == nil {
-		return cephdomain.OperationResult{}, nil
+
+func probeFailure(err error) (string, string) {
+	var commandErr *executor.Error
+	if errors.As(err, &commandErr) && commandErr.Kind == "timeout" {
+		return "ceph_probe_timeout", "Ceph probe timed out. Verify that the MON addresses and ports are reachable from the CephTower backend. Common MON ports are 3300 and 6789. Also verify the client user and key."
 	}
-	row, err := s.database().FindCluster(ctx, *operation.ClusterID)
-	if errors.Is(err, store.ErrRecordNotFound) {
-		return cephdomain.OperationResult{}, nil
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		return "ceph_probe_timeout", "Ceph probe timed out or was cancelled. Verify that the MON addresses and ports are reachable from the CephTower backend."
 	}
-	if err != nil {
-		return cephdomain.OperationResult{}, err
-	}
-	active, err := s.database().CountNonTerminalOperations(ctx, *operation.ClusterID, operation.ID)
-	if err != nil {
-		return cephdomain.OperationResult{}, err
-	}
-	if active != 0 {
-		return cephdomain.OperationResult{}, &cephdomain.OperationError{Code: "cluster_busy", Message: "cluster has non-terminal operations", Retryable: true}
-	}
-	if err := s.database().DeleteCluster(ctx, &row); err != nil {
-		return cephdomain.OperationResult{}, err
-	}
-	return cephdomain.OperationResult{Details: map[string]any{"deleted": true}}, nil
+	return "ceph_unavailable", security.Redact(err.Error())
 }
+
 func validateCreate(input CreateInput) (string, string, string, string, error) {
 	name := strings.TrimSpace(input.Name)
 	mon := strings.TrimSpace(input.MonitorAddresses)

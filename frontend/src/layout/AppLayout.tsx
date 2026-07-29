@@ -29,18 +29,18 @@ import {
   PartitionOutlined,
   ProfileOutlined,
   ReconciliationOutlined,
-  SearchOutlined,
   SettingOutlined,
   SafetyCertificateOutlined,
   SlidersOutlined,
   StopOutlined,
   TeamOutlined
 } from '@ant-design/icons'
-import { Badge, Button, Dropdown, Input, Layout, Menu, Space, Typography } from 'antd'
+import { Button, Dropdown, Layout, Menu, Space, Typography } from 'antd'
 import type { MenuProps } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { UserAccount } from '../api/auth'
+import { ClusterSelector } from '../components/ClusterSelector'
 import { NAV_SECTIONS, type NavIcon, type PageKey } from '../navigation'
 
 const { Content, Header, Sider } = Layout
@@ -63,8 +63,8 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
   const [menuOpenKeys, setMenuOpenKeys] = useState<string[]>([])
   const collapsedHoverArmed = useRef(false)
   const displayName = user.display_name || user.username
-  const roleLabel = user.role === 'admin' ? '管理员' : '普通用户'
-  const permissionSummary = user.role === 'admin' ? '全部权限' : `${user.permissions.length} 项权限`
+  const roleLabel = roleDisplayName(user.role)
+  const permissionSummary = isAdminRole(user.role) ? '全部权限' : `${user.permissions.length} 项权限`
   const lastLoginLabel = formatDateTime(user.last_login_at)
   const navSections = buildNavSections(user)
   const navItems = buildNavItems(navSections)
@@ -173,9 +173,6 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
             <img className="brand-mark" src="/ceph-tower-logo.svg" alt="CephTower logo" />
             <div className="brand-copy">
               <Text strong>CephTower</Text>
-              <Text type="secondary" className="brand-subtitle">
-                集群运维控制台
-              </Text>
             </div>
           </div>
           <div className="sidebar-nav-stack">
@@ -212,16 +209,8 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
         <Header className="topbar">
           <div className="topbar-inner">
             <Space size={14} className="topbar-tools">
-              <Input
-                className="global-search"
-                prefix={<SearchOutlined />}
-                suffix={<span className="shortcut-key">/</span>}
-                placeholder="搜索主机、池、OSD..."
-              />
+              <ClusterSelector />
               <Button className="icon-button" icon={<AppstoreOutlined />} />
-              <Badge dot offset={[-4, 4]}>
-                <Button className="icon-button" icon={<BellOutlined />} />
-              </Badge>
               <Dropdown
                 menu={{
                   items: userDropdownItems,
@@ -338,10 +327,7 @@ function formatDateTime(value?: string) {
 }
 
 function buildNavSections(user: UserAccount): NavSection[] {
-  const isAdmin = user.role === 'admin'
-  const canReadCluster = isAdmin || user.permissions.includes('cluster:read')
-  const canReadStorage = isAdmin || user.permissions.includes('storage:read')
-  const canReadSystem = isAdmin || user.permissions.includes('system:read')
+  void user
 
   return NAV_SECTIONS.map((section) => ({
     key: section.key,
@@ -350,13 +336,28 @@ function buildNavSections(user: UserAccount): NavSection[] {
     children: section.children.map((item) => ({
       key: item.key,
       icon: renderNavIcon(item.icon),
-      label: item.label,
-      disabled:
-        (item.permission === 'cluster' && !canReadCluster) ||
-        (item.permission === 'storage' && !canReadStorage) ||
-        (item.permission === 'system' && !canReadSystem)
+      label: item.label
     }))
   }))
+}
+
+function isAdminRole(role: string) {
+  return role === 'cluster-admin' || role === 'security-admin'
+}
+
+function roleDisplayName(role: string) {
+  switch (role) {
+    case 'cluster-admin':
+      return '集群管理员'
+    case 'security-admin':
+      return '安全管理员'
+    case 'storage-admin':
+      return '存储管理员'
+    case 'operator':
+      return '操作员'
+    default:
+      return '只读用户'
+  }
 }
 
 function renderNavIcon(icon: NavIcon) {
@@ -372,6 +373,8 @@ function renderNavIcon(icon: NavIcon) {
     case 'mgr':
       return <ControlOutlined />
     case 'osd':
+      return <HddOutlined />
+    case 'device':
       return <HddOutlined />
     case 'mds':
       return <ApartmentOutlined />
@@ -423,5 +426,7 @@ function renderNavIcon(icon: NavIcon) {
       return <SlidersOutlined />
     case 'data':
       return <DatabaseOutlined />
+    case 'audit':
+      return <SafetyCertificateOutlined />
   }
 }

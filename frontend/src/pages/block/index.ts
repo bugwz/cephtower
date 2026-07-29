@@ -1,1 +1,1 @@
-export { DemoPage as BlockDemoPage } from '../DemoPage'
+export * from './pages'

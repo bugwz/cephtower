@@ -1,11 +1,14 @@
 import { ArrowLeftOutlined, DeleteOutlined, ExclamationCircleOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Button, Card, Descriptions, Modal, Space, Table, Tag, Typography, message } from 'antd'
-import { useCallback } from 'react'
+import { Button, Card, Descriptions, Modal, Space, Table, Tag, Typography } from 'antd'
+import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { deleteCluster, getClusterDetail, type CephDiscoveredRecord } from '../../api/cluster'
 import { textValue } from '../../api/client'
+import { refreshResource } from '../../api/resource'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
+import { useMutationOperation } from '../../hooks/useMutationOperation'
+import { message } from '../../utils/appMessage'
 
 const { Paragraph, Text } = Typography
 
@@ -14,7 +17,24 @@ export function ClusterDetailPage() {
   const { id = '' } = useParams()
   const loader = useCallback(() => getClusterDetail(id), [id])
   const { data, loading, error, refresh } = useResource(loader)
+  const [refreshing, setRefreshing] = useState(false)
+  const operationMutation = useMutationOperation()
   const cluster = data?.cluster
+
+  async function refreshClusterDetail() {
+    const clusterID = Number(cluster?.id ?? id)
+    if (!Number.isFinite(clusterID) || clusterID <= 0) {
+      await refresh()
+      return
+    }
+    setRefreshing(true)
+    try {
+      await operationMutation.run(() => refreshResource({ clusterId: clusterID, scope: 'all' }), '集群刷新执行成功')
+      await refresh()
+    } finally {
+      setRefreshing(false)
+    }
+  }
 
   function confirmDeleteCluster() {
     if (!cluster) {
@@ -46,7 +66,7 @@ export function ClusterDetailPage() {
               <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/cluster/cluster')}>
                 返回
               </Button>
-              <Button icon={<ReloadOutlined />} loading={loading} onClick={refresh}>
+              <Button icon={<ReloadOutlined />} loading={refreshing || loading} onClick={refreshClusterDetail}>
                 刷新
               </Button>
               <Button danger icon={<DeleteOutlined />} disabled={!cluster} onClick={confirmDeleteCluster}>

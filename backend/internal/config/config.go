@@ -2,7 +2,9 @@ package config
 
 import (
 	"bytes"
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"os"
 	"path/filepath"
 	"sort"
@@ -19,8 +21,7 @@ const (
 	DefaultServerDir      = "/opt/cephtower"
 	defaultServerAddress  = "0.0.0.0"
 	defaultServerPort     = 36900
-	defaultLogDir         = "log"
-	defaultLogFile        = "cephtower.log"
+	defaultLogName        = "cephtower.log"
 	defaultLogOutput      = "both"
 	defaultLogLevel       = "info"
 	defaultLogFormat      = "txt"
@@ -28,7 +29,7 @@ const (
 	defaultLogRetention   = "70days"
 	defaultRuntimeDir     = "data/runtime"
 	defaultDatabaseEngine = "sqlite"
-	defaultSQLitePath     = "data/db/cephtower.db"
+	defaultSQLiteName     = "cephtower.db"
 	defaultMySQLHost      = "127.0.0.1"
 	defaultMySQLPort      = 3306
 	defaultMySQLUsername  = "root"
@@ -36,6 +37,7 @@ const (
 	defaultMySQLParams    = "charset=utf8mb4&parseTime=True&loc=Local"
 	defaultMySQLTLS       = "false"
 	defaultSMTPPort       = 587
+	databaseKeyAlphabet   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-"
 )
 
 type Config struct {
@@ -43,19 +45,18 @@ type Config struct {
 	Server   ServerConfig
 	Logging  LoggingConfig
 	Database DatabaseConfig
-	Runtime  RuntimeConfig
 	SMTP     SMTPConfig
 }
 
 type ServerConfig struct {
-	Address string
-	Port    int
-	Dir     string
+	Address   string
+	Port      int
+	Dir       string
+	Bootstrap bool
 }
 
 type LoggingConfig struct {
-	Dir       string
-	File      string
+	Name      string
 	Output    string
 	Level     string
 	Format    string
@@ -70,10 +71,6 @@ type DatabaseConfig struct {
 	MySQL         MySQLConfig  `yaml:"mysql"`
 }
 
-type RuntimeConfig struct {
-	Dir string
-}
-
 type SMTPConfig struct {
 	Host     string
 	Port     int
@@ -83,7 +80,7 @@ type SMTPConfig struct {
 }
 
 type SQLiteConfig struct {
-	Path string `yaml:"path"`
+	Name string `yaml:"name"`
 }
 
 type MySQLConfig struct {
@@ -105,14 +102,13 @@ func defaultInt(value, fallback int) int {
 
 type fileConfig struct {
 	Server struct {
-		Address string `yaml:"address"`
-		Port    int    `yaml:"port"`
-		Dir     string `yaml:"dir"`
+		Address   string `yaml:"address"`
+		Port      int    `yaml:"port"`
+		Dir       string `yaml:"dir"`
+		Bootstrap *bool  `yaml:"bootstrap"`
 	} `yaml:"server"`
 	Logging struct {
-		Dir       string `yaml:"dir"`
-		File      string `yaml:"file"`
-		Path      string `yaml:"path,omitempty"` // backward compatibility with older configs
+		Name      string `yaml:"name"`
 		Output    string `yaml:"output"`
 		Level     string `yaml:"level"`
 		Format    string `yaml:"format"`
@@ -123,7 +119,7 @@ type fileConfig struct {
 		EncryptionKey string `yaml:"encryption_key"`
 		Engine        string `yaml:"engine"`
 		SQLite        struct {
-			Path string `yaml:"path"`
+			Name string `yaml:"name"`
 		} `yaml:"sqlite"`
 		MySQL struct {
 			Host     string `yaml:"host"`
@@ -135,9 +131,6 @@ type fileConfig struct {
 			TLS      string `yaml:"tls"`
 		} `yaml:"mysql"`
 	} `yaml:"database"`
-	Runtime struct {
-		Dir string `yaml:"dir"`
-	} `yaml:"runtime"`
 	SMTP struct {
 		Host     string `yaml:"host"`
 		Port     int    `yaml:"port"`
@@ -182,14 +175,11 @@ func Load(path string) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	runtime := normalizeRuntimeConfig(raw)
-
 	return Config{
 		Path:     path,
 		Server:   server,
 		Logging:  logging,
 		Database: database,
-		Runtime:  runtime,
 		SMTP: SMTPConfig{
 			Host:     strings.TrimSpace(raw.SMTP.Host),
 			Port:     defaultInt(raw.SMTP.Port, defaultSMTPPort),
@@ -200,34 +190,52 @@ func Load(path string) (Config, error) {
 	}, nil
 }
 
-func normalizeRuntimeConfig(raw fileConfig) RuntimeConfig {
-	dir := strings.TrimSpace(raw.Runtime.Dir)
-	if dir == "" {
-		dir = defaultRuntimeDir
-	}
-	return RuntimeConfig{Dir: dir}
-}
-
 func ResolveRuntimeDir(cfg Config) string {
-	dir := strings.TrimSpace(cfg.Runtime.Dir)
-	if dir == "" {
-		dir = defaultRuntimeDir
-	}
-	if filepath.IsAbs(dir) {
-		return dir
-	}
 	workDir := cfg.Server.Dir
 	if workDir == "" {
 		workDir = "."
 	}
-	return filepath.Join(workDir, dir)
+	return filepath.Join(workDir, defaultRuntimeDir)
+}
+
+func ResolveLogDir(cfg Config) string {
+	workDir := cfg.Server.Dir
+	if workDir == "" {
+		workDir = "."
+	}
+	return filepath.Join(workDir, "log")
+}
+
+func ResolveSQLiteDir(cfg Config) string {
+	workDir := cfg.Server.Dir
+	if workDir == "" {
+		workDir = "."
+	}
+	return filepath.Join(workDir, "data", "db")
+}
+
+func EnsureDirectories(cfg Config) error {
+	for _, dir := range []string{cfg.Server.Dir, ResolveLogDir(cfg), ResolveRuntimeDir(cfg), ResolveSQLiteDir(cfg)} {
+		if strings.TrimSpace(dir) == "" {
+			continue
+		}
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return fmt.Errorf("create runtime directory %q: %w", dir, err)
+		}
+	}
+	return nil
 }
 
 func normalizeServerConfig(raw fileConfig) ServerConfig {
+	bootstrap := true
+	if raw.Server.Bootstrap != nil {
+		bootstrap = *raw.Server.Bootstrap
+	}
 	return ServerConfig{
-		Dir:     strings.TrimSpace(raw.Server.Dir),
-		Address: strings.TrimSpace(raw.Server.Address),
-		Port:    raw.Server.Port,
+		Dir:       strings.TrimSpace(raw.Server.Dir),
+		Address:   strings.TrimSpace(raw.Server.Address),
+		Port:      raw.Server.Port,
+		Bootstrap: bootstrap,
 	}
 }
 
@@ -248,6 +256,36 @@ func SaveDatabase(path string, database DatabaseConfig) error {
 	}
 
 	output, err := updateDatabaseValues(data, normalized)
+	if err != nil {
+		return fmt.Errorf("parse config file %q: %w", path, err)
+	}
+	if err := os.WriteFile(path, output, 0o600); err != nil {
+		return fmt.Errorf("write config file %q: %w", path, err)
+	}
+	return nil
+}
+
+func SaveSetup(path string, database DatabaseConfig, bootstrap bool) error {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return fmt.Errorf("config file path is required")
+	}
+
+	normalized, err := NormalizeDatabaseConfig(database)
+	if err != nil {
+		return err
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read config file %q: %w", path, err)
+	}
+
+	output, err := updateDatabaseValues(data, normalized)
+	if err != nil {
+		return fmt.Errorf("parse config file %q: %w", path, err)
+	}
+	output, err = updateServerBootstrapValue(output, bootstrap)
 	if err != nil {
 		return fmt.Errorf("parse config file %q: %w", path, err)
 	}
@@ -294,7 +332,7 @@ func updateDatabaseValues(data []byte, database DatabaseConfig) ([]byte, error) 
 	}{
 		{[]string{"encryption_key"}, database.EncryptionKey, "!!str"},
 		{[]string{"engine"}, database.Engine, "!!str"},
-		{[]string{"sqlite", "path"}, database.SQLite.Path, "!!str"},
+		{[]string{"sqlite", "name"}, database.SQLite.Name, "!!str"},
 		{[]string{"mysql", "host"}, database.MySQL.Host, "!!str"},
 		{[]string{"mysql", "port"}, strconv.Itoa(database.MySQL.Port), "!!int"},
 		{[]string{"mysql", "username"}, database.MySQL.Username, "!!str"},
@@ -344,18 +382,18 @@ func updateDatabaseValues(data []byte, database DatabaseConfig) ([]byte, error) 
 	if sqliteNode == nil {
 		databaseLines = append(databaseLines,
 			strings.Repeat(" ", databaseIndent)+"sqlite:",
-			yamlLine(databaseIndent+indentStep, "path", database.SQLite.Path, "!!str"),
+			yamlLine(databaseIndent+indentStep, "name", database.SQLite.Name, "!!str"),
 		)
 	} else {
 		if sqliteNode.Kind != yaml.MappingNode {
 			return nil, fmt.Errorf("database field %q must be a mapping", "sqlite")
 		}
-		if _, ok := missing["sqlite.path"]; ok {
+		if _, ok := missing["sqlite.name"]; ok {
 			if sqliteNode.Style&yaml.FlowStyle != 0 {
 				return nil, fmt.Errorf("cannot append missing fields to a flow-style sqlite configuration")
 			}
 			indent := mappingIndent(sqliteNode, databaseIndent+indentStep)
-			addInsertion(insertions, mappingInsertionOffset(data, sqliteNode), yamlLine(indent, "path", database.SQLite.Path, "!!str")+"\n")
+			addInsertion(insertions, mappingInsertionOffset(data, sqliteNode), yamlLine(indent, "name", database.SQLite.Name, "!!str")+"\n")
 		}
 	}
 
@@ -421,6 +459,55 @@ func updateDatabaseValues(data []byte, database DatabaseConfig) ([]byte, error) 
 	for index := len(edits) - 1; index >= 0; index-- {
 		edit := edits[index]
 		data = bytes.Join([][]byte{data[:edit.start], edit.value, data[edit.end:]}, nil)
+	}
+	return data, nil
+}
+
+func updateServerBootstrapValue(data []byte, bootstrap bool) ([]byte, error) {
+	var document yaml.Node
+	if err := yaml.Unmarshal(data, &document); err != nil {
+		return nil, err
+	}
+	if len(document.Content) == 0 || document.Content[0].Kind != yaml.MappingNode {
+		return nil, fmt.Errorf("configuration root must be a mapping")
+	}
+
+	root := document.Content[0]
+	value := strconv.FormatBool(bootstrap)
+	serverNode := mappingValue(root, "server")
+	if serverNode == nil {
+		if root.Style&yaml.FlowStyle != 0 {
+			return nil, fmt.Errorf("cannot append server fields to a flow-style configuration")
+		}
+		return appendServerBootstrapSection(data, bootstrap), nil
+	}
+	if serverNode.Kind != yaml.MappingNode {
+		return nil, fmt.Errorf("server configuration must be a mapping")
+	}
+
+	bootstrapNode := mappingValue(serverNode, "bootstrap")
+	if bootstrapNode != nil {
+		if bootstrapNode.Kind != yaml.ScalarNode {
+			return nil, fmt.Errorf("server.bootstrap must be a scalar")
+		}
+		start, end, err := scalarRange(data, bootstrapNode)
+		if err != nil {
+			return nil, fmt.Errorf("locate server.bootstrap: %w", err)
+		}
+		return bytes.Join([][]byte{data[:start], encodeScalar(value, "!!bool", bootstrapNode.Style), data[end:]}, nil), nil
+	}
+	if serverNode.Style&yaml.FlowStyle != 0 {
+		return nil, fmt.Errorf("cannot append missing fields to a flow-style server configuration")
+	}
+	serverKey := mappingKey(root, "server")
+	indent := mappingIndent(serverNode, serverKey.Column-1+2)
+	insertions := map[int][]byte{}
+	addInsertion(insertions, mappingInsertionOffset(data, serverNode), yamlLine(indent, "bootstrap", value, "!!bool")+"\n")
+	for offset, insertion := range insertions {
+		if offset > 0 && data[offset-1] != '\n' {
+			insertion = append([]byte("\n"), insertion...)
+		}
+		data = bytes.Join([][]byte{data[:offset], insertion, data[offset:]}, nil)
 	}
 	return data, nil
 }
@@ -607,6 +694,17 @@ func appendDatabaseSection(data []byte, database DatabaseConfig) []byte {
 	return append(data, section...)
 }
 
+func appendServerBootstrapSection(data []byte, bootstrap bool) []byte {
+	section := []byte("server:\n  bootstrap: " + strconv.FormatBool(bootstrap) + "\n")
+	if len(data) > 0 && data[len(data)-1] != '\n' {
+		data = append(data, '\n')
+	}
+	if len(data) > 0 {
+		data = append(data, '\n')
+	}
+	return append(data, section...)
+}
+
 func marshalDatabaseConfig(database DatabaseConfig) []byte {
 	type databaseFile struct {
 		Database DatabaseConfig `yaml:"database"`
@@ -636,18 +734,9 @@ func normalizeLoggingConfig(raw fileConfig) (LoggingConfig, error) {
 		return LoggingConfig{}, fmt.Errorf("unsupported logging format %q", raw.Logging.Format)
 	}
 
-	dir := strings.TrimSpace(raw.Logging.Dir)
-	file := strings.TrimSpace(raw.Logging.File)
-	if dir == "" && file == "" && strings.TrimSpace(raw.Logging.Path) != "" {
-		legacyPath := strings.TrimSpace(raw.Logging.Path)
-		dir = filepath.Dir(legacyPath)
-		file = filepath.Base(legacyPath)
-	}
-	if dir == "" {
-		dir = defaultLogDir
-	}
-	if file == "" {
-		file = defaultLogFile
+	name := strings.TrimSpace(raw.Logging.Name)
+	if name == "" {
+		name = defaultLogName
 	}
 
 	output := strings.ToLower(strings.TrimSpace(raw.Logging.Output))
@@ -679,8 +768,7 @@ func normalizeLoggingConfig(raw fileConfig) (LoggingConfig, error) {
 	return LoggingConfig{
 		Level:     level,
 		Format:    format,
-		Dir:       dir,
-		File:      file,
+		Name:      name,
 		Output:    output,
 		Rotation:  rotation,
 		Retention: retention,
@@ -718,7 +806,7 @@ func normalizeDatabaseConfig(raw fileConfig) (DatabaseConfig, error) {
 		EncryptionKey: raw.Database.EncryptionKey,
 		Engine:        raw.Database.Engine,
 		SQLite: SQLiteConfig{
-			Path: raw.Database.SQLite.Path,
+			Name: raw.Database.SQLite.Name,
 		},
 		MySQL: MySQLConfig{
 			Host:     raw.Database.MySQL.Host,
@@ -733,8 +821,11 @@ func normalizeDatabaseConfig(raw fileConfig) (DatabaseConfig, error) {
 }
 
 func NormalizeDatabaseConfig(cfg DatabaseConfig) (DatabaseConfig, error) {
-	if err := security.ValidateDatabaseEncryptionKey(cfg.EncryptionKey); err != nil {
-		return DatabaseConfig{}, err
+	encryptionKey := strings.TrimSpace(cfg.EncryptionKey)
+	if encryptionKey != "" {
+		if err := security.ValidateDatabaseEncryptionKey(encryptionKey); err != nil {
+			return DatabaseConfig{}, err
+		}
 	}
 	engine := strings.ToLower(strings.TrimSpace(cfg.Engine))
 	if engine == "" {
@@ -744,9 +835,12 @@ func NormalizeDatabaseConfig(cfg DatabaseConfig) (DatabaseConfig, error) {
 		return DatabaseConfig{}, fmt.Errorf("unsupported database engine %q", cfg.Engine)
 	}
 
-	sqlitePath := strings.TrimSpace(cfg.SQLite.Path)
-	if sqlitePath == "" {
-		sqlitePath = defaultSQLitePath
+	sqliteName := strings.TrimSpace(cfg.SQLite.Name)
+	if sqliteName == "" {
+		sqliteName = defaultSQLiteName
+	}
+	if filepath.Base(sqliteName) != sqliteName || strings.ContainsAny(sqliteName, `/\:`) || sqliteName == "." || sqliteName == ".." {
+		return DatabaseConfig{}, fmt.Errorf("sqlite name must be a file name, got %q", cfg.SQLite.Name)
 	}
 
 	mysqlHost := strings.TrimSpace(cfg.MySQL.Host)
@@ -785,10 +879,10 @@ func NormalizeDatabaseConfig(cfg DatabaseConfig) (DatabaseConfig, error) {
 	}
 
 	return DatabaseConfig{
-		EncryptionKey: cfg.EncryptionKey,
+		EncryptionKey: encryptionKey,
 		Engine:        engine,
 		SQLite: SQLiteConfig{
-			Path: sqlitePath,
+			Name: sqliteName,
 		},
 		MySQL: MySQLConfig{
 			Host:     mysqlHost,
@@ -800,4 +894,16 @@ func NormalizeDatabaseConfig(cfg DatabaseConfig) (DatabaseConfig, error) {
 			TLS:      mysqlTLS,
 		},
 	}, nil
+}
+
+func GenerateDatabaseEncryptionKey() (string, error) {
+	result := make([]byte, 32)
+	for i := range result {
+		value, err := rand.Int(rand.Reader, big.NewInt(int64(len(databaseKeyAlphabet))))
+		if err != nil {
+			return "", err
+		}
+		result[i] = databaseKeyAlphabet[value.Int64()]
+	}
+	return string(result), nil
 }

@@ -1,9 +1,9 @@
-import { DemoPage } from '../DemoPage'
 import { DataPage } from './DataPage'
+import { SystemInfoPage as SystemInfo } from './SystemInfoPage'
 import { UserPage } from './UserPage'
 
 export function SystemInfoPage() {
-  return <DemoPage pageKey="systemInfo" />
+  return <SystemInfo />
 }
 
 export function SystemUsersPage() {

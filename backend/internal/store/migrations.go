@@ -12,10 +12,10 @@ import (
 
 const baselineVersion = "20260726_ceph_backend_v1"
 
-//go:embed migrations/sqlite/001_baseline.sql
+//go:embed migrations/sqlite/init.sql
 var sqliteBaselineSQL string
 
-//go:embed migrations/mysql/001_baseline.sql
+//go:embed migrations/mysql/init.sql
 var mysqlBaselineSQL string
 
 func migrate(db *gorm.DB) error {

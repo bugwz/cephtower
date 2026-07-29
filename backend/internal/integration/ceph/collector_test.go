@@ -1,6 +1,7 @@
 package ceph
 
 import (
+	cephdomain "cephtower/backend/internal/domain/ceph"
 	"cephtower/backend/internal/integration/ceph/executor"
 	"context"
 	"fmt"
@@ -36,6 +37,105 @@ func TestCollectParsesCeph2022Fixtures(t *testing.T) {
 	}
 }
 
+func TestCollectStorageRecordsEmptyOSDFlags(t *testing.T) {
+	base := fixtureExecutor{t}
+	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{"collect.osd_dump": []byte(`{"flags":"","osds":[]}`)}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "storage")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range rows {
+		if row.Kind != "osd_flag" || row.NaturalKey != "flags" {
+			continue
+		}
+		payload, ok := row.Payload.(map[string]any)
+		if !ok {
+			t.Fatalf("osd_flag payload type = %T", row.Payload)
+		}
+		flags, ok := payload["flags"].([]string)
+		if !ok {
+			t.Fatalf("osd_flag flags type = %T", payload["flags"])
+		}
+		if len(flags) != 0 {
+			t.Fatalf("osd_flag flags = %v, want empty", flags)
+		}
+		return
+	}
+	t.Fatal("osd_flag record was not collected")
+}
+
+func TestCollectStorageAcceptsNumericPoolCrushRuleAndMapsOSDHost(t *testing.T) {
+	base := fixtureExecutor{t}
+	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{
+		"collect.osd_tree": []byte(`{"nodes":[{"id":-1,"name":"default","type":"root","children":[-3]},{"id":-3,"name":"node-a","type":"host","children":[0]},{"id":0,"name":"osd.0","type":"osd","status":"up","crush_weight":1.0,"device_class":"ssd"}]}`),
+		"collect.osd_dump": []byte(`{"flags":"","osds":[{"osd":0,"up":1,"in":1}]}`),
+		"collect.pool":     []byte(`[{"pool":1,"pool_name":"pool-a","type":1,"size":3,"min_size":2,"pg_num":8,"pg_placement_num":8,"crush_rule":0}]`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "storage")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var sawOSD, sawPool bool
+	for _, row := range rows {
+		switch row.Kind {
+		case "osd":
+			payload, ok := row.Payload.(cephdomain.OSD)
+			if !ok {
+				t.Fatalf("osd payload type = %T", row.Payload)
+			}
+			if payload.Host == nil || *payload.Host != "node-a" {
+				t.Fatalf("osd host = %v, want node-a", payload.Host)
+			}
+			sawOSD = true
+		case "pool":
+			payload, ok := row.Payload.(cephdomain.Pool)
+			if !ok {
+				t.Fatalf("pool payload type = %T", row.Payload)
+			}
+			if payload.CrushRule == nil || *payload.CrushRule != "0" {
+				t.Fatalf("pool crush rule = %v, want 0", payload.CrushRule)
+			}
+			sawPool = true
+		}
+	}
+	if !sawOSD || !sawPool {
+		t.Fatalf("collected osd=%v pool=%v, want both", sawOSD, sawPool)
+	}
+}
+
+func TestCollectInventoryAcceptsNestedDevicesAndSkipsPlaceholders(t *testing.T) {
+	base := fixtureExecutor{t}
+	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{
+		"collect.device": []byte(`[
+			{"name":"node-a","devices":[
+				{"path":"/dev/sdb","available":true,"rejected_reasons":[],"sys_api":{"size":"1073741824","rotational":"0","model":"fast-disk","vendor":"fixture","serial":"serial-a"}},
+				{"available":false}
+			]},
+			{"hostname":"node-b"}
+		]`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "inventory")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("inventory rows = %d, want 1", len(rows))
+	}
+	payload, ok := rows[0].Payload.(cephdomain.Device)
+	if !ok {
+		t.Fatalf("device payload type = %T", rows[0].Payload)
+	}
+	if payload.Hostname != "node-a" || payload.Path != "/dev/sdb" {
+		t.Fatalf("device identity = %s:%s, want node-a:/dev/sdb", payload.Hostname, payload.Path)
+	}
+	if payload.SizeBytes == nil || *payload.SizeBytes != 1073741824 {
+		t.Fatalf("device size = %v, want 1073741824", payload.SizeBytes)
+	}
+	if payload.Rotational == nil || *payload.Rotational {
+		t.Fatalf("device rotational = %v, want false", payload.Rotational)
+	}
+}
+
 type malformedExecutor struct {
 	base     executor.Executor
 	override map[string][]byte
@@ -59,7 +159,6 @@ func TestCollectRejectsMissingNullAndOverflowedCoreFields(t *testing.T) {
 		{"overflow capacity", "fast", "collect.df", `{"stats":{"total_bytes":18446744073709551616,"total_used_bytes":1,"total_avail_bytes":1}}`},
 		{"missing host name", "topology", "collect.host", `[{}]`},
 		{"missing pool name", "storage", "collect.pool", `[{"pool":1}]`},
-		{"missing device path", "inventory", "collect.device", `[{"hostname":"node"}]`},
 		{"missing config name", "configuration", "collect.config", `[{"who":"global"}]`},
 	}
 	for _, test := range tests {

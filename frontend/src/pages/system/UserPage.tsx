@@ -1,230 +1,238 @@
-import {
-  KeyOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-  SaveOutlined,
-  UserAddOutlined
-} from '@ant-design/icons'
-import { Button, Card, Form, Input, Select, Space, Switch, Table, Tag, Typography, message } from 'antd'
+import { DeleteOutlined, PlusOutlined, ReloadOutlined, SaveOutlined, TeamOutlined, UserAddOutlined } from '@ant-design/icons'
+import { Button, Card, Form, Input, Popconfirm, Select, Space, Table, Tabs, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
-import { createUser, listUsers, updateUser, type UserAccount, type UserRole } from '../../api/auth'
+import { createUser, listUsers, type UserAccount, type UserRole } from '../../api/auth'
+import {
+  createRole,
+  createRoleBinding,
+  deleteRoleBinding,
+  listRoleBindings,
+  listRoles,
+  type RoleBindingView,
+  type RoleView
+} from '../../api/rbac'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
+import { useClusterContext } from '../../state/ClusterContext'
+import { message } from '../../utils/appMessage'
 
 const { Text } = Typography
 
-const permissionOptions = [
-  { label: '集群读取', value: 'cluster:read' },
-  { label: '存储读取', value: 'storage:read' },
-  { label: '系统读取', value: 'system:read' },
-  { label: '用户管理', value: 'user:manage' }
+const roleOptions: Array<{ label: string; value: UserRole }> = [
+  { label: 'Cluster Admin', value: 'cluster-admin' },
+  { label: 'Security Admin', value: 'security-admin' },
+  { label: 'Storage Admin', value: 'storage-admin' },
+  { label: 'Operator', value: 'operator' },
+  { label: 'Viewer', value: 'viewer' }
 ]
 
 export function UserPage() {
+  const { selectedClusterId } = useClusterContext()
   const [users, setUsers] = useState<UserAccount[]>([])
+  const [roles, setRoles] = useState<RoleView[]>([])
+  const [bindings, setBindings] = useState<RoleBindingView[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [createOpen, setCreateOpen] = useState(false)
-  const [passwordTarget, setPasswordTarget] = useState<UserAccount | null>(null)
-  const [createSubmitting, setCreateSubmitting] = useState(false)
-  const [passwordSubmitting, setPasswordSubmitting] = useState(false)
-  const [pendingUserUpdates, setPendingUserUpdates] = useState<Record<string, boolean>>({})
-  const [createForm] = Form.useForm()
-  const [passwordForm] = Form.useForm()
+  const [createUserOpen, setCreateUserOpen] = useState(false)
+  const [createRoleOpen, setCreateRoleOpen] = useState(false)
+  const [bindingOpen, setBindingOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [userForm] = Form.useForm()
+  const [roleForm] = Form.useForm()
+  const [bindingForm] = Form.useForm()
 
   const load = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      setUsers(await listUsers())
+      const [nextUsers, nextRoles, nextBindings] = await Promise.all([
+        listUsers(),
+        listRoles(),
+        selectedClusterId ? listRoleBindings(selectedClusterId) : Promise.resolve([])
+      ])
+      setUsers(nextUsers)
+      setRoles(nextRoles)
+      setBindings(nextBindings)
     } catch (err) {
-      setError(err instanceof Error ? err.message : '加载用户失败')
+      setError(err instanceof Error ? err.message : '加载用户与授权失败')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [selectedClusterId])
 
   useEffect(() => {
     load()
   }, [load])
 
-  async function patchUser(id: number, payload: Parameters<typeof updateUser>[1], pendingKey = `${id}:update`) {
-    if (pendingUserUpdates[pendingKey]) {
-      return
-    }
-    setPendingUserUpdates((current) => ({ ...current, [pendingKey]: true }))
-    try {
-      const updated = await updateUser(id, payload)
-      setUsers((current) => current.map((user) => (user.id === updated.id ? updated : user)))
-      message.success('用户已更新')
-    } finally {
-      setPendingUserUpdates((current) => {
-        const next = { ...current }
-        delete next[pendingKey]
-        return next
-      })
-    }
-  }
-
-  async function submitCreate(values: {
+  async function submitUser(values: {
     username: string
     display_name: string
     email?: string
     role: UserRole
-    permissions: string[]
     password: string
-    enabled: boolean
   }) {
-    if (createSubmitting) {
+    if (submitting) {
       return
     }
-    setCreateSubmitting(true)
+    setSubmitting(true)
     try {
-      const user = await createUser({ ...values, enabled: values.enabled ?? true })
+      const user = await createUser({ ...values, enabled: true })
       setUsers((current) => [...current, user])
-      setCreateOpen(false)
-      createForm.resetFields()
+      setCreateUserOpen(false)
+      userForm.resetFields()
       message.success('用户已创建')
     } finally {
-      setCreateSubmitting(false)
+      setSubmitting(false)
     }
   }
 
-  async function resetPassword(values: { password: string }) {
-    if (!passwordTarget) {
+  async function submitRole(values: { name: string; description?: string }) {
+    if (submitting) {
       return
     }
-    if (passwordSubmitting) {
-      return
-    }
-    setPasswordSubmitting(true)
+    setSubmitting(true)
     try {
-      await patchUser(passwordTarget.id, { password: values.password }, `${passwordTarget.id}:password`)
-      setPasswordTarget(null)
-      passwordForm.resetFields()
+      const role = await createRole(values)
+      setRoles((current) => [...current, role])
+      setCreateRoleOpen(false)
+      roleForm.resetFields()
+      message.success('角色已创建')
     } finally {
-      setPasswordSubmitting(false)
+      setSubmitting(false)
     }
+  }
+
+  async function submitBinding(values: { user_id: number; role: string }) {
+    if (!selectedClusterId || submitting) {
+      return
+    }
+    setSubmitting(true)
+    try {
+      const binding = await createRoleBinding({
+        clusterId: selectedClusterId,
+        userId: values.user_id,
+        role: values.role
+      })
+      setBindings((current) => [...current, binding])
+      setBindingOpen(false)
+      bindingForm.resetFields()
+      message.success('集群授权已创建')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function removeBinding(row: RoleBindingView) {
+    if (!selectedClusterId) {
+      return
+    }
+    await deleteRoleBinding(selectedClusterId, row.role_binding_id)
+    setBindings((current) => current.filter((item) => item.role_binding_id !== row.role_binding_id))
+    message.success('集群授权已删除')
   }
 
   return (
-    <Page
-      title="用户管理"
-      loading={loading}
-      error={error}
-    >
+    <Page title="用户管理" loading={loading} error={error}>
       <Card
         className="page-surface-card"
-        title="系统用户"
-        extra={
-          <Space>
-            <Button icon={<ReloadOutlined />} loading={loading} onClick={load}>
-              刷新
-            </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-              新建用户
-            </Button>
-          </Space>
-        }
+        title="用户、角色与集群授权"
+        extra={<Button icon={<ReloadOutlined />} loading={loading} onClick={load}>刷新</Button>}
       >
-        <Table
-          size="middle"
-          rowKey="id"
-          dataSource={users}
-          pagination={{ pageSize: 8, showSizeChanger: false }}
-          scroll={{ x: true }}
-          columns={[
+        <Tabs
+          items={[
             {
-              title: '用户',
-              key: 'user',
-              render: (_, user) => (
-                <div className="user-cell">
-                  <Text strong>{user.display_name}</Text>
-                  <Text type="secondary">{user.username}</Text>
-                </div>
-              )
-            },
-            {
-              title: '邮箱',
-              dataIndex: 'email',
-              render: (email: string, user) => (
-                <Input
-                  className="email-input"
-                  value={email}
-                  placeholder="未绑定邮箱"
-                  disabled={Boolean(pendingUserUpdates[`${user.id}:email`])}
-                  onChange={(event) =>
-                    setUsers((current) =>
-                      current.map((item) => (item.id === user.id ? { ...item, email: event.target.value } : item))
-                    )
-                  }
-                  onBlur={(event) => patchUser(user.id, { email: event.target.value }, `${user.id}:email`)}
-                />
-              )
-            },
-            {
-              title: '角色',
-              dataIndex: 'role',
-              render: (role: UserRole, user) => (
-                <Select
-                  className="role-select"
-                  value={role}
-                  options={[
-                    { label: '管理员', value: 'admin' },
-                    { label: '普通用户', value: 'user' }
-                  ]}
-                  loading={Boolean(pendingUserUpdates[`${user.id}:role`])}
-                  disabled={Boolean(pendingUserUpdates[`${user.id}:role`])}
-                  onChange={(value) => patchUser(user.id, { role: value }, `${user.id}:role`)}
-                />
-              )
-            },
-            {
-              title: '访问权限',
-              dataIndex: 'permissions',
-              render: (permissions: string[], user) => (
-                <Select
-                  mode="multiple"
-                  className="permission-select"
-                  value={permissions}
-                  options={permissionOptions}
-                  maxTagCount="responsive"
-                  loading={Boolean(pendingUserUpdates[`${user.id}:permissions`])}
-                  disabled={Boolean(pendingUserUpdates[`${user.id}:permissions`])}
-                  onChange={(value) => patchUser(user.id, { permissions: value }, `${user.id}:permissions`)}
-                />
-              )
-            },
-            {
-              title: '状态',
-              dataIndex: 'enabled',
-              render: (enabled: boolean, user) => (
-                <Space>
-                  <Switch
-                    checked={enabled}
-                    loading={Boolean(pendingUserUpdates[`${user.id}:enabled`])}
-                    onChange={(value) => patchUser(user.id, { enabled: value }, `${user.id}:enabled`)}
+              key: 'users',
+              label: '用户',
+              children: (
+                <Space direction="vertical" size={16} className="page-stack">
+                  <Space>
+                    <Button type="primary" icon={<UserAddOutlined />} onClick={() => setCreateUserOpen(true)}>新建用户</Button>
+                  </Space>
+                  <Table<UserAccount>
+                    size="middle"
+                    rowKey="id"
+                    dataSource={users}
+                    pagination={{ pageSize: 8, showSizeChanger: false }}
+                    scroll={{ x: 980 }}
+                    columns={[
+                      {
+                        title: '用户',
+                        key: 'user',
+                        render: (_, user) => (
+                          <Space direction="vertical" size={0}>
+                            <Text strong>{user.display_name || user.username}</Text>
+                            <Text type="secondary">{user.username}</Text>
+                          </Space>
+                        )
+                      },
+                      { title: '邮箱', dataIndex: 'email', render: (value) => value || '-' },
+                      { title: '默认角色', dataIndex: 'role', render: (role) => <Tag color="blue">{role}</Tag> },
+                      { title: '状态', dataIndex: 'enabled', render: (enabled) => <Tag color={enabled ? 'success' : 'default'}>{enabled ? '启用' : '停用'}</Tag> },
+                      { title: '最近登录', dataIndex: 'last_login_at', render: formatTime },
+                      { title: '创建时间', dataIndex: 'created_at', render: formatTime }
+                    ]}
                   />
-                  <Tag color={enabled ? 'success' : 'default'}>{enabled ? '启用' : '禁用'}</Tag>
                 </Space>
               )
             },
             {
-              title: '最近登录',
-              dataIndex: 'last_login_at',
-              render: (value?: string) => value ? new Date(value).toLocaleString() : '—'
+              key: 'roles',
+              label: '角色',
+              children: (
+                <Space direction="vertical" size={16} className="page-stack">
+                  <Space>
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateRoleOpen(true)}>新建角色</Button>
+                  </Space>
+                  <Table<RoleView>
+                    size="middle"
+                    rowKey="id"
+                    dataSource={roles}
+                    pagination={{ pageSize: 8, showSizeChanger: false }}
+                    columns={[
+                      { title: '角色', dataIndex: 'name' },
+                      { title: '描述', dataIndex: 'description', render: (value) => value || '-' },
+                      { title: '创建时间', dataIndex: 'created_at', render: formatTime }
+                    ]}
+                  />
+                </Space>
+              )
             },
             {
-              title: '操作',
-              key: 'actions',
-              render: (_, user) => (
-                <Button
-                  icon={<KeyOutlined />}
-                  loading={Boolean(pendingUserUpdates[`${user.id}:password`])}
-                  onClick={() => setPasswordTarget(user)}
-                >
-                  重设密码
-                </Button>
+              key: 'bindings',
+              label: '集群授权',
+              children: (
+                <Space direction="vertical" size={16} className="page-stack">
+                  {!selectedClusterId ? (
+                    <Text type="secondary">请先选择集群</Text>
+                  ) : (
+                    <>
+                      <Space>
+                        <Button type="primary" icon={<TeamOutlined />} onClick={() => setBindingOpen(true)}>新建授权</Button>
+                      </Space>
+                      <Table<RoleBindingView>
+                        size="middle"
+                        rowKey="role_binding_id"
+                        dataSource={bindings}
+                        pagination={{ pageSize: 8, showSizeChanger: false }}
+                        columns={[
+                          { title: '用户', dataIndex: 'username' },
+                          { title: 'User ID', dataIndex: 'user_id' },
+                          { title: '角色', dataIndex: 'role', render: (role) => <Tag color="geekblue">{role}</Tag> },
+                          { title: '创建时间', dataIndex: 'created_at', render: formatTime },
+                          {
+                            title: '操作',
+                            width: 120,
+                            render: (_, row) => (
+                              <Popconfirm title="删除集群授权" okText="删除" cancelText="取消" onConfirm={() => removeBinding(row)}>
+                                <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
+                              </Popconfirm>
+                            )
+                          }
+                        ]}
+                      />
+                    </>
+                  )}
+                </Space>
               )
             }
           ]}
@@ -233,28 +241,15 @@ export function UserPage() {
 
       <DraggableModal
         title="新建用户"
-        open={createOpen}
-        onCancel={() => {
-          if (!createSubmitting) {
-            setCreateOpen(false)
-          }
-        }}
-        onOk={() => createForm.submit()}
+        open={createUserOpen}
+        onCancel={() => setCreateUserOpen(false)}
+        onOk={() => userForm.submit()}
         okText="创建"
-        confirmLoading={createSubmitting}
-        okButtonProps={{ icon: <UserAddOutlined />, loading: createSubmitting }}
-        cancelButtonProps={{ disabled: createSubmitting }}
+        confirmLoading={submitting}
+        okButtonProps={{ icon: <SaveOutlined /> }}
+        destroyOnClose
       >
-        <Form
-          form={createForm}
-          layout="vertical"
-          initialValues={{
-            role: 'user',
-            permissions: ['cluster:read', 'storage:read'],
-            enabled: true
-          }}
-          onFinish={submitCreate}
-        >
+        <Form form={userForm} layout="vertical" initialValues={{ role: 'viewer' }} onFinish={submitUser}>
           <Form.Item name="username" label="用户名" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
@@ -262,48 +257,64 @@ export function UserPage() {
             <Input />
           </Form.Item>
           <Form.Item name="email" label="邮箱" rules={[{ type: 'email', message: '请输入有效邮箱地址' }]}>
-            <Input placeholder="用于忘记密码验证码" />
+            <Input />
           </Form.Item>
-          <Form.Item name="role" label="角色" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { label: '管理员', value: 'admin' },
-                { label: '普通用户', value: 'user' }
-              ]}
-            />
-          </Form.Item>
-          <Form.Item name="permissions" label="访问权限" rules={[{ required: true }]}>
-            <Select mode="multiple" options={permissionOptions} />
+          <Form.Item name="role" label="默认角色" rules={[{ required: true }]}>
+            <Select options={roleOptions} />
           </Form.Item>
           <Form.Item name="password" label="初始密码" rules={[{ required: true, min: 8 }]}>
             <Input.Password />
-          </Form.Item>
-          <Form.Item name="enabled" label="启用账号" valuePropName="checked">
-            <Switch />
           </Form.Item>
         </Form>
       </DraggableModal>
 
       <DraggableModal
-        title={`重设密码${passwordTarget ? `：${passwordTarget.username}` : ''}`}
-        open={Boolean(passwordTarget)}
-        onCancel={() => {
-          if (!passwordSubmitting) {
-            setPasswordTarget(null)
-          }
-        }}
-        onOk={() => passwordForm.submit()}
-        okText="保存"
-        confirmLoading={passwordSubmitting}
-        okButtonProps={{ icon: <SaveOutlined />, loading: passwordSubmitting }}
-        cancelButtonProps={{ disabled: passwordSubmitting }}
+        title="新建角色"
+        open={createRoleOpen}
+        onCancel={() => setCreateRoleOpen(false)}
+        onOk={() => roleForm.submit()}
+        okText="创建"
+        confirmLoading={submitting}
+        okButtonProps={{ icon: <SaveOutlined /> }}
+        destroyOnClose
       >
-        <Form form={passwordForm} layout="vertical" onFinish={resetPassword}>
-          <Form.Item name="password" label="新密码" rules={[{ required: true, min: 8 }]}>
-            <Input.Password />
+        <Form form={roleForm} layout="vertical" onFinish={submitRole}>
+          <Form.Item name="name" label="角色名称" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="description" label="描述">
+            <Input.TextArea rows={4} />
+          </Form.Item>
+        </Form>
+      </DraggableModal>
+
+      <DraggableModal
+        title="新建集群授权"
+        open={bindingOpen}
+        onCancel={() => setBindingOpen(false)}
+        onOk={() => bindingForm.submit()}
+        okText="创建"
+        confirmLoading={submitting}
+        okButtonProps={{ icon: <SaveOutlined /> }}
+        destroyOnClose
+      >
+        <Form form={bindingForm} layout="vertical" onFinish={submitBinding}>
+          <Form.Item name="user_id" label="用户" rules={[{ required: true }]}>
+            <Select options={users.map((user) => ({ label: `${user.display_name || user.username} (${user.username})`, value: user.id }))} />
+          </Form.Item>
+          <Form.Item name="role" label="角色" rules={[{ required: true }]}>
+            <Select options={roles.map((role) => ({ label: role.name, value: role.name }))} />
           </Form.Item>
         </Form>
       </DraggableModal>
     </Page>
   )
+}
+
+function formatTime(value?: string | null) {
+  if (!value) {
+    return '-'
+  }
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }

@@ -12,136 +12,25 @@ import (
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
 	"cephtower/backend/internal/integration/ceph/executor"
-	"cephtower/backend/internal/security"
 	clusterservice "cephtower/backend/internal/service/cluster"
-	operationservice "cephtower/backend/internal/service/operation"
-	"cephtower/backend/internal/store"
 )
 
 var identifier = regexp.MustCompile(`^[A-Za-z0-9_.:@/+\-=]{1,512}$`)
 
 type Service struct {
-	clusters      *clusterservice.Service
-	executor      executor.Executor
-	encryptionKey string
+	clusters *clusterservice.Service
+	executor executor.Executor
 }
 
-func (s *Service) CheckPlan(ctx context.Context, request operationservice.PlanRequest) ([]string, []string, error) {
-	access, err := s.clusters.Access(ctx, request.ClusterID)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer func() { access.ClientKey = "" }()
-	parameters, _ := request.Parameters.(map[string]any)
-	run := func(binary executor.Binary, id string, args []string, stdin []byte) (executor.CommandResult, error) {
-		return s.executor.Run(ctx, access, executor.CommandSpec{ID: id, Binary: binary, Args: args, Stdin: stdin, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
-	}
-	tail := resourceTail(request.ResourceKey)
-	switch request.Action {
-	case "osd.delete":
-		id := pathValue(tail, "osd")
-		if id == "" {
-			id = last(tail)
-		}
-		if _, err := run(executor.BinaryCeph, "plan.osd_safe_to_destroy", []string{"osd", "safe-to-destroy", id, "--format", "json"}, nil); err != nil {
-			return []string{"OSD " + id + " is not safe to destroy"}, nil, nil
-		}
-	case "host.delete":
-		host := last(tail)
-		if _, err := run(executor.BinaryCeph, "plan.host_ok_to_stop", []string{"orch", "host", "ok-to-stop", host, "--format", "json"}, nil); err != nil {
-			return []string{"host " + host + " is not safe to remove"}, nil, nil
-		}
-	case "pool.delete":
-		pool := last(tail)
-		result, err := run(executor.BinaryRBD, "plan.pool_rbd_images", []string{"ls", pool, "--format", "json"}, nil)
-		if err != nil {
-			return nil, nil, err
-		}
-		var images []string
-		if err := decodePlanJSON(result.Stdout, &images); err != nil {
-			return nil, nil, err
-		}
-		if len(images) > 0 {
-			return []string{fmt.Sprintf("pool %s contains %d RBD image(s)", pool, len(images))}, nil, nil
-		}
-		applications, err := run(executor.BinaryCeph, "plan.pool_applications", []string{"osd", "pool", "application", "get", pool, "--format", "json"}, nil)
-		if err != nil {
-			return nil, nil, err
-		}
-		var metadata map[string]any
-		if err := decodePlanJSON(applications.Stdout, &metadata); err != nil {
-			return nil, nil, err
-		}
-		if len(metadata) > 0 {
-			return nil, []string{"pool still has application metadata"}, nil
-		}
-	case "device.zap":
-		host, device, err := decodePair(pathValue(tail, "device"))
-		if err != nil {
-			return nil, nil, err
-		}
-		result, err := run(executor.BinaryCeph, "plan.device_inventory", []string{"orch", "device", "ls", "--host", host, "--wide", "--refresh", "--format", "json"}, nil)
-		if err != nil {
-			return nil, nil, err
-		}
-		var devices []map[string]any
-		if err := decodePlanJSON(result.Stdout, &devices); err != nil {
-			return nil, nil, err
-		}
-		found, available := false, false
-		for _, item := range devices {
-			path, _ := item["path"].(string)
-			if path != device {
-				continue
-			}
-			found = true
-			available, _ = item["available"].(bool)
-			if text, ok := item["available"].(string); ok {
-				available = strings.EqualFold(text, "yes") || strings.EqualFold(text, "true")
-			}
-		}
-		if !found {
-			return []string{"device is absent from refreshed orchestrator inventory"}, nil, nil
-		}
-		if !available {
-			return []string{"device is in use and cannot be zapped"}, nil, nil
-		}
-	case "osd_deployment.create":
-		spec, err := osdSpec(parameters)
-		if err != nil {
-			return nil, nil, err
-		}
-		stdin, _ := json.Marshal(spec)
-		if _, err := run(executor.BinaryCeph, "plan.osd_deployment_preview", []string{"orch", "apply", "osd", "-i", "-", "--dry-run"}, stdin); err != nil {
-			return []string{"OSD deployment preview did not succeed"}, nil, nil
-		}
-	case "upgrade.action":
-		if _, err := run(executor.BinaryCeph, "plan.upgrade_status", []string{"orch", "upgrade", "status", "--format", "json"}, nil); err != nil {
-			return nil, nil, err
-		}
-	case "rgw_period.commit":
-		if _, err := run(executor.BinaryRGWAdmin, "plan.rgw_period", []string{"period", "get", "--format", "json"}, nil); err != nil {
-			return nil, nil, err
-		}
-	}
-	return nil, nil, nil
+type Request struct {
+	ClusterID   uint64
+	Action      string
+	ResourceKey string
+	Parameters  map[string]any
 }
 
-func decodePlanJSON(data []byte, target any) error {
-	decoder := json.NewDecoder(strings.NewReader(string(data)))
-	decoder.UseNumber()
-	if err := decoder.Decode(target); err != nil {
-		return fmt.Errorf("decode plan pre-check response: %w", err)
-	}
-	return nil
-}
-
-func New(clusters *clusterservice.Service, runner executor.Executor, encryptionKeys ...string) *Service {
-	key := ""
-	if len(encryptionKeys) > 0 {
-		key = encryptionKeys[0]
-	}
-	return &Service{clusters: clusters, executor: runner, encryptionKey: key}
+func New(clusters *clusterservice.Service, runner executor.Executor) *Service {
+	return &Service{clusters: clusters, executor: runner}
 }
 
 type command struct {
@@ -185,48 +74,37 @@ func Supports(action string) bool {
 	}
 }
 
-func (s *Service) Apply(ctx context.Context, operation store.CephOperation) (cephdomain.OperationResult, error) {
-	if operation.ClusterID == nil {
-		return cephdomain.OperationResult{}, unsupported(operation.Action)
+func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.ActionResult, error) {
+	if request.ClusterID == 0 {
+		return cephdomain.ActionResult{}, unsupported(request.Action)
 	}
-	access, err := s.clusters.Access(ctx, *operation.ClusterID)
+	access, err := s.clusters.Access(ctx, request.ClusterID)
 	if err != nil {
-		return cephdomain.OperationResult{}, err
+		return cephdomain.ActionResult{}, err
 	}
 	defer func() { access.ClientKey = "" }()
-	var stored any
-	if err := json.Unmarshal([]byte(operation.RequestJSON), &stored); err != nil {
-		return cephdomain.OperationResult{}, err
+	if request.Parameters == nil {
+		request.Parameters = map[string]any{}
 	}
-	if s.encryptionKey != "" {
-		stored, err = security.UnprotectJSON(stored, s.encryptionKey)
-		if err != nil {
-			return cephdomain.OperationResult{}, &cephdomain.OperationError{Code: "invalid_credential", Message: "operation secrets could not be decrypted"}
-		}
-	}
-	parameters, ok := stored.(map[string]any)
-	if !ok {
-		return cephdomain.OperationResult{}, invalid("operation parameters must be an object")
-	}
-	spec, err := build(operation, parameters)
+	spec, err := build(request, request.Parameters)
 	if err != nil {
-		return cephdomain.OperationResult{}, err
+		return cephdomain.ActionResult{}, err
 	}
-	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: operation.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true, SensitiveArgs: spec.sensitive})
+	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true, SensitiveArgs: spec.sensitive})
 	if err != nil {
-		return cephdomain.OperationResult{}, normalize(err)
+		return cephdomain.ActionResult{}, normalize(err)
 	}
 	if len(spec.check) > 0 {
-		if _, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: operation.Action + ".post_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput}); err != nil {
-			return cephdomain.OperationResult{}, &cephdomain.OperationError{Code: "post_check_failed", Message: "command was accepted but the expected state could not be verified", Retryable: true}
+		if _, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput}); err != nil {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "command was accepted but the expected state could not be verified", Retryable: true}
 		}
 	}
-	return cephdomain.OperationResult{Details: map[string]any{"exit_code": result.ExitCode, "duration_ms": result.Duration.Milliseconds()}}, nil
+	return cephdomain.ActionResult{Details: map[string]any{"exit_code": result.ExitCode, "duration_ms": result.Duration.Milliseconds()}}, nil
 }
 
-func build(operation store.CephOperation, p map[string]any) (command, error) {
-	action := operation.Action
-	tail := resourceTail(operation.ResourceKey)
+func build(request Request, p map[string]any) (command, error) {
+	action := request.Action
+	tail := resourceTail(request.ResourceKey)
 	ceph := func(args, check []string) command {
 		return command{binary: executor.BinaryCeph, args: args, check: check, timeout: 2 * time.Minute}
 	}
@@ -1139,11 +1017,11 @@ func poolOf(spec string) string {
 	return spec
 }
 func invalid(message string) error {
-	return &cephdomain.OperationError{Code: "invalid_request", Message: message}
+	return &cephdomain.ActionError{Code: "invalid_request", Message: message}
 }
 func unsupported(action string) error {
-	return &cephdomain.OperationError{Code: "capability_unavailable", Message: fmt.Sprintf("native adapter for %s is unavailable", action)}
+	return &cephdomain.ActionError{Code: "capability_unavailable", Message: fmt.Sprintf("native adapter for %s is unavailable", action)}
 }
 func normalize(err error) error {
-	return &cephdomain.OperationError{Code: "ceph_command_failed", Message: err.Error(), Retryable: true}
+	return &cephdomain.ActionError{Code: "ceph_command_failed", Message: err.Error(), Retryable: true}
 }

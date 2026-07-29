@@ -5,6 +5,7 @@ export type PageKey =
   | 'monManagement'
   | 'mgrManagement'
   | 'osdManagement'
+  | 'deviceManagement'
   | 'mdsManagement'
   | 'blockPools'
   | 'rbdImages'
@@ -30,6 +31,7 @@ export type PageKey =
   | 'systemInfo'
   | 'systemUsers'
   | 'dataManagement'
+  | 'auditEvents'
 
 export type NavIcon =
   | 'overview'
@@ -38,6 +40,7 @@ export type NavIcon =
   | 'mon'
   | 'mgr'
   | 'osd'
+  | 'device'
   | 'mds'
   | 'block'
   | 'pool'
@@ -63,6 +66,7 @@ export type NavIcon =
   | 'silence'
   | 'system'
   | 'data'
+  | 'audit'
 
 export type NavChildDefinition = {
   key: PageKey
@@ -99,6 +103,7 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
       { key: 'monManagement', label: 'MON 管理', path: '/cluster/mon', icon: 'mon', permission: 'cluster' },
       { key: 'mgrManagement', label: 'MGR 管理', path: '/cluster/mgr', icon: 'mgr', permission: 'cluster' },
       { key: 'osdManagement', label: 'OSD 管理', path: '/cluster/osd', icon: 'osd', permission: 'cluster' },
+      { key: 'deviceManagement', label: '设备管理', path: '/cluster/device', icon: 'device', permission: 'cluster' },
       { key: 'mdsManagement', label: 'MDS 管理', path: '/cluster/mds', icon: 'mds', permission: 'cluster' }
     ]
   },
@@ -164,6 +169,15 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
       { key: 'systemInfo', label: '系统信息', path: '/system/info', icon: 'system', permission: 'system' },
       { key: 'systemUsers', label: '用户管理', path: '/system/user', icon: 'user', permission: 'system' },
       { key: 'dataManagement', label: '配置管理', path: '/system/data', icon: 'config', permission: 'system' }
+    ]
+  },
+  {
+    key: 'audit-section',
+    label: '审计',
+    path: '/audit',
+    icon: 'audit',
+    children: [
+      { key: 'auditEvents', label: '审计事件', path: '/audit/events', icon: 'audit', permission: 'system' }
     ]
   }
 ]

@@ -87,10 +87,6 @@ body .app-shell .sidebar-menu .ant-menu-submenu-title {
     height: 52px;
   }
 
-  .global-search {
-    height: 34px;
-  }
-
   .icon-button.ant-btn,
   .user-button.ant-btn {
     height: 34px;

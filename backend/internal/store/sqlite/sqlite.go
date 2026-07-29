@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/gorm"
@@ -13,25 +12,29 @@ import (
 )
 
 func Dialector(cfg config.SQLiteConfig, workDir string) (gorm.Dialector, error) {
-	path := resolvePath(cfg.Path, workDir)
+	path := resolveName(cfg.Name, workDir)
 	if err := ensureDirectory(path); err != nil {
 		return nil, err
 	}
 	return sqlite.Open(path), nil
 }
 
-func resolvePath(path, workDir string) string {
-	if path == "" || path == ":memory:" || strings.HasPrefix(path, "file:") || filepath.IsAbs(path) {
-		return path
+func ResolveName(name, workDir string) string {
+	return resolveName(name, workDir)
+}
+
+func resolveName(name, workDir string) string {
+	if name == "" {
+		name = "cephtower.db"
 	}
 	if workDir == "" {
 		workDir = "."
 	}
-	return filepath.Join(workDir, path)
+	return filepath.Join(workDir, "data", "db", name)
 }
 
 func ensureDirectory(path string) error {
-	if path == "" || path == ":memory:" || strings.HasPrefix(path, "file:") {
+	if path == "" {
 		return nil
 	}
 

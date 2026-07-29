@@ -212,14 +212,8 @@ func InstallManaged(cfg config.LoggingConfig, workDirs ...string) (*slog.Logger,
 		if len(workDirs) > 0 && workDirs[0] != "" {
 			workDir = workDirs[0]
 		}
-		dir := cfg.Dir
-		if dir == "" {
-			dir = "log"
-		}
-		if !filepath.IsAbs(dir) {
-			dir = filepath.Join(workDir, dir)
-		}
-		file := cfg.File
+		dir := filepath.Join(workDir, "log")
+		file := cfg.Name
 		if file == "" {
 			file = "cephtower.log"
 		}

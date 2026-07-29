@@ -3,39 +3,41 @@ package handler
 import (
 	"context"
 	"net/http"
-	"net/url"
 
 	authservice "cephtower/backend/internal/service/auth"
 	clusterservice "cephtower/backend/internal/service/cluster"
 	endpointservice "cephtower/backend/internal/service/endpoint"
-	operationservice "cephtower/backend/internal/service/operation"
+	externalservice "cephtower/backend/internal/service/external"
+	mutationservice "cephtower/backend/internal/service/mutation"
+	reconcilerservice "cephtower/backend/internal/service/reconciler"
+	setupservice "cephtower/backend/internal/service/setup"
 	"cephtower/backend/internal/store"
 )
 
 type Handler struct {
 	Auth       *authservice.Service
 	Clusters   *clusterservice.Service
-	Operations *operationservice.Service
 	Endpoints  *endpointservice.Service
-	External   ExternalReader
+	External   *externalservice.Service
+	Mutations  *mutationservice.Service
+	Reconciler *reconcilerservice.Service
+	Setup      *setupservice.Service
 	Database   func() *store.Database
-}
-
-type ExternalReader interface {
-	Read(context.Context, uint64, string, string, url.Values) (any, error)
 }
 
 type Dependencies struct {
 	Auth       *authservice.Service
 	Clusters   *clusterservice.Service
-	Operations *operationservice.Service
 	Endpoints  *endpointservice.Service
-	External   ExternalReader
+	External   *externalservice.Service
+	Mutations  *mutationservice.Service
+	Reconciler *reconcilerservice.Service
+	Setup      *setupservice.Service
 	Database   func() *store.Database
 }
 
 func New(deps Dependencies) *Handler {
-	return &Handler{Auth: deps.Auth, Clusters: deps.Clusters, Operations: deps.Operations, Endpoints: deps.Endpoints, External: deps.External, Database: deps.Database}
+	return &Handler{Auth: deps.Auth, Clusters: deps.Clusters, Endpoints: deps.Endpoints, External: deps.External, Mutations: deps.Mutations, Reconciler: deps.Reconciler, Setup: deps.Setup, Database: deps.Database}
 }
 
 type userContextKey struct{}

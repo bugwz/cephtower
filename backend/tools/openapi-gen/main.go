@@ -79,8 +79,6 @@ func generate() []byte {
 			status := "200"
 			if explicit := explicitSuccessStatus(route); explicit != "" {
 				status = explicit
-			} else if route.Method != "GET" && route.Path != "/operation/plan" {
-				status = "202"
 			}
 			mediaType := "application/json"
 			if isStreamRoute(route) {
@@ -101,7 +99,7 @@ func successResponseSchema(route router.Route) string {
 		return "HealthResponse"
 	case "GET /bootstrap":
 		return "BootstrapResponse"
-	case "POST /bootstrap/admin", "POST /user":
+	case "POST /bootstrap/run", "POST /user":
 		return "UserResponse"
 	case "POST /auth/login":
 		return "LoginResponse"
@@ -121,6 +119,8 @@ func successResponseSchema(route router.Route) string {
 		return "ClusterListResponse"
 	case "GET /cluster":
 		return "ClusterResponse"
+	case "POST /cluster":
+		return "ClusterMutationResponse"
 	case "GET /cluster/capabilities":
 		return "CapabilityListResponse"
 	case "GET /credentials":
@@ -133,16 +133,10 @@ func successResponseSchema(route router.Route) string {
 		return "EndpointListResponse"
 	case "POST /endpoint", "PATCH /endpoint":
 		return "EndpointResponse"
-	case "POST /operation/plan":
-		return "PlanResponse"
-	case "GET /operations":
-		return "OperationListResponse"
-	case "GET /operation":
-		return "OperationResponse"
-	case "GET /operation/events":
-		return "OperationEventListResponse"
 	case "GET /audit/events":
 		return "AuditEventListResponse"
+	case "POST /resource/refresh":
+		return "ActionResponse"
 	case "GET /rgw/bucket/policy":
 		return "BucketConfigurationResponse"
 	}
@@ -150,7 +144,7 @@ func successResponseSchema(route router.Route) string {
 		return "EventStream"
 	}
 	if route.Method != "GET" {
-		return "OperationResponse"
+		return "ActionResponse"
 	}
 	switch {
 	case strings.HasPrefix(route.Path, "/metric/"):
@@ -185,9 +179,8 @@ func writeResponseSchemas(b *strings.Builder) {
 		{"ClusterResponse", "Cluster"}, {"ClusterListResponse", "ClusterListData"},
 		{"CapabilityListResponse", "CapabilityListData"}, {"CredentialResponse", "Credential"},
 		{"CredentialListResponse", "CredentialListData"}, {"EndpointResponse", "Endpoint"},
-		{"EndpointListResponse", "EndpointListData"}, {"OperationResponse", "Operation"},
-		{"OperationListResponse", "OperationListData"}, {"OperationEventListResponse", "OperationEventListData"},
-		{"PlanResponse", "Plan"}, {"AuditEventListResponse", "AuditEventListData"},
+		{"EndpointListResponse", "EndpointListData"}, {"ClusterMutationResponse", "ClusterMutationData"},
+		{"ActionResponse", "ActionResult"}, {"AuditEventListResponse", "AuditEventListData"},
 		{"ResourceResponse", "Resource"}, {"ResourceListResponse", "ResourceListData"},
 		{"MetricResponse", "MetricData"}, {"ExternalListResponse", "ExternalListData"},
 		{"ExternalResultResponse", "ExternalResultData"}, {"ISCSIGatewayResponse", "ISCSIGateway"},
@@ -212,14 +205,6 @@ func routeParameters(route router.Route) []parameterSpec {
 		result = append(result, parameterSpec{Name: "Last-Event-ID", In: "header", Type: "integer", Minimum: "0"})
 	}
 	switch route.Path {
-	case "/operations":
-		result = append(result,
-			parameterSpec{Name: "status", In: "query", Type: "string"},
-			parameterSpec{Name: "kind", In: "query", Type: "string"},
-			parameterSpec{Name: "resource_kind", In: "query", Type: "string"},
-			parameterSpec{Name: "resource_key", In: "query", Type: "string"},
-			parameterSpec{Name: "user_id", In: "query", Type: "integer", Minimum: "1"},
-			parameterSpec{Name: "limit", In: "query", Type: "integer", Minimum: "1"})
 	case "/audit/events":
 		result = append(result,
 			parameterSpec{Name: "username", In: "query", Type: "string"},
@@ -244,6 +229,9 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 	stringField := func(required bool) handler.JSONField { return handler.JSONField{Type: "string", Required: required} }
 	boolField := func(required bool) handler.JSONField { return handler.JSONField{Type: "boolean", Required: required} }
 	integerField := func(required bool) handler.JSONField { return handler.JSONField{Type: "integer", Required: required} }
+	stringArrayField := func(required bool) handler.JSONField {
+		return handler.JSONField{Type: "array", Required: required, Items: &handler.JSONField{Type: "string"}}
+	}
 	object := func(required bool, fields map[string]handler.JSONField) handler.JSONField {
 		return handler.JSONField{Type: "object", Required: required, Properties: fields}
 	}
@@ -288,7 +276,41 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 	var fields map[string]handler.JSONField
 	required := true
 	switch key {
-	case "POST /bootstrap/admin", "POST /user":
+	case "POST /bootstrap/run":
+		database := object(true, map[string]handler.JSONField{
+			"engine": stringField(true),
+			"sqlite": object(true, map[string]handler.JSONField{
+				"name": stringField(true),
+			}),
+			"mysql": object(true, map[string]handler.JSONField{
+				"host":     stringField(true),
+				"port":     integerField(true),
+				"username": stringField(true),
+				"password": {Type: "string", Required: false, WriteOnly: true},
+				"database": stringField(true),
+				"params":   stringField(true),
+				"tls":      stringField(true),
+			}),
+		})
+		user := object(true, map[string]handler.JSONField{"username": stringField(true), "display_name": stringField(true), "email": stringField(false), "password": {Type: "string", Required: true, WriteOnly: true}, "role": stringField(false)})
+		fields = map[string]handler.JSONField{"database": database, "user": user}
+	case "POST /bootstrap/dbtest":
+		fields = map[string]handler.JSONField{
+			"engine": stringField(true),
+			"sqlite": object(true, map[string]handler.JSONField{
+				"name": stringField(true),
+			}),
+			"mysql": object(true, map[string]handler.JSONField{
+				"host":     stringField(true),
+				"port":     integerField(true),
+				"username": stringField(true),
+				"password": {Type: "string", Required: false, WriteOnly: true},
+				"database": stringField(true),
+				"params":   stringField(true),
+				"tls":      stringField(true),
+			}),
+		}
+	case "POST /user":
 		fields = map[string]handler.JSONField{"username": stringField(true), "display_name": stringField(true), "email": stringField(false), "password": {Type: "string", Required: true, WriteOnly: true}, "role": stringField(route.Path == "/user")}
 	case "POST /auth/login":
 		fields = map[string]handler.JSONField{"username": stringField(true), "password": {Type: "string", Required: true, WriteOnly: true}}
@@ -306,10 +328,10 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "delete_cached_data": boolField(true)}
 	case "POST /cluster/probe":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
-	case "GET /cluster", "GET /cluster/capabilities", "GET /credentials", "GET /endpoints", "GET /role/bindings", "GET /logs/stream", "GET /operation/event/stream":
+	case "POST /resource/refresh":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "scope": stringField(false), "module": stringField(false), "modules": stringArrayField(false), "kind": stringField(false), "kinds": stringArrayField(false)}
+	case "GET /cluster", "GET /cluster/capabilities", "GET /credentials", "GET /endpoints", "GET /role/bindings", "GET /logs/stream":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
-	case "GET /operation", "GET /operation/events":
-		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "operation_id": stringField(true)}
 	case "PUT /credential":
 		credentialFields := map[string]handler.JSONField{"token": {Type: "string", WriteOnly: true}, "username": stringField(false), "password": {Type: "string", WriteOnly: true}, "ca_certificate": {Type: "string", WriteOnly: true}, "client_certificate": {Type: "string", WriteOnly: true}, "client_key": {Type: "string", WriteOnly: true}, "access_key": {Type: "string", WriteOnly: true}, "secret_key": {Type: "string", WriteOnly: true}, "session_token": {Type: "string", WriteOnly: true}, "region": stringField(false)}
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "kind": stringField(true), "credential": object(true, credentialFields)}
@@ -319,11 +341,6 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "endpoint_id": integerField(route.Method == "PATCH"), "kind": stringField(true), "name": stringField(false), "url": stringField(true), "tls_mode": stringField(false), "ca_credential_id": integerField(false), "timeout_seconds": integerField(false), "enabled": boolField(false)}
 	case "DELETE /endpoint":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "endpoint_id": integerField(true)}
-	case "POST /operation/cancel", "POST /operation/retry":
-		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "operation_id": stringField(true)}
-	case "POST /operation/plan":
-		parameters := handler.JSONField{Type: "object", Required: true, Properties: mutationFieldUnion()}
-		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "action": stringField(true), "resource_kind": stringField(true), "resource_key": stringField(true), "resource_generation": integerField(true), "risk": {Type: "string", Required: true, Enum: []string{"high"}}, "parameters": parameters}
 	default:
 		if route.Method == "GET" && isClusterScopedRoute(route) {
 			fields := identifierFields()
@@ -409,7 +426,7 @@ func writeFieldSchema(b *strings.Builder, field handler.JSONField, indent int) {
 func explicitSuccessStatus(route router.Route) string {
 	key := route.Method + " " + route.Path
 	switch key {
-	case "POST /bootstrap/admin", "POST /user", "POST /role", "POST /role/binding", "POST /endpoint":
+	case "POST /bootstrap/run", "POST /user", "POST /role", "POST /role/binding", "POST /endpoint":
 		return "201"
 	case "POST /auth/login", "PUT /credential", "DELETE /credential", "PATCH /endpoint", "DELETE /endpoint", "DELETE /role/binding":
 		return "200"
@@ -428,7 +445,8 @@ func isPublicRoute(route router.Route) bool {
 	return key == "GET /healthz" ||
 		key == "GET /readyz" ||
 		key == "GET /bootstrap" ||
-		key == "POST /bootstrap/admin" ||
+		key == "POST /bootstrap/dbtest" ||
+		key == "POST /bootstrap/run" ||
 		key == "POST /auth/login"
 }
 
@@ -463,7 +481,6 @@ func isItemResourceRoute(route router.Route) bool {
 		"/cluster/capabilities",
 		"/credentials",
 		"/endpoints",
-		"/operations",
 		"/audit/events",
 		"/health",
 		"/host/devices",
@@ -556,25 +573,12 @@ const components = `components:
         monitor_addresses: {type: string, minLength: 1, maxLength: 4096}
         client_username: {type: string, pattern: '^client\\.'}
         client_key: {type: string, writeOnly: true, minLength: 1}
-    Operation:
+    ActionResult:
       type: object
       additionalProperties: false
-      required: [operation_id, kind, resource_type, resource_key, status, stage, progress, risk, created_at]
       properties:
-        operation_id: {type: string, format: uuid}
-        kind: {type: string}
-        cluster_id: {type: integer}
-        resource_type: {type: string}
-        resource_key: {type: string}
-        status: {type: string}
-        stage: {type: string}
-        progress: {type: integer, minimum: 0, maximum: 100}
-        risk: {type: string, enum: [low, medium, high]}
-        created_at: {type: string, format: date-time}
-        started_at: {type: string, format: date-time}
-        completed_at: {type: string, format: date-time}
-        result: {$ref: '#/components/schemas/JSONValue'}
-        error: {$ref: '#/components/schemas/JSONValue'}
+        resource_url: {type: string}
+        details: {$ref: '#/components/schemas/JSONValue'}
     Pagination:
       type: object
       additionalProperties: false
@@ -688,36 +692,6 @@ const components = `components:
         enabled: {type: boolean}
         created_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
-    Plan:
-      type: object
-      additionalProperties: false
-      required: [plan_id, cluster_id, action, resource_kind, resource_key, resource_generation, risk, status, blockers, warnings, expires_at, created_at]
-      properties:
-        plan_id: {type: string, format: uuid}
-        cluster_id: {type: integer, minimum: 1}
-        action: {type: string}
-        resource_kind: {type: string}
-        resource_key: {type: string}
-        resource_generation: {type: integer, minimum: 1}
-        risk: {type: string, const: high}
-        status: {type: string, enum: [valid, blocked, consumed, expired]}
-        blockers: {type: array, items: {type: string}}
-        warnings: {type: array, items: {type: string}}
-        expires_at: {type: string, format: date-time}
-        created_at: {type: string, format: date-time}
-    OperationEvent:
-      type: object
-      additionalProperties: false
-      required: [sequence, event_type, stage, progress, message, data, error_code, created_at]
-      properties:
-        sequence: {type: integer, minimum: 1}
-        event_type: {type: string}
-        stage: {type: string}
-        progress: {type: [integer, 'null'], minimum: 0, maximum: 100}
-        message: {type: string}
-        data: {$ref: '#/components/schemas/JSONValue'}
-        error_code: {type: [string, 'null']}
-        created_at: {type: string, format: date-time}
     AuditEvent:
       type: object
       additionalProperties: false
@@ -737,8 +711,6 @@ const components = `components:
         outcome: {type: string}
         http_status: {type: [integer, 'null']}
         error_code: {type: [string, 'null']}
-        plan_id: {type: [string, 'null']}
-        operation_id: {type: [string, 'null']}
         before_generation: {type: [integer, 'null']}
         after_generation: {type: [integer, 'null']}
         parameters: {$ref: '#/components/schemas/JSONValue'}
@@ -857,6 +829,13 @@ const components = `components:
         - type: object
           properties:
             items: {type: array, items: {$ref: '#/components/schemas/Cluster'}}
+    ClusterMutationData:
+      type: object
+      additionalProperties: false
+      required: [cluster, result]
+      properties:
+        cluster: {$ref: '#/components/schemas/Cluster'}
+        result: {$ref: '#/components/schemas/ActionResult'}
     CapabilityListData:
       allOf:
         - $ref: '#/components/schemas/ListData'
@@ -875,18 +854,6 @@ const components = `components:
         - type: object
           properties:
             items: {type: array, items: {$ref: '#/components/schemas/Endpoint'}}
-    OperationListData:
-      allOf:
-        - $ref: '#/components/schemas/ListData'
-        - type: object
-          properties:
-            items: {type: array, items: {$ref: '#/components/schemas/Operation'}}
-    OperationEventListData:
-      allOf:
-        - $ref: '#/components/schemas/ListData'
-        - type: object
-          properties:
-            items: {type: array, items: {$ref: '#/components/schemas/OperationEvent'}}
     AuditEventListData:
       allOf:
         - $ref: '#/components/schemas/ListData'

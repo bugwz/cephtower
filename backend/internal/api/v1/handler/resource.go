@@ -1,14 +1,19 @@
 package handler
 
 import (
+	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	operationservice "cephtower/backend/internal/service/operation"
+	cephdomain "cephtower/backend/internal/domain/ceph"
+	externalservice "cephtower/backend/internal/service/external"
+	mutationservice "cephtower/backend/internal/service/mutation"
 	"cephtower/backend/internal/store"
 )
 
@@ -33,8 +38,10 @@ func (h *Handler) ReadResource(kind string, item bool) http.HandlerFunc {
 		if !h.ensureResourceCapability(w, r, id, kind) {
 			return
 		}
+		auditClusterID := id
 		if item {
 			key := readResourceKey(kind, body)
+			annotateAudit(r, kind+".get", kind, key, "", &auditClusterID)
 			row, err := h.Database().FindResource(r.Context(), id, kind, key)
 			if err != nil {
 				WriteError(w, r, 404, "resource_not_found", "resource was not found", false, nil)
@@ -44,6 +51,7 @@ func (h *Handler) ReadResource(kind string, item bool) http.HandlerFunc {
 			WriteSuccess(w, 200, "success", toResourceDTO(row))
 			return
 		}
+		annotateAudit(r, kind+".list", kind, "", "", &auditClusterID)
 		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 		after := decodeCursor(r.URL.Query().Get("cursor"))
 		rows, err := h.Database().ListResources(r.Context(), id, storeResourceFilter(kind, limit, after, r, body))
@@ -143,6 +151,7 @@ func (h *Handler) ensureResourceCapability(w http.ResponseWriter, r *http.Reques
 
 func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		_ = risk
 		var body map[string]any
 		if !DecodeStrict(w, r, &body) {
 			return
@@ -172,23 +181,170 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 			}
 			generation = &parsed
 		}
-		var planID *string
-		if value, ok := body["plan_id"].(string); ok && value != "" {
-			planID = &value
-			delete(body, "plan_id")
+		resourceKey := resourceKey(kind, action, r, body)
+		annotateAudit(r, action, kind, resourceKey, risk, &id)
+		if generation != nil {
+			if err := h.checkResourceGeneration(r.Context(), id, kind, resourceKey, *generation); err != nil {
+				WriteError(w, r, http.StatusConflict, "resource_conflict", err.Error(), false, nil)
+				return
+			}
 		}
-		user, _ := CurrentUser(r)
-		cluster, err := h.Clusters.Get(r.Context(), id)
+		result, err := h.executeMutation(r, id, kind, action, resourceKey, body)
 		if err != nil {
-			clusterError(w, r, err)
+			writeActionError(w, r, err)
 			return
 		}
-		operation, err := h.Operations.Enqueue(r.Context(), operationservice.Request{ClusterID: &id, ClusterName: cluster.Name, ActorUserID: &user.ID, ActorUsername: user.Username, RequestID: RequestID(r), Action: action, ResourceKind: kind, ResourceKey: resourceKey(kind, action, r, body), ResourceGeneration: generation, Risk: riskFromString(risk), PlanID: planID, IdempotencyKey: r.Header.Get("Idempotency-Key"), Parameters: body})
-		if err != nil {
-			WriteError(w, r, 400, "invalid_request", err.Error(), false, nil)
-			return
+		WriteSuccess(w, http.StatusOK, "success", result)
+	}
+}
+
+func (h *Handler) checkResourceGeneration(ctx context.Context, clusterID uint64, kind, resourceKey string, generation uint64) error {
+	row, err := h.Database().FindResource(ctx, clusterID, kind, resourceLookupKey(kind, resourceKey))
+	if errors.Is(err, store.ErrRecordNotFound) && generation == 0 {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if row.ResourceVersion != generation {
+		return errors.New("resource generation changed")
+	}
+	return nil
+}
+
+func (h *Handler) executeMutation(r *http.Request, clusterID uint64, kind, action, resourceKey string, body map[string]any) (cephdomain.ActionResult, error) {
+	if action == "cluster.refresh" && h.Reconciler != nil {
+		modules := stringSliceBody(body, "modules")
+		return h.Reconciler.Refresh(r.Context(), clusterID, modules)
+	}
+	if externalservice.Supports(action) {
+		if h.External == nil {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "capability_unavailable", Message: "external action is unavailable"}
 		}
-		acceptedOperation(w, r, id, operation)
+		return h.External.Execute(r.Context(), externalservice.Request{ClusterID: clusterID, Action: action, ResourceKey: resourceKey, Parameters: body})
+	}
+	if h.Mutations == nil {
+		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "capability_unavailable", Message: "native action is unavailable"}
+	}
+	result, err := h.Mutations.Execute(r.Context(), mutationservice.Request{ClusterID: clusterID, Action: action, ResourceKey: resourceKey, Parameters: body})
+	if err != nil {
+		return cephdomain.ActionResult{}, err
+	}
+	return result, nil
+}
+
+func writeActionError(w http.ResponseWriter, r *http.Request, err error) {
+	var actionError *cephdomain.ActionError
+	if errors.As(err, &actionError) {
+		status := http.StatusBadGateway
+		switch actionError.Code {
+		case "invalid_request", "invalid_credential", "invalid_endpoint":
+			status = http.StatusBadRequest
+		case "endpoint_unavailable", "capability_unavailable":
+			status = http.StatusNotImplemented
+		case "resource_conflict":
+			status = http.StatusConflict
+		}
+		WriteError(w, r, status, actionError.Code, actionError.Message, actionError.Retryable, actionError.Details)
+		return
+	}
+	WriteError(w, r, http.StatusBadGateway, "action_failed", err.Error(), true, nil)
+}
+
+func stringSliceBody(body map[string]any, key string) []string {
+	raw, ok := body[key].([]any)
+	if !ok {
+		return nil
+	}
+	values := make([]string, 0, len(raw))
+	for _, item := range raw {
+		if value, ok := item.(string); ok {
+			values = append(values, value)
+		}
+	}
+	return values
+}
+
+func resourceLookupKey(kind, resourceKey string) string {
+	path := strings.Split(strings.Trim(resourceKey, "/"), "/")
+	after := func(segment string) string {
+		for index := 0; index+1 < len(path); index++ {
+			if path[index] == segment {
+				return path[index+1]
+			}
+		}
+		return ""
+	}
+	lastResource := func() string {
+		for index := len(path) - 1; index >= 0; index-- {
+			switch path[index] {
+			case "action", "delete", "purge", "zap", "commit", "clone":
+				continue
+			default:
+				return path[index]
+			}
+		}
+		return ""
+	}
+	switch kind {
+	case "device":
+		encoded := after("device")
+		decoded, err := base64.RawURLEncoding.Strict().DecodeString(encoded)
+		if err == nil {
+			parts := bytes.SplitN(decoded, []byte{0}, 2)
+			if len(parts) == 2 {
+				return string(parts[0]) + ":" + string(parts[1])
+			}
+		}
+		return encoded
+	case "rbd_image":
+		return after("image")
+	case "rbd_snapshot":
+		return after("image") + "@" + after("snapshot")
+	case "rbd_namespace":
+		return after("namespace") + "/" + lastResource()
+	case "subvolume_group":
+		return after("filesystem") + "/" + after("subvolume-group")
+	case "subvolume":
+		return after("filesystem") + "/" + after("subvolume")
+	case "cephfs_snapshot":
+		return after("filesystem") + "/" + after("subvolume") + "/" + after("snapshot")
+	case "filesystem":
+		return after("filesystem")
+	case "osd":
+		return after("osd")
+	case "pool":
+		return after("pool")
+	case "host":
+		return after("host")
+	case "service":
+		return after("service")
+	case "crush_rule":
+		return after("crush-rule")
+	case "erasure_code_profile":
+		return after("erasure-code-profile")
+	case "nfs_cluster", "smb_cluster":
+		return after("cluster")
+	case "nfs_export":
+		return after("export")
+	case "smb_share":
+		return after("share")
+	case "rgw_bucket":
+		return after("bucket")
+	case "nvmeof_subsystem":
+		return after("subsystem")
+	case "nvmeof_namespace":
+		return after("namespace")
+	case "nvmeof_listener":
+		return after("listener")
+	case "nvmeof_host":
+		return after("host")
+	case "iscsi_target":
+		return after("target")
+	case "upgrade":
+		return "upgrade"
+	default:
+		return lastResource()
 	}
 }
 

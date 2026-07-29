@@ -15,7 +15,7 @@ const testKey = "0123456789abcdefghijklmnopqrstuv"
 
 func testService(t *testing.T) (*Service, *store.Database, store.CephCluster) {
 	t.Helper()
-	db, err := store.Open(config.DatabaseConfig{EncryptionKey: testKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Path: t.TempDir() + "/endpoint.db"}})
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: testKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "endpoint.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}

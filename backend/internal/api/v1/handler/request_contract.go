@@ -64,7 +64,6 @@ func buildMutationRequestContracts() map[string]RequestContract {
 					copyFields[name] = field
 				}
 			}
-			copyFields["plan_id"] = stringField(false)
 			contracts[action] = RequestContract{Required: required, Fields: copyFields}
 		}
 	}
@@ -170,7 +169,6 @@ func routeIdentifierFields() map[string]JSONField {
 		"namespace":     stringField(false),
 		"nqn":           stringField(false),
 		"nsid":          stringField(false),
-		"operation_id":  stringField(false),
 		"osd_id":        stringField(false),
 		"pool":          stringField(false),
 		"service_id":    stringField(false),

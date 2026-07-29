@@ -1,6 +1,7 @@
 import { Empty, Table, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { textValue, type ApiRecord } from '../api/client'
+import { RecordDetail } from './RecordDetail'
 
 export interface FieldColumn {
   key: string
@@ -32,6 +33,10 @@ export function DataTable({ columns, data, rowKeyCandidates = ['id', 'name', 'ho
       pagination={{ pageSize: 8, showSizeChanger: false }}
       rowKey={(row, index) => rowKeyCandidates.map((key) => row[key]).find(Boolean)?.toString() ?? String(index)}
       scroll={{ x: true }}
+      expandable={{
+        expandedRowRender: (row) => <RecordDetail record={row} />,
+        rowExpandable: (row) => Object.keys(row).length > 0
+      }}
     />
   )
 }
@@ -43,4 +48,3 @@ function renderValue(value: unknown) {
 
   return textValue(value)
 }
-

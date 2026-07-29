@@ -23,10 +23,10 @@ func TestInfofFormatsSingleMessage(t *testing.T) {
 	slog.SetDefault(logger)
 	t.Cleanup(func() { slog.SetDefault(previous) })
 
-	Infof("backend listening: addr=%s database_engine=%s", "127.0.0.1:36900", "sqlite")
+	Infof("backend listening: addr=%s", "127.0.0.1:36900")
 
 	line := strings.TrimSpace(output.String())
-	if !strings.HasSuffix(line, "INFO backend listening: addr=127.0.0.1:36900 database_engine=sqlite") {
+	if !strings.HasSuffix(line, "INFO backend listening: addr=127.0.0.1:36900") {
 		t.Fatalf("unexpected formatted log line: %q", line)
 	}
 }
@@ -104,8 +104,7 @@ func TestInstallAppendsToLogFile(t *testing.T) {
 	cfg := config.LoggingConfig{
 		Level:  "info",
 		Format: "txt",
-		Dir:    "log",
-		File:   "cephtower.log",
+		Name:   "cephtower.log",
 		Output: "file",
 	}
 

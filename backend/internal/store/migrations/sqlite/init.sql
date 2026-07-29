@@ -174,101 +174,6 @@ CREATE TABLE ceph_collection_run (
 CREATE INDEX idx_collection_module_started ON ceph_collection_run(cluster_id, module, started_at);
 CREATE INDEX idx_collection_status_started ON ceph_collection_run(status, started_at);
 CREATE INDEX idx_collection_finished ON ceph_collection_run(finished_at);
-CREATE TABLE ceph_action_plan (
-  id TEXT PRIMARY KEY,
-  cluster_id INTEGER NOT NULL REFERENCES ceph_cluster(id) ON DELETE CASCADE,
-  actor_user_id INTEGER NULL REFERENCES user(id) ON DELETE SET NULL,
-  actor_username TEXT NOT NULL,
-  request_id TEXT NOT NULL,
-  action TEXT NOT NULL,
-  resource_kind TEXT NOT NULL,
-  resource_key TEXT NOT NULL,
-  resource_generation INTEGER NOT NULL,
-  risk TEXT NOT NULL,
-  status TEXT NOT NULL,
-  request_json TEXT NOT NULL,
-  blockers_json TEXT NOT NULL DEFAULT '[]',
-  warnings_json TEXT NOT NULL DEFAULT '[]',
-  expires_at DATETIME NOT NULL,
-  consumed_at DATETIME NULL,
-  created_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-);
-CREATE INDEX idx_plan_resource ON ceph_action_plan(cluster_id, resource_kind, resource_key);
-CREATE INDEX idx_plan_actor_created ON ceph_action_plan(actor_user_id, created_at);
-CREATE INDEX idx_plan_status_expiry ON ceph_action_plan(status, expires_at);
-CREATE INDEX idx_plan_request ON ceph_action_plan(request_id);
-CREATE TABLE ceph_operation (
-  id TEXT PRIMARY KEY,
-  cluster_id INTEGER NULL REFERENCES ceph_cluster(id) ON DELETE SET NULL,
-  cluster_name TEXT NOT NULL,
-  actor_user_id INTEGER NULL REFERENCES user(id) ON DELETE SET NULL,
-  actor_username TEXT NOT NULL,
-  plan_id TEXT NULL REFERENCES ceph_action_plan(id) ON DELETE SET NULL,
-  retry_of_id TEXT NULL REFERENCES ceph_operation(id) ON DELETE SET NULL,
-  request_id TEXT NOT NULL,
-  action TEXT NOT NULL,
-  resource_kind TEXT NOT NULL,
-  resource_key TEXT NOT NULL,
-  resource_generation INTEGER NULL,
-  risk TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'queued',
-  stage TEXT NOT NULL DEFAULT 'queued',
-  progress INTEGER NOT NULL DEFAULT 0 CHECK(progress BETWEEN 0 AND 100),
-  attempt INTEGER NOT NULL DEFAULT 0,
-  max_attempts INTEGER NOT NULL DEFAULT 1,
-  idempotency_key_hash TEXT NULL,
-  idempotency_scope_hash TEXT NULL UNIQUE,
-  request_json TEXT NOT NULL,
-  result_json TEXT NULL,
-  error_code TEXT NULL,
-  error_message TEXT NULL,
-  error_details_json TEXT NULL,
-  retryable INTEGER NOT NULL DEFAULT 0 CHECK(retryable IN (0,1)),
-  cancel_requested_at DATETIME NULL,
-  scheduled_at DATETIME NOT NULL,
-  started_at DATETIME NULL,
-  heartbeat_at DATETIME NULL,
-  completed_at DATETIME NULL,
-  created_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-  updated_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-);
-CREATE INDEX idx_operation_cluster_status_created ON ceph_operation(cluster_id, status, created_at);
-CREATE INDEX idx_operation_actor_created ON ceph_operation(actor_user_id, created_at);
-CREATE INDEX idx_operation_resource_created ON ceph_operation(resource_kind, resource_key, created_at);
-CREATE INDEX idx_operation_status_scheduled ON ceph_operation(status, scheduled_at);
-CREATE INDEX idx_operation_heartbeat ON ceph_operation(heartbeat_at);
-CREATE INDEX idx_operation_plan ON ceph_operation(plan_id);
-CREATE INDEX idx_operation_retry_of ON ceph_operation(retry_of_id);
-CREATE INDEX idx_operation_request ON ceph_operation(request_id);
-CREATE TABLE ceph_operation_event (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  operation_id TEXT NOT NULL REFERENCES ceph_operation(id) ON DELETE CASCADE,
-  sequence INTEGER NOT NULL,
-  event_type TEXT NOT NULL,
-  stage TEXT NOT NULL,
-  progress INTEGER NULL CHECK(progress IS NULL OR progress BETWEEN 0 AND 100),
-  message TEXT NOT NULL,
-  data_json TEXT NULL,
-  error_code TEXT NULL,
-  created_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-  UNIQUE(operation_id, sequence)
-);
-CREATE INDEX idx_event_operation_created ON ceph_operation_event(operation_id, created_at);
-CREATE INDEX idx_event_created ON ceph_operation_event(created_at);
-CREATE TABLE ceph_operation_lock (
-  lock_key TEXT PRIMARY KEY,
-  cluster_id INTEGER NOT NULL REFERENCES ceph_cluster(id) ON DELETE CASCADE,
-  resource_kind TEXT NOT NULL,
-  resource_key TEXT NOT NULL,
-  operation_id TEXT NOT NULL REFERENCES ceph_operation(id) ON DELETE CASCADE,
-  fencing_token INTEGER NOT NULL,
-  lease_expires_at DATETIME NOT NULL,
-  acquired_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-  updated_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-);
-CREATE INDEX idx_lock_resource ON ceph_operation_lock(cluster_id, resource_kind, resource_key);
-CREATE INDEX idx_lock_operation ON ceph_operation_lock(operation_id);
-CREATE INDEX idx_lock_expiry ON ceph_operation_lock(lease_expires_at);
 CREATE TABLE audit_event (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   occurred_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
@@ -287,8 +192,6 @@ CREATE TABLE audit_event (
   error_code TEXT NULL,
   source_ip TEXT NULL,
   user_agent TEXT NULL,
-  plan_id TEXT NULL,
-  operation_id TEXT NULL,
   before_generation INTEGER NULL,
   after_generation INTEGER NULL,
   parameters_json TEXT NULL,
@@ -302,4 +205,3 @@ CREATE INDEX idx_audit_cluster_occurred ON audit_event(cluster_id, occurred_at);
 CREATE INDEX idx_audit_action_occurred ON audit_event(action, occurred_at);
 CREATE INDEX idx_audit_resource_occurred ON audit_event(resource_kind, resource_key, occurred_at);
 CREATE INDEX idx_audit_request ON audit_event(request_id);
-CREATE INDEX idx_audit_operation ON audit_event(operation_id);

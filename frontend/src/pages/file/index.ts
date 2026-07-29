@@ -1,1 +1,1 @@
-export { DemoPage as FileDemoPage } from '../DemoPage'
+export * from './pages'

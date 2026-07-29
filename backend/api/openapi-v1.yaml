@@ -459,8 +459,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -485,8 +483,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -577,12 +573,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -851,8 +847,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -877,8 +871,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -969,12 +961,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -1250,9 +1242,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /bootstrap/admin:
+  /bootstrap/dbtest:
     post:
-      operationId: post_bootstrap_admin
+      operationId: post_bootstrap_dbtest
       requestBody:
         required: true
         content:
@@ -1260,19 +1252,112 @@ paths:
             schema:
               type: object
               additionalProperties: false
-              required: [display_name, password, username]
+              required: [engine, mysql, sqlite]
               properties:
-                display_name:
+                engine:
                   type: string
-                email:
-                  type: string
-                password:
-                  type: string
-                  writeOnly: true
-                role:
-                  type: string
-                username:
-                  type: string
+                mysql:
+                  type: object
+                  additionalProperties: false
+                  required: [database, host, params, port, tls, username]
+                  properties:
+                    database:
+                      type: string
+                    host:
+                      type: string
+                    params:
+                      type: string
+                    password:
+                      type: string
+                      writeOnly: true
+                    port:
+                      type: integer
+                    tls:
+                      type: string
+                    username:
+                      type: string
+                sqlite:
+                  type: object
+                  additionalProperties: false
+                  required: [name]
+                  properties:
+                    name:
+                      type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /bootstrap/run:
+    post:
+      operationId: post_bootstrap_run
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [database, user]
+              properties:
+                database:
+                  type: object
+                  additionalProperties: false
+                  required: [engine, mysql, sqlite]
+                  properties:
+                    engine:
+                      type: string
+                    mysql:
+                      type: object
+                      additionalProperties: false
+                      required: [database, host, params, port, tls, username]
+                      properties:
+                        database:
+                          type: string
+                        host:
+                          type: string
+                        params:
+                          type: string
+                        password:
+                          type: string
+                          writeOnly: true
+                        port:
+                          type: integer
+                        tls:
+                          type: string
+                        username:
+                          type: string
+                    sqlite:
+                      type: object
+                      additionalProperties: false
+                      required: [name]
+                      properties:
+                        name:
+                          type: string
+                user:
+                  type: object
+                  additionalProperties: false
+                  required: [display_name, password, username]
+                  properties:
+                    display_name:
+                      type: string
+                    email:
+                      type: string
+                    password:
+                      type: string
+                      writeOnly: true
+                    role:
+                      type: string
+                    username:
+                      type: string
       responses:
         '201':
           description: success
@@ -1305,12 +1390,12 @@ paths:
                 delete_cached_data:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -1370,12 +1455,12 @@ paths:
                 name:
                   type: string
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -1405,12 +1490,12 @@ paths:
                 name:
                   type: string
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ClusterMutationResponse'
         default:
           description: error
           content:
@@ -1463,405 +1548,12 @@ paths:
                 cluster_id:
                   type: integer
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
-        default:
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /cluster/refresh:
-    post:
-      operationId: post_cluster_refresh
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              required: [cluster_id]
-              properties:
-                access:
-                  type: string
-                  enum: [r, rw]
-                access_key:
-                  type: string
-                  writeOnly: true
-                account_id:
-                  type: string
-                account_name:
-                  type: string
-                action:
-                  type: string
-                  enum: [pause, resume, start, stop]
-                address:
-                  type: string
-                adrfam:
-                  type: integer
-                application:
-                  type: string
-                assume_role_policy:
-                  type: string
-                auth_mode:
-                  type: string
-                  enum: [active-directory, user]
-                binding_id:
-                  type: integer
-                block_size:
-                  type: integer
-                bucket_id:
-                  type: string
-                client:
-                  type: string
-                client_id:
-                  type: string
-                clients:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [iqn]
-                    properties:
-                      iqn:
-                        type: string
-                      luns:
-                        type: array
-                        items:
-                          type: string
-                cluster:
-                  type: string
-                cluster_id:
-                  type: integer
-                code:
-                  type: string
-                comment:
-                  type: string
-                cors:
-                  description: action-specific JSON value
-                create_image:
-                  type: boolean
-                createdBy:
-                  type: string
-                crush-device-class:
-                  type: string
-                crush-failure-domain:
-                  type: string
-                data_devices:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    all:
-                      type: boolean
-                    model:
-                      type: string
-                    paths:
-                      type: array
-                      items:
-                        type: string
-                    rotational:
-                      type: boolean
-                    size:
-                      type: string
-                    vendor:
-                      type: string
-                destination:
-                  type: string
-                device:
-                  type: string
-                device_class:
-                  type: string
-                device_id:
-                  type: string
-                dhchap_key:
-                  type: string
-                disable_auto_resize:
-                  type: boolean
-                disks:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [image, pool]
-                    properties:
-                      backstore:
-                        type: string
-                      image:
-                        type: string
-                      pool:
-                        type: string
-                display_name:
-                  type: string
-                document:
-                  description: action-specific JSON value
-                email:
-                  type: string
-                enable_ha:
-                  type: boolean
-                enabled:
-                  type: boolean
-                encryption:
-                  description: action-specific JSON value
-                endpoint_id:
-                  type: integer
-                endsAt:
-                  type: string
-                export_id:
-                  type: string
-                failure_domain:
-                  type: string
-                feature_action:
-                  type: string
-                  enum: [disable, enable]
-                features:
-                  type: string
-                field:
-                  type: string
-                filesystem:
-                  type: string
-                flag:
-                  type: string
-                force:
-                  type: boolean
-                fs:
-                  type: string
-                group:
-                  type: string
-                groups:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [name]
-                    properties:
-                      disks:
-                        type: array
-                        items:
-                          type: string
-                      members:
-                        type: array
-                        items:
-                          type: string
-                      name:
-                        type: string
-                host:
-                  type: string
-                host_name:
-                  type: string
-                host_nqn:
-                  type: string
-                host_pattern:
-                  type: string
-                hostname:
-                  type: string
-                id:
-                  type: string
-                image_id:
-                  type: string
-                image_spec:
-                  type: string
-                iqn:
-                  type: string
-                k:
-                  type: integer
-                kind:
-                  type: string
-                  enum: [cors, encryption, lifecycle, policy]
-                label:
-                  type: string
-                lifecycle:
-                  description: action-specific JSON value
-                light:
-                  type: string
-                  enum: [fault, ident]
-                listener_id:
-                  type: string
-                m:
-                  type: integer
-                matchers:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [isEqual, isRegex, name, value]
-                    properties:
-                      isEqual:
-                        type: boolean
-                      isRegex:
-                        type: boolean
-                      name:
-                        type: string
-                      value:
-                        type: string
-                max_buckets:
-                  type: integer
-                max_bytes:
-                  type: integer
-                max_mds:
-                  type: integer
-                max_namespaces:
-                  type: integer
-                mode:
-                  type: string
-                  enum: [disabled, image, pool]
-                model_number:
-                  type: string
-                modules:
-                  type: array
-                  items:
-                    type: string
-                name:
-                  type: string
-                names:
-                  type: array
-                  items:
-                    type: string
-                namespace:
-                  type: string
-                new_size:
-                  type: integer
-                no_auto_visible:
-                  type: boolean
-                no_group_append:
-                  type: boolean
-                nqn:
-                  type: string
-                nsid:
-                  type: string
-                operation:
-                  type: string
-                  enum: [application, quota, rename]
-                operation_id:
-                  type: string
-                osd_id:
-                  type: string
-                osd_ids:
-                  type: array
-                  items:
-                    type: string
-                path:
-                  type: string
-                pg_num:
-                  type: integer
-                placement:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    count:
-                      type: integer
-                    host_pattern:
-                      type: string
-                    hosts:
-                      type: array
-                      items:
-                        type: string
-                    label:
-                      type: string
-                plan_id:
-                  type: string
-                plugin:
-                  type: string
-                policy:
-                  description: action-specific JSON value
-                pool:
-                  type: string
-                portals:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [host, ip]
-                    properties:
-                      host:
-                        type: string
-                      ip:
-                        type: string
-                pseudo:
-                  type: string
-                psk:
-                  type: string
-                rbd_image_name:
-                  type: string
-                rbd_pool_name:
-                  type: string
-                read_only:
-                  type: boolean
-                root:
-                  type: string
-                schedule:
-                  type: string
-                secret_key:
-                  type: string
-                  writeOnly: true
-                secure:
-                  type: boolean
-                serial_number:
-                  type: string
-                service_id:
-                  type: string
-                service_type:
-                  type: string
-                  enum: [alertmanager, crash, grafana, mds, mgr, mon, nfs, node-exporter, prometheus, rgw, smb]
-                share_id:
-                  type: string
-                silence_id:
-                  type: string
-                size:
-                  type: integer
-                snap:
-                  type: string
-                startsAt:
-                  type: string
-                state:
-                  type: string
-                  enum: [off, on]
-                subsystem_nqn:
-                  type: string
-                subvolume:
-                  type: string
-                suspended:
-                  type: boolean
-                system:
-                  type: boolean
-                target:
-                  type: string
-                tenant:
-                  type: string
-                traddr:
-                  type: string
-                trsvcid:
-                  type: integer
-                uid:
-                  type: string
-                value:
-                  description: action-specific JSON value
-                verify_host_name:
-                  type: boolean
-                version:
-                  type: string
-                versioning:
-                  type: string
-                  enum: [enabled, suspended]
-                weight:
-                  type: number
-                who:
-                  type: string
-                zap:
-                  type: boolean
-      responses:
-        '202':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -2244,8 +1936,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -2270,8 +1960,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -2362,12 +2050,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -2636,8 +2324,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -2662,8 +2348,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -2754,12 +2438,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -3246,8 +2930,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -3272,8 +2954,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -3364,12 +3044,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -3732,8 +3412,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -3758,8 +3436,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -3850,12 +3526,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -4124,8 +3800,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -4150,8 +3824,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -4242,12 +3914,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -4707,8 +4379,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -4733,8 +4403,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -4825,12 +4493,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -5195,8 +4863,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -5221,8 +4887,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -5313,12 +4977,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -5736,8 +5400,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -5762,8 +5424,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -5854,12 +5514,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -6222,8 +5882,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -6248,8 +5906,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -6340,12 +5996,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -6710,8 +6366,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -6736,8 +6390,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -6828,12 +6480,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -7196,8 +6848,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -7222,8 +6872,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -7314,12 +6962,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -7588,8 +7236,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -7614,8 +7260,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -7706,12 +7350,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -7981,8 +7625,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -8007,8 +7649,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -8099,12 +7739,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -8469,8 +8109,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -8495,8 +8133,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -8587,12 +8223,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -9052,8 +8688,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -9078,8 +8712,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -9170,12 +8802,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -9445,8 +9077,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -9471,8 +9101,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -9563,12 +9191,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -9933,8 +9561,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -9959,8 +9585,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -10051,12 +9675,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -10419,8 +10043,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -10445,8 +10067,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -10537,12 +10157,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -10811,8 +10431,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -10837,8 +10455,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -10929,12 +10545,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -11204,8 +10820,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -11230,8 +10844,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -11322,12 +10934,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -11690,8 +11302,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -11716,8 +11326,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -11808,12 +11416,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -12082,8 +11690,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -12108,8 +11714,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -12200,12 +11804,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -12570,8 +12174,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -12596,8 +12198,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -12688,12 +12288,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -12963,8 +12563,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -12989,8 +12587,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -13081,12 +12677,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -13831,8 +13427,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -13857,8 +13451,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -13949,12 +13541,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -14223,8 +13815,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -14249,8 +13839,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -14341,12 +13929,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -14632,8 +14220,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -14658,8 +14244,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -14750,12 +14334,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -15118,8 +14702,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -15144,8 +14726,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -15236,12 +14816,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -15510,8 +15090,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -15536,8 +15114,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -15628,12 +15204,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -15903,8 +15479,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -15929,8 +15503,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -16021,12 +15593,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -16296,8 +15868,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -16322,8 +15892,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -16414,12 +15982,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -16974,8 +16542,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -17000,8 +16566,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -17092,12 +16656,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -17460,8 +17024,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -17486,8 +17048,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -17578,12 +17138,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -17852,8 +17412,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -17878,8 +17436,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -17970,12 +17526,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -18471,8 +18027,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -18497,8 +18051,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -18589,12 +18141,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -18864,8 +18416,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -18890,8 +18440,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -18982,12 +18530,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -19672,8 +19220,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -19698,8 +19244,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -19790,12 +19334,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -20160,8 +19704,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -20186,8 +19728,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -20278,12 +19818,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -20646,8 +20186,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -20672,8 +20210,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -20764,12 +20300,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -21134,8 +20670,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -21160,8 +20694,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -21252,12 +20784,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -21620,8 +21152,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -21646,8 +21176,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -21738,12 +21266,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -22012,8 +21540,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -22038,8 +21564,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -22130,12 +21654,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -22595,8 +22119,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -22621,8 +22143,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -22713,12 +22233,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -23081,8 +22601,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -23107,8 +22625,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -23199,12 +22715,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -23473,8 +22989,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -23499,8 +23013,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -23591,12 +23103,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -23961,8 +23473,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -23987,8 +23497,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -24079,12 +23587,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -24353,8 +23861,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -24379,8 +23885,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -24471,12 +23975,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -24841,8 +24345,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -24867,8 +24369,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -24959,12 +24459,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -25233,8 +24733,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -25259,8 +24757,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -25351,12 +24847,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -25721,8 +25217,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -25747,8 +25241,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -25839,12 +25331,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -26207,8 +25699,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -26233,8 +25723,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -26325,12 +25813,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -26599,8 +26087,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -26625,8 +26111,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -26717,12 +26201,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -26913,704 +26397,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ExternalResultResponse'
-        default:
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /operation:
-    get:
-      operationId: get_operation
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              required: [cluster_id, operation_id]
-              properties:
-                cluster_id:
-                  type: integer
-                operation_id:
-                  type: string
-      responses:
-        '200':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperationResponse'
-        default:
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /operation/cancel:
-    post:
-      operationId: post_operation_cancel
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              required: [cluster_id, operation_id]
-              properties:
-                cluster_id:
-                  type: integer
-                operation_id:
-                  type: string
-      responses:
-        '202':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperationResponse'
-        default:
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /operation/event/stream:
-    get:
-      operationId: get_operation_event_stream
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: Last-Event-ID
-          in: header
-          required: false
-          schema:
-            type: integer
-            minimum: 0
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              required: [cluster_id]
-              properties:
-                cluster_id:
-                  type: integer
-      responses:
-        '200':
-          description: success
-          content:
-            text/event-stream:
-              schema:
-                $ref: '#/components/schemas/EventStream'
-        default:
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /operation/events:
-    get:
-      operationId: get_operation_events
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              required: [cluster_id, operation_id]
-              properties:
-                cluster_id:
-                  type: integer
-                operation_id:
-                  type: string
-      responses:
-        '200':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperationEventListResponse'
-        default:
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /operation/plan:
-    post:
-      operationId: post_operation_plan
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              required: [action, cluster_id, parameters, resource_generation, resource_key, resource_kind, risk]
-              properties:
-                action:
-                  type: string
-                cluster_id:
-                  type: integer
-                parameters:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    access:
-                      type: string
-                      enum: [r, rw]
-                    access_key:
-                      type: string
-                      writeOnly: true
-                    account_id:
-                      type: string
-                    account_name:
-                      type: string
-                    action:
-                      type: string
-                      enum: [pause, resume, start, stop]
-                    address:
-                      type: string
-                    adrfam:
-                      type: integer
-                    application:
-                      type: string
-                    assume_role_policy:
-                      type: string
-                    auth_mode:
-                      type: string
-                      enum: [active-directory, user]
-                    binding_id:
-                      type: integer
-                    block_size:
-                      type: integer
-                    bucket_id:
-                      type: string
-                    client:
-                      type: string
-                    client_id:
-                      type: string
-                    clients:
-                      type: array
-                      items:
-                        type: object
-                        additionalProperties: false
-                        required: [iqn]
-                        properties:
-                          iqn:
-                            type: string
-                          luns:
-                            type: array
-                            items:
-                              type: string
-                    cluster:
-                      type: string
-                    cluster_id:
-                      type: integer
-                    code:
-                      type: string
-                    comment:
-                      type: string
-                    cors:
-                      description: action-specific JSON value
-                    create_image:
-                      type: boolean
-                    createdBy:
-                      type: string
-                    crush-device-class:
-                      type: string
-                    crush-failure-domain:
-                      type: string
-                    data_devices:
-                      type: object
-                      additionalProperties: false
-                      properties:
-                        all:
-                          type: boolean
-                        model:
-                          type: string
-                        paths:
-                          type: array
-                          items:
-                            type: string
-                        rotational:
-                          type: boolean
-                        size:
-                          type: string
-                        vendor:
-                          type: string
-                    destination:
-                      type: string
-                    device:
-                      type: string
-                    device_class:
-                      type: string
-                    device_id:
-                      type: string
-                    dhchap_key:
-                      type: string
-                    disable_auto_resize:
-                      type: boolean
-                    disks:
-                      type: array
-                      items:
-                        type: object
-                        additionalProperties: false
-                        required: [image, pool]
-                        properties:
-                          backstore:
-                            type: string
-                          image:
-                            type: string
-                          pool:
-                            type: string
-                    display_name:
-                      type: string
-                    document:
-                      description: action-specific JSON value
-                    email:
-                      type: string
-                    enable_ha:
-                      type: boolean
-                    enabled:
-                      type: boolean
-                    encryption:
-                      description: action-specific JSON value
-                    endpoint_id:
-                      type: integer
-                    endsAt:
-                      type: string
-                    export_id:
-                      type: string
-                    failure_domain:
-                      type: string
-                    feature_action:
-                      type: string
-                      enum: [disable, enable]
-                    features:
-                      type: string
-                    field:
-                      type: string
-                    filesystem:
-                      type: string
-                    flag:
-                      type: string
-                    force:
-                      type: boolean
-                    fs:
-                      type: string
-                    group:
-                      type: string
-                    groups:
-                      type: array
-                      items:
-                        type: object
-                        additionalProperties: false
-                        required: [name]
-                        properties:
-                          disks:
-                            type: array
-                            items:
-                              type: string
-                          members:
-                            type: array
-                            items:
-                              type: string
-                          name:
-                            type: string
-                    host:
-                      type: string
-                    host_name:
-                      type: string
-                    host_nqn:
-                      type: string
-                    host_pattern:
-                      type: string
-                    hostname:
-                      type: string
-                    id:
-                      type: string
-                    image_id:
-                      type: string
-                    image_spec:
-                      type: string
-                    iqn:
-                      type: string
-                    k:
-                      type: integer
-                    kind:
-                      type: string
-                      enum: [cors, encryption, lifecycle, policy]
-                    label:
-                      type: string
-                    lifecycle:
-                      description: action-specific JSON value
-                    light:
-                      type: string
-                      enum: [fault, ident]
-                    listener_id:
-                      type: string
-                    m:
-                      type: integer
-                    matchers:
-                      type: array
-                      items:
-                        type: object
-                        additionalProperties: false
-                        required: [isEqual, isRegex, name, value]
-                        properties:
-                          isEqual:
-                            type: boolean
-                          isRegex:
-                            type: boolean
-                          name:
-                            type: string
-                          value:
-                            type: string
-                    max_buckets:
-                      type: integer
-                    max_bytes:
-                      type: integer
-                    max_mds:
-                      type: integer
-                    max_namespaces:
-                      type: integer
-                    mode:
-                      type: string
-                      enum: [disabled, image, pool]
-                    model_number:
-                      type: string
-                    modules:
-                      type: array
-                      items:
-                        type: string
-                    name:
-                      type: string
-                    names:
-                      type: array
-                      items:
-                        type: string
-                    namespace:
-                      type: string
-                    new_size:
-                      type: integer
-                    no_auto_visible:
-                      type: boolean
-                    no_group_append:
-                      type: boolean
-                    nqn:
-                      type: string
-                    nsid:
-                      type: string
-                    operation:
-                      type: string
-                      enum: [application, quota, rename]
-                    operation_id:
-                      type: string
-                    osd_id:
-                      type: string
-                    osd_ids:
-                      type: array
-                      items:
-                        type: string
-                    path:
-                      type: string
-                    pg_num:
-                      type: integer
-                    placement:
-                      type: object
-                      additionalProperties: false
-                      properties:
-                        count:
-                          type: integer
-                        host_pattern:
-                          type: string
-                        hosts:
-                          type: array
-                          items:
-                            type: string
-                        label:
-                          type: string
-                    plan_id:
-                      type: string
-                    plugin:
-                      type: string
-                    policy:
-                      description: action-specific JSON value
-                    pool:
-                      type: string
-                    portals:
-                      type: array
-                      items:
-                        type: object
-                        additionalProperties: false
-                        required: [host, ip]
-                        properties:
-                          host:
-                            type: string
-                          ip:
-                            type: string
-                    pseudo:
-                      type: string
-                    psk:
-                      type: string
-                    rbd_image_name:
-                      type: string
-                    rbd_pool_name:
-                      type: string
-                    read_only:
-                      type: boolean
-                    root:
-                      type: string
-                    schedule:
-                      type: string
-                    secret_key:
-                      type: string
-                      writeOnly: true
-                    secure:
-                      type: boolean
-                    serial_number:
-                      type: string
-                    service_id:
-                      type: string
-                    service_type:
-                      type: string
-                      enum: [alertmanager, crash, grafana, mds, mgr, mon, nfs, node-exporter, prometheus, rgw, smb]
-                    share_id:
-                      type: string
-                    silence_id:
-                      type: string
-                    size:
-                      type: integer
-                    snap:
-                      type: string
-                    startsAt:
-                      type: string
-                    state:
-                      type: string
-                      enum: [off, on]
-                    subsystem_nqn:
-                      type: string
-                    subvolume:
-                      type: string
-                    suspended:
-                      type: boolean
-                    system:
-                      type: boolean
-                    target:
-                      type: string
-                    tenant:
-                      type: string
-                    traddr:
-                      type: string
-                    trsvcid:
-                      type: integer
-                    uid:
-                      type: string
-                    value:
-                      description: action-specific JSON value
-                    verify_host_name:
-                      type: boolean
-                    version:
-                      type: string
-                    versioning:
-                      type: string
-                      enum: [enabled, suspended]
-                    weight:
-                      type: number
-                    who:
-                      type: string
-                    zap:
-                      type: boolean
-                resource_generation:
-                  type: integer
-                resource_key:
-                  type: string
-                resource_kind:
-                  type: string
-                risk:
-                  type: string
-                  enum: [high]
-      responses:
-        '200':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PlanResponse'
-        default:
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /operation/retry:
-    post:
-      operationId: post_operation_retry
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              required: [cluster_id, operation_id]
-              properties:
-                cluster_id:
-                  type: integer
-                operation_id:
-                  type: string
-      responses:
-        '202':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperationResponse'
-        default:
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /operations:
-    get:
-      operationId: get_operations
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: status
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: kind
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: resource_kind
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: resource_key
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: user_id
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              required: [cluster_id]
-              properties:
-                account_id:
-                  type: string
-                binding_id:
-                  type: integer
-                bucket_id:
-                  type: string
-                client_id:
-                  type: string
-                cluster_id:
-                  type: integer
-                code:
-                  type: string
-                device_id:
-                  type: string
-                endpoint_id:
-                  type: integer
-                export_id:
-                  type: string
-                fs:
-                  type: string
-                group:
-                  type: string
-                host:
-                  type: string
-                host_nqn:
-                  type: string
-                id:
-                  type: string
-                image_id:
-                  type: string
-                image_spec:
-                  type: string
-                iqn:
-                  type: string
-                listener_id:
-                  type: string
-                metric_id:
-                  type: string
-                name:
-                  type: string
-                namespace:
-                  type: string
-                nqn:
-                  type: string
-                nsid:
-                  type: string
-                operation_id:
-                  type: string
-                osd_id:
-                  type: string
-                pool:
-                  type: string
-                service_id:
-                  type: string
-                share_id:
-                  type: string
-                silence_id:
-                  type: string
-                snap:
-                  type: string
-                subsystem_nqn:
-                  type: string
-                subvolume:
-                  type: string
-                uid:
-                  type: string
-                who:
-                  type: string
-      responses:
-        '200':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperationListResponse'
         default:
           description: error
           content:
@@ -27880,8 +26666,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -27906,8 +26690,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -27998,12 +26780,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -28367,8 +27149,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -28393,8 +27173,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -28485,12 +27263,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -28760,8 +27538,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -28786,8 +27562,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -28878,12 +27652,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -29153,8 +27927,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -29179,8 +27951,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -29271,12 +28041,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -29640,8 +28410,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -29666,8 +28434,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -29758,12 +28524,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -30033,8 +28799,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -30059,8 +28823,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -30151,12 +28913,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -30711,8 +29473,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -30737,8 +29497,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -30829,12 +29587,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -31197,8 +29955,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -31223,8 +29979,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -31315,12 +30069,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -31589,8 +30343,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -31615,8 +30367,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -31707,12 +30457,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -32077,8 +30827,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -32103,8 +30851,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -32195,12 +30941,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -32565,8 +31311,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -32591,8 +31335,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -32683,12 +31425,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -33051,8 +31793,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -33077,8 +31817,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -33169,12 +31907,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -33443,8 +32181,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -33469,8 +32205,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -33561,12 +32295,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -33836,8 +32570,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -33862,8 +32594,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -33954,12 +32684,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -34229,8 +32959,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -34255,8 +32983,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -34347,12 +33073,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -34621,8 +33347,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -34647,8 +33371,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -34739,12 +33461,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -35013,8 +33735,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -35039,8 +33759,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -35131,12 +33849,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -35406,8 +34124,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -35432,8 +34148,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -35524,12 +34238,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -36083,8 +34797,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -36109,8 +34821,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -36201,12 +34911,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -36476,8 +35186,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -36502,8 +35210,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -36594,12 +35300,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -36868,8 +35574,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -36894,8 +35598,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -36986,12 +35688,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -37356,8 +36058,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -37382,8 +36082,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -37474,12 +36172,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -37843,8 +36541,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -37869,8 +36565,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -37961,12 +36655,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -38236,8 +36930,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -38262,8 +36954,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -38354,12 +37044,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -38376,6 +37066,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /resource/refresh:
+    post:
+      operationId: post_resource_refresh
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id]
+              properties:
+                cluster_id:
+                  type: integer
+                kind:
+                  type: string
+                kinds:
+                  type: array
+                  items:
+                    type: string
+                module:
+                  type: string
+                modules:
+                  type: array
+                  items:
+                    type: string
+                scope:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -38645,8 +37378,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -38671,8 +37402,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -38763,12 +37492,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -39133,8 +37862,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -39159,8 +37886,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -39251,12 +37976,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -39619,8 +38344,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -39645,8 +38368,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -39737,12 +38458,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -40011,8 +38732,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -40037,8 +38756,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -40129,12 +38846,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -40505,8 +39222,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -40531,8 +39246,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -40623,12 +39336,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -40993,8 +39706,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -41019,8 +39730,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -41111,12 +39820,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -41386,8 +40095,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -41412,8 +40119,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -41504,12 +40209,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -41874,8 +40579,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -41900,8 +40603,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -41992,12 +40693,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -42457,8 +41158,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -42483,8 +41182,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -42575,12 +41272,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -42943,8 +41640,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -42969,8 +41664,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -43061,12 +41754,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -43335,8 +42028,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -43361,8 +42052,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -43453,12 +42142,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -43728,8 +42417,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -43754,8 +42441,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -43846,12 +42531,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -44120,8 +42805,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -44146,8 +42829,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -44238,12 +42919,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -44608,8 +43289,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -44634,8 +43313,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -44726,12 +43403,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -45001,8 +43678,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -45027,8 +43702,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -45119,12 +43792,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -45724,8 +44397,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -45750,8 +44421,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -45842,12 +44511,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -46210,8 +44879,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -46236,8 +44903,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -46328,12 +44993,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -46602,8 +45267,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -46628,8 +45291,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -46720,12 +45381,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -47090,8 +45751,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -47116,8 +45775,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -47208,12 +45865,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -47576,8 +46233,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -47602,8 +46257,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -47694,12 +46347,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -47968,8 +46621,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -47994,8 +46645,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -48086,12 +46735,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -48456,8 +47105,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -48482,8 +47129,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -48574,12 +47219,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -48942,8 +47587,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -48968,8 +47611,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -49060,12 +47701,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -49334,8 +47975,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -49360,8 +47999,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -49452,12 +48089,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -49917,8 +48554,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -49943,8 +48578,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -50035,12 +48668,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -50310,8 +48943,6 @@ paths:
                 operation:
                   type: string
                   enum: [application, quota, rename]
-                operation_id:
-                  type: string
                 osd_id:
                   type: string
                 osd_ids:
@@ -50336,8 +48967,6 @@ paths:
                         type: string
                     label:
                       type: string
-                plan_id:
-                  type: string
                 plugin:
                   type: string
                 policy:
@@ -50428,12 +49057,12 @@ paths:
                 zap:
                   type: boolean
       responses:
-        '202':
+        '200':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OperationResponse'
+                $ref: '#/components/schemas/ActionResponse'
         default:
           description: error
           content:
@@ -50561,25 +49190,12 @@ components:
         monitor_addresses: {type: string, minLength: 1, maxLength: 4096}
         client_username: {type: string, pattern: '^client\\.'}
         client_key: {type: string, writeOnly: true, minLength: 1}
-    Operation:
+    ActionResult:
       type: object
       additionalProperties: false
-      required: [operation_id, kind, resource_type, resource_key, status, stage, progress, risk, created_at]
       properties:
-        operation_id: {type: string, format: uuid}
-        kind: {type: string}
-        cluster_id: {type: integer}
-        resource_type: {type: string}
-        resource_key: {type: string}
-        status: {type: string}
-        stage: {type: string}
-        progress: {type: integer, minimum: 0, maximum: 100}
-        risk: {type: string, enum: [low, medium, high]}
-        created_at: {type: string, format: date-time}
-        started_at: {type: string, format: date-time}
-        completed_at: {type: string, format: date-time}
-        result: {$ref: '#/components/schemas/JSONValue'}
-        error: {$ref: '#/components/schemas/JSONValue'}
+        resource_url: {type: string}
+        details: {$ref: '#/components/schemas/JSONValue'}
     Pagination:
       type: object
       additionalProperties: false
@@ -50693,36 +49309,6 @@ components:
         enabled: {type: boolean}
         created_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
-    Plan:
-      type: object
-      additionalProperties: false
-      required: [plan_id, cluster_id, action, resource_kind, resource_key, resource_generation, risk, status, blockers, warnings, expires_at, created_at]
-      properties:
-        plan_id: {type: string, format: uuid}
-        cluster_id: {type: integer, minimum: 1}
-        action: {type: string}
-        resource_kind: {type: string}
-        resource_key: {type: string}
-        resource_generation: {type: integer, minimum: 1}
-        risk: {type: string, const: high}
-        status: {type: string, enum: [valid, blocked, consumed, expired]}
-        blockers: {type: array, items: {type: string}}
-        warnings: {type: array, items: {type: string}}
-        expires_at: {type: string, format: date-time}
-        created_at: {type: string, format: date-time}
-    OperationEvent:
-      type: object
-      additionalProperties: false
-      required: [sequence, event_type, stage, progress, message, data, error_code, created_at]
-      properties:
-        sequence: {type: integer, minimum: 1}
-        event_type: {type: string}
-        stage: {type: string}
-        progress: {type: [integer, 'null'], minimum: 0, maximum: 100}
-        message: {type: string}
-        data: {$ref: '#/components/schemas/JSONValue'}
-        error_code: {type: [string, 'null']}
-        created_at: {type: string, format: date-time}
     AuditEvent:
       type: object
       additionalProperties: false
@@ -50742,8 +49328,6 @@ components:
         outcome: {type: string}
         http_status: {type: [integer, 'null']}
         error_code: {type: [string, 'null']}
-        plan_id: {type: [string, 'null']}
-        operation_id: {type: [string, 'null']}
         before_generation: {type: [integer, 'null']}
         after_generation: {type: [integer, 'null']}
         parameters: {$ref: '#/components/schemas/JSONValue'}
@@ -50862,6 +49446,13 @@ components:
         - type: object
           properties:
             items: {type: array, items: {$ref: '#/components/schemas/Cluster'}}
+    ClusterMutationData:
+      type: object
+      additionalProperties: false
+      required: [cluster, result]
+      properties:
+        cluster: {$ref: '#/components/schemas/Cluster'}
+        result: {$ref: '#/components/schemas/ActionResult'}
     CapabilityListData:
       allOf:
         - $ref: '#/components/schemas/ListData'
@@ -50880,18 +49471,6 @@ components:
         - type: object
           properties:
             items: {type: array, items: {$ref: '#/components/schemas/Endpoint'}}
-    OperationListData:
-      allOf:
-        - $ref: '#/components/schemas/ListData'
-        - type: object
-          properties:
-            items: {type: array, items: {$ref: '#/components/schemas/Operation'}}
-    OperationEventListData:
-      allOf:
-        - $ref: '#/components/schemas/ListData'
-        - type: object
-          properties:
-            items: {type: array, items: {$ref: '#/components/schemas/OperationEvent'}}
     AuditEventListData:
       allOf:
         - $ref: '#/components/schemas/ListData'
@@ -51068,7 +49647,7 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/EndpointListData'
-    OperationResponse:
+    ClusterMutationResponse:
       allOf:
         - $ref: '#/components/schemas/APIResponse'
         - type: object
@@ -51076,8 +49655,8 @@ components:
           required: [data]
           properties:
             data:
-              $ref: '#/components/schemas/Operation'
-    OperationListResponse:
+              $ref: '#/components/schemas/ClusterMutationData'
+    ActionResponse:
       allOf:
         - $ref: '#/components/schemas/APIResponse'
         - type: object
@@ -51085,25 +49664,7 @@ components:
           required: [data]
           properties:
             data:
-              $ref: '#/components/schemas/OperationListData'
-    OperationEventListResponse:
-      allOf:
-        - $ref: '#/components/schemas/APIResponse'
-        - type: object
-          unevaluatedProperties: false
-          required: [data]
-          properties:
-            data:
-              $ref: '#/components/schemas/OperationEventListData'
-    PlanResponse:
-      allOf:
-        - $ref: '#/components/schemas/APIResponse'
-        - type: object
-          unevaluatedProperties: false
-          required: [data]
-          properties:
-            data:
-              $ref: '#/components/schemas/Plan'
+              $ref: '#/components/schemas/ActionResult'
     AuditEventListResponse:
       allOf:
         - $ref: '#/components/schemas/APIResponse'

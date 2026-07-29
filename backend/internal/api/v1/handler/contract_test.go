@@ -15,7 +15,6 @@ import (
 	cephprovider "cephtower/backend/internal/integration/ceph"
 	authservice "cephtower/backend/internal/service/auth"
 	clusterservice "cephtower/backend/internal/service/cluster"
-	operationservice "cephtower/backend/internal/service/operation"
 	"cephtower/backend/internal/store"
 )
 
@@ -28,7 +27,7 @@ func (unusedProvider) Probe(context.Context, cephprovider.ClusterAccess) (cephpr
 }
 
 func TestClusterContractEncryptsWriteOnlyKeyAndUsesEnvelope(t *testing.T) {
-	db, err := store.Open(config.DatabaseConfig{EncryptionKey: contractKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Path: t.TempDir() + "/api.db"}})
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: contractKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "api.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,9 +42,8 @@ func TestClusterContractEncryptsWriteOnlyKeyAndUsesEnvelope(t *testing.T) {
 	if _, err := auth.CreateUser(context.Background(), authservice.CreateUserInput{Username: "admin", DisplayName: "Admin", Password: "password-123", Role: "cluster-admin"}); err != nil {
 		t.Fatal(err)
 	}
-	operations := operationservice.New(func() *store.Database { return db }, 1)
-	clusters := clusterservice.New(func() *store.Database { return db }, contractKey, operations, unusedProvider{})
-	h := handler.New(handler.Dependencies{Auth: auth, Clusters: clusters, Operations: operations, Database: func() *store.Database { return db }})
+	clusters := clusterservice.New(func() *store.Database { return db }, contractKey, unusedProvider{})
+	h := handler.New(handler.Dependencies{Auth: auth, Clusters: clusters, Database: func() *store.Database { return db }})
 	mux := http.NewServeMux()
 	router.Register(mux, h)
 	token := login(t, mux)
@@ -55,15 +53,12 @@ func TestClusterContractEncryptsWriteOnlyKeyAndUsesEnvelope(t *testing.T) {
 	request.Header.Set("Content-Type", "application/json")
 	response := httptest.NewRecorder()
 	mux.ServeHTTP(response, request)
-	if response.Code != http.StatusAccepted {
+	if response.Code != http.StatusOK {
 		t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
 	}
 	assertEnvelope(t, response.Body.Bytes())
 	if strings.Contains(response.Body.String(), "ceph-secret") || strings.Contains(response.Body.String(), "client_key") {
 		t.Fatalf("secret leaked: %s", response.Body.String())
-	}
-	if response.Header().Get("Location") == "" {
-		t.Fatal("Location header missing")
 	}
 	rows, err := db.ListClusters(context.Background())
 	if err != nil || len(rows) != 1 {
@@ -106,9 +101,47 @@ func TestClusterContractRejectsUnknownAndDuplicateClusterID(t *testing.T) {
 	assertEnvelope(t, response.Body.Bytes())
 }
 
+func TestAuthenticatedRouteCreatesAuditEvent(t *testing.T) {
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: contractKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "api.db"}}, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close(db)
+	current := func() config.Config {
+		return config.Config{Database: config.DatabaseConfig{EncryptionKey: contractKey}}
+	}
+	auth := authservice.New(func() *store.Database { return db }, current)
+	if err := auth.EnsureRoles(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := auth.CreateUser(context.Background(), authservice.CreateUserInput{Username: "admin", DisplayName: "Admin", Password: "password-123", Role: "cluster-admin"}); err != nil {
+		t.Fatal(err)
+	}
+	clusters := clusterservice.New(func() *store.Database { return db }, contractKey, unusedProvider{})
+	h := handler.New(handler.Dependencies{Auth: auth, Clusters: clusters, Database: func() *store.Database { return db }})
+	mux := http.NewServeMux()
+	router.Register(mux, h)
+	token := login(t, mux)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/clusters", nil)
+	request.Header.Set("Authorization", "Bearer "+token)
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
+	}
+	count, err := db.CountRecords(context.Background(), &store.AuditEvent{}, map[string]any{"action": "GET /clusters", "actor_username": "admin", "outcome": "succeeded"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("audit events=%d, want 1", count)
+	}
+}
+
 func contractServer(t *testing.T) (*http.ServeMux, string) {
 	t.Helper()
-	db, err := store.Open(config.DatabaseConfig{EncryptionKey: contractKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Path: t.TempDir() + "/api.db"}})
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: contractKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "api.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,9 +152,8 @@ func contractServer(t *testing.T) (*http.ServeMux, string) {
 	auth := authservice.New(func() *store.Database { return db }, current)
 	_ = auth.EnsureRoles(context.Background())
 	_, _ = auth.CreateUser(context.Background(), authservice.CreateUserInput{Username: "admin", DisplayName: "Admin", Password: "password-123", Role: "cluster-admin"})
-	operations := operationservice.New(func() *store.Database { return db }, 1)
-	clusters := clusterservice.New(func() *store.Database { return db }, contractKey, operations, unusedProvider{})
-	h := handler.New(handler.Dependencies{Auth: auth, Clusters: clusters, Operations: operations, Database: func() *store.Database { return db }})
+	clusters := clusterservice.New(func() *store.Database { return db }, contractKey, unusedProvider{})
+	h := handler.New(handler.Dependencies{Auth: auth, Clusters: clusters, Database: func() *store.Database { return db }})
 	mux := http.NewServeMux()
 	router.Register(mux, h)
 	return mux, login(t, mux)

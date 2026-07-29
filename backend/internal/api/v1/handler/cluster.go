@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	cephdomain "cephtower/backend/internal/domain/ceph"
 	clusterservice "cephtower/backend/internal/service/cluster"
 	"cephtower/backend/internal/store"
 )
@@ -70,14 +71,12 @@ func (h *Handler) CreateCluster(w http.ResponseWriter, r *http.Request) {
 	if !DecodeStrict(w, r, &request) {
 		return
 	}
-	user, _ := CurrentUser(r)
-	_, operation, err := h.Clusters.Create(r.Context(), clusterservice.CreateInput{Name: request.Name, MonitorAddresses: request.MonitorAddresses, ClientUsername: request.ClientUsername, ClientKey: request.ClientKey}, &user.ID, user.Username, RequestID(r), r.Header.Get("Idempotency-Key"))
+	cluster, result, err := h.Clusters.Create(r.Context(), clusterservice.CreateInput{Name: request.Name, MonitorAddresses: request.MonitorAddresses, ClientUsername: request.ClientUsername, ClientKey: request.ClientKey})
 	if err != nil {
 		WriteError(w, r, 400, "invalid_request", err.Error(), false, nil)
 		return
 	}
-	w.Header().Set("Location", "/api/v1/operation")
-	WriteSuccess(w, 202, "accepted", operationDTO(operation))
+	WriteSuccess(w, http.StatusOK, "success", map[string]any{"cluster": toClusterDTO(cluster), "result": result})
 }
 
 func (h *Handler) GetCluster(w http.ResponseWriter, r *http.Request) {
@@ -108,13 +107,12 @@ func (h *Handler) UpdateCluster(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, 400, "invalid_request", "cluster_id is required", false, nil)
 		return
 	}
-	user, _ := CurrentUser(r)
-	operation, err := h.Clusters.Update(r.Context(), id, clusterservice.UpdateInput{Name: request.Name, MonitorAddresses: request.MonitorAddresses, ClientUsername: request.ClientUsername, ClientKey: request.ClientKey}, &user.ID, user.Username, RequestID(r), r.Header.Get("Idempotency-Key"))
+	result, err := h.Clusters.Update(r.Context(), id, clusterservice.UpdateInput{Name: request.Name, MonitorAddresses: request.MonitorAddresses, ClientUsername: request.ClientUsername, ClientKey: request.ClientKey})
 	if err != nil {
 		clusterError(w, r, err)
 		return
 	}
-	acceptedOperation(w, r, id, operation)
+	WriteSuccess(w, http.StatusOK, "success", result)
 }
 
 func (h *Handler) DeleteCluster(w http.ResponseWriter, r *http.Request) {
@@ -127,13 +125,12 @@ func (h *Handler) DeleteCluster(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, 400, "invalid_request", "cluster_id and delete_cached_data=true are required", false, nil)
 		return
 	}
-	user, _ := CurrentUser(r)
-	operation, err := h.Clusters.Delete(r.Context(), id, request.DeleteCachedData, &user.ID, user.Username, RequestID(r), r.Header.Get("Idempotency-Key"))
+	result, err := h.Clusters.Delete(r.Context(), id, request.DeleteCachedData)
 	if err != nil {
 		clusterError(w, r, err)
 		return
 	}
-	acceptedOperation(w, r, id, operation)
+	WriteSuccess(w, http.StatusOK, "success", result)
 }
 
 func (h *Handler) ProbeCluster(w http.ResponseWriter, r *http.Request) {
@@ -146,13 +143,12 @@ func (h *Handler) ProbeCluster(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, 400, "invalid_request", "cluster_id is required", false, nil)
 		return
 	}
-	user, _ := CurrentUser(r)
-	operation, err := h.Clusters.Probe(r.Context(), id, &user.ID, user.Username, RequestID(r), r.Header.Get("Idempotency-Key"))
+	result, err := h.Clusters.Probe(r.Context(), id)
 	if err != nil {
 		clusterError(w, r, err)
 		return
 	}
-	acceptedOperation(w, r, id, operation)
+	WriteSuccess(w, http.StatusOK, "success", result)
 }
 
 func (h *Handler) Capabilities(w http.ResponseWriter, r *http.Request) {
@@ -188,6 +184,11 @@ func toClusterDTO(row store.CephCluster) clusterDTO {
 func clusterError(w http.ResponseWriter, r *http.Request, err error) {
 	if errors.Is(err, clusterservice.ErrNotFound) {
 		WriteError(w, r, 404, "cluster_not_found", "cluster was not found", false, nil)
+		return
+	}
+	var actionError *cephdomain.ActionError
+	if errors.As(err, &actionError) {
+		writeActionError(w, r, err)
 		return
 	}
 	WriteError(w, r, 400, "invalid_request", err.Error(), false, nil)

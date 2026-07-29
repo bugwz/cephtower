@@ -13,7 +13,6 @@ import (
 
 	"cephtower/backend/internal/config"
 	endpointservice "cephtower/backend/internal/service/endpoint"
-	operationservice "cephtower/backend/internal/service/operation"
 	"cephtower/backend/internal/store"
 )
 
@@ -27,7 +26,7 @@ const externalTestKey = "0123456789abcdefghijklmnopqrstuv"
 
 func externalTestService(t *testing.T) (*Service, *endpointservice.Service, store.CephCluster) {
 	t.Helper()
-	db, err := store.Open(config.DatabaseConfig{EncryptionKey: externalTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Path: t.TempDir() + "/external.db"}})
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: externalTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "external.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +37,7 @@ func externalTestService(t *testing.T) (*Service, *endpointservice.Service, stor
 		t.Fatal(err)
 	}
 	endpoints := endpointservice.New(func() *store.Database { return db }, externalTestKey)
-	return New(endpoints, nil), endpoints, cluster
+	return New(endpoints), endpoints, cluster
 }
 
 func TestHTTPClientUsesEndpointTimeoutWithoutRequiringCredential(t *testing.T) {
@@ -134,11 +133,6 @@ func TestProtocolNativeHTTPReadsUseTypedAdapters(t *testing.T) {
 		if !strings.Contains(toJSON(t, result), check.contains) {
 			t.Fatalf("Read(%s) = %#v", check.kind, result)
 		}
-	}
-	bucketID := base64.RawURLEncoding.EncodeToString([]byte("\x00bucket-one"))
-	blockers, warnings, err := service.CheckPlan(ctx, operationservice.PlanRequest{ClusterID: cluster.ID, Action: "rgw_bucket.delete", ResourceKind: "rgw_bucket", ResourceKey: "rgw/bucket/" + bucketID})
-	if err != nil || len(blockers) != 0 || len(warnings) != 0 {
-		t.Fatalf("S3 plan pre-check blockers=%v warnings=%v err=%v", blockers, warnings, err)
 	}
 }
 

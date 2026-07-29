@@ -203,104 +203,6 @@ type CephCollectionRun struct {
 
 func (CephCollectionRun) TableName() string { return "ceph_collection_run" }
 
-type CephActionPlan struct {
-	ID                 string      `gorm:"primaryKey;size:36"`
-	ClusterID          uint64      `gorm:"not null;index:idx_plan_resource,priority:1"`
-	Cluster            CephCluster `gorm:"constraint:OnDelete:CASCADE"`
-	ActorUserID        *uint64     `gorm:"index:idx_plan_actor_created,priority:1"`
-	ActorUser          *User       `gorm:"constraint:OnDelete:SET NULL"`
-	ActorUsername      string      `gorm:"size:128;not null"`
-	RequestID          string      `gorm:"size:64;not null;index:idx_plan_request"`
-	Action             string      `gorm:"size:128;not null"`
-	ResourceKind       string      `gorm:"size:64;not null;index:idx_plan_resource,priority:2"`
-	ResourceKey        string      `gorm:"size:512;not null;index:idx_plan_resource,priority:3"`
-	ResourceGeneration uint64      `gorm:"not null"`
-	Risk               string      `gorm:"size:16;not null"`
-	Status             string      `gorm:"size:32;not null;index:idx_plan_status_expiry,priority:1"`
-	RequestJSON        string      `gorm:"type:text;not null"`
-	BlockersJSON       string      `gorm:"type:text;not null;default:'[]'"`
-	WarningsJSON       string      `gorm:"type:text;not null;default:'[]'"`
-	ExpiresAt          time.Time   `gorm:"not null;index:idx_plan_status_expiry,priority:2"`
-	ConsumedAt         *time.Time
-	CreatedAt          time.Time `gorm:"not null;index:idx_plan_actor_created,priority:2"`
-}
-
-func (CephActionPlan) TableName() string { return "ceph_action_plan" }
-
-type CephOperation struct {
-	ID                   string          `gorm:"primaryKey;size:36"`
-	ClusterID            *uint64         `gorm:"index:idx_operation_cluster_status_created,priority:1"`
-	Cluster              *CephCluster    `gorm:"constraint:OnDelete:SET NULL"`
-	ClusterName          string          `gorm:"size:128;not null"`
-	ActorUserID          *uint64         `gorm:"index:idx_operation_actor_created,priority:1"`
-	ActorUser            *User           `gorm:"constraint:OnDelete:SET NULL"`
-	ActorUsername        string          `gorm:"size:128;not null"`
-	PlanID               *string         `gorm:"size:36;index:idx_operation_plan"`
-	Plan                 *CephActionPlan `gorm:"constraint:OnDelete:SET NULL"`
-	RetryOfID            *string         `gorm:"size:36;index:idx_operation_retry_of"`
-	RetryOf              *CephOperation  `gorm:"foreignKey:RetryOfID;constraint:OnDelete:SET NULL"`
-	RequestID            string          `gorm:"size:64;not null;index:idx_operation_request"`
-	Action               string          `gorm:"size:128;not null"`
-	ResourceKind         string          `gorm:"size:64;not null;index:idx_operation_resource_created,priority:1"`
-	ResourceKey          string          `gorm:"size:512;not null;index:idx_operation_resource_created,priority:2"`
-	ResourceGeneration   *uint64
-	Risk                 string  `gorm:"size:16;not null"`
-	Status               string  `gorm:"size:32;not null;default:queued;index:idx_operation_cluster_status_created,priority:2;index:idx_operation_status_scheduled,priority:1"`
-	Stage                string  `gorm:"size:64;not null;default:queued"`
-	Progress             int     `gorm:"not null;default:0;check:operation_progress_check,progress >= 0 AND progress <= 100"`
-	Attempt              int     `gorm:"not null;default:0"`
-	MaxAttempts          int     `gorm:"not null;default:1"`
-	IdempotencyKeyHash   *string `gorm:"size:64"`
-	IdempotencyScopeHash *string `gorm:"size:64;uniqueIndex:uq_operation_idempotency"`
-	RequestJSON          string  `gorm:"type:text;not null"`
-	ResultJSON           *string `gorm:"type:text"`
-	ErrorCode            *string `gorm:"size:64"`
-	ErrorMessage         *string `gorm:"type:text"`
-	ErrorDetailsJSON     *string `gorm:"type:text"`
-	Retryable            bool    `gorm:"not null;default:false;check:operation_retryable_check,retryable IN (0,1)"`
-	CancelRequestedAt    *time.Time
-	ScheduledAt          time.Time `gorm:"not null;index:idx_operation_status_scheduled,priority:2"`
-	StartedAt            *time.Time
-	HeartbeatAt          *time.Time `gorm:"index:idx_operation_heartbeat"`
-	CompletedAt          *time.Time
-	CreatedAt            time.Time `gorm:"not null;index:idx_operation_cluster_status_created,priority:3;index:idx_operation_actor_created,priority:2;index:idx_operation_resource_created,priority:3"`
-	UpdatedAt            time.Time `gorm:"not null"`
-}
-
-func (CephOperation) TableName() string { return "ceph_operation" }
-
-type CephOperationEvent struct {
-	ID          uint64        `gorm:"primaryKey;autoIncrement"`
-	OperationID string        `gorm:"size:36;not null;uniqueIndex:uq_operation_event,priority:1;index:idx_event_operation_created,priority:1"`
-	Operation   CephOperation `gorm:"constraint:OnDelete:CASCADE"`
-	Sequence    uint64        `gorm:"not null;uniqueIndex:uq_operation_event,priority:2"`
-	EventType   string        `gorm:"size:32;not null"`
-	Stage       string        `gorm:"size:64;not null"`
-	Progress    *int
-	Message     string    `gorm:"type:text;not null"`
-	DataJSON    *string   `gorm:"type:text"`
-	ErrorCode   *string   `gorm:"size:64"`
-	CreatedAt   time.Time `gorm:"not null;index:idx_event_operation_created,priority:2;index:idx_event_created"`
-}
-
-func (CephOperationEvent) TableName() string { return "ceph_operation_event" }
-
-type CephOperationLock struct {
-	LockKey        string        `gorm:"primaryKey;size:191"`
-	ClusterID      uint64        `gorm:"not null;index:idx_lock_resource,priority:1"`
-	Cluster        CephCluster   `gorm:"constraint:OnDelete:CASCADE"`
-	ResourceKind   string        `gorm:"size:64;not null;index:idx_lock_resource,priority:2"`
-	ResourceKey    string        `gorm:"size:512;not null;index:idx_lock_resource,priority:3"`
-	OperationID    string        `gorm:"size:36;not null;index:idx_lock_operation"`
-	Operation      CephOperation `gorm:"constraint:OnDelete:CASCADE"`
-	FencingToken   uint64        `gorm:"not null"`
-	LeaseExpiresAt time.Time     `gorm:"not null;index:idx_lock_expiry"`
-	AcquiredAt     time.Time     `gorm:"not null"`
-	UpdatedAt      time.Time     `gorm:"not null"`
-}
-
-func (CephOperationLock) TableName() string { return "ceph_operation_lock" }
-
 type AuditEvent struct {
 	ID               uint64       `gorm:"primaryKey;autoIncrement"`
 	OccurredAt       time.Time    `gorm:"not null;index:idx_audit_occurred;index:idx_audit_actor_occurred,priority:2;index:idx_audit_cluster_occurred,priority:2;index:idx_audit_action_occurred,priority:2;index:idx_audit_resource_occurred,priority:3"`
@@ -321,8 +223,6 @@ type AuditEvent struct {
 	ErrorCode        *string `gorm:"size:64"`
 	SourceIP         *string `gorm:"size:64"`
 	UserAgent        *string `gorm:"size:512"`
-	PlanID           *string `gorm:"size:36"`
-	OperationID      *string `gorm:"size:36;index:idx_audit_operation"`
 	BeforeGeneration *uint64
 	AfterGeneration  *uint64
 	ParametersJSON   *string `gorm:"type:text"`

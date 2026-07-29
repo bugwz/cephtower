@@ -358,14 +358,14 @@ type osdDumpWire struct {
 	} `json:"osds"`
 }
 type poolWire struct {
-	Pool      int64   `json:"pool"`
-	PoolName  string  `json:"pool_name"`
-	Type      int     `json:"type"`
-	Size      *int64  `json:"size"`
-	MinSize   *int64  `json:"min_size"`
-	PGNum     *int64  `json:"pg_num"`
-	PGPNum    *int64  `json:"pg_placement_num"`
-	CrushRule *string `json:"crush_rule"`
+	Pool      int64           `json:"pool"`
+	PoolName  string          `json:"pool_name"`
+	Type      int             `json:"type"`
+	Size      *int64          `json:"size"`
+	MinSize   *int64          `json:"min_size"`
+	PGNum     *int64          `json:"pg_num"`
+	PGPNum    *int64          `json:"pg_placement_num"`
+	CrushRule json.RawMessage `json:"crush_rule"`
 }
 type fsDumpWire struct {
 	Standbys []struct {
@@ -412,6 +412,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 	for _, osd := range dump.OSDs {
 		states[osd.OSD] = [2]bool{osd.Up == 1, osd.In == 1}
 	}
+	hosts := osdHosts(tree)
 	var pools []poolWire
 	if err := p.runInto(ctx, access, "collect.pool", []string{"osd", "pool", "ls", "detail", "--format", "json"}, &pools); err != nil {
 		return nil, err
@@ -421,9 +422,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		return nil, err
 	}
 	rows := []Observation{}
-	if dump.Flags != "" {
-		rows = append(rows, Observation{Kind: "osd_flag", NaturalKey: "flags", Name: "flags", Source: "ceph_cli", Payload: map[string]any{"flags": strings.Split(dump.Flags, ",")}, ObservedAt: now})
-	}
+	rows = append(rows, Observation{Kind: "osd_flag", NaturalKey: "flags", Name: "flags", Source: "ceph_cli", Payload: map[string]any{"flags": splitOSDFlags(dump.Flags)}, ObservedAt: now})
 	for _, node := range tree.Nodes {
 		if node.Type != "osd" {
 			continue
@@ -433,7 +432,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		}
 		state := states[node.ID]
 		up, in := state[0], state[1]
-		payload := cephdomain.OSD{ID: node.ID, Name: node.Name, Status: node.Status, Up: &up, In: &in, Weight: node.CrushWeight, DeviceClass: node.DeviceClass}
+		payload := cephdomain.OSD{ID: node.ID, Name: node.Name, Status: node.Status, Up: &up, In: &in, Weight: node.CrushWeight, DeviceClass: node.DeviceClass, Host: hosts[node.ID]}
 		rows = append(rows, Observation{Kind: "osd", NaturalKey: strconv.Itoa(node.ID), Name: node.Name, Status: node.Status, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	for _, wire := range pools {
@@ -444,7 +443,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		if wire.Type == 3 {
 			kind = "erasure"
 		}
-		payload := cephdomain.Pool{Name: wire.PoolName, ID: wire.Pool, Type: kind, Size: wire.Size, MinSize: wire.MinSize, PGNum: wire.PGNum, PGPNum: wire.PGPNum, CrushRule: wire.CrushRule}
+		payload := cephdomain.Pool{Name: wire.PoolName, ID: wire.Pool, Type: kind, Size: wire.Size, MinSize: wire.MinSize, PGNum: wire.PGNum, PGPNum: wire.PGPNum, CrushRule: rawTextPointer(wire.CrushRule)}
 		rows = append(rows, Observation{Kind: "pool", NaturalKey: wire.PoolName, Name: wire.PoolName, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	for _, wire := range fs.Filesystems {
@@ -513,20 +512,277 @@ type deviceWire struct {
 
 func (p *NativeProvider) collectInventory(ctx context.Context, access ClusterAccess) ([]Observation, error) {
 	now := time.Now().UTC()
-	var devices []deviceWire
-	if err := p.runInto(ctx, access, "collect.device", []string{"orch", "device", "ls", "--wide", "--refresh", "--format", "json"}, &devices); err != nil {
+	var rawDevices []json.RawMessage
+	if err := p.runInto(ctx, access, "collect.device", []string{"orch", "device", "ls", "--wide", "--refresh", "--format", "json"}, &rawDevices); err != nil {
+		return nil, err
+	}
+	devices, err := normalizeDeviceWires(rawDevices)
+	if err != nil {
 		return nil, err
 	}
 	rows := make([]Observation, 0, len(devices))
 	for _, wire := range devices {
-		if strings.TrimSpace(wire.Hostname) == "" || strings.TrimSpace(wire.Path) == "" {
-			return nil, fmt.Errorf("parse collect.device response: hostname and path are required")
-		}
 		key := wire.Hostname + ":" + wire.Path
 		payload := cephdomain.Device{ID: wire.DeviceID, Hostname: wire.Hostname, Path: wire.Path, Available: wire.Available, RejectedReasons: wire.RejectedReasons, DeviceType: wire.DeviceType, Model: wire.Model, Vendor: wire.Vendor, Serial: wire.Serial, SizeBytes: wire.SizeBytes, Rotational: wire.Rotational, Metadata: wire.Metadata}
 		rows = append(rows, Observation{Kind: "device", NaturalKey: key, Name: key, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	return rows, nil
+}
+
+func normalizeDeviceWires(rawDevices []json.RawMessage) ([]deviceWire, error) {
+	devices := make([]deviceWire, 0, len(rawDevices))
+	for _, raw := range rawDevices {
+		record, err := rawMap(raw)
+		if err != nil {
+			return nil, fmt.Errorf("parse collect.device response: %w", err)
+		}
+		devices = append(devices, normalizeDeviceRecord(record, "")...)
+	}
+	return devices, nil
+}
+
+func normalizeDeviceRecord(record map[string]any, inheritedHost string) []deviceWire {
+	host := firstString(record, "hostname", "host")
+	if host == "" && hasArray(record, "devices") {
+		host = firstString(record, "name")
+	}
+	if host == "" {
+		host = inheritedHost
+	}
+	if children, ok := record["devices"].([]any); ok {
+		devices := []deviceWire{}
+		for _, child := range children {
+			childRecord, ok := child.(map[string]any)
+			if !ok {
+				continue
+			}
+			devices = append(devices, normalizeDeviceRecord(childRecord, host)...)
+		}
+		return devices
+	}
+	device, ok := buildDeviceWire(record, host)
+	if !ok {
+		return nil
+	}
+	return []deviceWire{device}
+}
+
+func buildDeviceWire(record map[string]any, host string) (deviceWire, bool) {
+	sysAPI, _ := record["sys_api"].(map[string]any)
+	hostname := firstNonEmpty(firstString(record, "hostname", "host"), host)
+	path := firstNonEmpty(firstString(record, "path"), firstString(sysAPI, "path"))
+	if strings.TrimSpace(hostname) == "" || strings.TrimSpace(path) == "" {
+		return deviceWire{}, false
+	}
+	size := firstUintPointer(record, "size_bytes", "size")
+	if size == nil {
+		size = firstUintPointer(sysAPI, "size_bytes", "size")
+	}
+	rotational := firstBoolPointer(record, "rotational")
+	if rotational == nil {
+		rotational = firstBoolPointer(sysAPI, "rotational")
+	}
+	metadata := stringMap(record["metadata"])
+	for key, value := range stringMap(sysAPI) {
+		if metadata == nil {
+			metadata = map[string]string{}
+		}
+		metadata["sys_api."+key] = value
+	}
+	return deviceWire{
+		DeviceID:        firstNonEmpty(firstString(record, "device_id", "id", "devid"), hostname+":"+path),
+		Hostname:        hostname,
+		Path:            path,
+		Available:       boolValue(record["available"]),
+		RejectedReasons: stringSlice(record["rejected_reasons"]),
+		DeviceType:      firstStringPointer(record, "device_type", "type"),
+		Model:           firstStringPointer(record, "model"),
+		Vendor:          firstStringPointer(record, "vendor"),
+		Serial:          firstStringPointer(record, "serial"),
+		SizeBytes:       size,
+		Rotational:      rotational,
+		Metadata:        metadata,
+	}, true
+}
+
+func splitOSDFlags(value string) []string {
+	if strings.TrimSpace(value) == "" {
+		return []string{}
+	}
+	parts := strings.Split(value, ",")
+	flags := make([]string, 0, len(parts))
+	for _, part := range parts {
+		flag := strings.TrimSpace(part)
+		if flag != "" {
+			flags = append(flags, flag)
+		}
+	}
+	return flags
+}
+
+func osdHosts(tree osdTreeWire) map[int]*string {
+	hosts := map[int]*string{}
+	for _, node := range tree.Nodes {
+		if node.Type != "host" || strings.TrimSpace(node.Name) == "" {
+			continue
+		}
+		host := node.Name
+		for _, child := range node.Children {
+			hosts[child] = &host
+		}
+	}
+	return hosts
+}
+
+func rawTextPointer(raw json.RawMessage) *string {
+	value := strings.TrimSpace(string(raw))
+	if value == "" || value == "null" {
+		return nil
+	}
+	if strings.HasPrefix(value, `"`) {
+		var decoded string
+		if err := json.Unmarshal(raw, &decoded); err == nil {
+			value = strings.TrimSpace(decoded)
+		}
+	}
+	if value == "" {
+		return nil
+	}
+	return &value
+}
+
+func rawMap(raw json.RawMessage) (map[string]any, error) {
+	var value map[string]any
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
+	if err := decoder.Decode(&value); err != nil {
+		return nil, err
+	}
+	return value, nil
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func firstString(record map[string]any, keys ...string) string {
+	for _, key := range keys {
+		if value := stringValue(record[key]); value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func firstStringPointer(record map[string]any, keys ...string) *string {
+	value := firstString(record, keys...)
+	if value == "" {
+		return nil
+	}
+	return &value
+}
+
+func stringValue(value any) string {
+	switch typed := value.(type) {
+	case string:
+		return strings.TrimSpace(typed)
+	case json.Number:
+		return typed.String()
+	case float64:
+		return strconv.FormatFloat(typed, 'f', -1, 64)
+	default:
+		return ""
+	}
+}
+
+func hasArray(record map[string]any, key string) bool {
+	value, ok := record[key].([]any)
+	return ok && len(value) > 0
+}
+
+func boolValue(value any) bool {
+	switch typed := value.(type) {
+	case bool:
+		return typed
+	case json.Number:
+		return typed.String() != "0"
+	case string:
+		normalized := strings.TrimSpace(strings.ToLower(typed))
+		return normalized == "true" || normalized == "1" || normalized == "yes"
+	default:
+		return false
+	}
+}
+
+func firstBoolPointer(record map[string]any, keys ...string) *bool {
+	for _, key := range keys {
+		switch record[key].(type) {
+		case bool, json.Number, string:
+			value := boolValue(record[key])
+			return &value
+		}
+	}
+	return nil
+}
+
+func firstUintPointer(record map[string]any, keys ...string) *uint64 {
+	for _, key := range keys {
+		if value, ok := uintValue(record[key]); ok {
+			return &value
+		}
+	}
+	return nil
+}
+
+func uintValue(value any) (uint64, bool) {
+	switch typed := value.(type) {
+	case json.Number:
+		if parsed, err := strconv.ParseUint(typed.String(), 10, 64); err == nil {
+			return parsed, true
+		}
+	case float64:
+		if typed >= 0 {
+			return uint64(typed), true
+		}
+	case string:
+		if parsed, err := strconv.ParseUint(strings.TrimSpace(typed), 10, 64); err == nil {
+			return parsed, true
+		}
+	}
+	return 0, false
+}
+
+func stringSlice(value any) []string {
+	items, ok := value.([]any)
+	if !ok {
+		return nil
+	}
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		if text := stringValue(item); text != "" {
+			result = append(result, text)
+		}
+	}
+	return result
+}
+
+func stringMap(value any) map[string]string {
+	record, ok := value.(map[string]any)
+	if !ok {
+		return nil
+	}
+	result := map[string]string{}
+	for key, item := range record {
+		if text := stringValue(item); text != "" {
+			result[key] = text
+		}
+	}
+	return result
 }
 
 type configValueWire struct {

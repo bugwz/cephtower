@@ -13,7 +13,7 @@ import (
 const bootstrapKey = "0123456789abcdefghijklmnopqrstuv"
 
 func TestInitialAdminCanOnlyBeCreatedOnce(t *testing.T) {
-	db, err := store.Open(config.DatabaseConfig{EncryptionKey: bootstrapKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Path: t.TempDir() + "/auth.db"}})
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: bootstrapKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "auth.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestInitialAdminCanOnlyBeCreatedOnce(t *testing.T) {
 }
 
 func TestClusterRoleBindingLifecycle(t *testing.T) {
-	db, err := store.Open(config.DatabaseConfig{EncryptionKey: bootstrapKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Path: t.TempDir() + "/rbac.db"}})
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: bootstrapKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "rbac.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}

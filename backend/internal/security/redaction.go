@@ -43,7 +43,7 @@ func RedactJSON(value any) (any, error) {
 const encryptedJSONField = "$encrypted"
 
 // ProtectJSON encrypts sensitive JSON fields while preserving the surrounding
-// request shape so durable workers can recover the original values in memory.
+// request shape so services can recover the original values in memory.
 func ProtectJSON(value any, databaseEncryptionKey string) (any, error) {
 	normalized, err := normalizeJSON(value)
 	if err != nil {

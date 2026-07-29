@@ -1,1 +1,1 @@
-export { DemoPage as ClusterDemoPage } from '../DemoPage'
+export * from './pages'

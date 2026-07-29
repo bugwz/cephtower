@@ -29,11 +29,11 @@ CephTower 使用 Go 后端和 React / Ant Design 前端，通过 Ceph 原生命�
 - 集群界面：集群连接与详情、主机、MON、MGR、OSD 和 MDS 管理；支持 Mgr 模块开关、
   守护进程操作以及 OSD in/out、reweight 和 scrub 等操作。
 - 数据采集：按 fast、topology、storage、inventory、configuration 模块分层收敛；手动
-  refresh 也进入 durable operation，并区分成功空结果与可选能力暂时不可用。
+  refresh 由请求直接触发，并区分成功空结果与可选能力暂时不可用。
 - 后端集成：覆盖集群、Pool/RBD、CephFS/NFS/SMB、RGW、iSCSI、NVMe-oF、
   Prometheus/Alertmanager/Grafana 等原生 API；CephTower 用户和角色由自身 RBAC 管理。
-- 操作安全：所有 Ceph mutation 使用持久化 operation、幂等键、语义锁、审计哈希链和
-  pre/post-check；高风险动作必须提交未过期 plan，并在 worker 执行前再次检查。
+- 操作执行：Ceph mutation 在当前 HTTP 请求内直接执行，依赖 Go HTTP server 的自然并发；
+  后端保留严格请求校验、Ceph 命令 post-check 和审计哈希链。
 - API 契约：请求按 action 严格校验并拒绝未知字段；OpenAPI 为每条路由声明具体响应 DTO，
   所有 JSON 和 SSE event 的顶层固定为 `code`、`message`、`data`。
 - 交付方式：生产构建将前端产物嵌入 Go 可执行文件，由同一 HTTP 服务提供 UI 和 API。
@@ -90,7 +90,7 @@ make run
 - 后端与生产 Web 入口：<http://localhost:36900>
 - Vite 开发服务器：<http://localhost:36901>（`/api` 代理到后端）
 
-全新数据库通过 `POST /api/v1/bootstrap/admin` 一次性创建首个管理员，随后在集群管理中
+全新数据库通过 `POST /api/v1/bootstrap/run` 一次性创建首个管理员，随后在集群管理中
 添加 Ceph 连接。若要分别启动服务，先运行 `make ensure-run-config`，再在两个终端中运行：
 
 ```bash
@@ -162,7 +162,7 @@ API 前缀为 `/api/v1`。无需认证的基础端点包括：
 | `GET` | `/api/v1/healthz` | 进程存活检查 |
 | `GET` | `/api/v1/readyz` | 初始化就绪检查 |
 | `GET` | `/api/v1/bootstrap` | 是否需要创建首个管理员 |
-| `POST` | `/api/v1/bootstrap/admin` | 创建首个管理员 |
+| `POST` | `/api/v1/bootstrap/run` | 创建首个管理员 |
 | `POST` | `/api/v1/auth/login` | 登录并获取 Token |
 
 除 bootstrap 和登录端点外，API 请求需要 `Authorization: Bearer <token>`。完整生成契约见

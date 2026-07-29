@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useClusterContext } from './state/ClusterContext'
 
 export function useResource<T>(loader: () => Promise<T>) {
+  const { selectedClusterId } = useClusterContext()
   const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -44,8 +46,7 @@ export function useResource<T>(loader: () => Promise<T>) {
     return () => {
       ignore = true
     }
-  }, [loader])
+  }, [loader, selectedClusterId])
 
   return { data, loading, error, refresh: load }
 }
-

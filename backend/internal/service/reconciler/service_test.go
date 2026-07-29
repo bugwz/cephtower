@@ -61,7 +61,7 @@ func (f optionalCollectorFake) Collect(_ context.Context, access cephprovider.Cl
 }
 
 func TestOptionalObservationIsStoredWithoutSecrets(t *testing.T) {
-	db, err := store.Open(config.DatabaseConfig{EncryptionKey: reconcilerTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Path: t.TempDir() + "/reconciler.db"}})
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: reconcilerTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "reconciler.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +75,7 @@ func TestOptionalObservationIsStoredWithoutSecrets(t *testing.T) {
 	if err := db.CreateCluster(context.Background(), &cluster); err != nil {
 		t.Fatal(err)
 	}
-	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil, nil)
+	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil)
 	service := New(func() *store.Database { return db }, clusters, optionalCollectorFake{t: t})
 	module := Module{Name: "storage", Kinds: []string{"rgw_user"}}
 	if err := service.Reconcile(context.Background(), cluster.ID, module); err != nil {
@@ -93,7 +93,7 @@ func TestOptionalObservationIsStoredWithoutSecrets(t *testing.T) {
 	if !strings.Contains(row.PayloadJSON, "fixture-user") || !strings.Contains(row.PayloadJSON, "[REDACTED]") {
 		t.Fatalf("optional resource payload was not preserved and redacted: %s", row.PayloadJSON)
 	}
-	result, err := service.ApplyRefresh(context.Background(), store.CephOperation{ClusterID: &cluster.ID, RequestJSON: `{"modules":["storage"]}`})
+	result, err := service.Refresh(context.Background(), cluster.ID, []string{"storage"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func TestOptionalObservationIsStoredWithoutSecrets(t *testing.T) {
 }
 
 func TestReconcileMarksSuccessfulEmptyKindsStaleButPreservesUnavailableKinds(t *testing.T) {
-	db, err := store.Open(config.DatabaseConfig{EncryptionKey: reconcilerTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Path: t.TempDir() + "/reconciler-stale.db"}})
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: reconcilerTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "reconciler-stale.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,7 +125,7 @@ func TestReconcileMarksSuccessfulEmptyKindsStaleButPreservesUnavailableKinds(t *
 		}},
 		{UnavailableKinds: []string{"rgw_account"}},
 	}}
-	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil, nil)
+	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil)
 	service := New(func() *store.Database { return db }, clusters, collector)
 	module := Module{Name: "storage", Kinds: []string{"rgw_user", "rgw_account"}}
 	if err := service.Reconcile(context.Background(), cluster.ID, module); err != nil {

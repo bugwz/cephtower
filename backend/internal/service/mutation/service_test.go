@@ -3,8 +3,6 @@ package mutation
 import (
 	"encoding/base64"
 	"testing"
-
-	"cephtower/backend/internal/store"
 )
 
 func TestEveryNativeActionBuildsRegisteredCommand(t *testing.T) {
@@ -85,7 +83,7 @@ func TestEveryNativeActionBuildsRegisteredCommand(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.action, func(t *testing.T) {
-			command, err := build(store.CephOperation{Action: test.action, ResourceKey: test.key}, test.parameters)
+			command, err := build(Request{Action: test.action, ResourceKey: test.key}, test.parameters)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -100,7 +98,7 @@ func TestEveryNativeActionBuildsRegisteredCommand(t *testing.T) {
 }
 
 func TestRGWKeyArgumentsAreSensitive(t *testing.T) {
-	command, err := build(store.CephOperation{Action: "rgw_key.create", ResourceKey: "rgw/user/user1/key"}, map[string]any{"access_key": "ACCESS123", "secret_key": "SECRET123"})
+	command, err := build(Request{Action: "rgw_key.create", ResourceKey: "rgw/user/user1/key"}, map[string]any{"access_key": "ACCESS123", "secret_key": "SECRET123"})
 	if err != nil {
 		t.Fatal(err)
 	}

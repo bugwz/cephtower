@@ -1,23 +1,28 @@
-import { EditOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, Space, Table, Typography, message } from 'antd'
+import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SaveOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import { Button, Card, Form, Input, Popconfirm, Space, Table, Typography } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   createCluster,
+  deleteCluster,
   listClusters,
+  probeCluster,
   updateCluster,
   type CephCluster
 } from '../../api/cluster'
+import { refreshResource } from '../../api/resource'
 import { Page } from '../../components/Page'
 import { DraggableModal } from '../../components/DraggableModal'
+import { useMutationOperation } from '../../hooks/useMutationOperation'
+import { useClusterContext } from '../../state/ClusterContext'
+import { message } from '../../utils/appMessage'
 
 const { Text } = Typography
 
 interface ClusterFormValues {
   name: string
   monitor_host?: string
-  dashboard_username?: string
-  dashboard_password?: string
+  client_username?: string
   keyring?: string
 }
 
@@ -29,7 +34,10 @@ export function ClusterPage() {
   const [clusterModalOpen, setClusterModalOpen] = useState(false)
   const [editingCluster, setEditingCluster] = useState<CephCluster | null>(null)
   const [clusterSubmitting, setClusterSubmitting] = useState(false)
+  const [refreshingClusterId, setRefreshingClusterId] = useState<number | null>(null)
   const [form] = Form.useForm<ClusterFormValues>()
+  const operationMutation = useMutationOperation()
+  const { refreshClusters } = useClusterContext()
 
   const loadClusters = useCallback(async () => {
     setClusterLoading(true)
@@ -59,8 +67,7 @@ export function ClusterPage() {
     form.setFieldsValue({
       name: cluster.name,
       monitor_host: cluster.command.monitor_host,
-      dashboard_username: cluster.dashboard.username,
-      dashboard_password: '',
+      client_username: cluster.client_username,
       keyring: ''
     })
     setClusterModalOpen(true)
@@ -75,14 +82,46 @@ export function ClusterPage() {
       const result = editingCluster
         ? await updateCluster(editingCluster.id, values)
         : await createCluster(values)
-
+      message.success(result.message)
+      await loadClusters()
+      await refreshClusters()
       setClusterModalOpen(false)
       form.resetFields()
-      message.success(result.message || (editingCluster ? '集群连接已更新' : '集群连接已创建'))
-      await loadClusters()
     } finally {
       setClusterSubmitting(false)
     }
+  }
+
+  async function submitOperation(action: () => Promise<unknown>, successMessage: string) {
+    await operationMutation.run(async () => await action() as never, successMessage)
+    await loadClusters()
+    await refreshClusters()
+  }
+
+  async function submitClusterRefresh(cluster: CephCluster) {
+    if (refreshingClusterId !== null) {
+      return
+    }
+    setRefreshingClusterId(cluster.id)
+    try {
+      await submitOperation(() => refreshResource({ clusterId: cluster.id, scope: 'all' }), '集群刷新执行成功')
+    } finally {
+      setRefreshingClusterId(null)
+    }
+  }
+
+  async function submitProbe(cluster: CephCluster) {
+    await probeCluster(cluster.id)
+    message.success('集群探测执行成功')
+    await loadClusters()
+    await refreshClusters()
+  }
+
+  async function submitDelete(cluster: CephCluster) {
+    const result = await deleteCluster(cluster.id)
+    message.success(result.message)
+    await loadClusters()
+    await refreshClusters()
   }
 
   return (
@@ -125,38 +164,54 @@ export function ClusterPage() {
             },
             {
               title: 'MON 地址',
-              dataIndex: ['command', 'monitor_host'],
+              dataIndex: 'monitor_addresses',
               width: 240,
             },
             {
-              title: '密钥',
-              dataIndex: ['command', 'keyring'],
-              width: 220,
-              ellipsis: true
-            },
-            {
-              title: 'Dashboard 用户',
-              dataIndex: ['dashboard', 'username'],
+              title: 'Client 用户',
+              dataIndex: 'client_username',
               width: 180
             },
             {
-              title: '密码',
-              dataIndex: ['dashboard', 'password'],
-              width: 220,
-              ellipsis: true
+              title: '更新时间',
+              dataIndex: 'updated_at',
+              width: 200,
+              render: (value) => formatDateTime(value)
             },
             {
               title: '操作',
               key: 'actions',
-              width: 180,
+              width: 360,
               render: (_, cluster) => (
                 <Space>
                   <Button icon={<EditOutlined />} onClick={() => openEditCluster(cluster)}>
                     编辑
                   </Button>
+                  <Button icon={<ThunderboltOutlined />} onClick={() => submitProbe(cluster)}>
+                    探测
+                  </Button>
+                  <Button
+                    icon={<ReloadOutlined />}
+                    loading={refreshingClusterId === cluster.id}
+                    disabled={refreshingClusterId !== null && refreshingClusterId !== cluster.id}
+                    onClick={() => submitClusterRefresh(cluster)}
+                  >
+                    刷新
+                  </Button>
                   <Button onClick={() => navigate(`/cluster/cluster/${cluster.id}`)}>
                     详情
                   </Button>
+                  <Popconfirm
+                    title={`删除集群 ${cluster.name}`}
+                    description="删除会清理该集群在本系统中的缓存数据。"
+                    okText="删除"
+                    cancelText="取消"
+                    onConfirm={() => submitDelete(cluster)}
+                  >
+                    <Button danger icon={<DeleteOutlined />}>
+                      删除
+                    </Button>
+                  </Popconfirm>
                 </Space>
               )
             }
@@ -204,15 +259,8 @@ export function ClusterPage() {
             >
               <Input.Password placeholder={editingCluster?.command.keyring_content_set ? '留空则保持已保存密钥' : 'client.admin key'} />
             </Form.Item>
-            <Form.Item name="dashboard_username" label="Dashboard 用户名" rules={[{ required: true, message: '请输入 Dashboard 用户名' }]}>
-              <Input placeholder="admin" />
-            </Form.Item>
-            <Form.Item
-              name="dashboard_password"
-              label="Dashboard 密码"
-              rules={[{ required: !editingCluster?.dashboard.password_set, message: '请输入 Dashboard 密码' }]}
-            >
-              <Input.Password placeholder={editingCluster?.dashboard.password_set ? '留空则保持已保存密码' : 'Dashboard 登录密码'} />
+            <Form.Item name="client_username" label="Client 用户" rules={[{ required: true, message: '请输入 Client 用户' }]}>
+              <Input placeholder="client.admin" />
             </Form.Item>
           </div>
         </Form>
@@ -223,6 +271,14 @@ export function ClusterPage() {
 
 function defaultClusterFormValues(): Partial<ClusterFormValues> {
   return {
-    dashboard_username: 'admin'
+    client_username: 'client.admin'
   }
+}
+
+function formatDateTime(value: unknown) {
+  if (typeof value !== 'string' || !value) {
+    return '-'
+  }
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }

@@ -1,7 +1,9 @@
 import { LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons'
-import { Alert, Button, Form, Input, InputNumber, Radio, Select, Steps, Typography, message } from 'antd'
+import { Alert, Button, Form, Input, InputNumber, Radio, Select, Steps, Typography } from 'antd'
 import { useMemo, useRef, useState } from 'react'
 import { initializeSetup, testSetupDatabase, type SetupDatabaseConfig, type SetupDatabaseInput } from '../api/auth'
+import { message } from '../utils/appMessage'
+import { friendlyAuthError, isFormValidationError } from '../utils/friendlyAuthError'
 import { TowerIllustration } from './LoginPage'
 
 const { Text, Title } = Typography
@@ -13,7 +15,7 @@ interface InitializationPageProps {
 
 interface InitializationFormValues {
   engine: 'sqlite' | 'mysql'
-  sqlite_path: string
+  sqlite_name: string
   mysql_host: string
   mysql_port: number
   mysql_username: string
@@ -37,7 +39,7 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
   const initialValues = useMemo(
     () => ({
       engine: database?.engine ?? 'sqlite',
-      sqlite_path: database?.sqlite.path ?? 'data/cephtower.db',
+      sqlite_name: database?.sqlite.name ?? 'cephtower.db',
       mysql_host: database?.mysql.host ?? '127.0.0.1',
       mysql_port: database?.mysql.port ?? 3306,
       mysql_username: database?.mysql.username ?? 'root',
@@ -71,8 +73,8 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
       await testSetupDatabase(databaseInput(form.getFieldsValue(), engine))
       message.success('数据库连接成功')
     } catch (err) {
-      if (err instanceof Error) {
-        message.error(err.message || '数据库连接失败')
+      if (!isFormValidationError(err)) {
+        message.error(friendlyAuthError(err, 'testDatabase', { engine }))
       }
     } finally {
       databaseTestRunning.current = false
@@ -83,11 +85,13 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
   async function submit() {
     setLoading(true)
     setError('')
+    let submittedEngine = engine
     try {
       const values = await form.validateFields()
+      submittedEngine = values.engine
       await initializeSetup({
         database: databaseInput(values, values.engine),
-        admin: {
+        user: {
           username: values.admin_username,
           email: values.admin_email,
           password: values.admin_password
@@ -96,7 +100,9 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
       message.success('初始化完成！')
       onComplete()
     } catch (err) {
-      setError(err instanceof Error ? err.message : '初始化失败')
+      if (!isFormValidationError(err)) {
+        setError(friendlyAuthError(err, 'initialize', { engine: submittedEngine }))
+      }
     } finally {
       setLoading(false)
     }
@@ -135,8 +141,8 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
                 </Radio.Group>
               </Form.Item>
               {engine === 'sqlite' ? (
-                <Form.Item name="sqlite_path" label="数据库路径" rules={[{ required: true, message: '请输入数据库路径' }]}>
-                  <Input placeholder="data/cephtower.db" />
+                <Form.Item name="sqlite_name" label="数据库文件" rules={[{ required: true, message: '请输入数据库文件' }]}>
+                  <Input placeholder="cephtower.db" />
                 </Form.Item>
               ) : (
                 <>
@@ -219,7 +225,7 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
                 <div className="setup-summary-list">
                   {setupSummaryItem('类型', engine === 'sqlite' ? 'SQLite' : 'MySQL')}
                   {engine === 'sqlite' ? (
-                    setupSummaryItem('数据库路径', form.getFieldValue('sqlite_path'))
+                    setupSummaryItem('数据库文件', form.getFieldValue('sqlite_name'))
                   ) : (
                     <>
                       {setupSummaryItem('主机', form.getFieldValue('mysql_host'))}
@@ -249,7 +255,7 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
               )}
               {step === 0 && (
                 <Button loading={testingDatabase} onClick={testDatabase} disabled={loading || testingDatabase}>
-                  测试连接
+                  检测
                 </Button>
               )}
               {step < 2 ? (
@@ -258,7 +264,7 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
                 </Button>
               ) : (
                 <Button type="primary" loading={loading} onClick={submit}>
-                  提交初始化
+                  初始化
                 </Button>
               )}
             </div>
@@ -271,14 +277,14 @@ export function InitializationPage({ database, onComplete }: InitializationPageP
 
 function databaseFields(engine: InitializationFormValues['engine']): Array<keyof InitializationFormValues> {
   return engine === 'sqlite'
-    ? ['engine', 'sqlite_path']
+    ? ['engine', 'sqlite_name']
     : ['engine', 'mysql_host', 'mysql_port', 'mysql_username', 'mysql_password', 'mysql_database', 'mysql_params', 'mysql_tls']
 }
 
 function databaseInput(values: Partial<InitializationFormValues>, engine: InitializationFormValues['engine']): SetupDatabaseInput {
   return {
     engine,
-    sqlite: { path: values.sqlite_path ?? '' },
+    sqlite: { name: values.sqlite_name ?? '' },
     mysql: {
       host: values.mysql_host ?? '',
       port: values.mysql_port ?? 0,

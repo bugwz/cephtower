@@ -15,6 +15,27 @@ export interface ApiErrorDetail {
   path?: string
 }
 
+export class ApiRequestError extends Error {
+  status: number
+  code?: string
+
+  constructor(message: string, status: number, code?: string) {
+    super(message)
+    this.name = 'ApiRequestError'
+    this.status = status
+    this.code = code
+  }
+}
+
+export interface ApiRequestOptions extends ApiRequestInit {
+  body?: BodyInit | null
+}
+
+export interface ApiResponsePayload<T> {
+  data: T
+  response: Response
+}
+
 export function setAuthToken(token: string) {
   authToken = token
   if (token) {
@@ -29,22 +50,43 @@ export function getAuthToken() {
 }
 
 export async function request<T>(path: string, init?: ApiRequestInit): Promise<T> {
+  const { data } = await requestWithResponse<T>(path, init)
+  return data
+}
+
+export async function requestWithResponse<T>(path: string, init?: ApiRequestInit): Promise<ApiResponsePayload<T>> {
   const { suppressErrorNotification, ...fetchInit } = init ?? {}
   try {
     const response = await fetch(`${apiBaseUrl}${path}`, {
       ...fetchInit,
       headers: {
+        ...(fetchInit.body && !hasHeader(fetchInit.headers, 'Content-Type') ? { 'Content-Type': 'application/json' } : {}),
         ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         ...fetchInit.headers
       }
     })
 
-    return await readApiResponse<T>(response)
+    return { data: await readApiResponse<T>(response), response }
   } catch (err) {
     if (!suppressErrorNotification) {
       notifyApiError(toApiErrorDetail(err, path))
     }
     throw err
+  }
+}
+
+export function jsonInit(method: string, body?: unknown, init?: ApiRequestInit): ApiRequestInit {
+  const normalizedMethod = method.toUpperCase()
+  const useGetOverride = normalizedMethod === 'GET' && body !== undefined
+  return {
+    ...init,
+    method: useGetOverride ? 'POST' : method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(useGetOverride ? { 'X-HTTP-Method-Override': 'GET' } : {}),
+      ...init?.headers
+    },
+    body: body === undefined ? undefined : JSON.stringify(body)
   }
 }
 
@@ -105,7 +147,8 @@ export async function readApiResponse<T>(response: Response): Promise<T> {
   const { payload, invalidJSON } = parseJSON(text)
 
   if (!response.ok) {
-    throw new Error(extractErrorMessage(payload, text, response.status))
+    const { message, code } = extractError(payload, text, response.status)
+    throw new ApiRequestError(message, response.status, code)
   }
 
   if (invalidJSON) {
@@ -143,8 +186,15 @@ export function subscribeApiErrors(listener: (detail: ApiErrorDetail) => void) {
 export function toApiErrorDetail(err: unknown, path?: string): ApiErrorDetail {
   return {
     message: formatApiErrorMessage(err),
+    status: err instanceof ApiRequestError ? err.status : undefined,
     path
   }
+}
+
+export function isApiError(err: unknown, status?: number, code?: string): err is ApiRequestError {
+  return err instanceof ApiRequestError
+    && (status === undefined || err.status === status)
+    && (code === undefined || err.code === code)
 }
 
 function parseJSON(text: string): { payload: unknown; invalidJSON: boolean } {
@@ -159,22 +209,24 @@ function parseJSON(text: string): { payload: unknown; invalidJSON: boolean } {
   }
 }
 
-function extractErrorMessage(payload: unknown, text: string, status: number): string {
+function extractError(payload: unknown, text: string, status: number): { message: string; code?: string } {
   if (isRecord(payload) && 'code' in payload && 'message' in payload && 'data' in payload) {
     const message = payload.message
+    const data = payload.data
+    const code = isRecord(data) && typeof data.error_code === 'string' ? data.error_code : undefined
     if (typeof message === 'string' && message.trim()) {
-      return message
+      return { message, code }
     }
   }
 
   if (isRecord(payload)) {
     const message = payload.error ?? payload.message
     if (typeof message === 'string' && message.trim()) {
-      return message
+      return { message }
     }
   }
 
-  return text || `Request failed: ${status}`
+  return { message: text || `Request failed: ${status}` }
 }
 
 function formatApiErrorMessage(err: unknown): string {
@@ -187,4 +239,18 @@ function formatApiErrorMessage(err: unknown): string {
   }
 
   return err.message || '后端接口调用失败'
+}
+
+function hasHeader(headers: HeadersInit | undefined, name: string) {
+  if (!headers) {
+    return false
+  }
+  if (headers instanceof Headers) {
+    return headers.has(name)
+  }
+  const normalized = name.toLowerCase()
+  if (Array.isArray(headers)) {
+    return headers.some(([key]) => key.toLowerCase() === normalized)
+  }
+  return Object.keys(headers).some((key) => key.toLowerCase() === normalized)
 }

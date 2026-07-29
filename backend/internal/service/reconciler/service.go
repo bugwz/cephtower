@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -40,6 +39,7 @@ type Service struct {
 	modules  []Module
 	mu       sync.Mutex
 	breakers map[uint64]*breaker
+	runCtx   context.Context
 	cancel   context.CancelFunc
 	wg       sync.WaitGroup
 }
@@ -48,22 +48,12 @@ func New(database func() *store.Database, clusters *clusterservice.Service, prov
 	return &Service{database: database, clusters: clusters, provider: provider, modules: DefaultModules, breakers: map[uint64]*breaker{}}
 }
 
-func (s *Service) ApplyRefresh(ctx context.Context, operation store.CephOperation) (cephdomain.OperationResult, error) {
-	if operation.ClusterID == nil {
-		return cephdomain.OperationResult{}, &cephdomain.OperationError{Code: "invalid_request", Message: "cluster is required"}
+func (s *Service) Refresh(ctx context.Context, clusterID uint64, modules []string) (cephdomain.ActionResult, error) {
+	if clusterID == 0 {
+		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "invalid_request", Message: "cluster is required"}
 	}
-	var request struct {
-		Modules []string `json:"modules"`
-	}
-	if strings.TrimSpace(operation.RequestJSON) != "" {
-		decoder := json.NewDecoder(strings.NewReader(operation.RequestJSON))
-		decoder.DisallowUnknownFields()
-		if err := decoder.Decode(&request); err != nil {
-			return cephdomain.OperationResult{}, &cephdomain.OperationError{Code: "invalid_request", Message: "refresh request is invalid"}
-		}
-	}
-	selected := make(map[string]bool, len(request.Modules))
-	for _, name := range request.Modules {
+	selected := make(map[string]bool, len(modules))
+	for _, name := range modules {
 		selected[name] = true
 	}
 	available := make(map[string]Module, len(s.modules))
@@ -77,7 +67,7 @@ func (s *Service) ApplyRefresh(ctx context.Context, operation store.CephOperatio
 	}
 	for name := range selected {
 		if _, ok := available[name]; !ok {
-			return cephdomain.OperationResult{}, &cephdomain.OperationError{Code: "invalid_request", Message: "unsupported refresh module " + name}
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "invalid_request", Message: "unsupported refresh module " + name}
 		}
 	}
 	names := make([]string, 0, len(selected))
@@ -85,46 +75,57 @@ func (s *Service) ApplyRefresh(ctx context.Context, operation store.CephOperatio
 		if !selected[module.Name] {
 			continue
 		}
-		if err := s.Reconcile(ctx, *operation.ClusterID, module); err != nil {
-			return cephdomain.OperationResult{}, &cephdomain.OperationError{Code: "refresh_failed", Message: security.Redact(err.Error()), Retryable: true}
+		if err := s.Reconcile(ctx, clusterID, module); err != nil {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "refresh_failed", Message: security.Redact(err.Error()), Retryable: true}
 		}
 		names = append(names, module.Name)
 	}
-	return cephdomain.OperationResult{Details: map[string]any{"modules": names}}, nil
+	return cephdomain.ActionResult{Details: map[string]any{"modules": names}}, nil
 }
 
-// ReconcileAffected refreshes the module that owns a successfully mutated
-// resource before the operation is reported as complete.
-func (s *Service) ReconcileAffected(ctx context.Context, operation store.CephOperation) error {
-	if operation.ClusterID == nil || strings.HasPrefix(operation.Action, "cluster.") {
-		return nil
+func (s *Service) RefreshKind(ctx context.Context, clusterID uint64, kind string) (cephdomain.ActionResult, error) {
+	module, ok := s.moduleForKind(kind)
+	if !ok {
+		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "invalid_request", Message: "unsupported refresh kind " + kind}
 	}
-	kind := operation.ResourceKind
-	for _, module := range s.modules {
-		for _, candidate := range module.Kinds {
-			if candidate == kind {
-				return s.Reconcile(ctx, *operation.ClusterID, module)
-			}
-		}
+	if err := s.ReconcileKinds(ctx, clusterID, module, []string{kind}); err != nil {
+		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "refresh_failed", Message: security.Redact(err.Error()), Retryable: true}
 	}
-	moduleName := ""
-	switch {
-	case kind == "osd_deployment", kind == "rgw_key", kind == "rgw_period",
-		kind == "snapshot_schedule", kind == "cephfs_authorization", kind == "cephfs_client", kind == "cephfs_entry":
-		moduleName = "storage"
-	}
-	for _, module := range s.modules {
-		if module.Name == moduleName {
-			return s.Reconcile(ctx, *operation.ClusterID, module)
-		}
-	}
-	return nil
+	return cephdomain.ActionResult{Details: map[string]any{"kinds": []string{kind}, "module": module.Name}}, nil
 }
+
+func (s *Service) RefreshKinds(ctx context.Context, clusterID uint64, kinds []string) (cephdomain.ActionResult, error) {
+	if len(kinds) == 0 {
+		return s.Refresh(ctx, clusterID, nil)
+	}
+	grouped := map[string][]string{}
+	modules := map[string]Module{}
+	for _, kind := range kinds {
+		module, ok := s.moduleForKind(kind)
+		if !ok {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "invalid_request", Message: "unsupported refresh kind " + kind}
+		}
+		grouped[module.Name] = append(grouped[module.Name], kind)
+		modules[module.Name] = module
+	}
+	for _, module := range s.modules {
+		selected := grouped[module.Name]
+		if len(selected) == 0 {
+			continue
+		}
+		if err := s.ReconcileKinds(ctx, clusterID, modules[module.Name], selected); err != nil {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "refresh_failed", Message: security.Redact(err.Error()), Retryable: true}
+		}
+	}
+	return cephdomain.ActionResult{Details: map[string]any{"kinds": kinds}}, nil
+}
+
 func (s *Service) Start(ctx context.Context) {
 	if s.cancel != nil {
 		return
 	}
 	runCtx, cancel := context.WithCancel(ctx)
+	s.runCtx = runCtx
 	s.cancel = cancel
 	for _, module := range s.modules {
 		module := module
@@ -150,6 +151,7 @@ func (s *Service) Stop() {
 		s.cancel()
 		s.wg.Wait()
 		s.cancel = nil
+		s.runCtx = nil
 	}
 }
 func (s *Service) runModule(ctx context.Context, module Module) {
@@ -164,6 +166,17 @@ func (s *Service) runModule(ctx context.Context, module Module) {
 	}
 }
 func (s *Service) Reconcile(ctx context.Context, clusterID uint64, module Module) error {
+	return s.reconcile(ctx, clusterID, module, nil)
+}
+
+func (s *Service) ReconcileKinds(ctx context.Context, clusterID uint64, module Module, kinds []string) error {
+	if len(kinds) == 0 {
+		return s.Reconcile(ctx, clusterID, module)
+	}
+	return s.reconcile(ctx, clusterID, module, kindSet(kinds))
+}
+
+func (s *Service) reconcile(ctx context.Context, clusterID uint64, module Module, selectedKinds map[string]struct{}) error {
 	generation, err := s.database().NextCollectionGeneration(ctx, clusterID, module.Name)
 	if err != nil {
 		return err
@@ -213,6 +226,10 @@ func (s *Service) Reconcile(ctx context.Context, clusterID uint64, module Module
 				records = append(records, store.CephResourceRecord{Kind: observation.Kind, NaturalKey: observation.NaturalKey, ParentKind: optionalString(observation.ParentKind), ParentKey: optionalString(observation.ParentKey), Name: name, Status: status, Source: observation.Source, SourceVersion: optionalString(observation.SourceVersion), ObservedAt: observation.ObservedAt, PayloadSchemaVersion: 1, PayloadJSON: string(payload)})
 			}
 			if err == nil {
+				if len(selectedKinds) > 0 {
+					records = filterRecords(records, selectedKinds)
+					authoritativeKinds = filterKinds(authoritativeKinds, selectedKinds)
+				}
 				err = s.database().ReconcileResources(ctx, clusterID, generation, records, authoritativeKinds)
 			}
 		}
@@ -226,7 +243,11 @@ func (s *Service) Reconcile(ctx context.Context, clusterID uint64, module Module
 	message := security.Redact(fmt.Sprint(err))
 	code := "ceph_unavailable"
 	_ = s.database().FinishCollectionRun(ctx, run.ID, "failed", 0, &code, &message, finished)
-	_ = s.database().MarkModuleResourcesStale(ctx, clusterID, module.Kinds, finished)
+	staleKinds := module.Kinds
+	if len(selectedKinds) > 0 {
+		staleKinds = filterKinds(module.Kinds, selectedKinds)
+	}
+	_ = s.database().MarkModuleResourcesStale(ctx, clusterID, staleKinds, finished)
 	s.failure(clusterID)
 	return err
 }
@@ -286,4 +307,45 @@ func optionalString(value string) *string {
 		return nil
 	}
 	return &value
+}
+
+func (s *Service) moduleForKind(kind string) (Module, bool) {
+	for _, module := range s.modules {
+		for _, candidate := range module.Kinds {
+			if candidate == kind {
+				return module, true
+			}
+		}
+	}
+	return Module{}, false
+}
+
+func kindSet(kinds []string) map[string]struct{} {
+	result := make(map[string]struct{}, len(kinds))
+	for _, kind := range kinds {
+		if kind != "" {
+			result[kind] = struct{}{}
+		}
+	}
+	return result
+}
+
+func filterRecords(rows []store.CephResourceRecord, kinds map[string]struct{}) []store.CephResourceRecord {
+	result := make([]store.CephResourceRecord, 0, len(rows))
+	for _, row := range rows {
+		if _, ok := kinds[row.Kind]; ok {
+			result = append(result, row)
+		}
+	}
+	return result
+}
+
+func filterKinds(values []string, kinds map[string]struct{}) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		if _, ok := kinds[value]; ok {
+			result = append(result, value)
+		}
+	}
+	return result
 }

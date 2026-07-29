@@ -1,1 +1,1 @@
-export { DemoPage as ObjectDemoPage } from '../DemoPage'
+export * from './pages'

@@ -3,7 +3,6 @@ package store
 import (
 	"cephtower/backend/internal/config"
 	"context"
-	"os"
 	"reflect"
 	"regexp"
 	"sort"
@@ -13,8 +12,8 @@ import (
 
 const schemaTestKey = "0123456789abcdefghijklmnopqrstuv"
 
-func TestSQLiteBaselineContainsExactlyNineteenTables(t *testing.T) {
-	db, err := Open(config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Path: t.TempDir() + "/schema.db"}})
+func TestSQLiteBaselineContainsExactlyFifteenTables(t *testing.T) {
+	db, err := Open(config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Name: "schema.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -23,7 +22,7 @@ func TestSQLiteBaselineContainsExactlyNineteenTables(t *testing.T) {
 	if err := db.db.Raw("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").Scan(&names).Error; err != nil {
 		t.Fatal(err)
 	}
-	expected := []string{"audit_event", "ceph_action_plan", "ceph_cluster", "ceph_cluster_capability", "ceph_cluster_credential", "ceph_cluster_endpoint", "ceph_cluster_observation", "ceph_collection_run", "ceph_operation", "ceph_operation_event", "ceph_operation_lock", "ceph_resource_record", "password_reset_code", "role", "schema_migration", "setting", "user", "user_role_binding", "user_session"}
+	expected := []string{"audit_event", "ceph_cluster", "ceph_cluster_capability", "ceph_cluster_credential", "ceph_cluster_endpoint", "ceph_cluster_observation", "ceph_collection_run", "ceph_resource_record", "password_reset_code", "role", "schema_migration", "setting", "user", "user_role_binding", "user_session"}
 	sort.Strings(expected)
 	if len(names) != len(expected) {
 		t.Fatalf("tables = %v", names)
@@ -38,14 +37,14 @@ func TestSQLiteBaselineContainsExactlyNineteenTables(t *testing.T) {
 	}
 }
 func TestMigrationRegistryIsIdempotent(t *testing.T) {
-	path := t.TempDir() + "/schema.db"
-	cfg := config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Path: path}}
-	first, err := Open(cfg)
+	workDir := t.TempDir()
+	cfg := config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Name: "schema.db"}}
+	first, err := Open(cfg, workDir)
 	if err != nil {
 		t.Fatal(err)
 	}
 	_ = Close(first)
-	second, err := Open(cfg)
+	second, err := Open(cfg, workDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,15 +66,11 @@ var expectedColumns = map[string][]string{
 	"ceph_cluster_capability":  {"id", "cluster_id", "name", "supported", "reason", "version", "details_json", "observed_at", "updated_at"},
 	"ceph_resource_record":     {"id", "cluster_id", "kind", "natural_key", "parent_kind", "parent_key", "name", "status", "generation", "resource_version", "source", "source_version", "observed_at", "stale_at", "payload_schema_version", "payload_json", "created_at", "updated_at"},
 	"ceph_collection_run":      {"id", "cluster_id", "module", "generation", "status", "source", "record_count", "error_code", "error_message", "started_at", "finished_at", "created_at"},
-	"ceph_action_plan":         {"id", "cluster_id", "actor_user_id", "actor_username", "request_id", "action", "resource_kind", "resource_key", "resource_generation", "risk", "status", "request_json", "blockers_json", "warnings_json", "expires_at", "consumed_at", "created_at"},
-	"ceph_operation":           {"id", "cluster_id", "cluster_name", "actor_user_id", "actor_username", "plan_id", "retry_of_id", "request_id", "action", "resource_kind", "resource_key", "resource_generation", "risk", "status", "stage", "progress", "attempt", "max_attempts", "idempotency_key_hash", "idempotency_scope_hash", "request_json", "result_json", "error_code", "error_message", "error_details_json", "retryable", "cancel_requested_at", "scheduled_at", "started_at", "heartbeat_at", "completed_at", "created_at", "updated_at"},
-	"ceph_operation_event":     {"id", "operation_id", "sequence", "event_type", "stage", "progress", "message", "data_json", "error_code", "created_at"},
-	"ceph_operation_lock":      {"lock_key", "cluster_id", "resource_kind", "resource_key", "operation_id", "fencing_token", "lease_expires_at", "acquired_at", "updated_at"},
-	"audit_event":              {"id", "occurred_at", "event_type", "request_id", "actor_user_id", "actor_username", "cluster_id", "cluster_name", "action", "resource_kind", "resource_key", "risk", "outcome", "http_status", "error_code", "source_ip", "user_agent", "plan_id", "operation_id", "before_generation", "after_generation", "parameters_json", "details_json", "previous_hash", "event_hash"},
+	"audit_event":              {"id", "occurred_at", "event_type", "request_id", "actor_user_id", "actor_username", "cluster_id", "cluster_name", "action", "resource_kind", "resource_key", "risk", "outcome", "http_status", "error_code", "source_ip", "user_agent", "before_generation", "after_generation", "parameters_json", "details_json", "previous_hash", "event_hash"},
 }
 
 func TestSQLiteColumnsIndexesAndForeignKeysMatchBaseline(t *testing.T) {
-	db, err := Open(config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Path: t.TempDir() + "/schema.db"}})
+	db, err := Open(config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Name: "schema.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +97,7 @@ func TestSQLiteColumnsIndexesAndForeignKeysMatchBaseline(t *testing.T) {
 	if foreignKeys != 1 {
 		t.Fatal("endpoint CA foreign key missing")
 	}
-	for _, index := range []string{"idx_resource_parent", "idx_operation_heartbeat", "idx_audit_operation"} {
+	for _, index := range []string{"idx_resource_parent", "idx_audit_request"} {
 		var count int64
 		if err := db.db.Raw("SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name = ?", index).Scan(&count).Error; err != nil || count != 1 {
 			t.Fatalf("index %s missing: count=%d err=%v", index, count, err)
@@ -110,7 +105,7 @@ func TestSQLiteColumnsIndexesAndForeignKeysMatchBaseline(t *testing.T) {
 	}
 }
 
-func TestCanonicalDDLAndDocumentationContainExactlyBaselineTables(t *testing.T) {
+func TestCanonicalDDLContainsExactlyBaselineTables(t *testing.T) {
 	pattern := regexp.MustCompile(`(?im)^CREATE TABLE(?: IF NOT EXISTS)?\s+` + "`?" + `([a-z_]+)` + "`?" + `\s*\(`)
 	expected := make([]string, 0, len(expectedColumns))
 	for table := range expectedColumns {
@@ -129,15 +124,6 @@ func TestCanonicalDDLAndDocumentationContainExactlyBaselineTables(t *testing.T) 
 		}
 		if strings.Count(ddl, "CREATE TABLE") != strings.Count(ddl, ";")-strings.Count(ddl, "CREATE INDEX") {
 			t.Fatalf("%s DDL has an unexpected statement boundary", name)
-		}
-	}
-	for path, expectedDDL := range map[string]string{"../../../docs/database-schema/sqlite/schema.sql": sqliteBaselineSQL, "../../../docs/database-schema/mysql/schema.sql": mysqlBaselineSQL} {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if string(data) != expectedDDL {
-			t.Fatalf("%s is not an exact canonical migration mirror", path)
 		}
 	}
 	for _, forbidden := range []string{"password_ciphertext", "client_key_ciphertext", "credential_ciphertext", "nonce"} {

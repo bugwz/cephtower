@@ -1,9 +1,11 @@
 import type { ComponentType } from 'react'
 import type { PageKey } from '../navigation'
+import { AuditPage } from './audit/AuditPage'
 import { BlockPoolsPage, ImageMirroringPage, IscsiPage, NvmeTcpPage, RbdImagesPage } from './block/pages'
 import {
   ClusterDetailPage,
   ClusterPage,
+  DeviceManagementPage,
   HostPage,
   MdsManagementPage,
   MgrManagementPage,
@@ -33,7 +35,6 @@ import { DataManagementPage, SystemInfoPage, SystemUsersPage } from './system/pa
 export type { PageKey } from '../navigation'
 
 export { OverviewPage } from './overview/OverviewPage'
-export { DemoPage } from './DemoPage'
 export { LoginPage } from './LoginPage'
 export { InitializationPage } from './InitializationPage'
 export { UserPage } from './system/UserPage'
@@ -46,6 +47,7 @@ export const pageComponents: Record<PageKey, ComponentType> = {
   monManagement: MonManagementPage,
   mgrManagement: MgrManagementPage,
   osdManagement: OsdManagementPage,
+  deviceManagement: DeviceManagementPage,
   mdsManagement: MdsManagementPage,
   blockPools: BlockPoolsPage,
   rbdImages: RbdImagesPage,
@@ -70,5 +72,6 @@ export const pageComponents: Record<PageKey, ComponentType> = {
   alertSilences: AlertSilencesPage,
   systemInfo: SystemInfoPage,
   systemUsers: SystemUsersPage,
-  dataManagement: DataManagementPage
+  dataManagement: DataManagementPage,
+  auditEvents: AuditPage
 }

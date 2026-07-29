@@ -21,6 +21,7 @@ func Register(mux *http.ServeMux, h *handler.Handler) {
 		authRoutes(h),
 		rbacRoutes(h),
 		clusterRoutes(h),
+		resourceRoutes(h),
 		credentialRoutes(h),
 		endpointRoutes(h),
 		overviewRoutes(h),
@@ -48,7 +49,6 @@ func Register(mux *http.ServeMux, h *handler.Handler) {
 		metricRoutes(h),
 		alertRoutes(h),
 		grafanaRoutes(h),
-		operationRoutes(h),
 		auditRoutes(h),
 	}
 	for _, routes := range groups {
@@ -69,6 +69,7 @@ func ReadRoutesForContract(h *handler.Handler) []Route {
 		authRoutes(h),
 		rbacRoutes(h),
 		clusterRoutes(h),
+		resourceRoutes(h),
 		credentialRoutes(h),
 		endpointRoutes(h),
 		overviewRoutes(h),
@@ -96,7 +97,6 @@ func ReadRoutesForContract(h *handler.Handler) []Route {
 		metricRoutes(h),
 		alertRoutes(h),
 		grafanaRoutes(h),
-		operationRoutes(h),
 		auditRoutes(h),
 	}
 	for _, group := range groups {

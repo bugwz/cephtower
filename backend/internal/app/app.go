@@ -21,8 +21,8 @@ import (
 	endpointservice "cephtower/backend/internal/service/endpoint"
 	externalservice "cephtower/backend/internal/service/external"
 	mutationservice "cephtower/backend/internal/service/mutation"
-	operationservice "cephtower/backend/internal/service/operation"
 	reconcilerservice "cephtower/backend/internal/service/reconciler"
+	setupservice "cephtower/backend/internal/service/setup"
 	"cephtower/backend/internal/store"
 )
 
@@ -32,7 +32,6 @@ type App struct {
 	config     config.Config
 	apiServer  *api.API
 	database   *store.Manager
-	operations *operationservice.Service
 	reconciler *reconcilerservice.Service
 	httpServer *http.Server
 	closeLog   func() error
@@ -45,55 +44,61 @@ func New(configPath string) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("load config: %w", err)
 	}
+	if cfg.Database.EncryptionKey == "" {
+		key, err := config.GenerateDatabaseEncryptionKey()
+		if err != nil {
+			return nil, fmt.Errorf("generate database encryption key: %w", err)
+		}
+		cfg.Database.EncryptionKey = key
+	}
+	if err := config.EnsureDirectories(cfg); err != nil {
+		return nil, err
+	}
 	_, _, closeLog, err := logging.InstallManaged(cfg.Logging, cfg.Server.Dir)
 	if err != nil {
 		return nil, fmt.Errorf("configure logging: %w", err)
 	}
-	db, err := store.Open(cfg.Database, cfg.Server.Dir)
-	if err != nil {
-		_ = closeLog()
-		return nil, fmt.Errorf("open database: %w", err)
+	var db *store.Database
+	if !cfg.Server.Bootstrap {
+		db, err = store.OpenExisting(cfg.Database, cfg.Server.Dir)
+		if err != nil {
+			_ = closeLog()
+			return nil, fmt.Errorf("open database: %w", err)
+		}
 	}
 	manager := store.NewManager(db)
-	currentConfig := func() config.Config { return cfg }
-	auth := authservice.New(manager.Current, currentConfig)
-	if err := auth.EnsureRoles(context.Background()); err != nil {
-		_ = manager.Close()
-		_ = closeLog()
-		return nil, fmt.Errorf("initialize roles: %w", err)
+	configMu := &sync.RWMutex{}
+	currentConfig := func() config.Config {
+		configMu.RLock()
+		defer configMu.RUnlock()
+		return cfg
 	}
-	operations := operationservice.New(manager.Current, 8, cfg.Database.EncryptionKey)
+	updateConfig := func(next config.Config) {
+		configMu.Lock()
+		defer configMu.Unlock()
+		cfg = next
+	}
+	auth := authservice.New(manager.Current, currentConfig)
 	runner := &executor.Runner{}
 	native := &cephprovider.NativeProvider{Executor: runner}
-	clusters := clusterservice.New(manager.Current, cfg.Database.EncryptionKey, operations, native)
+	clusters := clusterservice.New(manager.Current, cfg.Database.EncryptionKey, native)
 	endpoints := endpointservice.New(manager.Current, cfg.Database.EncryptionKey)
-	external := externalservice.New(endpoints, operations, cfg.Database.EncryptionKey)
-	mutations := mutationservice.New(clusters, runner, cfg.Database.EncryptionKey)
-	operations.SetFallback(mutations.Apply)
-	operations.SetPlanChecker(func(ctx context.Context, request operationservice.PlanRequest) ([]string, []string, error) {
-		if externalservice.Supports(request.Action) {
-			return external.CheckPlan(ctx, request)
-		}
-		return mutations.CheckPlan(ctx, request)
-	})
+	external := externalservice.New(endpoints, cfg.Database.EncryptionKey)
+	mutations := mutationservice.New(clusters, runner)
 	reconciler := reconcilerservice.New(manager.Current, clusters, native)
-	operations.SetPostSuccess(reconciler.ReconcileAffected)
-	if err := operations.Register("cluster.refresh", reconciler.ApplyRefresh); err != nil {
-		_ = manager.Close()
-		_ = closeLog()
-		return nil, fmt.Errorf("register cluster refresh operation: %w", err)
-	}
-	handler := v1handler.New(v1handler.Dependencies{Auth: auth, Clusters: clusters, Operations: operations, Endpoints: endpoints, External: external, Database: manager.Current})
+	setup := &setupservice.Service{Manager: manager, CurrentConfig: currentConfig, UpdateConfig: updateConfig, OnInitialized: func() {
+		reconciler.Start(context.Background())
+	}}
+	handler := v1handler.New(v1handler.Dependencies{Auth: auth, Clusters: clusters, Endpoints: endpoints, External: external, Mutations: mutations, Reconciler: reconciler, Setup: setup, Database: manager.Current})
 	apiServer := api.NewAPI(handler)
 	server := &http.Server{Addr: net.JoinHostPort(cfg.Server.Address, strconv.Itoa(cfg.Server.Port)), Handler: apiServer.Routes(), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 2 * time.Minute}
-	return &App{config: cfg, apiServer: apiServer, database: manager, operations: operations, reconciler: reconciler, httpServer: server, closeLog: closeLog}, nil
+	return &App{config: cfg, apiServer: apiServer, database: manager, reconciler: reconciler, httpServer: server, closeLog: closeLog}, nil
 }
 func (a *App) Run(ctx context.Context) error {
-	if err := a.operations.Start(ctx); err != nil {
-		return fmt.Errorf("start operation workers: %w", err)
+	if a.database != nil && a.database.Current() != nil {
+		a.reconciler.Start(ctx)
 	}
-	a.reconciler.Start(ctx)
-	logging.Infof("backend listening: addr=%s database_engine=%s", a.httpServer.Addr, a.config.Database.Engine)
+	logging.Infof("backend listening: addr=%s", a.httpServer.Addr)
 	errCh := make(chan error, 1)
 	go func() { errCh <- a.httpServer.ListenAndServe() }()
 	select {
@@ -125,9 +130,6 @@ func (a *App) Close(ctx context.Context) error {
 			if err := a.httpServer.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				errs = append(errs, err)
 			}
-		}
-		if a.operations != nil {
-			a.operations.Stop()
 		}
 		if a.reconciler != nil {
 			a.reconciler.Stop()

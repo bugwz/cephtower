@@ -1,9 +1,79 @@
 package handler
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+	"strings"
+	"time"
 
-func (h *Handler) RefreshCluster(w http.ResponseWriter, r *http.Request) {
-	h.MutateResource("cluster", "cluster.refresh", "low")(w, r)
+	cephdomain "cephtower/backend/internal/domain/ceph"
+)
+
+type refreshResourceRequest struct {
+	ClusterID uint64   `json:"cluster_id"`
+	Scope     string   `json:"scope,omitempty"`
+	Module    string   `json:"module,omitempty"`
+	Modules   []string `json:"modules,omitempty"`
+	Kind      string   `json:"kind,omitempty"`
+	Kinds     []string `json:"kinds,omitempty"`
+}
+
+func (h *Handler) RefreshResource(w http.ResponseWriter, r *http.Request) {
+	var request refreshResourceRequest
+	if !DecodeStrict(w, r, &request) {
+		return
+	}
+	annotateAudit(r, "resource.refresh", "resource", refreshAuditKey(request), string(cephdomain.RiskLow), &request.ClusterID)
+	if h.Reconciler == nil {
+		WriteError(w, r, http.StatusNotImplemented, "capability_unavailable", "resource refresh is unavailable", false, nil)
+		return
+	}
+	modules := append([]string(nil), request.Modules...)
+	if request.Module != "" {
+		modules = append(modules, request.Module)
+	}
+	kinds := append([]string(nil), request.Kinds...)
+	if request.Kind != "" {
+		kinds = append(kinds, request.Kind)
+	}
+	if request.Scope == "all" {
+		modules = nil
+		kinds = nil
+	}
+	var result any
+	var err error
+	switch {
+	case len(kinds) > 0:
+		result, err = h.Reconciler.RefreshKinds(r.Context(), request.ClusterID, kinds)
+	case len(modules) > 0:
+		result, err = h.Reconciler.Refresh(r.Context(), request.ClusterID, modules)
+	default:
+		result, err = h.Reconciler.Refresh(r.Context(), request.ClusterID, nil)
+	}
+	if err != nil {
+		writeActionError(w, r, err)
+		return
+	}
+	WriteSuccess(w, http.StatusOK, "success", result)
+}
+
+func refreshAuditKey(request refreshResourceRequest) string {
+	if request.Scope == "all" {
+		return "cluster/all"
+	}
+	if request.Kind != "" {
+		return "kind/" + request.Kind
+	}
+	if len(request.Kinds) > 0 {
+		return "kind/" + strings.Join(request.Kinds, ",")
+	}
+	if request.Module != "" {
+		return "module/" + request.Module
+	}
+	if len(request.Modules) > 0 {
+		return "module/" + strings.Join(request.Modules, ",")
+	}
+	return "cluster/all"
 }
 
 func (h *Handler) GetOverview(w http.ResponseWriter, r *http.Request) {
@@ -708,6 +778,31 @@ func (h *Handler) DeleteConfigurationValue(w http.ResponseWriter, r *http.Reques
 
 func (h *Handler) ListLogs(w http.ResponseWriter, r *http.Request) {
 	h.ReadResource("log", false)(w, r)
+}
+
+func (h *Handler) StreamEvents(w http.ResponseWriter, r *http.Request) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		WriteError(w, r, http.StatusInternalServerError, "stream_unavailable", "streaming is unavailable", false, nil)
+		return
+	}
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("X-Accel-Buffering", "no")
+	_ = http.NewResponseController(w).SetWriteDeadline(time.Time{})
+	heartbeat := time.NewTicker(10 * time.Second)
+	defer heartbeat.Stop()
+	for {
+		select {
+		case <-r.Context().Done():
+			return
+		case <-heartbeat.C:
+			if _, err := fmt.Fprint(w, ": heartbeat\n\n"); err != nil {
+				return
+			}
+			flusher.Flush()
+		}
+	}
 }
 
 func (h *Handler) QueryMetric(w http.ResponseWriter, r *http.Request) {
