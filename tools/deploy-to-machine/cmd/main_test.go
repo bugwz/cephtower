@@ -223,7 +223,7 @@ func TestConfigWithServerDir(t *testing.T) {
 		t.Fatal(err)
 	}
 	key := "0123456789abcdefghijklmnopqrstuv"
-	raw, err := configWithServerDir(path, "/opt/cephtower", key)
+	raw, err := configWithServerDir(path, "/opt/cephtower", remoteConfigValues{DatabaseEncryptionKey: key})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -233,6 +233,30 @@ func TestConfigWithServerDir(t *testing.T) {
 	}
 	if !strings.Contains(value, "encryption_key: "+key) {
 		t.Fatalf("database.encryption_key was not rewritten:\n%s", value)
+	}
+}
+
+func TestConfigWithServerDirPreservesRemoteBootstrap(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	if err := os.WriteFile(path, []byte("server:\n    dir: ./app\n    bootstrap: true\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	key := "0123456789abcdefghijklmnopqrstuv"
+	bootstrap := false
+	raw, err := configWithServerDir(path, "/opt/cephtower", remoteConfigValues{
+		DatabaseEncryptionKey: key,
+		ServerBootstrap:       &bootstrap,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	value := string(raw)
+	if !strings.Contains(value, "bootstrap: false") {
+		t.Fatalf("server.bootstrap was not preserved from remote config:\n%s", value)
+	}
+	if strings.Contains(value, "bootstrap: true") {
+		t.Fatalf("server.bootstrap kept the local template value:\n%s", value)
 	}
 }
 
@@ -250,6 +274,26 @@ func TestEncryptionKeyFromConfig(t *testing.T) {
 	}
 	if _, _, err := encryptionKeyFromConfig([]byte("database:\n  encryption_key: short\n")); err == nil {
 		t.Fatal("expected invalid key to fail")
+	}
+}
+
+func TestRemoteConfigValuesFromConfigReadsBootstrap(t *testing.T) {
+	key := "0123456789abcdefghijklmnopqrstuv"
+	values, err := remoteConfigValuesFromConfig([]byte("server:\n  bootstrap: false\ndatabase:\n  encryption_key: " + key + "\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if values.DatabaseEncryptionKey != key {
+		t.Fatalf("unexpected key: %q", values.DatabaseEncryptionKey)
+	}
+	if values.ServerBootstrap == nil || *values.ServerBootstrap {
+		t.Fatalf("expected server.bootstrap=false, got %#v", values.ServerBootstrap)
+	}
+	if _, err := remoteConfigValuesFromConfig([]byte("server:\n  bootstrap:\n    nested: true\n")); err == nil {
+		t.Fatal("expected non-scalar bootstrap to fail")
+	}
+	if _, err := remoteConfigValuesFromConfig([]byte("server:\n  bootstrap: maybe\n")); err == nil {
+		t.Fatal("expected invalid bootstrap to fail")
 	}
 }
 

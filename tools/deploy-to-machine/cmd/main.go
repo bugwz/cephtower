@@ -118,6 +118,13 @@ type deployState struct {
 	PID           string       `json:"pid,omitempty"`
 }
 
+type remoteConfigValues struct {
+	DatabaseEncryptionKey       string
+	DatabaseEncryptionKeySource string
+	ServerBootstrap             *bool
+	ServerBootstrapSource       string
+}
+
 type remoteInfo struct {
 	GOOS   string
 	GOARCH string
@@ -221,13 +228,17 @@ func deploy(ctx context.Context, opts options, client *remoteClient, stdout, std
 	}
 	log.Infof("release: selected binary %s", binaryPath)
 
-	encryptionKey, encryptionKeySource, err := client.DatabaseEncryptionKey(ctx)
+	configValues, err := client.RemoteConfigValues(ctx)
 	if err != nil {
 		return err
 	}
-	log.Infof("config: using database.encryption_key source=%s", encryptionKeySource)
+	log.Infof("config: using database.encryption_key source=%s", configValues.DatabaseEncryptionKeySource)
+	if configValues.ServerBootstrap != nil {
+		log.Infof("config: using server.bootstrap=%t source=%s",
+			*configValues.ServerBootstrap, configValues.ServerBootstrapSource)
+	}
 
-	configPayload, err := configWithServerDir(opts.App.Config, remoteRoot, encryptionKey)
+	configPayload, err := configWithServerDir(opts.App.Config, remoteRoot, configValues)
 	if err != nil {
 		return err
 	}
@@ -810,8 +821,8 @@ func selectReleaseArtifact(releaseDir, goos, goarch string) (string, error) {
 	return matches[0], nil
 }
 
-func configWithServerDir(path, serverDir, encryptionKey string) ([]byte, error) {
-	if err := validateDatabaseEncryptionKey(encryptionKey); err != nil {
+func configWithServerDir(path, serverDir string, values remoteConfigValues) ([]byte, error) {
+	if err := validateDatabaseEncryptionKey(values.DatabaseEncryptionKey); err != nil {
 		return nil, err
 	}
 	raw, err := os.ReadFile(path)
@@ -832,13 +843,16 @@ func configWithServerDir(path, serverDir, encryptionKey string) ([]byte, error) 
 		appendMappingValue(doc, "server", server)
 	}
 	setMappingScalar(server, "dir", serverDir)
+	if values.ServerBootstrap != nil {
+		setMappingBool(server, "bootstrap", *values.ServerBootstrap)
+	}
 
 	database := mappingValue(doc, "database")
 	if database == nil {
 		database = &yaml.Node{Kind: yaml.MappingNode}
 		appendMappingValue(doc, "database", database)
 	}
-	setMappingScalar(database, "encryption_key", encryptionKey)
+	setMappingScalar(database, "encryption_key", values.DatabaseEncryptionKey)
 	var out bytes.Buffer
 	encoder := yaml.NewEncoder(&out)
 	encoder.SetIndent(4)
@@ -852,29 +866,57 @@ func configWithServerDir(path, serverDir, encryptionKey string) ([]byte, error) 
 }
 
 func encryptionKeyFromConfig(raw []byte) (string, bool, error) {
-	if len(bytes.TrimSpace(raw)) == 0 {
+	values, err := remoteConfigValuesFromConfig(raw)
+	if err != nil {
+		return "", false, err
+	}
+	if values.DatabaseEncryptionKey == "" {
 		return "", false, nil
+	}
+	return values.DatabaseEncryptionKey, true, nil
+}
+
+func remoteConfigValuesFromConfig(raw []byte) (remoteConfigValues, error) {
+	values := remoteConfigValues{}
+	if len(bytes.TrimSpace(raw)) == 0 {
+		return values, nil
 	}
 	var root yaml.Node
 	if err := yaml.Unmarshal(raw, &root); err != nil {
-		return "", false, fmt.Errorf("decode remote config: %w", err)
+		return remoteConfigValues{}, fmt.Errorf("decode remote config: %w", err)
 	}
 	if len(root.Content) == 0 {
-		return "", false, nil
+		return values, nil
 	}
-	database := mappingValue(root.Content[0], "database")
+	doc := root.Content[0]
+	server := mappingValue(doc, "server")
+	if server != nil {
+		bootstrapNode := mappingValue(server, "bootstrap")
+		if bootstrapNode != nil {
+			if bootstrapNode.Kind != yaml.ScalarNode {
+				return remoteConfigValues{}, errors.New("remote server.bootstrap must be a scalar")
+			}
+			var bootstrap bool
+			if err := bootstrapNode.Decode(&bootstrap); err != nil {
+				return remoteConfigValues{}, fmt.Errorf("remote server.bootstrap is invalid: %w", err)
+			}
+			values.ServerBootstrap = &bootstrap
+		}
+	}
+	database := mappingValue(doc, "database")
 	if database == nil {
-		return "", false, nil
+		return values, nil
 	}
 	keyNode := mappingValue(database, "encryption_key")
 	if keyNode == nil || keyNode.Kind != yaml.ScalarNode || strings.TrimSpace(keyNode.Value) == "" {
-		return "", false, nil
+		return values, nil
 	}
 	key := strings.TrimSpace(keyNode.Value)
 	if err := validateDatabaseEncryptionKey(key); err != nil {
-		return "", false, fmt.Errorf("remote database.encryption_key is invalid: %w", err)
+		return remoteConfigValues{}, fmt.Errorf("remote database.encryption_key is invalid: %w", err)
 	}
-	return key, true, nil
+	values.DatabaseEncryptionKey = key
+	return values, nil
 }
 
 func validateDatabaseEncryptionKey(key string) error {
@@ -924,6 +966,18 @@ func setMappingScalar(node *yaml.Node, key, value string) {
 	current.Kind = yaml.ScalarNode
 	current.Tag = "!!str"
 	current.Value = value
+}
+
+func setMappingBool(node *yaml.Node, key string, value bool) {
+	current := mappingValue(node, key)
+	boolValue := strconv.FormatBool(value)
+	if current == nil {
+		appendMappingValue(node, key, &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!bool", Value: boolValue})
+		return
+	}
+	current.Kind = yaml.ScalarNode
+	current.Tag = "!!bool"
+	current.Value = boolValue
 }
 
 type remoteClient struct {
@@ -1001,21 +1055,29 @@ func (r *remoteClient) Info(ctx context.Context) (remoteInfo, error) {
 	return normalizeRemoteOSArch(lines[0], lines[1])
 }
 
-func (r *remoteClient) DatabaseEncryptionKey(ctx context.Context) (string, string, error) {
+func (r *remoteClient) RemoteConfigValues(ctx context.Context) (remoteConfigValues, error) {
 	output, err := r.Run(ctx, "if test -r "+shellQuote(remoteConfDir+"/config.yaml")+"; then cat "+shellQuote(remoteConfDir+"/config.yaml")+"; fi")
 	if err != nil {
-		return "", "", fmt.Errorf("read remote config for database.encryption_key: %w", err)
+		return remoteConfigValues{}, fmt.Errorf("read remote config values: %w", err)
 	}
-	if key, ok, err := encryptionKeyFromConfig([]byte(output)); err != nil {
-		return "", "", err
-	} else if ok {
-		return key, "remote", nil
-	}
-	key, err := generateDatabaseEncryptionKey()
+	values, err := remoteConfigValuesFromConfig([]byte(output))
 	if err != nil {
-		return "", "", err
+		return remoteConfigValues{}, err
 	}
-	return key, "generated", nil
+	if values.DatabaseEncryptionKey != "" {
+		values.DatabaseEncryptionKeySource = "remote"
+	} else {
+		key, err := generateDatabaseEncryptionKey()
+		if err != nil {
+			return remoteConfigValues{}, err
+		}
+		values.DatabaseEncryptionKey = key
+		values.DatabaseEncryptionKeySource = "generated"
+	}
+	if values.ServerBootstrap != nil {
+		values.ServerBootstrapSource = "remote"
+	}
+	return values, nil
 }
 
 func normalizeRemoteOSArch(rawOS, rawCPU string) (remoteInfo, error) {

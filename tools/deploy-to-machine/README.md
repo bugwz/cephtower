@@ -16,8 +16,10 @@
 上传配置前，工具会先读取远端已有的
 `/opt/cephtower/config/config.yaml`。如果其中存在有效的
 `database.encryption_key`，本次上传会继续使用这个值；如果不存在或为空，
-工具会生成新的 32 位 key。即使使用 `--replace conf` 或 `--replace all`，
-也会先读取旧 key 再替换配置文件，避免已有数据库内容无法解密。
+工具会生成新的 32 位 key。如果远端配置已经写入 `server.bootstrap`，本次上传也会
+继续使用远端值，避免初始化完成后的 `false` 被本地模板中的 `true` 覆盖。即使使用
+`--replace conf` 或 `--replace all`，也会先读取这些旧值再替换配置文件，避免已有
+数据库内容无法解密或初始化状态被重置。
 
 ## 使用方式
 
