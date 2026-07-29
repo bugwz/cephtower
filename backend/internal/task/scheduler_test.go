@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -37,19 +38,22 @@ func TestSchedulerDoesNotRunSameTaskConcurrently(t *testing.T) {
 
 	started := make(chan struct{})
 	release := make(chan struct{})
+	var startedOnce sync.Once
 	var running atomic.Int32
 	var maxRunning atomic.Int32
 	err := scheduler.Register("test", time.Now(), Every(10*time.Millisecond), func(context.Context) {
 		current := running.Add(1)
+		defer running.Add(-1)
 		for {
 			previous := maxRunning.Load()
 			if current <= previous || maxRunning.CompareAndSwap(previous, current) {
 				break
 			}
 		}
-		close(started)
+		startedOnce.Do(func() {
+			close(started)
+		})
 		<-release
-		running.Add(-1)
 	})
 	if err != nil {
 		t.Fatalf("Register() returned error: %v", err)
