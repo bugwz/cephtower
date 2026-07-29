@@ -1,12 +1,14 @@
 # 部署到机器工具
 
-`deploy-to-machine` 用于把本地 CephTower release 部署到一台远程机器。
+`deploy-to-machine` 用于把本地 CephTower release 部署到一台远程机器，并查看最近
+一次部署机器上的服务日志。
 
 工具会执行 `make release`，连接目标机器获取系统和 CPU 架构，选择匹配的
 `dist/cephtower-*-<goos>-<goarch>` 二进制文件，上传到
 `/opt/cephtower/bin/cephtower`，再把本项目 `config/config.yaml` 改写
 `server.dir=/opt/cephtower` 后上传到 `/opt/cephtower/config/config.yaml`，
-最后在远端后台启动服务。
+最后在远端后台启动服务。服务进程的 stdout/stderr 也会追加到
+`/opt/cephtower/log/cephtower.log`，不会再拆分写入单独的 stdout 日志文件。
 
 部署时会先连接远端机器识别架构，再执行
 `make release TARGET=<goos>/<goarch>`，只构建当前机器需要的二进制。
@@ -23,7 +25,7 @@
 
 ```bash
 cd tools/deploy-to-machine
-go run ./cmd --config config.local.yaml
+go run ./cmd deploy --config config.local.yaml
 ```
 
 配置文件中不指定 `host` 时，工具会自动扫描
@@ -31,14 +33,32 @@ go run ./cmd --config config.local.yaml
 
 ```bash
 cd tools/deploy-to-machine
-go run ./cmd
+go run ./cmd deploy
+```
+
+部署成功后，工具会把本次目标机器信息记录到
+`tools/deploy-to-machine/.state/last-deploy.json`。随后可以观察最近一次部署的服务
+日志：
+
+```bash
+go run ./cmd watch
+```
+
+`watch` 会通过 SSH 连接最近一次部署的机器，持续输出
+`/opt/cephtower/log/cephtower.log`。按 `Ctrl+C` 会结束观测。日志轮转后，`watch`
+会按文件名自动跟随新的 `cephtower.log` 文件，避免一直停留在旧日志文件上。
+
+如果需要直接观察配置文件指定的机器，也可以显式传入配置：
+
+```bash
+go run ./cmd watch --config config.local.yaml
 ```
 
 部署前替换远端目录：
 
 ```bash
-go run ./cmd --replace bin,conf
-go run ./cmd --replace all
+go run ./cmd deploy --replace bin,conf
+go run ./cmd deploy --replace all
 ```
 
 `--replace` 支持 `bin`、`conf`、`data`、`log` 和 `all`。
@@ -60,14 +80,35 @@ YAML 顶层：
 应用配置固定使用仓库根目录下的 `config/config.yaml`，release 产物目录固定使用
 仓库根目录下的 `dist/`。
 
-命令行只提供 `--config` 和 `--replace`：
+命令行提供 `deploy` 和 `watch` 两个子命令，必须显式指定子命令。
 
 ```text
-Usage: deploy-to-machine [--config path] [--replace list]
+Usage: deploy-to-machine <deploy|watch> [command options]
+
+Commands:
+  deploy         build, upload, configure, and start CephTower
+  watch          stream the last deployed service log
+
+Run deploy-to-machine <command> --help for command options.
+```
+
+`deploy` 子命令：
+
+```text
+Usage: deploy-to-machine deploy [--config path] [--replace list]
 
 Options:
   --config path   deploy YAML configuration
   --replace list  remote directories to replace: bin,conf,data,log,all
+```
+
+`watch` 子命令：
+
+```text
+Usage: deploy-to-machine watch [--config path]
+
+Options:
+  --config path   deploy YAML configuration
 ```
 
 工具日志输出到 stderr，格式与 `aliyun-ceph-lab` 一致：

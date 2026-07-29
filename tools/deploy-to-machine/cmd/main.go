@@ -48,11 +48,11 @@ type deployConfig struct {
 }
 
 type targetConfig struct {
-	Host       string `yaml:"host"`
-	Port       int    `yaml:"port"`
-	User       string `yaml:"user"`
-	Password   string `yaml:"password"`
-	KnownHosts string `yaml:"known_hosts"`
+	Host       string `json:"host" yaml:"host"`
+	Port       int    `json:"port" yaml:"port"`
+	User       string `json:"user" yaml:"user"`
+	Password   string `json:"password" yaml:"password"`
+	KnownHosts string `json:"known_hosts" yaml:"known_hosts"`
 }
 
 type appConfig struct {
@@ -60,13 +60,24 @@ type appConfig struct {
 	ReleaseDir string
 }
 
+type commandMode string
+
+const (
+	commandDeploy commandMode = "deploy"
+	commandWatch  commandMode = "watch"
+)
+
 type options struct {
-	RepoRoot   string
-	ToolDir    string
-	ConfigPath string
-	Target     targetConfig
-	App        appConfig
-	Replace    replaceSet
+	Command        commandMode
+	RepoRoot       string
+	ToolDir        string
+	ConfigPath     string
+	ConfigExplicit bool
+	StatePath      string
+	RemoteLogPath  string
+	Target         targetConfig
+	App            appConfig
+	Replace        replaceSet
 }
 
 type labState struct {
@@ -96,6 +107,15 @@ type labNodeSSH struct {
 	Port     int    `json:"port"`
 	User     string `json:"user"`
 	Password string `json:"password"`
+}
+
+type deployState struct {
+	Version       int          `json:"version"`
+	UpdatedAt     time.Time    `json:"updated_at"`
+	Target        targetConfig `json:"target"`
+	RemoteRoot    string       `json:"remote_root"`
+	RemoteLogPath string       `json:"remote_log_path"`
+	PID           string       `json:"pid,omitempty"`
 }
 
 type remoteInfo struct {
@@ -137,7 +157,22 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	if opts.Command == commandWatch && !opts.ConfigExplicit {
+		state, err := loadDeployState(opts.StatePath)
+		if err != nil {
+			return err
+		}
+		opts.Target = state.Target
+		if state.RemoteLogPath != "" {
+			opts.RemoteLogPath = state.RemoteLogPath
+		}
+		log.Infof("watch: using deploy state %s updated_at=%s", opts.StatePath, state.UpdatedAt.Format(time.RFC3339))
+	}
+
 	if opts.Target.Host == "" {
+		if opts.Command == commandWatch {
+			return fmt.Errorf("watch target is not recorded; run deploy-to-machine deploy first")
+		}
 		target, err := chooseLabTarget(opts, stdin, stdout)
 		if err != nil {
 			return err
@@ -155,6 +190,17 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	}
 	defer client.Close()
 
+	switch opts.Command {
+	case commandDeploy:
+		return deploy(ctx, opts, client, stdout, stderr, log)
+	case commandWatch:
+		return watch(ctx, opts, client, stdout, stderr, log)
+	default:
+		return fmt.Errorf("unsupported command %q", opts.Command)
+	}
+}
+
+func deploy(ctx context.Context, opts options, client *remoteClient, stdout, stderr io.Writer, log *logger) error {
 	log.Infof("remote: detecting machine architecture")
 	info, err := client.Info(ctx)
 	if err != nil {
@@ -209,14 +255,44 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		return err
 	}
 
+	state := deployState{
+		Version:       1,
+		UpdatedAt:     time.Now(),
+		Target:        opts.Target,
+		RemoteRoot:    remoteRoot,
+		RemoteLogPath: opts.RemoteLogPath,
+		PID:           pid,
+	}
+	if err := saveDeployState(opts.StatePath, state); err != nil {
+		return err
+	}
+	log.Infof("state: wrote deploy target to %s", opts.StatePath)
 	log.Infof("remote: service started host=%s pid=%s", opts.Target.Host, pid)
+	return nil
+}
+
+func watch(ctx context.Context, opts options, client *remoteClient, stdout, stderr io.Writer, log *logger) error {
+	logPath := opts.RemoteLogPath
+	if logPath == "" {
+		logPath = remoteLogDir + "/cephtower.log"
+	}
+	log.Infof("watch: streaming %s from host=%s; press Ctrl+C to stop", logPath, opts.Target.Host)
+	if err := client.WatchLog(ctx, logPath, stdout, stderr); err != nil {
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			log.Infof("watch: stopped")
+			return nil
+		}
+		return err
+	}
 	return nil
 }
 
 func parseOptions(args []string, repoRoot, toolDir string, output io.Writer) (options, error) {
 	defaults := options{
-		RepoRoot: repoRoot,
-		ToolDir:  toolDir,
+		RepoRoot:      repoRoot,
+		ToolDir:       toolDir,
+		StatePath:     filepath.Join(toolDir, ".state", "last-deploy.json"),
+		RemoteLogPath: remoteLogDir + "/cephtower.log",
 		ConfigPath: firstExistingPath(
 			filepath.Join(toolDir, "config.local.yaml"),
 			filepath.Join(toolDir, "config.yaml"),
@@ -227,17 +303,36 @@ func parseOptions(args []string, repoRoot, toolDir string, output io.Writer) (op
 			ReleaseDir: filepath.Join(repoRoot, "dist"),
 		},
 	}
-	flags := flag.NewFlagSet("deploy-to-machine", flag.ContinueOnError)
-	flags.SetOutput(output)
-	flags.Usage = func() {
-		fmt.Fprintf(flags.Output(), "Usage: deploy-to-machine [--config path] [--replace list]\n\n")
-		fmt.Fprintln(flags.Output(), "Options:")
-		fmt.Fprintf(flags.Output(), "  --config path   deploy YAML configuration (default %s)\n", defaults.ConfigPath)
-		fmt.Fprintln(flags.Output(), "  --replace list  remote directories to replace: bin,conf,data,log,all")
+	command := commandMode("")
+	flagArgs := args
+	if len(args) == 0 {
+		printRootUsage(output)
+		return options{}, errors.New("missing command")
 	}
+	switch args[0] {
+	case "-h", "--help":
+		printRootUsage(output)
+		return options{}, flag.ErrHelp
+	case string(commandDeploy):
+		command = commandDeploy
+		flagArgs = args[1:]
+	case string(commandWatch):
+		command = commandWatch
+		flagArgs = args[1:]
+	default:
+		if strings.HasPrefix(args[0], "-") {
+			printRootUsage(output)
+			return options{}, fmt.Errorf("missing command before %q", args[0])
+		}
+		return options{}, fmt.Errorf("unknown command %q", args[0])
+	}
+	flags := newCommandFlagSet(command, defaults.ConfigPath, output)
 	configPath := flags.String("config", defaults.ConfigPath, "deploy YAML configuration")
-	replaceValue := flags.String("replace", "", "remote directories to replace: bin,conf,data,log,all")
-	if err := flags.Parse(args); err != nil {
+	replaceValue := ""
+	if command == commandDeploy {
+		flags.StringVar(&replaceValue, "replace", "", "remote directories to replace: bin,conf,data,log,all")
+	}
+	if err := flags.Parse(flagArgs); err != nil {
 		return options{}, err
 	}
 	if flags.NArg() != 0 {
@@ -245,6 +340,12 @@ func parseOptions(args []string, repoRoot, toolDir string, output io.Writer) (op
 	}
 
 	opts := defaults
+	opts.Command = command
+	flags.Visit(func(flag *flag.Flag) {
+		if flag.Name == "config" {
+			opts.ConfigExplicit = true
+		}
+	})
 	opts.ConfigPath = resolvePath(*configPath, toolDir)
 	configDir := toolDir
 	if opts.ConfigPath != "" {
@@ -256,7 +357,7 @@ func parseOptions(args []string, repoRoot, toolDir string, output io.Writer) (op
 		opts.Target = mergeDeployConfig(opts.Target, cfg)
 	}
 
-	replace, err := parseReplace(*replaceValue)
+	replace, err := parseReplace(replaceValue)
 	if err != nil {
 		return options{}, err
 	}
@@ -265,6 +366,37 @@ func parseOptions(args []string, repoRoot, toolDir string, output io.Writer) (op
 	opts.App.Config = resolvePath(opts.App.Config, configDir)
 	opts.App.ReleaseDir = resolvePath(opts.App.ReleaseDir, configDir)
 	return opts, nil
+}
+
+func printRootUsage(output io.Writer) {
+	fmt.Fprintln(output, "Usage: deploy-to-machine <deploy|watch> [command options]")
+	fmt.Fprintln(output, "")
+	fmt.Fprintln(output, "Commands:")
+	fmt.Fprintln(output, "  deploy         build, upload, configure, and start CephTower")
+	fmt.Fprintln(output, "  watch          stream the last deployed service log")
+	fmt.Fprintln(output, "")
+	fmt.Fprintln(output, "Run deploy-to-machine <command> --help for command options.")
+}
+
+func newCommandFlagSet(command commandMode, defaultConfigPath string, output io.Writer) *flag.FlagSet {
+	flags := flag.NewFlagSet("deploy-to-machine "+string(command), flag.ContinueOnError)
+	flags.SetOutput(output)
+	flags.Usage = func() {
+		switch command {
+		case commandDeploy:
+			fmt.Fprintln(flags.Output(), "Usage: deploy-to-machine deploy [--config path] [--replace list]")
+			fmt.Fprintln(flags.Output(), "")
+			fmt.Fprintln(flags.Output(), "Options:")
+			fmt.Fprintf(flags.Output(), "  --config path   deploy YAML configuration (default %s)\n", defaultConfigPath)
+			fmt.Fprintln(flags.Output(), "  --replace list  remote directories to replace: bin,conf,data,log,all")
+		case commandWatch:
+			fmt.Fprintln(flags.Output(), "Usage: deploy-to-machine watch [--config path]")
+			fmt.Fprintln(flags.Output(), "")
+			fmt.Fprintln(flags.Output(), "Options:")
+			fmt.Fprintf(flags.Output(), "  --config path   deploy YAML configuration (default %s)\n", defaultConfigPath)
+		}
+	}
+	return flags
 }
 
 func firstExistingPath(paths ...string) string {
@@ -294,6 +426,51 @@ func loadDeployConfig(path string) (deployConfig, error) {
 		return deployConfig{}, fmt.Errorf("decode deploy config %s: %w", path, err)
 	}
 	return cfg, nil
+}
+
+func loadDeployState(path string) (deployState, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return deployState{}, fmt.Errorf("deploy state %s does not exist; run deploy-to-machine deploy first", path)
+		}
+		return deployState{}, fmt.Errorf("read deploy state %s: %w", path, err)
+	}
+	var state deployState
+	if err := json.Unmarshal(raw, &state); err != nil {
+		return deployState{}, fmt.Errorf("decode deploy state %s: %w", path, err)
+	}
+	if state.Version == 0 {
+		return deployState{}, fmt.Errorf("deploy state %s has no version", path)
+	}
+	if err := validateTarget(state.Target); err != nil {
+		return deployState{}, fmt.Errorf("deploy state %s target is invalid: %w", path, err)
+	}
+	return state, nil
+}
+
+func saveDeployState(path string, state deployState) error {
+	if err := validateTarget(state.Target); err != nil {
+		return err
+	}
+	if state.RemoteRoot == "" {
+		state.RemoteRoot = remoteRoot
+	}
+	if state.RemoteLogPath == "" {
+		state.RemoteLogPath = remoteLogDir + "/cephtower.log"
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		return fmt.Errorf("create deploy state directory: %w", err)
+	}
+	payload, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		return fmt.Errorf("encode deploy state: %w", err)
+	}
+	payload = append(payload, '\n')
+	if err := os.WriteFile(path, payload, 0o600); err != nil {
+		return fmt.Errorf("write deploy state %s: %w", path, err)
+	}
+	return nil
 }
 
 func mergeDeployConfig(base targetConfig, override deployConfig) targetConfig {
@@ -932,14 +1109,9 @@ func (r *remoteClient) upload(ctx context.Context, input io.Reader, remotePath s
 }
 
 func (r *remoteClient) Start(ctx context.Context) (string, error) {
-	startScript := "nohup " + shellQuote(remoteBinDir+"/"+appName) +
-		" -config " + shellQuote(remoteConfDir+"/config.yaml") +
-		" >> " + shellQuote(remoteLogDir+"/cephtower.stdout.log") + " 2>&1 < /dev/null & " +
-		"pid=$!; echo \"$pid\" > " + shellQuote(remoteRoot+"/cephtower.pid") +
-		"; sleep 1; kill -0 \"$pid\"; printf '%s' \"$pid\""
 	command := "cd " + shellQuote(remoteRoot) +
 		" && install -d -m 0755 " + shellQuote(remoteLogDir) + " " + shellQuote(remoteDataDir) +
-		" && sh -c " + shellQuote(startScript)
+		" && sh -c " + shellQuote(startServiceCommand())
 	output, err := r.Run(ctx, command)
 	if err != nil {
 		return "", err
@@ -947,20 +1119,42 @@ func (r *remoteClient) Start(ctx context.Context) (string, error) {
 	return strings.TrimSpace(output), nil
 }
 
+func startServiceCommand() string {
+	return "nohup " + shellQuote(remoteBinDir+"/"+appName) +
+		" -config " + shellQuote(remoteConfDir+"/config.yaml") +
+		" >> " + shellQuote(remoteLogDir+"/cephtower.log") + " 2>&1 < /dev/null & " +
+		"pid=$!; echo \"$pid\" > " + shellQuote(remoteRoot+"/cephtower.pid") +
+		"; sleep 1; kill -0 \"$pid\"; printf '%s' \"$pid\""
+}
+
+func (r *remoteClient) WatchLog(ctx context.Context, remotePath string, stdout, stderr io.Writer) error {
+	command := "touch " + shellQuote(remotePath) + " && tail -n +1 -F " + shellQuote(remotePath)
+	_, err := r.runWithOutput(ctx, command, nil, stdout, stderr)
+	return err
+}
+
 func (r *remoteClient) Run(ctx context.Context, command string) (string, error) {
 	return r.run(ctx, command, nil)
 }
 
 func (r *remoteClient) run(ctx context.Context, command string, stdin io.Reader) (string, error) {
+	var stdout, stderr bytes.Buffer
+	_, err := r.runWithOutput(ctx, command, stdin, &stdout, &stderr)
+	if err != nil {
+		return stdout.String(), fmt.Errorf("%w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return stdout.String(), nil
+}
+
+func (r *remoteClient) runWithOutput(ctx context.Context, command string, stdin io.Reader, stdout, stderr io.Writer) (string, error) {
 	session, err := r.client.NewSession()
 	if err != nil {
 		return "", fmt.Errorf("create SSH session: %w", err)
 	}
 	defer session.Close()
 	session.Stdin = stdin
-	var stdout, stderr bytes.Buffer
-	session.Stdout = &stdout
-	session.Stderr = &stderr
+	session.Stdout = stdout
+	session.Stderr = stderr
 	if r.target.User != "root" {
 		command = "sudo -n sh -c " + shellQuote(command)
 	}
@@ -969,13 +1163,13 @@ func (r *remoteClient) run(ctx context.Context, command string, stdin io.Reader)
 	select {
 	case err := <-done:
 		if err != nil {
-			return stdout.String(), fmt.Errorf("remote command failed: %w: %s", err, strings.TrimSpace(stderr.String()))
+			return "", fmt.Errorf("remote command failed: %w", err)
 		}
-		return stdout.String(), nil
+		return "", nil
 	case <-ctx.Done():
 		_ = session.Close()
 		<-done
-		return stdout.String(), ctx.Err()
+		return "", ctx.Err()
 	}
 }
 

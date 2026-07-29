@@ -2,24 +2,73 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
 
-func TestHelpOnlyDocumentsConfigAndReplace(t *testing.T) {
+func TestRootHelpOnlyDocumentsCommands(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	if err := run([]string{"-h"}, strings.NewReader(""), &stdout, &stderr); err != nil {
 		t.Fatal(err)
 	}
 	usage := stdout.String()
-	for _, want := range []string{"--config", "--replace"} {
+	for _, want := range []string{"deploy", "watch", "Run deploy-to-machine <command> --help"} {
 		if !strings.Contains(usage, want) {
 			t.Fatalf("help output missing %q:\n%s", want, usage)
 		}
 	}
+	for _, unwanted := range []string{"--config", "--replace"} {
+		if strings.Contains(usage, unwanted) {
+			t.Fatalf("root help should not document command option %q:\n%s", unwanted, usage)
+		}
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("help wrote to stderr:\n%s", stderr.String())
+	}
+}
+
+func TestCommandHelpDocumentsCommandOptions(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	if err := run([]string{"deploy", "--help"}, strings.NewReader(""), &stdout, &stderr); err != nil {
+		t.Fatal(err)
+	}
+	deployUsage := stdout.String()
+	for _, want := range []string{"Usage: deploy-to-machine deploy", "--config", "--replace"} {
+		if !strings.Contains(deployUsage, want) {
+			t.Fatalf("deploy help output missing %q:\n%s", want, deployUsage)
+		}
+	}
+	stdout.Reset()
+	stderr.Reset()
+	if err := run([]string{"watch", "--help"}, strings.NewReader(""), &stdout, &stderr); err != nil {
+		t.Fatal(err)
+	}
+	watchUsage := stdout.String()
+	for _, want := range []string{"Usage: deploy-to-machine watch", "--config"} {
+		if !strings.Contains(watchUsage, want) {
+			t.Fatalf("watch help output missing %q:\n%s", want, watchUsage)
+		}
+	}
+	if strings.Contains(watchUsage, "--replace") {
+		t.Fatalf("watch help should not document deploy-only option --replace:\n%s", watchUsage)
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("help wrote to stderr:\n%s", stderr.String())
+	}
+}
+
+func TestHelpDoesNotDocumentRemovedOptions(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	if err := run([]string{"deploy", "--help"}, strings.NewReader(""), &stdout, &stderr); err != nil {
+		t.Fatal(err)
+	}
+	usage := stdout.String()
 	for _, unwanted := range []string{
 		"--host",
 		"--port",
@@ -39,6 +88,47 @@ func TestHelpOnlyDocumentsConfigAndReplace(t *testing.T) {
 	}
 }
 
+func TestParseOptionsRecognizesCommands(t *testing.T) {
+	repoRoot := t.TempDir()
+	toolDir := filepath.Join(repoRoot, "tools", "deploy-to-machine")
+	var output bytes.Buffer
+	opts, err := parseOptions([]string{"deploy", "--replace", "bin"}, repoRoot, toolDir, &output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if opts.Command != commandDeploy || !opts.Replace["bin"] {
+		t.Fatalf("unexpected deploy options: %#v", opts)
+	}
+	opts, err = parseOptions([]string{"watch"}, repoRoot, toolDir, &output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if opts.Command != commandWatch {
+		t.Fatalf("expected watch command, got %#v", opts.Command)
+	}
+	if opts.RemoteLogPath != "/opt/cephtower/log/cephtower.log" {
+		t.Fatalf("unexpected log path: %s", opts.RemoteLogPath)
+	}
+	if _, err := parseOptions([]string{"logs"}, repoRoot, toolDir, &output); err == nil {
+		t.Fatal("expected unknown command to fail")
+	}
+}
+
+func TestParseOptionsRequiresCommand(t *testing.T) {
+	repoRoot := t.TempDir()
+	toolDir := filepath.Join(repoRoot, "tools", "deploy-to-machine")
+	var output bytes.Buffer
+	if _, err := parseOptions(nil, repoRoot, toolDir, &output); err == nil || !strings.Contains(err.Error(), "missing command") {
+		t.Fatalf("expected missing command to fail, got %v", err)
+	}
+	if _, err := parseOptions([]string{"--replace", "bin"}, repoRoot, toolDir, &output); err == nil || !strings.Contains(err.Error(), "missing command") {
+		t.Fatalf("expected flag without command to fail, got %v", err)
+	}
+	if _, err := parseOptions([]string{"watch", "--replace", "bin"}, repoRoot, toolDir, &output); err == nil {
+		t.Fatal("expected watch to reject deploy-only --replace")
+	}
+}
+
 func TestParseReplace(t *testing.T) {
 	got, err := parseReplace("bin, conf,config,data,log")
 	if err != nil {
@@ -54,6 +144,38 @@ func TestParseReplace(t *testing.T) {
 	}
 }
 
+func TestSaveAndLoadDeployState(t *testing.T) {
+	path := filepath.Join(t.TempDir(), ".state", "last-deploy.json")
+	state := deployState{
+		Version:       1,
+		Target:        targetConfig{Host: "203.0.113.10", Port: 22, User: "root", Password: "secret", KnownHosts: "/tmp/known_hosts"},
+		RemoteRoot:    remoteRoot,
+		RemoteLogPath: remoteLogDir + "/cephtower.log",
+		PID:           "1234",
+	}
+	if err := saveDeployState(path, state); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload["remote_log_path"] != "/opt/cephtower/log/cephtower.log" {
+		t.Fatalf("unexpected state payload:\n%s", string(raw))
+	}
+	got, err := loadDeployState(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Target.Host != state.Target.Host || got.RemoteLogPath != state.RemoteLogPath {
+		t.Fatalf("unexpected loaded state: %#v", got)
+	}
+}
+
 func TestBackupRemoteRootCommand(t *testing.T) {
 	command := backupRemoteRootCommand()
 	for _, want := range []string{
@@ -64,6 +186,16 @@ func TestBackupRemoteRootCommand(t *testing.T) {
 		if !strings.Contains(command, want) {
 			t.Fatalf("backup command missing %q: %s", want, command)
 		}
+	}
+}
+
+func TestStartScriptWritesAllOutputToCephtowerLog(t *testing.T) {
+	script := startServiceCommand()
+	if !strings.Contains(script, ">> '/opt/cephtower/log/cephtower.log' 2>&1") {
+		t.Fatalf("start command does not append stdout/stderr to cephtower.log: %s", script)
+	}
+	if strings.Contains(script, "cephtower.stdout.log") {
+		t.Fatalf("start command still writes split stdout log: %s", script)
 	}
 }
 
