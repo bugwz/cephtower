@@ -285,7 +285,7 @@ function buildNavItems(sections: NavSection[], includePopupTitle = false): MenuP
       icon: section.icon,
       label: section.label,
       popupClassName: 'sidebar-menu-popup',
-      children: includePopupTitle ? buildPopupNavItems(section) : buildNavChildItems(section.children, includePopupTitle)
+      children: includePopupTitle ? buildPopupNavItems(section) : buildNavChildItems(section.children)
     }
   }) satisfies MenuProps['items']
 }
@@ -304,11 +304,11 @@ function buildPopupNavItems(section: NavSection) {
       className: 'sidebar-menu-popup-divider',
       type: 'divider'
     },
-    ...buildNavChildItems(section.children, true)
+    ...buildNavChildItems(section.children)
   ] satisfies NonNullable<MenuProps['items']>
 }
 
-function buildNavChildItems(children: Array<NavChild | NavChildGroup>, includePopupTitle = false): NonNullable<MenuProps['items']> {
+function buildNavChildItems(children: Array<NavChild | NavChildGroup>): NonNullable<MenuProps['items']> {
   return children.map((item) => {
     if ('children' in item) {
       return {
@@ -316,7 +316,7 @@ function buildNavChildItems(children: Array<NavChild | NavChildGroup>, includePo
         icon: item.icon,
         label: item.label,
         popupClassName: 'sidebar-menu-popup',
-        children: includePopupTitle ? buildPopupNavGroupItems(item) : buildNavChildItems(item.children, includePopupTitle)
+        children: buildNavChildItems(item.children)
       }
     }
 
@@ -327,24 +327,6 @@ function buildNavChildItems(children: Array<NavChild | NavChildGroup>, includePo
       disabled: item.disabled
     }
   })
-}
-
-function buildPopupNavGroupItems(group: NavChildGroup) {
-  return [
-    {
-      key: `${group.key}-popup-title`,
-      className: 'sidebar-menu-popup-title-item',
-      icon: group.icon,
-      label: group.label,
-      disabled: true
-    },
-    {
-      key: `${group.key}-popup-divider`,
-      className: 'sidebar-menu-popup-divider',
-      type: 'divider'
-    },
-    ...buildNavChildItems(group.children, true)
-  ] satisfies NonNullable<MenuProps['items']>
 }
 
 function getDefaultOpenKeys(sections: NavSection[], activePage: PageKey) {
