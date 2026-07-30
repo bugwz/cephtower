@@ -13,6 +13,7 @@ export interface ApiErrorDetail {
   message: string
   status?: number
   path?: string
+  requiresAuthentication?: boolean
 }
 
 export class ApiRequestError extends Error {
@@ -187,7 +188,8 @@ export function toApiErrorDetail(err: unknown, path?: string): ApiErrorDetail {
   return {
     message: formatApiErrorMessage(err),
     status: err instanceof ApiRequestError ? err.status : undefined,
-    path
+    path,
+    requiresAuthentication: err instanceof ApiRequestError && err.status === 401
   }
 }
 

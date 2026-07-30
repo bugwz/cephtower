@@ -1,6 +1,6 @@
 import { ConfigProvider, theme } from 'antd'
 import type React from 'react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { currentUser, hasStoredToken, logout, setupStatus, type SetupDatabaseConfig, type UserAccount } from './api/auth'
 import { ApiErrorNotifier } from './components/ApiErrorNotifier'
@@ -21,6 +21,7 @@ export default function App() {
   const [checkingSession, setCheckingSession] = useState(true)
   const [setupRequired, setSetupRequired] = useState(false)
   const [setupDatabase, setSetupDatabase] = useState<SetupDatabaseConfig | undefined>()
+  const handlingAuthenticationRequired = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -74,6 +75,20 @@ export default function App() {
     setUser(null)
     navigate('/login', { replace: true })
   }
+
+  const handleAuthenticationRequired = useCallback(() => {
+    if (handlingAuthenticationRequired.current) {
+      return
+    }
+
+    handlingAuthenticationRequired.current = true
+    logout()
+    setUser(null)
+    navigate('/login', { replace: true })
+    window.setTimeout(() => {
+      handlingAuthenticationRequired.current = false
+    }, 0)
+  }, [navigate])
 
   function handleSetupComplete() {
     logout()
@@ -149,7 +164,7 @@ export default function App() {
         }
       }}
     >
-      <ApiErrorNotifier />
+      <ApiErrorNotifier onAuthenticationRequired={handleAuthenticationRequired} />
       <ClusterProvider enabled={Boolean(user)}>
         {checkingSession ? (
           <div className="session-check" aria-label="正在检查系统状态" aria-busy="true" />
