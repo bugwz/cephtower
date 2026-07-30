@@ -86,23 +86,23 @@ const definitions: Record<
     path: '/filesystems',
     requiredCapabilities: ['cephfs_volume'],
     createAction: {
-      title: '新建 CephFS',
+      title: '新建 CephFS 文件系统',
       buttonLabel: '新建文件系统',
       path: '/filesystem',
       method: 'POST',
-      successMessage: 'CephFS 创建执行成功',
+      successMessage: 'CephFS 文件系统创建执行成功',
       fields: [
         { name: 'name', label: '文件系统名称', required: true }
       ],
       buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? '') })
     },
     updateAction: {
-      title: '更新 CephFS',
+      title: '更新 CephFS 文件系统',
       path: '/filesystem',
       method: 'PATCH',
-      successMessage: 'CephFS 更新执行成功',
+      successMessage: 'CephFS 文件系统更新执行成功',
       fields: [
-        { name: 'max_mds', label: 'Max MDS', type: 'number', required: true, min: 1 }
+        { name: 'max_mds', label: '最大 MDS 数', type: 'number', required: true, min: 1 }
       ],
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
@@ -111,11 +111,11 @@ const definitions: Record<
       })
     },
     deleteAction: {
-      title: '删除 CephFS',
+      title: '删除 CephFS 文件系统',
       path: '/filesystem',
       action: 'filesystem.delete',
       resourceKind: 'filesystem',
-      successMessage: 'CephFS 删除执行成功',
+      successMessage: 'CephFS 文件系统删除执行成功',
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, fs: resourceName(row) }),
       resourceKey: (row) => `filesystem/${resourceName(row)}`
     },
@@ -129,68 +129,68 @@ const definitions: Record<
     ]
   },
   cephfsClients: {
-    title: 'CephFS Clients',
+    title: 'CephFS 客户端',
     path: '/filesystem/clients',
     requiredCapabilities: ['cephfs_volume'],
     rowKeyCandidates: ['natural_key', 'client_id', 'id'],
     deleteAction: {
-      title: '驱逐 CephFS Client',
+      title: '驱逐 CephFS 客户端',
       path: '/filesystem/client',
       action: 'cephfs_client.evict',
       resourceKind: 'cephfs_client',
-      successMessage: 'CephFS Client 驱逐执行成功',
+      successMessage: 'CephFS 客户端驱逐执行成功',
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, fs: fsName(row), client_id: clientId(row) }),
       resourceKey: (row) => `filesystem/${fsName(row)}/client/${clientId(row)}`
     },
     columns: [
-      { key: 'fs', title: 'FS' },
-      { key: 'filesystem', title: 'Filesystem' },
-      { key: 'client_id', title: 'Client ID' },
+      { key: 'fs', title: '文件系统' },
+      { key: 'filesystem', title: '文件系统名称' },
+      { key: 'client_id', title: '客户端 ID' },
       { key: 'hostname', title: '主机' },
-      { key: 'root', title: 'Root' },
+      { key: 'root', title: '根路径' },
       { key: 'state', title: '状态' },
       { key: 'resource_version', title: '版本' }
     ]
   },
   subvolumeGroups: {
-    title: 'Subvolume Groups',
+    title: '子卷组',
     path: '/filesystem/subvolume/groups',
     requiredCapabilities: ['cephfs_volume'],
     rowKeyCandidates: ['natural_key', 'name'],
     createAction: {
-      title: '新建 Subvolume Group',
-      buttonLabel: '新建 Group',
+      title: '新建子卷组',
+      buttonLabel: '新建子卷组',
       path: '/filesystem/subvolume/group',
       method: 'POST',
-      successMessage: 'Subvolume Group 创建执行成功',
+      successMessage: '子卷组创建执行成功',
       fields: [
-        { name: 'fs', label: 'Filesystem', required: true },
-        { name: 'name', label: 'Group 名称', required: true }
+        { name: 'fs', label: '文件系统', required: true },
+        { name: 'name', label: '子卷组名称', required: true }
       ],
       buildBody: (values, clusterId) => ({ cluster_id: clusterId, fs: String(values.fs ?? ''), name: String(values.name ?? '') })
     },
     updateAction: {
-      title: '更新 Subvolume Group',
+      title: '更新子卷组',
       path: '/filesystem/subvolume/group',
       method: 'PATCH',
-      successMessage: 'Subvolume Group 更新执行成功',
+      successMessage: '子卷组更新执行成功',
       fields: [
-        { name: 'size', label: '大小 bytes', type: 'number', required: true, min: 1 }
+        { name: 'size', label: '大小（字节）', type: 'number', required: true, min: 1 }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, fs: fsName(row), group: groupName(row), size: Number(values.size) })
     },
     deleteAction: {
-      title: '删除 Subvolume Group',
+      title: '删除子卷组',
       path: '/filesystem/subvolume/group',
       action: 'subvolume_group.delete',
       resourceKind: 'subvolume_group',
-      successMessage: 'Subvolume Group 删除执行成功',
+      successMessage: '子卷组删除执行成功',
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, fs: fsName(row), group: groupName(row) }),
       resourceKey: (row) => `filesystem/${fsName(row)}/subvolume-group/${groupName(row)}`
     },
     columns: [
-      { key: 'fs', title: 'FS' },
-      { key: 'filesystem', title: 'Filesystem' },
+      { key: 'fs', title: '文件系统' },
+      { key: 'filesystem', title: '文件系统名称' },
       { key: 'name', title: '名称' },
       { key: 'size', title: '大小' },
       { key: 'bytes_used', title: '已用' },
@@ -198,44 +198,44 @@ const definitions: Record<
     ]
   },
   subvolumes: {
-    title: 'Subvolumes',
+    title: '子卷',
     path: '/filesystem/subvolumes',
     requiredCapabilities: ['cephfs_volume'],
     rowKeyCandidates: ['natural_key', 'name'],
     createAction: {
-      title: '新建 Subvolume',
-      buttonLabel: '新建 Subvolume',
+      title: '新建子卷',
+      buttonLabel: '新建子卷',
       path: '/filesystem/subvolume',
       method: 'POST',
-      successMessage: 'Subvolume 创建执行成功',
+      successMessage: '子卷创建执行成功',
       fields: [
-        { name: 'fs', label: 'Filesystem', required: true },
-        { name: 'name', label: 'Subvolume 名称', required: true }
+        { name: 'fs', label: '文件系统', required: true },
+        { name: 'name', label: '子卷名称', required: true }
       ],
       buildBody: (values, clusterId) => ({ cluster_id: clusterId, fs: String(values.fs ?? ''), name: String(values.name ?? '') })
     },
     updateAction: {
-      title: '更新 Subvolume',
+      title: '更新子卷',
       path: '/filesystem/subvolume',
       method: 'PATCH',
-      successMessage: 'Subvolume 更新执行成功',
+      successMessage: '子卷更新执行成功',
       fields: [
-        { name: 'size', label: '大小 bytes', type: 'number', required: true, min: 1 }
+        { name: 'size', label: '大小（字节）', type: 'number', required: true, min: 1 }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, fs: fsName(row), subvolume: subvolumeName(row), size: Number(values.size) })
     },
     deleteAction: {
-      title: '删除 Subvolume',
+      title: '删除子卷',
       path: '/filesystem/subvolume',
       action: 'subvolume.delete',
       resourceKind: 'subvolume',
-      successMessage: 'Subvolume 删除执行成功',
+      successMessage: '子卷删除执行成功',
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, fs: fsName(row), subvolume: subvolumeName(row) }),
       resourceKey: (row) => `filesystem/${fsName(row)}/subvolume/${subvolumeName(row)}`
     },
     columns: [
-      { key: 'fs', title: 'FS' },
-      { key: 'group', title: 'Group' },
+      { key: 'fs', title: '文件系统' },
+      { key: 'group', title: '子卷组' },
       { key: 'name', title: '名称' },
       { key: 'path', title: '路径' },
       { key: 'size', title: '大小' },
@@ -244,20 +244,20 @@ const definitions: Record<
     ]
   },
   cephfsSnapshots: {
-    title: 'CephFS Snapshots',
+    title: 'CephFS 快照',
     path: '/filesystem/subvolume/snapshots',
     requiredCapabilities: ['cephfs_volume'],
     rowKeyCandidates: ['natural_key', 'name'],
     createAction: {
-      title: '新建 CephFS Snapshot',
-      buttonLabel: '新建 Snapshot',
+      title: '新建 CephFS 快照',
+      buttonLabel: '新建快照',
       path: '/filesystem/subvolume/snapshot',
       method: 'POST',
-      successMessage: 'CephFS Snapshot 创建执行成功',
+      successMessage: 'CephFS 快照创建执行成功',
       fields: [
-        { name: 'fs', label: 'Filesystem', required: true },
-        { name: 'subvolume', label: 'Subvolume', required: true },
-        { name: 'name', label: 'Snapshot 名称', required: true }
+        { name: 'fs', label: '文件系统', required: true },
+        { name: 'subvolume', label: '子卷', required: true },
+        { name: 'name', label: '快照名称', required: true }
       ],
       buildBody: (values, clusterId) => ({
         cluster_id: clusterId,
@@ -267,25 +267,25 @@ const definitions: Record<
       })
     },
     columns: [
-      { key: 'fs', title: 'FS' },
-      { key: 'subvolume', title: 'Subvolume' },
-      { key: 'name', title: 'Snapshot' },
+      { key: 'fs', title: '文件系统' },
+      { key: 'subvolume', title: '子卷' },
+      { key: 'name', title: '快照' },
       { key: 'created_at', title: '创建时间' },
       { key: 'resource_version', title: '版本' }
     ]
   },
   snapshotSchedules: {
-    title: 'Snapshot Schedules',
+    title: '快照计划',
     path: '/filesystem/snapshot/schedules',
     requiredCapabilities: ['cephfs_volume'],
     createAction: {
-      title: '新建 Snapshot Schedule',
-      buttonLabel: '新建 Schedule',
+      title: '新建快照计划',
+      buttonLabel: '新建快照计划',
       path: '/filesystem/snapshot/schedule',
       method: 'POST',
-      successMessage: 'Snapshot Schedule 创建执行成功',
+      successMessage: '快照计划创建执行成功',
       fields: [
-        { name: 'fs', label: 'Filesystem', required: true },
+        { name: 'fs', label: '文件系统', required: true },
         { name: 'path', label: '路径', required: true, placeholder: '/' },
         { name: 'schedule', label: '计划', required: true, placeholder: '1h' }
       ],
@@ -298,7 +298,7 @@ const definitions: Record<
       })
     },
     columns: [
-      { key: 'fs', title: 'FS' },
+      { key: 'fs', title: '文件系统' },
       { key: 'path', title: '路径' },
       { key: 'schedule', title: '计划' },
       { key: 'retention', title: '保留' },
@@ -306,18 +306,18 @@ const definitions: Record<
     ]
   },
   cephfsAuthorizations: {
-    title: 'CephFS Authorizations',
+    title: 'CephFS 访问授权',
     path: '/filesystem/authorizations',
     requiredCapabilities: ['cephfs_volume'],
     createAction: {
-      title: '新建 CephFS Authorization',
+      title: '新建 CephFS 访问授权',
       buttonLabel: '新建授权',
       path: '/filesystem/authorization',
       method: 'POST',
       successMessage: 'CephFS 授权创建执行成功',
       fields: [
-        { name: 'fs', label: 'Filesystem', required: true },
-        { name: 'client', label: 'Client', required: true, placeholder: 'client.app' },
+        { name: 'fs', label: '文件系统', required: true },
+        { name: 'client', label: '客户端', required: true, placeholder: 'client.app' },
         { name: 'path', label: '路径', placeholder: '/' },
         {
           name: 'access',
@@ -340,8 +340,8 @@ const definitions: Record<
       })
     },
     columns: [
-      { key: 'fs', title: 'FS' },
-      { key: 'client', title: 'Client' },
+      { key: 'fs', title: '文件系统' },
+      { key: 'client', title: '客户端' },
       { key: 'path', title: '路径' },
       { key: 'access', title: '权限' },
       { key: 'resource_version', title: '版本' }
@@ -357,7 +357,7 @@ const definitions: Record<
       method: 'PATCH',
       successMessage: '目录配额更新执行成功',
       fields: [
-        { name: 'max_bytes', label: '最大 bytes', type: 'number', required: true, min: 1 }
+        { name: 'max_bytes', label: '最大容量（字节）', type: 'number', required: true, min: 1 }
       ],
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
@@ -367,7 +367,7 @@ const definitions: Record<
       })
     },
     columns: [
-      { key: 'fs', title: 'FS' },
+      { key: 'fs', title: '文件系统' },
       { key: 'path', title: '路径' },
       { key: 'quota', title: '配额' },
       { key: 'bytes_used', title: '已用' },
@@ -375,26 +375,26 @@ const definitions: Record<
     ]
   },
   nfsClusters: {
-    title: 'NFS Cluster',
+    title: 'NFS 集群',
     path: '/nfs/clusters',
     requiredCapabilities: ['nfs'],
     createAction: {
-      title: '新建 NFS Cluster',
-      buttonLabel: '新建 Cluster',
+      title: '新建 NFS 集群',
+      buttonLabel: '新建集群',
       path: '/nfs/cluster',
       method: 'POST',
-      successMessage: 'NFS Cluster 创建执行成功',
+      successMessage: 'NFS 集群创建执行成功',
       fields: [
-        { name: 'name', label: 'Cluster 名称', required: true }
+        { name: 'name', label: '集群名称', required: true }
       ],
       buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? '') })
     },
     deleteAction: {
-      title: '删除 NFS Cluster',
+      title: '删除 NFS 集群',
       path: '/nfs/cluster',
       action: 'nfs_cluster.delete',
       resourceKind: 'nfs_cluster',
-      successMessage: 'NFS Cluster 删除执行成功',
+      successMessage: 'NFS 集群删除执行成功',
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, name: resourceName(row) }),
       resourceKey: (row) => `nfs/cluster/${resourceName(row)}`
     },
@@ -407,21 +407,21 @@ const definitions: Record<
     ]
   },
   nfs: {
-    title: 'NFS Export',
+    title: 'NFS 导出',
     path: '/nfs/exports',
     requiredCapabilities: ['nfs'],
     rowKeyCandidates: ['natural_key', 'export_id', 'pseudo', 'name'],
     createAction: {
-      title: '新建 NFS Export',
-      buttonLabel: '新建 Export',
+      title: '新建 NFS 导出',
+      buttonLabel: '新建导出',
       path: '/nfs/export',
       method: 'POST',
-      successMessage: 'NFS Export 创建执行成功',
+      successMessage: 'NFS 导出创建执行成功',
       fields: [
-        { name: 'cluster', label: 'NFS Cluster', required: true },
-        { name: 'pseudo', label: 'Pseudo Path', required: true, placeholder: '/export' },
-        { name: 'path', label: 'CephFS Path', required: true, placeholder: '/data' },
-        { name: 'filesystem', label: 'Filesystem', required: true },
+        { name: 'cluster', label: 'NFS 集群', required: true },
+        { name: 'pseudo', label: '伪路径', required: true, placeholder: '/export' },
+        { name: 'path', label: 'CephFS 路径', required: true, placeholder: '/data' },
+        { name: 'filesystem', label: '文件系统', required: true },
         { name: 'read_only', label: '只读', type: 'boolean' }
       ],
       initialValues: { pseudo: '/export', path: '/', read_only: false },
@@ -435,15 +435,15 @@ const definitions: Record<
       })
     },
     updateAction: {
-      title: '更新 NFS Export',
+      title: '更新 NFS 导出',
       path: '/nfs/export',
       method: 'PATCH',
-      successMessage: 'NFS Export 更新执行成功',
+      successMessage: 'NFS 导出更新执行成功',
       fields: [
-        { name: 'cluster', label: 'NFS Cluster', required: true },
-        { name: 'pseudo', label: 'Pseudo Path', required: true },
-        { name: 'path', label: 'CephFS Path', required: true },
-        { name: 'filesystem', label: 'Filesystem', required: true },
+        { name: 'cluster', label: 'NFS 集群', required: true },
+        { name: 'pseudo', label: '伪路径', required: true },
+        { name: 'path', label: 'CephFS 路径', required: true },
+        { name: 'filesystem', label: '文件系统', required: true },
         { name: 'read_only', label: '只读', type: 'boolean' }
       ],
       initialValues: (row) => ({
@@ -464,37 +464,37 @@ const definitions: Record<
       })
     },
     deleteAction: {
-      title: '删除 NFS Export',
+      title: '删除 NFS 导出',
       path: '/nfs/export',
       action: 'nfs_export.delete',
       resourceKind: 'nfs_export',
-      successMessage: 'NFS Export 删除执行成功',
+      successMessage: 'NFS 导出删除执行成功',
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, export_id: exportId(row) }),
       resourceKey: (row) => `nfs/export/${exportId(row)}`
     },
     columns: [
-      { key: 'export_id', title: 'Export ID' },
-      { key: 'cluster', title: 'Cluster' },
-      { key: 'pseudo', title: 'Pseudo' },
+      { key: 'export_id', title: '导出 ID' },
+      { key: 'cluster', title: '集群' },
+      { key: 'pseudo', title: '伪路径' },
       { key: 'path', title: '路径' },
-      { key: 'filesystem', title: 'Filesystem' },
+      { key: 'filesystem', title: '文件系统' },
       { key: 'read_only', title: '只读' },
       { key: 'status', title: '状态' },
       { key: 'resource_version', title: '版本' }
     ]
   },
   smbClusters: {
-    title: 'SMB Cluster',
+    title: 'SMB 集群',
     path: '/smb/clusters',
     requiredCapabilities: ['smb'],
     createAction: {
-      title: '新建 SMB Cluster',
-      buttonLabel: '新建 Cluster',
+      title: '新建 SMB 集群',
+      buttonLabel: '新建集群',
       path: '/smb/cluster',
       method: 'POST',
-      successMessage: 'SMB Cluster 创建执行成功',
+      successMessage: 'SMB 集群创建执行成功',
       fields: [
-        { name: 'name', label: 'Cluster 名称', required: true },
+        { name: 'name', label: '集群名称', required: true },
         {
           name: 'auth_mode',
           label: '认证模式',
@@ -513,10 +513,10 @@ const definitions: Record<
       })
     },
     updateAction: {
-      title: '更新 SMB Cluster',
+      title: '更新 SMB 集群',
       path: '/smb/cluster',
       method: 'PATCH',
-      successMessage: 'SMB Cluster 更新执行成功',
+      successMessage: 'SMB 集群更新执行成功',
       fields: [
         {
           name: 'auth_mode',
@@ -537,11 +537,11 @@ const definitions: Record<
       })
     },
     deleteAction: {
-      title: '删除 SMB Cluster',
+      title: '删除 SMB 集群',
       path: '/smb/cluster',
       action: 'smb_cluster.delete',
       resourceKind: 'smb_cluster',
-      successMessage: 'SMB Cluster 删除执行成功',
+      successMessage: 'SMB 集群删除执行成功',
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, name: resourceName(row) }),
       resourceKey: (row) => `smb/cluster/${resourceName(row)}`
     },
@@ -554,21 +554,21 @@ const definitions: Record<
     ]
   },
   smb: {
-    title: 'SMB Share',
+    title: 'SMB 共享',
     path: '/smb/shares',
     requiredCapabilities: ['smb'],
     rowKeyCandidates: ['natural_key', 'share_id', 'name'],
     createAction: {
-      title: '新建 SMB Share',
-      buttonLabel: '新建 Share',
+      title: '新建 SMB 共享',
+      buttonLabel: '新建共享',
       path: '/smb/share',
       method: 'POST',
-      successMessage: 'SMB Share 创建执行成功',
+      successMessage: 'SMB 共享创建执行成功',
       fields: [
-        { name: 'cluster', label: 'SMB Cluster', required: true },
-        { name: 'name', label: 'Share 名称', required: true },
-        { name: 'filesystem', label: 'Filesystem', required: true },
-        { name: 'path', label: 'CephFS Path', required: true, placeholder: '/data' }
+        { name: 'cluster', label: 'SMB 集群', required: true },
+        { name: 'name', label: '共享名称', required: true },
+        { name: 'filesystem', label: '文件系统', required: true },
+        { name: 'path', label: 'CephFS 路径', required: true, placeholder: '/data' }
       ],
       initialValues: { path: '/' },
       buildBody: (values, clusterId) => ({
@@ -580,14 +580,14 @@ const definitions: Record<
       })
     },
     updateAction: {
-      title: '更新 SMB Share',
+      title: '更新 SMB 共享',
       path: '/smb/share',
       method: 'PATCH',
-      successMessage: 'SMB Share 更新执行成功',
+      successMessage: 'SMB 共享更新执行成功',
       fields: [
-        { name: 'cluster', label: 'SMB Cluster', required: true },
-        { name: 'filesystem', label: 'Filesystem', required: true },
-        { name: 'path', label: 'CephFS Path' }
+        { name: 'cluster', label: 'SMB 集群', required: true },
+        { name: 'filesystem', label: '文件系统', required: true },
+        { name: 'path', label: 'CephFS 路径' }
       ],
       initialValues: (row) => ({
         cluster: text(row?.cluster),
@@ -603,19 +603,19 @@ const definitions: Record<
       })
     },
     deleteAction: {
-      title: '删除 SMB Share',
+      title: '删除 SMB 共享',
       path: '/smb/share',
       action: 'smb_share.delete',
       resourceKind: 'smb_share',
-      successMessage: 'SMB Share 删除执行成功',
+      successMessage: 'SMB 共享删除执行成功',
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, share_id: shareId(row) }),
       resourceKey: (row) => `smb/share/${shareId(row)}`
     },
     columns: [
-      { key: 'share_id', title: 'Share ID' },
-      { key: 'cluster', title: 'Cluster' },
+      { key: 'share_id', title: '共享 ID' },
+      { key: 'cluster', title: '集群' },
       { key: 'name', title: '名称' },
-      { key: 'filesystem', title: 'Filesystem' },
+      { key: 'filesystem', title: '文件系统' },
       { key: 'path', title: '路径' },
       { key: 'status', title: '状态' },
       { key: 'auth_mode', title: '认证' },

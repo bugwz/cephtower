@@ -188,17 +188,17 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
       { key: 'filePools', label: '存储池', path: '/file/pool', icon: 'pool', permission: 'storage' },
       {
         key: 'cephfs-section',
-        label: '文件系统',
+        label: 'CephFS',
         path: '/file/cephfs',
         icon: 'cephfs',
         children: [
-          { key: 'cephfs', label: '文件系统', path: '/file/cephfs', icon: 'cephfs', permission: 'storage' },
-          { key: 'cephfsClients', label: 'Clients', path: '/file/cephfs/clients', icon: 'user', permission: 'storage' },
-          { key: 'subvolumeGroups', label: 'Subvolume Groups', path: '/file/cephfs/subvolume-groups', icon: 'site', permission: 'storage' },
-          { key: 'subvolumes', label: 'Subvolumes', path: '/file/cephfs/subvolumes', icon: 'file', permission: 'storage' },
-          { key: 'cephfsSnapshots', label: 'Snapshots', path: '/file/cephfs/snapshots', icon: 'logs', permission: 'storage' },
-          { key: 'snapshotSchedules', label: 'Schedules', path: '/file/cephfs/schedules', icon: 'monitor', permission: 'storage' },
-          { key: 'cephfsAuthorizations', label: 'Authorizations', path: '/file/cephfs/authorizations', icon: 'audit', permission: 'storage' },
+          { key: 'cephfs', label: '文件系统列表', path: '/file/cephfs', icon: 'cephfs', permission: 'storage' },
+          { key: 'cephfsClients', label: '客户端', path: '/file/cephfs/clients', icon: 'user', permission: 'storage' },
+          { key: 'subvolumeGroups', label: '子卷组', path: '/file/cephfs/subvolume-groups', icon: 'site', permission: 'storage' },
+          { key: 'subvolumes', label: '子卷', path: '/file/cephfs/subvolumes', icon: 'file', permission: 'storage' },
+          { key: 'cephfsSnapshots', label: '快照', path: '/file/cephfs/snapshots', icon: 'logs', permission: 'storage' },
+          { key: 'snapshotSchedules', label: '快照计划', path: '/file/cephfs/schedules', icon: 'monitor', permission: 'storage' },
+          { key: 'cephfsAuthorizations', label: '访问授权', path: '/file/cephfs/authorizations', icon: 'audit', permission: 'storage' },
           { key: 'cephfsEntries', label: '目录配额', path: '/file/cephfs/entries', icon: 'config', permission: 'storage' }
         ]
       },
@@ -208,8 +208,8 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
         path: '/file/nfs',
         icon: 'nfs',
         children: [
-          { key: 'nfsClusters', label: 'Clusters', path: '/file/nfs/clusters', icon: 'cluster', permission: 'storage' },
-          { key: 'nfs', label: 'Exports', path: '/file/nfs', icon: 'nfs', permission: 'storage' }
+          { key: 'nfsClusters', label: '集群', path: '/file/nfs/clusters', icon: 'cluster', permission: 'storage' },
+          { key: 'nfs', label: '导出', path: '/file/nfs', icon: 'nfs', permission: 'storage' }
         ]
       },
       {
@@ -218,8 +218,8 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
         path: '/file/smb',
         icon: 'smb',
         children: [
-          { key: 'smbClusters', label: 'Clusters', path: '/file/smb/clusters', icon: 'cluster', permission: 'storage' },
-          { key: 'smb', label: 'Shares', path: '/file/smb', icon: 'smb', permission: 'storage' }
+          { key: 'smbClusters', label: '集群', path: '/file/smb/clusters', icon: 'cluster', permission: 'storage' },
+          { key: 'smb', label: '共享', path: '/file/smb', icon: 'smb', permission: 'storage' }
         ]
       }
     ]
