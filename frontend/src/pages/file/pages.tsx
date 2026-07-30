@@ -1,4 +1,3 @@
-import { Card, Tabs } from 'antd'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 
 export function FilePoolsPage() {
@@ -6,51 +5,51 @@ export function FilePoolsPage() {
 }
 
 export function CephfsPage() {
-  return (
-    <Card className="page-surface-card tab-surface-card">
-      <Tabs
-        className="page-tabs"
-        items={[
-          { key: 'filesystems', label: '文件系统', children: <ResourceListPage definition={definitions.cephfs} embedded /> },
-          { key: 'clients', label: 'Clients', children: <ResourceListPage definition={definitions.cephfsClients} embedded /> },
-          { key: 'groups', label: 'Subvolume Groups', children: <ResourceListPage definition={definitions.subvolumeGroups} embedded /> },
-          { key: 'subvolumes', label: 'Subvolumes', children: <ResourceListPage definition={definitions.subvolumes} embedded /> },
-          { key: 'snapshots', label: 'Snapshots', children: <ResourceListPage definition={definitions.cephfsSnapshots} embedded /> },
-          { key: 'schedules', label: 'Schedules', children: <ResourceListPage definition={definitions.snapshotSchedules} embedded /> },
-          { key: 'auth', label: 'Authorizations', children: <ResourceListPage definition={definitions.cephfsAuthorizations} embedded /> },
-          { key: 'entries', label: '目录配额', children: <ResourceListPage definition={definitions.cephfsEntries} embedded /> }
-        ]}
-      />
-    </Card>
-  )
+  return <ResourceListPage definition={definitions.cephfs} />
+}
+
+export function CephfsClientsPage() {
+  return <ResourceListPage definition={definitions.cephfsClients} />
+}
+
+export function SubvolumeGroupsPage() {
+  return <ResourceListPage definition={definitions.subvolumeGroups} />
+}
+
+export function SubvolumesPage() {
+  return <ResourceListPage definition={definitions.subvolumes} />
+}
+
+export function CephfsSnapshotsPage() {
+  return <ResourceListPage definition={definitions.cephfsSnapshots} />
+}
+
+export function SnapshotSchedulesPage() {
+  return <ResourceListPage definition={definitions.snapshotSchedules} />
+}
+
+export function CephfsAuthorizationsPage() {
+  return <ResourceListPage definition={definitions.cephfsAuthorizations} />
+}
+
+export function CephfsEntriesPage() {
+  return <ResourceListPage definition={definitions.cephfsEntries} />
+}
+
+export function NfsClustersPage() {
+  return <ResourceListPage definition={definitions.nfsClusters} />
 }
 
 export function NfsPage() {
-  return (
-    <Card className="page-surface-card tab-surface-card">
-      <Tabs
-        className="page-tabs"
-        items={[
-          { key: 'clusters', label: 'Clusters', children: <ResourceListPage definition={definitions.nfsClusters} embedded /> },
-          { key: 'exports', label: 'Exports', children: <ResourceListPage definition={definitions.nfs} embedded /> }
-        ]}
-      />
-    </Card>
-  )
+  return <ResourceListPage definition={definitions.nfs} />
+}
+
+export function SmbClustersPage() {
+  return <ResourceListPage definition={definitions.smbClusters} />
 }
 
 export function SmbPage() {
-  return (
-    <Card className="page-surface-card tab-surface-card">
-      <Tabs
-        className="page-tabs"
-        items={[
-          { key: 'clusters', label: 'Clusters', children: <ResourceListPage definition={definitions.smbClusters} embedded /> },
-          { key: 'shares', label: 'Shares', children: <ResourceListPage definition={definitions.smb} embedded /> }
-        ]}
-      />
-    </Card>
-  )
+  return <ResourceListPage definition={definitions.smb} />
 }
 
 const definitions: Record<

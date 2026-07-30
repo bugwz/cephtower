@@ -41,7 +41,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { UserAccount } from '../api/auth'
 import { ClusterSelector } from '../components/ClusterSelector'
-import { NAV_SECTIONS, type NavIcon, type PageKey } from '../navigation'
+import { NAV_SECTIONS, type NavChildDefinition, type NavChildGroupDefinition, type NavIcon, type PageKey } from '../navigation'
 
 const { Content, Header, Sider } = Layout
 const { Text } = Typography
@@ -69,6 +69,7 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
   const navSections = buildNavSections(user)
   const navItems = buildNavItems(navSections, sidebarCollapsed)
   const rootMenuKeys = getRootMenuKeys(navSections)
+  const menuParentKeyMap = getMenuParentKeyMap(navSections)
   const defaultOpenKeys = getDefaultOpenKeys(navSections, activePage)
   const defaultOpenKeysKey = defaultOpenKeys.join('|')
   const userDropdownItems: MenuProps['items'] = [
@@ -134,7 +135,7 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
       return
     }
 
-    setMenuOpenKeys((currentOpenKeys) => getSingleOpenMenuKeys(nextOpenKeys, currentOpenKeys, rootMenuKeys))
+    setMenuOpenKeys((currentOpenKeys) => getSingleOpenMenuKeys(nextOpenKeys, currentOpenKeys, rootMenuKeys, menuParentKeyMap))
   }
 
   function handleMenuClick(key: string) {
@@ -253,16 +254,23 @@ type NavChild = {
   disabled?: boolean
 }
 
-type NavSection = {
+type NavChildGroup = {
   key: string
   icon: ReactNode
   label: string
   children: NavChild[]
 }
 
+type NavSection = {
+  key: string
+  icon: ReactNode
+  label: string
+  children: Array<NavChild | NavChildGroup>
+}
+
 function buildNavItems(sections: NavSection[], includePopupTitle = false): MenuProps['items'] {
   return sections.map((section) => {
-    if (section.children.length === 1) {
+    if (section.children.length === 1 && !('children' in section.children[0])) {
       const [item] = section.children
       return {
         key: item.key,
@@ -277,7 +285,7 @@ function buildNavItems(sections: NavSection[], includePopupTitle = false): MenuP
       icon: section.icon,
       label: section.label,
       popupClassName: 'sidebar-menu-popup',
-      children: includePopupTitle ? buildPopupNavItems(section) : buildNavChildItems(section.children)
+      children: includePopupTitle ? buildPopupNavItems(section) : buildNavChildItems(section.children, includePopupTitle)
     }
   }) satisfies MenuProps['items']
 }
@@ -296,38 +304,132 @@ function buildPopupNavItems(section: NavSection) {
       className: 'sidebar-menu-popup-divider',
       type: 'divider'
     },
-    ...buildNavChildItems(section.children)
+    ...buildNavChildItems(section.children, true)
   ] satisfies NonNullable<MenuProps['items']>
 }
 
-function buildNavChildItems(children: NavChild[]) {
-  return children.map((item) => ({
-    key: item.key,
-    icon: item.icon,
-    label: item.label,
-    disabled: item.disabled
-  }))
+function buildNavChildItems(children: Array<NavChild | NavChildGroup>, includePopupTitle = false): NonNullable<MenuProps['items']> {
+  return children.map((item) => {
+    if ('children' in item) {
+      return {
+        key: item.key,
+        icon: item.icon,
+        label: item.label,
+        popupClassName: 'sidebar-menu-popup',
+        children: includePopupTitle ? buildPopupNavGroupItems(item) : buildNavChildItems(item.children, includePopupTitle)
+      }
+    }
+
+    return {
+      key: item.key,
+      icon: item.icon,
+      label: item.label,
+      disabled: item.disabled
+    }
+  })
+}
+
+function buildPopupNavGroupItems(group: NavChildGroup) {
+  return [
+    {
+      key: `${group.key}-popup-title`,
+      className: 'sidebar-menu-popup-title-item',
+      icon: group.icon,
+      label: group.label,
+      disabled: true
+    },
+    {
+      key: `${group.key}-popup-divider`,
+      className: 'sidebar-menu-popup-divider',
+      type: 'divider'
+    },
+    ...buildNavChildItems(group.children, true)
+  ] satisfies NonNullable<MenuProps['items']>
 }
 
 function getDefaultOpenKeys(sections: NavSection[], activePage: PageKey) {
-  const activeSection = sections.find(
-    (section) => section.children.length > 1 && section.children.some((item) => item.key === activePage)
-  )
-  return activeSection ? [activeSection.key] : []
+  for (const section of sections) {
+    if (section.children.length <= 1) {
+      continue
+    }
+
+    const childPath = findOpenPath(section.children, activePage)
+    if (childPath) {
+      return [section.key, ...childPath]
+    }
+  }
+
+  return []
 }
 
 function getRootMenuKeys(sections: NavSection[]) {
   return sections.filter((section) => section.children.length > 1).map((section) => section.key)
 }
 
-function getSingleOpenMenuKeys(nextOpenKeys: string[], currentOpenKeys: string[], rootMenuKeys: string[]) {
-  const latestOpenKey = nextOpenKeys.find((key) => !currentOpenKeys.includes(key))
+function getMenuParentKeyMap(sections: NavSection[]) {
+  const parentKeyMap: Record<string, string> = {}
 
-  if (!latestOpenKey || !rootMenuKeys.includes(latestOpenKey)) {
-    return nextOpenKeys.filter((key) => rootMenuKeys.includes(key)).slice(-1)
+  sections.forEach((section) => {
+    section.children.forEach((child) => {
+      if ('children' in child) {
+        parentKeyMap[child.key] = section.key
+      }
+    })
+  })
+
+  return parentKeyMap
+}
+
+function getSingleOpenMenuKeys(
+  nextOpenKeys: string[],
+  currentOpenKeys: string[],
+  rootMenuKeys: string[],
+  parentKeyMap: Record<string, string>
+) {
+  const latestOpenKey = nextOpenKeys.find((key) => !currentOpenKeys.includes(key))
+  const activeRootKey = latestOpenKey ? getRootMenuKey(latestOpenKey, rootMenuKeys, parentKeyMap) : getLastRootMenuKey(nextOpenKeys, rootMenuKeys)
+
+  if (!activeRootKey) {
+    return []
   }
 
-  return [latestOpenKey]
+  return nextOpenKeys.filter((key) => getRootMenuKey(key, rootMenuKeys, parentKeyMap) === activeRootKey)
+}
+
+function getRootMenuKey(key: string, rootMenuKeys: string[], parentKeyMap: Record<string, string>) {
+  let cursor = key
+  while (parentKeyMap[cursor]) {
+    cursor = parentKeyMap[cursor]
+  }
+
+  return rootMenuKeys.includes(cursor) ? cursor : undefined
+}
+
+function getLastRootMenuKey(openKeys: string[], rootMenuKeys: string[]) {
+  for (let index = openKeys.length - 1; index >= 0; index -= 1) {
+    if (rootMenuKeys.includes(openKeys[index])) {
+      return openKeys[index]
+    }
+  }
+
+  return undefined
+}
+
+function findOpenPath(children: Array<NavChild | NavChildGroup>, activePage: PageKey): string[] | undefined {
+  for (const child of children) {
+    if ('children' in child) {
+      if (child.children.some((item) => item.key === activePage)) {
+        return [child.key]
+      }
+      continue
+    }
+
+    if (child.key === activePage) {
+      return []
+    }
+  }
+
+  return undefined
 }
 
 function didPointerActuallyMove(movementX: number, movementY: number) {
@@ -370,12 +472,29 @@ function buildNavSections(user: UserAccount): NavSection[] {
     key: section.key,
     icon: renderNavIcon(section.icon),
     label: section.label,
-    children: section.children.map((item) => ({
+    children: section.children.map(renderNavChild)
+  }))
+}
+
+function renderNavChild(item: NavChildDefinition | NavChildGroupDefinition): NavChild | NavChildGroup {
+  if ('children' in item) {
+    return {
       key: item.key,
       icon: renderNavIcon(item.icon),
-      label: item.label
-    }))
-  }))
+      label: item.label,
+      children: item.children.map(renderNavChildDefinition)
+    }
+  }
+
+  return renderNavChildDefinition(item)
+}
+
+function renderNavChildDefinition(item: NavChildDefinition): NavChild {
+  return {
+    key: item.key,
+    icon: renderNavIcon(item.icon),
+    label: item.label
+  }
 }
 
 function isAdminRole(role: string) {

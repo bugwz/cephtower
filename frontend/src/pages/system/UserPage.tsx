@@ -1,5 +1,5 @@
 import { DeleteOutlined, PlusOutlined, ReloadOutlined, SaveOutlined, TeamOutlined, UserAddOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, Popconfirm, Select, Space, Table, Tabs, Tag, Typography } from 'antd'
+import { Button, Card, Form, Input, Popconfirm, Select, Space, Table, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { createUser, listUsers, type UserAccount, type UserRole } from '../../api/auth'
 import {
@@ -18,6 +18,8 @@ import { message } from '../../utils/appMessage'
 
 const { Text } = Typography
 
+export type UserPageView = 'users' | 'roles' | 'bindings'
+
 const roleOptions: Array<{ label: string; value: UserRole }> = [
   { label: 'Cluster Admin', value: 'cluster-admin' },
   { label: 'Security Admin', value: 'security-admin' },
@@ -26,7 +28,7 @@ const roleOptions: Array<{ label: string; value: UserRole }> = [
   { label: 'Viewer', value: 'viewer' }
 ]
 
-export function UserPage() {
+export function UserPage({ view = 'users' }: { view?: UserPageView }) {
   const { selectedClusterId } = useClusterContext()
   const [users, setUsers] = useState<UserAccount[]>([])
   const [roles, setRoles] = useState<RoleView[]>([])
@@ -131,6 +133,92 @@ export function UserPage() {
     message.success('集群授权已删除')
   }
 
+  function renderUserManagementView() {
+    if (view === 'roles') {
+      return (
+        <Space direction="vertical" size={16} className="page-stack">
+          <Space>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateRoleOpen(true)}>新建角色</Button>
+          </Space>
+          <Table<RoleView>
+            size="middle"
+            rowKey="id"
+            dataSource={roles}
+            pagination={{ pageSize: 8, showSizeChanger: false }}
+            columns={[
+              { title: '角色', dataIndex: 'name' },
+              { title: '描述', dataIndex: 'description', render: (value) => value || '-' },
+              { title: '创建时间', dataIndex: 'created_at', render: formatTime }
+            ]}
+          />
+        </Space>
+      )
+    }
+
+    if (view === 'bindings') {
+      return (
+        <Space direction="vertical" size={16} className="page-stack">
+          <Space>
+            <Button type="primary" icon={<TeamOutlined />} disabled={!selectedClusterId} onClick={() => setBindingOpen(true)}>新建授权</Button>
+          </Space>
+          <Table<RoleBindingView>
+            size="middle"
+            rowKey="role_binding_id"
+            dataSource={bindings}
+            pagination={{ pageSize: 8, showSizeChanger: false }}
+            columns={[
+              { title: '用户', dataIndex: 'username' },
+              { title: 'User ID', dataIndex: 'user_id' },
+              { title: '角色', dataIndex: 'role', render: (role) => <Tag color="geekblue">{role}</Tag> },
+              { title: '创建时间', dataIndex: 'created_at', render: formatTime },
+              {
+                title: '操作',
+                width: 120,
+                render: (_, row) => (
+                  <Popconfirm title="删除集群授权" okText="删除" cancelText="取消" onConfirm={() => removeBinding(row)}>
+                    <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
+                  </Popconfirm>
+                )
+              }
+            ]}
+          />
+        </Space>
+      )
+    }
+
+    return (
+      <Space direction="vertical" size={16} className="page-stack">
+        <Space>
+          <Button type="primary" icon={<UserAddOutlined />} onClick={() => setCreateUserOpen(true)}>新建用户</Button>
+        </Space>
+        <Table<UserAccount>
+          size="middle"
+          rowKey="id"
+          dataSource={users}
+          pagination={{ pageSize: 8, showSizeChanger: false }}
+          scroll={{ x: 980 }}
+          columns={[
+            {
+              title: '用户',
+              key: 'user',
+              render: (_, user) => (
+                <Space direction="vertical" size={0}>
+                  <Text strong>{user.display_name || user.username}</Text>
+                  <Text type="secondary">{user.username}</Text>
+                </Space>
+              )
+            },
+            { title: '邮箱', dataIndex: 'email', render: (value) => value || '-' },
+            { title: '默认角色', dataIndex: 'role', render: (role) => <Tag color="blue">{role}</Tag> },
+            { title: '状态', dataIndex: 'enabled', render: (enabled) => <Tag color={enabled ? 'success' : 'default'}>{enabled ? '启用' : '停用'}</Tag> },
+            { title: '最近登录', dataIndex: 'last_login_at', render: formatTime },
+            { title: '创建时间', dataIndex: 'created_at', render: formatTime }
+          ]}
+        />
+      </Space>
+    )
+  }
+
   return (
     <Page title="用户管理" loading={loading} error={error}>
       <Card
@@ -138,99 +226,7 @@ export function UserPage() {
         title="用户、角色与集群授权"
         extra={<Button icon={<ReloadOutlined />} loading={loading} onClick={load}>刷新</Button>}
       >
-        <Tabs
-          items={[
-            {
-              key: 'users',
-              label: '用户',
-              children: (
-                <Space direction="vertical" size={16} className="page-stack">
-                  <Space>
-                    <Button type="primary" icon={<UserAddOutlined />} onClick={() => setCreateUserOpen(true)}>新建用户</Button>
-                  </Space>
-                  <Table<UserAccount>
-                    size="middle"
-                    rowKey="id"
-                    dataSource={users}
-                    pagination={{ pageSize: 8, showSizeChanger: false }}
-                    scroll={{ x: 980 }}
-                    columns={[
-                      {
-                        title: '用户',
-                        key: 'user',
-                        render: (_, user) => (
-                          <Space direction="vertical" size={0}>
-                            <Text strong>{user.display_name || user.username}</Text>
-                            <Text type="secondary">{user.username}</Text>
-                          </Space>
-                        )
-                      },
-                      { title: '邮箱', dataIndex: 'email', render: (value) => value || '-' },
-                      { title: '默认角色', dataIndex: 'role', render: (role) => <Tag color="blue">{role}</Tag> },
-                      { title: '状态', dataIndex: 'enabled', render: (enabled) => <Tag color={enabled ? 'success' : 'default'}>{enabled ? '启用' : '停用'}</Tag> },
-                      { title: '最近登录', dataIndex: 'last_login_at', render: formatTime },
-                      { title: '创建时间', dataIndex: 'created_at', render: formatTime }
-                    ]}
-                  />
-                </Space>
-              )
-            },
-            {
-              key: 'roles',
-              label: '角色',
-              children: (
-                <Space direction="vertical" size={16} className="page-stack">
-                  <Space>
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateRoleOpen(true)}>新建角色</Button>
-                  </Space>
-                  <Table<RoleView>
-                    size="middle"
-                    rowKey="id"
-                    dataSource={roles}
-                    pagination={{ pageSize: 8, showSizeChanger: false }}
-                    columns={[
-                      { title: '角色', dataIndex: 'name' },
-                      { title: '描述', dataIndex: 'description', render: (value) => value || '-' },
-                      { title: '创建时间', dataIndex: 'created_at', render: formatTime }
-                    ]}
-                  />
-                </Space>
-              )
-            },
-            {
-              key: 'bindings',
-              label: '集群授权',
-              children: (
-                <Space direction="vertical" size={16} className="page-stack">
-                  <Space>
-                    <Button type="primary" icon={<TeamOutlined />} disabled={!selectedClusterId} onClick={() => setBindingOpen(true)}>新建授权</Button>
-                  </Space>
-                  <Table<RoleBindingView>
-                    size="middle"
-                    rowKey="role_binding_id"
-                    dataSource={bindings}
-                    pagination={{ pageSize: 8, showSizeChanger: false }}
-                    columns={[
-                      { title: '用户', dataIndex: 'username' },
-                      { title: 'User ID', dataIndex: 'user_id' },
-                      { title: '角色', dataIndex: 'role', render: (role) => <Tag color="geekblue">{role}</Tag> },
-                      { title: '创建时间', dataIndex: 'created_at', render: formatTime },
-                      {
-                        title: '操作',
-                        width: 120,
-                        render: (_, row) => (
-                          <Popconfirm title="删除集群授权" okText="删除" cancelText="取消" onConfirm={() => removeBinding(row)}>
-                            <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
-                          </Popconfirm>
-                        )
-                      }
-                    ]}
-                  />
-                </Space>
-              )
-            }
-          ]}
-        />
+        {renderUserManagementView()}
       </Card>
 
       <DraggableModal

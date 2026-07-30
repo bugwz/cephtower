@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Modal, Tabs } from 'antd'
+import { Alert, Button, Modal } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'
 import { mutateResource } from '../../api/resource'
 import { useFeatureRequirements } from '../../hooks/useFeatureRequirements'
@@ -13,32 +13,23 @@ export function RgwOverviewPage() {
 }
 
 export function RgwUsersPage() {
-  return (
-    <Card className="page-surface-card tab-surface-card">
-      <Tabs
-        className="page-tabs"
-        items={[
-          { key: 'users', label: '用户', children: <ResourceListPage definition={definitions.rgwUsers} embedded /> },
-          { key: 'accounts', label: 'Accounts', children: <ResourceListPage definition={definitions.rgwAccounts} embedded /> },
-          { key: 'roles', label: 'Roles', children: <ResourceListPage definition={definitions.rgwRoles} embedded /> }
-        ]}
-      />
-    </Card>
-  )
+  return <ResourceListPage definition={definitions.rgwUsers} />
+}
+
+export function RgwAccountsPage() {
+  return <ResourceListPage definition={definitions.rgwAccounts} />
+}
+
+export function RgwRolesPage() {
+  return <ResourceListPage definition={definitions.rgwRoles} />
 }
 
 export function BucketManagementPage() {
-  return (
-    <Card className="page-surface-card tab-surface-card">
-      <Tabs
-        className="page-tabs"
-        items={[
-          { key: 'buckets', label: 'Buckets', children: <ResourceListPage definition={definitions.bucketManagement} embedded /> },
-          { key: 'policy', label: 'Policy', children: <ExternalListPage definition={externalDefinitions.bucketPolicy} embedded /> }
-        ]}
-      />
-    </Card>
-  )
+  return <ResourceListPage definition={definitions.bucketManagement} />
+}
+
+export function BucketPolicyPage() {
+  return <ExternalListPage definition={externalDefinitions.bucketPolicy} />
 }
 
 export function GatewayManagementPage() {
@@ -46,19 +37,19 @@ export function GatewayManagementPage() {
 }
 
 export function MultisitePage() {
-  return (
-    <Card className="page-surface-card tab-surface-card">
-      <Tabs
-        className="page-tabs"
-        items={[
-          { key: 'realms', label: 'Realms', children: <ResourceListPage definition={definitions.multisite} embedded /> },
-          { key: 'zonegroups', label: 'ZoneGroups', children: <ResourceListPage definition={definitions.rgwZonegroups} embedded /> },
-          { key: 'zones', label: 'Zones', children: <ResourceListPage definition={definitions.rgwZones} embedded /> },
-          { key: 'period', label: 'Period', children: <PeriodCommitPanel /> }
-        ]}
-      />
-    </Card>
-  )
+  return <ResourceListPage definition={definitions.multisite} />
+}
+
+export function RgwZonegroupsPage() {
+  return <ResourceListPage definition={definitions.rgwZonegroups} />
+}
+
+export function RgwZonesPage() {
+  return <ResourceListPage definition={definitions.rgwZones} />
+}
+
+export function RgwPeriodPage() {
+  return <PeriodCommitPanel />
 }
 
 export function ObjectStorageConfigPage() {

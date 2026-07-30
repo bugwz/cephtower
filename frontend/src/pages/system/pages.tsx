@@ -7,7 +7,15 @@ export function SystemInfoPage() {
 }
 
 export function SystemUsersPage() {
-  return <UserPage />
+  return <UserPage view="users" />
+}
+
+export function SystemRolesPage() {
+  return <UserPage view="roles" />
+}
+
+export function SystemRoleBindingsPage() {
+  return <UserPage view="bindings" />
 }
 
 export function DataManagementPage() {

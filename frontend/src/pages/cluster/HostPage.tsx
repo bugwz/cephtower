@@ -1,8 +1,8 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, Modal, Select, Space, Tabs, Tag } from 'antd'
+import { Button, Card, Form, Input, Modal, Select, Space } from 'antd'
 import { useCallback, useState } from 'react'
 import { textValue, type ApiRecord } from '../../api/client'
-import { listHosts, listOSDFlags, listOSDs, mutateResource, refreshResource } from '../../api/resource'
+import { listHosts, mutateResource, refreshResource } from '../../api/resource'
 import { DataTable } from '../../components/DataTable'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
@@ -22,10 +22,10 @@ export function HostPage() {
   const { selectedClusterId } = useClusterContext()
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
-      return { hosts: [], osds: [], flags: [] }
+      return { hosts: [] }
     }
-    const [hosts, osds, flags] = await Promise.all([listHosts(), listOSDs(), listOSDFlags()])
-    return { hosts, osds, flags }
+    const hosts = await listHosts()
+    return { hosts }
   }, [selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [form] = Form.useForm<HostFormValues>()
@@ -46,7 +46,7 @@ export function HostPage() {
     }
     setRefreshingHosts(true)
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['host', 'osd', 'osd_flag'] }), '主机数据刷新已触发')
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['host'] }), '主机数据刷新已触发')
       await refresh()
     } finally {
       setRefreshingHosts(false)
@@ -162,78 +162,32 @@ export function HostPage() {
           </Space>
         }
       >
-        <Tabs
-          items={[
+        <DataTable
+          data={data?.hosts ?? []}
+          rowKeyCandidates={['hostname', 'addr']}
+          columns={[
+            { key: 'hostname', title: '主机名' },
+            { key: 'addr', title: '地址' },
+            { key: 'status', title: '状态' },
+            { key: 'ceph_version', title: 'Ceph 版本' },
+            { key: 'labels', title: '标签' },
+            { key: 'service_instances', title: '服务实例' },
             {
-              key: 'hosts',
-              label: '主机',
-              children: (
-                <div className="embedded-panel">
-                <DataTable
-                  data={data?.hosts ?? []}
-                  rowKeyCandidates={['hostname', 'addr']}
-                  columns={[
-                    { key: 'hostname', title: '主机名' },
-                    { key: 'addr', title: '地址' },
-                    { key: 'status', title: '状态' },
-                    { key: 'ceph_version', title: 'Ceph 版本' },
-                    { key: 'labels', title: '标签' },
-                    { key: 'service_instances', title: '服务实例' },
-                    {
-                      key: 'actions',
-                      title: '操作',
-                      render: (_, row) => {
-                        const name = hostName(row)
-                        return (
-                          <Space>
-                            <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(row)}>编辑</Button>
-                            <Button size="small" loading={pendingAction === `${name}:maintenance_enter`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:maintenance_enter`} onClick={() => runHostAction(row, 'maintenance_enter')}>维护</Button>
-                            <Button size="small" loading={pendingAction === `${name}:maintenance_exit`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:maintenance_exit`} onClick={() => runHostAction(row, 'maintenance_exit')}>退出维护</Button>
-                            <Button size="small" loading={pendingAction === `${name}:drain`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:drain`} onClick={() => runHostAction(row, 'drain')}>Drain</Button>
-                            <Button size="small" loading={pendingAction === `${name}:rescan`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:rescan`} onClick={() => runHostAction(row, 'rescan')}>Rescan</Button>
-                            <Button size="small" danger icon={<DeleteOutlined />} disabled={Boolean(pendingAction)} onClick={() => deleteHost(row)}>删除</Button>
-                          </Space>
-                        )
-                      }
-                    }
-                  ]}
-                />
-                </div>
-              )
-            },
-            {
-              key: 'osds',
-              label: 'OSD',
-              children: (
-                <div className="embedded-panel">
-                <DataTable
-                  data={data?.osds ?? []}
-                  rowKeyCandidates={['id', 'osd', 'service_id', 'name']}
-                  columns={[
-                    { key: 'id', title: 'ID' },
-                    { key: 'host', title: '主机' },
-                    { key: 'state', title: '状态' },
-                    { key: 'up', title: 'Up' },
-                    { key: 'in', title: 'In' },
-                    { key: 'device_class', title: '设备类型' },
-                    { key: 'stats', title: '容量/统计' }
-                  ]}
-                />
-                </div>
-              )
-            },
-            {
-              key: 'flags',
-              label: 'OSD Flags',
-              children: (
-                <div className="embedded-panel">
-                {(data?.flags ?? []).length ? (
-                  data?.flags.map((flag) => <Tag key={flag}>{flag}</Tag>)
-                ) : (
-                  <span className="muted">未设置 OSD flags</span>
-                )}
-                </div>
-              )
+              key: 'actions',
+              title: '操作',
+              render: (_, row) => {
+                const name = hostName(row)
+                return (
+                  <Space>
+                    <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(row)}>编辑</Button>
+                    <Button size="small" loading={pendingAction === `${name}:maintenance_enter`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:maintenance_enter`} onClick={() => runHostAction(row, 'maintenance_enter')}>维护</Button>
+                    <Button size="small" loading={pendingAction === `${name}:maintenance_exit`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:maintenance_exit`} onClick={() => runHostAction(row, 'maintenance_exit')}>退出维护</Button>
+                    <Button size="small" loading={pendingAction === `${name}:drain`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:drain`} onClick={() => runHostAction(row, 'drain')}>Drain</Button>
+                    <Button size="small" loading={pendingAction === `${name}:rescan`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:rescan`} onClick={() => runHostAction(row, 'rescan')}>Rescan</Button>
+                    <Button size="small" danger icon={<DeleteOutlined />} disabled={Boolean(pendingAction)} onClick={() => deleteHost(row)}>删除</Button>
+                  </Space>
+                )
+              }
             }
           ]}
         />

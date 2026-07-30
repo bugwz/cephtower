@@ -9,18 +9,42 @@ export type PageKey =
   | 'mdsManagement'
   | 'blockPools'
   | 'rbdImages'
+  | 'rbdSnapshots'
+  | 'rbdNamespaces'
+  | 'rbdTrash'
+  | 'rbdGroups'
   | 'imageMirroring'
   | 'iscsi'
+  | 'nvmeGateway'
   | 'nvmeTcp'
+  | 'nvmeNamespaces'
+  | 'nvmeListeners'
+  | 'nvmeHosts'
+  | 'nvmeConnections'
   | 'filePools'
   | 'cephfs'
+  | 'cephfsClients'
+  | 'subvolumeGroups'
+  | 'subvolumes'
+  | 'cephfsSnapshots'
+  | 'snapshotSchedules'
+  | 'cephfsAuthorizations'
+  | 'cephfsEntries'
+  | 'nfsClusters'
   | 'nfs'
+  | 'smbClusters'
   | 'smb'
   | 'rgwOverview'
   | 'rgwUsers'
+  | 'rgwAccounts'
+  | 'rgwRoles'
   | 'bucketManagement'
+  | 'bucketPolicy'
   | 'gatewayManagement'
   | 'multisite'
+  | 'rgwZonegroups'
+  | 'rgwZones'
+  | 'rgwPeriod'
   | 'objectStorageConfig'
   | 'monitorOverview'
   | 'performanceMetrics'
@@ -30,6 +54,8 @@ export type PageKey =
   | 'alertSilences'
   | 'systemInfo'
   | 'systemUsers'
+  | 'systemRoles'
+  | 'systemRoleBindings'
   | 'dataManagement'
   | 'auditEvents'
 
@@ -76,12 +102,20 @@ export type NavChildDefinition = {
   permission: 'cluster' | 'storage' | 'system'
 }
 
-export type NavSectionDefinition = {
+export type NavChildGroupDefinition = {
   key: string
   label: string
   path: string
   icon: NavIcon
   children: NavChildDefinition[]
+}
+
+export type NavSectionDefinition = {
+  key: string
+  label: string
+  path: string
+  icon: NavIcon
+  children: Array<NavChildDefinition | NavChildGroupDefinition>
 }
 
 export const NAV_SECTIONS: NavSectionDefinition[] = [
@@ -114,10 +148,35 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     icon: 'block',
     children: [
       { key: 'blockPools', label: '存储池', path: '/block/pool', icon: 'pool', permission: 'storage' },
-      { key: 'rbdImages', label: 'RBD 镜像', path: '/block/rbd-image', icon: 'rbd', permission: 'storage' },
+      {
+        key: 'rbd-image-section',
+        label: 'RBD 镜像',
+        path: '/block/rbd-image',
+        icon: 'rbd',
+        children: [
+          { key: 'rbdImages', label: '镜像', path: '/block/rbd-image', icon: 'rbd', permission: 'storage' },
+          { key: 'rbdSnapshots', label: '快照', path: '/block/rbd-snapshot', icon: 'logs', permission: 'storage' },
+          { key: 'rbdNamespaces', label: '命名空间', path: '/block/rbd-namespace', icon: 'cephfs', permission: 'storage' },
+          { key: 'rbdTrash', label: '回收站', path: '/block/rbd-trash', icon: 'silence', permission: 'storage' },
+          { key: 'rbdGroups', label: '镜像组', path: '/block/rbd-group', icon: 'site', permission: 'storage' }
+        ]
+      },
       { key: 'imageMirroring', label: '镜像同步', path: '/block/mirroring', icon: 'sync', permission: 'storage' },
       { key: 'iscsi', label: 'iSCSI', path: '/block/iscsi', icon: 'iscsi', permission: 'storage' },
-      { key: 'nvmeTcp', label: 'NVMe/TCP', path: '/block/nvme-tcp', icon: 'nvme', permission: 'storage' }
+      {
+        key: 'nvme-tcp-section',
+        label: 'NVMe/TCP',
+        path: '/block/nvme-tcp',
+        icon: 'nvme',
+        children: [
+          { key: 'nvmeGateway', label: 'Gateway', path: '/block/nvme-tcp/gateway', icon: 'gateway', permission: 'storage' },
+          { key: 'nvmeTcp', label: 'Subsystems', path: '/block/nvme-tcp', icon: 'nvme', permission: 'storage' },
+          { key: 'nvmeNamespaces', label: 'Namespaces', path: '/block/nvme-tcp/namespaces', icon: 'cephfs', permission: 'storage' },
+          { key: 'nvmeListeners', label: 'Listeners', path: '/block/nvme-tcp/listeners', icon: 'logs', permission: 'storage' },
+          { key: 'nvmeHosts', label: 'Hosts', path: '/block/nvme-tcp/hosts', icon: 'host', permission: 'storage' },
+          { key: 'nvmeConnections', label: 'Connections', path: '/block/nvme-tcp/connections', icon: 'iscsi', permission: 'storage' }
+        ]
+      }
     ]
   },
   {
@@ -127,9 +186,42 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     icon: 'file',
     children: [
       { key: 'filePools', label: '存储池', path: '/file/pool', icon: 'pool', permission: 'storage' },
-      { key: 'cephfs', label: 'CephFS', path: '/file/cephfs', icon: 'cephfs', permission: 'storage' },
-      { key: 'nfs', label: 'NFS', path: '/file/nfs', icon: 'nfs', permission: 'storage' },
-      { key: 'smb', label: 'SMB', path: '/file/smb', icon: 'smb', permission: 'storage' }
+      {
+        key: 'cephfs-section',
+        label: '文件系统',
+        path: '/file/cephfs',
+        icon: 'cephfs',
+        children: [
+          { key: 'cephfs', label: '文件系统', path: '/file/cephfs', icon: 'cephfs', permission: 'storage' },
+          { key: 'cephfsClients', label: 'Clients', path: '/file/cephfs/clients', icon: 'user', permission: 'storage' },
+          { key: 'subvolumeGroups', label: 'Subvolume Groups', path: '/file/cephfs/subvolume-groups', icon: 'site', permission: 'storage' },
+          { key: 'subvolumes', label: 'Subvolumes', path: '/file/cephfs/subvolumes', icon: 'file', permission: 'storage' },
+          { key: 'cephfsSnapshots', label: 'Snapshots', path: '/file/cephfs/snapshots', icon: 'logs', permission: 'storage' },
+          { key: 'snapshotSchedules', label: 'Schedules', path: '/file/cephfs/schedules', icon: 'monitor', permission: 'storage' },
+          { key: 'cephfsAuthorizations', label: 'Authorizations', path: '/file/cephfs/authorizations', icon: 'audit', permission: 'storage' },
+          { key: 'cephfsEntries', label: '目录配额', path: '/file/cephfs/entries', icon: 'config', permission: 'storage' }
+        ]
+      },
+      {
+        key: 'nfs-section',
+        label: 'NFS',
+        path: '/file/nfs',
+        icon: 'nfs',
+        children: [
+          { key: 'nfsClusters', label: 'Clusters', path: '/file/nfs/clusters', icon: 'cluster', permission: 'storage' },
+          { key: 'nfs', label: 'Exports', path: '/file/nfs', icon: 'nfs', permission: 'storage' }
+        ]
+      },
+      {
+        key: 'smb-section',
+        label: 'SMB',
+        path: '/file/smb',
+        icon: 'smb',
+        children: [
+          { key: 'smbClusters', label: 'Clusters', path: '/file/smb/clusters', icon: 'cluster', permission: 'storage' },
+          { key: 'smb', label: 'Shares', path: '/file/smb', icon: 'smb', permission: 'storage' }
+        ]
+      }
     ]
   },
   {
@@ -139,10 +231,40 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     icon: 'object',
     children: [
       { key: 'rgwOverview', label: 'RGW 总览', path: '/object/rgw-overview', icon: 'object', permission: 'storage' },
-      { key: 'rgwUsers', label: '用户管理', path: '/object/user', icon: 'user', permission: 'storage' },
-      { key: 'bucketManagement', label: 'Bucket 管理', path: '/object/bucket', icon: 'bucket', permission: 'storage' },
+      {
+        key: 'rgw-user-section',
+        label: '用户管理',
+        path: '/object/user',
+        icon: 'user',
+        children: [
+          { key: 'rgwUsers', label: '用户', path: '/object/user', icon: 'user', permission: 'storage' },
+          { key: 'rgwAccounts', label: 'Accounts', path: '/object/user/accounts', icon: 'audit', permission: 'storage' },
+          { key: 'rgwRoles', label: 'Roles', path: '/object/user/roles', icon: 'system', permission: 'storage' }
+        ]
+      },
+      {
+        key: 'bucket-management-section',
+        label: 'Bucket 管理',
+        path: '/object/bucket',
+        icon: 'bucket',
+        children: [
+          { key: 'bucketManagement', label: 'Buckets', path: '/object/bucket', icon: 'bucket', permission: 'storage' },
+          { key: 'bucketPolicy', label: 'Policy', path: '/object/bucket/policy', icon: 'config', permission: 'storage' }
+        ]
+      },
       { key: 'gatewayManagement', label: '网关管理', path: '/object/gateway', icon: 'gateway', permission: 'storage' },
-      { key: 'multisite', label: '多站点', path: '/object/multisite', icon: 'site', permission: 'storage' },
+      {
+        key: 'multisite-section',
+        label: '多站点',
+        path: '/object/multisite',
+        icon: 'site',
+        children: [
+          { key: 'multisite', label: 'Realms', path: '/object/multisite', icon: 'site', permission: 'storage' },
+          { key: 'rgwZonegroups', label: 'ZoneGroups', path: '/object/multisite/zonegroups', icon: 'cluster', permission: 'storage' },
+          { key: 'rgwZones', label: 'Zones', path: '/object/multisite/zones', icon: 'gateway', permission: 'storage' },
+          { key: 'rgwPeriod', label: 'Period', path: '/object/multisite/period', icon: 'sync', permission: 'storage' }
+        ]
+      },
       { key: 'objectStorageConfig', label: '对象存储配置', path: '/object/configuration', icon: 'config', permission: 'storage' }
     ]
   },
@@ -167,7 +289,17 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     icon: 'system',
     children: [
       { key: 'systemInfo', label: '系统信息', path: '/system/info', icon: 'system', permission: 'system' },
-      { key: 'systemUsers', label: '用户管理', path: '/system/user', icon: 'user', permission: 'system' },
+      {
+        key: 'system-user-section',
+        label: '用户管理',
+        path: '/system/user',
+        icon: 'user',
+        children: [
+          { key: 'systemUsers', label: '用户', path: '/system/user', icon: 'user', permission: 'system' },
+          { key: 'systemRoles', label: '角色', path: '/system/user/role', icon: 'system', permission: 'system' },
+          { key: 'systemRoleBindings', label: '集群授权', path: '/system/user/binding', icon: 'audit', permission: 'system' }
+        ]
+      },
       { key: 'dataManagement', label: '配置管理', path: '/system/data', icon: 'config', permission: 'system' }
     ]
   },
@@ -182,7 +314,7 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
   }
 ]
 
-export const NAV_PAGES = NAV_SECTIONS.flatMap((section) => section.children)
+export const NAV_PAGES = NAV_SECTIONS.flatMap((section) => flattenNavChildren(section.children))
 
 export const pagePaths = NAV_PAGES.reduce(
   (paths, page) => {
@@ -197,5 +329,9 @@ export function findNavPage(pageKey: PageKey) {
 }
 
 export function findNavSection(pageKey: PageKey) {
-  return NAV_SECTIONS.find((section) => section.children.some((page) => page.key === pageKey))
+  return NAV_SECTIONS.find((section) => flattenNavChildren(section.children).some((page) => page.key === pageKey))
+}
+
+function flattenNavChildren(children: Array<NavChildDefinition | NavChildGroupDefinition>): NavChildDefinition[] {
+  return children.flatMap((item) => ('children' in item ? item.children : [item]))
 }

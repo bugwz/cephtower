@@ -1,7 +1,22 @@
 import type { ComponentType } from 'react'
 import type { PageKey } from '../navigation'
 import { AuditPage } from './audit/AuditPage'
-import { BlockPoolsPage, ImageMirroringPage, IscsiPage, NvmeTcpPage, RbdImagesPage } from './block/pages'
+import {
+  BlockPoolsPage,
+  ImageMirroringPage,
+  IscsiPage,
+  NvmeConnectionsPage,
+  NvmeGatewayPage,
+  NvmeHostsPage,
+  NvmeListenersPage,
+  NvmeNamespacesPage,
+  NvmeTcpPage,
+  RbdGroupsPage,
+  RbdImagesPage,
+  RbdNamespacesPage,
+  RbdSnapshotsPage,
+  RbdTrashPage
+} from './block/pages'
 import {
   ClusterDetailPage,
   ClusterPage,
@@ -12,7 +27,21 @@ import {
   MonManagementPage,
   OsdManagementPage
 } from './cluster/pages'
-import { CephfsPage, FilePoolsPage, NfsPage, SmbPage } from './file/pages'
+import {
+  CephfsAuthorizationsPage,
+  CephfsClientsPage,
+  CephfsEntriesPage,
+  CephfsPage,
+  CephfsSnapshotsPage,
+  FilePoolsPage,
+  NfsClustersPage,
+  NfsPage,
+  SmbClustersPage,
+  SmbPage,
+  SnapshotSchedulesPage,
+  SubvolumeGroupsPage,
+  SubvolumesPage
+} from './file/pages'
 import {
   AlertListPage,
   AlertRulesPage,
@@ -23,14 +52,20 @@ import {
 } from './monitoring/pages'
 import {
   BucketManagementPage,
+  BucketPolicyPage,
   GatewayManagementPage,
   MultisitePage,
   ObjectStorageConfigPage,
+  RgwAccountsPage,
   RgwOverviewPage,
-  RgwUsersPage
+  RgwPeriodPage,
+  RgwRolesPage,
+  RgwUsersPage,
+  RgwZonegroupsPage,
+  RgwZonesPage
 } from './object/pages'
 import { OverviewPage } from './overview/OverviewPage'
-import { DataManagementPage, SystemInfoPage, SystemUsersPage } from './system/pages'
+import { DataManagementPage, SystemInfoPage, SystemRoleBindingsPage, SystemRolesPage, SystemUsersPage } from './system/pages'
 
 export type { PageKey } from '../navigation'
 
@@ -51,18 +86,42 @@ export const pageComponents: Record<PageKey, ComponentType> = {
   mdsManagement: MdsManagementPage,
   blockPools: BlockPoolsPage,
   rbdImages: RbdImagesPage,
+  rbdSnapshots: RbdSnapshotsPage,
+  rbdNamespaces: RbdNamespacesPage,
+  rbdTrash: RbdTrashPage,
+  rbdGroups: RbdGroupsPage,
   imageMirroring: ImageMirroringPage,
   iscsi: IscsiPage,
+  nvmeGateway: NvmeGatewayPage,
   nvmeTcp: NvmeTcpPage,
+  nvmeNamespaces: NvmeNamespacesPage,
+  nvmeListeners: NvmeListenersPage,
+  nvmeHosts: NvmeHostsPage,
+  nvmeConnections: NvmeConnectionsPage,
   filePools: FilePoolsPage,
   cephfs: CephfsPage,
+  cephfsClients: CephfsClientsPage,
+  subvolumeGroups: SubvolumeGroupsPage,
+  subvolumes: SubvolumesPage,
+  cephfsSnapshots: CephfsSnapshotsPage,
+  snapshotSchedules: SnapshotSchedulesPage,
+  cephfsAuthorizations: CephfsAuthorizationsPage,
+  cephfsEntries: CephfsEntriesPage,
+  nfsClusters: NfsClustersPage,
   nfs: NfsPage,
+  smbClusters: SmbClustersPage,
   smb: SmbPage,
   rgwOverview: RgwOverviewPage,
   rgwUsers: RgwUsersPage,
+  rgwAccounts: RgwAccountsPage,
+  rgwRoles: RgwRolesPage,
   bucketManagement: BucketManagementPage,
+  bucketPolicy: BucketPolicyPage,
   gatewayManagement: GatewayManagementPage,
   multisite: MultisitePage,
+  rgwZonegroups: RgwZonegroupsPage,
+  rgwZones: RgwZonesPage,
+  rgwPeriod: RgwPeriodPage,
   objectStorageConfig: ObjectStorageConfigPage,
   monitorOverview: MonitorOverviewPage,
   performanceMetrics: PerformanceMetricsPage,
@@ -72,6 +131,8 @@ export const pageComponents: Record<PageKey, ComponentType> = {
   alertSilences: AlertSilencesPage,
   systemInfo: SystemInfoPage,
   systemUsers: SystemUsersPage,
+  systemRoles: SystemRolesPage,
+  systemRoleBindings: SystemRoleBindingsPage,
   dataManagement: DataManagementPage,
   auditEvents: AuditPage
 }

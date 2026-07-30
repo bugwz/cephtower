@@ -1,4 +1,3 @@
-import { Card, Tabs } from 'antd'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { PoolPage } from './PoolPage'
@@ -8,20 +7,23 @@ export function BlockPoolsPage() {
 }
 
 export function RbdImagesPage() {
-  return (
-    <Card className="page-surface-card tab-surface-card">
-      <Tabs
-        className="page-tabs"
-        items={[
-          { key: 'images', label: '镜像', children: <ResourceListPage definition={resourceDefinitions.rbdImages} embedded /> },
-          { key: 'snapshots', label: '快照', children: <ResourceListPage definition={resourceDefinitions.rbdSnapshots} embedded /> },
-          { key: 'namespaces', label: '命名空间', children: <ResourceListPage definition={resourceDefinitions.rbdNamespaces} embedded /> },
-          { key: 'trash', label: '回收站', children: <ResourceListPage definition={resourceDefinitions.rbdTrash} embedded /> },
-          { key: 'groups', label: '镜像组', children: <ResourceListPage definition={resourceDefinitions.rbdGroups} embedded /> }
-        ]}
-      />
-    </Card>
-  )
+  return <ResourceListPage definition={resourceDefinitions.rbdImages} />
+}
+
+export function RbdSnapshotsPage() {
+  return <ResourceListPage definition={resourceDefinitions.rbdSnapshots} />
+}
+
+export function RbdNamespacesPage() {
+  return <ResourceListPage definition={resourceDefinitions.rbdNamespaces} />
+}
+
+export function RbdTrashPage() {
+  return <ResourceListPage definition={resourceDefinitions.rbdTrash} />
+}
+
+export function RbdGroupsPage() {
+  return <ResourceListPage definition={resourceDefinitions.rbdGroups} />
 }
 
 export function ImageMirroringPage() {
@@ -32,22 +34,28 @@ export function IscsiPage() {
   return <ExternalListPage definition={externalDefinitions.iscsi} />
 }
 
+export function NvmeGatewayPage() {
+  return <ExternalListPage definition={externalDefinitions.nvmeGateway} />
+}
+
 export function NvmeTcpPage() {
-  return (
-    <Card className="page-surface-card tab-surface-card">
-      <Tabs
-        className="page-tabs"
-        items={[
-          { key: 'gateway', label: 'Gateway', children: <ExternalListPage definition={externalDefinitions.nvmeGateway} embedded /> },
-          { key: 'subsystems', label: 'Subsystems', children: <ExternalListPage definition={externalDefinitions.nvmeTcp} embedded /> },
-          { key: 'namespaces', label: 'Namespaces', children: <ExternalListPage definition={externalDefinitions.nvmeNamespaces} embedded /> },
-          { key: 'listeners', label: 'Listeners', children: <ExternalListPage definition={externalDefinitions.nvmeListeners} embedded /> },
-          { key: 'hosts', label: 'Hosts', children: <ExternalListPage definition={externalDefinitions.nvmeHosts} embedded /> },
-          { key: 'connections', label: 'Connections', children: <ExternalListPage definition={externalDefinitions.nvmeConnections} embedded /> }
-        ]}
-      />
-    </Card>
-  )
+  return <ExternalListPage definition={externalDefinitions.nvmeTcp} />
+}
+
+export function NvmeNamespacesPage() {
+  return <ExternalListPage definition={externalDefinitions.nvmeNamespaces} />
+}
+
+export function NvmeListenersPage() {
+  return <ExternalListPage definition={externalDefinitions.nvmeListeners} />
+}
+
+export function NvmeHostsPage() {
+  return <ExternalListPage definition={externalDefinitions.nvmeHosts} />
+}
+
+export function NvmeConnectionsPage() {
+  return <ExternalListPage definition={externalDefinitions.nvmeConnections} />
 }
 
 const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 'rbdNamespaces' | 'rbdTrash' | 'rbdGroups' | 'imageMirroring', ResourceListPageDefinition> = {
