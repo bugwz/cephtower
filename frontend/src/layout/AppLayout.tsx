@@ -135,7 +135,14 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
       return
     }
 
-    setMenuOpenKeys((currentOpenKeys) => getSingleOpenMenuKeys(nextOpenKeys, currentOpenKeys, rootMenuKeys, menuParentKeyMap))
+    setMenuOpenKeys((currentOpenKeys) => {
+      const singleRootOpenKeys = getSingleOpenMenuKeys(nextOpenKeys, currentOpenKeys, rootMenuKeys, menuParentKeyMap)
+      if (!sidebarCollapsed) {
+        return singleRootOpenKeys
+      }
+
+      return getCollapsedOpenMenuKeys(singleRootOpenKeys, defaultOpenKeys)
+    })
   }
 
   function handleMenuClick(key: string) {
@@ -184,6 +191,9 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
               openKeys={menuOpenKeys}
               selectedKeys={[activePage]}
               items={navItems}
+              subMenuOpenDelay={0}
+              subMenuCloseDelay={0}
+              forceSubMenuRender
               onOpenChange={handleMenuOpenChange}
               onPointerDownCapture={() => {
                 collapsedHoverArmed.current = true
@@ -376,6 +386,17 @@ function getSingleOpenMenuKeys(
   }
 
   return nextOpenKeys.filter((key) => getRootMenuKey(key, rootMenuKeys, parentKeyMap) === activeRootKey)
+}
+
+function getCollapsedOpenMenuKeys(openKeys: string[], activeOpenKeys: string[]) {
+  const [openRootKey] = openKeys
+  const [activeRootKey] = activeOpenKeys
+
+  if (openKeys.length === 1 && activeOpenKeys.length > 1 && openRootKey === activeRootKey) {
+    return activeOpenKeys
+  }
+
+  return openKeys
 }
 
 function getRootMenuKey(key: string, rootMenuKeys: string[], parentKeyMap: Record<string, string>) {
