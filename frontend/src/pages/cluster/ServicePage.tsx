@@ -34,9 +34,12 @@ const serviceTypeOptions = [
 export function ServicePage() {
   const { selectedClusterId } = useClusterContext()
   const loader = useCallback(async () => {
+    if (!selectedClusterId) {
+      return { services: [], daemons: [] }
+    }
     const [services, daemons] = await Promise.all([listServices(), listDaemons()])
     return { services, daemons }
-  }, [])
+  }, [selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [form] = Form.useForm<ServiceFormValues>()
   const [formOpen, setFormOpen] = useState(false)

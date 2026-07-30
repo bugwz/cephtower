@@ -21,9 +21,12 @@ interface HostFormValues {
 export function HostPage() {
   const { selectedClusterId } = useClusterContext()
   const loader = useCallback(async () => {
+    if (!selectedClusterId) {
+      return { hosts: [], osds: [], flags: [] }
+    }
     const [hosts, osds, flags] = await Promise.all([listHosts(), listOSDs(), listOSDFlags()])
     return { hosts, osds, flags }
-  }, [])
+  }, [selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [form] = Form.useForm<HostFormValues>()
   const [formOpen, setFormOpen] = useState(false)

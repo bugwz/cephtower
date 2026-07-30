@@ -152,9 +152,7 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
       ) : null}
     </Space>
   )
-  const listContent = !selectedClusterId ? (
-    <Text type="secondary">请先选择集群</Text>
-  ) : (
+  const listContent = (
     <Space direction="vertical" size={16} className="page-stack">
       <FeatureRequirementAlert status={featureStatus} />
       {definition.filterFields?.length ? (

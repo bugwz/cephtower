@@ -1,5 +1,5 @@
 import { DeleteOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, InputNumber, Popconfirm, Select, Space, Switch, Table, Tabs, Tag, Typography } from 'antd'
+import { Button, Card, Form, Input, InputNumber, Popconfirm, Select, Space, Switch, Table, Tabs, Tag } from 'antd'
 import { useCallback, useState } from 'react'
 import {
   createEndpoint,
@@ -19,8 +19,6 @@ import { Page } from '../../components/Page'
 import { message } from '../../utils/appMessage'
 import { useResource } from '../../hooks'
 import { useClusterContext } from '../../state/ClusterContext'
-
-const { Text } = Typography
 
 interface EndpointFormValues extends EndpointInput {
   endpoint_id?: number
@@ -151,79 +149,75 @@ export function DataPage() {
         extra={
           <Space>
             <Button icon={<ReloadOutlined />} loading={loading} onClick={refresh}>刷新</Button>
-            <Button icon={<PlusOutlined />} onClick={openCreateCredential}>新增 Credential</Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={openCreateEndpoint}>新增 Endpoint</Button>
+            <Button icon={<PlusOutlined />} disabled={!selectedClusterId} onClick={openCreateCredential}>新增 Credential</Button>
+            <Button type="primary" icon={<PlusOutlined />} disabled={!selectedClusterId} onClick={openCreateEndpoint}>新增 Endpoint</Button>
           </Space>
         }
       >
-        {!selectedClusterId ? (
-          <Text type="secondary">请先选择集群</Text>
-        ) : (
-          <Tabs
-            items={[
-              {
-                key: 'endpoints',
-                label: 'Endpoints',
-                children: (
-                  <Table<EndpointView>
-                    size="middle"
-                    rowKey="endpoint_id"
-                    dataSource={data?.endpoints ?? []}
-                    pagination={{ pageSize: 8, showSizeChanger: false }}
-                    scroll={{ x: 980 }}
-                    columns={[
-                      { title: 'ID', dataIndex: 'endpoint_id', width: 80 },
-                      { title: 'Kind', dataIndex: 'kind', width: 140 },
-                      { title: 'Name', dataIndex: 'name', width: 140 },
-                      { title: 'URL', dataIndex: 'url', ellipsis: true },
-                      { title: 'TLS', dataIndex: 'tls_mode', width: 150 },
-                      { title: '状态', dataIndex: 'enabled', width: 100, render: (enabled) => <Tag color={enabled ? 'success' : 'default'}>{enabled ? '启用' : '停用'}</Tag> },
-                      {
-                        title: '操作',
-                        width: 180,
-                        render: (_, row) => (
-                          <Space>
-                            <Button size="small" onClick={() => openEditEndpoint(row)}>编辑</Button>
-                            <Popconfirm title="删除 Endpoint" okText="删除" cancelText="取消" onConfirm={() => removeEndpoint(row)}>
-                              <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
-                            </Popconfirm>
-                          </Space>
-                        )
-                      }
-                    ]}
-                  />
-                )
-              },
-              {
-                key: 'credentials',
-                label: 'Credentials',
-                children: (
-                  <Table<CredentialView>
-                    size="middle"
-                    rowKey="kind"
-                    dataSource={data?.credentials ?? []}
-                    pagination={{ pageSize: 8, showSizeChanger: false }}
-                    columns={[
-                      { title: 'Kind', dataIndex: 'kind' },
-                      { title: 'Fingerprint', dataIndex: 'fingerprint', ellipsis: true },
-                      { title: '创建时间', dataIndex: 'created_at', render: formatTime },
-                      { title: '更新时间', dataIndex: 'updated_at', render: formatTime },
-                      {
-                        title: '操作',
-                        width: 120,
-                        render: (_, row) => (
-                          <Popconfirm title="删除 Credential" okText="删除" cancelText="取消" onConfirm={() => removeCredential(row)}>
+        <Tabs
+          items={[
+            {
+              key: 'endpoints',
+              label: 'Endpoints',
+              children: (
+                <Table<EndpointView>
+                  size="middle"
+                  rowKey="endpoint_id"
+                  dataSource={data?.endpoints ?? []}
+                  pagination={{ pageSize: 8, showSizeChanger: false }}
+                  scroll={{ x: 980 }}
+                  columns={[
+                    { title: 'ID', dataIndex: 'endpoint_id', width: 80 },
+                    { title: 'Kind', dataIndex: 'kind', width: 140 },
+                    { title: 'Name', dataIndex: 'name', width: 140 },
+                    { title: 'URL', dataIndex: 'url', ellipsis: true },
+                    { title: 'TLS', dataIndex: 'tls_mode', width: 150 },
+                    { title: '状态', dataIndex: 'enabled', width: 100, render: (enabled) => <Tag color={enabled ? 'success' : 'default'}>{enabled ? '启用' : '停用'}</Tag> },
+                    {
+                      title: '操作',
+                      width: 180,
+                      render: (_, row) => (
+                        <Space>
+                          <Button size="small" onClick={() => openEditEndpoint(row)}>编辑</Button>
+                          <Popconfirm title="删除 Endpoint" okText="删除" cancelText="取消" onConfirm={() => removeEndpoint(row)}>
                             <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
                           </Popconfirm>
-                        )
-                      }
-                    ]}
-                  />
-                )
-              }
-            ]}
-          />
-        )}
+                        </Space>
+                      )
+                    }
+                  ]}
+                />
+              )
+            },
+            {
+              key: 'credentials',
+              label: 'Credentials',
+              children: (
+                <Table<CredentialView>
+                  size="middle"
+                  rowKey="kind"
+                  dataSource={data?.credentials ?? []}
+                  pagination={{ pageSize: 8, showSizeChanger: false }}
+                  columns={[
+                    { title: 'Kind', dataIndex: 'kind' },
+                    { title: 'Fingerprint', dataIndex: 'fingerprint', ellipsis: true },
+                    { title: '创建时间', dataIndex: 'created_at', render: formatTime },
+                    { title: '更新时间', dataIndex: 'updated_at', render: formatTime },
+                    {
+                      title: '操作',
+                      width: 120,
+                      render: (_, row) => (
+                        <Popconfirm title="删除 Credential" okText="删除" cancelText="取消" onConfirm={() => removeCredential(row)}>
+                          <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
+                        </Popconfirm>
+                      )
+                    }
+                  ]}
+                />
+              )
+            }
+          ]}
+        />
       </Card>
 
       <DraggableModal

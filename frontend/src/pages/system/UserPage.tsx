@@ -202,36 +202,30 @@ export function UserPage() {
               label: '集群授权',
               children: (
                 <Space direction="vertical" size={16} className="page-stack">
-                  {!selectedClusterId ? (
-                    <Text type="secondary">请先选择集群</Text>
-                  ) : (
-                    <>
-                      <Space>
-                        <Button type="primary" icon={<TeamOutlined />} onClick={() => setBindingOpen(true)}>新建授权</Button>
-                      </Space>
-                      <Table<RoleBindingView>
-                        size="middle"
-                        rowKey="role_binding_id"
-                        dataSource={bindings}
-                        pagination={{ pageSize: 8, showSizeChanger: false }}
-                        columns={[
-                          { title: '用户', dataIndex: 'username' },
-                          { title: 'User ID', dataIndex: 'user_id' },
-                          { title: '角色', dataIndex: 'role', render: (role) => <Tag color="geekblue">{role}</Tag> },
-                          { title: '创建时间', dataIndex: 'created_at', render: formatTime },
-                          {
-                            title: '操作',
-                            width: 120,
-                            render: (_, row) => (
-                              <Popconfirm title="删除集群授权" okText="删除" cancelText="取消" onConfirm={() => removeBinding(row)}>
-                                <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
-                              </Popconfirm>
-                            )
-                          }
-                        ]}
-                      />
-                    </>
-                  )}
+                  <Space>
+                    <Button type="primary" icon={<TeamOutlined />} disabled={!selectedClusterId} onClick={() => setBindingOpen(true)}>新建授权</Button>
+                  </Space>
+                  <Table<RoleBindingView>
+                    size="middle"
+                    rowKey="role_binding_id"
+                    dataSource={bindings}
+                    pagination={{ pageSize: 8, showSizeChanger: false }}
+                    columns={[
+                      { title: '用户', dataIndex: 'username' },
+                      { title: 'User ID', dataIndex: 'user_id' },
+                      { title: '角色', dataIndex: 'role', render: (role) => <Tag color="geekblue">{role}</Tag> },
+                      { title: '创建时间', dataIndex: 'created_at', render: formatTime },
+                      {
+                        title: '操作',
+                        width: 120,
+                        render: (_, row) => (
+                          <Popconfirm title="删除集群授权" okText="删除" cancelText="取消" onConfirm={() => removeBinding(row)}>
+                            <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
+                          </Popconfirm>
+                        )
+                      }
+                    ]}
+                  />
                 </Space>
               )
             }

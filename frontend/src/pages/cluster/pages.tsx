@@ -34,7 +34,16 @@ import { ServicePage } from './ServicePage'
 export { ClusterDetailPage, ClusterPage, HostPage, ServicePage }
 
 export function MonManagementPage() {
+  const { selectedClusterId } = useClusterContext()
   const loader = useCallback(async () => {
+    if (!selectedClusterId) {
+      return {
+        monitor: {},
+        daemons: [],
+        inQuorum: [],
+        outQuorum: []
+      }
+    }
     const [monitor, daemons] = await Promise.all([listMonitors(), listDaemons('mon')])
     return {
       monitor,
@@ -42,7 +51,7 @@ export function MonManagementPage() {
       inQuorum: asRecords(monitor.in_quorum),
       outQuorum: asRecords(monitor.out_quorum)
     }
-  }, [])
+  }, [selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
 
   return (
@@ -100,10 +109,14 @@ export function MonManagementPage() {
 }
 
 export function MgrManagementPage() {
+  const { selectedClusterId } = useClusterContext()
   const loader = useCallback(async () => {
+    if (!selectedClusterId) {
+      return { modules: [], daemons: [] }
+    }
     const [modules, daemons] = await Promise.all([listMgrModules(), listDaemons('mgr')])
     return { modules, daemons }
-  }, [])
+  }, [selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [pendingModule, setPendingModule] = useState('')
   const operationMutation = useMutationOperation()
@@ -174,9 +187,12 @@ export function MgrManagementPage() {
 export function OsdManagementPage() {
   const { selectedClusterId } = useClusterContext()
   const loader = useCallback(async () => {
+    if (!selectedClusterId) {
+      return { osds: [], flags: [] }
+    }
     const [osds, flags] = await Promise.all([listOSDs(), listOSDFlags()])
     return { osds, flags }
-  }, [])
+  }, [selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [pendingOSDAction, setPendingOSDAction] = useState('')
   const [deploymentOpen, setDeploymentOpen] = useState(false)
@@ -544,13 +560,17 @@ export function DeviceManagementPage() {
 }
 
 export function MdsManagementPage() {
+  const { selectedClusterId } = useClusterContext()
   const loader = useCallback(async () => {
+    if (!selectedClusterId) {
+      return { services: [], daemons: [] }
+    }
     const [services, daemons] = await Promise.all([listServices(), listDaemons('mds')])
     return {
       services: services.filter((service) => textValue(service.service_type || service.type, '').toLowerCase() === 'mds'),
       daemons
     }
-  }, [])
+  }, [selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
 
   return (

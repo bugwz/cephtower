@@ -1,5 +1,5 @@
 import { DeleteOutlined, EyeOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, InputNumber, Modal, Space, Table, Typography } from 'antd'
+import { Button, Card, Form, Input, InputNumber, Modal, Space, Table } from 'antd'
 import { useCallback, useState } from 'react'
 import { listResource, mutateResource, refreshResource } from '../../api/resource'
 import type { ApiRecord } from '../../api/client'
@@ -12,8 +12,6 @@ import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
-
-const { Text } = Typography
 
 interface PoolFormValues {
   name: string
@@ -113,49 +111,45 @@ export function PoolPage() {
           </Space>
         }
       >
-        {!selectedClusterId ? (
-          <Text type="secondary">请先选择集群</Text>
-        ) : (
-          <Space direction="vertical" size={16} className="page-stack">
-            <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />
-            <Table<ApiRecord>
-              size="middle"
-              rowKey={(row) => String(row.natural_key ?? row.name)}
-              dataSource={data?.items ?? []}
-              pagination={{ pageSize: 10, showSizeChanger: false }}
-              scroll={{ x: 1180 }}
-              columns={[
-                { title: '名称', dataIndex: 'name', width: 180 },
-                { title: '状态', dataIndex: 'status', width: 120 },
-                { title: '类型', dataIndex: 'type', width: 120 },
-                { title: '副本/大小', dataIndex: 'size', width: 120 },
-                { title: '最小副本', dataIndex: 'min_size', width: 120 },
-                { title: 'PG', dataIndex: 'pg_num', width: 100 },
-                { title: '应用', dataIndex: 'application_metadata', width: 220, render: renderValue },
-                { title: '版本', dataIndex: 'resource_version', width: 90 },
-                {
-                  title: '操作',
-                  width: 190,
-                  fixed: 'right',
-                  render: (_, row) => (
-                    <Space>
-                      <Button size="small" icon={<EyeOutlined />} onClick={() => setDetailRow(row)}>
-                        详情
-                      </Button>
-                      <Button danger size="small" icon={<DeleteOutlined />} onClick={() => deletePool(row)}>
-                        删除
-                      </Button>
-                    </Space>
-                  )
-                }
-              ]}
-              expandable={{
-                expandedRowRender: (row) => <RecordDetail record={row} />,
-                rowExpandable: (row) => Object.keys(row).length > 0
-              }}
-            />
-          </Space>
-        )}
+        <Space direction="vertical" size={16} className="page-stack">
+          <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />
+          <Table<ApiRecord>
+            size="middle"
+            rowKey={(row) => String(row.natural_key ?? row.name)}
+            dataSource={data?.items ?? []}
+            pagination={{ pageSize: 10, showSizeChanger: false }}
+            scroll={{ x: 1180 }}
+            columns={[
+              { title: '名称', dataIndex: 'name', width: 180 },
+              { title: '状态', dataIndex: 'status', width: 120 },
+              { title: '类型', dataIndex: 'type', width: 120 },
+              { title: '副本/大小', dataIndex: 'size', width: 120 },
+              { title: '最小副本', dataIndex: 'min_size', width: 120 },
+              { title: 'PG', dataIndex: 'pg_num', width: 100 },
+              { title: '应用', dataIndex: 'application_metadata', width: 220, render: renderValue },
+              { title: '版本', dataIndex: 'resource_version', width: 90 },
+              {
+                title: '操作',
+                width: 190,
+                fixed: 'right',
+                render: (_, row) => (
+                  <Space>
+                    <Button size="small" icon={<EyeOutlined />} onClick={() => setDetailRow(row)}>
+                      详情
+                    </Button>
+                    <Button danger size="small" icon={<DeleteOutlined />} onClick={() => deletePool(row)}>
+                      删除
+                    </Button>
+                  </Space>
+                )
+              }
+            ]}
+            expandable={{
+              expandedRowRender: (row) => <RecordDetail record={row} />,
+              rowExpandable: (row) => Object.keys(row).length > 0
+            }}
+          />
+        </Space>
       </Card>
 
       <DraggableModal

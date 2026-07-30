@@ -100,56 +100,50 @@ export function OverviewPage() {
             </Space>
           }
         >
-          {!selectedClusterId ? (
-            <Text type="secondary">请先选择集群</Text>
-          ) : (
-            <Space direction="vertical" size={16} className="page-stack">
-              <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />
-              <div className="metrics-grid">
-                <MetricCard icon={<DatabaseOutlined />} label="容量使用率" value={`${usedPercent}%`} detail={`${formatBytes(capacity.used_bytes)} / ${formatBytes(capacity.total_bytes)}`} />
-                <MetricCard icon={<HddOutlined />} label="OSD" value={serviceValue(services.osd, 'up', 'total')} detail={`in ${servicePart(services.osd, 'in')}`} />
-                <MetricCard icon={<ApiOutlined />} label="MON" value={serviceValue(services.mon, 'in_quorum', 'total')} detail="quorum / total" />
-                <MetricCard icon={<SafetyCertificateOutlined />} label="能力" value={`${supportedCapabilities}/${data?.capabilities.length ?? 0}`} detail="supported capabilities" />
-                <MetricCard icon={<ThunderboltOutlined />} label="读写吞吐" value={`${formatBytes(clientIO.read_bytes_per_second)}/s`} detail={`write ${formatBytes(clientIO.write_bytes_per_second)}/s`} />
-              </div>
-              <Card title="容量">
-                <Progress percent={usedPercent} strokeColor="#168766" />
-                <Descriptions size="small" column={{ xs: 1, sm: 3 }}>
-                  <Descriptions.Item label="Total">{formatBytes(capacity.total_bytes)}</Descriptions.Item>
-                  <Descriptions.Item label="Used">{formatBytes(capacity.used_bytes)}</Descriptions.Item>
-                  <Descriptions.Item label="Available">{formatBytes(capacity.available_bytes)}</Descriptions.Item>
-                </Descriptions>
-              </Card>
-            </Space>
-          )}
+          <Space direction="vertical" size={16} className="page-stack">
+            <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />
+            <div className="metrics-grid">
+              <MetricCard icon={<DatabaseOutlined />} label="容量使用率" value={`${usedPercent}%`} detail={`${formatBytes(capacity.used_bytes)} / ${formatBytes(capacity.total_bytes)}`} />
+              <MetricCard icon={<HddOutlined />} label="OSD" value={serviceValue(services.osd, 'up', 'total')} detail={`in ${servicePart(services.osd, 'in')}`} />
+              <MetricCard icon={<ApiOutlined />} label="MON" value={serviceValue(services.mon, 'in_quorum', 'total')} detail="quorum / total" />
+              <MetricCard icon={<SafetyCertificateOutlined />} label="能力" value={`${supportedCapabilities}/${data?.capabilities.length ?? 0}`} detail="supported capabilities" />
+              <MetricCard icon={<ThunderboltOutlined />} label="读写吞吐" value={`${formatBytes(clientIO.read_bytes_per_second)}/s`} detail={`write ${formatBytes(clientIO.write_bytes_per_second)}/s`} />
+            </div>
+            <Card title="容量">
+              <Progress percent={usedPercent} strokeColor="#168766" />
+              <Descriptions size="small" column={{ xs: 1, sm: 3 }}>
+                <Descriptions.Item label="Total">{formatBytes(capacity.total_bytes)}</Descriptions.Item>
+                <Descriptions.Item label="Used">{formatBytes(capacity.used_bytes)}</Descriptions.Item>
+                <Descriptions.Item label="Available">{formatBytes(capacity.available_bytes)}</Descriptions.Item>
+              </Descriptions>
+            </Card>
+          </Space>
         </Card>
 
-        {selectedClusterId ? (
-          <div className="content-grid">
-            <Card title="健康检查">
-              <Table<ApiRecord>
-                size="small"
-                rowKey={(row) => textValue(row.code ?? row.name ?? row.natural_key)}
-                dataSource={data?.healthChecks ?? []}
-                pagination={{ pageSize: 6, showSizeChanger: false }}
-                columns={[
-                  { title: 'Code', dataIndex: 'code', ellipsis: true },
-                  { title: '级别', dataIndex: 'severity', render: (value) => <HealthBadge status={textValue(value)} /> },
-                  { title: '摘要', dataIndex: 'summary', ellipsis: true },
-                  { title: '数量', dataIndex: 'count', width: 80, render: (value) => textValue(value, '-') },
-                  {
-                    title: '操作',
-                    width: 110,
-                    render: (_, row) => {
-                      const muted = Boolean(row.muted)
-                      return <Button size="small" onClick={() => toggleHealth(row, muted)}>{muted ? '取消静默' : '静默'}</Button>
-                    }
+        <div className="content-grid">
+          <Card title="健康检查">
+            <Table<ApiRecord>
+              size="small"
+              rowKey={(row) => textValue(row.code ?? row.name ?? row.natural_key)}
+              dataSource={data?.healthChecks ?? []}
+              pagination={{ pageSize: 6, showSizeChanger: false }}
+              columns={[
+                { title: 'Code', dataIndex: 'code', ellipsis: true },
+                { title: '级别', dataIndex: 'severity', render: (value) => <HealthBadge status={textValue(value)} /> },
+                { title: '摘要', dataIndex: 'summary', ellipsis: true },
+                { title: '数量', dataIndex: 'count', width: 80, render: (value) => textValue(value, '-') },
+                {
+                  title: '操作',
+                  width: 110,
+                  render: (_, row) => {
+                    const muted = Boolean(row.muted)
+                    return <Button size="small" onClick={() => toggleHealth(row, muted)}>{muted ? '取消静默' : '静默'}</Button>
                   }
-                ]}
-              />
-            </Card>
-          </div>
-        ) : null}
+                }
+              ]}
+            />
+          </Card>
+        </div>
       </Space>
     </Page>
   )

@@ -117,82 +117,78 @@ export function MetricPage() {
           title="Prometheus 指标查询"
           extra={<Button icon={<ReloadOutlined />} loading={loading} disabled={!selectedClusterId || blocked} onClick={() => form.submit()}>查询</Button>}
         >
-          {!selectedClusterId ? (
-            <Text type="secondary">请先选择集群，并在配置管理中配置 prometheus endpoint。</Text>
-          ) : (
-            <Space direction="vertical" size={16} className="page-stack">
-              <FeatureRequirementAlert status={featureStatus} />
-              {error ? <Alert type="error" showIcon message="查询失败" description={error} /> : null}
-              <Form
-                form={form}
-                layout="vertical"
-                initialValues={initialValues}
-                onFinish={submit}
-                onValuesChange={(changed) => {
-                  if (changed.mode) {
-                    setMode(changed.mode)
-                  }
-                }}
-              >
-                <div className="metric-query-grid">
-                  <Form.Item name="mode" label="查询模式">
-                    <Segmented
-                      options={[
-                        { label: '即时', value: 'instant', icon: <BarChartOutlined /> },
-                        { label: '范围', value: 'range', icon: <LineChartOutlined /> }
-                      ]}
-                    />
+          <Space direction="vertical" size={16} className="page-stack">
+            <FeatureRequirementAlert status={featureStatus} />
+            {error ? <Alert type="error" showIcon message="查询失败" description={error} /> : null}
+            <Form
+              form={form}
+              layout="vertical"
+              initialValues={initialValues}
+              onFinish={submit}
+              onValuesChange={(changed) => {
+                if (changed.mode) {
+                  setMode(changed.mode)
+                }
+              }}
+            >
+              <div className="metric-query-grid">
+                <Form.Item name="mode" label="查询模式">
+                  <Segmented
+                    options={[
+                      { label: '即时', value: 'instant', icon: <BarChartOutlined /> },
+                      { label: '范围', value: 'range', icon: <LineChartOutlined /> }
+                    ]}
+                  />
+                </Form.Item>
+                <Form.Item name="metric_id" label="指标" rules={[{ required: true }]}>
+                  <Select options={metricOptions} optionRender={(option) => (
+                    <Space direction="vertical" size={0}>
+                      <Text>{option.label}</Text>
+                      <Text type="secondary">{option.value}</Text>
+                    </Space>
+                  )} />
+                </Form.Item>
+                {mode === 'instant' ? (
+                  <Form.Item name="time" label="查询时间">
+                    <Input />
                   </Form.Item>
-                  <Form.Item name="metric_id" label="指标" rules={[{ required: true }]}>
-                    <Select options={metricOptions} optionRender={(option) => (
-                      <Space direction="vertical" size={0}>
-                        <Text>{option.label}</Text>
-                        <Text type="secondary">{option.value}</Text>
-                      </Space>
-                    )} />
-                  </Form.Item>
-                  {mode === 'instant' ? (
-                    <Form.Item name="time" label="查询时间">
+                ) : (
+                  <>
+                    <Form.Item name="start" label="开始时间" rules={[{ required: true }]}>
                       <Input />
                     </Form.Item>
-                  ) : (
-                    <>
-                      <Form.Item name="start" label="开始时间" rules={[{ required: true }]}>
-                        <Input />
-                      </Form.Item>
-                      <Form.Item name="end" label="结束时间" rules={[{ required: true }]}>
-                        <Input />
-                      </Form.Item>
-                      <Form.Item name="step" label="步长" rules={[{ required: true }]}>
-                        <Input />
-                      </Form.Item>
-                    </>
-                  )}
-                </div>
-              </Form>
+                    <Form.Item name="end" label="结束时间" rules={[{ required: true }]}>
+                      <Input />
+                    </Form.Item>
+                    <Form.Item name="step" label="步长" rules={[{ required: true }]}>
+                      <Input />
+                    </Form.Item>
+                  </>
+                )}
+              </div>
+            </Form>
 
-              <Space wrap>
-                <Tag color="blue">result_type: {result?.result_type ?? '-'}</Tag>
-                <Tag>series: {rows.length}</Tag>
-                <Tag>points: {rows.reduce((sum, row) => sum + row.points, 0)}</Tag>
-              </Space>
-
-              <Table<MetricRow>
-                size="middle"
-                rowKey="row_id"
-                loading={loading}
-                dataSource={rows}
-                pagination={{ pageSize: 8, showSizeChanger: false }}
-                scroll={{ x: 980 }}
-                columns={[
-                  { title: '指标', dataIndex: 'metric_name', width: 220, ellipsis: true },
-                  { title: 'Labels', dataIndex: 'labels', ellipsis: true },
-                  { title: '最新值', dataIndex: 'latest_value', width: 160 },
-                  { title: '点数', dataIndex: 'points', width: 90 }
-                ]}
-              />
+            <Space wrap>
+              <Tag color="blue">result_type: {result?.result_type ?? '-'}</Tag>
+              <Tag>series: {rows.length}</Tag>
+              <Tag>points: {rows.reduce((sum, row) => sum + row.points, 0)}</Tag>
             </Space>
-          )}
+
+            <Table<MetricRow>
+              size="middle"
+              rowKey="row_id"
+              loading={loading}
+              dataSource={rows}
+              pagination={{ pageSize: 8, showSizeChanger: false }}
+              scroll={{ x: 980 }}
+              columns={[
+                { title: '指标', dataIndex: 'metric_name', width: 220, ellipsis: true },
+                { title: 'Labels', dataIndex: 'labels', ellipsis: true },
+                { title: '最新值', dataIndex: 'latest_value', width: 160 },
+                { title: '点数', dataIndex: 'points', width: 90 }
+              ]}
+            />
+          </Space>
         </Card>
       </Space>
     </Page>
