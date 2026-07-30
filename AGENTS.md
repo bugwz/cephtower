@@ -1,5 +1,20 @@
 # CephTower Agent Guide
 
+## Development Direction
+
+This project moves quickly and does not preserve backward compatibility unless the user
+explicitly requests it.
+
+- When requirements change, update the implementation fully to match the new direction.
+- Do not add compatibility layers, legacy fallbacks, dual API paths, old configuration
+  aliases, database compatibility shims, or transitional code for previous behavior.
+- Remove or replace obsolete database, configuration, API, backend, frontend, and test
+  logic that conflicts with the new requirement.
+- Prefer a clean current implementation over preserving old behavior for hypothetical
+  existing consumers.
+- If preserving compatibility appears necessary, stop and confirm it with the user before
+  adding compatibility logic.
+
 ## Commit Discipline
 
 Codex and other coding agents working in this repository must follow the project commit
