@@ -1907,6 +1907,130 @@
   gap: 3px;
 }
 
+.mon-address-summary {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mon-address-summary .ant-tag {
+  margin-inline-end: 0;
+  border-color: #bce5d5;
+  background: #eefaf5;
+  color: #17735a;
+  font-weight: 700;
+}
+
+.mon-address-chips {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.mon-address-chip,
+.mon-address-more,
+.mon-address-tooltip-item {
+  border: 1px solid #dce9e6;
+  border-radius: 6px;
+  background: #fbfefd;
+  color: #24424a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: var(--font-xs);
+  line-height: 1.7;
+}
+
+.mon-address-chip {
+  max-width: min(132px, 45%);
+  padding: 1px 7px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mon-address-more {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  color: #4d6870;
+}
+
+.mon-address-tooltip {
+  display: grid;
+  gap: 6px;
+  max-width: 300px;
+}
+
+.mon-address-popover .ant-popover-inner {
+  border: 1px solid #cfe8df;
+  border-radius: 8px;
+  background: #fbfefd;
+  box-shadow: 0 10px 28px rgba(38, 82, 75, 0.14);
+}
+
+.mon-address-popover .ant-popover-inner-content {
+  padding: 10px;
+}
+
+.mon-address-popover .ant-popover-arrow::before {
+  background: #fbfefd;
+}
+
+.mon-address-tooltip-item {
+  padding: 2px 8px;
+  overflow-wrap: anywhere;
+}
+
+.cluster-detail-descriptions .ant-descriptions-item-label {
+  width: 150px;
+  min-width: 150px;
+  color: #51666c;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cluster-basic-descriptions .ant-descriptions-item-label {
+  width: 128px;
+  min-width: 128px;
+}
+
+.cluster-detail-descriptions .ant-descriptions-item-content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.detail-value-fixed {
+  display: inline-block;
+  min-width: 42px;
+  font-variant-numeric: tabular-nums;
+}
+
+.table-actions {
+  white-space: nowrap;
+}
+
+.table-action.ant-typography {
+  color: #147c63;
+  font-size: var(--font-sm);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.table-action.ant-typography:hover {
+  color: #0f5e4c;
+}
+
+.table-action-danger.ant-typography,
+.table-action-danger.ant-typography:hover {
+  color: #f0444d;
+}
+
+.table-action.ant-typography[aria-disabled="true"] {
+  color: #9caeb2;
+  cursor: not-allowed;
+}
+
 .role-select {
   width: 128px;
 }

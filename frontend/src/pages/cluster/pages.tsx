@@ -1,4 +1,4 @@
-import { DeleteOutlined, PlusOutlined, ReloadOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button, Card, Form, Input, InputNumber, Modal, Space, Switch, Tabs, Tag } from 'antd'
 import { useCallback, useState } from 'react'
 import { textValue, type ApiRecord } from '../../api/client'
@@ -22,6 +22,7 @@ import { DataTable } from '../../components/DataTable'
 import { DraggableModal, draggableModalRender } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
+import { TableAction, TableActions } from '../../components/TableActions'
 import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -303,13 +304,13 @@ export function OsdManagementPage() {
                 render: (_, row) => {
                   const id = osdID(row)
                   return (
-                    <Space>
-                      <Button size="small" loading={pendingOSDAction === `${id}:in`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:in`} onClick={() => runOSDAction(id, 'in')}>In</Button>
-                      <Button size="small" loading={pendingOSDAction === `${id}:out`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:out`} onClick={() => runOSDAction(id, 'out')}>Out</Button>
-                      <Button size="small" icon={<ThunderboltOutlined />} loading={pendingOSDAction === `${id}:scrub`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:scrub`} onClick={() => runOSDAction(id, 'scrub')}>Scrub</Button>
-                      <Button size="small" disabled={Boolean(pendingOSDAction)} onClick={() => runOSDAction(id, 'reweight')}>权重</Button>
-                      <Button size="small" danger icon={<DeleteOutlined />} disabled={Boolean(pendingOSDAction)} onClick={() => deleteOSD(row)}>删除</Button>
-                    </Space>
+                    <TableActions>
+                      <TableAction loading={pendingOSDAction === `${id}:in`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:in`} onClick={() => runOSDAction(id, 'in')}>In</TableAction>
+                      <TableAction loading={pendingOSDAction === `${id}:out`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:out`} onClick={() => runOSDAction(id, 'out')}>Out</TableAction>
+                      <TableAction loading={pendingOSDAction === `${id}:scrub`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:scrub`} onClick={() => runOSDAction(id, 'scrub')}>Scrub</TableAction>
+                      <TableAction disabled={Boolean(pendingOSDAction)} onClick={() => runOSDAction(id, 'reweight')}>权重</TableAction>
+                      <TableAction danger disabled={Boolean(pendingOSDAction)} onClick={() => deleteOSD(row)}>删除</TableAction>
+                    </TableActions>
                   )
                 }
               }
@@ -543,11 +544,11 @@ export function DeviceManagementPage() {
                   const identOnKey = `${host}:${path}:identify:on:ident`
                   const identOffKey = `${host}:${path}:identify:off:ident`
                   return (
-                    <Space>
-                      <Button size="small" loading={pendingDeviceAction === identOnKey} disabled={Boolean(pendingDeviceAction) && pendingDeviceAction !== identOnKey} onClick={() => identify(row, 'on')}>点灯</Button>
-                      <Button size="small" loading={pendingDeviceAction === identOffKey} disabled={Boolean(pendingDeviceAction) && pendingDeviceAction !== identOffKey} onClick={() => identify(row, 'off')}>关灯</Button>
-                      <Button size="small" danger icon={<DeleteOutlined />} disabled={Boolean(pendingDeviceAction)} onClick={() => zap(row)}>擦除</Button>
-                    </Space>
+                    <TableActions>
+                      <TableAction loading={pendingDeviceAction === identOnKey} disabled={Boolean(pendingDeviceAction) && pendingDeviceAction !== identOnKey} onClick={() => identify(row, 'on')}>点灯</TableAction>
+                      <TableAction loading={pendingDeviceAction === identOffKey} disabled={Boolean(pendingDeviceAction) && pendingDeviceAction !== identOffKey} onClick={() => identify(row, 'off')}>关灯</TableAction>
+                      <TableAction danger disabled={Boolean(pendingDeviceAction)} onClick={() => zap(row)}>擦除</TableAction>
+                    </TableActions>
                   )
                 }
               }
@@ -645,11 +646,11 @@ function DaemonTable({ data, refresh }: { data: ApiRecord[]; refresh: () => void
             render: (_, row) => {
               const name = textValue(row.daemon_name || row.name, '')
               return (
-                <Space>
-                  <Button size="small" icon={<ReloadOutlined />} loading={pendingDaemonAction === `${name}:restart`} disabled={Boolean(pendingDaemonAction) && pendingDaemonAction !== `${name}:restart`} onClick={() => runAction(row, 'restart')}>重启</Button>
-                  <Button size="small" loading={pendingDaemonAction === `${name}:start`} disabled={Boolean(pendingDaemonAction) && pendingDaemonAction !== `${name}:start`} onClick={() => runAction(row, 'start')}>启动</Button>
-                  <Button size="small" danger loading={pendingDaemonAction === `${name}:stop`} disabled={Boolean(pendingDaemonAction) && pendingDaemonAction !== `${name}:stop`} onClick={() => runAction(row, 'stop')}>停止</Button>
-                </Space>
+                <TableActions>
+                  <TableAction loading={pendingDaemonAction === `${name}:restart`} disabled={Boolean(pendingDaemonAction) && pendingDaemonAction !== `${name}:restart`} onClick={() => runAction(row, 'restart')}>重启</TableAction>
+                  <TableAction loading={pendingDaemonAction === `${name}:start`} disabled={Boolean(pendingDaemonAction) && pendingDaemonAction !== `${name}:start`} onClick={() => runAction(row, 'start')}>启动</TableAction>
+                  <TableAction danger loading={pendingDaemonAction === `${name}:stop`} disabled={Boolean(pendingDaemonAction) && pendingDaemonAction !== `${name}:stop`} onClick={() => runAction(row, 'stop')}>停止</TableAction>
+                </TableActions>
               )
             }
           }

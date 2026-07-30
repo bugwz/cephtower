@@ -1,4 +1,4 @@
-import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
+import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Table, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useCallback, useState } from 'react'
@@ -10,6 +10,7 @@ import { DraggableModal } from '../components/DraggableModal'
 import { Page } from '../components/Page'
 import { RecordDetail } from '../components/RecordDetail'
 import { ResourceMetaBar } from '../components/ResourceMetaBar'
+import { TableAction, TableActions } from '../components/TableActions'
 import { useResource } from '../hooks'
 import { useFeatureRequirements, type FeatureRequirements } from '../hooks/useFeatureRequirements'
 import { useMutationOperation } from '../hooks/useMutationOperation'
@@ -280,24 +281,18 @@ function buildColumns(
   columns.push({
     title: '操作',
     key: 'actions',
-    width: definition.updateAction && definition.deleteAction ? 230 : 160,
+    width: definition.updateAction && definition.deleteAction ? 150 : 110,
     fixed: 'right',
     render: (_, row) => (
-      <Space>
-        <Button size="small" icon={<EyeOutlined />} onClick={() => openDetail(row)}>
-          详情
-        </Button>
+      <TableActions>
+        <TableAction onClick={() => openDetail(row)}>详情</TableAction>
         {definition.updateAction ? (
-          <Button size="small" icon={<EditOutlined />} disabled={mutationBlocked} onClick={() => openForm(definition.updateAction!, row)}>
-            编辑
-          </Button>
+          <TableAction disabled={mutationBlocked} onClick={() => openForm(definition.updateAction!, row)}>编辑</TableAction>
         ) : null}
         {definition.deleteAction ? (
-          <Button size="small" danger icon={<DeleteOutlined />} disabled={mutationBlocked} onClick={() => deleteRow(row)}>
-            删除
-          </Button>
+          <TableAction danger disabled={mutationBlocked} onClick={() => deleteRow(row)}>删除</TableAction>
         ) : null}
-      </Space>
+      </TableActions>
     )
   })
 

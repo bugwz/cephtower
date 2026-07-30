@@ -1,4 +1,6 @@
 import { asArray, jsonInit, request, type ApiRecord } from './client'
+import { listCredentials, listEndpoints, type CredentialView, type EndpointView } from './endpoint'
+import { listResource } from './resource'
 import type { ListEnvelope } from './types'
 
 export interface CephCluster {
@@ -11,7 +13,14 @@ export interface CephCluster {
   updated_at: string
   description: string
   fsid: string
+  ceph_version: string
+  status: string
   enabled: boolean
+  generation: number
+  last_seen_at: string
+  last_error_code: string
+  last_error_message: string
+  observed_at: string
   dashboard: {
     enabled: boolean
     base_url: string
@@ -74,6 +83,8 @@ export interface CephClusterDiscovery {
 export interface CephClusterDetail {
   cluster: CephCluster
   discovery: CephClusterDiscovery
+  endpoints: EndpointView[]
+  credentials: CredentialView[]
 }
 
 export interface CephDiscoveredRecord {
@@ -125,20 +136,47 @@ export async function listClusters(): Promise<CephCluster[]> {
 
 export async function getClusterDetail(id: number | string): Promise<CephClusterDetail> {
   const cluster = await getCluster(Number(id))
+  const [
+    hosts,
+    osds,
+    daemons,
+    services,
+    mons,
+    mgrs,
+    mdss,
+    mgrModules,
+    configuration,
+    endpoints,
+    credentials
+  ] = await Promise.all([
+    detailRows('/hosts', cluster.id, 'hosts'),
+    detailRows('/osds', cluster.id, 'osds'),
+    detailRows('/daemons', cluster.id, 'daemons'),
+    detailRows('/services', cluster.id, 'services'),
+    detailRows('/monitors', cluster.id, 'mons'),
+    detailRows('/managers', cluster.id, 'mgrs'),
+    detailRows('/daemons', cluster.id, 'mdss', { daemon_type: 'mds' }),
+    detailRows('/manager/modules', cluster.id, 'mgr_modules'),
+    detailRows('/configuration/values', cluster.id, 'configuration'),
+    listEndpoints(cluster.id),
+    listCredentials(cluster.id)
+  ])
   return {
     cluster,
     discovery: {
-      hosts: [],
-      osds: [],
+      hosts,
+      osds,
       osd_flags: [],
-      daemons: [],
-      services: [],
-      mons: [],
-      mgrs: [],
-      mdss: [],
-      mgr_modules: [],
-      configuration: []
-    }
+      daemons,
+      services,
+      mons,
+      mgrs,
+      mdss,
+      mgr_modules: mgrModules,
+      configuration
+    },
+    endpoints,
+    credentials
   }
 }
 
@@ -210,7 +248,14 @@ function normalizeCluster(row: ApiRecord): CephCluster {
     updated_at: String(row.updated_at ?? ''),
     description: String(row.description ?? ''),
     fsid: String(row.fsid ?? ''),
+    ceph_version: String(row.ceph_version ?? ''),
+    status: String(row.status ?? 'unknown'),
     enabled: row.enabled !== false,
+    generation: Number(row.generation ?? 0),
+    last_seen_at: String(row.last_seen_at ?? ''),
+    last_error_code: String(row.last_error_code ?? ''),
+    last_error_message: String(row.last_error_message ?? ''),
+    observed_at: String(row.observed_at ?? ''),
     dashboard: {
       enabled: false,
       base_url: '',
@@ -230,6 +275,23 @@ function normalizeCluster(row: ApiRecord): CephCluster {
       keyring_content_set: true,
       timeout_seconds: 30
     }
+  }
+}
+
+async function detailRows(path: string, clusterId: number, category: string, body?: ApiRecord): Promise<CephDiscoveredRecord[]> {
+  const payload = await listResource(path, clusterId, { limit: 200, body })
+  return payload.items.map((row, index) => toDiscoveredRecord(row, category, index))
+}
+
+function toDiscoveredRecord(row: ApiRecord, category: string, index: number): CephDiscoveredRecord {
+  const key = String(row.natural_key ?? row.name ?? row.hostname ?? row.id ?? `${category}-${index + 1}`)
+  return {
+    key,
+    type: String(row.type ?? row.daemon_type ?? row.service_type ?? row.kind ?? ''),
+    hostname: String(row.hostname ?? row.host ?? ''),
+    status: String(row.status ?? ''),
+    payload: row,
+    discovered_at: String(row.observed_at ?? '')
   }
 }
 

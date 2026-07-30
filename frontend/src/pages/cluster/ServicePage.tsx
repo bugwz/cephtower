@@ -1,4 +1,4 @@
-import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button, Card, Form, Input, Modal, Select, Space, Tabs } from 'antd'
 import { useCallback, useState } from 'react'
 import { textValue, type ApiRecord } from '../../api/client'
@@ -6,6 +6,7 @@ import { listDaemons, listServices, mutateResource, refreshResource } from '../.
 import { DataTable } from '../../components/DataTable'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
+import { TableAction, TableActions } from '../../components/TableActions'
 import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -173,10 +174,10 @@ export function ServicePage() {
                       key: 'actions',
                       title: '操作',
                       render: (_, row) => (
-                        <Space>
-                          <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(row)}>编辑</Button>
-                          <Button size="small" danger icon={<DeleteOutlined />} onClick={() => deleteService(row)}>删除</Button>
-                        </Space>
+                        <TableActions>
+                          <TableAction onClick={() => openEdit(row)}>编辑</TableAction>
+                          <TableAction danger onClick={() => deleteService(row)}>删除</TableAction>
+                        </TableActions>
                       )
                     }
                   ]}

@@ -1,4 +1,4 @@
-import { DeleteOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
+import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Button, Card, Form, Input, InputNumber, Popconfirm, Select, Space, Switch, Table, Tabs, Tag } from 'antd'
 import { useCallback, useState } from 'react'
 import {
@@ -16,6 +16,7 @@ import {
 import type { ApiRecord } from '../../api/client'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
+import { TableAction, TableActions } from '../../components/TableActions'
 import { message } from '../../utils/appMessage'
 import { useResource } from '../../hooks'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -175,14 +176,14 @@ export function DataPage() {
                     { title: '状态', dataIndex: 'enabled', width: 100, render: (enabled) => <Tag color={enabled ? 'success' : 'default'}>{enabled ? '启用' : '停用'}</Tag> },
                     {
                       title: '操作',
-                      width: 180,
+                      width: 100,
                       render: (_, row) => (
-                        <Space>
-                          <Button size="small" onClick={() => openEditEndpoint(row)}>编辑</Button>
+                        <TableActions>
+                          <TableAction onClick={() => openEditEndpoint(row)}>编辑</TableAction>
                           <Popconfirm title="删除 Endpoint" okText="删除" cancelText="取消" onConfirm={() => removeEndpoint(row)}>
-                            <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
+                            <TableAction danger>删除</TableAction>
                           </Popconfirm>
-                        </Space>
+                        </TableActions>
                       )
                     }
                   ]}
@@ -205,10 +206,10 @@ export function DataPage() {
                     { title: '更新时间', dataIndex: 'updated_at', render: formatTime },
                     {
                       title: '操作',
-                      width: 120,
+                      width: 70,
                       render: (_, row) => (
                         <Popconfirm title="删除 Credential" okText="删除" cancelText="取消" onConfirm={() => removeCredential(row)}>
-                          <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
+                          <TableAction danger>删除</TableAction>
                         </Popconfirm>
                       )
                     }

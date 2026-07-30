@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -36,12 +37,21 @@ type clusterIDRequest struct {
 }
 
 type clusterDTO struct {
-	ClusterID        uint64    `json:"cluster_id"`
-	Name             string    `json:"name"`
-	MonitorAddresses string    `json:"monitor_addresses"`
-	ClientUsername   string    `json:"client_username"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
+	ClusterID        uint64     `json:"cluster_id"`
+	Name             string     `json:"name"`
+	MonitorAddresses string     `json:"monitor_addresses"`
+	ClientUsername   string     `json:"client_username"`
+	FSID             string     `json:"fsid,omitempty"`
+	CephVersion      string     `json:"ceph_version,omitempty"`
+	Status           string     `json:"status"`
+	Enabled          bool       `json:"enabled"`
+	Generation       uint64     `json:"generation"`
+	LastSeenAt       *time.Time `json:"last_seen_at,omitempty"`
+	LastErrorCode    string     `json:"last_error_code,omitempty"`
+	LastErrorMessage string     `json:"last_error_message,omitempty"`
+	ObservedAt       *time.Time `json:"observed_at,omitempty"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
 }
 
 type capabilityDTO struct {
@@ -61,7 +71,12 @@ func (h *Handler) ListClusters(w http.ResponseWriter, r *http.Request) {
 	}
 	items := make([]clusterDTO, 0, len(rows))
 	for _, row := range rows {
-		items = append(items, toClusterDTO(row))
+		item, err := h.toClusterDTO(r.Context(), row)
+		if err != nil {
+			WriteError(w, r, 500, "store_error", err.Error(), false, nil)
+			return
+		}
+		items = append(items, item)
 	}
 	WriteSuccess(w, 200, "success", map[string]any{"items": items, "pagination": map[string]any{"next_cursor": nil}, "meta": map[string]string{"request_id": RequestID(r)}})
 }
@@ -76,7 +91,12 @@ func (h *Handler) CreateCluster(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, 400, "invalid_request", err.Error(), false, nil)
 		return
 	}
-	WriteSuccess(w, http.StatusOK, "success", map[string]any{"cluster": toClusterDTO(cluster), "result": result})
+	item, err := h.toClusterDTO(r.Context(), cluster)
+	if err != nil {
+		WriteError(w, r, 500, "store_error", err.Error(), false, nil)
+		return
+	}
+	WriteSuccess(w, http.StatusOK, "success", map[string]any{"cluster": item, "result": result})
 }
 
 func (h *Handler) GetCluster(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +114,12 @@ func (h *Handler) GetCluster(w http.ResponseWriter, r *http.Request) {
 		clusterError(w, r, err)
 		return
 	}
-	WriteSuccess(w, 200, "success", toClusterDTO(row))
+	item, err := h.toClusterDTO(r.Context(), row)
+	if err != nil {
+		WriteError(w, r, 500, "store_error", err.Error(), false, nil)
+		return
+	}
+	WriteSuccess(w, 200, "success", item)
 }
 
 func (h *Handler) UpdateCluster(w http.ResponseWriter, r *http.Request) {
@@ -177,8 +202,42 @@ func (h *Handler) Capabilities(w http.ResponseWriter, r *http.Request) {
 	WriteSuccess(w, 200, "success", map[string]any{"items": items, "pagination": map[string]any{"next_cursor": nil}, "meta": map[string]string{"request_id": RequestID(r)}})
 }
 
-func toClusterDTO(row store.CephCluster) clusterDTO {
-	return clusterDTO{ClusterID: row.ID, Name: row.Name, MonitorAddresses: row.MonitorAddresses, ClientUsername: row.ClientUsername, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt}
+func (h *Handler) toClusterDTO(ctx context.Context, row store.CephCluster) (clusterDTO, error) {
+	dto := clusterDTO{
+		ClusterID:        row.ID,
+		Name:             row.Name,
+		MonitorAddresses: row.MonitorAddresses,
+		ClientUsername:   row.ClientUsername,
+		Status:           "unknown",
+		Enabled:          true,
+		CreatedAt:        row.CreatedAt,
+		UpdatedAt:        row.UpdatedAt,
+	}
+	observation, err := h.Database().FindObservation(ctx, row.ID)
+	if err != nil {
+		if errors.Is(err, store.ErrRecordNotFound) {
+			return dto, nil
+		}
+		return dto, err
+	}
+	if observation.FSID != nil {
+		dto.FSID = *observation.FSID
+	}
+	if observation.CephVersion != nil {
+		dto.CephVersion = *observation.CephVersion
+	}
+	dto.Status = observation.Status
+	dto.Enabled = observation.Enabled
+	dto.Generation = observation.Generation
+	dto.LastSeenAt = observation.LastSeenAt
+	if observation.LastErrorCode != nil {
+		dto.LastErrorCode = *observation.LastErrorCode
+	}
+	if observation.LastErrorMessage != nil {
+		dto.LastErrorMessage = *observation.LastErrorMessage
+	}
+	dto.ObservedAt = observation.ObservedAt
+	return dto, nil
 }
 
 func clusterError(w http.ResponseWriter, r *http.Request, err error) {

@@ -1,4 +1,4 @@
-import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button, Card, Form, Input, Modal, Select, Space } from 'antd'
 import { useCallback, useState } from 'react'
 import { textValue, type ApiRecord } from '../../api/client'
@@ -6,6 +6,7 @@ import { listHosts, mutateResource, refreshResource } from '../../api/resource'
 import { DataTable } from '../../components/DataTable'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
+import { TableAction, TableActions } from '../../components/TableActions'
 import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -178,14 +179,14 @@ export function HostPage() {
               render: (_, row) => {
                 const name = hostName(row)
                 return (
-                  <Space>
-                    <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(row)}>编辑</Button>
-                    <Button size="small" loading={pendingAction === `${name}:maintenance_enter`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:maintenance_enter`} onClick={() => runHostAction(row, 'maintenance_enter')}>维护</Button>
-                    <Button size="small" loading={pendingAction === `${name}:maintenance_exit`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:maintenance_exit`} onClick={() => runHostAction(row, 'maintenance_exit')}>退出维护</Button>
-                    <Button size="small" loading={pendingAction === `${name}:drain`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:drain`} onClick={() => runHostAction(row, 'drain')}>Drain</Button>
-                    <Button size="small" loading={pendingAction === `${name}:rescan`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:rescan`} onClick={() => runHostAction(row, 'rescan')}>Rescan</Button>
-                    <Button size="small" danger icon={<DeleteOutlined />} disabled={Boolean(pendingAction)} onClick={() => deleteHost(row)}>删除</Button>
-                  </Space>
+                  <TableActions>
+                    <TableAction onClick={() => openEdit(row)}>编辑</TableAction>
+                    <TableAction loading={pendingAction === `${name}:maintenance_enter`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:maintenance_enter`} onClick={() => runHostAction(row, 'maintenance_enter')}>维护</TableAction>
+                    <TableAction loading={pendingAction === `${name}:maintenance_exit`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:maintenance_exit`} onClick={() => runHostAction(row, 'maintenance_exit')}>退出维护</TableAction>
+                    <TableAction loading={pendingAction === `${name}:drain`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:drain`} onClick={() => runHostAction(row, 'drain')}>Drain</TableAction>
+                    <TableAction loading={pendingAction === `${name}:rescan`} disabled={Boolean(pendingAction) && pendingAction !== `${name}:rescan`} onClick={() => runHostAction(row, 'rescan')}>Rescan</TableAction>
+                    <TableAction danger disabled={Boolean(pendingAction)} onClick={() => deleteHost(row)}>删除</TableAction>
+                  </TableActions>
                 )
               }
             }

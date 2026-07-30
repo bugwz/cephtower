@@ -1,4 +1,4 @@
-import { DeleteOutlined, EyeOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
+import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Button, Card, Form, Input, InputNumber, Modal, Space, Table } from 'antd'
 import { useCallback, useState } from 'react'
 import { listResource, mutateResource, refreshResource } from '../../api/resource'
@@ -8,6 +8,7 @@ import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
 import { RecordDetail } from '../../components/RecordDetail'
+import { TableAction, TableActions } from '../../components/TableActions'
 import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -130,17 +131,13 @@ export function PoolPage() {
               { title: '版本', dataIndex: 'resource_version', width: 90 },
               {
                 title: '操作',
-                width: 190,
+                width: 100,
                 fixed: 'right',
                 render: (_, row) => (
-                  <Space>
-                    <Button size="small" icon={<EyeOutlined />} onClick={() => setDetailRow(row)}>
-                      详情
-                    </Button>
-                    <Button danger size="small" icon={<DeleteOutlined />} onClick={() => deletePool(row)}>
-                      删除
-                    </Button>
-                  </Space>
+                  <TableActions>
+                    <TableAction onClick={() => setDetailRow(row)}>详情</TableAction>
+                    <TableAction danger onClick={() => deletePool(row)}>删除</TableAction>
+                  </TableActions>
                 )
               }
             ]}

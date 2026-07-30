@@ -1,4 +1,4 @@
-import { DeleteOutlined, PlusOutlined, ReloadOutlined, SaveOutlined, TeamOutlined, UserAddOutlined } from '@ant-design/icons'
+import { PlusOutlined, ReloadOutlined, SaveOutlined, TeamOutlined, UserAddOutlined } from '@ant-design/icons'
 import { Button, Card, Form, Input, Popconfirm, Select, Space, Table, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { createUser, listUsers, type UserAccount, type UserRole } from '../../api/auth'
@@ -13,6 +13,7 @@ import {
 } from '../../api/rbac'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
+import { TableAction } from '../../components/TableActions'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 
@@ -173,10 +174,10 @@ export function UserPage({ view = 'users' }: { view?: UserPageView }) {
               { title: '创建时间', dataIndex: 'created_at', render: formatTime },
               {
                 title: '操作',
-                width: 120,
+                width: 70,
                 render: (_, row) => (
                   <Popconfirm title="删除集群授权" okText="删除" cancelText="取消" onConfirm={() => removeBinding(row)}>
-                    <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
+                    <TableAction danger>删除</TableAction>
                   </Popconfirm>
                 )
               }

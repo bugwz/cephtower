@@ -14,6 +14,7 @@ import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import { HealthBadge } from '../../components/HealthBadge'
 import { Page } from '../../components/Page'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
+import { TableAction } from '../../components/TableActions'
 import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -134,10 +135,10 @@ export function OverviewPage() {
                 { title: '数量', dataIndex: 'count', width: 80, render: (value) => textValue(value, '-') },
                 {
                   title: '操作',
-                  width: 110,
+                  width: 80,
                   render: (_, row) => {
                     const muted = Boolean(row.muted)
-                    return <Button size="small" onClick={() => toggleHealth(row, muted)}>{muted ? '取消静默' : '静默'}</Button>
+                    return <TableAction onClick={() => toggleHealth(row, muted)}>{muted ? '取消静默' : '静默'}</TableAction>
                   }
                 }
               ]}
