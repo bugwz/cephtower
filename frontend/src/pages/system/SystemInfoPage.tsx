@@ -82,7 +82,7 @@ export function SystemInfoPage() {
             <Descriptions.Item label="SQLite 文件">{data?.setup.database?.sqlite.name ?? '-'}</Descriptions.Item>
             <Descriptions.Item label="集群 ID">{selectedClusterId ?? '-'}</Descriptions.Item>
             <Descriptions.Item label="FSID">{selectedCluster?.fsid || '-'}</Descriptions.Item>
-            <Descriptions.Item label="Client">{selectedCluster?.client_username || '-'}</Descriptions.Item>
+            <Descriptions.Item label="认证用户">{selectedCluster?.client_username || '-'}</Descriptions.Item>
           </Descriptions>
         </Card>
 

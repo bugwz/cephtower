@@ -87,12 +87,12 @@ func TestOptionalObservationIsStoredWithoutSecrets(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, secret := range []string{"plain-ceph-key", "fixture-access-key", "fixture-secret-key", "fixture-session-token"} {
-		if strings.Contains(row.PayloadJSON, secret) {
-			t.Fatalf("secret %q persisted in %s", secret, row.PayloadJSON)
+		if strings.Contains(row.DiscoveredData, secret) {
+			t.Fatalf("secret %q persisted in %s", secret, row.DiscoveredData)
 		}
 	}
-	if !strings.Contains(row.PayloadJSON, "fixture-user") || !strings.Contains(row.PayloadJSON, "[REDACTED]") {
-		t.Fatalf("optional resource payload was not preserved and redacted: %s", row.PayloadJSON)
+	if !strings.Contains(row.DiscoveredData, "fixture-user") || !strings.Contains(row.DiscoveredData, "[REDACTED]") {
+		t.Fatalf("optional resource discovery was not preserved and redacted: %s", row.DiscoveredData)
 	}
 	result, err := service.Refresh(context.Background(), cluster.ID, []string{"storage"})
 	if err != nil {
@@ -145,16 +145,16 @@ func TestReconcileMarksSuccessfulEmptyKindsStaleButPreservesUnavailableKinds(t *
 	}
 }
 
-func TestClusterObservationUpdateUsesOverviewAndCoreDaemonVersion(t *testing.T) {
+func TestClusterDiscoveryUpdateUsesOverviewAndCoreDaemonVersion(t *testing.T) {
 	now := time.Now().UTC()
 	version := "ceph version 20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc) tentacle (stable)"
-	update, ok := clusterObservationUpdate(42, []cephprovider.Observation{
+	update, ok := clusterDiscoveryUpdate(42, []cephprovider.Observation{
 		{Kind: "overview", Payload: cephdomain.Overview{FSID: "9f11d824-8e53-11f1-8c55-00163e11e24f", CephVersion: version}, ObservedAt: now},
 		{Kind: "daemon", Payload: cephdomain.Daemon{Type: "alertmanager", Version: stringPointer("0.27.0")}, ObservedAt: now},
 		{Kind: "daemon", Payload: cephdomain.Daemon{Type: "mgr", Version: stringPointer("20.2.2")}, ObservedAt: now},
 	})
 	if !ok {
-		t.Fatal("cluster observation update was not detected")
+		t.Fatal("cluster discovery update was not detected")
 	}
 	if update.FSID == nil || *update.FSID != "9f11d824-8e53-11f1-8c55-00163e11e24f" {
 		t.Fatalf("fsid = %#v", update.FSID)
@@ -167,7 +167,7 @@ func TestClusterObservationUpdateUsesOverviewAndCoreDaemonVersion(t *testing.T) 
 	}
 }
 
-func TestReconcileStoresClusterObservation(t *testing.T) {
+func TestReconcileStoresClusterDiscovery(t *testing.T) {
 	db, err := store.Open(config.DatabaseConfig{EncryptionKey: reconcilerTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "reconciler-observation.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
@@ -192,19 +192,22 @@ func TestReconcileStoresClusterObservation(t *testing.T) {
 	if err := service.Reconcile(context.Background(), cluster.ID, module); err != nil {
 		t.Fatal(err)
 	}
-	observation, err := db.FindObservation(context.Background(), cluster.ID)
+	stored, err := db.FindCluster(context.Background(), cluster.ID)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if observation.FSID == nil || *observation.FSID != "9f11d824-8e53-11f1-8c55-00163e11e24f" {
-		t.Fatalf("fsid = %#v", observation.FSID)
+	if stored.FSID == nil || *stored.FSID != "9f11d824-8e53-11f1-8c55-00163e11e24f" {
+		t.Fatalf("fsid = %#v", stored.FSID)
 	}
-	if observation.CephVersion == nil || *observation.CephVersion != "20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc)" {
-		t.Fatalf("ceph version = %#v", observation.CephVersion)
+	if stored.CephVersion == nil || *stored.CephVersion != "20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc)" {
+		t.Fatalf("ceph version = %#v", stored.CephVersion)
+	}
+	if !strings.Contains(stored.DiscoveredData, *stored.FSID) {
+		t.Fatalf("cluster discovery JSON = %s", stored.DiscoveredData)
 	}
 }
 
-func TestSyncClusterObservationKeepsExistingVersionWithCommit(t *testing.T) {
+func TestSyncClusterDiscoveryKeepsExistingVersionWithCommit(t *testing.T) {
 	db, err := store.Open(config.DatabaseConfig{EncryptionKey: reconcilerTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "reconciler-version.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
@@ -220,18 +223,18 @@ func TestSyncClusterObservationKeepsExistingVersionWithCommit(t *testing.T) {
 		t.Fatal(err)
 	}
 	version := "20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc)"
-	observation := store.CephClusterObservation{ClusterID: cluster.ID, CephVersion: &version, Status: "available", Enabled: true, UpdatedAt: now}
-	if err := db.UpsertObservation(context.Background(), &observation); err != nil {
+	cluster.CephVersion, cluster.Status, cluster.Enabled, cluster.DiscoveredData = &version, "available", true, `{}`
+	if err := db.UpdateClusterDiscovery(context.Background(), cluster); err != nil {
 		t.Fatal(err)
 	}
 	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil)
 	service := New(func() *store.Database { return db }, clusters, &metadataCollectorFake{})
-	if err := service.syncClusterObservation(context.Background(), cluster.ID, 2, []cephprovider.Observation{
+	if err := service.syncClusterDiscovery(context.Background(), cluster.ID, 2, []cephprovider.Observation{
 		{Kind: "daemon", Payload: cephdomain.Daemon{Type: "mgr", Version: stringPointer("20.2.2")}, ObservedAt: now},
-	}); err != nil {
+	}, nil); err != nil {
 		t.Fatal(err)
 	}
-	stored, err := db.FindObservation(context.Background(), cluster.ID)
+	stored, err := db.FindCluster(context.Background(), cluster.ID)
 	if err != nil {
 		t.Fatal(err)
 	}

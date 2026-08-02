@@ -1,9 +1,11 @@
 import { InfoCircleOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Button, Card, Form, Input, Popover, Space, Typography } from 'antd'
+import type { TableProps } from 'antd/es/table'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   createCluster,
+  listClusterFilterOptions,
   listClusters,
   updateCluster,
   type CephCluster
@@ -35,6 +37,8 @@ export function ClusterPage() {
   const [clusters, setClusters] = useState<CephCluster[]>([])
   const [clusterLoading, setClusterLoading] = useState(true)
   const [clusterError, setClusterError] = useState('')
+  const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({})
+  const [filterOptions, setFilterOptions] = useState<Record<string, string[]>>({})
   const [clusterModalOpen, setClusterModalOpen] = useState(false)
   const [editingCluster, setEditingCluster] = useState<CephCluster | null>(null)
   const [clusterSubmitting, setClusterSubmitting] = useState(false)
@@ -47,7 +51,7 @@ export function ClusterPage() {
     }
     setClusterError('')
     try {
-      setClusters(await listClusters())
+      setClusters(await listClusters({ filters: columnFilters }))
     } catch (err) {
       setClusterError(err instanceof Error ? err.message : '加载集群连接失败')
     } finally {
@@ -55,11 +59,33 @@ export function ClusterPage() {
         setClusterLoading(false)
       }
     }
-  }, [])
+  }, [columnFilters])
 
   useEffect(() => {
     loadClusters()
   }, [loadClusters])
+
+  useEffect(() => {
+    let ignore = false
+    void listClusterFilterOptions(['name', 'client_username'])
+      .then((options) => {
+        if (!ignore) {
+          setFilterOptions(options)
+        }
+      })
+      .catch(() => {
+        if (!ignore) {
+          setFilterOptions({})
+        }
+      })
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  const handleTableChange: TableProps<CephCluster>['onChange'] = (_pagination, filters) => {
+    setColumnFilters(tableFilters(filters))
+  }
 
   function openCreateCluster() {
     setEditingCluster(null)
@@ -125,13 +151,18 @@ export function ClusterPage() {
           rowKey="id"
           tableLayout="fixed"
           dataSource={clusters}
+          onChange={handleTableChange}
           pagination={{ defaultPageSize: 10, showSizeChanger: true }}
           scroll={{ x: 900 }}
           columns={[
             {
               title: '集群名称',
-              key: 'cluster',
+              key: 'name',
               width: 180,
+              filterMultiple: true,
+              filterSearch: true,
+              filters: (filterOptions.name ?? []).map((value) => ({ text: value, value })),
+              filteredValue: columnFilters.name ?? null,
               render: (_, cluster) => (
                 <div className="user-cell">
                   <Text strong>{cluster.name}</Text>
@@ -145,9 +176,14 @@ export function ClusterPage() {
               render: (value) => <MonitorAddressSummary value={value} maxVisible={2} />
             },
             {
-              title: 'Client 用户',
+              title: '认证用户',
               dataIndex: 'client_username',
-              width: 180
+              key: 'client_username',
+              width: 180,
+              filterMultiple: true,
+              filterSearch: true,
+              filters: (filterOptions.client_username ?? []).map((value) => ({ text: value, value })),
+              filteredValue: columnFilters.client_username ?? null
             },
             {
               title: '更新时间',
@@ -251,4 +287,12 @@ function defaultClusterFormValues(): Partial<ClusterFormValues> {
   return {
     client_username: 'client.admin'
   }
+}
+
+function tableFilters(filters: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(filters)
+      .map(([field, values]) => [field, Array.isArray(values) ? values.map(String).filter(Boolean) : []] as const)
+      .filter(([, values]) => values.length > 0)
+  )
 }

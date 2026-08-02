@@ -10,8 +10,10 @@ import { NAV_PAGES, pagePaths } from './navigation'
 import {
   InitializationPage,
   ClusterDetailPage,
+  DeviceDetailPage,
   HostDetailPage,
   LoginPage,
+  MonDetailPage,
   pageComponents,
   type PageKey
 } from './pages'
@@ -200,7 +202,9 @@ export default function App() {
               <Route key={page.key} path={page.path} element={renderAppPage(page.key)} />
             ))}
             <Route path="/cluster/cluster/:name" element={renderStandaloneAppPage('clusterManagement', <ClusterDetailPage />)} />
+            <Route path="/cluster/host/device/:deviceId" element={renderStandaloneAppPage('deviceManagement', <DeviceDetailPage />)} />
             <Route path="/cluster/host/:name" element={renderStandaloneAppPage('hostManagement', <HostDetailPage />)} />
+            <Route path="/cluster/mon/:name" element={renderStandaloneAppPage('monManagement', <MonDetailPage />)} />
             <Route path="/login" element={<Navigate to={pagePaths.overview} replace />} />
             <Route path="/bootstrap" element={<Navigate to={pagePaths.overview} replace />} />
             <Route path="/password-reset" element={<Navigate to={pagePaths.overview} replace />} />

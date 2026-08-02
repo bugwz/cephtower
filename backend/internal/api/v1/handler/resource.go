@@ -12,6 +12,7 @@ import (
 	"time"
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
+	"cephtower/backend/internal/security"
 	externalservice "cephtower/backend/internal/service/external"
 	mutationservice "cephtower/backend/internal/service/mutation"
 	"cephtower/backend/internal/store"
@@ -61,7 +62,19 @@ func (h *Handler) ReadResource(kind string, item bool) http.HandlerFunc {
 		annotateAudit(r, kind+".list", kind, "", "", &auditClusterID)
 		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 		after := decodeCursor(r.URL.Query().Get("cursor"))
-		rows, err := h.Database().ListResources(r.Context(), id, storeResourceFilter(kind, limit, after, r, body))
+		filter := storeResourceFilter(kind, limit, after, r, body)
+		if r.URL.Query().Get("filter_options") == "1" {
+			fields := requestedFilterOptionFields(r)
+			options, err := h.Database().ResourceFilterOptions(r.Context(), id, filter, fields)
+			if err != nil {
+				WriteError(w, r, 500, "store_error", err.Error(), false, nil)
+				return
+			}
+			WriteSuccess(w, 200, "success", map[string]any{"filter_options": options})
+			return
+		}
+		filter.FieldValues = resourceFieldFilters(r)
+		rows, err := h.Database().ListResources(r.Context(), id, filter)
 		if err != nil {
 			WriteError(w, r, 500, "store_error", err.Error(), false, nil)
 			return
@@ -205,8 +218,33 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 			writeActionError(w, r, err)
 			return
 		}
+		if err := h.persistResourceMutation(r.Context(), id, kind, action, resourceKey, body); err != nil {
+			WriteError(w, r, http.StatusInternalServerError, "store_error", err.Error(), false, nil)
+			return
+		}
 		WriteSuccess(w, http.StatusOK, "success", result)
 	}
+}
+
+func (h *Handler) persistResourceMutation(ctx context.Context, clusterID uint64, kind, action, auditKey string, body map[string]any) error {
+	key := resourceLookupKey(kind, auditKey)
+	if strings.HasSuffix(action, ".delete") || strings.HasSuffix(action, ".purge") {
+		return h.Database().DeleteResourceState(ctx, clusterID, kind, key)
+	}
+	if !strings.HasSuffix(action, ".create") && !strings.HasSuffix(action, ".update") &&
+		!strings.HasSuffix(action, ".set") && !strings.HasSuffix(action, ".quota") &&
+		!strings.HasSuffix(action, ".clone") && !strings.HasSuffix(action, ".restore") {
+		return nil
+	}
+	redacted, err := security.RedactJSON(body)
+	if err != nil {
+		return err
+	}
+	configured, err := json.Marshal(redacted)
+	if err != nil {
+		return err
+	}
+	return h.Database().SaveResourceConfiguration(ctx, clusterID, kind, key, string(configured))
 }
 
 func (h *Handler) checkResourceGeneration(ctx context.Context, clusterID uint64, kind, resourceKey string, generation uint64) error {
@@ -359,9 +397,17 @@ func resourceLookupKey(kind, resourceKey string) string {
 	}
 }
 
-func toResourceDTO(row store.CephResourceRecord) resourceDTO {
-	var data any
-	_ = json.Unmarshal([]byte(row.PayloadJSON), &data)
+func toResourceDTO(row store.CephEntityRecord) resourceDTO {
+	data := map[string]any{}
+	_ = json.Unmarshal([]byte(row.DiscoveredData), &data)
+	if row.ConfiguredData != nil {
+		var configured map[string]any
+		if err := json.Unmarshal([]byte(*row.ConfiguredData), &configured); err == nil {
+			for field, value := range configured {
+				data[field] = value
+			}
+		}
+	}
 	return resourceDTO{Kind: row.Kind, NaturalKey: row.NaturalKey, Name: row.Name, Status: row.Status, ResourceVersion: row.ResourceVersion, Source: row.Source, ObservedAt: row.ObservedAt, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt, Stale: row.StaleAt != nil, Data: data}
 }
 
@@ -432,6 +478,56 @@ func storeResourceFilter(kind string, limit int, after uint64, r *http.Request, 
 		filter.ParentKind = ""
 	}
 	return filter
+}
+
+func requestedFilterOptionFields(r *http.Request) []string {
+	raw := r.URL.Query().Get("fields")
+	if raw == "" {
+		return nil
+	}
+	parts := strings.Split(raw, ",")
+	fields := make([]string, 0, len(parts))
+	for _, part := range parts {
+		field := strings.TrimSpace(part)
+		if validResourceField(field) {
+			fields = append(fields, field)
+		}
+	}
+	return fields
+}
+
+func resourceFieldFilters(r *http.Request) map[string][]string {
+	values := r.URL.Query()
+	filters := map[string][]string{}
+	for key, selected := range values {
+		field, ok := strings.CutPrefix(key, "filter.")
+		if !ok || !validResourceField(field) {
+			continue
+		}
+		for _, value := range selected {
+			value = strings.TrimSpace(value)
+			if value != "" {
+				filters[field] = append(filters[field], value)
+			}
+		}
+	}
+	if len(filters) == 0 {
+		return nil
+	}
+	return filters
+}
+
+func validResourceField(field string) bool {
+	if field == "" || len(field) > 96 {
+		return false
+	}
+	for _, char := range field {
+		if (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || (char >= '0' && char <= '9') || char == '_' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 func readResourceKey(kind string, body map[string]any) string {

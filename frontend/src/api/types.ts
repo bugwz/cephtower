@@ -13,6 +13,10 @@ export interface ListEnvelope<T> {
   }
 }
 
+export interface FilterOptionsEnvelope {
+  filter_options?: Record<string, string[]>
+}
+
 export interface ResourceDTO<T = ApiRecord> {
   kind: string
   natural_key: string

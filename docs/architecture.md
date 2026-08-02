@@ -84,11 +84,14 @@ execution materializes a mode-0600 temporary config and keyring, runs without a 
 timeouts and output limits, and removes the temporary directory when the command finishes.
 CephX keys are decrypted only for this in-memory execution scope.
 
-The reconciler stores normalized current state in `ceph_resource_record`. Its five modules are
-`fast`, `topology`, `storage`, `inventory`, and `configuration`. A collection result explicitly
-records which kinds were authoritative: a successful empty result marks disappeared resources
-stale, while a failed optional command preserves the last known rows. Successful mutations
-immediately reconcile the owning module before the operation is marked complete.
+The reconciler stores each resource kind in its dedicated `ceph_<kind>` table. Cluster and host
+configuration use `ceph_cluster` and `ceph_host`; internal discovery payloads are stored in
+`discovered_data`, parsed into explicit API DTO fields, and never returned as raw storage fields.
+Its five modules are `fast`, `topology`, `storage`, `inventory`, and `configuration`. A collection
+result explicitly records which kinds were authoritative: a successful empty result marks
+disappeared resources stale, while a failed optional command preserves the last known rows.
+Successful mutations immediately reconcile the owning module before the operation is marked
+complete.
 
 Prometheus, Alertmanager, Grafana, S3 bucket configuration, iSCSI, and NVMe-oF reads use their
 native HTTP, S3, or gRPC protocols. Endpoint credentials and custom CA/mTLS material are stored

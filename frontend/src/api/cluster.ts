@@ -1,7 +1,7 @@
 import { asArray, jsonInit, request, type ApiRecord } from './client'
 import { listCredentials, listEndpoints, type CredentialView, type EndpointView } from './endpoint'
 import { getOptionalResource, listResource } from './resource'
-import type { ListEnvelope } from './types'
+import type { FilterOptionsEnvelope, ListEnvelope } from './types'
 
 export interface CephCluster {
   id: number
@@ -129,10 +129,29 @@ export interface ClusterCapability {
   observed_at: string
 }
 
-export async function listClusters(): Promise<CephCluster[]> {
-  const payload = await request<ListEnvelope<ApiRecord> | ApiRecord[]>('/clusters', { method: 'GET' })
+export interface ClusterListOptions {
+  filters?: Record<string, string[]>
+}
+
+export async function listClusters(options: ClusterListOptions = {}): Promise<CephCluster[]> {
+  const query = new URLSearchParams()
+  Object.entries(options.filters ?? {}).forEach(([field, values]) => {
+    values.forEach((value) => {
+      if (value) {
+        query.append(`filter.${field}`, value)
+      }
+    })
+  })
+  const suffix = query.toString() ? `?${query}` : ''
+  const payload = await request<ListEnvelope<ApiRecord> | ApiRecord[]>(`/clusters${suffix}`, { method: 'GET' })
   const rows = Array.isArray(payload) ? payload : asArray(payload)
   return rows.map(normalizeCluster)
+}
+
+export async function listClusterFilterOptions(fields: string[]) {
+  const query = new URLSearchParams({ filter_options: '1', fields: fields.join(',') })
+  const payload = await request<FilterOptionsEnvelope>(`/clusters?${query}`, { method: 'GET' })
+  return payload.filter_options ?? {}
 }
 
 export async function getClusterDetail(name: string): Promise<CephClusterDetail> {

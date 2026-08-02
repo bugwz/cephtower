@@ -71,11 +71,21 @@ type Role struct {
 func (Role) TableName() string { return "role" }
 
 type CephCluster struct {
-	ID               uint64    `gorm:"primaryKey;autoIncrement"`
-	Name             string    `gorm:"size:128;not null;uniqueIndex:uq_cluster_name"`
-	MonitorAddresses string    `gorm:"size:4096;not null"`
-	ClientUsername   string    `gorm:"size:128;not null"`
-	ClientKey        string    `gorm:"type:text;not null"`
+	ID               uint64     `gorm:"primaryKey;autoIncrement"`
+	Name             string     `gorm:"size:128;not null;uniqueIndex:uq_cluster_name"`
+	MonitorAddresses string     `gorm:"size:4096;not null"`
+	ClientUsername   string     `gorm:"size:128;not null"`
+	ClientKey        string     `gorm:"type:text;not null"`
+	DiscoveredData   string     `json:"-" gorm:"column:discovered_data;type:text;not null;default:'{}'"`
+	FSID             *string    `gorm:"column:fsid;size:36;index:idx_cluster_fsid"`
+	CephVersion      *string    `gorm:"size:128"`
+	Status           string     `gorm:"size:32;not null;default:unknown;index:idx_cluster_status_enabled,priority:1"`
+	Enabled          bool       `gorm:"not null;default:true;index:idx_cluster_status_enabled,priority:2"`
+	Generation       uint64     `gorm:"not null;default:0"`
+	LastSeenAt       *time.Time `gorm:"index:idx_cluster_last_seen"`
+	LastErrorCode    *string    `gorm:"size:64"`
+	LastErrorMessage *string    `gorm:"type:text"`
+	ObservedAt       *time.Time
 	CreatedAt        time.Time `gorm:"not null"`
 	UpdatedAt        time.Time `gorm:"not null"`
 }
@@ -97,23 +107,6 @@ type UserRoleBinding struct {
 }
 
 func (UserRoleBinding) TableName() string { return "user_role_binding" }
-
-type CephClusterObservation struct {
-	ClusterID        uint64      `gorm:"primaryKey;autoIncrement:false"`
-	Cluster          CephCluster `gorm:"constraint:OnDelete:CASCADE"`
-	FSID             *string     `gorm:"column:fsid;size:36;index:idx_observation_fsid"`
-	CephVersion      *string     `gorm:"size:128"`
-	Status           string      `gorm:"size:32;not null;default:unknown;index:idx_observation_status_enabled,priority:1"`
-	Enabled          bool        `gorm:"not null;default:true;check:observation_enabled_check,enabled IN (0,1);index:idx_observation_status_enabled,priority:2"`
-	Generation       uint64      `gorm:"not null;default:0"`
-	LastSeenAt       *time.Time  `gorm:"index:idx_observation_last_seen"`
-	LastErrorCode    *string     `gorm:"size:64"`
-	LastErrorMessage *string     `gorm:"type:text"`
-	ObservedAt       *time.Time
-	UpdatedAt        time.Time `gorm:"not null"`
-}
-
-func (CephClusterObservation) TableName() string { return "ceph_cluster_observation" }
 
 type CephClusterCredential struct {
 	ID          uint64      `gorm:"primaryKey;autoIncrement"`
@@ -174,35 +167,42 @@ type CephHost struct {
 	SSHPrivateKeySecret    *string     `gorm:"column:ssh_private_key_secret;type:text"`
 	SSHKeyPassphraseSecret *string     `gorm:"column:ssh_key_passphrase_secret;type:text"`
 	Notes                  *string     `gorm:"type:text"`
+	Address                *string     `gorm:"size:255"`
+	Status                 *string     `gorm:"size:64;index:idx_ceph_host_status"`
+	ConfiguredData         *string     `json:"-" gorm:"column:configured_data;type:text"`
+	DiscoveredData         string      `json:"-" gorm:"column:discovered_data;type:text;not null;default:'{}'"`
+	Generation             uint64      `gorm:"not null;default:0"`
+	ResourceVersion        uint64      `gorm:"not null;default:1"`
+	Source                 string      `gorm:"size:32;not null;default:''"`
+	SourceVersion          *string     `gorm:"size:128"`
+	ObservedAt             *time.Time  `gorm:"index:idx_ceph_host_observed"`
+	StaleAt                *time.Time  `gorm:"index:idx_ceph_host_stale"`
 	CreatedAt              time.Time   `gorm:"not null"`
 	UpdatedAt              time.Time   `gorm:"not null"`
 }
 
 func (CephHost) TableName() string { return "ceph_host" }
 
-type CephResourceRecord struct {
-	ID                   uint64      `gorm:"primaryKey;autoIncrement"`
-	ClusterID            uint64      `gorm:"not null;uniqueIndex:uq_resource,priority:1;index:idx_resource_name,priority:1;index:idx_resource_status,priority:1;index:idx_resource_generation,priority:1;index:idx_resource_observed,priority:1;index:idx_resource_parent,priority:1;index:idx_resource_stale,priority:1"`
-	Cluster              CephCluster `gorm:"constraint:OnDelete:CASCADE"`
-	Kind                 string      `gorm:"size:64;not null;uniqueIndex:uq_resource,priority:2;index:idx_resource_name,priority:2;index:idx_resource_status,priority:2;index:idx_resource_generation,priority:2;index:idx_resource_observed,priority:2"`
-	NaturalKey           string      `gorm:"size:512;not null;uniqueIndex:uq_resource,priority:3"`
-	ParentKind           *string     `gorm:"size:64;index:idx_resource_parent,priority:2"`
-	ParentKey            *string     `gorm:"size:512;index:idx_resource_parent,priority:3"`
-	Name                 *string     `gorm:"size:512;index:idx_resource_name,priority:3"`
-	Status               *string     `gorm:"size:64;index:idx_resource_status,priority:3"`
-	Generation           uint64      `gorm:"not null;index:idx_resource_generation,priority:3"`
-	ResourceVersion      uint64      `gorm:"not null;default:1"`
-	Source               string      `gorm:"size:32;not null"`
-	SourceVersion        *string     `gorm:"size:128"`
-	ObservedAt           time.Time   `gorm:"not null;index:idx_resource_observed,priority:3"`
-	StaleAt              *time.Time  `gorm:"index:idx_resource_stale,priority:2"`
-	PayloadSchemaVersion int         `gorm:"not null"`
-	PayloadJSON          string      `gorm:"type:text;not null"`
-	CreatedAt            time.Time   `gorm:"not null"`
-	UpdatedAt            time.Time   `gorm:"not null"`
+type CephEntityRecord struct {
+	ID              uint64    `gorm:"primaryKey;autoIncrement"`
+	ClusterID       uint64    `gorm:"not null"`
+	Kind            string    `gorm:"-"`
+	NaturalKey      string    `gorm:"size:512;not null"`
+	ParentKind      *string   `gorm:"size:64"`
+	ParentKey       *string   `gorm:"size:512"`
+	Name            *string   `gorm:"size:512"`
+	Status          *string   `gorm:"size:64"`
+	Generation      uint64    `gorm:"not null"`
+	ResourceVersion uint64    `gorm:"not null;default:1"`
+	Source          string    `gorm:"size:32;not null"`
+	SourceVersion   *string   `gorm:"size:128"`
+	ObservedAt      time.Time `gorm:"not null"`
+	StaleAt         *time.Time
+	ConfiguredData  *string   `json:"-" gorm:"column:configured_data;type:text"`
+	DiscoveredData  string    `json:"-" gorm:"column:discovered_data;type:text;not null"`
+	CreatedAt       time.Time `gorm:"not null"`
+	UpdatedAt       time.Time `gorm:"not null"`
 }
-
-func (CephResourceRecord) TableName() string { return "ceph_resource_record" }
 
 type CephCollectionRun struct {
 	ID           uint64      `gorm:"primaryKey;autoIncrement"`

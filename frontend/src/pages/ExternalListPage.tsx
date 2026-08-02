@@ -162,49 +162,56 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
       ) : null}
     </Space>
   )
-  const listContent = (
-    <Space direction="vertical" size={16} className="page-stack">
-      <FeatureRequirementAlert status={featureStatus} />
-      {definition.filterFields?.length ? (
-        <Form
-          form={filterForm}
-          layout="inline"
-          initialValues={definition.body}
-          onFinish={(values) => setQueryBody(cleanRecord(values))}
+  const featureRequirementAlert = <FeatureRequirementAlert status={featureStatus} />
+  const filterFormContent = definition.filterFields?.length ? (
+    <Form
+      form={filterForm}
+      layout="inline"
+      initialValues={definition.body}
+      onFinish={(values) => setQueryBody(cleanRecord(values))}
+    >
+      {definition.filterFields.map((field) => (
+        <Form.Item
+          key={field.name}
+          name={field.name}
+          label={field.label}
+          rules={field.required ? [{ required: true, message: `请输入${field.label}` }] : undefined}
         >
-          {definition.filterFields.map((field) => (
-            <Form.Item
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              rules={field.required ? [{ required: true, message: `请输入${field.label}` }] : undefined}
-            >
-              {renderFormControl(field)}
-            </Form.Item>
-          ))}
-          <Form.Item>
-            <Button icon={<ReloadOutlined />} htmlType="submit">应用</Button>
-          </Form.Item>
-        </Form>
-      ) : null}
-      {missingRequiredFilters.length > 0 ? (
-        <Alert
-          type="info"
-          showIcon
-          message="请先填写筛选条件"
-          description={`该页面需要 ${missingRequiredFilters.join('、')} 后再读取数据。`}
-        />
-      ) : null}
-      <AppTable<ApiRecord>
-        size="middle"
-        columns={tableColumns}
-        dataSource={data ?? []}
-        pagination={{ defaultPageSize: 10, showSizeChanger: true }}
-        rowKey={(row, index) => rowKey(definition, row, index)}
-        scroll={{ x: true }}
-      />
-    </Space>
+          {renderFormControl(field)}
+        </Form.Item>
+      ))}
+      <Form.Item>
+        <Button icon={<ReloadOutlined />} htmlType="submit">应用</Button>
+      </Form.Item>
+    </Form>
+  ) : null
+  const missingFilterAlert = missingRequiredFilters.length > 0 ? (
+    <Alert
+      type="info"
+      showIcon
+      message="请先填写筛选条件"
+      description={`该页面需要 ${missingRequiredFilters.join('、')} 后再读取数据。`}
+    />
+  ) : null
+  const externalTable = (
+    <AppTable<ApiRecord>
+      size="middle"
+      columns={tableColumns}
+      dataSource={data ?? []}
+      pagination={{ defaultPageSize: 10, showSizeChanger: true }}
+      rowKey={(row, index) => rowKey(definition, row, index)}
+      scroll={{ x: true }}
+    />
   )
+  const hasListExtras = hasFeatureRequirementAlert(featureStatus) || Boolean(filterFormContent) || Boolean(missingFilterAlert)
+  const listContent = hasListExtras ? (
+    <Space direction="vertical" size={16} className="page-stack">
+      {featureRequirementAlert}
+      {filterFormContent}
+      {missingFilterAlert}
+      {externalTable}
+    </Space>
+  ) : externalTable
   const listSurface = embedded ? (
     <div className="page-embedded-list">
       <div className="page-embedded-list-head">
@@ -321,6 +328,10 @@ function FeatureRequirementAlert({ status }: { status: ReturnType<typeof useFeat
     return <Alert type="warning" showIcon message="当前集群暂不可执行该页面的变更操作" description={status.reasons.join('; ')} />
   }
   return null
+}
+
+function hasFeatureRequirementAlert(status: ReturnType<typeof useFeatureRequirements>) {
+  return status.loading || Boolean(status.error) || status.reasons.length > 0
 }
 
 function renderFormControl(field: MutationFormField) {

@@ -11,6 +11,7 @@ import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 import { TableAction, TableActions } from '../../components/TableActions'
 import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
+import { useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 
@@ -34,12 +35,17 @@ interface HostSSHFormValues {
 export function HostPage() {
   const navigate = useNavigate()
   const { selectedClusterId } = useClusterContext()
+  const hostTableFilters = useResourceTableFilters({
+    path: '/hosts',
+    fields: ['hostname', 'address', 'system', 'kernel_release', 'status'],
+    clusterId: selectedClusterId
+  })
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
       return { hosts: [], observedAt: null, stale: false, staleReason: null }
     }
     const [hostList, daemons, devices] = await Promise.all([
-      listResource('/hosts'),
+      listResource('/hosts', selectedClusterId, { filters: hostTableFilters.filters }),
       listDaemons(),
       listResource('/host/devices').then((payload) => payload.items)
     ])
@@ -49,7 +55,7 @@ export function HostPage() {
       stale: hostList.stale,
       staleReason: hostList.staleReason
     }
-  }, [selectedClusterId])
+  }, [hostTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [form] = Form.useForm<HostFormValues>()
   const [sshForm] = Form.useForm<HostSSHFormValues>()
@@ -187,20 +193,24 @@ export function HostPage() {
       >
         <DataTable
           data={data?.hosts ?? []}
+          filterOptions={hostTableFilters.filterOptions}
+          filteredValues={hostTableFilters.filters}
+          onFilterChange={hostTableFilters.handleFilterChange}
           footer={<ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />}
           rowKeyCandidates={['hostname', 'name', 'address', 'addr']}
           columns={[
             { key: 'hostname', title: '主机名' },
-            { key: 'address_display', title: '地址' },
-            { key: 'system_display', title: '系统' },
-            { key: 'kernel_display', title: '内核版本' },
-            { key: 'daemon_count_display', title: '守护进程' },
-            { key: 'osd_count_display', title: 'OSD' },
-            { key: 'storage_display', title: '磁盘容量' },
-            { key: 'status_display', title: '状态', render: (value) => <Tag color={value === '在线' ? 'success' : 'default'}>{textValue(value)}</Tag> },
+            { key: 'address_display', title: '地址', filterKey: 'address' },
+            { key: 'system_display', title: '系统', filterKey: 'system' },
+            { key: 'kernel_display', title: '内核版本', filterKey: 'kernel_release' },
+            { key: 'daemon_count_display', title: '守护进程', filterKey: false },
+            { key: 'osd_count_display', title: 'OSD', filterKey: false },
+            { key: 'storage_display', title: '磁盘容量', filterKey: false },
+            { key: 'status_display', title: '状态', filterKey: 'status', render: (value) => <Tag color={value === '在线' ? 'success' : 'default'}>{textValue(value)}</Tag> },
             {
               key: 'actions',
               title: '操作',
+              filterKey: false,
               render: (_, row) => {
                 const name = hostName(row)
                 return (

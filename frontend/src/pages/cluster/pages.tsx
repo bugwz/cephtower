@@ -1,16 +1,13 @@
-import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, InputNumber, Modal, Segmented, Space, Switch, Tabs, Tag } from 'antd'
+import { ArrowLeftOutlined, BulbOutlined, DeleteOutlined, PlusOutlined, PoweroffOutlined, ReloadOutlined } from '@ant-design/icons'
+import { Button, Card, Descriptions, Form, Input, InputNumber, Modal, Space, Switch, Tabs, Tag, Typography } from 'antd'
 import { useCallback, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import {
   applyDaemonAction,
-  listDaemons,
-  listMgrModules,
   listMonitors,
   listResource,
   listOSDFlags,
-  listOSDs,
-  listServices,
   markOSD,
   mutateResource,
   refreshResource,
@@ -25,85 +22,70 @@ import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 import { TableAction, TableActions } from '../../components/TableActions'
 import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
+import { mergeResourceFilters, useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
+import { formatDateTime } from '../../utils/time'
 import { ClusterDetailPage } from './ClusterDetailPage'
 import { ClusterPage } from './ClusterPage'
 import { HostDetailPage } from './HostDetailPage'
 import { formatBytes, HostPage } from './HostPage'
+import { MonDetailPage } from './MonDetailPage'
 import { ServicePage } from './ServicePage'
 
-export { ClusterDetailPage, ClusterPage, HostDetailPage, HostPage, ServicePage }
+export { ClusterDetailPage, ClusterPage, HostDetailPage, HostPage, MonDetailPage, ServicePage }
 
-type DeviceScope = 'all' | 'available' | 'used' | 'unavailable'
+const { Text } = Typography
+const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
+
+type DeviceScope = 'available' | 'used' | 'unavailable'
 
 export function MonManagementPage() {
+  const navigate = useNavigate()
   const { selectedClusterId } = useClusterContext()
+  const monTableFilters = useResourceTableFilters({
+    path: '/monitors',
+    fields: ['name', 'rank', 'address', 'status'],
+    clusterId: selectedClusterId
+  })
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
-      return {
-        monitor: {},
-        daemons: [],
-        inQuorum: [],
-        outQuorum: []
-      }
+      return []
     }
-    const [monitor, daemons] = await Promise.all([listMonitors(), listDaemons('mon')])
-    return {
-      monitor,
-      daemons,
-      inQuorum: asRecords(monitor.in_quorum),
-      outQuorum: asRecords(monitor.out_quorum)
-    }
-  }, [selectedClusterId])
-  const { data, loading, error, refresh } = useResource(loader)
+    return listMonitors(selectedClusterId, monTableFilters.filters)
+  }, [monTableFilters.filters, selectedClusterId])
+  const { data, loading, error } = useResource(loader)
 
   return (
     <Page title="MON管理" loading={loading} error={error}>
       <Card className="page-surface-card" title="MON管理">
-        <Tabs
-          items={[
+        <DataTable
+          data={data ?? []}
+          filterOptions={monTableFilters.filterOptions}
+          filteredValues={monTableFilters.filters}
+          onFilterChange={monTableFilters.handleFilterChange}
+          rowKeyCandidates={['name', 'natural_key', 'rank']}
+          columns={[
+            { key: 'name', title: '名称' },
+            { key: 'rank', title: 'Rank' },
+            { key: 'address', title: 'Public Addr' },
             {
-              key: 'quorum',
-              label: '仲裁成员',
-              children: (
-                <div className="embedded-panel">
-                <DataTable
-                  data={data?.inQuorum ?? []}
-                  rowKeyCandidates={['name', 'rank', 'addr']}
-                  columns={[
-                    { key: 'name', title: '名称' },
-                    { key: 'rank', title: 'Rank' },
-                    { key: 'public_addr', title: 'Public Addr' },
-                    { key: 'priority', title: '优先级' },
-                    { key: 'stats', title: '会话统计', render: (value) => textValue(value) }
-                  ]}
-                />
-                </div>
-              )
+              key: 'status',
+              title: '状态',
+              render: (_, row) => <Tag color={row.in_quorum === true ? 'success' : 'default'}>{row.in_quorum === true ? '仲裁中' : '未加入仲裁'}</Tag>
             },
             {
-              key: 'out',
-              label: '非仲裁成员',
-              children: (
-                <div className="embedded-panel">
-                <DataTable
-                  data={data?.outQuorum ?? []}
-                  rowKeyCandidates={['name', 'rank', 'addr']}
-                  columns={[
-                    { key: 'name', title: '名称' },
-                    { key: 'rank', title: 'Rank' },
-                    { key: 'public_addr', title: 'Public Addr' },
-                    { key: 'addr', title: '地址' }
-                  ]}
-                />
-                </div>
-              )
-            },
-            {
-              key: 'daemons',
-              label: '守护进程',
-              children: <DaemonTable data={data?.daemons ?? []} refresh={refresh} />
+              key: 'actions',
+              title: '操作',
+              filterKey: false,
+              render: (_, row) => {
+                const name = textValue(row.name ?? row.natural_key, '')
+                return (
+                  <TableActions>
+                    <TableAction disabled={!name} onClick={() => navigate(`/cluster/mon/${encodeURIComponent(name)}`)}>详情</TableAction>
+                  </TableActions>
+                )
+              }
             }
           ]}
         />
@@ -114,13 +96,28 @@ export function MonManagementPage() {
 
 export function MgrManagementPage() {
   const { selectedClusterId } = useClusterContext()
+  const moduleTableFilters = useResourceTableFilters({
+    path: '/manager/modules',
+    fields: ['name', 'enabled', 'always_on'],
+    clusterId: selectedClusterId
+  })
+  const daemonTableFilters = useResourceTableFilters({
+    path: '/daemons',
+    fields: ['daemon_name', 'daemon_type', 'hostname', 'status_desc', 'version'],
+    clusterId: selectedClusterId
+  })
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
       return { modules: [], daemons: [] }
     }
-    const [modules, daemons] = await Promise.all([listMgrModules(), listDaemons('mgr')])
+    const [modules, daemons] = await Promise.all([
+      listResource('/manager/modules', selectedClusterId, { filters: moduleTableFilters.filters }).then((payload) => payload.items),
+      listResource('/daemons', selectedClusterId, {
+        filters: mergeResourceFilters({ daemon_type: ['mgr'] }, daemonTableFilters.filters)
+      }).then((payload) => payload.items)
+    ])
     return { modules, daemons }
-  }, [selectedClusterId])
+  }, [daemonTableFilters.filters, moduleTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [pendingModule, setPendingModule] = useState('')
   const operationMutation = useMutationOperation()
@@ -151,6 +148,9 @@ export function MgrManagementPage() {
                 <div className="embedded-panel">
                 <DataTable
                   data={data?.modules ?? []}
+                  filterOptions={moduleTableFilters.filterOptions}
+                  filteredValues={moduleTableFilters.filters}
+                  onFilterChange={moduleTableFilters.handleFilterChange}
                   rowKeyCandidates={['name']}
                   columns={[
                     { key: 'name', title: '模块' },
@@ -179,7 +179,7 @@ export function MgrManagementPage() {
             {
               key: 'daemons',
               label: '守护进程',
-              children: <DaemonTable data={data?.daemons ?? []} refresh={refresh} />
+              children: <DaemonTable data={data?.daemons ?? []} refresh={refresh} tableFilters={daemonTableFilters} />
             }
           ]}
         />
@@ -190,13 +190,21 @@ export function MgrManagementPage() {
 
 export function OsdManagementPage() {
   const { selectedClusterId } = useClusterContext()
+  const osdTableFilters = useResourceTableFilters({
+    path: '/osds',
+    fields: ['id', 'host', 'state', 'up', 'in', 'device_class'],
+    clusterId: selectedClusterId
+  })
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
       return { osds: [], flags: [] }
     }
-    const [osds, flags] = await Promise.all([listOSDs(), listOSDFlags()])
+    const [osds, flags] = await Promise.all([
+      listResource('/osds', selectedClusterId, { filters: osdTableFilters.filters }).then((payload) => payload.items),
+      listOSDFlags()
+    ])
     return { osds, flags }
-  }, [selectedClusterId])
+  }, [osdTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [pendingOSDAction, setPendingOSDAction] = useState('')
   const [deploymentOpen, setDeploymentOpen] = useState(false)
@@ -295,6 +303,9 @@ export function OsdManagementPage() {
         <section className="embedded-panel">
           <DataTable
             data={data?.osds ?? []}
+            filterOptions={osdTableFilters.filterOptions}
+            filteredValues={osdTableFilters.filters}
+            onFilterChange={osdTableFilters.handleFilterChange}
             rowKeyCandidates={['id', 'osd', 'service_id', 'name']}
             columns={[
               { key: 'id', title: 'ID' },
@@ -307,6 +318,7 @@ export function OsdManagementPage() {
               {
                 key: 'actions',
                 title: '操作',
+                filterKey: false,
                 render: (_, row) => {
                   const id = osdID(row)
                   return (
@@ -440,7 +452,13 @@ function OSDDeploymentModal({ open, onClose, refresh }: { open: boolean; onClose
 }
 
 export function DeviceManagementPage() {
+  const navigate = useNavigate()
   const { selectedClusterId } = useClusterContext()
+  const deviceTableFilters = useResourceTableFilters({
+    path: '/host/devices',
+    fields: ['hostname', 'path', 'device_id', 'size_display', 'device_type', 'usage_state'],
+    clusterId: selectedClusterId
+  })
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
       return {
@@ -450,19 +468,14 @@ export function DeviceManagementPage() {
         staleReason: null
       }
     }
-    return listResource('/host/devices', selectedClusterId)
-  }, [selectedClusterId])
+    return listResource('/host/devices', selectedClusterId, {
+      filters: deviceTableFilters.filters
+    })
+  }, [deviceTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
-  const [pendingDeviceAction, setPendingDeviceAction] = useState('')
   const [refreshingDevices, setRefreshingDevices] = useState(false)
-  const [deviceScope, setDeviceScope] = useState<DeviceScope>('all')
   const operationMutation = useMutationOperation()
   const deviceRows = useMemo(() => (data?.items ?? []).map(normalizeDeviceRow), [data?.items])
-  const visibleDeviceRows = useMemo(
-    () => deviceRows.filter((row) => deviceScope === 'all' || row.usage_state === deviceScope),
-    [deviceRows, deviceScope]
-  )
-  const deviceScopeOptions = useMemo(() => buildDeviceScopeOptions(deviceRows), [deviceRows])
 
   async function refreshDeviceData() {
     if (!selectedClusterId) {
@@ -478,61 +491,6 @@ export function DeviceManagementPage() {
     }
   }
 
-  async function identify(row: ApiRecord, state: 'on' | 'off', light: 'ident' | 'fault' = 'ident') {
-    if (!selectedClusterId) {
-      message.error('请先选择集群')
-      return
-    }
-    const host = deviceHost(row)
-    const path = devicePath(row)
-    const pendingKey = `${host}:${path}:identify:${state}:${light}`
-    if (!host || !path || pendingDeviceAction) {
-      return
-    }
-    setPendingDeviceAction(pendingKey)
-    try {
-      await operationMutation.run(() => mutateResource('/host/device/identify', 'POST', {
-        cluster_id: selectedClusterId,
-        host,
-        device: path,
-        state,
-        light
-      }), state === 'on' ? '设备点灯执行成功' : '设备关灯执行成功')
-      refresh()
-    } finally {
-      setPendingDeviceAction('')
-    }
-  }
-
-  async function zap(row: ApiRecord) {
-    if (!selectedClusterId) {
-      message.error('请先选择集群')
-      return
-    }
-    const host = deviceHost(row)
-    const path = devicePath(row)
-    if (!host || !path) {
-      message.error('无法识别设备主机或路径')
-      return
-    }
-    const generation = Number(row.resource_version ?? 0)
-    const parameters = { cluster_id: selectedClusterId, host, device: path }
-    Modal.confirm({
-      title: `擦除设备 ${host}:${path}`,
-      content: '该操作会清理设备数据，为高风险操作，确认后将直接执行操作。',
-      okText: '提交擦除',
-      okType: 'danger',
-      cancelText: '取消',
-      async onOk() {
-        await operationMutation.run(() => mutateResource('/host/device/zap', 'POST', parameters, { ifMatch: generation }), false)
-        window.setTimeout(() => {
-          message.success('设备擦除执行成功')
-          refresh({ showLoading: false })
-        })
-      }
-    })
-  }
-
   return (
     <Page title="设备列表" loading={loading} error={error}>
       <Card
@@ -540,61 +498,251 @@ export function DeviceManagementPage() {
         title="设备列表"
         extra={<Button icon={<ReloadOutlined />} loading={refreshingDevices || loading} onClick={refreshDeviceData}>刷新</Button>}
       >
-        <Space direction="vertical" size={16} className="page-stack">
-          <Segmented
-            value={deviceScope}
-            options={deviceScopeOptions}
-            onChange={(value) => setDeviceScope(value as DeviceScope)}
-          />
-          <DataTable
-            data={visibleDeviceRows}
-            footer={<ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />}
-            rowKeyCandidates={['natural_key', 'device_id', 'path', 'name']}
-            columns={[
-              { key: 'hostname', title: '主机' },
-              { key: 'path', title: '路径' },
-              { key: 'usage_label', title: '使用状态', render: (_, row) => renderDeviceUsage(row) },
-              { key: 'usage_notes', title: '占用说明', render: (value) => renderDeviceNotes(value) },
-              { key: 'device_type', title: '类型' },
-              { key: 'model', title: '型号' },
-              { key: 'size_display', title: '容量' },
-              {
-                key: 'actions',
-                title: '操作',
-                render: (_, row) => {
-                  const host = deviceHost(row)
-                  const path = devicePath(row)
-                  const identOnKey = `${host}:${path}:identify:on:ident`
-                  const identOffKey = `${host}:${path}:identify:off:ident`
-                  return (
-                    <TableActions>
-                      <TableAction loading={pendingDeviceAction === identOnKey} disabled={Boolean(pendingDeviceAction) && pendingDeviceAction !== identOnKey} onClick={() => identify(row, 'on')}>点灯</TableAction>
-                      <TableAction loading={pendingDeviceAction === identOffKey} disabled={Boolean(pendingDeviceAction) && pendingDeviceAction !== identOffKey} onClick={() => identify(row, 'off')}>关灯</TableAction>
-                      <TableAction danger disabled={Boolean(pendingDeviceAction)} onClick={() => zap(row)}>擦除</TableAction>
-                    </TableActions>
-                  )
-                }
+        <DataTable
+          data={deviceRows}
+          filterOptions={deviceTableFilters.filterOptions}
+          filteredValues={deviceTableFilters.filters}
+          onFilterChange={deviceTableFilters.handleFilterChange}
+          footer={<ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />}
+          rowKeyCandidates={['natural_key', 'device_id', 'path', 'name']}
+          columns={[
+            { key: 'hostname', title: '主机' },
+            { key: 'path', title: '路径' },
+            { key: 'device_id', title: '设备 ID' },
+            { key: 'size_display', title: '容量', filterKey: 'size_display' },
+            { key: 'device_type', title: '类型' },
+            { key: 'usage_label', title: '状态', filterKey: 'usage_state', render: (_, row) => renderDeviceUsage(row) },
+            {
+              key: 'actions',
+              title: '操作',
+              filterKey: false,
+              render: (_, row) => {
+                const id = deviceID(row)
+                return (
+                  <TableActions>
+                    <TableAction disabled={!id} onClick={() => navigate(deviceDetailPath(id))}>详情</TableAction>
+                  </TableActions>
+                )
               }
-            ]}
-          />
-        </Space>
+            }
+          ]}
+        />
       </Card>
+    </Page>
+  )
+}
+
+export function DeviceDetailPage() {
+  const navigate = useNavigate()
+  const { deviceId = '' } = useParams()
+  const { selectedClusterId } = useClusterContext()
+  const decodedDeviceId = safeDecodeRouteParam(deviceId)
+  const loader = useCallback(async () => {
+    if (!selectedClusterId || !decodedDeviceId) {
+      return {
+        device: null,
+        observedAt: null,
+        stale: false,
+        staleReason: null
+      }
+    }
+    const payload = await listResource('/host/devices', selectedClusterId, { filters: { device_id: [decodedDeviceId] } })
+    const rows = payload.items.map(normalizeDeviceRow)
+    return {
+      device: rows.find((row) => deviceID(row) === decodedDeviceId) ?? null,
+      observedAt: payload.observedAt,
+      stale: payload.stale,
+      staleReason: payload.staleReason
+    }
+  }, [decodedDeviceId, selectedClusterId])
+  const { data, loading, error, refresh } = useResource(loader)
+  const device = data?.device
+  const currentDeviceHost = device ? deviceHost(device) : ''
+  const currentDevicePath = device ? devicePath(device) : ''
+  const [pendingDeviceAction, setPendingDeviceAction] = useState('')
+  const [refreshingDevice, setRefreshingDevice] = useState(false)
+  const operationMutation = useMutationOperation()
+
+  async function refreshDeviceDetail() {
+    if (!selectedClusterId || refreshingDevice) {
+      return
+    }
+    setRefreshingDevice(true)
+    try {
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kind: 'device' }), '刷新成功')
+      await refresh()
+    } finally {
+      setRefreshingDevice(false)
+    }
+  }
+
+  function confirmIdentify(state: 'on' | 'off') {
+    if (!device) {
+      return
+    }
+    const isOn = state === 'on'
+    Modal.confirm({
+      title: `${isOn ? '点灯' : '关灯'}设备 ${currentDeviceHost}:${currentDevicePath}`,
+      content: `确认后将对主机 ${currentDeviceHost} 的设备 ${currentDevicePath} 执行${isOn ? '点灯' : '关灯'}操作。`,
+      okText: `确认${isOn ? '点灯' : '关灯'}`,
+      cancelText: '取消',
+      async onOk() {
+        await identify(state)
+      }
+    })
+  }
+
+  async function identify(state: 'on' | 'off', light: 'ident' | 'fault' = 'ident') {
+    if (!selectedClusterId || !device) {
+      message.error('请先选择集群')
+      return
+    }
+    const pendingKey = `${currentDeviceHost}:${currentDevicePath}:identify:${state}:${light}`
+    if (!currentDeviceHost || !currentDevicePath || pendingDeviceAction) {
+      return
+    }
+    setPendingDeviceAction(pendingKey)
+    try {
+      await operationMutation.run(() => mutateResource('/host/device/identify', 'POST', {
+        cluster_id: selectedClusterId,
+        host: currentDeviceHost,
+        device: currentDevicePath,
+        state,
+        light
+      }), state === 'on' ? '设备点灯执行成功' : '设备关灯执行成功')
+      await refresh({ showLoading: false })
+    } finally {
+      setPendingDeviceAction('')
+    }
+  }
+
+  async function zap() {
+    if (!selectedClusterId || !device) {
+      message.error('请先选择集群')
+      return
+    }
+    const generation = Number(device.resource_version ?? 0)
+    const parameters = { cluster_id: selectedClusterId, host: currentDeviceHost, device: currentDevicePath }
+    const pendingKey = `${currentDeviceHost}:${currentDevicePath}:zap`
+    Modal.confirm({
+      title: `擦除设备 ${currentDeviceHost}:${currentDevicePath}`,
+      content: `该操作会清理主机 ${currentDeviceHost} 的设备 ${currentDevicePath} 数据，为高风险操作，确认后将直接执行。`,
+      okText: '提交擦除',
+      okType: 'danger',
+      cancelText: '取消',
+      async onOk() {
+        if (pendingDeviceAction) {
+          return
+        }
+        setPendingDeviceAction(pendingKey)
+        try {
+          await operationMutation.run(() => mutateResource('/host/device/zap', 'POST', parameters, { ifMatch: generation }), false)
+          window.setTimeout(() => {
+            message.success('设备擦除执行成功')
+            refresh({ showLoading: false })
+          })
+        } finally {
+          setPendingDeviceAction('')
+        }
+      }
+    })
+  }
+
+  return (
+    <Page title="设备详情" loading={loading} error={error}>
+      <Space direction="vertical" size={16} className="page-stack">
+        <Card
+          className="page-surface-card"
+          title="基础信息"
+          extra={
+            <Space className="host-detail-actions">
+              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/cluster/host/device')}>返回</Button>
+              <Button icon={<ReloadOutlined />} loading={refreshingDevice || loading} onClick={refreshDeviceDetail}>刷新</Button>
+            </Space>
+          }
+        >
+          {device ? (
+            <Descriptions className="host-detail-descriptions" size="small" column={twoColumnDescriptions} bordered>
+              <Descriptions.Item label="主机">{textValue(device.hostname)}</Descriptions.Item>
+              <Descriptions.Item label="路径">{textValue(device.path)}</Descriptions.Item>
+              <Descriptions.Item label="类型">{textValue(device.device_type)}</Descriptions.Item>
+              <Descriptions.Item label="容量">{textValue(device.size_display)}</Descriptions.Item>
+              <Descriptions.Item label="厂商">{textValue(device.vendor)}</Descriptions.Item>
+              <Descriptions.Item label="设备 ID">{textValue(device.device_id ?? device.id ?? device.name)}</Descriptions.Item>
+              <Descriptions.Item label="序列号">{textValue(device.serial_number ?? device.serial)}</Descriptions.Item>
+              <Descriptions.Item label="状态">{renderDeviceUsage(device)}</Descriptions.Item>
+              <Descriptions.Item label="说明" span={2}>{renderDeviceNotes(device.usage_notes)}</Descriptions.Item>
+              <Descriptions.Item label="创建时间">{formatDateTime(device.created_at)}</Descriptions.Item>
+              <Descriptions.Item label="更新时间">{formatDateTime(device.updated_at)}</Descriptions.Item>
+            </Descriptions>
+          ) : (
+            <Text type="secondary">暂无设备详情</Text>
+          )}
+        </Card>
+
+        <Card className="page-surface-card" title="设备操作">
+          <Space wrap>
+            <Button
+              icon={<BulbOutlined />}
+              loading={pendingDeviceAction === `${currentDeviceHost}:${currentDevicePath}:identify:on:ident`}
+              disabled={!device || Boolean(pendingDeviceAction)}
+              onClick={() => confirmIdentify('on')}
+            >
+              点灯
+            </Button>
+            <Button
+              icon={<PoweroffOutlined />}
+              loading={pendingDeviceAction === `${currentDeviceHost}:${currentDevicePath}:identify:off:ident`}
+              disabled={!device || Boolean(pendingDeviceAction)}
+              onClick={() => confirmIdentify('off')}
+            >
+              关灯
+            </Button>
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              loading={pendingDeviceAction === `${currentDeviceHost}:${currentDevicePath}:zap`}
+              disabled={!device || Boolean(pendingDeviceAction)}
+              onClick={zap}
+            >
+              擦除
+            </Button>
+          </Space>
+        </Card>
+      </Space>
     </Page>
   )
 }
 
 export function MdsManagementPage() {
   const { selectedClusterId } = useClusterContext()
+  const serviceTableFilters = useResourceTableFilters({
+    path: '/services',
+    fields: ['service_name', 'service_type', 'placement', 'status', 'running', 'size'],
+    clusterId: selectedClusterId
+  })
+  const daemonTableFilters = useResourceTableFilters({
+    path: '/daemons',
+    fields: ['daemon_name', 'daemon_type', 'hostname', 'status_desc', 'version'],
+    clusterId: selectedClusterId
+  })
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
       return { services: [], daemons: [] }
     }
-    const [services, daemons] = await Promise.all([listServices(), listDaemons('mds')])
+    const [services, daemons] = await Promise.all([
+      listResource('/services', selectedClusterId, {
+        filters: mergeResourceFilters({ service_type: ['mds'] }, serviceTableFilters.filters)
+      }).then((payload) => payload.items),
+      listResource('/daemons', selectedClusterId, {
+        filters: mergeResourceFilters({ daemon_type: ['mds'] }, daemonTableFilters.filters)
+      }).then((payload) => payload.items)
+    ])
     return {
-      services: services.filter((service) => textValue(service.service_type || service.type, '').toLowerCase() === 'mds'),
+      services,
       daemons
     }
-  }, [selectedClusterId])
+  }, [daemonTableFilters.filters, selectedClusterId, serviceTableFilters.filters])
   const { data, loading, error, refresh } = useResource(loader)
 
   return (
@@ -609,6 +757,9 @@ export function MdsManagementPage() {
                 <div className="embedded-panel">
                 <DataTable
                   data={data?.services ?? []}
+                  filterOptions={serviceTableFilters.filterOptions}
+                  filteredValues={serviceTableFilters.filters}
+                  onFilterChange={serviceTableFilters.handleFilterChange}
                   rowKeyCandidates={['service_name', 'service_id', 'name']}
                   columns={[
                     { key: 'service_name', title: '服务名' },
@@ -624,7 +775,7 @@ export function MdsManagementPage() {
             {
               key: 'daemons',
               label: '守护进程',
-              children: <DaemonTable data={data?.daemons ?? []} refresh={refresh} />
+              children: <DaemonTable data={data?.daemons ?? []} refresh={refresh} tableFilters={daemonTableFilters} />
             }
           ]}
         />
@@ -633,7 +784,15 @@ export function MdsManagementPage() {
   )
 }
 
-function DaemonTable({ data, refresh }: { data: ApiRecord[]; refresh: () => void }) {
+function DaemonTable({
+  data,
+  refresh,
+  tableFilters
+}: {
+  data: ApiRecord[]
+  refresh: () => void
+  tableFilters?: ReturnType<typeof useResourceTableFilters>
+}) {
   const [pendingDaemonAction, setPendingDaemonAction] = useState('')
   const operationMutation = useMutationOperation()
 
@@ -656,6 +815,9 @@ function DaemonTable({ data, refresh }: { data: ApiRecord[]; refresh: () => void
     <div className="embedded-panel">
       <DataTable
         data={data}
+        filterOptions={tableFilters?.filterOptions}
+        filteredValues={tableFilters?.filters}
+        onFilterChange={tableFilters?.handleFilterChange}
         rowKeyCandidates={['daemon_name', 'name', 'hostname']}
         columns={[
           { key: 'daemon_name', title: 'Daemon' },
@@ -666,6 +828,7 @@ function DaemonTable({ data, refresh }: { data: ApiRecord[]; refresh: () => void
           {
             key: 'actions',
             title: '操作',
+            filterKey: false,
             render: (_, row) => {
               const name = textValue(row.daemon_name || row.name, '')
               return (
@@ -714,10 +877,6 @@ function ReweightForm({ osdID, refresh }: { osdID: string; refresh: (options?: {
       </Button>
     </Form>
   )
-}
-
-function asRecords(value: unknown): ApiRecord[] {
-  return Array.isArray(value) ? value.filter((item): item is ApiRecord => typeof item === 'object' && item !== null && !Array.isArray(item)) : []
 }
 
 function osdID(row: ApiRecord) {
@@ -775,6 +934,22 @@ function deviceHost(row: ApiRecord) {
 
 function devicePath(row: ApiRecord) {
   return textValue(row.path ?? row.device ?? row.name, '')
+}
+
+function deviceID(row: ApiRecord) {
+  return textValue(row.device_id ?? row.id ?? row.natural_key, '')
+}
+
+function deviceDetailPath(id: string) {
+  return `/cluster/host/device/${encodeURIComponent(id)}`
+}
+
+function safeDecodeRouteParam(value: string) {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
 }
 
 function normalizeDeviceRow(row: ApiRecord): ApiRecord {
@@ -864,7 +1039,6 @@ function renderDeviceUsage(row: ApiRecord) {
   const state = textValue(row.usage_state, '') as DeviceScope
   const label = textValue(row.usage_label)
   const colors: Record<DeviceScope, string> = {
-    all: 'default',
     available: 'success',
     used: 'processing',
     unavailable: 'default'
@@ -878,19 +1052,4 @@ function renderDeviceNotes(value: unknown) {
   }
 
   return value.map((item) => <Tag key={textValue(item)}>{textValue(item)}</Tag>)
-}
-
-function buildDeviceScopeOptions(rows: ApiRecord[]) {
-  const counts = {
-    all: rows.length,
-    available: rows.filter((row) => row.usage_state === 'available').length,
-    used: rows.filter((row) => row.usage_state === 'used').length,
-    unavailable: rows.filter((row) => row.usage_state === 'unavailable').length
-  }
-  return [
-    { label: `全部 ${counts.all}`, value: 'all' },
-    { label: `空闲可用 ${counts.available}`, value: 'available' },
-    { label: `已占用 ${counts.used}`, value: 'used' },
-    { label: `不可用 ${counts.unavailable}`, value: 'unavailable' }
-  ]
 }

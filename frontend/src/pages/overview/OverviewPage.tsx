@@ -17,6 +17,7 @@ import { Page } from '../../components/Page'
 import { TableAction } from '../../components/TableActions'
 import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
+import { useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 
@@ -35,13 +36,18 @@ export function OverviewPage() {
   const { selectedClusterId } = useClusterContext()
   const [refreshing, setRefreshing] = useState(false)
   const operationMutation = useMutationOperation()
+  const healthTableFilters = useResourceTableFilters({
+    path: '/health',
+    fields: ['code', 'severity', 'summary', 'count'],
+    clusterId: selectedClusterId
+  })
   const loader = useCallback(async (): Promise<OverviewData> => {
     if (!selectedClusterId) {
       return { overview: {}, healthChecks: [], capabilities: [] }
     }
     const [overviewResult, healthResult, capabilities] = await Promise.all([
       getOptionalResource('/overview', selectedClusterId),
-      listResource('/health', selectedClusterId),
+      listResource('/health', selectedClusterId, { filters: healthTableFilters.filters }),
       listClusterCapabilities(selectedClusterId)
     ])
     return {
@@ -52,7 +58,7 @@ export function OverviewPage() {
       staleReason: healthResult.staleReason,
       capabilities
     }
-  }, [selectedClusterId])
+  }, [healthTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
 
   const capacity = readRecord(data?.overview.capacity)
@@ -126,11 +132,12 @@ export function OverviewPage() {
               rowKey={(row) => textValue(row.code ?? row.name ?? row.natural_key)}
               dataSource={data?.healthChecks ?? []}
               pagination={{ defaultPageSize: 10, showSizeChanger: true }}
+              onChange={(_pagination, filters) => healthTableFilters.handleFilterChange(tableFilters(filters))}
               columns={[
-                { title: 'Code', dataIndex: 'code', ellipsis: true },
-                { title: '级别', dataIndex: 'severity', render: (value) => <HealthBadge status={textValue(value)} /> },
-                { title: '摘要', dataIndex: 'summary', ellipsis: true },
-                { title: '数量', dataIndex: 'count', width: 80, render: (value) => textValue(value, '-') },
+                { ...filterColumn('Code', 'code', healthTableFilters), ellipsis: true },
+                { ...filterColumn('级别', 'severity', healthTableFilters), render: (value) => <HealthBadge status={textValue(value)} /> },
+                { ...filterColumn('摘要', 'summary', healthTableFilters), ellipsis: true },
+                { ...filterColumn('数量', 'count', healthTableFilters), width: 80, render: (value) => textValue(value, '-') },
                 {
                   title: '操作',
                   width: 80,
@@ -184,6 +191,26 @@ function formatBytes(value: unknown) {
     index += 1
   }
   return `${size.toFixed(size >= 10 || index === 0 ? 0 : 1)} ${units[index]}`
+}
+
+function filterColumn(title: string, field: string, tableFilters: ReturnType<typeof useResourceTableFilters>) {
+  return {
+    title,
+    dataIndex: field,
+    key: field,
+    filterMultiple: true,
+    filterSearch: true,
+    filters: (tableFilters.filterOptions[field] ?? []).map((value) => ({ text: value, value })),
+    filteredValue: tableFilters.filters[field] ?? null
+  }
+}
+
+function tableFilters(filters: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(filters)
+      .map(([field, values]) => [field, Array.isArray(values) ? values.map(String).filter(Boolean) : []] as const)
+      .filter(([, values]) => values.length > 0)
+  )
 }
 
 function serviceValue(value: unknown, primary: string, secondary: string) {

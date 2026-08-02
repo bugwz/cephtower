@@ -1,8 +1,8 @@
 import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Typography } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
-import { useCallback, useState } from 'react'
-import { listResource, mutateResource, refreshResource, type ResourceListResult } from '../api/resource'
+import type { ColumnsType, TableProps } from 'antd/es/table'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { listResource, listResourceFilterOptions, mutateResource, refreshResource, type ResourceListResult } from '../api/resource'
 import { textValue, type ApiRecord } from '../api/client'
 import type { OperationRisk } from '../api/types'
 import type { FieldColumn } from '../components/DataTable'
@@ -74,17 +74,42 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
   const [activeRow, setActiveRow] = useState<ApiRecord | undefined>()
   const [detailRow, setDetailRow] = useState<ApiRecord | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({})
+  const [filterOptions, setFilterOptions] = useState<Record<string, string[]>>({})
   const [form] = Form.useForm<MutationFormValues>()
   const operationMutation = useMutationOperation()
+  const filterFields = useMemo(() => Array.from(new Set(definition.columns.map((column) => column.key))), [definition.columns])
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
       return emptyResult()
     }
-    return listResource(definition.path, selectedClusterId, { body: definition.body })
-  }, [definition.body, definition.path, selectedClusterId])
+    return listResource(definition.path, selectedClusterId, { body: definition.body, filters: columnFilters })
+  }, [columnFilters, definition.body, definition.path, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const featureStatus = useFeatureRequirements(selectedClusterId, definition)
   const mutationBlocked = featureStatus.loading || featureStatus.blocked || Boolean(featureStatus.error)
+
+  useEffect(() => {
+    let ignore = false
+    async function loadOptions() {
+      if (!selectedClusterId || filterFields.length === 0) {
+        setFilterOptions({})
+        return
+      }
+      const options = await listResourceFilterOptions(definition.path, filterFields, selectedClusterId, definition.body)
+      if (!ignore) {
+        setFilterOptions(options)
+      }
+    }
+    void loadOptions().catch(() => {
+      if (!ignore) {
+        setFilterOptions({})
+      }
+    })
+    return () => {
+      ignore = true
+    }
+  }, [definition.body, definition.path, filterFields, selectedClusterId])
 
   async function reload() {
     if (!selectedClusterId) {
@@ -180,7 +205,10 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
     })
   }
 
-  const tableColumns = buildColumns(definition, openForm, deleteRow, (row) => setDetailRow(row), mutationBlocked)
+  const handleTableChange: TableProps<ApiRecord>['onChange'] = (_pagination, filters) => {
+    setColumnFilters(tableFilters(filters))
+  }
+  const tableColumns = buildColumns(definition, openForm, deleteRow, (row) => setDetailRow(row), mutationBlocked, filterOptions, columnFilters)
   const listActions = (
     <Space>
       <Button icon={<ReloadOutlined />} loading={refreshing} onClick={reload}>
@@ -198,21 +226,26 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
       ) : null}
     </Space>
   )
-  const listContent = (
-    <Space direction="vertical" size={16} className="page-stack">
-      <FeatureRequirementAlert status={featureStatus} />
-      <AppTable<ApiRecord>
-        size="middle"
-        columns={tableColumns}
-        dataSource={data?.items ?? []}
-        locale={{ emptyText: '暂无数据' }}
-        pagination={{ defaultPageSize: 10, showSizeChanger: true }}
-        rowKey={(row, index) => rowKey(definition, row, index)}
-        scroll={{ x: true }}
-        footer={() => <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />}
-      />
-    </Space>
+  const featureRequirementAlert = <FeatureRequirementAlert status={featureStatus} />
+  const resourceTable = (
+    <AppTable<ApiRecord>
+      size="middle"
+      columns={tableColumns}
+      dataSource={data?.items ?? []}
+      locale={{ emptyText: '暂无数据' }}
+      pagination={{ defaultPageSize: 10, showSizeChanger: true }}
+      onChange={handleTableChange}
+      rowKey={(row, index) => rowKey(definition, row, index)}
+      scroll={{ x: true }}
+      footer={() => <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />}
+    />
   )
+  const listContent = hasFeatureRequirementAlert(featureStatus) ? (
+    <Space direction="vertical" size={16} className="page-stack">
+      {featureRequirementAlert}
+      {resourceTable}
+    </Space>
+  ) : resourceTable
   const listSurface = embedded ? (
     <div className="page-embedded-list">
       <div className="page-embedded-list-head">
@@ -273,13 +306,19 @@ function buildColumns(
   openForm: (action: ResourceFormAction, row?: ApiRecord) => void,
   deleteRow: (row: ApiRecord) => void,
   openDetail: (row: ApiRecord) => void,
-  mutationBlocked: boolean
+  mutationBlocked: boolean,
+  filterOptions: Record<string, string[]>,
+  columnFilters: Record<string, string[]>
 ) {
   const columns: ColumnsType<ApiRecord> = definition.columns.map((column) => ({
     title: column.title,
     dataIndex: column.key,
     key: column.key,
     ellipsis: true,
+    filterMultiple: true,
+    filterSearch: true,
+    filters: (filterOptions[column.key] ?? []).map((value) => ({ text: value, value })),
+    filteredValue: columnFilters[column.key] ?? null,
     render: (value, row) => column.render?.(value, row) ?? renderValue(value)
   }))
 
@@ -353,6 +392,10 @@ function FeatureRequirementAlert({ status }: { status: ReturnType<typeof useFeat
   return null
 }
 
+function hasFeatureRequirementAlert(status: ReturnType<typeof useFeatureRequirements>) {
+  return status.loading || Boolean(status.error) || status.reasons.length > 0
+}
+
 function renderFormControl(field: MutationFormField) {
   if (field.type === 'number') {
     return <InputNumber min={field.min} max={field.max} className="full-width-control" />
@@ -374,6 +417,14 @@ function renderValue(value: unknown) {
     return value.length ? value.map((item) => textValue(item)).join(', ') : '-'
   }
   return textValue(value, '-')
+}
+
+function tableFilters(filters: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(filters)
+      .map(([field, values]) => [field, Array.isArray(values) ? values.map(String).filter(Boolean) : []] as const)
+      .filter(([, values]) => values.length > 0)
+  )
 }
 
 function rowKey(definition: ResourceListPageDefinition, row: ApiRecord, index?: number) {

@@ -2,13 +2,14 @@ import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button, Card, Form, Input, Modal, Select, Space, Tabs } from 'antd'
 import { useCallback, useState } from 'react'
 import { textValue, type ApiRecord } from '../../api/client'
-import { listDaemons, listServices, mutateResource, refreshResource } from '../../api/resource'
+import { listResource, mutateResource, refreshResource } from '../../api/resource'
 import { DataTable } from '../../components/DataTable'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
 import { TableAction, TableActions } from '../../components/TableActions'
 import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
+import { useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 
@@ -34,13 +35,26 @@ const serviceTypeOptions = [
 
 export function ServicePage() {
   const { selectedClusterId } = useClusterContext()
+  const serviceTableFilters = useResourceTableFilters({
+    path: '/services',
+    fields: ['service_name', 'service_type', 'status', 'running', 'size'],
+    clusterId: selectedClusterId
+  })
+  const daemonTableFilters = useResourceTableFilters({
+    path: '/daemons',
+    fields: ['daemon_name', 'daemon_type', 'hostname', 'status_desc', 'version', 'container_image_name'],
+    clusterId: selectedClusterId
+  })
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
       return { services: [], daemons: [] }
     }
-    const [services, daemons] = await Promise.all([listServices(), listDaemons()])
+    const [services, daemons] = await Promise.all([
+      listResource('/services', selectedClusterId, { filters: serviceTableFilters.filters }).then((payload) => payload.items),
+      listResource('/daemons', selectedClusterId, { filters: daemonTableFilters.filters }).then((payload) => payload.items)
+    ])
     return { services, daemons }
-  }, [selectedClusterId])
+  }, [daemonTableFilters.filters, selectedClusterId, serviceTableFilters.filters])
   const { data, loading, error, refresh } = useResource(loader)
   const [form] = Form.useForm<ServiceFormValues>()
   const [formOpen, setFormOpen] = useState(false)
@@ -167,6 +181,9 @@ export function ServicePage() {
                 <div className="embedded-panel">
                 <DataTable
                   data={data?.services ?? []}
+                  filterOptions={serviceTableFilters.filterOptions}
+                  filteredValues={serviceTableFilters.filters}
+                  onFilterChange={serviceTableFilters.handleFilterChange}
                   rowKeyCandidates={['service_name', 'service_id', 'name']}
                   columns={[
                     { key: 'service_name', title: '服务名' },
@@ -178,6 +195,7 @@ export function ServicePage() {
                     {
                       key: 'actions',
                       title: '操作',
+                      filterKey: false,
                       render: (_, row) => (
                         <TableActions>
                           <TableAction onClick={() => openEdit(row)}>编辑</TableAction>
@@ -197,6 +215,9 @@ export function ServicePage() {
                 <div className="embedded-panel">
                 <DataTable
                   data={data?.daemons ?? []}
+                  filterOptions={daemonTableFilters.filterOptions}
+                  filteredValues={daemonTableFilters.filters}
+                  onFilterChange={daemonTableFilters.handleFilterChange}
                   rowKeyCandidates={['daemon_name', 'name', 'hostname']}
                   columns={[
                     { key: 'daemon_name', title: 'Daemon' },

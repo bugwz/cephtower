@@ -58,9 +58,22 @@ CREATE TABLE ceph_cluster (
   monitor_addresses TEXT NOT NULL,
   client_username TEXT NOT NULL,
   client_key TEXT NOT NULL,
+  discovered_data TEXT NOT NULL DEFAULT '{}',
+  fsid TEXT NULL,
+  ceph_version TEXT NULL,
+  status TEXT NOT NULL DEFAULT 'unknown',
+  enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1)),
+  generation INTEGER NOT NULL DEFAULT 0,
+  last_seen_at DATETIME NULL,
+  last_error_code TEXT NULL,
+  last_error_message TEXT NULL,
+  observed_at DATETIME NULL,
   created_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   updated_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
+CREATE INDEX idx_cluster_fsid ON ceph_cluster(fsid);
+CREATE INDEX idx_cluster_status_enabled ON ceph_cluster(status, enabled);
+CREATE INDEX idx_cluster_last_seen ON ceph_cluster(last_seen_at);
 CREATE TABLE user_role_binding (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES user(id) ON DELETE CASCADE,
@@ -74,22 +87,6 @@ CREATE TABLE user_role_binding (
 CREATE INDEX idx_binding_user_cluster ON user_role_binding(user_id, cluster_id);
 CREATE INDEX idx_binding_role ON user_role_binding(role_id);
 CREATE INDEX idx_binding_created_by ON user_role_binding(created_by_user_id);
-CREATE TABLE ceph_cluster_observation (
-  cluster_id INTEGER PRIMARY KEY REFERENCES ceph_cluster(id) ON DELETE CASCADE,
-  fsid TEXT NULL,
-  ceph_version TEXT NULL,
-  status TEXT NOT NULL DEFAULT 'unknown',
-  enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1)),
-  generation INTEGER NOT NULL DEFAULT 0,
-  last_seen_at DATETIME NULL,
-  last_error_code TEXT NULL,
-  last_error_message TEXT NULL,
-  observed_at DATETIME NULL,
-  updated_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-);
-CREATE INDEX idx_observation_fsid ON ceph_cluster_observation(fsid);
-CREATE INDEX idx_observation_status_enabled ON ceph_cluster_observation(status, enabled);
-CREATE INDEX idx_observation_last_seen ON ceph_cluster_observation(last_seen_at);
 CREATE TABLE ceph_cluster_credential (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   cluster_id INTEGER NOT NULL REFERENCES ceph_cluster(id) ON DELETE CASCADE,
@@ -142,38 +139,24 @@ CREATE TABLE ceph_host (
   ssh_private_key_secret TEXT NULL,
   ssh_key_passphrase_secret TEXT NULL,
   notes TEXT NULL,
+  address TEXT NULL,
+  status TEXT NULL,
+  configured_data TEXT NULL,
+  discovered_data TEXT NOT NULL DEFAULT '{}',
+  generation INTEGER NOT NULL DEFAULT 0,
+  resource_version INTEGER NOT NULL DEFAULT 1,
+  source TEXT NOT NULL DEFAULT '',
+  source_version TEXT NULL,
+  observed_at DATETIME NULL,
+  stale_at DATETIME NULL,
   created_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   updated_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   UNIQUE(cluster_id, hostname)
 );
 CREATE INDEX idx_ceph_host_cluster ON ceph_host(cluster_id, hostname);
-CREATE TABLE ceph_resource_record (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  cluster_id INTEGER NOT NULL REFERENCES ceph_cluster(id) ON DELETE CASCADE,
-  kind TEXT NOT NULL,
-  natural_key TEXT NOT NULL,
-  parent_kind TEXT NULL,
-  parent_key TEXT NULL,
-  name TEXT NULL,
-  status TEXT NULL,
-  generation INTEGER NOT NULL,
-  resource_version INTEGER NOT NULL DEFAULT 1,
-  source TEXT NOT NULL,
-  source_version TEXT NULL,
-  observed_at DATETIME NOT NULL,
-  stale_at DATETIME NULL,
-  payload_schema_version INTEGER NOT NULL,
-  payload_json TEXT NOT NULL,
-  created_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-  updated_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-  UNIQUE(cluster_id, kind, natural_key)
-);
-CREATE INDEX idx_resource_name ON ceph_resource_record(cluster_id, kind, name);
-CREATE INDEX idx_resource_status ON ceph_resource_record(cluster_id, kind, status);
-CREATE INDEX idx_resource_generation ON ceph_resource_record(cluster_id, kind, generation);
-CREATE INDEX idx_resource_observed ON ceph_resource_record(cluster_id, kind, observed_at);
-CREATE INDEX idx_resource_parent ON ceph_resource_record(cluster_id, parent_kind, parent_key);
-CREATE INDEX idx_resource_stale ON ceph_resource_record(cluster_id, stale_at);
+CREATE INDEX idx_ceph_host_observed ON ceph_host(observed_at);
+CREATE INDEX idx_ceph_host_stale ON ceph_host(stale_at);
+CREATE INDEX idx_ceph_host_status ON ceph_host(status);
 CREATE TABLE ceph_collection_run (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   cluster_id INTEGER NOT NULL REFERENCES ceph_cluster(id) ON DELETE CASCADE,

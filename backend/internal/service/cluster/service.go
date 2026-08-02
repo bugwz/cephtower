@@ -34,8 +34,11 @@ type Service struct {
 func New(database func() *store.Database, encryptionKey string, provider cephprovider.ClusterProvider) *Service {
 	return &Service{database: database, encryptionKey: encryptionKey, provider: provider}
 }
-func (s *Service) List(ctx context.Context) ([]store.CephCluster, error) {
-	return s.database().ListClusters(ctx)
+func (s *Service) List(ctx context.Context, filter store.ClusterFilter) ([]store.CephCluster, error) {
+	return s.database().ListClusters(ctx, filter)
+}
+func (s *Service) FilterOptions(ctx context.Context, fields []string) (store.ClusterFilterOptions, error) {
+	return s.database().ClusterFilterOptions(ctx, fields)
 }
 func (s *Service) Get(ctx context.Context, id uint64) (store.CephCluster, error) {
 	row, err := s.database().FindCluster(ctx, id)
@@ -57,7 +60,7 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (store.CephClus
 		return store.CephCluster{}, cephdomain.ActionResult{}, err
 	}
 	now := time.Now().UTC()
-	row := store.CephCluster{Name: name, MonitorAddresses: mon, ClientUsername: user, ClientKey: encrypted, CreatedAt: now, UpdatedAt: now}
+	row := store.CephCluster{Name: name, MonitorAddresses: mon, ClientUsername: user, ClientKey: encrypted, DiscoveredData: "{}", Status: "unknown", Enabled: true, CreatedAt: now, UpdatedAt: now}
 	if err := s.database().CreateCluster(ctx, &row); err != nil {
 		return store.CephCluster{}, cephdomain.ActionResult{}, err
 	}
@@ -153,7 +156,10 @@ func (s *Service) applyProbe(ctx context.Context, row, candidate store.CephClust
 	now := time.Now().UTC()
 	if err != nil {
 		code, message := probeFailure(err)
-		_ = s.database().UpsertObservation(ctx, &store.CephClusterObservation{ClusterID: row.ID, Status: "unavailable", Enabled: true, LastErrorCode: &code, LastErrorMessage: &message, ObservedAt: &now, UpdatedAt: now})
+		data, _ := json.Marshal(map[string]any{"status": "unavailable", "error_code": code, "error_message": message, "observed_at": now})
+		row.DiscoveredData = string(data)
+		row.Status, row.Enabled, row.LastErrorCode, row.LastErrorMessage, row.ObservedAt, row.UpdatedAt = "unavailable", true, &code, &message, &now, now
+		_ = s.database().UpdateClusterDiscovery(ctx, row)
 		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: code, Message: message, Retryable: true}
 	}
 	if saveCandidate {
@@ -164,8 +170,15 @@ func (s *Service) applyProbe(ctx context.Context, row, candidate store.CephClust
 	}
 	version := result.Version
 	fsid := result.FSID
-	observation := store.CephClusterObservation{ClusterID: row.ID, FSID: &fsid, CephVersion: &version, Status: "available", Enabled: true, Generation: 1, LastSeenAt: &now, ObservedAt: &now, UpdatedAt: now}
-	if err := s.database().UpsertObservation(ctx, &observation); err != nil {
+	discovered, err := json.Marshal(result)
+	if err != nil {
+		return cephdomain.ActionResult{}, err
+	}
+	row.DiscoveredData = string(discovered)
+	row.FSID, row.CephVersion, row.Status, row.Enabled = &fsid, &version, "available", true
+	row.Generation, row.LastSeenAt, row.ObservedAt, row.UpdatedAt = max(row.Generation, 1), &now, &now, now
+	row.LastErrorCode, row.LastErrorMessage = nil, nil
+	if err := s.database().UpdateClusterDiscovery(ctx, row); err != nil {
 		return cephdomain.ActionResult{}, err
 	}
 	caps := make([]store.CephClusterCapability, 0, len(result.Capabilities))

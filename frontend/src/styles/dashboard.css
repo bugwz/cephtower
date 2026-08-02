@@ -62,6 +62,21 @@
   font-size: var(--font-sm);
 }
 
+.ant-table-filter-dropdown .ant-table-filter-dropdown-btns .ant-btn {
+  height: 28px;
+  padding-inline: 10px;
+  border-radius: 6px;
+}
+
+.ant-table-filter-dropdown .ant-table-filter-dropdown-btns .ant-btn-link {
+  border: 1px solid #cfe7df;
+  color: #315e64;
+}
+
+.ant-table-filter-dropdown .ant-table-filter-dropdown-btns .ant-btn-link:disabled {
+  border-color: #edf2f3;
+}
+
 .app-sidebar {
   --sidebar-symbol-size: 16px;
   --sidebar-motion: 260ms cubic-bezier(0.22, 1, 0.36, 1);

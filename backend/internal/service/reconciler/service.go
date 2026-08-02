@@ -3,7 +3,6 @@ package reconciler
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -157,7 +156,7 @@ func (s *Service) Stop() {
 	}
 }
 func (s *Service) runModule(ctx context.Context, module Module) {
-	clusters, err := s.clusters.List(ctx)
+	clusters, err := s.clusters.List(ctx, store.ClusterFilter{})
 	if err != nil {
 		return
 	}
@@ -189,7 +188,7 @@ func (s *Service) reconcile(ctx context.Context, clusterID uint64, module Module
 		return err
 	}
 	access, err := s.clusters.Access(ctx, clusterID)
-	var records []store.CephResourceRecord
+	var records []store.CephEntityRecord
 	if err == nil {
 		var observations []cephprovider.Observation
 		var authoritativeKinds []string
@@ -204,7 +203,7 @@ func (s *Service) reconcile(ctx context.Context, clusterID uint64, module Module
 		}
 		access.ClientKey = ""
 		if err == nil {
-			records = make([]store.CephResourceRecord, 0, len(observations))
+			records = make([]store.CephEntityRecord, 0, len(observations))
 			for _, observation := range observations {
 				redacted, redactErr := security.RedactJSON(observation.Payload)
 				if redactErr != nil {
@@ -225,7 +224,7 @@ func (s *Service) reconcile(ctx context.Context, clusterID uint64, module Module
 					value := observation.Status
 					status = &value
 				}
-				records = append(records, store.CephResourceRecord{Kind: observation.Kind, NaturalKey: observation.NaturalKey, ParentKind: optionalString(observation.ParentKind), ParentKey: optionalString(observation.ParentKey), Name: name, Status: status, Source: observation.Source, SourceVersion: optionalString(observation.SourceVersion), ObservedAt: observation.ObservedAt, PayloadSchemaVersion: 1, PayloadJSON: string(payload)})
+				records = append(records, store.CephEntityRecord{Kind: observation.Kind, NaturalKey: observation.NaturalKey, ParentKind: optionalString(observation.ParentKind), ParentKey: optionalString(observation.ParentKey), Name: name, Status: status, Source: observation.Source, SourceVersion: optionalString(observation.SourceVersion), ObservedAt: observation.ObservedAt, DiscoveredData: string(payload)})
 			}
 			if err == nil {
 				selectedObservations := observations
@@ -236,7 +235,7 @@ func (s *Service) reconcile(ctx context.Context, clusterID uint64, module Module
 				}
 				err = s.database().ReconcileResources(ctx, clusterID, generation, records, authoritativeKinds)
 				if err == nil {
-					_ = s.syncClusterObservation(ctx, clusterID, generation, selectedObservations)
+					_ = s.syncClusterDiscovery(ctx, clusterID, generation, selectedObservations, records)
 				}
 			}
 		}
@@ -285,36 +284,43 @@ func observedKinds(observations []cephprovider.Observation) []string {
 	return result
 }
 
-func (s *Service) syncClusterObservation(ctx context.Context, clusterID, generation uint64, observations []cephprovider.Observation) error {
-	update, ok := clusterObservationUpdate(generation, observations)
+func (s *Service) syncClusterDiscovery(ctx context.Context, clusterID, generation uint64, observations []cephprovider.Observation, records []store.CephEntityRecord) error {
+	update, ok := clusterDiscoveryUpdate(generation, observations)
 	if !ok {
 		return nil
 	}
-	existing, err := s.database().FindObservation(ctx, clusterID)
-	if err != nil && !errors.Is(err, store.ErrRecordNotFound) {
+	existing, err := s.database().FindCluster(ctx, clusterID)
+	if err != nil {
 		return err
 	}
-	if err == nil {
-		if update.FSID == nil {
-			update.FSID = existing.FSID
+	for _, record := range records {
+		if record.Kind == "overview" {
+			update.DiscoveredData = record.DiscoveredData
+			break
 		}
-		if update.CephVersion == nil {
-			update.CephVersion = existing.CephVersion
-		} else if existing.CephVersion != nil && richerCephVersion(*existing.CephVersion, *update.CephVersion) == *existing.CephVersion {
-			update.CephVersion = existing.CephVersion
-		}
-		if update.Status == "" {
-			update.Status = existing.Status
-		}
-		if update.Generation < existing.Generation {
-			update.Generation = existing.Generation
-		}
-		if update.LastSeenAt == nil {
-			update.LastSeenAt = existing.LastSeenAt
-		}
-		if update.ObservedAt == nil {
-			update.ObservedAt = existing.ObservedAt
-		}
+	}
+	if update.DiscoveredData == "" {
+		update.DiscoveredData = existing.DiscoveredData
+	}
+	if update.FSID == nil {
+		update.FSID = existing.FSID
+	}
+	if update.CephVersion == nil {
+		update.CephVersion = existing.CephVersion
+	} else if existing.CephVersion != nil && richerCephVersion(*existing.CephVersion, *update.CephVersion) == *existing.CephVersion {
+		update.CephVersion = existing.CephVersion
+	}
+	if update.Status == "" {
+		update.Status = existing.Status
+	}
+	if update.Generation < existing.Generation {
+		update.Generation = existing.Generation
+	}
+	if update.LastSeenAt == nil {
+		update.LastSeenAt = existing.LastSeenAt
+	}
+	if update.ObservedAt == nil {
+		update.ObservedAt = existing.ObservedAt
 	}
 	if update.Status == "" {
 		update.Status = "available"
@@ -326,14 +332,14 @@ func (s *Service) syncClusterObservation(ctx context.Context, clusterID, generat
 	if update.ObservedAt == nil {
 		update.ObservedAt = update.LastSeenAt
 	}
-	update.ClusterID = clusterID
+	update.ID = clusterID
 	update.Enabled = true
 	update.UpdatedAt = time.Now().UTC()
-	return s.database().UpsertObservation(ctx, &update)
+	return s.database().UpdateClusterDiscovery(ctx, update)
 }
 
-func clusterObservationUpdate(generation uint64, observations []cephprovider.Observation) (store.CephClusterObservation, bool) {
-	update := store.CephClusterObservation{Generation: generation}
+func clusterDiscoveryUpdate(generation uint64, observations []cephprovider.Observation) (store.CephCluster, bool) {
+	update := store.CephCluster{Generation: generation}
 	bestVersionPriority := int(^uint(0) >> 1)
 	for _, observation := range observations {
 		switch observation.Kind {
@@ -476,8 +482,8 @@ func kindSet(kinds []string) map[string]struct{} {
 	return result
 }
 
-func filterRecords(rows []store.CephResourceRecord, kinds map[string]struct{}) []store.CephResourceRecord {
-	result := make([]store.CephResourceRecord, 0, len(rows))
+func filterRecords(rows []store.CephEntityRecord, kinds map[string]struct{}) []store.CephEntityRecord {
+	result := make([]store.CephEntityRecord, 0, len(rows))
 	for _, row := range rows {
 		if _, ok := kinds[row.Kind]; ok {
 			result = append(result, row)

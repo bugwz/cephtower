@@ -102,6 +102,8 @@ func (s *Service) Save(ctx context.Context, input SaveInput) (View, error) {
 		CreatedAt:         now,
 		UpdatedAt:         now,
 		SSHPasswordSecret: nil,
+		DiscoveredData:    "{}",
+		ResourceVersion:   1,
 	}
 	existing, err := s.database().FindCephHost(ctx, input.ClusterID, hostname)
 	if err != nil && !errors.Is(err, store.ErrRecordNotFound) {

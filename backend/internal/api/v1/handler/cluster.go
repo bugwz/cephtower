@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
@@ -64,21 +64,61 @@ type capabilityDTO struct {
 }
 
 func (h *Handler) ListClusters(w http.ResponseWriter, r *http.Request) {
-	rows, err := h.Clusters.List(r.Context())
+	if r.URL.Query().Get("filter_options") == "1" {
+		options, err := h.Clusters.FilterOptions(r.Context(), clusterFilterOptionFields(r))
+		if err != nil {
+			WriteError(w, r, 500, "store_error", err.Error(), false, nil)
+			return
+		}
+		WriteSuccess(w, 200, "success", map[string]any{"filter_options": options})
+		return
+	}
+	rows, err := h.Clusters.List(r.Context(), clusterFilters(r))
 	if err != nil {
 		WriteError(w, r, 500, "store_error", err.Error(), false, nil)
 		return
 	}
 	items := make([]clusterDTO, 0, len(rows))
 	for _, row := range rows {
-		item, err := h.toClusterDTO(r.Context(), row)
-		if err != nil {
-			WriteError(w, r, 500, "store_error", err.Error(), false, nil)
-			return
-		}
-		items = append(items, item)
+		items = append(items, toClusterDTO(row))
 	}
 	WriteSuccess(w, 200, "success", map[string]any{"items": items, "pagination": map[string]any{"next_cursor": nil}, "meta": map[string]string{"request_id": RequestID(r)}})
+}
+
+func clusterFilters(r *http.Request) store.ClusterFilter {
+	return store.ClusterFilter{
+		Names:           cleanClusterFilterValues(r.URL.Query()["filter.name"]),
+		ClientUsernames: cleanClusterFilterValues(r.URL.Query()["filter.client_username"]),
+	}
+}
+
+func clusterFilterOptionFields(r *http.Request) []string {
+	requested := strings.Split(r.URL.Query().Get("fields"), ",")
+	fields := make([]string, 0, len(requested))
+	seen := map[string]bool{}
+	for _, value := range requested {
+		field := strings.TrimSpace(value)
+		if seen[field] || (field != "name" && field != "client_username") {
+			continue
+		}
+		seen[field] = true
+		fields = append(fields, field)
+	}
+	return fields
+}
+
+func cleanClusterFilterValues(values []string) []string {
+	cleaned := make([]string, 0, len(values))
+	seen := map[string]bool{}
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value == "" || seen[value] {
+			continue
+		}
+		seen[value] = true
+		cleaned = append(cleaned, value)
+	}
+	return cleaned
 }
 
 func (h *Handler) CreateCluster(w http.ResponseWriter, r *http.Request) {
@@ -91,12 +131,7 @@ func (h *Handler) CreateCluster(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, 400, "invalid_request", err.Error(), false, nil)
 		return
 	}
-	item, err := h.toClusterDTO(r.Context(), cluster)
-	if err != nil {
-		WriteError(w, r, 500, "store_error", err.Error(), false, nil)
-		return
-	}
-	WriteSuccess(w, http.StatusOK, "success", map[string]any{"cluster": item, "result": result})
+	WriteSuccess(w, http.StatusOK, "success", map[string]any{"cluster": toClusterDTO(cluster), "result": result})
 }
 
 func (h *Handler) GetCluster(w http.ResponseWriter, r *http.Request) {
@@ -114,12 +149,7 @@ func (h *Handler) GetCluster(w http.ResponseWriter, r *http.Request) {
 		clusterError(w, r, err)
 		return
 	}
-	item, err := h.toClusterDTO(r.Context(), row)
-	if err != nil {
-		WriteError(w, r, 500, "store_error", err.Error(), false, nil)
-		return
-	}
-	WriteSuccess(w, 200, "success", item)
+	WriteSuccess(w, 200, "success", toClusterDTO(row))
 }
 
 func (h *Handler) UpdateCluster(w http.ResponseWriter, r *http.Request) {
@@ -202,42 +232,60 @@ func (h *Handler) Capabilities(w http.ResponseWriter, r *http.Request) {
 	WriteSuccess(w, 200, "success", map[string]any{"items": items, "pagination": map[string]any{"next_cursor": nil}, "meta": map[string]string{"request_id": RequestID(r)}})
 }
 
-func (h *Handler) toClusterDTO(ctx context.Context, row store.CephCluster) (clusterDTO, error) {
+func toClusterDTO(row store.CephCluster) clusterDTO {
 	dto := clusterDTO{
 		ClusterID:        row.ID,
 		Name:             row.Name,
 		MonitorAddresses: row.MonitorAddresses,
 		ClientUsername:   row.ClientUsername,
-		Status:           "unknown",
-		Enabled:          true,
+		Status:           row.Status,
+		Enabled:          row.Enabled,
+		Generation:       row.Generation,
+		LastSeenAt:       row.LastSeenAt,
+		ObservedAt:       row.ObservedAt,
 		CreatedAt:        row.CreatedAt,
 		UpdatedAt:        row.UpdatedAt,
 	}
-	observation, err := h.Database().FindObservation(ctx, row.ID)
-	if err != nil {
-		if errors.Is(err, store.ErrRecordNotFound) {
-			return dto, nil
-		}
-		return dto, err
+	if row.FSID != nil {
+		dto.FSID = *row.FSID
 	}
-	if observation.FSID != nil {
-		dto.FSID = *observation.FSID
+	if row.CephVersion != nil {
+		dto.CephVersion = cephdomain.NormalizeVersion(*row.CephVersion)
 	}
-	if observation.CephVersion != nil {
-		dto.CephVersion = cephdomain.NormalizeVersion(*observation.CephVersion)
+	if row.LastErrorCode != nil {
+		dto.LastErrorCode = *row.LastErrorCode
 	}
-	dto.Status = observation.Status
-	dto.Enabled = observation.Enabled
-	dto.Generation = observation.Generation
-	dto.LastSeenAt = observation.LastSeenAt
-	if observation.LastErrorCode != nil {
-		dto.LastErrorCode = *observation.LastErrorCode
+	if row.LastErrorMessage != nil {
+		dto.LastErrorMessage = *row.LastErrorMessage
 	}
-	if observation.LastErrorMessage != nil {
-		dto.LastErrorMessage = *observation.LastErrorMessage
+	applyClusterDiscovery(&dto, row.DiscoveredData)
+	return dto
+}
+
+func applyClusterDiscovery(dto *clusterDTO, raw string) {
+	var data map[string]any
+	if json.Unmarshal([]byte(raw), &data) != nil {
+		return
 	}
-	dto.ObservedAt = observation.ObservedAt
-	return dto, nil
+	if value, ok := data["fsid"].(string); ok && value != "" {
+		dto.FSID = value
+	}
+	version, _ := data["ceph_version"].(string)
+	if version == "" {
+		version, _ = data["version"].(string)
+	}
+	if version != "" {
+		dto.CephVersion = cephdomain.NormalizeVersion(version)
+	}
+	if value, ok := data["status"].(string); ok && value != "" {
+		dto.Status = value
+	}
+	if value, ok := data["error_code"].(string); ok {
+		dto.LastErrorCode = value
+	}
+	if value, ok := data["error_message"].(string); ok {
+		dto.LastErrorMessage = value
+	}
 }
 
 func clusterError(w http.ResponseWriter, r *http.Request, err error) {

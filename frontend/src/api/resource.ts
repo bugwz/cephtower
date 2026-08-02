@@ -1,5 +1,5 @@
 import { asArray, isApiError, jsonInit, request, requestWithResponse, textValue, type ApiRecord, type ApiRequestInit } from './client'
-import type { ActionResult, ListEnvelope, ResourceDTO } from './types'
+import type { ActionResult, FilterOptionsEnvelope, ListEnvelope, ResourceDTO } from './types'
 
 export const selectedClusterStorageKey = 'cephtower.selectedClusterId'
 
@@ -8,6 +8,7 @@ export interface ResourceListOptions {
   cursor?: string
   name?: string
   status?: string
+  filters?: Record<string, string[]>
   body?: ApiRecord
 }
 
@@ -60,6 +61,13 @@ export async function listResource<T = ApiRecord>(path: string, clusterId = requ
   if (options.status) {
     query.set('status', options.status)
   }
+  Object.entries(options.filters ?? {}).forEach(([field, values]) => {
+    values.forEach((value) => {
+      if (value) {
+        query.append(`filter.${field}`, value)
+      }
+    })
+  })
   const suffix = query.toString() ? `?${query}` : ''
   let payload: ListEnvelope<ResourceDTO<T>> | ResourceDTO<T>
   try {
@@ -99,6 +107,17 @@ export async function listResource<T = ApiRecord>(path: string, clusterId = requ
     stale: Boolean(meta?.stale ?? resourceItems.some((item) => item.stale)),
     staleReason: meta?.stale_reason
   } satisfies ResourceListResult<T>
+}
+
+export async function listResourceFilterOptions(path: string, fields: string[], clusterId = requiredClusterId(), body?: ApiRecord) {
+  const query = new URLSearchParams()
+  query.set('filter_options', '1')
+  query.set('fields', fields.join(','))
+  const payload = await request<FilterOptionsEnvelope>(`${path}?${query}`, jsonInit('GET', {
+    cluster_id: clusterId,
+    ...body
+  }))
+  return payload.filter_options ?? {}
 }
 
 export async function getResource<T = ApiRecord>(path: string, clusterId = requiredClusterId(), body: ApiRecord = {}, init?: ApiRequestInit) {
@@ -218,8 +237,8 @@ export function listServices(): Promise<ApiRecord[]> {
   return listResource('/services').then((payload) => payload.items)
 }
 
-export function listMonitors(): Promise<ApiRecord> {
-  return listResource('/monitors').then((payload) => ({ items: payload.items }))
+export function listMonitors(clusterId = requiredClusterId(), filters?: Record<string, string[]>): Promise<ApiRecord[]> {
+  return listResource('/monitors', clusterId, { filters }).then((payload) => payload.items)
 }
 
 export function listMgrModules(): Promise<ApiRecord[]> {

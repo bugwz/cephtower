@@ -16,15 +16,17 @@ import (
 
 type ClusterAccess = executor.ClusterAccess
 type Capability struct {
-	Name            string
-	Supported       bool
-	Reason, Version string
-	Details         map[string]any
+	Name      string         `json:"name"`
+	Supported bool           `json:"supported"`
+	Reason    string         `json:"reason,omitempty"`
+	Version   string         `json:"version,omitempty"`
+	Details   map[string]any `json:"details,omitempty"`
 }
 type ProbeResult struct {
-	FSID, Version string
-	Capabilities  []Capability
-	Status        map[string]any
+	FSID         string         `json:"fsid"`
+	Version      string         `json:"version"`
+	Capabilities []Capability   `json:"capabilities"`
+	Status       map[string]any `json:"status"`
 }
 type ClusterProvider interface {
 	Probe(context.Context, ClusterAccess) (ProbeResult, error)

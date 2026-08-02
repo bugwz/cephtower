@@ -1565,6 +1565,28 @@ paths:
       operationId: get_clusters
       security:
         - bearerAuth: []
+      parameters:
+        - name: filter.name
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filter.client_username
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: filter_options
+          in: query
+          required: false
+          schema:
+            type: integer
+            enum: [1]
+        - name: fields
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         '200':
           description: success

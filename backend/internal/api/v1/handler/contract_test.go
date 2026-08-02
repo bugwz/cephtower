@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"cephtower/backend/internal/api/v1/handler"
 	"cephtower/backend/internal/api/v1/router"
@@ -60,7 +61,7 @@ func TestClusterContractEncryptsWriteOnlyKeyAndUsesEnvelope(t *testing.T) {
 	if strings.Contains(response.Body.String(), "ceph-secret") || strings.Contains(response.Body.String(), "client_key") {
 		t.Fatalf("secret leaked: %s", response.Body.String())
 	}
-	rows, err := db.ListClusters(context.Background())
+	rows, err := db.ListClusters(context.Background(), store.ClusterFilter{})
 	if err != nil || len(rows) != 1 {
 		t.Fatalf("clusters=%v err=%v", rows, err)
 	}
@@ -77,6 +78,32 @@ func TestClusterContractEncryptsWriteOnlyKeyAndUsesEnvelope(t *testing.T) {
 	assertEnvelope(t, listResponse.Body.Bytes())
 	if strings.Contains(listResponse.Body.String(), "client_key") {
 		t.Fatalf("client key field leaked: %s", listResponse.Body.String())
+	}
+	now := time.Now().UTC()
+	second := store.CephCluster{
+		Name:             "archive",
+		MonitorAddresses: "archive:6789",
+		ClientUsername:   "client.readonly",
+		ClientKey:        "encrypted",
+		CreatedAt:        now,
+		UpdatedAt:        now,
+	}
+	if err := db.CreateCluster(context.Background(), &second); err != nil {
+		t.Fatal(err)
+	}
+	filtered := httptest.NewRequest(http.MethodGet, "/api/v1/clusters?filter.name=test", nil)
+	filtered.Header.Set("Authorization", "Bearer "+token)
+	filteredResponse := httptest.NewRecorder()
+	mux.ServeHTTP(filteredResponse, filtered)
+	if filteredResponse.Code != http.StatusOK || !strings.Contains(filteredResponse.Body.String(), `"name":"test"`) || strings.Contains(filteredResponse.Body.String(), `"name":"archive"`) {
+		t.Fatalf("filtered list status=%d body=%s", filteredResponse.Code, filteredResponse.Body.String())
+	}
+	options := httptest.NewRequest(http.MethodGet, "/api/v1/clusters?filter_options=1&fields=name,client_username", nil)
+	options.Header.Set("Authorization", "Bearer "+token)
+	optionsResponse := httptest.NewRecorder()
+	mux.ServeHTTP(optionsResponse, options)
+	if optionsResponse.Code != http.StatusOK || !strings.Contains(optionsResponse.Body.String(), `"client.readonly"`) {
+		t.Fatalf("filter options status=%d body=%s", optionsResponse.Code, optionsResponse.Body.String())
 	}
 }
 

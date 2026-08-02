@@ -213,6 +213,12 @@ func routeParameters(route router.Route) []parameterSpec {
 			parameterSpec{Name: "resource_key", In: "query", Type: "string"},
 			parameterSpec{Name: "user_id", In: "query", Type: "integer", Minimum: "1"},
 			parameterSpec{Name: "limit", In: "query", Type: "integer", Minimum: "1"})
+	case "/clusters":
+		result = append(result,
+			parameterSpec{Name: "filter.name", In: "query", Type: "string"},
+			parameterSpec{Name: "filter.client_username", In: "query", Type: "string"},
+			parameterSpec{Name: "filter_options", In: "query", Type: "integer", Enum: []string{"1"}},
+			parameterSpec{Name: "fields", In: "query", Type: "string"})
 	case "/metric/query":
 		result = append(result, parameterSpec{Name: "metric_id", In: "query", Type: "string", Required: true}, parameterSpec{Name: "time", In: "query", Type: "string", Format: "date-time"})
 	case "/metric/range":

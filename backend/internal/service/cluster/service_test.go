@@ -164,19 +164,19 @@ func TestCreateAcceptsV1V2AndAddrvecMonitorAddresses(t *testing.T) {
 	}
 }
 
-func waitForObservationError(t *testing.T, db *store.Database, clusterID uint64) (store.CephClusterObservation, error) {
-	return waitForObservation(t, db, clusterID, func(observation store.CephClusterObservation) bool {
-		return observation.LastErrorMessage != nil
+func waitForObservationError(t *testing.T, db *store.Database, clusterID uint64) (store.CephCluster, error) {
+	return waitForObservation(t, db, clusterID, func(cluster store.CephCluster) bool {
+		return cluster.LastErrorMessage != nil
 	})
 }
 
-func waitForObservationSuccess(t *testing.T, db *store.Database, clusterID uint64) (store.CephClusterObservation, error) {
-	return waitForObservation(t, db, clusterID, func(observation store.CephClusterObservation) bool {
-		return observation.LastSeenAt != nil
+func waitForObservationSuccess(t *testing.T, db *store.Database, clusterID uint64) (store.CephCluster, error) {
+	return waitForObservation(t, db, clusterID, func(cluster store.CephCluster) bool {
+		return cluster.LastSeenAt != nil
 	})
 }
 
-func waitForObservation(t *testing.T, db *store.Database, clusterID uint64, ready func(store.CephClusterObservation) bool) (store.CephClusterObservation, error) {
+func waitForObservation(t *testing.T, db *store.Database, clusterID uint64, ready func(store.CephCluster) bool) (store.CephCluster, error) {
 	t.Helper()
 	deadline := time.After(time.Second)
 	ticker := time.NewTicker(10 * time.Millisecond)
@@ -184,11 +184,11 @@ func waitForObservation(t *testing.T, db *store.Database, clusterID uint64, read
 	for {
 		select {
 		case <-deadline:
-			return store.CephClusterObservation{}, errors.New("timed out waiting for observation")
+			return store.CephCluster{}, errors.New("timed out waiting for cluster discovery")
 		case <-ticker.C:
-			observation, err := db.FindObservation(context.Background(), clusterID)
-			if err == nil && ready(observation) {
-				return observation, nil
+			cluster, err := db.FindCluster(context.Background(), clusterID)
+			if err == nil && ready(cluster) {
+				return cluster, nil
 			}
 		}
 	}

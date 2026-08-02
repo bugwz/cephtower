@@ -12,6 +12,7 @@ import { RecordDetail } from '../../components/RecordDetail'
 import { TableAction, TableActions } from '../../components/TableActions'
 import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
+import { useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 
@@ -28,12 +29,17 @@ export function PoolPage() {
   const [refreshingPools, setRefreshingPools] = useState(false)
   const [form] = Form.useForm<PoolFormValues>()
   const operationMutation = useMutationOperation()
+  const poolTableFilters = useResourceTableFilters({
+    path: '/pools',
+    fields: ['name', 'status', 'type', 'size', 'min_size', 'pg_num', 'application_metadata', 'resource_version'],
+    clusterId: selectedClusterId
+  })
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
       return emptyResult()
     }
-    return listResource('/pools', selectedClusterId)
-  }, [selectedClusterId])
+    return listResource('/pools', selectedClusterId, { filters: poolTableFilters.filters })
+  }, [poolTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
 
   async function refreshPools() {
@@ -117,37 +123,36 @@ export function PoolPage() {
           </Space>
         }
       >
-        <Space direction="vertical" size={16} className="page-stack">
-          <AppTable<ApiRecord>
-            size="middle"
-            rowKey={(row) => String(row.natural_key ?? row.name)}
-            dataSource={data?.items ?? []}
-            pagination={{ defaultPageSize: 10, showSizeChanger: true }}
-            scroll={{ x: 1180 }}
-            footer={() => <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />}
-            columns={[
-              { title: '名称', dataIndex: 'name', width: 180 },
-              { title: '状态', dataIndex: 'status', width: 120 },
-              { title: '类型', dataIndex: 'type', width: 120 },
-              { title: '副本/大小', dataIndex: 'size', width: 120 },
-              { title: '最小副本', dataIndex: 'min_size', width: 120 },
-              { title: 'PG', dataIndex: 'pg_num', width: 100 },
-              { title: '应用', dataIndex: 'application_metadata', width: 220, render: renderValue },
-              { title: '版本', dataIndex: 'resource_version', width: 90 },
-              {
-                title: '操作',
-                width: 100,
-                fixed: 'right',
-                render: (_, row) => (
-                  <TableActions>
-                    <TableAction onClick={() => setDetailRow(row)}>详情</TableAction>
-                    <TableAction danger onClick={() => deletePool(row)}>删除</TableAction>
-                  </TableActions>
-                )
-              }
-            ]}
-          />
-        </Space>
+        <AppTable<ApiRecord>
+          size="middle"
+          rowKey={(row) => String(row.natural_key ?? row.name)}
+          dataSource={data?.items ?? []}
+          pagination={{ defaultPageSize: 10, showSizeChanger: true }}
+          scroll={{ x: 1180 }}
+          onChange={(_pagination, filters) => poolTableFilters.handleFilterChange(tableFilters(filters))}
+          footer={() => <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />}
+          columns={[
+            filterColumn('名称', 'name', 180, poolTableFilters),
+            filterColumn('状态', 'status', 120, poolTableFilters),
+            filterColumn('类型', 'type', 120, poolTableFilters),
+            filterColumn('副本/大小', 'size', 120, poolTableFilters),
+            filterColumn('最小副本', 'min_size', 120, poolTableFilters),
+            filterColumn('PG', 'pg_num', 100, poolTableFilters),
+            { ...filterColumn('应用', 'application_metadata', 220, poolTableFilters), render: renderValue },
+            filterColumn('版本', 'resource_version', 90, poolTableFilters),
+            {
+              title: '操作',
+              width: 100,
+              fixed: 'right',
+              render: (_, row) => (
+                <TableActions>
+                  <TableAction onClick={() => setDetailRow(row)}>详情</TableAction>
+                  <TableAction danger onClick={() => deletePool(row)}>删除</TableAction>
+                </TableActions>
+              )
+            }
+          ]}
+        />
       </Card>
 
       <DraggableModal
@@ -195,6 +200,27 @@ function renderValue(value: unknown) {
     return JSON.stringify(value)
   }
   return String(value)
+}
+
+function filterColumn(title: string, field: string, width: number, tableFilters: ReturnType<typeof useResourceTableFilters>) {
+  return {
+    title,
+    dataIndex: field,
+    key: field,
+    width,
+    filterMultiple: true,
+    filterSearch: true,
+    filters: (tableFilters.filterOptions[field] ?? []).map((value) => ({ text: value, value })),
+    filteredValue: tableFilters.filters[field] ?? null
+  }
+}
+
+function tableFilters(filters: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(filters)
+      .map(([field, values]) => [field, Array.isArray(values) ? values.map(String).filter(Boolean) : []] as const)
+      .filter(([, values]) => values.length > 0)
+  )
 }
 
 function emptyResult(): ResourceListResult<ApiRecord> {
