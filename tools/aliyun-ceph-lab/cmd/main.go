@@ -276,6 +276,7 @@ func confirmDelete(reader io.Reader, writer io.Writer) (bool, error) {
 
 func printJSON(value any) error {
 	encoder := json.NewEncoder(os.Stdout)
+	encoder.SetEscapeHTML(false)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(value)
 }

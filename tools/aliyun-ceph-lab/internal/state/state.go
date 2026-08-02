@@ -1,6 +1,7 @@
 package state
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -50,12 +51,11 @@ type SSH struct {
 }
 
 type Ceph struct {
-	ClusterName            string          `json:"cluster_name,omitempty"`
-	FSID                   string          `json:"fsid,omitempty"`
-	ClientAdmin            CephClientAdmin `json:"client_admin"`
-	Dashboard              CephDashboard   `json:"dashboard"`
-	Monitors               CephMonitors    `json:"monitors"`
-	CephTowerClusterCreate CephTowerCreate `json:"cephtower_cluster_create"`
+	ClusterName      string          `json:"cluster_name,omitempty"`
+	FSID             string          `json:"fsid,omitempty"`
+	ClientAdmin      CephClientAdmin `json:"client_admin"`
+	Dashboard        CephDashboard   `json:"dashboard"`
+	MonitorAddresses string          `json:"monitor_addresses"`
 }
 
 type CephClientAdmin struct {
@@ -86,13 +86,6 @@ type CephMonitorEndpoint struct {
 	Nonce    uint64 `json:"nonce,omitempty"`
 }
 
-type CephTowerCreate struct {
-	Name             string `json:"name"`
-	MonitorAddresses string `json:"monitor_addresses"`
-	ClientUsername   string `json:"client_username"`
-	ClientKey        string `json:"client_key"`
-}
-
 func Load(path string) (*State, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
@@ -115,13 +108,15 @@ func Save(path string, value *State) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return fmt.Errorf("create state directory: %w", err)
 	}
-	raw, err := json.MarshalIndent(value, "", "  ")
-	if err != nil {
+	var buffer bytes.Buffer
+	encoder := json.NewEncoder(&buffer)
+	encoder.SetEscapeHTML(false)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(value); err != nil {
 		return fmt.Errorf("encode state: %w", err)
 	}
-	raw = append(raw, '\n')
 	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, raw, 0o600); err != nil {
+	if err := os.WriteFile(tmp, buffer.Bytes(), 0o600); err != nil {
 		return fmt.Errorf("write temporary state: %w", err)
 	}
 	if err := os.Chmod(tmp, 0o600); err != nil {

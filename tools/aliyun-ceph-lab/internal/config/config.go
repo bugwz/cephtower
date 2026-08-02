@@ -400,7 +400,7 @@ func generateSSHPassword() (string, error) {
 		uppercase = "ABCDEFGHJKLMNPQRSTUVWXYZ"
 		lowercase = "abcdefghijkmnopqrstuvwxyz"
 		digits    = "23456789"
-		specials  = "!@#$%^&*-_+="
+		specials  = "!@#$%^*-_+="
 	)
 	all := uppercase + lowercase + digits + specials
 	password := make([]byte, 0, generatedSSHPasswordLength)

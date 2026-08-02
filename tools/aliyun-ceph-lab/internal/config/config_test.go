@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -145,6 +146,9 @@ func TestGenerateSSHPassword(t *testing.T) {
 		}
 		if err := validateSSHPassword(password); err != nil {
 			t.Fatalf("generated invalid password %q: %v", password, err)
+		}
+		if strings.Contains(password, "&") {
+			t.Fatalf("generated password contains unsupported JSON-sensitive character: %q", password)
 		}
 		if _, exists := seen[password]; exists {
 			t.Fatalf("generated duplicate password %q", password)

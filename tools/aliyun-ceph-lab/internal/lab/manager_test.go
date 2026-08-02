@@ -81,7 +81,7 @@ func TestJoinDataDiskCounts(t *testing.T) {
 	}
 }
 
-func TestBuildCephMonitorsProducesAddrvecForCephTower(t *testing.T) {
+func TestBuildCephMonitorsProducesMonitorAddresses(t *testing.T) {
 	t.Parallel()
 	dump := monDumpWire{Mons: []monWire{
 		{Name: "node-1", PublicAddrs: struct {

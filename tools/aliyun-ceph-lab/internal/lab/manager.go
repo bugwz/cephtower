@@ -190,7 +190,7 @@ func (m *Manager) Create(ctx context.Context) error {
 	if err := state.Save(m.StatePath, current); err != nil {
 		return fmt.Errorf("save ceph connection information: %w", err)
 	}
-	logging.Infof("create: Ceph connection information saved; dashboard=%s mon=%s", cephInfo.Dashboard.URL, cephInfo.Monitors.MonitorAddresses)
+	logging.Infof("create: Ceph connection information saved; dashboard=%s mon=%s", cephInfo.Dashboard.URL, cephInfo.MonitorAddresses)
 	return nil
 }
 func (m *Manager) List() (*state.State, error) {
@@ -463,13 +463,7 @@ func (m *Manager) collectCephInfo(
 			Username: dashboardUsername,
 			Password: wire.DashboardPassword,
 		},
-		Monitors: monitors,
-		CephTowerClusterCreate: state.CephTowerCreate{
-			Name:             current.ClusterName,
-			MonitorAddresses: monitors.MonitorAddresses,
-			ClientUsername:   clientUsername,
-			ClientKey:        strings.TrimSpace(wire.ClientAdminKey),
-		},
+		MonitorAddresses: monitors.MonitorAddresses,
 	}, nil
 }
 

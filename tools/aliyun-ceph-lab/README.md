@@ -201,8 +201,8 @@ credentials:
 - Ceph 部署只在第一台机器执行，完整部署日志在第一台机器的 `deploy-ceph.sh.log`。
 
 `create` 的最终 JSON 会包含节点 SSH 连接信息、本地日志路径和 `ceph` 连接信息。
-`ceph.cephtower_cluster_create.monitor_addresses` 可直接填写到 CephTower 新增集群
-表单的 MON 地址中，支持 v1、v2 或 v2+v1 addrvec 格式。
+`ceph.monitor_addresses` 可直接填写到 CephTower 新增集群表单的 MON 地址中，
+支持 v1、v2 或 v2+v1 addrvec 格式。
 
 ## Hook 参数
 
