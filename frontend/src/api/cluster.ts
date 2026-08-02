@@ -1,6 +1,6 @@
 import { asArray, jsonInit, request, type ApiRecord } from './client'
 import { listCredentials, listEndpoints, type CredentialView, type EndpointView } from './endpoint'
-import { listResource } from './resource'
+import { getOptionalResource, listResource } from './resource'
 import type { ListEnvelope } from './types'
 
 export interface CephCluster {
@@ -83,6 +83,7 @@ export interface CephClusterDiscovery {
 export interface CephClusterDetail {
   cluster: CephCluster
   discovery: CephClusterDiscovery
+  overview: ApiRecord
   endpoints: EndpointView[]
   credentials: CredentialView[]
 }
@@ -134,8 +135,8 @@ export async function listClusters(): Promise<CephCluster[]> {
   return rows.map(normalizeCluster)
 }
 
-export async function getClusterDetail(id: number | string): Promise<CephClusterDetail> {
-  const cluster = await getCluster(Number(id))
+export async function getClusterDetail(name: string): Promise<CephClusterDetail> {
+  const cluster = await getClusterByName(name)
   const [
     hosts,
     osds,
@@ -146,6 +147,7 @@ export async function getClusterDetail(id: number | string): Promise<CephCluster
     mdss,
     mgrModules,
     configuration,
+    overview,
     endpoints,
     credentials
   ] = await Promise.all([
@@ -158,6 +160,7 @@ export async function getClusterDetail(id: number | string): Promise<CephCluster
     detailRows('/daemons', cluster.id, 'mdss', { daemon_type: 'mds' }),
     detailRows('/manager/modules', cluster.id, 'mgr_modules'),
     detailRows('/configuration/values', cluster.id, 'configuration'),
+    getClusterOverview(cluster.id),
     listEndpoints(cluster.id),
     listCredentials(cluster.id)
   ])
@@ -175,6 +178,7 @@ export async function getClusterDetail(id: number | string): Promise<CephCluster
       mgr_modules: mgrModules,
       configuration
     },
+    overview,
     endpoints,
     credentials
   }
@@ -183,6 +187,19 @@ export async function getClusterDetail(id: number | string): Promise<CephCluster
 export async function getCluster(id: number): Promise<CephCluster> {
   const payload = await request<ApiRecord>('/cluster', jsonInit('GET', { cluster_id: id }))
   return normalizeCluster(payload)
+}
+
+export async function getClusterByName(name: string): Promise<CephCluster> {
+  const clusterName = name.trim()
+  if (!clusterName) {
+    throw new Error('集群名称不能为空')
+  }
+  const clusters = await listClusters()
+  const cluster = clusters.find((item) => item.name === clusterName)
+  if (!cluster) {
+    throw new Error(`未找到集群：${clusterName}`)
+  }
+  return cluster
 }
 
 export async function createCluster(values: CephClusterFormPayload): Promise<ClusterActionResponse> {
@@ -281,6 +298,12 @@ function normalizeCluster(row: ApiRecord): CephCluster {
 async function detailRows(path: string, clusterId: number, category: string, body?: ApiRecord): Promise<CephDiscoveredRecord[]> {
   const payload = await listResource(path, clusterId, { limit: 200, body })
   return payload.items.map((row, index) => toDiscoveredRecord(row, category, index))
+}
+
+async function getClusterOverview(clusterId: number): Promise<ApiRecord> {
+  const payload = await getOptionalResource<ApiRecord>('/overview', clusterId)
+  const data = payload?.item.data
+  return data && typeof data === 'object' && !Array.isArray(data) ? data as ApiRecord : {}
 }
 
 function toDiscoveredRecord(row: ApiRecord, category: string, index: number): CephDiscoveredRecord {

@@ -68,13 +68,14 @@ func buildMutationRequestContracts() map[string]RequestContract {
 		}
 	}
 	empty := map[string]JSONField{}
-	add([]string{"health.mute", "health.unmute", "host.delete", "service.delete", "manager.fail", "device.zap", "crush_rule.delete", "erasure_code_profile.delete", "pool.delete", "rbd_image.delete", "rbd_snapshot.delete", "rbd_namespace.delete", "rbd_trash.delete", "filesystem.delete", "subvolume_group.delete", "subvolume.delete", "cephfs_client.evict", "rgw_user.delete", "rgw_period.commit", "nfs_cluster.delete", "nfs_export.delete", "smb_cluster.delete", "smb_share.delete", "config_value.delete", "silence.delete", "rgw_bucket.delete", "iscsi_target.delete", "nvmeof_subsystem.delete"}, false, empty)
+	add([]string{"health.mute", "health.unmute", "host.delete", "service.delete", "manager.fail", "crush_rule.delete", "erasure_code_profile.delete", "pool.delete", "rbd_image.delete", "rbd_snapshot.delete", "rbd_namespace.delete", "rbd_trash.delete", "filesystem.delete", "subvolume_group.delete", "subvolume.delete", "cephfs_client.evict", "rgw_user.delete", "rgw_period.commit", "nfs_cluster.delete", "nfs_export.delete", "smb_cluster.delete", "smb_share.delete", "config_value.delete", "silence.delete", "rgw_bucket.delete", "iscsi_target.delete", "nvmeof_subsystem.delete"}, false, empty)
 	add([]string{"cluster.refresh"}, false, map[string]JSONField{"modules": stringsField(false)})
 	add([]string{"osd.delete"}, false, map[string]JSONField{"zap": boolField(false)})
 	add([]string{"host.create"}, true, map[string]JSONField{"hostname": stringField(true), "address": stringField(false)})
 	add([]string{"host.update"}, true, map[string]JSONField{"address": stringField(false), "label": stringField(false), "action": stringField(false, "add", "rm")})
 	add([]string{"host.action"}, true, map[string]JSONField{"action": stringField(true, "maintenance_enter", "maintenance_exit", "drain", "stop_drain", "rescan")})
 	add([]string{"device.identify"}, true, map[string]JSONField{"device": stringField(true), "state": stringField(true, "on", "off"), "light": stringField(false, "ident", "fault")})
+	add([]string{"device.zap"}, true, map[string]JSONField{"host": stringField(true), "device": stringField(true)})
 	placement := objectField(false, map[string]JSONField{"count": integerField(false), "host_pattern": stringField(false), "hosts": stringsField(false), "label": stringField(false)})
 	add([]string{"service.create", "service.update"}, true, map[string]JSONField{"service_type": stringField(true, "mon", "mgr", "mds", "rgw", "nfs", "smb", "prometheus", "alertmanager", "grafana", "node-exporter", "crash"), "service_id": stringField(false), "placement": placement})
 	add([]string{"daemon.action"}, true, map[string]JSONField{"action": stringField(true, "start", "stop", "restart", "reconfig", "redeploy", "rotate-key")})

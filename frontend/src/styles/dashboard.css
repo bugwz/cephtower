@@ -4,6 +4,64 @@
   background: #ffffff;
 }
 
+.ant-message {
+  font-size: var(--font-sm);
+}
+
+.ant-message .ant-message-notice {
+  padding: 4px 0;
+}
+
+.ant-message .ant-message-notice-content {
+  min-height: 34px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  box-shadow: 0 10px 28px rgb(25 88 94 / 12%);
+}
+
+.ant-message .ant-message-custom-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  line-height: 1.25;
+}
+
+.ant-message .anticon {
+  font-size: 14px;
+}
+
+.ant-notification .ant-notification-notice {
+  width: min(320px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border-radius: 7px;
+}
+
+.ant-notification .ant-notification-notice-message {
+  margin-bottom: 4px;
+  font-size: var(--font-md);
+  line-height: 1.3;
+}
+
+.ant-notification .ant-notification-notice-description {
+  font-size: var(--font-sm);
+  line-height: 1.45;
+}
+
+.ant-popover-inner {
+  border-radius: 7px;
+}
+
+.ant-popconfirm .ant-popconfirm-message {
+  font-size: var(--font-sm);
+}
+
+.ant-popconfirm .ant-popconfirm-buttons .ant-btn,
+.ant-modal-confirm .ant-btn {
+  height: 28px;
+  padding-inline: 10px;
+  font-size: var(--font-sm);
+}
+
 .app-sidebar {
   --sidebar-symbol-size: 16px;
   --sidebar-motion: 260ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -908,6 +966,147 @@
   min-width: 0;
 }
 
+.app-shell .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(.sidebar-collapse-button):not(.sidebar-github-button),
+.ant-modal-root .ant-btn:not(.ant-btn-link):not(.ant-btn-text),
+.ant-popover .ant-popconfirm-buttons .ant-btn:not(.ant-btn-link):not(.ant-btn-text) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  height: var(--button-height);
+  padding: 0 14px;
+  border-color: var(--button-border);
+  border-radius: 8px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  font-size: var(--font-md);
+  box-shadow: 0 3px 10px rgb(25 88 94 / 6%);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.app-shell .ant-btn-icon-only:not(.sidebar-collapse-button):not(.sidebar-github-button),
+.ant-modal-root .ant-btn-icon-only,
+.ant-popover .ant-popconfirm-buttons .ant-btn-icon-only {
+  min-width: var(--button-height);
+  width: var(--button-height);
+  padding: 0;
+}
+
+.app-shell .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(.sidebar-collapse-button):not(.sidebar-github-button) .anticon,
+.ant-modal-root .ant-btn:not(.ant-btn-link):not(.ant-btn-text) .anticon,
+.ant-popover .ant-popconfirm-buttons .ant-btn:not(.ant-btn-link):not(.ant-btn-text) .anticon {
+  color: var(--button-icon);
+  transition: color 160ms ease;
+}
+
+.app-shell .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(.sidebar-collapse-button):not(.sidebar-github-button):not(:disabled):not(.ant-btn-disabled):hover,
+.app-shell .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(.sidebar-collapse-button):not(.sidebar-github-button):not(:disabled):not(.ant-btn-disabled):focus-visible,
+.ant-modal-root .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):hover,
+.ant-modal-root .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):focus-visible,
+.ant-popover .ant-popconfirm-buttons .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):hover,
+.ant-popover .ant-popconfirm-buttons .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):focus-visible {
+  border-color: var(--button-hover-border);
+  background: var(--button-hover-bg);
+  color: var(--button-hover-text);
+  box-shadow: 0 6px 16px rgb(35 92 107 / 8%);
+}
+
+.app-shell .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(.sidebar-collapse-button):not(.sidebar-github-button):not(:disabled):not(.ant-btn-disabled):hover .anticon,
+.app-shell .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(.sidebar-collapse-button):not(.sidebar-github-button):not(:disabled):not(.ant-btn-disabled):focus-visible .anticon,
+.ant-modal-root .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):hover .anticon,
+.ant-modal-root .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):focus-visible .anticon,
+.ant-popover .ant-popconfirm-buttons .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):hover .anticon,
+.ant-popover .ant-popconfirm-buttons .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):focus-visible .anticon {
+  color: var(--button-hover-text);
+}
+
+.app-shell .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(.sidebar-collapse-button):not(.sidebar-github-button):not(:disabled):not(.ant-btn-disabled):active,
+.ant-modal-root .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):active,
+.ant-popover .ant-popconfirm-buttons .ant-btn:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):active {
+  border-color: var(--button-active-border);
+  background: var(--button-active-bg);
+  color: var(--button-active-text);
+}
+
+.app-shell .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):not(.ant-btn-disabled),
+.ant-modal-root .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):not(.ant-btn-disabled),
+.ant-popover .ant-popconfirm-buttons .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):not(.ant-btn-disabled) {
+  border-color: var(--button-primary-border);
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+  box-shadow: 0 4px 12px rgb(35 132 103 / 10%);
+}
+
+.app-shell .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):not(.ant-btn-disabled) .anticon,
+.ant-modal-root .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):not(.ant-btn-disabled) .anticon,
+.ant-popover .ant-popconfirm-buttons .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):not(.ant-btn-disabled) .anticon {
+  color: var(--button-primary-text);
+}
+
+.app-shell .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):not(.ant-btn-disabled):hover,
+.app-shell .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):not(.ant-btn-disabled):focus-visible,
+.ant-modal-root .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):not(.ant-btn-disabled):hover,
+.ant-modal-root .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):not(.ant-btn-disabled):focus-visible,
+.ant-popover .ant-popconfirm-buttons .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):not(.ant-btn-disabled):hover,
+.ant-popover .ant-popconfirm-buttons .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):not(.ant-btn-disabled):focus-visible {
+  border-color: var(--button-primary-hover-border);
+  background: var(--button-primary-hover-bg);
+  color: var(--button-primary-text);
+  box-shadow: 0 7px 18px rgb(35 132 103 / 13%);
+}
+
+.app-shell .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text),
+.ant-modal-root .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text),
+.ant-popover .ant-popconfirm-buttons .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text) {
+  border-color: var(--button-danger-border);
+  background: var(--button-danger-bg);
+  color: var(--button-danger-text);
+  box-shadow: 0 3px 10px rgb(150 54 64 / 6%);
+}
+
+.app-shell .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text) .anticon,
+.ant-modal-root .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text) .anticon,
+.ant-popover .ant-popconfirm-buttons .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text) .anticon {
+  color: var(--button-danger-text);
+}
+
+.app-shell .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):hover,
+.app-shell .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):focus-visible,
+.ant-modal-root .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):hover,
+.ant-modal-root .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):focus-visible,
+.ant-popover .ant-popconfirm-buttons .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):hover,
+.ant-popover .ant-popconfirm-buttons .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):focus-visible {
+  border-color: var(--button-danger-hover-border);
+  background: var(--button-danger-hover-bg);
+  color: var(--button-danger-hover-text);
+  box-shadow: 0 6px 16px rgb(150 54 64 / 8%);
+}
+
+.app-shell .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):hover .anticon,
+.app-shell .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):focus-visible .anticon,
+.ant-modal-root .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):hover .anticon,
+.ant-modal-root .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):focus-visible .anticon,
+.ant-popover .ant-popconfirm-buttons .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):hover .anticon,
+.ant-popover .ant-popconfirm-buttons .ant-btn-dangerous:not(.ant-btn-link):not(.ant-btn-text):not(:disabled):not(.ant-btn-disabled):focus-visible .anticon {
+  color: var(--button-danger-hover-text);
+}
+
+.app-shell .ant-btn:disabled:not(.ant-btn-link):not(.ant-btn-text),
+.app-shell .ant-btn.ant-btn-disabled:not(.ant-btn-link):not(.ant-btn-text),
+.ant-modal-root .ant-btn:disabled:not(.ant-btn-link):not(.ant-btn-text),
+.ant-modal-root .ant-btn.ant-btn-disabled:not(.ant-btn-link):not(.ant-btn-text),
+.ant-popover .ant-popconfirm-buttons .ant-btn:disabled:not(.ant-btn-link):not(.ant-btn-text),
+.ant-popover .ant-popconfirm-buttons .ant-btn.ant-btn-disabled:not(.ant-btn-link):not(.ant-btn-text) {
+  border-color: #dce8ec;
+  background: #f8fbfa;
+  color: #a0b0b5;
+  box-shadow: none;
+}
+
 .page-surface-card.ant-card > .ant-card-head {
   padding: 0 var(--surface-card-x);
 }
@@ -1024,9 +1223,6 @@
 
 .overview-toolbar .ant-btn-primary {
   min-width: 116px;
-  background: #43bf8f;
-  border-color: #43bf8f;
-  box-shadow: 0 2px 5px rgb(67 191 143 / 22%);
 }
 
 .warning-banner {
@@ -1955,31 +2151,14 @@
 }
 
 .mon-address-summary {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.mon-address-summary .ant-tag {
-  margin-inline-end: 0;
-  border-color: #bce5d5;
-  background: #eefaf5;
-  color: #17735a;
-  font-weight: 700;
-}
-
-.mon-address-chips {
   display: flex;
   min-width: 0;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
-.mon-address-chip,
-.mon-address-more,
-.mon-address-tooltip-item {
+.mon-address-chip {
   border: 1px solid #dce9e6;
   border-radius: 6px;
   background: #fbfefd;
@@ -1990,59 +2169,110 @@
 }
 
 .mon-address-chip {
-  max-width: min(132px, 45%);
+  appearance: none;
+  cursor: pointer;
   padding: 1px 7px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mon-address-more {
-  flex: 0 0 auto;
-  padding: 1px 6px;
-  color: #4d6870;
-}
-
-.mon-address-tooltip {
-  display: grid;
-  gap: 6px;
-  max-width: 300px;
-}
-
-.mon-address-popover .ant-popover-inner {
-  border: 1px solid #cfe8df;
-  border-radius: 8px;
-  background: #fbfefd;
-  box-shadow: 0 10px 28px rgba(38, 82, 75, 0.14);
-}
-
-.mon-address-popover .ant-popover-inner-content {
-  padding: 10px;
-}
-
-.mon-address-popover .ant-popover-arrow::before {
-  background: #fbfefd;
-}
-
-.mon-address-tooltip-item {
-  padding: 2px 8px;
   overflow-wrap: anywhere;
 }
 
+.mon-address-chip:hover {
+  border-color: #9bd6c1;
+  background: #eefaf5;
+  color: #13745b;
+}
+
+.mon-address-chip:focus-visible {
+  outline: 2px solid rgba(29, 132, 103, 0.32);
+  outline-offset: 2px;
+}
+
+.mon-address-more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 23px;
+  padding: 1px 8px;
+  border: 1px solid #cfe7df;
+  border-radius: 6px;
+  background: #eefaf5;
+  color: #168766;
+  font-size: var(--font-xs);
+  font-weight: 700;
+  line-height: 1.7;
+  white-space: nowrap;
+}
+
+.cluster-detail-descriptions .ant-descriptions-view > table {
+  table-layout: fixed;
+  width: 100%;
+}
+
 .cluster-detail-descriptions .ant-descriptions-item-label {
-  width: 150px;
-  min-width: 150px;
+  width: 12.5%;
+  min-width: 120px;
   color: #51666c;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .cluster-basic-descriptions .ant-descriptions-item-label {
-  width: 128px;
-  min-width: 128px;
+  width: 12.5%;
+  min-width: 120px;
+}
+
+.cluster-detail-actions,
+.host-detail-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cluster-detail-actions .ant-space-item,
+.host-detail-actions .ant-space-item {
+  display: inline-flex;
+}
+
+.app-shell .cluster-detail-actions .ant-btn:not(.ant-btn-link):not(.ant-btn-text),
+.app-shell .host-detail-actions .ant-btn:not(.ant-btn-link):not(.ant-btn-text) {
+  height: 30px;
+  min-width: 58px;
+  padding: 0 14px;
+  border-radius: 7px;
+  font-size: var(--font-sm);
+  gap: 5px;
+  line-height: 1;
+}
+
+.app-shell .cluster-detail-actions .ant-btn:not(.ant-btn-link):not(.ant-btn-text) .anticon,
+.app-shell .host-detail-actions .ant-btn:not(.ant-btn-link):not(.ant-btn-text) .anticon {
+  font-size: 13px;
+}
+
+.host-detail-descriptions .ant-descriptions-view > table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.host-detail-descriptions .ant-descriptions-item-label {
+  width: 12.5%;
+  min-width: 120px;
+  color: #51666c;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.host-detail-descriptions .ant-descriptions-item-content {
+  width: 37.5%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.host-detail-descriptions .ant-tag {
+  margin-inline-end: 0;
 }
 
 .cluster-detail-descriptions .ant-descriptions-item-content {
+  width: 37.5%;
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -2208,8 +2438,18 @@
 }
 
 .ant-message {
+  top: calc(clamp(52px, 2.6vw, 60px) / 2) !important;
   left: 50% !important;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
+  width: auto !important;
+  max-width: calc(100vw - 32px);
+}
+
+.ant-notification.ant-notification-top {
+  top: calc(clamp(52px, 2.6vw, 60px) / 2) !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translate(-50%, -50%);
   width: auto !important;
   max-width: calc(100vw - 32px);
 }
@@ -2221,6 +2461,12 @@
   line-height: 1.45;
 }
 
+.ant-notification.ant-notification-top .ant-notification-notice {
+  width: min(360px, calc(100vw - 32px));
+  margin-right: 0;
+  margin-left: 0;
+}
+
 .cluster-selector.ant-select {
   width: 280px;
   max-width: 22vw;
@@ -2228,7 +2474,64 @@
 }
 
 .resource-meta-bar {
-  padding: 10px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: fit-content;
+  max-width: 100%;
+  min-height: var(--table-footer-row-height, 42px);
+  color: #6f858c;
+  font-size: var(--font-sm);
+  line-height: 1.4;
+}
+
+.ant-table-wrapper:has(.resource-meta-bar) {
+  --table-footer-row-height: 42px;
+  position: relative;
+}
+
+.ant-table-wrapper:has(.resource-meta-bar) .ant-table {
+  position: static;
+}
+
+.ant-table-wrapper:has(.resource-meta-bar) .ant-table-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  max-width: calc(100% - 220px);
+  height: var(--table-footer-row-height);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.ant-table-wrapper:has(.resource-meta-bar) .ant-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: var(--table-footer-row-height);
+  margin: 16px 0 0;
+}
+
+.resource-meta-label.ant-typography,
+.resource-meta-time.ant-typography,
+.resource-meta-reason.ant-typography {
+  color: #6f858c;
+  font-size: var(--font-sm);
+}
+
+.resource-meta-time.ant-typography {
+  color: #35515a;
+  font-variant-numeric: tabular-nums;
+}
+
+.resource-meta-reason.ant-typography {
+  margin-left: 8px;
 }
 
 .operation-list {

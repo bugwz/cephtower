@@ -1,7 +1,7 @@
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, InputNumber, Modal, Space, Switch, Tabs, Tag } from 'antd'
-import { useCallback, useState } from 'react'
-import { textValue, type ApiRecord } from '../../api/client'
+import { Button, Card, Form, Input, InputNumber, Modal, Segmented, Space, Switch, Tabs, Tag } from 'antd'
+import { useCallback, useMemo, useState } from 'react'
+import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import {
   applyDaemonAction,
   listDaemons,
@@ -29,10 +29,13 @@ import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 import { ClusterDetailPage } from './ClusterDetailPage'
 import { ClusterPage } from './ClusterPage'
-import { HostPage } from './HostPage'
+import { HostDetailPage } from './HostDetailPage'
+import { formatBytes, HostPage } from './HostPage'
 import { ServicePage } from './ServicePage'
 
-export { ClusterDetailPage, ClusterPage, HostPage, ServicePage }
+export { ClusterDetailPage, ClusterPage, HostDetailPage, HostPage, ServicePage }
+
+type DeviceScope = 'all' | 'available' | 'used' | 'unavailable'
 
 export function MonManagementPage() {
   const { selectedClusterId } = useClusterContext()
@@ -207,7 +210,7 @@ export function OsdManagementPage() {
     }
     setRefreshingOSDs(true)
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['osd', 'osd_flag'] }), 'OSD 数据刷新已触发')
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['osd', 'osd_flag'] }), '刷新成功')
       await refresh()
     } finally {
       setRefreshingOSDs(false)
@@ -263,8 +266,11 @@ export function OsdManagementPage() {
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
-        await operationMutation.run(() => mutateResource('/osd', 'DELETE', parameters, { ifMatch: generation }), 'OSD 删除执行成功')
-        refresh()
+        await operationMutation.run(() => mutateResource('/osd', 'DELETE', parameters, { ifMatch: generation }), false)
+        window.setTimeout(() => {
+          message.success('OSD 删除执行成功')
+          refresh({ showLoading: false })
+        })
       }
     })
   }
@@ -324,7 +330,7 @@ export function OsdManagementPage() {
   )
 }
 
-function OSDDeploymentModal({ open, onClose, refresh }: { open: boolean; onClose: () => void; refresh: () => void }) {
+function OSDDeploymentModal({ open, onClose, refresh }: { open: boolean; onClose: () => void; refresh: (options?: { showLoading?: boolean }) => void }) {
   const { selectedClusterId } = useClusterContext()
   const [submitting, setSubmitting] = useState(false)
   const [form] = Form.useForm<{
@@ -356,7 +362,7 @@ function OSDDeploymentModal({ open, onClose, refresh }: { open: boolean; onClose
     setSubmitting(true)
     try {
       if (mode === 'preview') {
-        await operationMutation.run(() => mutateResource('/osd/deployment/preview', 'POST', payload), 'OSD 部署预览执行成功')
+        await operationMutation.run(() => mutateResource('/osd/deployment/preview', 'POST', payload), false)
       } else {
         Modal.confirm({
           title: '创建 OSD 部署',
@@ -365,15 +371,19 @@ function OSDDeploymentModal({ open, onClose, refresh }: { open: boolean; onClose
           okType: 'danger',
           cancelText: '取消',
           async onOk() {
-            await operationMutation.run(() => mutateResource('/osd/deployment', 'POST', payload), 'OSD 部署执行成功')
-            onClose()
-            refresh()
+            await operationMutation.run(() => mutateResource('/osd/deployment', 'POST', payload), false)
+            window.setTimeout(() => {
+              onClose()
+              message.success('OSD 部署执行成功')
+              refresh({ showLoading: false })
+            })
           }
         })
         return
       }
       onClose()
-      refresh()
+      message.success('OSD 部署预览执行成功')
+      refresh({ showLoading: false })
     } finally {
       setSubmitting(false)
     }
@@ -445,7 +455,14 @@ export function DeviceManagementPage() {
   const { data, loading, error, refresh } = useResource(loader)
   const [pendingDeviceAction, setPendingDeviceAction] = useState('')
   const [refreshingDevices, setRefreshingDevices] = useState(false)
+  const [deviceScope, setDeviceScope] = useState<DeviceScope>('all')
   const operationMutation = useMutationOperation()
+  const deviceRows = useMemo(() => (data?.items ?? []).map(normalizeDeviceRow), [data?.items])
+  const visibleDeviceRows = useMemo(
+    () => deviceRows.filter((row) => deviceScope === 'all' || row.usage_state === deviceScope),
+    [deviceRows, deviceScope]
+  )
+  const deviceScopeOptions = useMemo(() => buildDeviceScopeOptions(deviceRows), [deviceRows])
 
   async function refreshDeviceData() {
     if (!selectedClusterId) {
@@ -454,7 +471,7 @@ export function DeviceManagementPage() {
     }
     setRefreshingDevices(true)
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kind: 'device' }), '设备数据刷新已触发')
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kind: 'device' }), '刷新成功')
       await refresh()
     } finally {
       setRefreshingDevices(false)
@@ -498,9 +515,8 @@ export function DeviceManagementPage() {
       message.error('无法识别设备主机或路径')
       return
     }
-    const deviceID = encodePair(host, path)
     const generation = Number(row.resource_version ?? 0)
-    const parameters = { cluster_id: selectedClusterId, device_id: deviceID }
+    const parameters = { cluster_id: selectedClusterId, host, device: path }
     Modal.confirm({
       title: `擦除设备 ${host}:${path}`,
       content: '该操作会清理设备数据，为高风险操作，确认后将直接执行操作。',
@@ -508,33 +524,40 @@ export function DeviceManagementPage() {
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
-        await operationMutation.run(() => mutateResource('/device/zap', 'POST', parameters, { ifMatch: generation }), '设备擦除执行成功')
-        refresh()
+        await operationMutation.run(() => mutateResource('/host/device/zap', 'POST', parameters, { ifMatch: generation }), false)
+        window.setTimeout(() => {
+          message.success('设备擦除执行成功')
+          refresh({ showLoading: false })
+        })
       }
     })
   }
 
   return (
-    <Page title="设备管理" loading={loading} error={error}>
+    <Page title="设备列表" loading={loading} error={error}>
       <Card
         className="page-surface-card"
-        title="设备管理"
+        title="设备列表"
         extra={<Button icon={<ReloadOutlined />} loading={refreshingDevices || loading} onClick={refreshDeviceData}>刷新</Button>}
       >
         <Space direction="vertical" size={16} className="page-stack">
-          <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />
+          <Segmented
+            value={deviceScope}
+            options={deviceScopeOptions}
+            onChange={(value) => setDeviceScope(value as DeviceScope)}
+          />
           <DataTable
-            data={data?.items ?? []}
+            data={visibleDeviceRows}
+            footer={<ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />}
             rowKeyCandidates={['natural_key', 'device_id', 'path', 'name']}
             columns={[
               { key: 'hostname', title: '主机' },
               { key: 'path', title: '路径' },
-              { key: 'device_id', title: '设备 ID' },
-              { key: 'available', title: '可用', render: (value) => <Tag color={value ? 'success' : 'default'}>{value ? '可用' : '不可用'}</Tag> },
-              { key: 'rejected_reasons', title: '拒绝原因' },
+              { key: 'usage_label', title: '使用状态', render: (_, row) => renderDeviceUsage(row) },
+              { key: 'usage_notes', title: '占用说明', render: (value) => renderDeviceNotes(value) },
               { key: 'device_type', title: '类型' },
               { key: 'model', title: '型号' },
-              { key: 'size_bytes', title: '容量 bytes' },
+              { key: 'size_display', title: '容量' },
               {
                 key: 'actions',
                 title: '操作',
@@ -660,7 +683,7 @@ function DaemonTable({ data, refresh }: { data: ApiRecord[]; refresh: () => void
   )
 }
 
-function ReweightForm({ osdID, refresh }: { osdID: string; refresh: () => void }) {
+function ReweightForm({ osdID, refresh }: { osdID: string; refresh: (options?: { showLoading?: boolean }) => void }) {
   const [submitting, setSubmitting] = useState(false)
   const operationMutation = useMutationOperation()
 
@@ -670,9 +693,12 @@ function ReweightForm({ osdID, refresh }: { osdID: string; refresh: () => void }
     }
     setSubmitting(true)
     try {
-      await operationMutation.run(() => reweightOSD(osdID, values.weight), 'OSD 权重调整执行成功')
+      await operationMutation.run(() => reweightOSD(osdID, values.weight), false)
       Modal.destroyAll()
-      refresh()
+      window.setTimeout(() => {
+        message.success('OSD 权重调整执行成功')
+        refresh({ showLoading: false })
+      })
     } finally {
       setSubmitting(false)
     }
@@ -751,11 +777,120 @@ function devicePath(row: ApiRecord) {
   return textValue(row.path ?? row.device ?? row.name, '')
 }
 
-function encodePair(left: string, right: string) {
-  const bytes = new TextEncoder().encode(`${left}\u0000${right}`)
-  let binary = ''
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte)
-  })
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
+function normalizeDeviceRow(row: ApiRecord): ApiRecord {
+  const usage = deviceUsage(row)
+  const type = textValue(row.device_type ?? row.type, '')
+  return {
+    ...row,
+    hostname: textValue(row.hostname ?? row.host, ''),
+    path: devicePath(row),
+    device_type: type ? type.toUpperCase() : '-',
+    usage_state: usage.state,
+    usage_label: usage.label,
+    usage_notes: usage.notes,
+    size_display: formatBytes(numberValue(row.size_bytes ?? row.size))
+  }
+}
+
+function deviceUsage(row: ApiRecord) {
+  const reasons = deviceReasonValues(row.rejected_reasons ?? row.reject_reasons ?? row.reasons)
+  if (row.available === true) {
+    return { state: 'available' as DeviceScope, label: '空闲可用', notes: [] }
+  }
+  if (reasons.some(isUsedDeviceReason)) {
+    return { state: 'used' as DeviceScope, label: '已占用', notes: reasons.map(readableDeviceReason) }
+  }
+  return { state: 'unavailable' as DeviceScope, label: '不可用', notes: reasons.map(readableDeviceReason) }
+}
+
+function deviceReasonValues(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.map((item) => textValue(item, '')).filter(Boolean)
+  }
+
+  const text = textValue(value, '')
+  if (!text) {
+    return []
+  }
+
+  return text.split(',').map((item) => item.trim()).filter(Boolean)
+}
+
+function isUsedDeviceReason(reason: string) {
+  const normalized = reason.toLowerCase()
+  return [
+    'filesystem',
+    'file system',
+    'lvm',
+    'mounted',
+    'partition',
+    'bluestore',
+    'osd',
+    'in use',
+    'being used'
+  ].some((keyword) => normalized.includes(keyword))
+}
+
+function readableDeviceReason(reason: string) {
+  const normalized = reason.toLowerCase()
+  if (normalized.includes('filesystem') || normalized.includes('file system')) {
+    return '已有文件系统'
+  }
+  if (normalized.includes('lvm')) {
+    return '已有 LVM'
+  }
+  if (normalized.includes('insufficient space')) {
+    return 'VG 可用空间不足'
+  }
+  if (normalized.includes('mounted')) {
+    return '已挂载'
+  }
+  if (normalized.includes('partition')) {
+    return '已有分区'
+  }
+  if (normalized.includes('bluestore') || normalized.includes('osd')) {
+    return '已有 OSD 数据'
+  }
+  if (normalized.includes('locked')) {
+    return '设备被锁定'
+  }
+  if (normalized.includes('read-only') || normalized.includes('readonly')) {
+    return '只读设备'
+  }
+  return reason
+}
+
+function renderDeviceUsage(row: ApiRecord) {
+  const state = textValue(row.usage_state, '') as DeviceScope
+  const label = textValue(row.usage_label)
+  const colors: Record<DeviceScope, string> = {
+    all: 'default',
+    available: 'success',
+    used: 'processing',
+    unavailable: 'default'
+  }
+  return <Tag color={colors[state] ?? 'default'}>{label}</Tag>
+}
+
+function renderDeviceNotes(value: unknown) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return '-'
+  }
+
+  return value.map((item) => <Tag key={textValue(item)}>{textValue(item)}</Tag>)
+}
+
+function buildDeviceScopeOptions(rows: ApiRecord[]) {
+  const counts = {
+    all: rows.length,
+    available: rows.filter((row) => row.usage_state === 'available').length,
+    used: rows.filter((row) => row.usage_state === 'used').length,
+    unavailable: rows.filter((row) => row.usage_state === 'unavailable').length
+  }
+  return [
+    { label: `全部 ${counts.all}`, value: 'all' },
+    { label: `空闲可用 ${counts.available}`, value: 'available' },
+    { label: `已占用 ${counts.used}`, value: 'used' },
+    { label: `不可用 ${counts.unavailable}`, value: 'unavailable' }
+  ]
 }

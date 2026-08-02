@@ -37,6 +37,35 @@ func TestCollectParsesCeph2022Fixtures(t *testing.T) {
 	}
 }
 
+func TestCollectFastStoresCephVersionsHash(t *testing.T) {
+	base := fixtureExecutor{t}
+	version := "ceph version 20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc) tentacle (stable - RelWithDebInfo)"
+	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{
+		"collect.versions": []byte(`{"mon":{"` + version + `":3}}`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "fast")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range rows {
+		if row.Kind != "overview" {
+			continue
+		}
+		payload, ok := row.Payload.(cephdomain.Overview)
+		if !ok {
+			t.Fatalf("overview payload type = %T", row.Payload)
+		}
+		if payload.CephVersion != "20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc)" {
+			t.Fatalf("overview ceph version = %q", payload.CephVersion)
+		}
+		if row.SourceVersion != payload.CephVersion {
+			t.Fatalf("source version = %q, want %q", row.SourceVersion, payload.CephVersion)
+		}
+		return
+	}
+	t.Fatal("overview record was not collected")
+}
+
 func TestCollectStorageRecordsEmptyOSDFlags(t *testing.T) {
 	base := fixtureExecutor{t}
 	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{"collect.osd_dump": []byte(`{"flags":"","osds":[]}`)}}}
@@ -108,7 +137,7 @@ func TestCollectInventoryAcceptsNestedDevicesAndSkipsPlaceholders(t *testing.T) 
 	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{
 		"collect.device": []byte(`[
 			{"name":"node-a","devices":[
-				{"path":"/dev/sdb","available":true,"rejected_reasons":[],"sys_api":{"size":"1073741824","rotational":"0","model":"fast-disk","vendor":"fixture","serial":"serial-a"}},
+				{"path":"/dev/sdb","available":true,"human_readable_type":"ssd","rejected_reasons":[],"sys_api":{"size":"1073741824","rotational":"0","model":"fast-disk","vendor":"fixture","serial":"serial-a"}},
 				{"available":false}
 			]},
 			{"hostname":"node-b"}
@@ -120,6 +149,9 @@ func TestCollectInventoryAcceptsNestedDevicesAndSkipsPlaceholders(t *testing.T) 
 	}
 	if len(rows) != 1 {
 		t.Fatalf("inventory rows = %d, want 1", len(rows))
+	}
+	if rows[0].ParentKind != "host" || rows[0].ParentKey != "node-a" {
+		t.Fatalf("device parent = %s:%s, want host:node-a", rows[0].ParentKind, rows[0].ParentKey)
 	}
 	payload, ok := rows[0].Payload.(cephdomain.Device)
 	if !ok {
@@ -133,6 +165,238 @@ func TestCollectInventoryAcceptsNestedDevicesAndSkipsPlaceholders(t *testing.T) 
 	}
 	if payload.Rotational == nil || *payload.Rotational {
 		t.Fatalf("device rotational = %v, want false", payload.Rotational)
+	}
+	if payload.DeviceType == nil || *payload.DeviceType != "ssd" {
+		t.Fatalf("device type = %v, want ssd", payload.DeviceType)
+	}
+	if payload.Model == nil || *payload.Model != "fast-disk" {
+		t.Fatalf("device model = %v, want fast-disk", payload.Model)
+	}
+	if payload.Vendor == nil || *payload.Vendor != "fixture" {
+		t.Fatalf("device vendor = %v, want fixture", payload.Vendor)
+	}
+	if payload.Serial == nil || *payload.Serial != "serial-a" {
+		t.Fatalf("device serial = %v, want serial-a", payload.Serial)
+	}
+}
+
+func TestCollectInventoryAcceptsDecimalSysAPISize(t *testing.T) {
+	base := fixtureExecutor{t}
+	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{
+		"collect.device": []byte(`[
+			{"name":"ceph-node-1","devices":[
+				{"device_id":"disk-a","path":"/dev/vdb","sys_api":{"size":107374182400.0,"rotational":"1"}}
+			]}
+		]`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "inventory")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("inventory rows = %d, want 1", len(rows))
+	}
+	payload, ok := rows[0].Payload.(cephdomain.Device)
+	if !ok {
+		t.Fatalf("device payload type = %T", rows[0].Payload)
+	}
+	if payload.SizeBytes == nil || *payload.SizeBytes != 107374182400 {
+		t.Fatalf("device size = %v, want 107374182400", payload.SizeBytes)
+	}
+	if payload.Hostname != "ceph-node-1" || payload.Path != "/dev/vdb" {
+		t.Fatalf("device identity = %s:%s, want ceph-node-1:/dev/vdb", payload.Hostname, payload.Path)
+	}
+}
+
+func TestCollectTopologyNormalizesDaemonCephVersions(t *testing.T) {
+	base := fixtureExecutor{t}
+	version := "ceph version 20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc) tentacle (stable - RelWithDebInfo)"
+	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{
+		"collect.host":   []byte(`[{"hostname":"ceph-node-1","ceph_version":"` + version + `"}]`),
+		"collect.daemon": []byte(`[{"daemon_name":"mgr.ceph-node-1.x","daemon_type":"mgr","version":"` + version + `"}]`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "topology")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var sawDaemon bool
+	for _, row := range rows {
+		switch row.Kind {
+		case "daemon":
+			payload, ok := row.Payload.(cephdomain.Daemon)
+			if !ok {
+				t.Fatalf("daemon payload type = %T", row.Payload)
+			}
+			if payload.Version == nil || *payload.Version != "20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc)" {
+				t.Fatalf("daemon version = %v", payload.Version)
+			}
+			sawDaemon = true
+		}
+	}
+	if !sawDaemon {
+		t.Fatalf("collected daemon=%v, want true", sawDaemon)
+	}
+}
+
+func TestCollectTopologyKeepsHostNodeFacts(t *testing.T) {
+	base := fixtureExecutor{t}
+	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{
+		"collect.host": []byte(`[{
+			"hostname":"ceph-node-1",
+			"addr":"172.31.0.214",
+			"service_instances":[{"type":"osd","count":2}],
+			"facts":{
+					"system":"Alibaba Cloud Linux 3",
+					"platform":"Linux",
+					"distro":"alinux",
+					"kernel_release":"5.10.134-18.al8.x86_64",
+					"kernel_build":"#1 SMP",
+					"arch":"x86_64",
+					"cpu_model":"Intel Xeon",
+				"cpu_cores":4,
+				"memory_bytes":8388608
+			}
+		}]`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "topology")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload cephdomain.Host
+	for _, row := range rows {
+		if row.Kind == "host" {
+			var ok bool
+			payload, ok = row.Payload.(cephdomain.Host)
+			if !ok {
+				t.Fatalf("host payload type = %T", row.Payload)
+			}
+			break
+		}
+	}
+	if payload.Hostname != "ceph-node-1" {
+		t.Fatalf("host payload was not collected")
+	}
+	if payload.System == nil || *payload.System != "Alibaba Cloud Linux 3" {
+		t.Fatalf("host system = %v", payload.System)
+	}
+	if payload.Platform == nil || *payload.Platform != "Linux" {
+		t.Fatalf("host platform = %v", payload.Platform)
+	}
+	if payload.Distro == nil || *payload.Distro != "alinux" {
+		t.Fatalf("host distro = %v", payload.Distro)
+	}
+	if payload.KernelRelease == nil || *payload.KernelRelease != "5.10.134-18.al8.x86_64" {
+		t.Fatalf("host kernel release = %v", payload.KernelRelease)
+	}
+	if payload.KernelBuild == nil || *payload.KernelBuild != "#1 SMP" {
+		t.Fatalf("host kernel build = %v", payload.KernelBuild)
+	}
+	if payload.Arch == nil || *payload.Arch != "x86_64" {
+		t.Fatalf("host arch = %v", payload.Arch)
+	}
+	if payload.CPUCores == nil || *payload.CPUCores != 4 {
+		t.Fatalf("host cpu cores = %v", payload.CPUCores)
+	}
+	if payload.MemoryBytes == nil || *payload.MemoryBytes != 8388608 {
+		t.Fatalf("host memory bytes = %v", payload.MemoryBytes)
+	}
+	if len(payload.ServiceInstances) != 1 || payload.ServiceInstances[0].Type != "osd" || payload.ServiceInstances[0].Count != 2 {
+		t.Fatalf("host service instances = %#v", payload.ServiceInstances)
+	}
+}
+
+func TestCollectTopologyFillsHostFactsFromDaemonMetadata(t *testing.T) {
+	base := fixtureExecutor{t}
+	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{
+		"collect.host": []byte(`[{"hostname":"ceph-node-1","addr":"172.31.0.214"}]`),
+		"collect.osd_metadata": []byte(`[{
+				"hostname":"ceph-node-1",
+				"os":"Linux",
+				"distro":"centos",
+				"distro_description":"CentOS Stream 9",
+				"kernel_version":"5.14.0-710.el9.x86_64",
+			"kernel_description":"#1 SMP PREEMPT_DYNAMIC Wed May 27 09:04:56 UTC 2026",
+			"arch":"x86_64",
+			"cpu":"AMD EPYC 7T83 64-Core Processor",
+			"mem_total_kb":"15834904"
+		}]`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "topology")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload cephdomain.Host
+	for _, row := range rows {
+		if row.Kind == "host" {
+			var ok bool
+			payload, ok = row.Payload.(cephdomain.Host)
+			if !ok {
+				t.Fatalf("host payload type = %T", row.Payload)
+			}
+			break
+		}
+	}
+	if payload.System == nil || *payload.System != "CentOS Stream 9" {
+		t.Fatalf("host system = %v", payload.System)
+	}
+	if payload.Platform == nil || *payload.Platform != "Linux" {
+		t.Fatalf("host platform = %v", payload.Platform)
+	}
+	if payload.Distro == nil || *payload.Distro != "centos" {
+		t.Fatalf("host distro = %v", payload.Distro)
+	}
+	if payload.KernelRelease == nil || *payload.KernelRelease != "5.14.0-710.el9.x86_64" {
+		t.Fatalf("host kernel release = %v", payload.KernelRelease)
+	}
+	if payload.KernelBuild == nil || *payload.KernelBuild != "#1 SMP PREEMPT_DYNAMIC Wed May 27 09:04:56 UTC 2026" {
+		t.Fatalf("host kernel build = %v", payload.KernelBuild)
+	}
+	if payload.Arch == nil || *payload.Arch != "x86_64" {
+		t.Fatalf("host arch = %v", payload.Arch)
+	}
+	if payload.CPUModel == nil || *payload.CPUModel != "AMD EPYC 7T83 64-Core Processor" {
+		t.Fatalf("host cpu model = %v", payload.CPUModel)
+	}
+	if payload.MemoryBytes == nil || *payload.MemoryBytes != 16214941696 {
+		t.Fatalf("host memory bytes = %v", payload.MemoryBytes)
+	}
+}
+
+func TestCollectConfigurationAcceptsSectionOnlyDump(t *testing.T) {
+	base := fixtureExecutor{t}
+	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{
+		"collect.config": []byte(`[
+			{"section":"global","name":"public_network","value":"172.31.0.0/24","level":"advanced","can_update_at_runtime":false,"mask":""},
+			{"section":"osd","name":"osd_memory_target","value":"3997510860","level":"basic","can_update_at_runtime":true,"mask":"host:ceph-node-2","location_type":"host","location_value":"ceph-node-2"},
+			{"section":"mds","name":"debug_mds","value":"1","level":"advanced","mask":"fs:cephfs"}
+		]`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "configuration")
+	if err != nil {
+		t.Fatal(err)
+	}
+	configs := map[string]cephdomain.ConfigValue{}
+	for _, row := range rows {
+		if row.Kind != "config_value" {
+			continue
+		}
+		payload, ok := row.Payload.(cephdomain.ConfigValue)
+		if !ok {
+			t.Fatalf("config payload type = %T", row.Payload)
+		}
+		configs[row.NaturalKey] = payload
+	}
+	global := configs["global:public_network"]
+	if global.Who != "global" || global.Name != "public_network" {
+		t.Fatalf("global config = %#v", global)
+	}
+	hostScoped := configs["osd/host:ceph-node-2:osd_memory_target"]
+	if hostScoped.Who != "osd/host:ceph-node-2" || hostScoped.LocationType == nil || *hostScoped.LocationType != "host" || hostScoped.LocationValue == nil || *hostScoped.LocationValue != "ceph-node-2" {
+		t.Fatalf("host-scoped config = %#v", hostScoped)
+	}
+	maskScoped := configs["mds/fs:cephfs:debug_mds"]
+	if maskScoped.Who != "mds/fs:cephfs" || maskScoped.Mask == nil || *maskScoped.Mask != "fs:cephfs" {
+		t.Fatalf("mask-scoped config = %#v", maskScoped)
 	}
 }
 

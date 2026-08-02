@@ -76,7 +76,7 @@ CREATE INDEX idx_binding_role ON user_role_binding(role_id);
 CREATE INDEX idx_binding_created_by ON user_role_binding(created_by_user_id);
 CREATE TABLE ceph_cluster_observation (
   cluster_id INTEGER PRIMARY KEY REFERENCES ceph_cluster(id) ON DELETE CASCADE,
-  fsid TEXT NULL UNIQUE,
+  fsid TEXT NULL,
   ceph_version TEXT NULL,
   status TEXT NOT NULL DEFAULT 'unknown',
   enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1)),
@@ -87,6 +87,7 @@ CREATE TABLE ceph_cluster_observation (
   observed_at DATETIME NULL,
   updated_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
+CREATE INDEX idx_observation_fsid ON ceph_cluster_observation(fsid);
 CREATE INDEX idx_observation_status_enabled ON ceph_cluster_observation(status, enabled);
 CREATE INDEX idx_observation_last_seen ON ceph_cluster_observation(last_seen_at);
 CREATE TABLE ceph_cluster_credential (
@@ -129,6 +130,23 @@ CREATE TABLE ceph_cluster_capability (
 );
 CREATE INDEX idx_capability_supported ON ceph_cluster_capability(cluster_id, supported);
 CREATE INDEX idx_capability_observed ON ceph_cluster_capability(observed_at);
+CREATE TABLE ceph_host (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cluster_id INTEGER NOT NULL REFERENCES ceph_cluster(id) ON DELETE CASCADE,
+  hostname TEXT NOT NULL,
+  ssh_address TEXT NOT NULL,
+  ssh_port INTEGER NOT NULL DEFAULT 22,
+  ssh_user TEXT NOT NULL,
+  ssh_auth_method TEXT NOT NULL,
+  ssh_password_secret TEXT NULL,
+  ssh_private_key_secret TEXT NULL,
+  ssh_key_passphrase_secret TEXT NULL,
+  notes TEXT NULL,
+  created_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  updated_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  UNIQUE(cluster_id, hostname)
+);
+CREATE INDEX idx_ceph_host_cluster ON ceph_host(cluster_id, hostname);
 CREATE TABLE ceph_resource_record (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   cluster_id INTEGER NOT NULL REFERENCES ceph_cluster(id) ON DELETE CASCADE,

@@ -1,12 +1,20 @@
-import { message as antdMessage } from 'antd'
+import { message as antdMessage, notification } from 'antd'
 
 const maxMessageLength = 32
-const defaultDuration = 3
+const defaultDuration = 2.6
+const messageTop = 18
 
 antdMessage.config({
   duration: defaultDuration,
   maxCount: 3,
-  top: 24
+  top: messageTop
+})
+
+notification.config({
+  duration: defaultDuration,
+  maxCount: 3,
+  placement: 'top',
+  top: messageTop
 })
 
 function normalizeContent(content: unknown) {

@@ -59,7 +59,7 @@ export function ServicePage() {
     }
     setRefreshingServices(true)
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['service', 'daemon'] }), '服务数据刷新已触发')
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['service', 'daemon'] }), '刷新成功')
       await refresh()
     } finally {
       setRefreshingServices(false)
@@ -104,9 +104,11 @@ export function ServicePage() {
         ...(values.service_id ? { service_id: values.service_id } : {}),
         placement
       }
-      await operationMutation.run(() => mutateResource('/service', editingService ? 'PATCH' : 'POST', body, editingService ? { ifMatch: Number(editingService.resource_version ?? 0) } : undefined), editingService ? '服务更新执行成功' : '服务创建执行成功')
+      const successMessage = editingService ? '服务更新执行成功' : '服务创建执行成功'
+      await operationMutation.run(() => mutateResource('/service', editingService ? 'PATCH' : 'POST', body, editingService ? { ifMatch: Number(editingService.resource_version ?? 0) } : undefined), false)
       setFormOpen(false)
-      await refresh()
+      message.success(successMessage)
+      void refresh({ showLoading: false })
     } finally {
       setSubmitting(false)
     }
@@ -131,8 +133,11 @@ export function ServicePage() {
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
-        await operationMutation.run(() => mutateResource('/service', 'DELETE', parameters, { ifMatch: generation }), '服务删除执行成功')
-        await refresh()
+        await operationMutation.run(() => mutateResource('/service', 'DELETE', parameters, { ifMatch: generation }), false)
+        window.setTimeout(() => {
+          message.success('服务删除执行成功')
+          void refresh({ showLoading: false })
+        })
       }
     })
   }

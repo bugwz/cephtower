@@ -21,6 +21,8 @@ export interface ResourceDTO<T = ApiRecord> {
   resource_version: number
   source: string
   observed_at: string
+  created_at: string
+  updated_at: string
   stale: boolean
   data: T
 }

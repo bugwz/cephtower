@@ -27,13 +27,20 @@ type TaskSummary struct {
 type Host struct {
 	Hostname         string            `json:"hostname"`
 	Addr             string            `json:"addr"`
-	CephVersion      string            `json:"ceph_version"`
 	Labels           []string          `json:"labels"`
 	ServiceType      string            `json:"service_type"`
 	Status           string            `json:"status"`
 	Services         []HostService     `json:"services"`
 	ServiceInstances []ServiceInstance `json:"service_instances"`
-	Sources          HostSources       `json:"sources"`
+	System           string            `json:"system,omitempty"`
+	Platform         string            `json:"platform,omitempty"`
+	Distro           string            `json:"distro,omitempty"`
+	KernelRelease    string            `json:"kernel_release,omitempty"`
+	KernelBuild      string            `json:"kernel_build,omitempty"`
+	Arch             string            `json:"arch,omitempty"`
+	CPUModel         string            `json:"cpu_model,omitempty"`
+	CPUCores         int               `json:"cpu_cores,omitempty"`
+	MemoryBytes      uint64            `json:"memory_bytes,omitempty"`
 }
 
 type HostService struct {
@@ -44,11 +51,6 @@ type HostService struct {
 type ServiceInstance struct {
 	Type  string `json:"type"`
 	Count int    `json:"count"`
-}
-
-type HostSources struct {
-	Ceph         bool `json:"ceph"`
-	Orchestrator bool `json:"orchestrator"`
 }
 
 type ListHostsOptions struct {

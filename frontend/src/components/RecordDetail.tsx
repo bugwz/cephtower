@@ -1,5 +1,6 @@
 import { Descriptions, Typography } from 'antd'
 import { textValue, type ApiRecord } from '../api/client'
+import { formatDateTime, isDateTimeField } from '../utils/time'
 
 const { Paragraph, Text } = Typography
 
@@ -37,7 +38,7 @@ export function RecordDetail({ record, preferredKeys = defaultPreferredKeys }: R
       <Descriptions size="small" column={{ xs: 1, sm: 2, lg: 3 }} bordered>
         {rows.map(([key, value]) => (
           <Descriptions.Item key={key} label={key}>
-            {renderDetailValue(value)}
+            {renderDetailValue(value, key)}
           </Descriptions.Item>
         ))}
       </Descriptions>
@@ -60,7 +61,11 @@ function detailRows(record: ApiRecord | null | undefined, preferredKeys: string[
   return keys.slice(0, 12).map((key) => [key, record[key]] as const)
 }
 
-function renderDetailValue(value: unknown) {
+function renderDetailValue(value: unknown, key: string) {
+  if (isDateTimeField(key)) {
+    return formatDateTime(value)
+  }
+
   if (typeof value === 'boolean') {
     return value ? '是' : '否'
   }

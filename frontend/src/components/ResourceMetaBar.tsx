@@ -1,30 +1,18 @@
-import { Alert, Space, Tag, Typography } from 'antd'
+import { Typography } from 'antd'
+import { formatDateTime } from '../utils/time'
 
 const { Text } = Typography
 
 export function ResourceMetaBar({ observedAt, stale, staleReason }: { observedAt?: string | null; stale?: boolean; staleReason?: string | null }) {
-  if (!observedAt && !stale) {
+  if (!observedAt && !staleReason && !stale) {
     return null
   }
 
   return (
-    <Alert
-      className="resource-meta-bar"
-      type={stale ? 'warning' : 'info'}
-      showIcon
-      message={
-        <Space size={8} wrap>
-          <Text>{stale ? '资源快照可能已过期' : '资源快照已加载'}</Text>
-          {observedAt ? <Tag>{formatTime(observedAt)}</Tag> : null}
-          {staleReason ? <Text type="secondary">{staleReason}</Text> : null}
-        </Space>
-      }
-    />
+    <div className="resource-meta-bar">
+      <Text className="resource-meta-label">上次获取时间：</Text>
+      <Text className="resource-meta-time">{formatDateTime(observedAt)}</Text>
+      {staleReason ? <Text className="resource-meta-reason">{staleReason}</Text> : null}
+    </div>
   )
 }
-
-function formatTime(value: string) {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
-}
-

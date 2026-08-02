@@ -21,6 +21,7 @@ import {
   ClusterDetailPage,
   ClusterPage,
   DeviceManagementPage,
+  HostDetailPage,
   HostPage,
   MdsManagementPage,
   MgrManagementPage,
@@ -74,6 +75,7 @@ export { LoginPage } from './LoginPage'
 export { InitializationPage } from './InitializationPage'
 export { UserPage } from './system/UserPage'
 export { ClusterDetailPage } from './cluster/ClusterDetailPage'
+export { HostDetailPage } from './cluster/HostDetailPage'
 
 export const pageComponents: Record<PageKey, ComponentType> = {
   overview: OverviewPage,

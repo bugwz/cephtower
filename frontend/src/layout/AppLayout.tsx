@@ -42,11 +42,14 @@ import type { ReactNode } from 'react'
 import type { UserAccount } from '../api/auth'
 import { ClusterSelector } from '../components/ClusterSelector'
 import { NAV_SECTIONS, type NavChildDefinition, type NavChildGroupDefinition, type NavIcon, type PageKey } from '../navigation'
+import { formatDateTime } from '../utils/time'
 
 const { Content, Header, Sider } = Layout
 const { Text } = Typography
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'cephtower.sidebarCollapsed'
+const SIDEBAR_WIDTH = 224
+const SIDEBAR_COLLAPSED_WIDTH = 78
 const APP_VERSION = '0.1.0'
 const GITHUB_REPOSITORY_URL = 'https://github.com/bugwz/cephtower'
 
@@ -65,7 +68,7 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
   const displayName = user.display_name || user.username
   const roleLabel = roleDisplayName(user.role)
   const permissionSummary = isAdminRole(user.role) ? '全部权限' : `${user.permissions.length} 项权限`
-  const lastLoginLabel = formatDateTime(user.last_login_at)
+  const lastLoginLabel = formatDateTime(user.last_login_at, '暂无记录')
   const navSections = buildNavSections(user)
   const navItems = buildNavItems(navSections, sidebarCollapsed)
   const rootMenuKeys = getRootMenuKeys(navSections)
@@ -166,8 +169,8 @@ export function AppLayout({ activePage, onPageChange, user, onLogout, children }
     <Layout className="app-shell">
       <Sider
         className={`app-sidebar${sidebarCollapsed ? ' app-sidebar-collapsed' : ''}`}
-        width={224}
-        collapsedWidth={78}
+        width={SIDEBAR_WIDTH}
+        collapsedWidth={SIDEBAR_COLLAPSED_WIDTH}
         collapsed={sidebarCollapsed}
         trigger={null}
       >
@@ -453,19 +456,6 @@ function storeSidebarCollapsed(collapsed: boolean) {
   } catch {
     // Ignore storage errors so navigation remains usable in restricted contexts.
   }
-}
-
-function formatDateTime(value?: string) {
-  if (!value) {
-    return '暂无记录'
-  }
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return '暂无记录'
-  }
-
-  return date.toLocaleString()
 }
 
 function buildNavSections(user: UserAccount): NavSection[] {

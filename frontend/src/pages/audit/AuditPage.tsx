@@ -1,10 +1,12 @@
 import { ReloadOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, InputNumber, Space, Table, Tag } from 'antd'
+import { Button, Card, Form, Input, InputNumber, Space, Tag } from 'antd'
 import { useCallback, useState } from 'react'
 import { listAuditEvents, type AuditEventView } from '../../api/audit'
+import { AppTable } from '../../components/AppTable'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
 import { useClusterContext } from '../../state/ClusterContext'
+import { renderDateTime as formatTime } from '../../utils/time'
 
 export function AuditPage() {
   const { selectedClusterId } = useClusterContext()
@@ -92,11 +94,11 @@ export function AuditPage() {
               </Space>
             </Form.Item>
           </Form>
-          <Table<AuditEventView>
+          <AppTable<AuditEventView>
             size="middle"
             rowKey="audit_event_id"
             dataSource={data ?? []}
-            pagination={{ pageSize: 10, showSizeChanger: false }}
+            pagination={{ defaultPageSize: 10, showSizeChanger: true }}
             scroll={{ x: 1480 }}
             columns={[
               { title: '时间', dataIndex: 'occurred_at', width: 180, render: formatTime },
@@ -130,12 +132,4 @@ interface AuditSearchForm {
 function clean(value?: string) {
   const text = value?.trim()
   return text || undefined
-}
-
-function formatTime(value?: string | null) {
-  if (!value) {
-    return '-'
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }

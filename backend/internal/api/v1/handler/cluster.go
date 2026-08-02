@@ -224,7 +224,7 @@ func (h *Handler) toClusterDTO(ctx context.Context, row store.CephCluster) (clus
 		dto.FSID = *observation.FSID
 	}
 	if observation.CephVersion != nil {
-		dto.CephVersion = *observation.CephVersion
+		dto.CephVersion = cephdomain.NormalizeVersion(*observation.CephVersion)
 	}
 	dto.Status = observation.Status
 	dto.Enabled = observation.Enabled

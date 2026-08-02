@@ -35,6 +35,7 @@ type ClientIO struct {
 }
 type Overview struct {
 	FSID            string                  `json:"fsid"`
+	CephVersion     string                  `json:"ceph_version,omitempty"`
 	HealthStatus    string                  `json:"health_status"`
 	Capacity        Capacity                `json:"capacity"`
 	Services        map[string]ServiceCount `json:"services"`

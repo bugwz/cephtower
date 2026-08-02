@@ -1,5 +1,5 @@
 import { PlusOutlined, ReloadOutlined, SaveOutlined, TeamOutlined, UserAddOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, Popconfirm, Select, Space, Table, Tag, Typography } from 'antd'
+import { Button, Card, Form, Input, Popconfirm, Select, Space, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { createUser, listUsers, type UserAccount, type UserRole } from '../../api/auth'
 import {
@@ -11,11 +11,13 @@ import {
   type RoleBindingView,
   type RoleView
 } from '../../api/rbac'
+import { AppTable } from '../../components/AppTable'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
 import { TableAction } from '../../components/TableActions'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
+import { renderDateTime as formatTime } from '../../utils/time'
 
 const { Text } = Typography
 
@@ -131,7 +133,9 @@ export function UserPage({ view = 'users' }: { view?: UserPageView }) {
     }
     await deleteRoleBinding(selectedClusterId, row.role_binding_id)
     setBindings((current) => current.filter((item) => item.role_binding_id !== row.role_binding_id))
-    message.success('集群授权已删除')
+    window.setTimeout(() => {
+      message.success('集群授权已删除')
+    })
   }
 
   function renderUserManagementView() {
@@ -141,11 +145,11 @@ export function UserPage({ view = 'users' }: { view?: UserPageView }) {
           <Space>
             <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateRoleOpen(true)}>新建角色</Button>
           </Space>
-          <Table<RoleView>
+          <AppTable<RoleView>
             size="middle"
             rowKey="id"
             dataSource={roles}
-            pagination={{ pageSize: 8, showSizeChanger: false }}
+            pagination={{ defaultPageSize: 10, showSizeChanger: true }}
             columns={[
               { title: '角色', dataIndex: 'name' },
               { title: '描述', dataIndex: 'description', render: (value) => value || '-' },
@@ -162,11 +166,11 @@ export function UserPage({ view = 'users' }: { view?: UserPageView }) {
           <Space>
             <Button type="primary" icon={<TeamOutlined />} disabled={!selectedClusterId} onClick={() => setBindingOpen(true)}>新建授权</Button>
           </Space>
-          <Table<RoleBindingView>
+          <AppTable<RoleBindingView>
             size="middle"
             rowKey="role_binding_id"
             dataSource={bindings}
-            pagination={{ pageSize: 8, showSizeChanger: false }}
+            pagination={{ defaultPageSize: 10, showSizeChanger: true }}
             columns={[
               { title: '用户', dataIndex: 'username' },
               { title: 'User ID', dataIndex: 'user_id' },
@@ -192,11 +196,11 @@ export function UserPage({ view = 'users' }: { view?: UserPageView }) {
         <Space>
           <Button type="primary" icon={<UserAddOutlined />} onClick={() => setCreateUserOpen(true)}>新建用户</Button>
         </Space>
-        <Table<UserAccount>
+        <AppTable<UserAccount>
           size="middle"
           rowKey="id"
           dataSource={users}
-          pagination={{ pageSize: 8, showSizeChanger: false }}
+          pagination={{ defaultPageSize: 10, showSizeChanger: true }}
           scroll={{ x: 980 }}
           columns={[
             {
@@ -300,12 +304,4 @@ export function UserPage({ view = 'users' }: { view?: UserPageView }) {
       </DraggableModal>
     </Page>
   )
-}
-
-function formatTime(value?: string | null) {
-  if (!value) {
-    return '-'
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }

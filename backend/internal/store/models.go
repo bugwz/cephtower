@@ -101,7 +101,7 @@ func (UserRoleBinding) TableName() string { return "user_role_binding" }
 type CephClusterObservation struct {
 	ClusterID        uint64      `gorm:"primaryKey;autoIncrement:false"`
 	Cluster          CephCluster `gorm:"constraint:OnDelete:CASCADE"`
-	FSID             *string     `gorm:"column:fsid;size:36;uniqueIndex:uq_observation_fsid"`
+	FSID             *string     `gorm:"column:fsid;size:36;index:idx_observation_fsid"`
 	CephVersion      *string     `gorm:"size:128"`
 	Status           string      `gorm:"size:32;not null;default:unknown;index:idx_observation_status_enabled,priority:1"`
 	Enabled          bool        `gorm:"not null;default:true;check:observation_enabled_check,enabled IN (0,1);index:idx_observation_status_enabled,priority:2"`
@@ -160,6 +160,25 @@ type CephClusterCapability struct {
 }
 
 func (CephClusterCapability) TableName() string { return "ceph_cluster_capability" }
+
+type CephHost struct {
+	ID                     uint64      `gorm:"primaryKey;autoIncrement"`
+	ClusterID              uint64      `gorm:"not null;uniqueIndex:uq_ceph_host,priority:1;index:idx_ceph_host_cluster,priority:1"`
+	Cluster                CephCluster `gorm:"constraint:OnDelete:CASCADE"`
+	Hostname               string      `gorm:"size:512;not null;uniqueIndex:uq_ceph_host,priority:2;index:idx_ceph_host_cluster,priority:2"`
+	SSHAddress             string      `gorm:"column:ssh_address;size:255;not null"`
+	SSHPort                uint16      `gorm:"column:ssh_port;not null;default:22"`
+	SSHUser                string      `gorm:"column:ssh_user;size:128;not null"`
+	SSHAuthMethod          string      `gorm:"column:ssh_auth_method;size:32;not null"`
+	SSHPasswordSecret      *string     `gorm:"column:ssh_password_secret;type:text"`
+	SSHPrivateKeySecret    *string     `gorm:"column:ssh_private_key_secret;type:text"`
+	SSHKeyPassphraseSecret *string     `gorm:"column:ssh_key_passphrase_secret;type:text"`
+	Notes                  *string     `gorm:"type:text"`
+	CreatedAt              time.Time   `gorm:"not null"`
+	UpdatedAt              time.Time   `gorm:"not null"`
+}
+
+func (CephHost) TableName() string { return "ceph_host" }
 
 type CephResourceRecord struct {
 	ID                   uint64      `gorm:"primaryKey;autoIncrement"`

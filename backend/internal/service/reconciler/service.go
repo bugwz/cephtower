@@ -3,7 +3,9 @@ package reconciler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -226,11 +228,16 @@ func (s *Service) reconcile(ctx context.Context, clusterID uint64, module Module
 				records = append(records, store.CephResourceRecord{Kind: observation.Kind, NaturalKey: observation.NaturalKey, ParentKind: optionalString(observation.ParentKind), ParentKey: optionalString(observation.ParentKey), Name: name, Status: status, Source: observation.Source, SourceVersion: optionalString(observation.SourceVersion), ObservedAt: observation.ObservedAt, PayloadSchemaVersion: 1, PayloadJSON: string(payload)})
 			}
 			if err == nil {
+				selectedObservations := observations
 				if len(selectedKinds) > 0 {
 					records = filterRecords(records, selectedKinds)
+					selectedObservations = filterObservations(observations, selectedKinds)
 					authoritativeKinds = filterKinds(authoritativeKinds, selectedKinds)
 				}
 				err = s.database().ReconcileResources(ctx, clusterID, generation, records, authoritativeKinds)
+				if err == nil {
+					_ = s.syncClusterObservation(ctx, clusterID, generation, selectedObservations)
+				}
 			}
 		}
 	}
@@ -277,6 +284,145 @@ func observedKinds(observations []cephprovider.Observation) []string {
 	}
 	return result
 }
+
+func (s *Service) syncClusterObservation(ctx context.Context, clusterID, generation uint64, observations []cephprovider.Observation) error {
+	update, ok := clusterObservationUpdate(generation, observations)
+	if !ok {
+		return nil
+	}
+	existing, err := s.database().FindObservation(ctx, clusterID)
+	if err != nil && !errors.Is(err, store.ErrRecordNotFound) {
+		return err
+	}
+	if err == nil {
+		if update.FSID == nil {
+			update.FSID = existing.FSID
+		}
+		if update.CephVersion == nil {
+			update.CephVersion = existing.CephVersion
+		} else if existing.CephVersion != nil && richerCephVersion(*existing.CephVersion, *update.CephVersion) == *existing.CephVersion {
+			update.CephVersion = existing.CephVersion
+		}
+		if update.Status == "" {
+			update.Status = existing.Status
+		}
+		if update.Generation < existing.Generation {
+			update.Generation = existing.Generation
+		}
+		if update.LastSeenAt == nil {
+			update.LastSeenAt = existing.LastSeenAt
+		}
+		if update.ObservedAt == nil {
+			update.ObservedAt = existing.ObservedAt
+		}
+	}
+	if update.Status == "" {
+		update.Status = "available"
+	}
+	if update.LastSeenAt == nil {
+		now := time.Now().UTC()
+		update.LastSeenAt = &now
+	}
+	if update.ObservedAt == nil {
+		update.ObservedAt = update.LastSeenAt
+	}
+	update.ClusterID = clusterID
+	update.Enabled = true
+	update.UpdatedAt = time.Now().UTC()
+	return s.database().UpsertObservation(ctx, &update)
+}
+
+func clusterObservationUpdate(generation uint64, observations []cephprovider.Observation) (store.CephClusterObservation, bool) {
+	update := store.CephClusterObservation{Generation: generation}
+	bestVersionPriority := int(^uint(0) >> 1)
+	for _, observation := range observations {
+		switch observation.Kind {
+		case "overview":
+			overview, ok := observation.Payload.(cephdomain.Overview)
+			if !ok {
+				continue
+			}
+			if fsid := strings.TrimSpace(overview.FSID); fsid != "" {
+				update.FSID = &fsid
+			}
+			if version := cephdomain.NormalizeVersion(overview.CephVersion); cephdomain.IsVersion(version) {
+				update.CephVersion = &version
+				bestVersionPriority = 0
+			}
+			update.Status = "available"
+			observedAt := observation.ObservedAt
+			update.LastSeenAt = &observedAt
+			update.ObservedAt = &observedAt
+		case "daemon":
+			daemon, ok := observation.Payload.(cephdomain.Daemon)
+			if !ok || daemon.Version == nil {
+				continue
+			}
+			priority, ok := cephDaemonVersionPriority(daemon.Type)
+			if !ok || priority >= bestVersionPriority {
+				continue
+			}
+			version := cephdomain.NormalizeVersion(*daemon.Version)
+			if !cephdomain.IsVersion(version) {
+				continue
+			}
+			update.CephVersion = &version
+			bestVersionPriority = priority
+			if update.Status == "" {
+				update.Status = "available"
+			}
+			if update.LastSeenAt == nil {
+				observedAt := observation.ObservedAt
+				update.LastSeenAt = &observedAt
+				update.ObservedAt = &observedAt
+			}
+		}
+	}
+	return update, update.FSID != nil || update.CephVersion != nil || update.Status != ""
+}
+
+func cephDaemonVersionPriority(daemonType string) (int, bool) {
+	switch strings.ToLower(strings.TrimSpace(daemonType)) {
+	case "mon":
+		return 0, true
+	case "mgr":
+		return 1, true
+	case "osd":
+		return 2, true
+	case "mds":
+		return 3, true
+	case "rgw":
+		return 4, true
+	case "rbd-mirror", "crash":
+		return 5, true
+	default:
+		return 0, false
+	}
+}
+
+func richerCephVersion(left, right string) string {
+	left = cephdomain.NormalizeVersion(left)
+	right = cephdomain.NormalizeVersion(right)
+	if left == "" {
+		return right
+	}
+	if right == "" {
+		return left
+	}
+	leftHasCommit := cephdomain.VersionHasCommit(left)
+	rightHasCommit := cephdomain.VersionHasCommit(right)
+	if leftHasCommit != rightHasCommit {
+		if leftHasCommit {
+			return left
+		}
+		return right
+	}
+	if len(right) > len(left) {
+		return right
+	}
+	return left
+}
+
 func (s *Service) allowed(id uint64, now time.Time) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -332,6 +478,16 @@ func kindSet(kinds []string) map[string]struct{} {
 
 func filterRecords(rows []store.CephResourceRecord, kinds map[string]struct{}) []store.CephResourceRecord {
 	result := make([]store.CephResourceRecord, 0, len(rows))
+	for _, row := range rows {
+		if _, ok := kinds[row.Kind]; ok {
+			result = append(result, row)
+		}
+	}
+	return result
+}
+
+func filterObservations(rows []cephprovider.Observation, kinds map[string]struct{}) []cephprovider.Observation {
+	result := make([]cephprovider.Observation, 0, len(rows))
 	for _, row := range rows {
 		if _, ok := kinds[row.Kind]; ok {
 			result = append(result, row)

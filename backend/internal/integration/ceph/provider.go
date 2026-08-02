@@ -5,9 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
+	cephdomain "cephtower/backend/internal/domain/ceph"
 	"cephtower/backend/internal/integration/ceph/connection"
 	"cephtower/backend/internal/integration/ceph/executor"
 )
@@ -50,12 +52,8 @@ func (p *NativeProvider) Probe(ctx context.Context, access ClusterAccess) (Probe
 	if result.FSID == "" {
 		return ProbeResult{}, fmt.Errorf("ceph fsid returned an empty value")
 	}
-	var versionWire map[string]map[string]json.Number
-	if err := decodeJSON(versions, &versionWire); err == nil {
-		for version := range versionWire {
-			result.Version = version
-			break
-		}
+	if version := cephVersionFromVersions(versions); version != "" {
+		result.Version = version
 	}
 	if err := decodeJSON(status, &result.Status); err != nil {
 		return ProbeResult{}, fmt.Errorf("parse ceph status: %w", err)
@@ -75,6 +73,7 @@ func (p *NativeProvider) Probe(ctx context.Context, access ClusterAccess) (Probe
 	}
 	return result, nil
 }
+
 func (p *NativeProvider) run(ctx context.Context, access ClusterAccess, id string, timeout time.Duration, args ...string) ([]byte, error) {
 	return p.runBinary(ctx, access, executor.BinaryCeph, id, timeout, args...)
 }
@@ -92,4 +91,41 @@ func decodeJSON(data []byte, out any) error {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.UseNumber()
 	return decoder.Decode(out)
+}
+
+func cephVersionFromVersions(data []byte) string {
+	var wire map[string]map[string]json.Number
+	if err := decodeJSON(data, &wire); err != nil {
+		return ""
+	}
+	for _, component := range []string{"mon", "mgr", "osd", "mds"} {
+		if version := firstVersion(wire[component]); version != "" {
+			return version
+		}
+	}
+	components := make([]string, 0, len(wire))
+	for component := range wire {
+		components = append(components, component)
+	}
+	sort.Strings(components)
+	for _, component := range components {
+		if version := firstVersion(wire[component]); version != "" {
+			return version
+		}
+	}
+	return ""
+}
+
+func firstVersion(versions map[string]json.Number) string {
+	values := make([]string, 0, len(versions))
+	for version := range versions {
+		if normalized := cephdomain.NormalizeVersion(version); normalized != "" {
+			values = append(values, normalized)
+		}
+	}
+	sort.Strings(values)
+	if len(values) == 0 {
+		return ""
+	}
+	return values[0]
 }

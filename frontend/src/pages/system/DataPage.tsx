@@ -1,5 +1,5 @@
 import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, InputNumber, Popconfirm, Select, Space, Switch, Table, Tabs, Tag } from 'antd'
+import { Button, Card, Form, Input, InputNumber, Popconfirm, Select, Space, Switch, Tabs, Tag } from 'antd'
 import { useCallback, useState } from 'react'
 import {
   createEndpoint,
@@ -14,12 +14,14 @@ import {
   type EndpointView
 } from '../../api/endpoint'
 import type { ApiRecord } from '../../api/client'
+import { AppTable } from '../../components/AppTable'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
 import { TableAction, TableActions } from '../../components/TableActions'
 import { message } from '../../utils/appMessage'
 import { useResource } from '../../hooks'
 import { useClusterContext } from '../../state/ClusterContext'
+import { renderDateTime as formatTime } from '../../utils/time'
 
 interface EndpointFormValues extends EndpointInput {
   endpoint_id?: number
@@ -94,15 +96,15 @@ export function DataPage() {
     }
     setSubmitting(true)
     try {
+      const successMessage = editingEndpoint ? 'Endpoint 已更新' : 'Endpoint 已创建'
       if (editingEndpoint) {
         await updateEndpoint(selectedClusterId, editingEndpoint.endpoint_id, values)
-        message.success('Endpoint 已更新')
       } else {
         await createEndpoint(selectedClusterId, values)
-        message.success('Endpoint 已创建')
       }
       setEndpointModalOpen(false)
-      await refresh()
+      message.success(successMessage)
+      void refresh({ showLoading: false })
     } finally {
       setSubmitting(false)
     }
@@ -116,9 +118,9 @@ export function DataPage() {
     try {
       const credential = JSON.parse(values.credential_json) as ApiRecord
       await putCredential(selectedClusterId, values.kind, credential)
-      message.success('Credential 已保存')
       setCredentialModalOpen(false)
-      await refresh()
+      message.success('Credential 已保存')
+      void refresh({ showLoading: false })
     } finally {
       setSubmitting(false)
     }
@@ -129,8 +131,10 @@ export function DataPage() {
       return
     }
     await deleteEndpoint(selectedClusterId, row.endpoint_id)
-    message.success('Endpoint 已删除')
-    await refresh()
+    window.setTimeout(() => {
+      message.success('Endpoint 已删除')
+      void refresh({ showLoading: false })
+    })
   }
 
   async function removeCredential(row: CredentialView) {
@@ -138,8 +142,10 @@ export function DataPage() {
       return
     }
     await deleteCredential(selectedClusterId, row.kind)
-    message.success('Credential 已删除')
-    await refresh()
+    window.setTimeout(() => {
+      message.success('Credential 已删除')
+      void refresh({ showLoading: false })
+    })
   }
 
   return (
@@ -149,7 +155,7 @@ export function DataPage() {
         title="Endpoint 与 Credential"
         extra={
           <Space>
-            <Button icon={<ReloadOutlined />} loading={loading} onClick={refresh}>刷新</Button>
+            <Button icon={<ReloadOutlined />} loading={loading} onClick={() => refresh()}>刷新</Button>
             <Button icon={<PlusOutlined />} disabled={!selectedClusterId} onClick={openCreateCredential}>新增 Credential</Button>
             <Button type="primary" icon={<PlusOutlined />} disabled={!selectedClusterId} onClick={openCreateEndpoint}>新增 Endpoint</Button>
           </Space>
@@ -161,11 +167,11 @@ export function DataPage() {
               key: 'endpoints',
               label: 'Endpoints',
               children: (
-                <Table<EndpointView>
+                <AppTable<EndpointView>
                   size="middle"
                   rowKey="endpoint_id"
                   dataSource={data?.endpoints ?? []}
-                  pagination={{ pageSize: 8, showSizeChanger: false }}
+                  pagination={{ defaultPageSize: 10, showSizeChanger: true }}
                   scroll={{ x: 980 }}
                   columns={[
                     { title: 'ID', dataIndex: 'endpoint_id', width: 80 },
@@ -194,11 +200,11 @@ export function DataPage() {
               key: 'credentials',
               label: 'Credentials',
               children: (
-                <Table<CredentialView>
+                <AppTable<CredentialView>
                   size="middle"
                   rowKey="kind"
                   dataSource={data?.credentials ?? []}
-                  pagination={{ pageSize: 8, showSizeChanger: false }}
+                  pagination={{ defaultPageSize: 10, showSizeChanger: true }}
                   columns={[
                     { title: 'Kind', dataIndex: 'kind' },
                     { title: 'Fingerprint', dataIndex: 'fingerprint', ellipsis: true },
@@ -281,12 +287,4 @@ export function DataPage() {
 
 function readTimeout(_row: EndpointView) {
   return 10
-}
-
-function formatTime(value?: string | null) {
-  if (!value) {
-    return '-'
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }

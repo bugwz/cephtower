@@ -25,6 +25,8 @@ type resourceDTO struct {
 	ResourceVersion uint64    `json:"resource_version"`
 	Source          string    `json:"source"`
 	ObservedAt      time.Time `json:"observed_at"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 	Stale           bool      `json:"stale"`
 	Data            any       `json:"data"`
 }
@@ -48,7 +50,12 @@ func (h *Handler) ReadResource(kind string, item bool) http.HandlerFunc {
 				return
 			}
 			w.Header().Set("ETag", strconv.FormatUint(row.ResourceVersion, 10))
-			WriteSuccess(w, 200, "success", toResourceDTO(row))
+			items := []resourceDTO{toResourceDTO(row)}
+			if err := h.decorateResourceDTOs(r.Context(), id, kind, items); err != nil {
+				WriteError(w, r, http.StatusInternalServerError, "store_error", err.Error(), false, nil)
+				return
+			}
+			WriteSuccess(w, 200, "success", items[0])
 			return
 		}
 		annotateAudit(r, kind+".list", kind, "", "", &auditClusterID)
@@ -77,6 +84,10 @@ func (h *Handler) ReadResource(kind string, item bool) http.HandlerFunc {
 				observed = &value
 			}
 			stale = stale || row.StaleAt != nil
+		}
+		if err := h.decorateResourceDTOs(r.Context(), id, kind, items); err != nil {
+			WriteError(w, r, http.StatusInternalServerError, "store_error", err.Error(), false, nil)
+			return
 		}
 		var staleReason any
 		if stale {
@@ -351,7 +362,43 @@ func resourceLookupKey(kind, resourceKey string) string {
 func toResourceDTO(row store.CephResourceRecord) resourceDTO {
 	var data any
 	_ = json.Unmarshal([]byte(row.PayloadJSON), &data)
-	return resourceDTO{Kind: row.Kind, NaturalKey: row.NaturalKey, Name: row.Name, Status: row.Status, ResourceVersion: row.ResourceVersion, Source: row.Source, ObservedAt: row.ObservedAt, Stale: row.StaleAt != nil, Data: data}
+	return resourceDTO{Kind: row.Kind, NaturalKey: row.NaturalKey, Name: row.Name, Status: row.Status, ResourceVersion: row.ResourceVersion, Source: row.Source, ObservedAt: row.ObservedAt, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt, Stale: row.StaleAt != nil, Data: data}
+}
+
+func (h *Handler) decorateResourceDTOs(ctx context.Context, clusterID uint64, kind string, items []resourceDTO) error {
+	if kind != "host" || h.HostProfiles == nil || len(items) == 0 {
+		return nil
+	}
+	hostRows, err := h.HostProfiles.List(ctx, clusterID)
+	if err != nil {
+		return err
+	}
+	sshByHost := make(map[string]any, len(hostRows))
+	for _, row := range hostRows {
+		sshByHost[row.Hostname] = row
+	}
+	for index := range items {
+		data, ok := items[index].Data.(map[string]any)
+		if !ok {
+			continue
+		}
+		hostname := ""
+		if items[index].Name != nil {
+			hostname = *items[index].Name
+		}
+		if hostname == "" {
+			if value, ok := data["hostname"].(string); ok {
+				hostname = value
+			}
+		}
+		if ssh, ok := sshByHost[hostname]; ok {
+			data["host_ssh"] = ssh
+			data["host_ssh_configured"] = true
+		} else {
+			data["host_ssh_configured"] = false
+		}
+	}
+	return nil
 }
 
 func decodeCursor(value string) uint64 {
@@ -530,7 +577,7 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 		return segments("osd", pathValue("osd_id"))
 	case "device":
 		if action == "device.zap" {
-			return segments("device", pathValue("device_id", "device"), "zap")
+			return segments("host", pathValue("host"), "device", deviceResourceID(pathValue("host"), pathValue("device"), pathValue("device_id")), "zap")
 		}
 		return segments("host", pathValue("host"), "device", pathValue("device_id", "device"), "identify-device")
 	case "pool":
@@ -623,4 +670,11 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 		}
 		return strings.Trim(strings.TrimPrefix(r.URL.Path, "/api/v1/"), "/")
 	}
+}
+
+func deviceResourceID(host, device, fallback string) string {
+	if host == "" || device == "" {
+		return fallback
+	}
+	return base64.RawURLEncoding.EncodeToString([]byte(host + "\x00" + device))
 }

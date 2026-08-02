@@ -137,6 +137,23 @@ func (d *Database) FindObservation(ctx context.Context, clusterID uint64) (CephC
 	return row, d.db.WithContext(ctx).Where("cluster_id = ?", clusterID).First(&row).Error
 }
 
+func (d *Database) ListCephHosts(ctx context.Context, clusterID uint64) ([]CephHost, error) {
+	var rows []CephHost
+	return rows, d.db.WithContext(ctx).Where("cluster_id = ?", clusterID).Order("hostname asc").Find(&rows).Error
+}
+
+func (d *Database) FindCephHost(ctx context.Context, clusterID uint64, hostname string) (CephHost, error) {
+	var row CephHost
+	return row, d.db.WithContext(ctx).Where("cluster_id = ? AND hostname = ?", clusterID, hostname).First(&row).Error
+}
+
+func (d *Database) UpsertCephHost(ctx context.Context, row *CephHost) error {
+	return d.db.WithContext(ctx).Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "cluster_id"}, {Name: "hostname"}},
+		DoUpdates: clause.AssignmentColumns([]string{"ssh_address", "ssh_port", "ssh_user", "ssh_auth_method", "ssh_password_secret", "ssh_private_key_secret", "ssh_key_passphrase_secret", "notes", "updated_at"}),
+	}).Create(row).Error
+}
+
 func (d *Database) NextCollectionGeneration(ctx context.Context, clusterID uint64, module string) (uint64, error) {
 	var value *uint64
 	err := d.db.WithContext(ctx).Model(&CephCollectionRun{}).Where("cluster_id = ? AND module = ?", clusterID, module).Select("MAX(generation)").Scan(&value).Error

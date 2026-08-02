@@ -33,7 +33,7 @@ func TestEveryNativeActionBuildsRegisteredCommand(t *testing.T) {
 		{"osd.delete", "osd/1", map[string]any{"zap": true}},
 		{"osd_deployment.preview", "osd-deployment/preview", map[string]any{"data_devices": map[string]any{"all": true}}},
 		{"osd_deployment.create", "osd-deployment", map[string]any{"data_devices": map[string]any{"paths": []any{"/dev/sdb"}}}},
-		{"device.zap", "device/" + pair("node1", "/dev/sdb") + "/zap", nil},
+		{"device.zap", "host/node1/device/" + pair("node1", "/dev/sdb") + "/zap", nil},
 		{"crush_rule.create", "crush-rule", map[string]any{"name": "ssd", "root": "default", "failure_domain": "host"}},
 		{"crush_rule.update", "crush-rule/old", map[string]any{"name": "new"}}, {"crush_rule.delete", "crush-rule/old", nil},
 		{"erasure_code_profile.create", "erasure-code-profile", map[string]any{"name": "ec", "plugin": "jerasure", "k": "2", "m": "1"}},

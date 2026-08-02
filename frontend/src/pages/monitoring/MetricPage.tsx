@@ -1,8 +1,9 @@
 import { BarChartOutlined, LineChartOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Form, Input, Select, Segmented, Space, Statistic, Table, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Form, Input, Select, Segmented, Space, Statistic, Tag, Typography } from 'antd'
 import { useMemo, useState } from 'react'
 import { queryMetric, queryMetricRange, type MetricResponse } from '../../api/external'
 import type { ApiRecord } from '../../api/client'
+import { AppTable } from '../../components/AppTable'
 import { Page } from '../../components/Page'
 import { useFeatureRequirements } from '../../hooks/useFeatureRequirements'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -174,12 +175,12 @@ export function MetricPage() {
               <Tag>points: {rows.reduce((sum, row) => sum + row.points, 0)}</Tag>
             </Space>
 
-            <Table<MetricRow>
+            <AppTable<MetricRow>
               size="middle"
               rowKey="row_id"
               loading={loading}
               dataSource={rows}
-              pagination={{ pageSize: 8, showSizeChanger: false }}
+              pagination={{ defaultPageSize: 10, showSizeChanger: true }}
               scroll={{ x: 980 }}
               columns={[
                 { title: '指标', dataIndex: 'metric_name', width: 220, ellipsis: true },

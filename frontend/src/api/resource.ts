@@ -87,6 +87,8 @@ export async function listResource<T = ApiRecord>(path: string, clusterId = requ
     resource_version: item.resource_version,
     source: item.source,
     observed_at: item.observed_at,
+    created_at: item.created_at,
+    updated_at: item.updated_at,
     stale: item.stale
     }
   }) as unknown as Array<T & ApiRecord>
@@ -144,6 +146,10 @@ export async function listHosts(): Promise<ApiRecord[]> {
   return listResource('/hosts').then((payload) => payload.items)
 }
 
+export async function listHostDevices(host: string): Promise<ApiRecord[]> {
+  return listResource('/host/devices', requiredClusterId(), { body: { host } }).then((payload) => payload.items)
+}
+
 export async function listOSDs(): Promise<ApiRecord[]> {
   return listResource('/osds').then((payload) => payload.items)
 }
@@ -178,6 +184,30 @@ export function scrubOSD(id: string, deep = false): Promise<ActionResult> {
 
 export function listDaemons(types?: string): Promise<ApiRecord[]> {
   return listResource('/daemons', requiredClusterId(), { body: types ? { daemon_type: types } : undefined }).then((payload) => payload.items)
+}
+
+export interface HostSSHPayload {
+  cluster_id?: number
+  hostname: string
+  ssh_address: string
+  ssh_port?: number
+  ssh_user: string
+  ssh_auth_method: string
+  ssh_password?: string
+  ssh_private_key?: string
+  ssh_key_passphrase?: string
+  notes?: string
+}
+
+export function getHostSSH(hostname: string, clusterId = requiredClusterId()): Promise<ApiRecord> {
+  return request<ApiRecord>('/host/ssh', jsonInit('GET', { cluster_id: clusterId, hostname }))
+}
+
+export function saveHostSSH(values: HostSSHPayload, clusterId = requiredClusterId()): Promise<ApiRecord> {
+  return request<ApiRecord>('/host/ssh', jsonInit('PATCH', {
+    ...values,
+    cluster_id: clusterId
+  }))
 }
 
 export function applyDaemonAction(name: string, action: string, force = false): Promise<ActionResult> {

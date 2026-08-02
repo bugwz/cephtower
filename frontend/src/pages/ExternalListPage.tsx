@@ -1,5 +1,5 @@
 import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Table, Typography } from 'antd'
+import { Alert, Button, Card, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useCallback, useMemo, useState } from 'react'
 import { readExternalList } from '../api/external'
@@ -7,6 +7,7 @@ import { mutateResource } from '../api/resource'
 import type { ApiRecord } from '../api/client'
 import { textValue } from '../api/client'
 import type { FieldColumn } from '../components/DataTable'
+import { AppTable } from '../components/AppTable'
 import { DraggableModal } from '../components/DraggableModal'
 import { Page } from '../components/Page'
 import { RecordDetail } from '../components/RecordDetail'
@@ -85,15 +86,17 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
     if (!selectedClusterId || !activeAction || submitting || mutationBlocked) {
       return
     }
+    const action = activeAction
     setSubmitting(true)
     try {
       await operationMutation.run(() => mutateResource(
-        activeAction.path,
-        activeAction.method,
-        activeAction.buildBody(values, selectedClusterId, activeRow)
-      ), activeAction.successMessage)
+        action.path,
+        action.method,
+        action.buildBody(values, selectedClusterId, activeRow)
+      ), false)
       setFormOpen(false)
-      await refresh()
+      message.success(action.successMessage)
+      void refresh({ showLoading: false })
     } finally {
       setSubmitting(false)
     }
@@ -118,8 +121,11 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
         okType: action.risk === 'medium' ? 'danger' : 'primary',
         cancelText: '取消',
         async onOk() {
-          await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters), action.successMessage)
-          await refresh()
+          await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters), false)
+          window.setTimeout(() => {
+            message.success(action.successMessage)
+            void refresh({ showLoading: false })
+          })
         }
       })
       return
@@ -131,8 +137,11 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
-        await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters), action.successMessage)
-        await refresh()
+        await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters), false)
+        window.setTimeout(() => {
+          message.success(action.successMessage)
+          void refresh({ showLoading: false })
+        })
       }
     })
   }
@@ -186,17 +195,13 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
           description={`该页面需要 ${missingRequiredFilters.join('、')} 后再读取数据。`}
         />
       ) : null}
-      <Table<ApiRecord>
+      <AppTable<ApiRecord>
         size="middle"
         columns={tableColumns}
         dataSource={data ?? []}
-        pagination={{ pageSize: 8, showSizeChanger: false }}
+        pagination={{ defaultPageSize: 10, showSizeChanger: true }}
         rowKey={(row, index) => rowKey(definition, row, index)}
         scroll={{ x: true }}
-        expandable={{
-          expandedRowRender: (row) => <RecordDetail record={row} />,
-          rowExpandable: (row) => Object.keys(row).length > 0
-        }}
       />
     </Space>
   )

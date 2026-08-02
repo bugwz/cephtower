@@ -1,9 +1,10 @@
 import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, InputNumber, Modal, Space, Table } from 'antd'
+import { Button, Card, Form, Input, InputNumber, Modal, Space } from 'antd'
 import { useCallback, useState } from 'react'
 import { listResource, mutateResource, refreshResource } from '../../api/resource'
 import type { ApiRecord } from '../../api/client'
 import type { ResourceListResult } from '../../api/resource'
+import { AppTable } from '../../components/AppTable'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
@@ -45,7 +46,7 @@ export function PoolPage() {
     }
     setRefreshingPools(true)
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kind: 'pool' }), '存储池刷新已触发')
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kind: 'pool' }), '刷新成功')
       await refresh()
     } finally {
       setRefreshingPools(false)
@@ -68,9 +69,10 @@ export function PoolPage() {
         cluster_id: selectedClusterId,
         name: values.name,
         ...(values.pg_num ? { pg_num: values.pg_num } : {})
-      }), '存储池创建执行成功')
+      }), false)
       setModalOpen(false)
-      await refresh()
+      message.success('存储池创建执行成功')
+      void refresh({ showLoading: false })
     } finally {
       setSubmitting(false)
     }
@@ -94,8 +96,11 @@ export function PoolPage() {
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
-        await operationMutation.run(() => mutateResource('/pool', 'DELETE', parameters, { ifMatch: generation }), '存储池删除执行成功')
-        await refresh()
+        await operationMutation.run(() => mutateResource('/pool', 'DELETE', parameters, { ifMatch: generation }), false)
+        window.setTimeout(() => {
+          message.success('存储池删除执行成功')
+          void refresh({ showLoading: false })
+        })
       }
     })
   }
@@ -113,13 +118,13 @@ export function PoolPage() {
         }
       >
         <Space direction="vertical" size={16} className="page-stack">
-          <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />
-          <Table<ApiRecord>
+          <AppTable<ApiRecord>
             size="middle"
             rowKey={(row) => String(row.natural_key ?? row.name)}
             dataSource={data?.items ?? []}
-            pagination={{ pageSize: 10, showSizeChanger: false }}
+            pagination={{ defaultPageSize: 10, showSizeChanger: true }}
             scroll={{ x: 1180 }}
+            footer={() => <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />}
             columns={[
               { title: '名称', dataIndex: 'name', width: 180 },
               { title: '状态', dataIndex: 'status', width: 120 },
@@ -141,10 +146,6 @@ export function PoolPage() {
                 )
               }
             ]}
-            expandable={{
-              expandedRowRender: (row) => <RecordDetail record={row} />,
-              rowExpandable: (row) => Object.keys(row).length > 0
-            }}
           />
         </Space>
       </Card>

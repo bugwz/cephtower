@@ -1,21 +1,29 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useClusterContext } from './state/ClusterContext'
 
+interface ResourceRefreshOptions {
+  showLoading?: boolean
+}
+
 export function useResource<T>(loader: () => Promise<T>) {
   const { selectedClusterId } = useClusterContext()
   const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const load = useCallback(async ({ showLoading = true }: ResourceRefreshOptions = {}) => {
+    if (showLoading) {
+      setLoading(true)
+    }
     setError('')
     try {
       setData(await loader())
     } catch (err) {
       setError(err instanceof Error ? err.message : '请求失败')
     } finally {
-      setLoading(false)
+      if (showLoading) {
+        setLoading(false)
+      }
     }
   }, [loader])
 

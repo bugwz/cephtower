@@ -1,36 +1,39 @@
 import { ArrowLeftOutlined, DeleteOutlined, ExclamationCircleOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Button, Card, Descriptions, Modal, Space, Table, Tag, Typography } from 'antd'
+import { Button, Card, Descriptions, Modal, Space, Tag, Typography } from 'antd'
 import { useCallback, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { deleteCluster, getClusterDetail, type CephDiscoveredRecord, type CephClusterDetail } from '../../api/cluster'
-import { textValue } from '../../api/client'
+import { deleteCluster, getClusterDetail, type CephClusterDetail } from '../../api/cluster'
+import type { ApiRecord } from '../../api/client'
 import { refreshResource } from '../../api/resource'
 import { MonitorAddressSummary } from '../../components/MonitorAddressSummary'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { message } from '../../utils/appMessage'
+import { formatDateTime } from '../../utils/time'
 
-const { Paragraph, Text } = Typography
+const { Text } = Typography
+const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
 
 export function ClusterDetailPage() {
   const navigate = useNavigate()
-  const { id = '' } = useParams()
-  const loader = useCallback(() => getClusterDetail(id), [id])
+  const { name = '' } = useParams()
+  const clusterName = decodeClusterNameParam(name)
+  const loader = useCallback(() => getClusterDetail(clusterName), [clusterName])
   const { data, loading, error, refresh } = useResource(loader)
   const [refreshing, setRefreshing] = useState(false)
   const operationMutation = useMutationOperation()
   const cluster = data?.cluster
 
   async function refreshClusterDetail() {
-    const clusterID = Number(cluster?.id ?? id)
-    if (!Number.isFinite(clusterID) || clusterID <= 0) {
+    const clusterID = cluster?.id
+    if (typeof clusterID !== 'number' || !Number.isFinite(clusterID) || clusterID <= 0) {
       await refresh()
       return
     }
     setRefreshing(true)
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: clusterID, scope: 'all' }), '集群刷新执行成功')
+      await operationMutation.run(() => refreshResource({ clusterId: clusterID, scope: 'all' }), '刷新成功')
       await refresh()
     } finally {
       setRefreshing(false)
@@ -50,8 +53,10 @@ export function ClusterDetailPage() {
       cancelText: '取消',
       async onOk() {
         const result = await deleteCluster(cluster.id)
-        message.success(result.message || '集群连接已删除')
-        navigate('/cluster/cluster')
+        window.setTimeout(() => {
+          message.success(result.message || '集群连接已删除')
+          navigate('/cluster/cluster')
+        })
       }
     })
   }
@@ -61,9 +66,9 @@ export function ClusterDetailPage() {
       <Space direction="vertical" size={16} className="page-stack">
         <Card
           className="page-surface-card"
-          title={cluster?.name ?? '集群详情'}
+          title="基础信息"
           extra={
-            <Space>
+            <Space className="cluster-detail-actions">
               <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/cluster/cluster')}>
                 返回
               </Button>
@@ -76,84 +81,52 @@ export function ClusterDetailPage() {
             </Space>
           }
         >
-          <Descriptions className="cluster-detail-descriptions cluster-basic-descriptions" size="small" column={{ xs: 1, sm: 2, lg: 3 }} bordered>
-            <Descriptions.Item label="集群 ID"><Text className="detail-value-fixed">{cluster?.id ?? '-'}</Text></Descriptions.Item>
-            <Descriptions.Item label="状态">{cluster ? <ClusterStatusTag status={cluster.status} enabled={cluster.enabled} /> : '-'}</Descriptions.Item>
-            <Descriptions.Item label="Client 用户">{cluster?.command.name || 'client.admin'}</Descriptions.Item>
-            <Descriptions.Item label="MON 地址" span={3}>
-              <MonitorAddressSummary value={cluster?.command.monitor_host} />
-            </Descriptions.Item>
-            <Descriptions.Item label="Ceph 命令">{cluster?.command.bin || 'ceph'}</Descriptions.Item>
-            <Descriptions.Item label="Keyring">
+          <Descriptions className="cluster-detail-descriptions cluster-basic-descriptions" size="small" column={twoColumnDescriptions} bordered>
+            <Descriptions.Item label="集群名称">{cluster?.name || '-'}</Descriptions.Item>
+            <Descriptions.Item label="集群状态">{cluster ? <ClusterStatusTag status={cluster.status} enabled={cluster.enabled} /> : '-'}</Descriptions.Item>
+            <Descriptions.Item label="认证用户">{cluster?.command.name || 'client.admin'}</Descriptions.Item>
+            <Descriptions.Item label="认证密钥">
               <Tag color={cluster?.command.keyring_content_set ? 'gold' : 'default'}>{cluster?.command.keyring_content_set ? '已保存' : '未保存'}</Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="更新时间">{cluster?.updated_at ? new Date(cluster.updated_at).toLocaleString() : '-'}</Descriptions.Item>
+            <Descriptions.Item label="MON 地址" span={2}>
+              <MonitorAddressSummary value={cluster?.command.monitor_host || cluster?.monitor_addresses} />
+            </Descriptions.Item>
+            <Descriptions.Item label="创建时间">{formatDateTime(cluster?.created_at)}</Descriptions.Item>
+            <Descriptions.Item label="更新时间">{formatDateTime(cluster?.updated_at)}</Descriptions.Item>
           </Descriptions>
         </Card>
 
         <Card className="page-surface-card" title="详细信息">
-          <Space direction="vertical" size={16} className="page-stack">
-            <Descriptions className="cluster-detail-descriptions" size="small" column={{ xs: 1, sm: 2, lg: 3 }} bordered>
-              <Descriptions.Item label="FSID">{cluster?.fsid || '未发现'}</Descriptions.Item>
-              <Descriptions.Item label="Ceph 版本">{cluster?.ceph_version || '未发现'}</Descriptions.Item>
-              <Descriptions.Item label="Dashboard URL">{dashboardURL(data) || '未配置'}</Descriptions.Item>
-              <Descriptions.Item label="最后同步">{formatDateTime(cluster?.last_seen_at || cluster?.observed_at)}</Descriptions.Item>
-              <Descriptions.Item label="观测代次">{cluster?.generation || '-'}</Descriptions.Item>
-              <Descriptions.Item label="Endpoint">{data?.endpoints.length ?? 0}</Descriptions.Item>
-              <Descriptions.Item label="主机">{data?.discovery.hosts.length ?? 0}</Descriptions.Item>
-              <Descriptions.Item label="OSD">{data?.discovery.osds.length ?? 0}</Descriptions.Item>
-              <Descriptions.Item label="MON">{data?.discovery.mons.length ?? 0}</Descriptions.Item>
-              <Descriptions.Item label="MGR">{data?.discovery.mgrs.length ?? 0}</Descriptions.Item>
-              <Descriptions.Item label="MDS">{data?.discovery.mdss.length ?? 0}</Descriptions.Item>
-              <Descriptions.Item label="Daemon">{data?.discovery.daemons.length ?? 0}</Descriptions.Item>
-              <Descriptions.Item label="Service">{data?.discovery.services.length ?? 0}</Descriptions.Item>
-              <Descriptions.Item label="Credential">{data?.credentials.length ?? 0}</Descriptions.Item>
-              {cluster?.last_error_message && (
-                <Descriptions.Item label="最近错误" span={3}>
-                  <Text type="danger">{cluster.last_error_message}</Text>
-                </Descriptions.Item>
-              )}
-            </Descriptions>
-            <Table
-              size="middle"
-              rowKey={(row) => `${row.category}:${row.key}`}
-              dataSource={discoveryRows(data?.discovery)}
-              pagination={{ pageSize: 8, showSizeChanger: false }}
-              expandable={{
-                expandedRowRender: (row) => (
-                  <Paragraph className="snapshot-payload" copyable>
-                    {formatSnapshotPayload(row.payload)}
-                  </Paragraph>
-                )
-              }}
-              columns={[
-                { title: '类别', dataIndex: 'category', width: 140, render: (value: string) => categoryLabel(value) },
-                { title: '名称', dataIndex: 'key' },
-                { title: '类型', dataIndex: 'type', width: 120, render: (value: string) => value || '-' },
-                { title: '主机', dataIndex: 'hostname', width: 160, render: (value: string) => value || '-' },
-                { title: '状态', dataIndex: 'status', width: 120, render: (value: string) => value || '-' },
-                {
-                  title: '发现时间',
-                  dataIndex: 'discovered_at',
-                  width: 190,
-                  render: (value: string) => value ? new Date(value).toLocaleString() : '-'
-                },
-                {
-                  title: '数据预览',
-                  dataIndex: 'payload',
-                  render: (value: unknown) => textValue(previewSnapshotPayload(value))
-                }
-              ]}
-            />
-          </Space>
+          <Descriptions className="cluster-detail-descriptions" size="small" column={twoColumnDescriptions} bordered>
+            <Descriptions.Item label="FSID">{clusterFSID(data)}</Descriptions.Item>
+            <Descriptions.Item label="Ceph 版本">{cephVersion(data)}</Descriptions.Item>
+            <Descriptions.Item label="最后同步">{formatDateTime(cluster?.last_seen_at || cluster?.observed_at)}</Descriptions.Item>
+            <Descriptions.Item label="主机">{data?.discovery.hosts.length ?? 0}</Descriptions.Item>
+            <Descriptions.Item label="MON">{data?.discovery.mons.length ?? 0}</Descriptions.Item>
+            <Descriptions.Item label="MGR">{data?.discovery.mgrs.length ?? 0}</Descriptions.Item>
+            <Descriptions.Item label="OSD">{data?.discovery.osds.length ?? 0}</Descriptions.Item>
+            <Descriptions.Item label="MDS">{data?.discovery.mdss.length ?? 0}</Descriptions.Item>
+            <Descriptions.Item label="Daemon">{data?.discovery.daemons.length ?? 0}</Descriptions.Item>
+            <Descriptions.Item label="Service">{data?.discovery.services.length ?? 0}</Descriptions.Item>
+            <Descriptions.Item label="Credential">{data?.credentials.length ?? 0}</Descriptions.Item>
+            {cluster?.last_error_message && (
+              <Descriptions.Item label="最近错误" span={2}>
+                <Text type="danger">{cluster.last_error_message}</Text>
+              </Descriptions.Item>
+            )}
+          </Descriptions>
         </Card>
       </Space>
     </Page>
   )
 }
 
-interface DiscoveryTableRow extends CephDiscoveredRecord {
-  category: string
+function decodeClusterNameParam(value: string) {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
 }
 
 function ClusterStatusTag({ status, enabled }: { status: string, enabled: boolean }) {
@@ -169,78 +142,65 @@ function ClusterStatusTag({ status, enabled }: { status: string, enabled: boolea
   return <Tag color="default">未知</Tag>
 }
 
-function dashboardURL(data: CephClusterDetail | null | undefined) {
-  const clusterURL = data?.cluster.dashboard.base_url
-  if (clusterURL) {
-    return clusterURL
+function cephVersion(data: CephClusterDetail | null | undefined) {
+  const versions = [
+    normalizeCephVersion(data?.cluster.ceph_version),
+    normalizeCephVersion(data?.overview?.ceph_version)
+  ].filter(Boolean)
+  for (const candidate of data?.discovery.daemons ?? []) {
+    const record = asRecord(candidate.payload)
+    if (!record || !isCephDaemonType(record.type ?? record.daemon_type)) {
+      continue
+    }
+    const version = normalizeCephVersion(record.version ?? record.ceph_version)
+    if (version) {
+      versions.push(version)
+    }
   }
-  return data?.endpoints.find((endpoint) => endpoint.kind === 'grafana' && endpoint.enabled)?.url ?? ''
+  for (const candidate of data?.discovery.hosts ?? []) {
+    const version = normalizeCephVersion(asRecord(candidate.payload)?.ceph_version)
+    if (version) {
+      versions.push(version)
+    }
+  }
+  return versions.reduce(richerCephVersion, '') || '未发现'
 }
 
-function categoryLabel(value: string) {
-  return ({
-    hosts: '主机',
-    osds: 'OSD',
-    osd_flags: 'OSD 标记',
-    daemons: 'Daemon',
-    services: 'Service',
-    mons: 'MON',
-    mgrs: 'MGR',
-    mdss: 'MDS',
-    mgr_modules: 'MGR 模块',
-    configuration: '配置'
-  } as Record<string, string>)[value] ?? value
+function clusterFSID(data: CephClusterDetail | null | undefined) {
+  const fsid = String(data?.cluster.fsid || data?.overview?.fsid || '').trim()
+  return fsid || '未发现'
 }
 
-function discoveryRows(discovery: Awaited<ReturnType<typeof getClusterDetail>>['discovery'] | undefined): DiscoveryTableRow[] {
-  if (!discovery) {
-    return []
-  }
-  return [
-    ...withCategory('hosts', discovery.hosts),
-    ...withCategory('osds', discovery.osds),
-    ...discovery.osd_flags.map((flag) => ({
-      category: 'osd_flags',
-      key: flag.name,
-      payload: flag,
-      discovered_at: flag.discovered_at
-    })),
-    ...withCategory('daemons', discovery.daemons),
-    ...withCategory('services', discovery.services),
-    ...withCategory('mons', discovery.mons),
-    ...withCategory('mgrs', discovery.mgrs),
-    ...withCategory('mdss', discovery.mdss),
-    ...withCategory('mgr_modules', discovery.mgr_modules),
-    ...withCategory('configuration', discovery.configuration)
-  ]
+function asRecord(value: unknown): ApiRecord | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as ApiRecord : undefined
 }
 
-function withCategory(category: string, records: CephDiscoveredRecord[]): DiscoveryTableRow[] {
-  return records.map((record) => ({ ...record, category }))
+function normalizeCephVersion(value: unknown) {
+  if (typeof value !== 'string') {
+    return ''
+  }
+  const match = value.trim().match(/\b(\d+\.\d+\.\d+)\b(?:\s+\(([0-9a-f]{7,40})\))?/i)
+  if (!match) {
+    return ''
+  }
+  return match[2] ? `${match[1]} (${match[2]})` : match[1]
 }
 
-function previewSnapshotPayload(payload: unknown) {
-  if (Array.isArray(payload)) {
-    return `${payload.length} 条记录`
+function richerCephVersion(left: string, right: string) {
+  if (!left) {
+    return right
   }
-  if (payload && typeof payload === 'object') {
-    return Object.keys(payload).slice(0, 6).join(', ')
+  if (!right) {
+    return left
   }
-  return payload
+  const leftHasCommit = /\([0-9a-f]{7,40}\)/i.test(left)
+  const rightHasCommit = /\([0-9a-f]{7,40}\)/i.test(right)
+  if (leftHasCommit !== rightHasCommit) {
+    return leftHasCommit ? left : right
+  }
+  return right.length > left.length ? right : left
 }
 
-function formatDateTime(value: unknown) {
-  if (typeof value !== 'string' || !value) {
-    return '-'
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
-}
-
-function formatSnapshotPayload(payload: unknown) {
-  try {
-    return JSON.stringify(payload, null, 2)
-  } catch {
-    return textValue(payload)
-  }
+function isCephDaemonType(value: unknown) {
+  return typeof value === 'string' && ['mon', 'mgr', 'osd', 'mds', 'rgw', 'rbd-mirror', 'crash'].includes(value.trim().toLowerCase())
 }

@@ -8,6 +8,7 @@ import (
 	clusterservice "cephtower/backend/internal/service/cluster"
 	endpointservice "cephtower/backend/internal/service/endpoint"
 	externalservice "cephtower/backend/internal/service/external"
+	hostprofileservice "cephtower/backend/internal/service/hostprofile"
 	mutationservice "cephtower/backend/internal/service/mutation"
 	reconcilerservice "cephtower/backend/internal/service/reconciler"
 	setupservice "cephtower/backend/internal/service/setup"
@@ -15,29 +16,31 @@ import (
 )
 
 type Handler struct {
-	Auth       *authservice.Service
-	Clusters   *clusterservice.Service
-	Endpoints  *endpointservice.Service
-	External   *externalservice.Service
-	Mutations  *mutationservice.Service
-	Reconciler *reconcilerservice.Service
-	Setup      *setupservice.Service
-	Database   func() *store.Database
+	Auth         *authservice.Service
+	Clusters     *clusterservice.Service
+	Endpoints    *endpointservice.Service
+	External     *externalservice.Service
+	HostProfiles *hostprofileservice.Service
+	Mutations    *mutationservice.Service
+	Reconciler   *reconcilerservice.Service
+	Setup        *setupservice.Service
+	Database     func() *store.Database
 }
 
 type Dependencies struct {
-	Auth       *authservice.Service
-	Clusters   *clusterservice.Service
-	Endpoints  *endpointservice.Service
-	External   *externalservice.Service
-	Mutations  *mutationservice.Service
-	Reconciler *reconcilerservice.Service
-	Setup      *setupservice.Service
-	Database   func() *store.Database
+	Auth         *authservice.Service
+	Clusters     *clusterservice.Service
+	Endpoints    *endpointservice.Service
+	External     *externalservice.Service
+	HostProfiles *hostprofileservice.Service
+	Mutations    *mutationservice.Service
+	Reconciler   *reconcilerservice.Service
+	Setup        *setupservice.Service
+	Database     func() *store.Database
 }
 
 func New(deps Dependencies) *Handler {
-	return &Handler{Auth: deps.Auth, Clusters: deps.Clusters, Endpoints: deps.Endpoints, External: deps.External, Mutations: deps.Mutations, Reconciler: deps.Reconciler, Setup: deps.Setup, Database: deps.Database}
+	return &Handler{Auth: deps.Auth, Clusters: deps.Clusters, Endpoints: deps.Endpoints, External: deps.External, HostProfiles: deps.HostProfiles, Mutations: deps.Mutations, Reconciler: deps.Reconciler, Setup: deps.Setup, Database: deps.Database}
 }
 
 type userContextKey struct{}

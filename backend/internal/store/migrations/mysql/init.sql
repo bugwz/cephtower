@@ -39,11 +39,11 @@ CREATE TABLE user_role_binding (
  FOREIGN KEY(cluster_id) REFERENCES ceph_cluster(id) ON DELETE CASCADE, FOREIGN KEY(created_by_user_id) REFERENCES user(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 CREATE TABLE ceph_cluster_observation (
- cluster_id BIGINT UNSIGNED PRIMARY KEY, fsid VARCHAR(36) NULL UNIQUE, ceph_version VARCHAR(128) NULL,
+ cluster_id BIGINT UNSIGNED PRIMARY KEY, fsid VARCHAR(36) NULL, ceph_version VARCHAR(128) NULL,
  status VARCHAR(32) NOT NULL DEFAULT 'unknown', enabled BOOLEAN NOT NULL DEFAULT TRUE, generation BIGINT UNSIGNED NOT NULL DEFAULT 0,
  last_seen_at DATETIME(6) NULL, last_error_code VARCHAR(64) NULL, last_error_message LONGTEXT NULL,
  observed_at DATETIME(6) NULL, updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
- INDEX idx_observation_status_enabled(status,enabled), INDEX idx_observation_last_seen(last_seen_at),
+ INDEX idx_observation_fsid(fsid), INDEX idx_observation_status_enabled(status,enabled), INDEX idx_observation_last_seen(last_seen_at),
  FOREIGN KEY(cluster_id) REFERENCES ceph_cluster(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 CREATE TABLE ceph_cluster_credential (
@@ -66,6 +66,15 @@ CREATE TABLE ceph_cluster_capability (
  supported BOOLEAN NOT NULL, reason VARCHAR(64) NULL, version VARCHAR(128) NULL, details_json LONGTEXT NULL,
  observed_at DATETIME(6) NOT NULL, updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
  UNIQUE KEY uq_cluster_capability(cluster_id,name), INDEX idx_capability_supported(cluster_id,supported), INDEX idx_capability_observed(observed_at),
+ FOREIGN KEY(cluster_id) REFERENCES ceph_cluster(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+CREATE TABLE ceph_host (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, cluster_id BIGINT UNSIGNED NOT NULL, hostname VARCHAR(512) NOT NULL,
+ ssh_address VARCHAR(255) NOT NULL, ssh_port SMALLINT UNSIGNED NOT NULL DEFAULT 22, ssh_user VARCHAR(128) NOT NULL,
+ ssh_auth_method VARCHAR(32) NOT NULL, ssh_password_secret LONGTEXT NULL, ssh_private_key_secret LONGTEXT NULL,
+ ssh_key_passphrase_secret LONGTEXT NULL, notes LONGTEXT NULL,
+ created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+ UNIQUE KEY uq_ceph_host(cluster_id,hostname), INDEX idx_ceph_host_cluster(cluster_id,hostname),
  FOREIGN KEY(cluster_id) REFERENCES ceph_cluster(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 CREATE TABLE ceph_resource_record (

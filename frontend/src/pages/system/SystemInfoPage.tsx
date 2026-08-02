@@ -1,13 +1,15 @@
 import { ApiOutlined, ClusterOutlined, SafetyCertificateOutlined, TeamOutlined } from '@ant-design/icons'
-import { Alert, Card, Descriptions, Progress, Space, Statistic, Table, Tag, Typography } from 'antd'
+import { Alert, Card, Descriptions, Progress, Space, Statistic, Tag, Typography } from 'antd'
 import { useCallback } from 'react'
 import { listClusterCapabilities, type ClusterCapability } from '../../api/cluster'
 import { listCredentials, listEndpoints, type CredentialView, type EndpointView } from '../../api/endpoint'
 import { listRoleBindings, listRoles, type RoleBindingView, type RoleView } from '../../api/rbac'
 import { listUsers, setupStatus, type SetupStatus, type UserAccount } from '../../api/auth'
+import { AppTable } from '../../components/AppTable'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
 import { useClusterContext } from '../../state/ClusterContext'
+import { renderDateTime as formatTime } from '../../utils/time'
 
 const { Text } = Typography
 
@@ -86,11 +88,11 @@ export function SystemInfoPage() {
 
         <div className="content-grid two-columns system-info-grid">
           <Card title="集群能力">
-            <Table<ClusterCapability>
+            <AppTable<ClusterCapability>
               size="small"
               rowKey="name"
               dataSource={data?.capabilities ?? []}
-              pagination={{ pageSize: 6, showSizeChanger: false }}
+              pagination={{ defaultPageSize: 10, showSizeChanger: true }}
               columns={[
                 { title: '能力', dataIndex: 'name' },
                 { title: '状态', dataIndex: 'supported', width: 90, render: (supported) => <Tag color={supported ? 'success' : 'warning'}>{supported ? '支持' : '不可用'}</Tag> },
@@ -99,11 +101,11 @@ export function SystemInfoPage() {
             />
           </Card>
           <Card title="Endpoint">
-            <Table<EndpointView>
+            <AppTable<EndpointView>
               size="small"
               rowKey="endpoint_id"
               dataSource={data?.endpoints ?? []}
-              pagination={{ pageSize: 6, showSizeChanger: false }}
+              pagination={{ defaultPageSize: 10, showSizeChanger: true }}
               columns={[
                 { title: 'Kind', dataIndex: 'kind' },
                 { title: 'URL', dataIndex: 'url', ellipsis: true },
@@ -115,11 +117,11 @@ export function SystemInfoPage() {
 
         <div className="content-grid system-info-grid">
           <Card title="集群授权">
-            <Table<RoleBindingView>
+            <AppTable<RoleBindingView>
               size="small"
               rowKey="role_binding_id"
               dataSource={data?.bindings ?? []}
-              pagination={{ pageSize: 6, showSizeChanger: false }}
+              pagination={{ defaultPageSize: 10, showSizeChanger: true }}
               columns={[
                 { title: '用户', dataIndex: 'username' },
                 { title: '角色', dataIndex: 'role' },
@@ -131,12 +133,4 @@ export function SystemInfoPage() {
       </Space>
     </Page>
   )
-}
-
-function formatTime(value?: string | null) {
-  if (!value) {
-    return '-'
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }

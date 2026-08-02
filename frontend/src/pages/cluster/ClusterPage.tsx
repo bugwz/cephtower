@@ -1,5 +1,5 @@
 import { InfoCircleOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, Popover, Space, Table, Typography } from 'antd'
+import { Button, Card, Form, Input, Popover, Space, Typography } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -8,12 +8,14 @@ import {
   updateCluster,
   type CephCluster
 } from '../../api/cluster'
+import { AppTable } from '../../components/AppTable'
 import { Page } from '../../components/Page'
 import { DraggableModal } from '../../components/DraggableModal'
 import { MonitorAddressSummary } from '../../components/MonitorAddressSummary'
 import { TableAction, TableActions } from '../../components/TableActions'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
+import { formatDateTime } from '../../utils/time'
 
 const { Text } = Typography
 
@@ -22,6 +24,10 @@ interface ClusterFormValues {
   monitor_host?: string
   client_username?: string
   keyring?: string
+}
+
+interface LoadClustersOptions {
+  showLoading?: boolean
 }
 
 export function ClusterPage() {
@@ -35,15 +41,19 @@ export function ClusterPage() {
   const [form] = Form.useForm<ClusterFormValues>()
   const { refreshClusters } = useClusterContext()
 
-  const loadClusters = useCallback(async () => {
-    setClusterLoading(true)
+  const loadClusters = useCallback(async ({ showLoading = true }: LoadClustersOptions = {}) => {
+    if (showLoading) {
+      setClusterLoading(true)
+    }
     setClusterError('')
     try {
       setClusters(await listClusters())
     } catch (err) {
       setClusterError(err instanceof Error ? err.message : '加载集群连接失败')
     } finally {
-      setClusterLoading(false)
+      if (showLoading) {
+        setClusterLoading(false)
+      }
     }
   }, [])
 
@@ -78,11 +88,13 @@ export function ClusterPage() {
       const result = editingCluster
         ? await updateCluster(editingCluster.id, values)
         : await createCluster(values)
-      message.success(result.message)
-      await loadClusters()
-      await refreshClusters()
       setClusterModalOpen(false)
       form.resetFields()
+      message.success(result.message)
+      void Promise.all([
+        loadClusters({ showLoading: false }),
+        refreshClusters()
+      ])
     } finally {
       setClusterSubmitting(false)
     }
@@ -90,16 +102,16 @@ export function ClusterPage() {
 
   return (
     <Page
-      title="集群管理"
+      title="集群列表"
       loading={clusterLoading}
       error={clusterError}
     >
       <Card
         className="page-surface-card"
-        title="集群管理"
+        title="集群列表"
         extra={
           <Space>
-            <Button icon={<ReloadOutlined />} loading={clusterLoading} onClick={loadClusters}>
+            <Button icon={<ReloadOutlined />} loading={clusterLoading} onClick={() => loadClusters()}>
               刷新
             </Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={openCreateCluster}>
@@ -108,12 +120,12 @@ export function ClusterPage() {
           </Space>
         }
       >
-        <Table
+        <AppTable
           size="middle"
           rowKey="id"
           tableLayout="fixed"
           dataSource={clusters}
-          pagination={{ pageSize: 6, showSizeChanger: false }}
+          pagination={{ defaultPageSize: 10, showSizeChanger: true }}
           scroll={{ x: 900 }}
           columns={[
             {
@@ -130,7 +142,7 @@ export function ClusterPage() {
               title: 'MON 地址',
               dataIndex: 'monitor_addresses',
               width: 320,
-              render: (value) => <MonitorAddressSummary value={value} />
+              render: (value) => <MonitorAddressSummary value={value} maxVisible={2} />
             },
             {
               title: 'Client 用户',
@@ -150,7 +162,7 @@ export function ClusterPage() {
               render: (_, cluster) => (
                 <TableActions>
                   <TableAction onClick={() => openEditCluster(cluster)}>编辑</TableAction>
-                  <TableAction onClick={() => navigate(`/cluster/cluster/${cluster.id}`)}>详情</TableAction>
+                  <TableAction onClick={() => navigate(`/cluster/cluster/${encodeURIComponent(cluster.name)}`)}>详情</TableAction>
                 </TableActions>
               )
             }
@@ -239,12 +251,4 @@ function defaultClusterFormValues(): Partial<ClusterFormValues> {
   return {
     client_username: 'client.admin'
   }
-}
-
-function formatDateTime(value: unknown) {
-  if (typeof value !== 'string' || !value) {
-    return '-'
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }

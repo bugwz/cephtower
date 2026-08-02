@@ -1,4 +1,5 @@
 import { ConfigProvider, theme } from 'antd'
+import zhCN from 'antd/locale/zh_CN'
 import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
@@ -9,6 +10,7 @@ import { NAV_PAGES, pagePaths } from './navigation'
 import {
   InitializationPage,
   ClusterDetailPage,
+  HostDetailPage,
   LoginPage,
   pageComponents,
   type PageKey
@@ -124,6 +126,7 @@ export default function App() {
 
   return (
     <ConfigProvider
+      locale={zhCN}
       theme={{
         algorithm: theme.defaultAlgorithm,
         token: {
@@ -133,9 +136,9 @@ export default function App() {
           fontSizeHeading1: 24,
           fontSizeHeading2: 20,
           fontSizeHeading3: 17,
-          controlHeight: 34,
-          controlHeightLG: 38,
-          controlHeightSM: 28,
+          controlHeight: 32,
+          controlHeightLG: 36,
+          controlHeightSM: 26,
           fontFamily:
             '-apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", sans-serif'
         },
@@ -159,7 +162,24 @@ export default function App() {
             headerBg: '#f3fbf8'
           },
           Button: {
-            fontWeight: 500
+            defaultBg: '#fbfefd',
+            defaultBorderColor: '#cfe7df',
+            defaultColor: '#35515a',
+            defaultHoverBg: '#f0faf5',
+            defaultHoverBorderColor: '#9bdcc4',
+            defaultHoverColor: '#168766',
+            defaultActiveBg: '#dff5ec',
+            defaultActiveBorderColor: '#7fd0b4',
+            defaultActiveColor: '#0c604f',
+            primaryColor: '#0c604f',
+            defaultShadow: '0 3px 10px rgb(25 88 94 / 6%)',
+            primaryShadow: '0 4px 12px rgb(35 132 103 / 10%)',
+            dangerShadow: '0 3px 10px rgb(150 54 64 / 6%)',
+            contentFontSize: 12,
+            contentFontSizeSM: 11,
+            fontWeight: 500,
+            paddingInline: 14,
+            paddingInlineSM: 9
           }
         }
       }}
@@ -179,7 +199,8 @@ export default function App() {
             {NAV_PAGES.map((page) => (
               <Route key={page.key} path={page.path} element={renderAppPage(page.key)} />
             ))}
-            <Route path="/cluster/cluster/:id" element={renderStandaloneAppPage('clusterManagement', <ClusterDetailPage />)} />
+            <Route path="/cluster/cluster/:name" element={renderStandaloneAppPage('clusterManagement', <ClusterDetailPage />)} />
+            <Route path="/cluster/host/:name" element={renderStandaloneAppPage('hostManagement', <HostDetailPage />)} />
             <Route path="/login" element={<Navigate to={pagePaths.overview} replace />} />
             <Route path="/bootstrap" element={<Navigate to={pagePaths.overview} replace />} />
             <Route path="/password-reset" element={<Navigate to={pagePaths.overview} replace />} />

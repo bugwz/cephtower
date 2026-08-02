@@ -6,14 +6,14 @@ import {
   SafetyCertificateOutlined,
   ThunderboltOutlined
 } from '@ant-design/icons'
-import { Button, Card, Descriptions, Progress, Space, Table, Tag, Typography } from 'antd'
+import { Button, Card, Descriptions, Progress, Space, Tag, Typography } from 'antd'
 import { useCallback, useMemo, useState } from 'react'
 import { listClusterCapabilities, type ClusterCapability } from '../../api/cluster'
 import { getOptionalResource, listResource, mutateResource, refreshResource } from '../../api/resource'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
+import { AppTable } from '../../components/AppTable'
 import { HealthBadge } from '../../components/HealthBadge'
 import { Page } from '../../components/Page'
-import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 import { TableAction } from '../../components/TableActions'
 import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
@@ -68,8 +68,7 @@ export function OverviewPage() {
     }
     setRefreshing(true)
     try {
-      const operation = await refreshResource({ clusterId: selectedClusterId, scope: 'all' })
-      await operationMutation.run(() => Promise.resolve(operation), '集群刷新执行成功')
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, scope: 'all' }), '刷新成功')
       await refresh()
     } finally {
       setRefreshing(false)
@@ -102,7 +101,6 @@ export function OverviewPage() {
           }
         >
           <Space direction="vertical" size={16} className="page-stack">
-            <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />
             <div className="metrics-grid">
               <MetricCard icon={<DatabaseOutlined />} label="容量使用率" value={`${usedPercent}%`} detail={`${formatBytes(capacity.used_bytes)} / ${formatBytes(capacity.total_bytes)}`} />
               <MetricCard icon={<HddOutlined />} label="OSD" value={serviceValue(services.osd, 'up', 'total')} detail={`in ${servicePart(services.osd, 'in')}`} />
@@ -123,11 +121,11 @@ export function OverviewPage() {
 
         <div className="content-grid">
           <Card title="健康检查">
-            <Table<ApiRecord>
+            <AppTable<ApiRecord>
               size="small"
               rowKey={(row) => textValue(row.code ?? row.name ?? row.natural_key)}
               dataSource={data?.healthChecks ?? []}
-              pagination={{ pageSize: 6, showSizeChanger: false }}
+              pagination={{ defaultPageSize: 10, showSizeChanger: true }}
               columns={[
                 { title: 'Code', dataIndex: 'code', ellipsis: true },
                 { title: '级别', dataIndex: 'severity', render: (value) => <HealthBadge status={textValue(value)} /> },

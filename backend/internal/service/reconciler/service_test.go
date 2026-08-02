@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"cephtower/backend/internal/config"
+	cephdomain "cephtower/backend/internal/domain/ceph"
 	cephprovider "cephtower/backend/internal/integration/ceph"
 	"cephtower/backend/internal/security"
 	clusterservice "cephtower/backend/internal/service/cluster"
@@ -142,4 +143,103 @@ func TestReconcileMarksSuccessfulEmptyKindsStaleButPreservesUnavailableKinds(t *
 	if err != nil || retained.StaleAt != nil {
 		t.Fatalf("unavailable optional kind was marked stale: row=%#v err=%v", retained, err)
 	}
+}
+
+func TestClusterObservationUpdateUsesOverviewAndCoreDaemonVersion(t *testing.T) {
+	now := time.Now().UTC()
+	version := "ceph version 20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc) tentacle (stable)"
+	update, ok := clusterObservationUpdate(42, []cephprovider.Observation{
+		{Kind: "overview", Payload: cephdomain.Overview{FSID: "9f11d824-8e53-11f1-8c55-00163e11e24f", CephVersion: version}, ObservedAt: now},
+		{Kind: "daemon", Payload: cephdomain.Daemon{Type: "alertmanager", Version: stringPointer("0.27.0")}, ObservedAt: now},
+		{Kind: "daemon", Payload: cephdomain.Daemon{Type: "mgr", Version: stringPointer("20.2.2")}, ObservedAt: now},
+	})
+	if !ok {
+		t.Fatal("cluster observation update was not detected")
+	}
+	if update.FSID == nil || *update.FSID != "9f11d824-8e53-11f1-8c55-00163e11e24f" {
+		t.Fatalf("fsid = %#v", update.FSID)
+	}
+	if update.CephVersion == nil || *update.CephVersion != "20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc)" {
+		t.Fatalf("ceph version = %#v", update.CephVersion)
+	}
+	if update.Status != "available" || update.Generation != 42 {
+		t.Fatalf("status/generation = %q/%d", update.Status, update.Generation)
+	}
+}
+
+func TestReconcileStoresClusterObservation(t *testing.T) {
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: reconcilerTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "reconciler-observation.db"}}, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close(db)
+	encrypted, err := security.Encrypt([]byte("plain-ceph-key"), reconcilerTestKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	cluster := store.CephCluster{Name: "fixture", MonitorAddresses: "mon:6789", ClientUsername: "client.fixture", ClientKey: encrypted, CreatedAt: now, UpdatedAt: now}
+	if err := db.CreateCluster(context.Background(), &cluster); err != nil {
+		t.Fatal(err)
+	}
+	collector := &metadataCollectorFake{results: []cephprovider.CollectionResult{{Observations: []cephprovider.Observation{
+		{Kind: "overview", NaturalKey: "overview", Payload: cephdomain.Overview{FSID: "9f11d824-8e53-11f1-8c55-00163e11e24f", CephVersion: "ceph version 20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc) tentacle (stable)"}, ObservedAt: now},
+		{Kind: "daemon", NaturalKey: "mgr.a", Payload: cephdomain.Daemon{Type: "mgr", Version: stringPointer("ceph version 20.2.2")}, ObservedAt: now},
+	}}}}
+	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil)
+	service := New(func() *store.Database { return db }, clusters, collector)
+	module := Module{Name: "fast", Kinds: []string{"overview", "daemon"}}
+	if err := service.Reconcile(context.Background(), cluster.ID, module); err != nil {
+		t.Fatal(err)
+	}
+	observation, err := db.FindObservation(context.Background(), cluster.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if observation.FSID == nil || *observation.FSID != "9f11d824-8e53-11f1-8c55-00163e11e24f" {
+		t.Fatalf("fsid = %#v", observation.FSID)
+	}
+	if observation.CephVersion == nil || *observation.CephVersion != "20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc)" {
+		t.Fatalf("ceph version = %#v", observation.CephVersion)
+	}
+}
+
+func TestSyncClusterObservationKeepsExistingVersionWithCommit(t *testing.T) {
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: reconcilerTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "reconciler-version.db"}}, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close(db)
+	encrypted, err := security.Encrypt([]byte("plain-ceph-key"), reconcilerTestKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	cluster := store.CephCluster{Name: "fixture", MonitorAddresses: "mon:6789", ClientUsername: "client.fixture", ClientKey: encrypted, CreatedAt: now, UpdatedAt: now}
+	if err := db.CreateCluster(context.Background(), &cluster); err != nil {
+		t.Fatal(err)
+	}
+	version := "20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc)"
+	observation := store.CephClusterObservation{ClusterID: cluster.ID, CephVersion: &version, Status: "available", Enabled: true, UpdatedAt: now}
+	if err := db.UpsertObservation(context.Background(), &observation); err != nil {
+		t.Fatal(err)
+	}
+	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil)
+	service := New(func() *store.Database { return db }, clusters, &metadataCollectorFake{})
+	if err := service.syncClusterObservation(context.Background(), cluster.ID, 2, []cephprovider.Observation{
+		{Kind: "daemon", Payload: cephdomain.Daemon{Type: "mgr", Version: stringPointer("20.2.2")}, ObservedAt: now},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	stored, err := db.FindObservation(context.Background(), cluster.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.CephVersion == nil || *stored.CephVersion != version {
+		t.Fatalf("ceph version = %#v, want %q", stored.CephVersion, version)
+	}
+}
+
+func stringPointer(value string) *string {
+	return &value
 }

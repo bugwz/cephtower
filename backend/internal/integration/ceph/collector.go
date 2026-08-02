@@ -174,10 +174,13 @@ func (p *NativeProvider) collectFast(ctx context.Context, access ClusterAccess) 
 		return nil, fmt.Errorf("parse collect.df response: total byte fields are required")
 	}
 	overview := cephdomain.Overview{FSID: status.FSID, HealthStatus: status.Health.Status, Capacity: cephdomain.Capacity{TotalBytes: df.Stats.TotalBytes, UsedBytes: df.Stats.TotalUsedBytes, AvailableBytes: df.Stats.TotalAvailBytes}, Services: map[string]cephdomain.ServiceCount{"mon": {Total: &status.MonMap.NumMons, InQuorum: intPointer(len(status.MonMap.Quorum))}, "mgr": {Active: intPointer(boolInt(status.MgrMap.Available)), Standby: &status.MgrMap.NumStandbys}, "osd": {Total: &status.OSDMap.NumOSDs, Up: &status.OSDMap.NumUpOSDs, In: &status.OSDMap.NumInOSDs}, "mds": {Active: &status.FSMap.Up, Standby: intPointer(len(status.FSMap.Standbys))}}, ClientIO: cephdomain.ClientIO{ReadBytesPerSecond: status.PGMap.ReadBytesSec, WriteBytesPerSecond: status.PGMap.WriteBytesSec, ReadOpsPerSecond: status.PGMap.ReadOpPerSec, WriteOpsPerSecond: status.PGMap.WriteOpPerSec}, ObservedAt: now}
+	if versions, err := p.run(ctx, access, "collect.versions", 30*time.Second, "versions", "--format", "json"); err == nil {
+		overview.CephVersion = cephVersionFromVersions(versions)
+	}
 	for _, state := range status.PGMap.PGsByState {
 		overview.PlacementGroups = append(overview.PlacementGroups, cephdomain.PGState{Name: state.StateName, Count: state.Count})
 	}
-	rows := []Observation{{Kind: "overview", NaturalKey: "overview", Name: "overview", Status: status.Health.Status, Source: "ceph_cli", Payload: overview, ObservedAt: now}}
+	rows := []Observation{{Kind: "overview", NaturalKey: "overview", Name: "overview", Status: status.Health.Status, Source: "ceph_cli", SourceVersion: overview.CephVersion, Payload: overview, ObservedAt: now}}
 	for code, check := range status.Health.Checks {
 		details := make([]string, 0, len(check.Detail))
 		for _, detail := range check.Detail {
@@ -190,12 +193,28 @@ func (p *NativeProvider) collectFast(ctx context.Context, access ClusterAccess) 
 }
 
 type hostWire struct {
-	Hostname    string   `json:"hostname"`
-	Addr        *string  `json:"addr"`
-	Status      *string  `json:"status"`
-	Labels      []string `json:"labels"`
-	CephVersion *string  `json:"ceph_version"`
+	Hostname         string                       `json:"hostname"`
+	Addr             *string                      `json:"addr"`
+	Status           *string                      `json:"status"`
+	Labels           []string                     `json:"labels"`
+	ServiceType      *string                      `json:"service_type"`
+	Services         []cephdomain.HostService     `json:"services"`
+	ServiceInstances []cephdomain.ServiceInstance `json:"service_instances"`
+	Facts            map[string]any               `json:"facts"`
 }
+
+type hostFacts struct {
+	System        *string
+	Platform      *string
+	Distro        *string
+	KernelRelease *string
+	KernelBuild   *string
+	Arch          *string
+	CPUModel      *string
+	CPUCores      *int
+	MemoryBytes   *uint64
+}
+
 type daemonWire struct {
 	DaemonName         string  `json:"daemon_name"`
 	DaemonType         string  `json:"daemon_type"`
@@ -262,19 +281,38 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 	if err := p.runInto(ctx, access, "collect.mgr", []string{"mgr", "dump", "--format", "json"}, &managers); err != nil {
 		return nil, err
 	}
+	factsByHost := p.collectDaemonHostFacts(ctx, access)
 	rows := make([]Observation, 0, len(hosts)+len(daemons)+len(services)+len(mons.Mons)+1+len(managers.Standbys))
 	for _, wire := range hosts {
 		if strings.TrimSpace(wire.Hostname) == "" {
 			return nil, fmt.Errorf("parse collect.host response: hostname is required")
 		}
-		payload := cephdomain.Host{Hostname: wire.Hostname, Address: wire.Addr, Status: wire.Status, Labels: wire.Labels, CephVersion: wire.CephVersion}
+		facts := mergeHostFacts(hostFactsFromMap(wire.Facts), factsByHost[wire.Hostname])
+		payload := cephdomain.Host{
+			Hostname:         wire.Hostname,
+			Address:          wire.Addr,
+			Status:           wire.Status,
+			Labels:           wire.Labels,
+			ServiceType:      wire.ServiceType,
+			Services:         wire.Services,
+			ServiceInstances: wire.ServiceInstances,
+			System:           facts.System,
+			Platform:         facts.Platform,
+			Distro:           facts.Distro,
+			KernelRelease:    facts.KernelRelease,
+			KernelBuild:      facts.KernelBuild,
+			Arch:             facts.Arch,
+			CPUModel:         facts.CPUModel,
+			CPUCores:         facts.CPUCores,
+			MemoryBytes:      facts.MemoryBytes,
+		}
 		rows = append(rows, Observation{Kind: "host", NaturalKey: wire.Hostname, Name: wire.Hostname, Status: value(wire.Status), Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	for _, wire := range daemons {
 		if strings.TrimSpace(wire.DaemonName) == "" || strings.TrimSpace(wire.DaemonType) == "" {
 			return nil, fmt.Errorf("parse collect.daemon response: daemon_name and daemon_type are required")
 		}
-		payload := cephdomain.Daemon{Name: wire.DaemonName, Type: wire.DaemonType, Hostname: wire.Hostname, Status: wire.StatusDesc, Version: wire.Version, ContainerImage: wire.ContainerImageName}
+		payload := cephdomain.Daemon{Name: wire.DaemonName, Type: wire.DaemonType, Hostname: wire.Hostname, Status: wire.StatusDesc, Version: cephdomain.NormalizeVersionPointer(wire.Version), ContainerImage: wire.ContainerImageName}
 		rows = append(rows, Observation{Kind: "daemon", NaturalKey: wire.DaemonName, Name: wire.DaemonName, Status: value(wire.StatusDesc), Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	for _, wire := range services {
@@ -524,7 +562,7 @@ func (p *NativeProvider) collectInventory(ctx context.Context, access ClusterAcc
 	for _, wire := range devices {
 		key := wire.Hostname + ":" + wire.Path
 		payload := cephdomain.Device{ID: wire.DeviceID, Hostname: wire.Hostname, Path: wire.Path, Available: wire.Available, RejectedReasons: wire.RejectedReasons, DeviceType: wire.DeviceType, Model: wire.Model, Vendor: wire.Vendor, Serial: wire.Serial, SizeBytes: wire.SizeBytes, Rotational: wire.Rotational, Metadata: wire.Metadata}
-		rows = append(rows, Observation{Kind: "device", NaturalKey: key, Name: key, Source: "ceph_cli", Payload: payload, ObservedAt: now})
+		rows = append(rows, Observation{Kind: "device", NaturalKey: key, ParentKind: "host", ParentKey: wire.Hostname, Name: key, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	return rows, nil
 }
@@ -589,16 +627,32 @@ func buildDeviceWire(record map[string]any, host string) (deviceWire, bool) {
 		}
 		metadata["sys_api."+key] = value
 	}
+	deviceType := firstStringPointer(record, "device_type", "human_readable_type", "crush_device_class", "type")
+	if deviceType == nil {
+		deviceType = firstStringPointer(sysAPI, "human_readable_type", "crush_device_class", "type")
+	}
+	model := firstStringPointer(record, "model")
+	if model == nil {
+		model = firstStringPointer(sysAPI, "model")
+	}
+	vendor := firstStringPointer(record, "vendor")
+	if vendor == nil {
+		vendor = firstStringPointer(sysAPI, "vendor")
+	}
+	serial := firstStringPointer(record, "serial")
+	if serial == nil {
+		serial = firstStringPointer(sysAPI, "serial")
+	}
 	return deviceWire{
 		DeviceID:        firstNonEmpty(firstString(record, "device_id", "id", "devid"), hostname+":"+path),
 		Hostname:        hostname,
 		Path:            path,
 		Available:       boolValue(record["available"]),
 		RejectedReasons: stringSlice(record["rejected_reasons"]),
-		DeviceType:      firstStringPointer(record, "device_type", "type"),
-		Model:           firstStringPointer(record, "model"),
-		Vendor:          firstStringPointer(record, "vendor"),
-		Serial:          firstStringPointer(record, "serial"),
+		DeviceType:      deviceType,
+		Model:           model,
+		Vendor:          vendor,
+		Serial:          serial,
 		SizeBytes:       size,
 		Rotational:      rotational,
 		Metadata:        metadata,
@@ -745,6 +799,9 @@ func uintValue(value any) (uint64, bool) {
 		if parsed, err := strconv.ParseUint(typed.String(), 10, 64); err == nil {
 			return parsed, true
 		}
+		if parsed, err := strconv.ParseFloat(typed.String(), 64); err == nil && parsed >= 0 {
+			return uint64(parsed), true
+		}
 	case float64:
 		if typed >= 0 {
 			return uint64(typed), true
@@ -752,6 +809,9 @@ func uintValue(value any) (uint64, bool) {
 	case string:
 		if parsed, err := strconv.ParseUint(strings.TrimSpace(typed), 10, 64); err == nil {
 			return parsed, true
+		}
+		if parsed, err := strconv.ParseFloat(strings.TrimSpace(typed), 64); err == nil && parsed >= 0 {
+			return uint64(parsed), true
 		}
 	}
 	return 0, false
@@ -786,11 +846,14 @@ func stringMap(value any) map[string]string {
 }
 
 type configValueWire struct {
-	Who     string  `json:"who"`
-	Name    string  `json:"name"`
-	Value   string  `json:"value"`
-	Level   *string `json:"level"`
-	Section *string `json:"section"`
+	Who           string  `json:"who"`
+	Name          string  `json:"name"`
+	Value         string  `json:"value"`
+	Level         *string `json:"level"`
+	Section       *string `json:"section"`
+	LocationType  *string `json:"location_type"`
+	LocationValue *string `json:"location_value"`
+	Mask          *string `json:"mask"`
 }
 
 func (p *NativeProvider) collectConfiguration(ctx context.Context, access ClusterAccess) ([]Observation, error) {
@@ -801,16 +864,222 @@ func (p *NativeProvider) collectConfiguration(ctx context.Context, access Cluste
 	}
 	rows := make([]Observation, 0, len(values))
 	for _, wire := range values {
-		if strings.TrimSpace(wire.Who) == "" || strings.TrimSpace(wire.Name) == "" {
+		who := configValueWho(wire)
+		name := strings.TrimSpace(wire.Name)
+		if who == "" || name == "" {
 			return nil, fmt.Errorf("parse collect.config response: who and name are required")
 		}
-		key := wire.Who + ":" + wire.Name
-		payload := cephdomain.ConfigValue{Who: wire.Who, Name: wire.Name, Value: wire.Value, Level: wire.Level, Section: wire.Section}
-		rows = append(rows, Observation{Kind: "config_value", NaturalKey: key, Name: wire.Name, Source: "ceph_cli", Payload: payload, ObservedAt: now})
+		key := who + ":" + name
+		payload := cephdomain.ConfigValue{Who: who, Name: name, Value: wire.Value, Level: wire.Level, Section: wire.Section, LocationType: wire.LocationType, LocationValue: wire.LocationValue, Mask: wire.Mask}
+		rows = append(rows, Observation{Kind: "config_value", NaturalKey: key, Name: name, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	rows = append(rows, p.collectConfigurationOptional(ctx, access, now)...)
 	return rows, nil
 }
+
+func configValueWho(wire configValueWire) string {
+	who := strings.TrimSpace(wire.Who)
+	if who == "" && wire.Section != nil {
+		who = strings.TrimSpace(*wire.Section)
+	}
+	locationType := trimStringPointer(wire.LocationType)
+	locationValue := trimStringPointer(wire.LocationValue)
+	scope := trimStringPointer(wire.Mask)
+	if locationType != "" && locationValue != "" {
+		scope = locationType + ":" + locationValue
+	}
+	if scope == "" {
+		return who
+	}
+	if who == "" {
+		return scope
+	}
+	return who + "/" + scope
+}
+
+func (p *NativeProvider) collectDaemonHostFacts(ctx context.Context, access ClusterAccess) map[string]hostFacts {
+	result := map[string]hostFacts{}
+	for _, command := range []struct {
+		id   string
+		args []string
+	}{
+		{"collect.osd_metadata", []string{"osd", "metadata", "--format", "json"}},
+		{"collect.mon_metadata", []string{"mon", "metadata", "--format", "json"}},
+		{"collect.mgr_metadata", []string{"mgr", "metadata", "--format", "json"}},
+		{"collect.mds_metadata", []string{"mds", "metadata", "--format", "json"}},
+	} {
+		var rows []map[string]any
+		if !p.optional(ctx, access, executor.BinaryCeph, command.id, command.args, &rows) {
+			continue
+		}
+		for _, row := range rows {
+			hostname := firstString(row, "hostname", "host")
+			if hostname == "" {
+				continue
+			}
+			result[hostname] = mergeHostFacts(result[hostname], hostFactsFromDaemonMetadata(row))
+		}
+	}
+	return result
+}
+
+func hostFactsFromMap(facts map[string]any) hostFacts {
+	return hostFacts{
+		System:        hostFactString(facts, "system", "os", "distro", "distribution"),
+		Platform:      hostFactString(facts, "platform"),
+		Distro:        hostFactString(facts, "distro"),
+		KernelRelease: hostFactString(facts, "kernel_release", "kernel"),
+		KernelBuild:   hostFactString(facts, "kernel_build"),
+		Arch:          hostFactString(facts, "arch", "machine"),
+		CPUModel:      hostFactString(facts, "cpu_model", "processor_model", "model_name"),
+		CPUCores:      hostFactInt(facts, "cpu_cores", "cpu_count", "processor_count", "cpus"),
+		MemoryBytes:   hostFactBytes(facts, "memory_bytes", "memory_total", "mem_total", "mem_total_kb"),
+	}
+}
+
+func hostFactsFromDaemonMetadata(metadata map[string]any) hostFacts {
+	return hostFacts{
+		System:        hostFactString(metadata, "system", "distro_description", "distro", "os"),
+		Platform:      hostFactString(metadata, "platform", "os"),
+		Distro:        hostFactString(metadata, "distro"),
+		KernelRelease: hostFactString(metadata, "kernel_release", "kernel_version", "kernel", "kernel_description"),
+		KernelBuild:   hostFactString(metadata, "kernel_build", "kernel_description"),
+		Arch:          hostFactString(metadata, "arch"),
+		CPUModel:      hostFactString(metadata, "cpu_model", "cpu"),
+		CPUCores:      hostFactInt(metadata, "cpu_cores", "cpu_count", "cpus"),
+		MemoryBytes:   hostFactBytes(metadata, "memory_bytes", "mem_total_kb", "memory_total", "mem_total"),
+	}
+}
+
+func mergeHostFacts(primary, fallback hostFacts) hostFacts {
+	if primary.System == nil {
+		primary.System = fallback.System
+	}
+	if primary.Platform == nil {
+		primary.Platform = fallback.Platform
+	}
+	if primary.Distro == nil {
+		primary.Distro = fallback.Distro
+	}
+	if primary.KernelRelease == nil {
+		primary.KernelRelease = fallback.KernelRelease
+	}
+	if primary.KernelBuild == nil {
+		primary.KernelBuild = fallback.KernelBuild
+	}
+	if primary.Arch == nil {
+		primary.Arch = fallback.Arch
+	}
+	if primary.CPUModel == nil {
+		primary.CPUModel = fallback.CPUModel
+	}
+	if primary.CPUCores == nil {
+		primary.CPUCores = fallback.CPUCores
+	}
+	if primary.MemoryBytes == nil {
+		primary.MemoryBytes = fallback.MemoryBytes
+	}
+	return primary
+}
+
+func trimStringPointer(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return strings.TrimSpace(*value)
+}
+
+func hostFactString(facts map[string]any, keys ...string) *string {
+	for _, key := range keys {
+		value := strings.TrimSpace(textValue(hostFactValue(facts, key)))
+		if value != "" {
+			return &value
+		}
+	}
+	return nil
+}
+
+func hostFactInt(facts map[string]any, keys ...string) *int {
+	for _, key := range keys {
+		switch value := hostFactValue(facts, key).(type) {
+		case int:
+			return &value
+		case int64:
+			parsed := int(value)
+			return &parsed
+		case float64:
+			parsed := int(value)
+			return &parsed
+		case json.Number:
+			if parsed, err := value.Int64(); err == nil {
+				result := int(parsed)
+				return &result
+			}
+		case string:
+			if parsed, err := strconv.Atoi(strings.TrimSpace(value)); err == nil {
+				return &parsed
+			}
+		}
+	}
+	return nil
+}
+
+func hostFactBytes(facts map[string]any, keys ...string) *uint64 {
+	for _, key := range keys {
+		raw := hostFactValue(facts, key)
+		value, ok := hostFactUint64(raw)
+		if !ok {
+			continue
+		}
+		if strings.HasSuffix(strings.ToLower(key), "_kb") {
+			value *= 1024
+		}
+		return &value
+	}
+	return nil
+}
+
+func hostFactValue(facts map[string]any, key string) any {
+	if facts == nil {
+		return nil
+	}
+	if value, ok := facts[key]; ok {
+		return value
+	}
+	for existing, value := range facts {
+		if strings.EqualFold(existing, key) {
+			return value
+		}
+	}
+	return nil
+}
+
+func hostFactUint64(raw any) (uint64, bool) {
+	switch value := raw.(type) {
+	case uint64:
+		return value, true
+	case int:
+		if value >= 0 {
+			return uint64(value), true
+		}
+	case int64:
+		if value >= 0 {
+			return uint64(value), true
+		}
+	case float64:
+		if value >= 0 {
+			return uint64(value), true
+		}
+	case json.Number:
+		parsed, err := strconv.ParseUint(value.String(), 10, 64)
+		return parsed, err == nil
+	case string:
+		parsed, err := strconv.ParseUint(strings.TrimSpace(value), 10, 64)
+		return parsed, err == nil
+	}
+	return 0, false
+}
+
 func (p *NativeProvider) runInto(ctx context.Context, access ClusterAccess, id string, args []string, out any) error {
 	return p.runBinaryInto(ctx, access, executor.BinaryCeph, id, args, out)
 }

@@ -1,11 +1,12 @@
 import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Table, Typography } from 'antd'
+import { Alert, Button, Card, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useCallback, useState } from 'react'
 import { listResource, mutateResource, refreshResource, type ResourceListResult } from '../api/resource'
 import { textValue, type ApiRecord } from '../api/client'
 import type { OperationRisk } from '../api/types'
 import type { FieldColumn } from '../components/DataTable'
+import { AppTable } from '../components/AppTable'
 import { DraggableModal } from '../components/DraggableModal'
 import { Page } from '../components/Page'
 import { RecordDetail } from '../components/RecordDetail'
@@ -93,7 +94,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
     setRefreshing(true)
     try {
       const kinds = refreshKinds(definition)
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, ...(kinds.length === 1 ? { kind: kinds[0] } : { kinds }) }), `${definition.title}刷新已触发`)
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, ...(kinds.length === 1 ? { kind: kinds[0] } : { kinds }) }), '刷新成功')
       await refresh()
     } finally {
       setRefreshing(false)
@@ -117,16 +118,18 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
     if (!selectedClusterId || !activeAction || submitting || mutationBlocked) {
       return
     }
+    const action = activeAction
     setSubmitting(true)
     try {
       await operationMutation.run(() => mutateResource(
-        activeAction.path,
-        activeAction.method,
-        activeAction.buildBody(values, selectedClusterId, activeRow),
+        action.path,
+        action.method,
+        action.buildBody(values, selectedClusterId, activeRow),
         activeRow?.resource_version ? { ifMatch: String(activeRow.resource_version) } : undefined
-      ), activeAction.successMessage)
+      ), false)
       setFormOpen(false)
-      await refresh()
+      message.success(action.successMessage)
+      void refresh({ showLoading: false })
     } finally {
       setSubmitting(false)
     }
@@ -152,8 +155,11 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
         okType: action.risk === 'medium' ? 'danger' : 'primary',
         cancelText: '取消',
         async onOk() {
-          await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters), action.successMessage)
-          await refresh()
+          await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters), false)
+          window.setTimeout(() => {
+            message.success(action.successMessage)
+            void refresh({ showLoading: false })
+          })
         }
       })
       return
@@ -165,8 +171,11 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
-        await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters, { ifMatch: generation }), action.successMessage)
-        await refresh()
+        await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters, { ifMatch: generation }), false)
+        window.setTimeout(() => {
+          message.success(action.successMessage)
+          void refresh({ showLoading: false })
+        })
       }
     })
   }
@@ -192,19 +201,15 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
   const listContent = (
     <Space direction="vertical" size={16} className="page-stack">
       <FeatureRequirementAlert status={featureStatus} />
-      <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />
-      <Table<ApiRecord>
+      <AppTable<ApiRecord>
         size="middle"
         columns={tableColumns}
         dataSource={data?.items ?? []}
         locale={{ emptyText: '暂无数据' }}
-        pagination={{ pageSize: 8, showSizeChanger: false }}
+        pagination={{ defaultPageSize: 10, showSizeChanger: true }}
         rowKey={(row, index) => rowKey(definition, row, index)}
         scroll={{ x: true }}
-        expandable={{
-          expandedRowRender: (row) => <RecordDetail record={row} />,
-          rowExpandable: (row) => Object.keys(row).length > 0
-        }}
+        footer={() => <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />}
       />
     </Space>
   )

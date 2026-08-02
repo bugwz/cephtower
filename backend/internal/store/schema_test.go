@@ -8,11 +8,12 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 )
 
 const schemaTestKey = "0123456789abcdefghijklmnopqrstuv"
 
-func TestSQLiteBaselineContainsExactlyFifteenTables(t *testing.T) {
+func TestSQLiteBaselineContainsExactlySixteenTables(t *testing.T) {
 	db, err := Open(config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Name: "schema.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
@@ -22,7 +23,7 @@ func TestSQLiteBaselineContainsExactlyFifteenTables(t *testing.T) {
 	if err := db.db.Raw("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").Scan(&names).Error; err != nil {
 		t.Fatal(err)
 	}
-	expected := []string{"audit_event", "ceph_cluster", "ceph_cluster_capability", "ceph_cluster_credential", "ceph_cluster_endpoint", "ceph_cluster_observation", "ceph_collection_run", "ceph_resource_record", "password_reset_code", "role", "schema_migration", "setting", "user", "user_role_binding", "user_session"}
+	expected := []string{"audit_event", "ceph_cluster", "ceph_cluster_capability", "ceph_cluster_credential", "ceph_cluster_endpoint", "ceph_cluster_observation", "ceph_collection_run", "ceph_host", "ceph_resource_record", "password_reset_code", "role", "schema_migration", "setting", "user", "user_role_binding", "user_session"}
 	sort.Strings(expected)
 	if len(names) != len(expected) {
 		t.Fatalf("tables = %v", names)
@@ -51,6 +52,30 @@ func TestMigrationRegistryIsIdempotent(t *testing.T) {
 	_ = Close(second)
 }
 
+func TestObservationFSIDIsNotUnique(t *testing.T) {
+	db, err := Open(config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Name: "schema.db"}}, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer Close(db)
+	now := time.Now().UTC()
+	first := CephCluster{Name: "first", MonitorAddresses: "mon:6789", ClientUsername: "client.first", ClientKey: "cipher", CreatedAt: now, UpdatedAt: now}
+	second := CephCluster{Name: "second", MonitorAddresses: "mon:6789", ClientUsername: "client.second", ClientKey: "cipher", CreatedAt: now, UpdatedAt: now}
+	if err := db.CreateCluster(context.Background(), &first); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.CreateCluster(context.Background(), &second); err != nil {
+		t.Fatal(err)
+	}
+	fsid := "9f11d824-8e53-11f1-8c55-00163e11e24f"
+	for _, cluster := range []CephCluster{first, second} {
+		observation := CephClusterObservation{ClusterID: cluster.ID, FSID: &fsid, Status: "available", Enabled: true, UpdatedAt: now}
+		if err := db.UpsertObservation(context.Background(), &observation); err != nil {
+			t.Fatalf("upsert observation for cluster %d: %v", cluster.ID, err)
+		}
+	}
+}
+
 var expectedColumns = map[string][]string{
 	"schema_migration":         {"version", "checksum", "applied_at"},
 	"setting":                  {"key", "value", "created_at", "updated_at"},
@@ -64,6 +89,7 @@ var expectedColumns = map[string][]string{
 	"ceph_cluster_credential":  {"id", "cluster_id", "kind", "credential", "fingerprint", "created_at", "updated_at"},
 	"ceph_cluster_endpoint":    {"id", "cluster_id", "kind", "name", "url", "tls_mode", "ca_credential_id", "config_json", "enabled", "created_at", "updated_at"},
 	"ceph_cluster_capability":  {"id", "cluster_id", "name", "supported", "reason", "version", "details_json", "observed_at", "updated_at"},
+	"ceph_host":                {"id", "cluster_id", "hostname", "ssh_address", "ssh_port", "ssh_user", "ssh_auth_method", "ssh_password_secret", "ssh_private_key_secret", "ssh_key_passphrase_secret", "notes", "created_at", "updated_at"},
 	"ceph_resource_record":     {"id", "cluster_id", "kind", "natural_key", "parent_kind", "parent_key", "name", "status", "generation", "resource_version", "source", "source_version", "observed_at", "stale_at", "payload_schema_version", "payload_json", "created_at", "updated_at"},
 	"ceph_collection_run":      {"id", "cluster_id", "module", "generation", "status", "source", "record_count", "error_code", "error_message", "started_at", "finished_at", "created_at"},
 	"audit_event":              {"id", "occurred_at", "event_type", "request_id", "actor_user_id", "actor_username", "cluster_id", "cluster_name", "action", "resource_kind", "resource_key", "risk", "outcome", "http_status", "error_code", "source_ip", "user_agent", "before_generation", "after_generation", "parameters_json", "details_json", "previous_hash", "event_hash"},

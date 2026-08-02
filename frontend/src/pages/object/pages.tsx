@@ -466,7 +466,10 @@ function PeriodCommitPanel() {
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
-        await operationMutation.run(() => mutateResource('/rgw/period/commit', 'POST', parameters), 'RGW Period commit 执行成功')
+        await operationMutation.run(() => mutateResource('/rgw/period/commit', 'POST', parameters), false)
+        window.setTimeout(() => {
+          message.success('RGW Period commit 执行成功')
+        })
       }
     })
   }

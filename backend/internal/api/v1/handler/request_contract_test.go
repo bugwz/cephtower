@@ -15,6 +15,12 @@ func TestMutationContractsRejectUnknownAndWrongType(t *testing.T) {
 	if err := ValidateMutationRequest("service.create", map[string]any{"cluster_id": float64(1), "service_type": "mgr", "placement": map[string]any{"count": float64(2)}}); err != nil {
 		t.Fatal(err)
 	}
+	if err := ValidateMutationRequest("device.zap", map[string]any{"cluster_id": float64(1), "host": "node-1", "device": "/dev/sdb"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateMutationRequest("device.zap", map[string]any{"cluster_id": float64(1), "device_id": "encoded"}); err == nil {
+		t.Fatal("device zap without host and device was accepted")
+	}
 }
 
 func TestMutationContractsCoverAllRegisteredActions(t *testing.T) {
