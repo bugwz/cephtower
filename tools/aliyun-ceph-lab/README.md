@@ -113,7 +113,7 @@ go build -o bin/aliyun-ceph-lab ./cmd
 包含默认远端脚本。
 
 - `hooks/init-node.sh`：每台 ECS 都执行，安装基础依赖、配置主机名、维护 `/etc/hosts`、记录 OSD 候选盘。
-- `hooks/deploy-ceph.sh`：仅第一台 ECS 执行，负责 cephadm bootstrap、主机纳管、OSD、CephFS 和 Dashboard 信息输出。
+- `hooks/deploy-ceph.sh`：仅第一台 ECS 执行，负责 cephadm bootstrap、主机纳管、OSD、CephFS 和 Dashboard 密码配置。
 
 ## 凭证
 
@@ -200,7 +200,9 @@ credentials:
 - 远端日志权限为 `0600`。
 - Ceph 部署只在第一台机器执行，完整部署日志在第一台机器的 `deploy-ceph.sh.log`。
 
-`list` 和 `create` 的最终 JSON 会包含节点 SSH 连接信息和本地日志路径。
+`create` 的最终 JSON 会包含节点 SSH 连接信息、本地日志路径和 `ceph` 连接信息。
+`ceph.cephtower_cluster_create.monitor_addresses` 可直接填写到 CephTower 新增集群
+表单的 MON 地址中，支持 v1、v2 或 v2+v1 addrvec 格式。
 
 ## Hook 参数
 
@@ -270,8 +272,9 @@ sudo bash init-node.sh \
 - `--private-ips`：按同一顺序排列的私网 IP，逗号分隔。
 - `--data-disk-counts`：按同一顺序排列的每台节点数据盘数量，逗号分隔。
 - `--wait-timeout-seconds`：每个就绪等待步骤的超时时间，例如 `900`。
+- `--dashboard-password`：要配置并写入状态 JSON 的 Dashboard admin 密码。
 
-部署脚本使用私网 IP 做 Ceph 内部通信，并输出 `https://<第一台公网IP>:8443/` 作为 Dashboard 外部入口。
+部署脚本使用私网 IP 做 Ceph 内部通信，并配置 `https://<第一台公网IP>:8443/` 作为 Dashboard 外部入口。
 
 部署脚本必须在所有节点的 `init-node.sh` 成功完成后，只在第一台节点执行。示例：
 
@@ -283,7 +286,8 @@ sudo bash deploy-ceph.sh \
   --public-ips 8.8.8.1,8.8.8.2,8.8.8.3 \
   --private-ips 172.31.0.10,172.31.0.11,172.31.0.12 \
   --data-disk-counts 2,2,2 \
-  --wait-timeout-seconds 900
+  --wait-timeout-seconds 900 \
+  --dashboard-password 'CephTower#example'
 ```
 
 手工执行顺序：

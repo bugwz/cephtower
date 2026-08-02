@@ -81,6 +81,59 @@ func TestJoinDataDiskCounts(t *testing.T) {
 	}
 }
 
+func TestBuildCephMonitorsProducesAddrvecForCephTower(t *testing.T) {
+	t.Parallel()
+	dump := monDumpWire{Mons: []monWire{
+		{Name: "node-1", PublicAddrs: struct {
+			Addrvec []monAddrvecWire `json:"addrvec"`
+		}{Addrvec: []monAddrvecWire{
+			{Type: "v2", Addr: "172.31.0.10:3300", Nonce: 0},
+			{Type: "v1", Addr: "172.31.0.10:6789", Nonce: 0},
+		}}},
+		{Name: "node-2", PublicAddrs: struct {
+			Addrvec []monAddrvecWire `json:"addrvec"`
+		}{Addrvec: []monAddrvecWire{
+			{Type: "v2", Addr: "172.31.0.11:3300", Nonce: 0},
+			{Type: "v1", Addr: "172.31.0.11:6789", Nonce: 0},
+		}}},
+	}}
+	monitors, err := buildCephMonitors(dump)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "[v2:172.31.0.10:3300/0,v1:172.31.0.10:6789/0],[v2:172.31.0.11:3300/0,v1:172.31.0.11:6789/0]"
+	if monitors.MonitorAddresses != want {
+		t.Fatalf("MonitorAddresses = %q, want %q", monitors.MonitorAddresses, want)
+	}
+	if monitors.V1Addresses != "v1:172.31.0.10:6789/0,v1:172.31.0.11:6789/0" {
+		t.Fatalf("V1Addresses = %q", monitors.V1Addresses)
+	}
+	if monitors.V2Addresses != "v2:172.31.0.10:3300/0,v2:172.31.0.11:3300/0" {
+		t.Fatalf("V2Addresses = %q", monitors.V2Addresses)
+	}
+	if len(monitors.Endpoints) != 4 || monitors.Endpoints[0].Host != "172.31.0.10" ||
+		monitors.Endpoints[0].Port != 3300 {
+		t.Fatalf("Endpoints = %#v", monitors.Endpoints)
+	}
+}
+
+func TestGenerateDashboardPasswordContainsRequiredClasses(t *testing.T) {
+	t.Parallel()
+	password, err := generateDashboardPassword()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(password) != 20 {
+		t.Fatalf("password length = %d, want 20", len(password))
+	}
+	if !strings.ContainsAny(password, "abcdefghijkmnopqrstuvwxyz") ||
+		!strings.ContainsAny(password, "ABCDEFGHJKLMNPQRSTUVWXYZ") ||
+		!strings.ContainsAny(password, "23456789") ||
+		!strings.ContainsAny(password, "#%+.-_") {
+		t.Fatalf("password does not contain every class: %q", password)
+	}
+}
+
 func TestCleanupLocalStateRemovesEntireDotStateDirectory(t *testing.T) {
 	t.Parallel()
 	stateDir := filepath.Join(t.TempDir(), ".state")

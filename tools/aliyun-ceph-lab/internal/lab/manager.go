@@ -5,12 +5,16 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"math/big"
+	"net"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -150,6 +154,10 @@ func (m *Manager) Create(ctx context.Context) error {
 		return nil
 	}
 	first := current.Nodes[0]
+	dashboardPassword, err := generateDashboardPassword()
+	if err != nil {
+		return fmt.Errorf("generate Ceph Dashboard password: %w", err)
+	}
 	args := []string{
 		"--cluster-name", m.Config.ClusterName,
 		"--bootstrap-node-name", first.Name,
@@ -158,6 +166,7 @@ func (m *Manager) Create(ctx context.Context) error {
 		"--private-ips", joinNodeField(current.Nodes, func(node state.Node) string { return node.PrivateIP }),
 		"--data-disk-counts", joinDataDiskCounts(m.Config.Nodes),
 		"--wait-timeout-seconds", fmt.Sprintf("%d", int(m.Config.WaitTimeoutDuration().Seconds())),
+		"--dashboard-password", dashboardPassword,
 	}
 	logging.Infof("create: running deployment hook on first node %s (%s)", first.Name, first.PublicIP)
 	deploymentStages := time.Duration(2*len(current.Nodes) + 6)
@@ -171,6 +180,17 @@ func (m *Manager) Create(ctx context.Context) error {
 		return fmt.Errorf("run ceph deployment hook: %w", err)
 	}
 	logging.Infof("create: deployment hook completed on %s", first.Name)
+	collectCtx, collectCancel := context.WithTimeout(ctx, m.Config.WaitTimeoutDuration())
+	defer collectCancel()
+	cephInfo, err := m.collectCephInfo(collectCtx, current, deployConnection, dashboardPassword)
+	if err != nil {
+		return fmt.Errorf("collect ceph connection information: %w", err)
+	}
+	current.Ceph = cephInfo
+	if err := state.Save(m.StatePath, current); err != nil {
+		return fmt.Errorf("save ceph connection information: %w", err)
+	}
+	logging.Infof("create: Ceph connection information saved; dashboard=%s mon=%s", cephInfo.Dashboard.URL, cephInfo.Monitors.MonitorAddresses)
 	return nil
 }
 func (m *Manager) List() (*state.State, error) {
@@ -365,6 +385,209 @@ func (m *Manager) refresh(ctx context.Context, current *state.State) error {
 	return nil
 }
 
+type cephCollectWire struct {
+	ClusterName        string      `json:"cluster_name"`
+	FSID               string      `json:"fsid"`
+	ClientAdminKey     string      `json:"client_admin_key"`
+	ClientAdminKeyring string      `json:"client_admin_keyring"`
+	DashboardURL       string      `json:"dashboard_url"`
+	DashboardUsername  string      `json:"dashboard_username"`
+	DashboardPassword  string      `json:"dashboard_password"`
+	MonDump            monDumpWire `json:"mon_dump"`
+}
+
+type monDumpWire struct {
+	Mons []monWire `json:"mons"`
+}
+
+type monWire struct {
+	Name        string `json:"name"`
+	Addr        string `json:"addr"`
+	PublicAddrs struct {
+		Addrvec []monAddrvecWire `json:"addrvec"`
+	} `json:"public_addrs"`
+}
+
+type monAddrvecWire struct {
+	Type  string `json:"type"`
+	Addr  string `json:"addr"`
+	Nonce uint64 `json:"nonce"`
+}
+
+func (m *Manager) collectCephInfo(
+	ctx context.Context,
+	current *state.State,
+	connection *remote.HostConnection,
+	dashboardPassword string,
+) (*state.Ceph, error) {
+	fallbackDashboardURL := ""
+	if len(current.Nodes) > 0 && current.Nodes[0].PublicIP != "" {
+		fallbackDashboardURL = fmt.Sprintf("https://%s:8443/", current.Nodes[0].PublicIP)
+	}
+	command := "CEPH_LAB_DASHBOARD_PASSWORD=" + shellQuote(dashboardPassword) + " " +
+		"CEPH_LAB_DASHBOARD_URL=" + shellQuote(fallbackDashboardURL) + " bash -s"
+	output, err := connection.CombinedOutput(ctx, command, strings.NewReader(cephCollectScript))
+	if err != nil {
+		return nil, err
+	}
+	var wire cephCollectWire
+	if err := json.Unmarshal(output, &wire); err != nil {
+		return nil, fmt.Errorf("decode ceph connection information: %w", err)
+	}
+	if strings.TrimSpace(wire.ClientAdminKey) == "" {
+		return nil, errors.New("client.admin key is empty")
+	}
+	monitors, err := buildCephMonitors(wire.MonDump)
+	if err != nil {
+		return nil, err
+	}
+	clientUsername := "client.admin"
+	clusterName := strings.TrimSpace(wire.ClusterName)
+	if clusterName == "" {
+		clusterName = "ceph"
+	}
+	dashboardUsername := strings.TrimSpace(wire.DashboardUsername)
+	if dashboardUsername == "" {
+		dashboardUsername = "admin"
+	}
+	return &state.Ceph{
+		ClusterName: clusterName,
+		FSID:        strings.TrimSpace(wire.FSID),
+		ClientAdmin: state.CephClientAdmin{
+			Username: clientUsername,
+			Key:      strings.TrimSpace(wire.ClientAdminKey),
+			Keyring:  wire.ClientAdminKeyring,
+		},
+		Dashboard: state.CephDashboard{
+			URL:      strings.TrimSpace(wire.DashboardURL),
+			Username: dashboardUsername,
+			Password: wire.DashboardPassword,
+		},
+		Monitors: monitors,
+		CephTowerClusterCreate: state.CephTowerCreate{
+			Name:             current.ClusterName,
+			MonitorAddresses: monitors.MonitorAddresses,
+			ClientUsername:   clientUsername,
+			ClientKey:        strings.TrimSpace(wire.ClientAdminKey),
+		},
+	}, nil
+}
+
+const cephCollectScript = `set -Eeuo pipefail
+dashboard_url="${CEPH_LAB_DASHBOARD_URL}"
+if [[ -z "${dashboard_url}" ]]; then
+	dashboard_url="$(ceph mgr services --format json | jq -r '.dashboard // empty')"
+fi
+jq -n \
+	--arg cluster_name "ceph" \
+	--arg fsid "$(ceph fsid | tr -d '\r\n')" \
+	--arg client_admin_key "$(ceph auth get-key client.admin | tr -d '\r\n')" \
+	--rawfile client_admin_keyring /etc/ceph/ceph.client.admin.keyring \
+	--arg dashboard_url "${dashboard_url}" \
+	--arg dashboard_username "admin" \
+	--arg dashboard_password "${CEPH_LAB_DASHBOARD_PASSWORD}" \
+	--slurpfile mon_dump <(ceph mon dump --format json) \
+	'{
+		cluster_name: $cluster_name,
+		fsid: $fsid,
+		client_admin_key: $client_admin_key,
+		client_admin_keyring: $client_admin_keyring,
+		dashboard_url: $dashboard_url,
+		dashboard_username: $dashboard_username,
+		dashboard_password: $dashboard_password,
+		mon_dump: $mon_dump[0]
+	}'
+`
+
+func buildCephMonitors(dump monDumpWire) (state.CephMonitors, error) {
+	groups := make([]string, 0, len(dump.Mons))
+	var v1 []string
+	var v2 []string
+	var endpoints []state.CephMonitorEndpoint
+	for _, mon := range dump.Mons {
+		addrvec := mon.PublicAddrs.Addrvec
+		if len(addrvec) == 0 && strings.TrimSpace(mon.Addr) != "" {
+			addrvec = []monAddrvecWire{{Type: "v1", Addr: strings.TrimSpace(mon.Addr)}}
+		}
+		group := make([]string, 0, len(addrvec))
+		for _, item := range addrvec {
+			endpoint, formatted, err := cephMonitorEndpoint(mon.Name, item)
+			if err != nil {
+				return state.CephMonitors{}, err
+			}
+			endpoints = append(endpoints, endpoint)
+			group = append(group, formatted)
+			switch endpoint.Protocol {
+			case "v1":
+				v1 = append(v1, formatted)
+			case "v2":
+				v2 = append(v2, formatted)
+			}
+		}
+		if len(group) == 1 {
+			groups = append(groups, group[0])
+		} else if len(group) > 1 {
+			groups = append(groups, "["+strings.Join(group, ",")+"]")
+		}
+	}
+	if len(groups) == 0 {
+		return state.CephMonitors{}, errors.New("ceph mon dump contained no monitor addresses")
+	}
+	return state.CephMonitors{
+		MonitorAddresses: strings.Join(groups, ","),
+		V1Addresses:      strings.Join(v1, ","),
+		V2Addresses:      strings.Join(v2, ","),
+		Endpoints:        endpoints,
+	}, nil
+}
+
+func cephMonitorEndpoint(name string, item monAddrvecWire) (state.CephMonitorEndpoint, string, error) {
+	protocol := strings.TrimSpace(item.Type)
+	if protocol == "" {
+		protocol = "v1"
+	}
+	if protocol != "v1" && protocol != "v2" {
+		return state.CephMonitorEndpoint{}, "", fmt.Errorf("unsupported monitor protocol %q", protocol)
+	}
+	address := strings.TrimSpace(item.Addr)
+	if address == "" {
+		return state.CephMonitorEndpoint{}, "", fmt.Errorf("monitor %s has empty address", name)
+	}
+	host, port := splitCephAddress(address)
+	formatted := protocol + ":" + address
+	if !strings.Contains(address, "/") {
+		formatted = fmt.Sprintf("%s/%d", formatted, item.Nonce)
+	}
+	return state.CephMonitorEndpoint{
+		Name:     name,
+		Protocol: protocol,
+		Address:  address,
+		Host:     host,
+		Port:     port,
+		Nonce:    item.Nonce,
+	}, formatted, nil
+}
+
+func splitCephAddress(address string) (string, uint16) {
+	value := address
+	if slash := strings.LastIndex(value, "/"); slash >= 0 {
+		value = value[:slash]
+	}
+	host, portText, err := net.SplitHostPort(value)
+	if err != nil {
+		colon := strings.LastIndex(value, ":")
+		if colon <= 0 || strings.Contains(value[:colon], ":") {
+			return strings.Trim(value, "[]"), 0
+		}
+		host, portText = value[:colon], value[colon+1:]
+	}
+	parsed, err := strconv.ParseUint(portText, 10, 16)
+	if err != nil {
+		return strings.Trim(host, "[]"), 0
+	}
+	return strings.Trim(host, "[]"), uint16(parsed)
+}
+
 func (m *Manager) nodeSSHConnection(hostname, host string) state.SSH {
 	connection := state.SSH{
 		Host: host, Port: 22, User: m.Config.SSHUser, Password: m.Config.SSHPassword,
@@ -500,4 +723,44 @@ func generateClusterSSHKey(clusterName string) (string, string, error) {
 	publicAuthorizedKey := ssh.MarshalAuthorizedKey(sshPublic)
 	return base64.StdEncoding.EncodeToString(privatePEM),
 		base64.StdEncoding.EncodeToString(publicAuthorizedKey), nil
+}
+
+func generateDashboardPassword() (string, error) {
+	const length = 20
+	const lower = "abcdefghijkmnopqrstuvwxyz"
+	const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ"
+	const digits = "23456789"
+	const symbols = "#%+-_."
+	alphabet := lower + upper + digits + symbols
+	password := []byte{lower[0], upper[0], digits[0], symbols[0]}
+	for len(password) < length {
+		character, err := randomCharacter(alphabet)
+		if err != nil {
+			return "", err
+		}
+		password = append(password, character)
+	}
+	for index := len(password) - 1; index > 0; index-- {
+		other, err := rand.Int(rand.Reader, big.NewInt(int64(index+1)))
+		if err != nil {
+			return "", err
+		}
+		password[index], password[other.Int64()] = password[other.Int64()], password[index]
+	}
+	return string(password), nil
+}
+
+func randomCharacter(alphabet string) (byte, error) {
+	index, err := rand.Int(rand.Reader, big.NewInt(int64(len(alphabet))))
+	if err != nil {
+		return 0, err
+	}
+	return alphabet[index.Int64()], nil
+}
+
+func shellQuote(value string) string {
+	if value == "" {
+		return "''"
+	}
+	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }

@@ -134,6 +134,36 @@ func TestCreateProbeFailureKeepsCluster(t *testing.T) {
 	}
 }
 
+func TestCreateAcceptsV1V2AndAddrvecMonitorAddresses(t *testing.T) {
+	for _, value := range []string{
+		"v1:192.0.2.1:6789/0,v1:192.0.2.2:6789/0",
+		"v2:192.0.2.1:3300/0,v2:192.0.2.2:3300/0",
+		"[v2:192.0.2.1:3300/0,v1:192.0.2.1:6789/0],[v2:192.0.2.2:3300/0,v1:192.0.2.2:6789/0]",
+	} {
+		t.Run(value, func(t *testing.T) {
+			called := make(chan cephprovider.ClusterAccess, 1)
+			service, _, _ := clusterTestServices(t, recordingProbeProvider{err: errors.New("skip probe"), called: called})
+			cluster, _, err := service.Create(context.Background(), CreateInput{
+				Name: "created", MonitorAddresses: value, ClientUsername: "client.created", ClientKey: "secret",
+			})
+			if err != nil {
+				t.Fatalf("Create() rejected monitor addresses: %v", err)
+			}
+			select {
+			case access := <-called:
+				if access.MonitorAddresses != value {
+					t.Fatalf("probe monitor addresses = %q, want %q", access.MonitorAddresses, value)
+				}
+			case <-time.After(time.Second):
+				t.Fatal("async probe was not started")
+			}
+			if cluster.MonitorAddresses != value {
+				t.Fatalf("stored monitor addresses = %q, want %q", cluster.MonitorAddresses, value)
+			}
+		})
+	}
+}
+
 func waitForObservationError(t *testing.T, db *store.Database, clusterID uint64) (store.CephClusterObservation, error) {
 	return waitForObservation(t, db, clusterID, func(observation store.CephClusterObservation) bool {
 		return observation.LastErrorMessage != nil

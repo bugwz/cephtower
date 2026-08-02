@@ -1890,6 +1890,43 @@
   font-weight: 700;
 }
 
+.mon-address-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mon-address-help-icon {
+  color: #3c7e70;
+  cursor: help;
+  font-size: 14px;
+}
+
+.mon-address-help {
+  display: grid;
+  gap: 8px;
+  max-width: 360px;
+  color: #2a4249;
+  font-size: var(--font-sm);
+}
+
+.mon-address-help code {
+  display: block;
+  padding: 5px 7px;
+  border: 1px solid #dce9e6;
+  border-radius: 6px;
+  background: #fbfefd;
+  color: #1f3a42;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: var(--font-xs);
+  overflow-wrap: anywhere;
+}
+
+.mon-address-help-popover .ant-popover-inner {
+  border: 1px solid #cfe8df;
+  border-radius: 8px;
+}
+
 .form-field-full,
 .cluster-form-full,
 .cluster-form-checkbox {

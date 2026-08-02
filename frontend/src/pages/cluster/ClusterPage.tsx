@@ -1,5 +1,5 @@
-import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, Space, Table, Typography } from 'antd'
+import { InfoCircleOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
+import { Button, Card, Form, Input, Popover, Space, Table, Typography } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -185,26 +185,53 @@ export function ClusterPage() {
             <Form.Item
               className="cluster-form-full"
               name="monitor_host"
-              label="MON 地址"
+              label={<MonitorAddressLabel />}
               rules={[{ required: true, message: '请输入 MON 地址' }]}
             >
-              <Input placeholder="例如：10.0.0.11:6789,10.0.0.12:6789" />
+              <Input placeholder="例如：[v2:10.0.0.11:3300/0,v1:10.0.0.11:6789/0]" />
+            </Form.Item>
+            <Form.Item
+              className="cluster-form-full"
+              name="client_username"
+              label="认证用户"
+              rules={[{ required: true, message: '请输入认证用户' }]}
+            >
+              <Input placeholder="client.admin" />
             </Form.Item>
             <Form.Item
               className="cluster-form-full"
               name="keyring"
-              label="管理员密钥"
-              rules={[{ required: !editingCluster?.command.keyring_content_set, message: '请输入 client.admin 密钥信息' }]}
+              label="认证密钥"
+              rules={[{ required: !editingCluster?.command.keyring_content_set, message: '请输入认证密钥' }]}
             >
               <Input.Password placeholder={editingCluster?.command.keyring_content_set ? '留空则保持已保存密钥' : 'client.admin key'} />
-            </Form.Item>
-            <Form.Item name="client_username" label="Client 用户" rules={[{ required: true, message: '请输入 Client 用户' }]}>
-              <Input placeholder="client.admin" />
             </Form.Item>
           </div>
         </Form>
       </DraggableModal>
     </Page>
+  )
+}
+
+function MonitorAddressLabel() {
+  return (
+    <span className="mon-address-label">
+      MON 地址
+      <Popover
+        placement="right"
+        overlayClassName="mon-address-help-popover"
+        content={
+          <div className="mon-address-help">
+            <div>支持以下格式，可用逗号或空格分隔多个 MON：</div>
+            <code>10.0.0.11:6789,10.0.0.12:6789</code>
+            <code>v2:10.0.0.11:3300/0,v2:10.0.0.12:3300/0</code>
+            <code>[v2:10.0.0.11:3300/0,v1:10.0.0.11:6789/0]</code>
+          </div>
+        }
+      >
+        <InfoCircleOutlined className="mon-address-help-icon" />
+      </Popover>
+    </span>
   )
 }
 

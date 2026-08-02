@@ -191,6 +191,7 @@ type createOutput struct {
 	ExpiresAt   time.Time        `json:"expires_at"`
 	Network     state.Network    `json:"network,omitempty"`
 	Nodes       []createNodeInfo `json:"nodes"`
+	Ceph        *state.Ceph      `json:"ceph,omitempty"`
 }
 
 type createNodeInfo struct {
@@ -233,7 +234,7 @@ func newCreateOutput(current *state.State) createOutput {
 	return createOutput{
 		Version: current.Version, ClusterName: current.ClusterName, RegionID: current.RegionID,
 		CreatedAt: current.CreatedAt, ExpiresAt: current.ExpiresAt, Network: current.Network,
-		Nodes: nodes,
+		Nodes: nodes, Ceph: current.Ceph,
 	}
 }
 

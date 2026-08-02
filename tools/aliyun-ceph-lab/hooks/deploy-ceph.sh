@@ -18,7 +18,7 @@ usage() {
 Usage:
   sudo bash deploy-ceph.sh --cluster-name NAME --bootstrap-node-name NAME \
     --node-names CSV --public-ips CSV --private-ips CSV \
-    --data-disk-counts CSV --wait-timeout-seconds N
+    --data-disk-counts CSV --wait-timeout-seconds N --dashboard-password PASSWORD
 
 Run this script only on the first/bootstrap node after init-node.sh has
 completed successfully on every node.
@@ -31,6 +31,7 @@ Options:
   --private-ips CSV               Comma-separated private IPs in the same order.
   --data-disk-counts CSV          Comma-separated data disk counts in the same order.
   --wait-timeout-seconds N        Timeout for each readiness wait, for example 900.
+  --dashboard-password PASSWORD   Dashboard admin password to configure and record.
   -h, --help                      Show this help.
 
 Example:
@@ -41,7 +42,8 @@ Example:
     --public-ips 8.8.8.1,8.8.8.2,8.8.8.3 \
     --private-ips 172.31.0.10,172.31.0.11,172.31.0.12 \
     --data-disk-counts 2,2,2 \
-    --wait-timeout-seconds 900
+    --wait-timeout-seconds 900 \
+    --dashboard-password 'CephTower#example'
 
 Manual run order:
   1. Copy init-node.sh and deploy-ceph.sh to the nodes.
@@ -129,6 +131,15 @@ parse_args() {
 				CEPH_LAB_WAIT_TIMEOUT_SECONDS="${1#--wait-timeout-seconds=}"
 				shift
 				;;
+			--dashboard-password)
+				require_option_value "$1" "$#"
+				CEPH_LAB_DASHBOARD_PASSWORD="${2:-}"
+				shift 2
+				;;
+			--dashboard-password=*)
+				CEPH_LAB_DASHBOARD_PASSWORD="${1#--dashboard-password=}"
+				shift
+				;;
 			*)
 				errorf 'unknown argument: %s' "$1"
 				usage >&2
@@ -176,6 +187,7 @@ required=(
 	"--private-ips:CEPH_LAB_PRIVATE_IPS"
 	"--data-disk-counts:CEPH_LAB_DATA_DISK_COUNTS"
 	"--wait-timeout-seconds:CEPH_LAB_WAIT_TIMEOUT_SECONDS"
+	"--dashboard-password:CEPH_LAB_DASHBOARD_PASSWORD"
 )
 for item in "${required[@]}"; do
 	option="${item%%:*}"
@@ -296,6 +308,14 @@ ceph_cli_ready() {
 wait_until "Ceph CLI and orchestrator after bootstrap" ceph_cli_ready
 ceph config set global log_to_file true
 ceph config set global mon_cluster_log_to_file true
+dashboard_password_file="$(mktemp)"
+chmod 0600 "${dashboard_password_file}"
+printf '%s' "${CEPH_LAB_DASHBOARD_PASSWORD}" >"${dashboard_password_file}"
+if ! ceph dashboard ac-user-set-password admin -i "${dashboard_password_file}"; then
+	ceph dashboard ac-user-set-password admin "${CEPH_LAB_DASHBOARD_PASSWORD}"
+fi
+rm -f "${dashboard_password_file}"
+ceph mgr services --format json
 
 for index in "${!node_names[@]}"; do
 	if (( index == 0 )); then

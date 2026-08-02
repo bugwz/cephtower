@@ -19,6 +19,7 @@ type State struct {
 	ExpiresAt   time.Time `json:"expires_at"`
 	Network     Network   `json:"network,omitempty"`
 	Nodes       []Node    `json:"nodes"`
+	Ceph        *Ceph     `json:"ceph,omitempty"`
 }
 
 type Network struct {
@@ -46,6 +47,50 @@ type SSH struct {
 	Password          string `json:"password"`
 	PasswordGenerated bool   `json:"password_generated"`
 	LogPath           string `json:"log_path,omitempty"`
+}
+
+type Ceph struct {
+	ClusterName            string          `json:"cluster_name,omitempty"`
+	FSID                   string          `json:"fsid,omitempty"`
+	ClientAdmin            CephClientAdmin `json:"client_admin"`
+	Dashboard              CephDashboard   `json:"dashboard"`
+	Monitors               CephMonitors    `json:"monitors"`
+	CephTowerClusterCreate CephTowerCreate `json:"cephtower_cluster_create"`
+}
+
+type CephClientAdmin struct {
+	Username string `json:"username"`
+	Key      string `json:"key"`
+	Keyring  string `json:"keyring,omitempty"`
+}
+
+type CephDashboard struct {
+	URL      string `json:"url,omitempty"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type CephMonitors struct {
+	MonitorAddresses string                `json:"monitor_addresses"`
+	V1Addresses      string                `json:"v1_addresses,omitempty"`
+	V2Addresses      string                `json:"v2_addresses,omitempty"`
+	Endpoints        []CephMonitorEndpoint `json:"endpoints,omitempty"`
+}
+
+type CephMonitorEndpoint struct {
+	Name     string `json:"name,omitempty"`
+	Protocol string `json:"protocol"`
+	Address  string `json:"address"`
+	Host     string `json:"host,omitempty"`
+	Port     uint16 `json:"port,omitempty"`
+	Nonce    uint64 `json:"nonce,omitempty"`
+}
+
+type CephTowerCreate struct {
+	Name             string `json:"name"`
+	MonitorAddresses string `json:"monitor_addresses"`
+	ClientUsername   string `json:"client_username"`
+	ClientKey        string `json:"client_key"`
 }
 
 func Load(path string) (*State, error) {

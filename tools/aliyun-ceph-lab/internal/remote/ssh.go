@@ -111,6 +111,14 @@ func (c *HostConnection) RunScript(ctx context.Context, scriptPath string, args 
 	return c.ssh.runScript(ctx, c, scriptPath, args)
 }
 
+func (c *HostConnection) CombinedOutput(ctx context.Context, command string, stdin io.Reader) ([]byte, error) {
+	var stdout, stderr bytes.Buffer
+	if err := c.run(ctx, command, stdin, &stdout, &stderr); err != nil {
+		return stdout.Bytes(), fmt.Errorf("%w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return stdout.Bytes(), nil
+}
+
 func (s *SSH) runScript(ctx context.Context, connection *HostConnection, scriptPath string, args []string) error {
 	script, err := os.ReadFile(scriptPath)
 	if err != nil {
