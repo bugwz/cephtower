@@ -112,7 +112,7 @@ func (h *Handler) DeleteHost(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("host", "host.delete", "high")(w, r)
 }
 
-func (h *Handler) ListHostDevices(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ListDevices(w http.ResponseWriter, r *http.Request) {
 	h.ReadResource("device", false)(w, r)
 }
 
@@ -120,7 +120,7 @@ func (h *Handler) RunHostAction(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("host", "host.action", "medium")(w, r)
 }
 
-func (h *Handler) IdentifyHostDevice(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) IdentifyDevice(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("device", "device.identify", "low")(w, r)
 }
 

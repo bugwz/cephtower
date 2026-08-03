@@ -39,7 +39,7 @@ export function HostDetailPage() {
         if (items.length > 0) {
           return items
         }
-        const payload = await listResource('/host/devices')
+        const payload = await listResource('/devices', selectedClusterId)
         return payload.items.filter((device) => textValue(device.hostname ?? device.host, '') === decodedName)
       })
     ])

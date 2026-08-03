@@ -133,16 +133,8 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     children: [
       { key: 'clusterManagement', label: '集群列表', path: '/cluster/cluster', icon: 'cluster', permission: 'cluster' },
       { key: 'poolManagement', label: '存储池管理', path: '/cluster/pool', icon: 'pool', permission: 'cluster' },
-      {
-        key: 'host-management-section',
-        label: '主机管理',
-        path: '/cluster/host',
-        icon: 'host',
-        children: [
-          { key: 'hostManagement', label: '主机列表', path: '/cluster/host', icon: 'host', permission: 'cluster' },
-          { key: 'deviceManagement', label: '设备列表', path: '/cluster/host/device', icon: 'device', permission: 'cluster' }
-        ]
-      },
+      { key: 'hostManagement', label: '主机管理', path: '/cluster/host', icon: 'host', permission: 'cluster' },
+      { key: 'deviceManagement', label: '设备管理', path: '/cluster/device', icon: 'device', permission: 'cluster' },
       { key: 'monManagement', label: 'MON 管理', path: '/cluster/mon', icon: 'mon', permission: 'cluster' },
       { key: 'mgrManagement', label: 'MGR 管理', path: '/cluster/mgr', icon: 'mgr', permission: 'cluster' },
       { key: 'osdManagement', label: 'OSD 管理', path: '/cluster/osd', icon: 'osd', permission: 'cluster' },

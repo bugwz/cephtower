@@ -457,7 +457,7 @@ export function DeviceManagementPage() {
   const navigate = useNavigate()
   const { selectedClusterId } = useClusterContext()
   const deviceTableFilters = useResourceTableFilters({
-    path: '/host/devices',
+    path: '/devices',
     fields: ['hostname', 'path', 'device_id', 'size_display', 'device_type', 'usage_state'],
     clusterId: selectedClusterId
   })
@@ -470,7 +470,7 @@ export function DeviceManagementPage() {
         staleReason: null
       }
     }
-    return listResource('/host/devices', selectedClusterId, {
+    return listResource('/devices', selectedClusterId, {
       filters: deviceTableFilters.filters
     })
   }, [deviceTableFilters.filters, selectedClusterId])
@@ -494,10 +494,10 @@ export function DeviceManagementPage() {
   }
 
   return (
-    <Page title="设备列表" loading={loading} error={error}>
+    <Page title="设备管理" loading={loading} error={error}>
       <Card
         className="page-surface-card"
-        title="设备列表"
+        title="设备管理"
         extra={<Button icon={<ReloadOutlined />} loading={refreshingDevices || loading} onClick={refreshDeviceData}>刷新</Button>}
       >
         <DataTable
@@ -548,7 +548,7 @@ export function DeviceDetailPage() {
         staleReason: null
       }
     }
-    const payload = await listResource('/host/devices', selectedClusterId, { filters: { device_id: [decodedDeviceId] } })
+    const payload = await listResource('/devices', selectedClusterId, { filters: { device_id: [decodedDeviceId] } })
     const rows = payload.items.map(normalizeDeviceRow)
     return {
       device: rows.find((row) => deviceID(row) === decodedDeviceId) ?? null,
@@ -605,7 +605,7 @@ export function DeviceDetailPage() {
     }
     setPendingDeviceAction(pendingKey)
     try {
-      await operationMutation.run(() => mutateResource('/host/device/identify', 'POST', {
+      await operationMutation.run(() => mutateResource('/device/identify', 'POST', {
         cluster_id: selectedClusterId,
         host: currentDeviceHost,
         device: currentDevicePath,
@@ -638,7 +638,7 @@ export function DeviceDetailPage() {
         }
         setPendingDeviceAction(pendingKey)
         try {
-          await operationMutation.run(() => mutateResource('/host/device/zap', 'POST', parameters, { ifMatch: generation }), false)
+          await operationMutation.run(() => mutateResource('/device/zap', 'POST', parameters, { ifMatch: generation }), false)
           window.setTimeout(() => {
             message.success('设备擦除执行成功')
             refresh({ showLoading: false })
@@ -658,7 +658,7 @@ export function DeviceDetailPage() {
           title="基础信息"
           extra={
             <Space className="host-detail-actions">
-              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/cluster/host/device')}>返回</Button>
+              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/cluster/device')}>返回</Button>
               <Button icon={<ReloadOutlined />} loading={refreshingDevice || loading} onClick={refreshDeviceDetail}>刷新</Button>
             </Space>
           }
@@ -943,7 +943,7 @@ function deviceID(row: ApiRecord) {
 }
 
 function deviceDetailPath(id: string) {
-  return `/cluster/host/device/${encodeURIComponent(id)}`
+  return `/cluster/device/${encodeURIComponent(id)}`
 }
 
 function safeDecodeRouteParam(value: string) {

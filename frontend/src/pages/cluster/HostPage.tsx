@@ -45,7 +45,7 @@ export function HostPage() {
     const [hostList, daemons, devices] = await Promise.all([
       listResource('/hosts', selectedClusterId, { filters: hostTableFilters.filters }),
       listDaemons(),
-      listResource('/host/devices').then((payload) => payload.items)
+      listResource('/devices', selectedClusterId).then((payload) => payload.items)
     ])
     return {
       hosts: hostList.items.map((host) => normalizeHostRow(host, daemons, devices)),
@@ -194,13 +194,13 @@ export function HostPage() {
 
   return (
     <Page
-      title="主机列表"
+      title="主机管理"
       loading={loading}
       error={error}
     >
       <Card
         className="page-surface-card"
-        title="主机列表"
+        title="主机管理"
         extra={
           <Space>
             <Button icon={<ReloadOutlined />} loading={refreshingHosts} onClick={refreshHostData}>刷新</Button>

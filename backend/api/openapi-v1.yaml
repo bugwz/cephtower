@@ -4798,6 +4798,923 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /device/identify:
+    post:
+      operationId: post_device_identify
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id]
+              properties:
+                access:
+                  type: string
+                  enum: [r, rw]
+                access_key:
+                  type: string
+                  writeOnly: true
+                account_id:
+                  type: string
+                account_name:
+                  type: string
+                action:
+                  type: string
+                  enum: [pause, resume, start, stop]
+                address:
+                  type: string
+                adrfam:
+                  type: integer
+                application:
+                  type: string
+                applications:
+                  type: array
+                  items:
+                    type: string
+                assume_role_policy:
+                  type: string
+                auth_mode:
+                  type: string
+                  enum: [active-directory, user]
+                binding_id:
+                  type: integer
+                block_size:
+                  type: integer
+                bucket_id:
+                  type: string
+                client:
+                  type: string
+                client_id:
+                  type: string
+                clients:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [iqn]
+                    properties:
+                      iqn:
+                        type: string
+                      luns:
+                        type: array
+                        items:
+                          type: string
+                cluster:
+                  type: string
+                cluster_id:
+                  type: integer
+                code:
+                  type: string
+                comment:
+                  type: string
+                compression_mode:
+                  type: string
+                  enum: [aggressive, force, none, passive]
+                cors:
+                  description: action-specific JSON value
+                create_image:
+                  type: boolean
+                createdBy:
+                  type: string
+                crush-device-class:
+                  type: string
+                crush-failure-domain:
+                  type: string
+                crush_rule:
+                  type: string
+                data_devices:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    all:
+                      type: boolean
+                    model:
+                      type: string
+                    paths:
+                      type: array
+                      items:
+                        type: string
+                    rotational:
+                      type: boolean
+                    size:
+                      type: string
+                    vendor:
+                      type: string
+                destination:
+                  type: string
+                device:
+                  type: string
+                device_class:
+                  type: string
+                device_id:
+                  type: string
+                dhchap_key:
+                  type: string
+                disable_auto_resize:
+                  type: boolean
+                disks:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [image, pool]
+                    properties:
+                      backstore:
+                        type: string
+                      image:
+                        type: string
+                      pool:
+                        type: string
+                display_name:
+                  type: string
+                document:
+                  description: action-specific JSON value
+                email:
+                  type: string
+                enable_ha:
+                  type: boolean
+                enabled:
+                  type: boolean
+                encryption:
+                  description: action-specific JSON value
+                endpoint_id:
+                  type: integer
+                endsAt:
+                  type: string
+                export_id:
+                  type: string
+                failure_domain:
+                  type: string
+                feature_action:
+                  type: string
+                  enum: [disable, enable]
+                features:
+                  type: string
+                field:
+                  type: string
+                filesystem:
+                  type: string
+                flag:
+                  type: string
+                force:
+                  type: boolean
+                fs:
+                  type: string
+                group:
+                  type: string
+                groups:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [name]
+                    properties:
+                      disks:
+                        type: array
+                        items:
+                          type: string
+                      members:
+                        type: array
+                        items:
+                          type: string
+                      name:
+                        type: string
+                host:
+                  type: string
+                host_name:
+                  type: string
+                host_nqn:
+                  type: string
+                host_pattern:
+                  type: string
+                hostname:
+                  type: string
+                id:
+                  type: string
+                image_id:
+                  type: string
+                image_spec:
+                  type: string
+                iqn:
+                  type: string
+                k:
+                  type: integer
+                kind:
+                  type: string
+                  enum: [cors, encryption, lifecycle, policy]
+                label:
+                  type: string
+                lifecycle:
+                  description: action-specific JSON value
+                light:
+                  type: string
+                  enum: [fault, ident]
+                listener_id:
+                  type: string
+                m:
+                  type: integer
+                matchers:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [isEqual, isRegex, name, value]
+                    properties:
+                      isEqual:
+                        type: boolean
+                      isRegex:
+                        type: boolean
+                      name:
+                        type: string
+                      value:
+                        type: string
+                max_buckets:
+                  type: integer
+                max_bytes:
+                  type: integer
+                max_mds:
+                  type: integer
+                max_namespaces:
+                  type: integer
+                mode:
+                  type: string
+                  enum: [disabled, image, pool]
+                model_number:
+                  type: string
+                modules:
+                  type: array
+                  items:
+                    type: string
+                name:
+                  type: string
+                names:
+                  type: array
+                  items:
+                    type: string
+                namespace:
+                  type: string
+                new_size:
+                  type: integer
+                no_auto_visible:
+                  type: boolean
+                no_group_append:
+                  type: boolean
+                nqn:
+                  type: string
+                nsid:
+                  type: string
+                operation:
+                  type: string
+                  enum: [application, quota, rename]
+                osd_id:
+                  type: string
+                osd_ids:
+                  type: array
+                  items:
+                    type: string
+                path:
+                  type: string
+                pg_autoscale_mode:
+                  type: string
+                  enum: [off, on, warn]
+                pg_num:
+                  type: integer
+                placement:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    count:
+                      type: integer
+                    host_pattern:
+                      type: string
+                    hosts:
+                      type: array
+                      items:
+                        type: string
+                    label:
+                      type: string
+                plugin:
+                  type: string
+                policy:
+                  description: action-specific JSON value
+                pool:
+                  type: string
+                pool_type:
+                  type: string
+                  enum: [erasure, replicated]
+                portals:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [host, ip]
+                    properties:
+                      host:
+                        type: string
+                      ip:
+                        type: string
+                pseudo:
+                  type: string
+                psk:
+                  type: string
+                quota_max_bytes:
+                  type: integer
+                quota_max_objects:
+                  type: integer
+                quota_unit:
+                  type: string
+                  enum: [B, GiB, KiB, MiB, PiB, TiB]
+                rbd_image_name:
+                  type: string
+                rbd_pool_name:
+                  type: string
+                read_only:
+                  type: boolean
+                root:
+                  type: string
+                schedule:
+                  type: string
+                secret_key:
+                  type: string
+                  writeOnly: true
+                secure:
+                  type: boolean
+                serial_number:
+                  type: string
+                service_id:
+                  type: string
+                service_type:
+                  type: string
+                  enum: [alertmanager, crash, grafana, mds, mgr, mon, nfs, node-exporter, prometheus, rgw, smb]
+                share_id:
+                  type: string
+                silence_id:
+                  type: string
+                size:
+                  type: integer
+                snap:
+                  type: string
+                startsAt:
+                  type: string
+                state:
+                  type: string
+                  enum: [off, on]
+                subsystem_nqn:
+                  type: string
+                subvolume:
+                  type: string
+                suspended:
+                  type: boolean
+                system:
+                  type: boolean
+                target:
+                  type: string
+                tenant:
+                  type: string
+                traddr:
+                  type: string
+                trsvcid:
+                  type: integer
+                uid:
+                  type: string
+                value:
+                  description: action-specific JSON value
+                verify_host_name:
+                  type: boolean
+                version:
+                  type: string
+                versioning:
+                  type: string
+                  enum: [enabled, suspended]
+                weight:
+                  type: number
+                who:
+                  type: string
+                zap:
+                  type: boolean
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /device/zap:
+    post:
+      operationId: post_device_zap
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id]
+              properties:
+                access:
+                  type: string
+                  enum: [r, rw]
+                access_key:
+                  type: string
+                  writeOnly: true
+                account_id:
+                  type: string
+                account_name:
+                  type: string
+                action:
+                  type: string
+                  enum: [pause, resume, start, stop]
+                address:
+                  type: string
+                adrfam:
+                  type: integer
+                application:
+                  type: string
+                applications:
+                  type: array
+                  items:
+                    type: string
+                assume_role_policy:
+                  type: string
+                auth_mode:
+                  type: string
+                  enum: [active-directory, user]
+                binding_id:
+                  type: integer
+                block_size:
+                  type: integer
+                bucket_id:
+                  type: string
+                client:
+                  type: string
+                client_id:
+                  type: string
+                clients:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [iqn]
+                    properties:
+                      iqn:
+                        type: string
+                      luns:
+                        type: array
+                        items:
+                          type: string
+                cluster:
+                  type: string
+                cluster_id:
+                  type: integer
+                code:
+                  type: string
+                comment:
+                  type: string
+                compression_mode:
+                  type: string
+                  enum: [aggressive, force, none, passive]
+                cors:
+                  description: action-specific JSON value
+                create_image:
+                  type: boolean
+                createdBy:
+                  type: string
+                crush-device-class:
+                  type: string
+                crush-failure-domain:
+                  type: string
+                crush_rule:
+                  type: string
+                data_devices:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    all:
+                      type: boolean
+                    model:
+                      type: string
+                    paths:
+                      type: array
+                      items:
+                        type: string
+                    rotational:
+                      type: boolean
+                    size:
+                      type: string
+                    vendor:
+                      type: string
+                destination:
+                  type: string
+                device:
+                  type: string
+                device_class:
+                  type: string
+                device_id:
+                  type: string
+                dhchap_key:
+                  type: string
+                disable_auto_resize:
+                  type: boolean
+                disks:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [image, pool]
+                    properties:
+                      backstore:
+                        type: string
+                      image:
+                        type: string
+                      pool:
+                        type: string
+                display_name:
+                  type: string
+                document:
+                  description: action-specific JSON value
+                email:
+                  type: string
+                enable_ha:
+                  type: boolean
+                enabled:
+                  type: boolean
+                encryption:
+                  description: action-specific JSON value
+                endpoint_id:
+                  type: integer
+                endsAt:
+                  type: string
+                export_id:
+                  type: string
+                failure_domain:
+                  type: string
+                feature_action:
+                  type: string
+                  enum: [disable, enable]
+                features:
+                  type: string
+                field:
+                  type: string
+                filesystem:
+                  type: string
+                flag:
+                  type: string
+                force:
+                  type: boolean
+                fs:
+                  type: string
+                group:
+                  type: string
+                groups:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [name]
+                    properties:
+                      disks:
+                        type: array
+                        items:
+                          type: string
+                      members:
+                        type: array
+                        items:
+                          type: string
+                      name:
+                        type: string
+                host:
+                  type: string
+                host_name:
+                  type: string
+                host_nqn:
+                  type: string
+                host_pattern:
+                  type: string
+                hostname:
+                  type: string
+                id:
+                  type: string
+                image_id:
+                  type: string
+                image_spec:
+                  type: string
+                iqn:
+                  type: string
+                k:
+                  type: integer
+                kind:
+                  type: string
+                  enum: [cors, encryption, lifecycle, policy]
+                label:
+                  type: string
+                lifecycle:
+                  description: action-specific JSON value
+                light:
+                  type: string
+                  enum: [fault, ident]
+                listener_id:
+                  type: string
+                m:
+                  type: integer
+                matchers:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [isEqual, isRegex, name, value]
+                    properties:
+                      isEqual:
+                        type: boolean
+                      isRegex:
+                        type: boolean
+                      name:
+                        type: string
+                      value:
+                        type: string
+                max_buckets:
+                  type: integer
+                max_bytes:
+                  type: integer
+                max_mds:
+                  type: integer
+                max_namespaces:
+                  type: integer
+                mode:
+                  type: string
+                  enum: [disabled, image, pool]
+                model_number:
+                  type: string
+                modules:
+                  type: array
+                  items:
+                    type: string
+                name:
+                  type: string
+                names:
+                  type: array
+                  items:
+                    type: string
+                namespace:
+                  type: string
+                new_size:
+                  type: integer
+                no_auto_visible:
+                  type: boolean
+                no_group_append:
+                  type: boolean
+                nqn:
+                  type: string
+                nsid:
+                  type: string
+                operation:
+                  type: string
+                  enum: [application, quota, rename]
+                osd_id:
+                  type: string
+                osd_ids:
+                  type: array
+                  items:
+                    type: string
+                path:
+                  type: string
+                pg_autoscale_mode:
+                  type: string
+                  enum: [off, on, warn]
+                pg_num:
+                  type: integer
+                placement:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    count:
+                      type: integer
+                    host_pattern:
+                      type: string
+                    hosts:
+                      type: array
+                      items:
+                        type: string
+                    label:
+                      type: string
+                plugin:
+                  type: string
+                policy:
+                  description: action-specific JSON value
+                pool:
+                  type: string
+                pool_type:
+                  type: string
+                  enum: [erasure, replicated]
+                portals:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [host, ip]
+                    properties:
+                      host:
+                        type: string
+                      ip:
+                        type: string
+                pseudo:
+                  type: string
+                psk:
+                  type: string
+                quota_max_bytes:
+                  type: integer
+                quota_max_objects:
+                  type: integer
+                quota_unit:
+                  type: string
+                  enum: [B, GiB, KiB, MiB, PiB, TiB]
+                rbd_image_name:
+                  type: string
+                rbd_pool_name:
+                  type: string
+                read_only:
+                  type: boolean
+                root:
+                  type: string
+                schedule:
+                  type: string
+                secret_key:
+                  type: string
+                  writeOnly: true
+                secure:
+                  type: boolean
+                serial_number:
+                  type: string
+                service_id:
+                  type: string
+                service_type:
+                  type: string
+                  enum: [alertmanager, crash, grafana, mds, mgr, mon, nfs, node-exporter, prometheus, rgw, smb]
+                share_id:
+                  type: string
+                silence_id:
+                  type: string
+                size:
+                  type: integer
+                snap:
+                  type: string
+                startsAt:
+                  type: string
+                state:
+                  type: string
+                  enum: [off, on]
+                subsystem_nqn:
+                  type: string
+                subvolume:
+                  type: string
+                suspended:
+                  type: boolean
+                system:
+                  type: boolean
+                target:
+                  type: string
+                tenant:
+                  type: string
+                traddr:
+                  type: string
+                trsvcid:
+                  type: integer
+                uid:
+                  type: string
+                value:
+                  description: action-specific JSON value
+                verify_host_name:
+                  type: boolean
+                version:
+                  type: string
+                versioning:
+                  type: string
+                  enum: [enabled, suspended]
+                weight:
+                  type: number
+                who:
+                  type: string
+                zap:
+                  type: boolean
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /devices:
+    get:
+      operationId: get_devices
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id]
+              properties:
+                account_id:
+                  type: string
+                binding_id:
+                  type: integer
+                bucket_id:
+                  type: string
+                client_id:
+                  type: string
+                cluster_id:
+                  type: integer
+                code:
+                  type: string
+                device_id:
+                  type: string
+                endpoint_id:
+                  type: integer
+                export_id:
+                  type: string
+                fs:
+                  type: string
+                group:
+                  type: string
+                host:
+                  type: string
+                host_nqn:
+                  type: string
+                id:
+                  type: string
+                image_id:
+                  type: string
+                image_spec:
+                  type: string
+                iqn:
+                  type: string
+                listener_id:
+                  type: string
+                metric_id:
+                  type: string
+                name:
+                  type: string
+                namespace:
+                  type: string
+                nqn:
+                  type: string
+                nsid:
+                  type: string
+                operation_id:
+                  type: string
+                osd_id:
+                  type: string
+                pool:
+                  type: string
+                service_id:
+                  type: string
+                share_id:
+                  type: string
+                silence_id:
+                  type: string
+                snap:
+                  type: string
+                subsystem_nqn:
+                  type: string
+                subvolume:
+                  type: string
+                uid:
+                  type: string
+                who:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceListResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /endpoint:
     delete:
       operationId: delete_endpoint
@@ -15914,923 +16831,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ActionResponse'
-        default:
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /host/device/identify:
-    post:
-      operationId: post_host_device_identify
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              required: [cluster_id]
-              properties:
-                access:
-                  type: string
-                  enum: [r, rw]
-                access_key:
-                  type: string
-                  writeOnly: true
-                account_id:
-                  type: string
-                account_name:
-                  type: string
-                action:
-                  type: string
-                  enum: [pause, resume, start, stop]
-                address:
-                  type: string
-                adrfam:
-                  type: integer
-                application:
-                  type: string
-                applications:
-                  type: array
-                  items:
-                    type: string
-                assume_role_policy:
-                  type: string
-                auth_mode:
-                  type: string
-                  enum: [active-directory, user]
-                binding_id:
-                  type: integer
-                block_size:
-                  type: integer
-                bucket_id:
-                  type: string
-                client:
-                  type: string
-                client_id:
-                  type: string
-                clients:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [iqn]
-                    properties:
-                      iqn:
-                        type: string
-                      luns:
-                        type: array
-                        items:
-                          type: string
-                cluster:
-                  type: string
-                cluster_id:
-                  type: integer
-                code:
-                  type: string
-                comment:
-                  type: string
-                compression_mode:
-                  type: string
-                  enum: [aggressive, force, none, passive]
-                cors:
-                  description: action-specific JSON value
-                create_image:
-                  type: boolean
-                createdBy:
-                  type: string
-                crush-device-class:
-                  type: string
-                crush-failure-domain:
-                  type: string
-                crush_rule:
-                  type: string
-                data_devices:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    all:
-                      type: boolean
-                    model:
-                      type: string
-                    paths:
-                      type: array
-                      items:
-                        type: string
-                    rotational:
-                      type: boolean
-                    size:
-                      type: string
-                    vendor:
-                      type: string
-                destination:
-                  type: string
-                device:
-                  type: string
-                device_class:
-                  type: string
-                device_id:
-                  type: string
-                dhchap_key:
-                  type: string
-                disable_auto_resize:
-                  type: boolean
-                disks:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [image, pool]
-                    properties:
-                      backstore:
-                        type: string
-                      image:
-                        type: string
-                      pool:
-                        type: string
-                display_name:
-                  type: string
-                document:
-                  description: action-specific JSON value
-                email:
-                  type: string
-                enable_ha:
-                  type: boolean
-                enabled:
-                  type: boolean
-                encryption:
-                  description: action-specific JSON value
-                endpoint_id:
-                  type: integer
-                endsAt:
-                  type: string
-                export_id:
-                  type: string
-                failure_domain:
-                  type: string
-                feature_action:
-                  type: string
-                  enum: [disable, enable]
-                features:
-                  type: string
-                field:
-                  type: string
-                filesystem:
-                  type: string
-                flag:
-                  type: string
-                force:
-                  type: boolean
-                fs:
-                  type: string
-                group:
-                  type: string
-                groups:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [name]
-                    properties:
-                      disks:
-                        type: array
-                        items:
-                          type: string
-                      members:
-                        type: array
-                        items:
-                          type: string
-                      name:
-                        type: string
-                host:
-                  type: string
-                host_name:
-                  type: string
-                host_nqn:
-                  type: string
-                host_pattern:
-                  type: string
-                hostname:
-                  type: string
-                id:
-                  type: string
-                image_id:
-                  type: string
-                image_spec:
-                  type: string
-                iqn:
-                  type: string
-                k:
-                  type: integer
-                kind:
-                  type: string
-                  enum: [cors, encryption, lifecycle, policy]
-                label:
-                  type: string
-                lifecycle:
-                  description: action-specific JSON value
-                light:
-                  type: string
-                  enum: [fault, ident]
-                listener_id:
-                  type: string
-                m:
-                  type: integer
-                matchers:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [isEqual, isRegex, name, value]
-                    properties:
-                      isEqual:
-                        type: boolean
-                      isRegex:
-                        type: boolean
-                      name:
-                        type: string
-                      value:
-                        type: string
-                max_buckets:
-                  type: integer
-                max_bytes:
-                  type: integer
-                max_mds:
-                  type: integer
-                max_namespaces:
-                  type: integer
-                mode:
-                  type: string
-                  enum: [disabled, image, pool]
-                model_number:
-                  type: string
-                modules:
-                  type: array
-                  items:
-                    type: string
-                name:
-                  type: string
-                names:
-                  type: array
-                  items:
-                    type: string
-                namespace:
-                  type: string
-                new_size:
-                  type: integer
-                no_auto_visible:
-                  type: boolean
-                no_group_append:
-                  type: boolean
-                nqn:
-                  type: string
-                nsid:
-                  type: string
-                operation:
-                  type: string
-                  enum: [application, quota, rename]
-                osd_id:
-                  type: string
-                osd_ids:
-                  type: array
-                  items:
-                    type: string
-                path:
-                  type: string
-                pg_autoscale_mode:
-                  type: string
-                  enum: [off, on, warn]
-                pg_num:
-                  type: integer
-                placement:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    count:
-                      type: integer
-                    host_pattern:
-                      type: string
-                    hosts:
-                      type: array
-                      items:
-                        type: string
-                    label:
-                      type: string
-                plugin:
-                  type: string
-                policy:
-                  description: action-specific JSON value
-                pool:
-                  type: string
-                pool_type:
-                  type: string
-                  enum: [erasure, replicated]
-                portals:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [host, ip]
-                    properties:
-                      host:
-                        type: string
-                      ip:
-                        type: string
-                pseudo:
-                  type: string
-                psk:
-                  type: string
-                quota_max_bytes:
-                  type: integer
-                quota_max_objects:
-                  type: integer
-                quota_unit:
-                  type: string
-                  enum: [B, GiB, KiB, MiB, PiB, TiB]
-                rbd_image_name:
-                  type: string
-                rbd_pool_name:
-                  type: string
-                read_only:
-                  type: boolean
-                root:
-                  type: string
-                schedule:
-                  type: string
-                secret_key:
-                  type: string
-                  writeOnly: true
-                secure:
-                  type: boolean
-                serial_number:
-                  type: string
-                service_id:
-                  type: string
-                service_type:
-                  type: string
-                  enum: [alertmanager, crash, grafana, mds, mgr, mon, nfs, node-exporter, prometheus, rgw, smb]
-                share_id:
-                  type: string
-                silence_id:
-                  type: string
-                size:
-                  type: integer
-                snap:
-                  type: string
-                startsAt:
-                  type: string
-                state:
-                  type: string
-                  enum: [off, on]
-                subsystem_nqn:
-                  type: string
-                subvolume:
-                  type: string
-                suspended:
-                  type: boolean
-                system:
-                  type: boolean
-                target:
-                  type: string
-                tenant:
-                  type: string
-                traddr:
-                  type: string
-                trsvcid:
-                  type: integer
-                uid:
-                  type: string
-                value:
-                  description: action-specific JSON value
-                verify_host_name:
-                  type: boolean
-                version:
-                  type: string
-                versioning:
-                  type: string
-                  enum: [enabled, suspended]
-                weight:
-                  type: number
-                who:
-                  type: string
-                zap:
-                  type: boolean
-      responses:
-        '200':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ActionResponse'
-        default:
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /host/device/zap:
-    post:
-      operationId: post_host_device_zap
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              required: [cluster_id]
-              properties:
-                access:
-                  type: string
-                  enum: [r, rw]
-                access_key:
-                  type: string
-                  writeOnly: true
-                account_id:
-                  type: string
-                account_name:
-                  type: string
-                action:
-                  type: string
-                  enum: [pause, resume, start, stop]
-                address:
-                  type: string
-                adrfam:
-                  type: integer
-                application:
-                  type: string
-                applications:
-                  type: array
-                  items:
-                    type: string
-                assume_role_policy:
-                  type: string
-                auth_mode:
-                  type: string
-                  enum: [active-directory, user]
-                binding_id:
-                  type: integer
-                block_size:
-                  type: integer
-                bucket_id:
-                  type: string
-                client:
-                  type: string
-                client_id:
-                  type: string
-                clients:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [iqn]
-                    properties:
-                      iqn:
-                        type: string
-                      luns:
-                        type: array
-                        items:
-                          type: string
-                cluster:
-                  type: string
-                cluster_id:
-                  type: integer
-                code:
-                  type: string
-                comment:
-                  type: string
-                compression_mode:
-                  type: string
-                  enum: [aggressive, force, none, passive]
-                cors:
-                  description: action-specific JSON value
-                create_image:
-                  type: boolean
-                createdBy:
-                  type: string
-                crush-device-class:
-                  type: string
-                crush-failure-domain:
-                  type: string
-                crush_rule:
-                  type: string
-                data_devices:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    all:
-                      type: boolean
-                    model:
-                      type: string
-                    paths:
-                      type: array
-                      items:
-                        type: string
-                    rotational:
-                      type: boolean
-                    size:
-                      type: string
-                    vendor:
-                      type: string
-                destination:
-                  type: string
-                device:
-                  type: string
-                device_class:
-                  type: string
-                device_id:
-                  type: string
-                dhchap_key:
-                  type: string
-                disable_auto_resize:
-                  type: boolean
-                disks:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [image, pool]
-                    properties:
-                      backstore:
-                        type: string
-                      image:
-                        type: string
-                      pool:
-                        type: string
-                display_name:
-                  type: string
-                document:
-                  description: action-specific JSON value
-                email:
-                  type: string
-                enable_ha:
-                  type: boolean
-                enabled:
-                  type: boolean
-                encryption:
-                  description: action-specific JSON value
-                endpoint_id:
-                  type: integer
-                endsAt:
-                  type: string
-                export_id:
-                  type: string
-                failure_domain:
-                  type: string
-                feature_action:
-                  type: string
-                  enum: [disable, enable]
-                features:
-                  type: string
-                field:
-                  type: string
-                filesystem:
-                  type: string
-                flag:
-                  type: string
-                force:
-                  type: boolean
-                fs:
-                  type: string
-                group:
-                  type: string
-                groups:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [name]
-                    properties:
-                      disks:
-                        type: array
-                        items:
-                          type: string
-                      members:
-                        type: array
-                        items:
-                          type: string
-                      name:
-                        type: string
-                host:
-                  type: string
-                host_name:
-                  type: string
-                host_nqn:
-                  type: string
-                host_pattern:
-                  type: string
-                hostname:
-                  type: string
-                id:
-                  type: string
-                image_id:
-                  type: string
-                image_spec:
-                  type: string
-                iqn:
-                  type: string
-                k:
-                  type: integer
-                kind:
-                  type: string
-                  enum: [cors, encryption, lifecycle, policy]
-                label:
-                  type: string
-                lifecycle:
-                  description: action-specific JSON value
-                light:
-                  type: string
-                  enum: [fault, ident]
-                listener_id:
-                  type: string
-                m:
-                  type: integer
-                matchers:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [isEqual, isRegex, name, value]
-                    properties:
-                      isEqual:
-                        type: boolean
-                      isRegex:
-                        type: boolean
-                      name:
-                        type: string
-                      value:
-                        type: string
-                max_buckets:
-                  type: integer
-                max_bytes:
-                  type: integer
-                max_mds:
-                  type: integer
-                max_namespaces:
-                  type: integer
-                mode:
-                  type: string
-                  enum: [disabled, image, pool]
-                model_number:
-                  type: string
-                modules:
-                  type: array
-                  items:
-                    type: string
-                name:
-                  type: string
-                names:
-                  type: array
-                  items:
-                    type: string
-                namespace:
-                  type: string
-                new_size:
-                  type: integer
-                no_auto_visible:
-                  type: boolean
-                no_group_append:
-                  type: boolean
-                nqn:
-                  type: string
-                nsid:
-                  type: string
-                operation:
-                  type: string
-                  enum: [application, quota, rename]
-                osd_id:
-                  type: string
-                osd_ids:
-                  type: array
-                  items:
-                    type: string
-                path:
-                  type: string
-                pg_autoscale_mode:
-                  type: string
-                  enum: [off, on, warn]
-                pg_num:
-                  type: integer
-                placement:
-                  type: object
-                  additionalProperties: false
-                  properties:
-                    count:
-                      type: integer
-                    host_pattern:
-                      type: string
-                    hosts:
-                      type: array
-                      items:
-                        type: string
-                    label:
-                      type: string
-                plugin:
-                  type: string
-                policy:
-                  description: action-specific JSON value
-                pool:
-                  type: string
-                pool_type:
-                  type: string
-                  enum: [erasure, replicated]
-                portals:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: false
-                    required: [host, ip]
-                    properties:
-                      host:
-                        type: string
-                      ip:
-                        type: string
-                pseudo:
-                  type: string
-                psk:
-                  type: string
-                quota_max_bytes:
-                  type: integer
-                quota_max_objects:
-                  type: integer
-                quota_unit:
-                  type: string
-                  enum: [B, GiB, KiB, MiB, PiB, TiB]
-                rbd_image_name:
-                  type: string
-                rbd_pool_name:
-                  type: string
-                read_only:
-                  type: boolean
-                root:
-                  type: string
-                schedule:
-                  type: string
-                secret_key:
-                  type: string
-                  writeOnly: true
-                secure:
-                  type: boolean
-                serial_number:
-                  type: string
-                service_id:
-                  type: string
-                service_type:
-                  type: string
-                  enum: [alertmanager, crash, grafana, mds, mgr, mon, nfs, node-exporter, prometheus, rgw, smb]
-                share_id:
-                  type: string
-                silence_id:
-                  type: string
-                size:
-                  type: integer
-                snap:
-                  type: string
-                startsAt:
-                  type: string
-                state:
-                  type: string
-                  enum: [off, on]
-                subsystem_nqn:
-                  type: string
-                subvolume:
-                  type: string
-                suspended:
-                  type: boolean
-                system:
-                  type: boolean
-                target:
-                  type: string
-                tenant:
-                  type: string
-                traddr:
-                  type: string
-                trsvcid:
-                  type: integer
-                uid:
-                  type: string
-                value:
-                  description: action-specific JSON value
-                verify_host_name:
-                  type: boolean
-                version:
-                  type: string
-                versioning:
-                  type: string
-                  enum: [enabled, suspended]
-                weight:
-                  type: number
-                who:
-                  type: string
-                zap:
-                  type: boolean
-      responses:
-        '200':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ActionResponse'
-        default:
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /host/devices:
-    get:
-      operationId: get_host_devices
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              required: [cluster_id]
-              properties:
-                account_id:
-                  type: string
-                binding_id:
-                  type: integer
-                bucket_id:
-                  type: string
-                client_id:
-                  type: string
-                cluster_id:
-                  type: integer
-                code:
-                  type: string
-                device_id:
-                  type: string
-                endpoint_id:
-                  type: integer
-                export_id:
-                  type: string
-                fs:
-                  type: string
-                group:
-                  type: string
-                host:
-                  type: string
-                host_nqn:
-                  type: string
-                id:
-                  type: string
-                image_id:
-                  type: string
-                image_spec:
-                  type: string
-                iqn:
-                  type: string
-                listener_id:
-                  type: string
-                metric_id:
-                  type: string
-                name:
-                  type: string
-                namespace:
-                  type: string
-                nqn:
-                  type: string
-                nsid:
-                  type: string
-                operation_id:
-                  type: string
-                osd_id:
-                  type: string
-                pool:
-                  type: string
-                service_id:
-                  type: string
-                share_id:
-                  type: string
-                silence_id:
-                  type: string
-                snap:
-                  type: string
-                subsystem_nqn:
-                  type: string
-                subvolume:
-                  type: string
-                uid:
-                  type: string
-                who:
-                  type: string
-      responses:
-        '200':
-          description: success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ResourceListResponse'
         default:
           description: error
           content:

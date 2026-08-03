@@ -166,7 +166,7 @@ export async function listHosts(): Promise<ApiRecord[]> {
 }
 
 export async function listHostDevices(host: string): Promise<ApiRecord[]> {
-  return listResource('/host/devices', requiredClusterId(), { body: { host } }).then((payload) => payload.items)
+  return listResource('/devices', requiredClusterId(), { body: { host } }).then((payload) => payload.items)
 }
 
 export async function listOSDs(): Promise<ApiRecord[]> {

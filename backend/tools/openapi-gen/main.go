@@ -489,7 +489,7 @@ func isItemResourceRoute(route router.Route) bool {
 		"/endpoints",
 		"/audit/events",
 		"/health",
-		"/host/devices",
+		"/devices",
 		"/filesystem/clients",
 		"/filesystem/subvolume/groups",
 		"/filesystem/subvolumes",

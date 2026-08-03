@@ -11,9 +11,6 @@ func hostRoutes(h *handler.Handler) []Route {
 		{"DELETE", "/host", h.DeleteHost},
 		{"GET", "/host/ssh", h.GetHostSSH},
 		{"PATCH", "/host/ssh", h.SaveHostSSH},
-		{"GET", "/host/devices", h.ListHostDevices},
 		{"POST", "/host/action", h.RunHostAction},
-		{"POST", "/host/device/identify", h.IdentifyHostDevice},
-		{"POST", "/host/device/zap", h.ZapDevice},
 	}
 }

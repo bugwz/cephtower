@@ -721,9 +721,9 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 		return segments("osd", pathValue("osd_id"))
 	case "device":
 		if action == "device.zap" {
-			return segments("host", pathValue("host"), "device", deviceResourceID(pathValue("host"), pathValue("device"), pathValue("device_id")), "zap")
+			return segments("device", pathValue("host"), deviceResourceID(pathValue("host"), pathValue("device"), pathValue("device_id")), "zap")
 		}
-		return segments("host", pathValue("host"), "device", pathValue("device_id", "device"), "identify-device")
+		return segments("device", pathValue("host"), pathValue("device_id", "device"), "identify")
 	case "pool":
 		return segments("pool", pathValue("pool", "name"))
 	case "rbd_image":

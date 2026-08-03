@@ -203,7 +203,7 @@ export default function App() {
               <Route key={page.key} path={page.path} element={renderAppPage(page.key)} />
             ))}
             <Route path="/cluster/cluster/:name" element={renderStandaloneAppPage('clusterManagement', <ClusterDetailPage />)} />
-            <Route path="/cluster/host/device/:deviceId" element={renderStandaloneAppPage('deviceManagement', <DeviceDetailPage />)} />
+            <Route path="/cluster/device/:deviceId" element={renderStandaloneAppPage('deviceManagement', <DeviceDetailPage />)} />
             <Route path="/cluster/host/:name" element={renderStandaloneAppPage('hostManagement', <HostDetailPage />)} />
             <Route path="/cluster/mon/:name" element={renderStandaloneAppPage('monManagement', <MonDetailPage />)} />
             <Route path="/cluster/pool/:name" element={renderStandaloneAppPage('poolManagement', <PoolDetailPage />)} />
