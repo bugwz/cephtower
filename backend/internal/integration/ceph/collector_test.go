@@ -98,7 +98,7 @@ func TestCollectStorageAcceptsNumericPoolCrushRuleAndMapsOSDHost(t *testing.T) {
 	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{
 		"collect.osd_tree": []byte(`{"nodes":[{"id":-1,"name":"default","type":"root","children":[-3]},{"id":-3,"name":"node-a","type":"host","children":[0]},{"id":0,"name":"osd.0","type":"osd","status":"up","crush_weight":1.0,"device_class":"ssd"}]}`),
 		"collect.osd_dump": []byte(`{"flags":"","osds":[{"osd":0,"up":1,"in":1}]}`),
-		"collect.pool":     []byte(`[{"pool":1,"pool_name":"pool-a","type":1,"size":3,"min_size":2,"pg_num":8,"pg_placement_num":8,"crush_rule":0}]`),
+		"collect.pool":     []byte(`[{"pool":1,"pool_name":"pool-a","type":1,"size":3,"min_size":2,"pg_num":8,"pg_placement_num":8,"pg_autoscale_mode":"on","application_metadata":{"rbd":{}},"crush_rule":0,"options":{"compression_mode":"none"},"quotas":{"max_bytes":0,"max_objects":0}}]`),
 	}}}
 	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "storage")
 	if err != nil {
@@ -123,6 +123,15 @@ func TestCollectStorageAcceptsNumericPoolCrushRuleAndMapsOSDHost(t *testing.T) {
 			}
 			if payload.CrushRule == nil || *payload.CrushRule != "0" {
 				t.Fatalf("pool crush rule = %v, want 0", payload.CrushRule)
+			}
+			if payload.PGAutoscaleMode == nil || *payload.PGAutoscaleMode != "on" {
+				t.Fatalf("pool autoscale = %v, want on", payload.PGAutoscaleMode)
+			}
+			if len(payload.Applications) != 1 || payload.Applications[0] != "rbd" {
+				t.Fatalf("pool applications = %v, want rbd", payload.Applications)
+			}
+			if payload.CompressionMode == nil || *payload.CompressionMode != "none" {
+				t.Fatalf("pool compression = %v, want none", payload.CompressionMode)
 			}
 			sawPool = true
 		}

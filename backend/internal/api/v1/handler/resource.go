@@ -236,7 +236,8 @@ func (h *Handler) persistResourceMutation(ctx context.Context, clusterID uint64,
 		!strings.HasSuffix(action, ".clone") && !strings.HasSuffix(action, ".restore") {
 		return nil
 	}
-	redacted, err := security.RedactJSON(body)
+	configBody := resourceConfigurationBody(kind, action, body)
+	redacted, err := security.RedactJSON(configBody)
 	if err != nil {
 		return err
 	}
@@ -245,6 +246,53 @@ func (h *Handler) persistResourceMutation(ctx context.Context, clusterID uint64,
 		return err
 	}
 	return h.Database().SaveResourceConfiguration(ctx, clusterID, kind, key, string(configured))
+}
+
+func resourceConfigurationBody(kind, action string, body map[string]any) map[string]any {
+	if kind != "pool" {
+		return body
+	}
+	clean := func(names ...string) map[string]any {
+		result := map[string]any{}
+		for _, name := range names {
+			if value, exists := body[name]; exists {
+				result[name] = value
+			}
+		}
+		return result
+	}
+	if strings.HasSuffix(action, ".create") {
+		return clean("name", "pool_type", "pg_num", "pg_autoscale_mode", "size", "applications", "crush_rule", "compression_mode", "quota_max_bytes", "quota_max_objects", "quota_unit")
+	}
+	if !strings.HasSuffix(action, ".update") {
+		return body
+	}
+	result := clean("applications")
+	if operation, _ := body["operation"].(string); operation == "quota" {
+		if field, _ := body["field"].(string); field == "max_bytes" || field == "max_objects" {
+			if value, exists := body["value"]; exists {
+				result["quota_"+field] = value
+			}
+		}
+		if value, exists := body["quota_unit"]; exists {
+			result["quota_unit"] = value
+		}
+		return result
+	}
+	if operation, _ := body["operation"].(string); operation == "application" {
+		return result
+	}
+	if operation, _ := body["operation"].(string); operation == "rename" {
+		return clean("name")
+	}
+	field, _ := body["field"].(string)
+	if field == "" {
+		return clean("name", "pool_type", "pg_num", "pg_autoscale_mode", "size", "applications", "crush_rule", "compression_mode", "quota_max_bytes", "quota_max_objects", "quota_unit")
+	}
+	if value, exists := body["value"]; exists {
+		result[field] = value
+	}
+	return result
 }
 
 func (h *Handler) checkResourceGeneration(ctx context.Context, clusterID uint64, kind, resourceKey string, generation uint64) error {

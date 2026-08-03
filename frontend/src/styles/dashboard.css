@@ -1195,6 +1195,44 @@
   font-weight: 800;
 }
 
+.pool-management-form .ant-form-item-extra {
+  color: #6b7c83;
+  font-size: var(--font-xs);
+}
+
+.pool-form-help-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pool-form-help-icon {
+  color: #7d9299;
+  font-size: 13px;
+  cursor: help;
+}
+
+.pool-management-form .ant-input-number-group-addon {
+  padding: 0;
+  background: #fbfefd;
+  vertical-align: top;
+}
+
+.pool-quota-unit-select {
+  width: 82px;
+  height: 100%;
+}
+
+.pool-quota-unit-select .ant-select-selector {
+  height: 32px !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.pool-quota-unit-select .ant-select-selection-item {
+  line-height: 32px !important;
+}
+
 .page-header {
   display: flex;
   align-items: flex-start;

@@ -396,14 +396,22 @@ type osdDumpWire struct {
 	} `json:"osds"`
 }
 type poolWire struct {
-	Pool      int64           `json:"pool"`
-	PoolName  string          `json:"pool_name"`
-	Type      int             `json:"type"`
-	Size      *int64          `json:"size"`
-	MinSize   *int64          `json:"min_size"`
-	PGNum     *int64          `json:"pg_num"`
-	PGPNum    *int64          `json:"pg_placement_num"`
-	CrushRule json.RawMessage `json:"crush_rule"`
+	Pool                int64           `json:"pool"`
+	PoolName            string          `json:"pool_name"`
+	Type                int             `json:"type"`
+	Size                *int64          `json:"size"`
+	MinSize             *int64          `json:"min_size"`
+	PGNum               *int64          `json:"pg_num"`
+	PGPNum              *int64          `json:"pg_placement_num"`
+	PGAutoscaleMode     *string         `json:"pg_autoscale_mode"`
+	ApplicationMetadata map[string]any  `json:"application_metadata"`
+	CrushRule           json.RawMessage `json:"crush_rule"`
+	Options             map[string]any  `json:"options"`
+	Quotas              poolQuotaWire   `json:"quotas"`
+}
+type poolQuotaWire struct {
+	MaxBytes   *int64 `json:"max_bytes"`
+	MaxObjects *int64 `json:"max_objects"`
 }
 type fsDumpWire struct {
 	Standbys []struct {
@@ -481,7 +489,11 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		if wire.Type == 3 {
 			kind = "erasure"
 		}
-		payload := cephdomain.Pool{Name: wire.PoolName, ID: wire.Pool, Type: kind, Size: wire.Size, MinSize: wire.MinSize, PGNum: wire.PGNum, PGPNum: wire.PGPNum, CrushRule: rawTextPointer(wire.CrushRule)}
+		payload := cephdomain.Pool{
+			Name: wire.PoolName, ID: wire.Pool, Type: kind, Size: wire.Size, MinSize: wire.MinSize, PGNum: wire.PGNum, PGPNum: wire.PGPNum,
+			PGAutoscaleMode: wire.PGAutoscaleMode, Applications: poolApplications(wire.ApplicationMetadata), ApplicationMetadata: wire.ApplicationMetadata,
+			CrushRule: rawTextPointer(wire.CrushRule), CompressionMode: poolCompressionMode(wire.Options), QuotaMaxBytes: wire.Quotas.MaxBytes, QuotaMaxObjects: wire.Quotas.MaxObjects,
+		}
 		rows = append(rows, Observation{Kind: "pool", NaturalKey: wire.PoolName, Name: wire.PoolName, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	for _, wire := range fs.Filesystems {
@@ -702,6 +714,32 @@ func rawTextPointer(raw json.RawMessage) *string {
 	if value == "" {
 		return nil
 	}
+	return &value
+}
+
+func poolApplications(metadata map[string]any) []string {
+	if len(metadata) == 0 {
+		return nil
+	}
+	applications := make([]string, 0, len(metadata))
+	for name := range metadata {
+		if strings.TrimSpace(name) != "" {
+			applications = append(applications, name)
+		}
+	}
+	sort.Strings(applications)
+	return applications
+}
+
+func poolCompressionMode(options map[string]any) *string {
+	if len(options) == 0 {
+		return nil
+	}
+	value, ok := options["compression_mode"].(string)
+	if !ok || strings.TrimSpace(value) == "" {
+		return nil
+	}
+	value = strings.TrimSpace(value)
 	return &value
 }
 

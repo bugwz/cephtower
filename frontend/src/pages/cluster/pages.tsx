@@ -31,9 +31,11 @@ import { ClusterPage } from './ClusterPage'
 import { HostDetailPage } from './HostDetailPage'
 import { formatBytes, HostPage } from './HostPage'
 import { MonDetailPage } from './MonDetailPage'
+import { PoolDetailPage } from './PoolDetailPage'
+import { PoolManagementPage } from './PoolManagementPage'
 import { ServicePage } from './ServicePage'
 
-export { ClusterDetailPage, ClusterPage, HostDetailPage, HostPage, MonDetailPage, ServicePage }
+export { ClusterDetailPage, ClusterPage, HostDetailPage, HostPage, MonDetailPage, PoolDetailPage, PoolManagementPage, ServicePage }
 
 const { Text } = Typography
 const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }

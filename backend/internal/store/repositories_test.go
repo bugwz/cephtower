@@ -171,6 +171,41 @@ func TestHostReconciliationPreservesUserConfiguration(t *testing.T) {
 	}
 }
 
+func TestSaveResourceConfigurationMergesEntityConfiguration(t *testing.T) {
+	db, err := Open(config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Name: "pool-config.db"}}, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer Close(db)
+	ctx := context.Background()
+	now := time.Now().UTC()
+	cluster := CephCluster{Name: "c", MonitorAddresses: "mon:6789", ClientUsername: "client.test", ClientKey: "cipher", CreatedAt: now, UpdatedAt: now}
+	if err := db.CreateCluster(ctx, &cluster); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.SaveResourceConfiguration(ctx, cluster.ID, "pool", "data", `{"name":"data","applications":["rbd"],"compression_mode":"none"}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.SaveResourceConfiguration(ctx, cluster.ID, "pool", "data", `{"size":"3"}`); err != nil {
+		t.Fatal(err)
+	}
+	row, err := db.FindResource(ctx, cluster.ID, "pool", "data")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var configured map[string]any
+	if err := json.Unmarshal([]byte(*row.ConfiguredData), &configured); err != nil {
+		t.Fatal(err)
+	}
+	if configured["name"] != "data" || configured["compression_mode"] != "none" || configured["size"] != "3" {
+		t.Fatalf("configured data was not merged: %#v", configured)
+	}
+	applications, ok := configured["applications"].([]any)
+	if !ok || len(applications) != 1 || applications[0] != "rbd" {
+		t.Fatalf("applications were not preserved: %#v", configured)
+	}
+}
+
 func resourceRecord(clusterID uint64, key, name string, status *string, now time.Time, payload map[string]any) CephEntityRecord {
 	data, _ := json.Marshal(payload)
 	return CephEntityRecord{

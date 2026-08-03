@@ -1,13 +1,13 @@
 export type PageKey =
   | 'overview'
   | 'clusterManagement'
+  | 'poolManagement'
   | 'hostManagement'
   | 'monManagement'
   | 'mgrManagement'
   | 'osdManagement'
   | 'deviceManagement'
   | 'mdsManagement'
-  | 'blockPools'
   | 'rbdImages'
   | 'rbdSnapshots'
   | 'rbdNamespaces'
@@ -21,7 +21,6 @@ export type PageKey =
   | 'nvmeListeners'
   | 'nvmeHosts'
   | 'nvmeConnections'
-  | 'filePools'
   | 'cephfs'
   | 'cephfsClients'
   | 'subvolumeGroups'
@@ -133,6 +132,7 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     icon: 'cluster',
     children: [
       { key: 'clusterManagement', label: '集群列表', path: '/cluster/cluster', icon: 'cluster', permission: 'cluster' },
+      { key: 'poolManagement', label: '存储池管理', path: '/cluster/pool', icon: 'pool', permission: 'cluster' },
       {
         key: 'host-management-section',
         label: '主机管理',
@@ -155,7 +155,6 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     path: '/block',
     icon: 'block',
     children: [
-      { key: 'blockPools', label: '存储池', path: '/block/pool', icon: 'pool', permission: 'storage' },
       {
         key: 'rbd-image-section',
         label: 'RBD 镜像',
@@ -193,7 +192,6 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     path: '/file',
     icon: 'file',
     children: [
-      { key: 'filePools', label: '存储池', path: '/file/pool', icon: 'pool', permission: 'storage' },
       {
         key: 'cephfs-section',
         label: 'CephFS',

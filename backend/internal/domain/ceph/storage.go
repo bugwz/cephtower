@@ -11,14 +11,20 @@ type OSD struct {
 	Host        *string  `json:"host"`
 }
 type Pool struct {
-	Name      string  `json:"name"`
-	ID        int64   `json:"id"`
-	Type      string  `json:"type"`
-	Size      *int64  `json:"size"`
-	MinSize   *int64  `json:"min_size"`
-	PGNum     *int64  `json:"pg_num"`
-	PGPNum    *int64  `json:"pgp_num"`
-	CrushRule *string `json:"crush_rule"`
+	Name                string         `json:"name"`
+	ID                  int64          `json:"id"`
+	Type                string         `json:"type"`
+	Size                *int64         `json:"size"`
+	MinSize             *int64         `json:"min_size"`
+	PGNum               *int64         `json:"pg_num"`
+	PGPNum              *int64         `json:"pgp_num"`
+	PGAutoscaleMode     *string        `json:"pg_autoscale_mode"`
+	Applications        []string       `json:"applications,omitempty"`
+	ApplicationMetadata map[string]any `json:"application_metadata,omitempty"`
+	CrushRule           *string        `json:"crush_rule"`
+	CompressionMode     *string        `json:"compression_mode"`
+	QuotaMaxBytes       *int64         `json:"quota_max_bytes"`
+	QuotaMaxObjects     *int64         `json:"quota_max_objects"`
 }
 type Filesystem struct {
 	Name   string           `json:"name"`

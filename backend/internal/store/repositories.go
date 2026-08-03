@@ -615,6 +615,7 @@ func (d *Database) SaveResourceConfiguration(ctx context.Context, clusterID uint
 	var existing CephEntityRecord
 	err := d.db.WithContext(ctx).Table(table).Where("cluster_id = ? AND natural_key = ?", clusterID, key).First(&existing).Error
 	if err == nil {
+		configuredData = mergeConfiguredData(existing.ConfiguredData, configuredData)
 		return d.db.WithContext(ctx).Table(table).Where("id = ?", existing.ID).Updates(map[string]any{
 			"configured_data": configuredData, "updated_at": now,
 		}).Error
@@ -642,6 +643,29 @@ func (d *Database) DeleteResourceState(ctx context.Context, clusterID uint64, ki
 	}
 	return d.db.WithContext(ctx).Table(table).Where("cluster_id = ? AND natural_key = ?", clusterID, key).Delete(&CephEntityRecord{}).Error
 }
+
+func mergeConfiguredData(existing *string, incoming string) string {
+	if existing == nil || *existing == "" {
+		return incoming
+	}
+	var current map[string]any
+	if err := json.Unmarshal([]byte(*existing), &current); err != nil {
+		return incoming
+	}
+	var next map[string]any
+	if err := json.Unmarshal([]byte(incoming), &next); err != nil {
+		return incoming
+	}
+	for key, value := range next {
+		current[key] = value
+	}
+	merged, err := json.Marshal(current)
+	if err != nil {
+		return incoming
+	}
+	return string(merged)
+}
+
 func equalStringPointer(left, right *string) bool {
 	if left == nil || right == nil {
 		return left == right

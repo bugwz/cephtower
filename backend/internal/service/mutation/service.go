@@ -385,7 +385,7 @@ func build(request Request, p map[string]any) (command, error) {
 			}
 			return ceph([]string{"osd", "pool", "rename", name, newName}, []string{"osd", "pool", "ls", "detail", "--format", "json"}), nil
 		}
-		field, err := enum(p, "field", "size", "min_size", "pg_num", "pgp_num", "pg_autoscale_mode", "compression_mode")
+		field, err := enum(p, "field", "size", "min_size", "pg_num", "pgp_num", "pg_autoscale_mode", "crush_rule", "compression_mode")
 		if err != nil {
 			return command{}, err
 		}

@@ -2,7 +2,6 @@ import type { ComponentType } from 'react'
 import type { PageKey } from '../navigation'
 import { AuditPage } from './audit/AuditPage'
 import {
-  BlockPoolsPage,
   ImageMirroringPage,
   IscsiPage,
   NvmeConnectionsPage,
@@ -28,7 +27,9 @@ import {
   MgrManagementPage,
   MonDetailPage,
   MonManagementPage,
-  OsdManagementPage
+  OsdManagementPage,
+  PoolDetailPage,
+  PoolManagementPage
 } from './cluster/pages'
 import {
   CephfsAuthorizationsPage,
@@ -36,7 +37,6 @@ import {
   CephfsEntriesPage,
   CephfsPage,
   CephfsSnapshotsPage,
-  FilePoolsPage,
   NfsClustersPage,
   NfsPage,
   SmbClustersPage,
@@ -80,17 +80,18 @@ export { ClusterDetailPage } from './cluster/ClusterDetailPage'
 export { HostDetailPage } from './cluster/HostDetailPage'
 export { DeviceDetailPage } from './cluster/pages'
 export { MonDetailPage } from './cluster/pages'
+export { PoolDetailPage } from './cluster/pages'
 
 export const pageComponents: Record<PageKey, ComponentType> = {
   overview: OverviewPage,
   clusterManagement: ClusterPage,
+  poolManagement: PoolManagementPage,
   hostManagement: HostPage,
   monManagement: MonManagementPage,
   mgrManagement: MgrManagementPage,
   osdManagement: OsdManagementPage,
   deviceManagement: DeviceManagementPage,
   mdsManagement: MdsManagementPage,
-  blockPools: BlockPoolsPage,
   rbdImages: RbdImagesPage,
   rbdSnapshots: RbdSnapshotsPage,
   rbdNamespaces: RbdNamespacesPage,
@@ -104,7 +105,6 @@ export const pageComponents: Record<PageKey, ComponentType> = {
   nvmeListeners: NvmeListenersPage,
   nvmeHosts: NvmeHostsPage,
   nvmeConnections: NvmeConnectionsPage,
-  filePools: FilePoolsPage,
   cephfs: CephfsPage,
   cephfsClients: CephfsClientsPage,
   subvolumeGroups: SubvolumeGroupsPage,

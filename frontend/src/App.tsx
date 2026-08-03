@@ -14,6 +14,7 @@ import {
   HostDetailPage,
   LoginPage,
   MonDetailPage,
+  PoolDetailPage,
   pageComponents,
   type PageKey
 } from './pages'
@@ -205,6 +206,7 @@ export default function App() {
             <Route path="/cluster/host/device/:deviceId" element={renderStandaloneAppPage('deviceManagement', <DeviceDetailPage />)} />
             <Route path="/cluster/host/:name" element={renderStandaloneAppPage('hostManagement', <HostDetailPage />)} />
             <Route path="/cluster/mon/:name" element={renderStandaloneAppPage('monManagement', <MonDetailPage />)} />
+            <Route path="/cluster/pool/:name" element={renderStandaloneAppPage('poolManagement', <PoolDetailPage />)} />
             <Route path="/login" element={<Navigate to={pagePaths.overview} replace />} />
             <Route path="/bootstrap" element={<Navigate to={pagePaths.overview} replace />} />
             <Route path="/password-reset" element={<Navigate to={pagePaths.overview} replace />} />

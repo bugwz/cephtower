@@ -91,8 +91,31 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"crush_rule.create"}, true, map[string]JSONField{"name": stringField(true), "root": stringField(true), "failure_domain": stringField(false), "device_class": stringField(false)})
 	add([]string{"crush_rule.update"}, true, map[string]JSONField{"name": stringField(true)})
 	add([]string{"erasure_code_profile.create"}, true, map[string]JSONField{"name": stringField(true), "plugin": stringField(false), "k": integerField(false), "m": integerField(false), "crush-failure-domain": stringField(false), "crush-device-class": stringField(false)})
-	add([]string{"pool.create"}, true, map[string]JSONField{"name": stringField(true), "pg_num": integerField(false)})
-	add([]string{"pool.update"}, true, map[string]JSONField{"operation": stringField(false, "quota", "application", "rename"), "field": stringField(false), "value": anyField(false), "action": stringField(false, "enable", "disable"), "application": stringField(false), "name": stringField(false)})
+	poolConfiguration := map[string]JSONField{
+		"name":              stringField(true),
+		"pool_type":         stringField(false, "replicated", "erasure"),
+		"pg_num":            integerField(false),
+		"pg_autoscale_mode": stringField(false, "on", "off", "warn"),
+		"size":              integerField(false),
+		"applications":      stringsField(false),
+		"crush_rule":        stringField(false),
+		"compression_mode":  stringField(false, "none", "passive", "aggressive", "force"),
+		"quota_max_bytes":   integerField(false),
+		"quota_max_objects": integerField(false),
+		"quota_unit":        stringField(false, "B", "KiB", "MiB", "GiB", "TiB", "PiB"),
+	}
+	poolUpdate := make(map[string]JSONField, len(poolConfiguration)+5)
+	for field, definition := range poolConfiguration {
+		definition.Required = false
+		poolUpdate[field] = definition
+	}
+	poolUpdate["operation"] = stringField(false, "quota", "application", "rename")
+	poolUpdate["field"] = stringField(false)
+	poolUpdate["value"] = anyField(false)
+	poolUpdate["action"] = stringField(false, "enable", "disable")
+	poolUpdate["application"] = stringField(false)
+	add([]string{"pool.create"}, true, poolConfiguration)
+	add([]string{"pool.update"}, true, poolUpdate)
 	add([]string{"rbd_image.create"}, true, map[string]JSONField{"image_spec": stringField(true), "size": integerField(true)})
 	add([]string{"rbd_image.update"}, true, map[string]JSONField{"size": integerField(false), "name": stringField(false), "feature_action": stringField(false, "enable", "disable"), "features": stringField(false)})
 	add([]string{"rbd_image.action"}, true, map[string]JSONField{"action": stringField(true, "flatten", "sparsify", "copy", "deep-copy", "move-to-trash"), "destination": stringField(false)})
