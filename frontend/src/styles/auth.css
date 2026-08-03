@@ -140,6 +140,12 @@
   border-color: #35ad82;
 }
 
+.login-form .ant-btn-primary,
+.login-form .ant-btn-primary:not(:disabled):hover,
+.login-form .ant-btn-primary:not(:disabled):focus-visible {
+  color: #ffffff;
+}
+
 .login-form .send-code-button.ant-btn {
   width: 132px;
   flex: 0 0 132px;
