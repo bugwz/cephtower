@@ -25,6 +25,14 @@ type Pool struct {
 	CompressionMode     *string        `json:"compression_mode"`
 	QuotaMaxBytes       *int64         `json:"quota_max_bytes"`
 	QuotaMaxObjects     *int64         `json:"quota_max_objects"`
+	RawDetail           map[string]any `json:"raw_detail,omitempty"`
+	Configuration       []PoolConfig   `json:"configuration,omitempty"`
+}
+type PoolConfig struct {
+	Name        string `json:"name"`
+	Value       any    `json:"value"`
+	Source      string `json:"source,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 type Filesystem struct {
 	Name   string           `json:"name"`

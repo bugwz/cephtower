@@ -396,6 +396,7 @@ type osdDumpWire struct {
 	} `json:"osds"`
 }
 type poolWire struct {
+	Raw                 map[string]any  `json:"-"`
 	Pool                int64           `json:"pool"`
 	PoolName            string          `json:"pool_name"`
 	Type                int             `json:"type"`
@@ -413,6 +414,22 @@ type poolQuotaWire struct {
 	MaxBytes   *int64 `json:"max_bytes"`
 	MaxObjects *int64 `json:"max_objects"`
 }
+
+func (wire *poolWire) UnmarshalJSON(data []byte) error {
+	type poolWireAlias poolWire
+	raw, err := rawMap(data)
+	if err != nil {
+		return err
+	}
+	var decoded poolWireAlias
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	*wire = poolWire(decoded)
+	wire.Raw = raw
+	return nil
+}
+
 type fsDumpWire struct {
 	Standbys []struct {
 		Name string `json:"name"`
@@ -493,6 +510,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 			Name: wire.PoolName, ID: wire.Pool, Type: kind, Size: wire.Size, MinSize: wire.MinSize, PGNum: wire.PGNum, PGPNum: wire.PGPNum,
 			PGAutoscaleMode: wire.PGAutoscaleMode, Applications: poolApplications(wire.ApplicationMetadata), ApplicationMetadata: wire.ApplicationMetadata,
 			CrushRule: rawTextPointer(wire.CrushRule), CompressionMode: poolCompressionMode(wire.Options), QuotaMaxBytes: wire.Quotas.MaxBytes, QuotaMaxObjects: wire.Quotas.MaxObjects,
+			RawDetail: poolRawDetail(wire.Raw, kind), Configuration: p.collectPoolConfiguration(ctx, access, wire.PoolName),
 		}
 		rows = append(rows, Observation{Kind: "pool", NaturalKey: wire.PoolName, Name: wire.PoolName, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
@@ -741,6 +759,88 @@ func poolCompressionMode(options map[string]any) *string {
 	}
 	value = strings.TrimSpace(value)
 	return &value
+}
+
+func poolRawDetail(raw map[string]any, poolType string) map[string]any {
+	if len(raw) == 0 {
+		return nil
+	}
+	detail := make(map[string]any, len(raw)+2)
+	for key, value := range raw {
+		detail[key] = value
+	}
+	if poolType != "" {
+		detail["type"] = poolType
+	}
+	if metadata, ok := detail["application_metadata"].(map[string]any); ok && len(metadata) > 0 {
+		detail["application_metadata"] = strings.Join(poolApplications(metadata), ", ")
+	}
+	return detail
+}
+
+func (p *NativeProvider) collectPoolConfiguration(ctx context.Context, access ClusterAccess, pool string) []cephdomain.PoolConfig {
+	if strings.TrimSpace(pool) == "" {
+		return nil
+	}
+	var raw any
+	if !p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_pool_config", []string{"config", "pool", "list", pool, "--format", "json"}, &raw) {
+		return nil
+	}
+	rows := poolConfigRows(raw)
+	configs := make([]cephdomain.PoolConfig, 0, len(rows))
+	for _, row := range rows {
+		name := firstNonEmpty(textField(row, "name"), textField(row, "key"), textField(row, "option"))
+		if name == "" {
+			continue
+		}
+		configs = append(configs, cephdomain.PoolConfig{
+			Name:        name,
+			Value:       firstConfigValue(row, "value", "val", "default"),
+			Source:      firstNonEmpty(textField(row, "source"), textField(row, "level"), textField(row, "who")),
+			Description: firstNonEmpty(textField(row, "description"), textField(row, "desc"), textField(row, "help")),
+		})
+	}
+	sort.Slice(configs, func(i, j int) bool { return configs[i].Name < configs[j].Name })
+	return configs
+}
+
+func poolConfigRows(raw any) []map[string]any {
+	rows := objectList(raw)
+	if len(rows) > 0 {
+		return rows
+	}
+	record, ok := raw.(map[string]any)
+	if !ok {
+		return nil
+	}
+	rows = make([]map[string]any, 0, len(record))
+	for name, value := range record {
+		if nested, ok := value.(map[string]any); ok {
+			row := make(map[string]any, len(nested)+1)
+			for key, item := range nested {
+				row[key] = item
+			}
+			row["name"] = name
+			rows = append(rows, row)
+		} else {
+			rows = append(rows, map[string]any{"name": name, "value": value})
+		}
+	}
+	return rows
+}
+
+func firstConfigValue(record map[string]any, keys ...string) any {
+	for _, key := range keys {
+		value, ok := record[key]
+		if !ok || value == nil {
+			continue
+		}
+		if text, ok := value.(string); ok && strings.TrimSpace(text) == "" {
+			continue
+		}
+		return value
+	}
+	return ""
 }
 
 func rawMap(raw json.RawMessage) (map[string]any, error) {

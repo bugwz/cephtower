@@ -99,6 +99,10 @@ func TestCollectStorageAcceptsNumericPoolCrushRuleAndMapsOSDHost(t *testing.T) {
 		"collect.osd_tree": []byte(`{"nodes":[{"id":-1,"name":"default","type":"root","children":[-3]},{"id":-3,"name":"node-a","type":"host","children":[0]},{"id":0,"name":"osd.0","type":"osd","status":"up","crush_weight":1.0,"device_class":"ssd"}]}`),
 		"collect.osd_dump": []byte(`{"flags":"","osds":[{"osd":0,"up":1,"in":1}]}`),
 		"collect.pool":     []byte(`[{"pool":1,"pool_name":"pool-a","type":1,"size":3,"min_size":2,"pg_num":8,"pg_placement_num":8,"pg_autoscale_mode":"on","application_metadata":{"rbd":{}},"crush_rule":0,"options":{"compression_mode":"none"},"quotas":{"max_bytes":0,"max_objects":0}}]`),
+		"collect.rbd_pool_config": []byte(`[
+			{"name":"rbd_qos_bps_limit","value":"0","source":"global","description":"IO byte limit"},
+			{"key":"rbd_qos_iops_limit","val":100,"who":"pool:pool-a"}
+		]`),
 	}}}
 	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "storage")
 	if err != nil {
@@ -132,6 +136,12 @@ func TestCollectStorageAcceptsNumericPoolCrushRuleAndMapsOSDHost(t *testing.T) {
 			}
 			if payload.CompressionMode == nil || *payload.CompressionMode != "none" {
 				t.Fatalf("pool compression = %v, want none", payload.CompressionMode)
+			}
+			if payload.RawDetail["pool_name"] != "pool-a" || payload.RawDetail["type"] != "replicated" || payload.RawDetail["application_metadata"] != "rbd" {
+				t.Fatalf("pool raw detail = %#v", payload.RawDetail)
+			}
+			if len(payload.Configuration) != 2 || payload.Configuration[0].Name != "rbd_qos_bps_limit" || payload.Configuration[0].Source != "global" {
+				t.Fatalf("pool configuration = %#v", payload.Configuration)
 			}
 			sawPool = true
 		}
