@@ -2,6 +2,7 @@ package mutation
 
 import (
 	"encoding/base64"
+	"reflect"
 	"testing"
 )
 
@@ -106,5 +107,21 @@ func TestRGWKeyArgumentsAreSensitive(t *testing.T) {
 		if _, ok := command.sensitive[index]; !ok {
 			t.Fatalf("argument %d is not marked sensitive", index)
 		}
+	}
+}
+
+func TestPoolCreateBuildsErasurePoolCommand(t *testing.T) {
+	command, err := build(Request{Action: "pool.create", ResourceKey: "pool"}, map[string]any{
+		"name":                 "ec-data",
+		"pg_num":               "32",
+		"pool_type":            "erasure",
+		"erasure_code_profile": "default",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"osd", "pool", "create", "ec-data", "32", "32", "erasure", "default"}
+	if !reflect.DeepEqual(command.args, want) {
+		t.Fatalf("args = %#v, want %#v", command.args, want)
 	}
 }

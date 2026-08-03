@@ -352,7 +352,18 @@ func build(request Request, p map[string]any) (command, error) {
 		if pg == "" {
 			pg = "32"
 		}
-		return ceph([]string{"osd", "pool", "create", name, pg}, []string{"osd", "pool", "ls", "detail", "--format", "json"}), nil
+		args := []string{"osd", "pool", "create", name, pg}
+		poolType := optional(p, "pool_type")
+		if poolType == "erasure" {
+			profile := optional(p, "erasure_code_profile")
+			if profile == "" {
+				profile = "default"
+			}
+			args = append(args, pg, "erasure", profile)
+		} else if poolType == "replicated" {
+			args = append(args, pg, "replicated")
+		}
+		return ceph(args, []string{"osd", "pool", "ls", "detail", "--format", "json"}), nil
 	case "pool.update":
 		name := last(tail)
 		operation := optional(p, "operation")

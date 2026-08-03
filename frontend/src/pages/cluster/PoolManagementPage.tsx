@@ -26,6 +26,7 @@ interface PoolFormValues {
   pg_autoscale_mode: 'on' | 'off' | 'warn'
   size?: number
   applications: string[]
+  erasure_code_profile: string
   crush_rule: string
   compression_mode: 'none' | 'passive' | 'aggressive' | 'force'
   quota_max_bytes?: number
@@ -36,6 +37,7 @@ interface PoolFormValues {
 interface PoolPageData {
   pools: ApiRecord[]
   crushRules: string[]
+  erasureCodeProfiles: string[]
   observedAt?: string | null
   stale: boolean
   staleReason?: string | null
@@ -43,12 +45,14 @@ interface PoolPageData {
 
 const applicationDefaults = ['rbd', 'cephfs', 'rgw', 'mgr']
 const quotaUnits: QuotaUnit[] = ['B', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB']
+const defaultErasureCodeProfile = 'default'
 const defaultPoolValues: PoolFormValues = {
   name: '',
   pool_type: 'replicated',
   pg_autoscale_mode: 'on',
   size: 3,
   applications: [],
+  erasure_code_profile: defaultErasureCodeProfile,
   crush_rule: 'replicated_rule',
   compression_mode: 'none',
   quota_max_bytes: 0,
@@ -69,20 +73,22 @@ export function PoolManagementPage() {
   const operationMutation = useMutationOperation()
   const poolTableFilters = useResourceTableFilters({
     path: '/pools',
-    fields: ['name', 'status', 'type', 'pg_autoscale_mode', 'size', 'applications', 'crush_rule', 'compression_mode'],
+    fields: ['name', 'status', 'type', 'pg_autoscale_mode', 'size', 'applications', 'crush_rule', 'erasure_code_profile', 'compression_mode'],
     clusterId: selectedClusterId
   })
   const loader = useCallback(async (): Promise<PoolPageData> => {
     if (!selectedClusterId) {
-      return { pools: [], crushRules: ['replicated_rule'], observedAt: null, stale: false, staleReason: null }
+      return { pools: [], crushRules: ['replicated_rule'], erasureCodeProfiles: [defaultErasureCodeProfile], observedAt: null, stale: false, staleReason: null }
     }
-    const [poolList, crushRules] = await Promise.all([
+    const [poolList, crushRules, erasureCodeProfiles] = await Promise.all([
       listResource('/pools', selectedClusterId, { filters: poolTableFilters.filters }),
-      listResource('/crush/rules', selectedClusterId).then((payload) => payload.items.map(resourceName).filter(Boolean)).catch(() => [])
+      listResource('/crush/rules', selectedClusterId).then((payload) => payload.items.map(resourceName).filter(Boolean)).catch(() => []),
+      listResource('/erasure/code/profiles', selectedClusterId).then((payload) => payload.items.map(resourceName).filter(Boolean)).catch(() => [])
     ])
     return {
       pools: poolList.items.map(normalizePoolRow),
       crushRules: Array.from(new Set(['replicated_rule', ...crushRules])),
+      erasureCodeProfiles: Array.from(new Set([defaultErasureCodeProfile, ...erasureCodeProfiles])),
       observedAt: poolList.observedAt,
       stale: poolList.stale,
       staleReason: poolList.staleReason
@@ -94,6 +100,10 @@ export function PoolManagementPage() {
     return Array.from(new Set([...applicationDefaults, ...fromRows])).map((value) => ({ label: value, value }))
   }, [data?.pools])
   const crushRuleOptions = useMemo(() => (data?.crushRules ?? ['replicated_rule']).map((value) => ({ label: value, value })), [data?.crushRules])
+  const erasureCodeProfileOptions = useMemo(
+    () => (data?.erasureCodeProfiles ?? [defaultErasureCodeProfile]).map((value) => ({ label: value, value })),
+    [data?.erasureCodeProfiles]
+  )
 
   async function refreshPoolData() {
     if (refreshingPools) {
@@ -217,7 +227,7 @@ export function PoolManagementPage() {
         maskClosable={false}
       >
         <Form form={form} className="cluster-form pool-management-form" layout="vertical" onFinish={submitPool}>
-          <div className="cluster-form-grid">
+          <div className="pool-form-section">
             <Form.Item name="name" label="存储池名称" rules={[{ required: true, message: '请输入存储池名称' }]}>
               <Input disabled={formMode === 'edit'} placeholder="请输入存储池名称" />
             </Form.Item>
@@ -232,8 +242,29 @@ export function PoolManagementPage() {
               />
             </Form.Item>
             <Form.Item
+              name="applications"
+              label={<HelpLabel label="应用标记" title="存储池在使用前需要关联至少一个应用。" />}
+              rules={[{ required: true, type: 'array', min: 1, message: '请选择应用标记' }]}
+            >
+              <Select mode="multiple" allowClear placeholder="请选择应用标记" options={applicationOptions} />
+            </Form.Item>
+            {poolType === 'replicated' ? (
+              <div className="pool-replicated-fields">
+                <Form.Item name="crush_rule" label="数据分布规则集" rules={[{ required: true, message: '请选择数据分布规则集' }]}>
+                  <Select showSearch placeholder="请选择数据分布规则集" options={crushRuleOptions} />
+                </Form.Item>
+                <Form.Item name="size" label="副本数" rules={[{ required: true, message: '请输入副本数' }]}>
+                  <InputNumber min={1} precision={0} className="full-width-control" placeholder="副本数" />
+                </Form.Item>
+              </div>
+            ) : (
+              <Form.Item name="erasure_code_profile" label="纠删码配置" rules={[{ required: true, message: '请选择纠删码配置' }]}>
+                <Select showSearch placeholder="请选择纠删码配置" options={erasureCodeProfileOptions} />
+              </Form.Item>
+            )}
+            <Form.Item
               name="pg_autoscale_mode"
-              label={<HelpLabel label="PG 自动伸缩" title="开启后系统会根据存储池使用情况自动调整 PG 数量。" />}
+              label={<HelpLabel label="PG 自动伸缩" title="为当前存储池启用 PG 数量自动调整。PG 用于在 Ceph 中分布数据，自动伸缩会随每个存储池的使用情况调整 PG 数量。" />}
               rules={[{ required: true, message: '请选择 PG 自动伸缩模式' }]}
             >
               <Select
@@ -244,21 +275,6 @@ export function PoolManagementPage() {
                   { label: '仅告警', value: 'warn' }
                 ]}
               />
-            </Form.Item>
-            <Form.Item name="size" label="副本数" rules={[{ required: true, message: '请输入副本数' }]}>
-              <InputNumber
-                min={1}
-                precision={0}
-                disabled={poolType !== 'replicated'}
-                className="full-width-control"
-                placeholder={poolType === 'replicated' ? '请输入副本数' : '纠删码池无需设置副本数'}
-              />
-            </Form.Item>
-            <Form.Item className="cluster-form-full" name="applications" label="应用标记" rules={[{ required: true, type: 'array', min: 1, message: '请选择应用标记' }]}>
-              <Select mode="multiple" allowClear placeholder="请选择应用标记" options={applicationOptions} />
-            </Form.Item>
-            <Form.Item name="crush_rule" label="数据分布规则集" rules={[{ required: true, message: '请选择数据分布规则集' }]}>
-              <Select showSearch placeholder="请选择数据分布规则集" options={crushRuleOptions} />
             </Form.Item>
             <Form.Item name="compression_mode" label={<HelpLabel label="压缩策略" title="不压缩表示该存储池不会主动压缩对象数据。" />}>
               <Select
@@ -271,12 +287,12 @@ export function PoolManagementPage() {
                 ]}
               />
             </Form.Item>
-            <Form.Item name="quota_max_bytes" label={<HelpLabel label="最大容量" title="留空或设置为 0 表示不限制容量。" />}>
+            <Form.Item name="quota_max_bytes" label={<HelpLabel label="最大容量" title="留空或设置为 0 表示不启用该配额。有效配额必须大于 0。" />}>
               <InputNumber
                 min={0}
                 precision={0}
                 className="full-width-control"
-                placeholder="请输入最大容量"
+                placeholder="0"
                 addonAfter={(
                   <Form.Item name="quota_unit" noStyle>
                     <Select className="pool-quota-unit-select" options={quotaUnits.map((value) => ({ label: value, value }))} />
@@ -284,8 +300,8 @@ export function PoolManagementPage() {
                 )}
               />
             </Form.Item>
-            <Form.Item name="quota_max_objects" label={<HelpLabel label="最大对象数量" title="留空或设置为 0 表示不限制对象数量。" />}>
-              <InputNumber min={0} precision={0} className="full-width-control" placeholder="请输入最大对象数量" />
+            <Form.Item name="quota_max_objects" label={<HelpLabel label="最大对象数量" title="留空或设置为 0 表示不启用该配额。有效配额必须大于 0。" />}>
+              <InputNumber min={0} precision={0} className="full-width-control" placeholder="0" />
             </Form.Item>
           </div>
         </Form>
@@ -323,6 +339,7 @@ function poolInitialValues(row: ApiRecord, crushRules: string[] = []): PoolFormV
     pg_autoscale_mode: poolAutoscaleMode(row),
     size: numberValue(row.size) ?? 3,
     applications: poolApplications(row),
+    erasure_code_profile: textValue(row.erasure_code_profile, defaultErasureCodeProfile),
     crush_rule: readableCrushRule(row.crush_rule, crushRules),
     compression_mode: poolCompressionMode(row),
     quota_max_bytes: fromBytes(quotaBytes, unit),
@@ -340,7 +357,8 @@ function poolCreateBody(values: PoolFormValues, clusterId: number): ApiRecord {
     pg_autoscale_mode: values.pg_autoscale_mode,
     size: values.pool_type === 'replicated' ? Math.trunc(values.size ?? 3) : undefined,
     applications: values.applications ?? [],
-    crush_rule: values.crush_rule,
+    erasure_code_profile: values.pool_type === 'erasure' ? values.erasure_code_profile : undefined,
+    crush_rule: values.pool_type === 'replicated' ? values.crush_rule : undefined,
     compression_mode: values.compression_mode,
     quota_max_bytes: quotaBytes(values.quota_max_bytes, values.quota_unit),
     quota_unit: values.quota_unit,

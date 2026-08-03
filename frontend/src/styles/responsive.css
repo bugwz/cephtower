@@ -227,6 +227,14 @@ body .app-shell .sidebar-menu .ant-menu-submenu-title {
     grid-template-columns: 1fr;
   }
 
+  .pool-form-section {
+    grid-template-columns: 1fr;
+  }
+
+  .pool-replicated-fields {
+    grid-template-columns: 1fr;
+  }
+
   .page-header {
     display: grid;
     gap: 8px;

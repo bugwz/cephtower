@@ -262,7 +262,7 @@ func resourceConfigurationBody(kind, action string, body map[string]any) map[str
 		return result
 	}
 	if strings.HasSuffix(action, ".create") {
-		return clean("name", "pool_type", "pg_num", "pg_autoscale_mode", "size", "applications", "crush_rule", "compression_mode", "quota_max_bytes", "quota_max_objects", "quota_unit")
+		return clean("name", "pool_type", "pg_num", "pg_autoscale_mode", "size", "applications", "erasure_code_profile", "crush_rule", "compression_mode", "quota_max_bytes", "quota_max_objects", "quota_unit")
 	}
 	if !strings.HasSuffix(action, ".update") {
 		return body
@@ -287,7 +287,7 @@ func resourceConfigurationBody(kind, action string, body map[string]any) map[str
 	}
 	field, _ := body["field"].(string)
 	if field == "" {
-		return clean("name", "pool_type", "pg_num", "pg_autoscale_mode", "size", "applications", "crush_rule", "compression_mode", "quota_max_bytes", "quota_max_objects", "quota_unit")
+		return clean("name", "pool_type", "pg_num", "pg_autoscale_mode", "size", "applications", "erasure_code_profile", "crush_rule", "compression_mode", "quota_max_bytes", "quota_max_objects", "quota_unit")
 	}
 	if value, exists := body["value"]; exists {
 		result[field] = value

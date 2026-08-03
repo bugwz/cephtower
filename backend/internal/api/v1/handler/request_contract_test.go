@@ -22,18 +22,19 @@ func TestMutationContractsRejectUnknownAndWrongType(t *testing.T) {
 		t.Fatal("device zap without host and device was accepted")
 	}
 	if err := ValidateMutationRequest("pool.create", map[string]any{
-		"cluster_id":        float64(1),
-		"name":              "data",
-		"pool_type":         "replicated",
-		"pg_num":            float64(32),
-		"pg_autoscale_mode": "on",
-		"size":              float64(3),
-		"applications":      []any{"rbd"},
-		"crush_rule":        "replicated_rule",
-		"compression_mode":  "none",
-		"quota_max_bytes":   float64(0),
-		"quota_unit":        "GiB",
-		"quota_max_objects": float64(0),
+		"cluster_id":           float64(1),
+		"name":                 "data",
+		"pool_type":            "replicated",
+		"pg_num":               float64(32),
+		"pg_autoscale_mode":    "on",
+		"size":                 float64(3),
+		"applications":         []any{"rbd"},
+		"erasure_code_profile": "default",
+		"crush_rule":           "replicated_rule",
+		"compression_mode":     "none",
+		"quota_max_bytes":      float64(0),
+		"quota_unit":           "GiB",
+		"quota_max_objects":    float64(0),
 	}); err != nil {
 		t.Fatal(err)
 	}

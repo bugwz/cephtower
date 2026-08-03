@@ -92,17 +92,18 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"crush_rule.update"}, true, map[string]JSONField{"name": stringField(true)})
 	add([]string{"erasure_code_profile.create"}, true, map[string]JSONField{"name": stringField(true), "plugin": stringField(false), "k": integerField(false), "m": integerField(false), "crush-failure-domain": stringField(false), "crush-device-class": stringField(false)})
 	poolConfiguration := map[string]JSONField{
-		"name":              stringField(true),
-		"pool_type":         stringField(false, "replicated", "erasure"),
-		"pg_num":            integerField(false),
-		"pg_autoscale_mode": stringField(false, "on", "off", "warn"),
-		"size":              integerField(false),
-		"applications":      stringsField(false),
-		"crush_rule":        stringField(false),
-		"compression_mode":  stringField(false, "none", "passive", "aggressive", "force"),
-		"quota_max_bytes":   integerField(false),
-		"quota_max_objects": integerField(false),
-		"quota_unit":        stringField(false, "B", "KiB", "MiB", "GiB", "TiB", "PiB"),
+		"name":                 stringField(true),
+		"pool_type":            stringField(false, "replicated", "erasure"),
+		"pg_num":               integerField(false),
+		"pg_autoscale_mode":    stringField(false, "on", "off", "warn"),
+		"size":                 integerField(false),
+		"applications":         stringsField(false),
+		"erasure_code_profile": stringField(false),
+		"crush_rule":           stringField(false),
+		"compression_mode":     stringField(false, "none", "passive", "aggressive", "force"),
+		"quota_max_bytes":      integerField(false),
+		"quota_max_objects":    integerField(false),
+		"quota_unit":           stringField(false, "B", "KiB", "MiB", "GiB", "TiB", "PiB"),
 	}
 	poolUpdate := make(map[string]JSONField, len(poolConfiguration)+5)
 	for field, definition := range poolConfiguration {
