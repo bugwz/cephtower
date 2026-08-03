@@ -12,7 +12,7 @@ type DragState = {
 const passthroughModalRender = (node: ReactNode) => node
 
 export function DraggableModal(props: ModalProps) {
-  const { modalRender, afterClose, ...rest } = props
+  const { modalRender, afterClose, className, width = 640, ...rest } = props
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const dragState = useRef<DragState | null>(null)
 
@@ -26,6 +26,8 @@ export function DraggableModal(props: ModalProps) {
     <Modal
       {...rest}
       afterClose={resetPosition}
+      className={modalClassName(className)}
+      width={width}
       modalRender={(node) =>
         renderDraggableModal(
           modalRender ? modalRender(node) : passthroughModalRender(node),
@@ -36,6 +38,10 @@ export function DraggableModal(props: ModalProps) {
       }
     />
   )
+}
+
+function modalClassName(className?: string) {
+  return ['app-form-modal', className].filter(Boolean).join(' ')
 }
 
 export function draggableModalRender(node: ReactNode) {
