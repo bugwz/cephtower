@@ -155,6 +155,20 @@ func TestHostReconciliationPreservesUserConfiguration(t *testing.T) {
 	if stored.DiscoveredData != discovered || stored.Status == nil || *stored.Status != status {
 		t.Fatalf("host discovery was not updated: %#v", stored)
 	}
+	rows, err := db.ListResources(ctx, cluster.ID, ResourceFilter{Kind: "host"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 {
+		t.Fatalf("host resources = %d, want 1", len(rows))
+	}
+	var configured map[string]any
+	if err := json.Unmarshal([]byte(*rows[0].ConfiguredData), &configured); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := configured["address"]; ok {
+		t.Fatalf("empty host address should not override discovered address: %#v", configured)
+	}
 }
 
 func resourceRecord(clusterID uint64, key, name string, status *string, now time.Time, payload map[string]any) CephEntityRecord {

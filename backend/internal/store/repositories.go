@@ -409,7 +409,10 @@ func hostEntityRecord(host CephHost) CephEntityRecord {
 	if host.ConfiguredData != nil {
 		_ = json.Unmarshal([]byte(*host.ConfiguredData), &configuredValues)
 	}
-	configuredValues["hostname"], configuredValues["address"] = host.Hostname, host.Address
+	configuredValues["hostname"] = host.Hostname
+	if host.Address != nil && strings.TrimSpace(*host.Address) != "" {
+		configuredValues["address"] = strings.TrimSpace(*host.Address)
+	}
 	configuredValues["ssh_address"], configuredValues["ssh_port"] = host.SSHAddress, host.SSHPort
 	configuredValues["ssh_user"], configuredValues["ssh_auth_method"] = host.SSHUser, host.SSHAuthMethod
 	configuredValues["host_ssh_configured"], configuredValues["notes"] = host.SSHAddress != "" && host.SSHUser != "", host.Notes
