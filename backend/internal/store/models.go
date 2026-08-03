@@ -155,30 +155,26 @@ type CephClusterCapability struct {
 func (CephClusterCapability) TableName() string { return "ceph_cluster_capability" }
 
 type CephHost struct {
-	ID                     uint64      `gorm:"primaryKey;autoIncrement"`
-	ClusterID              uint64      `gorm:"not null;uniqueIndex:uq_ceph_host,priority:1;index:idx_ceph_host_cluster,priority:1"`
-	Cluster                CephCluster `gorm:"constraint:OnDelete:CASCADE"`
-	Hostname               string      `gorm:"size:512;not null;uniqueIndex:uq_ceph_host,priority:2;index:idx_ceph_host_cluster,priority:2"`
-	SSHAddress             string      `gorm:"column:ssh_address;size:255;not null"`
-	SSHPort                uint16      `gorm:"column:ssh_port;not null;default:22"`
-	SSHUser                string      `gorm:"column:ssh_user;size:128;not null"`
-	SSHAuthMethod          string      `gorm:"column:ssh_auth_method;size:32;not null"`
-	SSHPasswordSecret      *string     `gorm:"column:ssh_password_secret;type:text"`
-	SSHPrivateKeySecret    *string     `gorm:"column:ssh_private_key_secret;type:text"`
-	SSHKeyPassphraseSecret *string     `gorm:"column:ssh_key_passphrase_secret;type:text"`
-	Notes                  *string     `gorm:"type:text"`
-	Address                *string     `gorm:"size:255"`
-	Status                 *string     `gorm:"size:64;index:idx_ceph_host_status"`
-	ConfiguredData         *string     `json:"-" gorm:"column:configured_data;type:text"`
-	DiscoveredData         string      `json:"-" gorm:"column:discovered_data;type:text;not null;default:'{}'"`
-	Generation             uint64      `gorm:"not null;default:0"`
-	ResourceVersion        uint64      `gorm:"not null;default:1"`
-	Source                 string      `gorm:"size:32;not null;default:''"`
-	SourceVersion          *string     `gorm:"size:128"`
-	ObservedAt             *time.Time  `gorm:"index:idx_ceph_host_observed"`
-	StaleAt                *time.Time  `gorm:"index:idx_ceph_host_stale"`
-	CreatedAt              time.Time   `gorm:"not null"`
-	UpdatedAt              time.Time   `gorm:"not null"`
+	ID                uint64      `gorm:"primaryKey;autoIncrement"`
+	ClusterID         uint64      `gorm:"not null;uniqueIndex:uq_ceph_host,priority:1;index:idx_ceph_host_cluster,priority:1"`
+	Cluster           CephCluster `gorm:"constraint:OnDelete:CASCADE"`
+	Hostname          string      `gorm:"size:512;not null;uniqueIndex:uq_ceph_host,priority:2;index:idx_ceph_host_cluster,priority:2"`
+	SSHAddress        string      `gorm:"column:ssh_address;size:255;not null"`
+	SSHPort           uint16      `gorm:"column:ssh_port;not null;default:22"`
+	SSHUser           string      `gorm:"column:ssh_user;size:128;not null"`
+	SSHPasswordSecret *string     `gorm:"column:ssh_password_secret;type:text"`
+	Address           *string     `gorm:"size:255"`
+	Status            *string     `gorm:"size:64;index:idx_ceph_host_status"`
+	ConfiguredData    *string     `json:"-" gorm:"column:configured_data;type:text"`
+	DiscoveredData    string      `json:"-" gorm:"column:discovered_data;type:text;not null;default:'{}'"`
+	Generation        uint64      `gorm:"not null;default:0"`
+	ResourceVersion   uint64      `gorm:"not null;default:1"`
+	Source            string      `gorm:"size:32;not null;default:''"`
+	SourceVersion     *string     `gorm:"size:128"`
+	ObservedAt        *time.Time  `gorm:"index:idx_ceph_host_observed"`
+	StaleAt           *time.Time  `gorm:"index:idx_ceph_host_stale"`
+	CreatedAt         time.Time   `gorm:"not null"`
+	UpdatedAt         time.Time   `gorm:"not null"`
 }
 
 func (CephHost) TableName() string { return "ceph_host" }

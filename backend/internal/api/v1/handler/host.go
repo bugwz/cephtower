@@ -15,17 +15,14 @@ type hostSSHRequest struct {
 }
 
 type hostSSHSaveRequest struct {
-	ClusterID        uint64  `json:"cluster_id"`
-	Hostname         string  `json:"hostname,omitempty"`
-	Host             string  `json:"host,omitempty"`
-	SSHAddress       string  `json:"ssh_address"`
-	SSHPort          uint16  `json:"ssh_port,omitempty"`
-	SSHUser          string  `json:"ssh_user"`
-	SSHAuthMethod    string  `json:"ssh_auth_method"`
-	SSHPassword      *string `json:"ssh_password,omitempty"`
-	SSHPrivateKey    *string `json:"ssh_private_key,omitempty"`
-	SSHKeyPassphrase *string `json:"ssh_key_passphrase,omitempty"`
-	Notes            *string `json:"notes,omitempty"`
+	ClusterID     uint64   `json:"cluster_id"`
+	Hostname      string   `json:"hostname,omitempty"`
+	Host          string   `json:"host,omitempty"`
+	SSHAddress    string   `json:"ssh_address"`
+	SSHPort       uint16   `json:"ssh_port,omitempty"`
+	SSHUser       string   `json:"ssh_user"`
+	SSHPassword   *string  `json:"ssh_password,omitempty"`
+	SyncHostnames []string `json:"sync_hostnames,omitempty"`
 }
 
 func (h *Handler) GetHostSSH(w http.ResponseWriter, r *http.Request) {
@@ -75,16 +72,13 @@ func (h *Handler) SaveHostSSH(w http.ResponseWriter, r *http.Request) {
 	auditClusterID := request.ClusterID
 	annotateAudit(r, "host_ssh.save", "host", "host/"+hostname+"/ssh", "medium", &auditClusterID)
 	view, err := h.HostProfiles.Save(r.Context(), hostprofileservice.SaveInput{
-		ClusterID:        request.ClusterID,
-		Hostname:         hostname,
-		SSHAddress:       request.SSHAddress,
-		SSHPort:          request.SSHPort,
-		SSHUser:          request.SSHUser,
-		SSHAuthMethod:    request.SSHAuthMethod,
-		SSHPassword:      request.SSHPassword,
-		SSHPrivateKey:    request.SSHPrivateKey,
-		SSHKeyPassphrase: request.SSHKeyPassphrase,
-		Notes:            request.Notes,
+		ClusterID:     request.ClusterID,
+		Hostname:      hostname,
+		SSHAddress:    request.SSHAddress,
+		SSHPort:       request.SSHPort,
+		SSHUser:       request.SSHUser,
+		SSHPassword:   request.SSHPassword,
+		SyncHostnames: request.SyncHostnames,
 	})
 	if err != nil {
 		WriteError(w, r, http.StatusBadRequest, "invalid_request", err.Error(), false, nil)

@@ -136,7 +136,7 @@ func TestHostReconciliationPreservesUserConfiguration(t *testing.T) {
 	if err := db.CreateCluster(ctx, &cluster); err != nil {
 		t.Fatal(err)
 	}
-	host := CephHost{ClusterID: cluster.ID, Hostname: "ceph-node-1", SSHAddress: "192.0.2.10", SSHPort: 2222, SSHUser: "cephadmin", SSHAuthMethod: "private_key", DiscoveredData: `{}`, ResourceVersion: 1, CreatedAt: now, UpdatedAt: now}
+	host := CephHost{ClusterID: cluster.ID, Hostname: "ceph-node-1", SSHAddress: "192.0.2.10", SSHPort: 2222, SSHUser: "cephadmin", DiscoveredData: `{}`, ResourceVersion: 1, CreatedAt: now, UpdatedAt: now}
 	if err := db.UpsertCephHost(ctx, &host); err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +149,7 @@ func TestHostReconciliationPreservesUserConfiguration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if stored.SSHAddress != "192.0.2.10" || stored.SSHPort != 2222 || stored.SSHUser != "cephadmin" || stored.SSHAuthMethod != "private_key" {
+	if stored.SSHAddress != "192.0.2.10" || stored.SSHPort != 2222 || stored.SSHUser != "cephadmin" {
 		t.Fatalf("host configuration was overwritten: %#v", stored)
 	}
 	if stored.DiscoveredData != discovered || stored.Status == nil || *stored.Status != status {

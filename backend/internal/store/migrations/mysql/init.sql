@@ -67,8 +67,7 @@ CREATE TABLE ceph_cluster_capability (
 CREATE TABLE ceph_host (
  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, cluster_id BIGINT UNSIGNED NOT NULL, hostname VARCHAR(512) NOT NULL,
  ssh_address VARCHAR(255) NOT NULL, ssh_port SMALLINT UNSIGNED NOT NULL DEFAULT 22, ssh_user VARCHAR(128) NOT NULL,
- ssh_auth_method VARCHAR(32) NOT NULL, ssh_password_secret LONGTEXT NULL, ssh_private_key_secret LONGTEXT NULL,
- ssh_key_passphrase_secret LONGTEXT NULL, notes LONGTEXT NULL, address VARCHAR(255) NULL, status VARCHAR(64) NULL,
+ ssh_password_secret LONGTEXT NULL, address VARCHAR(255) NULL, status VARCHAR(64) NULL,
  configured_data LONGTEXT NULL,
  discovered_data LONGTEXT NOT NULL, generation BIGINT UNSIGNED NOT NULL DEFAULT 0,
  resource_version BIGINT UNSIGNED NOT NULL DEFAULT 1, source VARCHAR(32) NOT NULL DEFAULT '', source_version VARCHAR(128) NULL,

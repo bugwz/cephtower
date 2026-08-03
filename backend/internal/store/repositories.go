@@ -414,8 +414,8 @@ func hostEntityRecord(host CephHost) CephEntityRecord {
 		configuredValues["address"] = strings.TrimSpace(*host.Address)
 	}
 	configuredValues["ssh_address"], configuredValues["ssh_port"] = host.SSHAddress, host.SSHPort
-	configuredValues["ssh_user"], configuredValues["ssh_auth_method"] = host.SSHUser, host.SSHAuthMethod
-	configuredValues["host_ssh_configured"], configuredValues["notes"] = host.SSHAddress != "" && host.SSHUser != "", host.Notes
+	configuredValues["ssh_user"] = host.SSHUser
+	configuredValues["host_ssh_configured"] = host.SSHAddress != "" && host.SSHUser != ""
 	configured, _ := json.Marshal(configuredValues)
 	configuredData := string(configured)
 	return CephEntityRecord{
@@ -444,7 +444,7 @@ func (d *Database) FindCephHost(ctx context.Context, clusterID uint64, hostname 
 func (d *Database) UpsertCephHost(ctx context.Context, row *CephHost) error {
 	return d.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "cluster_id"}, {Name: "hostname"}},
-		DoUpdates: clause.AssignmentColumns([]string{"ssh_address", "ssh_port", "ssh_user", "ssh_auth_method", "ssh_password_secret", "ssh_private_key_secret", "ssh_key_passphrase_secret", "notes", "updated_at"}),
+		DoUpdates: clause.AssignmentColumns([]string{"ssh_address", "ssh_port", "ssh_user", "ssh_password_secret", "updated_at"}),
 	}).Create(row).Error
 }
 
@@ -563,7 +563,7 @@ func reconcileHostEntity(tx *gorm.DB, row CephEntityRecord, now time.Time) error
 		return err
 	}
 	host := CephHost{
-		ClusterID: row.ClusterID, Hostname: row.NaturalKey, SSHPort: 22, SSHUser: "root", SSHAuthMethod: "password",
+		ClusterID: row.ClusterID, Hostname: row.NaturalKey, SSHPort: 22, SSHUser: "root",
 		Status: row.Status, DiscoveredData: row.DiscoveredData, Generation: row.Generation, ResourceVersion: 1,
 		Source: row.Source, SourceVersion: row.SourceVersion, ObservedAt: &row.ObservedAt, CreatedAt: now, UpdatedAt: now,
 	}
@@ -603,7 +603,7 @@ func (d *Database) SaveResourceConfiguration(ctx context.Context, clusterID uint
 			return err
 		}
 		return d.db.WithContext(ctx).Create(&CephHost{
-			ClusterID: clusterID, Hostname: key, Address: address, SSHPort: 22, SSHUser: "root", SSHAuthMethod: "password",
+			ClusterID: clusterID, Hostname: key, Address: address, SSHPort: 22, SSHUser: "root",
 			ConfiguredData: &configuredData, DiscoveredData: "{}", ResourceVersion: 1, Source: "user", CreatedAt: now, UpdatedAt: now,
 		}).Error
 	}

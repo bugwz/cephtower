@@ -211,11 +211,8 @@ export interface HostSSHPayload {
   ssh_address: string
   ssh_port?: number
   ssh_user: string
-  ssh_auth_method: string
   ssh_password?: string
-  ssh_private_key?: string
-  ssh_key_passphrase?: string
-  notes?: string
+  sync_hostnames?: string[]
 }
 
 export function getHostSSH(hostname: string, clusterId = requiredClusterId()): Promise<ApiRecord> {

@@ -92,7 +92,7 @@ var expectedColumns = map[string][]string{
 	"ceph_cluster_credential": {"id", "cluster_id", "kind", "credential", "fingerprint", "created_at", "updated_at"},
 	"ceph_cluster_endpoint":   {"id", "cluster_id", "kind", "name", "url", "tls_mode", "ca_credential_id", "config_json", "enabled", "created_at", "updated_at"},
 	"ceph_cluster_capability": {"id", "cluster_id", "name", "supported", "reason", "version", "details_json", "observed_at", "updated_at"},
-	"ceph_host":               {"id", "cluster_id", "hostname", "ssh_address", "ssh_port", "ssh_user", "ssh_auth_method", "ssh_password_secret", "ssh_private_key_secret", "ssh_key_passphrase_secret", "notes", "address", "status", "configured_data", "discovered_data", "generation", "resource_version", "source", "source_version", "observed_at", "stale_at", "created_at", "updated_at"},
+	"ceph_host":               {"id", "cluster_id", "hostname", "ssh_address", "ssh_port", "ssh_user", "ssh_password_secret", "address", "status", "configured_data", "discovered_data", "generation", "resource_version", "source", "source_version", "observed_at", "stale_at", "created_at", "updated_at"},
 	"ceph_collection_run":     {"id", "cluster_id", "module", "generation", "status", "source", "record_count", "error_code", "error_message", "started_at", "finished_at", "created_at"},
 	"audit_event":             {"id", "occurred_at", "event_type", "request_id", "actor_user_id", "actor_username", "cluster_id", "cluster_name", "action", "resource_kind", "resource_key", "risk", "outcome", "http_status", "error_code", "source_ip", "user_agent", "before_generation", "after_generation", "parameters_json", "details_json", "previous_hash", "event_hash"},
 }
