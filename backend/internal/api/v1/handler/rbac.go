@@ -94,8 +94,11 @@ func (h *Handler) CreateRoleBinding(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	clusterID := request.ClusterID
-	actor, _ := CurrentUser(r)
-	if err := h.Database().BindUserRole(r.Context(), request.UserID, request.Role, &clusterID, &actor.ID); err != nil {
+	var createdBy *uint64
+	if actor, ok := CurrentUser(r); ok && actor.ID != 0 {
+		createdBy = &actor.ID
+	}
+	if err := h.Database().BindUserRole(r.Context(), request.UserID, request.Role, &clusterID, createdBy); err != nil {
 		WriteError(w, r, http.StatusBadRequest, "invalid_request", err.Error(), false, nil)
 		return
 	}

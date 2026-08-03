@@ -124,7 +124,7 @@ make build
 
 | 配置段 | 用途 |
 |---|---|
-| `server` | 监听地址、端口和运行目录（默认 `0.0.0.0:36900`、`/opt/cephtower`） |
+| `server` | 监听地址、端口、运行目录、认证开关和初始化开关（默认 `0.0.0.0:36900`、`/opt/cephtower`、`auth: true`） |
 | `log` | 输出目标、级别、格式、轮转与保留时间 |
 | `runtime` | 任务期间生成的临时 Ceph 配置目录；凭据文件会在任务结束时删除 |
 | `database` | SQLite 文件或 MySQL 连接与 TLS 选项；启动时自动迁移 |
@@ -165,7 +165,9 @@ API 前缀为 `/api/v1`。无需认证的基础端点包括：
 | `POST` | `/api/v1/bootstrap/run` | 创建首个管理员 |
 | `POST` | `/api/v1/auth/login` | 登录并获取 Token |
 
-除 bootstrap 和登录端点外，API 请求需要 `Authorization: Bearer <token>`。完整生成契约见
+默认除 bootstrap 和登录端点外，API 请求需要 `Authorization: Bearer <token>`。如将
+`server.auth` 设置为 `false`，前端会直接进入界面，`GET /api/v1/bootstrap` 会返回
+`auth: false`，所有 API 均不校验 Bearer Token。完整生成契约见
 [backend/api/openapi-v1.yaml](backend/api/openapi-v1.yaml)，路由源码位于
 `backend/internal/api/v1/router/`。外部 endpoint 和凭据通过集群作用域 API 配置；读请求
 直接使用 Prometheus、Alertmanager、Grafana、S3、iSCSI 或 NVMe-oF 原生协议，不经过

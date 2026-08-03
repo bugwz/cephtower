@@ -52,6 +52,7 @@ type ServerConfig struct {
 	Address   string
 	Port      int
 	Dir       string
+	Auth      bool
 	Bootstrap bool
 }
 
@@ -105,6 +106,7 @@ type fileConfig struct {
 		Address   string `yaml:"address"`
 		Port      int    `yaml:"port"`
 		Dir       string `yaml:"dir"`
+		Auth      *bool  `yaml:"auth"`
 		Bootstrap *bool  `yaml:"bootstrap"`
 	} `yaml:"server"`
 	Logging struct {
@@ -227,6 +229,10 @@ func EnsureDirectories(cfg Config) error {
 }
 
 func normalizeServerConfig(raw fileConfig) ServerConfig {
+	auth := true
+	if raw.Server.Auth != nil {
+		auth = *raw.Server.Auth
+	}
 	bootstrap := true
 	if raw.Server.Bootstrap != nil {
 		bootstrap = *raw.Server.Bootstrap
@@ -235,6 +241,7 @@ func normalizeServerConfig(raw fileConfig) ServerConfig {
 		Dir:       strings.TrimSpace(raw.Server.Dir),
 		Address:   strings.TrimSpace(raw.Server.Address),
 		Port:      raw.Server.Port,
+		Auth:      auth,
 		Bootstrap: bootstrap,
 	}
 }

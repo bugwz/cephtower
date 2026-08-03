@@ -43,6 +43,7 @@ export interface SetupDatabaseConfig {
 
 export interface SetupStatus {
   initialized: boolean
+  authEnabled: boolean
   database?: SetupDatabaseConfig
 }
 
@@ -98,8 +99,21 @@ export async function currentUser(): Promise<UserAccount> {
 }
 
 export async function setupStatus(): Promise<SetupStatus> {
-  const payload = await requestPublic<{ required: boolean }>('/bootstrap', { suppressErrorNotification: true })
-  return { initialized: !payload.required, database: defaultSetupDatabase() }
+  const payload = await requestPublic<{ required: boolean; auth?: boolean }>('/bootstrap', { suppressErrorNotification: true })
+  return { initialized: !payload.required, authEnabled: payload.auth ?? true, database: defaultSetupDatabase() }
+}
+
+export function unauthenticatedUser(): UserAccount {
+  return normalizeUser({
+    id: 0,
+    username: 'admin',
+    display_name: '管理员',
+    role: 'cluster-admin',
+    permissions: ['cluster:read', 'storage:read', 'system:read'],
+    enabled: true,
+    created_at: '',
+    updated_at: ''
+  })
 }
 
 export async function testSetupDatabase(payload: SetupDatabaseInput): Promise<{ message: string }> {

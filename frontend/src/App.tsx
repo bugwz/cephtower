@@ -3,7 +3,7 @@ import zhCN from 'antd/locale/zh_CN'
 import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import { currentUser, hasStoredToken, logout, setupStatus, type SetupDatabaseConfig, type UserAccount } from './api/auth'
+import { currentUser, hasStoredToken, logout, setupStatus, unauthenticatedUser, type SetupDatabaseConfig, type UserAccount } from './api/auth'
 import { ApiErrorNotifier } from './components/ApiErrorNotifier'
 import { AppLayout } from './layout/AppLayout'
 import { NAV_PAGES, pagePaths } from './navigation'
@@ -25,6 +25,7 @@ export default function App() {
   const [user, setUser] = useState<UserAccount | null>(null)
   const [checkingSession, setCheckingSession] = useState(true)
   const [setupRequired, setSetupRequired] = useState(false)
+  const [authEnabled, setAuthEnabled] = useState(true)
   const [setupDatabase, setSetupDatabase] = useState<SetupDatabaseConfig | undefined>()
   const handlingAuthenticationRequired = useRef(false)
 
@@ -36,6 +37,7 @@ export default function App() {
         if (cancelled) {
           return
         }
+        setAuthEnabled(status.authEnabled)
         if (!status.initialized) {
           logout()
           setUser(null)
@@ -45,6 +47,11 @@ export default function App() {
         }
         setSetupRequired(false)
         setSetupDatabase(undefined)
+        if (!status.authEnabled) {
+          logout()
+          setUser(unauthenticatedUser())
+          return
+        }
         if (!hasStoredToken()) {
           return
         }
@@ -76,12 +83,20 @@ export default function App() {
   }
 
   function handleLogout() {
+    if (!authEnabled) {
+      setUser(unauthenticatedUser())
+      navigate(pagePaths.overview, { replace: true })
+      return
+    }
     logout()
     setUser(null)
     navigate('/login', { replace: true })
   }
 
   const handleAuthenticationRequired = useCallback(() => {
+    if (!authEnabled) {
+      return
+    }
     if (handlingAuthenticationRequired.current) {
       return
     }
@@ -93,7 +108,7 @@ export default function App() {
     window.setTimeout(() => {
       handlingAuthenticationRequired.current = false
     }, 0)
-  }, [navigate])
+  }, [authEnabled, navigate])
 
   function handleSetupComplete() {
     logout()

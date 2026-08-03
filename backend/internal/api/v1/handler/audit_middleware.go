@@ -123,7 +123,9 @@ func (h *Handler) recordAuditEvent(r *http.Request, recorder *auditResponseRecor
 	var actorID *uint64
 	actorUsername := "anonymous"
 	if user, ok := CurrentUser(r); ok {
-		actorID = &user.ID
+		if user.ID != 0 {
+			actorID = &user.ID
+		}
 		actorUsername = user.Username
 	}
 	var parametersJSON *string

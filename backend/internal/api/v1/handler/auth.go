@@ -54,7 +54,7 @@ func (h *Handler) BootstrapStatus(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, http.StatusInternalServerError, "store_error", "could not inspect initialization state", false, nil)
 		return
 	}
-	WriteSuccess(w, http.StatusOK, "success", map[string]bool{"required": status.Required})
+	WriteSuccess(w, http.StatusOK, "success", map[string]bool{"required": status.Required, "auth": h.RequireAuth()})
 }
 
 func (h *Handler) BootstrapRun(w http.ResponseWriter, r *http.Request) {

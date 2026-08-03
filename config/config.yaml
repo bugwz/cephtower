@@ -12,6 +12,9 @@ server:
     # 可选配置：任意存在或可创建的目录路径
     # 默认配置：/opt/cephtower
     dir: "/opt/cephtower"
+    # 是否启用前后端认证。设置为 false 后，前端无需登录，所有 API 不校验 Bearer Token
+    # 默认配置：true
+    auth: true
     # 是否进入初始化流程。首次部署保持 true；初始化完成后自动写回 false
     # 默认配置：true
     bootstrap: true

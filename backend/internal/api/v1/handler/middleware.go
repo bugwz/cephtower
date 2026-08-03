@@ -48,6 +48,11 @@ func (h *Handler) PrepareRoute(next http.Handler) http.Handler {
 			h.recordAuditEvent(r, recorder, body, started)
 			return
 		}
+		if !h.RequireAuth() {
+			r = r.WithContext(WithUser(r.Context(), DefaultAdminUser()))
+			h.auditRequest(next, w, r, body, started)
+			return
+		}
 		token := strings.TrimSpace(strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer "))
 		if token == "" || token == r.Header.Get("Authorization") {
 			recorder := &auditResponseRecorder{ResponseWriter: w}

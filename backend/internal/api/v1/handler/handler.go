@@ -25,6 +25,7 @@ type Handler struct {
 	Reconciler   *reconcilerservice.Service
 	Setup        *setupservice.Service
 	Database     func() *store.Database
+	AuthEnabled  func() bool
 }
 
 type Dependencies struct {
@@ -37,10 +38,15 @@ type Dependencies struct {
 	Reconciler   *reconcilerservice.Service
 	Setup        *setupservice.Service
 	Database     func() *store.Database
+	AuthEnabled  func() bool
 }
 
 func New(deps Dependencies) *Handler {
-	return &Handler{Auth: deps.Auth, Clusters: deps.Clusters, Endpoints: deps.Endpoints, External: deps.External, HostProfiles: deps.HostProfiles, Mutations: deps.Mutations, Reconciler: deps.Reconciler, Setup: deps.Setup, Database: deps.Database}
+	return &Handler{Auth: deps.Auth, Clusters: deps.Clusters, Endpoints: deps.Endpoints, External: deps.External, HostProfiles: deps.HostProfiles, Mutations: deps.Mutations, Reconciler: deps.Reconciler, Setup: deps.Setup, Database: deps.Database, AuthEnabled: deps.AuthEnabled}
+}
+
+func (h *Handler) RequireAuth() bool {
+	return h.AuthEnabled == nil || h.AuthEnabled()
 }
 
 type userContextKey struct{}
@@ -51,6 +57,10 @@ type requestIDContextKey struct{}
 
 func WithUser(ctx context.Context, user store.User) context.Context {
 	return context.WithValue(ctx, userContextKey{}, user)
+}
+
+func DefaultAdminUser() store.User {
+	return store.User{Username: "admin", DisplayName: "管理员", Status: "active"}
 }
 
 func CurrentUser(r *http.Request) (store.User, bool) {

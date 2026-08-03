@@ -166,6 +166,38 @@ func TestAuthenticatedRouteCreatesAuditEvent(t *testing.T) {
 	}
 }
 
+func TestAuthDisabledAllowsProtectedRouteWithoutBearerToken(t *testing.T) {
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: contractKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "api.db"}}, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close(db)
+	clusters := clusterservice.New(func() *store.Database { return db }, contractKey, unusedProvider{})
+	h := handler.New(handler.Dependencies{
+		Clusters:    clusters,
+		Database:    func() *store.Database { return db },
+		AuthEnabled: func() bool { return false },
+	})
+	mux := http.NewServeMux()
+	router.Register(mux, h)
+
+	request := httptest.NewRequest(http.MethodGet, "/api/v1/clusters", nil)
+	response := httptest.NewRecorder()
+	mux.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
+	}
+	assertEnvelope(t, response.Body.Bytes())
+	count, err := db.CountRecords(context.Background(), &store.AuditEvent{}, map[string]any{"action": "GET /clusters", "actor_username": "admin", "outcome": "succeeded"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("audit events=%d, want 1", count)
+	}
+}
+
 func contractServer(t *testing.T) (*http.ServeMux, string) {
 	t.Helper()
 	db, err := store.Open(config.DatabaseConfig{EncryptionKey: contractKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "api.db"}}, t.TempDir())

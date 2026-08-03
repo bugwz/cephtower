@@ -74,6 +74,9 @@ func New(configPath string) (*App, error) {
 		defer configMu.RUnlock()
 		return cfg
 	}
+	authEnabled := func() bool {
+		return currentConfig().Server.Auth
+	}
 	updateConfig := func(next config.Config) {
 		configMu.Lock()
 		defer configMu.Unlock()
@@ -91,7 +94,7 @@ func New(configPath string) (*App, error) {
 	setup := &setupservice.Service{Manager: manager, CurrentConfig: currentConfig, UpdateConfig: updateConfig, OnInitialized: func() {
 		reconciler.Start(context.Background())
 	}}
-	handler := v1handler.New(v1handler.Dependencies{Auth: auth, Clusters: clusters, Endpoints: endpoints, External: external, HostProfiles: hostProfiles, Mutations: mutations, Reconciler: reconciler, Setup: setup, Database: manager.Current})
+	handler := v1handler.New(v1handler.Dependencies{Auth: auth, Clusters: clusters, Endpoints: endpoints, External: external, HostProfiles: hostProfiles, Mutations: mutations, Reconciler: reconciler, Setup: setup, Database: manager.Current, AuthEnabled: authEnabled})
 	apiServer := api.NewAPI(handler)
 	server := &http.Server{Addr: net.JoinHostPort(cfg.Server.Address, strconv.Itoa(cfg.Server.Port)), Handler: apiServer.Routes(), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 2 * time.Minute}
 	return &App{config: cfg, apiServer: apiServer, database: manager, reconciler: reconciler, httpServer: server, closeLog: closeLog}, nil

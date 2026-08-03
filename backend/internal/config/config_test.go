@@ -24,6 +24,24 @@ func TestLoadAllowsEmptyDatabaseEncryptionKeyBeforeBootstrap(t *testing.T) {
 	if !cfg.Server.Bootstrap {
 		t.Fatal("server.bootstrap should default to true")
 	}
+	if !cfg.Server.Auth {
+		t.Fatal("server.auth should default to true")
+	}
+}
+
+func TestLoadAcceptsDisabledServerAuth(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	data := "server:\n  auth: false\ndatabase:\n  encryption_key: \"\"\n  engine: sqlite\n  sqlite:\n    name: cephtower.db\n"
+	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Server.Auth {
+		t.Fatal("server.auth was not disabled")
+	}
 }
 
 func TestLoadAcceptsValidDatabaseEncryptionKey(t *testing.T) {
