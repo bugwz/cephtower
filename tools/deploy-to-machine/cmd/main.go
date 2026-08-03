@@ -232,6 +232,7 @@ func deploy(ctx context.Context, opts options, client *remoteClient, stdout, std
 	if err != nil {
 		return err
 	}
+	configValues = configValuesForReplace(configValues, opts.Replace)
 	log.Infof("config: using database.encryption_key source=%s", configValues.DatabaseEncryptionKeySource)
 	if configValues.ServerBootstrap != nil {
 		log.Infof("config: using server.bootstrap=%t source=%s",
@@ -863,6 +864,23 @@ func configWithServerDir(path, serverDir string, values remoteConfigValues) ([]b
 		return nil, fmt.Errorf("close YAML encoder: %w", err)
 	}
 	return out.Bytes(), nil
+}
+
+func configValuesForReplace(values remoteConfigValues, replace replaceSet) remoteConfigValues {
+	if !replace["all"] && !replace["data"] {
+		return values
+	}
+	bootstrap := true
+	values.ServerBootstrap = &bootstrap
+	values.ServerBootstrapSource = replaceBootstrapSource(replace)
+	return values
+}
+
+func replaceBootstrapSource(replace replaceSet) string {
+	if replace["all"] {
+		return "--replace all"
+	}
+	return "--replace data"
 }
 
 func encryptionKeyFromConfig(raw []byte) (string, bool, error) {

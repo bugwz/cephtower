@@ -260,6 +260,32 @@ func TestConfigWithServerDirPreservesRemoteBootstrap(t *testing.T) {
 	}
 }
 
+func TestConfigValuesForReplacingDataEnablesBootstrap(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		replace replaceSet
+		source  string
+	}{
+		{name: "data", replace: replaceSet{"data": true}, source: "--replace data"},
+		{name: "all", replace: replaceSet{"all": true}, source: "--replace all"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			bootstrap := false
+			values := configValuesForReplace(remoteConfigValues{
+				DatabaseEncryptionKey: "0123456789abcdefghijklmnopqrstuv",
+				ServerBootstrap:       &bootstrap,
+				ServerBootstrapSource: "remote",
+			}, tc.replace)
+			if values.ServerBootstrap == nil || !*values.ServerBootstrap {
+				t.Fatalf("expected replacing data to enable server.bootstrap, got %#v", values.ServerBootstrap)
+			}
+			if values.ServerBootstrapSource != tc.source {
+				t.Fatalf("unexpected bootstrap source: %q", values.ServerBootstrapSource)
+			}
+		})
+	}
+}
+
 func TestEncryptionKeyFromConfig(t *testing.T) {
 	key := "0123456789abcdefghijklmnopqrstuv"
 	got, ok, err := encryptionKeyFromConfig([]byte("database:\n  encryption_key: " + key + "\n"))
