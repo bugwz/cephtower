@@ -59,10 +59,10 @@ func TestDefaultMatchesSingaporeLaunchAdvisorConfiguration(t *testing.T) {
 	if cfg.RegionID != "ap-southeast-1" || cfg.ZoneID != "ap-southeast-1b" {
 		t.Fatalf("unexpected location: %s/%s", cfg.RegionID, cfg.ZoneID)
 	}
-	if cfg.CPUOptions == nil || cfg.CPUOptions.CoreCount != 2 || cfg.CPUOptions.ThreadsPerCore != 2 {
+	if cfg.CPUOptions != nil {
 		t.Fatalf("unexpected CPU options: %#v", cfg.CPUOptions)
 	}
-	if len(cfg.Nodes) != 3 || cfg.Nodes[0].InstanceType != "ecs.g7a.xlarge" || len(cfg.Nodes[0].DataDisks) != 2 {
+	if len(cfg.Nodes) != 3 || cfg.Nodes[0].InstanceType != "ecs.e-c1m2.xlarge" || len(cfg.Nodes[0].DataDisks) != 2 {
 		t.Fatalf("unexpected node defaults: %#v", cfg.Nodes)
 	}
 	if cfg.Nodes[0].DataDisks[0].PerformanceLevel != "PL0" || cfg.InternetMaxBandwidthOutMbps != 100 {

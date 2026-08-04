@@ -80,24 +80,12 @@ network:
   cleanup_created_resources: false
 # 含义：nodes 中所有 ECS 的公共创建参数，由后端严格映射到 RunInstances SDK 请求。
 # 可选值：包含镜像、CPU、元数据、系统盘和公网带宽配置的对象。
-# 默认值：当前模板采用 ecs.g7a.xlarge 兼容的 CentOS Stream 9、ESSD PL0 和按流量公网。
+# 默认值：当前模板采用 ecs.e-c1m2.xlarge 兼容的 CentOS Stream 9、ESSD PL0 和按流量公网。
 ecs:
   # 含义：nodes 中所有 ECS 使用的系统镜像 ID。
   # 可选值：cluster.region_id 中可用且兼容目标实例规格的公共、自定义、共享或云市场镜像 ID。
   # 默认值：工具无内置默认值；当前模板为 CentOS Stream 9 镜像。
   image_id: "centos_stream_9_x64_20G_alibase_20260616.vhd"
-  # 含义：覆盖实例规格默认的 CPU 拓扑；删除整个 cpu_options 可让 ECS 自动选择。
-  # 可选值：省略该对象，或同时提供 core_count 和 threads_per_core。
-  # 默认值：工具内为省略；当前模板使用 2 核、每核 2 线程。
-  cpu_options:
-    # 含义：每台 ECS 启用的物理 CPU 核心数。
-    # 可选值：大于 0 且受 nodes.instance_type 支持的整数。
-    # 默认值：对象存在时无内置默认值；当前模板为 2。
-    core_count: 2
-    # 含义：每个物理 CPU 核心启用的线程数。
-    # 可选值：大于 0 且受 nodes.instance_type 支持的整数，常见值为 1 或 2。
-    # 默认值：对象存在时无内置默认值；当前模板为 2。
-    threads_per_core: 2
   # 含义：访问实例元数据服务时是否强制使用 IMDSv2 会话令牌。
   # 可选值："optional"、"required"，或 "" 表示不向 ECS API 传递该参数。
   # 默认值：ECS API 通常为 "optional"；当前模板为 "optional"。
@@ -172,7 +160,7 @@ hooks:
   deploy_script: "hooks/deploy-ceph.sh"
 # 含义：定义要创建的全部 Ceph 节点及各自的 ECS 规格和数据盘，工具按列表逐项创建。
 # 可选值：至少包含 1 个名称唯一的节点对象；节点数量没有固定为 3。
-# 默认值：当前模板包含 3 个 ecs.g7a.xlarge 节点，每台附加两块 100 GiB ESSD PL0。
+# 默认值：当前模板包含 3 个 ecs.e-c1m2.xlarge 节点，每台附加两块 100 GiB ESSD PL0。
 nodes:
   # 含义：第一台节点的主机名、ECS 实例名和集群内唯一标识。
   # 可选值：以字母开头、长度为 2～64，只包含字母、数字、下划线或短横线的名称。
@@ -180,8 +168,8 @@ nodes:
   - name: "ceph-node-1"
     # 含义：第一台节点使用的 ECS 实例规格。
     # 可选值：目标地域和可用区中有库存且支持所选镜像、CPU 拓扑和磁盘的规格 ID。
-    # 默认值："ecs.g7a.xlarge"。
-    instance_type: "ecs.g7a.xlarge"
+    # 默认值："ecs.e-c1m2.xlarge"。
+    instance_type: "ecs.e-c1m2.xlarge"
     # 含义：第一台节点附加的数据盘列表，后续用于 cephadm 创建 OSD。
     # 可选值：零个或多个受 ECS RunInstances 支持的数据盘对象。
     # 默认值：两块 100 GiB ESSD PL0。
@@ -216,8 +204,8 @@ nodes:
   - name: "ceph-node-2"
     # 含义：第二台节点使用的 ECS 实例规格。
     # 可选值：目标地域和可用区中有库存且支持所选镜像、CPU 拓扑和磁盘的规格 ID。
-    # 默认值："ecs.g7a.xlarge"。
-    instance_type: "ecs.g7a.xlarge"
+    # 默认值："ecs.e-c1m2.xlarge"。
+    instance_type: "ecs.e-c1m2.xlarge"
     # 含义：第二台节点附加的数据盘列表，后续用于 cephadm 创建 OSD。
     # 可选值：零个或多个受 ECS RunInstances 支持的数据盘对象。
     # 默认值：两块 100 GiB ESSD PL0。
@@ -252,8 +240,8 @@ nodes:
   - name: "ceph-node-3"
     # 含义：第三台节点使用的 ECS 实例规格。
     # 可选值：目标地域和可用区中有库存且支持所选镜像、CPU 拓扑和磁盘的规格 ID。
-    # 默认值："ecs.g7a.xlarge"。
-    instance_type: "ecs.g7a.xlarge"
+    # 默认值："ecs.e-c1m2.xlarge"。
+    instance_type: "ecs.e-c1m2.xlarge"
     # 含义：第三台节点附加的数据盘列表，后续用于 cephadm 创建 OSD。
     # 可选值：零个或多个受 ECS RunInstances 支持的数据盘对象。
     # 默认值：两块 100 GiB ESSD PL0。

@@ -204,21 +204,27 @@ if ! command -v dnf >/dev/null 2>&1; then
 	errorf '%s' 'dnf is required by the Aliyun Ceph node initialization script'
 	exit 1
 fi
-if ! command -v ssh >/dev/null 2>&1; then
-	errorf '%s' 'openssh-clients must be present before SSH initialization starts'
-	exit 1
-fi
 
-# Keep all package operations non-interactive. These are intentionally executed
-# in dependency order because the Ceph repository package provides cephadm.
-dnf -y makecache
-dnf -y install epel-release
-dnf -y groupinstall "Development Tools"
-dnf -y install centos-release-ceph-tentacle
-dnf -y install cephadm
-dnf -y install git cmake wget curl vim
-dnf -y install ceph-common
-dnf -y install ca-certificates chrony jq lvm2 podman python3
+# Keep package operations non-interactive and install only what the lab needs.
+# EPEL provides dependencies required by ceph-common, so pin it before Ceph.
+dnf_options=(-y --setopt=timeout=20 --setopt=minrate=10000 --setopt=retries=2)
+dnf "${dnf_options[@]}" makecache
+dnf "${dnf_options[@]}" install centos-release-ceph-tentacle
+dnf "${dnf_options[@]}" install epel-release
+epel_repo_files=()
+for repo_file in /etc/yum.repos.d/epel.repo /etc/yum.repos.d/epel-next.repo; do
+	[[ -f "${repo_file}" ]] && epel_repo_files+=("${repo_file}")
+done
+if (( ${#epel_repo_files[@]} > 0 )); then
+	sed -i \
+		-e 's|^metalink=|#metalink=|g' \
+		-e 's|^#baseurl=https://download.example/pub/epel/|baseurl=https://mirrors.aliyun.com/epel/|g' \
+		-e 's|^#baseurl=http://download.example/pub/epel/|baseurl=https://mirrors.aliyun.com/epel/|g' \
+		"${epel_repo_files[@]}"
+fi
+dnf "${dnf_options[@]}" install \
+	ca-certificates chrony curl git jq lvm2 openssh-clients podman python3 vim wget
+dnf "${dnf_options[@]}" --disablerepo=epel-next install cephadm ceph-common sshpass
 
 if command -v systemctl >/dev/null 2>&1; then
 	systemctl enable --now chronyd

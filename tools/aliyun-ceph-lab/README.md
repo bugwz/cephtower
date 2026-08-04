@@ -135,7 +135,7 @@ credentials:
 默认模板对应新加坡实验环境：
 
 - 地域/可用区：`ap-southeast-1` / `ap-southeast-1b`
-- 规格：三台 `ecs.g7a.xlarge`
+- 规格：三台 `ecs.e-c1m2.xlarge`
 - 镜像：`centos_stream_9_x64_20G_alibase_20260616.vhd`
 - 系统盘：40 GiB ESSD PL0
 - 数据盘：每台两块 100 GiB ESSD PL0
@@ -305,7 +305,8 @@ sudo bash deploy-ceph.sh \
 - 实例仍有云端自动释放时间，本地进程退出不影响到期释放。
 - SSH 连接失败、脚本失败行号、命令和退出码会同时写入终端和节点日志。
 - 如果远端 hook 进程退出但没有写出状态文件，create 会尽早报错而不是等完整超时。
-- 初始化要求镜像预装 `openssh-clients`；hook 不会升级当前 SSH 会话依赖的 OpenSSH。
+- 初始化 hook 会安装 `openssh-clients`、`sshpass`、`vim`、`wget`、`curl`
+  等基础工具，以及 `cephadm`、`podman`、`lvm2`、`chrony` 等 Ceph 容器运行依赖。
 
 ## RAM Action
 
