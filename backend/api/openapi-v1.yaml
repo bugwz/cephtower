@@ -343,6 +343,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -752,6 +754,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -1886,6 +1890,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -2295,6 +2301,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -2924,6 +2932,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -3428,6 +3438,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -3837,6 +3849,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -4439,6 +4453,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -4945,6 +4961,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -5355,6 +5373,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -6010,6 +6030,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -6513,6 +6535,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -7020,6 +7044,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -7524,6 +7550,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -7933,6 +7961,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -8344,6 +8374,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -8850,6 +8882,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -9452,6 +9486,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -9862,6 +9898,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -10369,6 +10407,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -10873,6 +10913,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -11282,6 +11324,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -11693,6 +11737,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -12198,6 +12244,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -12607,6 +12655,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -13114,6 +13164,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -13524,6 +13576,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -14411,6 +14465,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -14820,6 +14876,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -15247,6 +15305,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -15752,6 +15812,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -16161,6 +16223,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -16572,6 +16636,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -17077,6 +17143,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -17679,6 +17747,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -18183,6 +18253,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -18592,6 +18664,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -19230,6 +19304,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -19640,6 +19716,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -20467,6 +20545,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -20973,6 +21053,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -21476,6 +21558,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -21983,6 +22067,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -22487,6 +22573,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -22896,6 +22984,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -23498,6 +23588,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -24002,6 +24094,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -24411,6 +24505,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -24918,6 +25014,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -25327,6 +25425,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -25834,6 +25934,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -26243,6 +26345,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -26750,6 +26854,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -27254,6 +27360,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -27663,6 +27771,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -28265,6 +28375,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -28770,6 +28882,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -29181,6 +29295,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -29591,6 +29707,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -30097,6 +30215,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -30507,6 +30627,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -31204,6 +31326,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -31708,6 +31832,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -32117,6 +32243,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -32624,6 +32752,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -33130,6 +33260,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -33634,6 +33766,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -34043,6 +34177,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -34455,6 +34591,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -34866,6 +35004,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -35275,6 +35415,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -35686,6 +35828,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -36096,6 +36240,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -36792,6 +36938,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -37203,6 +37351,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -37612,6 +37762,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -38119,6 +38271,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -38624,6 +38778,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -39034,6 +39190,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -39504,6 +39662,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -40011,6 +40171,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -40515,6 +40677,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -40924,6 +41088,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -41437,6 +41603,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -41943,6 +42111,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -42353,6 +42523,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -42859,6 +43031,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -43461,6 +43635,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -43965,6 +44141,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -44374,6 +44552,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -44786,6 +44966,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -45195,6 +45377,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -45702,6 +45886,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -46112,6 +46298,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -46854,6 +47042,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -47358,6 +47548,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -47767,6 +47959,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -48274,6 +48468,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -48778,6 +48974,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -49187,6 +49385,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -49694,6 +49894,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -50198,6 +50400,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -50607,6 +50811,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
@@ -51209,6 +51415,8 @@ paths:
                   type: integer
                 endsAt:
                   type: string
+                erasure_code_profile:
+                  type: string
                 export_id:
                   type: string
                 failure_domain:
@@ -51619,6 +51827,8 @@ paths:
                 endpoint_id:
                   type: integer
                 endsAt:
+                  type: string
+                erasure_code_profile:
                   type: string
                 export_id:
                   type: string
