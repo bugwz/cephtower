@@ -2,11 +2,17 @@ package main
 
 import (
 	"bytes"
+	cryptorand "crypto/rand"
+	"crypto/rsa"
 	"encoding/json"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/knownhosts"
 )
 
 func TestRootHelpOnlyDocumentsCommands(t *testing.T) {
@@ -176,6 +182,50 @@ func TestSaveAndLoadDeployState(t *testing.T) {
 	}
 }
 
+func TestLearnHostKeyRefreshesChangedKey(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "known_hosts")
+	if err := os.WriteFile(path, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	host := "203.0.113.10:22"
+	address := &net.TCPAddr{IP: net.ParseIP("203.0.113.10"), Port: 22}
+	first := testSSHPublicKey(t)
+	second := testSSHPublicKey(t)
+
+	callback, err := knownhosts.New(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := learnHostKey(path, callback)(host, address, first); err != nil {
+		t.Fatalf("learnHostKey() rejected new key: %v", err)
+	}
+	callback, err = knownhosts.New(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := learnHostKey(path, callback)(host, address, second); err != nil {
+		t.Fatalf("learnHostKey() rejected changed key: %v", err)
+	}
+	callback, err = knownhosts.New(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := callback(host, address, second); err != nil {
+		t.Fatalf("refreshed known_hosts does not accept new key: %v", err)
+	}
+	if err := callback(host, address, first); err == nil {
+		t.Fatal("refreshed known_hosts still accepts old key")
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	normalizedHost := knownhosts.Normalize(host)
+	if got := strings.Count(string(raw), normalizedHost); got != 1 {
+		t.Fatalf("expected one known_hosts entry for %s, got %d:\n%s", normalizedHost, got, string(raw))
+	}
+}
+
 func TestBackupRemoteRootCommand(t *testing.T) {
 	command := backupRemoteRootCommand()
 	for _, want := range []string{
@@ -187,6 +237,19 @@ func TestBackupRemoteRootCommand(t *testing.T) {
 			t.Fatalf("backup command missing %q: %s", want, command)
 		}
 	}
+}
+
+func testSSHPublicKey(t *testing.T) ssh.PublicKey {
+	t.Helper()
+	privateKey, err := rsa.GenerateKey(cryptorand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	publicKey, err := ssh.NewPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return publicKey
 }
 
 func TestStartScriptWritesAllOutputToCephtowerLog(t *testing.T) {

@@ -1038,23 +1038,64 @@ func learnHostKey(path string, callback ssh.HostKeyCallback) ssh.HostKeyCallback
 			return nil
 		} else {
 			var keyError *knownhosts.KeyError
-			if !errors.As(err, &keyError) || len(keyError.Want) != 0 {
+			if !errors.As(err, &keyError) {
 				return fmt.Errorf("verify SSH host key: %w", err)
+			}
+			if len(keyError.Want) != 0 {
+				mu.Lock()
+				defer mu.Unlock()
+				if err := refreshKnownHostKey(path, keyError.Want, hostname, key); err != nil {
+					return err
+				}
+				return nil
 			}
 		}
 		mu.Lock()
 		defer mu.Unlock()
-		file, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0o600)
-		if err != nil {
-			return fmt.Errorf("append known_hosts: %w", err)
-		}
-		defer file.Close()
-		line := knownhosts.Line([]string{knownhosts.Normalize(hostname)}, key) + "\n"
-		if _, err := io.WriteString(file, line); err != nil {
-			return fmt.Errorf("write known_hosts: %w", err)
-		}
-		return nil
+		return appendKnownHostKey(path, hostname, key)
 	}
+}
+
+func refreshKnownHostKey(path string, knownKeys []knownhosts.KnownKey, hostname string, key ssh.PublicKey) error {
+	linesToRemove := make(map[int]bool)
+	for _, knownKey := range knownKeys {
+		if knownKey.Filename == path {
+			linesToRemove[knownKey.Line] = true
+		}
+	}
+	if len(linesToRemove) == 0 {
+		return fmt.Errorf("verify SSH host key: knownhosts: key mismatch")
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read known_hosts: %w", err)
+	}
+	lines := strings.SplitAfter(string(raw), "\n")
+	var rewritten strings.Builder
+	for index, line := range lines {
+		lineNumber := index + 1
+		if line == "" || linesToRemove[lineNumber] {
+			continue
+		}
+		rewritten.WriteString(line)
+	}
+	if err := os.WriteFile(path, []byte(rewritten.String()), 0o600); err != nil {
+		return fmt.Errorf("refresh known_hosts: %w", err)
+	}
+	return appendKnownHostKey(path, hostname, key)
+}
+
+func appendKnownHostKey(path, hostname string, key ssh.PublicKey) error {
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0o600)
+	if err != nil {
+		return fmt.Errorf("append known_hosts: %w", err)
+	}
+	defer file.Close()
+	line := knownhosts.Line([]string{knownhosts.Normalize(hostname)}, key) + "\n"
+	if _, err := io.WriteString(file, line); err != nil {
+		return fmt.Errorf("write known_hosts: %w", err)
+	}
+	return nil
 }
 
 func (r *remoteClient) Close() error {

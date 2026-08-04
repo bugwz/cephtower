@@ -80,6 +80,10 @@ YAML 顶层：
 - `password`：目标机器 SSH 密码；自动选择 lab 机器时从状态文件读取。
 - `known_hosts`：部署工具使用的 SSH known_hosts 文件。
 
+工具不会读取或写入当前用户的 `~/.ssh/known_hosts`。默认只使用
+`tools/deploy-to-machine/.state/known_hosts`；如果云主机重建后复用了相同 IP，工具会
+自动刷新这个部署工具状态文件里的旧主机密钥记录，避免旧记录导致连接失败。
+
 应用配置固定使用仓库根目录下的 `config/config.yaml`，release 产物目录固定使用
 仓库根目录下的 `dist/`。
 
