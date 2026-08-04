@@ -452,6 +452,11 @@ func toResourceDTO(row store.CephEntityRecord) resourceDTO {
 		var configured map[string]any
 		if err := json.Unmarshal([]byte(*row.ConfiguredData), &configured); err == nil {
 			for field, value := range configured {
+				if row.Kind == "pool" {
+					if _, exists := data[field]; exists {
+						continue
+					}
+				}
 				data[field] = value
 			}
 		}

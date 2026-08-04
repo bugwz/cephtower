@@ -96,9 +96,10 @@ func TestCollectStorageRecordsEmptyOSDFlags(t *testing.T) {
 func TestCollectStorageAcceptsNumericPoolCrushRuleAndMapsOSDHost(t *testing.T) {
 	base := fixtureExecutor{t}
 	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{
-		"collect.osd_tree": []byte(`{"nodes":[{"id":-1,"name":"default","type":"root","children":[-3]},{"id":-3,"name":"node-a","type":"host","children":[0]},{"id":0,"name":"osd.0","type":"osd","status":"up","crush_weight":1.0,"device_class":"ssd"}]}`),
-		"collect.osd_dump": []byte(`{"flags":"","osds":[{"osd":0,"up":1,"in":1}]}`),
-		"collect.pool":     []byte(`[{"pool":1,"pool_name":"pool-a","type":1,"size":3,"min_size":2,"pg_num":8,"pg_placement_num":8,"pg_autoscale_mode":"on","application_metadata":{"rbd":{}},"crush_rule":0,"options":{"compression_mode":"none"},"quotas":{"max_bytes":0,"max_objects":0}}]`),
+		"collect.osd_tree":   []byte(`{"nodes":[{"id":-1,"name":"default","type":"root","children":[-3]},{"id":-3,"name":"node-a","type":"host","children":[0]},{"id":0,"name":"osd.0","type":"osd","status":"up","crush_weight":1.0,"device_class":"ssd"}]}`),
+		"collect.osd_dump":   []byte(`{"flags":"","osds":[{"osd":0,"up":1,"in":1}]}`),
+		"collect.pool":       []byte(`[{"pool_id":1,"pool_name":"pool-a","type":1,"size":3,"min_size":2,"pg_num":8,"pg_placement_num":8,"pg_autoscale_mode":"on","application_metadata":{"rbd":{}},"crush_rule":0,"options":{"compression_mode":"none"},"quota_max_bytes":0,"quota_max_objects":0}]`),
+		"collect.pool_quota": []byte(`{"pool_name":"pool-a","pool_id":1,"quota_max_objects":1000,"current_num_objects":0,"quota_max_bytes":1099511627776,"current_num_bytes":0}`),
 		"collect.rbd_pool_config": []byte(`[
 			{"name":"rbd_qos_bps_limit","value":"0","source":"global","description":"IO byte limit"},
 			{"key":"rbd_qos_iops_limit","val":100,"who":"pool:pool-a"}
@@ -136,6 +137,9 @@ func TestCollectStorageAcceptsNumericPoolCrushRuleAndMapsOSDHost(t *testing.T) {
 			}
 			if payload.CompressionMode == nil || *payload.CompressionMode != "none" {
 				t.Fatalf("pool compression = %v, want none", payload.CompressionMode)
+			}
+			if payload.QuotaMaxBytes == nil || *payload.QuotaMaxBytes != 1099511627776 || payload.QuotaMaxObjects == nil || *payload.QuotaMaxObjects != 1000 {
+				t.Fatalf("pool quotas = %v/%v, want 1099511627776/1000", payload.QuotaMaxBytes, payload.QuotaMaxObjects)
 			}
 			if payload.RawDetail["pool_name"] != "pool-a" || payload.RawDetail["type"] != "replicated" || payload.RawDetail["application_metadata"] != "rbd" {
 				t.Fatalf("pool raw detail = %#v", payload.RawDetail)

@@ -398,6 +398,7 @@ type osdDumpWire struct {
 type poolWire struct {
 	Raw                 map[string]any  `json:"-"`
 	Pool                int64           `json:"pool"`
+	PoolID              int64           `json:"pool_id"`
 	PoolName            string          `json:"pool_name"`
 	Type                int             `json:"type"`
 	Size                *int64          `json:"size"`
@@ -408,11 +409,17 @@ type poolWire struct {
 	ApplicationMetadata map[string]any  `json:"application_metadata"`
 	CrushRule           json.RawMessage `json:"crush_rule"`
 	Options             map[string]any  `json:"options"`
+	QuotaMaxBytes       *int64          `json:"quota_max_bytes"`
+	QuotaMaxObjects     *int64          `json:"quota_max_objects"`
 	Quotas              poolQuotaWire   `json:"quotas"`
 }
 type poolQuotaWire struct {
 	MaxBytes   *int64 `json:"max_bytes"`
 	MaxObjects *int64 `json:"max_objects"`
+}
+type poolGetQuotaWire struct {
+	QuotaMaxBytes   *int64 `json:"quota_max_bytes"`
+	QuotaMaxObjects *int64 `json:"quota_max_objects"`
 }
 
 func (wire *poolWire) UnmarshalJSON(data []byte) error {
@@ -426,6 +433,9 @@ func (wire *poolWire) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	*wire = poolWire(decoded)
+	if wire.Pool == 0 {
+		wire.Pool = wire.PoolID
+	}
 	wire.Raw = raw
 	return nil
 }
@@ -506,10 +516,11 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		if wire.Type == 3 {
 			kind = "erasure"
 		}
+		quota := p.collectPoolQuota(ctx, access, wire.PoolName)
 		payload := cephdomain.Pool{
 			Name: wire.PoolName, ID: wire.Pool, Type: kind, Size: wire.Size, MinSize: wire.MinSize, PGNum: wire.PGNum, PGPNum: wire.PGPNum,
 			PGAutoscaleMode: wire.PGAutoscaleMode, Applications: poolApplications(wire.ApplicationMetadata), ApplicationMetadata: wire.ApplicationMetadata,
-			CrushRule: rawTextPointer(wire.CrushRule), CompressionMode: poolCompressionMode(wire.Options), QuotaMaxBytes: wire.Quotas.MaxBytes, QuotaMaxObjects: wire.Quotas.MaxObjects,
+			CrushRule: rawTextPointer(wire.CrushRule), CompressionMode: poolCompressionMode(wire.Options), QuotaMaxBytes: firstInt64Pointer(quota.QuotaMaxBytes, wire.QuotaMaxBytes, wire.Quotas.MaxBytes), QuotaMaxObjects: firstInt64Pointer(quota.QuotaMaxObjects, wire.QuotaMaxObjects, wire.Quotas.MaxObjects),
 			RawDetail: poolRawDetail(wire.Raw, kind), Configuration: p.collectPoolConfiguration(ctx, access, wire.PoolName),
 		}
 		rows = append(rows, Observation{Kind: "pool", NaturalKey: wire.PoolName, Name: wire.PoolName, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
@@ -804,6 +815,17 @@ func (p *NativeProvider) collectPoolConfiguration(ctx context.Context, access Cl
 	return configs
 }
 
+func (p *NativeProvider) collectPoolQuota(ctx context.Context, access ClusterAccess, pool string) poolGetQuotaWire {
+	if strings.TrimSpace(pool) == "" {
+		return poolGetQuotaWire{}
+	}
+	var quota poolGetQuotaWire
+	if !p.optional(ctx, access, executor.BinaryCeph, "collect.pool_quota", []string{"osd", "pool", "get-quota", pool, "--format", "json"}, &quota) {
+		return poolGetQuotaWire{}
+	}
+	return quota
+}
+
 func poolConfigRows(raw any) []map[string]any {
 	rows := objectList(raw)
 	if len(rows) > 0 {
@@ -877,6 +899,15 @@ func firstStringPointer(record map[string]any, keys ...string) *string {
 		return nil
 	}
 	return &value
+}
+
+func firstInt64Pointer(values ...*int64) *int64 {
+	for _, value := range values {
+		if value != nil {
+			return value
+		}
+	}
+	return nil
 }
 
 func stringValue(value any) string {

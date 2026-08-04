@@ -259,7 +259,7 @@ export function PoolManagementPage() {
               </div>
             ) : (
               <Form.Item name="erasure_code_profile" label="纠删码配置" rules={[{ required: true, message: '请选择纠删码配置' }]}>
-                <Select showSearch placeholder="请选择纠删码配置" options={erasureCodeProfileOptions} />
+                <Select disabled={formMode === 'edit'} showSearch placeholder="请选择纠删码配置" options={erasureCodeProfileOptions} />
               </Form.Item>
             )}
             <Form.Item

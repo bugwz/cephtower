@@ -125,3 +125,38 @@ func TestPoolCreateBuildsErasurePoolCommand(t *testing.T) {
 		t.Fatalf("args = %#v, want %#v", command.args, want)
 	}
 }
+
+func TestPoolCreateBuildsConfigurationFollowups(t *testing.T) {
+	command, err := build(Request{Action: "pool.create", ResourceKey: "pool"}, map[string]any{
+		"name":              "data",
+		"pg_num":            "32",
+		"pool_type":         "replicated",
+		"pg_autoscale_mode": "on",
+		"size":              "3",
+		"crush_rule":        "replicated_rule",
+		"compression_mode":  "passive",
+		"applications":      []any{"rbd", "cephfs"},
+		"quota_max_bytes":   "1099511627776",
+		"quota_max_objects": "1000",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := [][]string{
+		{"osd", "pool", "set", "data", "pg_autoscale_mode", "on"},
+		{"osd", "pool", "set", "data", "size", "3"},
+		{"osd", "pool", "set", "data", "crush_rule", "replicated_rule"},
+		{"osd", "pool", "set", "data", "compression_mode", "passive"},
+		{"osd", "pool", "application", "enable", "data", "rbd"},
+		{"osd", "pool", "application", "enable", "data", "cephfs"},
+		{"osd", "pool", "set-quota", "data", "max_bytes", "1099511627776"},
+		{"osd", "pool", "set-quota", "data", "max_objects", "1000"},
+	}
+	got := make([][]string, 0, len(command.followups))
+	for _, followup := range command.followups {
+		got = append(got, followup.args)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("followups = %#v, want %#v", got, want)
+	}
+}

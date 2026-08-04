@@ -26,6 +26,21 @@ func TestResourceDTOParsesInternalDataWithoutExposingStorageFields(t *testing.T)
 	assertInternalDiscoveryFieldsHidden(t, row)
 }
 
+func TestPoolResourceDTOPrefersDiscoveredClusterData(t *testing.T) {
+	now := time.Now().UTC()
+	configured := `{"quota_max_bytes":1024,"compression_mode":"passive","applications":["rbd"],"owner":"operator"}`
+	row := store.CephEntityRecord{
+		Kind: "pool", NaturalKey: "data", ResourceVersion: 1, Source: "ceph_cli",
+		ObservedAt: now, CreatedAt: now, UpdatedAt: now,
+		ConfiguredData: &configured, DiscoveredData: `{"quota_max_bytes":0,"compression_mode":"none"}`,
+	}
+	dto := toResourceDTO(row)
+	data, ok := dto.Data.(map[string]any)
+	if !ok || data["quota_max_bytes"] != float64(0) || data["compression_mode"] != "none" || data["owner"] != "operator" {
+		t.Fatalf("pool resource data = %#v", dto.Data)
+	}
+}
+
 func TestClusterDTOParsesDiscoveryWithoutExposingStorageField(t *testing.T) {
 	now := time.Now().UTC()
 	row := store.CephCluster{

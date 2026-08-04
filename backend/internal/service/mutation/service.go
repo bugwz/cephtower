@@ -36,6 +36,7 @@ func New(clusters *clusterservice.Service, runner executor.Executor) *Service {
 type command struct {
 	binary      executor.Binary
 	args, check []string
+	followups   []command
 	stdin       []byte
 	timeout     time.Duration
 	sensitive   map[int]struct{}
@@ -93,6 +94,13 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true, SensitiveArgs: spec.sensitive})
 	if err != nil {
 		return cephdomain.ActionResult{}, normalize(err)
+	}
+	for index, followup := range spec.followups {
+		stepID := fmt.Sprintf("%s.step%d", request.Action, index+2)
+		result, err = s.executor.Run(ctx, access, executor.CommandSpec{ID: stepID, Binary: followup.binary, Args: followup.args, Stdin: followup.stdin, Timeout: followup.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true, SensitiveArgs: followup.sensitive})
+		if err != nil {
+			return cephdomain.ActionResult{}, normalize(err)
+		}
 	}
 	if len(spec.check) > 0 {
 		if _, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput}); err != nil {
@@ -363,7 +371,12 @@ func build(request Request, p map[string]any) (command, error) {
 		} else if poolType == "replicated" {
 			args = append(args, pg, "replicated")
 		}
-		return ceph(args, []string{"osd", "pool", "ls", "detail", "--format", "json"}), nil
+		result := ceph(args, []string{"osd", "pool", "ls", "detail", "--format", "json"})
+		result.followups, err = poolCreateFollowups(p, name, poolType, ceph)
+		if err != nil {
+			return command{}, err
+		}
+		return result, nil
 	case "pool.update":
 		name := last(tail)
 		operation := optional(p, "operation")
@@ -880,6 +893,69 @@ func build(request Request, p map[string]any) (command, error) {
 	default:
 		return command{}, unsupported(action)
 	}
+}
+
+func poolCreateFollowups(p map[string]any, name, poolType string, wrap func([]string, []string) command) ([]command, error) {
+	var commands []command
+	addSet := func(field string, value string) {
+		if value != "" {
+			commands = append(commands, wrap([]string{"osd", "pool", "set", name, field, value}, nil))
+		}
+	}
+	if value := optional(p, "pg_autoscale_mode"); value != "" {
+		if _, err := enum(p, "pg_autoscale_mode", "on", "off", "warn"); err != nil {
+			return nil, err
+		}
+		addSet("pg_autoscale_mode", value)
+	}
+	if poolType == "replicated" {
+		addSet("size", optional(p, "size"))
+		addSet("crush_rule", optional(p, "crush_rule"))
+	}
+	if value := optional(p, "compression_mode"); value != "" {
+		if _, err := enum(p, "compression_mode", "none", "passive", "aggressive", "force"); err != nil {
+			return nil, err
+		}
+		addSet("compression_mode", value)
+	}
+	if applications, ok := stringSlice(p["applications"]); ok {
+		for _, application := range applications {
+			commands = append(commands, wrap([]string{"osd", "pool", "application", "enable", name, application}, nil))
+		}
+	} else if _, exists := p["applications"]; exists {
+		return nil, invalid("applications is invalid")
+	}
+	for _, quota := range []struct {
+		input string
+		field string
+	}{
+		{input: "quota_max_bytes", field: "max_bytes"},
+		{input: "quota_max_objects", field: "max_objects"},
+	} {
+		value, err := optionalPositiveInteger(p, quota.input)
+		if err != nil {
+			return nil, err
+		}
+		if value != "" {
+			commands = append(commands, wrap([]string{"osd", "pool", "set-quota", name, quota.field, value}, nil))
+		}
+	}
+	return commands, nil
+}
+
+func optionalPositiveInteger(p map[string]any, key string) (string, error) {
+	value := optional(p, key)
+	if value == "" {
+		return "", nil
+	}
+	number, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || number < 0 {
+		return "", invalid(key + " is invalid")
+	}
+	if number == 0 {
+		return "", nil
+	}
+	return value, nil
 }
 
 func hostUpdate(p map[string]any, host string, wrap func([]string, []string) command) (command, error) {
