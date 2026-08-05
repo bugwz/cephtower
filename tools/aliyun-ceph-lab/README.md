@@ -305,8 +305,9 @@ sudo bash deploy-ceph.sh \
 - 实例仍有云端自动释放时间，本地进程退出不影响到期释放。
 - SSH 连接失败、脚本失败行号、命令和退出码会同时写入终端和节点日志。
 - 如果远端 hook 进程退出但没有写出状态文件，create 会尽早报错而不是等完整超时。
-- 初始化 hook 会安装 `openssh-clients`、`sshpass`、`vim`、`wget`、`curl`
-  等基础工具，以及 `cephadm`、`podman`、`lvm2`、`chrony` 等 Ceph 容器运行依赖。
+- 初始化 hook 会安装 Go 1.26.5、Node.js 24.18.0 LTS 和 npm 11.16.0，以及
+  `openssh-clients`、`sshpass`、`vim`、`wget`、`curl` 等基础工具和 `cephadm`、
+  `podman`、`lvm2`、`chrony` 等 Ceph 容器运行依赖。
 
 ## RAM Action
 
