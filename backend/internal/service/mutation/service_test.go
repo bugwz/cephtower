@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"reflect"
 	"testing"
+
+	"cephtower/backend/internal/integration/ceph/executor"
 )
 
 func TestEveryNativeActionBuildsRegisteredCommand(t *testing.T) {
@@ -126,6 +128,104 @@ func TestPoolCreateBuildsErasurePoolCommand(t *testing.T) {
 	}
 }
 
+func TestPoolCreateBuildsRBDMirroringFollowup(t *testing.T) {
+	command, err := build(Request{Action: "pool.create", ResourceKey: "pool"}, map[string]any{
+		"name":          "rbd",
+		"pool_type":     "replicated",
+		"pg_num":        "32",
+		"rbd_mirroring": "pool",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(command.followups) != 1 {
+		t.Fatalf("followups = %d, want 1", len(command.followups))
+	}
+	want := []string{"mirror", "pool", "enable", "rbd", "pool"}
+	if !reflect.DeepEqual(command.followups[0].args, want) {
+		t.Fatalf("followup args = %#v, want %#v", command.followups[0].args, want)
+	}
+}
+
+func TestPoolCreateBuildsErasureFlagsAndMirroringFollowups(t *testing.T) {
+	command, err := build(Request{Action: "pool.create", ResourceKey: "pool"}, map[string]any{
+		"name":          "ec-rbd",
+		"pool_type":     "erasure",
+		"pg_num":        "32",
+		"flags":         []any{"allow_ec_overwrites"},
+		"applications":  []any{"rbd"},
+		"rbd_mirroring": "pool",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(command.followups) != 3 {
+		t.Fatalf("followups = %d, want 3", len(command.followups))
+	}
+	want := [][]string{
+		{"osd", "pool", "set", "ec-rbd", "allow_ec_overwrites", "true"},
+		{"osd", "pool", "application", "enable", "ec-rbd", "rbd"},
+		{"mirror", "pool", "enable", "ec-rbd", "pool"},
+	}
+	for index := range want {
+		if !reflect.DeepEqual(command.followups[index].args, want[index]) {
+			t.Fatalf("followup %d args = %#v, want %#v", index, command.followups[index].args, want[index])
+		}
+	}
+}
+
+func TestPoolUpdateBuildsErasureFlagCommand(t *testing.T) {
+	command, err := build(Request{Action: "pool.update", ResourceKey: "pool/ec-rbd"}, map[string]any{
+		"field": "allow_ec_overwrites",
+		"value": "false",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"osd", "pool", "set", "ec-rbd", "allow_ec_overwrites", "false"}
+	if !reflect.DeepEqual(command.args, want) {
+		t.Fatalf("args = %#v, want %#v", command.args, want)
+	}
+}
+
+func TestPoolUpdateBuildsRBDMirroringDisableCommand(t *testing.T) {
+	command, err := build(Request{Action: "pool.update", ResourceKey: "pool/rbd"}, map[string]any{
+		"operation":     "rbd_mirroring",
+		"rbd_mirroring": "disabled",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"mirror", "pool", "disable", "rbd"}
+	if !reflect.DeepEqual(command.args, want) {
+		t.Fatalf("args = %#v, want %#v", command.args, want)
+	}
+	if wantCheck := []string{"mirror", "pool", "info", "rbd", "--format", "json"}; !reflect.DeepEqual(command.check, wantCheck) {
+		t.Fatalf("check = %#v, want %#v", command.check, wantCheck)
+	}
+}
+
+func TestErasureCodeProfileCreateBuildsAllProfileArguments(t *testing.T) {
+	command, err := build(Request{Action: "erasure_code_profile.create", ResourceKey: "erasure-code-profile"}, map[string]any{
+		"name": "ec-isa", "plugin": "isa", "k": "7", "m": "3", "technique": "reed_sol_van",
+		"crush-failure-domain": "host", "crush-num-failure-domains": "3",
+		"crush-osds-per-failure-domain": "2", "crush-root": "default",
+		"crush-device-class": "ssd", "directory": "/usr/lib64/ceph/erasure-code",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"osd", "erasure-code-profile", "set", "ec-isa", "plugin=isa", "k=7", "m=3",
+		"technique=reed_sol_van", "crush-failure-domain=host", "crush-num-failure-domains=3",
+		"crush-osds-per-failure-domain=2", "crush-root=default", "crush-device-class=ssd",
+		"directory=/usr/lib64/ceph/erasure-code",
+	}
+	if !reflect.DeepEqual(command.args, want) {
+		t.Fatalf("args = %#v, want %#v", command.args, want)
+	}
+}
+
 func TestPoolCreateBuildsConfigurationFollowups(t *testing.T) {
 	command, err := build(Request{Action: "pool.create", ResourceKey: "pool"}, map[string]any{
 		"name":              "data",
@@ -158,5 +258,128 @@ func TestPoolCreateBuildsConfigurationFollowups(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("followups = %#v, want %#v", got, want)
+	}
+}
+
+func TestPoolCreateBuildsCompressionOptionFollowups(t *testing.T) {
+	command, err := build(Request{Action: "pool.create", ResourceKey: "pool"}, map[string]any{
+		"name":                       "data",
+		"pool_type":                  "replicated",
+		"compression_mode":           "force",
+		"compression_algorithm":      "zstd",
+		"compression_min_blob_size":  "4096",
+		"compression_max_blob_size":  "1048576",
+		"compression_required_ratio": "0.875",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := [][]string{
+		{"osd", "pool", "set", "data", "compression_mode", "force"},
+		{"osd", "pool", "set", "data", "compression_algorithm", "zstd"},
+		{"osd", "pool", "set", "data", "compression_min_blob_size", "4096"},
+		{"osd", "pool", "set", "data", "compression_max_blob_size", "1048576"},
+		{"osd", "pool", "set", "data", "compression_required_ratio", "0.875"},
+	}
+	got := make([][]string, 0, len(command.followups))
+	for _, followup := range command.followups {
+		got = append(got, followup.args)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("followups = %#v, want %#v", got, want)
+	}
+}
+
+func TestPoolUpdateBuildsCompressionOptionCommand(t *testing.T) {
+	command, err := build(Request{Action: "pool.update", ResourceKey: "pool/data"}, map[string]any{
+		"field": "compression_required_ratio",
+		"value": "0.875",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"osd", "pool", "set", "data", "compression_required_ratio", "0.875"}
+	if !reflect.DeepEqual(command.args, want) {
+		t.Fatalf("args = %#v, want %#v", command.args, want)
+	}
+}
+
+func TestPoolUpdateBuildsPGAndPGPCommands(t *testing.T) {
+	command, err := build(Request{Action: "pool.update", ResourceKey: "pool/data"}, map[string]any{
+		"field": "pg_num",
+		"value": "64",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"osd", "pool", "set", "data", "pg_num", "64"}; !reflect.DeepEqual(command.args, want) {
+		t.Fatalf("args = %#v, want %#v", command.args, want)
+	}
+	if len(command.followups) != 1 {
+		t.Fatalf("followups = %d, want 1", len(command.followups))
+	}
+	if want := []string{"osd", "pool", "set", "data", "pgp_num", "64"}; !reflect.DeepEqual(command.followups[0].args, want) {
+		t.Fatalf("followup args = %#v, want %#v", command.followups[0].args, want)
+	}
+}
+
+func TestPoolCreateBuildsRBDConfigurationFollowups(t *testing.T) {
+	command, err := build(Request{Action: "pool.create", ResourceKey: "pool"}, map[string]any{
+		"name":      "data",
+		"pool_type": "replicated",
+		"configuration": map[string]any{
+			"rbd_qos_bps_limit":  "1048576",
+			"rbd_qos_iops_limit": "1000",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(command.followups) != 2 {
+		t.Fatalf("followups = %d, want 2", len(command.followups))
+	}
+	for index, want := range [][]string{
+		{"config", "pool", "set", "data", "rbd_qos_bps_limit", "1048576"},
+		{"config", "pool", "set", "data", "rbd_qos_iops_limit", "1000"},
+	} {
+		if command.followups[index].binary != executor.BinaryRBD {
+			t.Fatalf("followup %d binary = %q, want rbd", index, command.followups[index].binary)
+		}
+		if !reflect.DeepEqual(command.followups[index].args, want) {
+			t.Fatalf("followup %d args = %#v, want %#v", index, command.followups[index].args, want)
+		}
+	}
+}
+
+func TestPoolUpdateBuildsRBDConfigurationCommand(t *testing.T) {
+	command, err := build(Request{Action: "pool.update", ResourceKey: "pool/data"}, map[string]any{
+		"operation": "rbd_configuration",
+		"field":     "rbd_qos_write_iops_burst",
+		"value":     "2000",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"config", "pool", "set", "data", "rbd_qos_write_iops_burst", "2000"}
+	if command.binary != executor.BinaryRBD || !reflect.DeepEqual(command.args, want) {
+		t.Fatalf("command = %q %#v, want rbd %#v", command.binary, command.args, want)
+	}
+	if wantCheck := []string{"config", "pool", "list", "data", "--format", "json"}; !reflect.DeepEqual(command.check, wantCheck) {
+		t.Fatalf("check = %#v, want %#v", command.check, wantCheck)
+	}
+}
+
+func TestPoolApplicationDisableIncludesConfirmation(t *testing.T) {
+	command, err := build(Request{Action: "pool.update", ResourceKey: "pool/data"}, map[string]any{
+		"operation":   "application",
+		"action":      "disable",
+		"application": "rbd",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"osd", "pool", "application", "disable", "data", "rbd", "--yes-i-really-mean-it"}
+	if !reflect.DeepEqual(command.args, want) {
+		t.Fatalf("args = %#v, want %#v", command.args, want)
 	}
 }

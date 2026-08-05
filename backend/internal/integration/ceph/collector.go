@@ -408,6 +408,7 @@ type poolWire struct {
 	PGAutoscaleMode     *string         `json:"pg_autoscale_mode"`
 	ApplicationMetadata map[string]any  `json:"application_metadata"`
 	CrushRule           json.RawMessage `json:"crush_rule"`
+	FlagsNames          string          `json:"flags_names"`
 	Options             map[string]any  `json:"options"`
 	QuotaMaxBytes       *int64          `json:"quota_max_bytes"`
 	QuotaMaxObjects     *int64          `json:"quota_max_objects"`
@@ -486,6 +487,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		states[osd.OSD] = [2]bool{osd.Up == 1, osd.In == 1}
 	}
 	hosts := osdHosts(tree)
+	crushPaths := osdCrushPaths(tree)
 	var pools []poolWire
 	if err := p.runInto(ctx, access, "collect.pool", []string{"osd", "pool", "ls", "detail", "--format", "json"}, &pools); err != nil {
 		return nil, err
@@ -505,7 +507,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		}
 		state := states[node.ID]
 		up, in := state[0], state[1]
-		payload := cephdomain.OSD{ID: node.ID, Name: node.Name, Status: node.Status, Up: &up, In: &in, Weight: node.CrushWeight, DeviceClass: node.DeviceClass, Host: hosts[node.ID]}
+		payload := cephdomain.OSD{ID: node.ID, Name: node.Name, Status: node.Status, Up: &up, In: &in, Weight: node.CrushWeight, DeviceClass: node.DeviceClass, Host: hosts[node.ID], CrushPath: crushPaths[node.ID]}
 		rows = append(rows, Observation{Kind: "osd", NaturalKey: strconv.Itoa(node.ID), Name: node.Name, Status: node.Status, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	for _, wire := range pools {
@@ -520,8 +522,11 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		payload := cephdomain.Pool{
 			Name: wire.PoolName, ID: wire.Pool, Type: kind, Size: wire.Size, MinSize: wire.MinSize, PGNum: wire.PGNum, PGPNum: wire.PGPNum,
 			PGAutoscaleMode: wire.PGAutoscaleMode, Applications: poolApplications(wire.ApplicationMetadata), ApplicationMetadata: wire.ApplicationMetadata,
-			CrushRule: rawTextPointer(wire.CrushRule), CompressionMode: poolCompressionMode(wire.Options), QuotaMaxBytes: firstInt64Pointer(quota.QuotaMaxBytes, wire.QuotaMaxBytes, wire.Quotas.MaxBytes), QuotaMaxObjects: firstInt64Pointer(quota.QuotaMaxObjects, wire.QuotaMaxObjects, wire.Quotas.MaxObjects),
-			RawDetail: poolRawDetail(wire.Raw, kind), Configuration: p.collectPoolConfiguration(ctx, access, wire.PoolName),
+			CrushRule: rawTextPointer(wire.CrushRule), Flags: poolFlagNames(wire.FlagsNames), CompressionMode: poolCompressionMode(wire.Options), CompressionAlgorithm: poolOptionStringPointer(wire.Options, "compression_algorithm"),
+			CompressionMinBlobSize: poolOptionInt64Pointer(wire.Options, "compression_min_blob_size"), CompressionMaxBlobSize: poolOptionInt64Pointer(wire.Options, "compression_max_blob_size"), CompressionRequiredRatio: poolOptionFloat64Pointer(wire.Options, "compression_required_ratio"),
+			QuotaMaxBytes: firstInt64Pointer(quota.QuotaMaxBytes, wire.QuotaMaxBytes, wire.Quotas.MaxBytes), QuotaMaxObjects: firstInt64Pointer(quota.QuotaMaxObjects, wire.QuotaMaxObjects, wire.Quotas.MaxObjects),
+			RBDMirroring: p.collectPoolMirroringMode(ctx, access, wire.PoolName),
+			RawDetail:    poolRawDetail(wire.Raw, kind), Configuration: p.collectPoolConfiguration(ctx, access, wire.PoolName),
 		}
 		rows = append(rows, Observation{Kind: "pool", NaturalKey: wire.PoolName, Name: wire.PoolName, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
@@ -729,6 +734,57 @@ func osdHosts(tree osdTreeWire) map[int]*string {
 	return hosts
 }
 
+func osdCrushPaths(tree osdTreeWire) map[int]map[string]string {
+	nodes := make(map[int]struct {
+		name     string
+		kind     string
+		children []int
+	}, len(tree.Nodes))
+	for _, node := range tree.Nodes {
+		nodes[node.ID] = struct {
+			name     string
+			kind     string
+			children []int
+		}{name: strings.TrimSpace(node.Name), kind: strings.TrimSpace(node.Type), children: node.Children}
+	}
+	paths := map[int]map[string]string{}
+	var walk func(int, map[string]string, map[int]struct{})
+	walk = func(id int, inherited map[string]string, visiting map[int]struct{}) {
+		if _, cycle := visiting[id]; cycle {
+			return
+		}
+		node, ok := nodes[id]
+		if !ok {
+			return
+		}
+		path := make(map[string]string, len(inherited)+1)
+		for kind, name := range inherited {
+			path[kind] = name
+		}
+		if node.kind != "" && node.kind != "osd" && node.name != "" {
+			path[node.kind] = node.name
+		}
+		if node.kind == "osd" {
+			paths[id] = path
+			return
+		}
+		nextVisiting := make(map[int]struct{}, len(visiting)+1)
+		for current := range visiting {
+			nextVisiting[current] = struct{}{}
+		}
+		nextVisiting[id] = struct{}{}
+		for _, child := range node.children {
+			walk(child, path, nextVisiting)
+		}
+	}
+	for _, node := range tree.Nodes {
+		if node.Type == "root" {
+			walk(node.ID, nil, map[int]struct{}{})
+		}
+	}
+	return paths
+}
+
 func rawTextPointer(raw json.RawMessage) *string {
 	value := strings.TrimSpace(string(raw))
 	if value == "" || value == "null" {
@@ -761,15 +817,60 @@ func poolApplications(metadata map[string]any) []string {
 }
 
 func poolCompressionMode(options map[string]any) *string {
+	return poolOptionStringPointer(options, "compression_mode")
+}
+
+func poolOptionStringPointer(options map[string]any, key string) *string {
 	if len(options) == 0 {
 		return nil
 	}
-	value, ok := options["compression_mode"].(string)
+	value, ok := options[key].(string)
 	if !ok || strings.TrimSpace(value) == "" {
 		return nil
 	}
 	value = strings.TrimSpace(value)
 	return &value
+}
+
+func poolOptionInt64Pointer(options map[string]any, key string) *int64 {
+	if len(options) == 0 {
+		return nil
+	}
+	switch value := options[key].(type) {
+	case float64:
+		integer := int64(value)
+		if float64(integer) == value {
+			return &integer
+		}
+	case json.Number:
+		if integer, err := value.Int64(); err == nil {
+			return &integer
+		}
+	case string:
+		if integer, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64); err == nil {
+			return &integer
+		}
+	}
+	return nil
+}
+
+func poolOptionFloat64Pointer(options map[string]any, key string) *float64 {
+	if len(options) == 0 {
+		return nil
+	}
+	switch value := options[key].(type) {
+	case float64:
+		return &value
+	case json.Number:
+		if number, err := value.Float64(); err == nil {
+			return &number
+		}
+	case string:
+		if number, err := strconv.ParseFloat(strings.TrimSpace(value), 64); err == nil {
+			return &number
+		}
+	}
+	return nil
 }
 
 func poolRawDetail(raw map[string]any, poolType string) map[string]any {
@@ -787,6 +888,16 @@ func poolRawDetail(raw map[string]any, poolType string) map[string]any {
 		detail["application_metadata"] = strings.Join(poolApplications(metadata), ", ")
 	}
 	return detail
+}
+
+func poolFlagNames(value string) []string {
+	var flags []string
+	for _, flag := range strings.Split(value, ",") {
+		if flag = strings.TrimSpace(flag); flag != "" {
+			flags = append(flags, flag)
+		}
+	}
+	return flags
 }
 
 func (p *NativeProvider) collectPoolConfiguration(ctx context.Context, access ClusterAccess, pool string) []cephdomain.PoolConfig {

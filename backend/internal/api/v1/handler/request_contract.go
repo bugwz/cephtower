@@ -90,27 +90,57 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"osd_deployment.preview", "osd_deployment.create"}, true, map[string]JSONField{"service_id": stringField(false), "host_pattern": stringField(false), "data_devices": dataDevices})
 	add([]string{"crush_rule.create"}, true, map[string]JSONField{"name": stringField(true), "root": stringField(true), "failure_domain": stringField(false), "device_class": stringField(false)})
 	add([]string{"crush_rule.update"}, true, map[string]JSONField{"name": stringField(true)})
-	add([]string{"erasure_code_profile.create"}, true, map[string]JSONField{"name": stringField(true), "plugin": stringField(false), "k": integerField(false), "m": integerField(false), "crush-failure-domain": stringField(false), "crush-device-class": stringField(false)})
+	add([]string{"erasure_code_profile.create"}, true, map[string]JSONField{
+		"name": stringField(true), "plugin": stringField(false), "k": integerField(false), "m": integerField(false),
+		"technique": stringField(false), "packetsize": integerField(false), "l": integerField(false),
+		"crush-locality": stringField(false), "c": integerField(false), "d": integerField(false),
+		"scalar_mds": stringField(false), "crush-failure-domain": stringField(false),
+		"crush-num-failure-domains": integerField(false), "crush-osds-per-failure-domain": integerField(false),
+		"crush-root": stringField(false), "crush-device-class": stringField(false), "directory": stringField(false),
+	})
+	rbdPoolConfiguration := objectField(false, map[string]JSONField{
+		"rbd_qos_bps_limit":        integerField(false),
+		"rbd_qos_iops_limit":       integerField(false),
+		"rbd_qos_read_bps_limit":   integerField(false),
+		"rbd_qos_read_iops_limit":  integerField(false),
+		"rbd_qos_write_bps_limit":  integerField(false),
+		"rbd_qos_write_iops_limit": integerField(false),
+		"rbd_qos_bps_burst":        integerField(false),
+		"rbd_qos_iops_burst":       integerField(false),
+		"rbd_qos_read_bps_burst":   integerField(false),
+		"rbd_qos_read_iops_burst":  integerField(false),
+		"rbd_qos_write_bps_burst":  integerField(false),
+		"rbd_qos_write_iops_burst": integerField(false),
+	})
+	poolFlags := stringsField(false)
+	poolFlags.Items.Enum = []string{"allow_ec_overwrites"}
 	poolConfiguration := map[string]JSONField{
-		"name":                 stringField(true),
-		"pool_type":            stringField(false, "replicated", "erasure"),
-		"pg_num":               integerField(false),
-		"pg_autoscale_mode":    stringField(false, "on", "off", "warn"),
-		"size":                 integerField(false),
-		"applications":         stringsField(false),
-		"erasure_code_profile": stringField(false),
-		"crush_rule":           stringField(false),
-		"compression_mode":     stringField(false, "none", "passive", "aggressive", "force"),
-		"quota_max_bytes":      integerField(false),
-		"quota_max_objects":    integerField(false),
-		"quota_unit":           stringField(false, "B", "KiB", "MiB", "GiB", "TiB", "PiB"),
+		"name":                       stringField(true),
+		"pool_type":                  stringField(false, "replicated", "erasure"),
+		"pg_num":                     integerField(false),
+		"pg_autoscale_mode":          stringField(false, "on", "off", "warn"),
+		"size":                       integerField(false),
+		"applications":               stringsField(false),
+		"erasure_code_profile":       stringField(false),
+		"crush_rule":                 stringField(false),
+		"flags":                      poolFlags,
+		"compression_mode":           stringField(false, "none", "passive", "aggressive", "force"),
+		"compression_algorithm":      stringField(false, "snappy", "zlib", "zstd", "lz4"),
+		"compression_min_blob_size":  integerField(false),
+		"compression_max_blob_size":  integerField(false),
+		"compression_required_ratio": numberField(false),
+		"quota_max_bytes":            integerField(false),
+		"quota_max_objects":          integerField(false),
+		"quota_unit":                 stringField(false, "B", "KiB", "MiB", "GiB", "TiB", "PiB"),
+		"rbd_mirroring":              stringField(false, "disabled", "pool"),
+		"configuration":              rbdPoolConfiguration,
 	}
 	poolUpdate := make(map[string]JSONField, len(poolConfiguration)+5)
 	for field, definition := range poolConfiguration {
 		definition.Required = false
 		poolUpdate[field] = definition
 	}
-	poolUpdate["operation"] = stringField(false, "quota", "application", "rename")
+	poolUpdate["operation"] = stringField(false, "quota", "application", "rename", "rbd_configuration", "rbd_mirroring")
 	poolUpdate["field"] = stringField(false)
 	poolUpdate["value"] = anyField(false)
 	poolUpdate["action"] = stringField(false, "enable", "disable")

@@ -55,8 +55,8 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 				rows = append(rows, observation("rbd_group", pool.PoolName+"/"+name, name, "rbd_cli", map[string]any{"pool": pool.PoolName, "name": name}, now))
 			}
 		}
-		var mirroring map[string]any
-		if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_mirroring", []string{"mirror", "pool", "info", pool.PoolName, "--format", "json"}, &mirroring) {
+		mirroring, ok := p.collectPoolMirroring(ctx, access, pool.PoolName)
+		if ok {
 			mirroring["pool"] = pool.PoolName
 			mirroringPools = append(mirroringPools, mirroring)
 		}
@@ -98,6 +98,29 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 		}
 	}
 	return rows
+}
+
+func (p *NativeProvider) collectPoolMirroringMode(ctx context.Context, access ClusterAccess, pool string) *string {
+	mirroring, ok := p.collectPoolMirroring(ctx, access, pool)
+	if !ok {
+		return nil
+	}
+	mode := firstNonEmpty(textField(mirroring, "mirror_mode"), textField(mirroring, "mode"))
+	if mode == "" {
+		return nil
+	}
+	return &mode
+}
+
+func (p *NativeProvider) collectPoolMirroring(ctx context.Context, access ClusterAccess, pool string) (map[string]any, bool) {
+	if strings.TrimSpace(pool) == "" {
+		return nil, false
+	}
+	var mirroring map[string]any
+	if !p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_mirroring", []string{"mirror", "pool", "info", pool, "--format", "json"}, &mirroring) {
+		return nil, false
+	}
+	return mirroring, true
 }
 
 func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterAccess, now time.Time) []Observation {

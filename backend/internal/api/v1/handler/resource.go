@@ -245,6 +245,15 @@ func (h *Handler) persistResourceMutation(ctx context.Context, clusterID uint64,
 	if err != nil {
 		return err
 	}
+	if kind == "pool" && strings.HasSuffix(action, ".update") {
+		if operation, _ := body["operation"].(string); operation == "rename" {
+			newName, _ := body["name"].(string)
+			newName = strings.TrimSpace(newName)
+			if newName != "" && newName != key {
+				return h.Database().RenameResourceState(ctx, clusterID, kind, key, newName, string(configured))
+			}
+		}
+	}
 	return h.Database().SaveResourceConfiguration(ctx, clusterID, kind, key, string(configured))
 }
 
@@ -262,7 +271,7 @@ func resourceConfigurationBody(kind, action string, body map[string]any) map[str
 		return result
 	}
 	if strings.HasSuffix(action, ".create") {
-		return clean("name", "pool_type", "pg_num", "pg_autoscale_mode", "size", "applications", "erasure_code_profile", "crush_rule", "compression_mode", "quota_max_bytes", "quota_max_objects", "quota_unit")
+		return clean("name", "pool_type", "pg_num", "pg_autoscale_mode", "size", "applications", "erasure_code_profile", "crush_rule", "compression_mode", "compression_algorithm", "compression_min_blob_size", "compression_max_blob_size", "compression_required_ratio", "quota_max_bytes", "quota_max_objects", "quota_unit", "rbd_mirroring", "configuration")
 	}
 	if !strings.HasSuffix(action, ".update") {
 		return body
@@ -282,12 +291,20 @@ func resourceConfigurationBody(kind, action string, body map[string]any) map[str
 	if operation, _ := body["operation"].(string); operation == "application" {
 		return result
 	}
+	if operation, _ := body["operation"].(string); operation == "rbd_configuration" {
+		// RBD pool configuration is read back from the cluster. Do not let a local
+		// shadow value override the effective value returned by `rbd config pool list`.
+		return map[string]any{}
+	}
+	if operation, _ := body["operation"].(string); operation == "rbd_mirroring" {
+		return clean("rbd_mirroring")
+	}
 	if operation, _ := body["operation"].(string); operation == "rename" {
 		return clean("name")
 	}
 	field, _ := body["field"].(string)
 	if field == "" {
-		return clean("name", "pool_type", "pg_num", "pg_autoscale_mode", "size", "applications", "erasure_code_profile", "crush_rule", "compression_mode", "quota_max_bytes", "quota_max_objects", "quota_unit")
+		return clean("name", "pool_type", "pg_num", "pg_autoscale_mode", "size", "applications", "erasure_code_profile", "crush_rule", "compression_mode", "compression_algorithm", "compression_min_blob_size", "compression_max_blob_size", "compression_required_ratio", "quota_max_bytes", "quota_max_objects", "quota_unit", "rbd_mirroring", "configuration")
 	}
 	if value, exists := body["value"]; exists {
 		result[field] = value

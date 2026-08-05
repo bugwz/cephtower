@@ -644,6 +644,32 @@ func (d *Database) DeleteResourceState(ctx context.Context, clusterID uint64, ki
 	return d.db.WithContext(ctx).Table(table).Where("cluster_id = ? AND natural_key = ?", clusterID, key).Delete(&CephEntityRecord{}).Error
 }
 
+func (d *Database) RenameResourceState(ctx context.Context, clusterID uint64, kind, oldKey, newKey, configuredData string) error {
+	if oldKey == "" || newKey == "" || oldKey == newKey {
+		return d.SaveResourceConfiguration(ctx, clusterID, kind, newKey, configuredData)
+	}
+	table, ok := EntityTableName(kind)
+	if !ok {
+		return nil
+	}
+	var existing CephEntityRecord
+	err := d.db.WithContext(ctx).Table(table).Where("cluster_id = ? AND natural_key = ?", clusterID, oldKey).First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return d.SaveResourceConfiguration(ctx, clusterID, kind, newKey, configuredData)
+	}
+	if err != nil {
+		return err
+	}
+	configuredData = mergeConfiguredData(existing.ConfiguredData, configuredData)
+	name := newKey
+	return d.db.WithContext(ctx).Table(table).Where("id = ?", existing.ID).Updates(map[string]any{
+		"natural_key":     newKey,
+		"name":            name,
+		"configured_data": configuredData,
+		"updated_at":      time.Now().UTC(),
+	}).Error
+}
+
 func mergeConfiguredData(existing *string, incoming string) string {
 	if existing == nil || *existing == "" {
 		return incoming

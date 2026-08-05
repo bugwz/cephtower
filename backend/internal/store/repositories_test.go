@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"reflect"
 	"testing"
 	"time"
@@ -199,6 +200,47 @@ func TestSaveResourceConfigurationMergesEntityConfiguration(t *testing.T) {
 	}
 	if configured["name"] != "data" || configured["compression_mode"] != "none" || configured["size"] != "3" {
 		t.Fatalf("configured data was not merged: %#v", configured)
+	}
+	applications, ok := configured["applications"].([]any)
+	if !ok || len(applications) != 1 || applications[0] != "rbd" {
+		t.Fatalf("applications were not preserved: %#v", configured)
+	}
+}
+
+func TestRenameResourceStatePreservesDiscoveryAndConfiguration(t *testing.T) {
+	db, err := Open(config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Name: "pool-rename.db"}}, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer Close(db)
+	ctx := context.Background()
+	now := time.Now().UTC()
+	cluster := CephCluster{Name: "c", MonitorAddresses: "mon:6789", ClientUsername: "client.test", ClientKey: "cipher", CreatedAt: now, UpdatedAt: now}
+	if err := db.CreateCluster(ctx, &cluster); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.SaveResourceConfiguration(ctx, cluster.ID, "pool", "old", `{"applications":["rbd"]}`); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.RenameResourceState(ctx, cluster.ID, "pool", "old", "new", `{"name":"new"}`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.FindResource(ctx, cluster.ID, "pool", "old"); !errors.Is(err, ErrRecordNotFound) {
+		t.Fatalf("old pool lookup error = %v, want not found", err)
+	}
+	row, err := db.FindResource(ctx, cluster.ID, "pool", "new")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if row.Name == nil || *row.Name != "new" || row.ConfiguredData == nil {
+		t.Fatalf("renamed row = %#v", row)
+	}
+	var configured map[string]any
+	if err := json.Unmarshal([]byte(*row.ConfiguredData), &configured); err != nil {
+		t.Fatal(err)
+	}
+	if configured["name"] != "new" {
+		t.Fatalf("configured data = %#v", configured)
 	}
 	applications, ok := configured["applications"].([]any)
 	if !ok || len(applications) != 1 || applications[0] != "rbd" {

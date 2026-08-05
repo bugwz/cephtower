@@ -1206,9 +1206,53 @@
   gap: 2px 16px;
 }
 
+.pool-form-divider {
+  grid-column: 1 / -1;
+  margin: 5px 0;
+}
+
+.pool-inline-create-control {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pool-inline-create-control > .ant-form-item,
+.pool-inline-create-control > .ant-select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pool-inline-create-control > .ant-form-item {
+  margin-bottom: 0;
+}
+
+.pool-inline-create-control .ant-select {
+  width: 100%;
+}
+
+.pool-inline-create-control > .ant-form-item .ant-select-selector,
+.pool-inline-create-control > .ant-select .ant-select-selector {
+  border-start-end-radius: 8px !important;
+  border-end-end-radius: 8px !important;
+}
+
+.pool-inline-create-control > .ant-btn {
+  flex: 0 0 40px;
+  width: 40px;
+  padding-inline: 0;
+  margin-inline-start: 0;
+  border-radius: 8px;
+}
+
+.pool-inline-create-control > .ant-btn .anticon {
+  font-size: 14px;
+}
+
 .pool-replicated-fields {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(84px, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
   gap: 16px;
 }
 
@@ -1231,28 +1275,41 @@
 .pool-management-form .ant-input-number-group-addon {
   padding: 0;
   background: #fbfefd;
-  vertical-align: top;
+  vertical-align: middle;
+}
+
+.pool-static-unit {
+  display: inline-flex;
+  min-width: 64px;
+  height: 100%;
+  padding: 0 12px;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .pool-quota-unit-select {
-  width: 88px;
+  width: 64px;
   height: 100%;
+  margin: 0 !important;
 }
 
 .pool-quota-unit-select .ant-select-selector {
-  height: 32px !important;
-  padding-inline: 10px 28px !important;
+  height: 100% !important;
+  padding-inline: 10px 24px !important;
   border: 0 !important;
   box-shadow: none !important;
 }
 
 .pool-quota-unit-select .ant-select-selection-wrap {
+  align-items: center;
   min-width: 0;
 }
 
 .pool-quota-unit-select .ant-select-selection-item {
   padding-inline-end: 0 !important;
-  line-height: 32px !important;
+  line-height: normal !important;
   text-align: center;
 }
 
@@ -2096,6 +2153,15 @@
   flex-direction: column;
   border-radius: 10px;
   overflow: hidden;
+}
+
+.ant-modal-root .nested-cluster-modal {
+  top: 96px;
+  padding-bottom: 0;
+}
+
+.ant-modal-root .nested-cluster-modal .ant-modal-content {
+  max-height: calc(100vh - 96px);
 }
 
 .ant-modal-root .ant-modal-body {

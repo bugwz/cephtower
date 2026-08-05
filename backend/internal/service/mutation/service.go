@@ -17,6 +17,23 @@ import (
 
 var identifier = regexp.MustCompile(`^[A-Za-z0-9_.:@/+\-=]{1,512}$`)
 
+const allowECOverwritesPoolFlag = "allow_ec_overwrites"
+
+var rbdPoolConfigurationFields = []string{
+	"rbd_qos_bps_limit",
+	"rbd_qos_iops_limit",
+	"rbd_qos_read_bps_limit",
+	"rbd_qos_read_iops_limit",
+	"rbd_qos_write_bps_limit",
+	"rbd_qos_write_iops_limit",
+	"rbd_qos_bps_burst",
+	"rbd_qos_iops_burst",
+	"rbd_qos_read_bps_burst",
+	"rbd_qos_read_iops_burst",
+	"rbd_qos_write_bps_burst",
+	"rbd_qos_write_iops_burst",
+}
+
 type Service struct {
 	clusters *clusterservice.Service
 	executor executor.Executor
@@ -117,7 +134,7 @@ func build(request Request, p map[string]any) (command, error) {
 		return command{binary: executor.BinaryCeph, args: args, check: check, timeout: 2 * time.Minute}
 	}
 	rbd := func(args, check []string) command {
-		return command{binary: executor.BinaryRBD, args: append(args, "--format", "json"), check: append(check, "--format", "json"), timeout: 5 * time.Minute}
+		return command{binary: executor.BinaryRBD, args: args, check: append(check, "--format", "json"), timeout: 5 * time.Minute}
 	}
 	rgw := func(args, check []string) command {
 		return command{binary: executor.BinaryRGWAdmin, args: append(args, "--format", "json"), check: append(check, "--format", "json"), timeout: 2 * time.Minute}
@@ -343,7 +360,11 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, err
 		}
 		args := []string{"osd", "erasure-code-profile", "set", name}
-		for _, key := range []string{"plugin", "k", "m", "crush-failure-domain", "crush-device-class"} {
+		for _, key := range []string{
+			"plugin", "k", "m", "technique", "packetsize", "l", "crush-locality", "c", "d", "scalar_mds",
+			"crush-failure-domain", "crush-num-failure-domains", "crush-osds-per-failure-domain",
+			"crush-root", "crush-device-class", "directory",
+		} {
 			if value := optional(p, key); value != "" {
 				args = append(args, key+"="+value)
 			}
@@ -372,7 +393,7 @@ func build(request Request, p map[string]any) (command, error) {
 			args = append(args, pg, "replicated")
 		}
 		result := ceph(args, []string{"osd", "pool", "ls", "detail", "--format", "json"})
-		result.followups, err = poolCreateFollowups(p, name, poolType, ceph)
+		result.followups, err = poolCreateFollowups(p, name, poolType, ceph, rbd)
 		if err != nil {
 			return command{}, err
 		}
@@ -400,7 +421,32 @@ func build(request Request, p map[string]any) (command, error) {
 			if err != nil {
 				return command{}, err
 			}
-			return ceph([]string{"osd", "pool", "application", verb, name, application}, []string{"osd", "pool", "application", "get", name, "--format", "json"}), nil
+			args := []string{"osd", "pool", "application", verb, name, application}
+			if verb == "disable" {
+				args = append(args, "--yes-i-really-mean-it")
+			}
+			return ceph(args, []string{"osd", "pool", "application", "get", name, "--format", "json"}), nil
+		}
+		if operation == "rbd_configuration" {
+			field, err := enum(p, "field", rbdPoolConfigurationFields...)
+			if err != nil {
+				return command{}, err
+			}
+			value, err := requiredNonNegativeInteger(p, "value")
+			if err != nil {
+				return command{}, err
+			}
+			return rbd(
+				[]string{"config", "pool", "set", name, field, value},
+				[]string{"config", "pool", "list", name},
+			), nil
+		}
+		if operation == "rbd_mirroring" {
+			mode, err := enum(p, "rbd_mirroring", "disabled", "pool")
+			if err != nil {
+				return command{}, err
+			}
+			return rbdMirrorPoolModeCommand(name, mode, rbd), nil
 		}
 		if operation == "rename" {
 			newName, err := required(p, "name")
@@ -409,7 +455,7 @@ func build(request Request, p map[string]any) (command, error) {
 			}
 			return ceph([]string{"osd", "pool", "rename", name, newName}, []string{"osd", "pool", "ls", "detail", "--format", "json"}), nil
 		}
-		field, err := enum(p, "field", "size", "min_size", "pg_num", "pgp_num", "pg_autoscale_mode", "crush_rule", "compression_mode")
+		field, err := enum(p, "field", poolSetFields()...)
 		if err != nil {
 			return command{}, err
 		}
@@ -417,7 +463,14 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return ceph([]string{"osd", "pool", "set", name, field, value}, []string{"osd", "pool", "ls", "detail", "--format", "json"}), nil
+		if err := validatePoolSetValue(field, value); err != nil {
+			return command{}, err
+		}
+		result := ceph([]string{"osd", "pool", "set", name, field, value}, []string{"osd", "pool", "ls", "detail", "--format", "json"})
+		if field == "pg_num" {
+			result.followups = []command{ceph([]string{"osd", "pool", "set", name, "pgp_num", value}, nil)}
+		}
+		return result, nil
 	case "pool.delete":
 		name := last(tail)
 		return ceph([]string{"osd", "pool", "rm", name, name, "--yes-i-really-really-mean-it"}, []string{"osd", "pool", "ls", "detail", "--format", "json"}), nil
@@ -588,7 +641,7 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return rbd([]string{"mirror", "pool", "enable", pool, mode}, []string{"mirror", "pool", "info", pool}), nil
+		return rbdMirrorPoolModeCommand(pool, mode, rbd), nil
 	case "filesystem.create":
 		name, err := required(p, "name")
 		if err != nil {
@@ -895,11 +948,15 @@ func build(request Request, p map[string]any) (command, error) {
 	}
 }
 
-func poolCreateFollowups(p map[string]any, name, poolType string, wrap func([]string, []string) command) ([]command, error) {
+func poolCreateFollowups(
+	p map[string]any,
+	name, poolType string,
+	wrapCeph, wrapRBD func([]string, []string) command,
+) ([]command, error) {
 	var commands []command
 	addSet := func(field string, value string) {
 		if value != "" {
-			commands = append(commands, wrap([]string{"osd", "pool", "set", name, field, value}, nil))
+			commands = append(commands, wrapCeph([]string{"osd", "pool", "set", name, field, value}, nil))
 		}
 	}
 	if value := optional(p, "pg_autoscale_mode"); value != "" {
@@ -912,15 +969,57 @@ func poolCreateFollowups(p map[string]any, name, poolType string, wrap func([]st
 		addSet("size", optional(p, "size"))
 		addSet("crush_rule", optional(p, "crush_rule"))
 	}
+	if rawFlags, exists := p["flags"]; exists {
+		flags, ok := stringSlice(rawFlags)
+		if !ok {
+			return nil, invalid("flags is invalid")
+		}
+		if poolType != "erasure" && len(flags) > 0 {
+			return nil, invalid("flags are only supported for erasure pools")
+		}
+		seen := make(map[string]struct{}, len(flags))
+		for _, flag := range flags {
+			if flag != allowECOverwritesPoolFlag {
+				return nil, invalid("pool flag is not supported")
+			}
+			if _, exists := seen[flag]; exists {
+				continue
+			}
+			seen[flag] = struct{}{}
+			addSet(flag, "true")
+		}
+	}
 	if value := optional(p, "compression_mode"); value != "" {
 		if _, err := enum(p, "compression_mode", "none", "passive", "aggressive", "force"); err != nil {
 			return nil, err
 		}
 		addSet("compression_mode", value)
 	}
+	if optional(p, "compression_mode") != "none" {
+		if value := optional(p, "compression_algorithm"); value != "" {
+			if _, err := enum(p, "compression_algorithm", "snappy", "zlib", "zstd", "lz4"); err != nil {
+				return nil, err
+			}
+			addSet("compression_algorithm", value)
+		}
+		for _, field := range []string{"compression_min_blob_size", "compression_max_blob_size"} {
+			value, ok, err := optionalNonNegativeInteger(p, field)
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				addSet(field, value)
+			}
+		}
+		if value, ok, err := optionalRatio(p, "compression_required_ratio"); err != nil {
+			return nil, err
+		} else if ok {
+			addSet("compression_required_ratio", value)
+		}
+	}
 	if applications, ok := stringSlice(p["applications"]); ok {
 		for _, application := range applications {
-			commands = append(commands, wrap([]string{"osd", "pool", "application", "enable", name, application}, nil))
+			commands = append(commands, wrapCeph([]string{"osd", "pool", "application", "enable", name, application}, nil))
 		}
 	} else if _, exists := p["applications"]; exists {
 		return nil, invalid("applications is invalid")
@@ -937,10 +1036,117 @@ func poolCreateFollowups(p map[string]any, name, poolType string, wrap func([]st
 			return nil, err
 		}
 		if value != "" {
-			commands = append(commands, wrap([]string{"osd", "pool", "set-quota", name, quota.field, value}, nil))
+			commands = append(commands, wrapCeph([]string{"osd", "pool", "set-quota", name, quota.field, value}, nil))
+		}
+	}
+	if rawConfiguration, exists := p["configuration"]; exists {
+		configuration, ok := rawConfiguration.(map[string]any)
+		if !ok {
+			return nil, invalid("configuration is invalid")
+		}
+		for _, field := range rbdPoolConfigurationFields {
+			if _, exists := configuration[field]; !exists {
+				continue
+			}
+			value, err := requiredNonNegativeInteger(configuration, field)
+			if err != nil {
+				return nil, err
+			}
+			commands = append(commands, wrapRBD([]string{"config", "pool", "set", name, field, value}, nil))
+		}
+	}
+	if rawMirroringMode := optional(p, "rbd_mirroring"); rawMirroringMode != "" {
+		mirroringMode, err := enum(p, "rbd_mirroring", "disabled", "pool")
+		if err != nil {
+			return nil, err
+		}
+		if mirroringMode != "disabled" {
+			commands = append(commands, rbdMirrorPoolModeCommand(name, mirroringMode, wrapRBD))
 		}
 	}
 	return commands, nil
+}
+
+func rbdMirrorPoolModeCommand(pool, mode string, wrapRBD func([]string, []string) command) command {
+	if mode == "disabled" {
+		return wrapRBD([]string{"mirror", "pool", "disable", pool}, []string{"mirror", "pool", "info", pool})
+	}
+	return wrapRBD([]string{"mirror", "pool", "enable", pool, mode}, []string{"mirror", "pool", "info", pool})
+}
+
+func poolSetFields() []string {
+	return []string{
+		"size",
+		"min_size",
+		"pg_num",
+		"pgp_num",
+		"pg_autoscale_mode",
+		"crush_rule",
+		"compression_mode",
+		"compression_algorithm",
+		"compression_required_ratio",
+		"compression_max_blob_size",
+		"compression_min_blob_size",
+		allowECOverwritesPoolFlag,
+	}
+}
+
+func validatePoolSetValue(field, value string) error {
+	switch field {
+	case "compression_mode":
+		for _, allowed := range []string{"none", "passive", "aggressive", "force", "unset"} {
+			if value == allowed {
+				return nil
+			}
+		}
+		return invalid("compression_mode is not supported")
+	case "compression_algorithm":
+		for _, allowed := range []string{"snappy", "zlib", "zstd", "lz4", "unset"} {
+			if value == allowed {
+				return nil
+			}
+		}
+		return invalid("compression_algorithm is not supported")
+	case "compression_required_ratio":
+		number, err := strconv.ParseFloat(value, 64)
+		if err != nil || number < 0 || number > 1 {
+			return invalid("compression_required_ratio is invalid")
+		}
+	case "compression_min_blob_size", "compression_max_blob_size":
+		number, err := strconv.ParseInt(value, 10, 64)
+		if err != nil || number < 0 {
+			return invalid(field + " is invalid")
+		}
+	case allowECOverwritesPoolFlag:
+		if value != "true" && value != "false" {
+			return invalid("allow_ec_overwrites is invalid")
+		}
+	}
+	return nil
+}
+
+func optionalNonNegativeInteger(p map[string]any, key string) (string, bool, error) {
+	if _, exists := p[key]; !exists {
+		return "", false, nil
+	}
+	value := optional(p, key)
+	number, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || number < 0 {
+		return "", false, invalid(key + " is invalid")
+	}
+	return value, true, nil
+}
+
+func optionalRatio(p map[string]any, key string) (string, bool, error) {
+	if _, exists := p[key]; !exists {
+		return "", false, nil
+	}
+	value := optional(p, key)
+	number, err := strconv.ParseFloat(value, 64)
+	if err != nil || number < 0 || number > 1 {
+		return "", false, invalid(key + " is invalid")
+	}
+	return value, true, nil
 }
 
 func optionalPositiveInteger(p map[string]any, key string) (string, error) {
@@ -954,6 +1160,15 @@ func optionalPositiveInteger(p map[string]any, key string) (string, error) {
 	}
 	if number == 0 {
 		return "", nil
+	}
+	return value, nil
+}
+
+func requiredNonNegativeInteger(p map[string]any, key string) (string, error) {
+	value := optional(p, key)
+	number, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || number < 0 {
+		return "", invalid(key + " is invalid")
 	}
 	return value, nil
 }
