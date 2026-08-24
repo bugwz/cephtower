@@ -12,6 +12,7 @@ import {
   ClusterDetailPage,
   DeviceDetailPage,
   HostDetailPage,
+  FilesystemDetailPage,
   LoginPage,
   MonDetailPage,
   PoolDetailPage,
@@ -222,6 +223,7 @@ export default function App() {
             <Route path="/cluster/host/:name" element={renderStandaloneAppPage('hostManagement', <HostDetailPage />)} />
             <Route path="/cluster/mon/:name" element={renderStandaloneAppPage('monManagement', <MonDetailPage />)} />
             <Route path="/cluster/pool/:name" element={renderStandaloneAppPage('poolManagement', <PoolDetailPage />)} />
+            <Route path="/file/cephfs/:name" element={renderStandaloneAppPage('cephfs', <FilesystemDetailPage />)} />
             <Route path="/login" element={<Navigate to={pagePaths.overview} replace />} />
             <Route path="/bootstrap" element={<Navigate to={pagePaths.overview} replace />} />
             <Route path="/password-reset" element={<Navigate to={pagePaths.overview} replace />} />

@@ -69,17 +69,32 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 		var groups []namedWire
 		if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_group", []string{"fs", "subvolumegroup", "ls", name, "--format", "json"}, &groups) {
 			for _, group := range groups {
-				rows = append(rows, Observation{Kind: "subvolume_group", NaturalKey: name + "/" + group.Name, ParentKind: "filesystem", ParentKey: name, Name: group.Name, Status: "available", Source: "ceph_cli", Payload: map[string]any{"filesystem": name, "name": group.Name}, ObservedAt: now})
+				payload := map[string]any{"filesystem": name, "name": group.Name}
+				var details map[string]any
+				if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_group", []string{"fs", "subvolumegroup", "info", name, group.Name, "--format", "json"}, &details) {
+					for key, value := range details {
+						payload[key] = value
+					}
+				}
+				rows = append(rows, Observation{Kind: "subvolume_group", NaturalKey: name + "/" + group.Name, ParentKind: "filesystem", ParentKey: name, Name: group.Name, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 			}
 		}
 		var subvolumes []namedWire
 		if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_subvolume_detail", []string{"fs", "subvolume", "ls", name, "--format", "json"}, &subvolumes) {
 			for _, subvolume := range subvolumes {
-				var snapshots []namedWire
+				var snapshots []map[string]any
 				if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_snapshot", []string{"fs", "subvolume", "snapshot", "ls", name, subvolume.Name, "--format", "json"}, &snapshots) {
 					for _, snapshot := range snapshots {
+						snapshotName := textField(snapshot, "name")
+						if snapshotName == "" {
+							continue
+						}
 						parent := name + "/" + subvolume.Name
-						rows = append(rows, Observation{Kind: "cephfs_snapshot", NaturalKey: parent + "/" + snapshot.Name, ParentKind: "subvolume", ParentKey: parent, Name: snapshot.Name, Status: "available", Source: "ceph_cli", Payload: map[string]any{"filesystem": name, "subvolume": subvolume.Name, "name": snapshot.Name}, ObservedAt: now})
+						payload := map[string]any{"filesystem": name, "subvolume": subvolume.Name, "name": snapshotName}
+						for key, value := range snapshot {
+							payload[key] = value
+						}
+						rows = append(rows, Observation{Kind: "cephfs_snapshot", NaturalKey: parent + "/" + snapshotName, ParentKind: "subvolume", ParentKey: parent, Name: snapshotName, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 					}
 				}
 			}

@@ -1,4 +1,5 @@
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
+import { listResource } from '../../api/resource'
 
 export function FilePoolsPage() {
   return <ResourceListPage definition={definitions.filePools} />
@@ -92,9 +93,37 @@ const definitions: Record<
       method: 'POST',
       successMessage: 'CephFS 文件系统创建执行成功',
       fields: [
-        { name: 'name', label: '文件系统名称', required: true }
+        {
+          name: 'name',
+          label: '文件系统名称',
+          required: true,
+          placeholder: '例如 cephfs',
+          pattern: /^(?:\.[A-Za-z0-9_-]+|[A-Za-z][.A-Za-z0-9_-]*)$/,
+          patternMessage: "名称须以字母或点开头，且只能包含字母、数字、点、'-' 或 '_'"
+        },
+        {
+          name: 'placement_type',
+          label: 'MDS 放置方式',
+          type: 'select',
+          options: [
+            { label: '指定主机', value: 'hosts' },
+            { label: '按主机标签', value: 'label' }
+          ]
+        },
+        { name: 'placement_hosts', label: 'MDS 主机（逗号分隔）', placeholder: 'ceph-node-1, ceph-node-2' },
+        { name: 'placement_label', label: 'MDS 主机标签', placeholder: '例如 mds' },
+        { name: 'use_existing_pools', label: '使用现有存储池', type: 'boolean' },
+        { name: 'metadata_pool', label: '元数据池', type: 'select', optionsLoader: cephfsPoolOptions },
+        { name: 'data_pool', label: '数据池', type: 'select', optionsLoader: cephfsPoolOptions }
       ],
-      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? '') })
+      initialValues: { placement_type: 'hosts', use_existing_pools: false },
+      buildBody: (values, clusterId) => ({
+        cluster_id: clusterId,
+        name: String(values.name ?? ''),
+        ...(filesystemPlacement(values) ? { placement: filesystemPlacement(values) } : {}),
+        ...(values.use_existing_pools && values.metadata_pool ? { metadata_pool: String(values.metadata_pool) } : {}),
+        ...(values.use_existing_pools && values.data_pool ? { data_pool: String(values.data_pool) } : {})
+      })
     },
     updateAction: {
       title: '更新 CephFS 文件系统',
@@ -119,12 +148,14 @@ const definitions: Record<
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, fs: resourceName(row) }),
       resourceKey: (row) => `filesystem/${resourceName(row)}`
     },
+    detailPath: (row) => `/file/cephfs/${encodeURIComponent(resourceName(row))}`,
     columns: [
       { key: 'name', title: '名称' },
       { key: 'status', title: '状态' },
       { key: 'metadata_pool', title: '元数据池' },
       { key: 'data_pools', title: '数据池' },
-      { key: 'mdsmap', title: 'MDS' },
+      { key: 'max_mds', title: '最大 MDS' },
+      { key: 'up', title: '活跃 MDS' },
       { key: 'resource_version', title: '版本' }
     ]
   },
@@ -164,10 +195,40 @@ const definitions: Record<
       method: 'POST',
       successMessage: '子卷组创建执行成功',
       fields: [
-        { name: 'fs', label: '文件系统', required: true },
-        { name: 'name', label: '子卷组名称', required: true }
+        { name: 'fs', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
+        { name: 'name', label: '子卷组名称', required: true },
+        { name: 'size', label: '配额大小（字节，0 表示不限制）', type: 'number', min: 0 },
+        { name: 'pool', label: 'CephFS 数据池', type: 'select', required: true, optionsLoader: cephfsPoolOptions },
+        { name: 'uid', label: 'UID', type: 'number', min: 0 },
+        { name: 'gid', label: 'GID', type: 'number', min: 0 },
+        { name: 'mode', label: '目录权限模式', placeholder: '0755' },
+        {
+          name: 'normalization',
+          label: '名称规范化',
+          type: 'select',
+          options: [
+            { label: '不指定', value: '' },
+            { label: 'NFD', value: 'nfd' },
+            { label: 'NFC', value: 'nfc' },
+            { label: 'NFKD', value: 'nfkd' },
+            { label: 'NFKC', value: 'nfkc' }
+          ]
+        },
+        { name: 'case_sensitive', label: '区分大小写', type: 'boolean' }
       ],
-      buildBody: (values, clusterId) => ({ cluster_id: clusterId, fs: String(values.fs ?? ''), name: String(values.name ?? '') })
+      initialValues: { size: 0, uid: 0, gid: 0, mode: '0755', normalization: '', case_sensitive: true },
+      buildBody: (values, clusterId) => ({
+        cluster_id: clusterId,
+        fs: String(values.fs ?? ''),
+        name: String(values.name ?? ''),
+        size: Number(values.size ?? 0),
+        pool: String(values.pool ?? ''),
+        uid: Number(values.uid ?? 0),
+        gid: Number(values.gid ?? 0),
+        mode: String(values.mode ?? '0755'),
+        ...(values.normalization ? { normalization: String(values.normalization) } : {}),
+        case_sensitive: Boolean(values.case_sensitive)
+      })
     },
     updateAction: {
       title: '更新子卷组',
@@ -192,8 +253,10 @@ const definitions: Record<
       { key: 'fs', title: '文件系统' },
       { key: 'filesystem', title: '文件系统名称' },
       { key: 'name', title: '名称' },
-      { key: 'size', title: '大小' },
+      { key: 'data_pool', title: '数据池' },
+      { key: 'bytes_quota', title: '配额' },
       { key: 'bytes_used', title: '已用' },
+      { key: 'mode', title: '模式' },
       { key: 'resource_version', title: '版本' }
     ]
   },
@@ -209,10 +272,29 @@ const definitions: Record<
       method: 'POST',
       successMessage: '子卷创建执行成功',
       fields: [
-        { name: 'fs', label: '文件系统', required: true },
-        { name: 'name', label: '子卷名称', required: true }
+        { name: 'fs', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
+        { name: 'name', label: '子卷名称', required: true },
+        { name: 'group', label: '子卷组', required: true, placeholder: '_nogroup' },
+        { name: 'size', label: '配额大小（字节，0 表示不限制）', type: 'number', min: 0 },
+        { name: 'pool', label: 'CephFS 数据池', type: 'select', required: true, optionsLoader: cephfsPoolOptions },
+        { name: 'uid', label: 'UID', type: 'number', min: 0 },
+        { name: 'gid', label: 'GID', type: 'number', min: 0 },
+        { name: 'mode', label: '目录权限模式', placeholder: '0755' },
+        { name: 'namespace_isolated', label: '使用独立 RADOS 命名空间', type: 'boolean' }
       ],
-      buildBody: (values, clusterId) => ({ cluster_id: clusterId, fs: String(values.fs ?? ''), name: String(values.name ?? '') })
+      initialValues: { group: '_nogroup', size: 0, uid: 0, gid: 0, mode: '0755', namespace_isolated: false },
+      buildBody: (values, clusterId) => ({
+        cluster_id: clusterId,
+        fs: String(values.fs ?? ''),
+        name: String(values.name ?? ''),
+        group: String(values.group ?? '_nogroup'),
+        size: Number(values.size ?? 0),
+        pool: String(values.pool ?? ''),
+        uid: Number(values.uid ?? 0),
+        gid: Number(values.gid ?? 0),
+        mode: String(values.mode ?? '0755'),
+        namespace_isolated: Boolean(values.namespace_isolated)
+      })
     },
     updateAction: {
       title: '更新子卷',
@@ -238,8 +320,10 @@ const definitions: Record<
       { key: 'group', title: '子卷组' },
       { key: 'name', title: '名称' },
       { key: 'path', title: '路径' },
-      { key: 'size', title: '大小' },
+      { key: 'data_pool', title: '数据池' },
+      { key: 'bytes_quota', title: '配额' },
       { key: 'bytes_used', title: '已用' },
+      { key: 'mode', title: '模式' },
       { key: 'resource_version', title: '版本' }
     ]
   },
@@ -255,7 +339,7 @@ const definitions: Record<
       method: 'POST',
       successMessage: 'CephFS 快照创建执行成功',
       fields: [
-        { name: 'fs', label: '文件系统', required: true },
+        { name: 'fs', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'subvolume', label: '子卷', required: true },
         { name: 'name', label: '快照名称', required: true }
       ],
@@ -265,6 +349,21 @@ const definitions: Record<
         subvolume: String(values.subvolume ?? ''),
         name: String(values.name ?? '')
       })
+    },
+    deleteAction: {
+      title: '删除 CephFS 快照',
+      path: '/filesystem/subvolume/snapshot',
+      action: 'cephfs_snapshot.delete',
+      resourceKind: 'cephfs_snapshot',
+      successMessage: 'CephFS 快照删除执行成功',
+      buildBody: (row, clusterId) => ({
+        cluster_id: clusterId,
+        fs: fsName(row),
+        subvolume: subvolumeName(row),
+        snap: resourceName(row),
+        ...(row.group ? { group: String(row.group) } : {})
+      }),
+      resourceKey: (row) => `filesystem/${fsName(row)}/subvolume/${subvolumeName(row)}/snapshot/${resourceName(row)}`
     },
     columns: [
       { key: 'fs', title: '文件系统' },
@@ -285,7 +384,7 @@ const definitions: Record<
       method: 'POST',
       successMessage: '快照计划创建执行成功',
       fields: [
-        { name: 'fs', label: '文件系统', required: true },
+        { name: 'fs', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'path', label: '路径', required: true, placeholder: '/' },
         { name: 'schedule', label: '计划', required: true, placeholder: '1h' }
       ],
@@ -316,7 +415,7 @@ const definitions: Record<
       method: 'POST',
       successMessage: 'CephFS 授权创建执行成功',
       fields: [
-        { name: 'fs', label: '文件系统', required: true },
+        { name: 'fs', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'client', label: '客户端', required: true, placeholder: 'client.app' },
         { name: 'path', label: '路径', placeholder: '/' },
         {
@@ -622,6 +721,38 @@ const definitions: Record<
       { key: 'resource_version', title: '版本' }
     ]
   }
+}
+
+function filesystemPlacement(values: Record<string, unknown>) {
+  if (values.placement_type === 'label') {
+    const label = String(values.placement_label ?? '').trim()
+    return label ? `label:${label}` : ''
+  }
+  const hosts = String(values.placement_hosts ?? '')
+    .split(',')
+    .map((host) => host.trim())
+    .filter(Boolean)
+  return hosts.length ? hosts.join(';') : ''
+}
+
+async function filesystemOptions(clusterId: number) {
+  const payload = await listResource('/filesystems', clusterId)
+  return payload.items
+    .map((row) => resourceName(row))
+    .filter(Boolean)
+    .map((name) => ({ label: name, value: name }))
+}
+
+async function cephfsPoolOptions(clusterId: number) {
+  const payload = await listResource('/pools', clusterId)
+  return payload.items
+    .filter((row) => {
+      const applications = Array.isArray(row.applications) ? row.applications.map(String) : []
+      return applications.includes('cephfs') || Boolean((row.application_metadata as Record<string, unknown> | undefined)?.cephfs)
+    })
+    .map((row) => resourceName(row))
+    .filter(Boolean)
+    .map((name) => ({ label: name, value: name }))
 }
 
 function resourceName(row?: Record<string, unknown>) {

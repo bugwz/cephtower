@@ -42,11 +42,13 @@ type PoolConfig struct {
 	Description string `json:"description,omitempty"`
 }
 type Filesystem struct {
-	Name   string           `json:"name"`
-	ID     int64            `json:"id"`
-	MaxMDS *int64           `json:"max_mds"`
-	In     []int64          `json:"in"`
-	Up     map[string]int64 `json:"up"`
+	Name         string           `json:"name"`
+	ID           int64            `json:"id"`
+	MaxMDS       *int64           `json:"max_mds"`
+	MetadataPool *int64           `json:"metadata_pool,omitempty"`
+	DataPools    []int64          `json:"data_pools,omitempty"`
+	In           []int64          `json:"in"`
+	Up           map[string]int64 `json:"up"`
 }
 type RBDImage struct {
 	ImageSpec string  `json:"image_spec"`

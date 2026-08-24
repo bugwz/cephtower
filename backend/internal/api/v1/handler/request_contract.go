@@ -68,7 +68,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 		}
 	}
 	empty := map[string]JSONField{}
-	add([]string{"health.mute", "health.unmute", "host.delete", "service.delete", "manager.fail", "crush_rule.delete", "erasure_code_profile.delete", "pool.delete", "rbd_image.delete", "rbd_snapshot.delete", "rbd_namespace.delete", "rbd_trash.delete", "filesystem.delete", "subvolume_group.delete", "subvolume.delete", "cephfs_client.evict", "rgw_user.delete", "rgw_period.commit", "nfs_cluster.delete", "nfs_export.delete", "smb_cluster.delete", "smb_share.delete", "config_value.delete", "silence.delete", "rgw_bucket.delete", "iscsi_target.delete", "nvmeof_subsystem.delete"}, false, empty)
+	add([]string{"health.mute", "health.unmute", "host.delete", "service.delete", "manager.fail", "crush_rule.delete", "erasure_code_profile.delete", "pool.delete", "rbd_image.delete", "rbd_snapshot.delete", "rbd_namespace.delete", "rbd_trash.delete", "filesystem.delete", "subvolume_group.delete", "subvolume.delete", "cephfs_snapshot.delete", "cephfs_client.evict", "rgw_user.delete", "rgw_period.commit", "nfs_cluster.delete", "nfs_export.delete", "smb_cluster.delete", "smb_share.delete", "config_value.delete", "silence.delete", "rgw_bucket.delete", "iscsi_target.delete", "nvmeof_subsystem.delete"}, false, empty)
 	add([]string{"cluster.refresh"}, false, map[string]JSONField{"modules": stringsField(false)})
 	add([]string{"osd.delete"}, false, map[string]JSONField{"zap": boolField(false)})
 	add([]string{"host.create"}, true, map[string]JSONField{
@@ -163,7 +163,24 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"rbd_trash.restore"}, true, map[string]JSONField{"pool": stringField(true), "name": stringField(true)})
 	add([]string{"rbd_trash.purge"}, true, map[string]JSONField{"pool": stringField(true)})
 	add([]string{"rbd_mirroring.update"}, true, map[string]JSONField{"pool": stringField(true), "mode": stringField(true, "disabled", "image", "pool")})
-	add([]string{"filesystem.create", "subvolume_group.create", "subvolume.create", "cephfs_snapshot.create", "nfs_cluster.create"}, true, map[string]JSONField{"name": stringField(true)})
+	add([]string{"filesystem.create"}, true, map[string]JSONField{
+		"name":          stringField(true),
+		"placement":     stringField(false),
+		"metadata_pool": stringField(false),
+		"data_pool":     stringField(false),
+	})
+	add([]string{"subvolume_group.create"}, true, map[string]JSONField{
+		"name": stringField(true), "size": integerField(false), "pool": stringField(true),
+		"uid": integerField(false), "gid": integerField(false), "mode": stringField(false),
+		"normalization":  stringField(false, "nfd", "nfc", "nfkd", "nfkc"),
+		"case_sensitive": boolField(false),
+	})
+	add([]string{"subvolume.create"}, true, map[string]JSONField{
+		"name": stringField(true), "group": stringField(true), "size": integerField(false),
+		"pool": stringField(true), "uid": integerField(false), "gid": integerField(false),
+		"mode": stringField(false), "namespace_isolated": boolField(false),
+	})
+	add([]string{"cephfs_snapshot.create", "nfs_cluster.create"}, true, map[string]JSONField{"name": stringField(true)})
 	add([]string{"filesystem.update"}, true, map[string]JSONField{"max_mds": integerField(true)})
 	add([]string{"subvolume_group.update", "subvolume.update"}, true, map[string]JSONField{"size": integerField(true)})
 	add([]string{"cephfs_snapshot.clone"}, true, map[string]JSONField{"target": stringField(true)})

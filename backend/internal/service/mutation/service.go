@@ -77,7 +77,7 @@ func Supports(action string) bool {
 		"filesystem.create", "filesystem.update", "filesystem.delete",
 		"subvolume_group.create", "subvolume_group.update", "subvolume_group.delete",
 		"subvolume.create", "subvolume.update", "subvolume.delete",
-		"cephfs_snapshot.create", "cephfs_snapshot.clone", "snapshot_schedule.create",
+		"cephfs_snapshot.create", "cephfs_snapshot.delete", "cephfs_snapshot.clone", "snapshot_schedule.create",
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota",
 		"rgw_user.create", "rgw_user.update", "rgw_user.delete",
 		"rgw_account.create", "rgw_role.create", "rgw_key.create", "rgw_key.delete",
@@ -659,7 +659,31 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return ceph([]string{"fs", "volume", "create", name}, []string{"fs", "volume", "ls", "--format", "json"}), nil
+		placement := rawText(p, "placement")
+		metadataPool := optional(p, "metadata_pool")
+		dataPool := optional(p, "data_pool")
+		if (metadataPool == "") != (dataPool == "") {
+			return command{}, invalid("metadata_pool and data_pool must be provided together")
+		}
+		if metadataPool != "" {
+			if !identifier.MatchString(metadataPool) || !identifier.MatchString(dataPool) {
+				return command{}, invalid("metadata_pool or data_pool is invalid")
+			}
+			if placement == "" {
+				placement = "1"
+			}
+		}
+		if len(placement) > 1024 || strings.ContainsRune(placement, 0) {
+			return command{}, invalid("placement is invalid")
+		}
+		args := []string{"fs", "volume", "create", name}
+		if placement != "" {
+			args = append(args, placement)
+		}
+		if metadataPool != "" {
+			args = append(args, metadataPool, dataPool)
+		}
+		return ceph(args, []string{"fs", "volume", "ls", "--format", "json"}), nil
 	case "filesystem.delete":
 		name := last(tail)
 		return ceph([]string{"fs", "volume", "rm", name, "--yes-i-really-mean-it"}, []string{"fs", "volume", "ls", "--format", "json"}), nil
@@ -676,7 +700,11 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return ceph([]string{"fs", "subvolumegroup", "create", fs, name}, []string{"fs", "subvolumegroup", "info", fs, name, "--format", "json"}), nil
+		args, err := subvolumeGroupCreateArgs(fs, name, p)
+		if err != nil {
+			return command{}, err
+		}
+		return ceph(args, []string{"fs", "subvolumegroup", "info", fs, name, "--format", "json"}), nil
 	case "subvolume_group.update":
 		fs := pathValue(tail, "filesystem")
 		name := last(tail)
@@ -695,7 +723,11 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return ceph([]string{"fs", "subvolume", "create", fs, name}, []string{"fs", "subvolume", "info", fs, name, "--format", "json"}), nil
+		args, err := subvolumeCreateArgs(fs, name, p)
+		if err != nil {
+			return command{}, err
+		}
+		return ceph(args, []string{"fs", "subvolume", "info", fs, name, optional(p, "group"), "--format", "json"}), nil
 	case "subvolume.delete":
 		fs := pathValue(tail, "filesystem")
 		name := last(tail)
@@ -716,6 +748,15 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, err
 		}
 		return ceph([]string{"fs", "subvolume", "snapshot", "create", fs, subvolume, name}, []string{"fs", "subvolume", "snapshot", "ls", fs, subvolume, "--format", "json"}), nil
+	case "cephfs_snapshot.delete":
+		fs := pathValue(tail, "filesystem")
+		subvolume := pathValue(tail, "subvolume")
+		snapshot := last(tail)
+		args := []string{"fs", "subvolume", "snapshot", "rm", fs, subvolume, snapshot}
+		if group := optional(p, "group"); group != "" {
+			args = append(args, group)
+		}
+		return ceph(args, []string{"fs", "subvolume", "snapshot", "ls", fs, subvolume, "--format", "json"}), nil
 	case "cephfs_snapshot.clone":
 		fs := pathValue(tail, "filesystem")
 		subvolume := pathValue(tail, "subvolume")
@@ -1235,6 +1276,76 @@ func hostAction(p map[string]any, host string, wrap func([]string, []string) com
 	}
 	return wrap(args, []string{"orch", "host", "ls", "--detail", "--format", "json"}), nil
 }
+
+func subvolumeGroupCreateArgs(fs, name string, p map[string]any) ([]string, error) {
+	pool, err := required(p, "pool")
+	if err != nil {
+		return nil, err
+	}
+	size, uid, gid := optional(p, "size"), optional(p, "uid"), optional(p, "gid")
+	if size == "" {
+		size = "0"
+	}
+	if uid == "" {
+		uid = "0"
+	}
+	if gid == "" {
+		gid = "0"
+	}
+	mode := optional(p, "mode")
+	if mode == "" {
+		mode = "0755"
+	}
+	if !regexp.MustCompile(`^0?[0-7]{3,4}$`).MatchString(mode) {
+		return nil, invalid("mode is invalid")
+	}
+	args := []string{"fs", "subvolumegroup", "create", fs, name, size, pool, uid, gid, mode}
+	if normalization := optional(p, "normalization"); normalization != "" {
+		value, enumErr := enum(p, "normalization", "nfd", "nfc", "nfkd", "nfkc")
+		if enumErr != nil {
+			return nil, enumErr
+		}
+		args = append(args, "--normalization", value)
+	}
+	if boolParameter(p, "case_sensitive") {
+		args = append(args, "--casesensitive")
+	}
+	return args, nil
+}
+
+func subvolumeCreateArgs(fs, name string, p map[string]any) ([]string, error) {
+	group, err := required(p, "group")
+	if err != nil {
+		return nil, err
+	}
+	pool, err := required(p, "pool")
+	if err != nil {
+		return nil, err
+	}
+	size, uid, gid := optional(p, "size"), optional(p, "uid"), optional(p, "gid")
+	if size == "" {
+		size = "0"
+	}
+	if uid == "" {
+		uid = "0"
+	}
+	if gid == "" {
+		gid = "0"
+	}
+	mode := optional(p, "mode")
+	if mode == "" {
+		mode = "0755"
+	}
+	if !regexp.MustCompile(`^0?[0-7]{3,4}$`).MatchString(mode) {
+		return nil, invalid("mode is invalid")
+	}
+	args := []string{"fs", "subvolume", "create", fs, name, size, group, pool, uid, gid, mode}
+	if boolParameter(p, "namespace_isolated") {
+		args = append(args, "--namespace-isolated")
+	}
+	return args, nil
+}
+
 func required(p map[string]any, key string) (string, error) {
 	value := optional(p, key)
 	if value == "" || !identifier.MatchString(value) {

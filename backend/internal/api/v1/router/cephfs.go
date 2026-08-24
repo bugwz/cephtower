@@ -23,6 +23,7 @@ func cephfsRoutes(h *handler.Handler) []Route {
 		{"DELETE", "/filesystem/subvolume", h.DeleteSubvolume},
 		{"GET", "/filesystem/subvolume/snapshots", h.ListCephFSSnapshots},
 		{"POST", "/filesystem/subvolume/snapshot", h.CreateCephFSSnapshot},
+		{"DELETE", "/filesystem/subvolume/snapshot", h.DeleteCephFSSnapshot},
 		{"POST", "/filesystem/subvolume/snapshot/clone", h.CloneCephFSSnapshot},
 		{"GET", "/filesystem/snapshot/schedules", h.ListSnapshotSchedules},
 		{"POST", "/filesystem/snapshot/schedule", h.CreateSnapshotSchedule},

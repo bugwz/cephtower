@@ -2,6 +2,7 @@ import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Typography } from 'antd'
 import type { ColumnsType, TableProps } from 'antd/es/table'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { listResource, listResourceFilterOptions, mutateResource, refreshResource, type ResourceListResult } from '../api/resource'
 import { textValue, type ApiRecord } from '../api/client'
 import type { OperationRisk } from '../api/types'
@@ -27,8 +28,11 @@ export interface MutationFormField {
   required?: boolean
   placeholder?: string
   options?: Array<{ label: string; value: string | number | boolean }>
+  optionsLoader?: (clusterId: number) => Promise<Array<{ label: string; value: string | number | boolean }>>
   min?: number
   max?: number
+  pattern?: RegExp
+  patternMessage?: string
 }
 
 export type MutationFormValues = Record<string, string | number | boolean | null | undefined | ApiRecord>
@@ -64,9 +68,11 @@ export interface ResourceListPageDefinition extends FeatureRequirements {
   createAction?: ResourceFormAction
   updateAction?: ResourceFormAction
   deleteAction?: ResourceDeleteAction
+  detailPath?: (row: ApiRecord) => string
 }
 
 export function ResourceListPage({ definition, embedded = false }: { definition: ResourceListPageDefinition; embedded?: boolean }) {
+  const navigate = useNavigate()
   const { selectedClusterId } = useClusterContext()
   const [refreshing, setRefreshing] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
@@ -74,6 +80,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
   const [activeRow, setActiveRow] = useState<ApiRecord | undefined>()
   const [detailRow, setDetailRow] = useState<ApiRecord | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [dynamicOptions, setDynamicOptions] = useState<Record<string, MutationFormField['options']>>({})
   const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({})
   const [filterOptions, setFilterOptions] = useState<Record<string, string[]>>({})
   const [form] = Form.useForm<MutationFormValues>()
@@ -136,7 +143,20 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
     form.resetFields()
     const initialValues = typeof action.initialValues === 'function' ? action.initialValues(row) : action.initialValues
     form.setFieldsValue({ ...initialValues })
+    setDynamicOptions({})
     setFormOpen(true)
+    if (selectedClusterId) {
+      action.fields.forEach((field) => {
+        if (!field.optionsLoader) {
+          return
+        }
+        void field.optionsLoader(selectedClusterId).then((options) => {
+          setDynamicOptions((current) => ({ ...current, [field.name]: options }))
+        }).catch(() => {
+          setDynamicOptions((current) => ({ ...current, [field.name]: [] }))
+        })
+      })
+    }
   }
 
   async function submitForm(values: MutationFormValues) {
@@ -208,7 +228,15 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
   const handleTableChange: TableProps<ApiRecord>['onChange'] = (_pagination, filters) => {
     setColumnFilters(tableFilters(filters))
   }
-  const tableColumns = buildColumns(definition, openForm, deleteRow, (row) => setDetailRow(row), mutationBlocked, filterOptions, columnFilters)
+  const tableColumns = buildColumns(
+    definition,
+    openForm,
+    deleteRow,
+    (row) => definition.detailPath ? navigate(definition.detailPath(row)) : setDetailRow(row),
+    mutationBlocked,
+    filterOptions,
+    columnFilters
+  )
   const listActions = (
     <Space>
       <Button icon={<ReloadOutlined />} loading={refreshing} onClick={reload}>
@@ -281,22 +309,27 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
               name={field.name}
               label={field.label}
               valuePropName={field.type === 'boolean' ? 'checked' : 'value'}
-              rules={field.required ? [{ required: true, message: `请输入${field.label}` }] : undefined}
+              rules={[
+                ...(field.required ? [{ required: true, message: `请输入${field.label}` }] : []),
+                ...(field.pattern ? [{ pattern: field.pattern, message: field.patternMessage ?? `${field.label}格式不正确` }] : [])
+              ]}
             >
-              {renderFormControl(field)}
+              {renderFormControl({ ...field, options: dynamicOptions[field.name] ?? field.options })}
             </Form.Item>
           ))}
         </Form>
       </DraggableModal>
-      <Drawer
-        title={`${definition.title}详情`}
-        open={Boolean(detailRow)}
-        onClose={() => setDetailRow(null)}
-        width={720}
-        destroyOnClose
-      >
-        <RecordDetail record={detailRow} />
-      </Drawer>
+      {!definition.detailPath ? (
+        <Drawer
+          title={`${definition.title}详情`}
+          open={Boolean(detailRow)}
+          onClose={() => setDetailRow(null)}
+          width={720}
+          destroyOnClose
+        >
+          <RecordDetail record={detailRow} />
+        </Drawer>
+      ) : null}
     </Page>
   )
 }

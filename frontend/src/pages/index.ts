@@ -81,6 +81,7 @@ export { HostDetailPage } from './cluster/HostDetailPage'
 export { DeviceDetailPage } from './cluster/pages'
 export { MonDetailPage } from './cluster/pages'
 export { PoolDetailPage } from './cluster/pages'
+export { FilesystemDetailPage } from './file/FilesystemDetailPage'
 
 export const pageComponents: Record<PageKey, ComponentType> = {
   overview: OverviewPage,

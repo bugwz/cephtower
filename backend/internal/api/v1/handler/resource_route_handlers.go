@@ -464,6 +464,10 @@ func (h *Handler) CreateCephFSSnapshot(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("cephfs_snapshot", "cephfs_snapshot.create", "medium")(w, r)
 }
 
+func (h *Handler) DeleteCephFSSnapshot(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("cephfs_snapshot", "cephfs_snapshot.delete", "high")(w, r)
+}
+
 func (h *Handler) CloneCephFSSnapshot(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("cephfs_snapshot", "cephfs_snapshot.clone", "medium")(w, r)
 }

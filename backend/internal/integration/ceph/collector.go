@@ -631,12 +631,14 @@ type fsDumpWire struct {
 	} `json:"standbys"`
 	Filesystems []struct {
 		MDSMap struct {
-			FSName string           `json:"fs_name"`
-			ID     int64            `json:"id"`
-			MaxMDS *int64           `json:"max_mds"`
-			In     []int64          `json:"in"`
-			Up     map[string]int64 `json:"up"`
-			Info   map[string]struct {
+			FSName       string           `json:"fs_name"`
+			ID           int64            `json:"id"`
+			MaxMDS       *int64           `json:"max_mds"`
+			MetadataPool *int64           `json:"metadata_pool"`
+			DataPools    []int64          `json:"data_pools"`
+			In           []int64          `json:"in"`
+			Up           map[string]int64 `json:"up"`
+			Info         map[string]struct {
 				Name  string `json:"name"`
 				Rank  int    `json:"rank"`
 				State string `json:"state"`
@@ -719,12 +721,21 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		if strings.TrimSpace(m.FSName) == "" {
 			return nil, fmt.Errorf("parse collect.fs response: fs_name is required")
 		}
-		payload := cephdomain.Filesystem{Name: m.FSName, ID: m.ID, MaxMDS: m.MaxMDS, In: m.In, Up: m.Up}
+		payload := cephdomain.Filesystem{
+			Name: m.FSName, ID: m.ID, MaxMDS: m.MaxMDS, MetadataPool: m.MetadataPool,
+			DataPools: m.DataPools, In: m.In, Up: m.Up,
+		}
 		rows = append(rows, Observation{Kind: "filesystem", NaturalKey: m.FSName, Name: m.FSName, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 		var subvolumes []namedWire
 		if err := p.runBinaryInto(ctx, access, executor.BinaryCeph, "collect.cephfs_subvolume", []string{"fs", "subvolume", "ls", m.FSName, "--format", "json"}, &subvolumes); err == nil {
 			for _, subvolume := range subvolumes {
-				payload := cephdomain.CephFSSubvolume{Filesystem: m.FSName, Name: subvolume.Name}
+				payload := map[string]any{"filesystem": m.FSName, "name": subvolume.Name}
+				var details map[string]any
+				if err := p.runBinaryInto(ctx, access, executor.BinaryCeph, "collect.cephfs_subvolume", []string{"fs", "subvolume", "info", m.FSName, subvolume.Name, "--format", "json"}, &details); err == nil {
+					for key, value := range details {
+						payload[key] = value
+					}
+				}
 				rows = append(rows, Observation{Kind: "subvolume", NaturalKey: m.FSName + "/" + subvolume.Name, ParentKind: "filesystem", ParentKey: m.FSName, Name: subvolume.Name, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 			}
 		}

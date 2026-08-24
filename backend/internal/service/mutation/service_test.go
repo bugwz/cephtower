@@ -58,11 +58,12 @@ func TestEveryNativeActionBuildsRegisteredCommand(t *testing.T) {
 		{"rbd_group.create", "rbd/group", map[string]any{"pool": "rbd", "name": "group1"}},
 		{"rbd_mirroring.update", "rbd/mirroring", map[string]any{"pool": "rbd", "mode": "image"}},
 		{"filesystem.create", "filesystem", map[string]any{"name": "cephfs"}}, {"filesystem.update", "filesystem/cephfs", map[string]any{"max_mds": "2"}}, {"filesystem.delete", "filesystem/cephfs", nil},
-		{"subvolume_group.create", "filesystem/cephfs/subvolume-group", map[string]any{"name": "group"}},
+		{"subvolume_group.create", "filesystem/cephfs/subvolume-group", map[string]any{"name": "group", "pool": "cephfs.data"}},
 		{"subvolume_group.update", "filesystem/cephfs/subvolume-group/group", map[string]any{"size": "1024"}}, {"subvolume_group.delete", "filesystem/cephfs/subvolume-group/group", nil},
-		{"subvolume.create", "filesystem/cephfs/subvolume", map[string]any{"name": "sub"}},
+		{"subvolume.create", "filesystem/cephfs/subvolume", map[string]any{"name": "sub", "group": "_nogroup", "pool": "cephfs.data"}},
 		{"subvolume.update", "filesystem/cephfs/subvolume/sub", map[string]any{"size": "2048"}}, {"subvolume.delete", "filesystem/cephfs/subvolume/sub", nil},
 		{"cephfs_snapshot.create", "filesystem/cephfs/subvolume/sub/snapshot", map[string]any{"name": "snap"}},
+		{"cephfs_snapshot.delete", "filesystem/cephfs/subvolume/sub/snapshot/snap", nil},
 		{"cephfs_snapshot.clone", "filesystem/cephfs/subvolume/sub/snapshot/snap/clone", map[string]any{"target": "clone"}},
 		{"snapshot_schedule.create", "filesystem/cephfs/snapshot-schedule", map[string]any{"path": "/", "schedule": "1h"}},
 		{"cephfs_authorization.create", "filesystem/cephfs/authorization", map[string]any{"client": "client.app", "path": "/", "access": "rw"}},
@@ -111,6 +112,43 @@ func TestHostCreateBuildsLabelsAndMaintenance(t *testing.T) {
 	want := []string{"orch", "host", "add", "node1", "--addr", "192.0.2.10", "--labels", "_admin,osd", "--maintenance"}
 	if !reflect.DeepEqual(command.args, want) {
 		t.Fatalf("args = %#v, want %#v", command.args, want)
+	}
+}
+
+func TestCephFSCreateCommandsIncludeFormOptions(t *testing.T) {
+	filesystem, err := build(Request{Action: "filesystem.create", ResourceKey: "filesystem"}, map[string]any{
+		"name": "cephfs", "placement": "node-1;node-2", "metadata_pool": "cephfs.meta", "data_pool": "cephfs.data",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantFilesystem := []string{"fs", "volume", "create", "cephfs", "node-1;node-2", "cephfs.meta", "cephfs.data"}
+	if !reflect.DeepEqual(filesystem.args, wantFilesystem) {
+		t.Fatalf("filesystem args = %#v, want %#v", filesystem.args, wantFilesystem)
+	}
+
+	subvolume, err := build(Request{Action: "subvolume.create", ResourceKey: "filesystem/cephfs/subvolume"}, map[string]any{
+		"name": "home", "group": "users", "size": "10737418240", "pool": "cephfs.data",
+		"uid": "1000", "gid": "1000", "mode": "0750", "namespace_isolated": true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantSubvolume := []string{
+		"fs", "subvolume", "create", "cephfs", "home", "10737418240", "users",
+		"cephfs.data", "1000", "1000", "0750", "--namespace-isolated",
+	}
+	if !reflect.DeepEqual(subvolume.args, wantSubvolume) {
+		t.Fatalf("subvolume args = %#v, want %#v", subvolume.args, wantSubvolume)
+	}
+}
+
+func TestFilesystemCreateRequiresPoolPair(t *testing.T) {
+	_, err := build(Request{Action: "filesystem.create", ResourceKey: "filesystem"}, map[string]any{
+		"name": "cephfs", "metadata_pool": "cephfs.meta",
+	})
+	if err == nil {
+		t.Fatal("filesystem create accepted a metadata pool without a data pool")
 	}
 }
 
