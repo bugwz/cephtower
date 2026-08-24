@@ -172,6 +172,42 @@ func TestHostReconciliationPreservesUserConfiguration(t *testing.T) {
 	}
 }
 
+func TestMonitorCounterReconciliationCalculatesCounterRate(t *testing.T) {
+	db, err := Open(config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Name: "monitor-rate.db"}}, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer Close(db)
+	ctx := context.Background()
+	observed := time.Now().UTC()
+	cluster := CephCluster{Name: "c", MonitorAddresses: "mon:6789", ClientUsername: "client.test", ClientKey: "cipher", CreatedAt: observed, UpdatedAt: observed}
+	if err := db.CreateCluster(ctx, &cluster); err != nil {
+		t.Fatal(err)
+	}
+	row := func(raw float64, at time.Time) CephEntityRecord {
+		name := "mon.session_rm"
+		payload, _ := json.Marshal(map[string]any{"monitor": "a", "name": name, "metric_type": "counter", "raw_value": raw, "value": raw})
+		return CephEntityRecord{Kind: "mon_perf_counter", NaturalKey: "a:" + name, Name: &name, Source: "ceph_cli", ObservedAt: at, DiscoveredData: string(payload)}
+	}
+	if err := db.ReconcileResources(ctx, cluster.ID, 1, []CephEntityRecord{row(100, observed)}, []string{"mon_perf_counter"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.ReconcileResources(ctx, cluster.ID, 2, []CephEntityRecord{row(142, observed.Add(10*time.Second))}, []string{"mon_perf_counter"}); err != nil {
+		t.Fatal(err)
+	}
+	stored, err := db.FindResource(ctx, cluster.ID, "mon_perf_counter", "a:mon.session_rm")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal([]byte(stored.DiscoveredData), &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload["value"] != 4.2 || payload["raw_value"] != float64(142) {
+		t.Fatalf("counter payload = %#v", payload)
+	}
+}
+
 func TestSaveResourceConfigurationMergesEntityConfiguration(t *testing.T) {
 	db, err := Open(config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Name: "pool-config.db"}}, t.TempDir())
 	if err != nil {

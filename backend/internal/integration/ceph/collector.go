@@ -72,6 +72,7 @@ var collectionFailureKinds = map[string][]string{
 	"collect.mgr_module":              {"mgr_module"},
 	"collect.crush_rule":              {"crush_rule"},
 	"collect.erasure_code_profile":    {"erasure_code_profile"},
+	"collect.mon_perf":                {"mon_perf_counter"},
 }
 
 func (p *NativeProvider) CollectWithMetadata(ctx context.Context, access ClusterAccess, module string) (CollectionResult, error) {
@@ -248,7 +249,35 @@ type monDumpWire struct {
 }
 type quorumWire struct {
 	QuorumNames []string `json:"quorum_names"`
+	Features    struct {
+		QuorumCon   string        `json:"quorum_con"`
+		QuorumMon   []interface{} `json:"quorum_mon"`
+		RequiredCon string        `json:"required_con"`
+		RequiredMon []interface{} `json:"required_mon"`
+	} `json:"features"`
+	MonMap struct {
+		FSID     string `json:"fsid"`
+		Modified string `json:"modified"`
+		Epoch    int    `json:"epoch"`
+	} `json:"monmap"`
 }
+
+type perfCounterSchema struct {
+	Description string `json:"description"`
+	MetricType  string `json:"metric_type"`
+	ValueType   string `json:"value_type"`
+	Units       string `json:"units"`
+	Type        int    `json:"type"`
+	Priority    int    `json:"priority"`
+}
+
+const (
+	perfCounterTime       = 0x1
+	perfCounterLongRunAvg = 0x4
+	perfCounterCounter    = 0x8
+	defaultMgrStatsLimit  = 5
+)
+
 type mgrDumpWire struct {
 	Available  bool   `json:"available"`
 	ActiveName string `json:"active_name"`
@@ -339,6 +368,13 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 	for _, name := range quorum.QuorumNames {
 		quorumSet[name] = struct{}{}
 	}
+	statusPayload := cephdomain.MonitorStatus{
+		FSID: quorum.MonMap.FSID, Modified: quorum.MonMap.Modified, Epoch: quorum.MonMap.Epoch,
+		QuorumCon: quorum.Features.QuorumCon, QuorumMon: interfaceStrings(quorum.Features.QuorumMon),
+		RequiredCon: quorum.Features.RequiredCon, RequiredMon: interfaceStrings(quorum.Features.RequiredMon),
+	}
+	rows = append(rows, Observation{Kind: "mon_status", NaturalKey: "status", Name: "status", Source: "ceph_cli", Payload: statusPayload, ObservedAt: now})
+	perfPriority, perfAvailable := p.collectMgrStatsThreshold(ctx, access)
 	for _, wire := range mons.Mons {
 		if strings.TrimSpace(wire.Name) == "" {
 			return nil, fmt.Errorf("parse collect.mon response: monitor name is required")
@@ -351,7 +387,13 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 			address = wire.PublicAddrs.AddrVec[0].Addr
 		}
 		_, inQuorum := quorumSet[wire.Name]
-		payload := cephdomain.Monitor{Name: wire.Name, Rank: wire.Rank, Address: address, InQuorum: inQuorum}
+		var counters []Observation
+		var openSessions any
+		if perfAvailable {
+			counters, openSessions = p.collectMonitorPerfCounters(ctx, access, wire.Name, perfPriority, now)
+			rows = append(rows, counters...)
+		}
+		payload := cephdomain.Monitor{Name: wire.Name, Rank: wire.Rank, Address: address, InQuorum: inQuorum, OpenSessions: openSessions}
 		status := "out_of_quorum"
 		if inQuorum {
 			status = "in_quorum"
@@ -387,6 +429,135 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 		rows = append(rows, Observation{Kind: "upgrade", NaturalKey: "upgrade", Name: "upgrade", Status: status, Source: "ceph_cli", Payload: upgrade, ObservedAt: now})
 	}
 	return rows, nil
+}
+
+func (p *NativeProvider) collectMgrStatsThreshold(ctx context.Context, access ClusterAccess) (int, bool) {
+	if p.Executor == nil {
+		markCollectionUnavailable(ctx, "collect.mon_perf.threshold")
+		return 0, false
+	}
+	result, err := p.run(ctx, access, "collect.mon_perf.threshold", 15*time.Second, "config", "get", "mgr", "mgr_stats_threshold")
+	if err != nil {
+		markCollectionUnavailable(ctx, "collect.mon_perf.threshold")
+		return 0, false
+	}
+	value := strings.TrimSpace(string(result))
+	if value == "" {
+		return defaultMgrStatsLimit, true
+	}
+	threshold, err := strconv.Atoi(value)
+	if err != nil || threshold < 0 || threshold > 11 {
+		markCollectionUnavailable(ctx, "collect.mon_perf.threshold")
+		return 0, false
+	}
+	return threshold, true
+}
+
+func (p *NativeProvider) collectMonitorPerfCounters(ctx context.Context, access ClusterAccess, monitor string, minimumPriority int, observedAt time.Time) ([]Observation, any) {
+	var schema map[string]map[string]perfCounterSchema
+	if err := p.runInto(ctx, access, "collect.mon_perf.schema", []string{"tell", "mon." + monitor, "perf", "schema", "--format", "json"}, &schema); err != nil {
+		return nil, nil
+	}
+	var values map[string]map[string]any
+	if err := p.runInto(ctx, access, "collect.mon_perf.dump", []string{"tell", "mon." + monitor, "perf", "dump", "--format", "json"}, &values); err != nil {
+		return nil, nil
+	}
+	groups := make([]string, 0, len(schema))
+	for group := range schema {
+		groups = append(groups, group)
+	}
+	sort.Strings(groups)
+	rows := make([]Observation, 0)
+	var openSessions any
+	for _, group := range groups {
+		names := make([]string, 0, len(schema[group]))
+		for name := range schema[group] {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		for _, name := range names {
+			definition := schema[group][name]
+			if definition.Priority < minimumPriority {
+				continue
+			}
+			metricType := dashboardMetricType(definition.Type)
+			rawValue := dashboardPerfRawValue(values[group][name], definition)
+			qualifiedName := group + "." + name
+			if qualifiedName == "mon.num_sessions" {
+				openSessions = rawValue
+			}
+			payload := cephdomain.MonitorPerfCounter{Monitor: monitor, Name: qualifiedName, Description: definition.Description, Value: rawValue, RawValue: rawValue, Unit: dashboardPerfUnit(definition.Units, metricType), MetricType: metricType, ValueType: definition.ValueType, Priority: definition.Priority}
+			rows = append(rows, Observation{Kind: "mon_perf_counter", NaturalKey: monitor + ":" + qualifiedName, Name: qualifiedName, ParentKind: "mon", ParentKey: monitor, Source: "ceph_cli", Payload: payload, ObservedAt: observedAt})
+		}
+	}
+	return rows, openSessions
+}
+
+func dashboardPerfRawValue(value any, definition perfCounterSchema) any {
+	pair, ok := value.(map[string]any)
+	if !ok {
+		return value
+	}
+	sum, ok := numberFloat(pair["sum"])
+	if !ok {
+		return value
+	}
+	if definition.Type&perfCounterTime != 0 || strings.HasPrefix(definition.ValueType, "real-") {
+		return sum * float64(time.Second)
+	}
+	return sum
+}
+
+func dashboardMetricType(counterType int) string {
+	if counterType&perfCounterLongRunAvg != 0 || counterType&perfCounterCounter != 0 {
+		return "counter"
+	}
+	return "gauge"
+}
+
+func dashboardPerfUnit(unit, metricType string) string {
+	if metricType != "counter" {
+		return ""
+	}
+	if unit == "bytes" {
+		return "B/s"
+	}
+	return "/s"
+}
+
+func numberFloat(value any) (float64, bool) {
+	switch typed := value.(type) {
+	case json.Number:
+		parsed, err := typed.Float64()
+		return parsed, err == nil
+	case float64:
+		return typed, true
+	case float32:
+		return float64(typed), true
+	case int:
+		return float64(typed), true
+	case int64:
+		return float64(typed), true
+	case uint64:
+		return float64(typed), true
+	default:
+		return 0, false
+	}
+}
+
+func interfaceStrings(values []interface{}) []string {
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		switch typed := value.(type) {
+		case string:
+			result = append(result, typed)
+		case json.Number:
+			result = append(result, typed.String())
+		case float64:
+			result = append(result, strconv.FormatFloat(typed, 'f', -1, 64))
+		}
+	}
+	return result
 }
 
 type osdTreeWire struct {
@@ -1396,7 +1567,11 @@ func markCollectionUnavailable(ctx context.Context, commandID string) {
 	if trace == nil {
 		return
 	}
-	for _, kind := range collectionFailureKinds[commandID] {
+	kinds := collectionFailureKinds[commandID]
+	if strings.HasPrefix(commandID, "collect.mon_perf.") {
+		kinds = collectionFailureKinds["collect.mon_perf"]
+	}
+	for _, kind := range kinds {
 		trace.unavailable[kind] = struct{}{}
 	}
 }

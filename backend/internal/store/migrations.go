@@ -11,6 +11,9 @@ import (
 )
 
 const baselineVersion = "20260802_dedicated_entity_tables_v1"
+const monitorTablesVersion = "20260824_monitor_details_v1"
+
+var monitorEntityKinds = []string{"mon_perf_counter", "mon_status"}
 
 const sqliteEntityTableDDL = `CREATE TABLE %s (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,7 +86,8 @@ func migrate(db *gorm.DB) error {
 	if err := db.Exec(registryDDL).Error; err != nil {
 		return fmt.Errorf("create schema migration table: %w", err)
 	}
-	entitySchema := strings.Join(entityKinds, ",") + sqliteEntityTableDDL + mysqlEntityTableDDL
+	baselineKinds := entityKindsWithout(entityKinds, monitorEntityKinds)
+	entitySchema := strings.Join(baselineKinds, ",") + sqliteEntityTableDDL + mysqlEntityTableDDL
 	checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(definition+entitySchema)))
 	var applied SchemaMigration
 	err := db.Where("version = ?", baselineVersion).First(&applied).Error
@@ -91,7 +95,7 @@ func migrate(db *gorm.DB) error {
 		if applied.Checksum != checksum {
 			return fmt.Errorf("migration %s checksum mismatch", baselineVersion)
 		}
-		return nil
+		return migrateMonitorEntityTables(db, engine)
 	}
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return fmt.Errorf("read migration registry: %w", err)
@@ -105,7 +109,7 @@ func migrate(db *gorm.DB) error {
 			return fmt.Errorf("unversioned table %q exists; rebuild the development database", table)
 		}
 	}
-	return db.Transaction(func(tx *gorm.DB) error {
+	if err := db.Transaction(func(tx *gorm.DB) error {
 		for _, statement := range strings.Split(definition, ";") {
 			statement = strings.TrimSpace(statement)
 			if statement == "" {
@@ -115,7 +119,7 @@ func migrate(db *gorm.DB) error {
 				return fmt.Errorf("apply baseline statement: %w", err)
 			}
 		}
-		if err := createEntityTables(tx, engine); err != nil {
+		if err := createEntityTables(tx, engine, baselineKinds); err != nil {
 			return err
 		}
 		entry := SchemaMigration{Version: baselineVersion, Checksum: checksum, AppliedAt: time.Now().UTC()}
@@ -123,11 +127,39 @@ func migrate(db *gorm.DB) error {
 			return fmt.Errorf("record migration: %w", err)
 		}
 		return nil
+	}); err != nil {
+		return err
+	}
+	return migrateMonitorEntityTables(db, engine)
+}
+
+func migrateMonitorEntityTables(db *gorm.DB, engine string) error {
+	checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(monitorEntityKinds, ",")+sqliteEntityTableDDL+mysqlEntityTableDDL)))
+	var applied SchemaMigration
+	err := db.Where("version = ?", monitorTablesVersion).First(&applied).Error
+	if err == nil {
+		if applied.Checksum != checksum {
+			return fmt.Errorf("migration %s checksum mismatch", monitorTablesVersion)
+		}
+		return nil
+	}
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return fmt.Errorf("read migration registry: %w", err)
+	}
+	return db.Transaction(func(tx *gorm.DB) error {
+		if err := createEntityTables(tx, engine, monitorEntityKinds); err != nil {
+			return err
+		}
+		entry := SchemaMigration{Version: monitorTablesVersion, Checksum: checksum, AppliedAt: time.Now().UTC()}
+		if err := tx.Create(&entry).Error; err != nil {
+			return fmt.Errorf("record migration: %w", err)
+		}
+		return nil
 	})
 }
 
-func createEntityTables(tx *gorm.DB, engine string) error {
-	for _, kind := range entityKinds {
+func createEntityTables(tx *gorm.DB, engine string, kinds []string) error {
+	for _, kind := range kinds {
 		table, _ := EntityTableName(kind)
 		var statement string
 		switch engine {
@@ -158,4 +190,18 @@ func createEntityTables(tx *gorm.DB, engine string) error {
 		}
 	}
 	return nil
+}
+
+func entityKindsWithout(values, excluded []string) []string {
+	excludedSet := make(map[string]struct{}, len(excluded))
+	for _, value := range excluded {
+		excludedSet[value] = struct{}{}
+	}
+	result := make([]string, 0, len(values)-len(excluded))
+	for _, value := range values {
+		if _, skip := excludedSet[value]; !skip {
+			result = append(result, value)
+		}
+	}
+	return result
 }

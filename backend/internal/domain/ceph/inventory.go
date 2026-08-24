@@ -48,10 +48,31 @@ type Service struct {
 	Placement any    `json:"placement,omitempty"`
 }
 type Monitor struct {
-	Name     string `json:"name"`
-	Rank     int    `json:"rank"`
-	Address  string `json:"address"`
-	InQuorum bool   `json:"in_quorum"`
+	Name         string `json:"name"`
+	Rank         int    `json:"rank"`
+	Address      string `json:"address"`
+	InQuorum     bool   `json:"in_quorum"`
+	OpenSessions any    `json:"open_sessions,omitempty"`
+}
+type MonitorStatus struct {
+	FSID        string   `json:"fsid"`
+	Modified    string   `json:"modified"`
+	Epoch       int      `json:"epoch"`
+	QuorumCon   string   `json:"quorum_con"`
+	QuorumMon   []string `json:"quorum_mon"`
+	RequiredCon string   `json:"required_con"`
+	RequiredMon []string `json:"required_mon"`
+}
+type MonitorPerfCounter struct {
+	Monitor     string `json:"monitor"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Value       any    `json:"value"`
+	RawValue    any    `json:"raw_value,omitempty"`
+	Unit        string `json:"unit,omitempty"`
+	MetricType  string `json:"metric_type,omitempty"`
+	ValueType   string `json:"value_type,omitempty"`
+	Priority    int    `json:"priority"`
 }
 type Manager struct {
 	Name      string  `json:"name"`

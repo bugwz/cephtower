@@ -529,6 +529,8 @@ func decodeCursor(value string) uint64 {
 func storeResourceFilter(kind string, limit int, after uint64, r *http.Request, body map[string]any) store.ResourceFilter {
 	filter := store.ResourceFilter{Kind: kind, Name: r.URL.Query().Get("name"), Status: r.URL.Query().Get("status"), Limit: limit, AfterID: after}
 	switch kind {
+	case "mon_perf_counter":
+		filter.ParentKind, filter.ParentKey = "mon", optionalStringBody(body, "monitor", "mon", "name")
 	case "device":
 		filter.ParentKind, filter.ParentKey = "host", optionalStringBody(body, "host", "hostname", "name")
 	case "rbd_snapshot":
@@ -607,6 +609,8 @@ func readResourceKey(kind string, body map[string]any) string {
 	case "health_check":
 		return optionalStringBody(body, "code")
 	case "rgw_status":
+		return "status"
+	case "mon_status":
 		return "status"
 	case "osd_flag":
 		return "flags"

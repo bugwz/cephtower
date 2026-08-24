@@ -2522,6 +2522,24 @@
   min-width: 120px;
 }
 
+.mon-status-descriptions .ant-descriptions-view > table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.mon-status-descriptions .ant-descriptions-item-label {
+  width: 12.5%;
+  min-width: 120px;
+  color: #51666c;
+  font-weight: 700;
+}
+
+.mon-status-descriptions .ant-descriptions-item-content {
+  width: 37.5%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .cluster-detail-actions,
 .host-detail-actions {
   display: inline-flex;

@@ -21,6 +21,8 @@ var entityKinds = []string{
 	"mgr",
 	"mgr_module",
 	"mon",
+	"mon_perf_counter",
+	"mon_status",
 	"nfs_cluster",
 	"nfs_export",
 	"osd",

@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import {
   applyDaemonAction,
+  getMonitorStatus,
   listMonitors,
   listResource,
   listOSDFlags,
@@ -45,6 +46,8 @@ type DeviceScope = 'available' | 'used' | 'unavailable'
 export function MonManagementPage() {
   const navigate = useNavigate()
   const { selectedClusterId } = useClusterContext()
+  const [refreshingSection, setRefreshingSection] = useState<'status' | 'nodes' | null>(null)
+  const operationMutation = useMutationOperation()
   const monTableFilters = useResourceTableFilters({
     path: '/monitors',
     fields: ['name', 'rank', 'address', 'status'],
@@ -52,17 +55,73 @@ export function MonManagementPage() {
   })
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
-      return []
+      return { mons: [], status: null }
     }
-    return listMonitors(selectedClusterId, monTableFilters.filters)
+    const [mons, status] = await Promise.all([
+      listMonitors(selectedClusterId, monTableFilters.filters),
+      getMonitorStatus(selectedClusterId)
+    ])
+    return { mons, status }
   }, [monTableFilters.filters, selectedClusterId])
-  const { data, loading, error } = useResource(loader)
+  const { data, loading, error, refresh } = useResource(loader)
+
+  async function refreshMonSection(section: 'status' | 'nodes') {
+    if (!selectedClusterId || refreshingSection) {
+      return
+    }
+    setRefreshingSection(section)
+    try {
+      const kinds = section === 'status' ? ['mon_status'] : ['mon', 'mon_perf_counter']
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds }), '刷新成功')
+      await refresh({ showLoading: false })
+    } finally {
+      setRefreshingSection(null)
+    }
+  }
 
   return (
     <Page title="MON管理" loading={loading} error={error}>
-      <Card className="page-surface-card" title="MON管理">
-        <DataTable
-          data={data ?? []}
+      <Space direction="vertical" size={16} className="page-stack">
+        <Card
+          className="page-surface-card"
+          title="MON 基础信息"
+          extra={
+            <Button
+              icon={<ReloadOutlined />}
+              loading={refreshingSection === 'status'}
+              disabled={Boolean(refreshingSection && refreshingSection !== 'status') || !selectedClusterId}
+              onClick={() => refreshMonSection('status')}
+            >
+              刷新
+            </Button>
+          }
+        >
+          <Descriptions className="mon-status-descriptions" size="small" column={twoColumnDescriptions} bordered>
+            <Descriptions.Item label="集群 ID">{textValue(data?.status?.fsid)}</Descriptions.Item>
+            <Descriptions.Item label="monmap 修改时间">{formatDateTime(data?.status?.modified)}</Descriptions.Item>
+            <Descriptions.Item label="monmap epoch">{textValue(data?.status?.epoch)}</Descriptions.Item>
+            <Descriptions.Item label="Quorum 连接特性">{textValue(data?.status?.quorum_con)}</Descriptions.Item>
+            <Descriptions.Item label="Quorum MON 特性" span={2}>{textValue(data?.status?.quorum_mon)}</Descriptions.Item>
+            <Descriptions.Item label="必需连接特性" span={2}>{textValue(data?.status?.required_con)}</Descriptions.Item>
+            <Descriptions.Item label="必需 MON 特性" span={2}>{textValue(data?.status?.required_mon)}</Descriptions.Item>
+          </Descriptions>
+        </Card>
+        <Card
+          className="page-surface-card"
+          title="MON 节点"
+          extra={
+            <Button
+              icon={<ReloadOutlined />}
+              loading={refreshingSection === 'nodes'}
+              disabled={Boolean(refreshingSection && refreshingSection !== 'nodes') || !selectedClusterId}
+              onClick={() => refreshMonSection('nodes')}
+            >
+              刷新
+            </Button>
+          }
+        >
+          <DataTable
+            data={data?.mons ?? []}
           filterOptions={monTableFilters.filterOptions}
           filteredValues={monTableFilters.filters}
           onFilterChange={monTableFilters.handleFilterChange}
@@ -76,6 +135,7 @@ export function MonManagementPage() {
               title: '状态',
               render: (_, row) => <Tag color={row.in_quorum === true ? 'success' : 'default'}>{row.in_quorum === true ? '仲裁中' : '未加入仲裁'}</Tag>
             },
+            { key: 'open_sessions', title: 'Open sessions' },
             {
               key: 'actions',
               title: '操作',
@@ -90,8 +150,9 @@ export function MonManagementPage() {
               }
             }
           ]}
-        />
-      </Card>
+          />
+        </Card>
+      </Space>
     </Page>
   )
 }

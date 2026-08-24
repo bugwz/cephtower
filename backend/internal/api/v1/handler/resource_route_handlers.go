@@ -172,6 +172,14 @@ func (h *Handler) ListMonitors(w http.ResponseWriter, r *http.Request) {
 	h.ReadResource("mon", false)(w, r)
 }
 
+func (h *Handler) GetMonitorStatus(w http.ResponseWriter, r *http.Request) {
+	h.ReadResource("mon_status", true)(w, r)
+}
+
+func (h *Handler) ListMonitorPerfCounters(w http.ResponseWriter, r *http.Request) {
+	h.ReadResource("mon_perf_counter", false)(w, r)
+}
+
 func (h *Handler) RunMonitorAction(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("mon", "monitor.action", "low")(w, r)
 }

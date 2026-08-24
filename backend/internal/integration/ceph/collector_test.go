@@ -4,6 +4,7 @@ import (
 	cephdomain "cephtower/backend/internal/domain/ceph"
 	"cephtower/backend/internal/integration/ceph/executor"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -67,6 +68,60 @@ func TestCollectTopologyPreservesDaemonRuntimeMetrics(t *testing.T) {
 		return
 	}
 	t.Fatal("daemon observation was not collected")
+}
+
+func TestCollectTopologyStoresMonitorStatusAndPerfCounters(t *testing.T) {
+	base := fixtureExecutor{t}
+	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{
+		"collect.mon_perf.threshold": []byte("5\n"),
+		"collect.quorum": []byte(`{
+			"quorum_names":["ceph-node-1"],
+			"features":{"quorum_con":"4541880224203014143","quorum_mon":["reef","squid"],"required_con":"2451647607914708996","required_mon":[18,19]},
+			"monmap":{"fsid":"00000000-0000-0000-0000-000000000001","modified":"2026-08-24T08:00:00Z","epoch":5}
+		}`),
+		"collect.mon_perf.schema": []byte(`{
+			"mon":{
+				"num_sessions":{"type":2,"metric_type":"gauge","value_type":"integer","description":"Open sessions","priority":5,"units":"none"},
+				"low_priority":{"type":2,"metric_type":"gauge","value_type":"integer","description":"Debug only","priority":0,"units":"none"}
+			},
+			"paxos":{"commit_latency":{"type":5,"metric_type":"gauge","value_type":"real-integer-pair","description":"Commit latency","priority":5,"units":"none"}}
+		}`),
+		"collect.mon_perf.dump": []byte(`{
+			"mon":{"num_sessions":15,"low_priority":99},
+			"paxos":{"commit_latency":{"avgcount":2,"sum":0.8,"avgtime":0.4}}
+		}`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "topology")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var status cephdomain.MonitorStatus
+	var monitor cephdomain.Monitor
+	counters := map[string]cephdomain.MonitorPerfCounter{}
+	for _, row := range rows {
+		switch row.Kind {
+		case "mon_status":
+			status = row.Payload.(cephdomain.MonitorStatus)
+		case "mon":
+			monitor = row.Payload.(cephdomain.Monitor)
+		case "mon_perf_counter":
+			counter := row.Payload.(cephdomain.MonitorPerfCounter)
+			counters[counter.Name] = counter
+			if row.ParentKind != "mon" || row.ParentKey != "ceph-node-1" {
+				t.Fatalf("counter parent = %s/%s", row.ParentKind, row.ParentKey)
+			}
+		}
+	}
+	if status.FSID != "00000000-0000-0000-0000-000000000001" || status.Epoch != 5 || len(status.QuorumMon) != 2 {
+		t.Fatalf("monitor status = %#v", status)
+	}
+	if monitor.OpenSessions != json.Number("15") {
+		t.Fatalf("open sessions = %#v", monitor.OpenSessions)
+	}
+	latency := counters["paxos.commit_latency"]
+	if len(counters) != 2 || latency.Value != float64(800000000) || latency.MetricType != "counter" || counters["mon.low_priority"].Name != "" {
+		t.Fatalf("monitor counters = %#v", counters)
+	}
 }
 
 func TestCollectFastStoresCephVersionsHash(t *testing.T) {

@@ -246,6 +246,31 @@ export function listMonitors(clusterId = requiredClusterId(), filters?: Record<s
   return listResource('/monitors', clusterId, { filters }).then((payload) => payload.items)
 }
 
+export async function getMonitorStatus(clusterId = requiredClusterId()): Promise<ApiRecord | null> {
+  const payload = await getOptionalResource<ApiRecord>('/monitor/status', clusterId)
+  if (!payload) {
+    return null
+  }
+  const data = toRecord(payload.item.data)
+  return {
+    ...data,
+    kind: payload.item.kind,
+    natural_key: payload.item.natural_key,
+    name: payload.item.name ?? data.name,
+    status: payload.item.status ?? data.status,
+    resource_version: payload.item.resource_version,
+    source: payload.item.source,
+    observed_at: payload.item.observed_at,
+    created_at: payload.item.created_at,
+    updated_at: payload.item.updated_at,
+    stale: payload.item.stale
+  }
+}
+
+export function listMonitorPerfCounters(monitor: string, clusterId = requiredClusterId()): Promise<ApiRecord[]> {
+  return listResource('/monitor/perf/counters', clusterId, { limit: 500, body: { monitor } }).then((payload) => payload.items)
+}
+
 export function listMgrModules(): Promise<ApiRecord[]> {
   return listResource('/manager/modules').then((payload) => payload.items)
 }

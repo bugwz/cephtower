@@ -484,6 +484,7 @@ func (d *Database) ReconcileResources(ctx context.Context, clusterID, generation
 			var existing CephEntityRecord
 			err := tx.Table(table).Where("cluster_id = ? AND natural_key = ?", clusterID, row.NaturalKey).First(&existing).Error
 			if err == nil {
+				applyMonitorCounterRate(row, &existing)
 				row.ID, row.CreatedAt, row.ResourceVersion, row.ConfiguredData = existing.ID, existing.CreatedAt, existing.ResourceVersion, existing.ConfiguredData
 				if existing.DiscoveredData != row.DiscoveredData || !equalStringPointer(existing.Status, row.Status) {
 					row.ResourceVersion++
@@ -492,6 +493,7 @@ func (d *Database) ReconcileResources(ctx context.Context, clusterID, generation
 					return err
 				}
 			} else if errors.Is(err, gorm.ErrRecordNotFound) {
+				applyMonitorCounterRate(row, nil)
 				row.ResourceVersion, row.CreatedAt = 1, now
 				if err := tx.Table(table).Create(row).Error; err != nil {
 					return err
@@ -502,6 +504,13 @@ func (d *Database) ReconcileResources(ctx context.Context, clusterID, generation
 		}
 		for _, kind := range authoritativeKinds {
 			if kind == "overview" {
+				continue
+			}
+			if kind == "mon_perf_counter" {
+				table, _ := EntityTableName(kind)
+				if err := tx.Table(table).Where("cluster_id = ? AND generation <> ?", clusterID, generation).Delete(&CephEntityRecord{}).Error; err != nil {
+					return err
+				}
 				continue
 			}
 			if kind == "host" {
@@ -520,6 +529,47 @@ func (d *Database) ReconcileResources(ctx context.Context, clusterID, generation
 		}
 		return nil
 	})
+}
+
+func applyMonitorCounterRate(row *CephEntityRecord, previous *CephEntityRecord) {
+	if row.Kind != "mon_perf_counter" {
+		return
+	}
+	var current map[string]any
+	if json.Unmarshal([]byte(row.DiscoveredData), &current) != nil || current["metric_type"] != "counter" {
+		return
+	}
+	currentRaw, ok := numericJSONValue(current["raw_value"])
+	if !ok {
+		return
+	}
+	rate := float64(0)
+	if previous != nil {
+		var prior map[string]any
+		if json.Unmarshal([]byte(previous.DiscoveredData), &prior) == nil {
+			priorRaw, priorOK := numericJSONValue(prior["raw_value"])
+			seconds := row.ObservedAt.Sub(previous.ObservedAt).Seconds()
+			if priorOK && seconds > 0 && currentRaw >= priorRaw {
+				rate = (currentRaw - priorRaw) / seconds
+			}
+		}
+	}
+	current["value"] = rate
+	if encoded, err := json.Marshal(current); err == nil {
+		row.DiscoveredData = string(encoded)
+	}
+}
+
+func numericJSONValue(value any) (float64, bool) {
+	switch typed := value.(type) {
+	case float64:
+		return typed, true
+	case json.Number:
+		parsed, err := typed.Float64()
+		return parsed, err == nil
+	default:
+		return 0, false
+	}
 }
 func (d *Database) MarkModuleResourcesStale(ctx context.Context, clusterID uint64, kinds []string, now time.Time) error {
 	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
