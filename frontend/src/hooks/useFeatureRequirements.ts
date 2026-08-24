@@ -19,12 +19,15 @@ export function useFeatureRequirements(clusterId: number | null | undefined, req
   const endpointKey = (requirements.requiredEndpoints ?? []).join('\u0000')
   const requiredCapabilities = useMemo(() => normalize(requirements.requiredCapabilities), [capabilityKey])
   const requiredEndpoints = useMemo(() => normalize(requirements.requiredEndpoints), [endpointKey])
+  const requirementKey = `${clusterId ?? 0}\u0000${capabilityKey}\u0000${endpointKey}`
+  const requiresCheck = Boolean(clusterId && (requiredCapabilities.length || requiredEndpoints.length))
   const [status, setStatus] = useState<FeatureRequirementStatus>({
-    loading: false,
+    loading: requiresCheck,
     error: '',
     blocked: false,
     reasons: []
   })
+  const [resolvedKey, setResolvedKey] = useState(requiresCheck ? '' : requirementKey)
 
   useEffect(() => {
     let ignore = false
@@ -32,6 +35,7 @@ export function useFeatureRequirements(clusterId: number | null | undefined, req
     async function load() {
       if (!clusterId || (requiredCapabilities.length === 0 && requiredEndpoints.length === 0)) {
         setStatus({ loading: false, error: '', blocked: false, reasons: [] })
+        setResolvedKey(requirementKey)
         return
       }
 
@@ -68,6 +72,7 @@ export function useFeatureRequirements(clusterId: number | null | undefined, req
             blocked: reasons.length > 0,
             reasons
           })
+          setResolvedKey(requirementKey)
         }
       } catch (err) {
         if (!ignore) {
@@ -77,6 +82,7 @@ export function useFeatureRequirements(clusterId: number | null | undefined, req
             blocked: true,
             reasons: []
           })
+          setResolvedKey(requirementKey)
         }
       }
     }
@@ -86,9 +92,12 @@ export function useFeatureRequirements(clusterId: number | null | undefined, req
     return () => {
       ignore = true
     }
-  }, [clusterId, requiredCapabilities, requiredEndpoints])
+  }, [clusterId, requiredCapabilities, requiredEndpoints, requirementKey])
 
-  return status
+  return {
+    ...status,
+    loading: requiresCheck && (status.loading || resolvedKey !== requirementKey)
+  }
 }
 
 function normalize(values?: string[]) {

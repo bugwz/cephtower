@@ -222,6 +222,9 @@ type daemonWire struct {
 	StatusDesc         *string `json:"status_desc"`
 	Version            *string `json:"version"`
 	ContainerImageName *string `json:"container_image_name"`
+	CPUPercentage      *string `json:"cpu_percentage"`
+	MemoryUsage        *uint64 `json:"memory_usage"`
+	LastRefresh        *string `json:"last_refresh"`
 }
 type serviceWire struct {
 	ServiceName string `json:"service_name"`
@@ -312,7 +315,17 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 		if strings.TrimSpace(wire.DaemonName) == "" || strings.TrimSpace(wire.DaemonType) == "" {
 			return nil, fmt.Errorf("parse collect.daemon response: daemon_name and daemon_type are required")
 		}
-		payload := cephdomain.Daemon{Name: wire.DaemonName, Type: wire.DaemonType, Hostname: wire.Hostname, Status: wire.StatusDesc, Version: cephdomain.NormalizeVersionPointer(wire.Version), ContainerImage: wire.ContainerImageName}
+		payload := cephdomain.Daemon{
+			Name:           wire.DaemonName,
+			Type:           wire.DaemonType,
+			Hostname:       wire.Hostname,
+			Status:         wire.StatusDesc,
+			Version:        cephdomain.NormalizeVersionPointer(wire.Version),
+			ContainerImage: wire.ContainerImageName,
+			CPUPercentage:  wire.CPUPercentage,
+			MemoryUsage:    wire.MemoryUsage,
+			LastRefresh:    wire.LastRefresh,
+		}
 		rows = append(rows, Observation{Kind: "daemon", NaturalKey: wire.DaemonName, Name: wire.DaemonName, Status: value(wire.StatusDesc), Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	for _, wire := range services {

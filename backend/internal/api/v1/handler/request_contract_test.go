@@ -83,6 +83,26 @@ func TestMutationContractsRejectUnknownAndWrongType(t *testing.T) {
 	}
 }
 
+func TestHostMutationContractsAcceptManagementFields(t *testing.T) {
+	if err := ValidateMutationRequest("host.create", map[string]any{
+		"cluster_id": float64(1), "hostname": "node-1", "address": "192.0.2.10",
+		"labels": []any{"_admin", "osd"}, "maintenance": true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateMutationRequest("host.update", map[string]any{
+		"cluster_id": float64(1), "host": "node-1",
+		"labels_add": []any{"osd"}, "labels_remove": []any{"mon"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateMutationRequest("host.action", map[string]any{
+		"cluster_id": float64(1), "host": "node-1", "action": "maintenance_enter", "force": true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestMutationContractsCoverAllRegisteredActions(t *testing.T) {
 	for _, action := range MutationContractActions() {
 		contract, ok := MutationRequestContract(action)

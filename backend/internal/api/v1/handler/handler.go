@@ -8,6 +8,7 @@ import (
 	clusterservice "cephtower/backend/internal/service/cluster"
 	endpointservice "cephtower/backend/internal/service/endpoint"
 	externalservice "cephtower/backend/internal/service/external"
+	hostdetailservice "cephtower/backend/internal/service/hostdetail"
 	hostprofileservice "cephtower/backend/internal/service/hostprofile"
 	mutationservice "cephtower/backend/internal/service/mutation"
 	reconcilerservice "cephtower/backend/internal/service/reconciler"
@@ -20,6 +21,7 @@ type Handler struct {
 	Clusters     *clusterservice.Service
 	Endpoints    *endpointservice.Service
 	External     *externalservice.Service
+	HostDetails  *hostdetailservice.Service
 	HostProfiles *hostprofileservice.Service
 	Mutations    *mutationservice.Service
 	Reconciler   *reconcilerservice.Service
@@ -33,6 +35,7 @@ type Dependencies struct {
 	Clusters     *clusterservice.Service
 	Endpoints    *endpointservice.Service
 	External     *externalservice.Service
+	HostDetails  *hostdetailservice.Service
 	HostProfiles *hostprofileservice.Service
 	Mutations    *mutationservice.Service
 	Reconciler   *reconcilerservice.Service
@@ -42,7 +45,7 @@ type Dependencies struct {
 }
 
 func New(deps Dependencies) *Handler {
-	return &Handler{Auth: deps.Auth, Clusters: deps.Clusters, Endpoints: deps.Endpoints, External: deps.External, HostProfiles: deps.HostProfiles, Mutations: deps.Mutations, Reconciler: deps.Reconciler, Setup: deps.Setup, Database: deps.Database, AuthEnabled: deps.AuthEnabled}
+	return &Handler{Auth: deps.Auth, Clusters: deps.Clusters, Endpoints: deps.Endpoints, External: deps.External, HostDetails: deps.HostDetails, HostProfiles: deps.HostProfiles, Mutations: deps.Mutations, Reconciler: deps.Reconciler, Setup: deps.Setup, Database: deps.Database, AuthEnabled: deps.AuthEnabled}
 }
 
 func (h *Handler) RequireAuth() bool {

@@ -36,6 +36,9 @@ type Daemon struct {
 	Status         *string `json:"status"`
 	Version        *string `json:"version"`
 	ContainerImage *string `json:"container_image"`
+	CPUPercentage  *string `json:"cpu_percentage,omitempty"`
+	MemoryUsage    *uint64 `json:"memory_usage,omitempty"`
+	LastRefresh    *string `json:"last_refresh,omitempty"`
 }
 type Service struct {
 	Name      string `json:"name"`

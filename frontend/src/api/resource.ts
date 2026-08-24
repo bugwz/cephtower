@@ -169,6 +169,14 @@ export async function listHostDevices(host: string): Promise<ApiRecord[]> {
   return listResource('/devices', requiredClusterId(), { body: { host } }).then((payload) => payload.items)
 }
 
+export function getHostDeviceInfo(hostname: string, clusterId = requiredClusterId()): Promise<ApiRecord[]> {
+  return request<ApiRecord[]>('/host/devices', jsonInit('GET', { cluster_id: clusterId, hostname }))
+}
+
+export function getHostSMART(hostname: string, clusterId = requiredClusterId()): Promise<ApiRecord> {
+  return request<ApiRecord>('/host/smart', jsonInit('GET', { cluster_id: clusterId, hostname }, { suppressErrorNotification: true }))
+}
+
 export async function listOSDs(): Promise<ApiRecord[]> {
   return listResource('/osds').then((payload) => payload.items)
 }

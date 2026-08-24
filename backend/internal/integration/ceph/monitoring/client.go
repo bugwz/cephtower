@@ -44,6 +44,12 @@ var metricQueries = map[string]string{
 	"capacity_used_percent": "100 * (ceph_cluster_total_used_bytes / ceph_cluster_total_bytes)",
 	"client_read_bytes":     "sum(rate(ceph_pool_rd_bytes[5m]))",
 	"client_write_bytes":    "sum(rate(ceph_pool_wr_bytes[5m]))",
+	"host_cpu_usage":        "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+	"host_memory_usage":     "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+	"host_disk_read_bytes":  "sum by (instance) (rate(node_disk_read_bytes_total[5m]))",
+	"host_disk_write_bytes": "sum by (instance) (rate(node_disk_written_bytes_total[5m]))",
+	"host_network_receive":  "sum by (instance) (rate(node_network_receive_bytes_total{device!=\"lo\"}[5m]))",
+	"host_network_transmit": "sum by (instance) (rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m]))",
 }
 
 func (c *Client) Query(ctx context.Context, metricID string, at *time.Time) (PrometheusResult, error) {

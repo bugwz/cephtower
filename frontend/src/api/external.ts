@@ -1,4 +1,4 @@
-import { asArray, isApiError, jsonInit, request, type ApiRecord } from './client'
+import { asArray, isApiError, jsonInit, request, type ApiRecord, type ApiRequestInit } from './client'
 import type { ListEnvelope } from './types'
 
 export interface MetricQueryInput {
@@ -45,12 +45,12 @@ export async function readExternalList(path: string, clusterId: number, body: Ap
   }
 }
 
-export async function queryMetric(clusterId: number, input: MetricQueryInput) {
+export async function queryMetric(clusterId: number, input: MetricQueryInput, init?: ApiRequestInit) {
   const query = new URLSearchParams({ metric_id: input.metricId })
   if (input.time) {
     query.set('time', input.time)
   }
-  return readMetric(`/metric/query?${query}`, clusterId)
+  return readMetric(`/metric/query?${query}`, clusterId, init)
 }
 
 export async function queryMetricRange(clusterId: number, input: MetricRangeInput) {
@@ -63,11 +63,11 @@ export async function queryMetricRange(clusterId: number, input: MetricRangeInpu
   return readMetric(`/metric/range?${query}`, clusterId)
 }
 
-async function readMetric(path: string, clusterId?: number) {
+async function readMetric(path: string, clusterId?: number, init?: ApiRequestInit) {
   if (!clusterId) {
     throw new Error('请先选择集群')
   }
-  const payload = await request<MetricResponse>(path, jsonInit('GET', { cluster_id: clusterId }))
+  const payload = await request<MetricResponse>(path, jsonInit('GET', { cluster_id: clusterId }, init))
   return {
     ...payload,
     series: Array.isArray(payload.series) ? payload.series.filter((item): item is ApiRecord => typeof item === 'object' && item !== null && !Array.isArray(item)) : []

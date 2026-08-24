@@ -14,6 +14,55 @@ type hostSSHRequest struct {
 	Host      string `json:"host,omitempty"`
 }
 
+func (h *Handler) GetHostDevices(w http.ResponseWriter, r *http.Request) {
+	request, ok := decodeHostDetailRequest(w, r)
+	if !ok {
+		return
+	}
+	if h.HostDetails == nil {
+		WriteError(w, r, http.StatusNotImplemented, "capability_unavailable", "host device details are unavailable", false, nil)
+		return
+	}
+	devices, err := h.HostDetails.Devices(r.Context(), request.ClusterID, request.Hostname)
+	if err != nil {
+		writeActionError(w, r, err)
+		return
+	}
+	WriteSuccess(w, http.StatusOK, "success", devices)
+}
+
+func (h *Handler) GetHostSMART(w http.ResponseWriter, r *http.Request) {
+	request, ok := decodeHostDetailRequest(w, r)
+	if !ok {
+		return
+	}
+	if h.HostDetails == nil {
+		WriteError(w, r, http.StatusNotImplemented, "capability_unavailable", "host SMART data is unavailable", false, nil)
+		return
+	}
+	payload, err := h.HostDetails.SMART(r.Context(), request.ClusterID, request.Hostname)
+	if err != nil {
+		writeActionError(w, r, err)
+		return
+	}
+	WriteSuccess(w, http.StatusOK, "success", payload)
+}
+
+func decodeHostDetailRequest(w http.ResponseWriter, r *http.Request) (hostSSHRequest, bool) {
+	var request hostSSHRequest
+	if !DecodeStrict(w, r, &request) {
+		return request, false
+	}
+	if request.Hostname == "" {
+		request.Hostname = request.Host
+	}
+	if request.ClusterID == 0 || request.Hostname == "" {
+		WriteError(w, r, http.StatusBadRequest, "invalid_request", "cluster_id and hostname are required", false, nil)
+		return request, false
+	}
+	return request, true
+}
+
 type hostSSHSaveRequest struct {
 	ClusterID     uint64   `json:"cluster_id"`
 	Hostname      string   `json:"hostname,omitempty"`

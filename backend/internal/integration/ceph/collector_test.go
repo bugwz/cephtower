@@ -38,6 +38,37 @@ func TestCollectParsesCeph2022Fixtures(t *testing.T) {
 	}
 }
 
+func TestCollectTopologyPreservesDaemonRuntimeMetrics(t *testing.T) {
+	base := fixtureExecutor{t}
+	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{
+		"collect.daemon": []byte(`[{"daemon_name":"osd.0","daemon_type":"osd","hostname":"node-a","status_desc":"running","version":"20.2.2","container_image_name":"quay.io/ceph/ceph:v20.2.2","cpu_percentage":"1.25%","memory_usage":73410805,"last_refresh":"2026-08-24T08:00:00Z"}]`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "topology")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range rows {
+		if row.Kind != "daemon" || row.NaturalKey != "osd.0" {
+			continue
+		}
+		payload, ok := row.Payload.(cephdomain.Daemon)
+		if !ok {
+			t.Fatalf("daemon payload type = %T", row.Payload)
+		}
+		if payload.CPUPercentage == nil || *payload.CPUPercentage != "1.25%" {
+			t.Fatalf("daemon cpu percentage = %v", payload.CPUPercentage)
+		}
+		if payload.MemoryUsage == nil || *payload.MemoryUsage != 73410805 {
+			t.Fatalf("daemon memory usage = %v", payload.MemoryUsage)
+		}
+		if payload.LastRefresh == nil || *payload.LastRefresh != "2026-08-24T08:00:00Z" {
+			t.Fatalf("daemon last refresh = %v", payload.LastRefresh)
+		}
+		return
+	}
+	t.Fatal("daemon observation was not collected")
+}
+
 func TestCollectFastStoresCephVersionsHash(t *testing.T) {
 	base := fixtureExecutor{t}
 	version := "ceph version 20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc) tentacle (stable - RelWithDebInfo)"

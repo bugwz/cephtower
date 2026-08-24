@@ -33,6 +33,21 @@ func TestPrometheusUsesRegisteredQueryAndBearerToken(t *testing.T) {
 	}
 }
 
+func TestHostMetricQueriesAreRegistered(t *testing.T) {
+	for _, metricID := range []string{
+		"host_cpu_usage",
+		"host_memory_usage",
+		"host_disk_read_bytes",
+		"host_disk_write_bytes",
+		"host_network_receive",
+		"host_network_transmit",
+	} {
+		if strings.TrimSpace(metricQueries[metricID]) == "" {
+			t.Fatalf("host metric %q is not registered", metricID)
+		}
+	}
+}
+
 func TestAlertmanagerSilenceUsesTypedPayload(t *testing.T) {
 	httpClient := &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
 		if r.URL.Path != "/api/v2/silences" || r.Method != http.MethodPost {

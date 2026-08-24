@@ -19,8 +19,8 @@ func TestEveryNativeActionBuildsRegisteredCommand(t *testing.T) {
 	}{
 		{"cluster.refresh", "cluster/1", nil},
 		{"health.mute", "health/mute/HEALTH_WARN", nil}, {"health.unmute", "health/mute/HEALTH_WARN", nil},
-		{"host.create", "host", map[string]any{"hostname": "node1", "address": "192.0.2.10"}},
-		{"host.update", "host/node1", map[string]any{"label": "storage", "action": "add"}},
+		{"host.create", "host", map[string]any{"hostname": "node1", "address": "192.0.2.10", "labels": []any{"storage"}, "maintenance": true}},
+		{"host.update", "host/node1", map[string]any{"labels_add": []any{"storage"}, "labels_remove": []any{"old"}}},
 		{"host.delete", "host/node1", nil}, {"host.action", "host/node1/action", map[string]any{"action": "rescan"}},
 		{"device.identify", "host/node1/identify-device", map[string]any{"device": "/dev/sdb", "state": "on"}},
 		{"service.create", "service", map[string]any{"service_type": "mon", "service_id": "mon"}},
@@ -97,6 +97,54 @@ func TestEveryNativeActionBuildsRegisteredCommand(t *testing.T) {
 				t.Fatalf("built action %q is absent from Supports", test.action)
 			}
 		})
+	}
+}
+
+func TestHostCreateBuildsLabelsAndMaintenance(t *testing.T) {
+	command, err := build(Request{Action: "host.create", ResourceKey: "host"}, map[string]any{
+		"hostname": "node1", "address": "192.0.2.10",
+		"labels": []any{"_admin", "osd"}, "maintenance": true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"orch", "host", "add", "node1", "--addr", "192.0.2.10", "--labels", "_admin,osd", "--maintenance"}
+	if !reflect.DeepEqual(command.args, want) {
+		t.Fatalf("args = %#v, want %#v", command.args, want)
+	}
+}
+
+func TestHostUpdateBuildsLabelDiff(t *testing.T) {
+	command, err := build(Request{Action: "host.update", ResourceKey: "host/node1"}, map[string]any{
+		"labels_add": []any{"osd", "mgr"}, "labels_remove": []any{"mon"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := [][]string{
+		{"orch", "host", "label", "add", "node1", "osd"},
+		{"orch", "host", "label", "add", "node1", "mgr"},
+		{"orch", "host", "label", "rm", "node1", "mon"},
+	}
+	got := [][]string{command.args}
+	for _, followup := range command.followups {
+		got = append(got, followup.args)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("commands = %#v, want %#v", got, want)
+	}
+}
+
+func TestHostMaintenanceForceBuildsSafetyFlags(t *testing.T) {
+	command, err := build(Request{Action: "host.action", ResourceKey: "host/node1/action"}, map[string]any{
+		"action": "maintenance_enter", "force": true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"orch", "host", "maintenance", "enter", "node1", "--force", "--yes-i-really-mean-it"}
+	if !reflect.DeepEqual(command.args, want) {
+		t.Fatalf("args = %#v, want %#v", command.args, want)
 	}
 }
 

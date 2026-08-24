@@ -18,6 +18,8 @@ import { message } from '../../utils/appMessage'
 interface HostFormValues {
   hostname: string
   address?: string
+  labels?: string[]
+  maintenance?: boolean
 }
 
 interface HostSSHFormValues {
@@ -28,7 +30,11 @@ interface HostSSHFormValues {
   ssh_user: string
   ssh_password?: string
   sync_hostnames?: string[]
+  labels?: string[]
 }
+
+const predefinedHostLabels = ['_admin', 'mon', 'mgr', 'osd', 'mds', 'rgw', 'nfs', 'iscsi', 'rbd', 'grafana']
+const hostLabelOptions = predefinedHostLabels.map((label) => ({ label, value: label }))
 
 export function HostPage() {
   const navigate = useNavigate()
@@ -67,6 +73,8 @@ export function HostPage() {
   const [syncHostSearch, setSyncHostSearch] = useState('')
   const operationMutation = useMutationOperation()
   const selectedSyncHostnames = Form.useWatch('sync_hostnames', sshForm) ?? []
+  const pendingHostnameInput = Form.useWatch('hostname', form) ?? ''
+  const pendingHostnames = useMemo(() => expandHostnames(pendingHostnameInput), [pendingHostnameInput])
   const syncHostOptions = useMemo(() => {
     const currentName = editingHost ? hostName(editingHost) : ''
     return (data?.hosts ?? [])
@@ -110,6 +118,7 @@ export function HostPage() {
 
   function openCreate() {
     form.resetFields()
+    form.setFieldsValue({ labels: [], maintenance: false })
     setFormOpen(true)
   }
 
@@ -128,7 +137,8 @@ export function HostPage() {
       ssh_address: hostAddress(row),
       ssh_port: 22,
       ssh_user: 'root',
-      sync_hostnames: []
+      sync_hostnames: [],
+      labels: hostLabels(row)
     })
     setSyncHostSearch('')
     setSSHLoading(true)
@@ -153,13 +163,20 @@ export function HostPage() {
     }
     setSubmitting(true)
     try {
-      await operationMutation.run(() => mutateResource('/host', 'POST', {
+      const hostnames = expandHostnames(values.hostname)
+      if (!hostnames.length) {
+        form.setFields([{ name: 'hostname', errors: ['请输入有效的主机名或主机范围'] }])
+        return
+      }
+      await operationMutation.run(() => Promise.all(hostnames.map((hostname) => mutateResource('/host', 'POST', {
         cluster_id: selectedClusterId,
-        hostname: values.hostname,
-        ...(values.address ? { address: values.address } : {})
-      }), false)
+        hostname,
+        ...(hostnames.length === 1 && values.address?.trim() ? { address: values.address.trim() } : {}),
+        labels: values.labels ?? [],
+        maintenance: Boolean(values.maintenance)
+      }))), false)
       setFormOpen(false)
-      message.success('主机添加执行成功')
+      message.success(hostnames.length > 1 ? `${hostnames.length} 台主机添加执行成功` : '主机添加执行成功')
       void refresh({ showLoading: false })
     } finally {
       setSubmitting(false)
@@ -182,10 +199,24 @@ export function HostPage() {
       if (values.ssh_password?.trim()) {
         payload.ssh_password = values.ssh_password.trim()
       }
-      await operationMutation.run(() => saveHostSSH(payload, selectedClusterId), false)
+      const previousLabels = hostLabels(editingHost)
+      const nextLabels = normalizeLabels(values.labels)
+      const labelsAdd = nextLabels.filter((label) => !previousLabels.includes(label))
+      const labelsRemove = previousLabels.filter((label) => !nextLabels.includes(label))
+      await operationMutation.run(async () => {
+        await saveHostSSH(payload, selectedClusterId)
+        if (labelsAdd.length || labelsRemove.length) {
+          await mutateResource('/host', 'PATCH', {
+            cluster_id: selectedClusterId,
+            host: values.hostname,
+            labels_add: labelsAdd,
+            labels_remove: labelsRemove
+          }, { ifMatch: Number(editingHost?.resource_version ?? 0) })
+        }
+      }, false)
       setSSHOpen(false)
       setEditingHost(null)
-      message.success('主机 SSH 信息已保存')
+      message.success('主机信息已保存')
       void refresh({ showLoading: false })
     } finally {
       setSSHSubmitting(false)
@@ -218,6 +249,7 @@ export function HostPage() {
           columns={[
             { key: 'hostname', title: '主机名' },
             { key: 'address_display', title: '地址', filterKey: 'address' },
+            { key: 'labels', title: '标签', filterKey: false },
             { key: 'system_display', title: '系统', filterKey: 'system' },
             { key: 'kernel_display', title: '内核版本', filterKey: 'kernel_release' },
             { key: 'daemon_count_display', title: '守护进程', filterKey: false },
@@ -242,6 +274,7 @@ export function HostPage() {
         />
       </Card>
       <DraggableModal
+        width={680}
         title="新增主机"
         open={formOpen}
         onCancel={() => setFormOpen(false)}
@@ -251,16 +284,35 @@ export function HostPage() {
         destroyOnClose
       >
         <Form form={form} layout="vertical" onFinish={submitHost}>
-          <Form.Item name="hostname" label="主机名" rules={[{ required: true, message: '请输入主机名' }]}>
-            <Input />
+          <Form.Item
+            name="hostname"
+            label="主机名"
+            extra="支持逗号分隔和数字范围，例如 node-01,node-02 或 node-[01-03]"
+            rules={[
+              { required: true, message: '请输入主机名' },
+              { validator: (_, value) => expandHostnames(String(value ?? '')).length ? Promise.resolve() : Promise.reject(new Error('请输入有效的主机名或主机范围')) }
+            ]}
+          >
+            <Input placeholder="例如：ceph-node-[01-03]" />
           </Form.Item>
-          <Form.Item name="address" label="地址">
-            <Input />
+          <Form.Item
+            name="address"
+            label="网络地址"
+            extra={pendingHostnames.length > 1 ? '批量添加时由 Ceph 按主机名解析网络地址' : undefined}
+          >
+            <Input placeholder="例如：192.168.1.10" disabled={pendingHostnames.length > 1} />
+          </Form.Item>
+          <Form.Item name="labels" label="标签">
+            <Select mode="tags" options={hostLabelOptions} placeholder="选择或输入标签" tokenSeparators={[',']} />
+          </Form.Item>
+          <Form.Item name="maintenance" valuePropName="checked">
+            <Checkbox>添加后进入维护模式</Checkbox>
           </Form.Item>
         </Form>
       </DraggableModal>
       <DraggableModal
-        title="编辑主机"
+        width={760}
+        title={editingHost ? `编辑主机：${hostName(editingHost)}` : '编辑主机'}
         open={sshOpen}
         onCancel={() => {
           setSSHOpen(false)
@@ -284,6 +336,9 @@ export function HostPage() {
           </Form.Item>
           <Form.Item name="address" label="地址" rules={[{ required: true, message: '请输入地址' }]}>
             <Input disabled />
+          </Form.Item>
+          <Form.Item className="host-edit-labels" name="labels" label="Ceph 标签">
+            <Select mode="tags" options={hostLabelOptions} placeholder="选择或输入标签" tokenSeparators={[',']} />
           </Form.Item>
           <Form.Item name="ssh_address" label="SSH 地址" rules={[{ required: true, message: '请输入 SSH 地址' }]}>
             <Input />
@@ -381,6 +436,53 @@ export function HostPage() {
       </DraggableModal>
     </Page>
   )
+}
+
+export function expandHostnames(value: string) {
+  const result: string[] = []
+  for (const part of value.split(',').map((item) => item.trim()).filter(Boolean)) {
+    const match = part.match(/^(.*)\[(\d+)-(\d+)](.*)$/)
+    if (!match) {
+      if (!isValidHostname(part)) {
+        return []
+      }
+      result.push(part)
+      continue
+    }
+    const [, prefix, startText, endText, suffix] = match
+    const start = Number(startText)
+    const end = Number(endText)
+    if (end < start || end - start > 999) {
+      return []
+    }
+    const width = Math.max(startText.length, endText.length)
+    for (let index = start; index <= end; index += 1) {
+      const hostname = `${prefix}${String(index).padStart(width, '0')}${suffix}`
+      if (!isValidHostname(hostname)) {
+        return []
+      }
+      result.push(hostname)
+    }
+  }
+  return Array.from(new Set(result))
+}
+
+function isValidHostname(value: string) {
+  return value.length > 0 && value.length <= 253 && /^[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?$/.test(value)
+}
+
+export function hostLabels(row: ApiRecord | null) {
+  if (!row || !Array.isArray(row.labels)) {
+    return []
+  }
+  return normalizeLabels(row.labels)
+}
+
+function normalizeLabels(value: unknown) {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return Array.from(new Set(value.map((label) => textValue(label, '').trim()).filter(Boolean)))
 }
 
 export function hostName(row: ApiRecord) {

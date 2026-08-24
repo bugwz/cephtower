@@ -156,7 +156,19 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		args := []string{"orch", "host", "add", name}
 		if addr := optional(p, "address"); addr != "" {
-			args = append(args, addr)
+			args = append(args, "--addr", addr)
+		}
+		if rawLabels, exists := p["labels"]; exists {
+			labels, ok := stringSlice(rawLabels)
+			if !ok {
+				return command{}, invalid("labels are invalid")
+			}
+			if len(labels) > 0 {
+				args = append(args, "--labels", strings.Join(labels, ","))
+			}
+		}
+		if boolParameter(p, "maintenance") {
+			args = append(args, "--maintenance")
 		}
 		return ceph(args, []string{"orch", "host", "ls", "--detail", "--format", "json"}), nil
 	case "host.delete":
@@ -1177,15 +1189,28 @@ func hostUpdate(p map[string]any, host string, wrap func([]string, []string) com
 	if address := optional(p, "address"); address != "" {
 		return wrap([]string{"orch", "host", "set-addr", host, address}, []string{"orch", "host", "ls", "--detail", "--format", "json"}), nil
 	}
-	label, err := required(p, "label")
-	if err != nil {
-		return command{}, err
+	labelsAdd, addOK := stringSlice(p["labels_add"])
+	labelsRemove, removeOK := stringSlice(p["labels_remove"])
+	if p["labels_add"] != nil && !addOK {
+		return command{}, invalid("labels_add is invalid")
 	}
-	action, err := enum(p, "action", "add", "rm")
-	if err != nil {
-		return command{}, err
+	if p["labels_remove"] != nil && !removeOK {
+		return command{}, invalid("labels_remove is invalid")
 	}
-	return wrap([]string{"orch", "host", "label", action, host, label}, []string{"orch", "host", "ls", "--detail", "--format", "json"}), nil
+	commands := make([]command, 0, len(labelsAdd)+len(labelsRemove))
+	for _, label := range labelsAdd {
+		commands = append(commands, wrap([]string{"orch", "host", "label", "add", host, label}, nil))
+	}
+	for _, label := range labelsRemove {
+		commands = append(commands, wrap([]string{"orch", "host", "label", "rm", host, label}, nil))
+	}
+	if len(commands) == 0 {
+		return command{}, invalid("at least one host update is required")
+	}
+	result := commands[0]
+	result.followups = commands[1:]
+	result.check = []string{"orch", "host", "ls", "--detail", "--format", "json"}
+	return result, nil
 }
 func hostAction(p map[string]any, host string, wrap func([]string, []string) command) (command, error) {
 	action, err := enum(p, "action", "maintenance_enter", "maintenance_exit", "drain", "stop_drain", "rescan")
@@ -1196,6 +1221,9 @@ func hostAction(p map[string]any, host string, wrap func([]string, []string) com
 	switch action {
 	case "maintenance_enter":
 		args = []string{"orch", "host", "maintenance", "enter", host}
+		if boolParameter(p, "force") {
+			args = append(args, "--force", "--yes-i-really-mean-it")
+		}
 	case "maintenance_exit":
 		args = []string{"orch", "host", "maintenance", "exit", host}
 	case "drain":
@@ -1257,6 +1285,10 @@ func stringSlice(value any) ([]string, bool) {
 		result = append(result, text)
 	}
 	return result, true
+}
+func boolParameter(p map[string]any, key string) bool {
+	value, _ := p[key].(bool)
+	return value
 }
 func osdSpec(p map[string]any) (map[string]any, error) {
 	serviceID := optional(p, "service_id")

@@ -2265,6 +2265,53 @@
   grid-column: 1 / -1;
 }
 
+.host-edit-form > .host-edit-labels {
+  grid-column: 1 / -1;
+}
+
+.host-detail-tabs-card.ant-card > .ant-card-body {
+  padding-top: 0;
+}
+
+.host-detail-tabs > .ant-tabs-nav {
+  margin-bottom: 18px;
+}
+
+.host-detail-tabs .ant-tabs-tab {
+  padding: 16px 4px 13px;
+  font-weight: 700;
+}
+
+.host-detail-tabs .ant-table-wrapper {
+  min-width: 0;
+}
+
+.host-tab-loading {
+  display: grid;
+  min-height: 180px;
+  place-items: center;
+}
+
+.host-performance-grid {
+  padding-bottom: 2px;
+}
+
+.host-performance-card {
+  height: 100%;
+  border-color: #dfecea;
+  background: #fbfefd;
+}
+
+.host-performance-card .ant-statistic-title {
+  color: #527078;
+  font-weight: 700;
+}
+
+.host-performance-card .ant-statistic-content {
+  color: #173e45;
+  font-size: clamp(20px, 1.4vw, 28px);
+}
+
 .host-ssh-advanced {
   margin-bottom: 14px;
   border: 1px solid #e3efec;

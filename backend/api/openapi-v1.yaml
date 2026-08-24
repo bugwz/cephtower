@@ -464,8 +464,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -475,6 +485,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -943,8 +955,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -954,6 +976,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -2145,8 +2169,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -2156,6 +2190,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -2624,8 +2660,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -2635,6 +2681,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -3321,8 +3369,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -3332,6 +3390,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -3894,8 +3954,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -3905,6 +3975,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -4373,8 +4445,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -4384,6 +4466,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -5043,8 +5127,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -5054,6 +5148,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -5618,8 +5714,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -5629,6 +5735,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -6098,8 +6206,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -6109,6 +6227,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -6821,8 +6941,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -6832,6 +6962,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -7394,8 +7526,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -7405,6 +7547,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -7969,8 +8113,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -7980,6 +8134,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -8542,8 +8698,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -8553,6 +8719,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -9021,8 +9189,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -9032,6 +9210,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -9501,8 +9681,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -9512,6 +9702,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -10076,8 +10268,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -10087,6 +10289,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -10746,8 +10950,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -10757,6 +10971,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -11226,8 +11442,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -11237,6 +11463,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -11801,8 +12029,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -11812,6 +12050,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -12374,8 +12614,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -12385,6 +12635,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -12853,8 +13105,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -12864,6 +13126,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -13333,8 +13597,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -13344,6 +13618,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -13906,8 +14182,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -13917,6 +14203,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -14385,8 +14673,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -14396,6 +14694,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -14960,8 +15260,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -14971,6 +15281,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -15440,8 +15752,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -15451,6 +15773,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -16395,8 +16719,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -16406,6 +16740,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -16874,8 +17210,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -16885,6 +17231,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -17370,8 +17718,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -17381,6 +17739,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -17943,8 +18303,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -17954,6 +18324,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -18422,8 +18794,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -18433,6 +18815,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -18902,8 +19286,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -18913,6 +19307,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -19108,6 +19504,196 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ActionResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /host/devices:
+    get:
+      operationId: get_host_devices
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id]
+              properties:
+                account_id:
+                  type: string
+                binding_id:
+                  type: integer
+                bucket_id:
+                  type: string
+                client_id:
+                  type: string
+                cluster_id:
+                  type: integer
+                code:
+                  type: string
+                device_id:
+                  type: string
+                endpoint_id:
+                  type: integer
+                export_id:
+                  type: string
+                fs:
+                  type: string
+                group:
+                  type: string
+                host:
+                  type: string
+                host_nqn:
+                  type: string
+                id:
+                  type: string
+                image_id:
+                  type: string
+                image_spec:
+                  type: string
+                iqn:
+                  type: string
+                listener_id:
+                  type: string
+                metric_id:
+                  type: string
+                name:
+                  type: string
+                namespace:
+                  type: string
+                nqn:
+                  type: string
+                nsid:
+                  type: string
+                operation_id:
+                  type: string
+                osd_id:
+                  type: string
+                pool:
+                  type: string
+                service_id:
+                  type: string
+                share_id:
+                  type: string
+                silence_id:
+                  type: string
+                snap:
+                  type: string
+                subsystem_nqn:
+                  type: string
+                subvolume:
+                  type: string
+                uid:
+                  type: string
+                who:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceListResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /host/smart:
+    get:
+      operationId: get_host_smart
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id]
+              properties:
+                account_id:
+                  type: string
+                binding_id:
+                  type: integer
+                bucket_id:
+                  type: string
+                client_id:
+                  type: string
+                cluster_id:
+                  type: integer
+                code:
+                  type: string
+                device_id:
+                  type: string
+                endpoint_id:
+                  type: integer
+                export_id:
+                  type: string
+                fs:
+                  type: string
+                group:
+                  type: string
+                host:
+                  type: string
+                host_nqn:
+                  type: string
+                id:
+                  type: string
+                image_id:
+                  type: string
+                image_spec:
+                  type: string
+                iqn:
+                  type: string
+                listener_id:
+                  type: string
+                metric_id:
+                  type: string
+                name:
+                  type: string
+                namespace:
+                  type: string
+                nqn:
+                  type: string
+                nsid:
+                  type: string
+                operation_id:
+                  type: string
+                osd_id:
+                  type: string
+                pool:
+                  type: string
+                service_id:
+                  type: string
+                share_id:
+                  type: string
+                silence_id:
+                  type: string
+                snap:
+                  type: string
+                subsystem_nqn:
+                  type: string
+                subvolume:
+                  type: string
+                uid:
+                  type: string
+                who:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceResponse'
         default:
           description: error
           content:
@@ -19476,8 +20062,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -19487,6 +20083,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -20146,8 +20744,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -20157,6 +20765,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -20719,8 +21329,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -20730,6 +21350,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -21198,8 +21820,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -21209,6 +21841,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -21904,8 +22538,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -21915,6 +22559,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -22384,8 +23030,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -22395,6 +23051,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -23279,8 +23937,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -23290,6 +23958,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -23854,8 +24524,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -23865,6 +24545,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -24427,8 +25109,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -24438,6 +25130,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -25002,8 +25696,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -25013,6 +25717,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -25575,8 +26281,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -25586,6 +26302,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -26054,8 +26772,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -26065,6 +26793,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -26724,8 +27454,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -26735,6 +27475,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -27297,8 +28039,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -27308,6 +28060,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -27776,8 +28530,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -27787,6 +28551,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -28351,8 +29117,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -28362,6 +29138,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -28830,8 +29608,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -28841,6 +29629,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -29405,8 +30195,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -29416,6 +30216,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -29884,8 +30686,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -29895,6 +30707,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -30459,8 +31273,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -30470,6 +31294,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -31032,8 +31858,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -31043,6 +31879,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -31511,8 +32349,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -31522,6 +32370,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -32181,8 +33031,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -32192,6 +33052,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -32755,8 +33617,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -32766,6 +33638,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -33235,8 +34109,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -33246,6 +34130,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -33715,8 +34601,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -33726,6 +34622,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -34289,8 +35187,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -34300,6 +35208,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -34769,8 +35679,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -34780,6 +35700,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -35534,8 +36456,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -35545,6 +36477,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -36107,8 +37041,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -36118,6 +37062,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -36586,8 +37532,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -36597,6 +37553,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -37161,8 +38119,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -37172,6 +38140,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -37736,8 +38706,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -37747,6 +38727,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -38309,8 +39291,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -38320,6 +39312,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -38788,8 +39782,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -38799,6 +39803,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -39268,8 +40274,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -39279,6 +40295,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -39748,8 +40766,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -39759,6 +40787,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -40227,8 +41257,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -40238,6 +41278,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -40706,8 +41748,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -40717,6 +41769,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -41186,8 +42240,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -41197,6 +42261,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -41950,8 +43016,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -41961,6 +43037,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -42430,8 +43508,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -42441,6 +43529,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -42909,8 +43999,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -42920,6 +44020,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -43484,8 +44586,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -43495,6 +44607,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -44058,8 +45172,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -44069,6 +45193,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -44538,8 +45664,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -44549,6 +45685,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -45077,8 +46215,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -45088,6 +46236,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -45652,8 +46802,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -45663,6 +46823,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -46225,8 +47387,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -46236,6 +47408,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -46704,8 +47878,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -46715,6 +47899,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -47285,8 +48471,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -47296,6 +48492,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -47860,8 +49058,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -47871,6 +49079,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -48340,8 +49550,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -48351,6 +49571,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -48915,8 +50137,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -48926,6 +50158,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -49585,8 +50819,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -49596,6 +50840,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -50158,8 +51404,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -50169,6 +51425,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -50637,8 +51895,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -50648,6 +51916,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -51117,8 +52387,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -51128,6 +52408,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -51596,8 +52878,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -51607,6 +52899,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -52171,8 +53465,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -52182,6 +53486,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -52651,8 +53957,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -52662,6 +53978,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -53461,8 +54779,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -53472,6 +54800,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -54034,8 +55364,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -54045,6 +55385,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -54513,8 +55855,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -54524,6 +55876,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -55088,8 +56442,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -55099,6 +56463,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -55661,8 +57027,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -55672,6 +57048,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -56140,8 +57518,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -56151,6 +57539,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -56715,8 +58105,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -56726,6 +58126,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -57288,8 +58690,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -57299,6 +58711,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -57767,8 +59181,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -57778,6 +59202,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -58437,8 +59863,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -58448,6 +59884,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
@@ -58917,8 +60355,18 @@ paths:
                   enum: [cors, encryption, lifecycle, policy]
                 l:
                   type: integer
-                label:
-                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
                 lifecycle:
                   description: action-specific JSON value
                 light:
@@ -58928,6 +60376,8 @@ paths:
                   type: string
                 m:
                   type: integer
+                maintenance:
+                  type: boolean
                 matchers:
                   type: array
                   items:
