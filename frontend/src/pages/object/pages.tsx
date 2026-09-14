@@ -564,7 +564,7 @@ function userId(row?: Record<string, unknown>) {
 }
 
 function bucketId(row?: Record<string, unknown>) {
-  return String(row?.bucket_id ?? row?.name ?? row?.natural_key ?? '').trim()
+  return String(row?.natural_key ?? row?.bucket_id ?? '').trim()
 }
 
 function PeriodCommitPanel() {
