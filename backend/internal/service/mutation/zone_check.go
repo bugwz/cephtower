@@ -93,3 +93,26 @@ func zoneGroupUpdateMatches(p map[string]any, output []byte) bool {
 	}
 	return false
 }
+
+func zoneCredentialReadbackMatches(p map[string]any, output []byte) bool {
+	expectedAccess, present := p["access_key"]
+	if !present {
+		return true
+	}
+	var zone struct {
+		Name string `json:"name"`
+		ID   string `json:"id"`
+		Key  struct {
+			Access string `json:"access_key"`
+			Secret string `json:"secret_key"`
+		} `json:"system_key"`
+	}
+	if json.Unmarshal(output, &zone) != nil || zone.ID == "" {
+		return false
+	}
+	name := optional(p, "new_name")
+	if name == "" {
+		name = optional(p, "name")
+	}
+	return zone.Name == name && zone.Key.Access == expectedAccess && zone.Key.Secret == p["secret_key"]
+}

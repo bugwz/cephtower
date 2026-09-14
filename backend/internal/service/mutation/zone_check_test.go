@@ -60,3 +60,24 @@ func TestZoneSyncSourceReadback(t *testing.T) {
 		}
 	}
 }
+
+func TestZoneCredentialReadback(t *testing.T) {
+	p := map[string]any{"name": "old", "new_name": "east", "access_key": "test-access", "secret_key": "test-secret"}
+	good := `{"name":"east","id":"id","system_key":{"access_key":"test-access","secret_key":"test-secret"}}`
+	if !zoneCredentialReadbackMatches(p, []byte(good)) {
+		t.Fatal("matching credentials rejected")
+	}
+	for _, raw := range []string{`null`, `{}`, `{"name":"old","id":"id","system_key":{"access_key":"test-access","secret_key":"test-secret"}}`, `{"name":"east","id":"id","system_key":{"access_key":"test-access","secret_key":"stale"}}`, `{"name":"east","id":"id"}`} {
+		if zoneCredentialReadbackMatches(p, []byte(raw)) {
+			t.Fatal("unverified credentials accepted")
+		}
+	}
+	delete(p, "new_name")
+	p["name"] = "east"
+	if !zoneCredentialReadbackMatches(p, []byte(good)) {
+		t.Fatal("creation readback rejected")
+	}
+	if !zoneCredentialReadbackMatches(map[string]any{}, nil) {
+		t.Fatal("unrelated update requires credentials")
+	}
+}
