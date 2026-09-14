@@ -1529,6 +1529,13 @@ func build(request Request, p map[string]any) (command, error) {
 			}
 		}
 		var syncArgs []string
+		if value, present := p["tier_type"]; present {
+			tier, ok := value.(string)
+			if !ok || (tier != "" && tier != "archive") {
+				return command{}, invalid("tier_type must be empty or archive")
+			}
+			syncArgs = append(syncArgs, "--tier-type="+tier)
+		}
 		for _, key := range []string{"master", "default"} {
 			if value, present := p[key]; present {
 				enabled, ok := value.(bool)

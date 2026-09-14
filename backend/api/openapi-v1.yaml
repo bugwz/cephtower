@@ -770,7 +770,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -1386,7 +1386,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -3279,7 +3279,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -3895,7 +3895,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -4729,7 +4729,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -5439,7 +5439,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -6055,7 +6055,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -6862,7 +6862,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -7574,7 +7574,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -8191,7 +8191,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -9051,7 +9051,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -9761,7 +9761,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -10473,7 +10473,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -11183,7 +11183,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -11799,7 +11799,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -12416,7 +12416,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -13128,7 +13128,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -13935,7 +13935,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -14552,7 +14552,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -15169,7 +15169,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -15786,7 +15786,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -16440,7 +16440,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -17150,7 +17150,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -17766,7 +17766,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -18383,7 +18383,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -19093,7 +19093,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -19709,7 +19709,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -20421,7 +20421,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -21037,7 +21037,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -21654,7 +21654,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -22746,7 +22746,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -23362,7 +23362,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -23995,7 +23995,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -24705,7 +24705,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -25321,7 +25321,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -25938,7 +25938,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -26839,7 +26839,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -27646,7 +27646,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -28356,7 +28356,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -28972,7 +28972,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -29721,7 +29721,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -30338,7 +30338,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -31370,7 +31370,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -32272,7 +32272,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -32982,7 +32982,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -33694,7 +33694,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -34404,7 +34404,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -35020,7 +35020,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -35827,7 +35827,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -36537,7 +36537,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -37153,7 +37153,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -37865,7 +37865,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -38481,7 +38481,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -39193,7 +39193,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -39809,7 +39809,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -40521,7 +40521,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -41231,7 +41231,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -41847,7 +41847,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -42654,7 +42654,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -43365,7 +43365,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -43982,7 +43982,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -44599,7 +44599,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -45310,7 +45310,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -45961,7 +45961,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -46863,7 +46863,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -47573,7 +47573,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -48189,7 +48189,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -48901,7 +48901,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -49518,7 +49518,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -50135,7 +50135,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -50752,7 +50752,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -51464,7 +51464,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -52174,7 +52174,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -52790,7 +52790,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -53407,7 +53407,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -54024,7 +54024,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -54640,7 +54640,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -55256,7 +55256,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -55873,7 +55873,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -56774,7 +56774,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -57391,7 +57391,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -58008,7 +58008,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -58624,7 +58624,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -59336,7 +59336,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -60047,7 +60047,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -60664,7 +60664,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -61340,7 +61340,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -61956,7 +61956,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -62572,7 +62572,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -63189,7 +63189,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -63901,7 +63901,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -64611,7 +64611,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -65227,7 +65227,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -65945,7 +65945,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -66562,7 +66562,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -67179,7 +67179,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -67891,7 +67891,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -68508,7 +68508,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -69124,7 +69124,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -69836,7 +69836,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -70452,7 +70452,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -71068,7 +71068,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -71685,7 +71685,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -72492,7 +72492,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -73202,7 +73202,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -73818,7 +73818,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -74435,7 +74435,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -75052,7 +75052,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -75668,7 +75668,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -76285,7 +76285,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -76902,7 +76902,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -77614,7 +77614,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -78230,7 +78230,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -78847,7 +78847,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -79463,7 +79463,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -80410,7 +80410,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -81120,7 +81120,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -81736,7 +81736,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -82448,7 +82448,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -83158,7 +83158,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -83774,7 +83774,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -84486,7 +84486,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -85196,7 +85196,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -85812,7 +85812,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -86619,7 +86619,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:
@@ -87236,7 +87236,7 @@ paths:
                   type: string
                 tier_type:
                   type: string
-                  enum: ["archive"]
+                  enum: ["", "archive"]
                 traddr:
                   type: string
                 trsvcid:

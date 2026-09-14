@@ -312,3 +312,19 @@ func TestZoneMasterDefaultUpdate(t *testing.T) {
 		}
 	}
 }
+
+func TestZoneTierUpdate(t *testing.T) {
+	for _, tier := range []string{"", "archive"} {
+		c, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": "east", "zonegroup": "group", "tier_type": tier})
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := []string{"zone", "modify", "--rgw-zone", "east", "--tier-type=" + tier, "--rgw-zonegroup", "group", "--format", "json"}
+		if !reflect.DeepEqual(c.args, want) {
+			t.Fatalf("args=%v", c.args)
+		}
+	}
+	if _, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": "east", "zonegroup": "group", "tier_type": "unknown"}); err == nil {
+		t.Fatal("accepted unsupported tier")
+	}
+}

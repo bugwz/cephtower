@@ -886,3 +886,10 @@ ID、Realm 和主 Zone 标记，避免同名误关联或多组信息互相覆盖
 分别生成 --master、--default。false 表示不修改该选项，不表示取消主/默认身份。
 要求指定 Zonegroup，支持单独更新和重命名后更新，沿用 Period 提交。
 离线测试覆盖两种执行路径及布尔校验；未实机验证。
+
+### Zone 归档类型编辑
+
+参考 modify_zone 和同步模块注册，空 tier_type 映射默认 rgw 模块，archive
+映射归档模块。编辑表单区分保持原值、普通、归档；普通显式生成 --tier-type=，
+归档生成 --tier-type=archive，避免把空值误认为省略。测试覆盖类型切换和
+非法类型，沿用指定 Zonegroup 与 Period 流程；未实机验证。
