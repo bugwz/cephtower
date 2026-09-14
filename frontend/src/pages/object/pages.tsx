@@ -535,6 +535,17 @@ const definitions: Record<
       ],
       buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? ''), ...(values.zonegroup ? { zonegroup: String(values.zonegroup).trim() } : {}), ...(values.endpoints ? { endpoints: String(values.endpoints).trim() } : {}), ...(values.access_key ? { access_key: String(values.access_key) } : {}), ...(values.secret_key ? { secret_key: String(values.secret_key) } : {}), ...(values.archive_zone ? { tier_type: 'archive' } : {}), ...(values.sync_from_all !== undefined ? { sync_from_all: Boolean(values.sync_from_all) } : {}), ...(values.sync_from ? { sync_from: String(values.sync_from).trim() } : {}), master: Boolean(values.master), default: Boolean(values.default) })
     },
+    updateAction: {
+      title: '重命名 Zone', path: '/rgw/zone', method: 'PATCH',
+      successMessage: 'Zone 重命名执行成功',
+      fields: [
+        { name: 'new_name', label: '新名称', required: true },
+        { name: 'zonegroup', label: '同步更新成员名称的 Zonegroup（留空使用默认组）' },
+        { name: 'realm_id', label: '提交 Period 的 Realm ID（无 Realm 时留空）' }
+      ],
+      initialValues: (row) => ({ new_name: text(row?.name), realm_id: text(row?.realm_id), zonegroup: Array.isArray(row?.zonegroup_memberships) && row.zonegroup_memberships.length === 1 ? text((row.zonegroup_memberships[0] as ApiRecord).zonegroup_name) : '' }),
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: text(row?.name), new_name: String(values.new_name ?? ''), zonegroup: String(values.zonegroup ?? ''), realm_id: String(values.realm_id ?? '') })
+    },
     columns: [
       { key: 'name', title: 'Zone' },
       { key: 'status', title: '状态' },

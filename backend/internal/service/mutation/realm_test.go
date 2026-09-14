@@ -223,3 +223,27 @@ func TestZoneCredentialsAreSensitive(t *testing.T) {
 		}
 	}
 }
+
+func TestZoneRenameTargetsGroupAndPeriod(t *testing.T) {
+	c, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": "west", "zonegroup": "group-a", "realm_id": "realm-a"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"zone", "rename", "--rgw-zone", "east", "--zone-new-name", "west", "--rgw-zonegroup", "group-a", "--format", "json"}
+	if !reflect.DeepEqual(c.args, want) {
+		t.Fatalf("args=%v", c.args)
+	}
+	if len(c.followups) != 1 || !reflect.DeepEqual(c.followups[0].args, []string{"period", "update", "--commit", "--realm-id", "realm-a", "--format", "json"}) {
+		t.Fatal("wrong period target")
+	}
+	if !reflect.DeepEqual(c.followups[0].check, []string{"zone", "get", "--rgw-zone", "west", "--format", "json"}) {
+		t.Fatal("wrong readback")
+	}
+	standalone, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": "west"})
+	if err != nil || len(standalone.followups) != 0 {
+		t.Fatal("unexpected standalone period")
+	}
+	if _, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": "east"}); err == nil {
+		t.Fatal("accepted unchanged name")
+	}
+}

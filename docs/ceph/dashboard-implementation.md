@@ -856,3 +856,11 @@ Zonegroup 成员记录，而非 ZoneParams。采集后按原生 Zone ID 关联�
 通过 zonegroup_memberships 提供给 Zone 页面详情表，保留每个 Zonegroup 的名称、
 ID、Realm 和主 Zone 标记，避免同名误关联或多组信息互相覆盖。
 离线测试覆盖名称变化、同名不同 ID、多组成员及 false 值保留；未实机验证。
+
+### Zone 重命名
+
+新增 PATCH /rgw/zone 与重命名表单，执行 zone rename --rgw-zone <旧名称>
+--zone-new-name <新名称>，可指定 --rgw-zonegroup 更新成员名称；原生代码未指定时
+尝试默认组，读取组失败或没有该成员仍可能返回成功。页面在唯一成员组时预填，
+随后刷新 Zone/Zonegroup。提供 Realm ID 时提交该 Realm Period，最后按新名称读回。
+离线测试覆盖组与 Period 参数、无 Realm 和空操作；其它 Zone 编辑仍待补齐。

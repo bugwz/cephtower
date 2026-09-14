@@ -346,6 +346,7 @@ Dashboard 控制器 → Ceph 命令 → CephTower API 使用。方法名来自�
 | [rgw.go](../../backend/internal/api/v1/router/rgw.go) | `PATCH /api/v1/rgw/zonegroup` | `UpdateRGWZonegroup` |
 | [rgw.go](../../backend/internal/api/v1/router/rgw.go) | `GET /api/v1/rgw/zones` | `ListRGWZones` |
 | [rgw.go](../../backend/internal/api/v1/router/rgw.go) | `POST /api/v1/rgw/zone` | `CreateRGWZone` |
+| [rgw.go](../../backend/internal/api/v1/router/rgw.go) | `PATCH /api/v1/rgw/zone` | `UpdateRGWZone` |
 | [rgw.go](../../backend/internal/api/v1/router/rgw.go) | `POST /api/v1/rgw/period/commit` | `CommitRGWPeriod` |
 | [service.go](../../backend/internal/api/v1/router/service.go) | `GET /api/v1/services` | `ListServices` |
 | [service.go](../../backend/internal/api/v1/router/service.go) | `POST /api/v1/service` | `CreateService` |

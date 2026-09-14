@@ -889,3 +889,7 @@ func (h *Handler) UpdateRGWRealm(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdateRGWZonegroup(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_zonegroup", "rgw_zonegroup.update", "medium")(w, r)
 }
+
+func (h *Handler) UpdateRGWZone(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_zone", "rgw_zone.update", "medium")(w, r)
+}

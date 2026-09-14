@@ -83,7 +83,7 @@ func Supports(action string) bool {
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota",
 		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_bucket.quota",
 		"rgw_account.create", "rgw_account.update", "rgw_account.quota", "rgw_account.delete", "rgw_role.create", "rgw_role.update", "rgw_role.delete", "rgw_role.policy", "rgw_key.create", "rgw_key.delete",
-		"rgw_realm.create", "rgw_realm.update", "rgw_zonegroup.create", "rgw_zonegroup.update", "rgw_zone.create", "rgw_period.commit",
+		"rgw_realm.create", "rgw_realm.update", "rgw_zonegroup.create", "rgw_zonegroup.update", "rgw_zone.create", "rgw_zone.update", "rgw_period.commit",
 		"nfs_cluster.create", "nfs_cluster.delete", "nfs_export.create", "nfs_export.update", "nfs_export.delete",
 		"smb_cluster.create", "smb_cluster.update", "smb_cluster.delete",
 		"smb_share.create", "smb_share.update", "smb_share.delete",
@@ -1510,6 +1510,36 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		result := rgw([]string{"key", "rm", "--uid", uid, "--key-type", "s3", "--access-key", accessKey}, []string{"user", "info", "--uid", uid})
 		result.sensitive = map[int]struct{}{7: {}}
+		return result, nil
+	case "rgw_zone.update":
+		name, err := required(p, "name")
+		if err != nil {
+			return command{}, err
+		}
+		next, err := required(p, "new_name")
+		if err != nil {
+			return command{}, err
+		}
+		if name == next {
+			return command{}, invalid("new_name must differ from name")
+		}
+		args := []string{"zone", "rename", "--rgw-zone", name, "--zone-new-name", next}
+		for _, key := range []string{"zonegroup", "realm_id"} {
+			if value, present := p[key]; present {
+				text, ok := value.(string)
+				if !ok || strings.ContainsAny(text, "\x00\r\n") {
+					return command{}, invalid(key + " must be a string")
+				}
+			}
+		}
+		if group := optional(p, "zonegroup"); group != "" {
+			args = append(args, "--rgw-zonegroup", group)
+		}
+		check := []string{"zone", "get", "--rgw-zone", next}
+		result := rgw(args, check)
+		if realm := optional(p, "realm_id"); realm != "" {
+			result.followups = append(result.followups, rgw([]string{"period", "update", "--commit", "--realm-id", realm}, check))
+		}
 		return result, nil
 	case "rgw_zonegroup.update":
 		name, err := required(p, "name")
