@@ -279,3 +279,27 @@ func TestGlobalRGWRateLimits(t *testing.T) {
 	}
 	t.Fatal("status missing")
 }
+
+func TestRGWRealmDetails(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		want bool
+	}{{"east", true}, {"wrong", false}} {
+		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+			"collect.rgw_realm":        []byte(`{"realms":["east"]}`),
+			"collect.rgw_realm_detail": []byte(fmt.Sprintf(`{"name":%q,"id":"realm-id","current_period":"period-id","epoch":4}`, tc.name)),
+		}}}
+		found := false
+		for _, row := range p.collectRGWOptional(context.Background(), ClusterAccess{}, time.Now()) {
+			if row.Kind == "rgw_realm" {
+				found = true
+				if row.Payload.(map[string]any)["current_period"] != "period-id" {
+					t.Fatal("period missing")
+				}
+			}
+		}
+		if found != tc.want {
+			t.Fatalf("realm %s found=%v", tc.name, found)
+		}
+	}
+}

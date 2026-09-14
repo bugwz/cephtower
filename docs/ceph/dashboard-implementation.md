@@ -738,3 +738,9 @@ which could collapse multiple paths and schedules into one resource key.
 - RGW 总览新增 `global ratelimit get --format json` 采集，展示默认 Realm 的 user_ratelimit、bucket_ratelimit、anonymous_ratelimit。任一范围对象缺失标记状态采集不完整。
 - 总览移除不对应 RGWStatus 的用户字段，显示 realms 与 global_rate_limit；限额单位为每 RGW 每分钟。
 - 三类原生返回结构测试、后端测试/OpenAPI 检查及前端构建通过，未实机验证。其他 Realm 的限流选择及全局写入操作仍待实现。
+
+### Realm 原生详情
+
+- Realm 名称列表后逐项执行 `realm get --rgw-realm <name>`，保留 id、name、current_period、epoch；页面增加 Epoch 展示。
+- 返回身份不匹配或读取失败标记 Realm 采集不完整，不生成仅含名称的占位详情。多站点列表返回 null 也标记不完整。
+- 原生详情及错误身份回归测试、后端测试/OpenAPI 检查和前端构建通过，未实机验证。Zonegroup、Zone 完整详情仍待补齐。

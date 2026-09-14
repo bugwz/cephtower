@@ -441,6 +441,7 @@ const definitions: Record<
       { key: 'status', title: '状态' },
       { key: 'id', title: 'ID' },
       { key: 'current_period', title: 'Current Period' },
+      { key: 'epoch', title: 'Epoch' },
       { key: 'resource_version', title: '版本' }
     ]
   },
