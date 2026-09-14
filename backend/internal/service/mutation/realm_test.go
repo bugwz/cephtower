@@ -201,3 +201,25 @@ func TestArchiveZoneCreation(t *testing.T) {
 		}
 	}
 }
+
+func TestZoneCredentialsAreSensitive(t *testing.T) {
+	c, err := build(Request{Action: "rgw_zone.create"}, map[string]any{"name": "east", "access_key": "test-access", "secret_key": "test-secret"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, arg := range c.args {
+		if arg == "test-access" || arg == "test-secret" {
+			if _, ok := c.sensitive[i]; !ok {
+				t.Fatal("credential argument not marked sensitive")
+			}
+		}
+	}
+	if len(c.sensitive) != 2 {
+		t.Fatal("missing sensitive arguments")
+	}
+	for _, p := range []map[string]any{{"name": "east", "access_key": "a"}, {"name": "east", "secret_key": "b"}, {"name": "east", "access_key": "a", "secret_key": ""}} {
+		if _, err := build(Request{Action: "rgw_zone.create"}, p); err == nil {
+			t.Fatal("accepted incomplete credentials")
+		}
+	}
+}

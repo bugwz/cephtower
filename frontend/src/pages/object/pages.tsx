@@ -525,13 +525,15 @@ const definitions: Record<
         { name: 'name', label: 'Zone 名称', required: true },
         { name: 'zonegroup', label: 'Zonegroup（留空使用原生默认值）' },
         { name: 'endpoints', label: '端点（多个地址以逗号分隔）' },
+        { name: 'access_key', label: '系统用户 Access Key（与 Secret Key 成对填写）', type: 'password' },
+        { name: 'secret_key', label: '系统用户 Secret Key', type: 'password' },
         { name: 'archive_zone', label: '归档 Zone', type: 'boolean' },
         { name: 'sync_from_all', label: '从所有 Zone 同步', type: 'boolean' },
         { name: 'sync_from', label: '同步来源 Zone（逗号分隔）' },
         { name: 'master', label: '设为主 Zone', type: 'boolean' },
         { name: 'default', label: '设为默认 Zone', type: 'boolean' }
       ],
-      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? ''), ...(values.zonegroup ? { zonegroup: String(values.zonegroup).trim() } : {}), ...(values.endpoints ? { endpoints: String(values.endpoints).trim() } : {}), ...(values.archive_zone ? { tier_type: 'archive' } : {}), ...(values.sync_from_all !== undefined ? { sync_from_all: Boolean(values.sync_from_all) } : {}), ...(values.sync_from ? { sync_from: String(values.sync_from).trim() } : {}), master: Boolean(values.master), default: Boolean(values.default) })
+      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? ''), ...(values.zonegroup ? { zonegroup: String(values.zonegroup).trim() } : {}), ...(values.endpoints ? { endpoints: String(values.endpoints).trim() } : {}), ...(values.access_key ? { access_key: String(values.access_key) } : {}), ...(values.secret_key ? { secret_key: String(values.secret_key) } : {}), ...(values.archive_zone ? { tier_type: 'archive' } : {}), ...(values.sync_from_all !== undefined ? { sync_from_all: Boolean(values.sync_from_all) } : {}), ...(values.sync_from ? { sync_from: String(values.sync_from).trim() } : {}), master: Boolean(values.master), default: Boolean(values.default) })
     },
     columns: [
       { key: 'name', title: 'Zone' },

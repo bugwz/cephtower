@@ -841,3 +841,10 @@ master/default 开关，映射为 --rgw-zonegroup、--endpoints、--master、--d
 选中时提交 tier_type=archive，原生命令传入 --tier-type archive。未选中不传参数，
 沿用普通 Zone 的原生行为。API 限定目前表单支持的 archive 值；离线测试覆盖
 命令及非法类型/取值，未实机验证。
+
+### Zone 系统用户凭据
+
+Zone 创建增加密码输入框，成对接受 access_key/secret_key，映射参考 create_zone
+的 --access-key/--secret 参数。参数标记为敏感，API 字段为 writeOnly，沿用
+审计及原生详情递归脱敏；不保存请求覆盖层。测试覆盖敏感参数位置和不完整凭据。
+未实机验证。

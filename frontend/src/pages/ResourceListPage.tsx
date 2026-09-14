@@ -24,7 +24,7 @@ const { Text } = Typography
 export interface MutationFormField {
   name: string
   label: string
-  type?: 'text' | 'number' | 'boolean' | 'select' | 'textarea'
+  type?: 'text' | 'number' | 'boolean' | 'select' | 'textarea' | 'password'
   required?: boolean
   visibleWhen?: (values: MutationFormValues) => boolean
   placeholder?: string
@@ -479,6 +479,7 @@ function hasFeatureRequirementAlert(status: ReturnType<typeof useFeatureRequirem
 }
 
 function renderFormControl(field: MutationFormField) {
+  if (field.type === 'password') return <Input.Password autoComplete="new-password" />
   if (field.type === 'number') {
     return <InputNumber min={field.min} max={field.max} className="full-width-control" />
   }

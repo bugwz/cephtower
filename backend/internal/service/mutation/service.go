@@ -1688,7 +1688,26 @@ func build(request Request, p map[string]any) (command, error) {
 				args = append(args, "--sync-from", sources)
 			}
 		}
-		return rgw(args, []string{kind, "get", flag, name}), nil
+		result := rgw(args, []string{kind, "get", flag, name})
+		if action == "rgw_zone.create" {
+			_, hasAccess := p["access_key"]
+			_, hasSecret := p["secret_key"]
+			if hasAccess != hasSecret {
+				return command{}, invalid("access_key and secret_key must be provided together")
+			}
+			if hasAccess {
+				result.sensitive = map[int]struct{}{}
+				for _, field := range []struct{ key, flag string }{{"access_key", "--access-key"}, {"secret_key", "--secret"}} {
+					value, ok := p[field.key].(string)
+					if !ok || value == "" || strings.ContainsAny(value, "\x00\r\n") {
+						return command{}, invalid(field.key + " must be a nonempty string")
+					}
+					result.args = append(result.args, field.flag, value)
+					result.sensitive[len(result.args)-1] = struct{}{}
+				}
+			}
+		}
+		return result, nil
 	case "rgw_period.commit":
 		return rgw([]string{"period", "update", "--commit"}, []string{"period", "get"}), nil
 	case "nfs_cluster.create":
