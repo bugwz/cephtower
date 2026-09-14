@@ -348,3 +348,29 @@ func TestZoneReadOnlyUpdate(t *testing.T) {
 		t.Fatal("accepted string boolean")
 	}
 }
+
+func TestZoneCredentialUpdate(t *testing.T) {
+	for _, next := range []string{"east", "west"} {
+		c, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": next, "zonegroup": "group", "access_key": "test-access", "secret_key": "test-secret"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		modified := c
+		if next != "east" {
+			modified = c.followups[0]
+		}
+		if modified.args[1] != "modify" || len(modified.sensitive) != 2 {
+			t.Fatal("missing sensitive modify command")
+		}
+		for i, arg := range modified.args {
+			if arg == "test-access" || arg == "test-secret" {
+				if _, ok := modified.sensitive[i]; !ok {
+					t.Fatal("credential is not sensitive")
+				}
+			}
+		}
+	}
+	if _, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": "west", "access_key": "a"}); err == nil {
+		t.Fatal("accepted incomplete credentials before rename")
+	}
+}

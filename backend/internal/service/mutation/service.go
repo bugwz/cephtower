@@ -1574,7 +1574,13 @@ func build(request Request, p map[string]any) (command, error) {
 			}
 			syncArgs = append(syncArgs, flag, sources)
 		}
-		if name == next && endpoints == "" && len(syncArgs) == 0 {
+		_, hasAccess := p["access_key"]
+		_, hasSecret := p["secret_key"]
+		hasCredentials := hasAccess || hasSecret
+		if _, err := zoneCredentials(command{}, p); err != nil {
+			return command{}, err
+		}
+		if name == next && endpoints == "" && len(syncArgs) == 0 && !hasCredentials {
 			return command{}, invalid("select a zone change")
 		}
 		args := []string{"zone", "rename", "--rgw-zone", name, "--zone-new-name", next}
@@ -1591,7 +1597,7 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		check := []string{"zone", "get", "--rgw-zone", next}
 		result := rgw(args, check)
-		if endpoints != "" || len(syncArgs) > 0 {
+		if endpoints != "" || len(syncArgs) > 0 || hasCredentials {
 			modify := []string{"zone", "modify", "--rgw-zone", next}
 			if endpoints != "" {
 				modify = append(modify, "--endpoints", endpoints)
@@ -1602,10 +1608,14 @@ func build(request Request, p map[string]any) (command, error) {
 				return command{}, invalid("zonegroup is required when updating zone configuration")
 			}
 			modify = append(modify, "--rgw-zonegroup", group)
+			modified, err := zoneCredentials(rgw(modify, check), p)
+			if err != nil {
+				return command{}, err
+			}
 			if name == next {
-				result = rgw(modify, check)
+				result = modified
 			} else {
-				result.followups = append(result.followups, rgw(modify, check))
+				result.followups = append(result.followups, modified)
 			}
 		}
 		if realm := optional(p, "realm_id"); realm != "" {
@@ -1791,22 +1801,7 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		result := rgw(args, []string{kind, "get", flag, name})
 		if action == "rgw_zone.create" {
-			_, hasAccess := p["access_key"]
-			_, hasSecret := p["secret_key"]
-			if hasAccess != hasSecret {
-				return command{}, invalid("access_key and secret_key must be provided together")
-			}
-			if hasAccess {
-				result.sensitive = map[int]struct{}{}
-				for _, field := range []struct{ key, flag string }{{"access_key", "--access-key"}, {"secret_key", "--secret"}} {
-					value, ok := p[field.key].(string)
-					if !ok || value == "" || strings.ContainsAny(value, "\x00\r\n") {
-						return command{}, invalid(field.key + " must be a nonempty string")
-					}
-					result.args = append(result.args, field.flag, value)
-					result.sensitive[len(result.args)-1] = struct{}{}
-				}
-			}
+			return zoneCredentials(result, p)
 		}
 		return result, nil
 	case "rgw_period.commit":
@@ -2392,4 +2387,27 @@ func unsupported(action string) error {
 }
 func normalize(err error) error {
 	return &cephdomain.ActionError{Code: "ceph_command_failed", Message: err.Error(), Retryable: true}
+}
+
+func zoneCredentials(result command, p map[string]any) (command, error) {
+	_, hasAccess := p["access_key"]
+	_, hasSecret := p["secret_key"]
+	if hasAccess != hasSecret {
+		return command{}, invalid("access_key and secret_key must be provided together")
+	}
+	if !hasAccess {
+		return result, nil
+	}
+	if result.sensitive == nil {
+		result.sensitive = map[int]struct{}{}
+	}
+	for _, field := range []struct{ key, flag string }{{"access_key", "--access-key"}, {"secret_key", "--secret"}} {
+		value, ok := p[field.key].(string)
+		if !ok || value == "" || strings.ContainsAny(value, "\x00\r\n") {
+			return command{}, invalid(field.key + " must be a nonempty string")
+		}
+		result.args = append(result.args, field.flag, value)
+		result.sensitive[len(result.args)-1] = struct{}{}
+	}
+	return result, nil
 }
