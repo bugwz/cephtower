@@ -121,3 +121,29 @@ func TestStandaloneZonegroupEdit(t *testing.T) {
 		}
 	}
 }
+
+func TestZonegroupMembership(t *testing.T) {
+	p := map[string]any{"name": "east", "new_name": "west", "realm_id": "realm", "add_zones": []any{"z1"}, "remove_zones": []any{"z2"}}
+	c, err := build(Request{Action: "rgw_zonegroup.update"}, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(c.followups) != 4 {
+		t.Fatalf("followups=%v", c.followups)
+	}
+	for i, action := range []string{"add", "remove"} {
+		want := []string{"zonegroup", action, "--rgw-zonegroup", "west", "--rgw-zone", []string{"z1", "z2"}[i], "--format", "json"}
+		if !reflect.DeepEqual(c.followups[i+1].args, want) {
+			t.Fatalf("membership command=%v", c.followups[i+1].args)
+		}
+	}
+	if c.followups[3].args[0] != "period" {
+		t.Fatal("period must follow membership changes")
+	}
+	for _, bad := range []any{[]any{42}, "z1", []any{"z1", "z1"}, []any{""}, []any{"z2"}} {
+		p["add_zones"] = bad
+		if _, err := build(Request{Action: "rgw_zonegroup.update"}, p); err == nil {
+			t.Fatalf("accepted %v", bad)
+		}
+	}
+}

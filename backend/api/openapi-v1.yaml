@@ -223,6 +223,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -696,6 +700,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -822,6 +830,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -1295,6 +1307,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -2698,6 +2714,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -3171,6 +3191,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -3297,6 +3321,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -3770,6 +3798,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -4114,6 +4146,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -4587,6 +4623,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -4807,6 +4847,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -5280,6 +5324,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -5406,6 +5454,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -5879,6 +5931,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -6196,6 +6252,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -6669,6 +6729,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -6891,6 +6955,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -7364,6 +7432,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -7491,6 +7563,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -7964,6 +8040,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -8334,6 +8414,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -8807,6 +8891,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -9027,6 +9115,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -9500,6 +9592,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -9722,6 +9818,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -10195,6 +10295,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -10415,6 +10519,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -10888,6 +10996,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -11014,6 +11126,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -11487,6 +11603,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -11614,6 +11734,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -12087,6 +12211,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -12309,6 +12437,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -12782,6 +12914,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -13099,6 +13235,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -13572,6 +13712,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -13699,6 +13843,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -14172,6 +14320,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -14299,6 +14451,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -14772,6 +14928,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -14899,6 +15059,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -15372,6 +15536,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -15536,6 +15704,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -16009,6 +16181,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -16229,6 +16405,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -16702,6 +16882,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -16828,6 +17012,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -17301,6 +17489,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -17428,6 +17620,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -17901,6 +18097,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -18121,6 +18321,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -18594,6 +18798,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -18720,6 +18928,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -19193,6 +19405,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -19415,6 +19631,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -19888,6 +20108,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -20014,6 +20238,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -20487,6 +20715,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -20614,6 +20846,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -21087,6 +21323,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -21689,6 +21929,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -22162,6 +22406,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -22288,6 +22536,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -22761,6 +23013,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -22904,6 +23160,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -23377,6 +23637,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -23597,6 +23861,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -24070,6 +24338,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -24196,6 +24468,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -24669,6 +24945,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -24796,6 +25076,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -25269,6 +25553,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -25680,6 +25968,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -26153,6 +26445,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -26470,6 +26766,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -26943,6 +27243,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -27163,6 +27467,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -27636,6 +27944,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -27762,6 +28074,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -28235,6 +28551,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -28494,6 +28814,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -28967,6 +29291,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -29094,6 +29422,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -29567,6 +29899,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -30109,6 +30445,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -30582,6 +30922,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -30994,6 +31338,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -31467,6 +31815,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -31687,6 +32039,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -32160,6 +32516,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -32382,6 +32742,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -32855,6 +33219,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -33075,6 +33443,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -33548,6 +33920,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -33674,6 +34050,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -34147,6 +34527,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -34464,6 +34848,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -34937,6 +35325,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -35157,6 +35549,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -35630,6 +36026,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -35756,6 +36156,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -36229,6 +36633,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -36451,6 +36859,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -36924,6 +37336,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -37050,6 +37466,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -37523,6 +37943,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -37745,6 +38169,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -38218,6 +38646,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -38344,6 +38776,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -38817,6 +39253,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -39039,6 +39479,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -39512,6 +39956,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -39732,6 +40180,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -40205,6 +40657,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -40331,6 +40787,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -40804,6 +41264,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -41121,6 +41585,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -41594,6 +42062,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -41815,6 +42287,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -42288,6 +42764,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -42415,6 +42895,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -42888,6 +43372,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -43015,6 +43503,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -43488,6 +43980,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -43709,6 +44205,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -44182,6 +44682,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -44343,6 +44847,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -44816,6 +45324,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -45228,6 +45740,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -45701,6 +46217,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -45921,6 +46441,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -46394,6 +46918,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -46520,6 +47048,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -46993,6 +47525,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -47215,6 +47751,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -47688,6 +48228,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -47815,6 +48359,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -48288,6 +48836,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -48415,6 +48967,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -48888,6 +49444,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -49015,6 +49575,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -49488,6 +50052,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -49710,6 +50278,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -50183,6 +50755,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -50403,6 +50979,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -50876,6 +51456,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -51002,6 +51586,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -51475,6 +52063,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -51602,6 +52194,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -52075,6 +52671,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -52202,6 +52802,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -52675,6 +53279,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -52801,6 +53409,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -53274,6 +53886,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -53400,6 +54016,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -53873,6 +54493,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -54000,6 +54624,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -54473,6 +55101,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -54884,6 +55516,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -55357,6 +55993,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -55484,6 +56124,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -55957,6 +56601,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -56084,6 +56732,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -56557,6 +57209,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -56683,6 +57339,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -57156,6 +57816,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -57378,6 +58042,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -57851,6 +58519,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -58072,6 +58744,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -58545,6 +59221,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -58672,6 +59352,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -59145,6 +59829,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -59331,6 +60019,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -59804,6 +60496,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -59930,6 +60626,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -60403,6 +61103,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -60529,6 +61233,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -61002,6 +61710,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -61129,6 +61841,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -61602,6 +62318,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -61824,6 +62544,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -62297,6 +63021,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -62517,6 +63245,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -62990,6 +63722,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -63116,6 +63852,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -63589,6 +64329,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -63817,6 +64561,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -64290,6 +65038,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -64417,6 +65169,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -64890,6 +65646,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -65017,6 +65777,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -65490,6 +66254,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -65712,6 +66480,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -66185,6 +66957,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -66312,6 +67088,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -66785,6 +67565,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -66911,6 +67695,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -67384,6 +68172,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -67606,6 +68398,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -68079,6 +68875,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -68205,6 +69005,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -68678,6 +69482,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -68804,6 +69612,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -69277,6 +70089,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -69404,6 +70220,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -69877,6 +70697,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -70194,6 +71018,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -70667,6 +71495,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -70887,6 +71719,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -71360,6 +72196,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -71486,6 +72326,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -71959,6 +72803,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -72086,6 +72934,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -72559,6 +73411,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -72686,6 +73542,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -73159,6 +74019,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -73285,6 +74149,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -73758,6 +74626,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -73885,6 +74757,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -74358,6 +75234,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -74485,6 +75365,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -74958,6 +75842,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -75180,6 +76068,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -75653,6 +76545,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -75780,6 +76676,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -76253,6 +77153,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -76379,6 +77283,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -76852,6 +77760,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -77309,6 +78221,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -77782,6 +78698,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -78002,6 +78922,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -78475,6 +79399,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -78601,6 +79529,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -79074,6 +80006,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -79296,6 +80232,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -79769,6 +80709,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -79989,6 +80933,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -80462,6 +81410,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -80588,6 +81540,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -81061,6 +82017,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -81283,6 +82243,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -81756,6 +82720,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -81976,6 +82944,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -82449,6 +83421,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -82575,6 +83551,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -83048,6 +84028,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -83365,6 +84349,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -83838,6 +84826,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:
@@ -83965,6 +84957,10 @@ paths:
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
                 address:
                   type: string
                 adrfam:
@@ -84438,6 +85434,10 @@ paths:
                   type: string
                 remote_cluster:
                   type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
                 retention:
                   type: string
                 root:

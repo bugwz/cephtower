@@ -1550,6 +1550,35 @@ func build(request Request, p map[string]any) (command, error) {
 			args = append(args, "--endpoints", endpoints)
 			changed = true
 		}
+		var members []command
+		seen := map[string]bool{}
+		for _, field := range []struct{ key, action string }{{"add_zones", "add"}, {"remove_zones", "remove"}} {
+			if value, present := p[field.key]; present {
+				var zones []string
+				switch list := value.(type) {
+				case []string:
+					zones = list
+				case []any:
+					for _, item := range list {
+						zone, ok := item.(string)
+						if !ok {
+							return command{}, invalid(field.key + " must contain strings")
+						}
+						zones = append(zones, zone)
+					}
+				default:
+					return command{}, invalid(field.key + " must be an array")
+				}
+				for _, zone := range zones {
+					if zone == "" || !identifier.MatchString(zone) || seen[zone] {
+						return command{}, invalid("zone names must be valid and unique across additions and removals")
+					}
+					seen[zone] = true
+					members = append(members, rgw([]string{"zonegroup", field.action, "--rgw-zonegroup", newName, "--rgw-zone", zone}, []string{"zonegroup", "get", "--rgw-zonegroup", newName}))
+					changed = true
+				}
+			}
+		}
 		if !changed {
 			return command{}, invalid("select a zonegroup change")
 		}
@@ -1559,6 +1588,7 @@ func build(request Request, p map[string]any) (command, error) {
 			result = rgw([]string{"zonegroup", "rename", "--rgw-zonegroup", name, "--zonegroup-new-name", newName}, nil)
 			result.followups = append(result.followups, rgw(args, check))
 		}
+		result.followups = append(result.followups, members...)
 		if realmID != "" {
 			result.followups = append(result.followups, rgw([]string{"period", "update", "--commit", "--realm-id", realmID}, check))
 		}

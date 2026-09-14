@@ -483,11 +483,13 @@ const definitions: Record<
         { name: 'new_name', label: 'Zonegroup 名称', required: true },
         { name: 'realm_id', label: '所属 Realm ID（无 Realm 时留空）' },
         { name: 'endpoints', label: '端点（逗号分隔，留空保持原值）' },
+        { name: 'add_zones', label: '添加成员 Zone（逗号分隔）' },
+        { name: 'remove_zones', label: '移除成员 Zone（逗号分隔）' },
         { name: 'master', label: '设为主 Zonegroup', type: 'boolean' },
         { name: 'default', label: '设为默认 Zonegroup', type: 'boolean' }
       ],
       initialValues: (row) => ({ new_name: text(row?.name), realm_id: text(row?.realm_id), endpoints: Array.isArray(row?.endpoints) ? row.endpoints.join(',') : '', master: false, default: false }),
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: text(row?.name), new_name: String(values.new_name ?? ''), realm_id: String(values.realm_id ?? ''), ...(values.endpoints ? { endpoints: String(values.endpoints) } : {}), master: Boolean(values.master), default: Boolean(values.default) })
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: text(row?.name), new_name: String(values.new_name ?? ''), realm_id: String(values.realm_id ?? ''), ...(values.endpoints ? { endpoints: String(values.endpoints) } : {}), add_zones: String(values.add_zones ?? '').split(',').map((zone) => zone.trim()).filter(Boolean), remove_zones: String(values.remove_zones ?? '').split(',').map((zone) => zone.trim()).filter(Boolean), master: Boolean(values.master), default: Boolean(values.default) })
     },
     columns: [
       { key: 'name', title: 'ZoneGroup' },

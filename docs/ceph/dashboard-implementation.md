@@ -804,3 +804,10 @@ period update --commit，并显式使用 Realm ID 限定目标，最后按新名
 原生 ZONEGROUP_MODIFY 将 --realm-id 用于重新绑定 Realm，并非查询范围限制。
 编辑命令移除此参数，Realm ID 仅用于 Period 提交；没有 Realm 时跳过 Period，
 直接读取更新后的 Zonegroup。增加独立 Zonegroup 命令回归，页面允许空 Realm ID。
+
+### Zonegroup 成员管理
+
+参考 add_or_remove_zone，在 Zonegroup 编辑 API 和表单增加 add_zones/remove_zones。
+依次执行 zonegroup add/remove --rgw-zonegroup <新名称> --rgw-zone <成员>，
+成员变更后再提交所属 Realm 的 Period，并读回详情。拒绝重复、交叉和非法成员名。
+离线测试覆盖重命名后的成员目标、命令顺序及参数异常；未实机验证。
