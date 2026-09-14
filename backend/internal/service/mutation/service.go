@@ -1529,6 +1529,17 @@ func build(request Request, p map[string]any) (command, error) {
 			}
 		}
 		var syncArgs []string
+		for _, key := range []string{"master", "default"} {
+			if value, present := p[key]; present {
+				enabled, ok := value.(bool)
+				if !ok {
+					return command{}, invalid(key + " must be a boolean")
+				}
+				if enabled {
+					syncArgs = append(syncArgs, "--"+key)
+				}
+			}
+		}
 		syncAll := false
 		if value, present := p["sync_from_all"]; present {
 			var ok bool

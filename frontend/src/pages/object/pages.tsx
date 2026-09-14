@@ -541,13 +541,15 @@ const definitions: Record<
       fields: [
         { name: 'new_name', label: '新名称', required: true },
         { name: 'zonegroup', label: '同步更新成员名称的 Zonegroup（留空使用默认组）' },
+        { name: 'master', label: '设为主 Zone', type: 'boolean' },
+        { name: 'default', label: '设为默认 Zone', type: 'boolean' },
         { name: 'sync_mode', label: '从所有 Zone 同步', type: 'select', options: [{ label: '保持原值', value: 'keep' }, { label: '开启', value: 'true' }, { label: '关闭', value: 'false' }] },
         { name: 'sync_from', label: '来源 Zone（逗号分隔；开启全部同步时表示移除这些来源）' },
         { name: 'endpoints', label: '新端点（逗号分隔，留空保持原值）' },
         { name: 'realm_id', label: '提交 Period 的 Realm ID（无 Realm 时留空）' }
       ],
       initialValues: (row) => ({ new_name: text(row?.name), realm_id: text(row?.realm_id), zonegroup: Array.isArray(row?.zonegroup_memberships) && row.zonegroup_memberships.length === 1 ? text((row.zonegroup_memberships[0] as ApiRecord).zonegroup_name) : '' }),
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: text(row?.name), new_name: String(values.new_name ?? ''), zonegroup: String(values.zonegroup ?? ''), realm_id: String(values.realm_id ?? ''), ...(values.sync_mode === 'true' || values.sync_mode === 'false' ? { sync_from_all: values.sync_mode === 'true' } : {}), ...(values.sync_from ? { sync_from: String(values.sync_from).trim() } : {}), ...(values.endpoints ? { endpoints: String(values.endpoints).trim() } : {}) })
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: text(row?.name), new_name: String(values.new_name ?? ''), zonegroup: String(values.zonegroup ?? ''), realm_id: String(values.realm_id ?? ''), master: Boolean(values.master), default: Boolean(values.default), ...(values.sync_mode === 'true' || values.sync_mode === 'false' ? { sync_from_all: values.sync_mode === 'true' } : {}), ...(values.sync_from ? { sync_from: String(values.sync_from).trim() } : {}), ...(values.endpoints ? { endpoints: String(values.endpoints).trim() } : {}) })
     },
     columns: [
       { key: 'name', title: 'Zone' },

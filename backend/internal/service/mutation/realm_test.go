@@ -290,3 +290,25 @@ func TestZoneSyncUpdateModes(t *testing.T) {
 		t.Fatal("accepted string boolean")
 	}
 }
+
+func TestZoneMasterDefaultUpdate(t *testing.T) {
+	for _, next := range []string{"east", "west"} {
+		c, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": next, "zonegroup": "group", "master": true, "default": true})
+		if err != nil {
+			t.Fatal(err)
+		}
+		modify := c
+		if next != "east" {
+			modify = c.followups[0]
+		}
+		want := []string{"zone", "modify", "--rgw-zone", next, "--master", "--default", "--rgw-zonegroup", "group", "--format", "json"}
+		if !reflect.DeepEqual(modify.args, want) {
+			t.Fatalf("args=%v", modify.args)
+		}
+	}
+	for _, key := range []string{"master", "default"} {
+		if _, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": "east", "zonegroup": "group", key: "true"}); err == nil {
+			t.Fatalf("accepted invalid %s", key)
+		}
+	}
+}

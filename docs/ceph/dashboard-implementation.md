@@ -879,3 +879,10 @@ ID、Realm 和主 Zone 标记，避免同名误关联或多组信息互相覆盖
 保持原值、开启、关闭。显式开启全部同步且提供来源时，按参考实现使用
 --sync-from-rm；其余使用 --sync-from。编辑要求指定 Zonegroup，沿用 Period
 提交和刷新流程。测试覆盖布尔参数及两种来源命令；未实机验证。
+
+### Zone 主/默认选项编辑
+
+对照 modify_zone，Zone 编辑 API 和表单支持设为主 Zone、设为默认 Zone，
+分别生成 --master、--default。false 表示不修改该选项，不表示取消主/默认身份。
+要求指定 Zonegroup，支持单独更新和重命名后更新，沿用 Period 提交。
+离线测试覆盖两种执行路径及布尔校验；未实机验证。
