@@ -464,7 +464,18 @@ const definitions: Record<
       { key: 'name', title: 'ZoneGroup' },
       { key: 'status', title: '状态' },
       { key: 'id', title: 'ID' },
+      { key: 'realm_id', title: 'Realm ID' },
+      { key: 'api_name', title: 'API 名称' },
+      { key: 'is_master', title: '主 Zonegroup' },
       { key: 'master_zone', title: 'Master Zone' },
+      { key: 'endpoints', title: '端点' },
+      { key: 'zones', title: '成员 Zone' },
+      { key: 'placement_targets', title: '放置目标' },
+      { key: 'default_placement', title: '默认放置目标' },
+      { key: 'hostnames', title: '主机名' },
+      { key: 'hostnames_s3website', title: '静态网站主机名' },
+      { key: 'sync_policy', title: '同步策略' },
+      { key: 'enabled_features', title: '启用特性' },
       { key: 'resource_version', title: '版本' }
     ]
   },

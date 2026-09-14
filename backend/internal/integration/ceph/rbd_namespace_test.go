@@ -303,3 +303,36 @@ func TestRGWRealmDetails(t *testing.T) {
 		}
 	}
 }
+
+func TestRGWZonegroupDetails(t *testing.T) {
+	for _, tc := range []struct {
+		name, detail string
+		want         bool
+	}{
+		{"valid", `{"name":"east","id":"zg-id","zones":[{"id":"zone-id","name":"zone-a"}],"endpoints":["https://rgw.example"],"placement_targets":[{"name":"default-placement"}]}`, true},
+		{"wrong name", `{"name":"west","id":"zg-id"}`, false},
+		{"missing id", `{"name":"east"}`, false},
+		{"null", `null`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+				"collect.rgw_zonegroup":        []byte(`{"zonegroups":["east"]}`),
+				"collect.rgw_zonegroup_detail": []byte(tc.detail),
+			}}}
+			found := false
+			for _, row := range p.collectRGWOptional(context.Background(), ClusterAccess{}, time.Now()) {
+				if row.Kind != "rgw_zonegroup" {
+					continue
+				}
+				found = true
+				data := row.Payload.(map[string]any)
+				if row.NaturalKey != "east" || len(data["zones"].([]any)) != 1 || len(data["endpoints"].([]any)) != 1 || len(data["placement_targets"].([]any)) != 1 {
+					t.Fatal("zonegroup detail lost")
+				}
+			}
+			if found != tc.want {
+				t.Fatalf("found=%v want=%v", found, tc.want)
+			}
+		})
+	}
+}

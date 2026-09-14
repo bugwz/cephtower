@@ -744,3 +744,13 @@ which could collapse multiple paths and schedules into one resource key.
 - Realm 名称列表后逐项执行 `realm get --rgw-realm <name>`，保留 id、name、current_period、epoch；页面增加 Epoch 展示。
 - 返回身份不匹配或读取失败标记 Realm 采集不完整，不生成仅含名称的占位详情。多站点列表返回 null 也标记不完整。
 - 原生详情及错误身份回归测试、后端测试/OpenAPI 检查和前端构建通过，未实机验证。Zonegroup、Zone 完整详情仍待补齐。
+
+### Zonegroup 原生详情
+
+依据 `src/rgw/radosgw-admin/radosgw-admin.cc` 的 ZONEGROUP_GET 和
+`src/rgw/rgw_zone.cc` 的 RGWZoneGroup::dump，枚举后调用
+`radosgw-admin zonegroup get --rgw-zonegroup <name> --format json`。
+详情通过现有资源 API 提供，页面展示 Realm、主 Zone、成员、端点、放置目标、
+主机名、同步策略和启用特性。名称不匹配、缺少 ID 或空返回均视为采集失败，
+不生成只有名称的详情记录，并保留该资源类型的采集不完整状态。
+新增离线测试覆盖嵌套详情及异常返回；尚无真实集群验证，Zonegroup 编辑操作待补齐。
