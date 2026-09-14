@@ -220,6 +220,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"rgw_key.delete"}, true, map[string]JSONField{"access_key": secret})
 	add([]string{"rgw_realm.update"}, true, map[string]JSONField{"name": stringField(true), "new_name": stringField(true), "default": boolField(false)})
 	add([]string{"rgw_realm.create"}, true, map[string]JSONField{"name": stringField(true), "default": boolField(false)})
+	add([]string{"rgw_zonegroup.update"}, true, map[string]JSONField{"name": stringField(true), "new_name": stringField(true), "realm_id": stringField(true), "endpoints": stringField(false), "default": boolField(false), "master": boolField(false)})
 	add([]string{"rgw_zonegroup.create"}, true, map[string]JSONField{"name": stringField(true), "realm": stringField(false), "endpoints": stringField(false), "default": boolField(false), "master": boolField(false)})
 	add([]string{"rgw_zone.create"}, true, map[string]JSONField{"name": stringField(true)})
 	add([]string{"nfs_export.create", "nfs_export.update"}, true, map[string]JSONField{"cluster": stringField(true), "pseudo": stringField(true), "path": stringField(true), "filesystem": stringField(true), "read_only": boolField(false)})

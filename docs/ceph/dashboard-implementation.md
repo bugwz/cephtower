@@ -790,3 +790,11 @@ master 和 default；后端分别传入 --rgw-realm、--endpoints、--master、-
 省略选项时使用 Ceph 原生行为，布尔值 false 不传对应开关。创建后重新采集
 Zonegroup，停止以请求数据覆盖原生详情。离线测试覆盖完整参数和非法类型；
 真实集群验证、Zonegroup 编辑仍待完成。
+
+### Zonegroup 基础编辑
+
+对照 RgwMultisite::edit_zonegroup/modify_zonegroup，新增 PATCH /rgw/zonegroup
+及编辑表单，支持重命名、替换非空端点、设为主/默认 Zonegroup。写入后执行
+period update --commit，并显式使用 Realm ID 限定目标，最后按新名称读取详情。
+无 Realm 的 Zonegroup 编辑、清空端点、成员和放置目标编辑仍待补齐。
+多个命令不具有事务性；测试覆盖顺序、Period 范围、读回目标及无效输入，未实机验证。

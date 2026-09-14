@@ -83,7 +83,7 @@ func Supports(action string) bool {
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota",
 		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_bucket.quota",
 		"rgw_account.create", "rgw_account.update", "rgw_account.quota", "rgw_account.delete", "rgw_role.create", "rgw_role.update", "rgw_role.delete", "rgw_role.policy", "rgw_key.create", "rgw_key.delete",
-		"rgw_realm.create", "rgw_realm.update", "rgw_zonegroup.create", "rgw_zone.create", "rgw_period.commit",
+		"rgw_realm.create", "rgw_realm.update", "rgw_zonegroup.create", "rgw_zonegroup.update", "rgw_zone.create", "rgw_period.commit",
 		"nfs_cluster.create", "nfs_cluster.delete", "nfs_export.create", "nfs_export.update", "nfs_export.delete",
 		"smb_cluster.create", "smb_cluster.update", "smb_cluster.delete",
 		"smb_share.create", "smb_share.update", "smb_share.delete",
@@ -1510,6 +1510,51 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		result := rgw([]string{"key", "rm", "--uid", uid, "--key-type", "s3", "--access-key", accessKey}, []string{"user", "info", "--uid", uid})
 		result.sensitive = map[int]struct{}{7: {}}
+		return result, nil
+	case "rgw_zonegroup.update":
+		name, err := required(p, "name")
+		if err != nil {
+			return command{}, err
+		}
+		newName, err := required(p, "new_name")
+		if err != nil {
+			return command{}, err
+		}
+		realmID, err := required(p, "realm_id")
+		if err != nil {
+			return command{}, err
+		}
+		args := []string{"zonegroup", "modify", "--rgw-zonegroup", newName, "--realm-id", realmID}
+		changed := name != newName
+		for _, key := range []string{"default", "master"} {
+			if value, present := p[key]; present {
+				enabled, ok := value.(bool)
+				if !ok {
+					return command{}, invalid(key + " must be a boolean")
+				}
+				if enabled {
+					args = append(args, "--"+key)
+					changed = true
+				}
+			}
+		}
+		if value, present := p["endpoints"]; present {
+			endpoints, ok := value.(string)
+			if !ok || strings.TrimSpace(endpoints) == "" || strings.ContainsAny(endpoints, "\x00\r\n") {
+				return command{}, invalid("endpoints must be a nonempty string")
+			}
+			args = append(args, "--endpoints", endpoints)
+			changed = true
+		}
+		if !changed {
+			return command{}, invalid("select a zonegroup change")
+		}
+		result := rgw(args, nil)
+		if name != newName {
+			result = rgw([]string{"zonegroup", "rename", "--rgw-zonegroup", name, "--zonegroup-new-name", newName, "--realm-id", realmID}, nil)
+			result.followups = append(result.followups, rgw(args, nil))
+		}
+		result.followups = append(result.followups, rgw([]string{"period", "update", "--commit", "--realm-id", realmID}, []string{"zonegroup", "get", "--rgw-zonegroup", newName, "--realm-id", realmID}))
 		return result, nil
 	case "rgw_realm.update":
 		name, err := required(p, "name")

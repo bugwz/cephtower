@@ -476,6 +476,19 @@ const definitions: Record<
       ],
       buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? ''), ...(values.realm ? { realm: String(values.realm).trim() } : {}), ...(values.endpoints ? { endpoints: String(values.endpoints).trim() } : {}), master: Boolean(values.master), default: Boolean(values.default) })
     },
+    updateAction: {
+      title: '编辑 Zonegroup', path: '/rgw/zonegroup', method: 'PATCH',
+      successMessage: 'Zonegroup 更新与 Period 提交执行成功',
+      fields: [
+        { name: 'new_name', label: 'Zonegroup 名称', required: true },
+        { name: 'realm_id', label: '所属 Realm ID', required: true },
+        { name: 'endpoints', label: '端点（逗号分隔，留空保持原值）' },
+        { name: 'master', label: '设为主 Zonegroup', type: 'boolean' },
+        { name: 'default', label: '设为默认 Zonegroup', type: 'boolean' }
+      ],
+      initialValues: (row) => ({ new_name: text(row?.name), realm_id: text(row?.realm_id), endpoints: Array.isArray(row?.endpoints) ? row.endpoints.join(',') : '', master: false, default: false }),
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: text(row?.name), new_name: String(values.new_name ?? ''), realm_id: String(values.realm_id ?? ''), ...(values.endpoints ? { endpoints: String(values.endpoints) } : {}), master: Boolean(values.master), default: Boolean(values.default) })
+    },
     columns: [
       { key: 'name', title: 'ZoneGroup' },
       { key: 'status', title: '状态' },
