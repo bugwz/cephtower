@@ -782,3 +782,11 @@ Realm 创建表单增加“设为默认 Realm”，POST /rgw/realm 接受可选�
 依据参考 RgwMultisite::create_realm，选中时在 realm create 命令添加 --default；
 未选中不传此开关，保留 Ceph 原生默认选择行为。拒绝非布尔参数，
 执行后沿用 Realm/RGW 状态刷新。离线测试覆盖省略、false、true 和非法参数。
+
+### Zonegroup 创建参数
+
+依据 RgwMultisite::create_zonegroup，创建表单/API 支持 Realm、逗号分隔端点、
+master 和 default；后端分别传入 --rgw-realm、--endpoints、--master、--default。
+省略选项时使用 Ceph 原生行为，布尔值 false 不传对应开关。创建后重新采集
+Zonegroup，停止以请求数据覆盖原生详情。离线测试覆盖完整参数和非法类型；
+真实集群验证、Zonegroup 编辑仍待完成。

@@ -188,6 +188,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
       if (action.path.startsWith('/rbd/')) {
         await refreshResource({ clusterId: selectedClusterId, kinds: ['rbd_image', 'rbd_snapshot', 'rbd_namespace', 'rbd_trash', 'rbd_group', 'rbd_mirroring'] })
       }
+      if (action.path === '/rgw/zonegroup') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_zonegroup'] })
       if (action.path === '/rgw/realm') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_realm','rgw_status'] })
       if (action.path.startsWith('/rgw/account')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_account','rgw_role'] })
       if (action.path.startsWith('/rgw/role')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_role'] })
@@ -222,7 +223,8 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
           await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters), false)
           message.success(action.successMessage)
           if (action.path.startsWith('/rbd/')) await refreshResource({ clusterId:selectedClusterId,kinds:['rbd_image','rbd_snapshot','rbd_namespace','rbd_trash','rbd_group'] })
-          if (action.path === '/rgw/realm') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_realm','rgw_status'] })
+          if (action.path === '/rgw/zonegroup') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_zonegroup'] })
+      if (action.path === '/rgw/realm') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_realm','rgw_status'] })
       if (action.path.startsWith('/rgw/account')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_account','rgw_role'] })
       if (action.path.startsWith('/rgw/role')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_role'] })
       if ((action.path === '/rgw/bucket/ratelimit' || action.path === '/rgw/bucket/quota')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_bucket'] })
@@ -242,7 +244,8 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
         await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters, { ifMatch: generation }), false)
         message.success(action.successMessage)
         if (action.path.startsWith('/rbd/')) await refreshResource({ clusterId:selectedClusterId,kinds:['rbd_image','rbd_snapshot','rbd_namespace','rbd_trash','rbd_group'] })
-          if (action.path === '/rgw/realm') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_realm','rgw_status'] })
+          if (action.path === '/rgw/zonegroup') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_zonegroup'] })
+      if (action.path === '/rgw/realm') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_realm','rgw_status'] })
       if (action.path.startsWith('/rgw/account')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_account','rgw_role'] })
       if (action.path.startsWith('/rgw/role')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_role'] })
       if ((action.path === '/rgw/bucket/ratelimit' || action.path === '/rgw/bucket/quota')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_bucket'] })

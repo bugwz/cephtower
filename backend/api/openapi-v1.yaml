@@ -421,6 +421,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -534,6 +536,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -684,6 +688,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -1012,6 +1018,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -1125,6 +1133,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -1275,6 +1285,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -2880,6 +2892,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -2993,6 +3007,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -3143,6 +3159,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -3471,6 +3489,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -3584,6 +3604,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -3734,6 +3756,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -4280,6 +4304,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -4393,6 +4419,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -4543,6 +4571,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -4965,6 +4995,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -5078,6 +5110,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -5228,6 +5262,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -5556,6 +5592,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -5669,6 +5707,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -5819,6 +5859,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -6338,6 +6380,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -6451,6 +6495,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -6601,6 +6647,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -7025,6 +7073,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -7138,6 +7188,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -7288,6 +7340,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -7617,6 +7671,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -7730,6 +7786,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -7880,6 +7938,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -8452,6 +8512,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -8565,6 +8627,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -8715,6 +8779,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -9137,6 +9203,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -9250,6 +9318,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -9400,6 +9470,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -9824,6 +9896,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -9937,6 +10011,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -10087,6 +10163,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -10509,6 +10587,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -10622,6 +10702,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -10772,6 +10854,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -11100,6 +11184,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -11213,6 +11299,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -11363,6 +11451,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -11692,6 +11782,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -11805,6 +11897,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -11955,6 +12049,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -12379,6 +12475,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -12492,6 +12590,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -12642,6 +12742,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -13161,6 +13263,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -13274,6 +13378,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -13424,6 +13530,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -13753,6 +13861,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -13866,6 +13976,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -14016,6 +14128,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -14345,6 +14459,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -14458,6 +14574,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -14608,6 +14726,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -14937,6 +15057,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -15050,6 +15172,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -15200,6 +15324,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -15566,6 +15692,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -15679,6 +15807,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -15829,6 +15959,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -16251,6 +16383,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -16364,6 +16498,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -16514,6 +16650,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -16842,6 +16980,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -16955,6 +17095,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -17105,6 +17247,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -17434,6 +17578,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -17547,6 +17693,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -17697,6 +17845,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -18119,6 +18269,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -18232,6 +18384,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -18382,6 +18536,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -18710,6 +18866,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -18823,6 +18981,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -18973,6 +19133,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -19397,6 +19559,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -19510,6 +19674,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -19660,6 +19826,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -19988,6 +20156,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -20101,6 +20271,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -20251,6 +20423,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -20580,6 +20754,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -20693,6 +20869,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -20843,6 +21021,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -21647,6 +21827,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -21760,6 +21942,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -21910,6 +22094,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -22238,6 +22424,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -22351,6 +22539,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -22501,6 +22691,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -22846,6 +23038,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -22959,6 +23153,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -23109,6 +23305,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -23531,6 +23729,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -23644,6 +23844,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -23794,6 +23996,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -24122,6 +24326,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -24235,6 +24441,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -24385,6 +24593,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -24714,6 +24924,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -24827,6 +25039,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -24977,6 +25191,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -25590,6 +25806,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -25703,6 +25921,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -25853,6 +26073,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -26372,6 +26594,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -26485,6 +26709,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -26635,6 +26861,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -27057,6 +27285,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -27170,6 +27400,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -27320,6 +27552,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -27648,6 +27882,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -27761,6 +27997,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -27911,6 +28149,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -28372,6 +28612,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -28485,6 +28727,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -28635,6 +28879,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -28964,6 +29210,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -29077,6 +29325,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -29227,6 +29477,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -29971,6 +30223,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -30084,6 +30338,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -30234,6 +30490,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -30848,6 +31106,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -30961,6 +31221,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -31111,6 +31373,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -31533,6 +31797,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -31646,6 +31912,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -31796,6 +32064,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -32220,6 +32490,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -32333,6 +32605,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -32483,6 +32757,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -32905,6 +33181,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -33018,6 +33296,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -33168,6 +33448,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -33496,6 +33778,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -33609,6 +33893,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -33759,6 +34045,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -34278,6 +34566,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -34391,6 +34681,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -34541,6 +34833,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -34963,6 +35257,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -35076,6 +35372,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -35226,6 +35524,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -35554,6 +35854,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -35667,6 +35969,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -35817,6 +36121,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -36241,6 +36547,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -36354,6 +36662,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -36504,6 +36814,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -36832,6 +37144,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -36945,6 +37259,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -37095,6 +37411,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -37519,6 +37837,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -37632,6 +37952,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -37782,6 +38104,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -38110,6 +38434,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -38223,6 +38549,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -38373,6 +38701,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -38797,6 +39127,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -38910,6 +39242,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -39060,6 +39394,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -39482,6 +39818,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -39595,6 +39933,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -39745,6 +40085,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -40073,6 +40415,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -40186,6 +40530,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -40336,6 +40682,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -40855,6 +41203,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -40968,6 +41318,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -41118,6 +41470,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -41541,6 +41895,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -41654,6 +42010,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -41804,6 +42162,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -42133,6 +42493,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -42246,6 +42608,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -42396,6 +42760,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -42725,6 +43091,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -42838,6 +43206,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -42988,6 +43358,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -43411,6 +43783,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -43524,6 +43898,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -43674,6 +44050,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -44037,6 +44415,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -44150,6 +44530,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -44300,6 +44682,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -44914,6 +45298,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -45027,6 +45413,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -45177,6 +45565,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -45599,6 +45989,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -45712,6 +46104,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -45862,6 +46256,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -46190,6 +46586,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -46303,6 +46701,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -46453,6 +46853,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -46877,6 +47279,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -46990,6 +47394,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -47140,6 +47546,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -47469,6 +47877,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -47582,6 +47992,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -47732,6 +48144,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -48061,6 +48475,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -48174,6 +48590,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -48324,6 +48742,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -48653,6 +49073,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -48766,6 +49188,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -48916,6 +49340,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -49340,6 +49766,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -49453,6 +49881,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -49603,6 +50033,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -50025,6 +50457,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -50138,6 +50572,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -50288,6 +50724,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -50616,6 +51054,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -50729,6 +51169,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -50879,6 +51321,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -51208,6 +51652,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -51321,6 +51767,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -51471,6 +51919,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -51800,6 +52250,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -51913,6 +52365,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -52063,6 +52517,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -52391,6 +52847,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -52504,6 +52962,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -52654,6 +53114,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -52982,6 +53444,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -53095,6 +53559,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -53245,6 +53711,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -53574,6 +54042,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -53687,6 +54157,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -53837,6 +54309,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -54450,6 +54924,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -54563,6 +55039,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -54713,6 +55191,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -55042,6 +55522,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -55155,6 +55637,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -55305,6 +55789,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -55634,6 +56120,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -55747,6 +56235,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -55897,6 +56387,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -56225,6 +56717,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -56338,6 +56832,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -56488,6 +56984,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -56912,6 +57410,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -57025,6 +57525,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -57175,6 +57677,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -57598,6 +58102,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -57711,6 +58217,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -57861,6 +58369,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -58190,6 +58700,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -58303,6 +58815,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -58453,6 +58967,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -58841,6 +59357,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -58954,6 +59472,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -59104,6 +59624,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -59432,6 +59954,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -59545,6 +60069,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -59695,6 +60221,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -60023,6 +60551,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -60136,6 +60666,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -60286,6 +60818,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -60615,6 +61149,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -60728,6 +61264,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -60878,6 +61416,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -61302,6 +61842,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -61415,6 +61957,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -61565,6 +62109,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -61987,6 +62533,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -62100,6 +62648,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -62250,6 +62800,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -62578,6 +63130,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -62691,6 +63245,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -62841,6 +63397,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -63271,6 +63829,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -63384,6 +63944,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -63534,6 +64096,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -63863,6 +64427,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -63976,6 +64542,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -64126,6 +64694,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -64455,6 +65025,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -64568,6 +65140,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -64718,6 +65292,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -65142,6 +65718,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -65255,6 +65833,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -65405,6 +65985,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -65734,6 +66316,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -65847,6 +66431,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -65997,6 +66583,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -66325,6 +66913,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -66438,6 +67028,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -66588,6 +67180,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -67012,6 +67606,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -67125,6 +67721,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -67275,6 +67873,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -67603,6 +68203,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -67716,6 +68318,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -67866,6 +68470,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -68194,6 +68800,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -68307,6 +68915,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -68457,6 +69067,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -68786,6 +69398,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -68899,6 +69513,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -69049,6 +69665,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -69568,6 +70186,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -69681,6 +70301,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -69831,6 +70453,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -70253,6 +70877,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -70366,6 +70992,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -70516,6 +71144,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -70844,6 +71474,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -70957,6 +71589,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -71107,6 +71741,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -71436,6 +72072,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -71549,6 +72187,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -71699,6 +72339,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -72028,6 +72670,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -72141,6 +72785,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -72291,6 +72937,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -72619,6 +73267,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -72732,6 +73382,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -72882,6 +73534,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -73211,6 +73865,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -73324,6 +73980,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -73474,6 +74132,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -73803,6 +74463,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -73916,6 +74578,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -74066,6 +74730,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -74490,6 +75156,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -74603,6 +75271,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -74753,6 +75423,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -75082,6 +75754,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -75195,6 +75869,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -75345,6 +76021,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -76004,6 +76682,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -76117,6 +76797,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -76267,6 +76949,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -76689,6 +77373,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -76802,6 +77488,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -76952,6 +77640,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -77280,6 +77970,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -77393,6 +78085,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -77543,6 +78237,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -77967,6 +78663,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -78080,6 +78778,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -78230,6 +78930,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -78652,6 +79354,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -78765,6 +79469,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -78915,6 +79621,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -79243,6 +79951,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -79356,6 +80066,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -79506,6 +80218,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -79930,6 +80644,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -80043,6 +80759,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -80193,6 +80911,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -80615,6 +81335,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -80728,6 +81450,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -80878,6 +81602,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -81206,6 +81932,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -81319,6 +82047,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -81469,6 +82199,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -81988,6 +82720,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -82101,6 +82835,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -82251,6 +82987,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:
@@ -82580,6 +83318,8 @@ paths:
                   description: action-specific JSON value
                 endpoint_id:
                   type: integer
+                endpoints:
+                  type: string
                 endsAt:
                   type: string
                 entity:
@@ -82693,6 +83433,8 @@ paths:
                 m:
                   type: integer
                 maintenance:
+                  type: boolean
+                master:
                   type: boolean
                 matchers:
                   type: array
@@ -82843,6 +83585,8 @@ paths:
                   type: string
                 read_only:
                   type: boolean
+                realm:
+                  type: string
                 remote_client:
                   type: string
                 remote_cluster:

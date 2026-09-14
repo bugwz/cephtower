@@ -468,9 +468,13 @@ const definitions: Record<
       method: 'POST',
       successMessage: 'ZoneGroup 创建执行成功',
       fields: [
-        { name: 'name', label: 'ZoneGroup 名称', required: true }
+        { name: 'name', label: 'ZoneGroup 名称', required: true },
+        { name: 'realm', label: 'Realm（留空使用原生默认值）' },
+        { name: 'endpoints', label: '端点（多个地址以逗号分隔）' },
+        { name: 'master', label: '主 Zonegroup', type: 'boolean' },
+        { name: 'default', label: '设为默认 Zonegroup', type: 'boolean' }
       ],
-      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? '') })
+      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? ''), ...(values.realm ? { realm: String(values.realm).trim() } : {}), ...(values.endpoints ? { endpoints: String(values.endpoints).trim() } : {}), master: Boolean(values.master), default: Boolean(values.default) })
     },
     columns: [
       { key: 'name', title: 'ZoneGroup' },

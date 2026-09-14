@@ -65,3 +65,21 @@ func TestRealmCreateDefault(t *testing.T) {
 		}
 	}
 }
+
+func TestZonegroupCreateOptions(t *testing.T) {
+	p := map[string]any{"name": "east", "realm": "global", "master": true, "default": true, "endpoints": "https://a.example,https://b.example"}
+	c, err := build(Request{Action: "rgw_zonegroup.create"}, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"zonegroup", "create", "--rgw-zonegroup", "east", "--default", "--master", "--rgw-realm", "global", "--endpoints", "https://a.example,https://b.example", "--format", "json"}
+	if !reflect.DeepEqual(c.args, want) {
+		t.Fatalf("args=%v", c.args)
+	}
+	for _, field := range []string{"master", "default", "realm", "endpoints"} {
+		bad := map[string]any{"name": "east", field: 42}
+		if _, err := build(Request{Action: "rgw_zonegroup.create"}, bad); err == nil {
+			t.Fatalf("accepted invalid %s", field)
+		}
+	}
+}
