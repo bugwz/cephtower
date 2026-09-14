@@ -726,3 +726,9 @@ which could collapse multiple paths and schedules into one resource key.
 - 共用执行器现在使用命令链最后一个已声明的后置检查（含其二进制），不再忽略 followup.check；空 RBD/RGW 检查不再被转换成单独的 --format json。
 - 实际 Service.Execute 回归测试验证限流依次执行 set、enable、get，且读取标记为非写入；后端测试/OpenAPI 检查通过。
 - 此修复保证声明的读取被执行，不代表已比较读取值和请求值。尤其参考源码 Bucket quota 外层忽略 set_bucket_quota 返回值，仍需进一步增加结果字段一致性校验；未实机验证。
+
+### Bucket 配额读取值校验
+
+- Bucket 配额操作现在比较最终 bucket stats 的 tenant、bucket、bucket_quota.enabled/max_size/max_objects 与请求，容量按 KiB 向上取整。
+- 写入返回成功但结果未变化、读取字段缺失、错误租户或 JSON 无效均返回 post_check_failed，补上参考原生配额调用可能忽略写入错误的缺口。
+- Service.Execute 模拟执行器回归测试及后端测试/OpenAPI 检查通过。未实机验证；该结果一致性校验目前针对单个 Bucket 配额。
