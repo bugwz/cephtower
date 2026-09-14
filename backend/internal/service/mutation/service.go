@@ -1665,6 +1665,22 @@ func build(request Request, p map[string]any) (command, error) {
 				}
 			}
 		}
+		if action == "rgw_zone.create" {
+			if value, present := p["sync_from_all"]; present {
+				enabled, ok := value.(bool)
+				if !ok {
+					return command{}, invalid("sync_from_all must be a boolean")
+				}
+				args = append(args, "--sync-from-all="+strconv.FormatBool(enabled))
+			}
+			if value, present := p["sync_from"]; present {
+				sources, ok := value.(string)
+				if !ok || strings.TrimSpace(sources) == "" || strings.ContainsAny(sources, "\x00\r\n") {
+					return command{}, invalid("sync_from must be a nonempty string")
+				}
+				args = append(args, "--sync-from", sources)
+			}
+		}
 		return rgw(args, []string{kind, "get", flag, name}), nil
 	case "rgw_period.commit":
 		return rgw([]string{"period", "update", "--commit"}, []string{"period", "get"}), nil

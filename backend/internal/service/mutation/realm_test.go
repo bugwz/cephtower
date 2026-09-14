@@ -163,3 +163,25 @@ func TestZoneCreateTopology(t *testing.T) {
 		}
 	}
 }
+
+func TestZoneSyncOptions(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		c, err := build(Request{Action: "rgw_zone.create"}, map[string]any{"name": "east", "sync_from_all": enabled, "sync_from": "z1,z2"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		flag := "--sync-from-all=false"
+		if enabled {
+			flag = "--sync-from-all=true"
+		}
+		want := []string{"zone", "create", "--rgw-zone", "east", flag, "--sync-from", "z1,z2", "--format", "json"}
+		if !reflect.DeepEqual(c.args, want) {
+			t.Fatalf("args=%v", c.args)
+		}
+	}
+	for _, p := range []map[string]any{{"name": "east", "sync_from_all": "false"}, {"name": "east", "sync_from": 42}, {"name": "east", "sync_from": ""}} {
+		if _, err := build(Request{Action: "rgw_zone.create"}, p); err == nil {
+			t.Fatalf("accepted %v", p)
+		}
+	}
+}

@@ -827,3 +827,10 @@ period update --commit，并显式使用 Realm ID 限定目标，最后按新名
 master/default 开关，映射为 --rgw-zonegroup、--endpoints、--master、--default。
 创建后刷新 Zone 和 Zonegroup 原生数据，停止持久化请求覆盖层。离线测试覆盖
 完整命令和非法参数。系统凭据、同步配置、分层参数与真实集群验证仍待补齐。
+
+### Zone 创建同步来源
+
+对照 create_zone 和原生参数解析，创建 API/表单增加 sync_from_all 与 sync_from。
+布尔选项显式生成 --sync-from-all=true/false，指定来源生成 --sync-from <列表>。
+省略时使用 Ceph 默认行为，false 不会被当作省略。离线测试覆盖两个布尔值、
+逗号分隔来源及非法类型；未实机验证。

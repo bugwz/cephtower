@@ -756,6 +756,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -1364,6 +1368,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -3251,6 +3259,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -3859,6 +3871,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -4687,6 +4703,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -5390,6 +5410,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -5998,6 +6022,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -6799,6 +6827,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -7504,6 +7536,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -8113,6 +8149,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -8967,6 +9007,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -9669,6 +9713,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -10375,6 +10423,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -11078,6 +11130,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -11686,6 +11742,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -12296,6 +12356,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -13001,6 +13065,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -13802,6 +13870,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -14411,6 +14483,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -15022,6 +15098,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -15631,6 +15711,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -16278,6 +16362,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -16982,6 +17070,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -17590,6 +17682,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -18200,6 +18296,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -18904,6 +19004,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -19512,6 +19616,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -20218,6 +20326,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -20826,6 +20938,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -21436,6 +21552,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -22522,6 +22642,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -23130,6 +23254,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -23756,6 +23884,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -24460,6 +24592,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -25068,6 +25204,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -25678,6 +25818,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -26573,6 +26717,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -27373,6 +27521,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -28076,6 +28228,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -28684,6 +28840,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -29427,6 +29587,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -30036,6 +30200,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -31062,6 +31230,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -31957,6 +32129,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -32659,6 +32835,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -33365,6 +33545,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -34068,6 +34252,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -34676,6 +34864,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -35477,6 +35669,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -36180,6 +36376,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -36788,6 +36988,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -37494,6 +37698,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -38102,6 +38310,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -38808,6 +39020,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -39416,6 +39632,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -40122,6 +40342,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -40825,6 +41049,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -41433,6 +41661,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -42234,6 +42466,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -42938,6 +43174,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -43548,6 +43788,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -44157,6 +44401,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -44862,6 +45110,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -45505,6 +45757,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -46401,6 +46657,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -47104,6 +47364,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -47712,6 +47976,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -48418,6 +48686,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -49027,6 +49299,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -49638,6 +49914,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -50247,6 +50527,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -50953,6 +51237,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -51656,6 +51944,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -52264,6 +52556,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -52875,6 +53171,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -53485,6 +53785,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -54093,6 +54397,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -54703,6 +55011,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -55312,6 +55624,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -56207,6 +56523,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -56816,6 +57136,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -57427,6 +57751,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -58035,6 +58363,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -58741,6 +59073,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -59445,6 +59781,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -60054,6 +60394,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -60724,6 +61068,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -61332,6 +61680,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -61942,6 +62294,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -62551,6 +62907,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -63257,6 +63617,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -63960,6 +64324,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -64568,6 +64936,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -65280,6 +65652,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -65890,6 +66266,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -66499,6 +66879,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -67205,6 +67589,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -67815,6 +68203,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -68423,6 +68815,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -69129,6 +69525,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -69737,6 +70137,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -70347,6 +70751,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -70956,6 +71364,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -71757,6 +72169,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -72460,6 +72876,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -73068,6 +73488,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -73679,6 +74103,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -74289,6 +74717,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -74897,6 +75329,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -75508,6 +75944,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -76117,6 +76557,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -76823,6 +77267,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -77433,6 +77881,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -78041,6 +78493,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -78982,6 +79438,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -79685,6 +80145,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -80293,6 +80757,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -80999,6 +81467,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -81702,6 +82174,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -82310,6 +82786,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -83016,6 +83496,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -83719,6 +84203,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -84327,6 +84815,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean
@@ -85128,6 +85620,10 @@ paths:
                   type: string
                 suspended:
                   type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
                 system:
                   type: boolean
                 target:
@@ -85737,6 +86233,10 @@ paths:
                 subvolume:
                   type: string
                 suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
                   type: boolean
                 system:
                   type: boolean

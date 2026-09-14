@@ -222,7 +222,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"rgw_realm.create"}, true, map[string]JSONField{"name": stringField(true), "default": boolField(false)})
 	add([]string{"rgw_zonegroup.update"}, true, map[string]JSONField{"add_zones": stringsField(false), "remove_zones": stringsField(false), "name": stringField(true), "new_name": stringField(true), "realm_id": stringField(false), "endpoints": stringField(false), "default": boolField(false), "master": boolField(false)})
 	add([]string{"rgw_zonegroup.create"}, true, map[string]JSONField{"name": stringField(true), "realm": stringField(false), "endpoints": stringField(false), "default": boolField(false), "master": boolField(false)})
-	add([]string{"rgw_zone.create"}, true, map[string]JSONField{"name": stringField(true), "zonegroup": stringField(false), "endpoints": stringField(false), "master": boolField(false), "default": boolField(false)})
+	add([]string{"rgw_zone.create"}, true, map[string]JSONField{"sync_from_all": boolField(false), "sync_from": stringField(false), "name": stringField(true), "zonegroup": stringField(false), "endpoints": stringField(false), "master": boolField(false), "default": boolField(false)})
 	add([]string{"nfs_export.create", "nfs_export.update"}, true, map[string]JSONField{"cluster": stringField(true), "pseudo": stringField(true), "path": stringField(true), "filesystem": stringField(true), "read_only": boolField(false)})
 	add([]string{"smb_cluster.create"}, true, map[string]JSONField{"name": stringField(true), "auth_mode": stringField(false, "user", "active-directory")})
 	add([]string{"smb_cluster.update"}, true, map[string]JSONField{"auth_mode": stringField(true, "user", "active-directory")})
