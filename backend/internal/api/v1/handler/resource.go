@@ -184,7 +184,7 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 		if !ok {
 			return
 		}
-		if strings.HasPrefix(action, "rgw_bucket.") {
+		if strings.HasPrefix(action, "rgw_bucket.") && action != "rgw_bucket.ratelimit" {
 			if _, err := h.Endpoints.Endpoint(r.Context(), id, "s3"); err != nil {
 				WriteError(w, r, http.StatusNotImplemented, "capability_unavailable", "s3 endpoint is not configured", false, map[string]any{"capability": "s3"})
 				return
@@ -227,6 +227,11 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 }
 
 func (h *Handler) persistResourceMutation(ctx context.Context, clusterID uint64, kind, action, auditKey string, body map[string]any) error {
+	if action == "rgw_bucket.ratelimit" || kind == "snapshot_schedule" || kind == "rgw_user" || kind == "rgw_account" || kind == "rgw_role" || strings.HasPrefix(kind, "rbd_") {
+		// RBD state comes from native collection; request bodies are not observations.
+		// Schedules are read directly from Ceph; there is no reconciled cache.
+		return nil
+	}
 	key := resourceLookupKey(kind, auditKey)
 	if strings.HasSuffix(action, ".delete") || strings.HasSuffix(action, ".purge") {
 		return h.Database().DeleteResourceState(ctx, clusterID, kind, key)
@@ -401,6 +406,14 @@ func resourceLookupKey(kind, resourceKey string) string {
 		return ""
 	}
 	switch kind {
+	case "config_value":
+		decoded, err := base64.RawURLEncoding.Strict().DecodeString(strings.TrimPrefix(resourceKey, "configuration/value/"))
+		parts := strings.Split(string(decoded), "\x00")
+		if err != nil || len(parts) != 2 {
+			return ""
+		}
+		return parts[0] + ":" + parts[1]
+
 	case "device":
 		encoded := after("device")
 		decoded, err := base64.RawURLEncoding.Strict().DecodeString(encoded)
@@ -465,11 +478,11 @@ func resourceLookupKey(kind, resourceKey string) string {
 func toResourceDTO(row store.CephEntityRecord) resourceDTO {
 	data := map[string]any{}
 	_ = json.Unmarshal([]byte(row.DiscoveredData), &data)
-	if row.ConfiguredData != nil {
+	if row.ConfiguredData != nil && row.Kind != "rgw_user" && row.Kind != "rgw_account" && row.Kind != "rgw_role" && !strings.HasPrefix(row.Kind, "rbd_") {
 		var configured map[string]any
 		if err := json.Unmarshal([]byte(*row.ConfiguredData), &configured); err == nil {
 			for field, value := range configured {
-				if row.Kind == "pool" {
+				if row.Kind == "pool" || row.Kind == "config_value" {
 					if _, exists := data[field]; exists {
 						continue
 					}
@@ -615,7 +628,7 @@ func readResourceKey(kind string, body map[string]any) string {
 	case "osd_flag":
 		return "flags"
 	case "rbd_mirroring":
-		return "mirroring"
+		return optionalStringBody(body, "pool")
 	case "upgrade":
 		return "upgrade"
 	case "host":
@@ -653,7 +666,11 @@ func readResourceKey(kind string, body map[string]any) string {
 	case "rgw_account":
 		return optionalStringBody(body, "account_id", "id")
 	case "rgw_role":
-		return optionalStringBody(body, "name")
+		name := optionalStringBody(body, "name")
+		if account := optionalStringBody(body, "account_id"); account != "" {
+			return account + "/" + name
+		}
+		return name
 	case "rgw_bucket", "rgw_bucket_policy":
 		return optionalStringBody(body, "bucket_id", "name")
 	case "nvmeof_subsystem":
@@ -699,6 +716,8 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 		return strings.Join(parts, "/")
 	}
 	switch kind {
+	case "ceph_user":
+		return segments("ceph-user", pathValue("entity"))
 	case "overview":
 		return "overview"
 	case "health_check":
@@ -713,7 +732,7 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 		}
 		return "osd-deployment"
 	case "rbd_mirroring":
-		return "rbd/mirroring"
+		return pathValue("pool")
 	case "mon":
 		return "monitor/action"
 	case "host":
@@ -752,6 +771,11 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 		return segments("device", pathValue("host"), pathValue("device_id", "device"), "identify")
 	case "pool":
 		return segments("pool", pathValue("pool", "name"))
+	case "rbd_group":
+		if action == "rbd_group.member" || action == "rbd_group.snapshot" || action == "rbd_group.action" {
+			return pathValue("group_spec")
+		}
+		return segments("rbd", "group", pathValue("pool"), pathValue("name"))
 	case "rbd_image":
 		key := segments("rbd", "image", pathValue("image_spec"))
 		if action == "rbd_image.action" {
@@ -774,8 +798,6 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 			return "rbd/trash/purge"
 		}
 		return segments("rbd", "trash", pathValue("image_id"))
-	case "rbd_group":
-		return segments("rbd", "group", pathValue("pool"), pathValue("name"))
 	case "filesystem":
 		return segments("filesystem", pathValue("fs", "name"))
 	case "subvolume_group":
@@ -807,7 +829,7 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 	case "rgw_account":
 		return segments("rgw", "account", pathValue("account_id", "id"))
 	case "rgw_role":
-		return segments("rgw", "role", pathValue("name"))
+		return segments("rgw", "role", pathValue("account_id"), pathValue("name"))
 	case "rgw_bucket":
 		return segments("rgw", "bucket", pathValue("bucket_id", "name"))
 	case "rgw_bucket_policy":
@@ -831,7 +853,7 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 	case "iscsi_target":
 		return segments("iscsi", "target", pathValue("iqn"))
 	case "config_value":
-		return segments("configuration", "value", pathValue("who"), pathValue("name"))
+		return segments("configuration", "value", base64.RawURLEncoding.EncodeToString([]byte(pathValue("who")+"\x00"+pathValue("name"))))
 	case "silence":
 		return segments("silence", pathValue("silence_id"))
 	default:

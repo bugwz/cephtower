@@ -8,61 +8,149 @@ import (
 	"strings"
 	"time"
 
+	cephdomain "cephtower/backend/internal/domain/ceph"
 	"cephtower/backend/internal/integration/ceph/executor"
 )
 
 func (p *NativeProvider) collectStorageOptional(ctx context.Context, access ClusterAccess, pools []poolWire, fs fsDumpWire, now time.Time) []Observation {
 	var rows []Observation
-	var mirroringPools []any
 	for _, pool := range pools {
 		var namespaces []string
-		if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_namespace", []string{"namespace", "list", pool.PoolName, "--format", "json"}, &namespaces) {
-			for _, name := range namespaces {
-				rows = append(rows, observation("rbd_namespace", pool.PoolName+"/"+name, name, "rbd_cli", map[string]any{"pool": pool.PoolName, "name": name}, now))
+		var namespaceRows []namedWire
+		if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_namespace", []string{"namespace", "list", pool.PoolName, "--format", "json"}, &namespaceRows) {
+			if namespaceRows == nil {
+				markCollectionUnavailable(ctx, "collect.rbd_namespace")
+			}
+			for _, namespace := range namespaceRows {
+				name := namespace.Name
+				if strings.TrimSpace(name) == "" || strings.Contains(name, "/") {
+					markCollectionUnavailable(ctx, "collect.rbd_namespace")
+					continue
+				}
+				namespaces = append(namespaces, name)
+				rows = append(rows, observation("rbd_namespace", pool.PoolName+"/"+name, name, "rbd_cli", map[string]any{"pool": pool.PoolName, "namespace": name, "name": name}, now))
 			}
 		}
-		var images []rbdImageWire
-		if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_image_detail", []string{"ls", "--long", pool.PoolName, "--format", "json"}, &images) {
-			for _, image := range images {
-				spec := pool.PoolName + "/" + image.Name
-				imageKey := base64.RawURLEncoding.EncodeToString([]byte(spec))
-				var snapshots []map[string]any
-				if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_snapshot", []string{"snap", "ls", spec, "--format", "json"}, &snapshots) {
-					for _, snapshot := range snapshots {
-						name := textField(snapshot, "name")
-						if name == "" {
-							continue
+		for _, namespace := range append([]string{""}, namespaces...) {
+			scope := pool.PoolName
+			imageArgs := []string{"ls", "--long", "--pool", pool.PoolName, "--format", "json"}
+			if namespace != "" {
+				scope += "/" + namespace
+				imageArgs = append(imageArgs, "--namespace", namespace)
+			}
+			var images []rbdImageWire
+			if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_image_detail", imageArgs, &images) {
+				if images == nil {
+					markCollectionUnavailable(ctx, "collect.rbd_image_detail")
+				}
+				for _, image := range images {
+					if image.Snapshot != nil {
+						continue
+					}
+					if strings.TrimSpace(image.Name) == "" {
+						markCollectionUnavailable(ctx, "collect.rbd_image_detail")
+						continue
+					}
+					spec := scope + "/" + image.Name
+					imageKey := base64.RawURLEncoding.EncodeToString([]byte(spec))
+					if namespace != "" {
+						payload := cephdomain.RBDImage{ImagePath: spec, ImageSpec: imageKey, Pool: pool.PoolName, Namespace: namespace, Name: image.Name, SizeBytes: image.Size, Format: image.Format}
+						p.enrichRBDImage(ctx, access, spec, &payload)
+						rows = append(rows, observation("rbd_image", imageKey, image.Name, "rbd_cli", payload, now))
+					}
+					var snapshots []map[string]any
+					if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_snapshot", []string{"snap", "ls", spec, "--format", "json"}, &snapshots) {
+						if snapshots == nil {
+							markCollectionUnavailable(ctx, "collect.rbd_snapshot")
 						}
-						rows = append(rows, Observation{Kind: "rbd_snapshot", NaturalKey: imageKey + "@" + name, ParentKind: "rbd_image", ParentKey: imageKey, Name: name, Status: "available", Source: "rbd_cli", Payload: snapshot, ObservedAt: now})
+						for _, snapshot := range snapshots {
+							name := textField(snapshot, "name")
+							if name == "" {
+								markCollectionUnavailable(ctx, "collect.rbd_snapshot")
+								continue
+							}
+							snapshot["image_spec"] = imageKey
+							snapshot["image_path"] = spec
+							snapshot["pool_name"] = pool.PoolName
+							snapshot["namespace"] = namespace
+							rows = append(rows, Observation{Kind: "rbd_snapshot", NaturalKey: imageKey + "@" + name, ParentKind: "rbd_image", ParentKey: imageKey, Name: name, Status: "available", Source: "rbd_cli", Payload: snapshot, ObservedAt: now})
+						}
 					}
 				}
 			}
 		}
-		var trash []map[string]any
-		if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_trash", []string{"trash", "ls", pool.PoolName, "--format", "json"}, &trash) {
-			for _, item := range trash {
-				id := textField(item, "id")
-				if id == "" {
-					continue
+		for _, namespace := range append([]string{""}, namespaces...) {
+			scope := pool.PoolName
+			args := []string{"trash", "ls", "--long", "--pool", pool.PoolName, "--format", "json"}
+			if namespace != "" {
+				scope += "/" + namespace
+				args = append(args, "--namespace", namespace)
+			}
+			var trash []map[string]any
+			if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_trash", args, &trash) {
+				if trash == nil {
+					markCollectionUnavailable(ctx, "collect.rbd_trash")
 				}
-				key := opaquePair(pool.PoolName, id)
-				rows = append(rows, observation("rbd_trash", key, textField(item, "name"), "rbd_cli", item, now))
+				for _, item := range trash {
+					id := textField(item, "id")
+					if id == "" {
+						markCollectionUnavailable(ctx, "collect.rbd_trash")
+						continue
+					}
+					item["pool"] = pool.PoolName
+					item["namespace"] = namespace
+					item["image_id"] = id
+					rows = append(rows, observation("rbd_trash", opaquePair(scope, id), textField(item, "name"), "rbd_cli", item, now))
+				}
 			}
 		}
-		var groups []string
-		if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_group", []string{"group", "list", pool.PoolName, "--format", "json"}, &groups) {
-			for _, name := range groups {
-				rows = append(rows, observation("rbd_group", pool.PoolName+"/"+name, name, "rbd_cli", map[string]any{"pool": pool.PoolName, "name": name}, now))
+		for _, namespace := range append([]string{""}, namespaces...) {
+			scope := pool.PoolName
+			args := []string{"group", "list", "--pool", pool.PoolName, "--format", "json"}
+			if namespace != "" {
+				scope += "/" + namespace
+				args = append(args, "--namespace", namespace)
+			}
+			var groups []string
+			if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_group", args, &groups) {
+				if groups == nil {
+					markCollectionUnavailable(ctx, "collect.rbd_group")
+				}
+				for _, name := range groups {
+					spec := scope + "/" + name
+					payload := map[string]any{"pool": pool.PoolName, "namespace": namespace, "name": name, "group_spec": spec}
+					var info map[string]any
+					if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_group_info", []string{"group", "info", spec, "--format", "json"}, &info) {
+						if id := textField(info, "group_id"); id != "" {
+							payload["group_id"] = id
+						} else {
+							markCollectionUnavailable(ctx, "collect.rbd_group_info")
+						}
+					}
+					var images, snapshots any
+					if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_group_images", []string{"group", "image", "list", spec, "--format", "json"}, &images) {
+						payload["images"] = images
+					}
+					if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_group_snapshots", []string{"group", "snap", "list", spec, "--format", "json"}, &snapshots) {
+						payload["snapshots"] = snapshots
+					}
+					rows = append(rows, observation("rbd_group", spec, name, "rbd_cli", payload, now))
+				}
 			}
 		}
 		mirroring, ok := p.collectPoolMirroring(ctx, access, pool.PoolName)
 		if ok {
 			mirroring["pool"] = pool.PoolName
-			mirroringPools = append(mirroringPools, mirroring)
+			if mirroring["mode"] != "disabled" {
+				var status map[string]any
+				if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_mirroring_status", []string{"mirror", "pool", "status", pool.PoolName, "--verbose", "--format", "json"}, &status) {
+					mirroring["summary"] = status["summary"]
+					mirroring["daemons"] = status["daemons"]
+					mirroring["images"] = status["images"]
+				}
+			}
+			rows = append(rows, observation("rbd_mirroring", pool.PoolName, pool.PoolName, "rbd_cli", mirroring, now))
 		}
-	}
-	if len(mirroringPools) > 0 {
-		rows = append(rows, observation("rbd_mirroring", "mirroring", "mirroring", "rbd_cli", map[string]any{"pools": mirroringPools}, now))
 	}
 	for _, filesystem := range fs.Filesystems {
 		name := filesystem.MDSMap.FSName
@@ -135,6 +223,11 @@ func (p *NativeProvider) collectPoolMirroring(ctx context.Context, access Cluste
 	if !p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_mirroring", []string{"mirror", "pool", "info", pool, "--format", "json"}, &mirroring) {
 		return nil, false
 	}
+	mode, ok := mirroring["mode"].(string)
+	if !ok || (mode != "disabled" && mode != "image" && mode != "pool" && mode != "init-only") {
+		markCollectionUnavailable(ctx, "collect.rbd_mirroring")
+		return nil, false
+	}
 	return mirroring, true
 }
 
@@ -147,6 +240,15 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 		if !p.optional(ctx, access, executor.BinaryRGWAdmin, "collect."+resource.kind, []string{resource.noun, "list", "--format", "json"}, &list) {
 			continue
 		}
+		if list == nil {
+			markCollectionUnavailable(ctx, "collect."+resource.kind)
+			continue
+		}
+		if resource.kind == "rgw_role" {
+			rows = append(rows, rgwRoleObservations(ctx, list, "", now)...)
+			continue
+		}
+
 		for _, id := range stringList(list, resource.listKey) {
 			var details map[string]any
 			verb := "info"
@@ -154,7 +256,51 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 				verb = "get"
 			}
 			if !p.optional(ctx, access, executor.BinaryRGWAdmin, "collect."+resource.kind+"_detail", []string{resource.noun, verb, resource.idFlag, id, "--format", "json"}, &details) {
-				details = map[string]any{"id": id}
+				continue
+			}
+			if len(details) == 0 {
+				markCollectionUnavailable(ctx, "collect."+resource.kind+"_detail")
+				continue
+			}
+			if resource.kind == "rgw_account" {
+				details["account_id"] = id
+				details["account_name"] = textField(details, "name")
+				var stats map[string]any
+				if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_account_stats", []string{"account", "stats", "--account-id", id, "--format", "json"}, &stats) {
+					if stats != nil && stats["stats"] != nil {
+						details["storage_stats"] = stats
+					} else {
+						markCollectionUnavailable(ctx, "collect.rgw_account_stats")
+					}
+				}
+				var roles any
+				if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_role", []string{"role", "list", "--account-id", id, "--format", "json"}, &roles) {
+					rows = append(rows, rgwRoleObservations(ctx, roles, id, now)...)
+				}
+
+			}
+			if resource.kind == "rgw_user" {
+				details["uid"] = id
+				var limits map[string]any
+				if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_user_ratelimit", []string{"ratelimit", "get", "--uid", id, "--ratelimit-scope", "user", "--format", "json"}, &limits) {
+					if value, ok := limits["user_ratelimit"].(map[string]any); ok {
+						details["rate_limit"] = value
+					} else {
+						markCollectionUnavailable(ctx, "collect.rgw_user_ratelimit")
+					}
+				}
+				var stats map[string]any
+				if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_user_stats", []string{"user", "stats", "--uid", id, "--format", "json"}, &stats) {
+					if stats != nil {
+						details["storage_stats"] = stats
+					} else {
+						markCollectionUnavailable(ctx, "collect.rgw_user_stats")
+					}
+				}
+				details["stats_scope"] = "user"
+				if textField(details, "account_id") != "" {
+					details["stats_scope"] = "account"
+				}
 			}
 			rows = append(rows, observation(resource.kind, id, id, "rgw_admin", details, now))
 		}
@@ -164,9 +310,26 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 		for _, bucket := range stringList(buckets, "buckets") {
 			var details map[string]any
 			if !p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_bucket_detail", []string{"bucket", "stats", "--bucket", bucket, "--format", "json"}, &details) {
-				details = map[string]any{"bucket": bucket}
+				continue
+			}
+			if len(details) == 0 {
+				markCollectionUnavailable(ctx, "collect.rgw_bucket_detail")
+				continue
 			}
 			tenant := textField(details, "tenant")
+			var limits map[string]any
+			args := []string{"ratelimit", "get", "--bucket", bucket, "--ratelimit-scope", "bucket"}
+			if tenant != "" {
+				args = append(args, "--tenant", tenant)
+			}
+			args = append(args, "--format", "json")
+			if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_bucket_ratelimit", args, &limits) {
+				if value, ok := limits["bucket_ratelimit"].(map[string]any); ok {
+					details["rate_limit"] = value
+				} else {
+					markCollectionUnavailable(ctx, "collect.rgw_bucket_ratelimit")
+				}
+			}
 			key := opaquePair(tenant, bucket)
 			rows = append(rows, observation("rgw_bucket", key, bucket, "rgw_admin", details, now))
 		}
@@ -221,14 +384,7 @@ func (p *NativeProvider) collectConfigurationOptional(ctx context.Context, acces
 			rows = append(rows, observation("config_option", name, name, "ceph_cli", map[string]any{"name": name}, now))
 		}
 	}
-	var modules map[string]any
-	if p.optional(ctx, access, executor.BinaryCeph, "collect.mgr_module", []string{"mgr", "module", "ls", "--format", "json"}, &modules) {
-		for _, state := range []string{"enabled_modules", "disabled_modules", "always_on_modules"} {
-			for _, name := range stringList(modules[state], "") {
-				rows = append(rows, observation("mgr_module", name, name, "ceph_cli", map[string]any{"name": name, "state": state}, now))
-			}
-		}
-	}
+	rows = append(rows, p.collectManagerModules(ctx, access, now)...)
 	var rules any
 	if p.optional(ctx, access, executor.BinaryCeph, "collect.crush_rule", []string{"osd", "crush", "rule", "dump", "--format", "json"}, &rules) {
 		for index, item := range objectList(rules) {
@@ -326,4 +482,69 @@ func objectList(value any) []map[string]any {
 		}
 	}
 	return result
+}
+
+func (p *NativeProvider) enrichRBDImage(ctx context.Context, access ClusterAccess, spec string, image *cephdomain.RBDImage) {
+	var configuration []cephdomain.PoolConfig
+	if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_image_config", []string{"config", "image", "list", spec, "--format", "json"}, &configuration) {
+		if configuration == nil {
+			markCollectionUnavailable(ctx, "collect.rbd_image_config")
+		} else {
+			image.Configuration = configuration
+		}
+	}
+
+	var status map[string]any
+	if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_image_status", []string{"status", spec, "--format", "json"}, &status) {
+		if status == nil {
+			markCollectionUnavailable(ctx, "collect.rbd_image_status")
+		} else {
+			for _, watcher := range objectList(status["watchers"]) {
+				for _, field := range []string{"client", "cookie"} {
+					if number, ok := watcher[field].(json.Number); ok {
+						watcher[field] = number.String()
+					}
+				}
+			}
+			image.RuntimeStatus = status
+		}
+	}
+	var info map[string]any
+	if !p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_image_info", []string{"info", spec, "--format", "json"}, &info) {
+		return
+	}
+	if info == nil {
+		markCollectionUnavailable(ctx, "collect.rbd_image_info")
+		return
+	}
+	image.Details = info
+	image.Features = stringList(info["features"], "")
+	image.Parent, _ = info["parent"].(map[string]any)
+}
+
+func rgwRoleObservations(ctx context.Context, list any, account string, now time.Time) []Observation {
+	items, ok := list.([]any)
+	if !ok {
+		markCollectionUnavailable(ctx, "collect.rgw_role")
+		return nil
+	}
+	var rows []Observation
+	for _, item := range items {
+		role, ok := item.(map[string]any)
+		if !ok || textField(role, "RoleName") == "" {
+			markCollectionUnavailable(ctx, "collect.rgw_role")
+			continue
+		}
+		name := textField(role, "RoleName")
+		if textField(role, "AccountId") != account {
+			markCollectionUnavailable(ctx, "collect.rgw_role")
+			continue
+		}
+		key := name
+		if account != "" {
+			key = account + "/" + name
+		}
+		rows = append(rows, observation("rgw_role", key, name, "rgw_admin", role, now))
+	}
+	return rows
 }

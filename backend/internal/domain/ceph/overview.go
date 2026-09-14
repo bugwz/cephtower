@@ -3,12 +3,15 @@ package ceph
 import "time"
 
 type HealthCheck struct {
-	Code     string   `json:"code"`
-	Severity string   `json:"severity"`
-	Summary  string   `json:"summary"`
-	Detail   []string `json:"detail"`
-	Count    *int64   `json:"count"`
-	Muted    bool     `json:"muted"`
+	Code      string   `json:"code"`
+	Severity  string   `json:"severity"`
+	Summary   string   `json:"summary"`
+	Detail    []string `json:"detail"`
+	Count     *int64   `json:"count"`
+	Muted     bool     `json:"muted"`
+	Active    bool     `json:"active"`
+	MuteUntil string   `json:"mute_until,omitempty"`
+	Sticky    bool     `json:"sticky"`
 }
 type Capacity struct {
 	TotalBytes     *uint64 `json:"total_bytes"`

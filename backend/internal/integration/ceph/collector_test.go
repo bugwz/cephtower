@@ -16,6 +16,7 @@ type fixtureExecutor struct{ t *testing.T }
 
 func (f fixtureExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	names := map[string]string{"collect.status": "status.json", "collect.df": "df.json", "collect.host": "host.json", "collect.daemon": "daemon.json", "collect.service": "service.json", "collect.mon": "mon.json", "collect.quorum": "quorum.json", "collect.mgr": "mgr.json", "collect.osd_tree": "osd-tree.json", "collect.osd_dump": "osd-dump.json", "collect.pool": "pool.json", "collect.fs": "fs.json", "collect.cephfs_subvolume": "cephfs-subvolume.json", "collect.rbd_image": "rbd-image.json", "collect.rgw_status": "rgw-realm.json", "collect.nfs_cluster": "nfs-cluster.json", "collect.smb_cluster": "smb-cluster.json", "collect.device": "device.json", "collect.config": "config.json"}
+	names["collect.health_detail"] = "health-detail.json"
 	names["collect.mds_fs"] = "fs.json"
 	names["collect.upgrade"] = "upgrade.json"
 	name := names[spec.ID]
@@ -187,7 +188,7 @@ func TestCollectStorageAcceptsNumericPoolCrushRuleAndMapsOSDHost(t *testing.T) {
 		"collect.osd_dump":      []byte(`{"flags":"","osds":[{"osd":0,"up":1,"in":1}]}`),
 		"collect.pool":          []byte(`[{"pool_id":1,"pool_name":"pool-a","type":1,"size":3,"min_size":2,"pg_num":8,"pg_placement_num":8,"pg_autoscale_mode":"on","application_metadata":{"rbd":{}},"crush_rule":0,"flags_names":"hashpspool,allow_ec_overwrites","options":{"compression_mode":"passive","compression_algorithm":"zstd","compression_min_blob_size":4096,"compression_max_blob_size":"1048576","compression_required_ratio":"0.875"},"quota_max_bytes":0,"quota_max_objects":0}]`),
 		"collect.pool_quota":    []byte(`{"pool_name":"pool-a","pool_id":1,"quota_max_objects":1000,"current_num_objects":0,"quota_max_bytes":1099511627776,"current_num_bytes":0}`),
-		"collect.rbd_mirroring": []byte(`{"mirror_mode":"pool"}`),
+		"collect.rbd_mirroring": []byte(`{"mode":"pool"}`),
 		"collect.rbd_pool_config": []byte(`[
 			{"name":"rbd_qos_bps_limit","value":"0","source":"global","description":"IO byte limit"},
 			{"key":"rbd_qos_iops_limit","val":100,"who":"pool:pool-a"}
@@ -556,5 +557,75 @@ func TestCollectRejectsMissingNullAndOverflowedCoreFields(t *testing.T) {
 				t.Fatal("malformed fixture was accepted")
 			}
 		})
+	}
+}
+
+func TestHealthDetailsUseDedicatedCommand(t *testing.T) {
+	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+		"collect.health_detail": []byte(`{"status":"HEALTH_WARN","checks":{"OSD_DOWN":{"severity":"HEALTH_WARN","summary":{"message":"1 osd down","count":1},"detail":[{"message":"osd.2 is down"}],"muted":true}}}`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "fast")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range rows {
+		if row.Kind != "health_check" {
+			continue
+		}
+		check := row.Payload.(cephdomain.HealthCheck)
+		if check.Code != "OSD_DOWN" || !check.Muted || !reflect.DeepEqual(check.Detail, []string{"osd.2 is down"}) {
+			t.Fatalf("check = %+v", check)
+		}
+		return
+	}
+	t.Fatal("missing health detail")
+}
+
+func TestHealthDetailFailureMarksChecksUnavailable(t *testing.T) {
+	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.health_detail": []byte(`not json`)}}}
+	result, err := provider.CollectWithMetadata(context.Background(), ClusterAccess{}, "fast")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(result.UnavailableKinds, []string{"health_check"}) {
+		t.Fatalf("unavailable = %v", result.UnavailableKinds)
+	}
+	for _, row := range result.Observations {
+		if row.Kind == "health_check" {
+			t.Fatal("failed collection must not replace cached checks")
+		}
+	}
+}
+
+func TestInactiveStickyHealthMuteCanStillBeListed(t *testing.T) {
+	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+		"collect.health_detail": []byte(`{"status":"HEALTH_OK","checks":{},"mutes":[{"code":"OSD_DOWN","sticky":true,"ttl":"2026-09-14 12:00:00.000000","summary":"1 osd down","count":1}]}`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "fast")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range rows {
+		if row.Kind != "health_check" {
+			continue
+		}
+		check := row.Payload.(cephdomain.HealthCheck)
+		if check.Code != "OSD_DOWN" || check.Active || !check.Muted || !check.Sticky || check.MuteUntil == "" {
+			t.Fatalf("check = %+v", check)
+		}
+		return
+	}
+	t.Fatal("sticky mute disappeared after check recovered")
+}
+
+func TestNamespaceDiscoveryFailurePreservesTrashCache(t *testing.T) {
+	trace := &collectionTrace{unavailable: map[string]struct{}{}}
+	ctx := context.WithValue(context.Background(), collectionTraceKey{}, trace)
+	markCollectionUnavailable(ctx, "collect.rbd_namespace")
+	if _, ok := trace.unavailable["rbd_trash"]; !ok {
+		t.Fatal("namespace failure may delete undiscovered trash")
+	}
+	if _, ok := trace.unavailable["rbd_namespace"]; !ok {
+		t.Fatal("namespace stale marker missing")
 	}
 }

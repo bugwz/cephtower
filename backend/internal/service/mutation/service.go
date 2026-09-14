@@ -12,6 +12,7 @@ import (
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
 	"cephtower/backend/internal/integration/ceph/executor"
+	"cephtower/backend/internal/security"
 	clusterservice "cephtower/backend/internal/service/cluster"
 )
 
@@ -61,7 +62,8 @@ type command struct {
 
 func Supports(action string) bool {
 	switch action {
-	case "cluster.refresh", "health.mute", "health.unmute",
+	case "ceph_user.create", "ceph_user.update", "ceph_user.delete", "ceph_user.import",
+		"cluster.refresh", "health.mute", "health.unmute",
 		"host.create", "host.update", "host.delete", "host.action", "device.identify",
 		"service.create", "service.update", "service.delete", "daemon.action",
 		"upgrade.check", "upgrade.action", "manager.fail", "monitor.action", "manager_module.update",
@@ -73,14 +75,14 @@ func Supports(action string) bool {
 		"rbd_image.create", "rbd_image.update", "rbd_image.delete", "rbd_image.action",
 		"rbd_snapshot.create", "rbd_snapshot.update", "rbd_snapshot.delete", "rbd_snapshot.action",
 		"rbd_namespace.create", "rbd_namespace.delete", "rbd_trash.restore", "rbd_trash.delete",
-		"rbd_trash.purge", "rbd_group.create", "rbd_mirroring.update",
+		"rbd_trash.purge", "rbd_group.create", "rbd_group.action", "rbd_group.member", "rbd_group.snapshot", "rbd_mirroring.update", "rbd_mirroring.peer",
 		"filesystem.create", "filesystem.update", "filesystem.delete",
 		"subvolume_group.create", "subvolume_group.update", "subvolume_group.delete",
 		"subvolume.create", "subvolume.update", "subvolume.delete",
-		"cephfs_snapshot.create", "cephfs_snapshot.delete", "cephfs_snapshot.clone", "snapshot_schedule.create",
+		"cephfs_snapshot.create", "cephfs_snapshot.delete", "cephfs_snapshot.clone", "snapshot_schedule.create", "snapshot_schedule.action", "snapshot_schedule.retention",
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota",
-		"rgw_user.create", "rgw_user.update", "rgw_user.delete",
-		"rgw_account.create", "rgw_role.create", "rgw_key.create", "rgw_key.delete",
+		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.ratelimit", "rgw_bucket.ratelimit",
+		"rgw_account.create", "rgw_account.update", "rgw_account.quota", "rgw_account.delete", "rgw_role.create", "rgw_role.update", "rgw_role.delete", "rgw_role.policy", "rgw_key.create", "rgw_key.delete",
 		"rgw_realm.create", "rgw_zonegroup.create", "rgw_zone.create", "rgw_period.commit",
 		"nfs_cluster.create", "nfs_cluster.delete", "nfs_export.create", "nfs_export.update", "nfs_export.delete",
 		"smb_cluster.create", "smb_cluster.update", "smb_cluster.delete",
@@ -108,8 +110,14 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if err != nil {
 		return cephdomain.ActionResult{}, err
 	}
-	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true, SensitiveArgs: spec.sensitive})
+	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: request.Action != "osd_deployment.preview", SensitiveArgs: spec.sensitive})
 	if err != nil {
+		if request.Action == "config_value.set" && len(spec.sensitive) > 0 {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "Ceph rejected the sensitive configuration update"}
+		}
+		if request.Action == "ceph_user.import" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "Ceph keyring import failed"}
+		}
 		return cephdomain.ActionResult{}, normalize(err)
 	}
 	for index, followup := range spec.followups {
@@ -124,6 +132,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "command was accepted but the expected state could not be verified", Retryable: true}
 		}
 	}
+	if request.Action == "osd_deployment.preview" {
+		return cephdomain.ActionResult{Details: map[string]any{"preview": security.Redact(string(result.Stdout))}}, nil
+	}
 	return cephdomain.ActionResult{Details: map[string]any{"exit_code": result.ExitCode, "duration_ms": result.Duration.Milliseconds()}}, nil
 }
 
@@ -137,16 +148,47 @@ func build(request Request, p map[string]any) (command, error) {
 		return command{binary: executor.BinaryRBD, args: args, check: append(check, "--format", "json"), timeout: 5 * time.Minute}
 	}
 	rgw := func(args, check []string) command {
+		if strings.HasPrefix(action, "rgw_role.") {
+			if account := optional(p, "account_id"); account != "" {
+				args = append(args, "--account-id", account)
+				if len(check) > 0 {
+					check = append(check, "--account-id", account)
+				}
+			}
+		}
 		return command{binary: executor.BinaryRGWAdmin, args: append(args, "--format", "json"), check: append(check, "--format", "json"), timeout: 2 * time.Minute}
 	}
 	cephfsShell := func(args []string) command {
 		return command{binary: executor.BinaryCephFSShell, args: args, timeout: 2 * time.Minute}
 	}
 	switch action {
+	case "ceph_user.create", "ceph_user.update", "ceph_user.delete", "ceph_user.import":
+		return cephUserCommand(request, p)
 	case "cluster.refresh":
 		return ceph([]string{"status", "--format", "json"}, []string{"status", "--format", "json"}), nil
 	case "health.mute":
-		return ceph([]string{"health", "mute", last(tail)}, []string{"health", "detail", "--format", "json"}), nil
+		code := last(tail)
+		if !regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`).MatchString(code) {
+			return command{}, invalid("health check code is invalid")
+		}
+		args := []string{"health", "mute", code}
+		if value, exists := p["ttl"]; exists {
+			ttl, ok := value.(string)
+			if !ok || !regexp.MustCompile(`^[1-9][0-9]{0,8}[smhdw]?$`).MatchString(ttl) {
+				return command{}, invalid("ttl must be a positive duration in seconds, minutes, hours, days or weeks")
+			}
+			args = append(args, ttl)
+		}
+		if value, exists := p["sticky"]; exists {
+			sticky, ok := value.(bool)
+			if !ok {
+				return command{}, invalid("sticky must be a boolean")
+			}
+			if sticky {
+				args = append(args, "--sticky")
+			}
+		}
+		return ceph(args, []string{"health", "detail", "--format", "json"}), nil
 	case "health.unmute":
 		return ceph([]string{"health", "unmute", last(tail)}, []string{"health", "detail", "--format", "json"}), nil
 	case "host.create":
@@ -331,6 +373,9 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		result := ceph(args, []string{"orch", "ps", "--daemon-type", "osd", "--format", "json"})
 		result.stdin = stdin
+		if action == "osd_deployment.preview" {
+			result.check = nil
+		}
 		return result, nil
 	case "device.zap":
 		host, device, err := decodePair(pathValue(tail, "device"))
@@ -491,21 +536,53 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
+		if err := validateRBDImagePath(spec); err != nil {
+			return command{}, err
+		}
 		size, err := required(p, "size")
 		if err != nil {
 			return command{}, err
 		}
-		return rbd([]string{"create", spec, "--size", size}, []string{"info", spec}), nil
+		args := []string{"create", spec, "--size", size + "B"}
+		if pool := optional(p, "data_pool"); pool != "" {
+			if !identifier.MatchString(pool) || strings.Contains(pool, "/") {
+				return command{}, invalid("data_pool is invalid")
+			}
+			args = append(args, "--data-pool", pool)
+		}
+		for _, field := range []string{"object_size", "stripe_unit", "stripe_count"} {
+			if value := optional(p, field); value != "" {
+				n, err := strconv.ParseUint(value, 10, 64)
+				if err != nil || n == 0 {
+					return command{}, invalid(field + " must be a positive integer")
+				}
+				if field == "object_size" && (n < 4096 || n > 33554432 || n&(n-1) != 0) {
+					return command{}, invalid("object_size must be a power of two from 4096 to 33554432 bytes")
+				}
+				if field == "stripe_unit" || field == "object_size" {
+					value += "B"
+				}
+				args = append(args, "--"+strings.ReplaceAll(field, "_", "-"), value)
+			}
+		}
+		return rbd(args, []string{"info", spec}), nil
 	case "rbd_image.update":
 		spec, err := decodeImageSpec(last(tail))
 		if err != nil {
 			return command{}, err
 		}
 		if size := optional(p, "size"); size != "" {
-			return rbd([]string{"resize", spec, "--size", size}, []string{"info", spec}), nil
+			args := []string{"resize", spec, "--size", size + "B"}
+			if allow, _ := p["allow_shrink"].(bool); allow {
+				args = append(args, "--allow-shrink")
+			}
+			return rbd(args, []string{"info", spec}), nil
 		}
 		if name := optional(p, "name"); name != "" {
-			destination := poolOf(spec) + "/" + name
+			if !identifier.MatchString(name) || strings.ContainsAny(name, "/@") {
+				return command{}, invalid("name must be an image name")
+			}
+			destination := spec[:strings.LastIndexByte(spec, '/')+1] + name
 			return rbd([]string{"rename", spec, destination}, []string{"info", destination}), nil
 		}
 		featureAction := optional(p, "feature_action")
@@ -522,7 +599,12 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return rbd([]string{"rm", spec}, []string{"ls", poolOf(spec)}), nil
+		parts := strings.Split(spec, "/")
+		check := []string{"ls", "--pool", parts[0]}
+		if len(parts) == 3 {
+			check = append(check, "--namespace", parts[1])
+		}
+		return rbd([]string{"rm", spec}, check), nil
 	case "rbd_snapshot.create":
 		spec, err := decodeImageSpec(pathValue(tail, "image"))
 		if err != nil {
@@ -559,12 +641,80 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		verb, err := enum(p, "action", "flatten", "sparsify", "copy", "deep-copy", "move-to-trash")
+		verb, err := enum(p, "action", "config-set", "config-remove", "snapshot-purge", "feature-enable", "feature-disable", "flatten", "sparsify", "copy", "deep-copy", "rename", "move-to-trash", "mirror-enable-journal", "mirror-enable-snapshot", "mirror-disable", "mirror-promote", "mirror-demote", "mirror-resync", "mirror-snapshot")
 		if err != nil {
 			return command{}, err
 		}
+		if verb == "config-set" || verb == "config-remove" {
+			name, err := required(p, "config_name")
+			if err != nil {
+				return command{}, err
+			}
+			if !strings.HasPrefix(name, "rbd_") || strings.ContainsAny(name, "/@") || security.IsSensitiveName(name) {
+				return command{}, invalid("config_name must be a non-secret RBD option")
+			}
+			args := []string{"config", "image", strings.TrimPrefix(verb, "config-"), spec, name}
+			if verb == "config-set" {
+				value, ok := p["config_value"].(string)
+				if !ok || value == "" || strings.ContainsAny(value, "\x00\r\n") || strings.HasPrefix(value, "-") {
+					return command{}, invalid("config_value must be a nonempty single-line value")
+				}
+				args = append(args, value)
+			}
+			return rbd(args, []string{"config", "image", "list", spec}), nil
+		}
+		if verb == "snapshot-purge" {
+			return rbd([]string{"snap", "purge", spec}, []string{"snap", "ls", spec}), nil
+		}
+		if verb == "feature-enable" || verb == "feature-disable" {
+			feature, err := enum(p, "feature", "exclusive-lock", "object-map", "fast-diff", "journaling", "deep-flatten")
+			if err != nil {
+				return command{}, err
+			}
+			if verb == "feature-enable" && feature == "deep-flatten" {
+				return command{}, invalid("deep-flatten cannot be enabled on an existing image")
+			}
+			return rbd([]string{"feature", strings.TrimPrefix(verb, "feature-"), spec, feature}, []string{"info", spec}), nil
+		}
+		if verb == "rename" {
+			name, err := required(p, "destination")
+			if err != nil {
+				return command{}, err
+			}
+			if strings.ContainsAny(name, "/@") {
+				return command{}, invalid("destination must be a new image name within the same pool and namespace")
+			}
+			parts := strings.Split(spec, "/")
+			destination := strings.Join(parts[:len(parts)-1], "/") + "/" + name
+			return rbd([]string{"rename", spec, destination}, []string{"info", destination}), nil
+		}
+		if strings.HasPrefix(verb, "mirror-") {
+			mirrorVerb := strings.TrimPrefix(verb, "mirror-")
+			args := []string{"mirror", "image", mirrorVerb, spec}
+			if strings.HasPrefix(mirrorVerb, "enable-") {
+				args = []string{"mirror", "image", "enable", spec, strings.TrimPrefix(mirrorVerb, "enable-")}
+			}
+			check := []string{"mirror", "image", "status", spec}
+			if mirrorVerb == "disable" {
+				check = []string{"info", spec}
+			}
+			return rbd(args, check), nil
+		}
 		if verb == "move-to-trash" {
-			return rbd([]string{"trash", "mv", spec}, []string{"trash", "ls", poolOf(spec)}), nil
+			scope := strings.Split(spec, "/")
+			check := []string{"trash", "ls", "--pool", scope[0]}
+			if len(scope) == 3 {
+				check = append(check, "--namespace", scope[1])
+			}
+			args := []string{"trash", "mv", spec}
+			if expiresAt := optional(p, "expires_at"); expiresAt != "" {
+				expires, err := time.Parse(time.RFC3339, expiresAt)
+				if err != nil {
+					return command{}, invalid("expires_at must be an RFC3339 timestamp with timezone")
+				}
+				args = append(args, "--expires-at="+expires.UTC().Format(time.RFC3339))
+			}
+			return rbd(args, check), nil
 		}
 		commandVerb := verb
 		if verb == "copy" {
@@ -576,7 +726,11 @@ func build(request Request, p map[string]any) (command, error) {
 			if err != nil {
 				return command{}, err
 			}
+			if err := validateRBDImagePath(destination); err != nil {
+				return command{}, err
+			}
 			args = append(args, destination)
+			return rbd(args, []string{"info", destination}), nil
 		}
 		return rbd(args, []string{"info", spec}), nil
 	case "rbd_snapshot.update":
@@ -608,6 +762,9 @@ func build(request Request, p map[string]any) (command, error) {
 			if err != nil {
 				return command{}, err
 			}
+			if err := validateRBDImagePath(destination); err != nil {
+				return command{}, err
+			}
 			return rbd([]string{"clone", spec + "@" + snap, destination}, []string{"info", destination}), nil
 		}
 		return rbd([]string{"snap", verb, spec + "@" + snap}, []string{"snap", "ls", spec}), nil
@@ -627,13 +784,107 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return rbd([]string{"trash", "remove", pool + "/" + imageID, "--force"}, []string{"trash", "ls", pool}), nil
+		scope := strings.Split(pool, "/")
+		check := []string{"trash", "ls", "--pool", scope[0]}
+		if len(scope) == 2 {
+			check = append(check, "--namespace", scope[1])
+		}
+		return rbd([]string{"trash", "remove", pool + "/" + imageID, "--force"}, check), nil
 	case "rbd_trash.purge":
 		pool, err := required(p, "pool")
 		if err != nil {
 			return command{}, err
 		}
-		return rbd([]string{"trash", "purge", pool}, []string{"trash", "ls", pool}), nil
+		scope := strings.Split(pool, "/")
+		if len(scope) > 2 || scope[0] == "" || (len(scope) == 2 && scope[1] == "") {
+			return command{}, invalid("pool must be pool or pool/namespace")
+		}
+		flags := []string{"--pool", scope[0]}
+		if len(scope) == 2 {
+			flags = append(flags, "--namespace", scope[1])
+		}
+		args := append([]string{"trash", "purge"}, flags...)
+		if cutoff := optional(p, "expired_before"); cutoff != "" {
+			expires, err := time.Parse(time.RFC3339, cutoff)
+			if err != nil {
+				return command{}, invalid("expired_before must be an RFC3339 timestamp with timezone")
+			}
+			args = append(args, "--expired-before="+expires.UTC().Format(time.RFC3339))
+		}
+		return rbd(args, append([]string{"trash", "ls"}, flags...)), nil
+	case "rbd_group.snapshot":
+		group, err := required(p, "group_spec")
+		if err != nil {
+			return command{}, err
+		}
+		name, err := required(p, "name")
+		if err != nil {
+			return command{}, err
+		}
+		verb, err := enum(p, "action", "create", "remove", "rollback", "rename")
+		if err != nil {
+			return command{}, err
+		}
+		args := []string{"group", "snap", verb, group + "@" + name}
+		if verb == "rename" {
+			destination, err := required(p, "new_name")
+			if err != nil {
+				return command{}, err
+			}
+			if strings.ContainsAny(destination, "/@") {
+				return command{}, invalid("new_name must be a snapshot name")
+			}
+			args = append(args, destination)
+		}
+		return rbd(args, []string{"group", "snap", "list", group}), nil
+	case "rbd_group.member":
+		group, err := required(p, "group_spec")
+		if err != nil {
+			return command{}, err
+		}
+		image, err := required(p, "image")
+		if err != nil {
+			return command{}, err
+		}
+		verb, err := enum(p, "action", "add", "remove")
+		if err != nil {
+			return command{}, err
+		}
+		return rbd([]string{"group", "image", verb, group, image}, []string{"group", "image", "list", group}), nil
+	case "rbd_group.action":
+		group, err := required(p, "group_spec")
+		if err != nil {
+			return command{}, err
+		}
+		parts := strings.Split(group, "/")
+		if len(parts) < 2 || len(parts) > 3 {
+			return command{}, invalid("group_spec must include pool and group")
+		}
+		for _, part := range parts {
+			if part == "" {
+				return command{}, invalid("group_spec contains an empty component")
+			}
+		}
+		verb, err := enum(p, "action", "rename", "remove")
+		if err != nil {
+			return command{}, err
+		}
+		args := []string{"group", verb, group}
+		if verb == "rename" {
+			name, err := required(p, "name")
+			if err != nil {
+				return command{}, err
+			}
+			if strings.Contains(name, "/") {
+				return command{}, invalid("name must be a group name within the same pool and namespace")
+			}
+			args = append(args, strings.Join(parts[:len(parts)-1], "/")+"/"+name)
+		}
+		check := []string{"group", "list", "--pool", parts[0]}
+		if len(parts) == 3 {
+			check = append(check, "--namespace", parts[1])
+		}
+		return rbd(args, check), nil
 	case "rbd_group.create":
 		pool, err := required(p, "pool")
 		if err != nil {
@@ -644,6 +895,55 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, err
 		}
 		return rbd([]string{"group", "create", pool + "/" + name}, []string{"group", "list", pool}), nil
+	case "rbd_mirroring.peer":
+		pool, err := required(p, "pool")
+		if err != nil {
+			return command{}, err
+		}
+		verb, err := enum(p, "action", "add", "remove", "set")
+		if err != nil {
+			return command{}, err
+		}
+		args := []string{"mirror", "pool", "peer", verb, pool}
+		if verb == "remove" || verb == "set" {
+			id, err := required(p, "uuid")
+			if err != nil {
+				return command{}, err
+			}
+			args = append(args, id)
+			if verb == "set" {
+				field, err := enum(p, "field", "site-name", "client", "mon-host", "direction")
+				if err != nil {
+					return command{}, err
+				}
+				value := optional(p, "value")
+				if value == "" || strings.ContainsAny(value, "\x00\r\n") || strings.HasPrefix(value, "-") {
+					return command{}, invalid("value is required or invalid")
+				}
+				if field == "direction" {
+					value, err = enum(p, "value", "rx-only", "tx-only", "rx-tx")
+					if err != nil {
+						return command{}, err
+					}
+				}
+				args = append(args, field, value)
+			}
+		} else {
+			site, err := required(p, "remote_cluster")
+			if err != nil {
+				return command{}, err
+			}
+			client, err := required(p, "remote_client")
+			if err != nil {
+				return command{}, err
+			}
+			direction, err := enum(p, "direction", "rx-only", "rx-tx")
+			if err != nil {
+				return command{}, err
+			}
+			args = append(args, "--remote-cluster="+site, "--remote-client-name="+client, "--direction="+direction)
+		}
+		return rbd(args, []string{"mirror", "pool", "info", pool}), nil
 	case "rbd_mirroring.update":
 		pool, err := required(p, "pool")
 		if err != nil {
@@ -766,7 +1066,9 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, err
 		}
 		return ceph([]string{"fs", "subvolume", "snapshot", "clone", fs, subvolume, snapshot, target}, []string{"fs", "clone", "status", fs, target, "--format", "json"}), nil
-	case "snapshot_schedule.create":
+	case "snapshot_schedule.retention":
+		return snapshotRetention(request, p)
+	case "snapshot_schedule.create", "snapshot_schedule.action":
 		fs := pathValue(tail, "filesystem")
 		path, err := required(p, "path")
 		if err != nil {
@@ -776,7 +1078,36 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return ceph([]string{"fs", "snap-schedule", "add", path, schedule, fs}, []string{"fs", "snap-schedule", "list", path, "--format", "json"}), nil
+		if fs == "" {
+			return command{}, invalid("filesystem is required")
+		}
+		args := []string{"fs", "snap-schedule", "add", path, schedule, "--fs", fs}
+		if action == "snapshot_schedule.action" {
+			if _, err := required(p, "start"); err != nil {
+				return command{}, err
+			}
+			verb, err := enum(p, "action", "activate", "deactivate", "remove")
+			if err != nil {
+				return command{}, err
+			}
+			args = []string{"fs", "snap-schedule", verb, path, "--repeat=" + schedule, "--fs=" + fs}
+		}
+		for _, option := range []string{"start", "subvol", "group"} {
+			if value, ok := p[option].(string); ok && value != "" {
+				if strings.ContainsAny(value, "\x00\r\n") {
+					return command{}, invalid("invalid snapshot schedule option")
+				}
+				args = append(args, "--"+option+"="+value)
+			}
+		}
+
+		check := []string{"fs", "snap-schedule", "status", path, "--fs", fs, "--format", "json"}
+		for _, option := range []string{"subvol", "group"} {
+			if value, ok := p[option].(string); ok && value != "" {
+				check = append(check, "--"+option+"="+value)
+			}
+		}
+		return ceph(args, check), nil
 	case "cephfs_authorization.create":
 		fs := pathValue(tail, "filesystem")
 		client, err := required(p, "client")
@@ -809,7 +1140,17 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
+		if strings.TrimSpace(rawText(p, "display_name")) == "" {
+			return command{}, invalid("display_name is required")
+		}
 		args := []string{"user", "create", "--uid", uid}
+		if maximum := optional(p, "max_buckets"); maximum != "" {
+			limit, err := strconv.ParseInt(maximum, 10, 32)
+			if err != nil || limit < -1 {
+				return command{}, invalid("max_buckets must be -1 or a nonnegative integer")
+			}
+			args = append(args, "--max-buckets", maximum)
+		}
 		for field, flag := range map[string]string{"display_name": "--display-name", "email": "--email"} {
 			if value := rawText(p, field); value != "" {
 				args = append(args, flag, value)
@@ -819,23 +1160,188 @@ func build(request Request, p map[string]any) (command, error) {
 	case "rgw_user.update":
 		uid := last(tail)
 		args := []string{"user", "modify", "--uid", uid}
-		for field, flag := range map[string]string{"display_name": "--display-name", "email": "--email", "max_buckets": "--max-buckets"} {
+		for field, flag := range map[string]string{"display_name": "--display-name", "max_buckets": "--max-buckets"} {
 			if value := rawText(p, field); value != "" {
 				args = append(args, flag, value)
 			}
 		}
-		for field, flag := range map[string]string{"suspended": "--suspended", "system": "--system"} {
+		if email, ok := p["email"].(string); ok {
+			if strings.ContainsAny(email, "\x00\r\n") {
+				return command{}, invalid("email must be a single-line string")
+			}
+			args = append(args, "--email="+email)
+		}
+		for field, flag := range map[string]string{"system": "--system"} {
 			if value, ok := p[field].(bool); ok {
 				args = append(args, flag, strconv.FormatBool(value))
 			}
+		}
+		if suspended, ok := p["suspended"].(bool); ok {
+			verb := "enable"
+			if suspended {
+				verb = "suspend"
+			}
+			stateCommand := rgw([]string{"user", verb, "--uid", uid}, []string{"user", "info", "--uid", uid})
+			if len(args) == 4 {
+				return stateCommand, nil
+			}
+			result := rgw(args, nil)
+			result.followups = []command{stateCommand}
+			return result, nil
 		}
 		if len(args) == 4 {
 			return command{}, invalid("at least one user field is required")
 		}
 		return rgw(args, []string{"user", "info", "--uid", uid}), nil
+	case "rgw_user.ratelimit", "rgw_bucket.ratelimit":
+		uid := rawText(p, "uid")
+		if action == "rgw_bucket.ratelimit" {
+			uid = "bucket"
+		}
+		if !regexp.MustCompile(`^[A-Za-z0-9_.:@$-]+$`).MatchString(uid) || strings.HasPrefix(uid, "-") {
+			return command{}, invalid("uid is invalid")
+		}
+		enabled, ok := p["enabled"].(bool)
+		if !ok {
+			return command{}, invalid("enabled must be a boolean")
+		}
+		target := []string{"--uid", uid, "--ratelimit-scope", "user"}
+		if action == "rgw_bucket.ratelimit" {
+			raw, err := base64.RawURLEncoding.DecodeString(rawText(p, "bucket_id"))
+			pair := strings.SplitN(string(raw), "\x00", 2)
+			if err != nil || len(pair) != 2 || pair[1] == "" || strings.HasPrefix(pair[1], "-") || strings.ContainsAny(pair[0]+pair[1], "\r\n\x00") {
+				return command{}, invalid("bucket_id is invalid")
+			}
+			target = []string{"--bucket", pair[1], "--ratelimit-scope", "bucket"}
+			if pair[0] != "" {
+				target = append(target, "--tenant", pair[0])
+			}
+		}
+		args := append([]string{"ratelimit", "set"}, target...)
+		for _, field := range []string{"max_read_ops", "max_write_ops", "max_read_bytes", "max_write_bytes"} {
+			value, err := strconv.ParseInt(optional(p, field), 10, 64)
+			if err != nil || value < 0 || value > 9007199254740991 {
+				return command{}, invalid(field + " must be a nonnegative safe integer")
+			}
+			args = append(args, "--"+strings.ReplaceAll(field, "_", "-"), strconv.FormatInt(value, 10))
+		}
+		verb := "disable"
+		if enabled {
+			verb = "enable"
+		}
+		result := rgw(args, nil)
+		result.followups = []command{rgw(append([]string{"ratelimit", verb}, target...), append([]string{"ratelimit", "get"}, target...))}
+		return result, nil
+	case "rgw_user.caps":
+		uid := rawText(p, "uid")
+		if !regexp.MustCompile(`^[A-Za-z0-9_.:@$-]+$`).MatchString(uid) || strings.HasPrefix(uid, "-") {
+			return command{}, invalid("uid is invalid")
+		}
+		verb, err := enum(p, "action", "add", "rm")
+		if err != nil {
+			return command{}, err
+		}
+		kind := rawText(p, "type")
+		if !regexp.MustCompile(`^[a-z][a-z0-9-]*$`).MatchString(kind) {
+			return command{}, invalid("capability type is invalid")
+		}
+		permission, err := enum(p, "permission", "read", "write", "read,write", "*")
+		if err != nil {
+			return command{}, err
+		}
+		return rgw([]string{"caps", verb, "--uid", uid, "--caps", kind + "=" + permission}, []string{"user", "info", "--uid", uid}), nil
 	case "rgw_user.delete":
 		uid := last(tail)
 		return rgw([]string{"user", "rm", "--uid", uid}, []string{"user", "list"}), nil
+	case "rgw_account.quota", "rgw_user.quota":
+		idField, idFlag, scopeName, noun, readVerb := "account_id", "--account-id", "account", "account", "get"
+		if action == "rgw_user.quota" {
+			idField, idFlag, scopeName, noun, readVerb = "uid", "--uid", "user", "user", "info"
+		}
+		id, err := required(p, idField)
+		if action == "rgw_user.quota" {
+			id = rawText(p, "uid")
+			if regexp.MustCompile(`^[A-Za-z0-9_.:@$-]+$`).MatchString(id) && !strings.HasPrefix(id, "-") {
+				err = nil
+			} else {
+				err = invalid("uid is invalid")
+			}
+		}
+		if err != nil {
+			return command{}, err
+		}
+		scope, err := enum(p, "scope", scopeName, "bucket")
+		if err != nil {
+			return command{}, err
+		}
+		enabled, ok := p["enabled"].(bool)
+		if !ok {
+			return command{}, invalid("enabled must be a boolean")
+		}
+		verb := "disable"
+		if enabled {
+			verb = "enable"
+		}
+		if action == "rgw_user.quota" && !enabled {
+			verb = "set"
+		}
+		args := []string{"quota", verb, idFlag, id, "--quota-scope", scope}
+		for _, field := range []string{"max_size", "max_objects"} {
+			value, err := strconv.ParseInt(optional(p, field), 10, 64)
+			if err != nil || value < -1 || value > 9007199254740991 {
+				return command{}, invalid(field + " must be -1 or a nonnegative safe integer")
+			}
+			encoded := strconv.FormatInt(value, 10)
+			if field == "max_size" {
+				if value < 0 {
+					encoded = "-1024"
+				} else {
+					encoded += "B"
+				}
+			}
+			args = append(args, "--"+strings.ReplaceAll(field, "_", "-"), encoded)
+		}
+		check := []string{noun, readVerb, idFlag, id}
+		if action == "rgw_user.quota" && !enabled {
+			result := rgw(args, nil)
+			result.followups = []command{rgw([]string{"quota", "disable", idFlag, id, "--quota-scope", scope}, check)}
+			return result, nil
+		}
+		return rgw(args, check), nil
+	case "rgw_account.update":
+		id, err := required(p, "account_id")
+		if err != nil {
+			return command{}, err
+		}
+		args := []string{"account", "modify", "--account-id", id}
+		for _, field := range []string{"account_name", "email"} {
+			if _, exists := p[field]; exists {
+				value := rawText(p, field)
+				if value == "" {
+					return command{}, invalid(field + " cannot be cleared by the native account command")
+				}
+				args = append(args, "--"+strings.ReplaceAll(field, "_", "-")+"="+value)
+			}
+		}
+		for _, field := range []string{"max_users", "max_roles", "max_groups", "max_buckets", "max_access_keys"} {
+			if _, exists := p[field]; exists {
+				value, err := strconv.ParseInt(optional(p, field), 10, 32)
+				if err != nil || value < -1 {
+					return command{}, invalid(field + " must be -1 or a nonnegative integer")
+				}
+				args = append(args, "--"+strings.ReplaceAll(field, "_", "-"), strconv.FormatInt(value, 10))
+			}
+		}
+		if len(args) == 4 {
+			return command{}, invalid("at least one account field is required")
+		}
+		return rgw(args, []string{"account", "get", "--account-id", id}), nil
+	case "rgw_account.delete":
+		id, err := required(p, "account_id")
+		if err != nil {
+			return command{}, err
+		}
+		return rgw([]string{"account", "rm", "--account-id", id}, []string{"account", "list"}), nil
 	case "rgw_account.create":
 		accountID, err := required(p, "account_id")
 		if err != nil {
@@ -848,18 +1354,89 @@ func build(request Request, p map[string]any) (command, error) {
 			}
 		}
 		return rgw(args, []string{"account", "get", "--account-id", accountID}), nil
+	case "rgw_role.policy":
+		name, err := required(p, "name")
+		if err != nil {
+			return command{}, err
+		}
+		policyName, err := required(p, "policy_name")
+		if err != nil {
+			return command{}, err
+		}
+		action, err := enum(p, "action", "put", "delete")
+		if err != nil {
+			return command{}, err
+		}
+		args := []string{"role-policy", action, "--role-name", name, "--policy-name", policyName}
+		if action == "put" {
+			policy := rawText(p, "policy_document")
+			var doc map[string]any
+			if json.Unmarshal([]byte(policy), &doc) != nil || doc == nil {
+				return command{}, invalid("policy_document must be a JSON object")
+			}
+			args = append(args, "--perm-policy-doc", policy)
+		}
+		return rgw(args, []string{"role", "get", "--role-name", name}), nil
+	case "rgw_role.update":
+		name, err := required(p, "name")
+		if err != nil {
+			return command{}, err
+		}
+		var commands []command
+		if _, exists := p["assume_role_policy"]; exists {
+			policy := rawText(p, "assume_role_policy")
+			var doc map[string]any
+			if json.Unmarshal([]byte(policy), &doc) != nil || doc == nil {
+				return command{}, invalid("assume_role_policy must be a JSON object")
+			}
+			commands = append(commands, rgw([]string{"role-trust-policy", "modify", "--role-name", name, "--assume-role-policy-doc", policy}, nil))
+		}
+		if _, exists := p["max_session_duration"]; exists {
+			duration, err := strconv.ParseInt(optional(p, "max_session_duration"), 10, 64)
+			if err != nil || duration < 3600 || duration > 43200 {
+				return command{}, invalid("max_session_duration must be an integer from 3600 to 43200 seconds")
+			}
+			commands = append(commands, rgw([]string{"role", "update", "--role-name", name, "--max-session-duration", strconv.FormatInt(duration, 10)}, nil))
+		}
+		if len(commands) == 0 {
+			return command{}, invalid("at least one role field is required")
+		}
+		commands[len(commands)-1].check = rgw(nil, []string{"role", "get", "--role-name", name}).check
+		result := commands[0]
+		result.followups = commands[1:]
+		return result, nil
+
+	case "rgw_role.delete":
+		name, err := required(p, "name")
+		if err != nil {
+			return command{}, err
+		}
+		return rgw([]string{"role", "delete", "--role-name", name}, []string{"role", "list"}), nil
 	case "rgw_role.create":
 		name, err := required(p, "name")
 		if err != nil {
 			return command{}, err
 		}
 		args := []string{"role", "create", "--role-name", name}
+		if _, exists := p["max_session_duration"]; exists {
+			duration, err := strconv.ParseInt(optional(p, "max_session_duration"), 10, 64)
+			if err != nil || duration < 3600 || duration > 43200 {
+				return command{}, invalid("max_session_duration must be an integer from 3600 to 43200 seconds")
+			}
+			args = append(args, "--max-session-duration", strconv.FormatInt(duration, 10))
+		}
+		if description := rawText(p, "description"); description != "" {
+			args = append(args, "--description", description)
+		}
 		if path := rawText(p, "path"); path != "" {
 			args = append(args, "--path", path)
 		}
-		if policy := rawText(p, "assume_role_policy"); policy != "" {
-			args = append(args, "--assume-role-policy-doc", policy)
+		policy := rawText(p, "assume_role_policy")
+		var policyDocument map[string]any
+		if json.Unmarshal([]byte(policy), &policyDocument) != nil || policyDocument == nil {
+			return command{}, invalid("assume_role_policy must be a JSON object")
 		}
+		args = append(args, "--assume-role-policy-doc", policy)
 		return rgw(args, []string{"role", "get", "--role-name", name}), nil
 	case "rgw_key.create":
 		uid := pathValue(tail, "user")
@@ -982,20 +1559,8 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, err
 		}
 		return ceph([]string{"smb", "share", "rm", cluster, share}, []string{"smb", "share", "ls", cluster, "--format", "json"}), nil
-	case "config_value.set":
-		who := pathValue(tail, "value")
-		name := last(tail)
-		value, err := required(p, "value")
-		if err != nil {
-			return command{}, err
-		}
-		return ceph([]string{"config", "set", who, name, value}, []string{"config", "get", who, name, "--format", "json"}), nil
-	case "config_value.delete":
-		segments := strings.Split(tail, "/")
-		if len(segments) < 3 {
-			return command{}, invalid("invalid configuration resource")
-		}
-		return ceph([]string{"config", "rm", segments[len(segments)-2], segments[len(segments)-1]}, []string{"config", "dump", "--format", "json"}), nil
+	case "config_value.set", "config_value.delete":
+		return configurationCommand(request, p)
 	default:
 		return command{}, unsupported(action)
 	}
@@ -1442,8 +2007,25 @@ func decodeImageSpec(value string) (string, error) {
 	if err != nil || !identifier.Match(decoded) {
 		return "", invalid("image_spec is invalid")
 	}
+	if err := validateRBDImagePath(string(decoded)); err != nil {
+		return "", err
+	}
 	return string(decoded), nil
 }
+
+func validateRBDImagePath(spec string) error {
+	parts := strings.Split(spec, "/")
+	if len(parts) < 2 || len(parts) > 3 {
+		return invalid("image path must include pool and image")
+	}
+	for _, part := range parts {
+		if part == "" || strings.Contains(part, "@") || !identifier.MatchString(part) {
+			return invalid("image path contains an invalid component")
+		}
+	}
+	return nil
+}
+
 func decodePair(value string) (string, string, error) {
 	decoded, err := base64.RawURLEncoding.DecodeString(value)
 	if err != nil {

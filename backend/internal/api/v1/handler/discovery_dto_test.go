@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -66,5 +67,32 @@ func assertInternalDiscoveryFieldsHidden(t *testing.T, value any) {
 		if strings.Contains(string(encoded), `"`+field+`"`) {
 			t.Fatalf("internal field %q leaked in %s", field, encoded)
 		}
+	}
+}
+
+func TestRBDStateComesOnlyFromDiscovery(t *testing.T) {
+	configured := `{"name":"old-name","image_spec":"raw/pool/image","destination":"other/image"}`
+	row := store.CephEntityRecord{Kind: "rbd_image", ConfiguredData: &configured, DiscoveredData: `{"name":"new-name","image_spec":"encoded"}`}
+	data := toResourceDTO(row).Data.(map[string]any)
+	if data["name"] != "new-name" || data["image_spec"] != "encoded" || data["destination"] != nil {
+		t.Fatalf("request fields leaked into observed state: %v", data)
+	}
+	h := &Handler{}
+	for _, action := range []string{"rbd_image.create", "rbd_image.update", "rbd_image.delete", "rbd_image.action"} {
+		if err := h.persistResourceMutation(context.Background(), 1, "rbd_image", action, "pool/image", map[string]any{"name": "image"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestRGWUserUsesNativeState(t *testing.T) {
+	configured := `{"suspended":false,"email":"old@example.com"}`
+	row := store.CephEntityRecord{Kind: "rgw_user", ConfiguredData: &configured, DiscoveredData: `{"uid":"tenant$user","suspended":1,"email":""}`}
+	data := toResourceDTO(row).Data.(map[string]any)
+	if data["suspended"] != float64(1) || data["email"] != "" {
+		t.Fatalf("native user state overwritten: %v", data)
+	}
+	if err := (&Handler{}).persistResourceMutation(context.Background(), 1, "rgw_user", "rgw_user.create", "user", nil); err != nil {
+		t.Fatal(err)
 	}
 }

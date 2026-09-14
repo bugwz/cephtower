@@ -4,6 +4,7 @@ import "cephtower/backend/internal/api/v1/handler"
 
 func configurationRoutes(h *handler.Handler) []Route {
 	return []Route{
+		{"GET", "/configuration/option", h.GetConfigurationOption},
 		{"GET", "/configuration/options", h.ListConfigurationOptions},
 		{"GET", "/configuration/values", h.ListConfigurationValues},
 		{"PUT", "/configuration/value", h.SetConfigurationValue},

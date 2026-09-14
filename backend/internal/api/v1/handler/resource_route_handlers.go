@@ -1,10 +1,8 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
 )
@@ -381,7 +379,7 @@ func (h *Handler) CreateRBDGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetRBDMirroring(w http.ResponseWriter, r *http.Request) {
-	h.ReadResource("rbd_mirroring", true)(w, r)
+	h.ReadResource("rbd_mirroring", false)(w, r)
 }
 
 func (h *Handler) UpdateRBDMirroring(w http.ResponseWriter, r *http.Request) {
@@ -470,10 +468,6 @@ func (h *Handler) DeleteCephFSSnapshot(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) CloneCephFSSnapshot(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("cephfs_snapshot", "cephfs_snapshot.clone", "medium")(w, r)
-}
-
-func (h *Handler) ListSnapshotSchedules(w http.ResponseWriter, r *http.Request) {
-	h.ReadResource("snapshot_schedule", false)(w, r)
 }
 
 func (h *Handler) CreateSnapshotSchedule(w http.ResponseWriter, r *http.Request) {
@@ -788,35 +782,6 @@ func (h *Handler) DeleteConfigurationValue(w http.ResponseWriter, r *http.Reques
 	h.MutateResource("config_value", "config_value.delete", "medium")(w, r)
 }
 
-func (h *Handler) ListLogs(w http.ResponseWriter, r *http.Request) {
-	h.ReadResource("log", false)(w, r)
-}
-
-func (h *Handler) StreamEvents(w http.ResponseWriter, r *http.Request) {
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		WriteError(w, r, http.StatusInternalServerError, "stream_unavailable", "streaming is unavailable", false, nil)
-		return
-	}
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("X-Accel-Buffering", "no")
-	_ = http.NewResponseController(w).SetWriteDeadline(time.Time{})
-	heartbeat := time.NewTicker(10 * time.Second)
-	defer heartbeat.Stop()
-	for {
-		select {
-		case <-r.Context().Done():
-			return
-		case <-heartbeat.C:
-			if _, err := fmt.Fprint(w, ": heartbeat\n\n"); err != nil {
-				return
-			}
-			flusher.Flush()
-		}
-	}
-}
-
 func (h *Handler) QueryMetric(w http.ResponseWriter, r *http.Request) {
 	h.ReadExternal("metric")(w, r)
 }
@@ -847,4 +812,68 @@ func (h *Handler) DeleteSilence(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetGrafana(w http.ResponseWriter, r *http.Request) {
 	h.ReadExternal("grafana")(w, r)
+}
+
+func (h *Handler) RunSnapshotScheduleAction(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("snapshot_schedule", "snapshot_schedule.action", "medium")(w, r)
+}
+
+func (h *Handler) UpdateSnapshotRetention(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("snapshot_schedule", "snapshot_schedule.retention", "medium")(w, r)
+}
+
+func (h *Handler) UpdateRBDGroupMember(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rbd_group", "rbd_group.member", "medium")(w, r)
+}
+
+func (h *Handler) CreateRBDGroupSnapshot(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rbd_group", "rbd_group.snapshot", "medium")(w, r)
+}
+
+func (h *Handler) UpdateRBDMirroringPeer(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rbd_mirroring", "rbd_mirroring.peer", "medium")(w, r)
+}
+
+func (h *Handler) RunRBDGroupAction(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rbd_group", "rbd_group.action", "medium")(w, r)
+}
+
+func (h *Handler) DeleteRGWRole(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_role", "rgw_role.delete", "high")(w, r)
+}
+
+func (h *Handler) UpdateRGWRole(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_role", "rgw_role.update", "medium")(w, r)
+}
+
+func (h *Handler) MutateRGWRolePolicy(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_role", "rgw_role.policy", "medium")(w, r)
+}
+
+func (h *Handler) DeleteRGWAccount(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_account", "rgw_account.delete", "high")(w, r)
+}
+
+func (h *Handler) UpdateRGWAccount(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_account", "rgw_account.update", "medium")(w, r)
+}
+
+func (h *Handler) UpdateRGWAccountQuota(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_account", "rgw_account.quota", "medium")(w, r)
+}
+
+func (h *Handler) UpdateRGWUserQuota(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_user", "rgw_user.quota", "medium")(w, r)
+}
+
+func (h *Handler) MutateRGWUserCaps(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_user", "rgw_user.caps", "medium")(w, r)
+}
+
+func (h *Handler) UpdateRGWUserRateLimit(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_user", "rgw_user.ratelimit", "medium")(w, r)
+}
+
+func (h *Handler) UpdateRGWBucketRateLimit(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_bucket", "rgw_bucket.ratelimit", "medium")(w, r)
 }

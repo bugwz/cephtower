@@ -24,7 +24,11 @@ func rbdRoutes(h *handler.Handler) []Route {
 		{"POST", "/rbd/trash/purge", h.PurgeRBDTrash},
 		{"GET", "/rbd/groups", h.ListRBDGroups},
 		{"POST", "/rbd/group", h.CreateRBDGroup},
+		{"POST", "/rbd/group/action", h.RunRBDGroupAction},
+		{"POST", "/rbd/group/member", h.UpdateRBDGroupMember},
+		{"POST", "/rbd/group/snapshot", h.CreateRBDGroupSnapshot},
 		{"GET", "/rbd/mirroring", h.GetRBDMirroring},
 		{"PATCH", "/rbd/mirroring", h.UpdateRBDMirroring},
+		{"POST", "/rbd/mirroring/peer", h.UpdateRBDMirroringPeer},
 	}
 }

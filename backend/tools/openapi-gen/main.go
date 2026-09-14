@@ -68,7 +68,7 @@ func generate() []byte {
 						b.WriteString("            format: " + parameter.Format + "\n")
 					}
 					if len(parameter.Enum) > 0 {
-						b.WriteString("            enum: [" + strings.Join(parameter.Enum, ", ") + "]\n")
+						b.WriteString("            enum: [" + yamlEnum(parameter.Enum) + "]\n")
 					}
 				}
 			}
@@ -95,6 +95,13 @@ func generate() []byte {
 func successResponseSchema(route router.Route) string {
 	key := route.Method + " " + route.Path
 	switch key {
+	case "GET /logs":
+		return "CephLogsResponse"
+	case "GET /configuration/option", "GET /osd/inspection", "GET /filesystem/snapshot/schedule/status":
+		return "ConfigurationOptionResponse"
+
+	case "GET /ceph/users/export":
+		return "CephKeyringResponse"
 	case "GET /healthz", "GET /readyz":
 		return "HealthResponse"
 	case "GET /bootstrap":
@@ -186,6 +193,8 @@ func writeResponseSchemas(b *strings.Builder) {
 		{"ExternalResultResponse", "ExternalResultData"}, {"ISCSIGatewayResponse", "ISCSIGateway"},
 		{"ISCSITargetResponse", "ISCSITarget"}, {"ISCSITargetListResponse", "ISCSITargetListData"},
 		{"BucketConfigurationResponse", "BucketConfiguration"},
+		{"CephKeyringResponse", "CephKeyring"},
+		{"CephLogsResponse", "CephLogs"}, {"ConfigurationOptionResponse", "JSONValue"},
 	}
 	for _, response := range responses {
 		b.WriteString("    " + response.name + ":\n      allOf:\n        - $ref: '#/components/schemas/APIResponse'\n        - type: object\n          unevaluatedProperties: false\n          required: [data]\n          properties:\n            data:\n              $ref: '#/components/schemas/" + response.data + "'\n")
@@ -320,6 +329,24 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"username": stringField(true), "display_name": stringField(true), "email": stringField(false), "password": {Type: "string", Required: true, WriteOnly: true}, "role": stringField(route.Path == "/user")}
 	case "POST /auth/login":
 		fields = map[string]handler.JSONField{"username": stringField(true), "password": {Type: "string", Required: true, WriteOnly: true}}
+	case "GET /logs":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "channel": {Type: "string", Enum: []string{"cluster", "audit", "cephadm", "*"}}, "level": {Type: "string", Enum: []string{"debug", "info", "sec", "warn", "error"}}, "limit": integerField(false)}
+	case "GET /filesystem/snapshot/schedule/status":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true), "subvol": stringField(false), "group": stringField(false)}
+	case "GET /osd/inspection":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "osd_id": stringField(true), "section": {Type: "string", Required: true, Enum: []string{"metadata", "histogram"}}}
+	case "GET /configuration/option":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "name": stringField(true)}
+	case "GET /ceph/users/export":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "entities": stringArrayField(true)}
+	case "POST /ceph/user":
+		return handler.MutationRequestContract("ceph_user.create")
+	case "PATCH /ceph/user":
+		return handler.MutationRequestContract("ceph_user.update")
+	case "DELETE /ceph/user":
+		return handler.MutationRequestContract("ceph_user.delete")
+	case "POST /ceph/users/import":
+		return handler.MutationRequestContract("ceph_user.import")
 	case "POST /role":
 		fields = map[string]handler.JSONField{"name": stringField(true), "description": stringField(false)}
 	case "POST /role/binding":
@@ -336,7 +363,7 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
 	case "POST /resource/refresh":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "scope": stringField(false), "module": stringField(false), "modules": stringArrayField(false), "kind": stringField(false), "kinds": stringArrayField(false)}
-	case "GET /cluster", "GET /cluster/capabilities", "GET /credentials", "GET /endpoints", "GET /role/bindings", "GET /logs/stream":
+	case "GET /cluster", "GET /cluster/capabilities", "GET /credentials", "GET /endpoints", "GET /role/bindings":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
 	case "PUT /credential":
 		credentialFields := map[string]handler.JSONField{"token": {Type: "string", WriteOnly: true}, "username": stringField(false), "password": {Type: "string", WriteOnly: true}, "ca_certificate": {Type: "string", WriteOnly: true}, "client_certificate": {Type: "string", WriteOnly: true}, "client_key": {Type: "string", WriteOnly: true}, "access_key": {Type: "string", WriteOnly: true}, "secret_key": {Type: "string", WriteOnly: true}, "session_token": {Type: "string", WriteOnly: true}, "region": stringField(false)}
@@ -426,9 +453,17 @@ func writeFieldSchema(b *strings.Builder, field handler.JSONField, indent int) {
 	if len(field.Enum) > 0 {
 		values := append([]string(nil), field.Enum...)
 		sort.Strings(values)
-		b.WriteString(pad + "enum: [" + strings.Join(values, ", ") + "]\n")
+		b.WriteString(pad + "enum: [" + yamlEnum(values) + "]\n")
 	}
 }
+func yamlEnum(values []string) string {
+	quoted := make([]string, len(values))
+	for i, value := range values {
+		quoted[i] = fmt.Sprintf("%q", value)
+	}
+	return strings.Join(quoted, ", ")
+}
+
 func explicitSuccessStatus(route router.Route) string {
 	key := route.Method + " " + route.Path
 	switch key {
@@ -494,7 +529,6 @@ func isItemResourceRoute(route router.Route) bool {
 		"/filesystem/subvolume/groups",
 		"/filesystem/subvolumes",
 		"/filesystem/subvolume/snapshots",
-		"/filesystem/snapshot/schedules",
 		"/filesystem/authorizations",
 		"/filesystem/entries",
 		"/rbd/trash":
@@ -884,6 +918,32 @@ const components = `components:
         - type: object
           properties:
             items: {type: array, items: {$ref: '#/components/schemas/ISCSITarget'}}
+    CephLogs:
+      type: object
+      additionalProperties: false
+      required: [items, observed_at]
+      properties:
+        observed_at: {type: string, format: date-time}
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              name: {type: string}
+              rank: {type: string}
+              stamp: {type: string}
+              seq: {type: string}
+              channel: {type: string}
+              priority: {type: string}
+              message: {type: string}
+              addrs: {$ref: '#/components/schemas/JSONValue'}
+    CephKeyring:
+      type: object
+      additionalProperties: false
+      required: [keyring]
+      properties:
+        keyring: {type: string, description: 'Selected Ceph entities in keyring format; contains secrets'}
     ListData:
       type: object
       additionalProperties: false

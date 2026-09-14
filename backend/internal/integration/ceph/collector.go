@@ -40,25 +40,41 @@ type collectionTraceKey struct{}
 type collectionTrace struct{ unavailable map[string]struct{} }
 
 var collectionFailureKinds = map[string][]string{
+	"collect.health_detail":           {"health_check"},
 	"collect.mds_fs":                  {"mds"},
 	"collect.upgrade":                 {"upgrade"},
 	"collect.cephfs_subvolume":        {"subvolume"},
+	"collect.rbd_image_status":        {"rbd_image"},
+	"collect.rbd_image_config":        {"rbd_image"},
+	"collect.rbd_image_info":          {"rbd_image"},
 	"collect.rbd_image":               {"rbd_image"},
 	"collect.rgw_status":              {"rgw_status"},
 	"collect.nfs_cluster":             {"nfs_cluster", "nfs_export"},
 	"collect.smb_cluster":             {"smb_cluster", "smb_share"},
-	"collect.rbd_namespace":           {"rbd_namespace"},
-	"collect.rbd_image_detail":        {"rbd_snapshot"},
+	"collect.rbd_namespace":           {"rbd_namespace", "rbd_trash", "rbd_snapshot", "rbd_image", "rbd_group"},
+	"collect.rbd_image_detail":        {"rbd_snapshot", "rbd_image"},
 	"collect.rbd_snapshot":            {"rbd_snapshot"},
 	"collect.rbd_trash":               {"rbd_trash"},
+	"collect.rbd_group_images":        {"rbd_group"},
+	"collect.rbd_group_snapshots":     {"rbd_group"},
+	"collect.rbd_group_info":          {"rbd_group"},
 	"collect.rbd_group":               {"rbd_group"},
+	"collect.rbd_mirroring_status":    {"rbd_mirroring"},
 	"collect.rbd_mirroring":           {"rbd_mirroring"},
 	"collect.cephfs_group":            {"subvolume_group"},
 	"collect.cephfs_subvolume_detail": {"cephfs_snapshot"},
 	"collect.cephfs_snapshot":         {"cephfs_snapshot"},
+	"collect.rgw_user_ratelimit":      {"rgw_user"},
+	"collect.rgw_user_stats":          {"rgw_user"},
+	"collect.rgw_user_detail":         {"rgw_user"},
 	"collect.rgw_user":                {"rgw_user"},
-	"collect.rgw_account":             {"rgw_account"},
+	"collect.rgw_account_stats":       {"rgw_account"},
+	"collect.rgw_account_detail":      {"rgw_account", "rgw_role"},
+	"collect.rgw_account":             {"rgw_account", "rgw_role"},
+	"collect.rgw_role_detail":         {"rgw_role"},
 	"collect.rgw_role":                {"rgw_role"},
+	"collect.rgw_bucket_ratelimit":    {"rgw_bucket"},
+	"collect.rgw_bucket_detail":       {"rgw_bucket"},
 	"collect.rgw_bucket":              {"rgw_bucket"},
 	"collect.rgw_realm":               {"rgw_realm"},
 	"collect.rgw_zonegroup":           {"rgw_zonegroup"},
@@ -69,6 +85,7 @@ var collectionFailureKinds = map[string][]string{
 	"collect.smb_share":               {"smb_share"},
 	"collect.osd_removal":             {"osd_removal"},
 	"collect.config_option":           {"config_option"},
+	"collect.mgr_module_metadata":     {"mgr_module"},
 	"collect.mgr_module":              {"mgr_module"},
 	"collect.crush_rule":              {"crush_rule"},
 	"collect.erasure_code_profile":    {"erasure_code_profile"},
@@ -96,6 +113,8 @@ func (p *NativeProvider) Collect(ctx context.Context, access ClusterAccess, modu
 		return p.collectStorage(ctx, access)
 	case "inventory":
 		return p.collectInventory(ctx, access)
+	case "ceph_auth":
+		return p.collectCephUsers(ctx, access)
 	case "configuration":
 		return p.collectConfiguration(ctx, access)
 	default:
@@ -106,8 +125,7 @@ func (p *NativeProvider) Collect(ctx context.Context, access ClusterAccess, modu
 type statusWire struct {
 	FSID   string `json:"fsid"`
 	Health struct {
-		Status string                     `json:"status"`
-		Checks map[string]healthCheckWire `json:"checks"`
+		Status string `json:"status"`
 	} `json:"health"`
 	MonMap struct {
 		NumMons int   `json:"num_mons"`
@@ -182,13 +200,47 @@ func (p *NativeProvider) collectFast(ctx context.Context, access ClusterAccess) 
 		overview.PlacementGroups = append(overview.PlacementGroups, cephdomain.PGState{Name: state.StateName, Count: state.Count})
 	}
 	rows := []Observation{{Kind: "overview", NaturalKey: "overview", Name: "overview", Status: status.Health.Status, Source: "ceph_cli", SourceVersion: overview.CephVersion, Payload: overview, ObservedAt: now}}
-	for code, check := range status.Health.Checks {
+	var health struct {
+		Status string                     `json:"status"`
+		Checks map[string]healthCheckWire `json:"checks"`
+		Mutes  []struct {
+			Code    string `json:"code"`
+			TTL     string `json:"ttl"`
+			Sticky  bool   `json:"sticky"`
+			Summary string `json:"summary"`
+			Count   *int64 `json:"count"`
+		} `json:"mutes"`
+	}
+	// Status contains summaries only. Keep cached checks stale if the detailed
+	// command fails instead of replacing them with an apparently empty list.
+	if !p.optional(ctx, access, executor.BinaryCeph, "collect.health_detail", []string{"health", "detail", "--format", "json"}, &health) {
+		return rows, nil
+	}
+	if health.Status == "" || health.Checks == nil {
+		return nil, fmt.Errorf("parse collect.health_detail response: status and checks are required")
+	}
+	checks := make(map[string]cephdomain.HealthCheck, len(health.Checks))
+	for code, check := range health.Checks {
 		details := make([]string, 0, len(check.Detail))
 		for _, detail := range check.Detail {
 			details = append(details, detail.Message)
 		}
-		payload := cephdomain.HealthCheck{Code: code, Severity: check.Severity, Summary: check.Summary.Message, Detail: details, Count: check.Summary.Count, Muted: check.Muted}
-		rows = append(rows, Observation{Kind: "health_check", NaturalKey: code, Name: code, Status: check.Severity, Source: "ceph_cli", Payload: payload, ObservedAt: now})
+		payload := cephdomain.HealthCheck{Code: code, Severity: check.Severity, Summary: check.Summary.Message, Detail: details, Count: check.Summary.Count, Muted: check.Muted, Active: true}
+		checks[code] = payload
+	}
+	for _, mute := range health.Mutes {
+		if mute.Code == "" {
+			continue
+		}
+		check, exists := checks[mute.Code]
+		if !exists {
+			check = cephdomain.HealthCheck{Code: mute.Code, Severity: "HEALTH_OK", Summary: mute.Summary, Count: mute.Count, Detail: []string{}}
+		}
+		check.Muted, check.Sticky, check.MuteUntil = true, mute.Sticky, mute.TTL
+		checks[mute.Code] = check
+	}
+	for code, check := range checks {
+		rows = append(rows, Observation{Kind: "health_check", NaturalKey: code, Name: code, Status: check.Severity, Source: "ceph_cli", Payload: check, ObservedAt: now})
 	}
 	return rows, nil
 }
@@ -647,9 +699,10 @@ type fsDumpWire struct {
 	} `json:"filesystems"`
 }
 type rbdImageWire struct {
-	Name   string  `json:"name"`
-	Size   *uint64 `json:"size"`
-	Format *int    `json:"format"`
+	Snapshot *string `json:"snapshot"`
+	Name     string  `json:"image"`
+	Size     *uint64 `json:"size"`
+	Format   *int    `json:"format"`
 }
 type namedWire struct {
 	Name string `json:"name"`
@@ -745,13 +798,20 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		if err := p.runBinaryInto(ctx, access, executor.BinaryRBD, "collect.rbd_image", []string{"ls", "--long", pool.PoolName, "--format", "json"}, &images); err != nil {
 			continue
 		}
+		if images == nil {
+			markCollectionUnavailable(ctx, "collect.rbd_image")
+		}
 		for _, image := range images {
+			if image.Snapshot != nil {
+				continue
+			}
 			if strings.TrimSpace(image.Name) == "" {
 				return nil, fmt.Errorf("parse collect.rbd_image response: image name is required")
 			}
 			spec := pool.PoolName + "/" + image.Name
 			key := base64.RawURLEncoding.EncodeToString([]byte(spec))
-			payload := cephdomain.RBDImage{ImageSpec: key, Pool: pool.PoolName, Name: image.Name, SizeBytes: image.Size, Format: image.Format}
+			payload := cephdomain.RBDImage{ImagePath: spec, ImageSpec: key, Pool: pool.PoolName, Name: image.Name, SizeBytes: image.Size, Format: image.Format}
+			p.enrichRBDImage(ctx, access, spec, &payload)
 			rows = append(rows, Observation{Kind: "rbd_image", NaturalKey: key, Name: image.Name, Status: "available", Source: "rbd_cli", Payload: payload, ObservedAt: now})
 		}
 	}

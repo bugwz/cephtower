@@ -51,11 +51,18 @@ type Filesystem struct {
 	Up           map[string]int64 `json:"up"`
 }
 type RBDImage struct {
-	ImageSpec string  `json:"image_spec"`
-	Pool      string  `json:"pool"`
-	Name      string  `json:"name"`
-	SizeBytes *uint64 `json:"size_bytes"`
-	Format    *int    `json:"format"`
+	Configuration []PoolConfig   `json:"configuration,omitempty"`
+	RuntimeStatus map[string]any `json:"runtime_status,omitempty"`
+	Features      []string       `json:"features,omitempty"`
+	Parent        map[string]any `json:"parent,omitempty"`
+	Details       map[string]any `json:"details,omitempty"`
+	ImagePath     string         `json:"image_path"`
+	Namespace     string         `json:"namespace"`
+	ImageSpec     string         `json:"image_spec"`
+	Pool          string         `json:"pool"`
+	Name          string         `json:"name"`
+	SizeBytes     *uint64        `json:"size_bytes"`
+	Format        *int           `json:"format"`
 }
 type CephFSSubvolume struct {
 	Filesystem string `json:"filesystem"`

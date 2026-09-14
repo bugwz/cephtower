@@ -1,6 +1,15 @@
 package handler
 
-import "testing"
+import (
+	"encoding/base64"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"testing"
+)
 
 func TestMutationContractsRejectUnknownAndWrongType(t *testing.T) {
 	if err := ValidateMutationRequest("host.create", map[string]any{"hostname": "node-1", "password": "secret"}); err == nil {
@@ -104,10 +113,93 @@ func TestHostMutationContractsAcceptManagementFields(t *testing.T) {
 }
 
 func TestMutationContractsCoverAllRegisteredActions(t *testing.T) {
-	for _, action := range MutationContractActions() {
-		contract, ok := MutationRequestContract(action)
-		if !ok || contract.Fields == nil {
-			t.Fatalf("action %s has no contract", action)
+	files, err := filepath.Glob("*.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	checked := 0
+	for _, path := range files {
+		if strings.HasSuffix(path, "_test.go") {
+			continue
 		}
+		file, err := parser.ParseFile(token.NewFileSet(), path, nil, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ast.Inspect(file, func(node ast.Node) bool {
+			call, ok := node.(*ast.CallExpr)
+			if !ok {
+				return true
+			}
+			selector, ok := call.Fun.(*ast.SelectorExpr)
+			if !ok || selector.Sel.Name != "MutateResource" {
+				return true
+			}
+			if len(call.Args) < 2 {
+				t.Fatalf("%s: malformed mutation registration", path)
+			}
+			literal, ok := call.Args[1].(*ast.BasicLit)
+			if !ok || literal.Kind != token.STRING {
+				t.Fatalf("%s: dynamic action needs explicit contract coverage", path)
+			}
+			action, err := strconv.Unquote(literal.Value)
+			if err != nil {
+				t.Fatal(err)
+			}
+			contract, ok := MutationRequestContract(action)
+			if !ok || contract.Fields == nil {
+				t.Errorf("%s: action %s has no request contract", path, action)
+			}
+			checked++
+			return true
+		})
+	}
+	if checked == 0 {
+		t.Fatal("no mutation handlers inspected")
+	}
+}
+
+func TestHealthMuteContract(t *testing.T) {
+	if err := ValidateMutationRequest("health.mute", map[string]any{"cluster_id": float64(1), "code": "OSD_DOWN", "ttl": "1h", "sticky": true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateMutationRequest("health.mute", map[string]any{"cluster_id": float64(1), "code": "OSD_DOWN", "sticky": "true"}); err == nil {
+		t.Fatal("accepted string sticky")
+	}
+}
+
+func TestCephUserRequestContract(t *testing.T) {
+	for _, action := range []string{"ceph_user.create", "ceph_user.update"} {
+		if err := ValidateMutationRequest(action, map[string]any{"cluster_id": float64(1), "entity": "client.backup", "caps": map[string]any{"mon": "allow r"}}); err != nil {
+			t.Fatal(err)
+		}
+		if err := ValidateMutationRequest(action, map[string]any{"cluster_id": float64(1), "entity": "client.backup", "caps": map[string]any{"extra": "allow *"}}); err == nil {
+			t.Fatal("unsupported capability accepted")
+		}
+	}
+	if got := resourceLookupKey("ceph_user", "ceph-user/client.backup"); got != "client.backup" {
+		t.Fatalf("key = %s", got)
+	}
+}
+
+func TestConfigurationResourceIdentityPreservesMask(t *testing.T) {
+	for _, tt := range []struct{ path, want string }{{"global\x00foo", "global:foo"}, {"mgr\x00mgr/dashboard/ssl", "mgr:mgr/dashboard/ssl"}, {"osd/host:node-a\x00foo", "osd/host:node-a:foo"}} {
+		if got := resourceLookupKey("config_value", "configuration/value/"+base64.RawURLEncoding.EncodeToString([]byte(tt.path))); got != tt.want {
+			t.Fatalf("key=%s want=%s", got, tt.want)
+		}
+	}
+}
+
+func TestRBDGroupActionRequestContract(t *testing.T) {
+	if _, ok := MutationRequestContract("rbd_group.action"); !ok {
+		t.Fatal("group action contract missing")
+	}
+	for _, verb := range []string{"rename", "remove"} {
+		if err := ValidateMutationRequest("rbd_group.action", map[string]any{"cluster_id": float64(1), "group_spec": "pool/ns/group", "action": verb, "name": "new"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := ValidateMutationRequest("rbd_group.action", map[string]any{"cluster_id": float64(1), "group_spec": "pool/ns/group", "action": "unknown"}); err == nil {
+		t.Fatal("unknown action accepted")
 	}
 }
