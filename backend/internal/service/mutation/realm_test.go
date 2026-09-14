@@ -185,3 +185,19 @@ func TestZoneSyncOptions(t *testing.T) {
 		}
 	}
 }
+
+func TestArchiveZoneCreation(t *testing.T) {
+	c, err := build(Request{Action: "rgw_zone.create"}, map[string]any{"name": "archive-a", "tier_type": "archive"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"zone", "create", "--rgw-zone", "archive-a", "--tier-type", "archive", "--format", "json"}
+	if !reflect.DeepEqual(c.args, want) {
+		t.Fatalf("args=%v", c.args)
+	}
+	for _, value := range []any{true, "", "unsupported"} {
+		if _, err := build(Request{Action: "rgw_zone.create"}, map[string]any{"name": "a", "tier_type": value}); err == nil {
+			t.Fatalf("accepted %v", value)
+		}
+	}
+}

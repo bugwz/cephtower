@@ -1666,6 +1666,13 @@ func build(request Request, p map[string]any) (command, error) {
 			}
 		}
 		if action == "rgw_zone.create" {
+			if value, present := p["tier_type"]; present {
+				tier, ok := value.(string)
+				if !ok || tier != "archive" {
+					return command{}, invalid("tier_type must be archive")
+				}
+				args = append(args, "--tier-type", tier)
+			}
 			if value, present := p["sync_from_all"]; present {
 				enabled, ok := value.(bool)
 				if !ok {

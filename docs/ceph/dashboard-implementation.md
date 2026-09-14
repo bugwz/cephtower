@@ -834,3 +834,10 @@ master/default 开关，映射为 --rgw-zonegroup、--endpoints、--master、--d
 布尔选项显式生成 --sync-from-all=true/false，指定来源生成 --sync-from <列表>。
 省略时使用 Ceph 默认行为，false 不会被当作省略。离线测试覆盖两个布尔值、
 逗号分隔来源及非法类型；未实机验证。
+
+### 创建归档 Zone
+
+参考 rgw-multisite-zone-form 的 archive_zone 开关，Zone 创建表单新增“归档 Zone”，
+选中时提交 tier_type=archive，原生命令传入 --tier-type archive。未选中不传参数，
+沿用普通 Zone 的原生行为。API 限定目前表单支持的 archive 值；离线测试覆盖
+命令及非法类型/取值，未实机验证。
