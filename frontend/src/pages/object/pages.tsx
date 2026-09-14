@@ -432,9 +432,10 @@ const definitions: Record<
       method: 'POST',
       successMessage: 'Realm 创建执行成功',
       fields: [
-        { name: 'name', label: 'Realm 名称', required: true }
+        { name: 'name', label: 'Realm 名称', required: true },
+        { name: 'default', label: '设为默认 Realm', type: 'boolean' }
       ],
-      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? '') })
+      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? ''), default: Boolean(values.default) })
     },
     updateAction: {
       title: '编辑 Realm', path: '/rgw/realm', method: 'PATCH',

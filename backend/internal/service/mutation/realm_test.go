@@ -38,3 +38,30 @@ func TestRealmEditCommands(t *testing.T) {
 		}
 	}
 }
+
+func TestRealmCreateDefault(t *testing.T) {
+	for _, value := range []any{nil, false, true, "true"} {
+		parameters := map[string]any{"name": "east"}
+		if value != nil {
+			parameters["default"] = value
+		}
+		c, err := build(Request{Action: "rgw_realm.create"}, parameters)
+		if value == "true" {
+			if err == nil {
+				t.Fatal("string boolean accepted")
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := []string{"realm", "create", "--rgw-realm", "east"}
+		if value == true {
+			want = append(want, "--default")
+		}
+		want = append(want, "--format", "json")
+		if !reflect.DeepEqual(c.args, want) {
+			t.Fatalf("args=%v want=%v", c.args, want)
+		}
+	}
+}

@@ -1547,7 +1547,19 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		kind := strings.TrimPrefix(strings.TrimSuffix(action, ".create"), "rgw_")
 		flag := "--rgw-" + kind
-		return rgw([]string{kind, "create", flag, name}, []string{kind, "get", flag, name}), nil
+		args := []string{kind, "create", flag, name}
+		if action == "rgw_realm.create" {
+			if value, present := p["default"]; present {
+				enabled, ok := value.(bool)
+				if !ok {
+					return command{}, invalid("default must be a boolean")
+				}
+				if enabled {
+					args = append(args, "--default")
+				}
+			}
+		}
+		return rgw(args, []string{kind, "get", flag, name}), nil
 	case "rgw_period.commit":
 		return rgw([]string{"period", "update", "--commit"}, []string{"period", "get"}), nil
 	case "nfs_cluster.create":

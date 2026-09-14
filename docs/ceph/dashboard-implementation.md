@@ -775,3 +775,10 @@ Zone 编辑与真实集群验证仍待完成。
 页面提交后重新采集 Realm 和 RGW 状态，默认标记来自 realm list 的 default_info，
 不再用请求体覆盖 Realm 的真实采集数据。离线测试覆盖命令顺序、目标名称、
 布尔校验和默认标记；未执行真实集群验证。
+
+### 创建默认 Realm
+
+Realm 创建表单增加“设为默认 Realm”，POST /rgw/realm 接受可选布尔字段 default。
+依据参考 RgwMultisite::create_realm，选中时在 realm create 命令添加 --default；
+未选中不传此开关，保留 Ceph 原生默认选择行为。拒绝非布尔参数，
+执行后沿用 Realm/RGW 状态刷新。离线测试覆盖省略、false、true 和非法参数。
