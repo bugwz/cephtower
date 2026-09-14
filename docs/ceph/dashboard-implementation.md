@@ -708,3 +708,9 @@ which could collapse multiple paths and schedules into one resource key.
 - 原生全局 bucket list 遍历 bucket metadata 键，键为 `[tenant/]bucket`。采集现在拆分名称和租户，为 bucket stats 与 ratelimit get 分别传递 --bucket/--tenant。
 - 校验统计返回的 bucket、tenant 与请求一致，再构造编码资源标识，避免重复编码租户前缀或误用其他租户数据。
 - 租户 Bucket fixture 改为原生列表格式，并校验展示名与编码标识；后端测试（含 OpenAPI 检查）通过。本次未改前端，未进行真实集群验证。
+
+### Bucket 统计字段展示
+
+- 对照原生 bucket_stats 输出，列表展示 tenant、versioning、num_shards、placement_rule、zonegroup、bucket_quota、object_lock_enabled、mfa_enabled、reshard_status、id、creation_time、mtime。
+- 原生 Bucket ID 使用 id 字段，与操作使用的编码 natural_key 分开；版本控制编辑读取已采集的 suspended 状态。
+- 前端构建通过；字段来自现有 bucket stats 采集，无后端变更，未实机验证。

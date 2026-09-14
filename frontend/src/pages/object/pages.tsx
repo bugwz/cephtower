@@ -359,7 +359,7 @@ const definitions: Record<
           ]
         }
       ],
-      initialValues: { versioning: 'enabled' },
+      initialValues: (row) => ({ versioning: row?.versioning === 'suspended' ? 'suspended' : 'enabled' }),
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
         bucket_id: bucketId(row),
@@ -385,11 +385,22 @@ const definitions: Record<
     },
     columns: [
       { key: 'name', title: 'Bucket' },
+      { key: 'tenant', title: '租户' },
       { key: 'owner', title: 'Owner' },
+      { key: 'versioning', title: '版本控制' },
+      { key: 'num_shards', title: '索引分片数' },
+      { key: 'placement_rule', title: '放置规则' },
+      { key: 'zonegroup', title: 'Zonegroup' },
+      { key: 'bucket_quota', title: 'Bucket 配额' },
+      { key: 'object_lock_enabled', title: '对象锁' },
+      { key: 'mfa_enabled', title: 'MFA' },
+      { key: 'reshard_status', title: '重新分片状态' },
       { key: 'status', title: '状态' },
       { key: 'usage', title: '使用量' },
       { key: 'rate_limit', title: 'Bucket 限流' },
-      { key: 'bucket_id', title: 'Bucket ID' },
+      { key: 'id', title: '原生 Bucket ID' },
+      { key: 'creation_time', title: '创建时间' },
+      { key: 'mtime', title: '修改时间' },
       { key: 'resource_version', title: '版本' }
     ]
   },
