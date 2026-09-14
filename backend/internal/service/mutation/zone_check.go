@@ -31,6 +31,34 @@ func zoneGroupUpdateMatches(p map[string]any, output []byte) bool {
 		if p["master"] == true && group.MasterZone != id {
 			return false
 		}
+		if expected, present := p["sync_from"]; present {
+			raw, ok := expected.(string)
+			if !ok {
+				return false
+			}
+			actual, ok := zone["sync_from"].([]any)
+			if !ok {
+				return false
+			}
+			sources := map[string]bool{}
+			for _, item := range actual {
+				source, ok := item.(string)
+				if !ok {
+					return false
+				}
+				sources[source] = true
+			}
+			removing := p["sync_from_all"] == true
+			for _, item := range strings.Split(raw, ",") {
+				source := strings.TrimSpace(item)
+				if source == "" {
+					continue
+				}
+				if sources[source] == removing {
+					return false
+				}
+			}
+		}
 		if expected, present := p["endpoints"]; present {
 			raw, ok := expected.(string)
 			if !ok {
