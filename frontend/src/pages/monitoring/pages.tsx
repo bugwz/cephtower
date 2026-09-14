@@ -1,5 +1,5 @@
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
-import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
+export { RuntimeLogsPage } from './RuntimeLogsPage'
 import { MetricPage } from './MetricPage'
 
 export function MonitorOverviewPage() {
@@ -10,9 +10,6 @@ export function PerformanceMetricsPage() {
   return <MetricPage />
 }
 
-export function RuntimeLogsPage() {
-  return <ResourceListPage definition={resourceDefinitions.runtimeLogs} />
-}
 
 export function AlertListPage() {
   return <ExternalListPage definition={externalDefinitions.alerts} />
@@ -54,7 +51,7 @@ const externalDefinitions: Record<'grafana' | 'alerts' | 'rules' | 'silences', E
   rules: {
     title: '告警规则',
     path: '/alert/rules',
-    requiredEndpoints: ['alertmanager'],
+    requiredEndpoints: ['prometheus'],
     columns: [
       { key: 'name', title: '名称' },
       { key: 'state', title: '状态' },
@@ -132,18 +129,4 @@ function parseJSONArray(value: unknown) {
     throw new Error('JSON 字段必须是数组')
   }
   return parsed
-}
-
-const resourceDefinitions: Record<'runtimeLogs', ResourceListPageDefinition> = {
-  runtimeLogs: {
-    title: '运行日志',
-    path: '/logs',
-    columns: [
-      { key: 'name', title: '名称' },
-      { key: 'status', title: '状态' },
-      { key: 'level', title: '级别' },
-      { key: 'message', title: '消息' },
-      { key: 'timestamp', title: '时间' }
-    ]
-  }
 }
