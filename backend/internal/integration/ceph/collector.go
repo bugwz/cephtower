@@ -48,6 +48,7 @@ var collectionFailureKinds = map[string][]string{
 	"collect.rbd_image_config":        {"rbd_image"},
 	"collect.rbd_image_info":          {"rbd_image"},
 	"collect.rbd_image":               {"rbd_image"},
+	"collect.rgw_global_ratelimit":    {"rgw_status"},
 	"collect.rgw_status":              {"rgw_status"},
 	"collect.nfs_cluster":             {"nfs_cluster", "nfs_export"},
 	"collect.smb_cluster":             {"smb_cluster", "smb_share"},
@@ -817,7 +818,22 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 	}
 	var realms rgwRealmWire
 	if err := p.runBinaryInto(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_status", []string{"realm", "list", "--format", "json"}, &realms); err == nil {
-		rows = append(rows, Observation{Kind: "rgw_status", NaturalKey: "status", Name: "status", Status: "available", Source: "rgw_admin", Payload: cephdomain.RGWStatus{Realms: realms.Realms}, ObservedAt: now})
+		payload := cephdomain.RGWStatus{Realms: realms.Realms}
+		var limits map[string]any
+		if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_global_ratelimit", []string{"global", "ratelimit", "get", "--format", "json"}, &limits) {
+			valid := true
+			for _, scope := range []string{"user_ratelimit", "bucket_ratelimit", "anonymous_ratelimit"} {
+				if _, ok := limits[scope].(map[string]any); !ok {
+					valid = false
+				}
+			}
+			if valid {
+				payload.GlobalRateLimit = limits
+			} else {
+				markCollectionUnavailable(ctx, "collect.rgw_global_ratelimit")
+			}
+		}
+		rows = append(rows, Observation{Kind: "rgw_status", NaturalKey: "status", Name: "status", Status: "available", Source: "rgw_admin", Payload: payload, ObservedAt: now})
 	}
 	for _, gateway := range []struct {
 		id, kind, prefix string

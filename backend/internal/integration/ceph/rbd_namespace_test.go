@@ -261,3 +261,21 @@ func TestRGWBucketRateLimitShape(t *testing.T) {
 	}
 	t.Fatal("bucket missing")
 }
+
+func TestGlobalRGWRateLimits(t *testing.T) {
+	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.rgw_global_ratelimit": []byte(`{"user_ratelimit":{"enabled":true,"max_read_ops":123},"bucket_ratelimit":{"enabled":false},"anonymous_ratelimit":{"enabled":true}}`)}}}
+	rows, err := p.collectStorage(context.Background(), ClusterAccess{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range rows {
+		if row.Kind == "rgw_status" {
+			limits := row.Payload.(cephdomain.RGWStatus).GlobalRateLimit
+			if len(limits) != 3 || limits["user_ratelimit"].(map[string]any)["enabled"] != true {
+				t.Fatalf("limits: %#v", limits)
+			}
+			return
+		}
+	}
+	t.Fatal("status missing")
+}

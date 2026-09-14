@@ -75,12 +75,8 @@ const definitions: Record<
     path: '/rgw/status',
     requiredCapabilities: ['rgw_admin'],
     columns: [
-      { key: 'name', title: '名称' },
-      { key: 'suspended', title: '暂停状态', render:(value)=>value === true || value === 1 ? '已暂停' : '正常' },
-      { key: 'max_buckets', title: '最大 Bucket 数' },
-      { key: 'realm', title: 'Realm' },
-      { key: 'zonegroup', title: 'ZoneGroup' },
-      { key: 'zone', title: 'Zone' },
+      { key: 'realms', title: 'Realms' },
+      { key: 'global_rate_limit', title: '默认 Realm 全局限流（每 RGW 每分钟）' },
       { key: 'resource_version', title: '版本' }
     ]
   },

@@ -732,3 +732,9 @@ which could collapse multiple paths and schedules into one resource key.
 - Bucket 配额操作现在比较最终 bucket stats 的 tenant、bucket、bucket_quota.enabled/max_size/max_objects 与请求，容量按 KiB 向上取整。
 - 写入返回成功但结果未变化、读取字段缺失、错误租户或 JSON 无效均返回 post_check_failed，补上参考原生配额调用可能忽略写入错误的缺口。
 - Service.Execute 模拟执行器回归测试及后端测试/OpenAPI 检查通过。未实机验证；该结果一致性校验目前针对单个 Bucket 配额。
+
+### 默认 Realm 全局限流读取
+
+- RGW 总览新增 `global ratelimit get --format json` 采集，展示默认 Realm 的 user_ratelimit、bucket_ratelimit、anonymous_ratelimit。任一范围对象缺失标记状态采集不完整。
+- 总览移除不对应 RGWStatus 的用户字段，显示 realms 与 global_rate_limit；限额单位为每 RGW 每分钟。
+- 三类原生返回结构测试、后端测试/OpenAPI 检查及前端构建通过，未实机验证。其他 Realm 的限流选择及全局写入操作仍待实现。
