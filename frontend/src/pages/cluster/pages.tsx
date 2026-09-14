@@ -8,6 +8,7 @@ import {
   getMonitorStatus,
   listMonitors,
   listResource,
+  listAllResources,
   listOSDFlags,
   markOSD,
   mutateResource,
@@ -19,6 +20,7 @@ import {
 import { DataTable } from '../../components/DataTable'
 import { DraggableModal, draggableModalRender } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
+import { RecordDetail } from '../../components/RecordDetail'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 import { TableAction, TableActions } from '../../components/TableActions'
 import { useResource } from '../../hooks'
@@ -27,6 +29,8 @@ import { mergeResourceFilters, useResourceTableFilters } from '../../hooks/useRe
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 import { formatDateTime } from '../../utils/time'
+import { OSDInspection } from './OSDInspection'
+import { ConfigurationPage } from './ConfigurationPage'
 import { ClusterDetailPage } from './ClusterDetailPage'
 import { ClusterPage } from './ClusterPage'
 import { HostDetailPage } from './HostDetailPage'
@@ -174,7 +178,7 @@ export function MgrManagementPage() {
       return { modules: [], daemons: [] }
     }
     const [modules, daemons] = await Promise.all([
-      listResource('/manager/modules', selectedClusterId, { filters: moduleTableFilters.filters }).then((payload) => payload.items),
+      listAllResources('/manager/modules', selectedClusterId, { filters: moduleTableFilters.filters }).then((payload) => payload.items),
       listResource('/daemons', selectedClusterId, {
         filters: mergeResourceFilters({ daemon_type: ['mgr'] }, daemonTableFilters.filters)
       }).then((payload) => payload.items)
@@ -183,6 +187,8 @@ export function MgrManagementPage() {
   }, [daemonTableFilters.filters, moduleTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [pendingModule, setPendingModule] = useState('')
+  const [moduleDetails, setModuleDetails] = useState<ApiRecord | null>(null)
+  const [configModule, setConfigModule] = useState('')
   const operationMutation = useMutationOperation()
 
   async function toggleModule(row: ApiRecord, enabled: boolean) {
@@ -193,6 +199,7 @@ export function MgrManagementPage() {
     setPendingModule(name)
     try {
       await operationMutation.run(() => setMgrModuleEnabled(name, enabled), enabled ? 'Mgr 模块启用执行成功' : 'Mgr 模块停用执行成功')
+      if (selectedClusterId) await refreshResource({ clusterId: selectedClusterId, kind: 'mgr_module' })
       refresh()
     } finally {
       setPendingModule('')
@@ -201,6 +208,12 @@ export function MgrManagementPage() {
 
   return (
     <Page title="MGR管理" loading={loading} error={error}>
+      <Modal open={Boolean(configModule)} onCancel={() => setConfigModule('')} footer={null} width="95vw" destroyOnClose>
+        {configModule && <ConfigurationPage key={configModule} moduleName={configModule} />}
+      </Modal>
+      <Modal title={`模块 ${textValue(moduleDetails?.name, '')}`} open={Boolean(moduleDetails)} onCancel={() => setModuleDetails(null)} footer={null} width={1000}>
+        <RecordDetail record={moduleDetails} preferredKeys={['name', 'enabled', 'always_on', 'can_run', 'error_string', 'options']} />
+      </Modal>
       <Card className="page-surface-card" title="MGR管理">
         <Tabs
           items={[
@@ -225,7 +238,7 @@ export function MgrManagementPage() {
                         return (
                           <Switch
                             checked={Boolean(value)}
-                            disabled={Boolean(row.always_on) || (Boolean(pendingModule) && pendingModule !== name)}
+                            disabled={Boolean(row.always_on) || (!value && row.can_run === false) || (Boolean(pendingModule) && pendingModule !== name)}
                             loading={pendingModule === name}
                             onChange={(checked) => toggleModule(row, checked)}
                           />
@@ -233,7 +246,11 @@ export function MgrManagementPage() {
                       }
                     },
                     { key: 'always_on', title: '常驻', render: (value) => <Tag color={value ? 'processing' : 'default'}>{value ? '是' : '否'}</Tag> },
-                    { key: 'options', title: '配置项', render: (value) => textValue(value) }
+                    { key: 'can_run', title: '可运行', render: (value) => <Tag color={value === false ? 'error' : 'default'}>{value === true ? '是' : value === false ? '否' : '未知'}</Tag> },
+                    { key: 'error_string', title: '加载错误' },
+                    { key: 'force_disabled', title: '强制停用', render: (value) => value ? '是' : '否' },
+                    { key: 'options', title: '配置项', render: (value, row) => <Button type="link" onClick={() => setModuleDetails(row)}>{Object.keys((value ?? {}) as object).length} 项 · 详情</Button> },
+                    { key: 'configure', title: '操作', render: (_, row) => <Button onClick={() => setConfigModule(textValue(row.name, ''))}>编辑配置</Button> }
                   ]}
                 />
                 </div>
@@ -260,17 +277,19 @@ export function OsdManagementPage() {
   })
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
-      return { osds: [], flags: [] }
+      return { osds: [], flags: [], removals: [], removalMeta: null }
     }
-    const [osds, flags] = await Promise.all([
-      listResource('/osds', selectedClusterId, { filters: osdTableFilters.filters }).then((payload) => payload.items),
-      listOSDFlags()
+    const [osds, flags, removalMeta] = await Promise.all([
+      listAllResources('/osds', selectedClusterId, { filters: osdTableFilters.filters }).then((payload) => payload.items),
+      listOSDFlags(),
+      listAllResources('/osd/removals', selectedClusterId, { limit: 500 })
     ])
-    return { osds, flags }
+    return { osds, flags, removals: removalMeta.items, removalMeta }
   }, [osdTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [pendingOSDAction, setPendingOSDAction] = useState('')
   const [deploymentOpen, setDeploymentOpen] = useState(false)
+  const [inspectedOSD, setInspectedOSD] = useState<ApiRecord | null>(null)
   const [refreshingOSDs, setRefreshingOSDs] = useState(false)
   const operationMutation = useMutationOperation()
 
@@ -281,7 +300,7 @@ export function OsdManagementPage() {
     }
     setRefreshingOSDs(true)
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['osd', 'osd_flag'] }), '刷新成功')
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['osd', 'osd_flag', 'osd_removal'] }), '刷新成功')
       await refresh()
     } finally {
       setRefreshingOSDs(false)
@@ -312,7 +331,8 @@ export function OsdManagementPage() {
       } else {
         await operationMutation.run(() => markOSD(id, action), `OSD ${action} 执行成功`)
       }
-      refresh()
+      if (selectedClusterId) await refreshResource({ clusterId: selectedClusterId, kinds: ['osd', 'osd_flag', 'osd_removal'] })
+      await refresh()
     } finally {
       setPendingOSDAction('')
     }
@@ -338,16 +358,18 @@ export function OsdManagementPage() {
       cancelText: '取消',
       async onOk() {
         await operationMutation.run(() => mutateResource('/osd', 'DELETE', parameters, { ifMatch: generation }), false)
-        window.setTimeout(() => {
-          message.success('OSD 删除执行成功')
-          refresh({ showLoading: false })
-        })
+        message.success('OSD 移除请求已提交')
+        await refreshResource({ clusterId: selectedClusterId, kinds: ['osd', 'osd_removal'] })
+        await refresh({ showLoading: false })
       }
     })
   }
 
   return (
     <Page title="OSD管理" loading={loading} error={error}>
+      <Modal open={Boolean(inspectedOSD)} title={`OSD ${osdID(inspectedOSD ?? {})} 详情`} onCancel={() => setInspectedOSD(null)} footer={null} width="90vw" destroyOnClose>
+        {inspectedOSD && selectedClusterId && <OSDInspection key={`${selectedClusterId}:${osdID(inspectedOSD)}`} clusterId={selectedClusterId} osdId={osdID(inspectedOSD)} record={inspectedOSD} />}
+      </Modal>
       <Card
         className="page-surface-card"
         title="OSD管理"
@@ -359,6 +381,19 @@ export function OsdManagementPage() {
         }
       >
         <Space direction="vertical" size={16} className="page-stack">
+        <section className="embedded-panel">
+          <div className="embedded-panel-title">OSD 移除队列</div>
+          <ResourceMetaBar observedAt={data?.removalMeta?.observedAt} stale={data?.removalMeta?.stale} />
+          <DataTable data={data?.removals ?? []} rowKeyCandidates={['osd_id', 'natural_key']} columns={[
+            { key: 'osd_id', title: 'OSD' },
+            { key: 'hostname', title: '主机' },
+            { key: 'drain_status', title: '排空状态' },
+            { key: 'pg_count', title: '剩余 PG' },
+            { key: 'replace', title: '替换', render: (value) => value ? '是' : '否' },
+            { key: 'force', title: '强制', render: (value) => value ? '是' : '否' },
+            { key: 'process_started_at', title: '开始时间', render: (value) => formatDateTime(value) }
+          ]} />
+        </section>
         <section className="embedded-panel">
           <div className="embedded-panel-title">OSD Flags</div>
           {(data?.flags ?? []).length ? data?.flags.map((flag) => <Tag key={flag}>{flag}</Tag>) : <span className="muted">未设置 OSD flags</span>}
@@ -386,6 +421,8 @@ export function OsdManagementPage() {
                   const id = osdID(row)
                   return (
                     <TableActions>
+                      <TableAction onClick={() => setInspectedOSD(row)}>详情</TableAction>
+                      <TableAction disabled={Boolean(pendingOSDAction)} onClick={() => runOSDAction(id, 'deep-scrub')}>Deep scrub</TableAction>
                       <TableAction loading={pendingOSDAction === `${id}:in`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:in`} onClick={() => runOSDAction(id, 'in')}>In</TableAction>
                       <TableAction loading={pendingOSDAction === `${id}:out`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:out`} onClick={() => runOSDAction(id, 'out')}>Out</TableAction>
                       <TableAction loading={pendingOSDAction === `${id}:scrub`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:scrub`} onClick={() => runOSDAction(id, 'scrub')}>Scrub</TableAction>
@@ -407,6 +444,7 @@ export function OsdManagementPage() {
 
 function OSDDeploymentModal({ open, onClose, refresh }: { open: boolean; onClose: () => void; refresh: (options?: { showLoading?: boolean }) => void }) {
   const { selectedClusterId } = useClusterContext()
+  const [preview, setPreview] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [form] = Form.useForm<{
     service_id?: string
@@ -437,7 +475,8 @@ function OSDDeploymentModal({ open, onClose, refresh }: { open: boolean; onClose
     setSubmitting(true)
     try {
       if (mode === 'preview') {
-        await operationMutation.run(() => mutateResource('/osd/deployment/preview', 'POST', payload), false)
+        const result = await operationMutation.run(() => mutateResource('/osd/deployment/preview', 'POST', payload), false)
+        setPreview(String((result.details as ApiRecord | undefined)?.preview ?? 'Ceph 未返回预览内容'))
       } else {
         Modal.confirm({
           title: '创建 OSD 部署',
@@ -456,9 +495,7 @@ function OSDDeploymentModal({ open, onClose, refresh }: { open: boolean; onClose
         })
         return
       }
-      onClose()
-      message.success('OSD 部署预览执行成功')
-      refresh({ showLoading: false })
+      message.success('OSD 部署预览已生成')
     } finally {
       setSubmitting(false)
     }
@@ -484,7 +521,7 @@ function OSDDeploymentModal({ open, onClose, refresh }: { open: boolean; onClose
       ]}
       destroyOnClose
     >
-      <Form form={form} layout="vertical" initialValues={{ all: false }} preserve={false}>
+      <Form form={form} layout="vertical" initialValues={{ all: false }} preserve={false} onValuesChange={() => setPreview('')}>
         <Form.Item name="service_id" label="Service ID">
           <Input />
         </Form.Item>
@@ -510,6 +547,7 @@ function OSDDeploymentModal({ open, onClose, refresh }: { open: boolean; onClose
           <Input />
         </Form.Item>
       </Form>
+      {preview && <Card title="部署预览"><Typography.Paragraph style={{ whiteSpace: 'pre-wrap' }} copyable>{preview}</Typography.Paragraph></Card>}
     </DraggableModal>
   )
 }
@@ -910,21 +948,21 @@ function DaemonTable({
 }
 
 function ReweightForm({ osdID, refresh }: { osdID: string; refresh: (options?: { showLoading?: boolean }) => void }) {
+  const { selectedClusterId } = useClusterContext()
   const [submitting, setSubmitting] = useState(false)
   const operationMutation = useMutationOperation()
 
   async function submit(values: { weight: number }) {
-    if (submitting) {
+    if (submitting || !selectedClusterId) {
       return
     }
     setSubmitting(true)
     try {
       await operationMutation.run(() => reweightOSD(osdID, values.weight), false)
       Modal.destroyAll()
-      window.setTimeout(() => {
-        message.success('OSD 权重调整执行成功')
-        refresh({ showLoading: false })
-      })
+      message.success('OSD 权重调整执行成功')
+      await refreshResource({ clusterId: selectedClusterId, kind: 'osd' })
+      await refresh({ showLoading: false })
     } finally {
       setSubmitting(false)
     }

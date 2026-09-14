@@ -1,5 +1,7 @@
 import type { ComponentType } from 'react'
 import type { PageKey } from '../navigation'
+import { ConfigurationPage } from './cluster/ConfigurationPage'
+import { CephUsersPage } from './cluster/CephUsersPage'
 import { AuditPage } from './audit/AuditPage'
 import {
   ImageMirroringPage,
@@ -85,6 +87,8 @@ export { FilesystemDetailPage } from './file/FilesystemDetailPage'
 
 export const pageComponents: Record<PageKey, ComponentType> = {
   overview: OverviewPage,
+  cephUsers: CephUsersPage,
+  clusterConfiguration: ConfigurationPage,
   clusterManagement: ClusterPage,
   poolManagement: PoolManagementPage,
   hostManagement: HostPage,
