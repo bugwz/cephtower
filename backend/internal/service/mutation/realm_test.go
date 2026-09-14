@@ -270,3 +270,23 @@ func TestZoneEndpointUpdate(t *testing.T) {
 		t.Fatal("accepted endpoints without group")
 	}
 }
+
+func TestZoneSyncUpdateModes(t *testing.T) {
+	for _, all := range []bool{true, false} {
+		c, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": "east", "zonegroup": "group", "sync_from_all": all, "sync_from": "z1,z2"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		mode, source := "--sync-from-all=false", "--sync-from"
+		if all {
+			mode, source = "--sync-from-all=true", "--sync-from-rm"
+		}
+		want := []string{"zone", "modify", "--rgw-zone", "east", mode, source, "z1,z2", "--rgw-zonegroup", "group", "--format", "json"}
+		if !reflect.DeepEqual(c.args, want) {
+			t.Fatalf("args=%v", c.args)
+		}
+	}
+	if _, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": "east", "zonegroup": "group", "sync_from_all": "false"}); err == nil {
+		t.Fatal("accepted string boolean")
+	}
+}

@@ -222,7 +222,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"rgw_realm.create"}, true, map[string]JSONField{"name": stringField(true), "default": boolField(false)})
 	add([]string{"rgw_zonegroup.update"}, true, map[string]JSONField{"add_zones": stringsField(false), "remove_zones": stringsField(false), "name": stringField(true), "new_name": stringField(true), "realm_id": stringField(false), "endpoints": stringField(false), "default": boolField(false), "master": boolField(false)})
 	add([]string{"rgw_zonegroup.create"}, true, map[string]JSONField{"name": stringField(true), "realm": stringField(false), "endpoints": stringField(false), "default": boolField(false), "master": boolField(false)})
-	add([]string{"rgw_zone.update"}, true, map[string]JSONField{"endpoints": stringField(false), "name": stringField(true), "new_name": stringField(true), "zonegroup": stringField(false), "realm_id": stringField(false)})
+	add([]string{"rgw_zone.update"}, true, map[string]JSONField{"sync_from_all": boolField(false), "sync_from": stringField(false), "endpoints": stringField(false), "name": stringField(true), "new_name": stringField(true), "zonegroup": stringField(false), "realm_id": stringField(false)})
 	optionalSecret := stringField(false)
 	optionalSecret.WriteOnly = true
 	add([]string{"rgw_zone.create"}, true, map[string]JSONField{"access_key": optionalSecret, "secret_key": optionalSecret, "tier_type": stringField(false, "archive"), "sync_from_all": boolField(false), "sync_from": stringField(false), "name": stringField(true), "zonegroup": stringField(false), "endpoints": stringField(false), "master": boolField(false), "default": boolField(false)})

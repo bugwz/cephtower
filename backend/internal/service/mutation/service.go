@@ -1528,8 +1528,29 @@ func build(request Request, p map[string]any) (command, error) {
 				return command{}, invalid("endpoints must be a nonempty string")
 			}
 		}
-		if name == next && endpoints == "" {
-			return command{}, invalid("change the name or endpoints")
+		var syncArgs []string
+		syncAll := false
+		if value, present := p["sync_from_all"]; present {
+			var ok bool
+			syncAll, ok = value.(bool)
+			if !ok {
+				return command{}, invalid("sync_from_all must be a boolean")
+			}
+			syncArgs = append(syncArgs, "--sync-from-all="+strconv.FormatBool(syncAll))
+		}
+		if value, present := p["sync_from"]; present {
+			sources, ok := value.(string)
+			if !ok || strings.TrimSpace(sources) == "" || strings.ContainsAny(sources, "\x00\r\n") {
+				return command{}, invalid("sync_from must be a nonempty string")
+			}
+			flag := "--sync-from"
+			if syncAll {
+				flag = "--sync-from-rm"
+			}
+			syncArgs = append(syncArgs, flag, sources)
+		}
+		if name == next && endpoints == "" && len(syncArgs) == 0 {
+			return command{}, invalid("select a zone change")
 		}
 		args := []string{"zone", "rename", "--rgw-zone", name, "--zone-new-name", next}
 		for _, key := range []string{"zonegroup", "realm_id"} {
@@ -1545,11 +1566,15 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		check := []string{"zone", "get", "--rgw-zone", next}
 		result := rgw(args, check)
-		if endpoints != "" {
-			modify := []string{"zone", "modify", "--rgw-zone", next, "--endpoints", endpoints}
+		if endpoints != "" || len(syncArgs) > 0 {
+			modify := []string{"zone", "modify", "--rgw-zone", next}
+			if endpoints != "" {
+				modify = append(modify, "--endpoints", endpoints)
+			}
+			modify = append(modify, syncArgs...)
 			group := optional(p, "zonegroup")
 			if group == "" {
-				return command{}, invalid("zonegroup is required when updating endpoints")
+				return command{}, invalid("zonegroup is required when updating zone configuration")
 			}
 			modify = append(modify, "--rgw-zonegroup", group)
 			if name == next {
