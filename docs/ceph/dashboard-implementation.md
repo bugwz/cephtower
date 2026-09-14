@@ -820,3 +820,10 @@ period update --commit，并显式使用 Realm ID 限定目标，最后按新名
 不声称展示每个 Realm 各自的默认对象。缺失或非法 default_info 保持未知，
 不伪装成 false；空字符串明确表示没有匹配对象。离线测试覆盖三类资源的
 匹配、不匹配、空、缺失及非法字段。
+
+### Zone 创建拓扑参数
+
+依据 RgwMultisite::create_zone，Zone 创建表单/API 支持 Zonegroup、端点及
+master/default 开关，映射为 --rgw-zonegroup、--endpoints、--master、--default。
+创建后刷新 Zone 和 Zonegroup 原生数据，停止持久化请求覆盖层。离线测试覆盖
+完整命令和非法参数。系统凭据、同步配置、分层参数与真实集群验证仍待补齐。

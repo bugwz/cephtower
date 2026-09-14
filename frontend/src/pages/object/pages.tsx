@@ -522,9 +522,13 @@ const definitions: Record<
       method: 'POST',
       successMessage: 'Zone 创建执行成功',
       fields: [
-        { name: 'name', label: 'Zone 名称', required: true }
+        { name: 'name', label: 'Zone 名称', required: true },
+        { name: 'zonegroup', label: 'Zonegroup（留空使用原生默认值）' },
+        { name: 'endpoints', label: '端点（多个地址以逗号分隔）' },
+        { name: 'master', label: '设为主 Zone', type: 'boolean' },
+        { name: 'default', label: '设为默认 Zone', type: 'boolean' }
       ],
-      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? '') })
+      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? ''), ...(values.zonegroup ? { zonegroup: String(values.zonegroup).trim() } : {}), ...(values.endpoints ? { endpoints: String(values.endpoints).trim() } : {}), master: Boolean(values.master), default: Boolean(values.default) })
     },
     columns: [
       { key: 'name', title: 'Zone' },

@@ -147,3 +147,19 @@ func TestZonegroupMembership(t *testing.T) {
 		}
 	}
 }
+
+func TestZoneCreateTopology(t *testing.T) {
+	c, err := build(Request{Action: "rgw_zone.create"}, map[string]any{"name": "zone-a", "zonegroup": "group-a", "endpoints": "https://rgw.example", "master": true, "default": true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"zone", "create", "--rgw-zone", "zone-a", "--default", "--master", "--rgw-zonegroup", "group-a", "--endpoints", "https://rgw.example", "--format", "json"}
+	if !reflect.DeepEqual(c.args, want) {
+		t.Fatalf("args=%v", c.args)
+	}
+	for _, field := range []string{"zonegroup", "endpoints", "master", "default"} {
+		if _, err := build(Request{Action: "rgw_zone.create"}, map[string]any{"name": "zone-a", field: 42}); err == nil {
+			t.Fatalf("accepted invalid %s", field)
+		}
+	}
+}

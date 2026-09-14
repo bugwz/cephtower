@@ -1630,7 +1630,7 @@ func build(request Request, p map[string]any) (command, error) {
 		kind := strings.TrimPrefix(strings.TrimSuffix(action, ".create"), "rgw_")
 		flag := "--rgw-" + kind
 		args := []string{kind, "create", flag, name}
-		if action == "rgw_realm.create" || action == "rgw_zonegroup.create" {
+		if action == "rgw_realm.create" || action == "rgw_zonegroup.create" || action == "rgw_zone.create" {
 			if value, present := p["default"]; present {
 				enabled, ok := value.(bool)
 				if !ok {
@@ -1641,7 +1641,7 @@ func build(request Request, p map[string]any) (command, error) {
 				}
 			}
 		}
-		if action == "rgw_zonegroup.create" {
+		if action == "rgw_zonegroup.create" || action == "rgw_zone.create" {
 			if value, present := p["master"]; present {
 				enabled, ok := value.(bool)
 				if !ok {
@@ -1651,7 +1651,11 @@ func build(request Request, p map[string]any) (command, error) {
 					args = append(args, "--master")
 				}
 			}
-			for _, field := range []struct{ key, flag string }{{"realm", "--rgw-realm"}, {"endpoints", "--endpoints"}} {
+			fields := []struct{ key, flag string }{{"realm", "--rgw-realm"}, {"endpoints", "--endpoints"}}
+			if action == "rgw_zone.create" {
+				fields[0] = struct{ key, flag string }{"zonegroup", "--rgw-zonegroup"}
+			}
+			for _, field := range fields {
 				if value, present := p[field.key]; present {
 					text, ok := value.(string)
 					if !ok || strings.TrimSpace(text) == "" || strings.ContainsAny(text, "\x00\r\n") {
