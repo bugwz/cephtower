@@ -4,6 +4,7 @@ import "strings"
 
 var entityKinds = []string{
 	"capability",
+	"ceph_user",
 	"cephfs_authorization",
 	"cephfs_client",
 	"cephfs_entry",

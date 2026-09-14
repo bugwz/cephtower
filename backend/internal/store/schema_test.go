@@ -163,3 +163,39 @@ func TestCanonicalDDLContainsExactlyBaselineTables(t *testing.T) {
 		}
 	}
 }
+
+func TestCephAuthEntityTableMigration(t *testing.T) {
+	workDir := t.TempDir()
+	cfg := config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Name: "ceph-auth-migration.db"}}
+	db, err := Open(cfg, workDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Exercise the newly added migration from the preceding schema version.
+	if err := db.db.Exec("DROP TABLE ceph_ceph_user").Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := db.db.Where("version = ?", cephAuthTablesVersion).Delete(&SchemaMigration{}).Error; err != nil {
+		t.Fatal(err)
+	}
+	cluster := CephCluster{Name: "preserved", MonitorAddresses: "mon:6789", ClientUsername: "client.test", ClientKey: "cipher"}
+	if err := db.Insert(context.Background(), &cluster); err != nil {
+		t.Fatal(err)
+	}
+	_ = Close(db)
+	upgraded, err := Open(cfg, workDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer Close(upgraded)
+	if !upgraded.db.Migrator().HasTable("ceph_ceph_user") {
+		t.Fatal("auth table missing")
+	}
+	if _, err := upgraded.FindCluster(context.Background(), cluster.ID); err != nil {
+		t.Fatal("cluster lost during migration")
+	}
+	var count int64
+	if err := upgraded.db.Model(&SchemaMigration{}).Where("version = ?", cephAuthTablesVersion).Count(&count).Error; err != nil || count != 1 {
+		t.Fatalf("migration count=%d error=%v", count, err)
+	}
+}

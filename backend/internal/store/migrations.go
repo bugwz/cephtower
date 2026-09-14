@@ -12,6 +12,9 @@ import (
 
 const baselineVersion = "20260802_dedicated_entity_tables_v1"
 const monitorTablesVersion = "20260824_monitor_details_v1"
+const cephAuthTablesVersion = "20260914_ceph_auth_v1"
+
+var cephAuthEntityKinds = []string{"ceph_user"}
 
 var monitorEntityKinds = []string{"mon_perf_counter", "mon_status"}
 
@@ -86,7 +89,7 @@ func migrate(db *gorm.DB) error {
 	if err := db.Exec(registryDDL).Error; err != nil {
 		return fmt.Errorf("create schema migration table: %w", err)
 	}
-	baselineKinds := entityKindsWithout(entityKinds, monitorEntityKinds)
+	baselineKinds := entityKindsWithout(entityKinds, append(append([]string{}, monitorEntityKinds...), cephAuthEntityKinds...))
 	entitySchema := strings.Join(baselineKinds, ",") + sqliteEntityTableDDL + mysqlEntityTableDDL
 	checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(definition+entitySchema)))
 	var applied SchemaMigration
@@ -95,7 +98,7 @@ func migrate(db *gorm.DB) error {
 		if applied.Checksum != checksum {
 			return fmt.Errorf("migration %s checksum mismatch", baselineVersion)
 		}
-		return migrateMonitorEntityTables(db, engine)
+		return migrateAdditionalEntityTables(db, engine)
 	}
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return fmt.Errorf("read migration registry: %w", err)
@@ -130,16 +133,23 @@ func migrate(db *gorm.DB) error {
 	}); err != nil {
 		return err
 	}
-	return migrateMonitorEntityTables(db, engine)
+	return migrateAdditionalEntityTables(db, engine)
 }
 
-func migrateMonitorEntityTables(db *gorm.DB, engine string) error {
-	checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(monitorEntityKinds, ",")+sqliteEntityTableDDL+mysqlEntityTableDDL)))
+func migrateAdditionalEntityTables(db *gorm.DB, engine string) error {
+	if err := migrateEntityTables(db, engine, monitorTablesVersion, monitorEntityKinds); err != nil {
+		return err
+	}
+	return migrateEntityTables(db, engine, cephAuthTablesVersion, cephAuthEntityKinds)
+}
+
+func migrateEntityTables(db *gorm.DB, engine, version string, kinds []string) error {
+	checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(kinds, ",")+sqliteEntityTableDDL+mysqlEntityTableDDL)))
 	var applied SchemaMigration
-	err := db.Where("version = ?", monitorTablesVersion).First(&applied).Error
+	err := db.Where("version = ?", version).First(&applied).Error
 	if err == nil {
 		if applied.Checksum != checksum {
-			return fmt.Errorf("migration %s checksum mismatch", monitorTablesVersion)
+			return fmt.Errorf("migration %s checksum mismatch", version)
 		}
 		return nil
 	}
@@ -147,10 +157,10 @@ func migrateMonitorEntityTables(db *gorm.DB, engine string) error {
 		return fmt.Errorf("read migration registry: %w", err)
 	}
 	return db.Transaction(func(tx *gorm.DB) error {
-		if err := createEntityTables(tx, engine, monitorEntityKinds); err != nil {
+		if err := createEntityTables(tx, engine, kinds); err != nil {
 			return err
 		}
-		entry := SchemaMigration{Version: monitorTablesVersion, Checksum: checksum, AppliedAt: time.Now().UTC()}
+		entry := SchemaMigration{Version: version, Checksum: checksum, AppliedAt: time.Now().UTC()}
 		if err := tx.Create(&entry).Error; err != nil {
 			return fmt.Errorf("record migration: %w", err)
 		}
