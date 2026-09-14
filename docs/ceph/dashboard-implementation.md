@@ -864,3 +864,11 @@ ID、Realm 和主 Zone 标记，避免同名误关联或多组信息互相覆盖
 尝试默认组，读取组失败或没有该成员仍可能返回成功。页面在唯一成员组时预填，
 随后刷新 Zone/Zonegroup。提供 Realm ID 时提交该 Realm Period，最后按新名称读回。
 离线测试覆盖组与 Period 参数、无 Realm 和空操作；其它 Zone 编辑仍待补齐。
+
+### Zone 端点编辑
+
+对照 modify_zone，PATCH /rgw/zone 和编辑表单支持替换非空端点列表。
+指定 Zonegroup 后执行 zone modify --rgw-zone <新名称> --endpoints <列表>
+--rgw-zonegroup <组>；仅修改端点不触发重命名，组合操作先重命名再修改，
+最后提交提供的 Realm Period 并读回。要求显式选择组避免更新默认组中的错误成员。
+测试覆盖两种执行路径和缺少组名；清空端点及其它 Zone 编辑参数仍待补齐。

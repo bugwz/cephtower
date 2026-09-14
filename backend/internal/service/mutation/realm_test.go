@@ -247,3 +247,26 @@ func TestZoneRenameTargetsGroupAndPeriod(t *testing.T) {
 		t.Fatal("accepted unchanged name")
 	}
 }
+
+func TestZoneEndpointUpdate(t *testing.T) {
+	for _, next := range []string{"east", "west"} {
+		c, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": next, "zonegroup": "group", "endpoints": "https://one.example,https://two.example", "realm_id": "realm"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		modify := c
+		if next != "east" {
+			modify = c.followups[0]
+		}
+		want := []string{"zone", "modify", "--rgw-zone", next, "--endpoints", "https://one.example,https://two.example", "--rgw-zonegroup", "group", "--format", "json"}
+		if !reflect.DeepEqual(modify.args, want) {
+			t.Fatalf("args=%v", modify.args)
+		}
+		if c.followups[len(c.followups)-1].args[0] != "period" {
+			t.Fatal("period must follow endpoint update")
+		}
+	}
+	if _, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": "east", "endpoints": "https://one.example"}); err == nil {
+		t.Fatal("accepted endpoints without group")
+	}
+}

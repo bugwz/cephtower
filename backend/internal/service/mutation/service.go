@@ -1520,8 +1520,16 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		if name == next {
-			return command{}, invalid("new_name must differ from name")
+		endpoints := ""
+		if value, present := p["endpoints"]; present {
+			var ok bool
+			endpoints, ok = value.(string)
+			if !ok || strings.TrimSpace(endpoints) == "" || strings.ContainsAny(endpoints, "\x00\r\n") {
+				return command{}, invalid("endpoints must be a nonempty string")
+			}
+		}
+		if name == next && endpoints == "" {
+			return command{}, invalid("change the name or endpoints")
 		}
 		args := []string{"zone", "rename", "--rgw-zone", name, "--zone-new-name", next}
 		for _, key := range []string{"zonegroup", "realm_id"} {
@@ -1537,6 +1545,19 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		check := []string{"zone", "get", "--rgw-zone", next}
 		result := rgw(args, check)
+		if endpoints != "" {
+			modify := []string{"zone", "modify", "--rgw-zone", next, "--endpoints", endpoints}
+			group := optional(p, "zonegroup")
+			if group == "" {
+				return command{}, invalid("zonegroup is required when updating endpoints")
+			}
+			modify = append(modify, "--rgw-zonegroup", group)
+			if name == next {
+				result = rgw(modify, check)
+			} else {
+				result.followups = append(result.followups, rgw(modify, check))
+			}
+		}
 		if realm := optional(p, "realm_id"); realm != "" {
 			result.followups = append(result.followups, rgw([]string{"period", "update", "--commit", "--realm-id", realm}, check))
 		}
