@@ -702,3 +702,9 @@ which could collapse multiple paths and schedules into one resource key.
 - 新增 `PUT /api/v1/rgw/bucket/ratelimit`，从编码 Bucket ID 解析租户与名称，使用 ratelimit set → enable/disable → get，三步传递相同的 bucket/tenant/scope。
 - Bucket 行操作支持四项限额和启停，完成后重新采集；原生命令使用 rgw_admin 能力，不要求 S3 端点，不将请求体持久化为 Bucket 展示状态。
 - 租户命令链回归测试、后端测试/OpenAPI 检查、前端构建均通过，未实机验证；两次写入不具备事务性，全局限流仍待实现。
+
+### Bucket 全局列表租户标识修正
+
+- 原生全局 bucket list 遍历 bucket metadata 键，键为 `[tenant/]bucket`。采集现在拆分名称和租户，为 bucket stats 与 ratelimit get 分别传递 --bucket/--tenant。
+- 校验统计返回的 bucket、tenant 与请求一致，再构造编码资源标识，避免重复编码租户前缀或误用其他租户数据。
+- 租户 Bucket fixture 改为原生列表格式，并校验展示名与编码标识；后端测试（含 OpenAPI 检查）通过。本次未改前端，未进行真实集群验证。

@@ -307,18 +307,29 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 	}
 	var buckets any
 	if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_bucket", []string{"bucket", "list", "--format", "json"}, &buckets) {
-		for _, bucket := range stringList(buckets, "buckets") {
-			var details map[string]any
-			if !p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_bucket_detail", []string{"bucket", "stats", "--bucket", bucket, "--format", "json"}, &details) {
-				continue
+		for _, entry := range stringList(buckets, "buckets") {
+			tenant, bucket := "", entry
+			if prefix, name, found := strings.Cut(entry, "/"); found {
+				tenant, bucket = prefix, name
 			}
-			if len(details) == 0 {
+			if bucket == "" || strings.Contains(bucket, "/") {
 				markCollectionUnavailable(ctx, "collect.rgw_bucket_detail")
 				continue
 			}
-			tenant := textField(details, "tenant")
+			args := []string{"bucket", "stats", "--bucket", bucket, "--format", "json"}
+			if tenant != "" {
+				args = append(args, "--tenant", tenant)
+			}
+			var details map[string]any
+			if !p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_bucket_detail", args, &details) {
+				continue
+			}
+			if textField(details, "bucket") != bucket || textField(details, "tenant") != tenant {
+				markCollectionUnavailable(ctx, "collect.rgw_bucket_detail")
+				continue
+			}
 			var limits map[string]any
-			args := []string{"ratelimit", "get", "--bucket", bucket, "--ratelimit-scope", "bucket"}
+			args = []string{"ratelimit", "get", "--bucket", bucket, "--ratelimit-scope", "bucket"}
 			if tenant != "" {
 				args = append(args, "--tenant", tenant)
 			}

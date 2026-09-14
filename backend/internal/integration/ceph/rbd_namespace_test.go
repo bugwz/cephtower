@@ -243,12 +243,15 @@ func TestRGWUserRateLimitShape(t *testing.T) {
 
 func TestRGWBucketRateLimitShape(t *testing.T) {
 	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
-		"collect.rgw_bucket":           []byte(`["photos"]`),
+		"collect.rgw_bucket":           []byte(`["team/photos"]`),
 		"collect.rgw_bucket_detail":    []byte(`{"bucket":"photos","tenant":"team"}`),
 		"collect.rgw_bucket_ratelimit": []byte(`{"bucket_ratelimit":{"enabled":true,"max_read_ops":25}}`),
 	}}}
 	for _, row := range p.collectRGWOptional(context.Background(), ClusterAccess{}, time.Now()) {
 		if row.Kind == "rgw_bucket" {
+			if row.NaturalKey != opaquePair("team", "photos") || row.Name != "photos" {
+				t.Fatalf("bucket identity: %#v", row)
+			}
 			limits, ok := row.Payload.(map[string]any)["rate_limit"].(map[string]any)
 			if !ok || limits["enabled"] != true || fmt.Sprint(limits["max_read_ops"]) != "25" {
 				t.Fatalf("limits: %#v", limits)
