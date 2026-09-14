@@ -6,13 +6,15 @@ import {
   SafetyCertificateOutlined,
   ThunderboltOutlined
 } from '@ant-design/icons'
-import { Button, Card, Descriptions, Progress, Space, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Descriptions, Form, Input, Progress, Space, Switch, Tag, Typography } from 'antd'
 import { useCallback, useMemo, useState } from 'react'
 import { listClusterCapabilities, type ClusterCapability } from '../../api/cluster'
 import { getOptionalResource, listResource, mutateResource, refreshResource } from '../../api/resource'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import { AppTable } from '../../components/AppTable'
 import { HealthBadge } from '../../components/HealthBadge'
+import { DraggableModal } from '../../components/DraggableModal'
+import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 import { Page } from '../../components/Page'
 import { TableAction } from '../../components/TableActions'
 import { useResource } from '../../hooks'
@@ -36,6 +38,9 @@ export function OverviewPage() {
   const { selectedClusterId } = useClusterContext()
   const [refreshing, setRefreshing] = useState(false)
   const operationMutation = useMutationOperation()
+  const [muteTarget, setMuteTarget] = useState<ApiRecord | null>(null)
+  const [muteForm] = Form.useForm<{ ttl?: string; sticky?: boolean }>()
+  const [mutatingHealth, setMutatingHealth] = useState(false)
   const healthTableFilters = useResourceTableFilters({
     path: '/health',
     fields: ['code', 'severity', 'summary', 'count'],
@@ -53,7 +58,7 @@ export function OverviewPage() {
     return {
       overview: overviewResult?.item.data as ApiRecord ?? {},
       observedAt: overviewResult?.item.observed_at,
-      stale: overviewResult?.item.stale,
+      stale: Boolean(overviewResult?.item.stale || healthResult.stale),
       healthChecks: healthResult.items,
       staleReason: healthResult.staleReason,
       capabilities
@@ -81,21 +86,32 @@ export function OverviewPage() {
     }
   }
 
-  async function toggleHealth(row: ApiRecord, muted: boolean) {
-    if (!selectedClusterId) {
-      return
-    }
+  async function toggleHealth(row: ApiRecord, muted: boolean, options: { ttl?: string; sticky?: boolean } = {}) {
+    if (!selectedClusterId || mutatingHealth) return
     const code = textValue(row.code ?? row.name ?? row.natural_key, '')
-    await operationMutation.run(() => mutateResource(muted ? '/health/mute' : '/health/mute', muted ? 'DELETE' : 'POST', {
-      cluster_id: selectedClusterId,
-      code
-    }), muted ? '健康检查取消静默执行成功' : '健康检查静默执行成功')
-    await refresh()
+    setMutatingHealth(true)
+    try {
+      await operationMutation.run(() => mutateResource('/health/mute', muted ? 'DELETE' : 'POST', {
+        cluster_id: selectedClusterId, code,
+        ...(!muted ? { ...(options.ttl ? { ttl: options.ttl.trim() } : {}), sticky: Boolean(options.sticky) } : {})
+      }), muted ? '健康检查已取消静默' : '健康检查已静默')
+      setMuteTarget(null)
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kind: 'health_check' }), false)
+      await refresh()
+    } finally {
+      setMutatingHealth(false)
+    }
   }
+
+  const pgStates = useMemo(() => Array.isArray(data?.overview.placement_groups)
+    ? (data.overview.placement_groups as ApiRecord[]) : [], [data?.overview.placement_groups])
+  const totalPGs = pgStates.reduce((sum, row) => sum + (numberValue(row.count) ?? 0), 0)
 
   return (
     <Page title="总览" loading={loading} error={error}>
       <Space direction="vertical" size={16} className="page-stack">
+        <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />
+        {data?.stale ? <Alert type="warning" showIcon message="采集数据已过期，请刷新后确认当前集群状态。" /> : null}
         <Card
           className="page-surface-card overview-surface-card"
           title="集群总览"
@@ -126,6 +142,26 @@ export function OverviewPage() {
         </Card>
 
         <div className="content-grid">
+          <Card title="Placement Groups">
+            <Text type="secondary">PG 总数：{data?.overview.placement_groups ? totalPGs : '—'}</Text>
+            <AppTable<ApiRecord> size="small" rowKey="name" dataSource={pgStates} pagination={false} columns={[
+              { title: '状态', dataIndex: 'name', render: (value) => <Tag>{String(value)}</Tag> },
+              { title: '数量', dataIndex: 'count' },
+              { title: '占比', render: (_, row) => <Progress percent={totalPGs ? Math.round((numberValue(row.count) ?? 0) / totalPGs * 1000) / 10 : 0} /> }
+            ]} />
+          </Card>
+          <Card title="客户端 I/O 与服务">
+            <Descriptions column={1} size="small" bordered>
+              <Descriptions.Item label="读取 IOPS">{textValue(clientIO.read_ops_per_second, '—')}</Descriptions.Item>
+              <Descriptions.Item label="写入 IOPS">{textValue(clientIO.write_ops_per_second, '—')}</Descriptions.Item>
+              <Descriptions.Item label="读取吞吐">{formatBytes(clientIO.read_bytes_per_second)}/s</Descriptions.Item>
+              <Descriptions.Item label="写入吞吐">{formatBytes(clientIO.write_bytes_per_second)}/s</Descriptions.Item>
+              <Descriptions.Item label="MGR active / standby">{serviceValue(services.mgr, 'active', 'standby')}</Descriptions.Item>
+              <Descriptions.Item label="MDS active / standby">{serviceValue(services.mds, 'active', 'standby')}</Descriptions.Item>
+            </Descriptions>
+          </Card>
+        </div>
+        <div className="content-grid">
           <Card title="健康检查">
             <AppTable<ApiRecord>
               size="small"
@@ -133,7 +169,15 @@ export function OverviewPage() {
               dataSource={data?.healthChecks ?? []}
               pagination={{ defaultPageSize: 10, showSizeChanger: true }}
               onChange={(_pagination, filters) => healthTableFilters.handleFilterChange(tableFilters(filters))}
+              expandable={{
+                rowExpandable: (row) => Array.isArray(row.detail) && row.detail.length > 0,
+                expandedRowRender: (row) => <Space direction="vertical">{(row.detail as string[]).map((detail, index) => <Text key={index}>{detail}</Text>)}</Space>
+              }}
               columns={[
+                { title: '检查状态', dataIndex: 'active', render: (value) => value === false ? '当前未触发' : '正在触发' },
+                { title: '静默到期时间', dataIndex: 'mute_until', render: (value, row) => row.muted ? textValue(value, '未设置') : '—' },
+                { title: '持续静默', dataIndex: 'sticky', render: (value) => value ? '是' : '否' },
+                { title: '静默', dataIndex: 'muted', render: (value) => <Tag color={value ? 'warning' : 'default'}>{value ? '已静默' : '未静默'}</Tag> },
                 { ...filterColumn('Code', 'code', healthTableFilters), ellipsis: true },
                 { ...filterColumn('级别', 'severity', healthTableFilters), render: (value) => <HealthBadge status={textValue(value)} /> },
                 { ...filterColumn('摘要', 'summary', healthTableFilters), ellipsis: true },
@@ -143,7 +187,11 @@ export function OverviewPage() {
                   width: 80,
                   render: (_, row) => {
                     const muted = Boolean(row.muted)
-                    return <TableAction onClick={() => toggleHealth(row, muted)}>{muted ? '取消静默' : '静默'}</TableAction>
+                    return <TableAction disabled={mutatingHealth || Boolean(row.stale)} onClick={() => {
+                      if (muted) { void toggleHealth(row, true); return }
+                      muteForm.setFieldsValue({ ttl: '1h', sticky: false })
+                      setMuteTarget(row)
+                    }}>{muted ? '取消静默' : '静默'}</TableAction>
                   }
                 }
               ]}
@@ -151,6 +199,18 @@ export function OverviewPage() {
           </Card>
         </div>
       </Space>
+      <DraggableModal title={`静默健康检查 ${textValue(muteTarget?.code, '')}`} open={Boolean(muteTarget)}
+        onCancel={() => { if (!mutatingHealth) setMuteTarget(null) }} onOk={() => muteForm.submit()} confirmLoading={mutatingHealth} destroyOnClose>
+        <Form form={muteForm} layout="vertical" onFinish={(values) => { if (muteTarget) void toggleHealth(muteTarget, false, values) }}>
+          <Form.Item name="ttl" label="静默时限" extra="支持 s（秒）、m（分）、h（时）、d（天）、w（周）；留空表示不设置到期时间。"
+            rules={[{ pattern: /^[1-9][0-9]{0,8}[smhdw]?$/, message: '请输入正整数时长，例如 1h 或 30m' }]}>
+            <Input placeholder="1h" />
+          </Form.Item>
+          <Form.Item name="sticky" label="持续静默" valuePropName="checked" extra="启用后，健康检查恢复或数量变化不会自动取消静默，仍受静默时限约束。">
+            <Switch />
+          </Form.Item>
+        </Form>
+      </DraggableModal>
     </Page>
   )
 }
