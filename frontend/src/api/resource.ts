@@ -25,6 +25,23 @@ export interface ResourceItemResult<T = ApiRecord> {
   etag?: string | null
 }
 
+export async function listAllResources<T = ApiRecord>(path: string, clusterId: number, options: Omit<ResourceListOptions, 'cursor'> = {}): Promise<ResourceListResult<T>> {
+  const result = await listResource<T>(path, clusterId, { ...options, limit: options.limit ?? 500 })
+  const seen = new Set<string>()
+  while (result.nextCursor) {
+    const cursor = result.nextCursor
+    if (seen.has(cursor)) throw new Error('资源分页游标重复，请重新刷新')
+    seen.add(cursor)
+    const next = await listResource<T>(path, clusterId, { ...options, limit: options.limit ?? 500, cursor })
+    result.items.push(...next.items)
+    result.stale ||= next.stale
+    if (next.staleReason) result.staleReason = next.staleReason
+    if (next.observedAt && (!result.observedAt || next.observedAt < result.observedAt)) result.observedAt = next.observedAt
+    result.nextCursor = next.nextCursor
+  }
+  return result
+}
+
 export function currentClusterId() {
   try {
     const raw = localStorage.getItem(selectedClusterStorageKey)
@@ -312,7 +329,7 @@ export function listConfiguration(): Promise<ApiRecord[]> {
 }
 
 export function listLogs(): Promise<ApiRecord> {
-  return listResource('/logs').then((payload) => ({ items: payload.items }))
+  return request<ApiRecord>('/logs', jsonInit('GET', { cluster_id: requiredClusterId() }))
 }
 
 export function unwrapList(payload: unknown): ApiRecord[] {

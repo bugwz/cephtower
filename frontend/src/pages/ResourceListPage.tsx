@@ -1,5 +1,5 @@
 import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Typography } from 'antd'
+import { Alert, Button, Card, Dropdown, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Typography } from 'antd'
 import type { ColumnsType, TableProps } from 'antd/es/table'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -26,6 +26,7 @@ export interface MutationFormField {
   label: string
   type?: 'text' | 'number' | 'boolean' | 'select' | 'textarea'
   required?: boolean
+  visibleWhen?: (values: MutationFormValues) => boolean
   placeholder?: string
   options?: Array<{ label: string; value: string | number | boolean }>
   optionsLoader?: (clusterId: number) => Promise<Array<{ label: string; value: string | number | boolean }>>
@@ -43,6 +44,7 @@ export interface ResourceFormAction {
   path: string
   method: 'POST' | 'PATCH' | 'PUT'
   successMessage: string
+  confirmation?: (values: MutationFormValues, row?: ApiRecord) => string | undefined
   fields: MutationFormField[]
   initialValues?: MutationFormValues | ((row?: ApiRecord) => MutationFormValues)
   buildBody: (values: MutationFormValues, clusterId: number, row?: ApiRecord) => ApiRecord
@@ -67,6 +69,7 @@ export interface ResourceListPageDefinition extends FeatureRequirements {
   rowKeyCandidates?: string[]
   createAction?: ResourceFormAction
   updateAction?: ResourceFormAction
+  extraActions?: ResourceFormAction[]
   deleteAction?: ResourceDeleteAction
   detailPath?: (row: ApiRecord) => string
 }
@@ -84,6 +87,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
   const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({})
   const [filterOptions, setFilterOptions] = useState<Record<string, string[]>>({})
   const [form] = Form.useForm<MutationFormValues>()
+  const formValues = Form.useWatch([], form) as MutationFormValues | undefined
   const operationMutation = useMutationOperation()
   const filterFields = useMemo(() => Array.from(new Set(definition.columns.map((column) => column.key))), [definition.columns])
   const loader = useCallback(async () => {
@@ -166,6 +170,13 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
     const action = activeAction
     setSubmitting(true)
     try {
+      const confirmation = action.confirmation?.(values, activeRow)
+      if (confirmation) {
+        const approved = await new Promise<boolean>((resolve) => {
+          Modal.confirm({ title: action.title, content: confirmation, okText: '确认执行', okType: 'danger', cancelText: '取消', onOk: () => resolve(true), onCancel: () => resolve(false), afterClose: () => resolve(false) })
+        })
+        if (!approved) return
+      }
       await operationMutation.run(() => mutateResource(
         action.path,
         action.method,
@@ -174,7 +185,14 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
       ), false)
       setFormOpen(false)
       message.success(action.successMessage)
-      void refresh({ showLoading: false })
+      if (action.path.startsWith('/rbd/')) {
+        await refreshResource({ clusterId: selectedClusterId, kinds: ['rbd_image', 'rbd_snapshot', 'rbd_namespace', 'rbd_trash', 'rbd_group', 'rbd_mirroring'] })
+      }
+      if (action.path.startsWith('/rgw/account')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_account','rgw_role'] })
+      if (action.path.startsWith('/rgw/role')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_role'] })
+      if (action.path === '/rgw/bucket/ratelimit') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_bucket'] })
+      if (action.path.startsWith('/rgw/user')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_user'] })
+      await refresh({ showLoading: false })
     } finally {
       setSubmitting(false)
     }
@@ -201,10 +219,13 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
         cancelText: '取消',
         async onOk() {
           await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters), false)
-          window.setTimeout(() => {
-            message.success(action.successMessage)
-            void refresh({ showLoading: false })
-          })
+          message.success(action.successMessage)
+          if (action.path.startsWith('/rbd/')) await refreshResource({ clusterId:selectedClusterId,kinds:['rbd_image','rbd_snapshot','rbd_namespace','rbd_trash','rbd_group'] })
+          if (action.path.startsWith('/rgw/account')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_account','rgw_role'] })
+      if (action.path.startsWith('/rgw/role')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_role'] })
+      if (action.path === '/rgw/bucket/ratelimit') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_bucket'] })
+      if (action.path.startsWith('/rgw/user')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_user'] })
+          await refresh({ showLoading:false })
         }
       })
       return
@@ -217,10 +238,13 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
       cancelText: '取消',
       async onOk() {
         await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters, { ifMatch: generation }), false)
-        window.setTimeout(() => {
-          message.success(action.successMessage)
-          void refresh({ showLoading: false })
-        })
+        message.success(action.successMessage)
+        if (action.path.startsWith('/rbd/')) await refreshResource({ clusterId:selectedClusterId,kinds:['rbd_image','rbd_snapshot','rbd_namespace','rbd_trash','rbd_group'] })
+          if (action.path.startsWith('/rgw/account')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_account','rgw_role'] })
+      if (action.path.startsWith('/rgw/role')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_role'] })
+      if (action.path === '/rgw/bucket/ratelimit') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_bucket'] })
+      if (action.path.startsWith('/rgw/user')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_user'] })
+        await refresh({ showLoading:false })
       }
     })
   }
@@ -303,9 +327,10 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
         destroyOnClose
       >
         <Form form={form} layout="vertical" onFinish={submitForm}>
-          {activeAction?.fields.map((field) => (
+          {activeAction?.fields.filter((field) => !field.visibleWhen || field.visibleWhen(formValues ?? {})).map((field) => (
             <Form.Item
               key={field.name}
+              preserve={false}
               name={field.name}
               label={field.label}
               valuePropName={field.type === 'boolean' ? 'checked' : 'value'}
@@ -352,19 +377,34 @@ function buildColumns(
     filterSearch: true,
     filters: (filterOptions[column.key] ?? []).map((value) => ({ text: value, value })),
     filteredValue: columnFilters[column.key] ?? null,
-    render: (value, row) => column.render?.(value, row) ?? renderValue(value)
+    render: (value, row) => column.render?.(value, row) ?? (value !== null && typeof value === 'object' && (!Array.isArray(value) || value.some((item) => item !== null && typeof item === 'object')) ? <Button type="link" size="small" onClick={() => openDetail({ [column.key]: value })}>{Array.isArray(value) ? `查看 ${value.length} 项` : '查看详情'}</Button> : renderValue(value))
   }))
 
   columns.push({
     title: '操作',
     key: 'actions',
-    width: definition.updateAction && definition.deleteAction ? 150 : 110,
+    width: 65 + (definition.updateAction ? 50 : 0) + (definition.deleteAction ? 50 : 0) + (definition.extraActions?.length ? 80 : 0),
     fixed: 'right',
     render: (_, row) => (
       <TableActions>
         <TableAction onClick={() => openDetail(row)}>详情</TableAction>
         {definition.updateAction ? (
           <TableAction disabled={mutationBlocked} onClick={() => openForm(definition.updateAction!, row)}>编辑</TableAction>
+        ) : null}
+        {definition.extraActions?.length ? (
+          <Dropdown
+            trigger={['click']}
+            disabled={mutationBlocked}
+            menu={{
+              items: definition.extraActions.map((action, index) => ({ key: String(index), label: action.title, disabled: mutationBlocked })),
+              onClick: ({ key }) => {
+                const action = definition.extraActions?.[Number(key)]
+                if (action && !mutationBlocked) openForm(action, row)
+              }
+            }}
+          >
+            <Button type="link" size="small" disabled={mutationBlocked}>更多操作</Button>
+          </Dropdown>
         ) : null}
         {definition.deleteAction ? (
           <TableAction danger disabled={mutationBlocked} onClick={() => deleteRow(row)}>删除</TableAction>
@@ -388,16 +428,16 @@ function refreshKinds(definition: ResourceListPageDefinition) {
     '/filesystem/authorizations': ['cephfs_authorization'],
     '/filesystem/clients': ['cephfs_client'],
     '/filesystem/entries': ['cephfs_entry'],
-    '/filesystem/snapshot/schedules': ['snapshot_schedule'],
     '/filesystem/subvolume/groups': ['subvolume_group'],
     '/filesystem/subvolume/snapshots': ['cephfs_snapshot'],
     '/filesystem/subvolumes': ['subvolume'],
     '/nfs/clusters': ['nfs_cluster'],
     '/nfs/exports': ['nfs_export'],
     '/rbd/groups': ['rbd_group'],
+    '/rbd/mirroring': ['rbd_mirroring'],
     '/rbd/images': ['rbd_image'],
     '/rbd/namespaces': ['rbd_namespace'],
-    '/rbd/snapshots': ['rbd_snapshot'],
+    '/rbd/image/snapshots': ['rbd_snapshot'],
     '/rbd/trash': ['rbd_trash'],
     '/rgw/accounts': ['rgw_account'],
     '/rgw/buckets': ['rgw_bucket'],

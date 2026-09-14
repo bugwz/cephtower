@@ -5,12 +5,24 @@ const dateTimeFields = new Set([
   'occurred_at',
   'last_login_at',
   'last_seen_at',
-  'discovered_at'
+  'discovered_at',
+  'deleted_at',
+  'timestamp',
+  'create_timestamp',
+  'access_timestamp',
+  'modify_timestamp',
+  'last_update'
 ])
 
 export function formatDateTime(value: unknown, fallback = '-') {
   if (typeof value !== 'string' || !value) {
     return fallback
+  }
+
+  // Native Ceph tools also emit ctime-style strings without a timezone.
+  // Preserve those rather than assigning the browser's local timezone.
+  if (!/T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(value)) {
+    return value
   }
 
   const date = new Date(value)
