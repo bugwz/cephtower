@@ -328,3 +328,23 @@ func TestZoneTierUpdate(t *testing.T) {
 		t.Fatal("accepted unsupported tier")
 	}
 }
+
+func TestZoneReadOnlyUpdate(t *testing.T) {
+	for _, enabled := range []bool{true, false} {
+		c, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": "east", "zonegroup": "group", "read_only": enabled})
+		if err != nil {
+			t.Fatal(err)
+		}
+		flag := "--read-only=false"
+		if enabled {
+			flag = "--read-only=true"
+		}
+		want := []string{"zone", "modify", "--rgw-zone", "east", flag, "--rgw-zonegroup", "group", "--format", "json"}
+		if !reflect.DeepEqual(c.args, want) {
+			t.Fatalf("args=%v", c.args)
+		}
+	}
+	if _, err := build(Request{Action: "rgw_zone.update"}, map[string]any{"name": "east", "new_name": "east", "zonegroup": "group", "read_only": "false"}); err == nil {
+		t.Fatal("accepted string boolean")
+	}
+}

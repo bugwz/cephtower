@@ -1529,6 +1529,13 @@ func build(request Request, p map[string]any) (command, error) {
 			}
 		}
 		var syncArgs []string
+		if value, present := p["read_only"]; present {
+			enabled, ok := value.(bool)
+			if !ok {
+				return command{}, invalid("read_only must be a boolean")
+			}
+			syncArgs = append(syncArgs, "--read-only="+strconv.FormatBool(enabled))
+		}
 		if value, present := p["tier_type"]; present {
 			tier, ok := value.(string)
 			if !ok || (tier != "" && tier != "archive") {

@@ -893,3 +893,10 @@ ID、Realm 和主 Zone 标记，避免同名误关联或多组信息互相覆盖
 映射归档模块。编辑表单区分保持原值、普通、归档；普通显式生成 --tier-type=，
 归档生成 --tier-type=archive，避免把空值误认为省略。测试覆盖类型切换和
 非法类型，沿用指定 Zonegroup 与 Period 流程；未实机验证。
+
+### Zone 只读编辑
+
+原生 ZONE_MODIFY 的 is_read_only_set 区分省略与显式 false。编辑 API/表单
+增加 read_only，生成 --read-only=true/false，支持保持原值、开启、关闭。
+只读状态仍从 Zonegroup 成员详情读取；沿用指定组和 Period 提交流程。
+离线测试覆盖开启、关闭及非法类型，未实机验证。
