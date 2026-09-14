@@ -1,3 +1,4 @@
+import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 import { listResource } from '../../api/resource'
 
@@ -26,7 +27,7 @@ export function CephfsSnapshotsPage() {
 }
 
 export function SnapshotSchedulesPage() {
-  return <ResourceListPage definition={definitions.snapshotSchedules} />
+  return <SnapshotScheduleStatus />
 }
 
 export function CephfsAuthorizationsPage() {
@@ -60,7 +61,6 @@ const definitions: Record<
   | 'subvolumeGroups'
   | 'subvolumes'
   | 'cephfsSnapshots'
-  | 'snapshotSchedules'
   | 'cephfsAuthorizations'
   | 'cephfsEntries'
   | 'nfsClusters'
@@ -370,37 +370,6 @@ const definitions: Record<
       { key: 'subvolume', title: '子卷' },
       { key: 'name', title: '快照' },
       { key: 'created_at', title: '创建时间' },
-      { key: 'resource_version', title: '版本' }
-    ]
-  },
-  snapshotSchedules: {
-    title: '快照计划',
-    path: '/filesystem/snapshot/schedules',
-    requiredCapabilities: ['cephfs_volume'],
-    createAction: {
-      title: '新建快照计划',
-      buttonLabel: '新建快照计划',
-      path: '/filesystem/snapshot/schedule',
-      method: 'POST',
-      successMessage: '快照计划创建执行成功',
-      fields: [
-        { name: 'fs', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
-        { name: 'path', label: '路径', required: true, placeholder: '/' },
-        { name: 'schedule', label: '计划', required: true, placeholder: '1h' }
-      ],
-      initialValues: { path: '/' },
-      buildBody: (values, clusterId) => ({
-        cluster_id: clusterId,
-        fs: String(values.fs ?? ''),
-        path: String(values.path ?? ''),
-        schedule: String(values.schedule ?? '')
-      })
-    },
-    columns: [
-      { key: 'fs', title: '文件系统' },
-      { key: 'path', title: '路径' },
-      { key: 'schedule', title: '计划' },
-      { key: 'retention', title: '保留' },
       { key: 'resource_version', title: '版本' }
     ]
   },
