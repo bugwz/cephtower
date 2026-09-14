@@ -720,3 +720,9 @@ which could collapse multiple paths and schedules into one resource key.
 - 新增 `PUT /api/v1/rgw/bucket/quota` 与行操作表单，编码标识解析为 bucket/tenant，调用 quota enable 或 set→disable，随后 bucket stats 并刷新采集。
 - 对照 set_quota_info，容量为字节并向上取整到 KiB，负值 -1 表示无限制；停用命令忽略限额，因此先单独保存，两次写入不具备事务性。
 - 租户范围及启停命令链测试、后端测试/OpenAPI 检查、前端构建通过。未进行真实集群验证。
+
+### 多步操作最终读取修复
+
+- 共用执行器现在使用命令链最后一个已声明的后置检查（含其二进制），不再忽略 followup.check；空 RBD/RGW 检查不再被转换成单独的 --format json。
+- 实际 Service.Execute 回归测试验证限流依次执行 set、enable、get，且读取标记为非写入；后端测试/OpenAPI 检查通过。
+- 此修复保证声明的读取被执行，不代表已比较读取值和请求值。尤其参考源码 Bucket quota 外层忽略 set_bucket_quota 返回值，仍需进一步增加结果字段一致性校验；未实机验证。

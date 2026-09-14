@@ -120,15 +120,19 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		return cephdomain.ActionResult{}, normalize(err)
 	}
+	checkSpec := spec
 	for index, followup := range spec.followups {
 		stepID := fmt.Sprintf("%s.step%d", request.Action, index+2)
 		result, err = s.executor.Run(ctx, access, executor.CommandSpec{ID: stepID, Binary: followup.binary, Args: followup.args, Stdin: followup.stdin, Timeout: followup.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true, SensitiveArgs: followup.sensitive})
 		if err != nil {
 			return cephdomain.ActionResult{}, normalize(err)
 		}
+		if len(followup.check) > 0 {
+			checkSpec = followup
+		}
 	}
-	if len(spec.check) > 0 {
-		if _, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput}); err != nil {
+	if len(checkSpec.check) > 0 {
+		if _, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput}); err != nil {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "command was accepted but the expected state could not be verified", Retryable: true}
 		}
 	}
@@ -145,7 +149,10 @@ func build(request Request, p map[string]any) (command, error) {
 		return command{binary: executor.BinaryCeph, args: args, check: check, timeout: 2 * time.Minute}
 	}
 	rbd := func(args, check []string) command {
-		return command{binary: executor.BinaryRBD, args: args, check: append(check, "--format", "json"), timeout: 5 * time.Minute}
+		if len(check) > 0 {
+			check = append(check, "--format", "json")
+		}
+		return command{binary: executor.BinaryRBD, args: args, check: check, timeout: 5 * time.Minute}
 	}
 	rgw := func(args, check []string) command {
 		if strings.HasPrefix(action, "rgw_role.") {
@@ -156,7 +163,10 @@ func build(request Request, p map[string]any) (command, error) {
 				}
 			}
 		}
-		return command{binary: executor.BinaryRGWAdmin, args: append(args, "--format", "json"), check: append(check, "--format", "json"), timeout: 2 * time.Minute}
+		if len(check) > 0 {
+			check = append(check, "--format", "json")
+		}
+		return command{binary: executor.BinaryRGWAdmin, args: append(args, "--format", "json"), check: check, timeout: 2 * time.Minute}
 	}
 	cephfsShell := func(args []string) command {
 		return command{binary: executor.BinaryCephFSShell, args: args, timeout: 2 * time.Minute}
