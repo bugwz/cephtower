@@ -383,3 +383,33 @@ func TestRGWZoneDetails(t *testing.T) {
 		})
 	}
 }
+
+func TestMultisiteDefaultIdentity(t *testing.T) {
+	for _, resource := range []struct{ kind, key string }{{"rgw_realm", "realms"}, {"rgw_zonegroup", "zonegroups"}, {"rgw_zone", "zones"}} {
+		for _, tc := range []struct {
+			label, value string
+			known, want  bool
+		}{{"match", `,"default_info":"id"`, true, true}, {"other", `,"default_info":"other"`, true, false}, {"empty", `,"default_info":""`, true, false}, {"missing", "", false, false}, {"invalid", `,"default_info":42`, false, false}} {
+			t.Run(resource.kind+"/"+tc.label, func(t *testing.T) {
+				p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+					"collect." + resource.kind:             []byte(fmt.Sprintf(`{"%s":["east"]%s}`, resource.key, tc.value)),
+					"collect." + resource.kind + "_detail": []byte(`{"name":"east","id":"id"}`),
+				}}}
+				found := false
+				for _, row := range p.collectRGWOptional(context.Background(), ClusterAccess{}, time.Now()) {
+					if row.Kind != resource.kind {
+						continue
+					}
+					found = true
+					value, known := row.Payload.(map[string]any)["is_default"]
+					if known != tc.known || (known && value != tc.want) {
+						t.Fatalf("default=%v known=%v", value, known)
+					}
+				}
+				if !found {
+					t.Fatal("missing multisite observation")
+				}
+			})
+		}
+	}
+}

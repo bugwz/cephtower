@@ -811,3 +811,12 @@ period update --commit，并显式使用 Realm ID 限定目标，最后按新名
 依次执行 zonegroup add/remove --rgw-zonegroup <新名称> --rgw-zone <成员>，
 成员变更后再提交所属 Realm 的 Period，并读回详情。拒绝重复、交叉和非法成员名。
 离线测试覆盖重命名后的成员目标、命令顺序及参数异常；未实机验证。
+
+### 多站点默认状态展示
+
+原生 REALM_LIST、ZONEGROUP_LIST、ZONE_LIST 均输出 default_info ID。采集器按
+详情 ID 比较后通过 API 提供 is_default，Zonegroup 与 Zone 页面展示“当前上下文默认”。
+命令未指定 Realm 上下文，因此此标记代表该次命令解析出的默认对象，
+不声称展示每个 Realm 各自的默认对象。缺失或非法 default_info 保持未知，
+不伪装成 false；空字符串明确表示没有匹配对象。离线测试覆盖三类资源的
+匹配、不匹配、空、缺失及非法字段。
