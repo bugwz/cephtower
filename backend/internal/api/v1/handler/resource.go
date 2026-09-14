@@ -227,7 +227,7 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 }
 
 func (h *Handler) persistResourceMutation(ctx context.Context, clusterID uint64, kind, action, auditKey string, body map[string]any) error {
-	if action == "rgw_bucket.quota" || action == "rgw_bucket.ratelimit" || kind == "snapshot_schedule" || kind == "rgw_user" || kind == "rgw_account" || kind == "rgw_role" || strings.HasPrefix(kind, "rbd_") {
+	if action == "rgw_bucket.quota" || action == "rgw_bucket.ratelimit" || kind == "snapshot_schedule" || kind == "rgw_user" || kind == "rgw_account" || kind == "rgw_role" || kind == "rgw_realm" || strings.HasPrefix(kind, "rbd_") {
 		// RBD state comes from native collection; request bodies are not observations.
 		// Schedules are read directly from Ceph; there is no reconciled cache.
 		return nil
@@ -478,7 +478,7 @@ func resourceLookupKey(kind, resourceKey string) string {
 func toResourceDTO(row store.CephEntityRecord) resourceDTO {
 	data := map[string]any{}
 	_ = json.Unmarshal([]byte(row.DiscoveredData), &data)
-	if row.ConfiguredData != nil && row.Kind != "rgw_user" && row.Kind != "rgw_account" && row.Kind != "rgw_role" && !strings.HasPrefix(row.Kind, "rbd_") {
+	if row.ConfiguredData != nil && row.Kind != "rgw_user" && row.Kind != "rgw_account" && row.Kind != "rgw_role" && row.Kind != "rgw_realm" && !strings.HasPrefix(row.Kind, "rbd_") {
 		var configured map[string]any
 		if err := json.Unmarshal([]byte(*row.ConfiguredData), &configured); err == nil {
 			for field, value := range configured {

@@ -765,3 +765,13 @@ which could collapse multiple paths and schedules into one resource key.
 名称或 ID 异常时标记 Zone 采集不完整。系统密钥由现有持久化前递归脱敏处理；
 离线回归覆盖详情、异常身份、空数据以及凭据脱敏后保留放置池。
 Zone 编辑与真实集群验证仍待完成。
+
+### Realm 编辑与默认 Realm
+
+对照 RgwMultisite::edit_realm 接入 PATCH /rgw/realm：名称变更执行
+`realm rename --rgw-realm <name> --realm-new-name <new_name>`，
+选中默认时随后执行 `realm default --rgw-realm <new_name>`，最后按新名称读取详情。
+无名称变化且未选择默认会拒绝空操作。多个写命令不具有事务性。
+页面提交后重新采集 Realm 和 RGW 状态，默认标记来自 realm list 的 default_info，
+不再用请求体覆盖 Realm 的真实采集数据。离线测试覆盖命令顺序、目标名称、
+布尔校验和默认标记；未执行真实集群验证。

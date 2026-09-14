@@ -365,6 +365,11 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 					continue
 				}
 			}
+			if resource.kind == "rgw_realm" {
+				if listed, ok := list.(map[string]any); ok {
+					details["is_default"] = textField(listed, "default_info") == textField(details, "id")
+				}
+			}
 			rows = append(rows, observation(resource.kind, name, name, "rgw_admin", details, now))
 		}
 	}

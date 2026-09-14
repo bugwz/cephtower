@@ -436,10 +436,21 @@ const definitions: Record<
       ],
       buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? '') })
     },
+    updateAction: {
+      title: '编辑 Realm', path: '/rgw/realm', method: 'PATCH',
+      successMessage: 'Realm 更新执行成功',
+      fields: [
+        { name: 'new_name', label: 'Realm 名称', required: true },
+        { name: 'default', label: '设为默认 Realm', type: 'boolean' }
+      ],
+      initialValues: (row) => ({ new_name: text(row?.name), default: false }),
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: text(row?.name), new_name: String(values.new_name ?? ''), default: Boolean(values.default) })
+    },
     columns: [
       { key: 'name', title: 'Realm' },
       { key: 'status', title: '状态' },
       { key: 'id', title: 'ID' },
+      { key: 'is_default', title: '默认 Realm' },
       { key: 'current_period', title: 'Current Period' },
       { key: 'epoch', title: 'Epoch' },
       { key: 'resource_version', title: '版本' }

@@ -83,7 +83,7 @@ func Supports(action string) bool {
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota",
 		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_bucket.quota",
 		"rgw_account.create", "rgw_account.update", "rgw_account.quota", "rgw_account.delete", "rgw_role.create", "rgw_role.update", "rgw_role.delete", "rgw_role.policy", "rgw_key.create", "rgw_key.delete",
-		"rgw_realm.create", "rgw_zonegroup.create", "rgw_zone.create", "rgw_period.commit",
+		"rgw_realm.create", "rgw_realm.update", "rgw_zonegroup.create", "rgw_zone.create", "rgw_period.commit",
 		"nfs_cluster.create", "nfs_cluster.delete", "nfs_export.create", "nfs_export.update", "nfs_export.delete",
 		"smb_cluster.create", "smb_cluster.update", "smb_cluster.delete",
 		"smb_share.create", "smb_share.update", "smb_share.delete",
@@ -1510,6 +1510,35 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		result := rgw([]string{"key", "rm", "--uid", uid, "--key-type", "s3", "--access-key", accessKey}, []string{"user", "info", "--uid", uid})
 		result.sensitive = map[int]struct{}{7: {}}
+		return result, nil
+	case "rgw_realm.update":
+		name, err := required(p, "name")
+		if err != nil {
+			return command{}, err
+		}
+		newName, err := required(p, "new_name")
+		if err != nil {
+			return command{}, err
+		}
+		makeDefault := false
+		if value, present := p["default"]; present {
+			var ok bool
+			makeDefault, ok = value.(bool)
+			if !ok {
+				return command{}, invalid("default must be a boolean")
+			}
+		}
+		check := []string{"realm", "get", "--rgw-realm", newName}
+		if name == newName {
+			if !makeDefault {
+				return command{}, invalid("change the name or select default")
+			}
+			return rgw([]string{"realm", "default", "--rgw-realm", name}, check), nil
+		}
+		result := rgw([]string{"realm", "rename", "--rgw-realm", name, "--realm-new-name", newName}, check)
+		if makeDefault {
+			result.followups = append(result.followups, rgw([]string{"realm", "default", "--rgw-realm", newName}, check))
+		}
 		return result, nil
 	case "rgw_realm.create", "rgw_zonegroup.create", "rgw_zone.create":
 		name, err := required(p, "name")

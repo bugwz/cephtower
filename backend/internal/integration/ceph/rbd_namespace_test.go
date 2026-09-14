@@ -289,14 +289,14 @@ func TestRGWRealmDetails(t *testing.T) {
 		want bool
 	}{{"east", true}, {"wrong", false}} {
 		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
-			"collect.rgw_realm":        []byte(`{"realms":["east"]}`),
+			"collect.rgw_realm":        []byte(`{"realms":["east"],"default_info":"realm-id"}`),
 			"collect.rgw_realm_detail": []byte(fmt.Sprintf(`{"name":%q,"id":"realm-id","current_period":"period-id","epoch":4}`, tc.name)),
 		}}}
 		found := false
 		for _, row := range p.collectRGWOptional(context.Background(), ClusterAccess{}, time.Now()) {
 			if row.Kind == "rgw_realm" {
 				found = true
-				if row.Payload.(map[string]any)["current_period"] != "period-id" {
+				if row.Payload.(map[string]any)["current_period"] != "period-id" || row.Payload.(map[string]any)["is_default"] != true {
 					t.Fatal("period missing")
 				}
 			}
