@@ -373,6 +373,7 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 			rows = append(rows, observation(resource.kind, name, name, "rgw_admin", details, now))
 		}
 	}
+	attachZoneMemberships(rows)
 	return rows
 }
 
@@ -577,4 +578,43 @@ func rgwRoleObservations(ctx context.Context, list any, account string, now time
 		rows = append(rows, observation("rgw_role", key, name, "rgw_admin", role, now))
 	}
 	return rows
+}
+
+// ZoneParams contains pool configuration; topology lives in ZoneGroup member records.
+func attachZoneMemberships(rows []Observation) {
+	members := map[string][]any{}
+	for _, row := range rows {
+		if row.Kind != "rgw_zonegroup" {
+			continue
+		}
+		group, ok := row.Payload.(map[string]any)
+		if !ok {
+			continue
+		}
+		for _, zone := range objectList(group["zones"]) {
+			id := textField(zone, "id")
+			if id == "" {
+				continue
+			}
+			member := map[string]any{"zonegroup_id": textField(group, "id"), "zonegroup_name": row.Name, "realm_id": textField(group, "realm_id"), "is_master": textField(group, "master_zone") == id}
+			for _, key := range []string{"endpoints", "log_meta", "log_data", "bucket_index_max_shards", "read_only", "tier_type", "sync_from_all", "sync_from", "redirect_zone", "supported_features"} {
+				if value, present := zone[key]; present {
+					member[key] = value
+				}
+			}
+			members[id] = append(members[id], member)
+		}
+	}
+	for _, row := range rows {
+		if row.Kind != "rgw_zone" {
+			continue
+		}
+		zone, ok := row.Payload.(map[string]any)
+		if !ok {
+			continue
+		}
+		if matches := members[textField(zone, "id")]; len(matches) > 0 {
+			zone["zonegroup_memberships"] = matches
+		}
+	}
 }

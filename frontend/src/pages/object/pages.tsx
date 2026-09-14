@@ -541,6 +541,7 @@ const definitions: Record<
       { key: 'id', title: 'ID' },
       { key: 'is_default', title: '当前上下文默认' },
       { key: 'realm_id', title: 'Realm ID' },
+      { key: 'zonegroup_memberships', title: '所属 Zonegroup、端点与同步配置' },
       { key: 'placement_pools', title: '放置池与存储类别' },
       { key: 'domain_root', title: '元数据根池' },
       { key: 'control_pool', title: '控制池' },

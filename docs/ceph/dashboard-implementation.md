@@ -848,3 +848,11 @@ Zone 创建增加密码输入框，成对接受 access_key/secret_key，映射�
 的 --access-key/--secret 参数。参数标记为敏感，API 字段为 writeOnly，沿用
 审计及原生详情递归脱敏；不保存请求覆盖层。测试覆盖敏感参数位置和不完整凭据。
 未实机验证。
+
+### Zone 的拓扑和同步详情
+
+RGWZone::dump 中的端点、归档类型、同步来源、只读标记及支持特性属于
+Zonegroup 成员记录，而非 ZoneParams。采集后按原生 Zone ID 关联这些记录，
+通过 zonegroup_memberships 提供给 Zone 页面详情表，保留每个 Zonegroup 的名称、
+ID、Realm 和主 Zone 标记，避免同名误关联或多组信息互相覆盖。
+离线测试覆盖名称变化、同名不同 ID、多组成员及 false 值保留；未实机验证。

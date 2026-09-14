@@ -413,3 +413,28 @@ func TestMultisiteDefaultIdentity(t *testing.T) {
 		}
 	}
 }
+
+func TestZoneMembershipJoinUsesNativeID(t *testing.T) {
+	target := map[string]any{"id": "zone-id", "name": "renamed"}
+	other := map[string]any{"id": "other-id", "name": "old-name"}
+	rows := []Observation{
+		{Kind: "rgw_zone", Payload: target}, {Kind: "rgw_zone", Payload: other},
+		{Kind: "rgw_zonegroup", Name: "group-a", Payload: map[string]any{"id": "group-id", "master_zone": "zone-id", "zones": []any{map[string]any{"id": "zone-id", "name": "old-name", "tier_type": "archive", "sync_from_all": false, "endpoints": []any{"https://rgw.example"}}}}},
+		{Kind: "rgw_zonegroup", Name: "group-b", Payload: map[string]any{"id": "group-b-id", "zones": []any{map[string]any{"id": "zone-id", "name": "renamed", "read_only": true}}}},
+	}
+	attachZoneMemberships(rows)
+	matches := target["zonegroup_memberships"].([]any)
+	if len(matches) != 2 {
+		t.Fatal("lost group membership")
+	}
+	first := matches[0].(map[string]any)
+	if first["zonegroup_name"] != "group-a" || first["is_master"] != true || first["tier_type"] != "archive" || first["sync_from_all"] != false {
+		t.Fatalf("wrong membership %v", first)
+	}
+	if _, present := other["zonegroup_memberships"]; present {
+		t.Fatal("joined unrelated zone by name")
+	}
+	if _, present := target["tier_type"]; present {
+		t.Fatal("group context must remain explicit")
+	}
+}
