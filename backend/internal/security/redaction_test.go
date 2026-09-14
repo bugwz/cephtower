@@ -67,3 +67,17 @@ func FuzzRedact(f *testing.F) {
 		}
 	})
 }
+
+func TestConfigurationValueRedaction(t *testing.T) {
+	redacted, err := RedactJSON(map[string]any{"name": "rgw_keystone_admin_password", "who": "client.rgw", "value": "hidden-value"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if redacted.(map[string]any)["value"] != "[REDACTED]" {
+		t.Fatal("credential in name/value configuration was not redacted")
+	}
+	plain, err := RedactJSON(map[string]any{"name": "osd_memory_target", "value": "4096"})
+	if err != nil || plain.(map[string]any)["value"] != "4096" {
+		t.Fatal("ordinary config value was changed")
+	}
+}

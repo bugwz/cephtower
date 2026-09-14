@@ -14,6 +14,7 @@ type redactionRule struct {
 }
 
 var secretPatterns = []redactionRule{
+	{regexp.MustCompile(`(?im)(^\s*key\s*=\s*)([^\s]+)`), `${1}[REDACTED]`},
 	{regexp.MustCompile(`(?i)(password|passphrase|token|secret|keyring|client_key|authorization|access_key|secret_key)(\s*[=:]\s*)([^\s,;]+)`), `${1}${2}[REDACTED]`},
 	{regexp.MustCompile(`(?i)(client\.[a-z0-9_.-]+\s*\{[^}]*?\bkey\s*=\s*)([^}\s]+)`), `${1}[REDACTED]`},
 	{regexp.MustCompile(`(?i)(https?://)[^/@\s]+@`), `${1}[REDACTED]@`},
@@ -21,6 +22,9 @@ var secretPatterns = []redactionRule{
 }
 
 var secretFieldPattern = regexp.MustCompile(`(?i)(^|_)(password|passphrase|token|secret|client_key|keyring|authorization|private_key|access_key|secret_key|credential|certificate_key)($|_)`)
+
+// IsSensitiveName identifies configuration names whose values contain credentials.
+func IsSensitiveName(name string) bool { return secretFieldPattern.MatchString(name) }
 
 // Redact removes common credential forms before values enter logs or events.
 func Redact(value string) string {
@@ -176,6 +180,12 @@ func redactJSONValue(value any, field string) any {
 	case map[string]any:
 		result := make(map[string]any, len(typed))
 		for key, item := range typed {
+			// Configuration APIs represent credentials as {name: "...password", value: "..."}.
+			if name, ok := typed["name"].(string); key == "value" && ok && IsSensitiveName(name) {
+				result[key] = "[REDACTED]"
+				continue
+			}
+
 			result[key] = redactJSONValue(item, key)
 		}
 		return result
