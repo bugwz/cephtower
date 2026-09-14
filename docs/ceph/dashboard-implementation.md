@@ -914,3 +914,11 @@ Zone 的 zonegroup_memberships 由同次采集中的 Zonegroup 详情派生。�
 ReconcileKinds 只持久化请求类型，因此 Zonegroup 操作和手动刷新必须同时
 请求 rgw_zonegroup、rgw_zone，否则 Zone 页面可能保留旧成员配置。
 现已补齐这两条刷新入口；真实集群交互验证仍待完成。
+
+### Zone 编辑的成员读回校验
+
+指定 Zonegroup 的 Zone 编辑在原有 Zone 读回之后，再执行 zonegroup get，
+确认组名、新成员名和成员 ID，并比较本次请求的端点、只读、归档类型、
+全来源同步以及设为主 Zone 的结果。读回不匹配返回 post_check_failed。
+避免原生命令仅返回成功却未修改目标成员时误报成功；同步来源集合、默认
+选择和系统密钥值尚未做结果比较。离线测试覆盖字段不匹配与异常返回。
