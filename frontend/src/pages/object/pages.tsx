@@ -366,7 +366,15 @@ const definitions: Record<
         versioning: String(values.versioning ?? 'enabled')
       })
     },
-    extraActions: [{ title: 'Bucket 限流设置', path: '/rgw/bucket/ratelimit', method: 'PUT', successMessage: 'Bucket 限流设置执行成功',
+    extraActions: [{ title: 'Bucket 配额设置', path: '/rgw/bucket/quota', method: 'PUT', successMessage: 'Bucket 配额设置执行成功',
+      fields: [
+        { name: 'enabled', label: '启用配额', type: 'boolean' },
+        { name: 'max_size', label: '容量上限（字节，向上取整至 KiB；-1 为无限制）', type: 'number', min: -1, max: Number.MAX_SAFE_INTEGER, required: true },
+        { name: 'max_objects', label: '对象上限（-1 为无限制）', type: 'number', min: -1, max: Number.MAX_SAFE_INTEGER, required: true }
+      ],
+      initialValues: (row) => { const quota=row?.bucket_quota as ApiRecord | undefined; return { enabled: quota?.enabled === true, max_size: Number(quota?.max_size ?? -1), max_objects: Number(quota?.max_objects ?? -1) } },
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, bucket_id: bucketId(row), enabled: Boolean(values.enabled), max_size: Number(values.max_size), max_objects: Number(values.max_objects) })
+    }, { title: 'Bucket 限流设置', path: '/rgw/bucket/ratelimit', method: 'PUT', successMessage: 'Bucket 限流设置执行成功',
         fields: [
           { name: 'enabled', label: '启用限流', type: 'boolean' },
           ...['max_read_ops', 'max_write_ops', 'max_read_bytes', 'max_write_bytes'].map((name,index) => ({ name, label: ['读请求数', '写请求数', '读取字节数', '写入字节数'][index] + '（每 RGW 每分钟；0 为无限制）', type: 'number' as const, min: 0, max: Number.MAX_SAFE_INTEGER, required: true }))

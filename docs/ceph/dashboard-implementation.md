@@ -714,3 +714,9 @@ which could collapse multiple paths and schedules into one resource key.
 - 对照原生 bucket_stats 输出，列表展示 tenant、versioning、num_shards、placement_rule、zonegroup、bucket_quota、object_lock_enabled、mfa_enabled、reshard_status、id、creation_time、mtime。
 - 原生 Bucket ID 使用 id 字段，与操作使用的编码 natural_key 分开；版本控制编辑读取已采集的 suspended 状态。
 - 前端构建通过；字段来自现有 bucket stats 采集，无后端变更，未实机验证。
+
+### 单个 Bucket 配额设置
+
+- 新增 `PUT /api/v1/rgw/bucket/quota` 与行操作表单，编码标识解析为 bucket/tenant，调用 quota enable 或 set→disable，随后 bucket stats 并刷新采集。
+- 对照 set_quota_info，容量为字节并向上取整到 KiB，负值 -1 表示无限制；停用命令忽略限额，因此先单独保存，两次写入不具备事务性。
+- 租户范围及启停命令链测试、后端测试/OpenAPI 检查、前端构建通过。未进行真实集群验证。

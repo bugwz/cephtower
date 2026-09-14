@@ -1308,3 +1308,25 @@ func TestBucketRateLimitTenantChain(t *testing.T) {
 		}
 	}
 }
+
+func TestBucketQuotaScope(t *testing.T) {
+	for _, enabled := range []bool{true, false} {
+		cmd, err := build(Request{Action: "rgw_bucket.quota"}, map[string]any{"bucket_id": base64.RawURLEncoding.EncodeToString([]byte("team\x00photos")), "enabled": enabled, "max_size": float64(-1), "max_objects": float64(0)})
+		if err != nil {
+			t.Fatal(err)
+		}
+		args := strings.Join(cmd.args, " ")
+		if !strings.Contains(args, "--tenant team") || !strings.Contains(args, "--max-size -1 --max-objects 0") {
+			t.Fatalf("args: %#v", cmd.args)
+		}
+		if !enabled {
+			if len(cmd.followups) != 1 || cmd.followups[0].args[1] != "disable" {
+				t.Fatal("missing disable")
+			}
+			cmd = cmd.followups[0]
+		}
+		if !reflect.DeepEqual(cmd.check, []string{"bucket", "stats", "--bucket", "photos", "--tenant", "team", "--format", "json"}) {
+			t.Fatalf("check: %#v", cmd.check)
+		}
+	}
+}

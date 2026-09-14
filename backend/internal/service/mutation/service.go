@@ -81,7 +81,7 @@ func Supports(action string) bool {
 		"subvolume.create", "subvolume.update", "subvolume.delete",
 		"cephfs_snapshot.create", "cephfs_snapshot.delete", "cephfs_snapshot.clone", "snapshot_schedule.create", "snapshot_schedule.action", "snapshot_schedule.retention",
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota",
-		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.ratelimit", "rgw_bucket.ratelimit",
+		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_bucket.quota",
 		"rgw_account.create", "rgw_account.update", "rgw_account.quota", "rgw_account.delete", "rgw_role.create", "rgw_role.update", "rgw_role.delete", "rgw_role.policy", "rgw_key.create", "rgw_key.delete",
 		"rgw_realm.create", "rgw_zonegroup.create", "rgw_zone.create", "rgw_period.commit",
 		"nfs_cluster.create", "nfs_cluster.delete", "nfs_export.create", "nfs_export.update", "nfs_export.delete",
@@ -1193,6 +1193,46 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("at least one user field is required")
 		}
 		return rgw(args, []string{"user", "info", "--uid", uid}), nil
+	case "rgw_bucket.quota":
+		raw, err := base64.RawURLEncoding.DecodeString(rawText(p, "bucket_id"))
+		pair := strings.SplitN(string(raw), "\x00", 2)
+		if err != nil || len(pair) != 2 || pair[1] == "" || strings.HasPrefix(pair[1], "-") || strings.ContainsAny(pair[0]+pair[1], "\r\n\x00") {
+			return command{}, invalid("bucket_id is invalid")
+		}
+		enabled, ok := p["enabled"].(bool)
+		if !ok {
+			return command{}, invalid("enabled must be a boolean")
+		}
+		target := []string{"--bucket", pair[1], "--quota-scope", "bucket"}
+		if pair[0] != "" {
+			target = append(target, "--tenant", pair[0])
+		}
+		verb := "set"
+		if enabled {
+			verb = "enable"
+		}
+		args := append([]string{"quota", verb}, target...)
+		for _, field := range []string{"max_size", "max_objects"} {
+			value, err := strconv.ParseInt(optional(p, field), 10, 64)
+			if err != nil || value < -1 || value > 9007199254740991 {
+				return command{}, invalid(field + " must be -1 or a nonnegative safe integer")
+			}
+			encoded := strconv.FormatInt(value, 10)
+			if field == "max_size" && value >= 0 {
+				encoded += "B"
+			}
+			args = append(args, "--"+strings.ReplaceAll(field, "_", "-"), encoded)
+		}
+		check := []string{"bucket", "stats", "--bucket", pair[1]}
+		if pair[0] != "" {
+			check = append(check, "--tenant", pair[0])
+		}
+		if enabled {
+			return rgw(args, check), nil
+		}
+		result := rgw(args, nil)
+		result.followups = []command{rgw(append([]string{"quota", "disable"}, target...), check)}
+		return result, nil
 	case "rgw_user.ratelimit", "rgw_bucket.ratelimit":
 		uid := rawText(p, "uid")
 		if action == "rgw_bucket.ratelimit" {

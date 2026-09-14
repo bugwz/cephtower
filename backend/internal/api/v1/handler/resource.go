@@ -184,7 +184,7 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 		if !ok {
 			return
 		}
-		if strings.HasPrefix(action, "rgw_bucket.") && action != "rgw_bucket.ratelimit" {
+		if strings.HasPrefix(action, "rgw_bucket.") && action != "rgw_bucket.ratelimit" && action != "rgw_bucket.quota" {
 			if _, err := h.Endpoints.Endpoint(r.Context(), id, "s3"); err != nil {
 				WriteError(w, r, http.StatusNotImplemented, "capability_unavailable", "s3 endpoint is not configured", false, map[string]any{"capability": "s3"})
 				return
@@ -227,7 +227,7 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 }
 
 func (h *Handler) persistResourceMutation(ctx context.Context, clusterID uint64, kind, action, auditKey string, body map[string]any) error {
-	if action == "rgw_bucket.ratelimit" || kind == "snapshot_schedule" || kind == "rgw_user" || kind == "rgw_account" || kind == "rgw_role" || strings.HasPrefix(kind, "rbd_") {
+	if action == "rgw_bucket.quota" || action == "rgw_bucket.ratelimit" || kind == "snapshot_schedule" || kind == "rgw_user" || kind == "rgw_account" || kind == "rgw_role" || strings.HasPrefix(kind, "rbd_") {
 		// RBD state comes from native collection; request bodies are not observations.
 		// Schedules are read directly from Ceph; there is no reconciled cache.
 		return nil

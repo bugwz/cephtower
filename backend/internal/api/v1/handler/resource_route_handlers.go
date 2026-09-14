@@ -877,3 +877,7 @@ func (h *Handler) UpdateRGWUserRateLimit(w http.ResponseWriter, r *http.Request)
 func (h *Handler) UpdateRGWBucketRateLimit(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_bucket", "rgw_bucket.ratelimit", "medium")(w, r)
 }
+
+func (h *Handler) UpdateRGWBucketQuota(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_bucket", "rgw_bucket.quota", "medium")(w, r)
+}

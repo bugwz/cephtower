@@ -331,6 +331,7 @@ Dashboard 控制器 → Ceph 命令 → CephTower API 使用。方法名来自�
 | [rgw.go](../../backend/internal/api/v1/router/rgw.go) | `DELETE /api/v1/rgw/role` | `DeleteRGWRole` |
 | [rgw.go](../../backend/internal/api/v1/router/rgw.go) | `GET /api/v1/rgw/buckets` | `ListRGWBuckets` |
 | [rgw.go](../../backend/internal/api/v1/router/rgw.go) | `PUT /api/v1/rgw/bucket/ratelimit` | `UpdateRGWBucketRateLimit` |
+| [rgw.go](../../backend/internal/api/v1/router/rgw.go) | `PUT /api/v1/rgw/bucket/quota` | `UpdateRGWBucketQuota` |
 | [rgw.go](../../backend/internal/api/v1/router/rgw.go) | `POST /api/v1/rgw/bucket` | `CreateRGWBucket` |
 | [rgw.go](../../backend/internal/api/v1/router/rgw.go) | `GET /api/v1/rgw/bucket` | `GetRGWBucket` |
 | [rgw.go](../../backend/internal/api/v1/router/rgw.go) | `PATCH /api/v1/rgw/bucket` | `UpdateRGWBucket` |

@@ -190,7 +190,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
       }
       if (action.path.startsWith('/rgw/account')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_account','rgw_role'] })
       if (action.path.startsWith('/rgw/role')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_role'] })
-      if (action.path === '/rgw/bucket/ratelimit') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_bucket'] })
+      if ((action.path === '/rgw/bucket/ratelimit' || action.path === '/rgw/bucket/quota')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_bucket'] })
       if (action.path.startsWith('/rgw/user')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_user'] })
       await refresh({ showLoading: false })
     } finally {
@@ -223,7 +223,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
           if (action.path.startsWith('/rbd/')) await refreshResource({ clusterId:selectedClusterId,kinds:['rbd_image','rbd_snapshot','rbd_namespace','rbd_trash','rbd_group'] })
           if (action.path.startsWith('/rgw/account')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_account','rgw_role'] })
       if (action.path.startsWith('/rgw/role')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_role'] })
-      if (action.path === '/rgw/bucket/ratelimit') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_bucket'] })
+      if ((action.path === '/rgw/bucket/ratelimit' || action.path === '/rgw/bucket/quota')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_bucket'] })
       if (action.path.startsWith('/rgw/user')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_user'] })
           await refresh({ showLoading:false })
         }
@@ -242,7 +242,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
         if (action.path.startsWith('/rbd/')) await refreshResource({ clusterId:selectedClusterId,kinds:['rbd_image','rbd_snapshot','rbd_namespace','rbd_trash','rbd_group'] })
           if (action.path.startsWith('/rgw/account')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_account','rgw_role'] })
       if (action.path.startsWith('/rgw/role')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_role'] })
-      if (action.path === '/rgw/bucket/ratelimit') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_bucket'] })
+      if ((action.path === '/rgw/bucket/ratelimit' || action.path === '/rgw/bucket/quota')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_bucket'] })
       if (action.path.startsWith('/rgw/user')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_user'] })
         await refresh({ showLoading:false })
       }
