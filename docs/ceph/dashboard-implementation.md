@@ -754,3 +754,14 @@ which could collapse multiple paths and schedules into one resource key.
 主机名、同步策略和启用特性。名称不匹配、缺少 ID 或空返回均视为采集失败，
 不生成只有名称的详情记录，并保留该资源类型的采集不完整状态。
 新增离线测试覆盖嵌套详情及异常返回；尚无真实集群验证，Zonegroup 编辑操作待补齐。
+
+### Zone 原生详情
+
+参考 Dashboard 的 `rgw-multisite-zone-form.component.ts::getZonePlacementData`，
+结合原生 ZONE_GET 和 RGWZoneParams::dump，枚举后逐项执行
+`radosgw-admin zone get --rgw-zone <name> --format json`。
+通过现有资源 API 提供 Realm、放置池、存储类别及内部池配置，页面增加对应列；
+完整详情保留其它原生字段。Zone 端点属于 Zonegroup 的成员 Zone，已在该页展示。
+名称或 ID 异常时标记 Zone 采集不完整。系统密钥由现有持久化前递归脱敏处理；
+离线回归覆盖详情、异常身份、空数据以及凭据脱敏后保留放置池。
+Zone 编辑与真实集群验证仍待完成。

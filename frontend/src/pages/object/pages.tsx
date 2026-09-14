@@ -498,7 +498,15 @@ const definitions: Record<
       { key: 'name', title: 'Zone' },
       { key: 'status', title: '状态' },
       { key: 'id', title: 'ID' },
-      { key: 'endpoints', title: 'Endpoints' },
+      { key: 'realm_id', title: 'Realm ID' },
+      { key: 'placement_pools', title: '放置池与存储类别' },
+      { key: 'domain_root', title: '元数据根池' },
+      { key: 'control_pool', title: '控制池' },
+      { key: 'gc_pool', title: '垃圾回收池' },
+      { key: 'lc_pool', title: '生命周期池' },
+      { key: 'log_pool', title: '日志池' },
+      { key: 'reshard_pool', title: '重分片池' },
+      { key: 'tier_config', title: '分层配置' },
       { key: 'resource_version', title: '版本' }
     ]
   },

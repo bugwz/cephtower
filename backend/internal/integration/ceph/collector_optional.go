@@ -356,7 +356,7 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 		}
 		for _, name := range stringList(list, resource.key) {
 			details := map[string]any{"name": name}
-			if resource.kind == "rgw_realm" || resource.kind == "rgw_zonegroup" {
+			if resource.kind == "rgw_realm" || resource.kind == "rgw_zonegroup" || resource.kind == "rgw_zone" {
 				if !p.optional(ctx, access, executor.BinaryRGWAdmin, "collect."+resource.kind+"_detail", []string{resource.noun, "get", "--rgw-" + resource.noun, name, "--format", "json"}, &details) {
 					continue
 				}

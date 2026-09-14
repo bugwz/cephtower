@@ -2,9 +2,12 @@ package ceph
 
 import (
 	cephdomain "cephtower/backend/internal/domain/ceph"
+	"cephtower/backend/internal/security"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
@@ -328,6 +331,50 @@ func TestRGWZonegroupDetails(t *testing.T) {
 				data := row.Payload.(map[string]any)
 				if row.NaturalKey != "east" || len(data["zones"].([]any)) != 1 || len(data["endpoints"].([]any)) != 1 || len(data["placement_targets"].([]any)) != 1 {
 					t.Fatal("zonegroup detail lost")
+				}
+			}
+			if found != tc.want {
+				t.Fatalf("found=%v want=%v", found, tc.want)
+			}
+		})
+	}
+}
+
+func TestRGWZoneDetails(t *testing.T) {
+	for _, tc := range []struct {
+		name, detail string
+		want         bool
+	}{
+		{"valid", `{"name":"east","id":"zone-id","realm_id":"realm-id","control_pool":"east.rgw.control","placement_pools":[{"key":"default-placement","val":{"index_pool":"east.rgw.buckets.index","storage_classes":{"STANDARD":{"data_pool":"east.rgw.buckets.data"}}}}],"system_key":{"access_key":"private-access","secret_key":"private-secret"}}`, true},
+		{"wrong name", `{"name":"west","id":"zone-id"}`, false},
+		{"missing id", `{"name":"east"}`, false},
+		{"null", `null`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+				"collect.rgw_zone":        []byte(`{"zones":["east"]}`),
+				"collect.rgw_zone_detail": []byte(tc.detail),
+			}}}
+			found := false
+			for _, row := range p.collectRGWOptional(context.Background(), ClusterAccess{}, time.Now()) {
+				if row.Kind != "rgw_zone" {
+					continue
+				}
+				found = true
+				data := row.Payload.(map[string]any)
+				if row.NaturalKey != "east" || data["control_pool"] != "east.rgw.control" || len(data["placement_pools"].([]any)) != 1 {
+					t.Fatal("zone detail lost")
+				}
+				redacted, err := security.RedactJSON(data)
+				if err != nil {
+					t.Fatal(err)
+				}
+				encoded, err := json.Marshal(redacted)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if strings.Contains(string(encoded), "private-") || !strings.Contains(string(encoded), "east.rgw.buckets.data") {
+					t.Fatal("zone redaction must hide credentials and preserve placement pools")
 				}
 			}
 			if found != tc.want {
