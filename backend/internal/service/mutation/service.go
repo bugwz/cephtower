@@ -1520,11 +1520,15 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		realmID, err := required(p, "realm_id")
-		if err != nil {
-			return command{}, err
+		realmID := ""
+		if value, present := p["realm_id"]; present {
+			var ok bool
+			realmID, ok = value.(string)
+			if !ok || strings.ContainsAny(realmID, "\x00\r\n") {
+				return command{}, invalid("realm_id must be a string")
+			}
 		}
-		args := []string{"zonegroup", "modify", "--rgw-zonegroup", newName, "--realm-id", realmID}
+		args := []string{"zonegroup", "modify", "--rgw-zonegroup", newName}
 		changed := name != newName
 		for _, key := range []string{"default", "master"} {
 			if value, present := p[key]; present {
@@ -1549,12 +1553,15 @@ func build(request Request, p map[string]any) (command, error) {
 		if !changed {
 			return command{}, invalid("select a zonegroup change")
 		}
-		result := rgw(args, nil)
+		check := []string{"zonegroup", "get", "--rgw-zonegroup", newName}
+		result := rgw(args, check)
 		if name != newName {
-			result = rgw([]string{"zonegroup", "rename", "--rgw-zonegroup", name, "--zonegroup-new-name", newName, "--realm-id", realmID}, nil)
-			result.followups = append(result.followups, rgw(args, nil))
+			result = rgw([]string{"zonegroup", "rename", "--rgw-zonegroup", name, "--zonegroup-new-name", newName}, nil)
+			result.followups = append(result.followups, rgw(args, check))
 		}
-		result.followups = append(result.followups, rgw([]string{"period", "update", "--commit", "--realm-id", realmID}, []string{"zonegroup", "get", "--rgw-zonegroup", newName, "--realm-id", realmID}))
+		if realmID != "" {
+			result.followups = append(result.followups, rgw([]string{"period", "update", "--commit", "--realm-id", realmID}, check))
+		}
 		return result, nil
 	case "rgw_realm.update":
 		name, err := required(p, "name")

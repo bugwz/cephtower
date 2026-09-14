@@ -95,12 +95,29 @@ func TestZonegroupEditCommitsScopedPeriod(t *testing.T) {
 	if !reflect.DeepEqual(c.followups[1].args, []string{"period", "update", "--commit", "--realm-id", "realm-id", "--format", "json"}) {
 		t.Fatal("period scope missing")
 	}
-	if !reflect.DeepEqual(c.followups[1].check, []string{"zonegroup", "get", "--rgw-zonegroup", "west", "--realm-id", "realm-id", "--format", "json"}) {
+	if !reflect.DeepEqual(c.followups[1].check, []string{"zonegroup", "get", "--rgw-zonegroup", "west", "--format", "json"}) {
 		t.Fatal("wrong readback")
 	}
-	for _, p := range []map[string]any{{"name": "east", "new_name": "west"}, {"name": "east", "new_name": "east", "realm_id": "id"}, {"name": "east", "new_name": "east", "realm_id": "id", "master": "true"}} {
+	for _, p := range []map[string]any{{"name": "east", "new_name": "east", "realm_id": "id"}, {"name": "east", "new_name": "east", "realm_id": "id", "master": "true"}} {
 		if _, err := build(Request{Action: "rgw_zonegroup.update"}, p); err == nil {
 			t.Fatalf("accepted invalid parameters %v", p)
+		}
+	}
+}
+
+func TestStandaloneZonegroupEdit(t *testing.T) {
+	c, err := build(Request{Action: "rgw_zonegroup.update"}, map[string]any{"name": "east", "new_name": "west", "realm_id": ""})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(c.followups) != 1 || c.followups[0].args[1] != "modify" || len(c.followups[0].check) == 0 {
+		t.Fatalf("unexpected standalone commands %+v", c)
+	}
+	for _, cmd := range append([]command{c}, c.followups...) {
+		for _, arg := range cmd.args {
+			if arg == "--realm-id" || arg == "period" {
+				t.Fatal("standalone edit must not change realm or commit a period")
+			}
 		}
 	}
 }

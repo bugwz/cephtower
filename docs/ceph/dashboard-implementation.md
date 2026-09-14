@@ -798,3 +798,9 @@ Zonegroup，停止以请求数据覆盖原生详情。离线测试覆盖完整�
 period update --commit，并显式使用 Realm ID 限定目标，最后按新名称读取详情。
 无 Realm 的 Zonegroup 编辑、清空端点、成员和放置目标编辑仍待补齐。
 多个命令不具有事务性；测试覆盖顺序、Period 范围、读回目标及无效输入，未实机验证。
+
+### 无 Realm 的 Zonegroup 编辑及 Realm 参数修正
+
+原生 ZONEGROUP_MODIFY 将 --realm-id 用于重新绑定 Realm，并非查询范围限制。
+编辑命令移除此参数，Realm ID 仅用于 Period 提交；没有 Realm 时跳过 Period，
+直接读取更新后的 Zonegroup。增加独立 Zonegroup 命令回归，页面允许空 Realm ID。

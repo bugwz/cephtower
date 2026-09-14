@@ -478,10 +478,10 @@ const definitions: Record<
     },
     updateAction: {
       title: '编辑 Zonegroup', path: '/rgw/zonegroup', method: 'PATCH',
-      successMessage: 'Zonegroup 更新与 Period 提交执行成功',
+      successMessage: 'Zonegroup 更新执行成功',
       fields: [
         { name: 'new_name', label: 'Zonegroup 名称', required: true },
-        { name: 'realm_id', label: '所属 Realm ID', required: true },
+        { name: 'realm_id', label: '所属 Realm ID（无 Realm 时留空）' },
         { name: 'endpoints', label: '端点（逗号分隔，留空保持原值）' },
         { name: 'master', label: '设为主 Zonegroup', type: 'boolean' },
         { name: 'default', label: '设为默认 Zonegroup', type: 'boolean' }
