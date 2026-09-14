@@ -907,3 +907,10 @@ Zone 编辑增加成对系统凭据更新，映射 modify_zone 的 --access-key/
 创建与编辑共用参数校验和敏感位置标记，组合重命名时敏感标记附在 modify
 后续命令上；凭据省略则保持原值，不回填已有密钥。测试覆盖单独更新、重命名
 组合及执行前拒绝不完整凭据，沿用审计脱敏；未实机验证。
+
+### Zonegroup 更新后的关联刷新
+
+Zone 的 zonegroup_memberships 由同次采集中的 Zonegroup 详情派生。后端
+ReconcileKinds 只持久化请求类型，因此 Zonegroup 操作和手动刷新必须同时
+请求 rgw_zonegroup、rgw_zone，否则 Zone 页面可能保留旧成员配置。
+现已补齐这两条刷新入口；真实集群交互验证仍待完成。
