@@ -141,15 +141,18 @@ type statusWire struct {
 		NumInOSDs int `json:"num_in_osds"`
 	} `json:"osdmap"`
 	PGMap struct {
-		NumPGs     uint64 `json:"num_pgs"`
+		NumPGs     uint64  `json:"num_pgs"`
+		NumPools   *uint64 `json:"num_pools"`
+		NumObjects *uint64 `json:"num_objects"`
 		PGsByState []struct {
 			StateName string `json:"state_name"`
 			Count     uint64 `json:"count"`
 		} `json:"pgs_by_state"`
-		ReadBytesSec  *uint64 `json:"read_bytes_sec"`
-		WriteBytesSec *uint64 `json:"write_bytes_sec"`
-		ReadOpPerSec  *uint64 `json:"read_op_per_sec"`
-		WriteOpPerSec *uint64 `json:"write_op_per_sec"`
+		ReadBytesSec          *uint64 `json:"read_bytes_sec"`
+		WriteBytesSec         *uint64 `json:"write_bytes_sec"`
+		ReadOpPerSec          *uint64 `json:"read_op_per_sec"`
+		WriteOpPerSec         *uint64 `json:"write_op_per_sec"`
+		RecoveringBytesPerSec *uint64 `json:"recovering_bytes_per_sec"`
 	} `json:"pgmap"`
 	MgrMap struct {
 		Available   bool `json:"available"`
@@ -180,6 +183,28 @@ type dfWire struct {
 	} `json:"stats"`
 }
 
+type pgDumpSummaryWire struct {
+	PGMap struct {
+		PGStatsSum struct {
+			StatSum struct {
+				NumObjects          *uint64 `json:"num_objects"`
+				NumObjectCopies     *uint64 `json:"num_object_copies"`
+				NumObjectsDegraded  *uint64 `json:"num_objects_degraded"`
+				NumObjectsMisplaced *uint64 `json:"num_objects_misplaced"`
+				NumObjectsUnfound   *uint64 `json:"num_objects_unfound"`
+			} `json:"stat_sum"`
+		} `json:"pg_stats_sum"`
+	} `json:"pg_map"`
+}
+
+type osdDFWire struct {
+	Nodes []struct {
+		ID   *int    `json:"id"`
+		PGs  *uint64 `json:"pgs"`
+		Type string  `json:"type"`
+	} `json:"nodes"`
+}
+
 func (p *NativeProvider) collectFast(ctx context.Context, access ClusterAccess) ([]Observation, error) {
 	now := time.Now().UTC()
 	var status statusWire
@@ -196,13 +221,14 @@ func (p *NativeProvider) collectFast(ctx context.Context, access ClusterAccess) 
 	if df.Stats.TotalBytes == nil || df.Stats.TotalUsedBytes == nil || df.Stats.TotalAvailBytes == nil {
 		return nil, fmt.Errorf("parse collect.df response: total byte fields are required")
 	}
-	overview := cephdomain.Overview{FSID: status.FSID, HealthStatus: status.Health.Status, Capacity: cephdomain.Capacity{TotalBytes: df.Stats.TotalBytes, UsedBytes: df.Stats.TotalUsedBytes, AvailableBytes: df.Stats.TotalAvailBytes}, Services: map[string]cephdomain.ServiceCount{"mon": {Total: &status.MonMap.NumMons, InQuorum: intPointer(len(status.MonMap.Quorum))}, "mgr": {Active: intPointer(boolInt(status.MgrMap.Available)), Standby: &status.MgrMap.NumStandbys}, "osd": {Total: &status.OSDMap.NumOSDs, Up: &status.OSDMap.NumUpOSDs, In: &status.OSDMap.NumInOSDs}, "mds": {Active: &status.FSMap.Up, Standby: intPointer(len(status.FSMap.Standbys))}}, ClientIO: cephdomain.ClientIO{ReadBytesPerSecond: status.PGMap.ReadBytesSec, WriteBytesPerSecond: status.PGMap.WriteBytesSec, ReadOpsPerSecond: status.PGMap.ReadOpPerSec, WriteOpsPerSecond: status.PGMap.WriteOpPerSec}, ObservedAt: now}
+	overview := cephdomain.Overview{FSID: status.FSID, HealthStatus: status.Health.Status, Capacity: cephdomain.Capacity{TotalBytes: df.Stats.TotalBytes, UsedBytes: df.Stats.TotalUsedBytes, AvailableBytes: df.Stats.TotalAvailBytes}, Services: map[string]cephdomain.ServiceCount{"mon": {Total: &status.MonMap.NumMons, InQuorum: intPointer(len(status.MonMap.Quorum))}, "mgr": {Active: intPointer(boolInt(status.MgrMap.Available)), Standby: &status.MgrMap.NumStandbys}, "osd": {Total: &status.OSDMap.NumOSDs, Up: &status.OSDMap.NumUpOSDs, In: &status.OSDMap.NumInOSDs}, "mds": {Active: &status.FSMap.Up, Standby: intPointer(len(status.FSMap.Standbys))}}, PoolCount: status.PGMap.NumPools, ObjectStats: cephdomain.ObjectStats{Objects: status.PGMap.NumObjects}, ClientIO: cephdomain.ClientIO{ReadBytesPerSecond: status.PGMap.ReadBytesSec, WriteBytesPerSecond: status.PGMap.WriteBytesSec, ReadOpsPerSecond: status.PGMap.ReadOpPerSec, WriteOpsPerSecond: status.PGMap.WriteOpPerSec, RecoveringBytesPerSecond: status.PGMap.RecoveringBytesPerSec}, ObservedAt: now}
 	if versions, err := p.run(ctx, access, "collect.versions", 30*time.Second, "versions", "--format", "json"); err == nil {
 		overview.CephVersion = cephVersionFromVersions(versions)
 	}
 	for _, state := range status.PGMap.PGsByState {
 		overview.PlacementGroups = append(overview.PlacementGroups, cephdomain.PGState{Name: state.StateName, Count: state.Count})
 	}
+	p.collectOverviewDetails(ctx, access, &overview)
 	rows := []Observation{{Kind: "overview", NaturalKey: "overview", Name: "overview", Status: status.Health.Status, Source: "ceph_cli", SourceVersion: overview.CephVersion, Payload: overview, ObservedAt: now}}
 	var health struct {
 		Status string                     `json:"status"`
@@ -247,6 +273,61 @@ func (p *NativeProvider) collectFast(ctx context.Context, access ClusterAccess) 
 		rows = append(rows, Observation{Kind: "health_check", NaturalKey: code, Name: code, Status: check.Severity, Source: "ceph_cli", Payload: check, ObservedAt: now})
 	}
 	return rows, nil
+}
+
+func (p *NativeProvider) collectOverviewDetails(ctx context.Context, access ClusterAccess, overview *cephdomain.Overview) {
+	var pgSummary pgDumpSummaryWire
+	if p.optional(ctx, access, executor.BinaryCeph, "collect.overview_pg_summary", []string{"pg", "dump", "summary", "--format", "json"}, &pgSummary) {
+		stats := pgSummary.PGMap.PGStatsSum.StatSum
+		if stats.NumObjects != nil && stats.NumObjectCopies != nil && stats.NumObjectsDegraded != nil && stats.NumObjectsMisplaced != nil && stats.NumObjectsUnfound != nil {
+			overview.ObjectStats = cephdomain.ObjectStats{
+				Objects: stats.NumObjects, Copies: stats.NumObjectCopies, Degraded: stats.NumObjectsDegraded,
+				Misplaced: stats.NumObjectsMisplaced, Unfound: stats.NumObjectsUnfound,
+			}
+		}
+	}
+
+	var osdDF osdDFWire
+	if p.optional(ctx, access, executor.BinaryCeph, "collect.overview_osd_df", []string{"osd", "df", "--format", "json"}, &osdDF) {
+		var total uint64
+		count := 0
+		for _, node := range osdDF.Nodes {
+			if node.ID == nil || *node.ID < 0 || node.PGs == nil || (node.Type != "" && node.Type != "osd") {
+				continue
+			}
+			total += *node.PGs
+			count++
+		}
+		if count > 0 {
+			average := float64(total) / float64(count)
+			overview.PGsPerOSD = &average
+		}
+	}
+
+	var osdDump osdDumpWire
+	flagsKnown := p.optional(ctx, access, executor.BinaryCeph, "collect.overview_osd_flags", []string{"osd", "dump", "--format", "json"}, &osdDump) && osdDump.Flags != nil
+	if status := overviewScrubStatus(overview.PlacementGroups, splitOSDFlags(value(osdDump.Flags)), flagsKnown); status != "" {
+		overview.ScrubStatus = &status
+	}
+}
+
+func overviewScrubStatus(states []cephdomain.PGState, flags []string, flagsKnown bool) string {
+	if flagsKnown {
+		for _, flag := range flags {
+			if flag == "noscrub" || flag == "nodeep-scrub" {
+				return "disabled"
+			}
+		}
+	}
+	for _, state := range states {
+		if strings.Contains(state.Name, "scrubbing") || strings.Contains(state.Name, "deep") {
+			return "active"
+		}
+	}
+	if flagsKnown {
+		return "inactive"
+	}
+	return ""
 }
 
 type hostWire struct {
@@ -628,7 +709,7 @@ type osdTreeWire struct {
 	} `json:"nodes"`
 }
 type osdDumpWire struct {
-	Flags string `json:"flags"`
+	Flags *string `json:"flags"`
 	OSDs  []struct {
 		OSD int `json:"osd"`
 		Up  int `json:"up"`
@@ -740,7 +821,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		return nil, err
 	}
 	rows := []Observation{}
-	rows = append(rows, Observation{Kind: "osd_flag", NaturalKey: "flags", Name: "flags", Source: "ceph_cli", Payload: map[string]any{"flags": splitOSDFlags(dump.Flags)}, ObservedAt: now})
+	rows = append(rows, Observation{Kind: "osd_flag", NaturalKey: "flags", Name: "flags", Source: "ceph_cli", Payload: map[string]any{"flags": splitOSDFlags(value(dump.Flags))}, ObservedAt: now})
 	for _, node := range tree.Nodes {
 		if node.Type != "osd" {
 			continue

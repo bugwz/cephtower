@@ -4,6 +4,7 @@ import {
   HddOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
+  SyncOutlined,
   ThunderboltOutlined
 } from '@ant-design/icons'
 import { Alert, Button, Card, Descriptions, Form, Input, Progress, Space, Switch, Tag, Typography } from 'antd'
@@ -69,7 +70,9 @@ export function OverviewPage() {
   const capacity = readRecord(data?.overview.capacity)
   const services = readRecord(data?.overview.services)
   const clientIO = readRecord(data?.overview.client_io)
+  const objectStats = readRecord(data?.overview.object_stats)
   const usedPercent = capacityPercent(capacity)
+  const objectHealth = objectHealthSummary(objectStats)
   const supportedCapabilities = data?.capabilities.filter((item) => item.supported).length ?? 0
 
   async function refreshAll() {
@@ -129,6 +132,7 @@ export function OverviewPage() {
               <MetricCard icon={<ApiOutlined />} label="MON" value={serviceValue(services.mon, 'in_quorum', 'total')} detail="quorum / total" />
               <MetricCard icon={<SafetyCertificateOutlined />} label="能力" value={`${supportedCapabilities}/${data?.capabilities.length ?? 0}`} detail="supported capabilities" />
               <MetricCard icon={<ThunderboltOutlined />} label="读写吞吐" value={`${formatBytes(clientIO.read_bytes_per_second)}/s`} detail={`write ${formatBytes(clientIO.write_bytes_per_second)}/s`} />
+              <MetricCard icon={<SyncOutlined />} label="恢复吞吐" value={`${formatBytes(clientIO.recovering_bytes_per_second)}/s`} detail={`scrub ${scrubStatusLabel(data?.overview.scrub_status)}`} />
             </div>
             <Card title="容量">
               <Progress percent={usedPercent} strokeColor="#168766" />
@@ -150,12 +154,28 @@ export function OverviewPage() {
               { title: '占比', render: (_, row) => <Progress percent={totalPGs ? Math.round((numberValue(row.count) ?? 0) / totalPGs * 1000) / 10 : 0} /> }
             ]} />
           </Card>
+          <Card title="对象健康">
+            {objectHealth.known
+              ? <Progress percent={objectHealth.percent} status={objectHealth.affected > 0 ? 'exception' : 'normal'} />
+              : <Text type="secondary">对象副本统计暂不可用</Text>}
+            <Descriptions column={1} size="small" bordered>
+              <Descriptions.Item label="对象数">{formatCount(objectStats.objects)}</Descriptions.Item>
+              <Descriptions.Item label="健康副本">{formatCount(objectHealth.healthy)}</Descriptions.Item>
+              <Descriptions.Item label="降级副本">{formatCount(objectStats.degraded)}</Descriptions.Item>
+              <Descriptions.Item label="错位副本">{formatCount(objectStats.misplaced)}</Descriptions.Item>
+              <Descriptions.Item label="未找到副本">{formatCount(objectStats.unfound)}</Descriptions.Item>
+            </Descriptions>
+          </Card>
           <Card title="客户端 I/O 与服务">
             <Descriptions column={1} size="small" bordered>
               <Descriptions.Item label="读取 IOPS">{textValue(clientIO.read_ops_per_second, '—')}</Descriptions.Item>
               <Descriptions.Item label="写入 IOPS">{textValue(clientIO.write_ops_per_second, '—')}</Descriptions.Item>
               <Descriptions.Item label="读取吞吐">{formatBytes(clientIO.read_bytes_per_second)}/s</Descriptions.Item>
               <Descriptions.Item label="写入吞吐">{formatBytes(clientIO.write_bytes_per_second)}/s</Descriptions.Item>
+              <Descriptions.Item label="恢复吞吐">{formatBytes(clientIO.recovering_bytes_per_second)}/s</Descriptions.Item>
+              <Descriptions.Item label="Scrub 状态">{scrubStatusLabel(data?.overview.scrub_status)}</Descriptions.Item>
+              <Descriptions.Item label="存储池">{formatCount(data?.overview.pool_count)}</Descriptions.Item>
+              <Descriptions.Item label="平均 PG / OSD">{formatDecimal(data?.overview.pgs_per_osd)}</Descriptions.Item>
               <Descriptions.Item label="MGR active / standby">{serviceValue(services.mgr, 'active', 'standby')}</Descriptions.Item>
               <Descriptions.Item label="MDS active / standby">{serviceValue(services.mds, 'active', 'standby')}</Descriptions.Item>
             </Descriptions>
@@ -251,6 +271,41 @@ function formatBytes(value: unknown) {
     index += 1
   }
   return `${size.toFixed(size >= 10 || index === 0 ? 0 : 1)} ${units[index]}`
+}
+
+function formatCount(value: unknown) {
+  const count = numberValue(value)
+  return count === undefined ? '—' : Math.max(0, count).toLocaleString()
+}
+
+function formatDecimal(value: unknown) {
+  const number = numberValue(value)
+  return number === undefined ? '—' : number.toLocaleString(undefined, { maximumFractionDigits: 2 })
+}
+
+function objectHealthSummary(stats: ApiRecord) {
+  const rawCopies = numberValue(stats.copies)
+  const copies = Math.max(0, rawCopies ?? 0)
+  const degraded = Math.max(0, numberValue(stats.degraded) ?? 0)
+  const misplaced = Math.max(0, numberValue(stats.misplaced) ?? 0)
+  const unfound = Math.max(0, numberValue(stats.unfound) ?? 0)
+  const affected = degraded + misplaced + unfound
+  const healthy = Math.max(0, copies - affected)
+  return {
+    known: rawCopies !== undefined,
+    affected,
+    healthy: rawCopies === undefined ? undefined : healthy,
+    percent: copies > 0 ? Math.round(healthy / copies * 1000) / 10 : 0
+  }
+}
+
+function scrubStatusLabel(value: unknown) {
+  switch (textValue(value, '')) {
+    case 'active': return '进行中'
+    case 'inactive': return '空闲'
+    case 'disabled': return '已禁用'
+    default: return '未知'
+  }
 }
 
 function filterColumn(title: string, field: string, tableFilters: ReturnType<typeof useResourceTableFilters>) {

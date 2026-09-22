@@ -31,10 +31,18 @@ type PGState struct {
 	Count uint64 `json:"count"`
 }
 type ClientIO struct {
-	ReadBytesPerSecond  *uint64 `json:"read_bytes_per_second"`
-	WriteBytesPerSecond *uint64 `json:"write_bytes_per_second"`
-	ReadOpsPerSecond    *uint64 `json:"read_ops_per_second"`
-	WriteOpsPerSecond   *uint64 `json:"write_ops_per_second"`
+	ReadBytesPerSecond       *uint64 `json:"read_bytes_per_second"`
+	WriteBytesPerSecond      *uint64 `json:"write_bytes_per_second"`
+	ReadOpsPerSecond         *uint64 `json:"read_ops_per_second"`
+	WriteOpsPerSecond        *uint64 `json:"write_ops_per_second"`
+	RecoveringBytesPerSecond *uint64 `json:"recovering_bytes_per_second"`
+}
+type ObjectStats struct {
+	Objects   *uint64 `json:"objects"`
+	Copies    *uint64 `json:"copies"`
+	Degraded  *uint64 `json:"degraded"`
+	Misplaced *uint64 `json:"misplaced"`
+	Unfound   *uint64 `json:"unfound"`
 }
 type Overview struct {
 	FSID            string                  `json:"fsid"`
@@ -44,5 +52,9 @@ type Overview struct {
 	Services        map[string]ServiceCount `json:"services"`
 	PlacementGroups []PGState               `json:"placement_groups"`
 	ClientIO        ClientIO                `json:"client_io"`
+	PoolCount       *uint64                 `json:"pool_count"`
+	PGsPerOSD       *float64                `json:"pgs_per_osd"`
+	ObjectStats     ObjectStats             `json:"object_stats"`
+	ScrubStatus     *string                 `json:"scrub_status"`
 	ObservedAt      time.Time               `json:"observed_at"`
 }

@@ -22,7 +22,7 @@
 
 | 参考模块 | 数据获取方式 / 命令族 | 当前情况及待补齐范围 |
 | --- | --- | --- |
-| dashboard / health | `status`、`df detail`、`health detail`、`pg dump`、`osd dump` | 已有总览；本次补 PG 分布、IOPS、健康详情和静默。对象统计、恢复速率、scrub 状态待补 |
+| dashboard / health | `status`、`df detail`、`health detail`、`pg dump`、`osd df`、`osd dump` | 已有总览、PG 分布、对象统计、IOPS、恢复速率、scrub 状态、健康详情和静默 |
 | cluster / host | `orch host ls --detail`、`orch ps`、`orch device ls`、`device ls-by-host` | 已有主机详情、SSH、SMART、服务操作；核对硬件和维护/排空全部参数 |
 | cluster / monitor | `mon dump`、`quorum_status`、`tell mon.* perf dump` | 已有详情和性能计数；核对历史速率与时钟偏移 |
 | cluster / mgr | `mgr dump`、`mgr module ls`、`config get/set` | 已有模块开关；模块配置项编辑与验证待核对 |
@@ -70,6 +70,19 @@
 6. 展示 PG 状态数量/占比、读写 IOPS、读写吞吐、MGR/MDS active/standby。
 7. 健康表格展示展开详情、当前是否触发、静默到期和持续静默状态。
 8. `alert/rules` 由 Prometheus 提供，前端依赖声明同步修正。
+
+### 对象健康、恢复和 scrub 指标
+
+- `ceph status --format json` 提供池数量、对象数、恢复吞吐和 PG 状态；保留缺失字段为
+  未知，不把旧版本或暂不可用的数据显示成零。
+- `ceph pg dump summary --format json` 的 `pg_map.pg_stats_sum.stat_sum` 提供对象副本、
+  degraded、misplaced 和 unfound 计数，和 Dashboard `get_pg_info()` 使用同一组字段。
+- `ceph osd df --format json` 的逐 OSD `pgs` 计算平均 PG/OSD，忽略 CRUSH 根和主机节点。
+- `ceph osd dump --format json` 提供 `noscrub`、`nodeep-scrub` 标志；结合 PG 状态，按
+  Dashboard 语义输出 disabled、active 或 inactive。命令失败时输出未知，不伪造状态。
+- 总览页新增对象健康副本比例、异常副本明细、恢复吞吐、scrub 状态、池数量和
+  PG/OSD 密度。对象健康计算与参考前端一致：副本总数扣除三类异常副本。
+- 附加命令是可选采集；失败不会覆盖已有总览，也不会让核心 `status`/`df` 数据失效。
 
 ## 已修正：CephFS 快照计划的文件系统参数
 

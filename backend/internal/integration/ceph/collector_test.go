@@ -26,6 +26,97 @@ func (f fixtureExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec e
 	data, err := os.ReadFile(filepath.Join("testdata", "v20.2.2", name))
 	return executor.CommandResult{Stdout: data}, err
 }
+
+type recordingExecutor struct {
+	base  executor.Executor
+	calls *[]executor.CommandSpec
+}
+
+func (r recordingExecutor) Run(ctx context.Context, access executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
+	*r.calls = append(*r.calls, spec)
+	return r.base.Run(ctx, access, spec)
+}
+
+func TestCollectFastIncludesDashboardHealthMetrics(t *testing.T) {
+	base := malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+		"collect.status": []byte(`{
+			"fsid":"00000000-0000-0000-0000-000000000001",
+			"health":{"status":"HEALTH_WARN"},
+			"monmap":{"num_mons":3,"quorum":[0,1,2]},
+			"osdmap":{"num_osds":3,"num_up_osds":3,"num_in_osds":3},
+			"pgmap":{"num_pgs":4,"num_pools":2,"num_objects":100,
+				"pgs_by_state":[{"state_name":"active+clean","count":3},{"state_name":"active+scrubbing","count":1}],
+				"read_bytes_sec":10,"write_bytes_sec":20,"read_op_per_sec":1,"write_op_per_sec":2,
+				"recovering_bytes_per_sec":30},
+			"mgrmap":{"available":true,"num_standbys":1},"fsmap":{"up":1,"standbys":[]}
+		}`),
+		"collect.overview_pg_summary": []byte(`{"pg_map":{"pg_stats_sum":{"stat_sum":{"num_objects":100,"num_object_copies":300,"num_objects_degraded":3,"num_objects_misplaced":2,"num_objects_unfound":1}}}}`),
+		"collect.overview_osd_df":     []byte(`{"nodes":[{"id":0,"type":"osd","pgs":4},{"id":1,"type":"osd","pgs":3},{"id":2,"type":"osd","pgs":5},{"id":-1,"type":"root","pgs":12}]}`),
+		"collect.overview_osd_flags":  []byte(`{"flags":""}`),
+	}}
+	var calls []executor.CommandSpec
+	provider := NativeProvider{Executor: recordingExecutor{base: base, calls: &calls}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "fast")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var overview cephdomain.Overview
+	for _, row := range rows {
+		if row.Kind == "overview" {
+			overview = row.Payload.(cephdomain.Overview)
+		}
+	}
+	if overview.PoolCount == nil || *overview.PoolCount != 2 || overview.PGsPerOSD == nil || *overview.PGsPerOSD != 4 {
+		t.Fatalf("overview density = pool count %v, PGs/OSD %v", overview.PoolCount, overview.PGsPerOSD)
+	}
+	if overview.ObjectStats.Copies == nil || *overview.ObjectStats.Copies != 300 || overview.ObjectStats.Degraded == nil || *overview.ObjectStats.Degraded != 3 {
+		t.Fatalf("object stats = %+v", overview.ObjectStats)
+	}
+	if overview.ClientIO.RecoveringBytesPerSecond == nil || *overview.ClientIO.RecoveringBytesPerSecond != 30 {
+		t.Fatalf("recovery throughput = %v", overview.ClientIO.RecoveringBytesPerSecond)
+	}
+	if overview.ScrubStatus == nil || *overview.ScrubStatus != "active" {
+		t.Fatalf("scrub status = %v", overview.ScrubStatus)
+	}
+	wantArgs := map[string][]string{
+		"collect.overview_pg_summary": {"pg", "dump", "summary", "--format", "json"},
+		"collect.overview_osd_df":     {"osd", "df", "--format", "json"},
+		"collect.overview_osd_flags":  {"osd", "dump", "--format", "json"},
+	}
+	for _, call := range calls {
+		if want, ok := wantArgs[call.ID]; ok {
+			if !reflect.DeepEqual(call.Args, want) {
+				t.Fatalf("%s args = %v, want %v", call.ID, call.Args, want)
+			}
+			delete(wantArgs, call.ID)
+		}
+	}
+	if len(wantArgs) != 0 {
+		t.Fatalf("missing overview commands: %v", wantArgs)
+	}
+}
+
+func TestOverviewScrubStatusMatchesDashboardSemantics(t *testing.T) {
+	tests := []struct {
+		name       string
+		states     []cephdomain.PGState
+		flags      []string
+		flagsKnown bool
+		want       string
+	}{
+		{"disabled takes priority", []cephdomain.PGState{{Name: "active+scrubbing"}}, []string{"noscrub"}, true, "disabled"},
+		{"deep scrub active", []cephdomain.PGState{{Name: "active+clean+deep"}}, nil, true, "active"},
+		{"inactive", []cephdomain.PGState{{Name: "active+clean"}}, nil, true, "inactive"},
+		{"unknown without flags", []cephdomain.PGState{{Name: "active+clean"}}, nil, false, ""},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := overviewScrubStatus(test.states, test.flags, test.flagsKnown); got != test.want {
+				t.Fatalf("overviewScrubStatus() = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
 func TestCollectParsesCeph2022Fixtures(t *testing.T) {
 	provider := NativeProvider{Executor: fixtureExecutor{t}}
 	access := ClusterAccess{}
