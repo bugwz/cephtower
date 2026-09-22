@@ -112,7 +112,7 @@ func TestOptionalObservationIsStoredWithoutSecrets(t *testing.T) {
 		t.Fatal(err)
 	}
 	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil)
-	service := New(func() *store.Database { return db }, clusters, optionalCollectorFake{t: t})
+	service := New(func() *store.Database { return db }, clusters, optionalCollectorFake{t: t}, Options{})
 	module := Module{Name: "storage", Kinds: []string{"rgw_user"}}
 	if err := service.Reconcile(context.Background(), cluster.ID, module); err != nil {
 		t.Fatal(err)
@@ -162,7 +162,7 @@ func TestReconcileMarksSuccessfulEmptyKindsStaleButPreservesUnavailableKinds(t *
 		{UnavailableKinds: []string{"rgw_account"}},
 	}}
 	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil)
-	service := New(func() *store.Database { return db }, clusters, collector)
+	service := New(func() *store.Database { return db }, clusters, collector, Options{})
 	module := Module{Name: "storage", Kinds: []string{"rgw_user", "rgw_account"}}
 	if err := service.Reconcile(context.Background(), cluster.ID, module); err != nil {
 		t.Fatal(err)
@@ -197,7 +197,7 @@ func TestReconcileSerializesTheSameClusterModule(t *testing.T) {
 	}
 	collector := &blockingCollectorFake{entered: make(chan struct{}), release: make(chan struct{})}
 	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil)
-	service := New(func() *store.Database { return db }, clusters, collector)
+	service := New(func() *store.Database { return db }, clusters, collector, Options{})
 	module := Module{Name: "storage", Kinds: []string{"pool"}}
 
 	errors := make(chan error, 2)
@@ -230,7 +230,7 @@ func TestReconcileSerializesTheSameClusterModule(t *testing.T) {
 }
 
 func TestBreakerIsScopedToClusterModule(t *testing.T) {
-	service := New(nil, nil, nil)
+	service := New(nil, nil, nil, Options{})
 	now := time.Now()
 	service.failure(7, "storage")
 	if service.allowed(7, "storage", now) {
@@ -249,6 +249,17 @@ func TestBreakerIsScopedToClusterModule(t *testing.T) {
 	service.success(7, "storage")
 	if !service.allowed(7, "storage", now) {
 		t.Fatal("storage success did not clear its backoff")
+	}
+}
+
+func TestModuleIntervalsCanBeConfiguredIndependently(t *testing.T) {
+	service := New(nil, nil, nil, Options{Intervals: map[string]time.Duration{"fast": 45 * time.Second, "storage": 2 * time.Minute}})
+	intervals := map[string]time.Duration{}
+	for _, module := range service.modules {
+		intervals[module.Name] = module.Interval
+	}
+	if intervals["fast"] != 45*time.Second || intervals["storage"] != 2*time.Minute || intervals["inventory"] != 5*time.Minute {
+		t.Fatalf("module intervals = %#v", intervals)
 	}
 }
 
@@ -294,7 +305,7 @@ func TestReconcileStoresClusterDiscovery(t *testing.T) {
 		{Kind: "daemon", NaturalKey: "mgr.a", Payload: cephdomain.Daemon{Type: "mgr", Version: stringPointer("ceph version 20.2.2")}, ObservedAt: now},
 	}}}}
 	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil)
-	service := New(func() *store.Database { return db }, clusters, collector)
+	service := New(func() *store.Database { return db }, clusters, collector, Options{})
 	module := Module{Name: "fast", Kinds: []string{"overview", "daemon"}}
 	if err := service.Reconcile(context.Background(), cluster.ID, module); err != nil {
 		t.Fatal(err)
@@ -339,7 +350,7 @@ func TestSyncClusterDiscoveryKeepsExistingVersionWithCommit(t *testing.T) {
 		t.Fatal(err)
 	}
 	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil)
-	service := New(func() *store.Database { return db }, clusters, &metadataCollectorFake{})
+	service := New(func() *store.Database { return db }, clusters, &metadataCollectorFake{}, Options{})
 	if err := service.syncClusterDiscovery(context.Background(), cluster.ID, 2, []cephprovider.Observation{
 		{Kind: "daemon", Payload: cephdomain.Daemon{Type: "mgr", Version: stringPointer("20.2.2")}, ObservedAt: now},
 	}, nil); err != nil {

@@ -95,7 +95,7 @@ func New(configPath string) (*App, error) {
 	hostDetails := hostdetailservice.New(clusters, runner)
 	hostProfiles := hostprofileservice.New(manager.Current, cfg.Database.EncryptionKey)
 	mutations := mutationservice.New(clusters, runner)
-	reconciler := reconcilerservice.New(manager.Current, clusters, native)
+	reconciler := reconcilerservice.New(manager.Current, clusters, native, reconcilerservice.Options{Intervals: cfg.Collection.Intervals})
 	dispatcher := operationservice.NewActionDispatcher(mutations, external, reconciler)
 	operations := operationservice.New(manager.Current, cfg.Database.EncryptionKey, dispatcher, operationservice.Options{})
 	setup := &setupservice.Service{Manager: manager, CurrentConfig: currentConfig, UpdateConfig: updateConfig, OnInitialized: func() {

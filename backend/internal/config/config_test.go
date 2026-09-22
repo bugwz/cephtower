@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 const validKey = "0123456789abcdefghijklmnopqrstuv"
@@ -41,6 +42,30 @@ func TestLoadAcceptsDisabledServerAuth(t *testing.T) {
 	}
 	if cfg.Server.Auth {
 		t.Fatal("server.auth was not disabled")
+	}
+}
+
+func TestLoadValidatesCollectionIntervals(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	data := "database:\n  engine: sqlite\n  sqlite:\n    name: cephtower.db\ncollection:\n  intervals:\n    fast: 45s\n    storage: 2m\n"
+	if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Collection.Intervals["fast"] != 45*time.Second || cfg.Collection.Intervals["storage"] != 2*time.Minute || cfg.Collection.Intervals["inventory"] != 5*time.Minute {
+		t.Fatalf("collection intervals = %#v", cfg.Collection.Intervals)
+	}
+	for _, invalid := range []string{"fast: nope", "unknown: 1m"} {
+		data := "database:\n  engine: sqlite\n  sqlite:\n    name: cephtower.db\ncollection:\n  intervals:\n    " + invalid + "\n"
+		if err := os.WriteFile(path, []byte(data), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := Load(path); err == nil {
+			t.Fatalf("invalid collection interval %q was accepted", invalid)
+		}
 	}
 }
 

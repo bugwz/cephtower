@@ -66,7 +66,7 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 	database := func() *store.Database { return db }
 	clusters := clusterservice.New(database, encryptionKey, provider)
 	mutations := mutationservice.New(clusters, runner)
-	reconcileService := reconciler.New(database, clusters, provider)
+	reconcileService := reconciler.New(database, clusters, provider, reconciler.Options{})
 	operations := operationservice.New(database, encryptionKey, operationservice.NewActionDispatcher(mutations, nil, reconcileService), operationservice.Options{Workers: 1, PollInterval: time.Millisecond})
 	if err := operations.Start(context.Background()); err != nil {
 		t.Fatal(err)

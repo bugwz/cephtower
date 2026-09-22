@@ -41,11 +41,12 @@ const (
 )
 
 type Config struct {
-	Path     string
-	Server   ServerConfig
-	Logging  LoggingConfig
-	Database DatabaseConfig
-	SMTP     SMTPConfig
+	Path       string
+	Server     ServerConfig
+	Logging    LoggingConfig
+	Database   DatabaseConfig
+	Collection CollectionConfig
+	SMTP       SMTPConfig
 }
 
 type ServerConfig struct {
@@ -70,6 +71,10 @@ type DatabaseConfig struct {
 	Engine        string       `yaml:"engine"`
 	SQLite        SQLiteConfig `yaml:"sqlite"`
 	MySQL         MySQLConfig  `yaml:"mysql"`
+}
+
+type CollectionConfig struct {
+	Intervals map[string]time.Duration
 }
 
 type SMTPConfig struct {
@@ -133,6 +138,9 @@ type fileConfig struct {
 			TLS      string `yaml:"tls"`
 		} `yaml:"mysql"`
 	} `yaml:"database"`
+	Collection struct {
+		Intervals map[string]string `yaml:"intervals"`
+	} `yaml:"collection"`
 	SMTP struct {
 		Host     string `yaml:"host"`
 		Port     int    `yaml:"port"`
@@ -177,11 +185,16 @@ func Load(path string) (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+	collection, err := normalizeCollectionConfig(raw)
+	if err != nil {
+		return Config{}, err
+	}
 	return Config{
-		Path:     path,
-		Server:   server,
-		Logging:  logging,
-		Database: database,
+		Path:       path,
+		Server:     server,
+		Logging:    logging,
+		Database:   database,
+		Collection: collection,
 		SMTP: SMTPConfig{
 			Host:     strings.TrimSpace(raw.SMTP.Host),
 			Port:     defaultInt(raw.SMTP.Port, defaultSMTPPort),
@@ -190,6 +203,28 @@ func Load(path string) (Config, error) {
 			From:     strings.TrimSpace(raw.SMTP.From),
 		},
 	}, nil
+}
+
+func normalizeCollectionConfig(raw fileConfig) (CollectionConfig, error) {
+	defaults := map[string]time.Duration{
+		"ceph_auth":     5 * time.Minute,
+		"fast":          15 * time.Second,
+		"topology":      30 * time.Second,
+		"storage":       time.Minute,
+		"inventory":     5 * time.Minute,
+		"configuration": 10 * time.Minute,
+	}
+	for name, value := range raw.Collection.Intervals {
+		if _, known := defaults[name]; !known {
+			return CollectionConfig{}, fmt.Errorf("unsupported collection module %q", name)
+		}
+		interval, err := time.ParseDuration(strings.TrimSpace(value))
+		if err != nil || interval < time.Second {
+			return CollectionConfig{}, fmt.Errorf("invalid collection interval for %s: %q", name, value)
+		}
+		defaults[name] = interval
+	}
+	return CollectionConfig{Intervals: defaults}, nil
 }
 
 func ResolveRuntimeDir(cfg Config) string {

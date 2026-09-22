@@ -43,6 +43,10 @@ var HistoryPolicies = map[string]HistoryPolicy{
 
 const collectionRunRetention = 30 * 24 * time.Hour
 
+type Options struct {
+	Intervals map[string]time.Duration
+}
+
 type breaker struct {
 	failures int
 	next     time.Time
@@ -72,12 +76,18 @@ type Service struct {
 	wg       sync.WaitGroup
 }
 
-func New(database func() *store.Database, clusters *clusterservice.Service, provider cephprovider.CollectorProvider) *Service {
+func New(database func() *store.Database, clusters *clusterservice.Service, provider cephprovider.CollectorProvider, options Options) *Service {
+	modules := append([]Module(nil), DefaultModules...)
+	for index := range modules {
+		if interval := options.Intervals[modules[index].Name]; interval > 0 {
+			modules[index].Interval = interval
+		}
+	}
 	return &Service{
 		database: database,
 		clusters: clusters,
 		provider: provider,
-		modules:  DefaultModules,
+		modules:  modules,
 		breakers: map[reconcileKey]*breaker{},
 		locks:    map[reconcileKey]*reconcileLock{},
 	}
