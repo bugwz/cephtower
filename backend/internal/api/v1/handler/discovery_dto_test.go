@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -77,12 +76,6 @@ func TestRBDStateComesOnlyFromDiscovery(t *testing.T) {
 	if data["name"] != "new-name" || data["image_spec"] != "encoded" || data["destination"] != nil {
 		t.Fatalf("request fields leaked into observed state: %v", data)
 	}
-	h := &Handler{}
-	for _, action := range []string{"rbd_image.create", "rbd_image.update", "rbd_image.delete", "rbd_image.action"} {
-		if err := h.persistResourceMutation(context.Background(), 1, "rbd_image", action, "pool/image", map[string]any{"name": "image"}); err != nil {
-			t.Fatal(err)
-		}
-	}
 }
 
 func TestRGWUserUsesNativeState(t *testing.T) {
@@ -91,8 +84,5 @@ func TestRGWUserUsesNativeState(t *testing.T) {
 	data := toResourceDTO(row).Data.(map[string]any)
 	if data["suspended"] != float64(1) || data["email"] != "" {
 		t.Fatalf("native user state overwritten: %v", data)
-	}
-	if err := (&Handler{}).persistResourceMutation(context.Background(), 1, "rgw_user", "rgw_user.create", "user", nil); err != nil {
-		t.Fatal(err)
 	}
 }

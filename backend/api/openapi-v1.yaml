@@ -201,6 +201,12 @@ paths:
       operationId: delete_alert_silence
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -801,12 +807,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -817,6 +823,12 @@ paths:
       operationId: post_alert_silence
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -1417,12 +1429,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -1832,6 +1844,12 @@ paths:
       operationId: delete_ceph_user
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -1908,12 +1926,12 @@ paths:
                 who:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -1924,6 +1942,12 @@ paths:
       operationId: patch_ceph_user
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -2012,12 +2036,12 @@ paths:
                 who:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -2028,6 +2052,12 @@ paths:
       operationId: post_ceph_user
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -2116,12 +2146,12 @@ paths:
                 who:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -2710,6 +2740,12 @@ paths:
       operationId: delete_configuration_value
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -3310,12 +3346,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -3326,6 +3362,12 @@ paths:
       operationId: put_configuration_value
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -3926,12 +3968,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -4160,6 +4202,12 @@ paths:
       operationId: delete_crush_rule
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -4760,12 +4808,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -4870,6 +4918,12 @@ paths:
       operationId: patch_crush_rule
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -5470,12 +5524,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -5486,6 +5540,12 @@ paths:
       operationId: post_crush_rule
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -6086,12 +6146,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -6293,6 +6353,12 @@ paths:
       operationId: post_daemon_action
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -6893,12 +6959,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -7005,6 +7071,12 @@ paths:
       operationId: post_device_identify
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -7605,12 +7677,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -7622,6 +7694,12 @@ paths:
       operationId: post_device_zap
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -8222,12 +8300,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -8482,6 +8560,12 @@ paths:
       operationId: delete_erasure_code_profile
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -9082,12 +9166,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -9192,6 +9276,12 @@ paths:
       operationId: post_erasure_code_profile
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -9792,12 +9882,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -9904,6 +9994,12 @@ paths:
       operationId: delete_filesystem
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -10504,12 +10600,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -10614,6 +10710,12 @@ paths:
       operationId: patch_filesystem
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -11214,12 +11316,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -11230,6 +11332,12 @@ paths:
       operationId: post_filesystem
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -11830,12 +11938,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -11847,6 +11955,12 @@ paths:
       operationId: post_filesystem_authorization
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -12447,12 +12561,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -12559,6 +12673,12 @@ paths:
       operationId: delete_filesystem_client
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -13159,12 +13279,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -13366,6 +13486,12 @@ paths:
       operationId: patch_filesystem_entry_quota
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -13966,12 +14092,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -13983,6 +14109,12 @@ paths:
       operationId: post_filesystem_snapshot_schedule
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -14583,12 +14715,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -14600,6 +14732,12 @@ paths:
       operationId: post_filesystem_snapshot_schedule_action
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -15200,12 +15338,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -15217,6 +15355,12 @@ paths:
       operationId: post_filesystem_snapshot_schedule_retention
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -15817,12 +15961,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -15871,6 +16015,12 @@ paths:
       operationId: delete_filesystem_subvolume
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -16471,12 +16621,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -16581,6 +16731,12 @@ paths:
       operationId: patch_filesystem_subvolume
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -17181,12 +17337,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -17197,6 +17353,12 @@ paths:
       operationId: post_filesystem_subvolume
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -17797,12 +17959,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -17814,6 +17976,12 @@ paths:
       operationId: delete_filesystem_subvolume_group
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -18414,12 +18582,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -18524,6 +18692,12 @@ paths:
       operationId: patch_filesystem_subvolume_group
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -19124,12 +19298,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -19140,6 +19314,12 @@ paths:
       operationId: post_filesystem_subvolume_group
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -19740,12 +19920,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -19852,6 +20032,12 @@ paths:
       operationId: delete_filesystem_subvolume_snapshot
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -20452,12 +20638,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -20468,6 +20654,12 @@ paths:
       operationId: post_filesystem_subvolume_snapshot
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -21068,12 +21260,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -21085,6 +21277,12 @@ paths:
       operationId: post_filesystem_subvolume_snapshot_clone
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -21685,12 +21883,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -22177,6 +22375,12 @@ paths:
       operationId: delete_health_mute
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -22777,12 +22981,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -22793,6 +22997,12 @@ paths:
       operationId: post_health_mute
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -23393,12 +23603,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -23426,6 +23636,12 @@ paths:
       operationId: delete_host
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -24026,12 +24242,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -24136,6 +24352,12 @@ paths:
       operationId: patch_host
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -24736,12 +24958,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -24752,6 +24974,12 @@ paths:
       operationId: post_host
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -25352,12 +25580,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -25369,6 +25597,12 @@ paths:
       operationId: post_host_action
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -25969,12 +26203,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -27077,6 +27311,12 @@ paths:
       operationId: delete_iscsi_target
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -27677,12 +27917,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -27787,6 +28027,12 @@ paths:
       operationId: patch_iscsi_target
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -28387,12 +28633,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -28403,6 +28649,12 @@ paths:
       operationId: post_iscsi_target
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -29003,12 +29255,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -29152,6 +29404,12 @@ paths:
       operationId: post_manager_fail
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -29752,12 +30010,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -29769,6 +30027,12 @@ paths:
       operationId: patch_manager_module
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -30369,12 +30633,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -30801,6 +31065,12 @@ paths:
       operationId: post_monitor_action
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -31401,12 +31671,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -31703,6 +31973,12 @@ paths:
       operationId: delete_nfs_cluster
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -32303,12 +32579,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -32413,6 +32689,12 @@ paths:
       operationId: post_nfs_cluster
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -33013,12 +33295,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -33125,6 +33407,12 @@ paths:
       operationId: delete_nfs_export
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -33725,12 +34013,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -33835,6 +34123,12 @@ paths:
       operationId: patch_nfs_export
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -34435,12 +34729,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -34451,6 +34745,12 @@ paths:
       operationId: post_nfs_export
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -35051,12 +35351,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -35258,6 +35558,12 @@ paths:
       operationId: delete_nvmeof_subsystem
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -35858,12 +36164,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -35968,6 +36274,12 @@ paths:
       operationId: patch_nvmeof_subsystem
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -36568,12 +36880,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -36584,6 +36896,12 @@ paths:
       operationId: post_nvmeof_subsystem
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -37184,12 +37502,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -37296,6 +37614,12 @@ paths:
       operationId: delete_nvmeof_subsystem_host
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -37896,12 +38220,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -37912,6 +38236,12 @@ paths:
       operationId: post_nvmeof_subsystem_host
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -38512,12 +38842,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -38624,6 +38954,12 @@ paths:
       operationId: delete_nvmeof_subsystem_listener
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -39224,12 +39560,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -39240,6 +39576,12 @@ paths:
       operationId: post_nvmeof_subsystem_listener
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -39840,12 +40182,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -39952,6 +40294,12 @@ paths:
       operationId: delete_nvmeof_subsystem_namespace
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -40552,12 +40900,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -40662,6 +41010,12 @@ paths:
       operationId: patch_nvmeof_subsystem_namespace
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -41262,12 +41616,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -41278,6 +41632,12 @@ paths:
       operationId: post_nvmeof_subsystem_namespace
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -41878,12 +42238,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -42080,11 +42440,90 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /operation:
+    get:
+      operationId: get_operation
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, operation_id]
+              properties:
+                cluster_id:
+                  type: integer
+                operation_id:
+                  type: integer
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /operations:
+    get:
+      operationId: get_operations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ["queued", "running", "succeeded", "failed"]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id]
+              properties:
+                cluster_id:
+                  type: integer
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationListResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /osd:
     delete:
       operationId: delete_osd
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -42685,12 +43124,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -42796,6 +43235,12 @@ paths:
       operationId: post_osd_action
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -43396,12 +43841,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -43413,6 +43858,12 @@ paths:
       operationId: post_osd_deployment
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -44013,12 +44464,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -44030,6 +44481,12 @@ paths:
       operationId: post_osd_deployment_preview
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -44630,12 +45087,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -44741,6 +45198,12 @@ paths:
       operationId: patch_osd_flag
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -45341,12 +45804,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -45392,6 +45855,12 @@ paths:
       operationId: post_osd_removal_check
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -45992,12 +46461,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -46294,6 +46763,12 @@ paths:
       operationId: delete_pool
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -46894,12 +47369,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -47004,6 +47479,12 @@ paths:
       operationId: patch_pool
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -47604,12 +48085,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -47620,6 +48101,12 @@ paths:
       operationId: post_pool
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -48220,12 +48707,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -48332,6 +48819,12 @@ paths:
       operationId: post_rbd_group
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -48932,12 +49425,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -48949,6 +49442,12 @@ paths:
       operationId: post_rbd_group_action
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -49549,12 +50048,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -49566,6 +50065,12 @@ paths:
       operationId: post_rbd_group_member
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -50166,12 +50671,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -50183,6 +50688,12 @@ paths:
       operationId: post_rbd_group_snapshot
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -50783,12 +51294,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -50895,6 +51406,12 @@ paths:
       operationId: delete_rbd_image
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -51495,12 +52012,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -51605,6 +52122,12 @@ paths:
       operationId: patch_rbd_image
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -52205,12 +52728,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -52221,6 +52744,12 @@ paths:
       operationId: post_rbd_image
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -52821,12 +53350,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -52838,6 +53367,12 @@ paths:
       operationId: post_rbd_image_action
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -53438,12 +53973,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -53455,6 +53990,12 @@ paths:
       operationId: delete_rbd_image_snapshot
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -54055,12 +54596,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -54071,6 +54612,12 @@ paths:
       operationId: patch_rbd_image_snapshot
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -54671,12 +55218,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -54687,6 +55234,12 @@ paths:
       operationId: post_rbd_image_snapshot
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -55287,12 +55840,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -55304,6 +55857,12 @@ paths:
       operationId: post_rbd_image_snapshot_action
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -55904,12 +56463,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -56205,6 +56764,12 @@ paths:
       operationId: patch_rbd_mirroring
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -56805,12 +57370,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -56822,6 +57387,12 @@ paths:
       operationId: post_rbd_mirroring_peer
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -57422,12 +57993,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -57439,6 +58010,12 @@ paths:
       operationId: delete_rbd_namespace
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -58039,12 +58616,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -58055,6 +58632,12 @@ paths:
       operationId: post_rbd_namespace
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -58655,12 +59238,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -58767,6 +59350,12 @@ paths:
       operationId: delete_rbd_trash
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -59367,12 +59956,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -59478,6 +60067,12 @@ paths:
       operationId: post_rbd_trash_purge
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -60078,12 +60673,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -60095,6 +60690,12 @@ paths:
       operationId: post_rbd_trash_restore
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -60695,12 +61296,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -60728,6 +61329,12 @@ paths:
       operationId: post_resource_refresh
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -60754,12 +61361,12 @@ paths:
                 scope:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -60771,6 +61378,12 @@ paths:
       operationId: delete_rgw_account
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -61371,12 +61984,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -61387,6 +62000,12 @@ paths:
       operationId: patch_rgw_account
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -61987,12 +62606,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -62003,6 +62622,12 @@ paths:
       operationId: post_rgw_account
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -62603,12 +63228,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -62620,6 +63245,12 @@ paths:
       operationId: put_rgw_account_quota
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -63220,12 +63851,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -63332,6 +63963,12 @@ paths:
       operationId: delete_rgw_bucket
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -63932,12 +64569,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -64042,6 +64679,12 @@ paths:
       operationId: patch_rgw_bucket
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -64642,12 +65285,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -64658,6 +65301,12 @@ paths:
       operationId: post_rgw_bucket
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -65258,12 +65907,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -65376,6 +66025,12 @@ paths:
       operationId: patch_rgw_bucket_policy
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -65976,12 +66631,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -65993,6 +66648,12 @@ paths:
       operationId: put_rgw_bucket_quota
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -66593,12 +67254,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -66610,6 +67271,12 @@ paths:
       operationId: put_rgw_bucket_ratelimit
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -67210,12 +67877,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -67322,6 +67989,12 @@ paths:
       operationId: post_rgw_period_commit
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -67922,12 +68595,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -67939,6 +68612,12 @@ paths:
       operationId: patch_rgw_realm
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -68539,12 +69218,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -68555,6 +69234,12 @@ paths:
       operationId: post_rgw_realm
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -69155,12 +69840,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -69267,6 +69952,12 @@ paths:
       operationId: delete_rgw_role
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -69867,12 +70558,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -69883,6 +70574,12 @@ paths:
       operationId: patch_rgw_role
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -70483,12 +71180,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -70499,6 +71196,12 @@ paths:
       operationId: post_rgw_role
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -71099,12 +71802,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -71116,6 +71819,12 @@ paths:
       operationId: post_rgw_role_policy
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -71716,12 +72425,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -71923,6 +72632,12 @@ paths:
       operationId: delete_rgw_user
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -72523,12 +73238,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -72633,6 +73348,12 @@ paths:
       operationId: patch_rgw_user
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -73233,12 +73954,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -73249,6 +73970,12 @@ paths:
       operationId: post_rgw_user
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -73849,12 +74576,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -73866,6 +74593,12 @@ paths:
       operationId: post_rgw_user_caps
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -74466,12 +75199,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -74483,6 +75216,12 @@ paths:
       operationId: delete_rgw_user_key
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -75083,12 +75822,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -75099,6 +75838,12 @@ paths:
       operationId: post_rgw_user_key
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -75699,12 +76444,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -75716,6 +76461,12 @@ paths:
       operationId: put_rgw_user_quota
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -76316,12 +77067,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -76333,6 +77084,12 @@ paths:
       operationId: put_rgw_user_ratelimit
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -76933,12 +77690,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -77045,6 +77802,12 @@ paths:
       operationId: patch_rgw_zone
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -77645,12 +78408,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -77661,6 +78424,12 @@ paths:
       operationId: post_rgw_zone
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -78261,12 +79030,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -78278,6 +79047,12 @@ paths:
       operationId: patch_rgw_zonegroup
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -78878,12 +79653,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -78894,6 +79669,12 @@ paths:
       operationId: post_rgw_zonegroup
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -79494,12 +80275,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -79841,6 +80622,12 @@ paths:
       operationId: delete_service
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -80441,12 +81228,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -80551,6 +81338,12 @@ paths:
       operationId: patch_service
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -81151,12 +81944,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -81167,6 +81960,12 @@ paths:
       operationId: post_service
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -81767,12 +82566,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -81879,6 +82678,12 @@ paths:
       operationId: delete_smb_cluster
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -82479,12 +83284,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -82589,6 +83394,12 @@ paths:
       operationId: patch_smb_cluster
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -83189,12 +84000,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -83205,6 +84016,12 @@ paths:
       operationId: post_smb_cluster
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -83805,12 +84622,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -83917,6 +84734,12 @@ paths:
       operationId: delete_smb_share
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -84517,12 +85340,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -84627,6 +85450,12 @@ paths:
       operationId: patch_smb_share
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -85227,12 +86056,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -85243,6 +86072,12 @@ paths:
       operationId: post_smb_share
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -85843,12 +86678,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -86050,6 +86885,12 @@ paths:
       operationId: post_upgrade_action
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -86650,12 +87491,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -86667,6 +87508,12 @@ paths:
       operationId: post_upgrade_check
       security:
         - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -87267,12 +88114,12 @@ paths:
                 zonegroup:
                   type: string
       responses:
-        '200':
+        '202':
           description: success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionResponse'
+                $ref: '#/components/schemas/OperationResponse'
         default:
           description: error
           content:
@@ -87406,6 +88253,31 @@ components:
       properties:
         resource_url: {type: string}
         details: {$ref: '#/components/schemas/JSONValue'}
+    Operation:
+      type: object
+      additionalProperties: false
+      required: [operation_id, cluster_id, request_id, action, resource_kind, resource_key, risk, status, retryable, attempts, max_attempts, created_at, updated_at]
+      properties:
+        operation_id: {type: integer, minimum: 1}
+        cluster_id: {type: integer, minimum: 1}
+        request_id: {type: string}
+        action: {type: string}
+        resource_kind: {type: string}
+        resource_key: {type: string}
+        risk: {type: string}
+        status: {type: string, enum: [queued, running, succeeded, failed]}
+        expected_version: {type: integer, minimum: 0}
+        result: {$ref: '#/components/schemas/ActionResult'}
+        error_code: {type: string}
+        error_message: {type: string}
+        retryable: {type: boolean}
+        attempts: {type: integer, minimum: 0}
+        max_attempts: {type: integer, minimum: 1}
+        next_attempt_at: {type: string, format: date-time}
+        started_at: {type: string, format: date-time}
+        finished_at: {type: string, format: date-time}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
     Pagination:
       type: object
       additionalProperties: false
@@ -87687,6 +88559,12 @@ components:
         - type: object
           properties:
             items: {type: array, items: {$ref: '#/components/schemas/AuditEvent'}}
+    OperationListData:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/Operation'}}
     ResourceListData:
       allOf:
         - $ref: '#/components/schemas/ListData'
@@ -87910,6 +88788,24 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/AuditEventListData'
+    OperationResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          unevaluatedProperties: false
+          required: [data]
+          properties:
+            data:
+              $ref: '#/components/schemas/Operation'
+    OperationListResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          unevaluatedProperties: false
+          required: [data]
+          properties:
+            data:
+              $ref: '#/components/schemas/OperationListData'
     ResourceResponse:
       allOf:
         - $ref: '#/components/schemas/APIResponse'

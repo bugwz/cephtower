@@ -142,8 +142,10 @@ func successResponseSchema(route router.Route) string {
 		return "EndpointResponse"
 	case "GET /audit/events":
 		return "AuditEventListResponse"
-	case "POST /resource/refresh":
-		return "ActionResponse"
+	case "GET /operation":
+		return "OperationResponse"
+	case "GET /operations":
+		return "OperationListResponse"
 	case "GET /rgw/bucket/policy":
 		return "BucketConfigurationResponse"
 	}
@@ -151,6 +153,9 @@ func successResponseSchema(route router.Route) string {
 		return "EventStream"
 	}
 	if route.Method != "GET" {
+		if isAsyncRoute(route) {
+			return "OperationResponse"
+		}
 		return "ActionResponse"
 	}
 	switch {
@@ -188,6 +193,7 @@ func writeResponseSchemas(b *strings.Builder) {
 		{"CredentialListResponse", "CredentialListData"}, {"EndpointResponse", "Endpoint"},
 		{"EndpointListResponse", "EndpointListData"}, {"ClusterMutationResponse", "ClusterMutationData"},
 		{"ActionResponse", "ActionResult"}, {"AuditEventListResponse", "AuditEventListData"},
+		{"OperationResponse", "Operation"}, {"OperationListResponse", "OperationListData"},
 		{"ResourceResponse", "Resource"}, {"ResourceListResponse", "ResourceListData"},
 		{"MetricResponse", "MetricData"}, {"ExternalListResponse", "ExternalListData"},
 		{"ExternalResultResponse", "ExternalResultData"}, {"ISCSIGatewayResponse", "ISCSIGateway"},
@@ -210,6 +216,9 @@ type parameterSpec struct {
 
 func routeParameters(route router.Route) []parameterSpec {
 	var result []parameterSpec
+	if isAsyncRoute(route) {
+		result = append(result, parameterSpec{Name: "Idempotency-Key", In: "header", Type: "string"})
+	}
 	if isStreamRoute(route) {
 		result = append(result, parameterSpec{Name: "Last-Event-ID", In: "header", Type: "integer", Minimum: "0"})
 	}
@@ -221,6 +230,10 @@ func routeParameters(route router.Route) []parameterSpec {
 			parameterSpec{Name: "resource_kind", In: "query", Type: "string"},
 			parameterSpec{Name: "resource_key", In: "query", Type: "string"},
 			parameterSpec{Name: "user_id", In: "query", Type: "integer", Minimum: "1"},
+			parameterSpec{Name: "limit", In: "query", Type: "integer", Minimum: "1"})
+	case "/operations":
+		result = append(result,
+			parameterSpec{Name: "status", In: "query", Type: "string", Enum: []string{"queued", "running", "succeeded", "failed"}},
 			parameterSpec{Name: "limit", In: "query", Type: "integer", Minimum: "1"})
 	case "/clusters":
 		result = append(result,
@@ -363,6 +376,10 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
 	case "POST /resource/refresh":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "scope": stringField(false), "module": stringField(false), "modules": stringArrayField(false), "kind": stringField(false), "kinds": stringArrayField(false)}
+	case "GET /operation":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "operation_id": integerField(true)}
+	case "GET /operations":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
 	case "GET /cluster", "GET /cluster/capabilities", "GET /credentials", "GET /endpoints", "GET /role/bindings":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
 	case "PUT /credential":
@@ -465,6 +482,9 @@ func yamlEnum(values []string) string {
 }
 
 func explicitSuccessStatus(route router.Route) string {
+	if isAsyncRoute(route) {
+		return "202"
+	}
 	key := route.Method + " " + route.Path
 	switch key {
 	case "POST /bootstrap/run", "POST /user", "POST /role", "POST /role/binding", "POST /endpoint":
@@ -473,6 +493,24 @@ func explicitSuccessStatus(route router.Route) string {
 		return "200"
 	default:
 		return ""
+	}
+}
+
+func isAsyncRoute(route router.Route) bool {
+	if route.Method == "GET" {
+		return false
+	}
+	key := route.Method + " " + route.Path
+	switch key {
+	case "DELETE /cluster", "DELETE /credential", "DELETE /endpoint", "DELETE /role/binding",
+		"PATCH /cluster", "PATCH /endpoint", "PATCH /host/ssh",
+		"POST /auth/login", "POST /bootstrap/dbtest", "POST /bootstrap/run",
+		"POST /ceph/users/import", "POST /cluster", "POST /cluster/probe",
+		"POST /endpoint", "POST /role", "POST /role/binding", "POST /user",
+		"PUT /credential":
+		return false
+	default:
+		return isClusterScopedRoute(route)
 	}
 }
 func operationID(route router.Route) string {
@@ -619,6 +657,31 @@ const components = `components:
       properties:
         resource_url: {type: string}
         details: {$ref: '#/components/schemas/JSONValue'}
+    Operation:
+      type: object
+      additionalProperties: false
+      required: [operation_id, cluster_id, request_id, action, resource_kind, resource_key, risk, status, retryable, attempts, max_attempts, created_at, updated_at]
+      properties:
+        operation_id: {type: integer, minimum: 1}
+        cluster_id: {type: integer, minimum: 1}
+        request_id: {type: string}
+        action: {type: string}
+        resource_kind: {type: string}
+        resource_key: {type: string}
+        risk: {type: string}
+        status: {type: string, enum: [queued, running, succeeded, failed]}
+        expected_version: {type: integer, minimum: 0}
+        result: {$ref: '#/components/schemas/ActionResult'}
+        error_code: {type: string}
+        error_message: {type: string}
+        retryable: {type: boolean}
+        attempts: {type: integer, minimum: 0}
+        max_attempts: {type: integer, minimum: 1}
+        next_attempt_at: {type: string, format: date-time}
+        started_at: {type: string, format: date-time}
+        finished_at: {type: string, format: date-time}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
     Pagination:
       type: object
       additionalProperties: false
@@ -900,6 +963,12 @@ const components = `components:
         - type: object
           properties:
             items: {type: array, items: {$ref: '#/components/schemas/AuditEvent'}}
+    OperationListData:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/Operation'}}
     ResourceListData:
       allOf:
         - $ref: '#/components/schemas/ListData'

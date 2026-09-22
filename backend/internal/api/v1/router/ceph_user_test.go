@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -19,6 +20,7 @@ import (
 	clusterservice "cephtower/backend/internal/service/cluster"
 	"cephtower/backend/internal/service/clusterinspect"
 	mutationservice "cephtower/backend/internal/service/mutation"
+	operationservice "cephtower/backend/internal/service/operation"
 	"cephtower/backend/internal/service/reconciler"
 	"cephtower/backend/internal/store"
 )
@@ -34,6 +36,8 @@ func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spe
 		return executor.CommandResult{Stdout: []byte(`{"name":"osd_memory_target","type":"size","default":"4G","can_update_at_runtime":true}`)}, nil
 	case "collect.ceph_user":
 		return executor.CommandResult{Stdout: []byte(`{"auth_dump":[{"entity":"client.backup","key":"sensitive-fixture-key","caps":{"mon":"allow r"}}]}`)}, nil
+	case "collect.config":
+		return executor.CommandResult{Stdout: []byte(`[]`)}, nil
 	case "ceph_user.export":
 		return executor.CommandResult{Stdout: []byte("[client.backup]\n key = sensitive-fixture-key\n")}, nil
 	default:
@@ -61,7 +65,14 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 	provider := &cephprovider.NativeProvider{Executor: runner}
 	database := func() *store.Database { return db }
 	clusters := clusterservice.New(database, encryptionKey, provider)
-	h := handler.New(handler.Dependencies{Inspection: clusterinspect.New(clusters, runner), Database: database, Clusters: clusters, Mutations: mutationservice.New(clusters, runner), Reconciler: reconciler.New(database, clusters, provider), AuthEnabled: func() bool { return false }})
+	mutations := mutationservice.New(clusters, runner)
+	reconcileService := reconciler.New(database, clusters, provider)
+	operations := operationservice.New(database, encryptionKey, operationservice.NewActionDispatcher(mutations, nil, reconcileService), operationservice.Options{Workers: 1, PollInterval: time.Millisecond})
+	if err := operations.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(operations.Stop)
+	h := handler.New(handler.Dependencies{Inspection: clusterinspect.New(clusters, runner), Database: database, Clusters: clusters, Mutations: mutations, Operations: operations, Reconciler: reconcileService, AuthEnabled: func() bool { return false }})
 	mux := http.NewServeMux()
 	Register(mux, h)
 	send := func(method, path string, body map[string]any) *httptest.ResponseRecorder {
@@ -72,8 +83,30 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		rec := httptest.NewRecorder()
 		mux.ServeHTTP(rec, req)
-		if rec.Code != http.StatusOK {
+		if rec.Code != http.StatusOK && rec.Code != http.StatusAccepted {
 			t.Fatalf("%s %s: %d %s", method, path, rec.Code, rec.Body.String())
+		}
+		if rec.Code == http.StatusAccepted {
+			var response struct {
+				Data struct {
+					OperationID uint64 `json:"operation_id"`
+				} `json:"data"`
+			}
+			if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil || response.Data.OperationID == 0 {
+				t.Fatalf("decode accepted operation: id=%d err=%v", response.Data.OperationID, err)
+			}
+			deadline := time.Now().Add(time.Second)
+			for time.Now().Before(deadline) {
+				row, err := db.FindOperation(context.Background(), response.Data.OperationID)
+				if err == nil && row.Status == store.OperationSucceeded {
+					return rec
+				}
+				if err == nil && row.Status == store.OperationFailed {
+					t.Fatalf("%s %s operation failed: %v %v", method, path, row.ErrorCode, row.ErrorMessage)
+				}
+				time.Sleep(time.Millisecond)
+			}
+			t.Fatalf("%s %s operation did not finish", method, path)
 		}
 		return rec
 	}
@@ -86,14 +119,13 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 		t.Fatal("configuration metadata missing")
 	}
 	send("PUT", "/configuration/value", map[string]any{"who": "osd/host:node-a", "name": "osd_memory_target", "value": "4G"})
-	if _, err := db.FindResource(context.Background(), cluster.ID, "config_value", "osd/host:node-a:osd_memory_target"); err != nil {
-		t.Fatalf("scoped configuration was not saved correctly: %v", err)
+	if _, err := db.FindResource(context.Background(), cluster.ID, "config_value", "osd/host:node-a:osd_memory_target"); !errors.Is(err, store.ErrRecordNotFound) {
+		t.Fatalf("configuration cache must reflect the empty Ceph response: %v", err)
 	}
 	send("DELETE", "/configuration/value", map[string]any{"who": "osd/host:node-a", "name": "osd_memory_target"})
 	send("PUT", "/configuration/value", map[string]any{"who": "client.rgw", "name": "rgw_keystone_admin_password", "value": "sensitive-config-value"})
-	secretConfig, err := db.FindResource(context.Background(), cluster.ID, "config_value", "client.rgw:rgw_keystone_admin_password")
-	if err != nil || secretConfig.ConfiguredData == nil || strings.Contains(*secretConfig.ConfiguredData, "sensitive-config-value") {
-		t.Fatal("configuration secret entered store")
+	if _, err := db.FindResource(context.Background(), cluster.ID, "config_value", "client.rgw:rgw_keystone_admin_password"); !errors.Is(err, store.ErrRecordNotFound) {
+		t.Fatal("configuration request body entered the observed-state cache")
 	}
 
 	send("POST", "/resource/refresh", map[string]any{"kind": "ceph_user"})

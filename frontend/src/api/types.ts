@@ -36,4 +36,29 @@ export interface ActionResult {
   details?: unknown
 }
 
+export type OperationStatus = 'queued' | 'running' | 'succeeded' | 'failed'
+
+export interface Operation {
+  operation_id: number
+  cluster_id: number
+  request_id: string
+  action: string
+  resource_kind: string
+  resource_key: string
+  risk: string
+  status: OperationStatus
+  expected_version?: number
+  result?: ActionResult
+  error_code?: string
+  error_message?: string
+  retryable: boolean
+  attempts: number
+  max_attempts: number
+  next_attempt_at?: string
+  started_at?: string
+  finished_at?: string
+  created_at: string
+  updated_at: string
+}
+
 export type OperationRisk = 'low' | 'medium' | 'high'

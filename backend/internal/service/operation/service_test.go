@@ -2,6 +2,7 @@ package operation
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -68,6 +69,16 @@ func TestEnqueueEncryptsParametersAndIsIdempotent(t *testing.T) {
 	plaintext, err := security.Decrypt(first.ParametersCiphertext, operationTestKey)
 	if err != nil || string(plaintext) != `{"name":"pool-a","secret_key":"secret"}` {
 		t.Fatalf("decrypted parameters = %q, err=%v", plaintext, err)
+	}
+	conflicting := request
+	conflicting.Action = "pool.delete"
+	if _, err := service.Enqueue(context.Background(), conflicting); !errors.Is(err, ErrIdempotencyConflict) {
+		t.Fatalf("conflicting idempotency key error = %v", err)
+	}
+	conflicting = request
+	conflicting.Parameters = map[string]any{"name": "pool-b"}
+	if _, err := service.Enqueue(context.Background(), conflicting); !errors.Is(err, ErrIdempotencyConflict) {
+		t.Fatalf("conflicting idempotency payload error = %v", err)
 	}
 }
 

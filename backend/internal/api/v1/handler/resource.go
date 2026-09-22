@@ -11,10 +11,7 @@ import (
 	"strings"
 	"time"
 
-	cephdomain "cephtower/backend/internal/domain/ceph"
-	"cephtower/backend/internal/security"
-	externalservice "cephtower/backend/internal/service/external"
-	mutationservice "cephtower/backend/internal/service/mutation"
+	operationservice "cephtower/backend/internal/service/operation"
 	"cephtower/backend/internal/store"
 )
 
@@ -175,13 +172,16 @@ func (h *Handler) ensureResourceCapability(w http.ResponseWriter, r *http.Reques
 
 func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_ = risk
 		var body map[string]any
 		if !DecodeStrict(w, r, &body) {
 			return
 		}
 		id, ok := requiredUintBody(w, r, body, "cluster_id")
 		if !ok {
+			return
+		}
+		if _, err := h.Clusters.Get(r.Context(), id); err != nil {
+			clusterError(w, r, err)
 			return
 		}
 		if strings.HasPrefix(action, "rgw_bucket.") && action != "rgw_bucket.ratelimit" && action != "rgw_bucket.quota" {
@@ -213,108 +213,17 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 				return
 			}
 		}
-		result, err := h.executeMutation(r, id, kind, action, resourceKey, body)
+		operation, err := h.enqueueOperation(r, operationservice.EnqueueRequest{
+			ClusterID: id, Action: action, ResourceKind: kind, ResourceKey: resourceKey,
+			Risk: risk, LockKey: kind + "/" + resourceKey, ExpectedVersion: generation,
+			Parameters: body,
+		})
 		if err != nil {
-			writeActionError(w, r, err)
+			writeOperationEnqueueError(w, r, err)
 			return
 		}
-		if err := h.persistResourceMutation(r.Context(), id, kind, action, resourceKey, body); err != nil {
-			WriteError(w, r, http.StatusInternalServerError, "store_error", err.Error(), false, nil)
-			return
-		}
-		WriteSuccess(w, http.StatusOK, "success", result)
+		WriteSuccess(w, http.StatusAccepted, "accepted", toOperationDTO(operation))
 	}
-}
-
-func (h *Handler) persistResourceMutation(ctx context.Context, clusterID uint64, kind, action, auditKey string, body map[string]any) error {
-	if action == "rgw_bucket.quota" || action == "rgw_bucket.ratelimit" || kind == "snapshot_schedule" || kind == "rgw_user" || kind == "rgw_account" || kind == "rgw_role" || kind == "rgw_realm" || kind == "rgw_zonegroup" || kind == "rgw_zone" || strings.HasPrefix(kind, "rbd_") {
-		// RBD state comes from native collection; request bodies are not observations.
-		// Schedules are read directly from Ceph; there is no reconciled cache.
-		return nil
-	}
-	key := resourceLookupKey(kind, auditKey)
-	if strings.HasSuffix(action, ".delete") || strings.HasSuffix(action, ".purge") {
-		return h.Database().DeleteResourceState(ctx, clusterID, kind, key)
-	}
-	if !strings.HasSuffix(action, ".create") && !strings.HasSuffix(action, ".update") &&
-		!strings.HasSuffix(action, ".set") && !strings.HasSuffix(action, ".quota") &&
-		!strings.HasSuffix(action, ".clone") && !strings.HasSuffix(action, ".restore") {
-		return nil
-	}
-	configBody := resourceConfigurationBody(kind, action, body)
-	redacted, err := security.RedactJSON(configBody)
-	if err != nil {
-		return err
-	}
-	configured, err := json.Marshal(redacted)
-	if err != nil {
-		return err
-	}
-	if kind == "pool" && strings.HasSuffix(action, ".update") {
-		if operation, _ := body["operation"].(string); operation == "rename" {
-			newName, _ := body["name"].(string)
-			newName = strings.TrimSpace(newName)
-			if newName != "" && newName != key {
-				return h.Database().RenameResourceState(ctx, clusterID, kind, key, newName, string(configured))
-			}
-		}
-	}
-	return h.Database().SaveResourceConfiguration(ctx, clusterID, kind, key, string(configured))
-}
-
-func resourceConfigurationBody(kind, action string, body map[string]any) map[string]any {
-	if kind != "pool" {
-		return body
-	}
-	clean := func(names ...string) map[string]any {
-		result := map[string]any{}
-		for _, name := range names {
-			if value, exists := body[name]; exists {
-				result[name] = value
-			}
-		}
-		return result
-	}
-	if strings.HasSuffix(action, ".create") {
-		return clean("name", "pool_type", "pg_num", "pg_autoscale_mode", "size", "applications", "erasure_code_profile", "crush_rule", "compression_mode", "compression_algorithm", "compression_min_blob_size", "compression_max_blob_size", "compression_required_ratio", "quota_max_bytes", "quota_max_objects", "quota_unit", "rbd_mirroring", "configuration")
-	}
-	if !strings.HasSuffix(action, ".update") {
-		return body
-	}
-	result := clean("applications")
-	if operation, _ := body["operation"].(string); operation == "quota" {
-		if field, _ := body["field"].(string); field == "max_bytes" || field == "max_objects" {
-			if value, exists := body["value"]; exists {
-				result["quota_"+field] = value
-			}
-		}
-		if value, exists := body["quota_unit"]; exists {
-			result["quota_unit"] = value
-		}
-		return result
-	}
-	if operation, _ := body["operation"].(string); operation == "application" {
-		return result
-	}
-	if operation, _ := body["operation"].(string); operation == "rbd_configuration" {
-		// RBD pool configuration is read back from the cluster. Do not let a local
-		// shadow value override the effective value returned by `rbd config pool list`.
-		return map[string]any{}
-	}
-	if operation, _ := body["operation"].(string); operation == "rbd_mirroring" {
-		return clean("rbd_mirroring")
-	}
-	if operation, _ := body["operation"].(string); operation == "rename" {
-		return clean("name")
-	}
-	field, _ := body["field"].(string)
-	if field == "" {
-		return clean("name", "pool_type", "pg_num", "pg_autoscale_mode", "size", "applications", "erasure_code_profile", "crush_rule", "compression_mode", "compression_algorithm", "compression_min_blob_size", "compression_max_blob_size", "compression_required_ratio", "quota_max_bytes", "quota_max_objects", "quota_unit", "rbd_mirroring", "configuration")
-	}
-	if value, exists := body["value"]; exists {
-		result[field] = value
-	}
-	return result
 }
 
 func (h *Handler) checkResourceGeneration(ctx context.Context, clusterID uint64, kind, resourceKey string, generation uint64) error {
@@ -329,59 +238,6 @@ func (h *Handler) checkResourceGeneration(ctx context.Context, clusterID uint64,
 		return errors.New("resource generation changed")
 	}
 	return nil
-}
-
-func (h *Handler) executeMutation(r *http.Request, clusterID uint64, kind, action, resourceKey string, body map[string]any) (cephdomain.ActionResult, error) {
-	if action == "cluster.refresh" && h.Reconciler != nil {
-		modules := stringSliceBody(body, "modules")
-		return h.Reconciler.Refresh(r.Context(), clusterID, modules)
-	}
-	if externalservice.Supports(action) {
-		if h.External == nil {
-			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "capability_unavailable", Message: "external action is unavailable"}
-		}
-		return h.External.Execute(r.Context(), externalservice.Request{ClusterID: clusterID, Action: action, ResourceKey: resourceKey, Parameters: body})
-	}
-	if h.Mutations == nil {
-		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "capability_unavailable", Message: "native action is unavailable"}
-	}
-	result, err := h.Mutations.Execute(r.Context(), mutationservice.Request{ClusterID: clusterID, Action: action, ResourceKey: resourceKey, Parameters: body})
-	if err != nil {
-		return cephdomain.ActionResult{}, err
-	}
-	return result, nil
-}
-
-func writeActionError(w http.ResponseWriter, r *http.Request, err error) {
-	var actionError *cephdomain.ActionError
-	if errors.As(err, &actionError) {
-		status := http.StatusBadGateway
-		switch actionError.Code {
-		case "invalid_request", "invalid_credential", "invalid_endpoint":
-			status = http.StatusBadRequest
-		case "endpoint_unavailable", "capability_unavailable":
-			status = http.StatusNotImplemented
-		case "resource_conflict":
-			status = http.StatusConflict
-		}
-		WriteError(w, r, status, actionError.Code, actionError.Message, actionError.Retryable, actionError.Details)
-		return
-	}
-	WriteError(w, r, http.StatusBadGateway, "action_failed", err.Error(), true, nil)
-}
-
-func stringSliceBody(body map[string]any, key string) []string {
-	raw, ok := body[key].([]any)
-	if !ok {
-		return nil
-	}
-	values := make([]string, 0, len(raw))
-	for _, item := range raw {
-		if value, ok := item.(string); ok {
-			values = append(values, value)
-		}
-	}
-	return values
 }
 
 func resourceLookupKey(kind, resourceKey string) string {

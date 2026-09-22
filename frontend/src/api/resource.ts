@@ -1,5 +1,5 @@
-import { asArray, isApiError, jsonInit, request, requestWithResponse, textValue, type ApiRecord, type ApiRequestInit } from './client'
-import type { ActionResult, FilterOptionsEnvelope, ListEnvelope, ResourceDTO } from './types'
+import { ApiRequestError, asArray, isApiError, jsonInit, notifyApiError, request, requestWithResponse, textValue, toApiErrorDetail, type ApiRecord, type ApiRequestInit } from './client'
+import type { ActionResult, FilterOptionsEnvelope, ListEnvelope, Operation, ResourceDTO } from './types'
 
 export const selectedClusterStorageKey = 'cephtower.selectedClusterId'
 
@@ -156,26 +156,68 @@ export async function getOptionalResource<T = ApiRecord>(path: string, clusterId
   }
 }
 
-export async function mutateResource(path: string, method: string, body: ApiRecord, options?: { ifMatch?: number | string }) {
-  return request<ActionResult>(path, {
+export async function mutateResource(path: string, method: string, body: ApiRecord, options?: { ifMatch?: number | string, idempotencyKey?: string }) {
+  const { data, response } = await requestWithResponse<ActionResult | Operation>(path, {
     ...jsonInit(method, body),
     headers: {
       'Content-Type': 'application/json',
-      ...(options?.ifMatch ? { 'If-Match': String(options.ifMatch) } : {})
+      'Idempotency-Key': options?.idempotencyKey ?? createIdempotencyKey(),
+      ...(options?.ifMatch !== undefined ? { 'If-Match': String(options.ifMatch) } : {})
     }
   })
+  if (response.status !== 202) {
+    return data as ActionResult
+  }
+  return waitForOperation(data as Operation)
 }
 
 export async function refreshResource(input: { clusterId?: number, kind?: string, kinds?: string[], module?: string, modules?: string[], scope?: 'all' }) {
   const clusterId = input.clusterId ?? requiredClusterId()
-  return request<ActionResult>('/resource/refresh', jsonInit('POST', {
+  const { data } = await requestWithResponse<Operation>('/resource/refresh', jsonInit('POST', {
     cluster_id: clusterId,
     ...(input.scope ? { scope: input.scope } : {}),
     ...(input.kind ? { kind: input.kind } : {}),
     ...(input.kinds && input.kinds.length > 0 ? { kinds: input.kinds } : {}),
     ...(input.module ? { module: input.module } : {}),
     ...(input.modules && input.modules.length > 0 ? { modules: input.modules } : {})
-  }))
+  }, { headers: { 'Idempotency-Key': createIdempotencyKey() } }))
+  return waitForOperation(data)
+}
+
+async function waitForOperation(initial: Operation): Promise<ActionResult> {
+  let operation = initial
+  const deadline = Date.now() + 15 * 60 * 1000
+  let delay = 250
+  while (operation.status === 'queued' || operation.status === 'running') {
+    if (Date.now() >= deadline) {
+      const error = new ApiRequestError('操作仍在后台执行，请稍后在操作记录中查看', 504, 'operation_wait_timeout')
+      notifyApiError(toApiErrorDetail(error, '/operation'))
+      throw error
+    }
+    await wait(delay)
+    operation = await request<Operation>('/operation', jsonInit('GET', {
+      cluster_id: operation.cluster_id,
+      operation_id: operation.operation_id
+    }, { suppressErrorNotification: true }))
+    delay = Math.min(Math.round(delay * 1.5), 2000)
+  }
+  if (operation.status === 'failed') {
+    const error = new ApiRequestError(operation.error_message || 'Ceph 操作执行失败', 502, operation.error_code)
+    notifyApiError(toApiErrorDetail(error, '/operation'))
+    throw error
+  }
+  return operation.result ?? {}
+}
+
+function wait(milliseconds: number) {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds))
+}
+
+function createIdempotencyKey() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
 export async function listHosts(): Promise<ApiRecord[]> {

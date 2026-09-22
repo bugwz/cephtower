@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
+	operationservice "cephtower/backend/internal/service/operation"
 )
 
 type refreshResourceRequest struct {
@@ -22,37 +23,24 @@ func (h *Handler) RefreshResource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	annotateAudit(r, "resource.refresh", "resource", refreshAuditKey(request), string(cephdomain.RiskLow), &request.ClusterID)
-	if h.Reconciler == nil {
-		WriteError(w, r, http.StatusNotImplemented, "capability_unavailable", "resource refresh is unavailable", false, nil)
+	if _, err := h.Clusters.Get(r.Context(), request.ClusterID); err != nil {
+		clusterError(w, r, err)
 		return
 	}
-	modules := append([]string(nil), request.Modules...)
-	if request.Module != "" {
-		modules = append(modules, request.Module)
+	parameters := map[string]any{
+		"scope": request.Scope, "module": request.Module, "modules": request.Modules,
+		"kind": request.Kind, "kinds": request.Kinds,
 	}
-	kinds := append([]string(nil), request.Kinds...)
-	if request.Kind != "" {
-		kinds = append(kinds, request.Kind)
-	}
-	if request.Scope == "all" {
-		modules = nil
-		kinds = nil
-	}
-	var result any
-	var err error
-	switch {
-	case len(kinds) > 0:
-		result, err = h.Reconciler.RefreshKinds(r.Context(), request.ClusterID, kinds)
-	case len(modules) > 0:
-		result, err = h.Reconciler.Refresh(r.Context(), request.ClusterID, modules)
-	default:
-		result, err = h.Reconciler.Refresh(r.Context(), request.ClusterID, nil)
-	}
+	operation, err := h.enqueueOperation(r, operationservice.EnqueueRequest{
+		ClusterID: request.ClusterID, Action: "cluster.refresh", ResourceKind: "resource",
+		ResourceKey: refreshAuditKey(request), Risk: string(cephdomain.RiskLow),
+		LockKey: "resource/" + refreshAuditKey(request), Parameters: parameters,
+	})
 	if err != nil {
-		writeActionError(w, r, err)
+		writeOperationEnqueueError(w, r, err)
 		return
 	}
-	WriteSuccess(w, http.StatusOK, "success", result)
+	WriteSuccess(w, http.StatusAccepted, "accepted", toOperationDTO(operation))
 }
 
 func refreshAuditKey(request refreshResourceRequest) string {

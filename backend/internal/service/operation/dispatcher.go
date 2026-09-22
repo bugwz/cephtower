@@ -18,6 +18,7 @@ type externalExecutor interface {
 
 type reconcileExecutor interface {
 	Refresh(context.Context, uint64, []string) (cephdomain.ActionResult, error)
+	RefreshKinds(context.Context, uint64, []string) (cephdomain.ActionResult, error)
 	RefreshKindIfSupported(context.Context, uint64, string) (bool, error)
 }
 
@@ -36,7 +37,18 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		if d.reconciler == nil {
 			return unavailable("resource refresh is unavailable")
 		}
-		return d.reconciler.Refresh(ctx, request.ClusterID, stringSlice(request.Parameters["modules"]))
+		kinds := stringSlice(request.Parameters["kinds"])
+		if kind, _ := request.Parameters["kind"].(string); kind != "" {
+			kinds = append(kinds, kind)
+		}
+		if len(kinds) > 0 {
+			return d.reconciler.RefreshKinds(ctx, request.ClusterID, kinds)
+		}
+		modules := stringSlice(request.Parameters["modules"])
+		if module, _ := request.Parameters["module"].(string); module != "" {
+			modules = append(modules, module)
+		}
+		return d.reconciler.Refresh(ctx, request.ClusterID, modules)
 	}
 	if externalservice.Supports(request.Action) {
 		if d.external == nil {

@@ -20,6 +20,8 @@ const (
 	defaultPollInterval = 250 * time.Millisecond
 )
 
+var ErrIdempotencyConflict = errors.New("idempotency key is already used by another operation")
+
 type Dispatcher interface {
 	Execute(context.Context, ExecutionRequest) (cephdomain.ActionResult, error)
 }
@@ -92,19 +94,22 @@ func (s *Service) Enqueue(ctx context.Context, request EnqueueRequest) (store.Ce
 	if request.ClusterID == 0 || request.Action == "" || request.ResourceKind == "" {
 		return store.CephOperation{}, fmt.Errorf("cluster, action, and resource kind are required")
 	}
-	if request.IdempotencyKey != "" {
-		if existing, err := s.database().FindOperationByIdempotencyKey(ctx, request.ClusterID, request.IdempotencyKey); err == nil {
-			return existing, nil
-		} else if !errors.Is(err, store.ErrRecordNotFound) {
-			return store.CephOperation{}, err
-		}
-	}
 	payload, err := json.Marshal(request.Parameters)
 	if err != nil {
 		return store.CephOperation{}, fmt.Errorf("encode operation parameters: %w", err)
 	}
 	if string(payload) == "null" {
 		payload = []byte("{}")
+	}
+	if request.IdempotencyKey != "" {
+		if existing, err := s.database().FindOperationByIdempotencyKey(ctx, request.ClusterID, request.IdempotencyKey); err == nil {
+			if !s.sameOperation(existing, request, payload) {
+				return store.CephOperation{}, ErrIdempotencyConflict
+			}
+			return existing, nil
+		} else if !errors.Is(err, store.ErrRecordNotFound) {
+			return store.CephOperation{}, err
+		}
 	}
 	ciphertext, err := security.Encrypt(payload, s.encryptionKey)
 	if err != nil {
@@ -124,6 +129,9 @@ func (s *Service) Enqueue(ctx context.Context, request EnqueueRequest) (store.Ce
 	if err := s.database().CreateOperation(ctx, &row); err != nil {
 		if request.IdempotencyKey != "" {
 			if existing, findErr := s.database().FindOperationByIdempotencyKey(ctx, request.ClusterID, request.IdempotencyKey); findErr == nil {
+				if !s.sameOperation(existing, request, payload) {
+					return store.CephOperation{}, ErrIdempotencyConflict
+				}
 				return existing, nil
 			}
 		}
@@ -131,6 +139,16 @@ func (s *Service) Enqueue(ctx context.Context, request EnqueueRequest) (store.Ce
 	}
 	s.signal()
 	return row, nil
+}
+
+func (s *Service) sameOperation(existing store.CephOperation, request EnqueueRequest, payload []byte) bool {
+	if existing.Action != request.Action ||
+		existing.ResourceKind != request.ResourceKind ||
+		existing.ResourceKey != request.ResourceKey {
+		return false
+	}
+	existingPayload, err := security.Decrypt(existing.ParametersCiphertext, s.encryptionKey)
+	return err == nil && bytes.Equal(existingPayload, payload)
 }
 
 func (s *Service) Start(ctx context.Context) error {

@@ -32,9 +32,15 @@ func (f *externalExecutorFake) Execute(_ context.Context, request externalservic
 
 type reconcileExecutorFake struct {
 	modules       []string
+	kinds         []string
 	kind          string
 	refreshResult bool
 	err           error
+}
+
+func (f *reconcileExecutorFake) RefreshKinds(_ context.Context, _ uint64, kinds []string) (cephdomain.ActionResult, error) {
+	f.kinds = append([]string(nil), kinds...)
+	return cephdomain.ActionResult{Details: map[string]any{"kinds": kinds}}, f.err
 }
 
 func (f *reconcileExecutorFake) Refresh(_ context.Context, _ uint64, modules []string) (cephdomain.ActionResult, error) {
@@ -86,6 +92,14 @@ func TestActionDispatcherRoutesRefreshAndExternalActions(t *testing.T) {
 	}
 	if len(reconciler.modules) != 2 || reconciler.modules[0] != "fast" {
 		t.Fatalf("refresh modules = %v", reconciler.modules)
+	}
+	if _, err := dispatcher.Execute(context.Background(), ExecutionRequest{
+		ClusterID: 7, Action: "cluster.refresh", Parameters: map[string]any{"kind": "pool"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if len(reconciler.kinds) != 1 || reconciler.kinds[0] != "pool" {
+		t.Fatalf("refresh kinds = %v", reconciler.kinds)
 	}
 	if _, err := dispatcher.Execute(context.Background(), ExecutionRequest{
 		ClusterID: 7, Action: "silence.delete", ResourceKind: "silence", ResourceKey: "silence-a",
