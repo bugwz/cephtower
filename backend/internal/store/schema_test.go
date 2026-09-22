@@ -184,7 +184,7 @@ func TestCephAuthEntityTableMigration(t *testing.T) {
 		t.Fatal(err)
 	}
 	_ = Close(db)
-	upgraded, err := Open(cfg, workDir)
+	upgraded, err := OpenExisting(cfg, workDir)
 	if err != nil {
 		t.Fatal(err)
 	}

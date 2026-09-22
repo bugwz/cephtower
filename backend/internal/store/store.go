@@ -82,8 +82,8 @@ func Open(cfg config.DatabaseConfig, workDirs ...string) (*Database, error) {
 	return wrap(db), nil
 }
 
-// OpenExisting connects to a database that must already exist. It intentionally
-// does not create SQLite files, create MySQL databases, or run migrations.
+// OpenExisting connects to a database that must already exist and upgrades its
+// schema. It never creates the database container itself.
 func OpenExisting(cfg config.DatabaseConfig, workDirs ...string) (*Database, error) {
 	workDir := databaseWorkDir(workDirs)
 	if cfg.Engine == EngineSQLite {
@@ -95,9 +95,13 @@ func OpenExisting(cfg config.DatabaseConfig, workDirs ...string) (*Database, err
 	if err != nil {
 		return nil, err
 	}
-	db, _, err := openDatabaseHandle(cfg.Engine, dialector)
+	db, sqlDB, err := openDatabaseHandle(cfg.Engine, dialector)
 	if err != nil {
 		return nil, err
+	}
+	if err := migrate(db); err != nil {
+		_ = sqlDB.Close()
+		return nil, fmt.Errorf("migrate database schema: %w", err)
 	}
 	return wrap(db), nil
 }
