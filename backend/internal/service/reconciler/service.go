@@ -34,6 +34,17 @@ type breaker struct {
 	failures int
 	next     time.Time
 }
+
+type reconcileKey struct {
+	clusterID uint64
+	module    string
+}
+
+type reconcileLock struct {
+	mu   sync.Mutex
+	refs int
+}
+
 type Service struct {
 	database func() *store.Database
 	clusters *clusterservice.Service
@@ -41,13 +52,22 @@ type Service struct {
 	modules  []Module
 	mu       sync.Mutex
 	breakers map[uint64]*breaker
+	lockMu   sync.Mutex
+	locks    map[reconcileKey]*reconcileLock
 	runCtx   context.Context
 	cancel   context.CancelFunc
 	wg       sync.WaitGroup
 }
 
 func New(database func() *store.Database, clusters *clusterservice.Service, provider cephprovider.CollectorProvider) *Service {
-	return &Service{database: database, clusters: clusters, provider: provider, modules: DefaultModules, breakers: map[uint64]*breaker{}}
+	return &Service{
+		database: database,
+		clusters: clusters,
+		provider: provider,
+		modules:  DefaultModules,
+		breakers: map[uint64]*breaker{},
+		locks:    map[reconcileKey]*reconcileLock{},
+	}
 }
 
 func (s *Service) Refresh(ctx context.Context, clusterID uint64, modules []string) (cephdomain.ActionResult, error) {
@@ -179,6 +199,9 @@ func (s *Service) ReconcileKinds(ctx context.Context, clusterID uint64, module M
 }
 
 func (s *Service) reconcile(ctx context.Context, clusterID uint64, module Module, selectedKinds map[string]struct{}) error {
+	unlock := s.lockReconcile(clusterID, module.Name)
+	defer unlock()
+
 	generation, err := s.database().NextCollectionGeneration(ctx, clusterID, module.Name)
 	if err != nil {
 		return err
@@ -257,6 +280,29 @@ func (s *Service) reconcile(ctx context.Context, clusterID uint64, module Module
 	_ = s.database().MarkModuleResourcesStale(ctx, clusterID, staleKinds, finished)
 	s.failure(clusterID)
 	return err
+}
+
+func (s *Service) lockReconcile(clusterID uint64, module string) func() {
+	key := reconcileKey{clusterID: clusterID, module: module}
+	s.lockMu.Lock()
+	lock := s.locks[key]
+	if lock == nil {
+		lock = &reconcileLock{}
+		s.locks[key] = lock
+	}
+	lock.refs++
+	s.lockMu.Unlock()
+
+	lock.mu.Lock()
+	return func() {
+		lock.mu.Unlock()
+		s.lockMu.Lock()
+		lock.refs--
+		if lock.refs == 0 {
+			delete(s.locks, key)
+		}
+		s.lockMu.Unlock()
+	}
 }
 
 func availableKinds(moduleKinds, unavailableKinds []string) []string {

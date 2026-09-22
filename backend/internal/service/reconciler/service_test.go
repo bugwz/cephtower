@@ -3,6 +3,7 @@ package reconciler
 import (
 	"context"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -23,6 +24,40 @@ type optionalCollectorFake struct {
 type metadataCollectorFake struct {
 	results []cephprovider.CollectionResult
 	index   int
+}
+
+type blockingCollectorFake struct {
+	mu      sync.Mutex
+	entered chan struct{}
+	release chan struct{}
+	calls   int
+	active  int
+	max     int
+}
+
+func (f *blockingCollectorFake) Collect(ctx context.Context, _ cephprovider.ClusterAccess, _ string) ([]cephprovider.Observation, error) {
+	f.mu.Lock()
+	f.calls++
+	f.active++
+	if f.active > f.max {
+		f.max = f.active
+	}
+	call := f.calls
+	f.mu.Unlock()
+
+	if call == 1 {
+		close(f.entered)
+		select {
+		case <-f.release:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+
+	f.mu.Lock()
+	f.active--
+	f.mu.Unlock()
+	return nil, nil
 }
 
 func (f *metadataCollectorFake) Collect(context.Context, cephprovider.ClusterAccess, string) ([]cephprovider.Observation, error) {
@@ -142,6 +177,55 @@ func TestReconcileMarksSuccessfulEmptyKindsStaleButPreservesUnavailableKinds(t *
 	retained, err := db.FindResource(context.Background(), cluster.ID, "rgw_account", "retained")
 	if err != nil || retained.StaleAt != nil {
 		t.Fatalf("unavailable optional kind was marked stale: row=%#v err=%v", retained, err)
+	}
+}
+
+func TestReconcileSerializesTheSameClusterModule(t *testing.T) {
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: reconcilerTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "reconciler-lock.db"}}, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close(db)
+	encrypted, err := security.Encrypt([]byte("plain-ceph-key"), reconcilerTestKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	cluster := store.CephCluster{Name: "fixture", MonitorAddresses: "mon:6789", ClientUsername: "client.fixture", ClientKey: encrypted, CreatedAt: now, UpdatedAt: now}
+	if err := db.CreateCluster(context.Background(), &cluster); err != nil {
+		t.Fatal(err)
+	}
+	collector := &blockingCollectorFake{entered: make(chan struct{}), release: make(chan struct{})}
+	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil)
+	service := New(func() *store.Database { return db }, clusters, collector)
+	module := Module{Name: "storage", Kinds: []string{"pool"}}
+
+	errors := make(chan error, 2)
+	go func() { errors <- service.Reconcile(context.Background(), cluster.ID, module) }()
+	select {
+	case <-collector.entered:
+	case <-time.After(time.Second):
+		t.Fatal("first reconcile did not enter the collector")
+	}
+	go func() { errors <- service.Reconcile(context.Background(), cluster.ID, module) }()
+	time.Sleep(50 * time.Millisecond)
+	collector.mu.Lock()
+	callsBeforeRelease := collector.calls
+	collector.mu.Unlock()
+	if callsBeforeRelease != 1 {
+		t.Fatalf("same module collector calls before release = %d, want 1", callsBeforeRelease)
+	}
+	close(collector.release)
+	for range 2 {
+		if err := <-errors; err != nil {
+			t.Fatal(err)
+		}
+	}
+	collector.mu.Lock()
+	calls, maxActive := collector.calls, collector.max
+	collector.mu.Unlock()
+	if calls != 2 || maxActive != 1 {
+		t.Fatalf("collector calls/max active = %d/%d, want 2/1", calls, maxActive)
 	}
 }
 
