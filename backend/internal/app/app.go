@@ -24,6 +24,7 @@ import (
 	hostdetailservice "cephtower/backend/internal/service/hostdetail"
 	hostprofileservice "cephtower/backend/internal/service/hostprofile"
 	mutationservice "cephtower/backend/internal/service/mutation"
+	operationservice "cephtower/backend/internal/service/operation"
 	reconcilerservice "cephtower/backend/internal/service/reconciler"
 	setupservice "cephtower/backend/internal/service/setup"
 	"cephtower/backend/internal/store"
@@ -36,6 +37,7 @@ type App struct {
 	apiServer  *api.API
 	database   *store.Manager
 	reconciler *reconcilerservice.Service
+	operations *operationservice.Service
 	httpServer *http.Server
 	closeLog   func() error
 	closeOnce  sync.Once
@@ -94,16 +96,24 @@ func New(configPath string) (*App, error) {
 	hostProfiles := hostprofileservice.New(manager.Current, cfg.Database.EncryptionKey)
 	mutations := mutationservice.New(clusters, runner)
 	reconciler := reconcilerservice.New(manager.Current, clusters, native)
+	dispatcher := operationservice.NewActionDispatcher(mutations, external, reconciler)
+	operations := operationservice.New(manager.Current, cfg.Database.EncryptionKey, dispatcher, operationservice.Options{})
 	setup := &setupservice.Service{Manager: manager, CurrentConfig: currentConfig, UpdateConfig: updateConfig, OnInitialized: func() {
+		if err := operations.Start(context.Background()); err != nil {
+			logging.Errorf("operation workers failed to start after initialization: error=%v", err)
+		}
 		reconciler.Start(context.Background())
 	}}
-	handler := v1handler.New(v1handler.Dependencies{Inspection: clusterinspect.New(clusters, runner), Auth: auth, Clusters: clusters, Endpoints: endpoints, External: external, HostDetails: hostDetails, HostProfiles: hostProfiles, Mutations: mutations, Reconciler: reconciler, Setup: setup, Database: manager.Current, AuthEnabled: authEnabled})
+	handler := v1handler.New(v1handler.Dependencies{Inspection: clusterinspect.New(clusters, runner), Auth: auth, Clusters: clusters, Endpoints: endpoints, External: external, HostDetails: hostDetails, HostProfiles: hostProfiles, Mutations: mutations, Operations: operations, Reconciler: reconciler, Setup: setup, Database: manager.Current, AuthEnabled: authEnabled})
 	apiServer := api.NewAPI(handler)
 	server := &http.Server{Addr: net.JoinHostPort(cfg.Server.Address, strconv.Itoa(cfg.Server.Port)), Handler: apiServer.Routes(), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 2 * time.Minute}
-	return &App{config: cfg, apiServer: apiServer, database: manager, reconciler: reconciler, httpServer: server, closeLog: closeLog}, nil
+	return &App{config: cfg, apiServer: apiServer, database: manager, reconciler: reconciler, operations: operations, httpServer: server, closeLog: closeLog}, nil
 }
 func (a *App) Run(ctx context.Context) error {
 	if a.database != nil && a.database.Current() != nil {
+		if err := a.operations.Start(ctx); err != nil {
+			return err
+		}
 		a.reconciler.Start(ctx)
 	}
 	logging.Infof("backend listening: addr=%s", a.httpServer.Addr)
@@ -138,6 +148,9 @@ func (a *App) Close(ctx context.Context) error {
 			if err := a.httpServer.Shutdown(ctx); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				errs = append(errs, err)
 			}
+		}
+		if a.operations != nil {
+			a.operations.Stop()
 		}
 		if a.reconciler != nil {
 			a.reconciler.Stop()

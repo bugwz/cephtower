@@ -116,6 +116,17 @@ func (s *Service) RefreshKind(ctx context.Context, clusterID uint64, kind string
 	return cephdomain.ActionResult{Details: map[string]any{"kinds": []string{kind}, "module": module.Name}}, nil
 }
 
+func (s *Service) RefreshKindIfSupported(ctx context.Context, clusterID uint64, kind string) (bool, error) {
+	module, ok := s.moduleForKind(kind)
+	if !ok {
+		return false, nil
+	}
+	if err := s.ReconcileKinds(ctx, clusterID, module, []string{kind}); err != nil {
+		return true, err
+	}
+	return true, nil
+}
+
 func (s *Service) RefreshKinds(ctx context.Context, clusterID uint64, kinds []string) (cephdomain.ActionResult, error) {
 	if len(kinds) == 0 {
 		return s.Refresh(ctx, clusterID, nil)
