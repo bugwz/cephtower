@@ -121,7 +121,7 @@ func (s *Service) Enqueue(ctx context.Context, request EnqueueRequest) (store.Ce
 		Action: request.Action, ResourceKind: request.ResourceKind, ResourceKey: request.ResourceKey,
 		Risk: request.Risk, LockKey: request.LockKey, Status: store.OperationQueued,
 		ParametersCiphertext: ciphertext, ExpectedVersion: request.ExpectedVersion,
-		MaxAttempts: 1, CreatedAt: now, UpdatedAt: now,
+		MaxAttempts: maxAttemptsFor(request.Action), CreatedAt: now, UpdatedAt: now,
 	}
 	if request.IdempotencyKey != "" {
 		row.IdempotencyKey = &request.IdempotencyKey
@@ -300,6 +300,19 @@ func (s *Service) parameters(row store.CephOperation) (map[string]any, error) {
 
 func (s *Service) fail(ctx context.Context, row store.CephOperation, code, message string, retryable bool) {
 	message = security.Redact(message)
+	if retryable && row.Attempts < row.MaxAttempts {
+		now := time.Now().UTC()
+		nextAttemptAt := now.Add(retryDelay(row.Attempts))
+		if err := s.database().RequeueOperation(ctx, row.ID, code, message, nextAttemptAt, now); err != nil {
+			if ctx.Err() == nil {
+				logging.Errorf("operation retry persistence failed: operation_id=%d error=%v", row.ID, err)
+			}
+			return
+		}
+		s.recordAudit(ctx, row, "operation_retry_scheduled", "retrying", &code, &retryable)
+		s.signal()
+		return
+	}
 	if err := s.database().FailOperation(ctx, row.ID, code, message, retryable, time.Now().UTC()); err != nil {
 		if ctx.Err() == nil {
 			logging.Errorf("operation failure persistence failed: operation_id=%d error=%v", row.ID, err)
@@ -307,6 +320,21 @@ func (s *Service) fail(ctx context.Context, row store.CephOperation, code, messa
 		return
 	}
 	s.recordAudit(ctx, row, "operation_completed", "failed", &code, &retryable)
+}
+
+func maxAttemptsFor(action string) uint32 {
+	if action == "cluster.refresh" {
+		return 3
+	}
+	return 1
+}
+
+func retryDelay(attempt uint32) time.Duration {
+	if attempt == 0 {
+		attempt = 1
+	}
+	delay := time.Second << min(attempt-1, 5)
+	return min(delay, 30*time.Second)
 }
 
 func (s *Service) recordAudit(ctx context.Context, row store.CephOperation, eventType, outcome string, errorCode *string, retryable *bool) {

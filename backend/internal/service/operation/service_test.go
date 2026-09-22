@@ -186,6 +186,40 @@ func TestWorkerRejectsStaleExpectedVersionBeforeDispatch(t *testing.T) {
 	t.Fatal("operation lifecycle audit events were not persisted")
 }
 
+func TestOnlyRefreshOperationsAreRequeued(t *testing.T) {
+	db, clusterID := operationServiceDatabase(t)
+	service := New(func() *store.Database { return db }, operationTestKey, &dispatcherFake{}, Options{})
+	refresh, err := service.Enqueue(context.Background(), EnqueueRequest{
+		ClusterID: clusterID, RequestID: "refresh", Action: "cluster.refresh",
+		ResourceKind: "resource", ResourceKey: "cluster/all", Parameters: map[string]any{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	mutation, err := service.Enqueue(context.Background(), EnqueueRequest{
+		ClusterID: clusterID, RequestID: "mutation", Action: "pool.create",
+		ResourceKind: "pool", ResourceKey: "pool/data", Parameters: map[string]any{"name": "data"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if refresh.MaxAttempts != 3 || mutation.MaxAttempts != 1 {
+		t.Fatalf("max attempts: refresh=%d mutation=%d", refresh.MaxAttempts, mutation.MaxAttempts)
+	}
+	claimed, err := db.ClaimNextOperation(context.Background(), time.Now().UTC())
+	if err != nil || claimed.ID != refresh.ID {
+		t.Fatalf("claimed=%#v err=%v", claimed, err)
+	}
+	service.fail(context.Background(), claimed, "refresh_failed", "offline", true)
+	stored, err := db.FindOperation(context.Background(), refresh.ID)
+	if err != nil || stored.Status != store.OperationQueued || stored.NextAttemptAt == nil || !stored.Retryable {
+		t.Fatalf("requeued operation=%#v err=%v", stored, err)
+	}
+	if stored.FinishedAt != nil {
+		t.Fatalf("requeued operation has finished timestamp: %#v", stored.FinishedAt)
+	}
+}
+
 func waitForOperationStatus(t *testing.T, db *store.Database, id uint64, status string) {
 	t.Helper()
 	deadline := time.Now().Add(time.Second)
