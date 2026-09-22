@@ -28,12 +28,14 @@ CephTower 使用 Go 后端和 React / Ant Design 前端，通过 Ceph 原生命�
   主机、守护进程、服务、MON、MGR、MDS、OSD、Mgr 模块与集群配置。
 - 集群界面：集群连接与详情、主机、MON、MGR、OSD 和 MDS 管理；支持 Mgr 模块开关、
   守护进程操作以及 OSD in/out、reweight 和 scrub 等操作。
-- 数据采集：按 fast、topology、storage、inventory、configuration 模块分层收敛；手动
-  refresh 由请求直接触发，并区分成功空结果与可选能力暂时不可用。
+- 数据采集：按 ceph_auth、fast、topology、storage、inventory、configuration 模块独立
+  调度；周期可配置，手动 refresh 进入持久化队列，并区分成功空结果与可选能力暂时不可用。
 - 后端集成：覆盖集群、Pool/RBD、CephFS/NFS/SMB、RGW、iSCSI、NVMe-oF、
   Prometheus/Alertmanager/Grafana 等原生 API；CephTower 用户和角色由自身 RBAC 管理。
-- 操作执行：Ceph mutation 在当前 HTTP 请求内直接执行，依赖 Go HTTP server 的自然并发；
-  后端保留严格请求校验、Ceph 命令 post-check 和审计哈希链。
+- 操作执行：Ceph mutation 返回 `202 Accepted` 后由持久化 worker 执行；同一集群串行化，
+  执行前复核资源版本，成功后立即采集，并记录完整的哈希链生命周期审计。
+- 数据生命周期：资源表仅保存 Ceph 最新观测；overview 与 health check 按五分钟采样并
+  保留 90 天，采集运行记录保留 30 天，完成的操作记录保留 90 天。
 - API 契约：请求按 action 严格校验并拒绝未知字段；OpenAPI 为每条路由声明具体响应 DTO，
   所有 JSON 和 SSE event 的顶层固定为 `code`、`message`、`data`。
 - 交付方式：生产构建将前端产物嵌入 Go 可执行文件，由同一 HTTP 服务提供 UI 和 API。
@@ -128,6 +130,7 @@ make build
 | `log` | 输出目标、级别、格式、轮转与保留时间 |
 | `runtime` | 任务期间生成的临时 Ceph 配置目录；凭据文件会在任务结束时删除 |
 | `database` | SQLite 文件或 MySQL 连接与 TLS 选项；启动时自动迁移 |
+| `collection` | ceph_auth、fast、topology、storage、inventory、configuration 的独立采集周期 |
 | `smtp` | 可选的密码重置邮件服务 |
 
 `database.encryption_key` 必须是 32 个 ASCII 字符。`make run` 首次创建本地配置时会安全

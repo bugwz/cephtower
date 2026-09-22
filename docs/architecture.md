@@ -25,7 +25,7 @@ backend/
     ├── service/                 application business operations
     │   ├── auth/                users, sessions and password reset
     │   ├── cluster/             managed cluster lifecycle and discovery
-    │   ├── operation/           durable queue, semantic locks, recovery, and audit
+    │   ├── operation/           durable queue, cluster serialization, recovery, and audit
     │   ├── reconciler/          current-state collection and stale-data handling
     │   ├── endpoint/            encrypted external endpoint configuration
     │   ├── external/            protocol-native gateway and monitoring integration
@@ -87,11 +87,18 @@ CephX keys are decrypted only for this in-memory execution scope.
 The reconciler stores each resource kind in its dedicated `ceph_<kind>` table. Cluster and host
 configuration use `ceph_cluster` and `ceph_host`; internal discovery payloads are stored in
 `discovered_data`, parsed into explicit API DTO fields, and never returned as raw storage fields.
-Its five modules are `fast`, `topology`, `storage`, `inventory`, and `configuration`. A collection
-result explicitly records which kinds were authoritative: a successful empty result marks
+Its six independently scheduled modules are `ceph_auth`, `fast`, `topology`, `storage`,
+`inventory`, and `configuration`; their intervals are configured under `collection.intervals`.
+A collection result explicitly records which kinds were authoritative: a successful empty result marks
 disappeared resources stale, while a failed optional command preserves the last known rows.
 Successful mutations immediately reconcile the owning module before the operation is marked
 complete.
+
+Dedicated resource tables contain only the latest Ceph observation. `overview` and
+`health_check` additionally write five-minute samples to `ceph_observation_history`, retain
+them for 90 days, and expose them through `/api/v1/resource/history`. Collection run metadata
+is retained for 30 days. These policies are explicit; request bodies are never merged into
+observed resource state.
 
 Prometheus, Alertmanager, Grafana, S3 bucket configuration, iSCSI, and NVMe-oF reads use their
 native HTTP, S3, or gRPC protocols. Endpoint credentials and custom CA/mTLS material are stored
@@ -100,11 +107,13 @@ client or arbitrary path proxy participates in either read or write flows.
 
 ## Operations and API contract
 
-Ceph mutations return `202 Accepted` with a durable operation. Workers enforce per-cluster
-concurrency, sorted semantic locks, generation checks, command post-checks, immediate reconcile,
-restart recovery, cancellation, and retry state. High-risk actions require a short-lived plan;
-server-side pre-checks run both when the plan is created and immediately before execution.
-Accepted, started, and completed outcomes are appended to a redacted audit hash chain.
+Ceph mutations return `202 Accepted` with a durable operation. Workers serialize commands per
+cluster, recheck optimistic resource versions immediately before execution, run command
+post-checks, reconcile successful mutations, and recover interrupted state after restart.
+Only idempotent collection refreshes retry automatically; mutation commands remain
+single-attempt because their outcome may be uncertain. Completed operation rows are retained
+for 90 days. Accepted, started, retrying, and completed outcomes are appended to a redacted
+audit hash chain.
 
 Request contracts are shared by runtime validation and the OpenAPI generator. Unknown fields,
 wrong JSON types, and action-specific invalid values are rejected before enqueue. Every JSON
