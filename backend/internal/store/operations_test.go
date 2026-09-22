@@ -87,6 +87,32 @@ func TestRecoverRunningOperations(t *testing.T) {
 	}
 }
 
+func TestPruneCompletedOperationsPreservesActiveAndRecentRows(t *testing.T) {
+	db, clusterID := operationTestDatabase(t)
+	now := time.Now().UTC()
+	oldFinished := now.Add(-100 * 24 * time.Hour)
+	recentFinished := now.Add(-time.Hour)
+	rows := []CephOperation{
+		{ClusterID: clusterID, RequestID: "old", Action: "pool.create", ResourceKind: "pool", Status: OperationSucceeded, ParametersCiphertext: "cipher", MaxAttempts: 1, FinishedAt: &oldFinished, CreatedAt: oldFinished, UpdatedAt: oldFinished},
+		{ClusterID: clusterID, RequestID: "active", Action: "pool.create", ResourceKind: "pool", Status: OperationQueued, ParametersCiphertext: "cipher", MaxAttempts: 1, CreatedAt: oldFinished, UpdatedAt: oldFinished},
+		{ClusterID: clusterID, RequestID: "recent", Action: "pool.create", ResourceKind: "pool", Status: OperationFailed, ParametersCiphertext: "cipher", MaxAttempts: 1, FinishedAt: &recentFinished, CreatedAt: recentFinished, UpdatedAt: recentFinished},
+	}
+	for index := range rows {
+		if err := db.CreateOperation(context.Background(), &rows[index]); err != nil {
+			t.Fatal(err)
+		}
+	}
+	deleted, err := db.PruneCompletedOperations(context.Background(), now.Add(-90*24*time.Hour))
+	if err != nil || deleted != 1 {
+		t.Fatalf("deleted=%d err=%v", deleted, err)
+	}
+	for _, row := range rows[1:] {
+		if _, err := db.FindOperation(context.Background(), row.ID); err != nil {
+			t.Fatalf("operation %d was pruned: %v", row.ID, err)
+		}
+	}
+}
+
 func operationTestDatabase(t *testing.T) (*Database, uint64) {
 	t.Helper()
 	db, err := Open(config.DatabaseConfig{EncryptionKey: schemaTestKey, Engine: EngineSQLite, SQLite: config.SQLiteConfig{Name: "operations.db"}}, t.TempDir())

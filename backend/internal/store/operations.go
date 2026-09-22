@@ -143,6 +143,13 @@ func (d *Database) RecoverRunningOperations(ctx context.Context, now time.Time) 
 	return result.RowsAffected, result.Error
 }
 
+func (d *Database) PruneCompletedOperations(ctx context.Context, before time.Time) (int64, error) {
+	result := d.db.WithContext(ctx).
+		Where("status IN ? AND finished_at IS NOT NULL AND finished_at < ?", []string{OperationSucceeded, OperationFailed}, before).
+		Delete(&CephOperation{})
+	return result.RowsAffected, result.Error
+}
+
 func operationUpdateError(result *gorm.DB) error {
 	if result.Error != nil {
 		return result.Error

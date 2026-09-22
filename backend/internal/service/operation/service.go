@@ -18,6 +18,7 @@ import (
 const (
 	defaultWorkers      = 4
 	defaultPollInterval = 250 * time.Millisecond
+	operationRetention  = 90 * 24 * time.Hour
 )
 
 var ErrIdempotencyConflict = errors.New("idempotency key is already used by another operation")
@@ -169,11 +170,34 @@ func (s *Service) Start(ctx context.Context) error {
 		return fmt.Errorf("recover interrupted operations: %w", err)
 	}
 	s.cancel = cancel
+	s.wg.Add(1)
+	go s.maintainRetention(runCtx)
 	for range s.workers {
 		s.wg.Add(1)
 		go s.worker(runCtx)
 	}
 	return nil
+}
+
+func (s *Service) maintainRetention(ctx context.Context) {
+	defer s.wg.Done()
+	s.pruneCompleted(ctx, time.Now().UTC())
+	ticker := time.NewTicker(24 * time.Hour)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case now := <-ticker.C:
+			s.pruneCompleted(ctx, now.UTC())
+		}
+	}
+}
+
+func (s *Service) pruneCompleted(ctx context.Context, now time.Time) {
+	if _, err := s.database().PruneCompletedOperations(ctx, now.Add(-operationRetention)); err != nil && ctx.Err() == nil {
+		logging.Warnf("operation retention failed: error=%v", err)
+	}
 }
 
 func (s *Service) Stop() {
