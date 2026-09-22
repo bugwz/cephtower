@@ -1,5 +1,5 @@
 import { ApiRequestError, asArray, isApiError, jsonInit, notifyApiError, request, requestWithResponse, textValue, toApiErrorDetail, type ApiRecord, type ApiRequestInit } from './client'
-import type { ActionResult, FilterOptionsEnvelope, ListEnvelope, Operation, ResourceDTO } from './types'
+import type { ActionResult, FilterOptionsEnvelope, ListEnvelope, ObservationHistory, Operation, ResourceDTO } from './types'
 
 export const selectedClusterStorageKey = 'cephtower.selectedClusterId'
 
@@ -182,6 +182,19 @@ export async function refreshResource(input: { clusterId?: number, kind?: string
     ...(input.modules && input.modules.length > 0 ? { modules: input.modules } : {})
   }, { headers: { 'Idempotency-Key': createIdempotencyKey() } }))
   return waitForOperation(data)
+}
+
+export async function listResourceHistory<T = ApiRecord>(kind: 'overview' | 'health_check', options: { clusterId?: number, naturalKey?: string, since?: string, limit?: number } = {}) {
+  const query = new URLSearchParams()
+  if (options.since) query.set('since', options.since)
+  if (options.limit) query.set('limit', String(options.limit))
+  const suffix = query.toString() ? `?${query}` : ''
+  const result = await request<{ items: ObservationHistory<T>[] }>(`/resource/history${suffix}`, jsonInit('GET', {
+    cluster_id: options.clusterId ?? requiredClusterId(),
+    kind,
+    ...(options.naturalKey ? { natural_key: options.naturalKey } : {})
+  }))
+  return result.items ?? []
 }
 
 async function waitForOperation(initial: Operation): Promise<ActionResult> {

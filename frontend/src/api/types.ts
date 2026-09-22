@@ -61,4 +61,15 @@ export interface Operation {
   updated_at: string
 }
 
+export interface ObservationHistory<T = ApiRecord> {
+  observation_id: number
+  kind: 'overview' | 'health_check'
+  natural_key: string
+  status?: string
+  source: string
+  source_version?: string
+  observed_at: string
+  data: T
+}
+
 export type OperationRisk = 'low' | 'medium' | 'high'

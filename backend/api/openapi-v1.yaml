@@ -61324,6 +61324,52 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /resource/history:
+    get:
+      operationId: get_resource_history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: since
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, kind]
+              properties:
+                cluster_id:
+                  type: integer
+                kind:
+                  type: string
+                natural_key:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObservationHistoryListResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /resource/refresh:
     post:
       operationId: post_resource_refresh
@@ -88278,6 +88324,19 @@ components:
         finished_at: {type: string, format: date-time}
         created_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
+    ObservationHistory:
+      type: object
+      additionalProperties: false
+      required: [observation_id, kind, natural_key, source, observed_at, data]
+      properties:
+        observation_id: {type: integer, minimum: 1}
+        kind: {type: string, enum: [overview, health_check]}
+        natural_key: {type: string}
+        status: {type: string}
+        source: {type: string}
+        source_version: {type: string}
+        observed_at: {type: string, format: date-time}
+        data: {$ref: '#/components/schemas/JSONValue'}
     Pagination:
       type: object
       additionalProperties: false
@@ -88565,6 +88624,12 @@ components:
       required: [items]
       properties:
         items: {type: array, items: {$ref: '#/components/schemas/Operation'}}
+    ObservationHistoryListData:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/ObservationHistory'}}
     ResourceListData:
       allOf:
         - $ref: '#/components/schemas/ListData'
@@ -88806,6 +88871,15 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/OperationListData'
+    ObservationHistoryListResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          unevaluatedProperties: false
+          required: [data]
+          properties:
+            data:
+              $ref: '#/components/schemas/ObservationHistoryListData'
     ResourceResponse:
       allOf:
         - $ref: '#/components/schemas/APIResponse'

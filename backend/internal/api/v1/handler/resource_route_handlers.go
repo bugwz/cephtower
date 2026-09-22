@@ -1,12 +1,28 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
 	operationservice "cephtower/backend/internal/service/operation"
+	reconcilerservice "cephtower/backend/internal/service/reconciler"
+	"cephtower/backend/internal/store"
 )
+
+type observationHistoryDTO struct {
+	ID            uint64    `json:"observation_id"`
+	Kind          string    `json:"kind"`
+	NaturalKey    string    `json:"natural_key"`
+	Status        *string   `json:"status,omitempty"`
+	Source        string    `json:"source"`
+	SourceVersion *string   `json:"source_version,omitempty"`
+	ObservedAt    time.Time `json:"observed_at"`
+	Data          any       `json:"data"`
+}
 
 type refreshResourceRequest struct {
 	ClusterID uint64   `json:"cluster_id"`
@@ -60,6 +76,61 @@ func refreshAuditKey(request refreshResourceRequest) string {
 		return "module/" + strings.Join(request.Modules, ",")
 	}
 	return "cluster/all"
+}
+
+func (h *Handler) ListResourceHistory(w http.ResponseWriter, r *http.Request) {
+	body, clusterID, ok := h.scopedBody(w, r)
+	if !ok {
+		return
+	}
+	kind, ok := requiredStringBody(w, r, body, "kind")
+	if !ok {
+		return
+	}
+	if _, supported := reconcilerservice.HistoryPolicies[kind]; !supported {
+		WriteError(w, r, http.StatusBadRequest, "history_not_supported", "resource kind does not retain history", false, nil)
+		return
+	}
+	naturalKey := optionalStringBody(body, "natural_key")
+	var since *time.Time
+	if value := strings.TrimSpace(r.URL.Query().Get("since")); value != "" {
+		parsed, err := time.Parse(time.RFC3339, value)
+		if err != nil {
+			WriteError(w, r, http.StatusBadRequest, "invalid_request", "since must be an RFC3339 timestamp", false, nil)
+			return
+		}
+		since = &parsed
+	}
+	limit := 0
+	if value := strings.TrimSpace(r.URL.Query().Get("limit")); value != "" {
+		parsed, err := strconv.Atoi(value)
+		if err != nil || parsed <= 0 {
+			WriteError(w, r, http.StatusBadRequest, "invalid_request", "limit must be a positive integer", false, nil)
+			return
+		}
+		limit = parsed
+	}
+	annotateAudit(r, "resource.history", kind, naturalKey, "", &clusterID)
+	rows, err := h.Database().ListObservationHistory(r.Context(), store.ObservationHistoryFilter{
+		ClusterID: clusterID, Kind: kind, NaturalKey: naturalKey, Since: since, Limit: limit,
+	})
+	if err != nil {
+		WriteError(w, r, http.StatusInternalServerError, "store_error", err.Error(), false, nil)
+		return
+	}
+	items := make([]observationHistoryDTO, 0, len(rows))
+	for _, row := range rows {
+		var data any
+		if err := json.Unmarshal([]byte(row.DataJSON), &data); err != nil {
+			WriteError(w, r, http.StatusInternalServerError, "store_error", "stored observation is invalid", false, nil)
+			return
+		}
+		items = append(items, observationHistoryDTO{
+			ID: row.ID, Kind: row.Kind, NaturalKey: row.NaturalKey, Status: row.Status,
+			Source: row.Source, SourceVersion: row.SourceVersion, ObservedAt: row.ObservedAt, Data: data,
+		})
+	}
+	WriteSuccess(w, http.StatusOK, "success", map[string]any{"items": items})
 }
 
 func (h *Handler) GetOverview(w http.ResponseWriter, r *http.Request) {

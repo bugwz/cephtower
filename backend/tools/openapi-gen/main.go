@@ -146,6 +146,8 @@ func successResponseSchema(route router.Route) string {
 		return "OperationResponse"
 	case "GET /operations":
 		return "OperationListResponse"
+	case "GET /resource/history":
+		return "ObservationHistoryListResponse"
 	case "GET /rgw/bucket/policy":
 		return "BucketConfigurationResponse"
 	}
@@ -194,6 +196,7 @@ func writeResponseSchemas(b *strings.Builder) {
 		{"EndpointListResponse", "EndpointListData"}, {"ClusterMutationResponse", "ClusterMutationData"},
 		{"ActionResponse", "ActionResult"}, {"AuditEventListResponse", "AuditEventListData"},
 		{"OperationResponse", "Operation"}, {"OperationListResponse", "OperationListData"},
+		{"ObservationHistoryListResponse", "ObservationHistoryListData"},
 		{"ResourceResponse", "Resource"}, {"ResourceListResponse", "ResourceListData"},
 		{"MetricResponse", "MetricData"}, {"ExternalListResponse", "ExternalListData"},
 		{"ExternalResultResponse", "ExternalResultData"}, {"ISCSIGatewayResponse", "ISCSIGateway"},
@@ -234,6 +237,10 @@ func routeParameters(route router.Route) []parameterSpec {
 	case "/operations":
 		result = append(result,
 			parameterSpec{Name: "status", In: "query", Type: "string", Enum: []string{"queued", "running", "succeeded", "failed"}},
+			parameterSpec{Name: "limit", In: "query", Type: "integer", Minimum: "1"})
+	case "/resource/history":
+		result = append(result,
+			parameterSpec{Name: "since", In: "query", Type: "string", Format: "date-time"},
 			parameterSpec{Name: "limit", In: "query", Type: "integer", Minimum: "1"})
 	case "/clusters":
 		result = append(result,
@@ -380,6 +387,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "operation_id": integerField(true)}
 	case "GET /operations":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
+	case "GET /resource/history":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "kind": stringField(true), "natural_key": stringField(false)}
 	case "GET /cluster", "GET /cluster/capabilities", "GET /credentials", "GET /endpoints", "GET /role/bindings":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
 	case "PUT /credential":
@@ -682,6 +691,19 @@ const components = `components:
         finished_at: {type: string, format: date-time}
         created_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
+    ObservationHistory:
+      type: object
+      additionalProperties: false
+      required: [observation_id, kind, natural_key, source, observed_at, data]
+      properties:
+        observation_id: {type: integer, minimum: 1}
+        kind: {type: string, enum: [overview, health_check]}
+        natural_key: {type: string}
+        status: {type: string}
+        source: {type: string}
+        source_version: {type: string}
+        observed_at: {type: string, format: date-time}
+        data: {$ref: '#/components/schemas/JSONValue'}
     Pagination:
       type: object
       additionalProperties: false
@@ -969,6 +991,12 @@ const components = `components:
       required: [items]
       properties:
         items: {type: array, items: {$ref: '#/components/schemas/Operation'}}
+    ObservationHistoryListData:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items: {type: array, items: {$ref: '#/components/schemas/ObservationHistory'}}
     ResourceListData:
       allOf:
         - $ref: '#/components/schemas/ListData'
