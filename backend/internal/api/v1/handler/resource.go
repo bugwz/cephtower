@@ -215,7 +215,7 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 		}
 		operation, err := h.enqueueOperation(r, operationservice.EnqueueRequest{
 			ClusterID: id, Action: action, ResourceKind: kind, ResourceKey: resourceKey,
-			Risk: risk, LockKey: kind + "/" + resourceKey, ExpectedVersion: generation,
+			Risk: risk, LockKey: resourceLookupKey(kind, resourceKey), ExpectedVersion: generation,
 			Parameters: body,
 		})
 		if err != nil {

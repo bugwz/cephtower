@@ -220,6 +220,11 @@ func (s *Service) worker(ctx context.Context) {
 func (s *Service) execute(ctx context.Context, row store.CephOperation) {
 	unlock := s.lockCluster(row.ClusterID)
 	defer unlock()
+	if err := s.validateExpectedVersion(ctx, row); err != nil {
+		code, message, retryable := normalizeError(err)
+		s.fail(ctx, row.ID, code, message, retryable)
+		return
+	}
 	parameters, err := s.parameters(row)
 	if err != nil {
 		s.fail(ctx, row.ID, "invalid_operation_payload", err.Error(), false)
@@ -250,6 +255,25 @@ func (s *Service) execute(ctx context.Context, row store.CephOperation) {
 	if err := s.database().CompleteOperation(ctx, row.ID, string(encoded), time.Now().UTC()); err != nil && ctx.Err() == nil {
 		logging.Errorf("operation completion persistence failed: operation_id=%d error=%v", row.ID, err)
 	}
+}
+
+func (s *Service) validateExpectedVersion(ctx context.Context, row store.CephOperation) error {
+	if row.ExpectedVersion == nil {
+		return nil
+	}
+	resource, err := s.database().FindResource(ctx, row.ClusterID, row.ResourceKind, row.LockKey)
+	if errors.Is(err, store.ErrRecordNotFound) && *row.ExpectedVersion == 0 {
+		return nil
+	}
+	if err != nil {
+		return &cephdomain.ActionError{
+			Code: "resource_conflict", Message: "resource version could not be verified before execution",
+		}
+	}
+	if resource.ResourceVersion != *row.ExpectedVersion {
+		return &cephdomain.ActionError{Code: "resource_conflict", Message: "resource generation changed"}
+	}
+	return nil
 }
 
 func (s *Service) parameters(row store.CephOperation) (map[string]any, error) {

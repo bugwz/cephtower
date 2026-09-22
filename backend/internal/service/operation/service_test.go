@@ -128,6 +128,46 @@ func TestWorkersSerializeOperationsForTheSameCluster(t *testing.T) {
 	}
 }
 
+func TestWorkerRejectsStaleExpectedVersionBeforeDispatch(t *testing.T) {
+	db, clusterID := operationServiceDatabase(t)
+	for generation, payload := range []string{`{}`, `{"size":3}`} {
+		now := time.Now().UTC()
+		record := store.CephEntityRecord{
+			Kind: "pool", NaturalKey: "data", Source: "ceph_cli", ObservedAt: now,
+			DiscoveredData: payload, CreatedAt: now, UpdatedAt: now,
+		}
+		if err := db.ReconcileResources(context.Background(), clusterID, uint64(generation+1), []store.CephEntityRecord{record}, []string{"pool"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	dispatcher := &dispatcherFake{
+		entered: make(chan ExecutionRequest, 1), active: map[uint64]int{}, max: map[uint64]int{},
+	}
+	service := New(func() *store.Database { return db }, operationTestKey, dispatcher, Options{Workers: 1, PollInterval: time.Millisecond})
+	expected := uint64(1)
+	row, err := service.Enqueue(context.Background(), EnqueueRequest{
+		ClusterID: clusterID, RequestID: "stale", Action: "pool.delete", ResourceKind: "pool",
+		ResourceKey: "pool/data", LockKey: "data", ExpectedVersion: &expected, Parameters: map[string]any{"name": "data"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := service.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(service.Stop)
+	waitForOperationStatus(t, db, row.ID, store.OperationFailed)
+	stored, err := db.FindOperation(context.Background(), row.ID)
+	if err != nil || stored.ErrorCode == nil || *stored.ErrorCode != "resource_conflict" {
+		t.Fatalf("operation=%#v err=%v", stored, err)
+	}
+	select {
+	case request := <-dispatcher.entered:
+		t.Fatalf("stale operation was dispatched: %#v", request)
+	default:
+	}
+}
+
 func waitForOperationStatus(t *testing.T, db *store.Database, id uint64, status string) {
 	t.Helper()
 	deadline := time.Now().Add(time.Second)
