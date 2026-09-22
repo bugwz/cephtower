@@ -203,6 +203,7 @@ func (s *Service) worker(ctx context.Context) {
 				}
 				break
 			}
+			s.recordAudit(ctx, row, "operation_started", "started", nil, nil)
 			s.execute(ctx, row)
 			if ctx.Err() != nil {
 				return
@@ -222,12 +223,12 @@ func (s *Service) execute(ctx context.Context, row store.CephOperation) {
 	defer unlock()
 	if err := s.validateExpectedVersion(ctx, row); err != nil {
 		code, message, retryable := normalizeError(err)
-		s.fail(ctx, row.ID, code, message, retryable)
+		s.fail(ctx, row, code, message, retryable)
 		return
 	}
 	parameters, err := s.parameters(row)
 	if err != nil {
-		s.fail(ctx, row.ID, "invalid_operation_payload", err.Error(), false)
+		s.fail(ctx, row, "invalid_operation_payload", err.Error(), false)
 		return
 	}
 	result, err := s.dispatcher.Execute(ctx, ExecutionRequest{
@@ -239,22 +240,26 @@ func (s *Service) execute(ctx context.Context, row store.CephOperation) {
 			return
 		}
 		code, message, retryable := normalizeError(err)
-		s.fail(ctx, row.ID, code, message, retryable)
+		s.fail(ctx, row, code, message, retryable)
 		return
 	}
 	redacted, err := security.RedactJSON(result)
 	if err != nil {
-		s.fail(ctx, row.ID, "result_encoding_failed", "operation result could not be encoded", false)
+		s.fail(ctx, row, "result_encoding_failed", "operation result could not be encoded", false)
 		return
 	}
 	encoded, err := json.Marshal(redacted)
 	if err != nil {
-		s.fail(ctx, row.ID, "result_encoding_failed", "operation result could not be encoded", false)
+		s.fail(ctx, row, "result_encoding_failed", "operation result could not be encoded", false)
 		return
 	}
-	if err := s.database().CompleteOperation(ctx, row.ID, string(encoded), time.Now().UTC()); err != nil && ctx.Err() == nil {
-		logging.Errorf("operation completion persistence failed: operation_id=%d error=%v", row.ID, err)
+	if err := s.database().CompleteOperation(ctx, row.ID, string(encoded), time.Now().UTC()); err != nil {
+		if ctx.Err() == nil {
+			logging.Errorf("operation completion persistence failed: operation_id=%d error=%v", row.ID, err)
+		}
+		return
 	}
+	s.recordAudit(ctx, row, "operation_completed", "succeeded", nil, nil)
 }
 
 func (s *Service) validateExpectedVersion(ctx context.Context, row store.CephOperation) error {
@@ -293,10 +298,53 @@ func (s *Service) parameters(row store.CephOperation) (map[string]any, error) {
 	return parameters, nil
 }
 
-func (s *Service) fail(ctx context.Context, id uint64, code, message string, retryable bool) {
+func (s *Service) fail(ctx context.Context, row store.CephOperation, code, message string, retryable bool) {
 	message = security.Redact(message)
-	if err := s.database().FailOperation(ctx, id, code, message, retryable, time.Now().UTC()); err != nil && ctx.Err() == nil {
-		logging.Errorf("operation failure persistence failed: operation_id=%d error=%v", id, err)
+	if err := s.database().FailOperation(ctx, row.ID, code, message, retryable, time.Now().UTC()); err != nil {
+		if ctx.Err() == nil {
+			logging.Errorf("operation failure persistence failed: operation_id=%d error=%v", row.ID, err)
+		}
+		return
+	}
+	s.recordAudit(ctx, row, "operation_completed", "failed", &code, &retryable)
+}
+
+func (s *Service) recordAudit(ctx context.Context, row store.CephOperation, eventType, outcome string, errorCode *string, retryable *bool) {
+	clusterID := row.ClusterID
+	resourceKind, resourceKey, risk := row.ResourceKind, row.ResourceKey, row.Risk
+	actorUsername := "system"
+	if row.ActorUserID != nil {
+		if user, err := s.database().FindUserByID(ctx, *row.ActorUserID); err == nil {
+			actorUsername = user.Username
+		}
+	}
+	var clusterName *string
+	if cluster, err := s.database().FindCluster(ctx, row.ClusterID); err == nil {
+		clusterName = &cluster.Name
+	}
+	details := map[string]any{
+		"operation_id": row.ID,
+		"attempt":      row.Attempts,
+		"max_attempts": row.MaxAttempts,
+	}
+	if retryable != nil {
+		details["retryable"] = *retryable
+	}
+	encoded, err := json.Marshal(details)
+	if err != nil {
+		return
+	}
+	detailsJSON := string(encoded)
+	event := store.AuditEvent{
+		OccurredAt: time.Now().UTC(), EventType: eventType, RequestID: row.RequestID,
+		ActorUserID: row.ActorUserID, ActorUsername: actorUsername,
+		ClusterID: &clusterID, ClusterName: clusterName, Action: row.Action,
+		ResourceKind: &resourceKind, ResourceKey: &resourceKey, Risk: &risk,
+		Outcome: outcome, ErrorCode: errorCode, BeforeGeneration: row.ExpectedVersion,
+		DetailsJSON: &detailsJSON,
+	}
+	if err := s.database().CreateAuditEvent(ctx, &event); err != nil && ctx.Err() == nil {
+		logging.Errorf("operation audit persistence failed: operation_id=%d event=%s error=%v", row.ID, eventType, err)
 	}
 }
 

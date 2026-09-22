@@ -166,6 +166,24 @@ func TestWorkerRejectsStaleExpectedVersionBeforeDispatch(t *testing.T) {
 		t.Fatalf("stale operation was dispatched: %#v", request)
 	default:
 	}
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		events, err := db.ListAuditEvents(context.Background(), clusterID, 10)
+		if err == nil && len(events) >= 2 {
+			if events[0].EventType != "operation_completed" || events[0].Outcome != "failed" ||
+				events[1].EventType != "operation_started" || events[1].Outcome != "started" {
+				t.Fatalf("operation audit events = %#v", events)
+			}
+			for _, event := range events[:2] {
+				if event.ParametersJSON != nil {
+					t.Fatalf("operation parameters entered audit: %#v", event)
+				}
+			}
+			return
+		}
+		time.Sleep(time.Millisecond)
+	}
+	t.Fatal("operation lifecycle audit events were not persisted")
 }
 
 func waitForOperationStatus(t *testing.T, db *store.Database, id uint64, status string) {
