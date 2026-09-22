@@ -312,6 +312,10 @@ func TestReconcileStoresClusterDiscovery(t *testing.T) {
 	if !strings.Contains(stored.DiscoveredData, *stored.FSID) {
 		t.Fatalf("cluster discovery JSON = %s", stored.DiscoveredData)
 	}
+	history, err := db.ListObservationHistory(context.Background(), store.ObservationHistoryFilter{ClusterID: cluster.ID, Kind: "overview", NaturalKey: "overview"})
+	if err != nil || len(history) != 1 || !strings.Contains(history[0].DataJSON, *stored.FSID) {
+		t.Fatalf("overview history = %#v, err=%v", history, err)
+	}
 }
 
 func TestSyncClusterDiscoveryKeepsExistingVersionWithCommit(t *testing.T) {

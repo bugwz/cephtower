@@ -10,6 +10,7 @@ import (
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
 	cephprovider "cephtower/backend/internal/integration/ceph"
+	"cephtower/backend/internal/logging"
 	"cephtower/backend/internal/security"
 	clusterservice "cephtower/backend/internal/service/cluster"
 	"cephtower/backend/internal/store"
@@ -29,6 +30,18 @@ var DefaultModules = []Module{
 	{Name: "inventory", Interval: 5 * time.Minute, Kinds: []string{"device", "capability"}},
 	{Name: "configuration", Interval: 10 * time.Minute, Kinds: []string{"config_value", "config_option", "mgr_module", "crush_rule", "erasure_code_profile"}},
 }
+
+type HistoryPolicy struct {
+	SampleInterval time.Duration
+	Retention      time.Duration
+}
+
+var HistoryPolicies = map[string]HistoryPolicy{
+	"overview":     {SampleInterval: 5 * time.Minute, Retention: 90 * 24 * time.Hour},
+	"health_check": {SampleInterval: 5 * time.Minute, Retention: 90 * 24 * time.Hour},
+}
+
+const collectionRunRetention = 30 * 24 * time.Hour
 
 type breaker struct {
 	failures int
@@ -178,6 +191,21 @@ func (s *Service) Start(ctx context.Context) {
 			}
 		}()
 	}
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+		s.runRetention(runCtx, time.Now().UTC())
+		ticker := time.NewTicker(24 * time.Hour)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-runCtx.Done():
+				return
+			case now := <-ticker.C:
+				s.runRetention(runCtx, now.UTC())
+			}
+		}
+	}()
 }
 func (s *Service) Stop() {
 	if s.cancel != nil {
@@ -268,7 +296,12 @@ func (s *Service) reconcile(ctx context.Context, clusterID uint64, module Module
 					selectedObservations = filterObservations(observations, selectedKinds)
 					authoritativeKinds = filterKinds(authoritativeKinds, selectedKinds)
 				}
-				err = s.database().ReconcileResources(ctx, clusterID, generation, records, authoritativeKinds)
+				err = s.database().Transaction(func(tx *store.Database) error {
+					if err := tx.ReconcileResources(ctx, clusterID, generation, records, authoritativeKinds); err != nil {
+						return err
+					}
+					return appendHistory(ctx, tx, clusterID, records)
+				})
 				if err == nil {
 					_ = s.syncClusterDiscovery(ctx, clusterID, generation, selectedObservations, records)
 				}
@@ -291,6 +324,39 @@ func (s *Service) reconcile(ctx context.Context, clusterID uint64, module Module
 	_ = s.database().MarkModuleResourcesStale(ctx, clusterID, staleKinds, finished)
 	s.failure(clusterID, module.Name)
 	return err
+}
+
+func appendHistory(ctx context.Context, database *store.Database, clusterID uint64, records []store.CephEntityRecord) error {
+	for _, record := range records {
+		policy, ok := HistoryPolicies[record.Kind]
+		if !ok {
+			continue
+		}
+		naturalKey := record.NaturalKey
+		if naturalKey == "" {
+			naturalKey = record.Kind
+		}
+		row := store.CephObservationHistory{
+			ClusterID: clusterID, Kind: record.Kind, NaturalKey: naturalKey,
+			Status: record.Status, Source: record.Source, SourceVersion: record.SourceVersion,
+			ObservedAt: record.ObservedAt, DataJSON: record.DiscoveredData,
+		}
+		if _, err := database.AppendObservationHistoryIfDue(ctx, &row, policy.SampleInterval); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Service) runRetention(ctx context.Context, now time.Time) {
+	if _, err := s.database().PruneCollectionRuns(ctx, now.Add(-collectionRunRetention)); err != nil && ctx.Err() == nil {
+		logging.Warnf("collection run retention failed: error=%v", err)
+	}
+	for kind, policy := range HistoryPolicies {
+		if _, err := s.database().PruneObservationHistory(ctx, kind, now.Add(-policy.Retention)); err != nil && ctx.Err() == nil {
+			logging.Warnf("observation history retention failed: kind=%s error=%v", kind, err)
+		}
+	}
 }
 
 func (s *Service) lockReconcile(clusterID uint64, module string) func() {

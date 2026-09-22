@@ -462,6 +462,10 @@ func (d *Database) CreateCollectionRun(ctx context.Context, row *CephCollectionR
 func (d *Database) FinishCollectionRun(ctx context.Context, id uint64, status string, count uint64, errorCode, errorMessage *string, finished time.Time) error {
 	return d.db.WithContext(ctx).Model(&CephCollectionRun{}).Where("id = ?", id).Updates(map[string]any{"status": status, "record_count": count, "error_code": errorCode, "error_message": errorMessage, "finished_at": finished}).Error
 }
+func (d *Database) PruneCollectionRuns(ctx context.Context, before time.Time) (int64, error) {
+	result := d.db.WithContext(ctx).Where("started_at < ?", before).Delete(&CephCollectionRun{})
+	return result.RowsAffected, result.Error
+}
 func (d *Database) ReconcileResources(ctx context.Context, clusterID, generation uint64, rows []CephEntityRecord, authoritativeKinds []string) error {
 	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		now := time.Now().UTC()
