@@ -13,6 +13,7 @@ import (
 const baselineVersion = "20260802_dedicated_entity_tables_v1"
 const monitorTablesVersion = "20260824_monitor_details_v1"
 const cephAuthTablesVersion = "20260914_ceph_auth_v1"
+const operationTableVersion = "20260922_ceph_operation_v1"
 
 var cephAuthEntityKinds = []string{"ceph_user"}
 
@@ -65,6 +66,72 @@ const mysqlEntityTableDDL = `CREATE TABLE %s (
 	INDEX idx_ceph_%s_parent(cluster_id,parent_kind,parent_key),
 	INDEX idx_ceph_%s_stale(cluster_id,stale_at),
   FOREIGN KEY(cluster_id) REFERENCES ceph_cluster(id) ON DELETE CASCADE
+) ENGINE=InnoDB`
+
+const sqliteOperationTableDDL = `CREATE TABLE ceph_operation (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cluster_id INTEGER NOT NULL REFERENCES ceph_cluster(id) ON DELETE CASCADE,
+  actor_user_id INTEGER NULL REFERENCES user(id) ON DELETE SET NULL,
+  request_id TEXT NOT NULL,
+  idempotency_key TEXT NULL,
+  action TEXT NOT NULL,
+  resource_kind TEXT NOT NULL,
+  resource_key TEXT NOT NULL,
+  risk TEXT NOT NULL,
+  lock_key TEXT NOT NULL,
+  status TEXT NOT NULL,
+  parameters_ciphertext TEXT NOT NULL,
+  expected_version INTEGER NULL,
+  result_json TEXT NULL,
+  error_code TEXT NULL,
+  error_message TEXT NULL,
+  retryable INTEGER NOT NULL DEFAULT 0 CHECK(retryable IN (0,1)),
+  attempts INTEGER NOT NULL DEFAULT 0,
+  max_attempts INTEGER NOT NULL DEFAULT 1,
+  next_attempt_at DATETIME NULL,
+  started_at DATETIME NULL,
+  finished_at DATETIME NULL,
+  created_at DATETIME NOT NULL,
+  updated_at DATETIME NOT NULL
+);
+CREATE UNIQUE INDEX uq_operation_idempotency ON ceph_operation(cluster_id, idempotency_key);
+CREATE INDEX idx_operation_cluster_created ON ceph_operation(cluster_id, created_at);
+CREATE INDEX idx_operation_actor_created ON ceph_operation(actor_user_id, created_at);
+CREATE INDEX idx_operation_request ON ceph_operation(request_id);
+CREATE INDEX idx_operation_status_next ON ceph_operation(status, next_attempt_at);`
+
+const mysqlOperationTableDDL = `CREATE TABLE ceph_operation (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  cluster_id BIGINT UNSIGNED NOT NULL,
+  actor_user_id BIGINT UNSIGNED NULL,
+  request_id VARCHAR(64) NOT NULL,
+  idempotency_key VARCHAR(128) NULL,
+  action VARCHAR(128) NOT NULL,
+  resource_kind VARCHAR(64) NOT NULL,
+  resource_key VARCHAR(512) NOT NULL,
+  risk VARCHAR(16) NOT NULL,
+  lock_key VARCHAR(512) NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  parameters_ciphertext LONGTEXT NOT NULL,
+  expected_version BIGINT UNSIGNED NULL,
+  result_json LONGTEXT NULL,
+  error_code VARCHAR(64) NULL,
+  error_message LONGTEXT NULL,
+  retryable BOOLEAN NOT NULL DEFAULT FALSE,
+  attempts INT UNSIGNED NOT NULL DEFAULT 0,
+  max_attempts INT UNSIGNED NOT NULL DEFAULT 1,
+  next_attempt_at DATETIME(6) NULL,
+  started_at DATETIME(6) NULL,
+  finished_at DATETIME(6) NULL,
+  created_at DATETIME(6) NOT NULL,
+  updated_at DATETIME(6) NOT NULL,
+  UNIQUE KEY uq_operation_idempotency(cluster_id,idempotency_key),
+  INDEX idx_operation_cluster_created(cluster_id,created_at),
+  INDEX idx_operation_actor_created(actor_user_id,created_at),
+  INDEX idx_operation_request(request_id),
+  INDEX idx_operation_status_next(status,next_attempt_at),
+  FOREIGN KEY(cluster_id) REFERENCES ceph_cluster(id) ON DELETE CASCADE,
+  FOREIGN KEY(actor_user_id) REFERENCES user(id) ON DELETE SET NULL
 ) ENGINE=InnoDB`
 
 //go:embed migrations/sqlite/init.sql
@@ -140,7 +207,43 @@ func migrateAdditionalEntityTables(db *gorm.DB, engine string) error {
 	if err := migrateEntityTables(db, engine, monitorTablesVersion, monitorEntityKinds); err != nil {
 		return err
 	}
-	return migrateEntityTables(db, engine, cephAuthTablesVersion, cephAuthEntityKinds)
+	if err := migrateEntityTables(db, engine, cephAuthTablesVersion, cephAuthEntityKinds); err != nil {
+		return err
+	}
+	return migrateOperationTable(db, engine)
+}
+
+func migrateOperationTable(db *gorm.DB, engine string) error {
+	definition := sqliteOperationTableDDL
+	if engine == EngineMySQL {
+		definition = mysqlOperationTableDDL
+	} else if engine != EngineSQLite {
+		return fmt.Errorf("unsupported migration engine %q", engine)
+	}
+	checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(definition)))
+	var applied SchemaMigration
+	err := db.Where("version = ?", operationTableVersion).First(&applied).Error
+	if err == nil {
+		if applied.Checksum != checksum {
+			return fmt.Errorf("migration %s checksum mismatch", operationTableVersion)
+		}
+		return nil
+	}
+	if err != gorm.ErrRecordNotFound {
+		return fmt.Errorf("read migration registry: %w", err)
+	}
+	return db.Transaction(func(tx *gorm.DB) error {
+		for _, statement := range strings.Split(definition, ";") {
+			statement = strings.TrimSpace(statement)
+			if statement == "" {
+				continue
+			}
+			if err := tx.Exec(statement).Error; err != nil {
+				return fmt.Errorf("create operation table: %w", err)
+			}
+		}
+		return tx.Create(&SchemaMigration{Version: operationTableVersion, Checksum: checksum, AppliedAt: time.Now().UTC()}).Error
+	})
 }
 
 func migrateEntityTables(db *gorm.DB, engine, version string, kinds []string) error {

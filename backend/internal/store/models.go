@@ -218,6 +218,37 @@ type CephCollectionRun struct {
 
 func (CephCollectionRun) TableName() string { return "ceph_collection_run" }
 
+type CephOperation struct {
+	ID                   uint64      `gorm:"primaryKey;autoIncrement"`
+	ClusterID            uint64      `gorm:"not null;index:idx_operation_cluster_created,priority:1;uniqueIndex:uq_operation_idempotency,priority:1"`
+	Cluster              CephCluster `gorm:"constraint:OnDelete:CASCADE"`
+	ActorUserID          *uint64     `gorm:"index:idx_operation_actor_created,priority:1"`
+	ActorUser            *User       `gorm:"constraint:OnDelete:SET NULL"`
+	RequestID            string      `gorm:"size:64;not null;index:idx_operation_request"`
+	IdempotencyKey       *string     `gorm:"size:128;uniqueIndex:uq_operation_idempotency,priority:2"`
+	Action               string      `gorm:"size:128;not null"`
+	ResourceKind         string      `gorm:"size:64;not null"`
+	ResourceKey          string      `gorm:"size:512;not null"`
+	Risk                 string      `gorm:"size:16;not null"`
+	LockKey              string      `gorm:"size:512;not null"`
+	Status               string      `gorm:"size:32;not null;index:idx_operation_status_next,priority:1"`
+	ParametersCiphertext string      `gorm:"type:text;not null"`
+	ExpectedVersion      *uint64
+	ResultJSON           *string    `gorm:"type:text"`
+	ErrorCode            *string    `gorm:"size:64"`
+	ErrorMessage         *string    `gorm:"type:text"`
+	Retryable            bool       `gorm:"not null;default:false"`
+	Attempts             uint32     `gorm:"not null;default:0"`
+	MaxAttempts          uint32     `gorm:"not null;default:1"`
+	NextAttemptAt        *time.Time `gorm:"index:idx_operation_status_next,priority:2"`
+	StartedAt            *time.Time
+	FinishedAt           *time.Time
+	CreatedAt            time.Time `gorm:"not null;index:idx_operation_cluster_created,priority:2;index:idx_operation_actor_created,priority:2"`
+	UpdatedAt            time.Time `gorm:"not null"`
+}
+
+func (CephOperation) TableName() string { return "ceph_operation" }
+
 type AuditEvent struct {
 	ID               uint64       `gorm:"primaryKey;autoIncrement"`
 	OccurredAt       time.Time    `gorm:"not null;index:idx_audit_occurred;index:idx_audit_actor_occurred,priority:2;index:idx_audit_cluster_occurred,priority:2;index:idx_audit_action_occurred,priority:2;index:idx_audit_resource_occurred,priority:3"`
