@@ -249,6 +249,22 @@ type CephOperation struct {
 
 func (CephOperation) TableName() string { return "ceph_operation" }
 
+type CephObservationHistory struct {
+	ID            uint64      `gorm:"primaryKey;autoIncrement"`
+	ClusterID     uint64      `gorm:"not null;index:idx_observation_kind_observed,priority:1;index:idx_observation_key_observed,priority:1"`
+	Cluster       CephCluster `gorm:"constraint:OnDelete:CASCADE"`
+	Kind          string      `gorm:"size:64;not null;index:idx_observation_kind_observed,priority:2;index:idx_observation_key_observed,priority:2"`
+	NaturalKey    string      `gorm:"size:512;not null;index:idx_observation_key_observed,priority:3"`
+	Status        *string     `gorm:"size:64"`
+	Source        string      `gorm:"size:32;not null"`
+	SourceVersion *string     `gorm:"size:128"`
+	ObservedAt    time.Time   `gorm:"not null;index:idx_observation_kind_observed,priority:3,sort:desc;index:idx_observation_key_observed,priority:4,sort:desc"`
+	DataJSON      string      `gorm:"type:text;not null"`
+	CreatedAt     time.Time   `gorm:"not null"`
+}
+
+func (CephObservationHistory) TableName() string { return "ceph_observation_history" }
+
 type AuditEvent struct {
 	ID               uint64       `gorm:"primaryKey;autoIncrement"`
 	OccurredAt       time.Time    `gorm:"not null;index:idx_audit_occurred;index:idx_audit_actor_occurred,priority:2;index:idx_audit_cluster_occurred,priority:2;index:idx_audit_action_occurred,priority:2;index:idx_audit_resource_occurred,priority:3"`

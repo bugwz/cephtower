@@ -14,6 +14,7 @@ const baselineVersion = "20260802_dedicated_entity_tables_v1"
 const monitorTablesVersion = "20260824_monitor_details_v1"
 const cephAuthTablesVersion = "20260914_ceph_auth_v1"
 const operationTableVersion = "20260922_ceph_operation_v1"
+const observationHistoryVersion = "20260922_observation_history_v1"
 
 var cephAuthEntityKinds = []string{"ceph_user"}
 
@@ -134,6 +135,37 @@ const mysqlOperationTableDDL = `CREATE TABLE ceph_operation (
   FOREIGN KEY(actor_user_id) REFERENCES user(id) ON DELETE SET NULL
 ) ENGINE=InnoDB`
 
+const sqliteObservationHistoryDDL = `CREATE TABLE ceph_observation_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cluster_id INTEGER NOT NULL REFERENCES ceph_cluster(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  natural_key TEXT NOT NULL,
+  status TEXT NULL,
+  source TEXT NOT NULL,
+  source_version TEXT NULL,
+  observed_at DATETIME NOT NULL,
+  data_json TEXT NOT NULL,
+  created_at DATETIME NOT NULL
+);
+CREATE INDEX idx_observation_kind_observed ON ceph_observation_history(cluster_id, kind, observed_at DESC);
+CREATE INDEX idx_observation_key_observed ON ceph_observation_history(cluster_id, kind, natural_key, observed_at DESC);`
+
+const mysqlObservationHistoryDDL = `CREATE TABLE ceph_observation_history (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  cluster_id BIGINT UNSIGNED NOT NULL,
+  kind VARCHAR(64) NOT NULL,
+  natural_key VARCHAR(512) NOT NULL,
+  status VARCHAR(64) NULL,
+  source VARCHAR(32) NOT NULL,
+  source_version VARCHAR(128) NULL,
+  observed_at DATETIME(6) NOT NULL,
+  data_json LONGTEXT NOT NULL,
+  created_at DATETIME(6) NOT NULL,
+  INDEX idx_observation_kind_observed(cluster_id,kind,observed_at DESC),
+  INDEX idx_observation_key_observed(cluster_id,kind,natural_key,observed_at DESC),
+  FOREIGN KEY(cluster_id) REFERENCES ceph_cluster(id) ON DELETE CASCADE
+) ENGINE=InnoDB`
+
 //go:embed migrations/sqlite/init.sql
 var sqliteBaselineSQL string
 
@@ -210,7 +242,10 @@ func migrateAdditionalEntityTables(db *gorm.DB, engine string) error {
 	if err := migrateEntityTables(db, engine, cephAuthTablesVersion, cephAuthEntityKinds); err != nil {
 		return err
 	}
-	return migrateOperationTable(db, engine)
+	if err := migrateOperationTable(db, engine); err != nil {
+		return err
+	}
+	return migrateObservationHistory(db, engine)
 }
 
 func migrateOperationTable(db *gorm.DB, engine string) error {
@@ -243,6 +278,39 @@ func migrateOperationTable(db *gorm.DB, engine string) error {
 			}
 		}
 		return tx.Create(&SchemaMigration{Version: operationTableVersion, Checksum: checksum, AppliedAt: time.Now().UTC()}).Error
+	})
+}
+
+func migrateObservationHistory(db *gorm.DB, engine string) error {
+	definition := sqliteObservationHistoryDDL
+	if engine == EngineMySQL {
+		definition = mysqlObservationHistoryDDL
+	} else if engine != EngineSQLite {
+		return fmt.Errorf("unsupported migration engine %q", engine)
+	}
+	checksum := fmt.Sprintf("%x", sha256.Sum256([]byte(definition)))
+	var applied SchemaMigration
+	err := db.Where("version = ?", observationHistoryVersion).First(&applied).Error
+	if err == nil {
+		if applied.Checksum != checksum {
+			return fmt.Errorf("migration %s checksum mismatch", observationHistoryVersion)
+		}
+		return nil
+	}
+	if err != gorm.ErrRecordNotFound {
+		return fmt.Errorf("read migration registry: %w", err)
+	}
+	return db.Transaction(func(tx *gorm.DB) error {
+		for _, statement := range strings.Split(definition, ";") {
+			statement = strings.TrimSpace(statement)
+			if statement == "" {
+				continue
+			}
+			if err := tx.Exec(statement).Error; err != nil {
+				return fmt.Errorf("create observation history table: %w", err)
+			}
+		}
+		return tx.Create(&SchemaMigration{Version: observationHistoryVersion, Checksum: checksum, AppliedAt: time.Now().UTC()}).Error
 	})
 }
 
