@@ -51,7 +51,7 @@ type Service struct {
 	provider cephprovider.CollectorProvider
 	modules  []Module
 	mu       sync.Mutex
-	breakers map[uint64]*breaker
+	breakers map[reconcileKey]*breaker
 	lockMu   sync.Mutex
 	locks    map[reconcileKey]*reconcileLock
 	runCtx   context.Context
@@ -65,7 +65,7 @@ func New(database func() *store.Database, clusters *clusterservice.Service, prov
 		clusters: clusters,
 		provider: provider,
 		modules:  DefaultModules,
-		breakers: map[uint64]*breaker{},
+		breakers: map[reconcileKey]*breaker{},
 		locks:    map[reconcileKey]*reconcileLock{},
 	}
 }
@@ -182,7 +182,7 @@ func (s *Service) runModule(ctx context.Context, module Module) {
 		return
 	}
 	for _, cluster := range clusters {
-		if s.allowed(cluster.ID, time.Now()) {
+		if s.allowed(cluster.ID, module.Name, time.Now()) {
 			_ = s.Reconcile(ctx, cluster.ID, module)
 		}
 	}
@@ -267,7 +267,7 @@ func (s *Service) reconcile(ctx context.Context, clusterID uint64, module Module
 	finished := time.Now().UTC()
 	if err == nil {
 		_ = s.database().FinishCollectionRun(ctx, run.ID, "succeeded", uint64(len(records)), nil, nil, finished)
-		s.success(clusterID)
+		s.success(clusterID, module.Name)
 		return nil
 	}
 	message := security.Redact(fmt.Sprint(err))
@@ -278,7 +278,7 @@ func (s *Service) reconcile(ctx context.Context, clusterID uint64, module Module
 		staleKinds = filterKinds(module.Kinds, selectedKinds)
 	}
 	_ = s.database().MarkModuleResourcesStale(ctx, clusterID, staleKinds, finished)
-	s.failure(clusterID)
+	s.failure(clusterID, module.Name)
 	return err
 }
 
@@ -476,20 +476,25 @@ func richerCephVersion(left, right string) string {
 	return left
 }
 
-func (s *Service) allowed(id uint64, now time.Time) bool {
+func (s *Service) allowed(clusterID uint64, module string, now time.Time) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	state := s.breakers[id]
+	state := s.breakers[reconcileKey{clusterID: clusterID, module: module}]
 	return state == nil || !now.Before(state.next)
 }
-func (s *Service) success(id uint64) { s.mu.Lock(); delete(s.breakers, id); s.mu.Unlock() }
-func (s *Service) failure(id uint64) {
+func (s *Service) success(clusterID uint64, module string) {
+	s.mu.Lock()
+	delete(s.breakers, reconcileKey{clusterID: clusterID, module: module})
+	s.mu.Unlock()
+}
+func (s *Service) failure(clusterID uint64, module string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	state := s.breakers[id]
+	key := reconcileKey{clusterID: clusterID, module: module}
+	state := s.breakers[key]
 	if state == nil {
 		state = &breaker{}
-		s.breakers[id] = state
+		s.breakers[key] = state
 	}
 	state.failures++
 	delay := time.Second * time.Duration(1<<min(state.failures, 8))

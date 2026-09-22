@@ -229,6 +229,29 @@ func TestReconcileSerializesTheSameClusterModule(t *testing.T) {
 	}
 }
 
+func TestBreakerIsScopedToClusterModule(t *testing.T) {
+	service := New(nil, nil, nil)
+	now := time.Now()
+	service.failure(7, "storage")
+	if service.allowed(7, "storage", now) {
+		t.Fatal("failed storage module was not backed off")
+	}
+	if !service.allowed(7, "fast", now) {
+		t.Fatal("storage failure blocked the fast module")
+	}
+	if !service.allowed(8, "storage", now) {
+		t.Fatal("cluster failure blocked another cluster")
+	}
+	service.success(7, "fast")
+	if service.allowed(7, "storage", now) {
+		t.Fatal("unrelated module success cleared storage backoff")
+	}
+	service.success(7, "storage")
+	if !service.allowed(7, "storage", now) {
+		t.Fatal("storage success did not clear its backoff")
+	}
+}
+
 func TestClusterDiscoveryUpdateUsesOverviewAndCoreDaemonVersion(t *testing.T) {
 	now := time.Now().UTC()
 	version := "ceph version 20.2.2 (0fcffee29411e3a38036764817b6e1afc59741cc) tentacle (stable)"
