@@ -334,19 +334,6 @@ func resourceLookupKey(kind, resourceKey string) string {
 func toResourceDTO(row store.CephEntityRecord) resourceDTO {
 	data := map[string]any{}
 	_ = json.Unmarshal([]byte(row.DiscoveredData), &data)
-	if row.ConfiguredData != nil && row.Kind != "rgw_user" && row.Kind != "rgw_account" && row.Kind != "rgw_role" && row.Kind != "rgw_realm" && row.Kind != "rgw_zonegroup" && row.Kind != "rgw_zone" && !strings.HasPrefix(row.Kind, "rbd_") {
-		var configured map[string]any
-		if err := json.Unmarshal([]byte(*row.ConfiguredData), &configured); err == nil {
-			for field, value := range configured {
-				if row.Kind == "pool" || row.Kind == "config_value" {
-					if _, exists := data[field]; exists {
-						continue
-					}
-				}
-				data[field] = value
-			}
-		}
-	}
 	return resourceDTO{Kind: row.Kind, NaturalKey: row.NaturalKey, Name: row.Name, Status: row.Status, ResourceVersion: row.ResourceVersion, Source: row.Source, ObservedAt: row.ObservedAt, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt, Stale: row.StaleAt != nil, Data: data}
 }
 

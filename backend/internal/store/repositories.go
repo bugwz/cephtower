@@ -261,20 +261,12 @@ func resourceFieldValues(row CephEntityRecord) map[string][]string {
 	if row.StaleAt != nil {
 		values["stale_at"] = []string{row.StaleAt.Format(time.RFC3339Nano)}
 	}
-	dataSets := []string{row.DiscoveredData}
-	if row.ConfiguredData != nil {
-		dataSets = append([]string{*row.ConfiguredData}, dataSets...)
-	}
-	for _, data := range dataSets {
-		var payload map[string]any
-		if err := json.Unmarshal([]byte(data), &payload); err != nil {
-			continue
-		}
+	var payload map[string]any
+	if err := json.Unmarshal([]byte(row.DiscoveredData), &payload); err == nil {
 		for field, value := range payload {
-			if _, exists := values[field]; exists {
-				continue
+			if _, exists := values[field]; !exists {
+				values[field] = valueTexts(value)
 			}
-			values[field] = valueTexts(value)
 		}
 	}
 	return values
@@ -489,7 +481,7 @@ func (d *Database) ReconcileResources(ctx context.Context, clusterID, generation
 			err := tx.Table(table).Where("cluster_id = ? AND natural_key = ?", clusterID, row.NaturalKey).First(&existing).Error
 			if err == nil {
 				applyMonitorCounterRate(row, &existing)
-				row.ID, row.CreatedAt, row.ResourceVersion, row.ConfiguredData = existing.ID, existing.CreatedAt, existing.ResourceVersion, existing.ConfiguredData
+				row.ID, row.CreatedAt, row.ResourceVersion = existing.ID, existing.CreatedAt, existing.ResourceVersion
 				if existing.DiscoveredData != row.DiscoveredData || !equalStringPointer(existing.Status, row.Status) {
 					row.ResourceVersion++
 				}
@@ -631,119 +623,6 @@ func (d *Database) UpdateClusterDiscovery(ctx context.Context, row CephCluster) 
 		"last_seen_at": row.LastSeenAt, "last_error_code": row.LastErrorCode,
 		"last_error_message": row.LastErrorMessage, "observed_at": row.ObservedAt, "updated_at": row.UpdatedAt,
 	}).Error
-}
-
-func (d *Database) SaveResourceConfiguration(ctx context.Context, clusterID uint64, kind, key, configuredData string) error {
-	if key == "" || configuredData == "" {
-		return nil
-	}
-	if kind == "host" {
-		var values map[string]any
-		_ = json.Unmarshal([]byte(configuredData), &values)
-		var address *string
-		if value, ok := values["address"].(string); ok && strings.TrimSpace(value) != "" {
-			cleaned := strings.TrimSpace(value)
-			address = &cleaned
-		}
-		now := time.Now().UTC()
-		var existing CephHost
-		err := d.db.WithContext(ctx).Where("cluster_id = ? AND hostname = ?", clusterID, key).First(&existing).Error
-		if err == nil {
-			return d.db.WithContext(ctx).Model(&CephHost{}).Where("id = ?", existing.ID).Updates(map[string]any{
-				"address": address, "configured_data": configuredData, "updated_at": now,
-			}).Error
-		}
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return err
-		}
-		return d.db.WithContext(ctx).Create(&CephHost{
-			ClusterID: clusterID, Hostname: key, Address: address, SSHPort: 22, SSHUser: "root",
-			ConfiguredData: &configuredData, DiscoveredData: "{}", ResourceVersion: 1, Source: "user", CreatedAt: now, UpdatedAt: now,
-		}).Error
-	}
-	table, ok := EntityTableName(kind)
-	if !ok {
-		return nil
-	}
-	now := time.Now().UTC()
-	var existing CephEntityRecord
-	err := d.db.WithContext(ctx).Table(table).Where("cluster_id = ? AND natural_key = ?", clusterID, key).First(&existing).Error
-	if err == nil {
-		configuredData = mergeConfiguredData(existing.ConfiguredData, configuredData)
-		return d.db.WithContext(ctx).Table(table).Where("id = ?", existing.ID).Updates(map[string]any{
-			"configured_data": configuredData, "updated_at": now,
-		}).Error
-	}
-	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return err
-	}
-	name := key
-	return d.db.WithContext(ctx).Table(table).Create(&CephEntityRecord{
-		ClusterID: clusterID, NaturalKey: key, Name: &name, ResourceVersion: 1, Source: "user",
-		ObservedAt: now, ConfiguredData: &configuredData, DiscoveredData: "{}", CreatedAt: now, UpdatedAt: now,
-	}).Error
-}
-
-func (d *Database) DeleteResourceState(ctx context.Context, clusterID uint64, kind, key string) error {
-	if key == "" {
-		return nil
-	}
-	if kind == "host" {
-		return d.db.WithContext(ctx).Where("cluster_id = ? AND hostname = ?", clusterID, key).Delete(&CephHost{}).Error
-	}
-	table, ok := EntityTableName(kind)
-	if !ok {
-		return nil
-	}
-	return d.db.WithContext(ctx).Table(table).Where("cluster_id = ? AND natural_key = ?", clusterID, key).Delete(&CephEntityRecord{}).Error
-}
-
-func (d *Database) RenameResourceState(ctx context.Context, clusterID uint64, kind, oldKey, newKey, configuredData string) error {
-	if oldKey == "" || newKey == "" || oldKey == newKey {
-		return d.SaveResourceConfiguration(ctx, clusterID, kind, newKey, configuredData)
-	}
-	table, ok := EntityTableName(kind)
-	if !ok {
-		return nil
-	}
-	var existing CephEntityRecord
-	err := d.db.WithContext(ctx).Table(table).Where("cluster_id = ? AND natural_key = ?", clusterID, oldKey).First(&existing).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return d.SaveResourceConfiguration(ctx, clusterID, kind, newKey, configuredData)
-	}
-	if err != nil {
-		return err
-	}
-	configuredData = mergeConfiguredData(existing.ConfiguredData, configuredData)
-	name := newKey
-	return d.db.WithContext(ctx).Table(table).Where("id = ?", existing.ID).Updates(map[string]any{
-		"natural_key":     newKey,
-		"name":            name,
-		"configured_data": configuredData,
-		"updated_at":      time.Now().UTC(),
-	}).Error
-}
-
-func mergeConfiguredData(existing *string, incoming string) string {
-	if existing == nil || *existing == "" {
-		return incoming
-	}
-	var current map[string]any
-	if err := json.Unmarshal([]byte(*existing), &current); err != nil {
-		return incoming
-	}
-	var next map[string]any
-	if err := json.Unmarshal([]byte(incoming), &next); err != nil {
-		return incoming
-	}
-	for key, value := range next {
-		current[key] = value
-	}
-	merged, err := json.Marshal(current)
-	if err != nil {
-		return incoming
-	}
-	return string(merged)
 }
 
 func equalStringPointer(left, right *string) bool {

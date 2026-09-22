@@ -9,7 +9,7 @@ import (
 	"cephtower/backend/internal/store"
 )
 
-func TestResourceDTOParsesInternalDataWithoutExposingStorageFields(t *testing.T) {
+func TestResourceDTOUsesOnlyDiscoveredData(t *testing.T) {
 	now := time.Now().UTC()
 	configured := `{"address":"configured-address","owner":"operator"}`
 	row := store.CephEntityRecord{
@@ -19,7 +19,7 @@ func TestResourceDTOParsesInternalDataWithoutExposingStorageFields(t *testing.T)
 	}
 	dto := toResourceDTO(row)
 	data, ok := dto.Data.(map[string]any)
-	if !ok || data["address"] != "configured-address" || data["device_class"] != "ssd" || data["owner"] != "operator" {
+	if !ok || data["address"] != "discovered-address" || data["device_class"] != "ssd" || data["owner"] != nil {
 		t.Fatalf("resource data = %#v", dto.Data)
 	}
 	assertInternalDiscoveryFieldsHidden(t, dto)
@@ -36,7 +36,7 @@ func TestPoolResourceDTOPrefersDiscoveredClusterData(t *testing.T) {
 	}
 	dto := toResourceDTO(row)
 	data, ok := dto.Data.(map[string]any)
-	if !ok || data["quota_max_bytes"] != float64(0) || data["compression_mode"] != "none" || data["owner"] != "operator" {
+	if !ok || data["quota_max_bytes"] != float64(0) || data["compression_mode"] != "none" || data["owner"] != nil || data["applications"] != nil {
 		t.Fatalf("pool resource data = %#v", dto.Data)
 	}
 }
