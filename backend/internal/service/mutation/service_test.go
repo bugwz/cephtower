@@ -204,6 +204,22 @@ func TestCephFSSubvolumeDeleteSupportsRetentionAndForce(t *testing.T) {
 	}
 }
 
+func TestCephFSSubvolumeResizeSupportsUnlimitedAndNoShrink(t *testing.T) {
+	cmd, err := build(Request{Action: "subvolume.update", ResourceKey: "filesystem/cephfs/subvolume/home"}, map[string]any{
+		"group": "users", "unlimited": true, "no_shrink": true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"fs", "subvolume", "resize", "cephfs", "home", "inf", "users", "--no_shrink"}
+	if !reflect.DeepEqual(cmd.args, want) {
+		t.Fatalf("args = %#v, want %#v", cmd.args, want)
+	}
+	if _, err := build(Request{Action: "subvolume.update", ResourceKey: "filesystem/cephfs/subvolume/home"}, nil); err == nil {
+		t.Fatal("resize accepted neither a size nor unlimited")
+	}
+}
+
 func TestFilesystemCreateRequiresPoolPair(t *testing.T) {
 	_, err := build(Request{Action: "filesystem.create", ResourceKey: "filesystem"}, map[string]any{
 		"name": "cephfs", "metadata_pool": "cephfs.meta",

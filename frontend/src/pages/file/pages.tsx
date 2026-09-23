@@ -321,9 +321,23 @@ const definitions: Record<
       method: 'PATCH',
       successMessage: '子卷更新执行成功',
       fields: [
-        { name: 'size', label: '大小（字节）', type: 'number', required: true, min: 1 }
+        { name: 'size', label: '大小（字节）', type: 'number', required: true, min: 1, visibleWhen: (values) => !values.unlimited },
+        { name: 'unlimited', label: '取消配额限制', type: 'boolean' },
+        { name: 'no_shrink', label: '禁止缩小现有配额', type: 'boolean' }
       ],
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, fs: fsName(row), subvolume: subvolumeName(row), group: groupName(row), size: Number(values.size) })
+      initialValues: (row) => ({
+        size: String(row?.bytes_quota ?? '').toLowerCase() === 'infinite' ? undefined : Number(row?.bytes_quota ?? 0) || undefined,
+        unlimited: String(row?.bytes_quota ?? '').toLowerCase() === 'infinite',
+        no_shrink: false
+      }),
+      buildBody: (values, clusterId, row) => ({
+        cluster_id: clusterId,
+        fs: fsName(row),
+        subvolume: subvolumeName(row),
+        group: groupName(row),
+        ...(values.unlimited ? { unlimited: true } : { size: Number(values.size) }),
+        no_shrink: Boolean(values.no_shrink)
+      })
     },
     extraActions: [
       {

@@ -1120,6 +1120,9 @@ func build(request Request, p map[string]any) (command, error) {
 		fs := pathValue(tail, "filesystem")
 		name := last(tail)
 		size := optional(p, "size")
+		if boolParameter(p, "unlimited") {
+			size = "inf"
+		}
 		if size == "" {
 			return command{}, invalid("size is required")
 		}
@@ -1128,6 +1131,9 @@ func build(request Request, p map[string]any) (command, error) {
 		if group := optional(p, "group"); group != "" && group != "_nogroup" {
 			args = append(args, group)
 			check = append(check, group)
+		}
+		if boolParameter(p, "no_shrink") {
+			args = append(args, "--no_shrink")
 		}
 		check = append(check, "--format", "json")
 		return ceph(args, check), nil
