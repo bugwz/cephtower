@@ -34,6 +34,7 @@ export interface MutationFormField {
   max?: number
   pattern?: RegExp
   patternMessage?: string
+  readOnly?: boolean
 }
 
 export type MutationFormValues = Record<string, string | number | boolean | null | undefined | ApiRecord>
@@ -48,6 +49,8 @@ export interface ResourceFormAction {
   fields: MutationFormField[]
   initialValues?: MutationFormValues | ((row?: ApiRecord) => MutationFormValues)
   buildBody: (values: MutationFormValues, clusterId: number, row?: ApiRecord) => ApiRecord
+  keepOpenOnSuccess?: boolean
+  resultValues?: (result: ApiRecord, values: MutationFormValues, row?: ApiRecord) => MutationFormValues
 }
 
 export interface ResourceDeleteAction {
@@ -163,6 +166,11 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
     }
   }
 
+  function closeForm() {
+    form.resetFields()
+    setFormOpen(false)
+  }
+
   async function submitForm(values: MutationFormValues) {
     if (!selectedClusterId || !activeAction || submitting || mutationBlocked) {
       return
@@ -177,13 +185,18 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
         })
         if (!approved) return
       }
-      await operationMutation.run(() => mutateResource(
+      const result = await operationMutation.run(() => mutateResource(
         action.path,
         action.method,
         action.buildBody(values, selectedClusterId, activeRow),
         activeRow?.resource_version ? { ifMatch: String(activeRow.resource_version) } : undefined
       ), false)
-      setFormOpen(false)
+      if (action.resultValues) {
+        form.setFieldsValue(action.resultValues(result as unknown as ApiRecord, values, activeRow))
+      }
+      if (!action.keepOpenOnSuccess) {
+        closeForm()
+      }
       message.success(action.successMessage)
       if (action.path.startsWith('/rbd/')) {
         await refreshResource({ clusterId: selectedClusterId, kinds: ['rbd_image', 'rbd_snapshot', 'rbd_namespace', 'rbd_trash', 'rbd_group', 'rbd_mirroring'] })
@@ -328,7 +341,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
       <DraggableModal
         title={activeAction?.title ?? ''}
         open={formOpen}
-        onCancel={() => setFormOpen(false)}
+        onCancel={closeForm}
         onOk={() => form.submit()}
         okText="提交"
         confirmLoading={submitting}
@@ -479,20 +492,20 @@ function hasFeatureRequirementAlert(status: ReturnType<typeof useFeatureRequirem
 }
 
 function renderFormControl(field: MutationFormField) {
-  if (field.type === 'password') return <Input.Password autoComplete="new-password" />
+  if (field.type === 'password') return <Input.Password autoComplete="new-password" readOnly={field.readOnly} />
   if (field.type === 'number') {
-    return <InputNumber min={field.min} max={field.max} className="full-width-control" />
+    return <InputNumber min={field.min} max={field.max} className="full-width-control" readOnly={field.readOnly} />
   }
   if (field.type === 'boolean') {
-    return <Switch />
+    return <Switch disabled={field.readOnly} />
   }
   if (field.type === 'select') {
-    return <Select options={field.options ?? []} />
+    return <Select options={field.options ?? []} disabled={field.readOnly} />
   }
   if (field.type === 'textarea') {
-    return <Input.TextArea rows={5} spellCheck={false} placeholder={field.placeholder} />
+    return <Input.TextArea rows={5} spellCheck={false} placeholder={field.placeholder} readOnly={field.readOnly} />
   }
-  return <Input placeholder={field.placeholder} />
+  return <Input placeholder={field.placeholder} readOnly={field.readOnly} />
 }
 
 function renderValue(value: unknown) {

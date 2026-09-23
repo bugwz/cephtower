@@ -57382,6 +57382,78 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /rbd/mirroring/bootstrap/peer:
+    post:
+      operationId: post_rbd_mirroring_bootstrap_peer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, direction, pool, site_name, token]
+              properties:
+                cluster_id:
+                  type: integer
+                direction:
+                  type: string
+                  enum: ["rx-only", "rx-tx"]
+                pool:
+                  type: string
+                site_name:
+                  type: string
+                token:
+                  type: string
+                  writeOnly: true
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /rbd/mirroring/bootstrap/token:
+    post:
+      operationId: post_rbd_mirroring_bootstrap_token
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, pool, site_name]
+              properties:
+                cluster_id:
+                  type: integer
+                pool:
+                  type: string
+                site_name:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RBDMirrorBootstrapTokenResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /rbd/mirroring/peer:
     post:
       operationId: post_rbd_mirroring_peer
@@ -88674,6 +88746,12 @@ components:
       required: [keyring]
       properties:
         keyring: {type: string, description: 'Selected Ceph entities in keyring format; contains secrets'}
+    RBDMirrorBootstrapToken:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token: {type: string, readOnly: true, description: 'One-time RBD mirroring bootstrap token; contains secrets'}
     ListData:
       type: object
       additionalProperties: false
@@ -88970,6 +89048,15 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/CephKeyring'
+    RBDMirrorBootstrapTokenResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          unevaluatedProperties: false
+          required: [data]
+          properties:
+            data:
+              $ref: '#/components/schemas/RBDMirrorBootstrapToken'
     CephLogsResponse:
       allOf:
         - $ref: '#/components/schemas/APIResponse'

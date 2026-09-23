@@ -431,6 +431,26 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       buildBody:(values,clusterId) => ({cluster_id:clusterId,pool:String(values.pool),mode:String(values.mode)})
     },
     extraActions:[{
+      title:'生成 Bootstrap Token',buttonLabel:'生成 Token',path:'/rbd/mirroring/bootstrap/token',method:'POST',successMessage:'Bootstrap Token 已生成，请立即复制并安全保存',
+      fields:[
+        {name:'site_name',label:'本站点名称',required:true,placeholder:'site-a'},
+        {name:'token',label:'Bootstrap Token（仅本次显示）',type:'textarea',readOnly:true,placeholder:'生成后将在这里显示'}
+      ],
+      initialValues:(row)=>({site_name:String(row?.site_name ?? ''),token:''}),
+      keepOpenOnSuccess:true,
+      resultValues:(result,values)=>({site_name:values.site_name,token:String(result.token ?? '')}),
+      buildBody:(values,clusterId,row)=>({cluster_id:clusterId,pool:String(row?.pool ?? row?.name),site_name:String(values.site_name)})
+    },{
+      title:'导入 Bootstrap Token',buttonLabel:'导入 Token',path:'/rbd/mirroring/bootstrap/peer',method:'POST',successMessage:'Bootstrap Token 已导入',
+      confirmation:(_values,row)=>`向池 ${String(row?.pool ?? row?.name)} 导入远端站点凭据并建立同步关系？`,
+      fields:[
+        {name:'site_name',label:'本站点名称',required:true,placeholder:'site-b'},
+        {name:'direction',label:'同步方向',type:'select',required:true,options:[{label:'仅接收',value:'rx-only'},{label:'双向',value:'rx-tx'}]},
+        {name:'token',label:'远端 Bootstrap Token',type:'textarea',required:true,placeholder:'粘贴远端站点生成的 Token'}
+      ],
+      initialValues:(row)=>({site_name:String(row?.site_name ?? ''),direction:'rx-tx',token:''}),
+      buildBody:(values,clusterId,row)=>({cluster_id:clusterId,pool:String(row?.pool ?? row?.name),site_name:String(values.site_name),direction:String(values.direction),token:String(values.token)})
+    },{
       title:'添加远端站点',buttonLabel:'添加 Peer',path:'/rbd/mirroring/peer',method:'POST',successMessage:'远端站点已添加',
       fields:[{name:'remote_cluster',label:'远端集群名称（需已有连接配置）',required:true},
         {name:'remote_client',label:'远端客户端',required:true,placeholder:'client.rbd-mirror'},

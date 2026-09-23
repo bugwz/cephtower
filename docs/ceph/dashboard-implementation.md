@@ -33,7 +33,7 @@
 | cluster / logs | `log last` / 外部日志源 | 已接通 log last 直接读取、频道/级别/条数筛选、轮询与下载；移除仅发心跳的假流接口 |
 | cluster / upgrade | `orch upgrade check/status/start/pause/resume/stop` | 已有状态和操作，版本选择及 daemon 范围参数待核对 |
 | block / rbd | `rbd ls/info/create/resize/rm/feature`、`rbd snap`、`rbd trash`、`rbd namespace` | 已有基础管理；克隆/扁平化、配置、快照保护、任务、回收站完整操作需逐项补齐 |
-| block / mirroring | `rbd mirror pool/image`、`rbd mirror snapshot schedule` | 当前为部分池级状态/配置；peer、bootstrap、调度需补齐；镜像启停、promote/demote/resync/snapshot 已接入 |
+| block / mirroring | `rbd mirror pool/image`、`rbd mirror snapshot schedule` | 已有池状态、模式、peer、bootstrap token 与镜像操作；调度仍需补齐 |
 | block / iSCSI | ceph-iscsi REST API | 需要网关 endpoint，不能把所有操作替换成普通 `ceph` CLI；当前已有外部客户端 |
 | block / NVMe-oF | 网关 gRPC | 当前已有 gRPC 客户端；子系统、namespace、listener、host、连接与 QoS 待完整对照 |
 | cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict` | 已有文件系统详情与客户端接口；计数器、rename、auth 与目录操作待核对 |
@@ -267,7 +267,7 @@ which could collapse multiple paths and schedules into one resource key.
 - The UI exposes disabled/image/pool configuration and confirms disabling mirroring.
   Successful changes trigger native collection before refreshing the table.
 - Fixture tests cover two independent pool identities and status fields. No live cluster
-  execution has been performed. Peer/bootstrap management and mirror snapshot scheduling remain unfinished.
+  execution has been performed. Mirror snapshot scheduling remains unfinished.
 
 ### RBD image mirroring actions
 
@@ -277,8 +277,8 @@ which could collapse multiple paths and schedules into one resource key.
   targets. Postchecks use mirror image status, or ordinary image info after disable.
 - Demote, disable and resync show operation-specific confirmation. The native CLI
   enforces mirror mode and primary-state prerequisites and returns errors to the UI.
-- Namespace-aware command tests cover all seven operations. Forced promotion and
-  forced disable, peer configuration, and mirror scheduling remain pending.
+- Namespace-aware command tests cover all seven operations. Forced promotion, forced
+  disable, and mirror scheduling remain pending.
 
 ### RBD mirroring peers
 
@@ -286,8 +286,8 @@ which could collapse multiple paths and schedules into one resource key.
   explicit peer UUID deletion confirmation, and refresh after native collection.
 - Commands map to `rbd mirror pool peer add/remove` in `MirrorPool.cc`; add uses
   explicit remote cluster/client and rx-only/rx-tx direction. Postcheck reads pool info.
-- Adding currently requires remote connection configuration already present on the
-  execution host. Remote credential setup, peer editing and bootstrap remain pending.
+- Direct peer add still requires remote connection configuration already present on the
+  execution host. Peer editing and bootstrap token exchange are available separately.
 - Command tests verify argument boundaries, postchecks, missing targets and invalid
   directions. These are fixture checks, not real cluster validation.
 
@@ -298,7 +298,23 @@ which could collapse multiple paths and schedules into one resource key.
 - The API validates field names and accepts rx-only/tx-only/rx-tx for updates, matching
   Ceph's separate add/set direction rules. Monitor address strings remain one argument.
 - Tests cover supported fields, invalid direction, missing UUID and rejected key-file
-  parameters. Credential transfer/bootstrap remains a separate unfinished capability.
+  parameters. Bootstrap token exchange is implemented as a separate secret-aware flow.
+
+### RBD mirroring bootstrap tokens
+
+- Pool rows expose token creation and import forms following Ceph Dashboard's bootstrap
+  workflow. Disabled pools are enabled in image mode before either operation.
+- Creation maps to `rbd mirror pool peer bootstrap create <pool> --site-name=<site>`;
+  import maps to `rbd mirror pool peer bootstrap import <pool> -` with explicit
+  `--site-name=<site>` and `--direction=<rx-only|rx-tx>` options. The token is passed
+  only through stdin.
+- The two APIs execute synchronously instead of entering the durable operation queue so
+  bootstrap secrets are never persisted in operation parameters. Requests and responses
+  use `Cache-Control: no-store`; audit request redaction removes the token value.
+- Token shape, pool/site names, and direction are validated before execution. Fixture
+  tests cover automatic pool enablement, exact arguments, stdin-only secret handling,
+  postchecks, invalid input, malformed native output, and secret-free errors. No live
+  cluster execution has been performed.
 
 ### Mirroring identity fields and malformed responses
 

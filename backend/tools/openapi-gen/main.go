@@ -102,6 +102,8 @@ func successResponseSchema(route router.Route) string {
 
 	case "GET /ceph/users/export":
 		return "CephKeyringResponse"
+	case "POST /rbd/mirroring/bootstrap/token":
+		return "RBDMirrorBootstrapTokenResponse"
 	case "GET /healthz", "GET /readyz":
 		return "HealthResponse"
 	case "GET /bootstrap":
@@ -203,6 +205,7 @@ func writeResponseSchemas(b *strings.Builder) {
 		{"ISCSITargetResponse", "ISCSITarget"}, {"ISCSITargetListResponse", "ISCSITargetListData"},
 		{"BucketConfigurationResponse", "BucketConfiguration"},
 		{"CephKeyringResponse", "CephKeyring"},
+		{"RBDMirrorBootstrapTokenResponse", "RBDMirrorBootstrapToken"},
 		{"CephLogsResponse", "CephLogs"}, {"ConfigurationOptionResponse", "JSONValue"},
 	}
 	for _, response := range responses {
@@ -359,6 +362,20 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "name": stringField(true)}
 	case "GET /ceph/users/export":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "entities": stringArrayField(true)}
+	case "POST /rbd/mirroring/bootstrap/token":
+		fields = map[string]handler.JSONField{
+			"cluster_id": integerField(true),
+			"pool":       stringField(true),
+			"site_name":  stringField(true),
+		}
+	case "POST /rbd/mirroring/bootstrap/peer":
+		fields = map[string]handler.JSONField{
+			"cluster_id": integerField(true),
+			"pool":       stringField(true),
+			"site_name":  stringField(true),
+			"direction":  {Type: "string", Required: true, Enum: []string{"rx-only", "rx-tx"}},
+			"token":      {Type: "string", Required: true, WriteOnly: true},
+		}
 	case "POST /ceph/user":
 		return handler.MutationRequestContract("ceph_user.create")
 	case "PATCH /ceph/user":
@@ -516,6 +533,7 @@ func isAsyncRoute(route router.Route) bool {
 		"POST /auth/login", "POST /bootstrap/dbtest", "POST /bootstrap/run",
 		"POST /ceph/users/import", "POST /cluster", "POST /cluster/probe",
 		"POST /endpoint", "POST /role", "POST /role/binding", "POST /user",
+		"POST /rbd/mirroring/bootstrap/peer", "POST /rbd/mirroring/bootstrap/token",
 		"PUT /credential":
 		return false
 	default:
@@ -1041,6 +1059,12 @@ const components = `components:
       required: [keyring]
       properties:
         keyring: {type: string, description: 'Selected Ceph entities in keyring format; contains secrets'}
+    RBDMirrorBootstrapToken:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token: {type: string, readOnly: true, description: 'One-time RBD mirroring bootstrap token; contains secrets'}
     ListData:
       type: object
       additionalProperties: false
