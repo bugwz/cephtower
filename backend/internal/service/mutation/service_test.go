@@ -220,6 +220,28 @@ func TestCephFSSubvolumeResizeSupportsUnlimitedAndNoShrink(t *testing.T) {
 	}
 }
 
+func TestCephFSAuthorizationBuildsExtendedCapabilities(t *testing.T) {
+	cmd, err := build(Request{Action: "cephfs_authorization.create", ResourceKey: "filesystem/cephfs/authorization"}, map[string]any{
+		"client": "client.app", "path": "/projects", "access": "rw", "quota": true, "snapshot": true, "root_squash": true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"fs", "authorize", "cephfs", "client.app", "/projects", "rwps", "root_squash"}
+	if !reflect.DeepEqual(cmd.args, want) {
+		t.Fatalf("args = %#v, want %#v", cmd.args, want)
+	}
+	readOnly, err := build(Request{Action: "cephfs_authorization.create", ResourceKey: "filesystem/cephfs/authorization"}, map[string]any{
+		"client": "client.reader", "path": "/", "access": "r", "quota": true, "snapshot": true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := readOnly.args[len(readOnly.args)-1]; got != "r" {
+		t.Fatalf("read-only capability = %q, want r", got)
+	}
+}
+
 func TestFilesystemCreateRequiresPoolPair(t *testing.T) {
 	_, err := build(Request{Action: "filesystem.create", ResourceKey: "filesystem"}, map[string]any{
 		"name": "cephfs", "metadata_pool": "cephfs.meta",

@@ -491,15 +491,21 @@ const definitions: Record<
             { label: '只读', value: 'r' },
             { label: '读写', value: 'rw' }
           ]
-        }
+        },
+        { name: 'quota', label: '允许设置布局和配额（p）', type: 'boolean', visibleWhen: (values) => values.access === 'rw' },
+        { name: 'snapshot', label: '允许创建和删除快照（s）', type: 'boolean', visibleWhen: (values) => values.access === 'rw' },
+        { name: 'root_squash', label: '启用 root squash', type: 'boolean' }
       ],
-      initialValues: { path: '/', access: 'rw' },
+      initialValues: { path: '/', access: 'rw', quota: false, snapshot: false, root_squash: false },
       buildBody: (values, clusterId) => ({
         cluster_id: clusterId,
         fs: String(values.fs ?? ''),
         client: String(values.client ?? ''),
         ...(values.path ? { path: String(values.path) } : {}),
-        access: String(values.access ?? 'rw')
+        access: String(values.access ?? 'rw'),
+        quota: Boolean(values.quota),
+        snapshot: Boolean(values.snapshot),
+        root_squash: Boolean(values.root_squash)
       })
     },
     columns: [

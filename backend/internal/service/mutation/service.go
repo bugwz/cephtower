@@ -1256,7 +1256,19 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return ceph([]string{"fs", "authorize", fs, client, path, access}, []string{"auth", "get", client, "--format", "json"}), nil
+		if access == "rw" {
+			if boolParameter(p, "quota") {
+				access += "p"
+			}
+			if boolParameter(p, "snapshot") {
+				access += "s"
+			}
+		}
+		args := []string{"fs", "authorize", fs, client, path, access}
+		if boolParameter(p, "root_squash") {
+			args = append(args, "root_squash")
+		}
+		return ceph(args, []string{"auth", "get", client, "--format", "json"}), nil
 	case "cephfs_client.evict":
 		return ceph([]string{"tell", "mds.*", "client", "evict", "id=" + last(tail)}, []string{"fs", "status", pathValue(tail, "filesystem"), "--format", "json"}), nil
 	case "cephfs_entry.quota":

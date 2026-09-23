@@ -1068,3 +1068,9 @@ in-progress 状态开放取消操作，调用 `fs clone cancel` 后以 `fs clone
 子卷编辑支持取消配额限制和禁止缩容。取消限制生成原生大小 `inf`，保护开关生成
 `--no_shrink`，并继续保留命名组作用域。表单从 bytes_quota 预填当前状态，API 使用
 独立的精确请求结构；离线测试覆盖无限配额、缩容保护和缺失大小校验。
+
+### CephFS 扩展访问权限
+
+对照参考授权弹窗，`fs authorize` 表单新增 quota、snapshot 和 root squash。
+读写权限可组合为 `rwp`、`rws` 或 `rwps`，root squash 作为独立 capability 参数；
+只读模式忽略仅适用于写权限的 p/s 选择。离线测试覆盖完整组合和只读约束。

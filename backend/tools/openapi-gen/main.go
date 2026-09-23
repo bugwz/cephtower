@@ -390,6 +390,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		return handler.MutationRequestContract("subvolume.create")
 	case "PATCH /filesystem/subvolume":
 		return handler.MutationRequestContract("subvolume.update")
+	case "POST /filesystem/authorization":
+		return handler.MutationRequestContract("cephfs_authorization.create")
 	case "POST /ceph/user":
 		return handler.MutationRequestContract("ceph_user.create")
 	case "PATCH /ceph/user":
@@ -450,7 +452,7 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 func mutationFieldUnion() map[string]handler.JSONField {
 	fields := map[string]handler.JSONField{}
 	for _, action := range handler.MutationContractActions() {
-		if action == "cephfs_snapshot.clone" || action == "subvolume.clone_cancel" || action == "subvolume.create" || action == "subvolume.delete" || action == "subvolume.update" {
+		if action == "cephfs_authorization.create" || action == "cephfs_snapshot.clone" || action == "subvolume.clone_cancel" || action == "subvolume.create" || action == "subvolume.delete" || action == "subvolume.update" {
 			continue
 		}
 		contract, _ := handler.MutationRequestContract(action)
