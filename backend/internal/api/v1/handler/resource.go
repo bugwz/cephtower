@@ -646,7 +646,11 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 	case "subvolume_group":
 		return segments("filesystem", pathValue("fs"), "subvolume-group", pathValue("group", "name"))
 	case "subvolume":
-		return segments("filesystem", pathValue("fs"), "subvolume", pathValue("subvolume", "name"))
+		key := segments("filesystem", pathValue("fs"), "subvolume", pathValue("subvolume", "name"))
+		if action == "subvolume.clone_cancel" {
+			key = segments(key, "clone", "cancel")
+		}
+		return key
 	case "cephfs_client":
 		return segments("filesystem", pathValue("fs"), "client", pathValue("client_id"))
 	case "cephfs_snapshot":

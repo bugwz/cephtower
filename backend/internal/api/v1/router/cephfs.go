@@ -21,6 +21,7 @@ func cephfsRoutes(h *handler.Handler) []Route {
 		{"GET", "/filesystem/subvolume", h.GetSubvolume},
 		{"PATCH", "/filesystem/subvolume", h.UpdateSubvolume},
 		{"DELETE", "/filesystem/subvolume", h.DeleteSubvolume},
+		{"POST", "/filesystem/subvolume/clone/cancel", h.CancelSubvolumeClone},
 		{"GET", "/filesystem/subvolume/snapshots", h.ListCephFSSnapshots},
 		{"POST", "/filesystem/subvolume/snapshot", h.CreateCephFSSnapshot},
 		{"DELETE", "/filesystem/subvolume/snapshot", h.DeleteCephFSSnapshot},

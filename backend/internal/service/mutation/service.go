@@ -79,7 +79,7 @@ func Supports(action string) bool {
 		"rbd_trash.purge", "rbd_group.create", "rbd_group.action", "rbd_group.member", "rbd_group.snapshot", "rbd_mirroring.update", "rbd_mirroring.peer",
 		"filesystem.create", "filesystem.update", "filesystem.delete",
 		"subvolume_group.create", "subvolume_group.update", "subvolume_group.delete",
-		"subvolume.create", "subvolume.update", "subvolume.delete",
+		"subvolume.create", "subvolume.update", "subvolume.delete", "subvolume.clone_cancel",
 		"cephfs_snapshot.create", "cephfs_snapshot.delete", "cephfs_snapshot.clone", "snapshot_schedule.create", "snapshot_schedule.action", "snapshot_schedule.retention",
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota",
 		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_bucket.quota",
@@ -1097,7 +1097,14 @@ func build(request Request, p map[string]any) (command, error) {
 	case "subvolume.delete":
 		fs := pathValue(tail, "filesystem")
 		name := last(tail)
-		return ceph([]string{"fs", "subvolume", "rm", fs, name}, []string{"fs", "subvolume", "ls", fs, "--format", "json"}), nil
+		args := []string{"fs", "subvolume", "rm", fs, name}
+		check := []string{"fs", "subvolume", "ls", fs}
+		if group := optional(p, "group"); group != "" && group != "_nogroup" {
+			args = append(args, group)
+			check = append(check, group)
+		}
+		check = append(check, "--format", "json")
+		return ceph(args, check), nil
 	case "subvolume.update":
 		fs := pathValue(tail, "filesystem")
 		name := last(tail)
@@ -1105,7 +1112,25 @@ func build(request Request, p map[string]any) (command, error) {
 		if size == "" {
 			return command{}, invalid("size is required")
 		}
-		return ceph([]string{"fs", "subvolume", "resize", fs, name, size}, []string{"fs", "subvolume", "info", fs, name, "--format", "json"}), nil
+		args := []string{"fs", "subvolume", "resize", fs, name, size}
+		check := []string{"fs", "subvolume", "info", fs, name}
+		if group := optional(p, "group"); group != "" && group != "_nogroup" {
+			args = append(args, group)
+			check = append(check, group)
+		}
+		check = append(check, "--format", "json")
+		return ceph(args, check), nil
+	case "subvolume.clone_cancel":
+		fs := pathValue(tail, "filesystem")
+		name := pathValue(tail, "subvolume")
+		args := []string{"fs", "clone", "cancel", fs, name}
+		check := []string{"fs", "clone", "status", fs, name}
+		if group := optional(p, "group"); group != "" && group != "_nogroup" {
+			args = append(args, "--group_name", group)
+			check = append(check, "--group_name", group)
+		}
+		check = append(check, "--format", "json")
+		return ceph(args, check), nil
 	case "cephfs_snapshot.create":
 		fs := pathValue(tail, "filesystem")
 		subvolume := pathValue(tail, "subvolume")
@@ -1113,16 +1138,26 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return ceph([]string{"fs", "subvolume", "snapshot", "create", fs, subvolume, name}, []string{"fs", "subvolume", "snapshot", "ls", fs, subvolume, "--format", "json"}), nil
+		args := []string{"fs", "subvolume", "snapshot", "create", fs, subvolume, name}
+		check := []string{"fs", "subvolume", "snapshot", "ls", fs, subvolume}
+		if group := optional(p, "group"); group != "" && group != "_nogroup" {
+			args = append(args, group)
+			check = append(check, group)
+		}
+		check = append(check, "--format", "json")
+		return ceph(args, check), nil
 	case "cephfs_snapshot.delete":
 		fs := pathValue(tail, "filesystem")
 		subvolume := pathValue(tail, "subvolume")
 		snapshot := last(tail)
 		args := []string{"fs", "subvolume", "snapshot", "rm", fs, subvolume, snapshot}
-		if group := optional(p, "group"); group != "" {
+		check := []string{"fs", "subvolume", "snapshot", "ls", fs, subvolume}
+		if group := optional(p, "group"); group != "" && group != "_nogroup" {
 			args = append(args, group)
+			check = append(check, group)
 		}
-		return ceph(args, []string{"fs", "subvolume", "snapshot", "ls", fs, subvolume, "--format", "json"}), nil
+		check = append(check, "--format", "json")
+		return ceph(args, check), nil
 	case "cephfs_snapshot.clone":
 		fs := pathValue(tail, "filesystem")
 		subvolume := pathValue(tail, "subvolume")
@@ -1131,7 +1166,23 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return ceph([]string{"fs", "subvolume", "snapshot", "clone", fs, subvolume, snapshot, target}, []string{"fs", "clone", "status", fs, target, "--format", "json"}), nil
+		args := []string{"fs", "subvolume", "snapshot", "clone", fs, subvolume, snapshot, target}
+		if pool := optional(p, "pool_layout"); pool != "" {
+			args = append(args, "--pool_layout", pool)
+		}
+		if group := optional(p, "group"); group != "" && group != "_nogroup" {
+			args = append(args, "--group_name", group)
+		}
+		targetGroup := optional(p, "target_group")
+		if targetGroup != "" && targetGroup != "_nogroup" {
+			args = append(args, "--target_group_name", targetGroup)
+		}
+		check := []string{"fs", "clone", "status", fs, target}
+		if targetGroup != "" && targetGroup != "_nogroup" {
+			check = append(check, "--group_name", targetGroup)
+		}
+		check = append(check, "--format", "json")
+		return ceph(args, check), nil
 	case "snapshot_schedule.retention":
 		return snapshotRetention(request, p)
 	case "snapshot_schedule.create", "snapshot_schedule.action":

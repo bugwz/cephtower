@@ -153,6 +153,7 @@ Dashboard 控制器 → Ceph 命令 → CephTower API 使用。方法名来自�
 | [cephfs.go](../../backend/internal/api/v1/router/cephfs.go) | `GET /api/v1/filesystem/subvolume` | `GetSubvolume` |
 | [cephfs.go](../../backend/internal/api/v1/router/cephfs.go) | `PATCH /api/v1/filesystem/subvolume` | `UpdateSubvolume` |
 | [cephfs.go](../../backend/internal/api/v1/router/cephfs.go) | `DELETE /api/v1/filesystem/subvolume` | `DeleteSubvolume` |
+| [cephfs.go](../../backend/internal/api/v1/router/cephfs.go) | `POST /api/v1/filesystem/subvolume/clone/cancel` | `CancelSubvolumeClone` |
 | [cephfs.go](../../backend/internal/api/v1/router/cephfs.go) | `GET /api/v1/filesystem/subvolume/snapshots` | `ListCephFSSnapshots` |
 | [cephfs.go](../../backend/internal/api/v1/router/cephfs.go) | `POST /api/v1/filesystem/subvolume/snapshot` | `CreateCephFSSnapshot` |
 | [cephfs.go](../../backend/internal/api/v1/router/cephfs.go) | `DELETE /api/v1/filesystem/subvolume/snapshot` | `DeleteCephFSSnapshot` |

@@ -513,6 +513,10 @@ func (h *Handler) DeleteSubvolume(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("subvolume", "subvolume.delete", "high")(w, r)
 }
 
+func (h *Handler) CancelSubvolumeClone(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("subvolume", "subvolume.clone_cancel", "medium")(w, r)
+}
+
 func (h *Handler) ListCephFSSnapshots(w http.ResponseWriter, r *http.Request) {
 	h.ReadResource("cephfs_snapshot", false)(w, r)
 }

@@ -63,7 +63,8 @@ var collectionFailureKinds = map[string][]string{
 	"collect.rbd_mirroring_status":    {"rbd_mirroring"},
 	"collect.rbd_mirroring":           {"rbd_mirroring"},
 	"collect.cephfs_group":            {"subvolume_group"},
-	"collect.cephfs_subvolume_detail": {"cephfs_snapshot"},
+	"collect.cephfs_subvolume_detail": {"subvolume"},
+	"collect.cephfs_clone_status":     {"subvolume"},
 	"collect.cephfs_snapshot":         {"cephfs_snapshot"},
 	"collect.rgw_user_ratelimit":      {"rgw_user"},
 	"collect.rgw_user_stats":          {"rgw_user"},
@@ -864,19 +865,6 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 			DataPools: m.DataPools, In: m.In, Up: m.Up,
 		}
 		rows = append(rows, Observation{Kind: "filesystem", NaturalKey: m.FSName, Name: m.FSName, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
-		var subvolumes []namedWire
-		if err := p.runBinaryInto(ctx, access, executor.BinaryCeph, "collect.cephfs_subvolume", []string{"fs", "subvolume", "ls", m.FSName, "--format", "json"}, &subvolumes); err == nil {
-			for _, subvolume := range subvolumes {
-				payload := map[string]any{"filesystem": m.FSName, "name": subvolume.Name}
-				var details map[string]any
-				if err := p.runBinaryInto(ctx, access, executor.BinaryCeph, "collect.cephfs_subvolume", []string{"fs", "subvolume", "info", m.FSName, subvolume.Name, "--format", "json"}, &details); err == nil {
-					for key, value := range details {
-						payload[key] = value
-					}
-				}
-				rows = append(rows, Observation{Kind: "subvolume", NaturalKey: m.FSName + "/" + subvolume.Name, ParentKind: "filesystem", ParentKey: m.FSName, Name: subvolume.Name, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
-			}
-		}
 	}
 	var realms rgwRealmWire
 	if err := p.runBinaryInto(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_status", []string{"realm", "list", "--format", "json"}, &realms); err == nil {

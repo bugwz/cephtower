@@ -380,6 +380,10 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		return handler.MutationRequestContract("rbd_image.action")
 	case "POST /rbd/image/snapshot/action":
 		return handler.MutationRequestContract("rbd_snapshot.action")
+	case "POST /filesystem/subvolume/snapshot/clone":
+		return handler.MutationRequestContract("cephfs_snapshot.clone")
+	case "POST /filesystem/subvolume/clone/cancel":
+		return handler.MutationRequestContract("subvolume.clone_cancel")
 	case "POST /ceph/user":
 		return handler.MutationRequestContract("ceph_user.create")
 	case "PATCH /ceph/user":
@@ -440,6 +444,9 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 func mutationFieldUnion() map[string]handler.JSONField {
 	fields := map[string]handler.JSONField{}
 	for _, action := range handler.MutationContractActions() {
+		if action == "cephfs_snapshot.clone" || action == "subvolume.clone_cancel" {
+			continue
+		}
 		contract, _ := handler.MutationRequestContract(action)
 		for name, field := range contract.Fields {
 			if action == "rbd_image.action" && (name == "interval" || name == "start_time") {

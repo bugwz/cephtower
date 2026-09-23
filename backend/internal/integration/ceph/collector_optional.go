@@ -174,6 +174,7 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 	}
 	for _, filesystem := range fs.Filesystems {
 		name := filesystem.MDSMap.FSName
+		rows = append(rows, p.collectCephFSSubvolumeScope(ctx, access, name, "", now)...)
 		var groups []namedWire
 		if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_group", []string{"fs", "subvolumegroup", "ls", name, "--format", "json"}, &groups) {
 			for _, group := range groups {
@@ -185,26 +186,7 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 					}
 				}
 				rows = append(rows, Observation{Kind: "subvolume_group", NaturalKey: name + "/" + group.Name, ParentKind: "filesystem", ParentKey: name, Name: group.Name, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
-			}
-		}
-		var subvolumes []namedWire
-		if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_subvolume_detail", []string{"fs", "subvolume", "ls", name, "--format", "json"}, &subvolumes) {
-			for _, subvolume := range subvolumes {
-				var snapshots []map[string]any
-				if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_snapshot", []string{"fs", "subvolume", "snapshot", "ls", name, subvolume.Name, "--format", "json"}, &snapshots) {
-					for _, snapshot := range snapshots {
-						snapshotName := textField(snapshot, "name")
-						if snapshotName == "" {
-							continue
-						}
-						parent := name + "/" + subvolume.Name
-						payload := map[string]any{"filesystem": name, "subvolume": subvolume.Name, "name": snapshotName}
-						for key, value := range snapshot {
-							payload[key] = value
-						}
-						rows = append(rows, Observation{Kind: "cephfs_snapshot", NaturalKey: parent + "/" + snapshotName, ParentKind: "subvolume", ParentKey: parent, Name: snapshotName, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
-					}
-				}
+				rows = append(rows, p.collectCephFSSubvolumeScope(ctx, access, name, group.Name, now)...)
 			}
 		}
 	}
@@ -218,6 +200,80 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 				key = strconv.Itoa(index)
 			}
 			rows = append(rows, observation("osd_removal", key, key, "ceph_cli", item, now))
+		}
+	}
+	return rows
+}
+
+func (p *NativeProvider) collectCephFSSubvolumeScope(ctx context.Context, access ClusterAccess, filesystem, group string, now time.Time) []Observation {
+	groupKey := group
+	if groupKey == "" {
+		groupKey = "_nogroup"
+	}
+	listArgs := []string{"fs", "subvolume", "ls", filesystem}
+	if group != "" {
+		listArgs = append(listArgs, group)
+	}
+	listArgs = append(listArgs, "--format", "json")
+	var subvolumes []namedWire
+	if !p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_subvolume", listArgs, &subvolumes) {
+		return nil
+	}
+	rows := make([]Observation, 0, len(subvolumes)*2)
+	for _, subvolume := range subvolumes {
+		if strings.TrimSpace(subvolume.Name) == "" {
+			continue
+		}
+		parent := filesystem + "/" + groupKey + "/" + subvolume.Name
+		payload := map[string]any{"fs": filesystem, "filesystem": filesystem, "group": groupKey, "name": subvolume.Name}
+		infoArgs := []string{"fs", "subvolume", "info", filesystem, subvolume.Name}
+		if group != "" {
+			infoArgs = append(infoArgs, group)
+		}
+		infoArgs = append(infoArgs, "--format", "json")
+		var details map[string]any
+		if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_subvolume_detail", infoArgs, &details) {
+			for key, value := range details {
+				payload[key] = value
+			}
+			if _, isClone := details["source"]; isClone {
+				statusArgs := []string{"fs", "clone", "status", filesystem, subvolume.Name}
+				if group != "" {
+					statusArgs = append(statusArgs, group)
+				}
+				statusArgs = append(statusArgs, "--format", "json")
+				var clone map[string]any
+				if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_clone_status", statusArgs, &clone) {
+					if status, ok := clone["status"].(map[string]any); ok {
+						payload["clone_status"] = status
+						payload["clone_state"] = status["state"]
+						payload["clone_source"] = status["source"]
+						payload["clone_progress"] = status["progress_report"]
+						payload["clone_failure"] = status["failure"]
+					}
+				}
+			}
+		}
+		rows = append(rows, Observation{Kind: "subvolume", NaturalKey: parent, ParentKind: "filesystem", ParentKey: filesystem, Name: subvolume.Name, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
+
+		snapshotArgs := []string{"fs", "subvolume", "snapshot", "ls", filesystem, subvolume.Name}
+		if group != "" {
+			snapshotArgs = append(snapshotArgs, group)
+		}
+		snapshotArgs = append(snapshotArgs, "--format", "json")
+		var snapshots []map[string]any
+		if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_snapshot", snapshotArgs, &snapshots) {
+			for _, snapshot := range snapshots {
+				snapshotName := textField(snapshot, "name")
+				if snapshotName == "" {
+					continue
+				}
+				snapshotPayload := map[string]any{"fs": filesystem, "filesystem": filesystem, "group": groupKey, "subvolume": subvolume.Name, "name": snapshotName}
+				for key, value := range snapshot {
+					snapshotPayload[key] = value
+				}
+				rows = append(rows, Observation{Kind: "cephfs_snapshot", NaturalKey: parent + "/" + snapshotName, ParentKind: "subvolume", ParentKey: parent, Name: snapshotName, Status: "available", Source: "ceph_cli", Payload: snapshotPayload, ObservedAt: now})
+			}
 		}
 	}
 	return rows

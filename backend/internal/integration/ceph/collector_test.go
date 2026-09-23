@@ -9,7 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
+	"time"
 )
 
 type fixtureExecutor struct{ t *testing.T }
@@ -30,6 +32,62 @@ func (f fixtureExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec e
 type recordingExecutor struct {
 	base  executor.Executor
 	calls *[]executor.CommandSpec
+}
+
+type cephFSCloneFixtureExecutor struct {
+	t     *testing.T
+	calls *[]executor.CommandSpec
+}
+
+func (f cephFSCloneFixtureExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
+	*f.calls = append(*f.calls, spec)
+	fixtures := map[string]string{
+		"fs subvolume ls cephfs team --format json":                  `[{"name":"clone-a"}]`,
+		"fs subvolume info cephfs clone-a team --format json":        `{"path":"/volumes/team/clone-a","source":{"volume":"cephfs","group":"_nogroup","subvolume":"source-a","snapshot":"snap-a"}}`,
+		"fs clone status cephfs clone-a team --format json":          `{"status":{"state":"in-progress","source":{"volume":"cephfs","subvolume":"source-a","snapshot":"snap-a"},"progress_report":{"percentage cloned":"42%","entries cloned":21,"bytes cloned":4096}}}`,
+		"fs subvolume snapshot ls cephfs clone-a team --format json": `[{"name":"checkpoint"}]`,
+	}
+	data, ok := fixtures[strings.Join(spec.Args, " ")]
+	if !ok {
+		return executor.CommandResult{}, fmt.Errorf("unexpected command %s", strings.Join(spec.Args, " "))
+	}
+	return executor.CommandResult{Stdout: []byte(data)}, nil
+}
+
+func TestCollectCephFSCloneStatusForNamedGroup(t *testing.T) {
+	var calls []executor.CommandSpec
+	provider := NativeProvider{Executor: cephFSCloneFixtureExecutor{t: t, calls: &calls}}
+	rows := provider.collectCephFSSubvolumeScope(context.Background(), ClusterAccess{}, "cephfs", "team", time.Unix(0, 0).UTC())
+	if len(rows) != 2 {
+		t.Fatalf("rows = %d, want 2", len(rows))
+	}
+	payload, ok := rows[0].Payload.(map[string]any)
+	if !ok {
+		t.Fatalf("subvolume payload type = %T", rows[0].Payload)
+	}
+	if rows[0].NaturalKey != "cephfs/team/clone-a" || payload["group"] != "team" || payload["clone_state"] != "in-progress" {
+		t.Fatalf("subvolume = key %q payload %#v", rows[0].NaturalKey, payload)
+	}
+	progress, ok := payload["clone_progress"].(map[string]any)
+	if !ok || progress["percentage cloned"] != "42%" {
+		t.Fatalf("clone progress = %#v", payload["clone_progress"])
+	}
+	if rows[1].NaturalKey != "cephfs/team/clone-a/checkpoint" {
+		t.Fatalf("snapshot key = %q", rows[1].NaturalKey)
+	}
+	want := [][]string{
+		{"fs", "subvolume", "ls", "cephfs", "team", "--format", "json"},
+		{"fs", "subvolume", "info", "cephfs", "clone-a", "team", "--format", "json"},
+		{"fs", "clone", "status", "cephfs", "clone-a", "team", "--format", "json"},
+		{"fs", "subvolume", "snapshot", "ls", "cephfs", "clone-a", "team", "--format", "json"},
+	}
+	got := make([][]string, len(calls))
+	for index := range calls {
+		got[index] = calls[index].Args
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("commands = %#v, want %#v", got, want)
+	}
 }
 
 func (r recordingExecutor) Run(ctx context.Context, access executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {

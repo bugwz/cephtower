@@ -51,6 +51,7 @@ export interface ResourceFormAction {
   buildBody: (values: MutationFormValues, clusterId: number, row?: ApiRecord) => ApiRecord
   keepOpenOnSuccess?: boolean
   resultValues?: (result: ApiRecord, values: MutationFormValues, row?: ApiRecord) => MutationFormValues
+  disabledWhen?: (row: ApiRecord) => string | undefined
 }
 
 export interface ResourceDeleteAction {
@@ -145,6 +146,13 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
     if (mutationBlocked) {
       message.warning('当前集群未满足该功能的操作依赖')
       return
+    }
+    if (row) {
+      const blockedReason = action.disabledWhen?.(row)
+      if (blockedReason) {
+        message.warning(blockedReason)
+        return
+      }
     }
     setActiveAction(action)
     setActiveRow(row)
@@ -424,7 +432,10 @@ function buildColumns(
             trigger={['click']}
             disabled={mutationBlocked}
             menu={{
-              items: definition.extraActions.map((action, index) => ({ key: String(index), label: action.title, disabled: mutationBlocked })),
+              items: definition.extraActions.map((action, index) => {
+                const blockedReason = action.disabledWhen?.(row)
+                return { key: String(index), label: action.title, disabled: mutationBlocked || Boolean(blockedReason), title: blockedReason }
+              }),
               onClick: ({ key }) => {
                 const action = definition.extraActions?.[Number(key)]
                 if (action && !mutationBlocked) openForm(action, row)

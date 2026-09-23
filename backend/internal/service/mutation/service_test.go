@@ -63,6 +63,7 @@ func TestEveryNativeActionBuildsRegisteredCommand(t *testing.T) {
 		{"subvolume_group.update", "filesystem/cephfs/subvolume-group/group", map[string]any{"size": "1024"}}, {"subvolume_group.delete", "filesystem/cephfs/subvolume-group/group", nil},
 		{"subvolume.create", "filesystem/cephfs/subvolume", map[string]any{"name": "sub", "group": "_nogroup", "pool": "cephfs.data"}},
 		{"subvolume.update", "filesystem/cephfs/subvolume/sub", map[string]any{"size": "2048"}}, {"subvolume.delete", "filesystem/cephfs/subvolume/sub", nil},
+		{"subvolume.clone_cancel", "filesystem/cephfs/subvolume/clone/clone/cancel", map[string]any{"group": "team"}},
 		{"cephfs_snapshot.create", "filesystem/cephfs/subvolume/sub/snapshot", map[string]any{"name": "snap"}},
 		{"cephfs_snapshot.delete", "filesystem/cephfs/subvolume/sub/snapshot/snap", nil},
 		{"cephfs_snapshot.clone", "filesystem/cephfs/subvolume/sub/snapshot/snap/clone", map[string]any{"target": "clone"}},
@@ -142,6 +143,29 @@ func TestCephFSCreateCommandsIncludeFormOptions(t *testing.T) {
 	}
 	if !reflect.DeepEqual(subvolume.args, wantSubvolume) {
 		t.Fatalf("subvolume args = %#v, want %#v", subvolume.args, wantSubvolume)
+	}
+}
+
+func TestCephFSCloneCommandsPreserveGroupScope(t *testing.T) {
+	clone, err := build(Request{Action: "cephfs_snapshot.clone", ResourceKey: "filesystem/cephfs/subvolume/source/snapshot/snap/clone"}, map[string]any{
+		"target": "clone-a", "group": "source-group", "target_group": "clone-group", "pool_layout": "cephfs.hot",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantClone := []string{"fs", "subvolume", "snapshot", "clone", "cephfs", "source", "snap", "clone-a", "--pool_layout", "cephfs.hot", "--group_name", "source-group", "--target_group_name", "clone-group"}
+	wantCloneCheck := []string{"fs", "clone", "status", "cephfs", "clone-a", "--group_name", "clone-group", "--format", "json"}
+	if !reflect.DeepEqual(clone.args, wantClone) || !reflect.DeepEqual(clone.check, wantCloneCheck) {
+		t.Fatalf("clone command = %#v check %#v", clone.args, clone.check)
+	}
+
+	cancel, err := build(Request{Action: "subvolume.clone_cancel", ResourceKey: "filesystem/cephfs/subvolume/clone-a/clone/cancel"}, map[string]any{"group": "clone-group"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantCancel := []string{"fs", "clone", "cancel", "cephfs", "clone-a", "--group_name", "clone-group"}
+	if !reflect.DeepEqual(cancel.args, wantCancel) || !reflect.DeepEqual(cancel.check, wantCloneCheck) {
+		t.Fatalf("cancel command = %#v check %#v", cancel.args, cancel.check)
 	}
 }
 

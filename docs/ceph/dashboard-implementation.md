@@ -37,7 +37,7 @@
 | block / iSCSI | ceph-iscsi REST API | 需要网关 endpoint，不能把所有操作替换成普通 `ceph` CLI；当前已有外部客户端 |
 | block / NVMe-oF | 网关 gRPC | 当前已有 gRPC 客户端；子系统、namespace、listener、host、连接与 QoS 待完整对照 |
 | cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict` | 已有文件系统详情与客户端接口；计数器、rename、auth 与目录操作待核对 |
-| cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot` | 已有基本管理；组范围采集、clone 状态、metadata 与完整参数需核对 |
+| cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot`、`fs clone` | 已有组范围采集、clone 状态/进度/失败展示、快照克隆和进行中任务取消；metadata 与其余完整参数需核对 |
 | cephfs / snapshot schedule | `fs snap-schedule` | 已有精确路径状态、创建、删除、激活/停用、retention 和模块启用；全路径自动发现受 CLI 结构限制 |
 | cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 目录配额、快照、浏览不能仅从 MON 获取；现有 cephfs-shell 数据面需核对 |
 | nfs | `nfs cluster`、`nfs export` | 已有基础管理；完整 export 属性、CephFS/RGW FSAL 与 ingress 待核对 |
@@ -1027,3 +1027,16 @@ Zone 创建或编辑携带系统凭据时，校验 zone get 返回的名称、ID
 Zone 创建和编辑统一验证 zone get 返回的名称及非空原生 ID，不再仅在请求
 携带凭据时验证身份。没有凭据的普通更新也会拒绝空返回、缺少 ID 或错误对象，
 携带凭据时继续比较密钥。离线测试覆盖有效无凭据详情及各类错误身份。
+
+### CephFS 子卷克隆状态与取消
+
+对照 volumes 模块的 `fs subvolume info`、`fs clone status` 和
+`fs clone cancel`，采集默认组及所有命名组中的子卷。只有 info 返回 source 的
+克隆子卷才继续查询状态，并向页面提供 state、source、progress_report 和 failure。
+子卷与快照缓存键包含组名，更新、删除、快照创建/删除也保留组作用域，避免同名
+资源碰撞或操作错误对象。
+
+CephFS 快照页新增克隆操作，支持源组、目标组和 pool layout，分别映射
+`--group_name`、`--target_group_name` 和 `--pool_layout`。子卷页仅对 pending 或
+in-progress 状态开放取消操作，调用 `fs clone cancel` 后以 `fs clone status`
+读回。离线测试覆盖命名组采集、状态字段和精确命令参数；未在真实集群验证。

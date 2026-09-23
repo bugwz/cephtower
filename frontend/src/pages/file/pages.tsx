@@ -304,21 +304,35 @@ const definitions: Record<
       fields: [
         { name: 'size', label: '大小（字节）', type: 'number', required: true, min: 1 }
       ],
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, fs: fsName(row), subvolume: subvolumeName(row), size: Number(values.size) })
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, fs: fsName(row), subvolume: subvolumeName(row), group: groupName(row), size: Number(values.size) })
     },
+    extraActions: [{
+      title: '取消克隆',
+      path: '/filesystem/subvolume/clone/cancel',
+      method: 'POST',
+      successMessage: '克隆取消请求执行成功',
+      fields: [],
+      confirmation: (_values, row) => `确认取消子卷 ${subvolumeName(row)} 的克隆任务吗？`,
+      buildBody: (_values, clusterId, row) => ({ cluster_id: clusterId, fs: fsName(row), subvolume: subvolumeName(row), group: groupName(row) }),
+      disabledWhen: (row) => ['pending', 'in-progress'].includes(String(row.clone_state ?? '')) ? undefined : '只有等待中或进行中的克隆任务可以取消'
+    }],
     deleteAction: {
       title: '删除子卷',
       path: '/filesystem/subvolume',
       action: 'subvolume.delete',
       resourceKind: 'subvolume',
       successMessage: '子卷删除执行成功',
-      buildBody: (row, clusterId) => ({ cluster_id: clusterId, fs: fsName(row), subvolume: subvolumeName(row) }),
+      buildBody: (row, clusterId) => ({ cluster_id: clusterId, fs: fsName(row), subvolume: subvolumeName(row), group: groupName(row) }),
       resourceKey: (row) => `filesystem/${fsName(row)}/subvolume/${subvolumeName(row)}`
     },
     columns: [
       { key: 'fs', title: '文件系统' },
       { key: 'group', title: '子卷组' },
       { key: 'name', title: '名称' },
+      { key: 'clone_state', title: '克隆状态' },
+      { key: 'source', title: '克隆来源' },
+      { key: 'clone_progress', title: '克隆进度' },
+      { key: 'clone_failure', title: '克隆错误' },
       { key: 'path', title: '路径' },
       { key: 'data_pool', title: '数据池' },
       { key: 'bytes_quota', title: '配额' },
@@ -341,15 +355,39 @@ const definitions: Record<
       fields: [
         { name: 'fs', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'subvolume', label: '子卷', required: true },
+        { name: 'group', label: '子卷组', placeholder: '_nogroup' },
         { name: 'name', label: '快照名称', required: true }
       ],
       buildBody: (values, clusterId) => ({
         cluster_id: clusterId,
         fs: String(values.fs ?? ''),
         subvolume: String(values.subvolume ?? ''),
-        name: String(values.name ?? '')
+        name: String(values.name ?? ''),
+        ...(values.group ? { group: String(values.group) } : {})
       })
     },
+    extraActions: [{
+      title: '克隆快照',
+      path: '/filesystem/subvolume/snapshot/clone',
+      method: 'POST',
+      successMessage: 'CephFS 快照克隆已启动',
+      fields: [
+        { name: 'target', label: '目标子卷名称', required: true },
+        { name: 'target_group', label: '目标子卷组', placeholder: '_nogroup' },
+        { name: 'pool_layout', label: '目标数据池', type: 'select', optionsLoader: cephfsPoolOptions }
+      ],
+      initialValues: { target_group: '_nogroup' },
+      buildBody: (values, clusterId, row) => ({
+        cluster_id: clusterId,
+        fs: fsName(row),
+        subvolume: subvolumeName(row),
+        snap: resourceName(row),
+        target: String(values.target ?? ''),
+        group: groupName(row),
+        target_group: String(values.target_group ?? '_nogroup'),
+        ...(values.pool_layout ? { pool_layout: String(values.pool_layout) } : {})
+      })
+    }],
     deleteAction: {
       title: '删除 CephFS 快照',
       path: '/filesystem/subvolume/snapshot',
