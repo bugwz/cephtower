@@ -293,7 +293,8 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       resourceKind: 'rbd_snapshot',
       successMessage: 'RBD 快照删除执行成功',
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, image_spec: imageSpec(row), snap: snapshotName(row) }),
-      resourceKey: (row) => `rbd/image/${imageSpec(row)}/snapshot/${snapshotName(row)}`
+      resourceKey: (row) => `rbd/image/${imageSpec(row)}/snapshot/${snapshotName(row)}`,
+      disabledWhen: (row) => row.is_protected === true ? '请先取消快照保护后再删除' : Array.isArray(row.children) && row.children.length > 0 ? '快照仍有子镜像，请先扁平化或删除子镜像' : undefined
     },
     columns: [
       { key: 'name', title: '快照' },
@@ -304,6 +305,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'used_bytes', title: '占用（bytes）' },
       { key: 'protected', title: '保护' },
       { key: 'timestamp', title: '时间' },
+      { key: 'children', title: '子镜像' },
       { key: 'resource_version', title: '版本' }
     ]
   },

@@ -54,6 +54,7 @@ var collectionFailureKinds = map[string][]string{
 	"collect.rbd_namespace":           {"rbd_namespace", "rbd_trash", "rbd_snapshot", "rbd_image", "rbd_group"},
 	"collect.rbd_image_detail":        {"rbd_snapshot", "rbd_image"},
 	"collect.rbd_snapshot":            {"rbd_snapshot"},
+	"collect.rbd_snapshot_children":   {"rbd_snapshot"},
 	"collect.rbd_trash":               {"rbd_trash"},
 	"collect.rbd_group_images":        {"rbd_group"},
 	"collect.rbd_group_snapshots":     {"rbd_group"},

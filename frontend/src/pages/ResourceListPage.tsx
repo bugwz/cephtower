@@ -62,6 +62,7 @@ export interface ResourceDeleteAction {
   successMessage: string
   buildBody: (row: ApiRecord, clusterId: number) => ApiRecord
   resourceKey: (row: ApiRecord) => string
+  disabledWhen?: (row: ApiRecord) => string | undefined
 }
 
 export interface ResourceListPageDefinition extends FeatureRequirements {
@@ -219,6 +220,11 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
       return
     }
     const action = definition.deleteAction
+    const blockedReason = action.disabledWhen?.(row)
+    if (blockedReason) {
+      message.warning(blockedReason)
+      return
+    }
     const resourceKey = action.resourceKey(row)
     if (!resourceKey) {
       message.error('无法识别资源标识')
@@ -429,7 +435,7 @@ function buildColumns(
           </Dropdown>
         ) : null}
         {definition.deleteAction ? (
-          <TableAction danger disabled={mutationBlocked} onClick={() => deleteRow(row)}>删除</TableAction>
+          <TableAction danger disabled={mutationBlocked || Boolean(definition.deleteAction.disabledWhen?.(row))} title={definition.deleteAction.disabledWhen?.(row)} onClick={() => deleteRow(row)}>删除</TableAction>
         ) : null}
       </TableActions>
     )

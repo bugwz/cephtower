@@ -489,13 +489,18 @@ which could collapse multiple paths and schedules into one resource key.
 - For fast-diff images, the already collected `rbd du` rows are joined by snapshot name
   and exposed as `used_bytes`/`disk_usage`, without another command per snapshot. The
   action form defaults to protect or unprotect according to the observed state.
+- Non-snapshot-mirrored images query `rbd children <image@snapshot> --format json`,
+  matching `Children.cc`; child pool, namespace, and image identities are displayed.
+  Snapshot-mirrored images skip this fan-out, matching Dashboard behavior.
+- Delete is disabled with an explanatory tooltip while the snapshot is protected or
+  still has child images. The submit path repeats the guard before issuing any request.
 - Snapshot actions now include independent copy alongside clone. Copy maps to
   `rbd copy <pool[/namespace]/image@snapshot> <destination>` from `Copy.cc`; clone
   continues to map to `rbd clone`. Both validate full destination scope and verify the
   created image with `rbd info`.
-- Namespace fixtures cover protected state, timestamp, usage, identity, and command
-  deduplication. Command tests cover namespaced copy, clone, and purge. Live validation
-  remains pending.
+- Namespace fixtures cover protected state, timestamp, usage, children, identity, and
+  command deduplication. Command tests cover namespaced copy, clone, and purge. Live
+  validation remains pending.
 
 ### RBD runtime status
 

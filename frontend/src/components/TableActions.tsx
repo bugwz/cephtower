@@ -9,6 +9,7 @@ interface TableActionProps {
   disabled?: boolean
   loading?: boolean
   onClick?: () => void
+  title?: string
 }
 
 export function TableActions({ children }: { children: ReactNode }) {
@@ -19,7 +20,7 @@ export function TableActions({ children }: { children: ReactNode }) {
   )
 }
 
-export function TableAction({ children, danger, disabled, loading, onClick }: TableActionProps) {
+export function TableAction({ children, danger, disabled, loading, onClick, title }: TableActionProps) {
   const blocked = disabled || loading
 
   function handleClick(event: MouseEvent<HTMLElement>) {
@@ -35,6 +36,7 @@ export function TableAction({ children, danger, disabled, loading, onClick }: Ta
       className={danger ? 'table-action table-action-danger' : 'table-action'}
       disabled={blocked}
       aria-busy={loading || undefined}
+      title={title}
       onClick={handleClick}
     >
       {children}

@@ -15,12 +15,13 @@ import (
 
 func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
 	base := malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
-		"collect.rbd_namespace":    []byte(`[{"name":"team"}]`),
-		"collect.rbd_image_detail": []byte(`[{"image":"image","size":1024,"format":2},{"image":"image","snapshot":"snap","size":512,"format":2}]`),
-		"collect.rbd_image_info":   []byte(`{"name":"image","features":["fast-diff"]}`),
-		"collect.rbd_image_usage":  []byte(`{"images":[{"name":"image","snapshot":"snap","used_size":256},{"name":"image","used_size":512}]}`),
-		"collect.rbd_snapshot":     []byte(`[{"name":"snap","id":1,"size":1024,"protected":"true","timestamp":"Tue Sep 23 02:03:04 2026"}]`),
-		"collect.rbd_trash":        []byte(`[{"name":"image","id":"abc123"}]`),
+		"collect.rbd_namespace":         []byte(`[{"name":"team"}]`),
+		"collect.rbd_image_detail":      []byte(`[{"image":"image","size":1024,"format":2},{"image":"image","snapshot":"snap","size":512,"format":2}]`),
+		"collect.rbd_image_info":        []byte(`{"name":"image","features":["fast-diff"]}`),
+		"collect.rbd_image_usage":       []byte(`{"images":[{"name":"image","snapshot":"snap","used_size":256},{"name":"image","used_size":512}]}`),
+		"collect.rbd_snapshot":          []byte(`[{"name":"snap","id":1,"size":1024,"protected":"true","timestamp":"Tue Sep 23 02:03:04 2026"}]`),
+		"collect.rbd_snapshot_children": []byte(`[{"pool":"child-pool","pool_namespace":"apps","image":"child"}]`),
+		"collect.rbd_trash":             []byte(`[{"name":"image","id":"abc123"}]`),
 	}}
 	var calls []executor.CommandSpec
 	provider := NativeProvider{Executor: recordingExecutor{base: base, calls: &calls}}
@@ -61,6 +62,10 @@ func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
 			if payload["protected"] != true || payload["is_protected"] != true || payload["used_bytes"] != uint64(256) || payload["disk_usage"] != uint64(256) || payload["timestamp"] != "Tue Sep 23 02:03:04 2026" {
 				t.Fatalf("snapshot details lost: %+v", payload)
 			}
+			children := objectList(payload["children"])
+			if len(children) != 1 || children[0]["pool"] != "child-pool" || children[0]["pool_namespace"] != "apps" || children[0]["image"] != "child" {
+				t.Fatalf("snapshot children lost: %+v", payload)
+			}
 		}
 	}
 	if counts["rbd_image"] != 2 || counts["rbd_snapshot"] != 2 || counts["rbd_trash"] != 2 {
@@ -68,12 +73,15 @@ func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
 	}
 	imageLists := map[string]int{}
 	usageCalls := map[string]int{}
+	childCalls := map[string]int{}
 	for _, call := range calls {
 		switch call.ID {
 		case "collect.rbd_image_detail":
 			imageLists[strings.Join(call.Args, " ")]++
 		case "collect.rbd_image_usage":
 			usageCalls[strings.Join(call.Args, " ")]++
+		case "collect.rbd_snapshot_children":
+			childCalls[strings.Join(call.Args, " ")]++
 		}
 	}
 	for _, command := range []string{
@@ -90,6 +98,14 @@ func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
 	} {
 		if usageCalls[command] != 1 {
 			t.Fatalf("usage command %q count=%d, all=%v", command, usageCalls[command], usageCalls)
+		}
+	}
+	for _, command := range []string{
+		"children pool/image@snap --format json",
+		"children pool/team/image@snap --format json",
+	} {
+		if childCalls[command] != 1 {
+			t.Fatalf("children command %q count=%d, all=%v", command, childCalls[command], childCalls)
 		}
 	}
 }

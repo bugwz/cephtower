@@ -78,6 +78,17 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 								markCollectionUnavailable(ctx, "collect.rbd_snapshot")
 								continue
 							}
+							snapshot["children"] = []map[string]any{}
+							if payload.MirrorMode != "snapshot" {
+								var children []map[string]any
+								if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_snapshot_children", []string{"children", spec + "@" + name, "--format", "json"}, &children) {
+									if children == nil {
+										markCollectionUnavailable(ctx, "collect.rbd_snapshot_children")
+										continue
+									}
+									snapshot["children"] = children
+								}
+							}
 							if used, ok := payload.SnapshotUsage[name]; ok {
 								snapshot["used_bytes"] = used
 								snapshot["disk_usage"] = used
