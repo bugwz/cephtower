@@ -34,6 +34,10 @@ func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spe
 		return executor.CommandResult{Stdout: []byte(`[{"name":"mon.a","rank":"0","stamp":"2026-09-14 01:00:00","seq":1,"channel":"audit","priority":"[INF]","message":"entry"}]`)}, nil
 	case "configuration.help":
 		return executor.CommandResult{Stdout: []byte(`{"name":"osd_memory_target","type":"size","default":"4G","can_update_at_runtime":true}`)}, nil
+	case "cephfs.directory.list":
+		return executor.CommandResult{Stdout: []byte("drwxr-xr-x 4096 1000 1000 2026-09-23 12:00:00 projects/\n")}, nil
+	case "cephfs.directory.quota":
+		return executor.CommandResult{Stdout: []byte("max_bytes: 1048576\nmax_files: 100\n")}, nil
 	case "collect.ceph_user":
 		return executor.CommandResult{Stdout: []byte(`{"auth_dump":[{"entity":"client.backup","key":"sensitive-fixture-key","caps":{"mon":"allow r"}}]}`)}, nil
 	case "collect.config":
@@ -59,6 +63,9 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 	now := time.Now().UTC()
 	cluster := store.CephCluster{Name: "fixture", MonitorAddresses: "mon:6789", ClientUsername: "client.admin", ClientKey: key, CreatedAt: now, UpdatedAt: now}
 	if err := db.CreateCluster(context.Background(), &cluster); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.UpsertCapabilities(context.Background(), []store.CephClusterCapability{{ClusterID: cluster.ID, Name: "cephfs_data_access", Supported: true, ObservedAt: now, UpdatedAt: now}}); err != nil {
 		t.Fatal(err)
 	}
 	runner := &authRouteExecutor{}
@@ -117,6 +124,10 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 	helpResult := send("GET", "/configuration/option", map[string]any{"name": "osd_memory_target"})
 	if !strings.Contains(helpResult.Body.String(), "can_update_at_runtime") {
 		t.Fatal("configuration metadata missing")
+	}
+	directoryResult := send("GET", "/filesystem/entries", map[string]any{"fs": "cephfs", "path": "/"})
+	if directoryResult.Header().Get("Cache-Control") != "no-store" || !strings.Contains(directoryResult.Body.String(), `"path":"/projects"`) || !strings.Contains(directoryResult.Body.String(), `"max_files":100`) {
+		t.Fatalf("directory browser response is incomplete: %s", directoryResult.Body.String())
 	}
 	send("PUT", "/configuration/value", map[string]any{"who": "osd/host:node-a", "name": "osd_memory_target", "value": "4G"})
 	if _, err := db.FindResource(context.Background(), cluster.ID, "config_value", "osd/host:node-a:osd_memory_target"); !errors.Is(err, store.ErrRecordNotFound) {

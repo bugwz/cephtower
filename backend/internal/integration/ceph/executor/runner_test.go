@@ -35,6 +35,8 @@ func TestRunnerConfiguresCephFSShellWithoutUnsupportedArguments(t *testing.T) {
 	fake := filepath.Join(dir, "cephfs-shell")
 	script := `#!/bin/sh
 test -n "$CEPH_CONF" || exit 21
+test -f "$CEPHFS_SHELL_CONF" || exit 23
+grep -q 'colors = False' "$CEPHFS_SHELL_CONF" || exit 24
 case "$CEPH_ARGS" in
   *"--name=client.test"*"--keyring="*) ;;
   *) exit 22 ;;

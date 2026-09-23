@@ -202,7 +202,10 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"snapshot_schedule.action"}, true, map[string]JSONField{"path": stringField(true), "schedule": stringField(true), "action": stringField(true, "activate", "deactivate", "remove"), "start": stringField(true), "subvol": stringField(false), "group": stringField(false)})
 	add([]string{"snapshot_schedule.create"}, true, map[string]JSONField{"path": stringField(true), "schedule": stringField(true), "start": stringField(false), "subvol": stringField(false), "group": stringField(false)})
 	add([]string{"cephfs_authorization.create"}, true, map[string]JSONField{"client": stringField(true), "path": stringField(false), "access": stringField(true, "r", "rw"), "quota": boolField(false), "snapshot": boolField(false), "root_squash": boolField(false)})
-	add([]string{"cephfs_entry.quota"}, true, map[string]JSONField{"path": stringField(true), "max_bytes": integerField(true)})
+	contracts["cephfs_entry.quota"] = RequestContract{Required: true, Fields: map[string]JSONField{
+		"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true),
+		"max_bytes": integerField(false), "max_files": integerField(false),
+	}}
 	add([]string{"rgw_user.create"}, true, map[string]JSONField{"uid": stringField(true), "display_name": stringField(true), "max_buckets": integerField(false), "email": stringField(false)})
 	add([]string{"rgw_user.update"}, true, map[string]JSONField{"display_name": stringField(false), "email": stringField(false), "max_buckets": integerField(false), "suspended": boolField(false), "system": boolField(false)})
 	add([]string{"rgw_user.ratelimit"}, true, map[string]JSONField{"uid": stringField(true), "enabled": boolField(true), "max_read_ops": integerField(true), "max_write_ops": integerField(true), "max_read_bytes": integerField(true), "max_write_bytes": integerField(true)})

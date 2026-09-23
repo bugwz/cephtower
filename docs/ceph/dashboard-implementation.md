@@ -39,7 +39,7 @@
 | cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict` | 已有文件系统详情与客户端接口；计数器、rename、auth 与目录操作待核对 |
 | cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot`、`fs clone` | 已有组范围采集、clone 状态/进度/失败展示、快照克隆和进行中任务取消；metadata 与其余完整参数需核对 |
 | cephfs / snapshot schedule | `fs snap-schedule` | 已有全路径发现、精确状态、创建、删除、激活/停用、retention 和模块启用 |
-| cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 已修正 cephfs-shell 认证、文件系统选择和目录配额回读；目录快照与浏览待补齐 |
+| cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 已有实时目录浏览、目录元数据、双维度配额读取/设置；目录快照待补齐 |
 | nfs | `nfs cluster`、`nfs export` | 已有基础管理；完整 export 属性、CephFS/RGW FSAL 与 ingress 待核对 |
 | smb | `smb show/apply/rm` 与模块资源定义 | 已有部分管理；域加入、用户组、资源校验与配置语义需核对 |
 | rgw / user / account / role | `radosgw-admin user/account/role` 与 RGW Admin Ops | 当前存在基础页面；配额、subuser、caps、rate limit、角色策略等需逐项扩展 |
@@ -166,6 +166,29 @@ CephTower 复用 `ceph auth ls --format json` 的 MDS caps，在不增加 CLI �
 文件系统执行 `getxattr` 并核对返回值。路径支持空格和引号，传给 shell 前按单一 token
 转义；拒绝 NUL、换行和逗号，其中逗号在 cephfs-shell 中是多命令分隔符。这样写操作不再
 依赖默认文件系统，也不会把“命令退出成功但值未生效”当成成功。
+
+## 已实现：CephFS 目录浏览与双维度配额
+
+参考 Dashboard `CephFS.ls_dir()`、`get_directory()` 和 `get_quotas()`，目录页改为按需读取，
+不再查询一个从未被采集器填充的 `cephfs_entry` 缓存。`GET /api/v1/filesystem/entries`
+接收文件系统和绝对路径，执行：
+
+1. `cephfs-shell --fs <filesystem> ls -la <path>`，解析直属目录的权限、大小、UID、GID、
+   修改时间和名称；文件不会混入目录树。
+2. 对当前非根目录及每个直属子目录执行
+   `cephfs-shell --fs <filesystem> quota get <path>`，读取 `max_bytes` 与 `max_files`。
+3. cephfs-shell 用退出码 9 表示扩展属性未设置；仅该退出码会按 Dashboard 语义转换为
+   0（不限制），其他退出、超时和不可解析输出均返回错误，不伪装成空目录。
+
+executor 为非交互调用写入临时 `cephfs-shell.conf` 并关闭颜色，确保 `ls -l` 输出不会夹带
+ANSI 转义。配额读取最多 8 路并发，且单层目录最多接受 500 个子目录，以限制一次请求触发
+的数据面调用数量；路径中的
+逗号、换行和 NUL 被拒绝，含空格或引号的路径作为一个 shell token 转义。
+
+目录页支持选择文件系统、输入路径、进入子目录、返回上级，并实时显示两种配额。配额写入
+支持同时或分别设置 `max_bytes`、`max_files`，0 表示不限制；双字段写入分成两个明确的
+`setxattr` 步骤，最后在同一个指定文件系统回读两个属性并逐值核对。能力探测改用
+cephfs-shell 实际支持的 `--help`，不再调用不存在的 `--version`。
 
 ## 已实现：集群配置与运行日志
 

@@ -95,7 +95,11 @@ func (r *Runner) Run(ctx context.Context, access ClusterAccess, spec CommandSpec
 		if !cephClientName.MatchString(access.ClientUsername) {
 			return CommandResult{}, fmt.Errorf("cephfs-shell client name is invalid")
 		}
-		cmd.Env = append(os.Environ(), "CEPH_CONF="+conf, "CEPH_ARGS=--name="+access.ClientUsername+" --keyring="+keyring)
+		shellConf := filepath.Join(dir, "cephfs-shell.conf")
+		if err := atomicWrite(shellConf, []byte("[cephfs-shell]\ncolors = False\n")); err != nil {
+			return CommandResult{}, fmt.Errorf("write cephfs-shell config: %w", err)
+		}
+		cmd.Env = append(os.Environ(), "CEPH_CONF="+conf, "CEPH_ARGS=--name="+access.ClientUsername+" --keyring="+keyring, "CEPHFS_SHELL_CONF="+shellConf)
 	}
 	configureCommandProcess(cmd)
 	cmd.Stdin = bytes.NewReader(spec.Stdin)

@@ -1,4 +1,5 @@
 import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
+import { CephFSDirectoryBrowser } from './CephFSDirectoryBrowser'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 import { listResource } from '../../api/resource'
 
@@ -35,7 +36,7 @@ export function CephfsAuthorizationsPage() {
 }
 
 export function CephfsEntriesPage() {
-  return <ResourceListPage definition={definitions.cephfsEntries} />
+  return <CephFSDirectoryBrowser />
 }
 
 export function NfsClustersPage() {
@@ -62,7 +63,6 @@ const definitions: Record<
   | 'subvolumes'
   | 'cephfsSnapshots'
   | 'cephfsAuthorizations'
-  | 'cephfsEntries'
   | 'nfsClusters'
   | 'nfs'
   | 'smbClusters'
@@ -519,33 +519,6 @@ const definitions: Record<
       { key: 'quota', title: '布局/配额', render: (value) => value ? '是' : '否' },
       { key: 'snapshot', title: '快照', render: (value) => value ? '是' : '否' },
       { key: 'root_squash', title: 'Root squash', render: (value) => value ? '是' : '否' },
-      { key: 'resource_version', title: '版本' }
-    ]
-  },
-  cephfsEntries: {
-    title: 'CephFS 目录配额',
-    path: '/filesystem/entries',
-    requiredCapabilities: ['cephfs_data_access'],
-    updateAction: {
-      title: '更新目录配额',
-      path: '/filesystem/entry/quota',
-      method: 'PATCH',
-      successMessage: '目录配额更新执行成功',
-      fields: [
-        { name: 'max_bytes', label: '最大容量（字节）', type: 'number', required: true, min: 1 }
-      ],
-      buildBody: (values, clusterId, row) => ({
-        cluster_id: clusterId,
-        fs: fsName(row),
-        path: String(row?.path ?? '/'),
-        max_bytes: Number(values.max_bytes)
-      })
-    },
-    columns: [
-      { key: 'fs', title: '文件系统' },
-      { key: 'path', title: '路径' },
-      { key: 'quota', title: '配额' },
-      { key: 'bytes_used', title: '已用' },
       { key: 'resource_version', title: '版本' }
     ]
   },

@@ -277,10 +277,24 @@ func TestCephFSEntryQuotaTargetsFilesystemAndVerifiesValue(t *testing.T) {
 	if cephFSEntryQuotaMatches(map[string]any{"max_bytes": "4096"}, []byte("2048\n")) {
 		t.Fatal("mismatched quota readback was accepted")
 	}
+	both, err := build(Request{Action: "cephfs_entry.quota", ResourceKey: "filesystem/cephfs/entry/quota"}, map[string]any{
+		"path": "/data", "max_bytes": float64(0), "max_files": float64(12),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(both.followups) != 1 || !reflect.DeepEqual(both.check, []string{"--fs", "cephfs", "getxattr", "/data", "ceph.quota.max_bytes", ",getxattr", "/data", "ceph.quota.max_files"}) {
+		t.Fatalf("combined quota command = %+v", both)
+	}
+	if !cephFSEntryQuotaMatches(map[string]any{"max_bytes": float64(0), "max_files": float64(12)}, []byte("0\n12\n")) {
+		t.Fatal("combined quota readback was rejected")
+	}
 	for _, request := range []Request{
 		{Action: "cephfs_entry.quota", ResourceKey: "filesystem//entry/quota"},
 		{Action: "cephfs_entry.quota", ResourceKey: "filesystem/cephfs/entry/quota", Parameters: map[string]any{"path": "relative", "max_bytes": "1"}},
 		{Action: "cephfs_entry.quota", ResourceKey: "filesystem/cephfs/entry/quota", Parameters: map[string]any{"path": "/bad,path", "max_bytes": "1"}},
+		{Action: "cephfs_entry.quota", ResourceKey: "filesystem/cephfs/entry/quota", Parameters: map[string]any{"path": "/data"}},
+		{Action: "cephfs_entry.quota", ResourceKey: "filesystem/cephfs/entry/quota", Parameters: map[string]any{"path": "/data", "max_files": float64(-1)}},
 	} {
 		if _, err := build(request, request.Parameters); err == nil {
 			t.Fatalf("invalid request accepted: %+v", request)

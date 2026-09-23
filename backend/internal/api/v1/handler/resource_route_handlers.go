@@ -549,10 +549,6 @@ func (h *Handler) CreateCephFSAuthorization(w http.ResponseWriter, r *http.Reque
 	h.MutateResource("cephfs_authorization", "cephfs_authorization.create", "medium")(w, r)
 }
 
-func (h *Handler) ListCephFSEntries(w http.ResponseWriter, r *http.Request) {
-	h.ReadResource("cephfs_entry", false)(w, r)
-}
-
 func (h *Handler) UpdateCephFSEntryQuota(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("cephfs_entry", "cephfs_entry.quota", "medium")(w, r)
 }

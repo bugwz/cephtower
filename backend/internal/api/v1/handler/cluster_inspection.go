@@ -93,3 +93,29 @@ func (h *Handler) GetSnapshotScheduleStatus(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Cache-Control", "no-store")
 	WriteSuccess(w, 200, "success", map[string]any{"items": rows})
 }
+
+func (h *Handler) ListCephFSEntries(w http.ResponseWriter, r *http.Request) {
+	var request struct {
+		ClusterID uint64 `json:"cluster_id"`
+		FS        string `json:"fs"`
+		Path      string `json:"path,omitempty"`
+	}
+	if !DecodeStrict(w, r, &request) {
+		return
+	}
+	annotateAudit(r, "cephfs_entry.list", "cephfs_entry", request.Path, "", &request.ClusterID)
+	if h.Inspection == nil {
+		WriteError(w, r, 501, "capability_unavailable", "cluster inspection is unavailable", false, nil)
+		return
+	}
+	if !h.ensureResourceCapability(w, r, request.ClusterID, "cephfs_entry") {
+		return
+	}
+	result, err := h.Inspection.CephFSDirectories(r.Context(), request.ClusterID, request.FS, request.Path)
+	if err != nil {
+		writeActionError(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	WriteSuccess(w, 200, "success", result)
+}

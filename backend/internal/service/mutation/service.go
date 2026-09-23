@@ -1293,12 +1293,40 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("path must be absolute and cannot contain commas or newlines")
 		}
 		path = quoteCephFSShellToken(path)
-		bytes := optional(p, "max_bytes")
-		if bytes == "" {
-			return command{}, invalid("max_bytes is required")
+		maxBytes, err := cephFSQuotaValue(p, "max_bytes")
+		if err != nil {
+			return command{}, err
+		}
+		maxFiles, err := cephFSQuotaValue(p, "max_files")
+		if err != nil {
+			return command{}, err
+		}
+		if maxBytes == "" && maxFiles == "" {
+			return command{}, invalid("max_bytes or max_files is required")
 		}
 		prefix := []string{"--fs", fs}
-		return cephfsShell(append(append([]string{}, prefix...), "setxattr", path, "ceph.quota.max_bytes", bytes), append(append([]string{}, prefix...), "getxattr", path, "ceph.quota.max_bytes")), nil
+		setCommand := func(attribute, value string) command {
+			return cephfsShell(append(append([]string{}, prefix...), "setxattr", path, attribute, value), nil)
+		}
+		var result command
+		if maxBytes != "" {
+			result = setCommand("ceph.quota.max_bytes", maxBytes)
+		}
+		if maxFiles != "" {
+			filesCommand := setCommand("ceph.quota.max_files", maxFiles)
+			if maxBytes == "" {
+				result = filesCommand
+			} else {
+				result.followups = append(result.followups, filesCommand)
+			}
+		}
+		result.check = append(append([]string{}, prefix...), "getxattr", path, "ceph.quota.max_bytes")
+		if maxBytes == "" {
+			result.check = append(append([]string{}, prefix...), "getxattr", path, "ceph.quota.max_files")
+		} else if maxFiles != "" {
+			result.check = append(result.check, ",getxattr", path, "ceph.quota.max_files")
+		}
+		return result, nil
 	case "rgw_user.create":
 		uid, err := required(p, "uid")
 		if err != nil {
@@ -2520,8 +2548,27 @@ func quoteCephFSShellToken(value string) string {
 }
 
 func cephFSEntryQuotaMatches(parameters map[string]any, data []byte) bool {
-	expected := optional(parameters, "max_bytes")
-	return expected != "" && strings.TrimSpace(string(data)) == expected
+	expected := make([]string, 0, 2)
+	if value := optional(parameters, "max_bytes"); value != "" {
+		expected = append(expected, value)
+	}
+	if value := optional(parameters, "max_files"); value != "" {
+		expected = append(expected, value)
+	}
+	actual := strings.Fields(string(data))
+	return len(expected) > 0 && len(actual) == len(expected) && strings.Join(actual, "\x00") == strings.Join(expected, "\x00")
+}
+
+func cephFSQuotaValue(parameters map[string]any, key string) (string, error) {
+	value := optional(parameters, key)
+	if value == "" {
+		return "", nil
+	}
+	parsed, err := strconv.ParseInt(value, 10, 64)
+	if err != nil || parsed < 0 {
+		return "", invalid(key + " must be a nonnegative integer")
+	}
+	return value, nil
 }
 func decodeImageSpec(value string) (string, error) {
 	decoded, err := base64.RawURLEncoding.DecodeString(value)

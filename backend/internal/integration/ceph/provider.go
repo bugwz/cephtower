@@ -64,7 +64,7 @@ func (p *NativeProvider) Probe(ctx context.Context, access ClusterAccess) (Probe
 		name   string
 		binary executor.Binary
 		args   []string
-	}{{"orchestrator", executor.BinaryCeph, []string{"orch", "status", "--format", "json"}}, {"mgr_module", executor.BinaryCeph, []string{"mgr", "module", "ls", "--format", "json"}}, {"cephfs_volume", executor.BinaryCeph, []string{"fs", "volume", "ls", "--format", "json"}}, {"nfs", executor.BinaryCeph, []string{"nfs", "cluster", "ls", "--format", "json"}}, {"smb", executor.BinaryCeph, []string{"smb", "cluster", "ls", "--format", "json"}}, {"rbd", executor.BinaryRBD, []string{"--version"}}, {"rgw_admin", executor.BinaryRGWAdmin, []string{"--version"}}, {"cephfs_data_access", executor.BinaryCephFSShell, []string{"--version"}}}
+	}{{"orchestrator", executor.BinaryCeph, []string{"orch", "status", "--format", "json"}}, {"mgr_module", executor.BinaryCeph, []string{"mgr", "module", "ls", "--format", "json"}}, {"cephfs_volume", executor.BinaryCeph, []string{"fs", "volume", "ls", "--format", "json"}}, {"nfs", executor.BinaryCeph, []string{"nfs", "cluster", "ls", "--format", "json"}}, {"smb", executor.BinaryCeph, []string{"smb", "cluster", "ls", "--format", "json"}}, {"rbd", executor.BinaryRBD, []string{"--version"}}, {"rgw_admin", executor.BinaryRGWAdmin, []string{"--version"}}, {"cephfs_data_access", executor.BinaryCephFSShell, []string{"--help"}}}
 	for _, probe := range optional {
 		_, err := p.runBinary(ctx, access, probe.binary, "capability."+probe.name, 30*time.Second, probe.args...)
 		capability := Capability{Name: probe.name, Supported: err == nil}

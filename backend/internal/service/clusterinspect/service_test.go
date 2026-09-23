@@ -18,10 +18,14 @@ type inspectExecutor struct {
 	output string
 	specs  []executor.CommandSpec
 	fail   bool
+	run    func(executor.CommandSpec) (executor.CommandResult, error)
 }
 
 func (e *inspectExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.specs = append(e.specs, spec)
+	if e.run != nil {
+		return e.run(spec)
+	}
 	if e.fail {
 		return executor.CommandResult{}, errors.New("unavailable")
 	}
