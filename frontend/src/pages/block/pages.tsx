@@ -159,7 +159,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       successMessage:'镜像同步请求已执行',
       confirmation:(values,row) => {
         const effects:Record<string,string> = {
-          'mirror-disable':'停用同步，镜像将不再复制更新',
+          'mirror-disable':values.force ? '强制停用同步；即使当前镜像不是主镜像也会解除同步关系' : '停用同步，镜像将不再复制更新',
           'mirror-promote':values.force ? '强制提升为主镜像；若远端仍为主镜像，可能造成双主和数据冲突' : '',
           'mirror-demote':'降级为非主镜像，请先停止对该镜像的写入',
           'mirror-resync':'重新同步，本地数据将被主镜像的数据覆盖'
@@ -176,8 +176,8 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
         {label:'从主镜像重新同步',value:'mirror-resync'},
         {label:'创建同步快照',value:'mirror-snapshot'}
       ]},
-      {name:'force',label:'强制提升（仅提升为主镜像时可选）',type:'boolean',visibleWhen:(values)=>values.action==='mirror-promote'}],
-      buildBody:(values,clusterId,row) => ({cluster_id:clusterId,image_spec:imageSpec(row),action:String(values.action),...(values.action==='mirror-promote'?{force:Boolean(values.force)}:{})})
+      {name:'force',label:'强制执行（仅提升或停用时可选）',type:'boolean',visibleWhen:(values)=>values.action==='mirror-promote' || values.action==='mirror-disable'}],
+      buildBody:(values,clusterId,row) => ({cluster_id:clusterId,image_spec:imageSpec(row),action:String(values.action),...(['mirror-promote','mirror-disable'].includes(String(values.action))?{force:Boolean(values.force)}:{})})
     }, {
       title:'同步快照调度',buttonLabel:'快照调度',path:'/rbd/image/action',method:'POST',successMessage:'同步快照调度已更新',
       confirmation:(values,row)=>values.action==='mirror-schedule-remove' ? `移除镜像 ${imageSpec(row)} ${values.remove_interval ? `的 ${String(values.remove_interval)} 调度` : '的全部专属调度'}？继承的池或集群调度不会被删除。` : undefined,

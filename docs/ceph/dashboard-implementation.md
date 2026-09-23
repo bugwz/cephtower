@@ -283,10 +283,13 @@ which could collapse multiple paths and schedules into one resource key.
   enforces mirror mode and primary-state prerequisites and returns errors to the UI.
 - Promotion optionally maps to `rbd mirror image promote <spec> --force`; the UI
   requires an explicit switch and warns about dual-primary and data-conflict risk.
-  Strict request validation rejects non-boolean force values and force on other actions.
-- Namespace-aware command tests cover all seven operations and forced promotion.
-  Fixture tests cover enabled and absent mirroring metadata. Forced disable and
-  live-cluster validation remain pending.
+  Disable similarly maps to `rbd mirror image disable <spec> --force`, matching
+  `MirrorImage.cc` support for disabling a non-primary image. Both paths require an
+  explicit switch and operation-specific high-risk confirmation.
+- Strict request validation rejects non-boolean force values and force on other actions.
+- Namespace-aware command tests cover all seven operations, forced promotion, and
+  forced disable. Fixture tests cover enabled and absent mirroring metadata.
+  Live-cluster validation remains pending.
 
 ### RBD mirror snapshot schedules
 

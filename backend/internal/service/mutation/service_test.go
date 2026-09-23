@@ -707,11 +707,16 @@ func TestRBDImageMirroringCommands(t *testing.T) {
 	if err != nil || !reflect.DeepEqual(forced.args, []string{"mirror", "image", "promote", spec, "--force"}) {
 		t.Fatalf("forced promote=%+v err=%v", forced, err)
 	}
+	forcedDisable, err := build(Request{Action: "rbd_image.action", ResourceKey: key}, map[string]any{"action": "mirror-disable", "force": true})
+	if err != nil || !reflect.DeepEqual(forcedDisable.args, []string{"mirror", "image", "disable", spec, "--force"}) || !reflect.DeepEqual(forcedDisable.check, []string{"info", spec, "--format", "json"}) {
+		t.Fatalf("forced disable=%+v err=%v", forcedDisable, err)
+	}
 	for _, payload := range []map[string]any{
 		{"action": "mirror-demote", "force": true},
 		{"action": "mirror-demote", "force": false},
 		{"action": "snapshot-purge", "force": true},
 		{"action": "mirror-promote", "force": "true"},
+		{"action": "mirror-disable", "force": "true"},
 	} {
 		if _, err := build(Request{Action: "rbd_image.action", ResourceKey: key}, payload); err == nil {
 			t.Fatalf("invalid force accepted: %v", payload)
