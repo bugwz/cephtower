@@ -177,6 +177,8 @@ const definitions: Record<
       { key: 'fs', title: '文件系统' },
       { key: 'filesystem', title: '文件系统名称' },
       { key: 'client_id', title: '客户端 ID' },
+      { key: 'type', title: '类型' },
+      { key: 'version', title: '版本' },
       { key: 'hostname', title: '主机' },
       { key: 'root', title: '根路径' },
       { key: 'state', title: '状态' },

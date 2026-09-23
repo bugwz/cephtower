@@ -1270,7 +1270,16 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		return ceph(args, []string{"auth", "get", client, "--format", "json"}), nil
 	case "cephfs_client.evict":
-		return ceph([]string{"tell", "mds.*", "client", "evict", "id=" + last(tail)}, []string{"fs", "status", pathValue(tail, "filesystem"), "--format", "json"}), nil
+		fs := pathValue(tail, "filesystem")
+		clientID := last(tail)
+		if fs == "" || !identifier.MatchString(fs) || strings.Contains(fs, "/") {
+			return command{}, invalid("filesystem is invalid")
+		}
+		if _, err := strconv.ParseUint(clientID, 10, 64); err != nil {
+			return command{}, invalid("client_id must be an unsigned integer")
+		}
+		target := "mds." + fs + ":0"
+		return ceph([]string{"tell", target, "client", "evict", "id=" + clientID}, []string{"tell", target, "session", "ls", "--format", "json"}), nil
 	case "cephfs_entry.quota":
 		path, err := required(p, "path")
 		if err != nil {

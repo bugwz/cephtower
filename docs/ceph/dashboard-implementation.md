@@ -133,6 +133,19 @@ CephTower 复用 `ceph auth ls --format json` 的 MDS caps，在不增加 CLI �
 授权创建成功后，`cephfs_authorization` 归属 `ceph_auth` 采集模块，立即重新执行同一条
 `auth ls` 命令并更新授权列表；定时采集也会把已撤销或被修改的授权标记为过期。
 
+## 已实现：CephFS 客户端会话
+
+参考 Dashboard `CephFSClients` 与客户端表格，拓扑采集对每个文件系统执行
+`tell mds.<fsname>:0 session ls --format json`。采集兼容 Ceph 版本中顶层数组及
+`sessions` 对象两种 JSON 外形，保留完整 session 指标，并把 `client_metadata` 规范化为
+类型、版本、主机和挂载根路径。列表展示与 Dashboard 对齐的 ID、类型、状态、版本、主机和
+根路径，详情仍可查看 lease、cap、请求和存活时间等原始字段。
+
+客户端驱逐限定到所属文件系统的 rank 0：
+`tell mds.<fsname>:0 client evict id=<client_id>`，不再向 `mds.*` 广播可能与其他文件系统
+同号客户端冲突的命令。后置检查复用同一 rank 的 `session ls`，成功后立即刷新
+`cephfs_client` 缓存；没有活动 MDS 或返回结构无效时保留最后一次有效会话列表。
+
 ## 已实现：集群配置与运行日志
 
 配置依据：`dashboard/controllers/cluster_configuration.py`、`src/mon/ConfigMonitor.cc`、

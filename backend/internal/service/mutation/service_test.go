@@ -242,6 +242,23 @@ func TestCephFSAuthorizationBuildsExtendedCapabilities(t *testing.T) {
 	}
 }
 
+func TestCephFSClientEvictionTargetsOwningFilesystem(t *testing.T) {
+	cmd, err := build(Request{Action: "cephfs_client.evict", ResourceKey: "filesystem/cephfs/client/123"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantArgs := []string{"tell", "mds.cephfs:0", "client", "evict", "id=123"}
+	wantCheck := []string{"tell", "mds.cephfs:0", "session", "ls", "--format", "json"}
+	if !reflect.DeepEqual(cmd.args, wantArgs) || !reflect.DeepEqual(cmd.check, wantCheck) {
+		t.Fatalf("command = args %#v check %#v", cmd.args, cmd.check)
+	}
+	for _, key := range []string{"filesystem//client/123", "filesystem/cephfs/client/not-a-number"} {
+		if _, err := build(Request{Action: "cephfs_client.evict", ResourceKey: key}, nil); err == nil {
+			t.Fatalf("invalid resource key accepted: %q", key)
+		}
+	}
+}
+
 func TestFilesystemCreateRequiresPoolPair(t *testing.T) {
 	_, err := build(Request{Action: "filesystem.create", ResourceKey: "filesystem"}, map[string]any{
 		"name": "cephfs", "metadata_pool": "cephfs.meta",

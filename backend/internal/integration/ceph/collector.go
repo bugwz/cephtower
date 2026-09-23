@@ -67,6 +67,7 @@ var collectionFailureKinds = map[string][]string{
 	"collect.cephfs_clone_status":     {"subvolume"},
 	"collect.cephfs_snapshot":         {"cephfs_snapshot"},
 	"collect.cephfs_snapshot_info":    {"cephfs_snapshot"},
+	"collect.cephfs_client":           {"cephfs_client"},
 	"collect.rgw_user_ratelimit":      {"rgw_user"},
 	"collect.rgw_user_stats":          {"rgw_user"},
 	"collect.rgw_user_detail":         {"rgw_user"},
@@ -556,6 +557,7 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 				payload := cephdomain.MetadataServer{Name: info.Name, Filesystem: filesystem.MDSMap.FSName, Rank: &rank, State: info.State}
 				rows = append(rows, Observation{Kind: "mds", NaturalKey: info.Name, Name: info.Name, Status: info.State, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 			}
+			rows = append(rows, p.collectCephFSClients(ctx, access, filesystem.MDSMap.FSName, now)...)
 		}
 		for _, standby := range mds.Standbys {
 			payload := cephdomain.MetadataServer{Name: standby.Name, State: "standby", Standby: true}

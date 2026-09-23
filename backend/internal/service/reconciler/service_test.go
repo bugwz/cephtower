@@ -3,6 +3,7 @@ package reconciler
 import (
 	"context"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -191,6 +192,18 @@ func TestCephAuthModuleOwnsUsersAndFilesystemAuthorizations(t *testing.T) {
 		}
 	}
 	t.Fatal("ceph_auth module is missing")
+}
+
+func TestTopologyModuleOwnsCephFSClients(t *testing.T) {
+	for _, module := range DefaultModules {
+		if module.Name == "topology" {
+			if !slices.Contains(module.Kinds, "cephfs_client") {
+				t.Fatalf("topology kinds = %v", module.Kinds)
+			}
+			return
+		}
+	}
+	t.Fatal("topology module is missing")
 }
 
 func TestReconcileSerializesTheSameClusterModule(t *testing.T) {
