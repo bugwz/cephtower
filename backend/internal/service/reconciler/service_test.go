@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -178,6 +179,18 @@ func TestReconcileMarksSuccessfulEmptyKindsStaleButPreservesUnavailableKinds(t *
 	if err != nil || retained.StaleAt != nil {
 		t.Fatalf("unavailable optional kind was marked stale: row=%#v err=%v", retained, err)
 	}
+}
+
+func TestCephAuthModuleOwnsUsersAndFilesystemAuthorizations(t *testing.T) {
+	for _, module := range DefaultModules {
+		if module.Name == "ceph_auth" {
+			if !reflect.DeepEqual(module.Kinds, []string{"ceph_user", "cephfs_authorization"}) {
+				t.Fatalf("ceph_auth kinds = %v", module.Kinds)
+			}
+			return
+		}
+	}
+	t.Fatal("ceph_auth module is missing")
 }
 
 func TestReconcileSerializesTheSameClusterModule(t *testing.T) {

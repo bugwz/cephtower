@@ -513,6 +513,10 @@ const definitions: Record<
       { key: 'client', title: '客户端' },
       { key: 'path', title: '路径' },
       { key: 'access', title: '权限' },
+      { key: 'permissions', title: 'MDS 权限' },
+      { key: 'quota', title: '布局/配额', render: (value) => value ? '是' : '否' },
+      { key: 'snapshot', title: '快照', render: (value) => value ? '是' : '否' },
+      { key: 'root_squash', title: 'Root squash', render: (value) => value ? '是' : '否' },
       { key: 'resource_version', title: '版本' }
     ]
   },

@@ -118,6 +118,21 @@
 - caps 按单个参数传递，支持空格和带引号的路径；拒绝选项注入、NUL 和非法子系统。
 - 无集群 API 集成测试实际经过路由、请求契约、命令执行模拟、资源入库、列表、导入、导出及审计。
 
+## 已实现：CephFS 访问授权发现
+
+CephFS Dashboard 的授权写入最终调用 `fs authorize`，但 Ceph 没有单独的授权列表命令。
+CephTower 复用 `ceph auth ls --format json` 的 MDS caps，在不增加 CLI 调用的前提下把每条
+`allow` 授权拆成 `cephfs_authorization` 资源。解析遵循 `MDSAuthCaps.cc` 的 cap 语法，支持：
+
+- 逗号或分号分隔的多条授权，以及包含逗号的 `gids`；
+- `fsname`、带引号或无引号的 `path`、`uid`、`gids`、`network` 和 `root_squash`；
+- `r`、`rw`、`p`、`s`、`f` 扩展及 `*`/`all` 通配权限；
+- 没有 `fsname` 的全局 MDS cap，使用 `*` 明确展示其作用域；
+- 原始 MDS cap 与结构化字段同时展示，且认证密钥不会进入资源缓存。
+
+授权创建成功后，`cephfs_authorization` 归属 `ceph_auth` 采集模块，立即重新执行同一条
+`auth ls` 命令并更新授权列表；定时采集也会把已撤销或被修改的授权标记为过期。
+
 ## 已实现：集群配置与运行日志
 
 配置依据：`dashboard/controllers/cluster_configuration.py`、`src/mon/ConfigMonitor.cc`、
