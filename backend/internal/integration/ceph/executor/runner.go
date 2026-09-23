@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -47,6 +48,9 @@ type CommandResult struct {
 type Executor interface {
 	Run(context.Context, ClusterAccess, CommandSpec) (CommandResult, error)
 }
+
+var cephClientName = regexp.MustCompile(`^client\.[A-Za-z0-9_.-]+$`)
+
 type Runner struct {
 	Paths    map[Binary]string
 	TempRoot string
@@ -83,10 +87,16 @@ func (r *Runner) Run(ctx context.Context, access ClusterAccess, spec CommandSpec
 	}
 	defer os.RemoveAll(dir)
 	args := append([]string{}, spec.Args...)
-	if spec.Binary == BinaryCeph || spec.Binary == BinaryRBD || spec.Binary == BinaryCephFSShell {
+	if spec.Binary == BinaryCeph || spec.Binary == BinaryRBD {
 		args = append([]string{"--conf", conf, "--name", access.ClientUsername, "--keyring", keyring}, args...)
 	}
 	cmd := exec.Command(path, args...)
+	if spec.Binary == BinaryCephFSShell {
+		if !cephClientName.MatchString(access.ClientUsername) {
+			return CommandResult{}, fmt.Errorf("cephfs-shell client name is invalid")
+		}
+		cmd.Env = append(os.Environ(), "CEPH_CONF="+conf, "CEPH_ARGS=--name="+access.ClientUsername+" --keyring="+keyring)
+	}
 	configureCommandProcess(cmd)
 	cmd.Stdin = bytes.NewReader(spec.Stdin)
 	stdout := &limitedBuffer{remaining: max}
@@ -219,7 +229,7 @@ var _ io.Writer = (*limitedBuffer)(nil)
 func redactArgs(spec CommandSpec, args []string) []string {
 	result := append([]string{}, args...)
 	prefix := 0
-	if spec.Binary == BinaryCeph || spec.Binary == BinaryRBD || spec.Binary == BinaryCephFSShell {
+	if spec.Binary == BinaryCeph || spec.Binary == BinaryRBD {
 		prefix = 6
 		result[1] = "[TEMP_CONF]"
 		result[3] = specArgsValue(args, 3)

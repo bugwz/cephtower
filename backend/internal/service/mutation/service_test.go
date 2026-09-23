@@ -259,6 +259,35 @@ func TestCephFSClientEvictionTargetsOwningFilesystem(t *testing.T) {
 	}
 }
 
+func TestCephFSEntryQuotaTargetsFilesystemAndVerifiesValue(t *testing.T) {
+	cmd, err := build(Request{Action: "cephfs_entry.quota", ResourceKey: "filesystem/cephfs/entry/quota"}, map[string]any{
+		"path": "/shared projects", "max_bytes": "4096",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantArgs := []string{"--fs", "cephfs", "setxattr", `"/shared projects"`, "ceph.quota.max_bytes", "4096"}
+	wantCheck := []string{"--fs", "cephfs", "getxattr", `"/shared projects"`, "ceph.quota.max_bytes"}
+	if cmd.binary != executor.BinaryCephFSShell || !reflect.DeepEqual(cmd.args, wantArgs) || !reflect.DeepEqual(cmd.check, wantCheck) {
+		t.Fatalf("command = %+v", cmd)
+	}
+	if !cephFSEntryQuotaMatches(map[string]any{"max_bytes": "4096"}, []byte("4096\n")) {
+		t.Fatal("matching quota readback was rejected")
+	}
+	if cephFSEntryQuotaMatches(map[string]any{"max_bytes": "4096"}, []byte("2048\n")) {
+		t.Fatal("mismatched quota readback was accepted")
+	}
+	for _, request := range []Request{
+		{Action: "cephfs_entry.quota", ResourceKey: "filesystem//entry/quota"},
+		{Action: "cephfs_entry.quota", ResourceKey: "filesystem/cephfs/entry/quota", Parameters: map[string]any{"path": "relative", "max_bytes": "1"}},
+		{Action: "cephfs_entry.quota", ResourceKey: "filesystem/cephfs/entry/quota", Parameters: map[string]any{"path": "/bad,path", "max_bytes": "1"}},
+	} {
+		if _, err := build(request, request.Parameters); err == nil {
+			t.Fatalf("invalid request accepted: %+v", request)
+		}
+	}
+}
+
 func TestFilesystemCreateRequiresPoolPair(t *testing.T) {
 	_, err := build(Request{Action: "filesystem.create", ResourceKey: "filesystem"}, map[string]any{
 		"name": "cephfs", "metadata_pool": "cephfs.meta",

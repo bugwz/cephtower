@@ -134,7 +134,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
-		if err != nil || (request.Action == "rgw_bucket.quota" && !bucketQuotaMatches(request.Parameters, checked.Stdout)) || ((request.Action == "rgw_zone.update" || request.Action == "rgw_zone.create") && !zoneReadbackMatches(request.Parameters, checked.Stdout)) || (isRBDMirrorScheduleMutation(request.Parameters) && !rbdMirrorScheduleReadbackMatches(request, checked.Stdout)) {
+		if err != nil || (request.Action == "cephfs_entry.quota" && !cephFSEntryQuotaMatches(request.Parameters, checked.Stdout)) || (request.Action == "rgw_bucket.quota" && !bucketQuotaMatches(request.Parameters, checked.Stdout)) || ((request.Action == "rgw_zone.update" || request.Action == "rgw_zone.create") && !zoneReadbackMatches(request.Parameters, checked.Stdout)) || (isRBDMirrorScheduleMutation(request.Parameters) && !rbdMirrorScheduleReadbackMatches(request, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "command was accepted but the expected state could not be verified", Retryable: true}
 		}
 	}
@@ -176,8 +176,8 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		return command{binary: executor.BinaryRGWAdmin, args: append(args, "--format", "json"), check: check, timeout: 2 * time.Minute}
 	}
-	cephfsShell := func(args []string) command {
-		return command{binary: executor.BinaryCephFSShell, args: args, timeout: 2 * time.Minute}
+	cephfsShell := func(args, check []string) command {
+		return command{binary: executor.BinaryCephFSShell, args: args, check: check, timeout: 2 * time.Minute}
 	}
 	switch action {
 	case "ceph_user.create", "ceph_user.update", "ceph_user.delete", "ceph_user.import":
@@ -1281,15 +1281,24 @@ func build(request Request, p map[string]any) (command, error) {
 		target := "mds." + fs + ":0"
 		return ceph([]string{"tell", target, "client", "evict", "id=" + clientID}, []string{"tell", target, "session", "ls", "--format", "json"}), nil
 	case "cephfs_entry.quota":
-		path, err := required(p, "path")
-		if err != nil {
-			return command{}, err
+		fs := pathValue(tail, "filesystem")
+		if fs == "" || !identifier.MatchString(fs) || strings.Contains(fs, "/") {
+			return command{}, invalid("filesystem is invalid")
 		}
+		path := rawText(p, "path")
+		if path == "" {
+			return command{}, invalid("path is required")
+		}
+		if !strings.HasPrefix(path, "/") || strings.ContainsAny(path, "\x00\r\n,") {
+			return command{}, invalid("path must be absolute and cannot contain commas or newlines")
+		}
+		path = quoteCephFSShellToken(path)
 		bytes := optional(p, "max_bytes")
 		if bytes == "" {
 			return command{}, invalid("max_bytes is required")
 		}
-		return cephfsShell([]string{"setxattr", path, "ceph.quota.max_bytes", bytes}), nil
+		prefix := []string{"--fs", fs}
+		return cephfsShell(append(append([]string{}, prefix...), "setxattr", path, "ceph.quota.max_bytes", bytes), append(append([]string{}, prefix...), "getxattr", path, "ceph.quota.max_bytes")), nil
 	case "rgw_user.create":
 		uid, err := required(p, "uid")
 		if err != nil {
@@ -2501,6 +2510,18 @@ func pathValue(path, segment string) string {
 		}
 	}
 	return ""
+}
+
+func quoteCephFSShellToken(value string) string {
+	if strings.ContainsAny(value, " \t'\"\\") {
+		return strconv.Quote(value)
+	}
+	return value
+}
+
+func cephFSEntryQuotaMatches(parameters map[string]any, data []byte) bool {
+	expected := optional(parameters, "max_bytes")
+	return expected != "" && strings.TrimSpace(string(data)) == expected
 }
 func decodeImageSpec(value string) (string, error) {
 	decoded, err := base64.RawURLEncoding.DecodeString(value)

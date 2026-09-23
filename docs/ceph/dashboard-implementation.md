@@ -39,7 +39,7 @@
 | cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict` | 已有文件系统详情与客户端接口；计数器、rename、auth 与目录操作待核对 |
 | cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot`、`fs clone` | 已有组范围采集、clone 状态/进度/失败展示、快照克隆和进行中任务取消；metadata 与其余完整参数需核对 |
 | cephfs / snapshot schedule | `fs snap-schedule` | 已有全路径发现、精确状态、创建、删除、激活/停用、retention 和模块启用 |
-| cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 目录配额、快照、浏览不能仅从 MON 获取；现有 cephfs-shell 数据面需核对 |
+| cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 已修正 cephfs-shell 认证、文件系统选择和目录配额回读；目录快照与浏览待补齐 |
 | nfs | `nfs cluster`、`nfs export` | 已有基础管理；完整 export 属性、CephFS/RGW FSAL 与 ingress 待核对 |
 | smb | `smb show/apply/rm` 与模块资源定义 | 已有部分管理；域加入、用户组、资源校验与配置语义需核对 |
 | rgw / user / account / role | `radosgw-admin user/account/role` 与 RGW Admin Ops | 当前存在基础页面；配额、subuser、caps、rate limit、角色策略等需逐项扩展 |
@@ -153,6 +153,19 @@ CephTower 复用 `ceph auth ls --format json` 的 MDS caps，在不增加 CLI �
 `tell mds.<fsname>:0 client evict id=<client_id>`，不再向 `mds.*` 广播可能与其他文件系统
 同号客户端冲突的命令。后置检查复用同一 rank 的 `session ls`，成功后立即刷新
 `cephfs_client` 缓存；没有活动 MDS 或返回结构无效时保留最后一次有效会话列表。
+
+## 已修正：CephFS Shell 与目录配额
+
+`cephfs-shell` 的入口参数只支持 `--config`、`--fs`、`--batch` 和 `--test`，不能复用
+`ceph`/`rbd` 的 `--conf --name --keyring` 参数前缀。executor 现在通过 `CEPH_CONF` 和
+`CEPH_ARGS` 向 libcephfs 传递临时配置、客户端实体及 keyring，并校验客户端实体名称，避免
+把认证参数当成 shell 子命令参数或注入环境参数。
+
+目录配额写入明确使用所选文件系统：
+`cephfs-shell --fs <filesystem> setxattr <path> ceph.quota.max_bytes <bytes>`，随后在同一
+文件系统执行 `getxattr` 并核对返回值。路径支持空格和引号，传给 shell 前按单一 token
+转义；拒绝 NUL、换行和逗号，其中逗号在 cephfs-shell 中是多命令分隔符。这样写操作不再
+依赖默认文件系统，也不会把“命令退出成功但值未生效”当成成功。
 
 ## 已实现：集群配置与运行日志
 
