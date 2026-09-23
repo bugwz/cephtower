@@ -1,7 +1,7 @@
 import { Alert, Button, Card, Form, Input, Modal, Popconfirm, Space } from 'antd'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
-import { mutateResource } from '../../api/resource'
+import { listResource, mutateResource, refreshResource } from '../../api/resource'
 import { AppTable } from '../../components/AppTable'
 import { RecordDetail } from '../../components/RecordDetail'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -17,9 +17,50 @@ export function SnapshotScheduleStatus() {
   const [retention, setRetention] = useState('')
   const [mutating, setMutating] = useState(false)
   const [error, setError] = useState('')
+  const [moduleState, setModuleState] = useState<'loading' | 'enabled' | 'disabled' | 'unavailable'>('loading')
+  const [moduleError, setModuleError] = useState('')
   const pending = useRef<AbortController | null>(null)
   function reset() { pending.current?.abort(); setRows(null); setError(''); setLoading(false) }
-  useEffect(() => { reset(); setCreating(false); return () => pending.current?.abort() }, [selectedClusterId])
+  const loadModule = useCallback(async () => {
+    if (!selectedClusterId) {
+      setModuleState('unavailable')
+      setModuleError('请先选择集群')
+      return
+    }
+    setModuleState('loading')
+    setModuleError('')
+    try {
+      const result = await listResource('/manager/modules', selectedClusterId, { filters: { name: ['snap_schedule'] } })
+      const module = result.items.find((item) => item.name === 'snap_schedule')
+      if (!module) {
+        setModuleState('unavailable')
+        setModuleError('集群未返回 snap_schedule 模块信息')
+      } else if (module.can_run === false) {
+        setModuleState('unavailable')
+        setModuleError(String(module.error_string ?? 'snap_schedule 模块当前无法运行'))
+      } else {
+        setModuleState(module.enabled === true ? 'enabled' : 'disabled')
+      }
+    } catch (err) {
+      setModuleState('unavailable')
+      setModuleError(err instanceof Error ? err.message : '读取模块状态失败')
+    }
+  }, [selectedClusterId])
+  useEffect(() => {
+    reset()
+    setCreating(false)
+    void loadModule()
+    return () => pending.current?.abort()
+  }, [loadModule, selectedClusterId])
+  async function enableModule() {
+    if (!selectedClusterId || mutating || moduleState !== 'disabled') return
+    setMutating(true)
+    try {
+      await mutateResource('/manager/module', 'PATCH', { cluster_id:selectedClusterId, name:'snap_schedule', enabled:true })
+      await refreshResource({ clusterId:selectedClusterId, kind:'mgr_module' })
+      await loadModule()
+    } finally { setMutating(false) }
+  }
   async function query(values: ApiRecord) {
     if (!selectedClusterId || loading) return
     scope.current = values
@@ -59,14 +100,17 @@ export function SnapshotScheduleStatus() {
     } finally { setMutating(false) }
   }
   return <Card title="查询路径的实时快照计划">
+    {moduleState === 'loading' && <Alert type="info" showIcon message="正在检查 snap_schedule 模块状态" />}
+    {moduleState === 'disabled' && <Alert type="warning" showIcon message="snap_schedule 模块尚未启用" description="启用后才能查询和管理 CephFS 快照计划。" action={<Button type="primary" loading={mutating} onClick={enableModule}>启用模块</Button>} />}
+    {moduleState === 'unavailable' && <Alert type="error" showIcon message="快照计划模块不可用" description={moduleError} />}
     <Form form={form} disabled={mutating} layout="inline" initialValues={{ path: '/' }} onFinish={query} onValuesChange={reset}>
       <Form.Item name="fs" label="文件系统" rules={[{ required: true }]}><Input /></Form.Item>
       <Form.Item name="path" label="路径" rules={[{ required: true }]}><Input /></Form.Item>
       <Form.Item name="subvol" label="子卷"><Input /></Form.Item>
       <Form.Item name="group" label="子卷组"><Input /></Form.Item>
-      <Button htmlType="submit" loading={loading} disabled={!selectedClusterId}>查询</Button>
+      <Button htmlType="submit" loading={loading} disabled={!selectedClusterId || moduleState !== 'enabled'}>查询</Button>
     </Form>
-    <Button disabled={!selectedClusterId || mutating || loading} onClick={() => { void form.validateFields().then(() => setCreating(true)) }}>为当前路径新建计划</Button>
+    <Button disabled={!selectedClusterId || mutating || loading || moduleState !== 'enabled'} onClick={() => { void form.validateFields().then(() => setCreating(true)) }}>为当前路径新建计划</Button>
     <Modal title="新建快照计划" open={creating} confirmLoading={mutating} onCancel={() => { if (!mutating) setCreating(false) }} onOk={() => createForm.submit()}>
       <Form form={createForm} layout="vertical" onFinish={create}>
         <Form.Item name="schedule" label="周期" rules={[{ required:true }]}><Input placeholder="1h" /></Form.Item>

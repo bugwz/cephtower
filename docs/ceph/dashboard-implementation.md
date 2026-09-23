@@ -38,7 +38,7 @@
 | block / NVMe-oF | 网关 gRPC | 当前已有 gRPC 客户端；子系统、namespace、listener、host、连接与 QoS 待完整对照 |
 | cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict` | 已有文件系统详情与客户端接口；计数器、rename、auth 与目录操作待核对 |
 | cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot` | 已有基本管理；组范围采集、clone 状态、metadata 与完整参数需核对 |
-| cephfs / snapshot schedule | `fs snap-schedule` | 已修正创建命令的文件系统参数；列表采集、删除、激活/停用、retention 待补齐 |
+| cephfs / snapshot schedule | `fs snap-schedule` | 已有精确路径状态、创建、删除、激活/停用、retention 和模块启用；全路径自动发现受 CLI 结构限制 |
 | cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 目录配额、快照、浏览不能仅从 MON 获取；现有 cephfs-shell 数据面需核对 |
 | nfs | `nfs cluster`、`nfs export` | 已有基础管理；完整 export 属性、CephFS/RGW FSAL 与 ingress 待核对 |
 | smb | `smb show/apply/rm` 与模块资源定义 | 已有部分管理；域加入、用户组、资源校验与配置语义需核对 |
@@ -234,6 +234,11 @@
   command tests cover operations and invalid expressions. Full-path discovery
   remains incomplete. The obsolete cached list endpoint and UI have been removed;
   creation now lives alongside direct scoped querying and actions.
+
+- The schedule page reads the collected `snap_schedule` manager-module state before
+  enabling query or mutation controls. A disabled runnable module can be enabled through
+  the existing strict manager-module API; unavailable modules surface `can_run` errors
+  instead of failing the first schedule command.
 
 - Schedule responses require path, period, start and boolean active state before
   being exposed to actionable UI. Tests reject null rows and ambiguous identities.
