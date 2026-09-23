@@ -188,7 +188,8 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"subvolume.create"}, true, map[string]JSONField{
 		"name": stringField(true), "group": stringField(true), "size": integerField(false),
 		"pool": stringField(true), "uid": integerField(false), "gid": integerField(false),
-		"mode": stringField(false), "namespace_isolated": boolField(false),
+		"mode": stringField(false), "namespace_isolated": boolField(false), "earmark": stringField(false),
+		"normalization": stringField(false, "nfd", "nfc", "nfkd", "nfkc"), "case_sensitive": boolField(false),
 	})
 	add([]string{"cephfs_snapshot.create", "nfs_cluster.create"}, true, map[string]JSONField{"name": stringField(true)})
 	add([]string{"filesystem.update"}, true, map[string]JSONField{"max_mds": integerField(true)})

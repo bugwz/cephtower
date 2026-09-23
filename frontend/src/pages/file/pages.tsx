@@ -280,9 +280,23 @@ const definitions: Record<
         { name: 'uid', label: 'UID', type: 'number', min: 0 },
         { name: 'gid', label: 'GID', type: 'number', min: 0 },
         { name: 'mode', label: '目录权限模式', placeholder: '0755' },
-        { name: 'namespace_isolated', label: '使用独立 RADOS 命名空间', type: 'boolean' }
+        { name: 'namespace_isolated', label: '使用独立 RADOS 命名空间', type: 'boolean' },
+        { name: 'earmark', label: '用途标记', placeholder: '例如 nfs 或 smb.cluster.team' },
+        {
+          name: 'normalization',
+          label: 'Unicode 规范化',
+          type: 'select',
+          options: [
+            { label: '不指定', value: '' },
+            { label: 'NFD', value: 'nfd' },
+            { label: 'NFC', value: 'nfc' },
+            { label: 'NFKD', value: 'nfkd' },
+            { label: 'NFKC', value: 'nfkc' }
+          ]
+        },
+        { name: 'case_sensitive', label: '区分文件名大小写', type: 'boolean' }
       ],
-      initialValues: { group: '_nogroup', size: 0, uid: 0, gid: 0, mode: '0755', namespace_isolated: false },
+      initialValues: { group: '_nogroup', size: 0, mode: '0755', namespace_isolated: false, normalization: '', case_sensitive: true },
       buildBody: (values, clusterId) => ({
         cluster_id: clusterId,
         fs: String(values.fs ?? ''),
@@ -290,10 +304,13 @@ const definitions: Record<
         group: String(values.group ?? '_nogroup'),
         size: Number(values.size ?? 0),
         pool: String(values.pool ?? ''),
-        uid: Number(values.uid ?? 0),
-        gid: Number(values.gid ?? 0),
+        ...(values.uid !== undefined && values.uid !== null && values.uid !== '' ? { uid: Number(values.uid) } : {}),
+        ...(values.gid !== undefined && values.gid !== null && values.gid !== '' ? { gid: Number(values.gid) } : {}),
         mode: String(values.mode ?? '0755'),
-        namespace_isolated: Boolean(values.namespace_isolated)
+        namespace_isolated: Boolean(values.namespace_isolated),
+        ...(values.earmark ? { earmark: String(values.earmark) } : {}),
+        ...(values.normalization ? { normalization: String(values.normalization) } : {}),
+        case_sensitive: Boolean(values.case_sensitive)
       })
     },
     updateAction: {

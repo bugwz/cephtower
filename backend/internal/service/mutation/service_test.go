@@ -133,16 +133,34 @@ func TestCephFSCreateCommandsIncludeFormOptions(t *testing.T) {
 	subvolume, err := build(Request{Action: "subvolume.create", ResourceKey: "filesystem/cephfs/subvolume"}, map[string]any{
 		"name": "home", "group": "users", "size": "10737418240", "pool": "cephfs.data",
 		"uid": "1000", "gid": "1000", "mode": "0750", "namespace_isolated": true,
+		"earmark": "smb.cluster.team", "normalization": "nfkc", "case_sensitive": false,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	wantSubvolume := []string{
-		"fs", "subvolume", "create", "cephfs", "home", "10737418240", "users",
-		"cephfs.data", "1000", "1000", "0750", "--namespace-isolated",
+		"fs", "subvolume", "create", "cephfs", "home", "--size", "10737418240",
+		"--group_name", "users", "--pool_layout", "cephfs.data", "--uid", "1000",
+		"--gid", "1000", "--mode", "0750", "--namespace-isolated", "--earmark",
+		"smb.cluster.team", "--normalization", "nfkc", "--casesensitive=false",
 	}
 	if !reflect.DeepEqual(subvolume.args, wantSubvolume) {
 		t.Fatalf("subvolume args = %#v, want %#v", subvolume.args, wantSubvolume)
+	}
+
+	defaultGroup, err := build(Request{Action: "subvolume.create", ResourceKey: "filesystem/cephfs/subvolume"}, map[string]any{
+		"name": "shared", "group": "_nogroup", "size": "0", "pool": "cephfs.data", "mode": "0755",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantDefault := []string{"fs", "subvolume", "create", "cephfs", "shared", "--pool_layout", "cephfs.data", "--mode", "0755"}
+	if !reflect.DeepEqual(defaultGroup.args, wantDefault) {
+		t.Fatalf("default group args = %#v, want %#v", defaultGroup.args, wantDefault)
+	}
+	wantDefaultCheck := []string{"fs", "subvolume", "info", "cephfs", "shared", "--format", "json"}
+	if !reflect.DeepEqual(defaultGroup.check, wantDefaultCheck) {
+		t.Fatalf("default group check = %#v, want %#v", defaultGroup.check, wantDefaultCheck)
 	}
 }
 

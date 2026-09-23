@@ -1048,3 +1048,11 @@ in-progress 状态开放取消操作，调用 `fs clone cancel` 后以 `fs clone
 可选择 `--retain-snapshots` 保留已有快照，并可用 `--force` 删除失败或已取消的
 克隆。请求仍携带资源版本前置条件并进行二次危险操作确认；普通删除入口保持简洁。
 离线测试覆盖命名组、两个开关的精确顺序及作用域读回；未在真实集群验证。
+
+### CephFS 子卷完整创建参数
+
+子卷创建改用原生文档中的命名参数，不再把内部保留名 `_nogroup` 作为显式组传入。
+默认组会省略 `--group_name`，UID/GID 留空时继承父组，不再隐式固定为 0。
+表单和 API 新增 earmark、Unicode normalization 与 case-sensitive 选项，并映射为
+`--earmark`、`--normalization` 和 `--casesensitive`。离线测试覆盖默认组、命名组、
+可选所有者以及完整参数组合；未在真实集群验证。

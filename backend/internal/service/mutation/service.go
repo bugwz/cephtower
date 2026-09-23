@@ -1093,7 +1093,12 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return ceph(args, []string{"fs", "subvolume", "info", fs, name, optional(p, "group"), "--format", "json"}), nil
+		check := []string{"fs", "subvolume", "info", fs, name}
+		if group := optional(p, "group"); group != "" && group != "_nogroup" {
+			check = append(check, group)
+		}
+		check = append(check, "--format", "json")
+		return ceph(args, check), nil
 	case "subvolume.delete":
 		fs := pathValue(tail, "filesystem")
 		name := last(tail)
@@ -2336,15 +2341,6 @@ func subvolumeCreateArgs(fs, name string, p map[string]any) ([]string, error) {
 		return nil, err
 	}
 	size, uid, gid := optional(p, "size"), optional(p, "uid"), optional(p, "gid")
-	if size == "" {
-		size = "0"
-	}
-	if uid == "" {
-		uid = "0"
-	}
-	if gid == "" {
-		gid = "0"
-	}
 	mode := optional(p, "mode")
 	if mode == "" {
 		mode = "0755"
@@ -2352,9 +2348,38 @@ func subvolumeCreateArgs(fs, name string, p map[string]any) ([]string, error) {
 	if !regexp.MustCompile(`^0?[0-7]{3,4}$`).MatchString(mode) {
 		return nil, invalid("mode is invalid")
 	}
-	args := []string{"fs", "subvolume", "create", fs, name, size, group, pool, uid, gid, mode}
+	args := []string{"fs", "subvolume", "create", fs, name}
+	if size != "" && size != "0" {
+		args = append(args, "--size", size)
+	}
+	if group != "_nogroup" {
+		args = append(args, "--group_name", group)
+	}
+	args = append(args, "--pool_layout", pool)
+	if uid != "" {
+		args = append(args, "--uid", uid)
+	}
+	if gid != "" {
+		args = append(args, "--gid", gid)
+	}
+	args = append(args, "--mode", mode)
 	if boolParameter(p, "namespace_isolated") {
 		args = append(args, "--namespace-isolated")
+	}
+	if earmark := optional(p, "earmark"); earmark != "" {
+		if !identifier.MatchString(earmark) {
+			return nil, invalid("earmark is invalid")
+		}
+		args = append(args, "--earmark", earmark)
+	}
+	if normalization := optional(p, "normalization"); normalization != "" {
+		if normalization != "nfd" && normalization != "nfc" && normalization != "nfkd" && normalization != "nfkc" {
+			return nil, invalid("normalization is invalid")
+		}
+		args = append(args, "--normalization", normalization)
+	}
+	if caseSensitive, ok := p["case_sensitive"].(bool); ok {
+		args = append(args, "--casesensitive="+strconv.FormatBool(caseSensitive))
 	}
 	return args, nil
 }
