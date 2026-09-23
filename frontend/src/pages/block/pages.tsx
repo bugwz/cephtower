@@ -160,6 +160,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       confirmation:(values,row) => {
         const effects:Record<string,string> = {
           'mirror-disable':'停用同步，镜像将不再复制更新',
+          'mirror-promote':values.force ? '强制提升为主镜像；若远端仍为主镜像，可能造成双主和数据冲突' : '',
           'mirror-demote':'降级为非主镜像，请先停止对该镜像的写入',
           'mirror-resync':'重新同步，本地数据将被主镜像的数据覆盖'
         }
@@ -174,8 +175,9 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
         {label:'降级为非主镜像',value:'mirror-demote'},
         {label:'从主镜像重新同步',value:'mirror-resync'},
         {label:'创建同步快照',value:'mirror-snapshot'}
-      ]}],
-      buildBody:(values,clusterId,row) => ({cluster_id:clusterId,image_spec:imageSpec(row),action:String(values.action)})
+      ]},
+      {name:'force',label:'强制提升（仅提升为主镜像时可选）',type:'boolean',visibleWhen:(values)=>values.action==='mirror-promote'}],
+      buildBody:(values,clusterId,row) => ({cluster_id:clusterId,image_spec:imageSpec(row),action:String(values.action),...(values.action==='mirror-promote'?{force:Boolean(values.force)}:{})})
     }, {
       title:'同步快照调度',buttonLabel:'快照调度',path:'/rbd/image/action',method:'POST',successMessage:'同步快照调度已更新',
       confirmation:(values,row)=>values.action==='mirror-schedule-remove' ? `移除镜像 ${imageSpec(row)} ${values.remove_interval ? `的 ${String(values.remove_interval)} 调度` : '的全部专属调度'}？继承的池或集群调度不会被删除。` : undefined,
@@ -208,7 +210,10 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'details', title: '镜像详情' },
       { key: 'runtime_status', title: '连接客户端 / 迁移 / 缓存状态' },
       { key: 'configuration', title: '生效配置及来源' },
-      { key: 'schedule_info', title: '同步快照调度 / 下次执行' },
+      { key: 'mirror_mode', title: '同步模式' },
+      { key: 'mirror_state', title: '同步状态' },
+      { key: 'primary', title: '同步角色', render:(value)=>value === true ? '主镜像' : value === false ? '从镜像' : '—' },
+      { key: 'schedule_info', title: '下次同步快照', render:(value)=>typeof value === 'object' && value !== null && !Array.isArray(value) ? String((value as Record<string,unknown>).schedule_time ?? '—') : '—' },
       { key: 'status', title: '状态' },
       { key: 'resource_version', title: '版本' }
     ]

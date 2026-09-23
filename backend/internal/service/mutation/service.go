@@ -663,6 +663,14 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
+		force, forceProvided := p["force"]
+		forceValue, forceIsBool := force.(bool)
+		if forceProvided && !forceIsBool {
+			return command{}, invalid("force must be a boolean")
+		}
+		if forceProvided && verb != "mirror-promote" {
+			return command{}, invalid("force is only supported when promoting an image")
+		}
 		if verb == "config-set" || verb == "config-remove" {
 			name, err := required(p, "config_name")
 			if err != nil {
@@ -752,6 +760,9 @@ func build(request Request, p map[string]any) (command, error) {
 			check := []string{"mirror", "image", "status", spec}
 			if mirrorVerb == "disable" {
 				check = []string{"info", spec}
+			}
+			if forceValue {
+				args = append(args, "--force")
 			}
 			return rbd(args, check), nil
 		}

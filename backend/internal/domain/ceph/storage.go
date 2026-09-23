@@ -51,19 +51,23 @@ type Filesystem struct {
 	Up           map[string]int64 `json:"up"`
 }
 type RBDImage struct {
-	Configuration []PoolConfig               `json:"configuration,omitempty"`
-	RuntimeStatus map[string]any             `json:"runtime_status,omitempty"`
-	ScheduleInfo  *RBDMirrorSnapshotSchedule `json:"schedule_info,omitempty"`
-	Features      []string                   `json:"features,omitempty"`
-	Parent        map[string]any             `json:"parent,omitempty"`
-	Details       map[string]any             `json:"details,omitempty"`
-	ImagePath     string                     `json:"image_path"`
-	Namespace     string                     `json:"namespace"`
-	ImageSpec     string                     `json:"image_spec"`
-	Pool          string                     `json:"pool"`
-	Name          string                     `json:"name"`
-	SizeBytes     *uint64                    `json:"size_bytes"`
-	Format        *int                       `json:"format"`
+	Configuration  []PoolConfig               `json:"configuration,omitempty"`
+	RuntimeStatus  map[string]any             `json:"runtime_status,omitempty"`
+	ScheduleInfo   *RBDMirrorSnapshotSchedule `json:"schedule_info,omitempty"`
+	Features       []string                   `json:"features,omitempty"`
+	Parent         map[string]any             `json:"parent,omitempty"`
+	Details        map[string]any             `json:"details,omitempty"`
+	MirrorMode     string                     `json:"mirror_mode,omitempty"`
+	MirrorState    string                     `json:"mirror_state,omitempty"`
+	MirrorGlobalID string                     `json:"mirror_global_id,omitempty"`
+	Primary        *bool                      `json:"primary,omitempty"`
+	ImagePath      string                     `json:"image_path"`
+	Namespace      string                     `json:"namespace"`
+	ImageSpec      string                     `json:"image_spec"`
+	Pool           string                     `json:"pool"`
+	Name           string                     `json:"name"`
+	SizeBytes      *uint64                    `json:"size_bytes"`
+	Format         *int                       `json:"format"`
 }
 
 type RBDMirrorSnapshotSchedule struct {

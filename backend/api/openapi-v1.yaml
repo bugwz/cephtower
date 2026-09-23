@@ -53414,6 +53414,8 @@ paths:
                 feature:
                   type: string
                   enum: ["deep-flatten", "exclusive-lock", "fast-diff", "journaling", "object-map"]
+                force:
+                  type: boolean
                 fs:
                   type: string
                 group:

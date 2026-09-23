@@ -271,14 +271,22 @@ which could collapse multiple paths and schedules into one resource key.
 
 ### RBD image mirroring actions
 
+- Image collection reuses `rbd info <pool[/namespace]/image> --format json` and
+  exposes its `mirroring.mode`, `state`, `global_id`, and `primary` fields. The
+  image table now shows the synchronization mode, state, primary/secondary role,
+  and the next scheduled mirror snapshot without adding another per-image command.
 - Image rows expose journal/snapshot enable, disable, promote, demote, resync, and
   mirror snapshot creation through the existing strict image-action API.
 - Commands follow `src/tools/rbd/action/MirrorImage.cc`, with full pool/namespace/image
   targets. Postchecks use mirror image status, or ordinary image info after disable.
 - Demote, disable and resync show operation-specific confirmation. The native CLI
   enforces mirror mode and primary-state prerequisites and returns errors to the UI.
-- Namespace-aware command tests cover all seven operations. Forced promotion and forced
-  disable remain pending.
+- Promotion optionally maps to `rbd mirror image promote <spec> --force`; the UI
+  requires an explicit switch and warns about dual-primary and data-conflict risk.
+  Strict request validation rejects non-boolean force values and force on other actions.
+- Namespace-aware command tests cover all seven operations and forced promotion.
+  Fixture tests cover enabled and absent mirroring metadata. Forced disable and
+  live-cluster validation remain pending.
 
 ### RBD mirror snapshot schedules
 

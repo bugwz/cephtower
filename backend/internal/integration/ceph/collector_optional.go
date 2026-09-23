@@ -551,6 +551,17 @@ func (p *NativeProvider) enrichRBDImage(ctx context.Context, access ClusterAcces
 	image.Details = info
 	image.Features = stringList(info["features"], "")
 	image.Parent, _ = info["parent"].(map[string]any)
+	image.MirrorState = "disabled"
+	if mirroring, ok := info["mirroring"].(map[string]any); ok {
+		image.MirrorMode = textField(mirroring, "mode")
+		if state := textField(mirroring, "state"); state != "" {
+			image.MirrorState = state
+		}
+		image.MirrorGlobalID = textField(mirroring, "global_id")
+		if primary, ok := mirroring["primary"].(bool); ok {
+			image.Primary = &primary
+		}
+	}
 }
 
 func rgwRoleObservations(ctx context.Context, list any, account string, now time.Time) []Observation {

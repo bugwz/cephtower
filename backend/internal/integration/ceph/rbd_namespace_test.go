@@ -121,7 +121,7 @@ func TestRBDImageInfoEnrichment(t *testing.T) {
 	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rbd_image_config": []byte(`[{"name":"rbd_qos_iops_limit","value":"1000","source":"image"}]`),
 		"collect.rbd_image_status": []byte(`{"watchers":[{"address":"10.0.0.1:0/1","client":9007199254740993,"cookie":18446744073709551615}],"migration":{"state":"executed"},"persistent_cache":{"clean":true}}`),
-		"collect.rbd_image_info":   []byte(`{"name":"image","features":["layering","exclusive-lock"],"parent":{"pool":"parent-pool","image":"parent","snapshot":"base"},"stripe_unit":4096}`),
+		"collect.rbd_image_info":   []byte(`{"name":"image","features":["layering","exclusive-lock"],"parent":{"pool":"parent-pool","image":"parent","snapshot":"base"},"stripe_unit":4096,"mirroring":{"mode":"snapshot","state":"enabled","global_id":"global-1","primary":false}}`),
 	}}}
 	payload := cephdomain.RBDImage{ImagePath: "pool/ns/image"}
 	provider.enrichRBDImage(context.Background(), ClusterAccess{}, payload.ImagePath, &payload)
@@ -137,6 +137,20 @@ func TestRBDImageInfoEnrichment(t *testing.T) {
 	}
 	if len(payload.Features) != 2 || payload.Features[0] != "layering" || payload.Parent["snapshot"] != "base" || payload.Details["stripe_unit"] == nil {
 		t.Fatalf("missing details: %+v", payload)
+	}
+	if payload.MirrorMode != "snapshot" || payload.MirrorState != "enabled" || payload.MirrorGlobalID != "global-1" || payload.Primary == nil || *payload.Primary {
+		t.Fatalf("missing mirroring state: %+v", payload)
+	}
+}
+
+func TestRBDImageInfoDefaultsToDisabledMirroring(t *testing.T) {
+	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+		"collect.rbd_image_info": []byte(`{"name":"image","features":[]}`),
+	}}}
+	payload := cephdomain.RBDImage{ImagePath: "pool/image"}
+	provider.enrichRBDImage(context.Background(), ClusterAccess{}, payload.ImagePath, &payload)
+	if payload.MirrorState != "disabled" || payload.MirrorMode != "" || payload.Primary != nil {
+		t.Fatalf("disabled mirroring state=%+v", payload)
 	}
 }
 
