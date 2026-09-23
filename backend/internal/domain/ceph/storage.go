@@ -78,6 +78,7 @@ type RBDImage struct {
 	StripeCount    *uint64                    `json:"stripe_count,omitempty"`
 	Order          *uint64                    `json:"order,omitempty"`
 	Format         *int                       `json:"format"`
+	SnapshotUsage  map[string]uint64          `json:"-"`
 }
 
 type RBDMirrorSnapshotSchedule struct {

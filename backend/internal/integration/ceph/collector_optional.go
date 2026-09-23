@@ -53,11 +53,9 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 					}
 					spec := scope + "/" + image.Name
 					imageKey := base64.RawURLEncoding.EncodeToString([]byte(spec))
-					if namespace != "" {
-						payload := cephdomain.RBDImage{ImagePath: spec, ImageSpec: imageKey, Pool: pool.PoolName, Namespace: namespace, Name: image.Name, SizeBytes: image.Size, Format: image.Format}
-						p.enrichRBDImage(ctx, access, spec, &payload)
-						rows = append(rows, observation("rbd_image", imageKey, image.Name, "rbd_cli", payload, now))
-					}
+					payload := cephdomain.RBDImage{ImagePath: spec, ImageSpec: imageKey, Pool: pool.PoolName, Namespace: namespace, Name: image.Name, SizeBytes: image.Size, Format: image.Format}
+					p.enrichRBDImage(ctx, access, spec, &payload)
+					rows = append(rows, observation("rbd_image", imageKey, image.Name, "rbd_cli", payload, now))
 					var snapshots []map[string]any
 					if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_snapshot", []string{"snap", "ls", spec, "--format", "json"}, &snapshots) {
 						if snapshots == nil {
@@ -73,6 +71,17 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 							snapshot["image_path"] = spec
 							snapshot["pool_name"] = pool.PoolName
 							snapshot["namespace"] = namespace
+							if protected, ok := rbdSnapshotProtected(snapshot["protected"]); ok {
+								snapshot["protected"] = protected
+								snapshot["is_protected"] = protected
+							} else {
+								markCollectionUnavailable(ctx, "collect.rbd_snapshot")
+								continue
+							}
+							if used, ok := payload.SnapshotUsage[name]; ok {
+								snapshot["used_bytes"] = used
+								snapshot["disk_usage"] = used
+							}
 							rows = append(rows, Observation{Kind: "rbd_snapshot", NaturalKey: imageKey + "@" + name, ParentKind: "rbd_image", ParentKey: imageKey, Name: name, Status: "available", Source: "rbd_cli", Payload: snapshot, ObservedAt: now})
 						}
 					}
@@ -600,6 +609,7 @@ func applyRBDImageUsage(image *cephdomain.RBDImage, usage map[string]any) bool {
 	var total uint64
 	var found bool
 	var current *uint64
+	snapshots := map[string]uint64{}
 	for _, row := range rows {
 		used, ok := uintValue(row["used_size"])
 		if !ok {
@@ -607,7 +617,9 @@ func applyRBDImageUsage(image *cephdomain.RBDImage, usage map[string]any) bool {
 		}
 		total += used
 		found = true
-		if _, isSnapshot := row["snapshot"]; !isSnapshot {
+		if snapshot := textField(row, "snapshot"); snapshot != "" {
+			snapshots[snapshot] = used
+		} else if _, isSnapshot := row["snapshot"]; !isSnapshot {
 			value := used
 			current = &value
 		}
@@ -617,7 +629,23 @@ func applyRBDImageUsage(image *cephdomain.RBDImage, usage map[string]any) bool {
 	}
 	image.UsedBytes = current
 	image.TotalUsedBytes = &total
+	image.SnapshotUsage = snapshots
 	return true
+}
+
+func rbdSnapshotProtected(value any) (bool, bool) {
+	switch typed := value.(type) {
+	case bool:
+		return typed, true
+	case string:
+		switch strings.ToLower(strings.TrimSpace(typed)) {
+		case "true", "yes":
+			return true, true
+		case "false", "no":
+			return false, true
+		}
+	}
+	return false, false
 }
 
 func rgwRoleObservations(ctx context.Context, list any, account string, now time.Time) []Observation {

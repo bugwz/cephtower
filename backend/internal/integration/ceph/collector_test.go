@@ -15,7 +15,7 @@ import (
 type fixtureExecutor struct{ t *testing.T }
 
 func (f fixtureExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
-	names := map[string]string{"collect.status": "status.json", "collect.df": "df.json", "collect.host": "host.json", "collect.daemon": "daemon.json", "collect.service": "service.json", "collect.mon": "mon.json", "collect.quorum": "quorum.json", "collect.mgr": "mgr.json", "collect.osd_tree": "osd-tree.json", "collect.osd_dump": "osd-dump.json", "collect.pool": "pool.json", "collect.fs": "fs.json", "collect.cephfs_subvolume": "cephfs-subvolume.json", "collect.rbd_image": "rbd-image.json", "collect.rgw_status": "rgw-realm.json", "collect.nfs_cluster": "nfs-cluster.json", "collect.smb_cluster": "smb-cluster.json", "collect.device": "device.json", "collect.config": "config.json"}
+	names := map[string]string{"collect.status": "status.json", "collect.df": "df.json", "collect.host": "host.json", "collect.daemon": "daemon.json", "collect.service": "service.json", "collect.mon": "mon.json", "collect.quorum": "quorum.json", "collect.mgr": "mgr.json", "collect.osd_tree": "osd-tree.json", "collect.osd_dump": "osd-dump.json", "collect.pool": "pool.json", "collect.fs": "fs.json", "collect.cephfs_subvolume": "cephfs-subvolume.json", "collect.rbd_image_detail": "rbd-image.json", "collect.rgw_status": "rgw-realm.json", "collect.nfs_cluster": "nfs-cluster.json", "collect.smb_cluster": "smb-cluster.json", "collect.device": "device.json", "collect.config": "config.json"}
 	names["collect.health_detail"] = "health-detail.json"
 	names["collect.mds_fs"] = "fs.json"
 	names["collect.upgrade"] = "upgrade.json"

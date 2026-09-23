@@ -3,7 +3,6 @@ package ceph
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -48,7 +47,6 @@ var collectionFailureKinds = map[string][]string{
 	"collect.rbd_image_config":        {"rbd_image"},
 	"collect.rbd_image_info":          {"rbd_image"},
 	"collect.rbd_image_usage":         {"rbd_image"},
-	"collect.rbd_image":               {"rbd_image"},
 	"collect.rgw_global_ratelimit":    {"rgw_status"},
 	"collect.rgw_status":              {"rgw_status"},
 	"collect.nfs_cluster":             {"nfs_cluster", "nfs_export"},
@@ -877,28 +875,6 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 				}
 				rows = append(rows, Observation{Kind: "subvolume", NaturalKey: m.FSName + "/" + subvolume.Name, ParentKind: "filesystem", ParentKey: m.FSName, Name: subvolume.Name, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 			}
-		}
-	}
-	for _, pool := range pools {
-		var images []rbdImageWire
-		if err := p.runBinaryInto(ctx, access, executor.BinaryRBD, "collect.rbd_image", []string{"ls", "--long", pool.PoolName, "--format", "json"}, &images); err != nil {
-			continue
-		}
-		if images == nil {
-			markCollectionUnavailable(ctx, "collect.rbd_image")
-		}
-		for _, image := range images {
-			if image.Snapshot != nil {
-				continue
-			}
-			if strings.TrimSpace(image.Name) == "" {
-				return nil, fmt.Errorf("parse collect.rbd_image response: image name is required")
-			}
-			spec := pool.PoolName + "/" + image.Name
-			key := base64.RawURLEncoding.EncodeToString([]byte(spec))
-			payload := cephdomain.RBDImage{ImagePath: spec, ImageSpec: key, Pool: pool.PoolName, Name: image.Name, SizeBytes: image.Size, Format: image.Format}
-			p.enrichRBDImage(ctx, access, spec, &payload)
-			rows = append(rows, Observation{Kind: "rbd_image", NaturalKey: key, Name: image.Name, Status: "available", Source: "rbd_cli", Payload: payload, ObservedAt: now})
 		}
 	}
 	var realms rgwRealmWire

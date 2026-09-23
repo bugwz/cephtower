@@ -470,8 +470,11 @@ which could collapse multiple paths and schedules into one resource key.
 
 - List.cc emits image (not name) for long-list records and mixes image and snapshot
   entries in the same array. Corrected the wire field and skip records with snapshot.
+- Default and named namespace images now share the scoped `ls --long --pool` collector.
+  This removes the earlier duplicate default-namespace list/enrichment path and lets one
+  image usage result feed both image and snapshot observations.
 - Updated fixture data to match native output, including an image plus its snapshot.
-  Namespace tests now verify that snapshot rows do not duplicate image/snapshot collection.
+  Namespace tests verify exactly one list and one eligible usage command per scope.
 - Earlier fixtures did not represent the actual native long-list schema; their passing
   results were insufficient evidence for live compatibility. Backend checks now use the
   corrected shape. Real cluster validation is still outstanding.
@@ -480,8 +483,14 @@ which could collapse multiple paths and schedules into one resource key.
 
 - Image rows expose confirmed purge of unprotected snapshots via native `snap purge`.
   The API action preserves full image scope and postchecks with snap ls.
-- Snapshot protected/timestamp fields were verified against Snap.cc native list output.
-- Command tests cover namespaced image purge. Live cluster validation remains pending.
+- Snapshot protected/timestamp fields come from `rbd snap ls <spec> --format json`,
+  following `Snap.cc`; string protection values are normalized to booleans for API and
+  UI action state.
+- For fast-diff images, the already collected `rbd du` rows are joined by snapshot name
+  and exposed as `used_bytes`/`disk_usage`, without another command per snapshot. The
+  action form defaults to protect or unprotect according to the observed state.
+- Namespace fixtures cover protected state, timestamp, usage, identity, and command
+  deduplication. Command tests cover namespaced purge. Live validation remains pending.
 
 ### RBD runtime status
 

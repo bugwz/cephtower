@@ -14,16 +14,24 @@ import (
 )
 
 func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
-	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+	base := malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rbd_namespace":    []byte(`[{"name":"team"}]`),
 		"collect.rbd_image_detail": []byte(`[{"image":"image","size":1024,"format":2},{"image":"image","snapshot":"snap","size":512,"format":2}]`),
-		"collect.rbd_snapshot":     []byte(`[{"name":"snap","id":1,"size":1024}]`),
+		"collect.rbd_image_info":   []byte(`{"name":"image","features":["fast-diff"]}`),
+		"collect.rbd_image_usage":  []byte(`{"images":[{"name":"image","snapshot":"snap","used_size":256},{"name":"image","used_size":512}]}`),
+		"collect.rbd_snapshot":     []byte(`[{"name":"snap","id":1,"size":1024,"protected":"true","timestamp":"Tue Sep 23 02:03:04 2026"}]`),
 		"collect.rbd_trash":        []byte(`[{"name":"image","id":"abc123"}]`),
-	}}}
+	}}
+	var calls []executor.CommandSpec
+	provider := NativeProvider{Executor: recordingExecutor{base: base, calls: &calls}}
 	rows := provider.collectStorageOptional(context.Background(), ClusterAccess{}, []poolWire{{PoolName: "pool"}}, fsDumpWire{}, time.Now())
 	keys := map[string]bool{}
 	counts := map[string]int{}
 	for _, row := range rows {
+		if row.Kind == "rbd_image" {
+			counts[row.Kind]++
+			continue
+		}
 		if row.Kind != "rbd_snapshot" && row.Kind != "rbd_trash" {
 			continue
 		}
@@ -50,10 +58,39 @@ func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
 			if payload["image_spec"] != base64.RawURLEncoding.EncodeToString([]byte(expected)) || payload["image_path"] != expected || payload["pool_name"] != "pool" {
 				t.Fatalf("snapshot identity lost: %+v", payload)
 			}
+			if payload["protected"] != true || payload["is_protected"] != true || payload["used_bytes"] != uint64(256) || payload["disk_usage"] != uint64(256) || payload["timestamp"] != "Tue Sep 23 02:03:04 2026" {
+				t.Fatalf("snapshot details lost: %+v", payload)
+			}
 		}
 	}
-	if counts["rbd_snapshot"] != 2 || counts["rbd_trash"] != 2 {
+	if counts["rbd_image"] != 2 || counts["rbd_snapshot"] != 2 || counts["rbd_trash"] != 2 {
 		t.Fatalf("missing namespace resources: %v", counts)
+	}
+	imageLists := map[string]int{}
+	usageCalls := map[string]int{}
+	for _, call := range calls {
+		switch call.ID {
+		case "collect.rbd_image_detail":
+			imageLists[strings.Join(call.Args, " ")]++
+		case "collect.rbd_image_usage":
+			usageCalls[strings.Join(call.Args, " ")]++
+		}
+	}
+	for _, command := range []string{
+		"ls --long --pool pool --format json",
+		"ls --long --pool pool --format json --namespace team",
+	} {
+		if imageLists[command] != 1 {
+			t.Fatalf("image list command %q count=%d, all=%v", command, imageLists[command], imageLists)
+		}
+	}
+	for _, command := range []string{
+		"du pool/image --format json",
+		"du pool/team/image --format json",
+	} {
+		if usageCalls[command] != 1 {
+			t.Fatalf("usage command %q count=%d, all=%v", command, usageCalls[command], usageCalls)
+		}
 	}
 }
 

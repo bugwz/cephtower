@@ -271,7 +271,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
         },
         { name: 'destination', required:true,visibleWhen:(values)=>values.action==='clone', label: '克隆目标（选择克隆时必填）', placeholder: 'pool/image 或 pool/namespace/image' }
       ],
-      initialValues: { action: 'protect' },
+      initialValues: (row) => ({ action: row?.is_protected === true ? 'unprotect' : 'protect' }),
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
         image_spec: imageSpec(row),
@@ -300,6 +300,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'pool_name', title: 'Pool' },
       { key: 'namespace', title: '命名空间' },
       { key: 'size', title: '容量' },
+      { key: 'used_bytes', title: '占用（bytes）' },
       { key: 'protected', title: '保护' },
       { key: 'timestamp', title: '时间' },
       { key: 'resource_version', title: '版本' }
