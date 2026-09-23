@@ -272,6 +272,17 @@ func (p *NativeProvider) collectCephFSSubvolumeScope(ctx context.Context, access
 				for key, value := range snapshot {
 					snapshotPayload[key] = value
 				}
+				infoArgs := []string{"fs", "subvolume", "snapshot", "info", filesystem, subvolume.Name, snapshotName}
+				if group != "" {
+					infoArgs = append(infoArgs, group)
+				}
+				infoArgs = append(infoArgs, "--format", "json")
+				var snapshotInfo map[string]any
+				if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_snapshot_info", infoArgs, &snapshotInfo) {
+					for key, value := range snapshotInfo {
+						snapshotPayload[key] = value
+					}
+				}
 				rows = append(rows, Observation{Kind: "cephfs_snapshot", NaturalKey: parent + "/" + snapshotName, ParentKind: "subvolume", ParentKey: parent, Name: snapshotName, Status: "available", Source: "ceph_cli", Payload: snapshotPayload, ObservedAt: now})
 			}
 		}

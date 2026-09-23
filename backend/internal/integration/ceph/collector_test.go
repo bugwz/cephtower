@@ -42,10 +42,11 @@ type cephFSCloneFixtureExecutor struct {
 func (f cephFSCloneFixtureExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	*f.calls = append(*f.calls, spec)
 	fixtures := map[string]string{
-		"fs subvolume ls cephfs team --format json":                  `[{"name":"clone-a"}]`,
-		"fs subvolume info cephfs clone-a team --format json":        `{"path":"/volumes/team/clone-a","source":{"volume":"cephfs","group":"_nogroup","subvolume":"source-a","snapshot":"snap-a"}}`,
-		"fs clone status cephfs clone-a team --format json":          `{"status":{"state":"in-progress","source":{"volume":"cephfs","subvolume":"source-a","snapshot":"snap-a"},"progress_report":{"percentage cloned":"42%","entries cloned":21,"bytes cloned":4096}}}`,
-		"fs subvolume snapshot ls cephfs clone-a team --format json": `[{"name":"checkpoint"}]`,
+		"fs subvolume ls cephfs team --format json":                               `[{"name":"clone-a"}]`,
+		"fs subvolume info cephfs clone-a team --format json":                     `{"path":"/volumes/team/clone-a","source":{"volume":"cephfs","group":"_nogroup","subvolume":"source-a","snapshot":"snap-a"}}`,
+		"fs clone status cephfs clone-a team --format json":                       `{"status":{"state":"in-progress","source":{"volume":"cephfs","subvolume":"source-a","snapshot":"snap-a"},"progress_report":{"percentage cloned":"42%","entries cloned":21,"bytes cloned":4096}}}`,
+		"fs subvolume snapshot ls cephfs clone-a team --format json":              `[{"name":"checkpoint"}]`,
+		"fs subvolume snapshot info cephfs clone-a checkpoint team --format json": `{"created_at":"2026-09-23 07:00:00","data_pool":"cephfs.hot","has_pending_clones":"yes"}`,
 	}
 	data, ok := fixtures[strings.Join(spec.Args, " ")]
 	if !ok {
@@ -75,11 +76,16 @@ func TestCollectCephFSCloneStatusForNamedGroup(t *testing.T) {
 	if rows[1].NaturalKey != "cephfs/team/clone-a/checkpoint" {
 		t.Fatalf("snapshot key = %q", rows[1].NaturalKey)
 	}
+	snapshot, ok := rows[1].Payload.(map[string]any)
+	if !ok || snapshot["has_pending_clones"] != "yes" || snapshot["data_pool"] != "cephfs.hot" {
+		t.Fatalf("snapshot payload = %#v", rows[1].Payload)
+	}
 	want := [][]string{
 		{"fs", "subvolume", "ls", "cephfs", "team", "--format", "json"},
 		{"fs", "subvolume", "info", "cephfs", "clone-a", "team", "--format", "json"},
 		{"fs", "clone", "status", "cephfs", "clone-a", "team", "--format", "json"},
 		{"fs", "subvolume", "snapshot", "ls", "cephfs", "clone-a", "team", "--format", "json"},
+		{"fs", "subvolume", "snapshot", "info", "cephfs", "clone-a", "checkpoint", "team", "--format", "json"},
 	}
 	got := make([][]string, len(calls))
 	for index := range calls {

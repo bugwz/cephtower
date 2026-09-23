@@ -1037,6 +1037,7 @@ Zone 创建和编辑统一验证 zone get 返回的名称及非空原生 ID，�
 资源碰撞或操作错误对象。
 
 CephFS 快照页新增克隆操作，支持源组、目标组和 pool layout，分别映射
-`--group_name`、`--target_group_name` 和 `--pool_layout`。子卷页仅对 pending 或
+`--group_name`、`--target_group_name` 和 `--pool_layout`。快照列表逐项调用
+`fs subvolume snapshot info`，展示创建时间、数据池和待处理克隆标记。子卷页仅对 pending 或
 in-progress 状态开放取消操作，调用 `fs clone cancel` 后以 `fs clone status`
 读回。离线测试覆盖命名组采集、状态字段和精确命令参数；未在真实集群验证。

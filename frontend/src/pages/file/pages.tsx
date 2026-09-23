@@ -408,6 +408,8 @@ const definitions: Record<
       { key: 'subvolume', title: '子卷' },
       { key: 'name', title: '快照' },
       { key: 'created_at', title: '创建时间' },
+      { key: 'data_pool', title: '数据池' },
+      { key: 'has_pending_clones', title: '存在待处理克隆' },
       { key: 'resource_version', title: '版本' }
     ]
   },

@@ -66,6 +66,7 @@ var collectionFailureKinds = map[string][]string{
 	"collect.cephfs_subvolume_detail": {"subvolume"},
 	"collect.cephfs_clone_status":     {"subvolume"},
 	"collect.cephfs_snapshot":         {"cephfs_snapshot"},
+	"collect.cephfs_snapshot_info":    {"cephfs_snapshot"},
 	"collect.rgw_user_ratelimit":      {"rgw_user"},
 	"collect.rgw_user_stats":          {"rgw_user"},
 	"collect.rgw_user_detail":         {"rgw_user"},
