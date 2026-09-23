@@ -38,7 +38,7 @@
 | block / NVMe-oF | 网关 gRPC | 当前已有 gRPC 客户端；子系统、namespace、listener、host、连接与 QoS 待完整对照 |
 | cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict` | 已有文件系统详情与客户端接口；计数器、rename、auth 与目录操作待核对 |
 | cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot`、`fs clone` | 已有组范围采集、clone 状态/进度/失败展示、快照克隆和进行中任务取消；metadata 与其余完整参数需核对 |
-| cephfs / snapshot schedule | `fs snap-schedule` | 已有精确路径状态、创建、删除、激活/停用、retention 和模块启用；全路径自动发现受 CLI 结构限制 |
+| cephfs / snapshot schedule | `fs snap-schedule` | 已有全路径发现、精确状态、创建、删除、激活/停用、retention 和模块启用 |
 | cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 目录配额、快照、浏览不能仅从 MON 获取；现有 cephfs-shell 数据面需核对 |
 | nfs | `nfs cluster`、`nfs export` | 已有基础管理；完整 export 属性、CephFS/RGW FSAL 与 ingress 待核对 |
 | smb | `smb show/apply/rm` 与模块资源定义 | 已有部分管理；域加入、用户组、资源校验与配置语义需核对 |
@@ -93,7 +93,15 @@
 测试明确核对写命令和后置检查的参数顺序。
 
 该模块的 `list --recursive` JSON 只包含 schedule/retention 汇总，不能直接当成前端所需的
-完整逐路径详情列表。后续采集必须核对 `status` 和路径发现方式，不能简单套用已有列表模型。
+完整逐路径详情列表。实现与 Dashboard 控制器保持一致：先执行
+`fs snap-schedule list / --recursive=true --fs=<filesystem>`，从逐行短格式发现并去重路径，
+再对每个路径执行 `fs snap-schedule status <path> --fs=<filesystem> --format=json`。这样缓存的
+每条记录保留 path、schedule、start、active、retention、创建/清理计数及子卷作用域。
+
+无计划时 plain list 会返回 `ENOENT`；采集器使用同命令的 JSON 模式确认 `{}` 后才把结果视为
+权威空列表，其他命令失败或非法结构会保留上次有效数据。新增
+`GET /api/v1/filesystem/snapshot/schedules` 返回缓存列表；前端同时提供全部计划表和原有的指定
+路径实时查询，全部计划可直接按其文件系统、路径、周期和开始时间执行启用、停用或删除。
 
 ## 已实现：CephX 认证实体管理
 

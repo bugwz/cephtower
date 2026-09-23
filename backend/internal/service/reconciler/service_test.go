@@ -206,6 +206,18 @@ func TestTopologyModuleOwnsCephFSClients(t *testing.T) {
 	t.Fatal("topology module is missing")
 }
 
+func TestStorageModuleOwnsCephFSSnapshotSchedules(t *testing.T) {
+	for _, module := range DefaultModules {
+		if module.Name == "storage" {
+			if !slices.Contains(module.Kinds, "snapshot_schedule") {
+				t.Fatalf("storage kinds = %v", module.Kinds)
+			}
+			return
+		}
+	}
+	t.Fatal("storage module is missing")
+}
+
 func TestReconcileSerializesTheSameClusterModule(t *testing.T) {
 	db, err := store.Open(config.DatabaseConfig{EncryptionKey: reconcilerTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "reconciler-lock.db"}}, t.TempDir())
 	if err != nil {

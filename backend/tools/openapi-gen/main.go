@@ -616,6 +616,7 @@ func isItemResourceRoute(route router.Route) bool {
 		"/filesystem/subvolume/groups",
 		"/filesystem/subvolumes",
 		"/filesystem/subvolume/snapshots",
+		"/filesystem/snapshot/schedules",
 		"/filesystem/authorizations",
 		"/filesystem/entries",
 		"/rbd/trash":

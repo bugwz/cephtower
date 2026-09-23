@@ -174,6 +174,7 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 	}
 	for _, filesystem := range fs.Filesystems {
 		name := filesystem.MDSMap.FSName
+		rows = append(rows, p.collectCephFSSnapshotSchedules(ctx, access, name, now)...)
 		rows = append(rows, p.collectCephFSSubvolumeScope(ctx, access, name, "", now)...)
 		var groups []namedWire
 		if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_group", []string{"fs", "subvolumegroup", "ls", name, "--format", "json"}, &groups) {

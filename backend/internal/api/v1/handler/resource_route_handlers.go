@@ -537,6 +537,10 @@ func (h *Handler) CreateSnapshotSchedule(w http.ResponseWriter, r *http.Request)
 	h.MutateResource("snapshot_schedule", "snapshot_schedule.create", "medium")(w, r)
 }
 
+func (h *Handler) ListSnapshotSchedules(w http.ResponseWriter, r *http.Request) {
+	h.ReadResource("snapshot_schedule", false)(w, r)
+}
+
 func (h *Handler) ListCephFSAuthorizations(w http.ResponseWriter, r *http.Request) {
 	h.ReadResource("cephfs_authorization", false)(w, r)
 }

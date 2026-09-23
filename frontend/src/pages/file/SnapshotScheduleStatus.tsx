@@ -19,6 +19,9 @@ export function SnapshotScheduleStatus() {
   const [error, setError] = useState('')
   const [moduleState, setModuleState] = useState<'loading' | 'enabled' | 'disabled' | 'unavailable'>('loading')
   const [moduleError, setModuleError] = useState('')
+  const [discoveredRows, setDiscoveredRows] = useState<ApiRecord[]>([])
+  const [discoveredLoading, setDiscoveredLoading] = useState(false)
+  const [discoveredError, setDiscoveredError] = useState('')
   const pending = useRef<AbortController | null>(null)
   function reset() { pending.current?.abort(); setRows(null); setError(''); setLoading(false) }
   const loadModule = useCallback(async () => {
@@ -46,12 +49,33 @@ export function SnapshotScheduleStatus() {
       setModuleError(err instanceof Error ? err.message : '读取模块状态失败')
     }
   }, [selectedClusterId])
+  const loadDiscovered = useCallback(async (refresh = false) => {
+    if (!selectedClusterId) {
+      setDiscoveredRows([])
+      return
+    }
+    setDiscoveredLoading(true)
+    setDiscoveredError('')
+    try {
+      if (refresh) await refreshResource({ clusterId: selectedClusterId, kind: 'snapshot_schedule' })
+      const result = await listResource('/filesystem/snapshot/schedules', selectedClusterId)
+      setDiscoveredRows(result.items)
+    } catch (err) {
+      setDiscoveredError(err instanceof Error ? err.message : '读取快照计划列表失败')
+    } finally {
+      setDiscoveredLoading(false)
+    }
+  }, [selectedClusterId])
   useEffect(() => {
     reset()
     setCreating(false)
     void loadModule()
     return () => pending.current?.abort()
   }, [loadModule, selectedClusterId])
+  useEffect(() => {
+    if (moduleState === 'enabled') void loadDiscovered()
+    if (moduleState === 'disabled' || moduleState === 'unavailable') setDiscoveredRows([])
+  }, [loadDiscovered, moduleState])
   async function enableModule() {
     if (!selectedClusterId || mutating || moduleState !== 'disabled') return
     setMutating(true)
@@ -73,12 +97,13 @@ export function SnapshotScheduleStatus() {
     } catch (err) { if (!abort.signal.aborted) setError(err instanceof Error ? err.message : '查询失败') }
     finally { if (!abort.signal.aborted) setLoading(false) }
   }
-  async function toggle(row: ApiRecord, action = row.active ? 'deactivate' : 'activate') {
+  async function toggle(row: ApiRecord, action = row.active ? 'deactivate' : 'activate', target: ApiRecord = scope.current, refreshQuery = true) {
     if (!selectedClusterId || mutating) return
     setMutating(true)
     try {
-      await mutateResource('/filesystem/snapshot/schedule/action','POST',{ cluster_id:selectedClusterId, ...scope.current, schedule:row.schedule, start:row.start, action })
-      await query(scope.current)
+      await mutateResource('/filesystem/snapshot/schedule/action','POST',{ cluster_id:selectedClusterId, ...target, schedule:row.schedule, start:row.start, action })
+      await loadDiscovered()
+      if (refreshQuery) await query(scope.current)
     } finally { setMutating(false) }
   }
   async function changeRetention(action: 'add' | 'remove') {
@@ -86,6 +111,7 @@ export function SnapshotScheduleStatus() {
     setMutating(true)
     try {
       await mutateResource('/filesystem/snapshot/schedule/retention','POST',{ cluster_id:selectedClusterId, ...scope.current, retention, action })
+      await loadDiscovered()
       await query(scope.current)
     } finally { setMutating(false) }
   }
@@ -96,6 +122,7 @@ export function SnapshotScheduleStatus() {
     try {
       await mutateResource('/filesystem/snapshot/schedule','POST',{ cluster_id:selectedClusterId, ...target, ...values })
       setCreating(false)
+      await loadDiscovered()
       await query(target)
     } finally { setMutating(false) }
   }
@@ -103,6 +130,21 @@ export function SnapshotScheduleStatus() {
     {moduleState === 'loading' && <Alert type="info" showIcon message="正在检查 snap_schedule 模块状态" />}
     {moduleState === 'disabled' && <Alert type="warning" showIcon message="snap_schedule 模块尚未启用" description="启用后才能查询和管理 CephFS 快照计划。" action={<Button type="primary" loading={mutating} onClick={enableModule}>启用模块</Button>} />}
     {moduleState === 'unavailable' && <Alert type="error" showIcon message="快照计划模块不可用" description={moduleError} />}
+    {moduleState === 'enabled' && <Card type="inner" title="全部已发现的快照计划" extra={<Button loading={discoveredLoading} onClick={() => loadDiscovered(true)}>刷新</Button>}>
+      {discoveredError && <Alert type="error" message={discoveredError} />}
+      <AppTable<ApiRecord> loading={discoveredLoading} dataSource={discoveredRows} rowKey={(row) => String(row.natural_key)} expandable={{ expandedRowRender:(row) => <RecordDetail record={row} /> }} columns={[
+        {title:'文件系统',dataIndex:'fs'},
+        {title:'路径',dataIndex:'path'},
+        {title:'子卷',dataIndex:'subvol',render:(value) => value || '—'},
+        {title:'周期',dataIndex:'schedule'},
+        {title:'状态',dataIndex:'active',render:(value) => value ? '启用' : '停用'},
+        {title:'开始时间（UTC）',dataIndex:'start'},
+        {title:'保留策略',dataIndex:'retention',render:(value) => typeof value === 'string' ? value || '—' : JSON.stringify(value ?? {})},
+        {title:'已创建',dataIndex:'created_count',render:(value) => value ?? '—'},
+        {title:'已清理',dataIndex:'pruned_count',render:(value) => value ?? '—'},
+        {title:'操作',render:(_,row) => <Space><Popconfirm title="删除这条快照计划？" description="已有快照不会因此删除。" onConfirm={() => toggle(row, 'remove', scheduleScope(row), false)}><Button danger disabled={mutating}>删除</Button></Popconfirm><Button disabled={mutating} onClick={() => toggle(row, row.active ? 'deactivate' : 'activate', scheduleScope(row), false)}>{row.active ? '停用' : '启用'}</Button></Space>}
+      ]} />
+    </Card>}
     <Form form={form} disabled={mutating} layout="inline" initialValues={{ path: '/' }} onFinish={query} onValuesChange={reset}>
       <Form.Item name="fs" label="文件系统" rules={[{ required: true }]}><Input /></Form.Item>
       <Form.Item name="path" label="路径" rules={[{ required: true }]}><Input /></Form.Item>
@@ -137,4 +179,13 @@ export function SnapshotScheduleStatus() {
     ]} />}
 
   </Card>
+}
+
+function scheduleScope(row: ApiRecord): ApiRecord {
+  return {
+    fs: row.fs,
+    path: row.path,
+    ...(row.subvol ? { subvol: row.subvol } : {}),
+    ...(row.group ? { group: row.group } : {})
+  }
 }
