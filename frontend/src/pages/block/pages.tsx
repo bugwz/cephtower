@@ -266,10 +266,11 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
             { label: '保护', value: 'protect' },
             { label: '取消保护', value: 'unprotect' },
             { label: '克隆为新镜像', value: 'clone' },
+            { label: '复制为独立镜像', value: 'copy' },
             { label: '回滚镜像到此快照', value: 'rollback' }
           ]
         },
-        { name: 'destination', required:true,visibleWhen:(values)=>values.action==='clone', label: '克隆目标（选择克隆时必填）', placeholder: 'pool/image 或 pool/namespace/image' }
+        { name: 'destination', required:true,visibleWhen:(values)=>values.action==='clone' || values.action==='copy', label: '目标镜像（克隆或复制时必填）', placeholder: 'pool/image 或 pool/namespace/image' }
       ],
       initialValues: (row) => ({ action: row?.is_protected === true ? 'unprotect' : 'protect' }),
       buildBody: (values, clusterId, row) => ({
@@ -277,7 +278,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
         image_spec: imageSpec(row),
         snap: snapshotName(row),
         action: String(values.action ?? 'protect'),
-        ...(values.action === 'clone' ? { destination: String(values.destination ?? '') } : {})
+        ...(['clone','copy'].includes(String(values.action)) ? { destination: String(values.destination ?? '') } : {})
       })
     },
     extraActions:[{

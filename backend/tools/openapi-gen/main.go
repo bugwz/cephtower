@@ -378,6 +378,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		}
 	case "POST /rbd/image/action":
 		return handler.MutationRequestContract("rbd_image.action")
+	case "POST /rbd/image/snapshot/action":
+		return handler.MutationRequestContract("rbd_snapshot.action")
 	case "POST /ceph/user":
 		return handler.MutationRequestContract("ceph_user.create")
 	case "PATCH /ceph/user":

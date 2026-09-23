@@ -819,11 +819,11 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, err
 		}
 		snap := last(strings.TrimSuffix(tail, "/action"))
-		verb, err := enum(p, "action", "clone", "protect", "unprotect", "rollback")
+		verb, err := enum(p, "action", "clone", "copy", "protect", "unprotect", "rollback")
 		if err != nil {
 			return command{}, err
 		}
-		if verb == "clone" {
+		if verb == "clone" || verb == "copy" {
 			destination, err := required(p, "destination")
 			if err != nil {
 				return command{}, err
@@ -831,7 +831,7 @@ func build(request Request, p map[string]any) (command, error) {
 			if err := validateRBDImagePath(destination); err != nil {
 				return command{}, err
 			}
-			return rbd([]string{"clone", spec + "@" + snap, destination}, []string{"info", destination}), nil
+			return rbd([]string{verb, spec + "@" + snap, destination}, []string{"info", destination}), nil
 		}
 		return rbd([]string{"snap", verb, spec + "@" + snap}, []string{"snap", "ls", spec}), nil
 	case "rbd_trash.restore":

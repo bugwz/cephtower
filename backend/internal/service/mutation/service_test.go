@@ -571,15 +571,15 @@ func TestSnapshotRetentionRejectsAmbiguousInput(t *testing.T) {
 func TestRBDSnapshotActionsPreserveNamespace(t *testing.T) {
 	image := "pool-a/team-a/image-a"
 	key := "rbd/image/" + base64.RawURLEncoding.EncodeToString([]byte(image)) + "/snapshot/snap-a/action"
-	for _, verb := range []string{"protect", "unprotect", "rollback", "clone"} {
+	for _, verb := range []string{"protect", "unprotect", "rollback", "clone", "copy"} {
 		cmd, err := build(Request{Action: "rbd_snapshot.action", ResourceKey: key}, map[string]any{"action": verb, "destination": "pool-b/team-b/clone-a"})
 		if err != nil {
 			t.Fatal(err)
 		}
 		want := []string{"snap", verb, image + "@snap-a"}
 		check := []string{"snap", "ls", image, "--format", "json"}
-		if verb == "clone" {
-			want = []string{"clone", image + "@snap-a", "pool-b/team-b/clone-a"}
+		if verb == "clone" || verb == "copy" {
+			want = []string{verb, image + "@snap-a", "pool-b/team-b/clone-a"}
 			check = []string{"info", "pool-b/team-b/clone-a", "--format", "json"}
 		}
 		if cmd.binary != executor.BinaryRBD || !reflect.DeepEqual(cmd.args, want) || !reflect.DeepEqual(cmd.check, check) {
@@ -588,6 +588,9 @@ func TestRBDSnapshotActionsPreserveNamespace(t *testing.T) {
 	}
 	if _, err := build(Request{Action: "rbd_snapshot.action", ResourceKey: key}, map[string]any{"action": "clone"}); err == nil {
 		t.Fatal("clone without destination accepted")
+	}
+	if _, err := build(Request{Action: "rbd_snapshot.action", ResourceKey: key}, map[string]any{"action": "copy"}); err == nil {
+		t.Fatal("copy without destination accepted")
 	}
 }
 
