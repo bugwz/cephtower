@@ -306,16 +306,38 @@ const definitions: Record<
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, fs: fsName(row), subvolume: subvolumeName(row), group: groupName(row), size: Number(values.size) })
     },
-    extraActions: [{
-      title: '取消克隆',
-      path: '/filesystem/subvolume/clone/cancel',
-      method: 'POST',
-      successMessage: '克隆取消请求执行成功',
-      fields: [],
-      confirmation: (_values, row) => `确认取消子卷 ${subvolumeName(row)} 的克隆任务吗？`,
-      buildBody: (_values, clusterId, row) => ({ cluster_id: clusterId, fs: fsName(row), subvolume: subvolumeName(row), group: groupName(row) }),
-      disabledWhen: (row) => ['pending', 'in-progress'].includes(String(row.clone_state ?? '')) ? undefined : '只有等待中或进行中的克隆任务可以取消'
-    }],
+    extraActions: [
+      {
+        title: '取消克隆',
+        path: '/filesystem/subvolume/clone/cancel',
+        method: 'POST',
+        successMessage: '克隆取消请求执行成功',
+        fields: [],
+        confirmation: (_values, row) => `确认取消子卷 ${subvolumeName(row)} 的克隆任务吗？`,
+        buildBody: (_values, clusterId, row) => ({ cluster_id: clusterId, fs: fsName(row), subvolume: subvolumeName(row), group: groupName(row) }),
+        disabledWhen: (row) => ['pending', 'in-progress'].includes(String(row.clone_state ?? '')) ? undefined : '只有等待中或进行中的克隆任务可以取消'
+      },
+      {
+        title: '高级删除',
+        path: '/filesystem/subvolume',
+        method: 'DELETE',
+        successMessage: '子卷删除执行成功',
+        fields: [
+          { name: 'retain_snapshots', label: '保留已有快照', type: 'boolean' },
+          { name: 'force', label: '强制删除失败或已取消的克隆', type: 'boolean' }
+        ],
+        initialValues: { retain_snapshots: true, force: false },
+        confirmation: (values, row) => `确认删除子卷 ${subvolumeName(row)} 吗？${values.retain_snapshots ? ' 已有快照将被保留。' : ''}${values.force ? ' 将启用强制删除。' : ''}`,
+        buildBody: (values, clusterId, row) => ({
+          cluster_id: clusterId,
+          fs: fsName(row),
+          subvolume: subvolumeName(row),
+          group: groupName(row),
+          retain_snapshots: Boolean(values.retain_snapshots),
+          force: Boolean(values.force)
+        })
+      }
+    ],
     deleteAction: {
       title: '删除子卷',
       path: '/filesystem/subvolume',

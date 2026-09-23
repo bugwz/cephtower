@@ -169,6 +169,23 @@ func TestCephFSCloneCommandsPreserveGroupScope(t *testing.T) {
 	}
 }
 
+func TestCephFSSubvolumeDeleteSupportsRetentionAndForce(t *testing.T) {
+	cmd, err := build(Request{Action: "subvolume.delete", ResourceKey: "filesystem/cephfs/subvolume/clone-a"}, map[string]any{
+		"group": "team", "retain_snapshots": true, "force": true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"fs", "subvolume", "rm", "cephfs", "clone-a", "team", "--force", "--retain-snapshots"}
+	if !reflect.DeepEqual(cmd.args, want) {
+		t.Fatalf("args = %#v, want %#v", cmd.args, want)
+	}
+	wantCheck := []string{"fs", "subvolume", "ls", "cephfs", "team", "--format", "json"}
+	if !reflect.DeepEqual(cmd.check, wantCheck) {
+		t.Fatalf("check = %#v, want %#v", cmd.check, wantCheck)
+	}
+}
+
 func TestFilesystemCreateRequiresPoolPair(t *testing.T) {
 	_, err := build(Request{Action: "filesystem.create", ResourceKey: "filesystem"}, map[string]any{
 		"name": "cephfs", "metadata_pool": "cephfs.meta",

@@ -43,7 +43,7 @@ export interface ResourceFormAction {
   title: string
   buttonLabel?: string
   path: string
-  method: 'POST' | 'PATCH' | 'PUT'
+  method: 'POST' | 'PATCH' | 'PUT' | 'DELETE'
   successMessage: string
   confirmation?: (values: MutationFormValues, row?: ApiRecord) => string | undefined
   fields: MutationFormField[]

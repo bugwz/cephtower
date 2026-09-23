@@ -1041,3 +1041,10 @@ CephFS 快照页新增克隆操作，支持源组、目标组和 pool layout，�
 `fs subvolume snapshot info`，展示创建时间、数据池和待处理克隆标记。子卷页仅对 pending 或
 in-progress 状态开放取消操作，调用 `fs clone cancel` 后以 `fs clone status`
 读回。离线测试覆盖命名组采集、状态字段和精确命令参数；未在真实集群验证。
+
+### CephFS 子卷高级删除
+
+对照参考界面删除确认框与 `fs subvolume rm` 原生参数，子卷页新增高级删除，
+可选择 `--retain-snapshots` 保留已有快照，并可用 `--force` 删除失败或已取消的
+克隆。请求仍携带资源版本前置条件并进行二次危险操作确认；普通删除入口保持简洁。
+离线测试覆盖命名组、两个开关的精确顺序及作用域读回；未在真实集群验证。

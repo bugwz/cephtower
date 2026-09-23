@@ -1103,6 +1103,12 @@ func build(request Request, p map[string]any) (command, error) {
 			args = append(args, group)
 			check = append(check, group)
 		}
+		if boolParameter(p, "force") {
+			args = append(args, "--force")
+		}
+		if boolParameter(p, "retain_snapshots") {
+			args = append(args, "--retain-snapshots")
+		}
 		check = append(check, "--format", "json")
 		return ceph(args, check), nil
 	case "subvolume.update":
