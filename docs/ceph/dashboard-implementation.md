@@ -420,12 +420,18 @@ which could collapse multiple paths and schedules into one resource key.
 ### RBD image info collection
 
 - Default and named namespace images now fetch `rbd info <spec> --format json`.
-  Features, parent identity and detailed fields are exposed in the image table.
+  Features, parent identity, size, object count/size, format, creation time, data
+  pool, block prefix, order, and stripe layout are exposed as typed table fields.
 - Source fields follow `src/tools/rbd/action/Info.cc`; details retain striping,
   timestamps and other native attributes. Failed info reads mark image collection
   unavailable instead of treating missing details as authoritative.
-- Fixture coverage verifies features, parent snapshot and striping detail retention.
-  Collection adds one native request per image; large-cluster performance is unverified.
+- Images with `fast-diff` additionally run `rbd du <spec> --format json`. The head
+  row supplies current-image usage, while summing snapshot and head rows supplies
+  total usage including snapshots, matching the two values shown by Dashboard.
+  Images without `fast-diff` omit usage rather than triggering an expensive scan.
+- Fixture coverage verifies the exact usage command, snapshot aggregation, 64-bit
+  capacity fields, features, parent snapshot, and layout retention. Collection adds
+  one usage request only for eligible images; large-cluster performance is unverified.
 
 ### RBD feature mutation
 

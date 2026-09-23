@@ -47,6 +47,7 @@ var collectionFailureKinds = map[string][]string{
 	"collect.rbd_image_status":        {"rbd_image"},
 	"collect.rbd_image_config":        {"rbd_image"},
 	"collect.rbd_image_info":          {"rbd_image"},
+	"collect.rbd_image_usage":         {"rbd_image"},
 	"collect.rbd_image":               {"rbd_image"},
 	"collect.rgw_global_ratelimit":    {"rgw_status"},
 	"collect.rgw_status":              {"rgw_status"},

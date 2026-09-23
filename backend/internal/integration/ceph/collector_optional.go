@@ -551,6 +551,17 @@ func (p *NativeProvider) enrichRBDImage(ctx context.Context, access ClusterAcces
 	image.Details = info
 	image.Features = stringList(info["features"], "")
 	image.Parent, _ = info["parent"].(map[string]any)
+	if size := firstUintPointer(info, "size"); size != nil {
+		image.SizeBytes = size
+	}
+	image.ObjectCount = firstUintPointer(info, "objects")
+	image.ObjectSize = firstUintPointer(info, "object_size")
+	image.StripeUnit = firstUintPointer(info, "stripe_unit")
+	image.StripeCount = firstUintPointer(info, "stripe_count")
+	image.Order = firstUintPointer(info, "order")
+	image.CreatedAt = textField(info, "create_timestamp")
+	image.DataPool = textField(info, "data_pool")
+	image.BlockPrefix = textField(info, "block_name_prefix")
 	image.MirrorState = "disabled"
 	if mirroring, ok := info["mirroring"].(map[string]any); ok {
 		image.MirrorMode = textField(mirroring, "mode")
@@ -562,6 +573,51 @@ func (p *NativeProvider) enrichRBDImage(ctx context.Context, access ClusterAcces
 			image.Primary = &primary
 		}
 	}
+	if hasString(image.Features, "fast-diff") {
+		var usage map[string]any
+		if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_image_usage", []string{"du", spec, "--format", "json"}, &usage) {
+			if !applyRBDImageUsage(image, usage) {
+				markCollectionUnavailable(ctx, "collect.rbd_image_usage")
+			}
+		}
+	}
+}
+
+func hasString(values []string, target string) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
+}
+
+func applyRBDImageUsage(image *cephdomain.RBDImage, usage map[string]any) bool {
+	rows := objectList(usage["images"])
+	if len(rows) == 0 {
+		return false
+	}
+	var total uint64
+	var found bool
+	var current *uint64
+	for _, row := range rows {
+		used, ok := uintValue(row["used_size"])
+		if !ok {
+			continue
+		}
+		total += used
+		found = true
+		if _, isSnapshot := row["snapshot"]; !isSnapshot {
+			value := used
+			current = &value
+		}
+	}
+	if !found || current == nil {
+		return false
+	}
+	image.UsedBytes = current
+	image.TotalUsedBytes = &total
+	return true
 }
 
 func rgwRoleObservations(ctx context.Context, list any, account string, now time.Time) []Observation {

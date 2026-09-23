@@ -2,6 +2,7 @@ package ceph
 
 import (
 	cephdomain "cephtower/backend/internal/domain/ceph"
+	"cephtower/backend/internal/integration/ceph/executor"
 	"cephtower/backend/internal/security"
 	"context"
 	"encoding/base64"
@@ -118,11 +119,14 @@ func TestMalformedMirroringInfoDoesNotBecomeEmptyPoolState(t *testing.T) {
 }
 
 func TestRBDImageInfoEnrichment(t *testing.T) {
-	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+	base := malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rbd_image_config": []byte(`[{"name":"rbd_qos_iops_limit","value":"1000","source":"image"}]`),
 		"collect.rbd_image_status": []byte(`{"watchers":[{"address":"10.0.0.1:0/1","client":9007199254740993,"cookie":18446744073709551615}],"migration":{"state":"executed"},"persistent_cache":{"clean":true}}`),
-		"collect.rbd_image_info":   []byte(`{"name":"image","features":["layering","exclusive-lock"],"parent":{"pool":"parent-pool","image":"parent","snapshot":"base"},"stripe_unit":4096,"mirroring":{"mode":"snapshot","state":"enabled","global_id":"global-1","primary":false}}`),
-	}}}
+		"collect.rbd_image_info":   []byte(`{"name":"image","size":1073741824,"objects":256,"object_size":4194304,"order":22,"stripe_unit":4096,"stripe_count":2,"create_timestamp":"2026-09-23T02:03:04Z","data_pool":"rbd-data","block_name_prefix":"rbd_data.1","features":["layering","exclusive-lock","fast-diff"],"parent":{"pool":"parent-pool","image":"parent","snapshot":"base"},"mirroring":{"mode":"snapshot","state":"enabled","global_id":"global-1","primary":false}}`),
+		"collect.rbd_image_usage":  []byte(`{"images":[{"name":"image","snapshot":"base","provisioned_size":1073741824,"used_size":1048576},{"name":"image","provisioned_size":1073741824,"used_size":2097152}]}`),
+	}}
+	var calls []executor.CommandSpec
+	provider := NativeProvider{Executor: recordingExecutor{base: base, calls: &calls}}
 	payload := cephdomain.RBDImage{ImagePath: "pool/ns/image"}
 	provider.enrichRBDImage(context.Background(), ClusterAccess{}, payload.ImagePath, &payload)
 	watchers := objectList(payload.RuntimeStatus["watchers"])
@@ -135,11 +139,32 @@ func TestRBDImageInfoEnrichment(t *testing.T) {
 	if payload.RuntimeStatus["watchers"] == nil || payload.RuntimeStatus["migration"] == nil || payload.RuntimeStatus["persistent_cache"] == nil {
 		t.Fatalf("missing runtime status: %+v", payload)
 	}
-	if len(payload.Features) != 2 || payload.Features[0] != "layering" || payload.Parent["snapshot"] != "base" || payload.Details["stripe_unit"] == nil {
+	if len(payload.Features) != 3 || payload.Features[0] != "layering" || payload.Features[2] != "fast-diff" || payload.Parent["snapshot"] != "base" || payload.Details["stripe_unit"] == nil {
 		t.Fatalf("missing details: %+v", payload)
 	}
 	if payload.MirrorMode != "snapshot" || payload.MirrorState != "enabled" || payload.MirrorGlobalID != "global-1" || payload.Primary == nil || *payload.Primary {
 		t.Fatalf("missing mirroring state: %+v", payload)
+	}
+	if payload.SizeBytes == nil || *payload.SizeBytes != 1073741824 || payload.ObjectCount == nil || *payload.ObjectCount != 256 || payload.ObjectSize == nil || *payload.ObjectSize != 4194304 {
+		t.Fatalf("missing image capacity details: %+v", payload)
+	}
+	if payload.StripeUnit == nil || *payload.StripeUnit != 4096 || payload.StripeCount == nil || *payload.StripeCount != 2 || payload.Order == nil || *payload.Order != 22 {
+		t.Fatalf("missing image layout details: %+v", payload)
+	}
+	if payload.CreatedAt != "2026-09-23T02:03:04Z" || payload.DataPool != "rbd-data" || payload.BlockPrefix != "rbd_data.1" {
+		t.Fatalf("missing image identity details: %+v", payload)
+	}
+	if payload.UsedBytes == nil || *payload.UsedBytes != 2097152 || payload.TotalUsedBytes == nil || *payload.TotalUsedBytes != 3145728 {
+		t.Fatalf("missing image usage details: %+v", payload)
+	}
+	foundUsage := false
+	for _, call := range calls {
+		if call.ID == "collect.rbd_image_usage" {
+			foundUsage = strings.Join(call.Args, " ") == "du pool/ns/image --format json"
+		}
+	}
+	if !foundUsage {
+		t.Fatalf("missing exact rbd du command: %+v", calls)
 	}
 }
 
@@ -151,6 +176,23 @@ func TestRBDImageInfoDefaultsToDisabledMirroring(t *testing.T) {
 	provider.enrichRBDImage(context.Background(), ClusterAccess{}, payload.ImagePath, &payload)
 	if payload.MirrorState != "disabled" || payload.MirrorMode != "" || payload.Primary != nil {
 		t.Fatalf("disabled mirroring state=%+v", payload)
+	}
+}
+
+func TestRBDImageUsageRequiresCurrentImageRow(t *testing.T) {
+	trace := &collectionTrace{unavailable: map[string]struct{}{}}
+	ctx := context.WithValue(context.Background(), collectionTraceKey{}, trace)
+	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+		"collect.rbd_image_info":  []byte(`{"name":"image","features":["fast-diff"]}`),
+		"collect.rbd_image_usage": []byte(`{"images":[{"name":"image","snapshot":"base","used_size":1024}]}`),
+	}}}
+	payload := cephdomain.RBDImage{ImagePath: "pool/image"}
+	provider.enrichRBDImage(ctx, ClusterAccess{}, payload.ImagePath, &payload)
+	if payload.UsedBytes != nil || payload.TotalUsedBytes != nil {
+		t.Fatalf("malformed usage was accepted: %+v", payload)
+	}
+	if _, ok := trace.unavailable["rbd_image"]; !ok {
+		t.Fatalf("malformed usage did not protect cached image state: %+v", trace.unavailable)
 	}
 }
 

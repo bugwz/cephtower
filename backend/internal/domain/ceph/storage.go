@@ -61,12 +61,22 @@ type RBDImage struct {
 	MirrorState    string                     `json:"mirror_state,omitempty"`
 	MirrorGlobalID string                     `json:"mirror_global_id,omitempty"`
 	Primary        *bool                      `json:"primary,omitempty"`
+	CreatedAt      string                     `json:"created_at,omitempty"`
+	DataPool       string                     `json:"data_pool,omitempty"`
+	BlockPrefix    string                     `json:"block_name_prefix,omitempty"`
 	ImagePath      string                     `json:"image_path"`
 	Namespace      string                     `json:"namespace"`
 	ImageSpec      string                     `json:"image_spec"`
 	Pool           string                     `json:"pool"`
 	Name           string                     `json:"name"`
 	SizeBytes      *uint64                    `json:"size_bytes"`
+	UsedBytes      *uint64                    `json:"used_bytes,omitempty"`
+	TotalUsedBytes *uint64                    `json:"total_used_bytes,omitempty"`
+	ObjectCount    *uint64                    `json:"object_count,omitempty"`
+	ObjectSize     *uint64                    `json:"object_size_bytes,omitempty"`
+	StripeUnit     *uint64                    `json:"stripe_unit_bytes,omitempty"`
+	StripeCount    *uint64                    `json:"stripe_count,omitempty"`
+	Order          *uint64                    `json:"order,omitempty"`
 	Format         *int                       `json:"format"`
 }
 
