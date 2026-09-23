@@ -376,6 +376,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 			"direction":  {Type: "string", Required: true, Enum: []string{"rx-only", "rx-tx"}},
 			"token":      {Type: "string", Required: true, WriteOnly: true},
 		}
+	case "POST /rbd/image/action":
+		return handler.MutationRequestContract("rbd_image.action")
 	case "POST /ceph/user":
 		return handler.MutationRequestContract("ceph_user.create")
 	case "PATCH /ceph/user":
@@ -438,6 +440,9 @@ func mutationFieldUnion() map[string]handler.JSONField {
 	for _, action := range handler.MutationContractActions() {
 		contract, _ := handler.MutationRequestContract(action)
 		for name, field := range contract.Fields {
+			if action == "rbd_image.action" && (name == "interval" || name == "start_time") {
+				continue
+			}
 			field.Required = false
 			if existing, ok := fields[name]; ok && existing.Type != field.Type {
 				field = handler.JSONField{}

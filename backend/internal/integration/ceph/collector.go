@@ -931,6 +931,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		}
 	}
 	rows = append(rows, p.collectStorageOptional(ctx, access, pools, fs, now)...)
+	p.attachRBDMirrorSnapshotSchedules(ctx, access, rows)
 	return rows, nil
 }
 

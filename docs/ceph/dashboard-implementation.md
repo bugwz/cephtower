@@ -33,7 +33,7 @@
 | cluster / logs | `log last` / 外部日志源 | 已接通 log last 直接读取、频道/级别/条数筛选、轮询与下载；移除仅发心跳的假流接口 |
 | cluster / upgrade | `orch upgrade check/status/start/pause/resume/stop` | 已有状态和操作，版本选择及 daemon 范围参数待核对 |
 | block / rbd | `rbd ls/info/create/resize/rm/feature`、`rbd snap`、`rbd trash`、`rbd namespace` | 已有基础管理；克隆/扁平化、配置、快照保护、任务、回收站完整操作需逐项补齐 |
-| block / mirroring | `rbd mirror pool/image`、`rbd mirror snapshot schedule` | 已有池状态、模式、peer、bootstrap token 与镜像操作；调度仍需补齐 |
+| block / mirroring | `rbd mirror pool/image`、`rbd mirror snapshot schedule` | 已有池状态、模式、peer、bootstrap token、镜像操作与镜像级调度；池/集群级调度管理待补齐 |
 | block / iSCSI | ceph-iscsi REST API | 需要网关 endpoint，不能把所有操作替换成普通 `ceph` CLI；当前已有外部客户端 |
 | block / NVMe-oF | 网关 gRPC | 当前已有 gRPC 客户端；子系统、namespace、listener、host、连接与 QoS 待完整对照 |
 | cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict` | 已有文件系统详情与客户端接口；计数器、rename、auth 与目录操作待核对 |
@@ -267,7 +267,7 @@ which could collapse multiple paths and schedules into one resource key.
 - The UI exposes disabled/image/pool configuration and confirms disabling mirroring.
   Successful changes trigger native collection before refreshing the table.
 - Fixture tests cover two independent pool identities and status fields. No live cluster
-  execution has been performed. Mirror snapshot scheduling remains unfinished.
+  execution has been performed. Pool- and cluster-level schedule administration remains unfinished.
 
 ### RBD image mirroring actions
 
@@ -277,8 +277,23 @@ which could collapse multiple paths and schedules into one resource key.
   targets. Postchecks use mirror image status, or ordinary image info after disable.
 - Demote, disable and resync show operation-specific confirmation. The native CLI
   enforces mirror mode and primary-state prerequisites and returns errors to the UI.
-- Namespace-aware command tests cover all seven operations. Forced promotion, forced
-  disable, and mirror scheduling remain pending.
+- Namespace-aware command tests cover all seven operations. Forced promotion and forced
+  disable remain pending.
+
+### RBD mirror snapshot schedules
+
+- RBD image rows now show the effective snapshot schedule, its image/namespace/pool/
+  cluster inheritance source, all interval/start-time pairs, and the next scheduled run.
+- Collection executes one recursive `rbd mirror snapshot schedule list --format json`
+  and one global `status --format json` per storage refresh, then applies the most
+  specific schedule to every image without per-image command fan-out.
+- Image actions add a schedule, remove one interval/start pair, or remove all schedules
+  defined directly on that image. They map to native `schedule add/remove --image=...`
+  commands and verify the exact image-level state through a recursive list readback.
+- Interval and start-time inputs are strictly validated. Fixture tests cover exact
+  command boundaries, normalized timezone-aware start times, readback failures,
+  inheritance precedence, next-run merging, malformed native data, and namespaces.
+  Pool- and cluster-level schedule administration and live-cluster validation remain.
 
 ### RBD mirroring peers
 

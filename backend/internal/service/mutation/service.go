@@ -17,6 +17,7 @@ import (
 )
 
 var identifier = regexp.MustCompile(`^[A-Za-z0-9_.:@/+\-=]{1,512}$`)
+var rbdMirrorScheduleIntervalPattern = regexp.MustCompile(`^[1-9][0-9]*(?:m|h|d)$`)
 
 const allowECOverwritesPoolFlag = "allow_ec_overwrites"
 
@@ -133,7 +134,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
-		if err != nil || (request.Action == "rgw_bucket.quota" && !bucketQuotaMatches(request.Parameters, checked.Stdout)) || ((request.Action == "rgw_zone.update" || request.Action == "rgw_zone.create") && !zoneReadbackMatches(request.Parameters, checked.Stdout)) {
+		if err != nil || (request.Action == "rgw_bucket.quota" && !bucketQuotaMatches(request.Parameters, checked.Stdout)) || ((request.Action == "rgw_zone.update" || request.Action == "rgw_zone.create") && !zoneReadbackMatches(request.Parameters, checked.Stdout)) || (isRBDMirrorScheduleMutation(request.Parameters) && !rbdMirrorScheduleReadbackMatches(request, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "command was accepted but the expected state could not be verified", Retryable: true}
 		}
 	}
@@ -658,7 +659,7 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		verb, err := enum(p, "action", "config-set", "config-remove", "snapshot-purge", "feature-enable", "feature-disable", "flatten", "sparsify", "copy", "deep-copy", "rename", "move-to-trash", "mirror-enable-journal", "mirror-enable-snapshot", "mirror-disable", "mirror-promote", "mirror-demote", "mirror-resync", "mirror-snapshot")
+		verb, err := enum(p, "action", "config-set", "config-remove", "snapshot-purge", "feature-enable", "feature-disable", "flatten", "sparsify", "copy", "deep-copy", "rename", "move-to-trash", "mirror-enable-journal", "mirror-enable-snapshot", "mirror-disable", "mirror-promote", "mirror-demote", "mirror-resync", "mirror-snapshot", "mirror-schedule-add", "mirror-schedule-remove")
 		if err != nil {
 			return command{}, err
 		}
@@ -692,6 +693,43 @@ func build(request Request, p map[string]any) (command, error) {
 				return command{}, invalid("deep-flatten cannot be enabled on an existing image")
 			}
 			return rbd([]string{"feature", strings.TrimPrefix(verb, "feature-"), spec, feature}, []string{"info", spec}), nil
+		}
+		if verb == "mirror-schedule-add" || verb == "mirror-schedule-remove" {
+			rawInterval, intervalProvided := p["interval"]
+			intervalText, intervalIsString := rawInterval.(string)
+			if intervalProvided && (!intervalIsString || strings.ContainsAny(intervalText, "\x00\r\n")) {
+				return command{}, invalid("interval must be valid single-line text")
+			}
+			interval := strings.TrimSpace(intervalText)
+			if verb == "mirror-schedule-add" && interval == "" {
+				return command{}, invalid("interval is required")
+			}
+			if interval != "" && !rbdMirrorScheduleIntervalPattern.MatchString(interval) {
+				return command{}, invalid("interval must be a positive number followed by m, h, or d")
+			}
+			rawStartTime, startTimeProvided := p["start_time"]
+			startTimeText, startTimeIsString := rawStartTime.(string)
+			if startTimeProvided && (!startTimeIsString || strings.ContainsAny(startTimeText, "\x00\r\n")) {
+				return command{}, invalid("start_time must be valid single-line text")
+			}
+			startTime := strings.TrimSpace(startTimeText)
+			if startTime != "" {
+				if interval == "" {
+					return command{}, invalid("start_time requires an interval")
+				}
+				startTime, err = normalizeRBDMirrorScheduleStartTime(startTime)
+				if err != nil {
+					return command{}, err
+				}
+			}
+			args := []string{"mirror", "snapshot", "schedule", strings.TrimPrefix(verb, "mirror-schedule-"), "--image=" + spec}
+			if interval != "" {
+				args = append(args, interval)
+			}
+			if startTime != "" {
+				args = append(args, startTime)
+			}
+			return rbd(args, []string{"mirror", "snapshot", "schedule", "list", "--recursive"}), nil
 		}
 		if verb == "rename" {
 			name, err := required(p, "destination")
@@ -2366,6 +2404,97 @@ func validateRBDImagePath(spec string) error {
 		}
 	}
 	return nil
+}
+
+func normalizeRBDMirrorScheduleStartTime(value string) (string, error) {
+	for _, candidate := range []struct {
+		layout string
+		zone   bool
+	}{
+		{"15:04", false},
+		{"15:04:05", false},
+		{"15:04Z07:00", true},
+		{"15:04:05Z07:00", true},
+	} {
+		parsed, err := time.Parse(candidate.layout, value)
+		if err != nil {
+			continue
+		}
+		if candidate.zone {
+			return parsed.Format("15:04:05Z07:00"), nil
+		}
+		return parsed.Format("15:04:05"), nil
+	}
+	return "", invalid("start_time must use HH:MM or HH:MM:SS with an optional timezone offset")
+}
+
+func isRBDMirrorScheduleMutation(parameters map[string]any) bool {
+	action := optional(parameters, "action")
+	return action == "mirror-schedule-add" || action == "mirror-schedule-remove"
+}
+
+func rbdMirrorScheduleReadbackMatches(request Request, data []byte) bool {
+	spec, err := decodeImageSpec(pathValue(resourceTail(request.ResourceKey), "image"))
+	if err != nil {
+		return false
+	}
+	parts := strings.Split(spec, "/")
+	pool, namespace, image := parts[0], "", parts[len(parts)-1]
+	if len(parts) == 3 {
+		namespace = parts[1]
+	}
+	var schedules []struct {
+		Pool      string `json:"pool"`
+		Namespace string `json:"namespace"`
+		Image     string `json:"image"`
+		Items     []struct {
+			Interval  string `json:"interval"`
+			StartTime string `json:"start_time"`
+		} `json:"items"`
+	}
+	if err := json.Unmarshal(data, &schedules); err != nil || schedules == nil {
+		return false
+	}
+	var exactItems []struct {
+		Interval  string `json:"interval"`
+		StartTime string `json:"start_time"`
+	}
+	for _, schedule := range schedules {
+		if schedule.Pool == pool && schedule.Namespace == namespace && schedule.Image == image {
+			exactItems = schedule.Items
+			break
+		}
+	}
+	action := optional(request.Parameters, "action")
+	interval := optional(request.Parameters, "interval")
+	startTime := optional(request.Parameters, "start_time")
+	if startTime != "" {
+		startTime, err = normalizeRBDMirrorScheduleStartTime(startTime)
+		if err != nil {
+			return false
+		}
+	}
+	if action == "mirror-schedule-remove" && interval == "" {
+		return len(exactItems) == 0
+	}
+	found := false
+	for _, item := range exactItems {
+		itemStart := strings.TrimSpace(item.StartTime)
+		if itemStart != "" {
+			itemStart, err = normalizeRBDMirrorScheduleStartTime(itemStart)
+			if err != nil {
+				return false
+			}
+		}
+		if item.Interval == interval && itemStart == startTime {
+			found = true
+			break
+		}
+	}
+	if action == "mirror-schedule-add" {
+		return found
+	}
+	return !found
 }
 
 func decodePair(value string) (string, string, error) {

@@ -705,6 +705,70 @@ func TestRBDImageMirroringCommands(t *testing.T) {
 	}
 }
 
+func TestRBDMirrorSnapshotScheduleCommands(t *testing.T) {
+	spec := "pool/team/image"
+	key := "rbd/image/" + base64.RawURLEncoding.EncodeToString([]byte(spec)) + "/action"
+	for _, test := range []struct {
+		name    string
+		payload map[string]any
+		args    []string
+	}{
+		{"add", map[string]any{"action": "mirror-schedule-add", "interval": "12h", "start_time": "00:15:00+08:00"}, []string{"mirror", "snapshot", "schedule", "add", "--image=" + spec, "12h", "00:15:00+08:00"}},
+		{"remove one", map[string]any{"action": "mirror-schedule-remove", "interval": "12h", "start_time": "00:15:00+08:00"}, []string{"mirror", "snapshot", "schedule", "remove", "--image=" + spec, "12h", "00:15:00+08:00"}},
+		{"remove all", map[string]any{"action": "mirror-schedule-remove"}, []string{"mirror", "snapshot", "schedule", "remove", "--image=" + spec}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			cmd, err := build(Request{Action: "rbd_image.action", ResourceKey: key}, test.payload)
+			if err != nil {
+				t.Fatal(err)
+			}
+			check := []string{"mirror", "snapshot", "schedule", "list", "--recursive", "--format", "json"}
+			if cmd.binary != executor.BinaryRBD || !reflect.DeepEqual(cmd.args, test.args) || !reflect.DeepEqual(cmd.check, check) {
+				t.Fatalf("command=%+v", cmd)
+			}
+		})
+	}
+	for _, payload := range []map[string]any{
+		{"action": "mirror-schedule-add"},
+		{"action": "mirror-schedule-add", "interval": "0m"},
+		{"action": "mirror-schedule-add", "interval": "1s"},
+		{"action": "mirror-schedule-remove", "start_time": "00:15"},
+		{"action": "mirror-schedule-add", "interval": "1h", "start_time": "--help"},
+		{"action": "mirror-schedule-add", "interval": "1h", "start_time": "00:15\n"},
+	} {
+		if _, err := build(Request{Action: "rbd_image.action", ResourceKey: key}, payload); err == nil {
+			t.Fatalf("invalid schedule accepted: %v", payload)
+		}
+	}
+}
+
+func TestRBDMirrorSnapshotScheduleReadback(t *testing.T) {
+	spec := "pool/team/image"
+	key := "rbd/image/" + base64.RawURLEncoding.EncodeToString([]byte(spec)) + "/action"
+	readback := []byte(`[{"pool":"pool","namespace":"team","image":"image","items":[{"interval":"12h","start_time":"00:15:00+08:00"},{"interval":"1d","start_time":""}]}]`)
+	for _, test := range []struct {
+		name       string
+		parameters map[string]any
+		data       []byte
+		want       bool
+	}{
+		{"add present", map[string]any{"action": "mirror-schedule-add", "interval": "12h", "start_time": "00:15+08:00"}, readback, true},
+		{"add missing", map[string]any{"action": "mirror-schedule-add", "interval": "5m"}, readback, false},
+		{"remove one", map[string]any{"action": "mirror-schedule-remove", "interval": "5m"}, readback, true},
+		{"remove one still present", map[string]any{"action": "mirror-schedule-remove", "interval": "1d"}, readback, false},
+		{"remove all", map[string]any{"action": "mirror-schedule-remove"}, []byte(`[]`), true},
+		{"remove all still present", map[string]any{"action": "mirror-schedule-remove"}, readback, false},
+		{"malformed", map[string]any{"action": "mirror-schedule-add", "interval": "12h"}, []byte(`{}`), false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			request := Request{Action: "rbd_image.action", ResourceKey: key, Parameters: test.parameters}
+			if got := rbdMirrorScheduleReadbackMatches(request, test.data); got != test.want {
+				t.Fatalf("match=%v want=%v", got, test.want)
+			}
+		})
+	}
+}
+
 func TestRBDMirroringPeerCommands(t *testing.T) {
 	for _, verb := range []string{"add", "remove"} {
 		payload := map[string]any{"pool": "pool", "action": verb, "remote_cluster": "remote", "remote_client": "client.mirror", "direction": "rx-only", "uuid": "peer-id"}

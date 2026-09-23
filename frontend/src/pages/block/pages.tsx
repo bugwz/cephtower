@@ -176,6 +176,17 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
         {label:'创建同步快照',value:'mirror-snapshot'}
       ]}],
       buildBody:(values,clusterId,row) => ({cluster_id:clusterId,image_spec:imageSpec(row),action:String(values.action)})
+    }, {
+      title:'同步快照调度',buttonLabel:'快照调度',path:'/rbd/image/action',method:'POST',successMessage:'同步快照调度已更新',
+      confirmation:(values,row)=>values.action==='mirror-schedule-remove' ? `移除镜像 ${imageSpec(row)} ${values.remove_interval ? `的 ${String(values.remove_interval)} 调度` : '的全部专属调度'}？继承的池或集群调度不会被删除。` : undefined,
+      fields:[
+        {name:'action',label:'操作',type:'select',required:true,options:[{label:'添加调度',value:'mirror-schedule-add'},{label:'移除调度',value:'mirror-schedule-remove'}]},
+        {name:'interval',label:'间隔',required:true,visibleWhen:(values)=>values.action==='mirror-schedule-add',placeholder:'例如 10m、12h、1d',pattern:/^[1-9][0-9]*(m|h|d)$/,patternMessage:'请输入正整数及 m、h 或 d 单位'},
+        {name:'remove_interval',label:'指定要移除的间隔（留空移除全部专属调度）',visibleWhen:(values)=>values.action==='mirror-schedule-remove',placeholder:'例如 10m、12h、1d',pattern:/^$|^[1-9][0-9]*(m|h|d)$/,patternMessage:'请输入正整数及 m、h 或 d 单位'},
+        {name:'start_time',label:'起始时间（可选）',visibleWhen:(values)=>values.action==='mirror-schedule-add' || Boolean(values.remove_interval),placeholder:'例如 00:15 或 00:15:00+08:00'}
+      ],
+      initialValues:{action:'mirror-schedule-add'},
+      buildBody:(values,clusterId,row)=>({cluster_id:clusterId,image_spec:imageSpec(row),action:String(values.action),...((values.action==='mirror-schedule-add' ? values.interval : values.remove_interval) ? {interval:String(values.action==='mirror-schedule-add' ? values.interval : values.remove_interval)} : {}),...(values.start_time ? {start_time:String(values.start_time)} : {})})
     }],
     deleteAction: {
       title: '删除 RBD 镜像',
@@ -197,6 +208,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'details', title: '镜像详情' },
       { key: 'runtime_status', title: '连接客户端 / 迁移 / 缓存状态' },
       { key: 'configuration', title: '生效配置及来源' },
+      { key: 'schedule_info', title: '同步快照调度 / 下次执行' },
       { key: 'status', title: '状态' },
       { key: 'resource_version', title: '版本' }
     ]
