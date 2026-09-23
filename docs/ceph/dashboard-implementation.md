@@ -1056,3 +1056,9 @@ in-progress 状态开放取消操作，调用 `fs clone cancel` 后以 `fs clone
 表单和 API 新增 earmark、Unicode normalization 与 case-sensitive 选项，并映射为
 `--earmark`、`--normalization` 和 `--casesensitive`。离线测试覆盖默认组、命名组、
 可选所有者以及完整参数组合；未在真实集群验证。
+
+### CephFS 子卷摘要字段
+
+参考子卷列表使用 `fs subvolume info` 的 bytes_pcent 和 created_at 展示配额使用率
+与创建时间。本项目采集器已经保留这两个原生字段，现已在子卷表格直接展示，
+无需新增命令或推导近似值。

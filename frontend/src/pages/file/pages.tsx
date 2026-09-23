@@ -256,7 +256,9 @@ const definitions: Record<
       { key: 'data_pool', title: '数据池' },
       { key: 'bytes_quota', title: '配额' },
       { key: 'bytes_used', title: '已用' },
+      { key: 'bytes_pcent', title: '配额使用率' },
       { key: 'mode', title: '模式' },
+      { key: 'created_at', title: '创建时间' },
       { key: 'resource_version', title: '版本' }
     ]
   },
