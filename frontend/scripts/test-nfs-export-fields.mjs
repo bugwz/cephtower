@@ -256,6 +256,14 @@ assert.throws(() => loginExports.smbLoginControlBody({ replace_login_control: tr
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/file/smbShareFields.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(smbFields)
 assert.deepEqual(smbFields.smbShareInitialValues({ cluster_id: 'a', cephfs: { volume: 'fs', path: '/docs' } }), { comment: undefined, cluster: 'a', share_name: undefined, filesystem: 'fs', path: '/docs', readonly: undefined, browseable: undefined })
 assert.equal(smbFields.smbShareInitialValues({ comment: '团队资料' }).comment, '团队资料')
+const shareColumnsNode = definitionNode.properties.find((property) => property.name.getText(tree) === 'smb').initializer.properties.find((property) => property.name.getText(tree) === 'columns').initializer
+const shareColumnsCode = ts.transpileModule(`const columns = ${shareColumnsNode.getText(tree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const shareColumns = new Function('smbCephFS', 'smbBooleanText', 'text', `${shareColumnsCode}; return columns`)(smbFields.smbCephFS, smbFields.smbBooleanText, (value) => value == null ? '-' : String(value))
+const providerColumn = shareColumns.find((column) => column.key === 'provider')
+assert.equal(providerColumn.filterKey, false)
+assert.equal(providerColumn.render(undefined, { cephfs: { provider: 'samba-vfs' } }), 'samba-vfs')
+assert.equal(providerColumn.render(undefined, { cephfs: { provider: 'kcephfs' } }), 'kcephfs')
+assert.equal(providerColumn.render(undefined, {}), '-')
 assert.deepEqual(smbFields.smbShareAccessBody({ comment: '' }), { comment: '' })
 assert.deepEqual(smbFields.smbShareAccessBody({ comment: '团队资料' }), { comment: '团队资料' })
 assert.throws(() => smbFields.smbShareAccessBody({ comment: 'a\nb' }))

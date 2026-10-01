@@ -1040,6 +1040,7 @@ const definitions: Record<
       { key: 'login_control', title: '登录控制规则', filterKey: false },
       { key: 'subvolume', title: '子卷', filterKey: false, render: (_, row) => text(smbCephFS(row).subvolume) },
       { key: 'subvolumegroup', title: '子卷组', filterKey: false, render: (_, row) => text(smbCephFS(row).subvolumegroup) },
+      { key: 'provider', title: '存储提供器', filterKey: false, render: (_, row) => text(smbCephFS(row).provider) },
       { key: 'status', title: '状态' },
       { key: 'resource_version', title: '版本' }
     ]
