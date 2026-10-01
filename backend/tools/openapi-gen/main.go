@@ -370,6 +370,10 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "name": stringField(true)}
 	case "GET /upgrade/versions":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
+	case "POST /upgrade/check":
+		return handler.MutationRequestContract("upgrade.check")
+	case "POST /upgrade/action":
+		return handler.MutationRequestContract("upgrade.action")
 	case "GET /ceph/users/export":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "entities": stringArrayField(true)}
 	case "POST /rbd/mirroring/bootstrap/token":
