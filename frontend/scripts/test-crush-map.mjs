@@ -108,6 +108,13 @@ assert.equal(poolExports.valid(osds, 'archive', 'osd', 'hdd'), false)
 assert.equal(poolExports.valid(osds, 'empty', 'osd'), false)
 assert.equal(poolExports.valid(osds, 'default', 'rack'), false)
 assert.equal(poolExports.valid(osds, 'default', 'root'), false)
+const localityFunction = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'erasureLocalityValid')
+const localityExports = {}
+new Function('exports', 'placementValid', ts.transpileModule(localityFunction.getText(poolTree) + '\nexports.valid = erasureLocalityValid', { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(localityExports, poolExports.valid)
+assert.equal(localityExports.valid({ plugin: 'lrc', crush_root: 'archive', crush_locality: 'host' }, osds), false)
+assert.equal(localityExports.valid({ plugin: 'lrc', crush_root: 'archive', crush_locality: 'osd' }, osds), true)
+assert.equal(localityExports.valid({ plugin: 'lrc', crush_root: 'archive', crush_locality: undefined }, osds), true)
+assert.ok(!poolSource.includes("l: 3, crush_locality: 'host'"), 'plugin changes must preserve topology selections')
 assert.deepEqual(poolExports.domains({ osd: 0, host: 0, root: 1 }), [])
 console.log('CRUSH failure domain root isolation checks passed')
 

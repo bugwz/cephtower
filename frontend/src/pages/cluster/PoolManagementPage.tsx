@@ -345,7 +345,7 @@ export function PoolManagementPage() {
       return
     }
     if (plugin === 'lrc') {
-      erasureCodeProfileForm.setFieldsValue({ k: 4, m: 2, l: 3, crush_locality: 'host' })
+      erasureCodeProfileForm.setFieldsValue({ k: 4, m: 2, l: 3 })
       return
     }
     if (plugin === 'shec') {
@@ -386,6 +386,7 @@ export function PoolManagementPage() {
       return
     }
     if (loading || error || !placementValid(data?.crushNodes ?? [], values.crush_root, values.crush_failure_domain, values.crush_device_class)) { message.error('CRUSH 放置选项不可用，请重新选择有效节点、故障域和设备类别'); return }
+    if (!erasureLocalityValid(values, data?.crushNodes ?? [])) { message.error('LRC 局部性不属于当前根节点和设备类别，请重新选择或清空'); return }
     setSubmittingErasureCodeProfile(true)
     try {
       await operationMutation.run(() => mutateResource('/erasure/code/profile', 'POST', erasureCodeProfileBody(values, selectedClusterId)), false)
@@ -873,6 +874,7 @@ export function PoolManagementPage() {
                 </Form.Item>
                 <Form.Item name="crush_locality" label={<HelpLabel label="CRUSH 局部性" title="LRC 局部恢复组使用的 CRUSH 故障域。" />}>
                   <Select
+                    allowClear
                     options={failureDomainOptions(erasureCodeTopology)}
                     getPopupContainer={nestedModalPopupContainer}
                   />
@@ -1269,6 +1271,10 @@ const clayHelperChunksRule = ({ getFieldValue }: { getFieldValue: (name: keyof E
     return Promise.resolve()
   }
 })
+
+function erasureLocalityValid(values: ErasureCodeProfileFormValues, nodes: ApiRecord[]) {
+  return values.plugin !== 'lrc' || !values.crush_locality || placementValid(nodes, values.crush_root, values.crush_locality, values.crush_device_class)
+}
 
 function erasureCodeProfileBody(values: ErasureCodeProfileFormValues, clusterId: number): ApiRecord {
   const body: ApiRecord = {
