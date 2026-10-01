@@ -259,6 +259,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"nfs_export.create", "nfs_export.update"}, true, map[string]JSONField{"cluster": stringField(true), "pseudo": stringField(true), "path": stringField(true), "filesystem": stringField(false), "fsal_type": stringField(false, "CEPH", "RGW"), "rgw_user_id": stringField(false), "rgw_bucket_tenant": stringField(false), "access_type": stringField(false, "RO", "RW", "NONE"), "security_label": boolField(false), "client_rules": objectArrayField(false, map[string]JSONField{"addresses": stringsField(true), "access_type": stringField(false, "", "RO", "RW", "NONE"), "squash": stringField(false)}), "sectype": stringsField(false), "transports": stringsField(false), "protocols": {Type: "array", Items: &JSONField{Type: "integer"}}, "squash": stringField(false, "root_squash", "root_id_squash", "all_squash", "no_root_squash")})
 	for _, action := range []string{"nfs_export.create", "nfs_export.update"} {
 		contracts[action].Fields["sec_label_xattr"] = stringField(false)
+		contracts[action].Fields["cmount_path"] = stringField(false)
 	}
 	add([]string{"smb_cluster.create"}, true, map[string]JSONField{"name": stringField(true), "auth_mode": stringField(false, "user", "active-directory")})
 	add([]string{"smb_cluster.update"}, true, map[string]JSONField{"auth_mode": stringField(true, "user", "active-directory")})

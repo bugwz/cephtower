@@ -18,6 +18,7 @@ export function NFSExportDetails({ row }: { row: ApiRecord }) {
         <Descriptions.Item label="存储后端">{valueText(fsal.name)}</Descriptions.Item>
         <Descriptions.Item label="文件系统">{valueText(fsal.fs_name)}</Descriptions.Item>
         <Descriptions.Item label="后端用户">{valueText(fsal.user_id)}</Descriptions.Item>
+        {fsal.name === 'CEPH' && <Descriptions.Item label="CephFS 挂载根路径">{valueText(fsal.cmount_path)}</Descriptions.Item>}
         {fsal.name === 'CEPH' && <Descriptions.Item label="安全标签扩展属性">{valueText(fsal.sec_label_xattr)}</Descriptions.Item>}
         <Descriptions.Item label="访问类型">{valueText(row.access_type)}</Descriptions.Item>
         <Descriptions.Item label="身份映射">{valueText(row.squash)}</Descriptions.Item>

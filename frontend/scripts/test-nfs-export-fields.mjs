@@ -7,7 +7,11 @@ const source = readFileSync(new URL('../src/pages/file/nfsExportFields.ts', impo
 const exports = {}
 new Function('exports', ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(exports)
 const row = { cluster_id: 'nfs-a', pseudo: '/share', path: '/data', access_type: 'RO', fsal: { name: 'CEPH', fs_name: 'cephfs-a', user_id: 'nfs.user' } }
-assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', sec_label_xattr: undefined, access_type: 'RO', squash: undefined, security_label: undefined, transports: undefined, protocols: undefined, sectype: undefined, clients: undefined, fsal_type: 'CEPH', rgw_export_type: 'user', rgw_bucket: undefined, rgw_user_id: 'nfs.user' })
+assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', cmount_path: undefined, sec_label_xattr: undefined, access_type: 'RO', squash: undefined, security_label: undefined, transports: undefined, protocols: undefined, sectype: undefined, clients: undefined, fsal_type: 'CEPH', rgw_export_type: 'user', rgw_bucket: undefined, rgw_user_id: 'nfs.user' })
+assert.equal(exports.nfsExportInitialValues({ fsal: { name: 'CEPH', cmount_path: '/data' } }).cmount_path, '/data')
+assert.equal(exports.nfsFSALBody({ filesystem: 'fs', cmount_path: '/data' }).cmount_path, '/data')
+assert.equal(exports.nfsFSALBody({ filesystem: 'fs', cmount_path: '' }).cmount_path, undefined)
+assert.equal(exports.nfsFSALBody({ fsal_type: 'RGW', cmount_path: '/stale' }).cmount_path, undefined)
 assert.equal(exports.nfsExportInitialValues({ fsal: { name: 'CEPH', sec_label_xattr: 'security.selinux' } }).sec_label_xattr, 'security.selinux')
 assert.equal(exports.nfsFSALBody({ filesystem: 'fs', sec_label_xattr: '' }).sec_label_xattr, '')
 assert.equal(exports.nfsFSALBody({ filesystem: 'fs', sec_label_xattr: 'security.selinux' }).sec_label_xattr, 'security.selinux')

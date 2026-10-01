@@ -626,6 +626,7 @@ const definitions: Record<
         { name: 'transports', label: '传输协议', type: 'select', options: nfsTransportOptions },
         { name: 'protocols', label: 'NFS 协议版本', type: 'select', options: nfsProtocolOptions },
         { name: 'sec_label_xattr', label: '安全标签扩展属性名', placeholder: '例如 security.selinux；留空使用原生默认值', visibleWhen: (values) => values.fsal_type !== 'RGW', pattern: /^[A-Za-z0-9_.-]{0,255}$/, patternMessage: '最多 255 个字母、数字、点、下划线或连字符' },
+        { name: 'cmount_path', label: 'CephFS 挂载根路径（授权范围）', placeholder: '默认 /；必须为导出路径的祖先目录或自身', visibleWhen: (values) => values.fsal_type !== 'RGW' },
         { name: 'security_label', label: '安全标签', type: 'select', options: nfsSecurityLabelOptions, placeholder: '使用原生默认值' }
       ],
       initialValues: { pseudo: '/export', path: '/', access_type: 'RW', fsal_type: 'CEPH', rgw_export_type: 'user' },
@@ -666,6 +667,7 @@ const definitions: Record<
         { name: 'transports', label: '传输协议', type: 'select', options: nfsTransportOptions },
         { name: 'protocols', label: 'NFS 协议版本', type: 'select', options: nfsProtocolOptions },
         { name: 'sec_label_xattr', label: '安全标签扩展属性名', placeholder: '未修改时保留；清空已有值恢复原生默认值', visibleWhen: (values) => values.fsal_type !== 'RGW', pattern: /^[A-Za-z0-9_.-]{0,255}$/, patternMessage: '最多 255 个字母、数字、点、下划线或连字符' },
+        { name: 'cmount_path', label: 'CephFS 挂载根路径（修改将重新生成后端身份）', placeholder: '留空保留；输入 / 恢复根目录授权', visibleWhen: (values) => values.fsal_type !== 'RGW' },
         { name: 'security_label', label: '安全标签', type: 'select', options: nfsSecurityLabelOptions, placeholder: '保持当前设置' }
       ],
       initialValues: nfsExportInitialValues,

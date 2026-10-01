@@ -156,6 +156,20 @@ func nfsExportUpdateJSON(export, parameters map[string]any) ([]byte, error) {
 		return nil, invalid("changing the NFS storage backend is not allowed")
 	}
 	previousPath := path.Clean(optional(export, "path"))
+	if wantedFSAL["name"] == "CEPH" {
+		mount := optional(fsal, "cmount_path")
+		if value, exists := wantedFSAL["cmount_path"]; exists {
+			mount = value.(string)
+		}
+		if mount != "" && !nfsMountContains(mount, optional(parameters, "path")) {
+			return nil, invalid("export path must remain within cmount_path")
+		}
+		if fsal["fs_name"] != wantedFSAL["fs_name"] || (wantedFSAL["cmount_path"] != nil && fsal["cmount_path"] != wantedFSAL["cmount_path"]) {
+			// Native Ceph derives the identity and key from filesystem and mount root.
+			delete(fsal, "user_id")
+			delete(fsal, "cephx_key")
+		}
+	}
 	export["pseudo"] = parameters["pseudo"]
 	export["path"] = parameters["path"]
 	for key, value := range wantedFSAL {

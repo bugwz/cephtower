@@ -20,7 +20,7 @@ func requiredNFSPath(parameters map[string]any, field string) (string, error) {
 // Ganesha's reference serializer quotes these values without escaping them.
 // JSON encoding protects transport, but does not protect the generated config.
 func validateNFSConfigStrings(parameters map[string]any) error {
-	for _, field := range []string{"cluster", "pseudo", "path", "filesystem", "rgw_user_id"} {
+	for _, field := range []string{"cluster", "pseudo", "path", "filesystem", "rgw_user_id", "cmount_path"} {
 		value, exists := parameters[field]
 		if !exists {
 			continue
