@@ -897,7 +897,7 @@ function clientId(row?: Record<string, unknown>) {
 }
 
 function exportId(row?: Record<string, unknown>) {
-  return String(row?.export_id ?? row?.id ?? row?.natural_key ?? '').trim()
+  return String(row?.natural_key ?? '').trim()
 }
 
 function shareId(row?: Record<string, unknown>) {
