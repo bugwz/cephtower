@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+存储池容量接入 ceph df detail --format json 的 pools[].stats，按数值池 ID 关联。
+原生 percent_used 为 0–1 比例，转换为 API used_percent 的 0–100 百分比；同时保留
+stored、bytes_used、max_avail 字节值。缺失使用率展示未采集，而不是虚构 0%；
+重复池 ID、非法比例或负容量不发布统计。容量字段可由 API 和资源详情读取。
+
 池的 crush_rule 从原生 pg_pool_t::dump 到库存 API 保持整数 ID，不再转成字符串。
 这使 CRUSH 规则引用视图能够按 rule_id 正确匹配，且避免数字规则名称与 ID 混淆。
 缺失 ID 保持 null，零值作为有效规则 ID；离线测试核对库存 JSON 的数值类型。

@@ -856,6 +856,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		rows = append(rows, Observation{Kind: "osd", NaturalKey: strconv.Itoa(node.ID), Name: node.Name, Status: node.Status, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	poolPGStates := p.collectPoolPGStates(ctx, access)
+	poolUsage := p.collectPoolUsage(ctx, access)
 	for _, wire := range pools {
 		if strings.TrimSpace(wire.PoolName) == "" {
 			return nil, fmt.Errorf("parse collect.pool response: pool_name is required")
@@ -866,7 +867,8 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		}
 		quota := p.collectPoolQuota(ctx, access, wire.PoolName)
 		payload := cephdomain.Pool{
-			PGStatus:           poolPGStates[wire.Pool],
+			PGStatus:    poolPGStates[wire.Pool],
+			UsedPercent: poolUsage[wire.Pool].PercentUsed, Stored: poolUsage[wire.Pool].Stored, BytesUsed: poolUsage[wire.Pool].BytesUsed, MaxAvail: poolUsage[wire.Pool].MaxAvail,
 			ErasureCodeProfile: wire.ErasureCodeProfile,
 			Name:               wire.PoolName, ID: wire.Pool, Type: kind, Size: wire.Size, MinSize: wire.MinSize, PGNum: wire.PGNum, PGPNum: wire.PGPNum,
 			PGAutoscaleMode: wire.PGAutoscaleMode, Applications: poolApplications(wire.ApplicationMetadata), ApplicationMetadata: wire.ApplicationMetadata,
