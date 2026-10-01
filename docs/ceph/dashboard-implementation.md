@@ -1884,5 +1884,11 @@ SMB 创建支持指定 CephFS 子卷：API 可选 subvolume 字符串映射原�
 `smb share create --subvolume=<name>` 或 `<group>/<name>`，由 CephFSStorage
 拆分为 subvolumegroup/subvolume，对应参考表单的两个存储字段。省略仍使用文件系统
 根范围；路径在选定子卷范围内解释。拒绝空值、多层路径、点目录、NUL 和换行。
-前端当前提供带格式提示的文本输入，库存联动选择和编辑存储范围仍待完善；已覆盖
-原生命令参数测试，尚未进行实际子卷共享验证。
+已覆盖原生命令参数测试，尚未进行实际子卷共享验证。
+
+SMB 创建的子卷输入改为文件系统 → 子卷组 → 子卷联动选择，复用现有全分页
+`/filesystem/subvolume/groups`、`/filesystem/subvolumes` API 与原生 CephFS 采集。
+子卷组包含默认组 `_nogroup`，子卷过滤不可用状态；依赖变化沿用通用表单清空
+下游选择，提交组合为原生命令 group/name 参数。未选子卷时不提交存储范围。
+测试覆盖请求集群/文件系统/组作用域、默认组、空依赖和参数组合。编辑存储范围
+仍待完善；未实测 SMB 或浏览器交互。

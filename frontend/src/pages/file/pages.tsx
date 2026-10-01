@@ -811,9 +811,10 @@ const definitions: Record<
         { name: 'cluster', label: 'SMB 集群', type: 'select', required: true, optionsLoader: smbClusterOptions },
         { name: 'name', label: '共享 ID（创建后不可更改）', required: true },
         { name: 'share_name', label: '客户端共享名称', placeholder: '留空使用共享 ID；最多 64 个英文字符' },
-        { name: 'subvolume', label: 'CephFS 子卷（可选）', placeholder: '子卷名或子卷组/子卷名；留空使用文件系统' },
         { name: 'readonly', label: '只读', type: 'select', required: true, options: [{ label: '只读', value: 'true' }, { label: '允许写入', value: 'false' }] },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
+        { name: 'subvolume_group', label: '子卷组（可选）', type: 'select', optionsDependencies: ['filesystem'], optionsLoader: smbSubvolumeGroupOptions },
+        { name: 'subvolume', label: '子卷（可选）', type: 'select', placeholder: '不选子卷则使用文件系统范围', optionsDependencies: ['filesystem', 'subvolume_group'], optionsLoader: smbSubvolumeOptions },
         { name: 'path', label: 'CephFS 路径', required: true, placeholder: '/data' }
       ],
       initialValues: { path: '/', readonly: 'false' },
@@ -823,7 +824,7 @@ const definitions: Record<
         name: String(values.name ?? ''),
         ...(values.share_name ? { share_name: String(values.share_name) } : {}),
         ...smbShareAccessBody({ readonly: values.readonly }),
-        ...(values.subvolume ? { subvolume: String(values.subvolume) } : {}),
+        ...smbSubvolumeBody(values),
         filesystem: String(values.filesystem ?? ''),
         path: String(values.path ?? '')
       })
@@ -905,6 +906,21 @@ async function nfsClusterOptions(clusterId: number) {
 async function smbClusterOptions(clusterId: number) {
   const payload = await listAllResources('/smb/clusters', clusterId)
   return payload.items.map(resourceName).filter(Boolean).map((name) => ({ label: name, value: name }))
+}
+
+async function smbSubvolumeGroupOptions(clusterId: number, _row?: Record<string, unknown>, values?: Record<string, unknown>) {
+  if (!values?.filesystem) return []
+  return cloneTargetGroupOptions(clusterId, { fs: values.filesystem })
+}
+
+async function smbSubvolumeOptions(clusterId: number, _row?: Record<string, unknown>, values?: Record<string, unknown>) {
+  return snapshotSubvolumeOptions(clusterId, undefined, { fs: values?.filesystem, group: values?.subvolume_group })
+}
+
+function smbSubvolumeBody(values: Record<string, unknown>) {
+  if (!values.subvolume) return {}
+  if (!values.subvolume_group) throw new Error('请选择子卷组')
+  return { subvolume: `${values.subvolume_group}/${values.subvolume}` }
 }
 
 async function nfsRGWUserOptions(clusterId: number, _row?: Record<string, unknown>, values?: Record<string, unknown>) {
