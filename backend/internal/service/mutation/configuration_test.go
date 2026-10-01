@@ -90,3 +90,29 @@ func TestConfigurationPreservesScopesAndValues(t *testing.T) {
 func configurationTestKey(who, name string) string {
 	return "configuration/value/" + base64.RawURLEncoding.EncodeToString([]byte(who+"\x00"+name))
 }
+
+func TestLocalizedManagerConfigurationCommands(t *testing.T) {
+	const name = "mgr/dashboard/node-a.x1/server_port"
+	resource := configurationTestKey("mgr", name)
+	for _, action := range []string{"config_value.set", "config_value.delete"} {
+		cmd, err := build(Request{Action: action, ResourceKey: resource}, map[string]any{"value": "8443"})
+		verb := "set"
+		if action == "config_value.delete" {
+			verb = "rm"
+		}
+		if err != nil || !reflect.DeepEqual(cmd.args[:4], []string{"config", verb, "mgr", name}) {
+			t.Fatalf("localized command=%v err=%v", cmd.args, err)
+		}
+	}
+	if configurationDeleted(resource, []byte(`[{"section":"mgr","name":"mgr/dashboard/node-a.x1/server_port","value":"8443"}]`)) {
+		t.Fatal("existing localized value treated as absent")
+	}
+	if !configurationDeleted(resource, []byte(`[{"section":"mgr","name":"mgr/dashboard/server_port","value":"8080"},{"section":"mgr","name":"mgr/dashboard/node-b/server_port","value":"8443"}]`)) {
+		t.Fatal("other instance or shared value confused with target")
+	}
+	for _, name := range []string{"mgr/dashboard//port", "mgr/dashboard/../port", "mgr/dashboard/-flag/port", "mgr/dashboard/a/b/port", "mgr/dashboard/node a/port"} {
+		if _, err := build(Request{Action: "config_value.set", ResourceKey: configurationTestKey("mgr", name)}, map[string]any{"value": "1"}); err == nil {
+			t.Fatalf("invalid key accepted: %s", name)
+		}
+	}
+}

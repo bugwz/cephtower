@@ -112,6 +112,29 @@ func TestConfigurationMetadataUsesHelp(t *testing.T) {
 	}
 }
 
+func TestLocalizedManagerConfigurationMetadata(t *testing.T) {
+	service, runner, id := testInspection(t)
+	const name = "mgr/dashboard/node-a.x1/server_port"
+	runner.output = `{"name":"mgr/dashboard/server_port","type":"int","default":8080}`
+	option, err := service.ConfigurationOption(context.Background(), id, name)
+	if err != nil || option["name"] != name || option["metadata_name"] != "mgr/dashboard/server_port" || option["default"] != "8080" {
+		t.Fatalf("localized metadata=%v err=%v", option, err)
+	}
+	if !reflect.DeepEqual(runner.specs[0].Args, []string{"config", "help", name, "--format", "json"}) {
+		t.Fatal("localized help target lost")
+	}
+	runner.output = `{"name":"mgr/dashboard/other"}`
+	if _, err := service.ConfigurationOption(context.Background(), id, name); err == nil {
+		t.Fatal("unrelated metadata accepted")
+	}
+	for _, invalid := range []string{"mgr/dashboard//server_port", "mgr/dashboard/../server_port", "mgr/dashboard/-flag/server_port", "mgr/dashboard/node/extra/server_port", "mgr/dashboard/node a/server_port"} {
+		before := len(runner.specs)
+		if _, err := service.ConfigurationOption(context.Background(), id, invalid); err == nil || len(runner.specs) != before {
+			t.Fatalf("invalid localized key executed: %s", invalid)
+		}
+	}
+}
+
 func TestConfigurationMetadataPreservesNumericText(t *testing.T) {
 	service, runner, id := testInspection(t)
 	runner.output = `{"name":"test","default":18446744073709551615,"daemon_default":9007199254740993,"min":-9223372036854775808,"max":1.234567890123456789e20}`

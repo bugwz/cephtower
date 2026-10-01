@@ -83,7 +83,7 @@ func (s *Service) Logs(ctx context.Context, clusterID uint64, channel, level str
 	return Logs{Items: rows, ObservedAt: time.Now().UTC()}, nil
 }
 
-var optionName = regexp.MustCompile(`^(mgr/[A-Za-z][A-Za-z0-9_]*/)?[A-Za-z][A-Za-z0-9_]{0,255}$`)
+var optionName = regexp.MustCompile(`^(mgr/[A-Za-z][A-Za-z0-9_]*/([A-Za-z0-9_][A-Za-z0-9_.-]{0,255}/)?)?[A-Za-z][A-Za-z0-9_]{0,255}$`)
 
 func (s *Service) OSDInspection(ctx context.Context, clusterID uint64, id, section string) (map[string]any, error) {
 	if !regexp.MustCompile(`^(0|[1-9][0-9]{0,9})$`).MatchString(id) {
@@ -116,8 +116,18 @@ func (s *Service) ConfigurationOption(ctx context.Context, clusterID uint64, nam
 	if err := s.read(ctx, clusterID, "configuration.help", []string{"config", "help", name, "--format", "json"}, &option); err != nil {
 		return nil, err
 	}
-	if !validConfigurationMetadata(option, name) {
+	metadataName := name
+	// MgrMonitor::find_module_option resolves a localized key to the module's
+	// shared definition; Option::dump consequently returns the unlocalized name.
+	if parts := strings.Split(name, "/"); len(parts) == 4 {
+		metadataName = strings.Join([]string{parts[0], parts[1], parts[3]}, "/")
+	}
+	if !validConfigurationMetadata(option, metadataName) {
 		return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph returned an unexpected configuration option"}
+	}
+	if metadataName != name {
+		option["metadata_name"] = metadataName
+		option["name"] = name
 	}
 	// These fields are presentation metadata, not arithmetic operands. Preserve
 	// their native numeric spelling across JavaScript JSON decoding.

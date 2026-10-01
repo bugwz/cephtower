@@ -87,7 +87,7 @@ func configurationScopeKey(who string) string {
 }
 
 var configurationScope = regexp.MustCompile(`^(global|mon|mgr|osd|mds|client)(\.[A-Za-z0-9_.-]+)?(/[A-Za-z0-9_.:-]+)*$`)
-var configurationName = regexp.MustCompile(`^(mgr/[A-Za-z][A-Za-z0-9_]*/)?[A-Za-z][A-Za-z0-9_]{0,255}$`)
+var configurationName = regexp.MustCompile(`^(mgr/[A-Za-z][A-Za-z0-9_]*/([A-Za-z0-9_][A-Za-z0-9_.-]{0,255}/)?)?[A-Za-z][A-Za-z0-9_]{0,255}$`)
 
 func configurationCommand(request Request, p map[string]any) (command, error) {
 	decoded, err := base64.RawURLEncoding.Strict().DecodeString(strings.TrimPrefix(request.ResourceKey, "configuration/value/"))
