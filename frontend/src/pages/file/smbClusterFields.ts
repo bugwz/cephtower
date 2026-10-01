@@ -10,8 +10,8 @@ export function smbClusterInitialValues(row?: ApiRecord) {
     clustering: typeof clustering === 'string' && ['default', 'always', 'never'].includes(clustering) ? clustering : undefined,
     count: typeof count === 'number' ? count : undefined,
     domain_realm: typeof domain?.realm === 'string' ? domain.realm : undefined,
-    domain_join_ref: Array.isArray(joins) && joins.every((source) => source && source.source_type === 'resource' && typeof source.ref === 'string') ? joins.map((source) => source.ref).join('\n') : undefined,
-    user_group_ref: Array.isArray(sources) && sources.every((source) => source && typeof source === 'object' && source.source_type === 'resource' && typeof source.ref === 'string') ? sources.map((source) => source.ref).join('\n') : undefined,
+    domain_join_ref: Array.isArray(joins) && joins.every((source) => source && source.source_type === 'resource' && typeof source.ref === 'string') ? joins.map((source) => source.ref) : undefined,
+    user_group_ref: Array.isArray(sources) && sources.every((source) => source && typeof source === 'object' && source.source_type === 'resource' && typeof source.ref === 'string') ? sources.map((source) => source.ref) : undefined,
     auth_mode: row?.auth_mode === 'user' || row?.auth_mode === 'active-directory' ? row.auth_mode : undefined,
     custom_dns: Array.isArray(row?.custom_dns) && row.custom_dns.every((value) => typeof value === 'string') ? row.custom_dns.join('\n') : undefined
   }
@@ -56,16 +56,16 @@ export function smbClusterUpdateHostsBody(values: ApiRecord) {
 
 export function smbClusterDomainBody(values: ApiRecord) {
   if (values.auth_mode !== 'active-directory' || (values.domain_realm === undefined && values.domain_join_ref === undefined)) return {}
-  if (typeof values.domain_realm !== 'string' || !values.domain_realm.trim() || typeof values.domain_join_ref !== 'string') throw new Error('请填写域名和域加入凭据资源 ID')
-  const refs = values.domain_join_ref.split(/[\s,]+/).filter(Boolean)
+  if (typeof values.domain_realm !== 'string' || !values.domain_realm.trim() || !Array.isArray(values.domain_join_ref) || values.domain_join_ref.some((ref) => typeof ref !== 'string' || !ref)) throw new Error('请填写域名并选择域加入凭据')
+  const refs = values.domain_join_ref
   if (!refs.length) throw new Error('至少需要一个域加入凭据资源 ID')
   return { domain_realm: values.domain_realm.trim(), domain_join_ref: refs }
 }
 
 export function smbClusterUserGroupsBody(values: ApiRecord) {
   if (values.auth_mode !== 'user' || values.user_group_ref === undefined) return {}
-  if (typeof values.user_group_ref !== 'string') throw new Error('用户组引用格式无效')
-  const refs = values.user_group_ref.split(/[\s,]+/).filter(Boolean)
+  if (!Array.isArray(values.user_group_ref) || values.user_group_ref.some((ref) => typeof ref !== 'string' || !ref)) throw new Error('用户组引用格式无效')
+  const refs = values.user_group_ref
   if (!refs.length) throw new Error('本地用户模式至少需要一个用户组资源引用')
   return { user_group_ref: refs }
 }

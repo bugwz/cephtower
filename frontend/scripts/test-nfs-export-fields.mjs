@@ -209,6 +209,19 @@ assert.deepEqual(await smbLoader(17), [{ label: 'smb-a', value: 'smb-a' }, { lab
 console.log('SMB cluster selection scope checks passed')
 
 const hostLoaderDeclaration = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'smbHostOptions')
+const authLoaderNames = ['smbAuthOptions', 'smbJoinAuthOptions', 'smbUserGroupOptions']
+const authLoaderCode = authLoaderNames.map((name) => ts.transpileModule(tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === name).getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText).join('\n')
+const authLoaders = new Function('listAllResources', 'resourceName', `${authLoaderCode}; return { smbJoinAuthOptions, smbUserGroupOptions }`)(async (path, clusterId) => {
+  assert.equal(clusterId, 17)
+  assert.ok(['/smb/join/auths', '/smb/usersgroups'].includes(path))
+  const key = path === '/smb/join/auths' ? 'auth_id' : 'users_groups_id'
+  return { items: [{ [key]: 'free' }, { [key]: 'own', linked_to_cluster: 'target' }, { [key]: 'other', linked_to_cluster: 'other' }, { [key]: 'free' }, { linked_to_cluster: 'target' }] }
+}, (row) => row.name)
+for (const loader of Object.values(authLoaders)) {
+  assert.deepEqual(await loader(17, undefined, { name: 'target' }), [{ label: 'free', value: 'free' }, { label: 'own', value: 'own' }])
+  assert.deepEqual(await loader(17, { name: 'target' }, { name: 'other' }), [{ label: 'free', value: 'free' }, { label: 'own', value: 'own' }])
+  assert.deepEqual(await loader(17), [{ label: 'free', value: 'free' }])
+}
 const hostLoaderCode = ts.transpileModule(hostLoaderDeclaration.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const hostLoader = new Function('listAllResources', `${hostLoaderCode}; return smbHostOptions`)(async (path, clusterId) => {
   assert.equal(path, '/hosts')
@@ -291,13 +304,13 @@ assert.deepEqual(clusterFields.smbClusterUpdateHostsBody({ replace_smb_hosts: tr
 assert.throws(() => clusterFields.smbClusterUpdateHostsBody({ replace_smb_hosts: true, smb_hosts: [] }))
 assert.throws(() => clusterFields.smbClusterUpdateHostsBody({ replace_smb_hosts: true }))
 for (const count of [0, -1, 1.5, 'invalid']) assert.throws(() => clusterFields.smbClusterCountBody({ count }))
-assert.equal(clusterFields.smbClusterInitialValues({ domain_settings: { realm: 'EXAMPLE.COM', join_sources: [{ source_type: 'resource', ref: 'join-a' }] } }).domain_join_ref, 'join-a')
-assert.deepEqual(clusterFields.smbClusterDomainBody({ auth_mode: 'active-directory', domain_realm: 'EXAMPLE.COM', domain_join_ref: 'join-a, join-b' }), { domain_realm: 'EXAMPLE.COM', domain_join_ref: ['join-a', 'join-b'] })
+assert.deepEqual(clusterFields.smbClusterInitialValues({ domain_settings: { realm: 'EXAMPLE.COM', join_sources: [{ source_type: 'resource', ref: 'join-a' }] } }).domain_join_ref, ['join-a'])
+assert.deepEqual(clusterFields.smbClusterDomainBody({ auth_mode: 'active-directory', domain_realm: 'EXAMPLE.COM', domain_join_ref: ['join-a', 'join-b'] }), { domain_realm: 'EXAMPLE.COM', domain_join_ref: ['join-a', 'join-b'] })
 assert.deepEqual(clusterFields.smbClusterDomainBody({ auth_mode: 'user', domain_realm: 'EXAMPLE.COM' }), {})
 assert.deepEqual(clusterFields.smbClusterDomainBody({ auth_mode: 'active-directory' }), {})
 assert.throws(() => clusterFields.smbClusterDomainBody({ auth_mode: 'active-directory', domain_realm: 'EXAMPLE.COM' }))
-assert.equal(clusterFields.smbClusterInitialValues({ user_group_settings: [{ source_type: 'resource', ref: 'team' }] }).user_group_ref, 'team')
-assert.deepEqual(clusterFields.smbClusterUserGroupsBody({ auth_mode: 'user', user_group_ref: 'team, ops' }), { user_group_ref: ['team', 'ops'] })
+assert.deepEqual(clusterFields.smbClusterInitialValues({ user_group_settings: [{ source_type: 'resource', ref: 'team' }] }).user_group_ref, ['team'])
+assert.deepEqual(clusterFields.smbClusterUserGroupsBody({ auth_mode: 'user', user_group_ref: ['team', 'ops'] }), { user_group_ref: ['team', 'ops'] })
 assert.deepEqual(clusterFields.smbClusterUserGroupsBody({ auth_mode: 'active-directory', user_group_ref: 'team' }), {})
 assert.deepEqual(clusterFields.smbClusterUserGroupsBody({ auth_mode: 'user' }), {})
 assert.throws(() => clusterFields.smbClusterUserGroupsBody({ auth_mode: 'user', user_group_ref: '' }))

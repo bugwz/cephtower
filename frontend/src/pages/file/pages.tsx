@@ -745,12 +745,13 @@ const definitions: Record<
         { name: 'smb_public_addresses', label: '客户端访问地址（可选）', type: 'textarea', placeholder: '每行一个 IP/前缀，可附加 %目标网络；例如 192.0.2.10/24%192.0.2.0/24' },
         { name: 'custom_dns', label: '自定义 DNS 地址（可选）', type: 'textarea', placeholder: '每行一个 IPv4/IPv6 地址' },
         { name: 'domain_realm', label: 'Active Directory 域名', required: true, placeholder: 'EXAMPLE.COM', visibleWhen: (values) => values.auth_mode === 'active-directory' },
-        { name: 'domain_join_ref', label: '域加入凭据资源 ID', type: 'textarea', required: true, placeholder: '每行一个已有凭据资源 ID', visibleWhen: (values) => values.auth_mode === 'active-directory' },
-        { name: 'user_group_ref', label: '用户组资源 ID', type: 'textarea', required: true, placeholder: '每行一个已有用户组资源 ID', visibleWhen: (values) => values.auth_mode === 'user' },
+        { name: 'domain_join_ref', label: '域加入凭据资源', type: 'select', multiple: true, optionsLoader: smbJoinAuthOptions, optionsDependencies: ['name'], required: true, visibleWhen: (values) => values.auth_mode === 'active-directory' },
+        { name: 'user_group_ref', label: '用户组资源', type: 'select', multiple: true, optionsLoader: smbUserGroupOptions, optionsDependencies: ['name'], required: true, visibleWhen: (values) => values.auth_mode === 'user' },
         {
           name: 'auth_mode',
           label: '认证模式',
           type: 'select',
+          required: true,
           options: [
             { label: '本地用户', value: 'user' },
             { label: 'Active Directory', value: 'active-directory' }
@@ -786,8 +787,8 @@ const definitions: Record<
         { name: 'smb_label', label: '新的部署标签', type: 'select', required: true, optionsLoader: smbLabelOptions, visibleWhen: (values) => values.replace_smb_label === true },
         { name: 'smb_hosts', label: '新的部署主机', type: 'select', multiple: true, required: true, optionsLoader: smbHostOptions, visibleWhen: (values) => values.replace_smb_hosts === true, placeholder: '至少选择一台；关闭替换开关保留原配置' },
         { name: 'domain_realm', label: 'Active Directory 域名', placeholder: 'EXAMPLE.COM', visibleWhen: (values) => values.auth_mode === 'active-directory' },
-        { name: 'domain_join_ref', label: '域加入凭据资源 ID', type: 'textarea', placeholder: '每行一个已有 ID；提交后替换本地用户组设置，不删除凭据资源', visibleWhen: (values) => values.auth_mode === 'active-directory' },
-        { name: 'user_group_ref', label: '用户组资源 ID', type: 'textarea', placeholder: '每行一个已有资源 ID；切换为本地用户模式时将替换域设置', visibleWhen: (values) => values.auth_mode === 'user' },
+        { name: 'domain_join_ref', label: '域加入凭据资源', type: 'select', multiple: true, optionsLoader: smbJoinAuthOptions, placeholder: '选择凭据引用，不删除凭据资源', visibleWhen: (values) => values.auth_mode === 'active-directory' },
+        { name: 'user_group_ref', label: '用户组资源', type: 'select', multiple: true, optionsLoader: smbUserGroupOptions, placeholder: '选择用户组引用；切换模式将替换域设置', visibleWhen: (values) => values.auth_mode === 'user' },
         { name: 'custom_dns', label: '自定义 DNS 地址', type: 'textarea', placeholder: '每行一个 IPv4/IPv6 地址；清空已知列表表示移除自定义 DNS' },
         {
           name: 'auth_mode',
@@ -948,6 +949,22 @@ async function nfsClusterOptions(clusterId: number) {
 async function smbClusterOptions(clusterId: number) {
   const payload = await listAllResources('/smb/clusters', clusterId)
   return payload.items.map(resourceName).filter(Boolean).map((name) => ({ label: name, value: name }))
+}
+
+async function smbAuthOptions(path: string, idField: string, clusterId: number, row?: Record<string, unknown>, values?: Record<string, unknown>) {
+  const target = row ? resourceName(row) : values?.name
+  const payload = await listAllResources(path, clusterId)
+  const ids = payload.items.filter((item) => item.linked_to_cluster === undefined || item.linked_to_cluster === null || item.linked_to_cluster === '' || item.linked_to_cluster === target)
+    .map((item) => item[idField]).filter((id): id is string => typeof id === 'string' && !!id)
+  return [...new Set(ids)].sort().map((id) => ({ label: id, value: id }))
+}
+
+async function smbJoinAuthOptions(clusterId: number, row?: Record<string, unknown>, values?: Record<string, unknown>) {
+  return smbAuthOptions('/smb/join/auths', 'auth_id', clusterId, row, values)
+}
+
+async function smbUserGroupOptions(clusterId: number, row?: Record<string, unknown>, values?: Record<string, unknown>) {
+  return smbAuthOptions('/smb/usersgroups', 'users_groups_id', clusterId, row, values)
 }
 
 async function smbHostOptions(clusterId: number) {
