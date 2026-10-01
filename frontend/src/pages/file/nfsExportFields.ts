@@ -7,6 +7,8 @@ export const nfsSquashOptions = [
   { label: '不映射 root（no_root_squash）', value: 'no_root_squash' }
 ]
 
+export const nfsSecurityLabelOptions = [{ label: '启用', value: 'enabled' }, { label: '禁用', value: 'disabled' }]
+
 export function nfsFSAL(row?: ApiRecord): ApiRecord {
   const value = row?.fsal
   return value && typeof value === 'object' && !Array.isArray(value) ? value as ApiRecord : {}
@@ -25,6 +27,7 @@ export function nfsExportInitialValues(row?: ApiRecord) {
     path: typeof row?.path === 'string' ? row.path : '',
     filesystem: typeof nfsFSAL(row).fs_name === 'string' ? String(nfsFSAL(row).fs_name) : '',
     read_only: row?.access_type === 'RO',
+    security_label: row?.security_label === true ? 'enabled' : row?.security_label === false ? 'disabled' : undefined,
     squash: nfsSquashOptions.some((option) => option.value === row?.squash) ? String(row?.squash) : undefined
   }
 }

@@ -2194,6 +2194,13 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, err
 		}
 		export := map[string]any{"cluster_id": cluster, "pseudo": pseudo, "path": path, "fsal": map[string]any{"name": "CEPH", "fs_name": filesystem}}
+		if value, exists := p["security_label"]; exists {
+			label, ok := value.(bool)
+			if !ok {
+				return command{}, invalid("security_label must be a boolean")
+			}
+			export["security_label"] = label
+		}
 		if _, exists := p["squash"]; exists {
 			squash, err := enum(p, "squash", "root_squash", "root_id_squash", "all_squash", "no_root_squash")
 			if err != nil {

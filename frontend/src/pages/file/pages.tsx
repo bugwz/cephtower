@@ -1,6 +1,6 @@
 import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
-import { nfsExportEditReason, nfsExportInitialValues, nfsFSAL, nfsSquashOptions } from './nfsExportFields'
+import { nfsExportEditReason, nfsExportInitialValues, nfsFSAL, nfsSecurityLabelOptions, nfsSquashOptions } from './nfsExportFields'
 import { CephFSDirectoryBrowser } from './CephFSDirectoryBrowser'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 import { listAllResources, listResource } from '../../api/resource'
@@ -614,7 +614,8 @@ const definitions: Record<
         { name: 'path', label: 'CephFS 路径', required: true, placeholder: '/data', pattern: /^\/[^\r\n\0]*$/, patternMessage: '请输入绝对路径' },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'read_only', label: '只读', type: 'boolean' },
-        { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '使用原生默认值' }
+        { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '使用原生默认值' },
+        { name: 'security_label', label: '安全标签', type: 'select', options: nfsSecurityLabelOptions, placeholder: '使用原生默认值' }
       ],
       initialValues: { pseudo: '/export', path: '/', read_only: false },
       buildBody: (values, clusterId) => ({
@@ -624,7 +625,8 @@ const definitions: Record<
         path: String(values.path ?? ''),
         filesystem: String(values.filesystem ?? ''),
         read_only: Boolean(values.read_only),
-        ...(values.squash ? { squash: values.squash } : {})
+        ...(values.squash ? { squash: values.squash } : {}),
+        ...(values.security_label ? { security_label: values.security_label === 'enabled' } : {})
       })
     },
     updateAction: {
@@ -639,7 +641,8 @@ const definitions: Record<
         { name: 'path', label: 'CephFS 路径', required: true, pattern: /^\/[^\r\n\0]*$/, patternMessage: '请输入绝对路径' },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'read_only', label: '只读', type: 'boolean' },
-        { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '保持当前设置' }
+        { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '保持当前设置' },
+        { name: 'security_label', label: '安全标签', type: 'select', options: nfsSecurityLabelOptions, placeholder: '保持当前设置' }
       ],
       initialValues: nfsExportInitialValues,
       buildBody: (values, clusterId, row) => ({
@@ -650,7 +653,8 @@ const definitions: Record<
         path: String(values.path ?? ''),
         filesystem: String(values.filesystem ?? ''),
         read_only: Boolean(values.read_only),
-        ...(values.squash ? { squash: values.squash } : {})
+        ...(values.squash ? { squash: values.squash } : {}),
+        ...(values.security_label ? { security_label: values.security_label === 'enabled' } : {})
       })
     },
     deleteAction: {

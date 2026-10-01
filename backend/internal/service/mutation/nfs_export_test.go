@@ -92,6 +92,29 @@ func TestNFSExportPaths(t *testing.T) {
 	}
 }
 
+func TestNFSExportSecurityLabel(t *testing.T) {
+	for _, label := range []any{true, false, "false"} {
+		params := map[string]any{"cluster": "nfs-a", "pseudo": "/share", "path": "/", "filesystem": "cephfs", "security_label": label}
+		cmd, err := build(Request{Action: "nfs_export.create", ResourceKey: "nfs/export"}, params)
+		if label == "false" {
+			if err == nil {
+				t.Fatal("string label accepted")
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		var payload map[string]any
+		if err := json.Unmarshal(cmd.stdin, &payload); err != nil {
+			t.Fatal(err)
+		}
+		if payload["security_label"] != label {
+			t.Fatalf("label lost: %v", payload)
+		}
+	}
+}
+
 func TestNFSExportDeleteResolvesNativePseudo(t *testing.T) {
 	for _, tt := range []struct {
 		name, output string

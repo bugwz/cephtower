@@ -717,6 +717,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -1330,6 +1332,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -3240,6 +3244,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -3853,6 +3859,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -4686,6 +4694,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -5394,6 +5404,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -6007,6 +6019,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -6813,6 +6827,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -7523,6 +7539,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -8137,6 +8155,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -8996,6 +9016,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -9703,6 +9725,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -10414,6 +10438,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -11122,6 +11148,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -11735,6 +11763,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -12595,6 +12625,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -13706,6 +13738,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -14321,6 +14355,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -14935,6 +14971,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -16188,6 +16226,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -16948,6 +16988,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -17658,6 +17700,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -18271,6 +18315,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -19542,6 +19588,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -20155,6 +20203,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -20786,6 +20836,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -21495,6 +21547,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -22108,6 +22162,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -22723,6 +22779,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -23617,6 +23675,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -24422,6 +24482,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -25130,6 +25192,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -25743,6 +25807,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -26491,6 +26557,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -27105,6 +27173,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -28136,6 +28206,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -29036,6 +29108,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -29743,6 +29817,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -30454,6 +30530,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -31162,6 +31240,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -31775,6 +31855,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -32581,6 +32663,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -33289,6 +33373,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -33902,6 +33988,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -34613,6 +34701,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -35226,6 +35316,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -35937,6 +36029,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -36550,6 +36644,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -37261,6 +37357,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -37969,6 +38067,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -38582,6 +38682,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -39461,6 +39563,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -40170,6 +40274,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -40785,6 +40891,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -41399,6 +41507,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -42109,6 +42219,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -42757,6 +42869,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -43658,6 +43772,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -44366,6 +44482,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -44979,6 +45097,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -45690,6 +45810,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -46304,6 +46426,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -46920,6 +47044,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -47534,6 +47660,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -48245,6 +48373,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -48953,6 +49083,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -49566,6 +49698,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -50299,6 +50433,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -50913,6 +51049,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -51526,6 +51664,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -52528,6 +52668,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -53215,6 +53357,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -53830,6 +53974,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -54443,6 +54589,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -55154,6 +55302,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -55863,6 +56013,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -56477,6 +56629,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -57204,6 +57358,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -57817,6 +57973,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -58432,6 +58590,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -59046,6 +59206,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -59757,6 +59919,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -60465,6 +60629,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -61078,6 +61244,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -61795,6 +61963,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -62410,6 +62580,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -63024,6 +63196,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -63735,6 +63909,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -64350,6 +64526,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -64963,6 +65141,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -65674,6 +65854,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -66287,6 +66469,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -66902,6 +67086,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -67516,6 +67702,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -68322,6 +68510,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -69030,6 +69220,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -69643,6 +69835,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -70259,6 +70453,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -70874,6 +71070,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -71487,6 +71685,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -72103,6 +72303,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -72717,6 +72919,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -73428,6 +73632,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -74041,6 +74247,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -74657,6 +74865,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -75270,6 +75480,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -76216,6 +76428,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -76924,6 +77138,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -77537,6 +77753,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -78248,6 +78466,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -78956,6 +79176,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -79569,6 +79791,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -80280,6 +80504,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -80988,6 +81214,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -81601,6 +81829,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string
@@ -82407,6 +82637,8 @@ paths:
                   writeOnly: true
                 secure:
                   type: boolean
+                security_label:
+                  type: boolean
                 serial_number:
                   type: string
                 service_id:
@@ -83021,6 +83253,8 @@ paths:
                   type: string
                   writeOnly: true
                 secure:
+                  type: boolean
+                security_label:
                   type: boolean
                 serial_number:
                   type: string

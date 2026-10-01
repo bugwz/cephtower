@@ -6,7 +6,9 @@ const source = readFileSync(new URL('../src/pages/file/nfsExportFields.ts', impo
 const exports = {}
 new Function('exports', ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
 const row = { cluster_id: 'nfs-a', pseudo: '/share', path: '/data', access_type: 'RO', fsal: { name: 'CEPH', fs_name: 'cephfs-a', user_id: 'nfs.user' } }
-assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', read_only: true, squash: undefined })
+assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', read_only: true, squash: undefined, security_label: undefined })
+assert.equal(exports.nfsExportInitialValues({ ...row, security_label: false }).security_label, 'disabled')
+assert.equal(exports.nfsExportInitialValues({ ...row, security_label: true }).security_label, 'enabled')
 assert.equal(exports.nfsExportInitialValues({ ...row, squash: 'all_squash' }).squash, 'all_squash')
 assert.equal(exports.nfsExportInitialValues({ ...row, squash: 'native-alias' }).squash, undefined)
 assert.equal(exports.nfsExportEditReason(row), undefined)

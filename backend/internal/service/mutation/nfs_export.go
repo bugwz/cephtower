@@ -81,6 +81,9 @@ func nfsExportUpdateJSON(export, parameters map[string]any) ([]byte, error) {
 	export["pseudo"] = parameters["pseudo"]
 	export["path"] = parameters["path"]
 	fsal["fs_name"] = parameters["filesystem"]
+	if label, exists := parameters["security_label"]; exists {
+		export["security_label"] = label
+	}
 	if squash, exists := parameters["squash"]; exists {
 		export["squash"] = squash
 	}
@@ -100,6 +103,9 @@ func nfsExportUpdateMatches(request Request, data []byte) bool {
 		return false
 	}
 	p := request.Parameters
+	if label, exists := p["security_label"]; exists && export["security_label"] != label {
+		return false
+	}
 	if squash, exists := p["squash"]; exists && export["squash"] != squash {
 		return false
 	}
