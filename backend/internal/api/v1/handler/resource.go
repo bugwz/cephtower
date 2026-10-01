@@ -625,6 +625,9 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 	case "mgr":
 		return segments("manager", pathValue("name"), "fail")
 	case "mgr_module":
+		if action == "telemetry.update" {
+			return "manager-module/telemetry"
+		}
 		return segments("manager-module", pathValue("name"))
 	case "upgrade":
 		return strings.TrimPrefix(action, "upgrade.")

@@ -5,6 +5,7 @@ import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
 import { useClusterContext } from '../../state/ClusterContext'
 import { TelemetryReportPanel } from './TelemetryReportPanel'
+import { TelemetryControls } from './TelemetryControls'
 
 export function telemetryStatusValue(value: unknown): string {
   if (value == null) return '未提供'
@@ -27,6 +28,7 @@ export function TelemetryPage() {
           <Typography.Text>读取时间：{data.observed_at}</Typography.Text>
           {error && <Alert type="warning" message="本次读取失败，以下为上次成功读取的状态。" />}
           <Tag color={status.enabled === true ? 'warning' : 'default'}>{status.enabled === true ? '遥测已开启' : status.enabled === false ? '遥测已关闭' : '状态未知'}</Tag>
+          {selectedClusterId && typeof status.enabled === 'boolean' && <TelemetryControls key={`${selectedClusterId}:${status.enabled}`} clusterId={selectedClusterId} enabled={status.enabled} disabled={loading || Boolean(error)} onComplete={refresh} />}
           <Descriptions bordered size="small" column={1}>
             {([['url', '集群报告地址'], ['device_url', '设备报告地址'], ['interval', '上传间隔（小时）'], ['last_opt_revision', '最后同意的报告修订版'], ['last_upload', '最近上传（Ceph 原始时间）'], ['channel_basic', '基本集群信息'], ['channel_ident', '身份及联系信息'], ['channel_crash', '崩溃信息'], ['channel_device', '设备健康信息'], ['channel_perf', '性能信息'], ['leaderboard', '排行榜'], ['leaderboard_description', '排行榜描述'], ['description', '描述'], ['organization', '组织'], ['contact', '联系人'], ['proxy', '代理']] as const).map(([key, label]) => <Descriptions.Item key={key} label={label}>{key === 'last_upload' && (status[key] === null || status[key] === 0) ? '尚无上传记录' : telemetryStatusValue(status[key])}</Descriptions.Item>)}
           </Descriptions>

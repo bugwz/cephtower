@@ -39,3 +39,24 @@ assert.ok(reportSource.includes('pending.current?.abort()'))
 assert.ok(!reportSource.includes('JSON.parse'))
 assert.ok(source.includes('<TelemetryReportPanel key={selectedClusterId}'))
 console.log('Telemetry report manual loading and cancellation checks passed')
+
+const controlSource = readFileSync(new URL('../src/pages/cluster/TelemetryControls.tsx', import.meta.url), 'utf8')
+const controlTree = ts.createSourceFile('controls.tsx', controlSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const control = controlTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'TelemetryControls')
+const submit = control.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submit')
+const submitCode = ts.transpileModule(submit.getText(controlTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const enabled of [true, false]) for (const accepted of [true, false]) for (const disabled of [true, false]) {
+  const calls = [], env = {
+    active: { current: true }, running: { current: false }, enabled, accepted, disabled, clusterId: 8,
+    setBusy: () => {}, setOpen: () => {}, setAccepted: () => {}, message: { success: () => calls.push('success') }, onComplete: async () => calls.push('refresh'),
+    mutateResource: async (path, method, body) => calls.push({ path, method, body })
+  }
+  const invoke = new Function(...Object.keys(env), `${submitCode}; return submit`)(...Object.values(env))
+  await invoke()
+  if (disabled || (!enabled && !accepted)) assert.deepEqual(calls, [])
+  else assert.deepEqual(calls, [{ path: '/manager/telemetry', method: 'PATCH', body: { cluster_id: 8, enabled: !enabled, ...(!enabled ? { license: 'sharing-1-0' } : {}) } }, 'success', 'refresh'])
+  assert.equal(env.running.current, false)
+}
+assert.ok(controlSource.includes('setAccepted(false); setOpen(true)'))
+assert.ok(source.includes('key={`${selectedClusterId}:${status.enabled}`}'))
+console.log('Telemetry explicit license consent checks passed')

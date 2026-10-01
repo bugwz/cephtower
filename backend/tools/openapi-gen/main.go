@@ -376,6 +376,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		return handler.MutationRequestContract("upgrade.check")
 	case "POST /upgrade/action":
 		return handler.MutationRequestContract("upgrade.action")
+	case "PATCH /manager/telemetry":
+		return handler.MutationRequestContract("telemetry.update")
 	case "POST /crush/rule":
 		return handler.MutationRequestContract("crush_rule.create")
 	case "PATCH /crush/rule":

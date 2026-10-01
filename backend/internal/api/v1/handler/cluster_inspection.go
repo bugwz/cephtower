@@ -183,6 +183,10 @@ func (h *Handler) GetTelemetryReport(w http.ResponseWriter, r *http.Request) {
 	WriteSuccess(w, 200, "success", result)
 }
 
+func (h *Handler) UpdateTelemetry(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("mgr_module", "telemetry.update", "high")(w, r)
+}
+
 func (h *Handler) GetOSDInspection(w http.ResponseWriter, r *http.Request) {
 	var request struct {
 		ClusterID uint64 `json:"cluster_id"`

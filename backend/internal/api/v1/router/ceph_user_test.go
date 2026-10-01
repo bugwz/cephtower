@@ -35,6 +35,8 @@ func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spe
 		return executor.CommandResult{Stdout: []byte(`{"enabled":false,"channel_basic":true,"interval":24,"last_upload":null}`)}, nil
 	case "telemetry.report":
 		return executor.CommandResult{Stdout: []byte(`{"report":{"counter":9007199254740993}}`)}, nil
+	case "telemetry.update.post_check":
+		return executor.CommandResult{Stdout: []byte(`{"enabled":true}`)}, nil
 	case "cluster.logs":
 		return executor.CommandResult{Stdout: []byte(`[{"name":"mon.a","rank":"0","stamp":"2026-09-14 01:00:00","seq":1,"channel":"audit","priority":"[INF]","message":"entry"}]`)}, nil
 	case "configuration.help":
@@ -157,6 +159,7 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 	helpResult := send("GET", "/configuration/option", map[string]any{"name": "osd_memory_target"})
 	telemetryResult := send("GET", "/manager/telemetry/status", map[string]any{})
 	telemetryReport := send("GET", "/manager/telemetry/report", map[string]any{"mode": "preview"})
+	send("PATCH", "/manager/telemetry", map[string]any{"enabled": true, "license": "sharing-1-0"})
 	if !strings.Contains(telemetryReport.Body.String(), "9007199254740993") || telemetryReport.Header().Get("Cache-Control") != "no-store" {
 		t.Fatal("telemetry report API lost exact uncached report")
 	}

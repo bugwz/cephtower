@@ -65,7 +65,7 @@ type command struct {
 func Supports(action string) bool {
 	switch action {
 	case "ceph_user.create", "ceph_user.update", "ceph_user.delete", "ceph_user.import",
-		"cluster.refresh", "health.mute", "health.unmute",
+		"cluster.refresh", "health.mute", "health.unmute", "telemetry.update",
 		"host.create", "host.update", "host.delete", "host.action", "device.identify",
 		"service.create", "service.update", "service.delete", "daemon.action",
 		"upgrade.check", "upgrade.action", "manager.fail", "monitor.action", "manager_module.update",
@@ -284,6 +284,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "telemetry.update" && (err != nil || !telemetryStateMatches(checked.Stdout, request.Parameters["enabled"].(bool))) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "telemetry command was accepted but the requested state could not be verified; inspect telemetry status before retrying", Retryable: false}
+		}
 		if request.Action == "manager_module.update" && (err != nil || !managerModuleStateMatches(checked.Stdout, last(resourceTail(request.ResourceKey)), request.Parameters["enabled"].(bool))) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "manager module command was accepted but the requested activation state could not be verified; inspect module state before retrying", Retryable: false}
 		}
@@ -602,6 +605,8 @@ func build(request Request, p map[string]any) (command, error) {
 			verb = "enable"
 		}
 		return ceph([]string{"mgr", "module", verb, name}, []string{"mgr", "module", "ls", "--format", "json"}), nil
+	case "telemetry.update":
+		return telemetryCommand(p)
 	case "osd.action":
 		id := pathValue(tail, "osd")
 		verb, err := enum(p, "action", "in", "out", "down", "reweight", "scrub", "deep-scrub")
