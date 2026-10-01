@@ -185,7 +185,7 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
       <Form.Item name="fs" label="文件系统" rules={[{ required: true }]}><Input /></Form.Item>
       <Form.Item name="path" label="路径" rules={[{ required: true }]}><Input /></Form.Item>
       <Form.Item name="subvol" label="子卷"><Input /></Form.Item>
-      <Form.Item name="group" label="子卷组"><Input /></Form.Item>
+      <Form.Item name="group" label="子卷组" dependencies={['subvol']} rules={[({ getFieldValue }) => ({ validator: (_, value) => !value || getFieldValue('subvol') ? Promise.resolve() : Promise.reject(new Error('指定子卷组时必须填写子卷')) })]}><Input /></Form.Item>
       <Button htmlType="submit" loading={loading} disabled={!selectedClusterId || moduleState !== 'enabled'}>查询</Button>
     </Form>
     <Button disabled={!selectedClusterId || mutating || loading || moduleState !== 'enabled'} onClick={() => { void form.validateFields().then(() => setCreating(true)) }}>为当前路径新建计划</Button>

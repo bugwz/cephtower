@@ -25,3 +25,17 @@ func TestSnapshotScheduleNativeIntervals(t *testing.T) {
 		}
 	}
 }
+
+func TestSnapshotScheduleGroupRequiresSubvolume(t *testing.T) {
+	for _, action := range []string{"snapshot_schedule.create", "snapshot_schedule.action"} {
+		params := map[string]any{"path": "/", "schedule": "1h", "start": "2026-10-01T00:00:00", "action": "activate", "group": "team"}
+		request := Request{Action: action, ResourceKey: "filesystem/data/snapshot-schedule"}
+		if _, err := build(request, params); err == nil {
+			t.Fatalf("%s accepted group without subvolume", action)
+		}
+		params["subvol"] = "home"
+		if _, err := build(request, params); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
