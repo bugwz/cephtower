@@ -1497,7 +1497,7 @@ func stringMap(value any) map[string]string {
 type configValueWire struct {
 	Who           string  `json:"who"`
 	Name          string  `json:"name"`
-	Value         string  `json:"value"`
+	Value         *string `json:"value"`
 	Level         *string `json:"level"`
 	Section       *string `json:"section"`
 	LocationType  *string `json:"location_type"`
@@ -1511,15 +1511,23 @@ func (p *NativeProvider) collectConfiguration(ctx context.Context, access Cluste
 	if err := p.runInto(ctx, access, "collect.config", []string{"config", "dump", "--format", "json"}, &values); err != nil {
 		return nil, err
 	}
+	if values == nil {
+		return nil, fmt.Errorf("parse collect.config response: expected a configuration array")
+	}
 	rows := make([]Observation, 0, len(values))
+	seen := make(map[string]bool, len(values))
 	for _, wire := range values {
 		who := configValueWho(wire)
 		name := strings.TrimSpace(wire.Name)
-		if who == "" || name == "" {
-			return nil, fmt.Errorf("parse collect.config response: who and name are required")
+		if who == "" || name == "" || wire.Value == nil {
+			return nil, fmt.Errorf("parse collect.config response: who, name and value are required")
 		}
 		key := who + ":" + name
-		payload := cephdomain.ConfigValue{Who: who, Name: name, Value: wire.Value, Level: wire.Level, Section: wire.Section, LocationType: wire.LocationType, LocationValue: wire.LocationValue, Mask: wire.Mask}
+		if seen[key] {
+			return nil, fmt.Errorf("parse collect.config response: duplicate configuration scope and name")
+		}
+		seen[key] = true
+		payload := cephdomain.ConfigValue{Who: who, Name: name, Value: *wire.Value, Level: wire.Level, Section: wire.Section, LocationType: wire.LocationType, LocationValue: wire.LocationValue, Mask: wire.Mask}
 		rows = append(rows, Observation{Kind: "config_value", NaturalKey: key, Name: name, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	rows = append(rows, p.collectConfigurationOptional(ctx, access, now)...)

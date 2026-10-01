@@ -5,6 +5,10 @@
 
 ## 如何追踪调用链
 
+config dump 采集严格区分有效空数组与 null/缺失值，拒绝同一作用域和选项的重复记录，
+避免异常响应被解释为无覆盖或空字符串。真实空字符串、字符串零值以及不同作用域
+的同名配置仍完整保留。离线采集到 JSON 序列化测试覆盖这些边界。
+
 配置选项详情补齐参考 configuration-details 的服务、标志、标签、枚举和相关选项，
 并按精确选项名关联全部分页读取的 config_value 库存，展示各作用域的覆盖值。
 沿用 ceph config help → /configuration/option 与 ceph config dump → 库存 API 链路，
