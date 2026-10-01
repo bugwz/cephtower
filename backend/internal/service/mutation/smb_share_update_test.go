@@ -7,6 +7,36 @@ import (
 	"testing"
 )
 
+func TestSMBShareFilesystemScope(t *testing.T) {
+	for _, scope := range []string{`"subvolume":"sub"`, `"subvolumegroup":"group"`, `"subvolume":"sub","subvolumegroup":"group"`} {
+		service, _, id := newCephUserService(t)
+		request := Request{ClusterID: id, Action: "smb_share.update", ResourceKey: "smb/share/" + base64.RawURLEncoding.EncodeToString([]byte("a\x00docs")), Parameters: map[string]any{"cluster": "a", "filesystem": "other", "path": "/new"}}
+		before := `{"resource_type":"ceph.smb.share","cluster_id":"a","share_id":"docs","cephfs":{"volume":"fs","path":"/",` + scope + `}}`
+		runner := &directoryRenameExecutor{outputs: map[string]string{"smb_share.update.pre_check": before}}
+		service.executor = runner
+		if _, err := service.Execute(context.Background(), request); err == nil {
+			t.Fatal("cross-filesystem subvolume retained")
+		}
+		if len(runner.specs) != 1 || runner.specs[0].Mutating {
+			t.Fatal("unsafe scope reached mutation", runner.specs)
+		}
+		request.Parameters["filesystem"] = "fs"
+		if _, err := smbShareUpdateJSON([]byte(before), request); err != nil {
+			t.Fatal("same filesystem rejected", err)
+		}
+	}
+	request := Request{ResourceKey: "smb/share/" + base64.RawURLEncoding.EncodeToString([]byte("a\x00docs")), Parameters: map[string]any{"filesystem": "other"}}
+	before := []byte(`{"resource_type":"ceph.smb.share","cluster_id":"a","share_id":"docs","cephfs":{"volume":"fs","path":"/","subvolume":"","subvolumegroup":""}}`)
+	data, err := smbShareUpdateJSON(before, request)
+	if err != nil {
+		t.Fatal("unscoped filesystem change rejected", err)
+	}
+	var record map[string]any
+	if err := json.Unmarshal(data, &record); err != nil || record["cephfs"].(map[string]any)["volume"] != "other" {
+		t.Fatal("filesystem not changed", err)
+	}
+}
+
 func TestSMBShareUpdatePreservesNativeSettings(t *testing.T) {
 	service, _, id := newCephUserService(t)
 	request := Request{ClusterID: id, Action: "smb_share.update", ResourceKey: "smb/share/" + base64.RawURLEncoding.EncodeToString([]byte("a\x00docs")), Parameters: map[string]any{"cluster": "a", "filesystem": "fs", "path": "/new"}}

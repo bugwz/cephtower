@@ -70,7 +70,15 @@ func smbShareUpdateJSON(data []byte, request Request) ([]byte, error) {
 			record[field] = flag
 		}
 	}
-	fs["volume"] = optional(request.Parameters, "filesystem")
+	volume := optional(request.Parameters, "filesystem")
+	if fs["volume"] != volume {
+		for _, field := range []string{"subvolume", "subvolumegroup"} {
+			if value := fs[field]; value != nil && value != "" {
+				return nil, invalid("cannot change the filesystem while preserving an existing SMB subvolume scope")
+			}
+		}
+	}
+	fs["volume"] = volume
 	if value, exists := request.Parameters["path"]; exists {
 		path, ok := value.(string)
 		if !ok || path == "" {
