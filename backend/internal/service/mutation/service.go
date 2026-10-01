@@ -2358,7 +2358,23 @@ func build(request Request, p map[string]any) (command, error) {
 		if authMode != "user" && authMode != "active-directory" {
 			return command{}, invalid("auth_mode is not supported")
 		}
-		return ceph([]string{"smb", "cluster", "create", name, authMode}, []string{"smb", "cluster", "ls", "--format", "json"}), nil
+		args := []string{"smb", "cluster", "create", name, authMode}
+		if value, exists := p["user_group_ref"]; exists || authMode == "user" {
+			data, err := json.Marshal(value)
+			var refs []string
+			if err != nil || json.Unmarshal(data, &refs) != nil || len(refs) == 0 || authMode != "user" {
+				return command{}, invalid("user_group_ref requires a non-empty list in user authentication mode")
+			}
+			seen := map[string]bool{}
+			for _, ref := range refs {
+				if !smbResourceIDPattern.MatchString(ref) || seen[ref] {
+					return command{}, invalid("user_group_ref requires unique valid SMB resource IDs")
+				}
+				seen[ref] = true
+				args = append(args, "--user-group-ref="+ref)
+			}
+		}
+		return ceph(args, []string{"smb", "cluster", "ls", "--format", "json"}), nil
 	case "smb_cluster.update":
 		name := last(tail)
 		_, err := enum(p, "auth_mode", "user", "active-directory")

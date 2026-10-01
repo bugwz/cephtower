@@ -83,7 +83,7 @@ func TestEveryNativeActionBuildsRegisteredCommand(t *testing.T) {
 		{"nfs_export.create", "nfs/export", map[string]any{"cluster": "nfs1", "pseudo": "/export", "path": "/data", "filesystem": "cephfs"}},
 		{"nfs_export.update", "nfs/export/" + pair("nfs1", "/export"), map[string]any{"cluster": "nfs1", "pseudo": "/export", "path": "/data", "filesystem": "cephfs"}},
 		{"nfs_export.delete", "nfs/export/" + pair("nfs1", "/export"), nil},
-		{"smb_cluster.create", "smb/cluster", map[string]any{"name": "smb1", "auth_mode": "user"}}, {"smb_cluster.update", "smb/cluster/smb1", map[string]any{"auth_mode": "user"}}, {"smb_cluster.delete", "smb/cluster/smb1", nil},
+		{"smb_cluster.create", "smb/cluster", map[string]any{"name": "smb1", "auth_mode": "user", "user_group_ref": []string{"users"}}}, {"smb_cluster.update", "smb/cluster/smb1", map[string]any{"auth_mode": "user"}}, {"smb_cluster.delete", "smb/cluster/smb1", nil},
 		{"smb_share.create", "smb/share", map[string]any{"cluster": "smb1", "name": "share1", "filesystem": "cephfs", "path": "/data"}},
 		{"smb_share.update", "smb/share/" + pair("smb1", "share1"), map[string]any{"cluster": "smb1", "filesystem": "cephfs"}}, {"smb_share.delete", "smb/share/" + pair("smb1", "share1"), nil},
 		{"config_value.set", "configuration/value/" + pair("global", "osd_pool_default_size"), map[string]any{"value": "3"}}, {"config_value.delete", "configuration/value/" + pair("global", "osd_pool_default_size"), nil},

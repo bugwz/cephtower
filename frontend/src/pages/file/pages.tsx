@@ -738,6 +738,7 @@ const definitions: Record<
       successMessage: 'SMB 集群创建执行成功',
       fields: [
         { name: 'name', label: '集群名称', required: true },
+        { name: 'user_group_ref', label: '用户组资源 ID', type: 'textarea', required: true, placeholder: '每行一个已有用户组资源 ID', visibleWhen: (values) => values.auth_mode === 'user' },
         {
           name: 'auth_mode',
           label: '认证模式',
@@ -752,6 +753,7 @@ const definitions: Record<
       buildBody: (values, clusterId) => ({
         cluster_id: clusterId,
         name: String(values.name ?? ''),
+        ...smbClusterUserGroupsBody(values),
         ...(values.auth_mode ? { auth_mode: String(values.auth_mode) } : {})
       })
     },
