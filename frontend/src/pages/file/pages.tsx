@@ -2,7 +2,7 @@ import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClusterDetails } from './NFSClusterDetails'
 import { SMBClusterDetails } from './SMBClusterDetails'
-import { smbCephFS, smbShareInitialValues, smbBooleanText } from './smbShareFields'
+import { smbCephFS, smbShareInitialValues, smbShareAccessBody, smbBooleanText } from './smbShareFields'
 import { NFSClientsEditor } from './NFSClientsEditor'
 import { nfsClientsBody, nfsFSALBody, nfsRGWUserChoices, nfsRGWBucketChoices } from './nfsExportFields'
 import { nfsAccessOptions, nfsExportEditReason, nfsExportInitialValues, nfsFSAL, nfsTransportBody, nfsTransportOptions, nfsProtocolBody, nfsProtocolOptions, nfsSecurityLabelOptions, nfsSecurityTypeBody, nfsSquashOptions } from './nfsExportFields'
@@ -830,12 +830,15 @@ const definitions: Record<
       fields: [
         { name: 'cluster', label: 'SMB 集群', required: true },
         { name: 'filesystem', label: '文件系统', required: true },
-        { name: 'path', label: 'CephFS 路径' }
+        { name: 'path', label: 'CephFS 路径' },
+        { name: 'readonly', label: '只读', type: 'select', placeholder: '未选择则保留', options: [{ label: '只读', value: 'true' }, { label: '允许写入', value: 'false' }] },
+        { name: 'browseable', label: '可浏览', type: 'select', placeholder: '未选择则保留', options: [{ label: '显示共享', value: 'true' }, { label: '隐藏共享（不是访问控制）', value: 'false' }] }
       ],
       initialValues: smbShareInitialValues,
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
         share_id: shareId(row),
+        ...smbShareAccessBody(values),
         cluster: String(values.cluster ?? ''),
         filesystem: String(values.filesystem ?? ''),
         ...(values.path ? { path: String(values.path) } : {})

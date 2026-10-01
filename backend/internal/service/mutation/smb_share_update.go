@@ -33,6 +33,15 @@ func smbShareUpdateJSON(data []byte, request Request) ([]byte, error) {
 		return nil, err
 	}
 	fs := record["cephfs"].(map[string]any)
+	for _, field := range []string{"readonly", "browseable"} {
+		if value, exists := request.Parameters[field]; exists {
+			flag, ok := value.(bool)
+			if !ok {
+				return nil, invalid(field + " must be a boolean")
+			}
+			record[field] = flag
+		}
+	}
 	fs["volume"] = optional(request.Parameters, "filesystem")
 	if value, exists := request.Parameters["path"]; exists {
 		path, ok := value.(string)

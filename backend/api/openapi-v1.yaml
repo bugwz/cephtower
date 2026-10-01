@@ -254,6 +254,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -725,6 +727,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -923,6 +927,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -1394,6 +1400,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -2887,6 +2895,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -3358,6 +3368,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -3556,6 +3568,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -4027,6 +4041,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -4443,6 +4459,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -4914,6 +4932,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -5206,6 +5226,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -5677,6 +5699,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -5875,6 +5899,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -6346,6 +6372,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -6735,6 +6763,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -7206,6 +7236,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -7500,6 +7532,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -7971,6 +8005,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -8170,6 +8206,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -8641,6 +8679,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -9083,6 +9123,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -9554,6 +9596,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -9846,6 +9890,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -10317,6 +10363,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -10611,6 +10659,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -11082,6 +11132,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -11374,6 +11426,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -11845,6 +11899,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -12043,6 +12099,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -12514,6 +12572,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -12958,6 +13018,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -13429,6 +13491,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -14123,6 +14187,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -14594,6 +14660,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -14793,6 +14861,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -15264,6 +15334,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -15463,6 +15535,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -15934,6 +16008,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -16770,6 +16846,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -17241,6 +17319,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -17585,6 +17665,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -18056,6 +18138,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -18350,6 +18434,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -18821,6 +18907,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -19019,6 +19107,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -19490,6 +19580,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -20344,6 +20436,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -20815,6 +20909,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -21013,6 +21109,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -21484,6 +21582,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -21699,6 +21799,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -22170,6 +22272,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -22462,6 +22566,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -22933,6 +23039,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -23131,6 +23239,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -23602,6 +23712,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -23801,6 +23913,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -24272,6 +24386,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -24749,6 +24865,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -25220,6 +25338,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -25609,6 +25729,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -26080,6 +26202,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -26372,6 +26496,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -26843,6 +26969,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -27041,6 +27169,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -27512,6 +27642,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -27843,6 +27975,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -28314,6 +28448,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -28513,6 +28649,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -28984,6 +29122,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -29598,6 +29738,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -30069,6 +30211,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -30553,6 +30697,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -31024,6 +31170,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -31316,6 +31464,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -31787,6 +31937,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -32081,6 +32233,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -32552,6 +32706,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -32844,6 +33000,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -33315,6 +33473,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -33513,6 +33673,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -33984,6 +34146,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -34373,6 +34537,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -34844,6 +35010,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -35136,6 +35304,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -35607,6 +35777,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -35805,6 +35977,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -36276,6 +36450,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -36570,6 +36746,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -37041,6 +37219,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -37239,6 +37419,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -37710,6 +37892,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -38004,6 +38188,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -38475,6 +38661,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -38673,6 +38861,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -39144,6 +39334,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -39438,6 +39630,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -39909,6 +40103,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -40201,6 +40397,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -40672,6 +40870,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -40870,6 +41070,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -41341,6 +41543,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -41803,6 +42007,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -42274,6 +42480,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -42567,6 +42775,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -43038,6 +43248,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -43237,6 +43449,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -43708,6 +43922,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -43907,6 +44123,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -44378,6 +44596,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -44671,6 +44891,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -45142,6 +45364,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -45375,6 +45599,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -45846,6 +46072,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -46330,6 +46558,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -46801,6 +47031,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -47093,6 +47325,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -47564,6 +47798,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -47762,6 +47998,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -48233,6 +48471,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -48527,6 +48767,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -48998,6 +49240,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -49197,6 +49441,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -49668,6 +49914,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -49867,6 +50115,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -50338,6 +50588,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -50537,6 +50789,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -51008,6 +51262,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -51302,6 +51558,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -51773,6 +52031,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -52065,6 +52325,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -52536,6 +52798,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -52734,6 +52998,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -53205,6 +53471,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -53521,6 +53789,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -53992,6 +54262,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -54190,6 +54462,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -54661,6 +54935,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -54859,6 +55135,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -55330,6 +55608,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -55915,6 +56195,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -56386,6 +56668,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -56657,6 +56941,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -57128,6 +57414,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -57327,6 +57615,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -57798,6 +58088,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -57996,6 +58288,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -58467,6 +58761,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -58761,6 +59057,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -59232,6 +59530,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -59525,6 +59825,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -59996,6 +60298,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -60195,6 +60499,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -60666,6 +60972,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -60976,6 +61284,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -61447,6 +61757,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -61645,6 +61957,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -62116,6 +62430,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -62314,6 +62630,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -62785,6 +63103,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -62984,6 +63304,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -63455,6 +63777,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -63749,6 +64073,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -64220,6 +64546,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -64512,6 +64840,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -64983,6 +65313,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -65181,6 +65513,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -65652,6 +65986,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -65952,6 +66288,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -66423,6 +66761,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -66622,6 +66962,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -67093,6 +67435,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -67292,6 +67636,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -67763,6 +68109,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -68057,6 +68405,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -68528,6 +68878,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -68727,6 +69079,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -69198,6 +69552,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -69396,6 +69752,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -69867,6 +70225,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -70161,6 +70521,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -70632,6 +70994,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -70830,6 +71194,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -71301,6 +71667,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -71499,6 +71867,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -71970,6 +72340,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -72169,6 +72541,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -72640,6 +73014,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -73029,6 +73405,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -73500,6 +73878,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -73792,6 +74172,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -74263,6 +74645,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -74461,6 +74845,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -74932,6 +75318,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -75131,6 +75519,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -75602,6 +75992,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -75801,6 +76193,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -76272,6 +76666,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -76470,6 +76866,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -76941,6 +77339,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -77140,6 +77540,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -77611,6 +78013,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -77810,6 +78214,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -78281,6 +78687,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -78575,6 +78983,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -79046,6 +79456,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -79244,6 +79656,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -79715,6 +80129,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -79914,6 +80330,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -80385,6 +80803,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -80583,6 +81003,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -81054,6 +81476,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -81583,6 +82007,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -82054,6 +82480,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -82346,6 +82774,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -82817,6 +83247,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -83015,6 +83447,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -83486,6 +83920,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -83780,6 +84216,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -84251,6 +84689,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -84543,6 +84983,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -85014,6 +85456,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -85212,6 +85656,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -85683,6 +86129,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -85977,6 +86425,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -86448,6 +86898,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -86740,6 +87192,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -87211,6 +87665,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -87409,6 +87865,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -87880,6 +88338,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -88269,6 +88729,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -88740,6 +89202,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string
@@ -88939,6 +89403,8 @@ paths:
                   type: integer
                 block_size:
                   type: integer
+                browseable:
+                  type: boolean
                 bucket_id:
                   type: string
                 c:
@@ -89410,6 +89876,8 @@ paths:
                 rbd_pool_name:
                   type: string
                 read_only:
+                  type: boolean
+                readonly:
                   type: boolean
                 realm:
                   type: string

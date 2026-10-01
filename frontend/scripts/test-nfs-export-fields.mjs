@@ -178,7 +178,11 @@ console.log('SMB cluster configuration display checks passed')
 
 const smbFields = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/file/smbShareFields.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(smbFields)
-assert.deepEqual(smbFields.smbShareInitialValues({ cluster_id: 'a', cephfs: { volume: 'fs', path: '/docs' } }), { cluster: 'a', filesystem: 'fs', path: '/docs' })
+assert.deepEqual(smbFields.smbShareInitialValues({ cluster_id: 'a', cephfs: { volume: 'fs', path: '/docs' } }), { cluster: 'a', filesystem: 'fs', path: '/docs', readonly: undefined, browseable: undefined })
+assert.equal(smbFields.smbShareInitialValues({ readonly: false }).readonly, 'false')
+assert.deepEqual(smbFields.smbShareAccessBody({ readonly: 'false', browseable: 'true' }), { readonly: false, browseable: true })
+assert.deepEqual(smbFields.smbShareAccessBody({}), {})
+assert.throws(() => smbFields.smbShareAccessBody({ readonly: 'invalid' }))
 assert.equal(smbFields.smbBooleanText(false), '否')
 assert.equal(smbFields.smbBooleanText(undefined), '未知')
 const shareIdentity = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'shareId')

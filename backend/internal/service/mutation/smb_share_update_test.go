@@ -41,6 +41,30 @@ func TestSMBShareUpdatePreservesNativeSettings(t *testing.T) {
 		}
 	}
 	delete(request.Parameters, "path")
+	for _, flag := range []bool{false, true} {
+		request.Parameters["readonly"] = flag
+		request.Parameters["browseable"] = flag
+		changed, err := smbShareUpdateJSON([]byte(before), request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var record map[string]any
+		if err := json.Unmarshal(changed, &record); err != nil {
+			t.Fatal(err)
+		}
+		if record["readonly"] != flag || record["browseable"] != flag {
+			t.Fatal("boolean lost")
+		}
+		if !smbShareUpdateMatches(changed, changed, request) {
+			t.Fatal("readback rejected")
+		}
+	}
+	request.Parameters["readonly"] = "false"
+	if _, err := smbShareUpdateJSON([]byte(before), request); err == nil {
+		t.Fatal("non-boolean accepted")
+	}
+	delete(request.Parameters, "readonly")
+	delete(request.Parameters, "browseable")
 	runner.outputs["smb_share.update"] = `{"success":false}`
 	if _, err := service.Execute(context.Background(), request); err == nil {
 		t.Fatal("native apply failure accepted even though unchanged readback matches")
