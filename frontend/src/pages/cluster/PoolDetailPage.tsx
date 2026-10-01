@@ -173,6 +173,8 @@ function renderOverview(data: ApiRecord, decodedName: string) {
       <Descriptions.Item label="实际占用">{poolCapacity(data.bytes_used)}</Descriptions.Item>
       <Descriptions.Item label="最大可用">{poolCapacity(data.max_avail)}</Descriptions.Item>
       <Descriptions.Item label="对象数量">{poolObjectCount(data.objects)}</Descriptions.Item>
+      <Descriptions.Item label="压缩数据实际占用">{poolCapacity(data.compress_bytes_used)}</Descriptions.Item>
+      <Descriptions.Item label="压缩数据原始大小">{poolCapacity(data.compress_under_bytes)}</Descriptions.Item>
       <Descriptions.Item label="纠删码配置">{textValue(data.erasure_code_profile, '未采集')}</Descriptions.Item>
       <Descriptions.Item label="应用标记" span={2}>{renderApplications(poolApplications(data))}</Descriptions.Item>
       <Descriptions.Item label="CRUSH 规则集">{textValue(data.crush_rule)}</Descriptions.Item>

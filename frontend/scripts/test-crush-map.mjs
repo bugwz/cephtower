@@ -157,7 +157,7 @@ for (const changed of [false, true]) {
 }
 assert.ok(detailSource.includes('pg_status_display: poolPGStatus(row.pg_status)'))
 assert.ok(!detailSource.includes('active+clean'), 'detail view must not fabricate healthy PG states')
-for (const field of ['stored', 'bytes_used', 'max_avail']) assert.ok(detailSource.includes(`poolCapacity(data.${field})`))
+for (const field of ['stored', 'bytes_used', 'max_avail', 'compress_bytes_used', 'compress_under_bytes']) assert.ok(detailSource.includes(`poolCapacity(data.${field})`))
 assert.ok(detailSource.includes('poolObjectCount(data.objects)'))
 assert.ok(detailSource.includes('poolUsage(data)'))
 for (const value of [undefined, null, {}, [], 'active+clean', { down: -1 }, { down: '2' }, { down: 1.5 }, { '': 1 }]) assert.equal(pgStatus(value), '未采集')

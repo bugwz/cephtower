@@ -46,7 +46,7 @@ func TestPoolPGStatesReachInventoryPayload(t *testing.T) {
 	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.pool":           []byte(`[{"pool":7,"pool_name":"pg-pool","type":3,"erasure_code_profile":"archive-ec","crush_rule":8}]`),
 		"collect.pool_pg_states": []byte(`{"pg_stats":[{"pgid":"7.0","state":"active+degraded"},{"pgid":"8.0","state":"down"}]}`),
-		"collect.pool_usage":     []byte(`{"pools":[{"id":7,"stats":{"percent_used":0.25,"stored":1024,"bytes_used":3072,"max_avail":8192,"objects":12345}}]}`),
+		"collect.pool_usage":     []byte(`{"pools":[{"id":7,"stats":{"percent_used":0.25,"stored":1024,"bytes_used":3072,"max_avail":8192,"objects":12345,"compress_bytes_used":512,"compress_under_bytes":1024}}]}`),
 	}}}
 	rows, err := p.Collect(context.Background(), ClusterAccess{}, "storage")
 	if err != nil {
@@ -79,6 +79,9 @@ func TestPoolPGStatesReachInventoryPayload(t *testing.T) {
 		}
 		if decoded["objects"] != float64(12345) {
 			t.Fatalf("native object count missing: %s", data)
+		}
+		if decoded["compress_bytes_used"] != float64(512) || decoded["compress_under_bytes"] != float64(1024) {
+			t.Fatalf("compression statistics missing: %s", data)
 		}
 		return
 	}

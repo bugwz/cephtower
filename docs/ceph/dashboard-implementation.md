@@ -5,6 +5,10 @@
 
 ## 如何追踪调用链
 
+池详情增加压缩数据实际占用及原始大小，复用 df detail 的 compress_bytes_used
+（data_compressed_allocated）和 compress_under_bytes（data_compressed_original）。
+两者不是全部池容量，也不把实际分配空间误称为纯压缩后数据长度；未知值保持未采集。
+
 存储池详情手动采集增加集群及池名称作用域检查，切换资源后旧采集完成不再调用
 旧详情加载器，也不显示误导性的刷新成功提示。原集群已提交的采集仍继续执行。
 离线延迟回调测试覆盖当前资源和已切换资源两种完成路径。

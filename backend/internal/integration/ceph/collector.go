@@ -867,6 +867,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		}
 		quota := p.collectPoolQuota(ctx, access, wire.PoolName)
 		payload := cephdomain.Pool{
+			CompressBytesUsed: poolUsage[wire.Pool].CompressBytesUsed, CompressUnderBytes: poolUsage[wire.Pool].CompressUnderBytes,
 			Objects:     poolUsage[wire.Pool].Objects,
 			PGStatus:    poolPGStates[wire.Pool],
 			UsedPercent: poolUsage[wire.Pool].PercentUsed, Stored: poolUsage[wire.Pool].Stored, BytesUsed: poolUsage[wire.Pool].BytesUsed, MaxAvail: poolUsage[wire.Pool].MaxAvail,

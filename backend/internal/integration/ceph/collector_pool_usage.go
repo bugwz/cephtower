@@ -6,11 +6,13 @@ import (
 )
 
 type poolUsageWire struct {
-	Objects     *uint64  `json:"objects"`
-	Stored      *uint64  `json:"stored"`
-	BytesUsed   *uint64  `json:"bytes_used"`
-	MaxAvail    *uint64  `json:"max_avail"`
-	PercentUsed *float64 `json:"percent_used"`
+	CompressBytesUsed  *uint64  `json:"compress_bytes_used"`
+	CompressUnderBytes *uint64  `json:"compress_under_bytes"`
+	Objects            *uint64  `json:"objects"`
+	Stored             *uint64  `json:"stored"`
+	BytesUsed          *uint64  `json:"bytes_used"`
+	MaxAvail           *uint64  `json:"max_avail"`
+	PercentUsed        *float64 `json:"percent_used"`
 }
 
 func (p *NativeProvider) collectPoolUsage(ctx context.Context, access ClusterAccess) map[int64]poolUsageWire {

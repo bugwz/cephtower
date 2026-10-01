@@ -26,3 +26,16 @@ func TestCollectPoolUsage(t *testing.T) {
 		}
 	}
 }
+
+func TestPoolCompressionUnknownAndZero(t *testing.T) {
+	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+		"collect.pool_usage": []byte(`{"pools":[{"id":1,"stats":{}},{"id":2,"stats":{"compress_bytes_used":0,"compress_under_bytes":0}}]}`),
+	}}}
+	got := p.collectPoolUsage(context.Background(), ClusterAccess{})
+	if got[1].CompressBytesUsed != nil || got[1].CompressUnderBytes != nil {
+		t.Fatal("missing compression values must remain unknown")
+	}
+	if got[2].CompressBytesUsed == nil || *got[2].CompressBytesUsed != 0 || got[2].CompressUnderBytes == nil || *got[2].CompressUnderBytes != 0 {
+		t.Fatal("zero compression values lost")
+	}
+}

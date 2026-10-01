@@ -22,6 +22,8 @@ type Pool struct {
 	UsedPercent              *float64          `json:"used_percent"`
 	Stored                   *uint64           `json:"stored"`
 	Objects                  *uint64           `json:"objects"`
+	CompressBytesUsed        *uint64           `json:"compress_bytes_used"`
+	CompressUnderBytes       *uint64           `json:"compress_under_bytes"`
 	BytesUsed                *uint64           `json:"bytes_used"`
 	MaxAvail                 *uint64           `json:"max_avail"`
 	ErasureCodeProfile       *string           `json:"erasure_code_profile"`
