@@ -745,6 +745,10 @@ func (h *Handler) DeleteSMBUsersGroup(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("smb_usersgroups", "smb_usersgroups.delete", "high")(w, r)
 }
 
+func (h *Handler) CreateSMBUsersGroup(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("smb_usersgroups", "smb_usersgroups.create", "medium")(w, r)
+}
+
 func (h *Handler) CreateSMBCluster(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("smb_cluster", "smb_cluster.create", "medium")(w, r)
 }

@@ -2,6 +2,7 @@ import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClusterDetails } from './NFSClusterDetails'
 import { SMBClusterDetails } from './SMBClusterDetails'
+import { SMBUsersEditor, smbUsersBody } from './SMBUsersEditor'
 import { smbClusterInitialValues, smbClusterDNSBody, smbClusterUserGroupsBody, smbClusterDomainBody, smbClusterCountBody, smbClusterHostsBody, smbClusterUpdateHostsBody, smbClusterClusteringBody, smbClusterPublicAddressesBody, smbClusterUpdatePublicAddressesBody } from './smbClusterFields'
 import { smbCephFS, smbShareInitialValues, smbShareAccessBody, smbBooleanText } from './smbShareFields'
 import { NFSClientsEditor } from './NFSClientsEditor'
@@ -786,6 +787,19 @@ const definitions: Record<
     title: 'SMB 用户组资源',
     path: '/smb/usersgroups',
     requiredCapabilities: ['smb'],
+    createAction: {
+      title: '新建 SMB 用户组资源',
+      path: '/smb/usersgroup',
+      method: 'POST',
+      successMessage: '用户组资源创建及元数据核验成功（未验证客户端登录）',
+      fields: [
+        { name: 'name', label: '资源 ID', required: true, pattern: /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,16}[a-zA-Z0-9])?$/, patternMessage: '1–18 个英文字母、数字或连字符，首尾为字母或数字' },
+        { name: 'users', label: '本地用户', required: true, renderControl: () => <SMBUsersEditor /> },
+        { name: 'groups', label: '组名（可选，每行一个）', type: 'textarea' },
+        { name: 'linked_to_cluster', label: '绑定 SMB 集群（可选）', type: 'select', optionsLoader: smbClusterOptions, placeholder: '绑定后仅该集群可用，并随集群删除' }
+      ],
+      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: values.name, users: smbUsersBody(values.users), groups: String(values.groups ?? '').split('\n').map((name) => name.trim()).filter(Boolean), ...(values.linked_to_cluster ? { linked_to_cluster: values.linked_to_cluster } : {}) })
+    },
     deleteAction: {
       title: '删除用户组资源',
       confirmation: (row) => `确认删除用户组资源 ${resourceName(row)} 及其中的认证配置？本系统不保存密码备份。仍被集群引用的资源将由 Ceph 拒绝删除，请先调整集群认证引用。`,

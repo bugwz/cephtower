@@ -62,13 +62,27 @@ console.log('NFS native export field checks passed')
 const pagesSource = readFileSync(new URL('../src/pages/file/pages.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('pages.tsx', pagesSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const definitionNode = tree.statements.filter(ts.isVariableStatement).flatMap((statement) => [...statement.declarationList.declarations]).find((declaration) => declaration.name.getText(tree) === 'definitions').initializer
+const smbEditorExports = {}
+const smbEditorCode = ts.transpileModule(readFileSync(new URL('../src/pages/file/SMBUsersEditor.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 } }).outputText
+new Function('exports', 'require', 'React', smbEditorCode)(smbEditorExports, () => ({ Alert: 'Alert', Button: 'Button', Input: Object.assign('Input', { Password: 'Password' }), Space: 'Space' }), { createElement: (type, props, ...children) => ({ type, props: { ...props, children } }) })
+assert.deepEqual(smbEditorExports.smbUsersBody('[{"name":"alice","password":" secret "}]'), [{ name: 'alice', password: ' secret ' }])
+let smbUsersValue
+const smbRenderUsers = () => smbEditorExports.SMBUsersEditor({ value: smbUsersValue, onChange: (value) => { smbUsersValue = value } })
+nodes(smbRenderUsers()).find((node) => node.type === 'Button' && node.props.children.includes('新增用户')).props.onClick()
+assert.deepEqual(JSON.parse(smbUsersValue), [{ name: '', password: '' }])
+nodes(smbRenderUsers()).find((node) => node.props['aria-label'] === '用户 1 名称').props.onChange({ target: { value: 'alice' } })
+nodes(smbRenderUsers()).find((node) => node.props['aria-label'] === '用户 1 密码').props.onChange({ target: { value: ' secret ' } })
+assert.deepEqual(smbEditorExports.smbUsersBody(smbUsersValue), [{ name: 'alice', password: ' secret ' }])
+nodes(smbRenderUsers()).find((node) => node.type === 'Button' && node.props.danger).props.onClick()
+assert.deepEqual(JSON.parse(smbUsersValue), [])
+for (const bad of [undefined, '[]', '[{"name":"a","password":""}]', '[{"name":"a","password":"p"},{"name":"a","password":"q"}]']) assert.throws(() => smbEditorExports.smbUsersBody(bad))
 for (const [key, path, columns] of [
   ['smbJoinAuths', '/smb/join/auths', ['auth_id', 'username', 'linked_to_cluster']],
   ['smbUsersGroups', '/smb/usersgroups', ['users_groups_id', 'user_count', 'group_names', 'linked_to_cluster']]
 ]) {
   const definition = definitionNode.properties.find((property) => property.name.getText(tree) === key).initializer
-  const code = ts.transpileModule(`const value = ${definition.getText(tree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-  const value = new Function('resourceName', 'smbClusterOptions', `${code}; return value`)((row) => row.name, async () => [])
+  const code = ts.transpileModule(`const value = ${definition.getText(tree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
+  const value = new Function('resourceName', 'smbClusterOptions', 'smbUsersBody', `${code}; return value`)((row) => row.name, async () => [], smbEditorExports.smbUsersBody)
   assert.equal(value.path, path)
   assert.deepEqual(value.requiredCapabilities, ['smb'])
   assert.deepEqual(value.columns.map((column) => column.key), columns)
@@ -80,7 +94,10 @@ for (const [key, path, columns] of [
     assert.deepEqual(value.updateAction.initialValues({ username: 'admin', password: 'must-not-copy', linked_to_cluster: 'a' }), { username: 'admin', linked_to_cluster: 'a' })
     assert.deepEqual(value.updateAction.buildBody({ name: 'other', username: 'new', password: 'replacement' }, 17, { name: 'original' }), { cluster_id: 17, name: 'original', username: 'new', password: 'replacement' })
     assert.deepEqual(value.createAction.buildBody({ name: 'auth', username: 'admin', password: 'test-secret' }, 17), { cluster_id: 17, name: 'auth', username: 'admin', password: 'test-secret' })
-  } else assert.equal(value.createAction, undefined)
+  } else {
+    assert.equal(value.createAction.path, '/smb/usersgroup')
+    assert.deepEqual(value.createAction.buildBody({ name: 'users', users: '[{"name":"alice","password":"p"}]', groups: 'staff\nops' }, 17), { cluster_id: 17, name: 'users', users: [{ name: 'alice', password: 'p' }], groups: ['staff', 'ops'] })
+  }
   const deletePath = key === 'smbJoinAuths' ? '/smb/join/auth' : '/smb/usersgroup'
   assert.equal(value.deleteAction.path, deletePath)
   assert.deepEqual(value.deleteAction.buildBody({ name: 'target' }, 17), { cluster_id: 17, name: 'target' })

@@ -1,0 +1,42 @@
+package mutation
+
+import (
+	"context"
+	"encoding/json"
+	"reflect"
+	"testing"
+)
+
+func TestSMBUsersGroupsCreate(t *testing.T) {
+	s, _, id := newCephUserService(t)
+	r := Request{ClusterID: id, Action: "smb_usersgroups.create", ResourceKey: "smb/usersgroup/target", Parameters: map[string]any{"name": "target", "users": []any{map[string]any{"name": "alice", "password": " secret "}}, "groups": []string{"staff"}}}
+	good := `{"resources":[{"resource_type":"ceph.smb.usersgroups","users_groups_id":"target","values":{"users":[{"name":"alice","password":"***"}],"groups":[{"name":"staff"}]}}]}`
+	e := &directoryRenameExecutor{outputs: map[string]string{r.Action + ".pre_check": `{"resources":[]}`, r.Action: `{"success":true}`, r.Action + ".post_check": good}}
+	s.executor = e
+	if _, err := s.Execute(context.Background(), r); err != nil {
+		t.Fatal(err)
+	}
+	if len(e.specs) != 3 || !reflect.DeepEqual(e.specs[1].Args, []string{"smb", "apply", "-i", "-", "--password-filter-out=hidden", "--format", "json"}) {
+		t.Fatal(e.specs)
+	}
+	var payload map[string]any
+	if json.Unmarshal(e.specs[1].Stdin, &payload) != nil || payload["values"].(map[string]any)["users"].([]any)[0].(map[string]any)["password"] != " secret " {
+		t.Fatal("password changed")
+	}
+	e.outputs[r.Action+".pre_check"] = good
+	e.specs = nil
+	if _, err := s.Execute(context.Background(), r); err == nil || len(e.specs) != 1 {
+		t.Fatal("existing resource overwritten")
+	}
+	for _, bad := range []string{`null`, `{}`, `{"resources":[]}`, good + ` {}`, `{"resources":[{"resource_type":"ceph.smb.usersgroups","users_groups_id":"target","values":{"users":[],"groups":[]}}]}`} {
+		if smbUsersGroupsCreated(r, []byte(bad)) {
+			t.Fatal("invalid readback accepted")
+		}
+	}
+	for _, users := range []any{nil, []any{}, []any{map[string]any{"name": "a"}}, []any{map[string]any{"name": "a", "password": "p"}, map[string]any{"name": "a", "password": "q"}}} {
+		r.Parameters["users"] = users
+		if _, err := smbUsersGroupsJSON(r.Parameters); err == nil {
+			t.Fatal("invalid users accepted")
+		}
+	}
+}

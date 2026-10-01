@@ -14,6 +14,10 @@ func isSMBJoinAuthWrite(action string) bool {
 	return action == "smb_join_auth.create" || action == "smb_join_auth.update"
 }
 
+func isSMBAuthWrite(action string) bool {
+	return isSMBJoinAuthWrite(action) || action == "smb_usersgroups.create"
+}
+
 func smbAuthResourceType(action string) (string, string) {
 	if action == "smb_join_auth.delete" || isSMBJoinAuthWrite(action) {
 		return "ceph.smb.join.auth", "auth_id"

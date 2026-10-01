@@ -92,6 +92,7 @@ func Supports(action string) bool {
 		"smb_share.create", "smb_share.update", "smb_share.delete",
 		"smb_join_auth.delete", "smb_usersgroups.delete",
 		"smb_join_auth.create", "smb_join_auth.update",
+		"smb_usersgroups.create",
 		"config_value.set", "config_value.delete":
 		return true
 	default:
@@ -222,7 +223,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			return cephdomain.ActionResult{}, invalid("source must be an existing directory")
 		}
 	}
-	if isSMBJoinAuthWrite(request.Action) {
+	if isSMBAuthWrite(request.Action) {
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 		if checkErr != nil || !smbAuthPresenceMatches(request, checked.Stdout, request.Action == "smb_join_auth.update") {
 			return cephdomain.ActionResult{}, invalid("SMB credential existence does not match the requested operation or could not be verified")
@@ -230,7 +231,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: request.Action != "osd_deployment.preview", SensitiveArgs: spec.sensitive})
 	if err != nil {
-		if isSMBJoinAuthWrite(request.Action) {
+		if isSMBAuthWrite(request.Action) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "SMB credential write failed"}
 		}
 		if request.Action == "config_value.set" && len(spec.sensitive) > 0 {
@@ -241,7 +242,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		return cephdomain.ActionResult{}, normalize(err)
 	}
-	if request.Action == "smb_share.update" || request.Action == "smb_cluster.update" || isSMBAuthDelete(request.Action) || isSMBJoinAuthWrite(request.Action) {
+	if request.Action == "smb_share.update" || request.Action == "smb_cluster.update" || isSMBAuthDelete(request.Action) || isSMBAuthWrite(request.Action) {
 		var applied struct {
 			Success bool `json:"success"`
 		}
@@ -309,6 +310,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		if isSMBJoinAuthWrite(request.Action) && !smbJoinAuthCreated(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB credential metadata could not be verified; the change may already have taken effect", Retryable: true}
+		}
+		if request.Action == "smb_usersgroups.create" && !smbUsersGroupsCreated(request, checked.Stdout) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB user group metadata could not be verified; creation may already have taken effect", Retryable: true}
 		}
 		if (request.Action == "smb_share.create" || request.Action == "smb_share.delete") && !smbShareStateMatches(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB share command was accepted but its expected presence or absence could not be verified; the change may already have taken effect", Retryable: true}
@@ -2490,6 +2494,17 @@ func build(request Request, p map[string]any) (command, error) {
 		return ceph([]string{"smb", "apply", "-i", "-", "--format", "json"}, []string{"smb", "show", "ceph.smb.cluster." + name, "--format", "json"}), nil
 	case "smb_cluster.delete":
 		return ceph([]string{"smb", "cluster", "rm", last(tail)}, []string{"smb", "cluster", "ls", "--format", "json"}), nil
+	case "smb_usersgroups.create":
+		if optional(p, "name") != last(tail) {
+			return command{}, invalid("SMB resource identity mismatch")
+		}
+		payload, err := smbUsersGroupsJSON(p)
+		if err != nil {
+			return command{}, err
+		}
+		result := ceph([]string{"smb", "apply", "-i", "-", "--password-filter-out=hidden", "--format", "json"}, []string{"smb", "show", "ceph.smb.usersgroups", "--results=full", "--password-filter=hidden", "--format", "json"})
+		result.stdin = payload
+		return result, nil
 	case "smb_join_auth.create", "smb_join_auth.update":
 		if optional(p, "name") != last(tail) {
 			return command{}, invalid("SMB credential identity does not match request")
