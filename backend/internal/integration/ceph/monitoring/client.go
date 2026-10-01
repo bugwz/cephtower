@@ -67,6 +67,9 @@ func (c *Client) Query(ctx context.Context, metricID string, at *time.Time) (Pro
 	}
 	var result PrometheusResult
 	err := c.get(ctx, "/api/v1/query?"+values.Encode(), &result)
+	if err == nil {
+		err = validateMetricResult(result, "vector")
+	}
 	return result, err
 }
 func (c *Client) QueryRange(ctx context.Context, metricID string, start, end time.Time, step time.Duration) (PrometheusResult, error) {
@@ -80,7 +83,20 @@ func (c *Client) QueryRange(ctx context.Context, metricID string, start, end tim
 	values := url.Values{"query": []string{query}, "start": []string{start.UTC().Format(time.RFC3339Nano)}, "end": []string{end.UTC().Format(time.RFC3339Nano)}, "step": []string{strconv.FormatFloat(step.Seconds(), 'f', -1, 64)}}
 	var result PrometheusResult
 	err := c.get(ctx, "/api/v1/query_range?"+values.Encode(), &result)
+	if err == nil {
+		err = validateMetricResult(result, "matrix")
+	}
 	return result, err
+}
+
+func validateMetricResult(result PrometheusResult, expected string) error {
+	if result.Status != "success" {
+		return fmt.Errorf("Prometheus query did not report success")
+	}
+	if result.Data.ResultType != expected || result.Data.Result == nil {
+		return fmt.Errorf("Prometheus query returned an invalid %s result", expected)
+	}
+	return nil
 }
 
 type Alert struct {

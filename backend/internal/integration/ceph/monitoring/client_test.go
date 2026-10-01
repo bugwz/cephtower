@@ -48,6 +48,18 @@ func TestHostMetricQueriesAreRegistered(t *testing.T) {
 	}
 }
 
+func TestInstantMetricRejectsInvalidEnvelope(t *testing.T) {
+	for _, body := range []string{`{}`, `{"status":"error"}`, `{"status":"success","data":{"resultType":"matrix","result":[]}}`, `{"status":"success","data":{"resultType":"vector","result":null}}`} {
+		client, err := New("https://prometheus.example.test", "", &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) { return jsonResponse(200, body), nil })})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := client.Query(context.Background(), "pool_read_bytes", nil); err == nil {
+			t.Fatalf("accepted %s", body)
+		}
+	}
+}
+
 func TestPoolMetricRangeRetainsPoolIdentity(t *testing.T) {
 	for metric, counter := range map[string]string{"pool_read_bytes": "rd_bytes", "pool_write_bytes": "wr_bytes", "pool_read_ops": "rd", "pool_write_ops": "wr"} {
 		t.Run(metric, func(t *testing.T) {

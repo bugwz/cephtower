@@ -54,6 +54,42 @@ func TestHTTPClientUsesEndpointTimeoutWithoutRequiringCredential(t *testing.T) {
 	}
 }
 
+func TestMetricRangeFailuresArePropagated(t *testing.T) {
+	s, endpoints, cluster := externalTestService(t)
+	ctx := context.Background()
+	if _, err := endpoints.CreateEndpoint(ctx, cluster.ID, endpointservice.EndpointInput{Kind: "prometheus", URL: "https://prometheus.example.test"}); err != nil {
+		t.Fatal(err)
+	}
+	query := url.Values{"metric_id": {"pool_read_bytes"}, "start": {"2026-01-01T00:00:00Z"}, "end": {"2026-01-01T01:00:00Z"}, "step": {"30s"}}
+	for _, tc := range []struct {
+		status int
+		body   string
+		valid  bool
+	}{
+		{503, `unavailable`, false},
+		{200, `{"status":"error","data":{"resultType":"matrix","result":[]}}`, false},
+		{200, `{}`, false},
+		{200, `{"status":"success","data":{"resultType":"vector","result":[]}}`, false},
+		{200, `{"status":"success","data":{"resultType":"matrix","result":null}}`, false},
+		{200, `{"status":"success","data":{"resultType":"matrix","result":[]}}`, true},
+	} {
+		s.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+			if r.URL.Path != "/api/v1/query_range" {
+				t.Fatalf("path %s", r.URL.Path)
+			}
+			return &http.Response{StatusCode: tc.status, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(tc.body)), Request: r}, nil
+		})
+		result, err := s.readMetric(ctx, cluster.ID, "metric/range", query)
+		if tc.valid {
+			if err != nil || result == nil {
+				t.Fatalf("valid empty result: %v", err)
+			}
+		} else if err == nil || result != nil {
+			t.Fatalf("failure lost for %s: %#v %v", tc.body, result, err)
+		}
+	}
+}
+
 func TestHTTPClientRejectsMalformedConfiguredCredential(t *testing.T) {
 	_, endpoints, cluster := externalTestService(t)
 	if _, err := endpoints.CreateEndpoint(context.Background(), cluster.ID, endpointservice.EndpointInput{Kind: "alertmanager", URL: "https://alertmanager.example.test"}); err != nil {

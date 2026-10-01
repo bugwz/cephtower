@@ -5,6 +5,10 @@
 
 ## 如何追踪调用链
 
+修复 Prometheus 范围查询错误被局部 err 遮蔽的问题；客户端仅接受 status=success、
+正确 vector/matrix 类型和非 null 结果数组。真实空数组仍是有效无样本结果，HTTP 失败、
+失败状态及异常结构传递为查询错误。服务级离线测试覆盖范围查询失败和有效空结果。
+
 池详情新增可手动查询的最近一小时 I/O 历史曲线。使用现有 Prometheus 范围 API，
 固定白名单查询 sum by(pool_id)(rate(ceph_pool_rd_bytes/wr_bytes/rd/wr[5m]))，
 按 pool_id 精确筛选，30 秒步长，展示吞吐和 IOPS 四条曲线。需要已配置 Prometheus；

@@ -119,16 +119,16 @@ func (s *Service) readMetric(ctx context.Context, clusterID uint64, key string, 
 	}
 	var result monitoring.PrometheusResult
 	if strings.Contains(key, "range") {
-		start, err := time.Parse(time.RFC3339Nano, query.Get("start"))
-		if err != nil {
+		start, parseErr := time.Parse(time.RFC3339Nano, query.Get("start"))
+		if parseErr != nil {
 			return nil, failure("invalid_request", "start must be RFC3339", false)
 		}
-		end, err := time.Parse(time.RFC3339Nano, query.Get("end"))
-		if err != nil {
+		end, parseErr := time.Parse(time.RFC3339Nano, query.Get("end"))
+		if parseErr != nil {
 			return nil, failure("invalid_request", "end must be RFC3339", false)
 		}
-		step, err := time.ParseDuration(query.Get("step"))
-		if err != nil {
+		step, parseErr := time.ParseDuration(query.Get("step"))
+		if parseErr != nil {
 			return nil, failure("invalid_request", "step must be a Go duration such as 30s", false)
 		}
 		result, err = api.QueryRange(ctx, metricID, start, end, step)
