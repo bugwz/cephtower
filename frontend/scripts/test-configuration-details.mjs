@@ -4,7 +4,7 @@ import ts from 'typescript'
 
 const source = readFileSync(new URL('../src/pages/cluster/ConfigurationPage.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('ConfigurationPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-const names = ['configurationOverrides', 'configurationList', 'configurationRuntime', 'filterConfigurationOptions']
+const names = ['configurationOverrides', 'configurationList', 'configurationRuntime', 'filterConfigurationOptions', 'configurationMetadataBatch']
 const code = ts.transpileModule(tree.statements.filter((node) => ts.isFunctionDeclaration(node) && names.includes(node.name.text)).map((node) => node.getText(tree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const helpers = new Function(`${code}; return { ${names.join(', ')} }`)()
 const rows = [
@@ -34,6 +34,37 @@ assert.ok(source.includes('configurationOverrides(data?.values ?? [], detail.nam
 assert.ok(source.includes('覆盖值不等同于某个守护进程最终生效的值'))
 assert.ok(source.includes("value === '' ? '空字符串'"))
 console.log('Configuration metadata and scoped override checks passed')
+
+{
+  let inflight = 0, maximum = 0
+  const calls = []
+  const result = await helpers.configurationMetadataBatch(['a', 'b', 'c', 'd', 'e', 'f', 'a'], async (name) => {
+    calls.push(name); maximum = Math.max(maximum, ++inflight)
+    await Promise.resolve(); inflight--
+    if (name === 'b') throw new Error('unavailable')
+    return { name: name === 'c' ? 'mismatch' : name, default: '0' }
+  }, () => true)
+  assert.equal(maximum, 4)
+  assert.equal(calls.length, 6)
+  assert.deepEqual(Object.keys(result.items).sort(), ['a', 'd', 'e', 'f'])
+  assert.deepEqual(result.failed.sort(), ['b', 'c'])
+  assert.equal(result.items.a.default, '0')
+}
+{
+  let active = true
+  const pending = [], calls = []
+  const result = helpers.configurationMetadataBatch(['a', 'b', 'c', 'd', 'e'], (name) => {
+    calls.push(name); return new Promise((resolve) => pending.push(() => resolve({ name })))
+  }, () => active)
+  assert.equal(calls.length, 4)
+  active = false
+  pending.forEach((resolve) => resolve())
+  await result
+  assert.equal(calls.length, 4, 'scope cancellation must stop queued reads')
+}
+assert.ok(source.includes('scopeRef.current !== scope || controller.signal.aborted'))
+assert.ok(source.includes('names.forEach((name) => { delete items[name] })'))
+assert.ok(source.includes('filteredOptions.slice((currentPage - 1) * optionPageSize, currentPage * optionPageSize)'))
 
 const page = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ConfigurationPage')
 const mutationCode = ts.transpileModule(page.body.statements.filter((node) => ts.isFunctionDeclaration(node) && ['run', 'collect', 'refreshAfterMutation', 'save', 'remove'].includes(node.name.text)).map((node) => node.getText(tree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText

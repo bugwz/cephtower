@@ -16,6 +16,23 @@ import { message } from '../../utils/appMessage'
 interface ConfigurationForm { who: string; name: string; value: string }
 type OverrideFilter = 'all' | 'configured' | 'unconfigured'
 
+async function configurationMetadataBatch(names: string[], read: (name: string) => Promise<ApiRecord>, active: () => boolean) {
+  const pending = [...new Set(names)]
+  const items: Record<string, ApiRecord> = Object.create(null)
+  const failed: string[] = []
+  await Promise.all(Array.from({ length: Math.min(4, pending.length) }, async () => {
+    while (active() && pending.length) {
+      const name = pending.shift()!
+      try {
+        const result = await read(name)
+        if (result.name !== name) throw new Error('配置元数据名称不匹配')
+        items[name] = result
+      } catch { failed.push(name) }
+    }
+  }))
+  return { items, failed }
+}
+
 function filterConfigurationOptions(options: ApiRecord[], values: ApiRecord[], filter: OverrideFilter, fresh: boolean): ApiRecord[] {
   if (filter === 'all') return options
   if (!fresh) return []
@@ -44,6 +61,11 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
   }
   const scope = scopeRef.current
   const running = useRef(false)
+  const metadataRequest = useRef<AbortController | null>(null)
+  const [metadata, setMetadata] = useState<{ scope: typeof scope, items: Record<string, ApiRecord>, failed: string[] } | null>(null)
+  const [metadataLoading, setMetadataLoading] = useState(false)
+  const [optionPage, setOptionPage] = useState(1)
+  const [optionPageSize, setOptionPageSize] = useState(20)
   const [search, setSearch] = useState('')
   const [overrideFilter, setOverrideFilter] = useState<OverrideFilter>('all')
   const [busy, setBusy] = useState(false)
@@ -132,6 +154,28 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
   const blocked = busy || loading || !selectedClusterId || Boolean(error)
   const overridesFresh = !loading && !error && data?.stale === false && data.values.every((row) => row.stale === false)
   const filteredOptions = filterConfigurationOptions(data?.options ?? [], data?.values ?? [], overrideFilter, overridesFresh).filter(matches)
+  const currentPage = Math.min(optionPage, Math.max(1, Math.ceil(filteredOptions.length / optionPageSize)))
+  const optionMetadata = metadata?.scope === scope ? metadata.items : {}
+  useEffect(() => () => { metadataRequest.current?.abort() }, [scope])
+  async function loadPageMetadata() {
+    if (!selectedClusterId || loading || error || metadataLoading) return
+    metadataRequest.current?.abort()
+    const controller = new AbortController()
+    metadataRequest.current = controller
+    setMetadataLoading(true)
+    try {
+      const names = filteredOptions.slice((currentPage - 1) * optionPageSize, currentPage * optionPageSize).map((row) => String(row.name))
+      const result = await configurationMetadataBatch(names, (name) => request<ApiRecord>('/configuration/option', jsonInit('GET', { cluster_id: selectedClusterId, name }, { signal: controller.signal, suppressErrorNotification: true })), () => scopeRef.current === scope && !controller.signal.aborted)
+      if (scopeRef.current !== scope || controller.signal.aborted) return
+      setMetadata((previous) => {
+        const items = { ...(previous?.scope === scope ? previous.items : {}) }
+        names.forEach((name) => { delete items[name] })
+        return { scope, items: { ...items, ...result.items }, failed: result.failed }
+      })
+    } finally {
+      if (metadataRequest.current === controller) setMetadataLoading(false)
+    }
+  }
   const valueTable = <AppTable<ApiRecord> size="small" rowKey="natural_key" dataSource={data?.values.filter(matches) ?? []} pagination={{ defaultPageSize: 20, showSizeChanger: true }} columns={[
     { title: '作用域', dataIndex: 'who' }, { title: '配置名', dataIndex: 'name' },
     { title: '值', dataIndex: 'value', render: (value) => <Typography.Text style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{String(value ?? '')}</Typography.Text> },
@@ -156,8 +200,12 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
             { label: '未设置显式覆盖', value: 'unconfigured', disabled: !overridesFresh }
           ]} /><Typography.Text type="secondary">筛选结果 {filteredOptions.length} 项；未设置覆盖不代表没有有效配置。</Typography.Text></Space>
           {overrideFilter !== 'all' && !overridesFresh && <Alert type="warning" showIcon message="配置库存不可用或已过期，暂不能判定覆盖状态，请刷新或选择全部选项。" />}
-          <AppTable<ApiRecord> size="small" rowKey="name" dataSource={filteredOptions} pagination={{ defaultPageSize: 20, showSizeChanger: true }} columns={[
+          <Space wrap><Button onClick={loadPageMetadata} loading={metadataLoading} disabled={loading || Boolean(error) || !selectedClusterId || !filteredOptions.length}>加载本页说明</Button><Typography.Text type="secondary">按需读取 ceph config help，最多 4 个并发；显示最近一次手动读取的元数据。</Typography.Text></Space>
+          {metadata?.scope === scope && metadata.failed.length > 0 && <Alert type="warning" showIcon message={`${metadata.failed.length} 个选项说明读取失败，可重新加载本页重试。`} />}
+          <AppTable<ApiRecord> size="small" rowKey="name" dataSource={filteredOptions} pagination={{ current: currentPage, pageSize: optionPageSize, pageSizeOptions: [10, 20, 50], showSizeChanger: true, onChange: (page, size) => { setOptionPage(page); setOptionPageSize(size) } }} columns={[
           { title: '配置选项', dataIndex: 'name' }, { title: '已配置作用域', render: (_, row) => data?.values.filter((value) => value.name === row.name).map((value) => <Tag key={String(value.natural_key)}>{String(value.who)}</Tag>) },
+          ...['desc', 'type', 'level', 'default'].map((key, index) => ({ title: ['说明', '类型', '级别', '默认值'][index], key, render: (_: unknown, row: ApiRecord) => String(optionMetadata[String(row.name)]?.[key] ?? '未读取') })),
+          { title: '运行时可更新', render: (_, row) => configurationRuntime(optionMetadata[String(row.name)]?.can_update_at_runtime) },
           { title: '操作', render: (_, row) => <TableActions><TableAction onClick={() => showDetails(String(row.name))}>详情</TableAction><TableAction disabled={blocked} onClick={() => edit(row)}>设置</TableAction></TableActions> }
         ]} /></Space> }
       ]} />
