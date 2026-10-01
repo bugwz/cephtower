@@ -59,6 +59,14 @@ assert.ok(profileSource.includes("action: 'erasure_code_profile.delete'"))
 
 const poolSource = readFileSync(new URL('../src/pages/cluster/PoolManagementPage.tsx', import.meta.url), 'utf8')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+assert.ok(!poolSource.includes('/usr/lib64/ceph/erasure-code'), 'do not invent a deployment-specific plugin directory')
+assert.ok(!poolSource.includes('profile.directory'), 'do not copy an unrelated profile directory')
+const profileBodyFns = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['erasureCodeProfileBody', 'positiveInteger'].includes(node.name.text))
+const bodyExports = {}
+new Function('exports', ts.transpileModule(profileBodyFns.map((fn) => fn.getText(poolTree)).join('\n') + '\nexports.body = erasureCodeProfileBody', { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(bodyExports)
+const profileValues = { name: 'ec', plugin: 'isa', k: 4, m: 2 }
+for (const directory of [undefined, '', '  ']) assert.ok(!('directory' in JSON.parse(JSON.stringify(bodyExports.body({ ...profileValues, directory }, 1)))))
+assert.equal(bodyExports.body({ ...profileValues, directory: ' /custom/plugins ' }, 1).directory, '/custom/plugins')
 const poolFunctions = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['topologyCounts', 'crushRootNames', 'placementDeviceOptions', 'placementValid', 'failureDomainOptions'].includes(node.name.text))
 const poolCode = ts.transpileModule(poolFunctions.map((fn) => fn.getText(poolTree)).join('\n') + '\nexports.counts = topologyCounts; exports.roots = crushRootNames; exports.devices = placementDeviceOptions; exports.valid = placementValid; exports.domains = failureDomainOptions', { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
 const poolExports = {}
