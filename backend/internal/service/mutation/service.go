@@ -290,11 +290,14 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "crush_rule.create" && (err != nil || !crushRuleCreated(request.Parameters, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "CRUSH rule creation was accepted but the requested placement could not be verified; inspect the existing rule before retrying", Retryable: false}
 		}
-		if request.Action == "crush_rule.delete" && (err != nil || !crushRuleDeleted(last(resourceTail(request.ResourceKey)), checked.Stdout)) {
+		if request.Action == "crush_rule.delete" && (err != nil || !nameAbsent(last(resourceTail(request.ResourceKey)), checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "CRUSH rule removal was accepted but absence could not be verified; inspect the rule before retrying", Retryable: false}
 		}
 		if request.Action == "erasure_code_profile.create" && (err != nil || !erasureProfileCreated(spec.args, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "erasure code profile creation was accepted but submitted parameters could not be verified; inspect the profile before retrying", Retryable: false}
+		}
+		if request.Action == "erasure_code_profile.delete" && (err != nil || !nameAbsent(last(resourceTail(request.ResourceKey)), checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "erasure code profile removal was accepted but absence could not be verified; inspect the profile before retrying", Retryable: false}
 		}
 		if err != nil || ((request.Action == "cephfs_entry.create" || request.Action == "cephfs_entry.delete") && !cephFSDirectoryMutationMatches(request.Action, request.Parameters, checked.Stdout)) || (request.Action == "cephfs_entry.quota" && !cephFSEntryQuotaMatches(request.Parameters, checked.Stdout)) || (isCephFSEntrySnapshotMutation(request.Action) && !cephFSEntrySnapshotMatches(request.Action, request.Parameters, checked.Stdout)) || (request.Action == "rgw_bucket.quota" && !bucketQuotaMatches(request.Parameters, checked.Stdout)) || ((request.Action == "rgw_zone.update" || request.Action == "rgw_zone.create") && !zoneReadbackMatches(request.Parameters, checked.Stdout)) || (isRBDMirrorScheduleMutation(request.Parameters) && !rbdMirrorScheduleReadbackMatches(request, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "command was accepted but the expected state could not be verified", Retryable: true}

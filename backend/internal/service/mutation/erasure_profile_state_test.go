@@ -28,3 +28,24 @@ func TestErasureProfileCreationReadback(t *testing.T) {
 		}
 	}
 }
+
+func TestErasureProfileDeletionReadback(t *testing.T) {
+	s, _, id := newCephUserService(t)
+	r := Request{ClusterID: id, Action: "erasure_code_profile.delete", ResourceKey: "erasure-code-profile/ec-isa"}
+	e := &directoryRenameExecutor{outputs: map[string]string{r.Action: "removed"}}
+	s.executor = e
+	for _, good := range []string{`[]`, `["default","other"]`} {
+		e.outputs[r.Action+".post_check"] = good
+		if _, err := s.Execute(context.Background(), r); err != nil {
+			t.Fatal(good, err)
+		}
+	}
+	for _, bad := range []string{`null`, `{}`, `[null]`, `[""]`, `["ec-isa"]`, `["default","ec-isa"]`, `[] {}`, `[1]`} {
+		e.outputs[r.Action+".post_check"] = bad
+		_, err := s.Execute(context.Background(), r)
+		var failure *cephdomain.ActionError
+		if !errors.As(err, &failure) || failure.Code != "post_check_failed" || failure.Retryable {
+			t.Fatal(bad, err)
+		}
+	}
+}

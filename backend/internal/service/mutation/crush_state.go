@@ -6,7 +6,8 @@ import (
 	"io"
 )
 
-func crushRuleDeleted(name string, data []byte) bool {
+// nameAbsent verifies native JSON name lists used by CRUSH and EC profiles.
+func nameAbsent(name string, data []byte) bool {
 	var names []string
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	if name == "" || decoder.Decode(&names) != nil || decoder.Decode(new(any)) != io.EOF || names == nil {
