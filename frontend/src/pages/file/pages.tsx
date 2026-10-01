@@ -610,8 +610,8 @@ const definitions: Record<
       successMessage: 'NFS 导出创建执行成功',
       fields: [
         { name: 'cluster', label: 'NFS 集群', type: 'select', required: true, optionsLoader: nfsClusterOptions },
-        { name: 'pseudo', label: '伪路径', required: true, placeholder: '/export' },
-        { name: 'path', label: 'CephFS 路径', required: true, placeholder: '/data' },
+        { name: 'pseudo', label: '伪路径', required: true, placeholder: '/export', pattern: /^\/[^\r\n\0]+$/, patternMessage: '请输入非根目录的绝对伪路径' },
+        { name: 'path', label: 'CephFS 路径', required: true, placeholder: '/data', pattern: /^\/[^\r\n\0]*$/, patternMessage: '请输入绝对路径' },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'read_only', label: '只读', type: 'boolean' },
         { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '使用原生默认值' }
@@ -635,8 +635,8 @@ const definitions: Record<
       successMessage: 'NFS 导出更新执行成功',
       fields: [
         { name: 'cluster', label: 'NFS 集群', required: true, readOnly: true },
-        { name: 'pseudo', label: '伪路径', required: true },
-        { name: 'path', label: 'CephFS 路径', required: true },
+        { name: 'pseudo', label: '伪路径', required: true, pattern: /^\/[^\r\n\0]+$/, patternMessage: '请输入非根目录的绝对伪路径' },
+        { name: 'path', label: 'CephFS 路径', required: true, pattern: /^\/[^\r\n\0]*$/, patternMessage: '请输入绝对路径' },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'read_only', label: '只读', type: 'boolean' },
         { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '保持当前设置' }

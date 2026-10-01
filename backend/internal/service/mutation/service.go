@@ -2179,9 +2179,15 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
+		if !strings.HasPrefix(pseudo, "/") || pseudo == "/" {
+			return command{}, invalid("NFS pseudo path must be absolute and cannot be root")
+		}
 		path, err := required(p, "path")
 		if err != nil {
 			return command{}, err
+		}
+		if !strings.HasPrefix(path, "/") {
+			return command{}, invalid("CephFS export path must be absolute")
 		}
 		filesystem, err := required(p, "filesystem")
 		if err != nil {

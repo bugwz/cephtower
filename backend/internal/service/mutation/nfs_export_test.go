@@ -78,6 +78,20 @@ func TestNFSExportSquashOptions(t *testing.T) {
 	}
 }
 
+func TestNFSExportPaths(t *testing.T) {
+	for _, action := range []string{"nfs_export.create", "nfs_export.update"} {
+		for _, pair := range [][2]string{{"/", "/data"}, {"relative", "/data"}, {"/share", "relative"}} {
+			_, err := build(Request{Action: action, ResourceKey: "nfs/export"}, map[string]any{"cluster": "nfs-a", "pseudo": pair[0], "path": pair[1], "filesystem": "cephfs"})
+			if err == nil {
+				t.Fatalf("%s accepted invalid paths: %v", action, pair)
+			}
+		}
+		if _, err := build(Request{Action: action, ResourceKey: "nfs/export"}, map[string]any{"cluster": "nfs-a", "pseudo": "/share", "path": "/", "filesystem": "cephfs"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestNFSExportDeleteResolvesNativePseudo(t *testing.T) {
 	for _, tt := range []struct {
 		name, output string
