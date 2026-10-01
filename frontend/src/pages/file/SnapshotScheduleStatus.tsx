@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { listAllResources, listResource, mutateResource, refreshResource, type ResourceListResult } from '../../api/resource'
 import { scheduleFormScope, scheduleScope } from './snapshotScheduleScope'
-import { buildRetentionRules, buildScheduleInterval, retentionFrequencyOptions, scheduleActiveText, scheduleFrequencyOptions, scheduleIntervalText, scheduleRetentionText, scheduleToggleAction } from './snapshotScheduleText'
+import { buildRetentionRules, buildScheduleInterval, retentionFrequencyOptions, retentionRuleCounts, scheduleActiveText, scheduleFrequencyOptions, scheduleIntervalText, scheduleRetentionText, scheduleToggleAction } from './snapshotScheduleText'
 import { AppTable } from '../../components/AppTable'
 import { RecordDetail } from '../../components/RecordDetail'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
@@ -28,6 +28,7 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
   const scope = useRef<ApiRecord>({})
   const [retentionCounts, setRetentionCounts] = useState<Record<string, string>>({})
   const retention = buildRetentionRules(retentionCounts)
+  const currentRetentionCounts = retentionRuleCounts(rows?.[0]?.retention)
   const [mutating, setMutating] = useState(false)
   const [error, setError] = useState('')
   const [moduleState, setModuleState] = useState<'loading' | 'enabled' | 'disabled' | 'unavailable'>('loading')
@@ -198,7 +199,8 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
     {Boolean(rows?.length) && <Card title="路径保留策略">
       <Alert type="info" message="保留策略作用于当前路径的全部计划。n 为最近快照数量；m/h/d/w/M/y 为分钟、小时、日、周、月、年。" />
       <Space wrap>{retentionFrequencyOptions.map(({ value, label }) => <label key={value}>{label}保留数量<Input aria-label={`${label}保留数量`} inputMode="numeric" value={retentionCounts[value] ?? ''} onChange={(event) => setRetentionCounts((current) => ({ ...current, [value]: event.target.value }))} placeholder="留空不修改" disabled={mutating} status={retentionCounts[value] && !/^[1-9][0-9]*$/.test(retentionCounts[value]) ? 'error' : undefined} /></label>)}</Space>
-      <p>填写正整数数量；留空的单位不参与本次操作。移除时填写当前规则的数量。</p>
+      <p>填写正整数数量；留空的单位不参与本次操作。已存在的单位须先移除再添加新数量；移除时数量必须与当前规则一致。</p>
+      <Button disabled={mutating || loading || !currentRetentionCounts || !Object.keys(currentRetentionCounts).length} onClick={() => setRetentionCounts(currentRetentionCounts ?? {})}>填入当前规则</Button>
       {retention && <p>{scheduleRetentionText(retention)}</p>}
       <Space><Button disabled={mutating || loading || !retention} onClick={() => changeRetention('add')}>添加保留规则</Button><Button disabled={mutating || loading || !retention} onClick={() => changeRetention('remove')}>移除保留规则</Button></Space>
     </Card>}

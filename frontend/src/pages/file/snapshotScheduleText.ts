@@ -3,6 +3,24 @@ const retentionUnits: Record<string, string> = { m: '每分钟', h: '每小时',
 
 export const retentionFrequencyOptions = Object.entries(retentionUnits).map(([value, label]) => ({ value, label }))
 
+export function retentionRuleCounts(value: unknown): Record<string, string> | undefined {
+  let entries: Array<[string, unknown]>
+  if (typeof value === 'string') {
+    if (!value) return {}
+    if (!/^([1-9][0-9]*[nmhdwMy])+$/.test(value)) return undefined
+    entries = Array.from(value.matchAll(/([1-9][0-9]*)([nmhdwMy])/g), (match) => [match[2], match[1]])
+  } else if (value && typeof value === 'object' && !Array.isArray(value)) entries = Object.entries(value)
+  else return undefined
+  const result: Record<string, string> = {}
+  for (const [unit, count] of entries) {
+    if (!Object.prototype.hasOwnProperty.call(retentionUnits, unit) || Object.prototype.hasOwnProperty.call(result, unit)) return undefined
+    const text = typeof count === 'string' ? count : typeof count === 'number' && Number.isSafeInteger(count) ? String(count) : ''
+    if (!/^[1-9][0-9]*$/.test(text)) return undefined
+    result[unit] = text
+  }
+  return result
+}
+
 export function buildRetentionRules(counts: Record<string, string>): string | undefined {
   const rules: string[] = []
   for (const { value: unit } of retentionFrequencyOptions) {
