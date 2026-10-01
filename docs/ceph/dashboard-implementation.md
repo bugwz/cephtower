@@ -1452,3 +1452,11 @@ FUSE/libcephfs；不会自动修改客户端配置，也不代表删除快照。
 
 前端、请求契约和命令构造测试覆盖超过 JavaScript 安全整数的配额及边界，
 `make test-backend`（含 OpenAPI 检查）和 `make test-frontend` 通过；未实测集群。
+
+## 子卷组创建大小写敏感开关
+
+参考 volumes 模块 `fs subvolumegroup create` 的 `casesensitive` 为可选
+`CephBool`，控制器将显式 false 与未指定分别传递。修复创建表单关闭开关后
+后端遗漏参数的问题：true/false 分别发送 `--casesensitive=true/false`，未指定
+保持省略。命令构造测试覆盖三种状态及非布尔值拒绝；`make test-backend`
+通过。未进行真实 Ceph 集群验证。

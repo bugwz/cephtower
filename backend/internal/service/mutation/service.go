@@ -2522,8 +2522,12 @@ func subvolumeGroupCreateArgs(fs, name string, p map[string]any) ([]string, erro
 		}
 		args = append(args, "--normalization", value)
 	}
-	if boolParameter(p, "case_sensitive") {
-		args = append(args, "--casesensitive")
+	if value, present := p["case_sensitive"]; present {
+		sensitive, ok := value.(bool)
+		if !ok {
+			return nil, invalid("case_sensitive must be a boolean")
+		}
+		args = append(args, "--casesensitive="+strconv.FormatBool(sensitive))
 	}
 	return args, nil
 }
