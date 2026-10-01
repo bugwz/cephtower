@@ -153,8 +153,8 @@ const defaultPoolValues: PoolFormValues = {
   pg_num: 32,
   size: 3,
   applications: [],
-  erasure_code_profile: defaultErasureCodeProfile,
-  crush_rule: 'replicated_rule',
+  erasure_code_profile: '',
+  crush_rule: '',
   allow_ec_overwrites: 'off',
   compression_mode: 'none',
   compression_algorithm: 'snappy',
@@ -186,6 +186,13 @@ export function PoolManagementPage() {
   const [submittingErasureCodeProfile, setSubmittingErasureCodeProfile] = useState(false)
   const [createdCrushRules, setCreatedCrushRules] = useState<string[]>([])
   const [createdErasureCodeProfiles, setCreatedErasureCodeProfiles] = useState<string[]>([])
+  useEffect(() => {
+    setCreatedCrushRules([])
+    setCreatedErasureCodeProfiles([])
+    setFormOpen(false)
+    setCrushRuleFormOpen(false)
+    setErasureCodeProfileFormOpen(false)
+  }, [selectedClusterId])
   const [refreshingPools, setRefreshingPools] = useState(false)
   const poolType = Form.useWatch('pool_type', form) ?? 'replicated'
   const pgAutoscaleMode = Form.useWatch('pg_autoscale_mode', form) ?? 'on'
@@ -209,12 +216,12 @@ export function PoolManagementPage() {
   })
   const loader = useCallback(async (): Promise<PoolPageData> => {
     if (!selectedClusterId) {
-      return { pools: [], crushRules: ['replicated_rule'], erasureCodeProfiles: [defaultErasureCodeProfile], erasureCodeDirectory: defaultErasureCodeDirectory, crushNodes: [], observedAt: null, stale: false, staleReason: null }
+      return { pools: [], crushRules: [], erasureCodeProfiles: [], erasureCodeDirectory: defaultErasureCodeDirectory, crushNodes: [], observedAt: null, stale: false, staleReason: null }
     }
     const [poolList, crushRules, erasureCodeProfileRows, crushNodes] = await Promise.all([
       listResource('/pools', selectedClusterId, { filters: poolTableFilters.filters }),
-      listAllResources('/crush/rules', selectedClusterId).then((payload) => payload.items.map(resourceName).filter(Boolean)).catch(() => []),
-      listAllResources('/erasure/code/profiles', selectedClusterId).then((payload) => payload.items).catch(() => []),
+      listAllResources('/crush/rules', selectedClusterId).then((payload) => payload.items.map(resourceName).filter(Boolean)),
+      listAllResources('/erasure/code/profiles', selectedClusterId).then((payload) => payload.items),
       request<{ nodes: ApiRecord[] }>('/crush/map', jsonInit('GET', { cluster_id: selectedClusterId })).then((payload) => payload.nodes)
     ])
     const erasureCodeProfiles = erasureCodeProfileRows.map(resourceName).filter(Boolean)
@@ -223,8 +230,8 @@ export function PoolManagementPage() {
       .find(Boolean) ?? defaultErasureCodeDirectory
     return {
       pools: poolList.items.map(normalizePoolRow),
-      crushRules: Array.from(new Set(['replicated_rule', ...crushRules])),
-      erasureCodeProfiles: Array.from(new Set([defaultErasureCodeProfile, ...erasureCodeProfiles])),
+      crushRules: Array.from(new Set(crushRules)),
+      erasureCodeProfiles: Array.from(new Set(erasureCodeProfiles)),
       erasureCodeDirectory,
       crushNodes,
       observedAt: poolList.observedAt,
@@ -238,11 +245,11 @@ export function PoolManagementPage() {
     return Array.from(new Set([...applicationDefaults, ...fromRows])).map((value) => ({ label: value, value }))
   }, [data?.pools])
   const crushRuleOptions = useMemo(
-    () => Array.from(new Set([...(data?.crushRules ?? ['replicated_rule']), ...createdCrushRules])).map((value) => ({ label: value, value })),
+    () => Array.from(new Set([...(data?.crushRules ?? []), ...createdCrushRules])).map((value) => ({ label: value, value })),
     [createdCrushRules, data?.crushRules]
   )
   const erasureCodeProfileOptions = useMemo(
-    () => Array.from(new Set([...(data?.erasureCodeProfiles ?? [defaultErasureCodeProfile]), ...createdErasureCodeProfiles])).map((value) => ({ label: value, value })),
+    () => Array.from(new Set([...(data?.erasureCodeProfiles ?? []), ...createdErasureCodeProfiles])).map((value) => ({ label: value, value })),
     [createdErasureCodeProfiles, data?.erasureCodeProfiles]
   )
   const crushRootOptions = useMemo(
@@ -296,6 +303,7 @@ export function PoolManagementPage() {
   }
 
   function openCreate() {
+    if (loading || error || !data) { message.error('请先成功读取存储池及放置配置'); return }
     setFormMode('create')
     setEditingPool(null)
     form.setFieldsValue({ ...defaultPoolValues, applications: [], configuration: defaultRbdPoolConfiguration() })
@@ -401,6 +409,10 @@ export function PoolManagementPage() {
 
   async function submitPool(values: PoolFormValues) {
     if (!selectedClusterId || submitting) {
+      return
+    }
+    if (formMode === 'create' && (loading || error || !poolPlacementAvailable(values, crushRuleOptions, erasureCodeProfileOptions))) {
+      message.error('请选择当前集群已读取或已成功创建的放置配置')
       return
     }
     setSubmitting(true)
@@ -1379,6 +1391,12 @@ function poolApplications(row: ApiRecord) {
   }
   const value = textValue(row.application_metadata, '')
   return value ? value.split(',').map((item) => item.trim()).filter(Boolean) : []
+}
+
+function poolPlacementAvailable(values: PoolFormValues, rules: Array<{ value: string }>, profiles: Array<{ value: string }>) {
+  const options = values.pool_type === 'erasure' ? profiles : rules
+  const selected = values.pool_type === 'erasure' ? values.erasure_code_profile : values.crush_rule
+  return Boolean(selected) && options.some((option) => option.value === selected)
 }
 
 function resourceName(row: ApiRecord) {

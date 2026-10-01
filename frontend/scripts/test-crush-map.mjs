@@ -64,6 +64,17 @@ assert.equal(poolExports.valid(osds, 'default', 'root'), false)
 assert.deepEqual(poolExports.domains({ osd: 0, host: 0, root: 1 }), [])
 console.log('CRUSH failure domain root isolation checks passed')
 
+const placementFunction = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolPlacementAvailable')
+const placementCode = ts.transpileModule(placementFunction.getText(poolTree) + '\nexports.valid = poolPlacementAvailable', { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+const placement = {}
+new Function('exports', placementCode)(placement)
+assert.equal(placement.valid({ pool_type: 'replicated', crush_rule: 'replicated_rule' }, [], []), false)
+assert.equal(placement.valid({ pool_type: 'erasure', erasure_code_profile: 'default' }, [], []), false)
+assert.equal(placement.valid({ pool_type: 'replicated', crush_rule: 'observed' }, [{ value: 'observed' }], []), true)
+assert.equal(placement.valid({ pool_type: 'erasure', erasure_code_profile: 'created' }, [], [{ value: 'created' }]), true)
+assert.equal(placement.valid({ pool_type: 'replicated', crush_rule: '' }, [{ value: '' }], []), false)
+assert.ok(!poolSource.includes(".catch(() => [])"), 'placement load errors must not become empty success')
+
 const rulesSource = readFileSync(new URL('../src/pages/cluster/CrushRulesPanel.tsx', import.meta.url), 'utf8')
 const rulesTree = ts.createSourceFile('CrushRulesPanel.tsx', rulesSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const rulesFunctions = rulesTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['crushRuleType', 'crushRuleSteps', 'crushRuleDeleteBlocked'].includes(node.name.text))
