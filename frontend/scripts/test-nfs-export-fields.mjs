@@ -153,3 +153,12 @@ console.log('NFS cluster placement form checks passed')
 assert.deepEqual(buildClusterBody({ name: 'nfs-a', ingress: true, virtual_ip: '192.0.2.1/24', ingress_mode: 'keepalive-only', nfs_port: 2050 }, 7), { cluster_id: 7, name: 'nfs-a', ingress: true, virtual_ip: '192.0.2.1/24', ingress_mode: 'keepalive-only', nfs_port: 2050 })
 assert.deepEqual(buildClusterBody({ name: 'nfs-a', ingress: false, virtual_ip: 'stale', ingress_mode: 'stale', nfs_port: null }, 7), { cluster_id: 7, name: 'nfs-a' })
 console.log('NFS cluster ingress form checks passed')
+
+const deleteCluster = clusterDefinition.properties.find((node) => node.name?.getText(tree) === 'deleteAction').initializer
+const clusterWarningSource = deleteCluster.properties.find((node) => node.name?.getText(tree) === 'confirmation').initializer.getText(tree)
+const clusterWarning = new Function('resourceName', `return (${ts.transpileModule(clusterWarningSource, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText.trim().replace(/;$/, '')})`)((row) => row.name)
+const warning = clusterWarning({ name: 'nfs-a' })
+assert.ok(warning.includes('nfs-a') && warning.includes('全部 NFS 导出') && warning.includes('客户端连接'))
+const resourcePageSource = readFileSync(new URL('../src/pages/ResourceListPage.tsx', import.meta.url), 'utf8')
+assert.equal((resourcePageSource.match(/content: action\.confirmation\?\.\(row\) \?\?/g) ?? []).length, 2)
+console.log('NFS cluster deletion impact warning checks passed')

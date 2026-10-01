@@ -590,6 +590,7 @@ const definitions: Record<
     },
     deleteAction: {
       title: '删除 NFS 集群',
+      confirmation: (row) => `删除 NFS 集群 ${resourceName(row)} 会同时删除其全部 NFS 导出、集群配置以及 NFS/入口服务，现有客户端连接将受影响。这不是仅删除列表记录，请确认已迁移客户端并保存所需配置。`,
       path: '/nfs/cluster',
       action: 'nfs_cluster.delete',
       resourceKind: 'nfs_cluster',

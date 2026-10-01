@@ -60,6 +60,7 @@ export interface ResourceFormAction {
 
 export interface ResourceDeleteAction {
   title: string
+  confirmation?: (row: ApiRecord) => string
   path: string
   action: string
   resourceKind: string
@@ -274,7 +275,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
     if (action.risk && action.risk !== 'high') {
       Modal.confirm({
         title: `${action.title} ${resourceKey}`,
-        content: '确认后将直接执行该操作。',
+        content: action.confirmation?.(row) ?? '确认后将直接执行该操作。',
         okText: '提交',
         okType: action.risk === 'medium' ? 'danger' : 'primary',
         cancelText: '取消',
@@ -296,7 +297,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
     }
     Modal.confirm({
       title: `${action.title} ${resourceKey}`,
-      content: '该操作为高风险操作，确认后将直接执行操作。',
+      content: action.confirmation?.(row) ?? '该操作为高风险操作，确认后将直接执行操作。',
       okText: '提交',
       okType: 'danger',
       cancelText: '取消',
