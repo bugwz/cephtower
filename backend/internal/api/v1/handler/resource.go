@@ -71,6 +71,19 @@ func (h *Handler) ReadResource(kind string, item bool) http.HandlerFunc {
 			return
 		}
 		filter.FieldValues = resourceFieldFilters(r)
+		if kind == "subvolume" || kind == "cephfs_snapshot" {
+			if filter.FieldValues == nil {
+				filter.FieldValues = map[string][]string{}
+			}
+			for _, field := range []string{"fs", "group", "subvolume"} {
+				if field == "subvolume" && kind == "subvolume" {
+					continue
+				}
+				if scope := optionalStringBody(body, field); scope != "" {
+					filter.FieldValues[field] = []string{scope}
+				}
+			}
+		}
 		rows, err := h.Database().ListResources(r.Context(), id, filter)
 		if err != nil {
 			WriteError(w, r, 500, "store_error", err.Error(), false, nil)
@@ -206,16 +219,20 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 			generation = &parsed
 		}
 		resourceKey := resourceKey(kind, action, r, body)
+		lookupKey := resourceLookupKey(kind, resourceKey)
+		if kind == "subvolume" || kind == "cephfs_snapshot" {
+			lookupKey = readResourceKey(kind, body)
+		}
 		annotateAudit(r, action, kind, resourceKey, risk, &id)
 		if generation != nil {
-			if err := h.checkResourceGeneration(r.Context(), id, kind, resourceKey, *generation); err != nil {
+			if err := h.checkResourceGeneration(r.Context(), id, kind, lookupKey, *generation); err != nil {
 				WriteError(w, r, http.StatusConflict, "resource_conflict", err.Error(), false, nil)
 				return
 			}
 		}
 		operation, err := h.enqueueOperation(r, operationservice.EnqueueRequest{
 			ClusterID: id, Action: action, ResourceKind: kind, ResourceKey: resourceKey,
-			Risk: risk, LockKey: resourceLookupKey(kind, resourceKey), ExpectedVersion: generation,
+			Risk: risk, LockKey: lookupKey, ExpectedVersion: generation,
 			Parameters: body,
 		})
 		if err != nil {
@@ -226,8 +243,8 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 	}
 }
 
-func (h *Handler) checkResourceGeneration(ctx context.Context, clusterID uint64, kind, resourceKey string, generation uint64) error {
-	row, err := h.Database().FindResource(ctx, clusterID, kind, resourceLookupKey(kind, resourceKey))
+func (h *Handler) checkResourceGeneration(ctx context.Context, clusterID uint64, kind, lookupKey string, generation uint64) error {
+	row, err := h.Database().FindResource(ctx, clusterID, kind, lookupKey)
 	if errors.Is(err, store.ErrRecordNotFound) && generation == 0 {
 		return nil
 	}
@@ -397,7 +414,9 @@ func storeResourceFilter(kind string, limit int, after uint64, r *http.Request, 
 	case "subvolume_group", "subvolume", "snapshot_schedule", "cephfs_authorization", "cephfs_client", "cephfs_entry":
 		filter.ParentKind, filter.ParentKey = "filesystem", optionalStringBody(body, "fs", "name")
 	case "cephfs_snapshot":
-		filter.ParentKind, filter.ParentKey = "subvolume", optionalStringBody(body, "fs")+"/"+optionalStringBody(body, "subvolume")
+		if optionalStringBody(body, "fs") != "" && optionalStringBody(body, "subvolume") != "" {
+			filter.ParentKind, filter.ParentKey = "subvolume", readResourceKey("subvolume", body)
+		}
 	case "nfs_export":
 		filter.ParentKind, filter.ParentKey = "nfs_cluster", optionalStringBody(body, "cluster")
 	case "smb_share":
@@ -500,9 +519,9 @@ func readResourceKey(kind string, body map[string]any) string {
 	case "subvolume_group":
 		return optionalStringBody(body, "fs") + "/" + optionalStringBody(body, "group", "name")
 	case "subvolume":
-		return optionalStringBody(body, "fs") + "/" + optionalStringBody(body, "subvolume", "name")
+		return optionalStringBody(body, "fs") + "/" + subvolumeGroupScope(body) + "/" + optionalStringBody(body, "subvolume", "name")
 	case "cephfs_snapshot":
-		return optionalStringBody(body, "fs") + "/" + optionalStringBody(body, "subvolume") + "/" + optionalStringBody(body, "snap", "name")
+		return optionalStringBody(body, "fs") + "/" + subvolumeGroupScope(body) + "/" + optionalStringBody(body, "subvolume") + "/" + optionalStringBody(body, "snap", "name")
 	case "nfs_export":
 		return optionalStringBody(body, "export_id")
 	case "smb_share":
@@ -534,6 +553,14 @@ func readResourceKey(kind string, body map[string]any) string {
 	default:
 		return optionalStringBody(body, "name", "id")
 	}
+}
+
+func subvolumeGroupScope(body map[string]any) string {
+	group := optionalStringBody(body, "group")
+	if group == "" {
+		return "_nogroup"
+	}
+	return group
 }
 
 func resourceKey(kind, action string, r *http.Request, body map[string]any) string {

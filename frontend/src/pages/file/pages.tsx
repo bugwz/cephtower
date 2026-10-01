@@ -491,6 +491,7 @@ const definitions: Record<
     columns: [
       { key: 'fs', title: '文件系统' },
       { key: 'subvolume', title: '子卷' },
+      { key: 'group', title: '子卷组' },
       { key: 'name', title: '快照' },
       { key: 'created_at', title: '创建时间' },
       { key: 'data_pool', title: '数据池' },
