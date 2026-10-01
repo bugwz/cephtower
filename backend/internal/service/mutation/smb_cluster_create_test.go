@@ -2,6 +2,7 @@ package mutation
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 )
 
@@ -26,6 +27,24 @@ func TestSMBClusterCreateUserReferences(t *testing.T) {
 	p["auth_mode"] = "active-directory"
 	if _, err := build(Request{Action: "smb_cluster.create"}, p); err == nil {
 		t.Fatal("local references in AD mode accepted")
+	}
+}
+
+func TestSMBClusterCreateDNS(t *testing.T) {
+	p := map[string]any{"name": "smb-a", "user_group_ref": []string{"users"}, "custom_dns": []string{"192.0.2.1", "2001:db8::1"}}
+	spec, err := build(Request{Action: "smb_cluster.create"}, p)
+	if err != nil || !slices.Contains(spec.args, "--custom-dns=192.0.2.1") || !slices.Contains(spec.args, "--custom-dns=2001:db8::1") {
+		t.Fatalf("DNS not passed: %v %v", spec.args, err)
+	}
+	for _, bad := range []any{nil, "192.0.2.1", []string{"bad"}, []string{"192.0.2.1/24"}, []any{1}} {
+		p["custom_dns"] = bad
+		if _, err := build(Request{Action: "smb_cluster.create"}, p); err == nil {
+			t.Fatalf("invalid DNS accepted: %v", bad)
+		}
+	}
+	p["custom_dns"] = []string{}
+	if _, err := build(Request{Action: "smb_cluster.create"}, p); err != nil {
+		t.Fatal(err)
 	}
 }
 

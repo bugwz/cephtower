@@ -12,6 +12,20 @@ import (
 
 var smbResourceIDPattern = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,16}[a-zA-Z0-9])?$`)
 
+func smbDNSServers(value any) ([]string, error) {
+	data, err := json.Marshal(value)
+	var servers []string
+	if err != nil || json.Unmarshal(data, &servers) != nil || servers == nil {
+		return nil, invalid("custom_dns must be an array of IP addresses")
+	}
+	for _, server := range servers {
+		if net.ParseIP(server) == nil {
+			return nil, invalid("custom_dns entries must be IP addresses")
+		}
+	}
+	return servers, nil
+}
+
 func smbClusterRecord(data []byte, request Request) (map[string]any, error) {
 	var record map[string]any
 	decoder := json.NewDecoder(bytes.NewReader(data))
@@ -94,15 +108,9 @@ func smbClusterUpdateJSON(data []byte, request Request) ([]byte, error) {
 		delete(record, "domain_settings")
 	}
 	if value, exists := request.Parameters["custom_dns"]; exists {
-		data, err := json.Marshal(value)
-		var servers []string
-		if err != nil || json.Unmarshal(data, &servers) != nil || servers == nil {
-			return nil, invalid("custom_dns must be an array of IP addresses")
-		}
-		for _, server := range servers {
-			if net.ParseIP(server) == nil {
-				return nil, invalid("custom_dns entries must be IP addresses")
-			}
+		servers, err := smbDNSServers(value)
+		if err != nil {
+			return nil, err
 		}
 		record["custom_dns"] = servers
 	}

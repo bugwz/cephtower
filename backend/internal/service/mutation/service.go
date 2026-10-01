@@ -2359,6 +2359,15 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("auth_mode is not supported")
 		}
 		args := []string{"smb", "cluster", "create", name, authMode}
+		if value, exists := p["custom_dns"]; exists {
+			servers, err := smbDNSServers(value)
+			if err != nil {
+				return command{}, err
+			}
+			for _, server := range servers {
+				args = append(args, "--custom-dns="+server)
+			}
+		}
 		_, hasRealm := p["domain_realm"]
 		_, hasJoin := p["domain_join_ref"]
 		if hasRealm || hasJoin || authMode == "active-directory" {
