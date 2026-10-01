@@ -1,6 +1,14 @@
 import { Alert, Button, Input, Space } from 'antd'
 import type { ApiRecord } from '../../api/client'
 
+export function smbUpdateGroupsBody(values: ApiRecord) {
+  if (values.clear_groups === true) return []
+  if (typeof values.groups !== 'string') throw new Error('未获取完整组名列表，请填写组名或明确选择清空全部组')
+  const groups = values.groups.split('\n').map((name) => name.trim()).filter(Boolean)
+  if (new Set(groups).size !== groups.length) throw new Error('组名不能重复')
+  return groups
+}
+
 export function smbUsersInitialValues(row?: ApiRecord) {
   return {
     users: Array.isArray(row?.user_names) && row.user_names.every((name) => typeof name === 'string') ? JSON.stringify(row.user_names.map((name) => ({ name, password: '' }))) : undefined,

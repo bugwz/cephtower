@@ -3,7 +3,7 @@ import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClusterDetails } from './NFSClusterDetails'
 import { SMBClusterDetails } from './SMBClusterDetails'
 import { SMBLoginControlEditor, smbLoginControlBody } from './SMBLoginControlEditor'
-import { SMBUsersEditor, smbUsersBody, smbUsersInitialValues } from './SMBUsersEditor'
+import { SMBUsersEditor, smbUsersBody, smbUsersInitialValues, smbUpdateGroupsBody } from './SMBUsersEditor'
 import { smbClusterInitialValues, smbClusterDNSBody, smbClusterUserGroupsBody, smbClusterDomainBody, smbClusterCountBody, smbClusterHostsBody, smbClusterUpdateHostsBody, smbClusterClusteringBody, smbClusterPublicAddressesBody, smbClusterUpdatePublicAddressesBody } from './smbClusterFields'
 import { smbCephFS, smbShareInitialValues, smbShareAccessBody, smbBooleanText } from './smbShareFields'
 import { NFSClientsEditor } from './NFSClientsEditor'
@@ -820,11 +820,12 @@ const definitions: Record<
       confirmation: () => '将替换全部用户、密码、组名和绑定设置。未列出的旧用户将被移除，可能中断访问；组名留空清空组，绑定留空解除绑定。确认继续？',
       fields: [
         { name: 'users', label: '完整用户列表（可删除全部用户；保留的用户须重新输入密码）', required: true, renderControl: () => <SMBUsersEditor /> },
-        { name: 'groups', label: '完整组名列表（每行一个）', type: 'textarea' },
+        { name: 'clear_groups', label: '明确清空全部组', type: 'boolean' },
+        { name: 'groups', label: '完整组名列表（每行一个）', type: 'textarea', visibleWhen: (values) => values.clear_groups !== true },
         { name: 'linked_to_cluster', label: '绑定 SMB 集群（留空解除绑定）', type: 'select', optionsLoader: smbClusterOptions }
       ],
       initialValues: smbUsersInitialValues,
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: resourceName(row), users: smbUsersBody(values.users), groups: String(values.groups ?? '').split('\n').map((name) => name.trim()).filter(Boolean), ...(values.linked_to_cluster ? { linked_to_cluster: values.linked_to_cluster } : {}) })
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: resourceName(row), users: smbUsersBody(values.users), groups: smbUpdateGroupsBody(values), ...(values.linked_to_cluster ? { linked_to_cluster: values.linked_to_cluster } : {}) })
     },
     columns: [
       { key: 'users_groups_id', title: '资源 ID', filterKey: false },
