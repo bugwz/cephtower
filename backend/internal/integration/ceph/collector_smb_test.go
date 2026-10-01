@@ -66,6 +66,28 @@ func TestSMBAuthInventoryUnavailable(t *testing.T) {
 	}
 }
 
+func TestSMBGroupInventoryRejectsPartialNames(t *testing.T) {
+	for _, groups := range []any{nil, "staff", []any{nil}, []any{map[string]any{"name": 1}}, []any{map[string]any{"name": "staff"}, map[string]any{"unexpected": "secret"}}} {
+		item := map[string]any{"resource_type": "ceph.smb.usersgroups", "users_groups_id": "a", "values": map[string]any{"users": []any{}, "groups": groups}}
+		good := map[string]any{"resource_type": "ceph.smb.usersgroups", "users_groups_id": "b", "values": map[string]any{"users": []any{}, "groups": []any{}}}
+		data, _ := json.Marshal(map[string]any{"resources": []any{good, item}})
+		trace := &collectionTrace{unavailable: map[string]struct{}{}}
+		ctx := context.WithValue(context.Background(), collectionTraceKey{}, trace)
+		provider := NativeProvider{Executor: &nfsInfoExecutor{data: string(data)}}
+		if rows := provider.collectSMBAuthResources(ctx, ClusterAccess{}, time.Time{}); len(rows) != 0 {
+			t.Fatal("partial group list published", rows)
+		}
+		if _, unavailable := trace.unavailable["smb_usersgroups"]; !unavailable {
+			t.Fatal("invalid group inventory not marked unavailable", trace.unavailable)
+		}
+	}
+	provider := NativeProvider{Executor: &nfsInfoExecutor{data: `{"resources":[{"resource_type":"ceph.smb.usersgroups","users_groups_id":"empty","values":{"users":[],"groups":[]}}]}`}}
+	rows := provider.collectSMBAuthResources(context.Background(), ClusterAccess{}, time.Time{})
+	if len(rows) != 1 || !reflect.DeepEqual(rows[0].Payload.(map[string]any)["group_names"], []string{}) {
+		t.Fatal("valid empty groups rejected", rows)
+	}
+}
+
 func TestSMBClusterInfo(t *testing.T) {
 	for _, tc := range []struct {
 		data      string

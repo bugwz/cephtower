@@ -63,7 +63,14 @@ func (p *NativeProvider) collectSMBAuthResources(ctx context.Context, access Clu
 							}
 						}
 					}
+					if len(names) != len(groups) {
+						valid = false
+						break
+					}
 					payload["group_names"] = names
+				} else {
+					valid = false
+					break
 				}
 			}
 			for _, key := range []string{"intent", "linked_to_cluster"} {
