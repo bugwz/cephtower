@@ -2,6 +2,7 @@ import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClusterDetails } from './NFSClusterDetails'
 import { SMBClusterDetails } from './SMBClusterDetails'
+import { smbClusterInitialValues, smbClusterDNSBody } from './smbClusterFields'
 import { smbCephFS, smbShareInitialValues, smbShareAccessBody, smbBooleanText } from './smbShareFields'
 import { NFSClientsEditor } from './NFSClientsEditor'
 import { nfsClientsBody, nfsFSALBody, nfsRGWUserChoices, nfsRGWBucketChoices } from './nfsExportFields'
@@ -760,6 +761,7 @@ const definitions: Record<
       method: 'PATCH',
       successMessage: 'SMB 集群更新执行成功',
       fields: [
+        { name: 'custom_dns', label: '自定义 DNS 地址', type: 'textarea', placeholder: '每行一个 IPv4/IPv6 地址；清空已知列表表示移除自定义 DNS' },
         {
           name: 'auth_mode',
           label: '认证模式',
@@ -771,11 +773,12 @@ const definitions: Record<
           ]
         }
       ],
-      initialValues: (row) => ({ auth_mode: row?.auth_mode === 'user' || row?.auth_mode === 'active-directory' ? row.auth_mode : undefined }),
+      initialValues: smbClusterInitialValues,
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
         name: resourceName(row),
-        auth_mode: String(values.auth_mode ?? 'user')
+        auth_mode: String(values.auth_mode ?? 'user'),
+        ...smbClusterDNSBody(values)
       })
     },
     deleteAction: {

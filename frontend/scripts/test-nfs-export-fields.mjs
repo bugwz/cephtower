@@ -227,3 +227,11 @@ assert.deepEqual(storage.smbSubvolumeBody({ subvolume_group: 'team', subvolume: 
 assert.deepEqual(storage.smbSubvolumeBody({ subvolume_group: '_nogroup', subvolume: 'docs' }), { subvolume: '_nogroup/docs' })
 assert.throws(() => storage.smbSubvolumeBody({ subvolume: 'docs' }))
 console.log('SMB dependent storage selection checks passed')
+
+const clusterFields = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/file/smbClusterFields.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(clusterFields)
+assert.equal(clusterFields.smbClusterInitialValues({ custom_dns: ['192.0.2.1', '2001:db8::1'] }).custom_dns, '192.0.2.1\n2001:db8::1')
+assert.equal(clusterFields.smbClusterInitialValues({}).custom_dns, undefined)
+assert.deepEqual(clusterFields.smbClusterDNSBody({}), {})
+assert.deepEqual(clusterFields.smbClusterDNSBody({ custom_dns: '' }), { custom_dns: [] })
+assert.deepEqual(clusterFields.smbClusterDNSBody({ custom_dns: '192.0.2.1, 2001:db8::1\n' }), { custom_dns: ['192.0.2.1', '2001:db8::1'] })

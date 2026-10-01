@@ -379,6 +379,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -1054,6 +1058,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -3024,6 +3032,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -3699,6 +3711,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -4592,6 +4608,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -5361,6 +5381,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -6036,6 +6060,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -6902,6 +6930,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -7673,6 +7705,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -8349,6 +8385,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -9268,6 +9308,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -10037,6 +10081,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -10808,6 +10856,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -11577,6 +11629,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -12252,6 +12308,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -13173,6 +13233,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -14344,6 +14408,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -15020,6 +15088,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -15696,6 +15768,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -17009,6 +17085,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -17830,6 +17910,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -18601,6 +18685,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -19276,6 +19364,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -20607,6 +20699,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -21282,6 +21378,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -21974,6 +22074,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -22743,6 +22847,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -23418,6 +23526,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -24094,6 +24206,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -25048,6 +25164,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -25914,6 +26034,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -26683,6 +26807,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -27358,6 +27486,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -28166,6 +28298,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -28842,6 +28978,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -29933,6 +30073,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -30894,6 +31038,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -31663,6 +31811,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -32434,6 +32586,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -33203,6 +33359,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -33878,6 +34038,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -34744,6 +34908,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -35513,6 +35681,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -36188,6 +36360,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -36959,6 +37135,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -37634,6 +37814,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -38405,6 +38589,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -39080,6 +39268,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -39851,6 +40043,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -40620,6 +40816,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -41295,6 +41495,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -42234,6 +42438,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -43004,6 +43212,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -43680,6 +43892,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -44356,6 +44572,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -45126,6 +45346,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -45836,6 +46060,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -46797,6 +47025,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -47566,6 +47798,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -48241,6 +48477,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -49012,6 +49252,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -49688,6 +49932,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -50364,6 +50612,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -51040,6 +51292,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -51811,6 +52067,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -52580,6 +52840,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -53255,6 +53519,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -54048,6 +54316,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -54723,6 +54995,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -55398,6 +55674,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -56460,6 +56740,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -57208,6 +57492,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -57884,6 +58172,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -58559,6 +58851,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -59330,6 +59626,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -60100,6 +60400,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -60776,6 +61080,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -61563,6 +61871,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -62238,6 +62550,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -62913,6 +63229,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -63589,6 +63909,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -64360,6 +64684,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -65129,6 +65457,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -65804,6 +66136,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -66581,6 +66917,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -67257,6 +67597,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -67933,6 +68277,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -68704,6 +69052,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -69380,6 +69732,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -70055,6 +70411,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -70826,6 +71186,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -71501,6 +71865,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -72176,6 +72544,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -72852,6 +73224,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -73718,6 +74094,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -74487,6 +74867,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -75162,6 +75546,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -75838,6 +76226,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -76514,6 +76906,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -77189,6 +77585,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -77865,6 +78265,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -78541,6 +78945,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -79312,6 +79720,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -79987,6 +80399,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -80663,6 +81079,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -81338,6 +81758,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -82344,6 +82768,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -83113,6 +83541,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -83788,6 +84220,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -84559,6 +84995,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -85328,6 +85768,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -86003,6 +86447,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -86774,6 +87222,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -87543,6 +87995,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -88218,6 +88674,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -89084,6 +89544,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:
@@ -89760,6 +90224,10 @@ paths:
                   type: string
                 crush_rule:
                   type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
                 d:
                   type: integer
                 data_devices:

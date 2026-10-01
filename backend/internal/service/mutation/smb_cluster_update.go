@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"net"
 	"reflect"
 )
 
@@ -31,6 +32,19 @@ func smbClusterUpdateJSON(data []byte, request Request) ([]byte, error) {
 		return nil, err
 	}
 	record["auth_mode"] = mode
+	if value, exists := request.Parameters["custom_dns"]; exists {
+		data, err := json.Marshal(value)
+		var servers []string
+		if err != nil || json.Unmarshal(data, &servers) != nil || servers == nil {
+			return nil, invalid("custom_dns must be an array of IP addresses")
+		}
+		for _, server := range servers {
+			if net.ParseIP(server) == nil {
+				return nil, invalid("custom_dns entries must be IP addresses")
+			}
+		}
+		record["custom_dns"] = servers
+	}
 	return json.Marshal(record)
 }
 

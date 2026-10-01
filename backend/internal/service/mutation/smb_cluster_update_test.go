@@ -2,6 +2,7 @@ package mutation
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 )
 
@@ -33,5 +34,31 @@ func TestSMBClusterUpdatePreservesSettings(t *testing.T) {
 	runner.outputs["smb_cluster.update"] = `{"success":false}`
 	if _, err := service.Execute(context.Background(), request); err == nil {
 		t.Fatal("failed apply accepted")
+	}
+}
+
+func TestSMBClusterDNSUpdate(t *testing.T) {
+	request := Request{ResourceKey: "smb/cluster/a", Parameters: map[string]any{"auth_mode": "user"}}
+	before := []byte(`{"resource_type":"ceph.smb.cluster","cluster_id":"a","auth_mode":"user","custom_dns":["192.0.2.1"]}`)
+	for _, servers := range [][]string{{"192.0.2.2", "2001:db8::1"}, {}} {
+		request.Parameters["custom_dns"] = servers
+		data, err := smbClusterUpdateJSON(before, request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var record map[string]json.RawMessage
+		if err := json.Unmarshal(data, &record); err != nil {
+			t.Fatal(err)
+		}
+		want, _ := json.Marshal(servers)
+		if string(record["custom_dns"]) != string(want) || smbClusterUpdateMatches(data, before, request) {
+			t.Fatalf("DNS update not verified: %s", data)
+		}
+	}
+	for _, bad := range []any{nil, "192.0.2.1", []any{1}, []string{""}, []string{"not-an-ip"}, []string{"192.0.2.1/24"}} {
+		request.Parameters["custom_dns"] = bad
+		if _, err := smbClusterUpdateJSON(before, request); err == nil {
+			t.Fatalf("invalid DNS accepted: %v", bad)
+		}
 	}
 }
