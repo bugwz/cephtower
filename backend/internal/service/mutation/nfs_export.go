@@ -125,7 +125,42 @@ func nfsExportUpdateMatches(request Request, data []byte) bool {
 	if err != nil {
 		return false
 	}
-	p := request.Parameters
+	return nfsExportAttributesMatch(export, request.Parameters)
+}
+
+func nfsExportCreateMatches(p map[string]any, data []byte) bool {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	var exports []map[string]any
+	if decoder.Decode(&exports) != nil {
+		return false
+	}
+	var extra any
+	if decoder.Decode(&extra) != io.EOF {
+		return false
+	}
+	found := false
+	for _, export := range exports {
+		pseudo, ok := export["pseudo"].(string)
+		if !ok || path.Clean(pseudo) != path.Clean(optional(p, "pseudo")) {
+			continue
+		}
+		id, ok := export["export_id"].(json.Number)
+		if !ok {
+			return false
+		}
+		if value, err := strconv.ParseUint(id.String(), 10, 64); err != nil || value == 0 {
+			return false
+		}
+		if found || export["cluster_id"] != p["cluster"] || !nfsExportAttributesMatch(export, p) {
+			return false
+		}
+		found = true
+	}
+	return found
+}
+
+func nfsExportAttributesMatch(export, p map[string]any) bool {
 	if label, exists := p["security_label"]; exists && export["security_label"] != label {
 		return false
 	}
@@ -133,7 +168,7 @@ func nfsExportUpdateMatches(request Request, data []byte) bool {
 		return false
 	}
 	fsal, ok := export["fsal"].(map[string]any)
-	if !ok || fsal["name"] != "CEPH" || fsal["fs_name"] != p["filesystem"] || export["pseudo"] != p["pseudo"] || export["path"] != p["path"] {
+	if !ok || fsal["name"] != "CEPH" || fsal["fs_name"] != p["filesystem"] || path.Clean(optional(export, "pseudo")) != path.Clean(optional(p, "pseudo")) || path.Clean(optional(export, "path")) != path.Clean(optional(p, "path")) {
 		return false
 	}
 	if readOnly, ok := p["read_only"].(bool); ok {

@@ -132,6 +132,33 @@ func TestNFSExportCreateDoesNotOverwriteExistingPseudo(t *testing.T) {
 	}
 }
 
+func TestNFSExportCreationReadback(t *testing.T) {
+	for _, tt := range []struct {
+		post  string
+		valid bool
+	}{
+		{`[{"export_id":1,"cluster_id":"nfs-a","pseudo":"/share","path":"/","fsal":{"name":"CEPH","fs_name":"cephfs"},"access_type":"RO"}]`, true},
+		{`[]`, false},
+		{`[{"export_id":1,"cluster_id":"nfs-a","pseudo":"/share","path":"/other","fsal":{"name":"CEPH","fs_name":"cephfs"},"access_type":"RO"}]`, false},
+		{`[{"export_id":1,"cluster_id":"nfs-b","pseudo":"/share","path":"/","fsal":{"name":"CEPH","fs_name":"cephfs"},"access_type":"RO"}]`, false},
+	} {
+		service, _, id := newCephUserService(t)
+		runner := &directoryRenameExecutor{outputs: map[string]string{"nfs_export.create.pre_check": "[]", "nfs_export.create.post_check": tt.post}}
+		service.executor = runner
+		_, err := service.Execute(context.Background(), Request{ClusterID: id, Action: "nfs_export.create", ResourceKey: "nfs/export", Parameters: map[string]any{"cluster": "nfs-a", "pseudo": "/share/", "path": "/", "filesystem": "cephfs", "read_only": true}})
+		if tt.valid {
+			if err != nil {
+				t.Fatal(err)
+			}
+		} else {
+			var actionErr *cephdomain.ActionError
+			if !errors.As(err, &actionErr) || actionErr.Code != "post_check_failed" {
+				t.Fatalf("unverified creation accepted: %v", err)
+			}
+		}
+	}
+}
+
 func TestNFSExportDeleteResolvesNativePseudo(t *testing.T) {
 	for _, tt := range []struct {
 		name, output string

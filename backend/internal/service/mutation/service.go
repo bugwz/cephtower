@@ -220,6 +220,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "nfs_export.update" && !nfsExportUpdateMatches(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "NFS export update was accepted but requested attributes could not be verified; the change may already have taken effect", Retryable: true}
 		}
+		if request.Action == "nfs_export.create" && !nfsExportCreateMatches(request.Parameters, checked.Stdout) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "NFS export creation was accepted but requested attributes could not be verified; the change may already have taken effect", Retryable: true}
+		}
 		if request.Action == "nfs_export.delete" && !nfsExportDeleted(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "NFS export removal was accepted but its absence could not be verified; the change may already have taken effect", Retryable: true}
 		}
@@ -2222,7 +2225,7 @@ func build(request Request, p map[string]any) (command, error) {
 			export["access_type"] = map[bool]string{true: "RO", false: "RW"}[readOnly]
 		}
 		stdin, _ := json.Marshal(export)
-		result := ceph([]string{"nfs", "export", "apply", cluster, "-i", "-"}, []string{"nfs", "export", "ls", cluster, "--format", "json"})
+		result := ceph([]string{"nfs", "export", "apply", cluster, "-i", "-"}, []string{"nfs", "export", "ls", cluster, "--detailed", "--format", "json"})
 		result.stdin = stdin
 		return result, nil
 	case "nfs_export.delete":
