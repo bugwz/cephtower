@@ -26,7 +26,7 @@ var DefaultModules = []Module{
 	{Name: "ceph_auth", Interval: 5 * time.Minute, Kinds: []string{"ceph_user", "cephfs_authorization"}},
 	{Name: "fast", Interval: 15 * time.Second, Kinds: []string{"overview", "health_check"}},
 	{Name: "topology", Interval: 30 * time.Second, Kinds: []string{"host", "service", "daemon", "mon", "mon_status", "mon_perf_counter", "mgr", "mds", "cephfs_client", "upgrade"}},
-	{Name: "storage", Interval: time.Minute, Kinds: []string{"osd", "osd_flag", "osd_removal", "pool", "filesystem", "subvolume_group", "subvolume", "cephfs_snapshot", "snapshot_schedule", "rbd_image", "rbd_snapshot", "rbd_namespace", "rbd_trash", "rbd_group", "rbd_mirroring", "rgw_status", "rgw_user", "rgw_account", "rgw_role", "rgw_bucket", "rgw_realm", "rgw_zonegroup", "rgw_zone", "nfs_cluster", "nfs_export", "smb_cluster", "smb_share"}},
+	{Name: "storage", Interval: time.Minute, Kinds: []string{"osd", "osd_flag", "osd_removal", "pool", "filesystem", "subvolume_group", "subvolume", "cephfs_snapshot", "snapshot_schedule", "rbd_image", "rbd_snapshot", "rbd_namespace", "rbd_trash", "rbd_group", "rbd_mirroring", "rgw_status", "rgw_user", "rgw_account", "rgw_role", "rgw_bucket", "rgw_realm", "rgw_zonegroup", "rgw_zone", "nfs_cluster", "nfs_export", "smb_cluster", "smb_share", "smb_join_auth", "smb_usersgroups"}},
 	{Name: "inventory", Interval: 5 * time.Minute, Kinds: []string{"device", "capability"}},
 	{Name: "configuration", Interval: 10 * time.Minute, Kinds: []string{"config_value", "config_option", "mgr_module", "crush_rule", "erasure_code_profile"}},
 }

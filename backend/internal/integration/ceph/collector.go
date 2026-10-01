@@ -51,6 +51,8 @@ var collectionFailureKinds = map[string][]string{
 	"collect.rgw_status":              {"rgw_status"},
 	"collect.nfs_cluster":             {"nfs_cluster", "nfs_export"},
 	"collect.smb_cluster":             {"smb_cluster", "smb_share"},
+	"collect.smb_join_auth":           {"smb_join_auth"},
+	"collect.smb_usersgroups":         {"smb_usersgroups"},
 	"collect.rbd_namespace":           {"rbd_namespace", "rbd_trash", "rbd_snapshot", "rbd_image", "rbd_group"},
 	"collect.rbd_image_detail":        {"rbd_snapshot", "rbd_image"},
 	"collect.rbd_snapshot":            {"rbd_snapshot"},
@@ -911,6 +913,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 			rows = append(rows, Observation{Kind: gateway.kind, NaturalKey: name, Name: name, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 		}
 	}
+	rows = append(rows, p.collectSMBAuthResources(ctx, access, now)...)
 	rows = append(rows, p.collectStorageOptional(ctx, access, pools, fs, now)...)
 	p.attachRBDMirrorSnapshotSchedules(ctx, access, rows)
 	return rows, nil

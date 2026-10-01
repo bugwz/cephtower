@@ -151,7 +151,7 @@ func (h *Handler) ensureResourceCapability(w http.ResponseWriter, r *http.Reques
 		capability = "rgw_admin"
 	case kind == "nfs_cluster" || kind == "nfs_export":
 		capability = "nfs"
-	case kind == "smb_cluster" || kind == "smb_share":
+	case strings.HasPrefix(kind, "smb_"):
 		capability = "smb"
 	case kind == "cephfs_entry":
 		capability = "cephfs_data_access"

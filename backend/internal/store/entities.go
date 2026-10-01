@@ -46,6 +46,8 @@ var entityKinds = []string{
 	"rgw_zonegroup",
 	"service",
 	"smb_cluster",
+	"smb_join_auth",
+	"smb_usersgroups",
 	"smb_share",
 	"snapshot_schedule",
 	"subvolume",

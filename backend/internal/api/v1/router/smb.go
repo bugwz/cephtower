@@ -4,6 +4,8 @@ import "cephtower/backend/internal/api/v1/handler"
 
 func smbRoutes(h *handler.Handler) []Route {
 	return []Route{
+		{"GET", "/smb/join/auths", h.ListSMBJoinAuths},
+		{"GET", "/smb/usersgroups", h.ListSMBUsersGroups},
 		{"GET", "/smb/clusters", h.ListSMBClusters},
 		{"POST", "/smb/cluster", h.CreateSMBCluster},
 		{"GET", "/smb/cluster", h.GetSMBCluster},

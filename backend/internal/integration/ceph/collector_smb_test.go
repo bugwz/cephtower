@@ -2,10 +2,61 @@ package ceph
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
+
+func TestSMBAuthInventory(t *testing.T) {
+	for _, spec := range []struct{ kind, resourceType, idField string }{
+		{"smb_join_auth", "ceph.smb.join.auth", "auth_id"},
+		{"smb_usersgroups", "ceph.smb.usersgroups", "users_groups_id"},
+	} {
+		t.Run(spec.kind, func(t *testing.T) {
+			item := map[string]any{"resource_type": spec.resourceType, spec.idField: "auth-a", "intent": "present", "linked_to_cluster": "cluster-a", "auth": map[string]any{"password": "secret"}, "values": map[string]any{"users": []string{"secret"}}, "unexpected": "secret"}
+			data, _ := json.Marshal(map[string]any{"resources": []any{item}})
+			runner := &nfsInfoExecutor{data: string(data)}
+			provider := NativeProvider{Executor: runner}
+			rows := provider.collectSMBAuthResources(context.Background(), ClusterAccess{}, time.Time{})
+			if len(rows) != 1 || rows[0].Kind != spec.kind || rows[0].NaturalKey != "auth-a" {
+				t.Fatal(rows)
+			}
+			encoded, _ := json.Marshal(rows[0].Payload)
+			if strings.Contains(string(encoded), "secret") || len(rows[0].Payload.(map[string]any)) != 4 {
+				t.Fatal(string(encoded))
+			}
+			for _, call := range runner.calls {
+				resourceType := "ceph.smb.join.auth"
+				if call.ID == "collect.smb_usersgroups" {
+					resourceType = "ceph.smb.usersgroups"
+				}
+				if call.Mutating || !reflect.DeepEqual(call.Args, []string{"smb", "show", resourceType, "--results=full", "--password-filter=hidden", "--format", "json"}) {
+					t.Fatal(call)
+				}
+			}
+		})
+	}
+}
+
+func TestSMBAuthInventoryUnavailable(t *testing.T) {
+	for _, data := range []string{`null`, `{}`, `{"resources":null}`, `invalid`, `{"resources":[null]}`, `{"resources":[{"resource_type":"ceph.smb.join.auth","auth_id":"bad/id"}]}`, `{"resources":[{"resource_type":"ceph.smb.join.auth","auth_id":"a"},{"resource_type":"ceph.smb.join.auth","auth_id":"a"}]}`, `{"resources":[{"resource_type":"ceph.smb.join.auth","auth_id":"a","linked_to_cluster":{}}]}`, `{"resources":[]}`} {
+		trace := &collectionTrace{unavailable: map[string]struct{}{}}
+		ctx := context.WithValue(context.Background(), collectionTraceKey{}, trace)
+		provider := NativeProvider{Executor: &nfsInfoExecutor{data: data}}
+		if rows := provider.collectSMBAuthResources(ctx, ClusterAccess{}, time.Time{}); len(rows) != 0 {
+			t.Fatal(rows)
+		}
+		want := 2
+		if data == `{"resources":[]}` {
+			want = 0
+		}
+		if len(trace.unavailable) != want {
+			t.Fatalf("%s: %v", data, trace.unavailable)
+		}
+	}
+}
 
 func TestSMBClusterInfo(t *testing.T) {
 	for _, tc := range []struct {

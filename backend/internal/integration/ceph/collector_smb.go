@@ -2,8 +2,58 @@ package ceph
 
 import (
 	"context"
+	"regexp"
 	"time"
 )
+
+var smbInventoryID = regexp.MustCompile(`^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,16}[a-zA-Z0-9])?$`)
+
+// Authentication contents must never enter inventory, even if a server ignores
+// the password filter. Only explicitly allowed reference metadata is retained.
+func (p *NativeProvider) collectSMBAuthResources(ctx context.Context, access ClusterAccess, now time.Time) []Observation {
+	var rows []Observation
+	for _, spec := range []struct{ kind, resourceType, idField string }{
+		{"smb_join_auth", "ceph.smb.join.auth", "auth_id"},
+		{"smb_usersgroups", "ceph.smb.usersgroups", "users_groups_id"},
+	} {
+		commandID := "collect." + spec.kind
+		var response struct {
+			Resources []map[string]any `json:"resources"`
+		}
+		if err := p.runInto(ctx, access, commandID, []string{"smb", "show", spec.resourceType, "--results=full", "--password-filter=hidden", "--format", "json"}, &response); err != nil {
+			continue
+		}
+		valid := response.Resources != nil
+		seen := map[string]bool{}
+		var batch []Observation
+		for _, item := range response.Resources {
+			id, _ := item[spec.idField].(string)
+			if !smbInventoryID.MatchString(id) || seen[id] || item["resource_type"] != spec.resourceType {
+				valid = false
+				break
+			}
+			seen[id] = true
+			payload := map[string]any{"resource_type": spec.resourceType, spec.idField: id}
+			for _, key := range []string{"intent", "linked_to_cluster"} {
+				if value, exists := item[key]; exists && value != nil {
+					text, ok := value.(string)
+					if !ok || (key == "intent" && text != "present") || (key == "linked_to_cluster" && text != "" && !smbInventoryID.MatchString(text)) {
+						valid = false
+						break
+					}
+					payload[key] = text
+				}
+			}
+			batch = append(batch, Observation{Kind: spec.kind, NaturalKey: id, Name: id, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
+		}
+		if !valid {
+			markCollectionUnavailable(ctx, commandID)
+			continue
+		}
+		rows = append(rows, batch...)
+	}
+	return rows
+}
 
 func (p *NativeProvider) collectSMBClusterInfo(ctx context.Context, access ClusterAccess, name string) map[string]any {
 	result := map[string]any{"name": name, "info_available": false}
