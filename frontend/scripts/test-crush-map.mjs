@@ -109,14 +109,14 @@ assert.ok(poolSource.includes('压缩后大小与原始大小的比例上限'), 
 assert.ok(poolSource.includes('分配单元对齐和压缩头开销'), 'compression storage is also subject to native allocation constraints')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const objectCountFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolObjectCount')
-const objectCountCode = ts.transpileModule(objectCountFn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const objectCountCode = ts.transpileModule(objectCountFn.getText(poolTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const objectCount = new Function(`${objectCountCode}; return poolObjectCount`)()
 assert.equal(objectCount(0), '0')
 assert.equal(objectCount(12345), '12,345')
 for (const value of [undefined, null, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, '2']) assert.equal(objectCount(value), '未采集')
 assert.ok(poolSource.includes('objects_display: poolObjectCount(row.objects)'))
 const capacityFns = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['poolCapacity', 'formatBytes'].includes(node.name.text))
-const capacityCode = ts.transpileModule(capacityFns.map((fn) => fn.getText(poolTree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const capacityCode = ts.transpileModule(capacityFns.map((fn) => fn.getText(poolTree).replace('export ', '')).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const capacity = new Function(`${capacityCode}; return poolCapacity`)()
 assert.equal(capacity(0), '0 B')
 assert.equal(capacity(1024), '1.0 KiB')
@@ -127,7 +127,7 @@ for (const field of ['stored', 'bytes_used', 'max_avail']) {
   assert.ok(poolSource.includes(`key: '${field}_display'`))
 }
 const usageDisplayFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolUsage')
-const usageDisplayCode = ts.transpileModule(usageDisplayFn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const usageDisplayCode = ts.transpileModule(usageDisplayFn.getText(poolTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const poolUsageDisplay = new Function('numberValue', `${usageDisplayCode}; return poolUsage`)((value) => typeof value === 'number' ? value : undefined)
 assert.equal(poolUsageDisplay({}), '未采集')
 assert.equal(poolUsageDisplay({ used_percent: 0 }), '0.0%')
@@ -136,10 +136,16 @@ assert.ok(poolSource.includes("erasure_code_profile: textValue(row.erasure_code_
 assert.ok(!poolSource.includes("const defaultErasureCodeProfile = 'default'"), 'do not invent an existing pool profile')
 assert.ok(poolSource.includes("required: formMode === 'create', message: '请选择纠删码配置'"), 'immutable missing profile must not prevent unrelated edits')
 const pgStatusFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolPGStatus')
-const pgStatusCode = ts.transpileModule(pgStatusFn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const pgStatusCode = ts.transpileModule(pgStatusFn.getText(poolTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const pgStatus = new Function('isRecord', `${pgStatusCode}; return poolPGStatus`)((value) => value !== null && typeof value === 'object' && !Array.isArray(value))
 assert.equal(pgStatus({ 'active+clean': 8, down: 2 }), '8 active+clean, 2 down')
 assert.equal(pgStatus({ 'active+degraded': 3 }), '3 active+degraded')
+const detailSource = readFileSync(new URL('../src/pages/cluster/PoolDetailPage.tsx', import.meta.url), 'utf8')
+assert.ok(detailSource.includes('pg_status_display: poolPGStatus(row.pg_status)'))
+assert.ok(!detailSource.includes('active+clean'), 'detail view must not fabricate healthy PG states')
+for (const field of ['stored', 'bytes_used', 'max_avail']) assert.ok(detailSource.includes(`poolCapacity(data.${field})`))
+assert.ok(detailSource.includes('poolObjectCount(data.objects)'))
+assert.ok(detailSource.includes('poolUsage(data)'))
 for (const value of [undefined, null, {}, [], 'active+clean', { down: -1 }, { down: '2' }, { down: 1.5 }, { '': 1 }]) assert.equal(pgStatus(value), '未采集')
 assert.ok(poolSource.includes('poolPGStatus(row.pg_status)'), 'pool health must use observed state counts')
 assert.ok(!poolSource.includes('`${pgNum} active+clean'), 'PG count must not imply healthy PGs')

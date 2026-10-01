@@ -963,7 +963,7 @@ export function PoolManagementPage() {
   )
 }
 
-function poolPGStatus(value: unknown): string {
+export function poolPGStatus(value: unknown): string {
   if (!isRecord(value)) return '未采集'
   const states = Object.entries(value)
   if (!states.length || states.some(([state, count]) => !state.trim() || typeof count !== 'number' || !Number.isSafeInteger(count) || count < 0)) return '未采集'
@@ -1496,16 +1496,16 @@ function poolHasFlag(row: ApiRecord, flag: string): boolean {
   return row.flags.some((value) => textValue(value, '') === flag)
 }
 
-function poolObjectCount(value: unknown): string {
+export function poolObjectCount(value: unknown): string {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value.toLocaleString('zh-CN') : '未采集'
 }
 
-function poolCapacity(value: unknown): string {
+export function poolCapacity(value: unknown): string {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return '未采集'
   return value === 0 ? '0 B' : formatBytes(value)
 }
 
-function poolUsage(row: ApiRecord) {
+export function poolUsage(row: ApiRecord) {
   const percent = numberValue(row.used_percent ?? row.percent_used ?? row.usage_percent)
   if (percent === undefined) {
     return '未采集'

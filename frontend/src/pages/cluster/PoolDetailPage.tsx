@@ -10,6 +10,7 @@ import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
+import { poolPGStatus, poolCapacity, poolObjectCount, poolUsage } from './PoolManagementPage'
 
 const { Text } = Typography
 const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
@@ -161,6 +162,12 @@ function renderOverview(data: ApiRecord, decodedName: string) {
       <Descriptions.Item label="数据保护">{textValue(data.data_protection_display)}</Descriptions.Item>
       <Descriptions.Item label="PG 状态">{textValue(data.pg_status_display)}</Descriptions.Item>
       <Descriptions.Item label="PG 自动伸缩">{textValue(data.pg_autoscale_mode)}</Descriptions.Item>
+      <Descriptions.Item label="使用率">{poolUsage(data)}</Descriptions.Item>
+      <Descriptions.Item label="用户数据量">{poolCapacity(data.stored)}</Descriptions.Item>
+      <Descriptions.Item label="实际占用">{poolCapacity(data.bytes_used)}</Descriptions.Item>
+      <Descriptions.Item label="最大可用">{poolCapacity(data.max_avail)}</Descriptions.Item>
+      <Descriptions.Item label="对象数量">{poolObjectCount(data.objects)}</Descriptions.Item>
+      <Descriptions.Item label="纠删码配置">{textValue(data.erasure_code_profile, '未采集')}</Descriptions.Item>
       <Descriptions.Item label="应用标记" span={2}>{renderApplications(poolApplications(data))}</Descriptions.Item>
       <Descriptions.Item label="CRUSH 规则集">{textValue(data.crush_rule)}</Descriptions.Item>
       <Descriptions.Item label="压缩模式">{textValue(data.compression_mode, 'none')}</Descriptions.Item>
@@ -176,13 +183,11 @@ function renderOverview(data: ApiRecord, decodedName: string) {
 function normalizePoolDetail(row: ApiRecord): ApiRecord {
   const type = poolType(row)
   const size = numberValue(row.size)
-  const pgNum = numberValue(row.pg_num)
-  const pgAutoscale = textValue(row.pg_autoscale_mode, 'on')
   return {
     ...row,
     type,
     data_protection_display: type === 'erasure' ? 'erasure' : `replica: x${size ?? 3}`,
-    pg_status_display: pgNum ? `${pgNum} active+clean / ${pgAutoscale}` : `active+clean / ${pgAutoscale}`
+    pg_status_display: poolPGStatus(row.pg_status)
   }
 }
 
