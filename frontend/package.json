@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "test": "npm run test:cephfs-performance",
+    "test": "npm run test:cephfs-performance && npm run test:cephfs-pools",
+    "test:cephfs-pools": "node scripts/test-cephfs-pools.mjs",
     "test:cephfs-performance": "node scripts/test-cephfs-performance.mjs",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

@@ -11,6 +11,7 @@ import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
 import { CephFSPerformance } from './CephFSPerformance'
+import { CephFSPoolUsage } from './CephFSPoolUsage'
 
 const { Text } = Typography
 const detailColumns = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
@@ -21,6 +22,7 @@ export function FilesystemDetailPage() {
   const filesystemName = decodeRouteParam(name)
   const { selectedClusterId } = useClusterContext()
   const [refreshing, setRefreshing] = useState(false)
+  const [poolRefreshToken, setPoolRefreshToken] = useState(0)
   const operationMutation = useMutationOperation()
   const loader = useCallback(async () => {
     if (!selectedClusterId || !filesystemName) {
@@ -48,6 +50,7 @@ export function FilesystemDetailPage() {
         '刷新成功'
       )
       await refresh()
+      setPoolRefreshToken((value) => value + 1)
     } finally {
       setRefreshing(false)
     }
@@ -90,6 +93,7 @@ export function FilesystemDetailPage() {
         <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />
       </Card>
       <CephFSPerformance clusterId={selectedClusterId} filesystem={filesystemName} />
+      <CephFSPoolUsage clusterId={selectedClusterId} filesystem={filesystemName} refreshToken={poolRefreshToken} />
     </Page>
   )
 }

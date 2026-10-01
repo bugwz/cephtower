@@ -97,7 +97,7 @@ func successResponseSchema(route router.Route) string {
 	switch key {
 	case "GET /logs":
 		return "CephLogsResponse"
-	case "GET /configuration/option", "GET /osd/inspection", "GET /filesystem/snapshot/schedule/status", "GET /filesystem/performance":
+	case "GET /configuration/option", "GET /osd/inspection", "GET /filesystem/snapshot/schedule/status", "GET /filesystem/performance", "GET /filesystem/pools":
 		return "ConfigurationOptionResponse"
 
 	case "GET /ceph/users/export":
@@ -358,7 +358,7 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true), "subvol": stringField(false), "group": stringField(false)}
 	case "GET /filesystem/entries":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(false)}
-	case "GET /filesystem/performance":
+	case "GET /filesystem/performance", "GET /filesystem/pools":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true)}
 	case "GET /filesystem/entry/snapshots":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true)}

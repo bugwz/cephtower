@@ -13075,6 +13075,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /filesystem/pools:
+    get:
+      operationId: get_filesystem_pools
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, fs]
+              properties:
+                cluster_id:
+                  type: integer
+                fs:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationOptionResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /filesystem/snapshot/schedule:
     post:
       operationId: post_filesystem_snapshot_schedule

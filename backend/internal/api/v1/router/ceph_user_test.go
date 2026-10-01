@@ -41,6 +41,10 @@ func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spe
 		return executor.CommandResult{Stdout: []byte(`{"mdsmap":{"fs_name":"cephfs","info":{"gid_1":{"name":"a","gid":1,"rank":0,"state":"up:active"}}}}`)}, nil
 	case "cephfs.performance.dump":
 		return executor.CommandResult{Stdout: []byte(`{"mds_mem":{"ino":123},"mds_server":{"handle_client_request":9007199254740993}}`)}, nil
+	case "cephfs.pools.map":
+		return executor.CommandResult{Stdout: []byte(`{"mdsmap":{"fs_name":"cephfs","metadata_pool":1,"data_pools":[2]}}`)}, nil
+	case "cephfs.pools.df":
+		return executor.CommandResult{Stdout: []byte(`{"pools":[{"id":1,"name":"cephfs.meta","stats":{"stored":50,"max_avail":100,"bytes_used":150}},{"id":2,"name":"cephfs.data","stats":{"stored":9007199254740993,"max_avail":100,"bytes_used":18014398509481986}}]}`)}, nil
 	case "cephfs.directory.quota":
 		return executor.CommandResult{Stdout: []byte("max_bytes: 1048576\nmax_files: 100\n")}, nil
 	case "cephfs.snapshot.list":
@@ -148,6 +152,10 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 	}
 	directoryResult := send("GET", "/filesystem/entries", map[string]any{"fs": "cephfs", "path": "/"})
 	performanceResult := send("GET", "/filesystem/performance", map[string]any{"fs": "cephfs"})
+	poolResult := send("GET", "/filesystem/pools", map[string]any{"fs": "cephfs"})
+	if poolResult.Header().Get("Cache-Control") != "no-store" || !strings.Contains(poolResult.Body.String(), `"stored":"9007199254740993"`) || !strings.Contains(poolResult.Body.String(), `"size":"150"`) || !strings.Contains(poolResult.Body.String(), `"type":"metadata"`) {
+		t.Fatalf("filesystem pool usage response is incomplete: %s", poolResult.Body.String())
+	}
 	if performanceResult.Header().Get("Cache-Control") != "no-store" || !strings.Contains(performanceResult.Body.String(), `"value":"9007199254740993"`) || !strings.Contains(performanceResult.Body.String(), `"name":"mds_log.ev","value":null`) {
 		t.Fatalf("performance response is incomplete: %s", performanceResult.Body.String())
 	}

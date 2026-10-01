@@ -190,6 +190,23 @@ ANSI 转义。配额读取最多 8 路并发，且单层目录最多接受 500 �
 `setxattr` 步骤，最后在同一个指定文件系统回读两个属性并逐值核对。能力探测改用
 cephfs-shell 实际支持的 `--help`，不再调用不存在的 `--version`。
 
+## 已实现：CephFS 存储池容量
+
+对照 `CephFS.fs_status()` 的 pools 表与 `CephfsDetailComponent` 容量展示，详情页新增
+元数据池/数据池实时容量表。`GET /api/v1/filesystem/pools` 接收 `cluster_id`、`fs`，
+执行 `ceph fs get <fs> --format json` 读取 `metadata_pool` 与 `data_pools`，再执行
+`ceph df detail --format json`，按 pool ID 精确匹配，只返回该文件系统关联的池。
+池名来自原生 df 条目，匹配缺失的池仍保留 ID 并标记错误，不把其他池的值用于替代。
+逻辑存储量使用 `stats.stored`，可用量使用 `stats.max_avail`，估算容量为两者之和；
+`stats.bytes_used` 另列为物理占用，不混入参考 Dashboard 的逻辑使用率口径。
+容量是当前集群空间、放置约束下的估算，不能视为预留空间；共享池的值也不是此 FS 独占量。
+
+API 以十进制字符串输出容量，后端 big.Int 加总和前端 BigInt 百分比计算避免大整数失真。
+页面显示二进制容量单位、精确字节 tooltip、用途和逻辑使用率，支持独立实时读取及详情页
+刷新联动。缺失/非法统计显示 null 或池级错误，容量为零时不计算无意义的百分比。
+离线测试覆盖多个数据池、不同于逻辑量的物理占用、超 uint64 总和、零值、缺失统计、
+重复 ID、原生命令失败、路由调用与前端格式/使用率边界；尚未经过真实集群验证。
+
 ## 已实现：CephFS MDS 性能计数器
 
 参考 Dashboard `CephFS._mds_counters()` 的 11 项非标签计数器与 `CephfsChartComponent`
