@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Form, Input, InputNumber, Modal, Select, Space, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Form, Input, InputNumber, Modal, Popconfirm, Select, Space, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { listResource, mutateResource } from '../../api/resource'
@@ -29,21 +29,68 @@ interface DirectoryList {
   observed_at: string
 }
 
+interface DirectorySnapshot {
+  name: string
+  path: string
+  modified_at: string
+}
+
+interface SnapshotList {
+  filesystem: string
+  path: string
+  items: DirectorySnapshot[]
+  observed_at: string
+}
+
 export function CephFSDirectoryBrowser() {
   const { selectedClusterId } = useClusterContext()
   const [queryForm] = Form.useForm()
   const [quotaForm] = Form.useForm()
+  const [snapshotForm] = Form.useForm()
   const [filesystems, setFilesystems] = useState<string[]>([])
   const [result, setResult] = useState<DirectoryList | null>(null)
   const [loading, setLoading] = useState(false)
   const [mutating, setMutating] = useState(false)
   const [error, setError] = useState('')
   const [editing, setEditing] = useState<DirectoryEntry | null>(null)
+  const [snapshots, setSnapshots] = useState<DirectorySnapshot[]>([])
+  const [snapshotsLoading, setSnapshotsLoading] = useState(false)
+  const [snapshotError, setSnapshotError] = useState('')
+  const [creatingSnapshot, setCreatingSnapshot] = useState(false)
   const pending = useRef<AbortController | null>(null)
+  const snapshotPending = useRef<AbortController | null>(null)
+
+  const loadSnapshots = useCallback(async (filesystem: string, path: string) => {
+    if (!selectedClusterId || !filesystem) return
+    snapshotPending.current?.abort()
+    const controller = new AbortController()
+    snapshotPending.current = controller
+    setSnapshotsLoading(true)
+    setSnapshotError('')
+    try {
+      const data = await request<SnapshotList>('/filesystem/entry/snapshots', jsonInit('GET', {
+        cluster_id: selectedClusterId,
+        fs: filesystem,
+        path
+      }, { signal: controller.signal, suppressErrorNotification: true }))
+      if (!controller.signal.aborted) setSnapshots(data.items)
+    } catch (err) {
+      if (!controller.signal.aborted) {
+        setSnapshots([])
+        setSnapshotError(err instanceof Error ? err.message : '读取目录快照失败')
+      }
+    } finally {
+      if (!controller.signal.aborted) setSnapshotsLoading(false)
+    }
+  }, [selectedClusterId])
 
   const load = useCallback(async (filesystem: string, path: string) => {
     if (!selectedClusterId || !filesystem) return
     pending.current?.abort()
+    snapshotPending.current?.abort()
+    setSnapshots([])
+    setCreatingSnapshot(false)
+    setEditing(null)
     const controller = new AbortController()
     pending.current = controller
     setLoading(true)
@@ -57,17 +104,21 @@ export function CephFSDirectoryBrowser() {
       if (!controller.signal.aborted) {
         setResult(data)
         queryForm.setFieldsValue({ fs: data.filesystem, path: data.path })
+        void loadSnapshots(data.filesystem, data.path)
       }
     } catch (err) {
       if (!controller.signal.aborted) setError(err instanceof Error ? err.message : '读取 CephFS 目录失败')
     } finally {
       if (!controller.signal.aborted) setLoading(false)
     }
-  }, [queryForm, selectedClusterId])
+  }, [loadSnapshots, queryForm, selectedClusterId])
 
   useEffect(() => {
     pending.current?.abort()
+    snapshotPending.current?.abort()
     setResult(null)
+    setSnapshots([])
+    setSnapshotError('')
     setFilesystems([])
     setError('')
     if (!selectedClusterId) return
@@ -83,7 +134,7 @@ export function CephFSDirectoryBrowser() {
     }).catch((err) => {
       if (active) setError(err instanceof Error ? err.message : '读取文件系统列表失败')
     })
-    return () => { active = false; pending.current?.abort() }
+    return () => { active = false; pending.current?.abort(); snapshotPending.current?.abort() }
   }, [load, queryForm, selectedClusterId])
 
   async function updateQuota(values: { max_bytes?: number; max_files?: number }) {
@@ -116,10 +167,44 @@ export function CephFSDirectoryBrowser() {
     })
   }
 
+  async function createSnapshot(values: { name: string }) {
+    if (!selectedClusterId || !result || mutating) return
+    setMutating(true)
+    try {
+      await mutateResource('/filesystem/entry/snapshot', 'POST', {
+        cluster_id: selectedClusterId,
+        fs: result.filesystem,
+        path: result.path,
+        name: values.name
+      })
+      setCreatingSnapshot(false)
+      snapshotForm.resetFields()
+      await loadSnapshots(result.filesystem, result.path)
+    } finally {
+      setMutating(false)
+    }
+  }
+
+  async function deleteSnapshot(snapshot: DirectorySnapshot) {
+    if (!selectedClusterId || !result || mutating) return
+    setMutating(true)
+    try {
+      await mutateResource('/filesystem/entry/snapshot', 'DELETE', {
+        cluster_id: selectedClusterId,
+        fs: result.filesystem,
+        path: result.path,
+        name: snapshot.name
+      })
+      await loadSnapshots(result.filesystem, result.path)
+    } finally {
+      setMutating(false)
+    }
+  }
+
   const current = result?.items[0]
   return <Card title="CephFS 目录浏览与配额">
     <Alert type="info" showIcon message="实时读取 CephFS 数据面" description="目录不会加入定时资源缓存。每次进入目录都会通过 cephfs-shell 读取直属子目录及其 max_bytes/max_files 配额；0 表示未限制。" />
-    <Form form={queryForm} layout="inline" initialValues={{ path: '/' }} onFinish={(values) => load(String(values.fs), String(values.path || '/'))}>
+    <Form form={queryForm} disabled={mutating} layout="inline" initialValues={{ path: '/' }} onFinish={(values) => load(String(values.fs), String(values.path || '/'))}>
       <Form.Item name="fs" label="文件系统" rules={[{ required: true }]}>
         <Select style={{ minWidth: 180 }} options={filesystems.map((value) => ({ label: value, value }))} />
       </Form.Item>
@@ -132,7 +217,7 @@ export function CephFSDirectoryBrowser() {
     {result && <>
       <Space wrap>
         <Typography.Text>当前位置：<Typography.Text code>{result.path}</Typography.Text></Typography.Text>
-        {current?.parent && <Button onClick={() => load(result.filesystem, current.parent!)} disabled={loading}>返回上级</Button>}
+        {current?.parent && <Button onClick={() => load(result.filesystem, current.parent!)} disabled={loading || mutating}>返回上级</Button>}
         <Typography.Text type="secondary">观测时间：{new Date(result.observed_at).toLocaleString()}</Typography.Text>
       </Space>
       <AppTable<DirectoryEntry>
@@ -141,7 +226,7 @@ export function CephFSDirectoryBrowser() {
         rowKey={(row) => row.path}
         pagination={false}
         columns={[
-          { title: '名称', dataIndex: 'name', render: (value, row) => row.path === result.path ? <Tag color="blue">{String(value)}（当前）</Tag> : <Button type="link" onClick={() => load(result.filesystem, row.path)}>{String(value)}</Button> },
+          { title: '名称', dataIndex: 'name', render: (value, row) => row.path === result.path ? <Tag color="blue">{String(value)}（当前）</Tag> : <Button type="link" disabled={mutating} onClick={() => load(result.filesystem, row.path)}>{String(value)}</Button> },
           { title: '路径', dataIndex: 'path', render: (value) => <Typography.Text code>{String(value)}</Typography.Text> },
           { title: '权限', dataIndex: 'mode', render: (value) => value || '—' },
           { title: 'UID / GID', render: (_, row) => row.uid === undefined ? '—' : `${row.uid} / ${row.gid}` },
@@ -151,12 +236,35 @@ export function CephFSDirectoryBrowser() {
           { title: '操作', render: (_, row) => row.quotas ? <Button onClick={() => openQuota(row)}>设置配额</Button> : '根目录不设置配额' }
         ]}
       />
+      <Card type="inner" title={`目录快照：${result.path}`} extra={<Space><Button loading={snapshotsLoading} onClick={() => loadSnapshots(result.filesystem, result.path)}>刷新</Button><Button type="primary" disabled={mutating} onClick={() => setCreatingSnapshot(true)}>创建快照</Button></Space>}>
+        {snapshotError && <Alert type="error" showIcon message="目录快照不可用" description={snapshotError} />}
+        {!snapshotError && snapshots.length === 0 && !snapshotsLoading && <Alert type="info" showIcon message="当前目录没有快照" />}
+        <AppTable<DirectorySnapshot>
+          loading={snapshotsLoading}
+          dataSource={snapshots}
+          rowKey={(row) => row.path}
+          pagination={false}
+          columns={[
+            { title: '名称', dataIndex: 'name' },
+            { title: '快照路径', dataIndex: 'path', render: (value) => <Typography.Text code>{String(value)}</Typography.Text> },
+            { title: '修改时间', dataIndex: 'modified_at', render: (value) => value || '—' },
+            { title: '操作', render: (_, row) => <Popconfirm title={`删除快照 ${row.name}？`} description="删除后无法恢复。" onConfirm={() => deleteSnapshot(row)}><Button danger disabled={mutating}>删除</Button></Popconfirm> }
+          ]}
+        />
+      </Card>
     </>}
     <Modal title={`设置目录配额：${editing?.path ?? ''}`} open={Boolean(editing)} confirmLoading={mutating} onCancel={() => !mutating && setEditing(null)} onOk={() => quotaForm.submit()}>
       <Alert type="warning" showIcon message="输入 0 可移除对应限制" />
       <Form form={quotaForm} layout="vertical" onFinish={updateQuota}>
         <Form.Item name="max_bytes" label="最大容量（字节）" rules={[{ type: 'number', min: 0 }]}><InputNumber min={0} precision={0} style={{ width: '100%' }} /></Form.Item>
         <Form.Item name="max_files" label="最大文件数" rules={[{ type: 'number', min: 0 }]}><InputNumber min={0} precision={0} style={{ width: '100%' }} /></Form.Item>
+      </Form>
+    </Modal>
+    <Modal title={`创建目录快照：${result?.path ?? ''}`} open={creatingSnapshot} confirmLoading={mutating} onCancel={() => !mutating && setCreatingSnapshot(false)} onOk={() => snapshotForm.submit()}>
+      <Form form={snapshotForm} layout="vertical" onFinish={createSnapshot}>
+        <Form.Item name="name" label="快照名称" rules={[{ required: true }, { pattern: /^(?![_.]{1,2}$)(?!_)[^/\r\n,]+$/, message: '名称不能以 _ 开头，且不能包含 /、逗号或换行' }]}>
+          <Input placeholder="例如 release-2026-10-01" />
+        </Form.Item>
       </Form>
     </Modal>
   </Card>

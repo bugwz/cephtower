@@ -358,6 +358,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true), "subvol": stringField(false), "group": stringField(false)}
 	case "GET /filesystem/entries":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(false)}
+	case "GET /filesystem/entry/snapshots":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true)}
 	case "GET /osd/inspection":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "osd_id": stringField(true), "section": {Type: "string", Required: true, Enum: []string{"metadata", "histogram"}}}
 	case "GET /configuration/option":
@@ -396,6 +398,10 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		return handler.MutationRequestContract("cephfs_authorization.create")
 	case "PATCH /filesystem/entry/quota":
 		return handler.MutationRequestContract("cephfs_entry.quota")
+	case "POST /filesystem/entry/snapshot":
+		return handler.MutationRequestContract("cephfs_entry_snapshot.create")
+	case "DELETE /filesystem/entry/snapshot":
+		return handler.MutationRequestContract("cephfs_entry_snapshot.delete")
 	case "POST /ceph/user":
 		return handler.MutationRequestContract("ceph_user.create")
 	case "PATCH /ceph/user":
@@ -456,7 +462,7 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 func mutationFieldUnion() map[string]handler.JSONField {
 	fields := map[string]handler.JSONField{}
 	for _, action := range handler.MutationContractActions() {
-		if action == "cephfs_entry.quota" {
+		if action == "cephfs_entry.quota" || action == "cephfs_entry_snapshot.create" || action == "cephfs_entry_snapshot.delete" {
 			continue
 		}
 		if action == "cephfs_authorization.create" || action == "cephfs_snapshot.clone" || action == "subvolume.clone_cancel" || action == "subvolume.create" || action == "subvolume.delete" || action == "subvolume.update" {

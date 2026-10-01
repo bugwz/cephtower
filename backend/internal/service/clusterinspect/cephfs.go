@@ -47,19 +47,24 @@ type CephFSDirectoryList struct {
 	ObservedAt time.Time         `json:"observed_at"`
 }
 
+type CephFSSnapshot struct {
+	Name       string `json:"name"`
+	Path       string `json:"path"`
+	ModifiedAt string `json:"modified_at"`
+}
+
+type CephFSSnapshotList struct {
+	Filesystem string           `json:"filesystem"`
+	Path       string           `json:"path"`
+	Items      []CephFSSnapshot `json:"items"`
+	ObservedAt time.Time        `json:"observed_at"`
+}
+
 func (s *Service) CephFSDirectories(ctx context.Context, clusterID uint64, filesystem, requestedPath string) (CephFSDirectoryList, error) {
-	filesystem = strings.TrimSpace(filesystem)
-	requestedPath = strings.TrimSpace(requestedPath)
-	if !cephFSNamePattern.MatchString(filesystem) {
-		return CephFSDirectoryList{}, invalid("filesystem is required or invalid")
+	filesystem, requestedPath, err := normalizeCephFSScope(filesystem, requestedPath)
+	if err != nil {
+		return CephFSDirectoryList{}, err
 	}
-	if requestedPath == "" {
-		requestedPath = "/"
-	}
-	if !strings.HasPrefix(requestedPath, "/") || len(requestedPath) > 32<<10 || strings.ContainsAny(requestedPath, "\x00\r\n,") {
-		return CephFSDirectoryList{}, invalid("path must be absolute and cannot contain commas or newlines")
-	}
-	requestedPath = path.Clean(requestedPath)
 	access, err := s.clusters.Access(ctx, clusterID)
 	if err != nil {
 		return CephFSDirectoryList{}, err
@@ -96,6 +101,54 @@ func (s *Service) CephFSDirectories(ctx context.Context, clusterID uint64, files
 	}
 	items = append(items, children...)
 	return CephFSDirectoryList{Filesystem: filesystem, Path: requestedPath, Items: items, ObservedAt: time.Now().UTC()}, nil
+}
+
+func (s *Service) CephFSSnapshots(ctx context.Context, clusterID uint64, filesystem, requestedPath string) (CephFSSnapshotList, error) {
+	filesystem, requestedPath, err := normalizeCephFSScope(filesystem, requestedPath)
+	if err != nil {
+		return CephFSSnapshotList{}, err
+	}
+	access, err := s.clusters.Access(ctx, clusterID)
+	if err != nil {
+		return CephFSSnapshotList{}, err
+	}
+	defer func() { access.ClientKey = "" }()
+	snapshotDirectory := path.Join(requestedPath, ".snap")
+	result, err := s.executor.Run(ctx, access, executor.CommandSpec{
+		ID: "cephfs.snapshot.list", Binary: executor.BinaryCephFSShell,
+		Args:    []string{"--fs", filesystem, "ls", "-la", quoteCephFSShellToken(snapshotDirectory)},
+		Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput,
+	})
+	if err != nil {
+		return CephFSSnapshotList{}, cephFSReadError(err)
+	}
+	directories, err := parseCephFSDirectories(snapshotDirectory, result.Stdout)
+	if err != nil {
+		return CephFSSnapshotList{}, err
+	}
+	items := make([]CephFSSnapshot, 0, len(directories))
+	for _, directory := range directories {
+		if strings.HasPrefix(directory.Name, "_") {
+			continue
+		}
+		items = append(items, CephFSSnapshot{Name: directory.Name, Path: directory.Path, ModifiedAt: directory.ModifiedAt})
+	}
+	return CephFSSnapshotList{Filesystem: filesystem, Path: requestedPath, Items: items, ObservedAt: time.Now().UTC()}, nil
+}
+
+func normalizeCephFSScope(filesystem, requestedPath string) (string, string, error) {
+	filesystem = strings.TrimSpace(filesystem)
+	requestedPath = strings.TrimSpace(requestedPath)
+	if !cephFSNamePattern.MatchString(filesystem) {
+		return "", "", invalid("filesystem is required or invalid")
+	}
+	if requestedPath == "" {
+		requestedPath = "/"
+	}
+	if !strings.HasPrefix(requestedPath, "/") || len(requestedPath) > 32<<10 || strings.ContainsAny(requestedPath, "\x00\r\n,") {
+		return "", "", invalid("path must be absolute and cannot contain commas or newlines")
+	}
+	return filesystem, path.Clean(requestedPath), nil
 }
 
 func (s *Service) populateCephFSQuotas(ctx context.Context, access executor.ClusterAccess, filesystem string, directories []CephFSDirectory) error {
@@ -218,7 +271,7 @@ func parseCephFSQuota(data []byte) (CephFSQuota, error) {
 }
 
 func quoteCephFSShellToken(value string) string {
-	if strings.ContainsAny(value, " \t'\"\\") {
+	if strings.HasPrefix(value, "-") || strings.ContainsAny(value, " \t'\"\\;|<>&$`()") {
 		return strconv.Quote(value)
 	}
 	return value

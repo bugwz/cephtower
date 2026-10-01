@@ -302,6 +302,38 @@ func TestCephFSEntryQuotaTargetsFilesystemAndVerifiesValue(t *testing.T) {
 	}
 }
 
+func TestCephFSEntrySnapshotCommandsAndReadback(t *testing.T) {
+	if cephFSEntrySnapshotMatches("cephfs_entry_snapshot.delete", map[string]any{"name": "snap"}, []byte("invalid listing")) {
+		t.Fatal("malformed listing verified snapshot deletion")
+	}
+	for _, tc := range []struct {
+		action, operation string
+		present           bool
+	}{{"cephfs_entry_snapshot.create", "create", true}, {"cephfs_entry_snapshot.delete", "delete", false}} {
+		parameters := map[string]any{"path": "/shared projects", "name": "release one"}
+		cmd, err := build(Request{Action: tc.action, ResourceKey: "filesystem/cephfs/entry"}, parameters)
+		if err != nil {
+			t.Fatal(err)
+		}
+		wantArgs := []string{"--fs", "cephfs", "snap", tc.operation, `"release one"`, `"/shared projects"`}
+		wantCheck := []string{"--fs", "cephfs", "ls", "-la", `"/shared projects/.snap"`}
+		if cmd.binary != executor.BinaryCephFSShell || !reflect.DeepEqual(cmd.args, wantArgs) || !reflect.DeepEqual(cmd.check, wantCheck) {
+			t.Fatalf("%s command = %+v", tc.action, cmd)
+		}
+		listing := []byte("drwxr-xr-x 0 0 0 2026-09-23 13:00:00 release one/\n")
+		if got := cephFSEntrySnapshotMatches(tc.action, parameters, listing); got != tc.present {
+			t.Fatalf("%s readback = %v", tc.action, got)
+		}
+	}
+	for _, parameters := range []map[string]any{
+		{"path": "relative", "name": "snap"}, {"path": "/data", "name": "../snap"}, {"path": "/data", "name": "_hidden"},
+	} {
+		if _, err := build(Request{Action: "cephfs_entry_snapshot.create", ResourceKey: "filesystem/cephfs/entry"}, parameters); err == nil {
+			t.Fatalf("invalid snapshot request accepted: %+v", parameters)
+		}
+	}
+}
+
 func TestFilesystemCreateRequiresPoolPair(t *testing.T) {
 	_, err := build(Request{Action: "filesystem.create", ResourceKey: "filesystem"}, map[string]any{
 		"name": "cephfs", "metadata_pool": "cephfs.meta",

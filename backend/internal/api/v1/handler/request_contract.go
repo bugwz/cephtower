@@ -206,6 +206,11 @@ func buildMutationRequestContracts() map[string]RequestContract {
 		"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true),
 		"max_bytes": integerField(false), "max_files": integerField(false),
 	}}
+	for _, action := range []string{"cephfs_entry_snapshot.create", "cephfs_entry_snapshot.delete"} {
+		contracts[action] = RequestContract{Required: true, Fields: map[string]JSONField{
+			"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true), "name": stringField(true),
+		}}
+	}
 	add([]string{"rgw_user.create"}, true, map[string]JSONField{"uid": stringField(true), "display_name": stringField(true), "max_buckets": integerField(false), "email": stringField(false)})
 	add([]string{"rgw_user.update"}, true, map[string]JSONField{"display_name": stringField(false), "email": stringField(false), "max_buckets": integerField(false), "suspended": boolField(false), "system": boolField(false)})
 	add([]string{"rgw_user.ratelimit"}, true, map[string]JSONField{"uid": stringField(true), "enabled": boolField(true), "max_read_ops": integerField(true), "max_write_ops": integerField(true), "max_read_bytes": integerField(true), "max_write_bytes": integerField(true)})

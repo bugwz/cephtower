@@ -93,3 +93,21 @@ func TestParseCephFSQuotaAcceptsPartialReadback(t *testing.T) {
 		t.Fatal("invalid quota accepted")
 	}
 }
+
+func TestCephFSSnapshotsListsVisibleSnapshotDirectories(t *testing.T) {
+	service, runner, clusterID := testInspection(t)
+	runner.output = "drwxr-xr-x 0 0 0 2026-09-23 13:00:00 snap one/\n" +
+		"drwxr-xr-x 0 0 0 2026-09-23 13:01:00 _internal/\n" +
+		"-rw-r--r-- 4 0 0 2026-09-23 13:02:00 not-a-snapshot\n"
+	result, err := service.CephFSSnapshots(context.Background(), clusterID, "cephfs", "/projects")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Items) != 1 || result.Items[0].Name != "snap one" || result.Items[0].Path != "/projects/.snap/snap one" {
+		t.Fatalf("snapshots = %+v", result.Items)
+	}
+	want := []string{"--fs", "cephfs", "ls", "-la", "/projects/.snap"}
+	if len(runner.specs) != 1 || runner.specs[0].ID != "cephfs.snapshot.list" || !reflect.DeepEqual(runner.specs[0].Args, want) {
+		t.Fatalf("spec = %+v", runner.specs)
+	}
+}

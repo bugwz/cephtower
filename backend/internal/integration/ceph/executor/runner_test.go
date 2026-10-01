@@ -38,7 +38,7 @@ test -n "$CEPH_CONF" || exit 21
 test -f "$CEPHFS_SHELL_CONF" || exit 23
 grep -q 'colors = False' "$CEPHFS_SHELL_CONF" || exit 24
 case "$CEPH_ARGS" in
-  *"--name=client.test"*"--keyring="*) ;;
+  *"--name=client.test"*"--keyring="*"--client_snapdir=.snap"*) ;;
   *) exit 22 ;;
 esac
 printf '%s\n' "$@"

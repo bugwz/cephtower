@@ -39,7 +39,7 @@
 | cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict` | 已有文件系统详情与客户端接口；计数器、rename、auth 与目录操作待核对 |
 | cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot`、`fs clone` | 已有组范围采集、clone 状态/进度/失败展示、快照克隆和进行中任务取消；metadata 与其余完整参数需核对 |
 | cephfs / snapshot schedule | `fs snap-schedule` | 已有全路径发现、精确状态、创建、删除、激活/停用、retention 和模块启用 |
-| cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 已有实时目录浏览、目录元数据、双维度配额读取/设置；目录快照待补齐 |
+| cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 已有实时目录浏览、目录元数据、双维度配额及目录快照列表/创建/删除；目录增删和重命名待补齐 |
 | nfs | `nfs cluster`、`nfs export` | 已有基础管理；完整 export 属性、CephFS/RGW FSAL 与 ingress 待核对 |
 | smb | `smb show/apply/rm` 与模块资源定义 | 已有部分管理；域加入、用户组、资源校验与配置语义需核对 |
 | rgw / user / account / role | `radosgw-admin user/account/role` 与 RGW Admin Ops | 当前存在基础页面；配额、subuser、caps、rate limit、角色策略等需逐项扩展 |
@@ -189,6 +189,24 @@ ANSI 转义。配额读取最多 8 路并发，且单层目录最多接受 500 �
 支持同时或分别设置 `max_bytes`、`max_files`，0 表示不限制；双字段写入分成两个明确的
 `setxattr` 步骤，最后在同一个指定文件系统回读两个属性并逐值核对。能力探测改用
 cephfs-shell 实际支持的 `--help`，不再调用不存在的 `--version`。
+
+## 已实现：CephFS 目录快照
+
+目录浏览页新增当前目录的快照表、创建表单和删除确认。参考 Dashboard
+`CephFS.ls_snapshots()`、`mk_snapshot()`、`rm_snapshot()`，数据面调用链为：
+
+- `GET /api/v1/filesystem/entry/snapshots` → `cephfs-shell --fs <fs> ls -la <path>/.snap`。
+- `POST /api/v1/filesystem/entry/snapshot` → `cephfs-shell --fs <fs> snap create <name> <path>`。
+- `DELETE /api/v1/filesystem/entry/snapshot` → `cephfs-shell --fs <fs> snap delete <name> <path>`。
+
+创建和删除通过同目录快照列表核验目标名称存在或消失；不可解析的列表不能证明删除成功。
+列表忽略普通文件、`.`、`..` 和以下划线开头的内部快照，与参考 Dashboard 的过滤一致。
+展示 `ls -l` 提供的修改时间，不将其冒充 libcephfs 的 `st_ctime` 创建时间。
+
+`client_snapdir` 是客户端虚拟目录名称。executor 给临时 cephfs-shell 客户端设置
+`--client_snapdir=.snap`，使列表与 `snap` 内部 `conf_get('client_snapdir')` 的路径一致，
+不会修改集群配置。写请求明确限定集群、文件系统、目录和名称，复用任务执行与审计链路。
+无集群测试覆盖目录快照发现、命令参数、名称校验、后置核验和 API 路由。
 
 ## 已实现：集群配置与运行日志
 

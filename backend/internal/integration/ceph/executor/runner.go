@@ -99,7 +99,9 @@ func (r *Runner) Run(ctx context.Context, access ClusterAccess, spec CommandSpec
 		if err := atomicWrite(shellConf, []byte("[cephfs-shell]\ncolors = False\n")); err != nil {
 			return CommandResult{}, fmt.Errorf("write cephfs-shell config: %w", err)
 		}
-		cmd.Env = append(os.Environ(), "CEPH_CONF="+conf, "CEPH_ARGS=--name="+access.ClientUsername+" --keyring="+keyring, "CEPHFS_SHELL_CONF="+shellConf)
+		// The snapshot directory name is a client-side virtual namespace. Use
+		// the same explicit name for listing and shell snapshot mutations.
+		cmd.Env = append(os.Environ(), "CEPH_CONF="+conf, "CEPH_ARGS=--name="+access.ClientUsername+" --keyring="+keyring+" --client_snapdir=.snap", "CEPHFS_SHELL_CONF="+shellConf)
 	}
 	configureCommandProcess(cmd)
 	cmd.Stdin = bytes.NewReader(spec.Stdin)
