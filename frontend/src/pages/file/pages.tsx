@@ -292,8 +292,7 @@ const definitions: Record<
       resourceKey: (row) => `filesystem/${fsName(row)}/subvolume-group/${groupName(row)}`
     },
     columns: [
-      { key: 'fs', title: '文件系统' },
-      { key: 'filesystem', title: '文件系统名称' },
+      { key: 'filesystem', title: '文件系统' },
       { key: 'name', title: '名称' },
       { key: 'data_pool', title: '数据池' },
       { key: 'bytes_quota', title: '配额', render: cephFSQuota },
@@ -517,7 +516,7 @@ const definitions: Record<
       { key: 'ceph_created_at', title: '创建时间', render: (value) => formatDateTime(value) },
       { key: 'data_pool', title: '数据池' },
       { key: 'has_pending_clones', title: '克隆依赖', render: snapshotPendingText },
-      { key: 'orphan_clones_count', title: '孤儿克隆记录', render: (_value, row) => snapshotDependencies(row).orphans ?? '未知' },
+      { key: 'orphan_clones_count', title: '孤儿克隆记录', filterKey: false, render: (_value, row) => snapshotDependencies(row).orphans ?? '未知' },
       { key: 'resource_version', title: '版本' }
     ]
   },

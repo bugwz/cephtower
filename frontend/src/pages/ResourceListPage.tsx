@@ -17,6 +17,7 @@ import { useResource } from '../hooks'
 import { useFeatureRequirements, type FeatureRequirements } from '../hooks/useFeatureRequirements'
 import { useMutationOperation } from '../hooks/useMutationOperation'
 import { useClusterContext } from '../state/ClusterContext'
+import { resourceColumnFilters, resourceFilterFields } from './resourceColumnFilters'
 import { message } from '../utils/appMessage'
 
 const { Text } = Typography
@@ -95,7 +96,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
   const [form] = Form.useForm<MutationFormValues>()
   const formValues = Form.useWatch([], form) as MutationFormValues | undefined
   const operationMutation = useMutationOperation()
-  const filterFields = useMemo(() => Array.from(new Set(definition.columns.map((column) => column.key))), [definition.columns])
+  const filterFields = useMemo(() => resourceFilterFields(definition.columns), [definition.columns])
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
       return emptyResult()
@@ -409,12 +410,8 @@ function buildColumns(
   const columns: ColumnsType<ApiRecord> = definition.columns.map((column) => ({
     title: column.title,
     dataIndex: column.key,
-    key: column.key,
+    ...resourceColumnFilters(column, filterOptions, columnFilters),
     ellipsis: true,
-    filterMultiple: true,
-    filterSearch: true,
-    filters: (filterOptions[column.key] ?? []).map((value) => ({ text: value, value })),
-    filteredValue: columnFilters[column.key] ?? null,
     render: (value, row) => column.render?.(value, row) ?? (value !== null && typeof value === 'object' && (!Array.isArray(value) || value.some((item) => item !== null && typeof item === 'object')) ? <Button type="link" size="small" onClick={() => openDetail({ [column.key]: value })}>{Array.isArray(value) ? `查看 ${value.length} 项` : '查看详情'}</Button> : renderValue(value))
   }))
 
