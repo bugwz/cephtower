@@ -15,6 +15,7 @@ import { CephFSCloneProgress } from './CephFSCloneProgress'
 import { SnapshotCloneDependenciesPanel } from './SnapshotCloneDependenciesPanel'
 import { snapshotDeleteReason, snapshotDependencies, snapshotPendingText } from './cephfsSnapshotDependencies'
 import { CephFSSubvolumeMount } from './CephFSAttachCommands'
+import { subvolumeUpdateBody, subvolumeUpdateInitialValues } from './cephfsSubvolumeForm'
 
 export function FilePoolsPage() {
   return <ResourceListPage definition={definitions.filePools} />
@@ -364,23 +365,12 @@ const definitions: Record<
       method: 'PATCH',
       successMessage: '子卷更新执行成功',
       fields: [
-        { name: 'size', label: '大小（字节）', type: 'number', required: true, min: 1, visibleWhen: (values) => !values.unlimited },
+        { name: 'size', label: '大小（字节）', type: 'number', required: true, min: 1, max: Number.MAX_SAFE_INTEGER, visibleWhen: (values) => !values.unlimited },
         { name: 'unlimited', label: '取消配额限制', type: 'boolean' },
-        { name: 'no_shrink', label: '禁止缩小现有配额', type: 'boolean' }
+        { name: 'no_shrink', label: '不允许配额低于已用空间', type: 'boolean', visibleWhen: (values) => !values.unlimited }
       ],
-      initialValues: (row) => ({
-        size: String(row?.bytes_quota ?? '').toLowerCase() === 'infinite' ? undefined : Number(row?.bytes_quota ?? 0) || undefined,
-        unlimited: String(row?.bytes_quota ?? '').toLowerCase() === 'infinite',
-        no_shrink: false
-      }),
-      buildBody: (values, clusterId, row) => ({
-        cluster_id: clusterId,
-        fs: fsName(row),
-        subvolume: subvolumeName(row),
-        group: groupName(row),
-        ...(values.unlimited ? { unlimited: true } : { size: Number(values.size) }),
-        no_shrink: Boolean(values.no_shrink)
-      })
+      initialValues: subvolumeUpdateInitialValues,
+      buildBody: (values, clusterId, row) => subvolumeUpdateBody(values, clusterId, fsName(row), subvolumeName(row), groupName(row))
     },
     extraActions: [
       {
