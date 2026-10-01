@@ -2,6 +2,7 @@ import { Alert, Button, Card, Col, Descriptions, Row, Space, Tag, Tree } from 'a
 import { useEffect, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { useClusterContext } from '../../state/ClusterContext'
+import { CrushRulesPanel } from './CrushRulesPanel'
 
 interface CrushMap { nodes: ApiRecord[]; roots: number[] }
 interface CrushTreeNode { key: string; title: string; nodeId: number; status: unknown; children: CrushTreeNode[] }
@@ -40,7 +41,7 @@ export function CrushMapPage() {
       .finally(() => { if (!abort.signal.aborted) setLoading(false) })
     return () => abort.abort()
   }, [selectedClusterId, revision])
-  return <Card title="CRUSH 拓扑" loading={loading} extra={<Button disabled={!selectedClusterId || loading} onClick={() => setRevision((value) => value + 1)}>刷新</Button>}>
+  return <><Card title="CRUSH 拓扑" loading={loading} extra={<Button disabled={!selectedClusterId || loading} onClick={() => setRevision((value) => value + 1)}>刷新</Button>}>
     {!selectedClusterId && <Alert type="info" message="请先选择集群" />}
     {error && <Alert type="error" message={error} />}
     {data && <Space direction="vertical" style={{ width: '100%' }}>
@@ -54,5 +55,5 @@ export function CrushMapPage() {
         </Col>
       </Row>
     </Space>}
-  </Card>
+  </Card><CrushRulesPanel /></>
 }
