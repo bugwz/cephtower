@@ -5,6 +5,12 @@
 
 ## 如何追踪调用链
 
+SMB 共享补充原生 `max_connections`：依据 `smb/resources.py` 的非负整数校验、
+`smb/handler.py` 的 Samba 配置生成及 `doc/mgr/smb.rst` 的字段说明，提供创建、
+编辑、列表展示和 API 整数契约。0 表示不限制连接数；创建省略使用原生默认值，
+更新省略保留原配置。通过 `smb apply` 写入，再用 `smb show` 验证上限。
+此项是原生能力扩展，并非已发现的 Dashboard 表单字段；仅完成离线测试，未做真实连接压测。
+
 - 参考界面：`docs/references/ceph/src/pybind/mgr/dashboard/frontend/src/app/ceph`。
 - 参考 HTTP 服务：同目录的 `shared/api`；[完整静态索引](dashboard-source-index.md)。
 - 参考接口实现：`dashboard/controllers`，底层 `dashboard/services`。

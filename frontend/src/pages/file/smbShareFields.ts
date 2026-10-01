@@ -12,6 +12,11 @@ export function smbShareInitialValues(row?: ApiRecord) {
 
 export function smbShareAccessBody(values: ApiRecord) {
   const result: ApiRecord = {}
+  if (values.max_connections !== undefined && values.max_connections !== null && values.max_connections !== '') {
+    const value = values.max_connections
+    if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) throw new Error('最大连接数必须为非负整数')
+    result.max_connections = value
+  }
   if (values.comment !== undefined) {
     if (typeof values.comment !== 'string' || /[\x00\r\n]/.test(values.comment)) throw new Error('共享描述必须为单行文本')
     result.comment = values.comment

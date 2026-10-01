@@ -613,6 +613,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -1339,6 +1341,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -3362,6 +3366,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -4088,6 +4094,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -5034,6 +5042,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -5855,6 +5865,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -6581,6 +6593,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -7500,6 +7514,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -8323,6 +8339,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -9050,6 +9068,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -10022,6 +10042,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -10842,6 +10864,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -11666,6 +11690,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -12487,6 +12513,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -13213,6 +13241,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -14186,6 +14216,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -15410,6 +15442,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -16138,6 +16172,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -16865,6 +16901,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -18231,6 +18269,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -19104,6 +19144,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -19927,6 +19969,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -20653,6 +20697,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -22037,6 +22083,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -22763,6 +22811,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -23507,6 +23557,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -24329,6 +24381,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -25055,6 +25109,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -25783,6 +25839,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -26790,6 +26848,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -27708,6 +27768,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -28529,6 +28591,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -29255,6 +29319,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -30116,6 +30182,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -30843,6 +30911,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -31987,6 +32057,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -33000,6 +33072,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -33820,6 +33894,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -34644,6 +34720,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -35465,6 +35543,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -36191,6 +36271,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -37110,6 +37192,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -37931,6 +38015,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -38657,6 +38743,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -39481,6 +39569,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -40207,6 +40297,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -41031,6 +41123,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -41757,6 +41851,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -42581,6 +42677,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -43402,6 +43500,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -44128,6 +44228,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -45120,6 +45222,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -45942,6 +46046,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -46670,6 +46776,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -47397,6 +47505,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -48220,6 +48330,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -48981,6 +49093,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -49995,6 +50109,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -50816,6 +50932,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -51542,6 +51660,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -52366,6 +52486,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -53093,6 +53215,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -53822,6 +53946,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -54549,6 +54675,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -55373,6 +55501,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -56194,6 +56324,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -56920,6 +57052,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -57766,6 +57900,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -58493,6 +58629,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -59219,6 +59357,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -60334,6 +60474,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -61134,6 +61276,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -61862,6 +62006,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -62588,6 +62734,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -63412,6 +63560,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -64234,6 +64384,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -64961,6 +65113,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -65801,6 +65955,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -66527,6 +66683,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -67255,6 +67413,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -67982,6 +68142,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -68806,6 +68968,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -69627,6 +69791,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -70353,6 +70519,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -71183,6 +71351,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -71911,6 +72081,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -72638,6 +72810,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -73462,6 +73636,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -74190,6 +74366,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -74916,6 +75094,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -75740,6 +75920,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -76466,6 +76648,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -77194,6 +77378,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -77921,6 +78107,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -78840,6 +79028,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -79661,6 +79851,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -80387,6 +80579,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -81116,6 +81310,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -81844,6 +82040,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -82570,6 +82768,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -83299,6 +83499,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -84026,6 +84228,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -84850,6 +85054,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -85576,6 +85782,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -86305,6 +86513,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -87031,6 +87241,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -88090,6 +88302,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -88911,6 +89125,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -89637,6 +89853,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -90461,6 +90679,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -91282,6 +91502,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -92008,6 +92230,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -92832,6 +93056,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -93559,6 +93785,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -94285,6 +94513,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -95109,6 +95339,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -95930,6 +96162,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -96656,6 +96890,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -97480,6 +97716,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -98207,6 +98445,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -98933,6 +99173,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer
@@ -99852,6 +100094,8 @@ paths:
                   type: integer
                 max_buckets:
                   type: integer
+                max_connections:
+                  type: integer
                 max_groups:
                   type: integer
                 max_mds:
@@ -100579,6 +100823,8 @@ paths:
                 max_access_keys:
                   type: integer
                 max_buckets:
+                  type: integer
+                max_connections:
                   type: integer
                 max_groups:
                   type: integer

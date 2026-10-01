@@ -295,6 +295,8 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	contracts["smb_share.create"].Fields["subvolume"] = stringField(false)
 	contracts["smb_share.update"].Fields["subvolume"] = stringField(false)
 	contracts["smb_share.update"].Fields["browseable"] = boolField(false)
+	contracts["smb_share.create"].Fields["max_connections"] = integerField(false)
+	contracts["smb_share.update"].Fields["max_connections"] = integerField(false)
 	contracts["smb_share.update"].Fields["comment"] = stringField(false)
 	contracts["smb_share.update"].Fields["restrict_access"] = boolField(false)
 	contracts["smb_share.create"].Fields["restrict_access"] = boolField(false)

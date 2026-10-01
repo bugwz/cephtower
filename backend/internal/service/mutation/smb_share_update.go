@@ -69,6 +69,11 @@ func smbShareUpdateJSON(data []byte, request Request) ([]byte, error) {
 		return nil, err
 	}
 	fs := record["cephfs"].(map[string]any)
+	if value, exists, err := optionalNonNegativeInteger(request.Parameters, "max_connections"); err != nil {
+		return nil, err
+	} else if exists {
+		record["max_connections"] = json.Number(value)
+	}
 	if err := applySMBLoginControl(record, request.Parameters); err != nil {
 		return nil, err
 	}
