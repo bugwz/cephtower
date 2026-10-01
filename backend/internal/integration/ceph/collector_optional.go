@@ -514,17 +514,33 @@ func (p *NativeProvider) collectConfigurationOptional(ctx context.Context, acces
 		}
 	}
 	rows = append(rows, p.collectManagerModules(ctx, access, now)...)
-	var rules any
-	if p.optional(ctx, access, executor.BinaryCeph, "collect.crush_rule", []string{"osd", "crush", "rule", "dump", "--format", "json"}, &rules) {
-		for index, item := range objectList(rules) {
-			name := textField(item, "rule_name", "name")
-			if name == "" {
-				name = strconv.Itoa(index)
-			}
-			rows = append(rows, observation("crush_rule", name, name, "ceph_cli", item, now))
-		}
-	}
+	rows = append(rows, p.collectCrushRules(ctx, access, now)...)
 	return append(rows, p.collectErasureProfiles(ctx, access, now)...)
+}
+
+func (p *NativeProvider) collectCrushRules(ctx context.Context, access ClusterAccess, now time.Time) []Observation {
+	var rules []map[string]any
+	if !p.optional(ctx, access, executor.BinaryCeph, "collect.crush_rule", []string{"osd", "crush", "rule", "dump", "--format", "json"}, &rules) {
+		return nil
+	}
+	var rows []Observation
+	names, ids := map[string]bool{}, map[int64]bool{}
+	if rules == nil {
+		markCollectionUnavailable(ctx, "collect.crush_rule")
+		return nil
+	}
+	for _, item := range rules {
+		name, named := item["rule_name"].(string)
+		idNumber, numbered := item["rule_id"].(json.Number)
+		id, err := idNumber.Int64()
+		if !named || strings.TrimSpace(name) == "" || !numbered || err != nil || id < 0 || names[name] || ids[id] {
+			markCollectionUnavailable(ctx, "collect.crush_rule")
+			return nil
+		}
+		names[name], ids[id] = true, true
+		rows = append(rows, observation("crush_rule", name, name, "ceph_cli", item, now))
+	}
+	return rows
 }
 
 func (p *NativeProvider) collectErasureProfiles(ctx context.Context, access ClusterAccess, now time.Time) []Observation {
