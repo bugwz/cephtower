@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import type { PageKey } from '../navigation'
 import { ConfigurationPage } from './cluster/ConfigurationPage'
 import { UpgradePage } from './cluster/UpgradePage'
+import { CrushMapPage } from './cluster/CrushMapPage'
 import { CephUsersPage } from './cluster/CephUsersPage'
 import { AuditPage } from './audit/AuditPage'
 import {
@@ -93,6 +94,7 @@ export const pageComponents: Record<PageKey, ComponentType> = {
   cephUsers: CephUsersPage,
   clusterConfiguration: ConfigurationPage,
   clusterUpgrade: UpgradePage,
+  crushMap: CrushMapPage,
   clusterManagement: ClusterPage,
   poolManagement: PoolManagementPage,
   hostManagement: HostPage,
