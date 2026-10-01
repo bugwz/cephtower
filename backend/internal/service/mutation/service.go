@@ -186,12 +186,16 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			spec.check = []string{"nfs", "export", "ls", cluster, "--detailed", "--format", "json"}
 		}
 	}
-	if request.Action == "smb_share.update" {
+	if request.Action == "smb_share.update" || request.Action == "smb_cluster.update" {
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 		if checkErr != nil {
 			return cephdomain.ActionResult{}, normalize(checkErr)
 		}
-		spec.stdin, err = smbShareUpdateJSON(checked.Stdout, request)
+		if request.Action == "smb_cluster.update" {
+			spec.stdin, err = smbClusterUpdateJSON(checked.Stdout, request)
+		} else {
+			spec.stdin, err = smbShareUpdateJSON(checked.Stdout, request)
+		}
 		if err != nil {
 			return cephdomain.ActionResult{}, err
 		}
@@ -226,7 +230,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		return cephdomain.ActionResult{}, normalize(err)
 	}
-	if request.Action == "smb_share.update" {
+	if request.Action == "smb_share.update" || request.Action == "smb_cluster.update" {
 		var applied struct {
 			Success bool `json:"success"`
 		}
@@ -285,6 +289,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		if request.Action == "smb_share.update" && !smbShareUpdateMatches(spec.stdin, checked.Stdout, request) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB share update was accepted but requested and preserved settings could not be verified; the change may already have taken effect", Retryable: true}
+		}
+		if request.Action == "smb_cluster.update" && !smbClusterUpdateMatches(spec.stdin, checked.Stdout, request) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB cluster settings could not be verified; the change may already have taken effect", Retryable: true}
 		}
 		if (request.Action == "smb_share.create" || request.Action == "smb_share.delete") && !smbShareStateMatches(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB share command was accepted but its expected presence or absence could not be verified; the change may already have taken effect", Retryable: true}
@@ -2354,11 +2361,11 @@ func build(request Request, p map[string]any) (command, error) {
 		return ceph([]string{"smb", "cluster", "create", name, authMode}, []string{"smb", "cluster", "ls", "--format", "json"}), nil
 	case "smb_cluster.update":
 		name := last(tail)
-		authMode, err := enum(p, "auth_mode", "user", "active-directory")
+		_, err := enum(p, "auth_mode", "user", "active-directory")
 		if err != nil {
 			return command{}, err
 		}
-		return ceph([]string{"smb", "cluster", "create", name, authMode}, []string{"smb", "cluster", "ls", "--format", "json"}), nil
+		return ceph([]string{"smb", "apply", "-i", "-", "--format", "json"}, []string{"smb", "show", "ceph.smb.cluster." + name, "--format", "json"}), nil
 	case "smb_cluster.delete":
 		return ceph([]string{"smb", "cluster", "rm", last(tail)}, []string{"smb", "cluster", "ls", "--format", "json"}), nil
 	case "smb_share.create", "smb_share.update":
