@@ -3,8 +3,47 @@ package ceph
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"testing"
 )
+
+func TestConfigurationOptionsAreCollectedAsCompleteLists(t *testing.T) {
+	for _, test := range []struct {
+		response string
+		valid    bool
+		count    int
+	}{
+		{`[]`, true, 0},
+		{`["osd_memory_target","mgr/dashboard/ssl_server_port"]`, true, 2},
+		{`null`, false, 0}, {`{}`, false, 0}, {`[null]`, false, 0},
+		{`["good",""]`, false, 0}, {`["good"," padded"]`, false, 0},
+		{`["good","good"]`, false, 0}, {`["good",1]`, false, 0},
+	} {
+		provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+			"collect.config_option": []byte(test.response),
+			"collect.config":        []byte(`[{"section":"global","name":"test","value":"0"}]`),
+		}}}
+		result, err := provider.CollectWithMetadata(context.Background(), ClusterAccess{}, "configuration")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if slices.Contains(result.UnavailableKinds, "config_option") == test.valid {
+			t.Fatalf("response=%s unavailable=%v", test.response, result.UnavailableKinds)
+		}
+		options, values := 0, 0
+		for _, row := range result.Observations {
+			if row.Kind == "config_option" {
+				options++
+			}
+			if row.Kind == "config_value" {
+				values++
+			}
+		}
+		if options != test.count || values != 1 {
+			t.Fatalf("response=%s options=%d values=%d", test.response, options, values)
+		}
+	}
+}
 
 func TestConfigurationRejectsUnknownOrAmbiguousValues(t *testing.T) {
 	for _, response := range []string{

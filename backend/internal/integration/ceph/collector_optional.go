@@ -509,8 +509,21 @@ func (p *NativeProvider) collectConfigurationOptional(ctx context.Context, acces
 	var rows []Observation
 	var options []string
 	if p.optional(ctx, access, executor.BinaryCeph, "collect.config_option", []string{"config", "ls", "--format", "json"}, &options) {
+		valid := options != nil
+		seen := make(map[string]bool, len(options))
 		for _, name := range options {
-			rows = append(rows, observation("config_option", name, name, "ceph_cli", map[string]any{"name": name}, now))
+			if name == "" || strings.TrimSpace(name) != name || seen[name] {
+				valid = false
+				break
+			}
+			seen[name] = true
+		}
+		if !valid {
+			markCollectionUnavailable(ctx, "collect.config_option")
+		} else {
+			for _, name := range options {
+				rows = append(rows, observation("config_option", name, name, "ceph_cli", map[string]any{"name": name}, now))
+			}
 		}
 	}
 	rows = append(rows, p.collectManagerModules(ctx, access, now)...)
