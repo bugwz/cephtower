@@ -14,6 +14,14 @@ import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 
 interface ConfigurationForm { who: string; name: string; value: string }
+type OverrideFilter = 'all' | 'configured' | 'unconfigured'
+
+function filterConfigurationOptions(options: ApiRecord[], values: ApiRecord[], filter: OverrideFilter, fresh: boolean): ApiRecord[] {
+  if (filter === 'all') return options
+  if (!fresh) return []
+  const configured = new Set(values.map((row) => row.name))
+  return options.filter((row) => configured.has(row.name) === (filter === 'configured'))
+}
 
 function configurationOverrides(rows: ApiRecord[], name: unknown): ApiRecord[] {
   return typeof name === 'string' && name.length > 0 ? rows.filter((row) => row.name === name) : []
@@ -37,6 +45,7 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
   const scope = scopeRef.current
   const running = useRef(false)
   const [search, setSearch] = useState('')
+  const [overrideFilter, setOverrideFilter] = useState<OverrideFilter>('all')
   const [busy, setBusy] = useState(false)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<ApiRecord | null>(null)
@@ -121,6 +130,8 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
   }
   const matches = (row: ApiRecord) => `${row.name} ${row.who ?? ''} ${row.value ?? ''}`.toLowerCase().includes(search.toLowerCase())
   const blocked = busy || loading || !selectedClusterId || Boolean(error)
+  const overridesFresh = !loading && !error && data?.stale === false && data.values.every((row) => row.stale === false)
+  const filteredOptions = filterConfigurationOptions(data?.options ?? [], data?.values ?? [], overrideFilter, overridesFresh).filter(matches)
   const valueTable = <AppTable<ApiRecord> size="small" rowKey="natural_key" dataSource={data?.values.filter(matches) ?? []} pagination={{ defaultPageSize: 20, showSizeChanger: true }} columns={[
     { title: '作用域', dataIndex: 'who' }, { title: '配置名', dataIndex: 'name' },
     { title: '值', dataIndex: 'value', render: (value) => <Typography.Text style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{String(value ?? '')}</Typography.Text> },
@@ -138,10 +149,17 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
       <Input.Search allowClear placeholder="搜索配置名、作用域或已设置的值" value={search} onChange={(event) => setSearch(event.target.value)} />
       <Tabs items={[
         { key: 'values', label: `已设置的配置（${data?.values.length ?? 0}）`, children: valueTable },
-        { key: 'options', label: `全部选项（${data?.options.length ?? 0}）`, children: <AppTable<ApiRecord> size="small" rowKey="name" dataSource={data?.options.filter(matches) ?? []} pagination={{ defaultPageSize: 20, showSizeChanger: true }} columns={[
+        { key: 'options', label: `全部选项（${data?.options.length ?? 0}）`, children: <Space direction="vertical" className="full-width-control">
+          <Space wrap><Typography.Text>显式覆盖</Typography.Text><Select aria-label="配置覆盖状态" value={overrideFilter} onChange={setOverrideFilter} style={{ minWidth: 190 }} options={[
+            { label: '全部选项', value: 'all' },
+            { label: '已设置覆盖（mon）', value: 'configured', disabled: !overridesFresh },
+            { label: '未设置显式覆盖', value: 'unconfigured', disabled: !overridesFresh }
+          ]} /><Typography.Text type="secondary">筛选结果 {filteredOptions.length} 项；未设置覆盖不代表没有有效配置。</Typography.Text></Space>
+          {overrideFilter !== 'all' && !overridesFresh && <Alert type="warning" showIcon message="配置库存不可用或已过期，暂不能判定覆盖状态，请刷新或选择全部选项。" />}
+          <AppTable<ApiRecord> size="small" rowKey="name" dataSource={filteredOptions} pagination={{ defaultPageSize: 20, showSizeChanger: true }} columns={[
           { title: '配置选项', dataIndex: 'name' }, { title: '已配置作用域', render: (_, row) => data?.values.filter((value) => value.name === row.name).map((value) => <Tag key={String(value.natural_key)}>{String(value.who)}</Tag>) },
           { title: '操作', render: (_, row) => <TableActions><TableAction onClick={() => showDetails(String(row.name))}>详情</TableAction><TableAction disabled={blocked} onClick={() => edit(row)}>设置</TableAction></TableActions> }
-        ]} /> }
+        ]} /></Space> }
       ]} />
     </Card>
     <Drawer title="配置选项详情" open={detailOpen} width="min(900px, 95vw)" onClose={() => { detailsRequest.current++; setDetailOpen(false) }}>

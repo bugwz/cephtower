@@ -4,7 +4,7 @@ import ts from 'typescript'
 
 const source = readFileSync(new URL('../src/pages/cluster/ConfigurationPage.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('ConfigurationPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-const names = ['configurationOverrides', 'configurationList', 'configurationRuntime']
+const names = ['configurationOverrides', 'configurationList', 'configurationRuntime', 'filterConfigurationOptions']
 const code = ts.transpileModule(tree.statements.filter((node) => ts.isFunctionDeclaration(node) && names.includes(node.name.text)).map((node) => node.getText(tree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const helpers = new Function(`${code}; return { ${names.join(', ')} }`)()
 const rows = [
@@ -17,6 +17,12 @@ const rows = [
 assert.deepEqual(helpers.configurationOverrides(rows, 'option'), [rows[0], rows[1], rows[2], rows[4]])
 for (const name of [undefined, null, '', 'missing', 'opt']) assert.deepEqual(helpers.configurationOverrides(rows, name), [])
 assert.deepEqual(helpers.configurationOverrides([], 'option'), [])
+const options = [{ name: 'option' }, { name: 'unset' }, { name: 'other' }]
+assert.deepEqual(helpers.filterConfigurationOptions(options, rows, 'configured', true), [options[0], options[2]])
+assert.deepEqual(helpers.filterConfigurationOptions(options, rows, 'unconfigured', true), [options[1]])
+assert.deepEqual(helpers.filterConfigurationOptions(options, [], 'unconfigured', true), options)
+for (const filter of ['configured', 'unconfigured']) assert.deepEqual(helpers.filterConfigurationOptions(options, rows, filter, false), [])
+assert.deepEqual(helpers.filterConfigurationOptions(options, rows, 'all', false), options)
 assert.equal(helpers.configurationList(['osd', 'mgr']), 'osd、mgr')
 assert.equal(helpers.configurationList([]), '无')
 for (const value of [undefined, null, false, 'osd', [1], [{}]]) assert.equal(helpers.configurationList(value), '未采集')
