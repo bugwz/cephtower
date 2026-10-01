@@ -2,8 +2,11 @@ package mutation
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"testing"
+
+	cephdomain "cephtower/backend/internal/domain/ceph"
 )
 
 func TestUpgradeControlReadback(t *testing.T) {
@@ -91,6 +94,14 @@ func TestUpgradeStartChecksTarget(t *testing.T) {
 			t.Fatal("unverified target accepted")
 		}
 	}
+	e.specs = nil
+	e.failID = r.Action + ".post_check"
+	_, err := s.Execute(context.Background(), r)
+	var actionError *cephdomain.ActionError
+	if !errors.As(err, &actionError) || actionError.Retryable || actionError.Code != "post_check_failed" {
+		t.Fatalf("uncertain start may be retried: %v", err)
+	}
+	e.failID = ""
 	e.specs = nil
 	e.outputs[r.Action+".pre_check"] = "Incompatible upgrade"
 	if _, err := s.Execute(context.Background(), r); err == nil || len(e.specs) != 1 {
