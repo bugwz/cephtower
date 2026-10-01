@@ -38,7 +38,7 @@ func TestNFSClusterExecuteRejectsUnverifiedState(t *testing.T) {
 		if action == "nfs_cluster.delete" {
 			good, bad = bad, good
 		}
-		runner := &directoryRenameExecutor{outputs: map[string]string{action + ".post_check": bad}}
+		runner := &directoryRenameExecutor{outputs: map[string]string{action + ".post_check": bad, action + ".pre_check": `[]`}}
 		service.executor = runner
 		_, err := service.Execute(context.Background(), request)
 		var actionErr *cephdomain.ActionError
@@ -48,6 +48,18 @@ func TestNFSClusterExecuteRejectsUnverifiedState(t *testing.T) {
 		runner.outputs[action+".post_check"] = good
 		if _, err := service.Execute(context.Background(), request); err != nil {
 			t.Fatal(err)
+		}
+	}
+}
+
+func TestNFSClusterCreatePrecheck(t *testing.T) {
+	service, _, id := newCephUserService(t)
+	for _, data := range []string{`["target"]`, `null`, `{}`, `[] []`, `["other","other"]`} {
+		runner := &directoryRenameExecutor{outputs: map[string]string{"nfs_cluster.create.pre_check": data}}
+		service.executor = runner
+		_, err := service.Execute(context.Background(), Request{ClusterID: id, Action: "nfs_cluster.create", ResourceKey: "nfs/cluster", Parameters: map[string]any{"name": "target", "nfs_port": 2050}})
+		if err == nil || len(runner.specs) != 1 || runner.specs[0].Mutating {
+			t.Fatalf("unsafe creation reached mutation for %s", data)
 		}
 	}
 }

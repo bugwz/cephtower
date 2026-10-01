@@ -113,6 +113,15 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if err != nil {
 		return cephdomain.ActionResult{}, err
 	}
+	if request.Action == "nfs_cluster.create" {
+		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: executor.BinaryCeph, Args: []string{"nfs", "cluster", "ls", "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if checkErr != nil {
+			return cephdomain.ActionResult{}, normalize(checkErr)
+		}
+		if !nfsClusterPresenceMatches(checked.Stdout, optional(request.Parameters, "name"), false) {
+			return cephdomain.ActionResult{}, invalid("NFS cluster already exists or its absence could not be verified; creation cannot update an existing cluster")
+		}
+	}
 	if (request.Action == "nfs_export.create" || request.Action == "nfs_export.update") && optional(request.Parameters, "fsal_type") == "RGW" {
 		if _, scoped := request.Parameters["rgw_bucket_tenant"]; scoped {
 			bucket, tenant := optional(request.Parameters, "path"), optional(request.Parameters, "rgw_bucket_tenant")

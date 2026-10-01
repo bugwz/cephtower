@@ -12,6 +12,13 @@ func nfsClusterStateMatches(request Request, data []byte) bool {
 	if request.Action == "nfs_cluster.delete" {
 		name = last(resourceTail(request.ResourceKey))
 	}
+	if request.Action != "nfs_cluster.create" && request.Action != "nfs_cluster.delete" {
+		return false
+	}
+	return nfsClusterPresenceMatches(data, name, request.Action == "nfs_cluster.create")
+}
+
+func nfsClusterPresenceMatches(data []byte, name string, present bool) bool {
 	if name == "" {
 		return false
 	}
@@ -31,8 +38,5 @@ func nfsClusterStateMatches(request Request, data []byte) bool {
 		}
 		seen[entry] = true
 	}
-	if request.Action == "nfs_cluster.create" {
-		return seen[name]
-	}
-	return request.Action == "nfs_cluster.delete" && !seen[name]
+	return seen[name] == present
 }
