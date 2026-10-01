@@ -269,6 +269,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"smb_cluster.create"}, true, map[string]JSONField{"name": stringField(true), "auth_mode": stringField(false, "user", "active-directory")})
 	add([]string{"smb_cluster.update"}, true, map[string]JSONField{"auth_mode": stringField(true, "user", "active-directory")})
 	contracts["smb_cluster.update"].Fields["custom_dns"] = stringsField(false)
+	contracts["smb_cluster.update"].Fields["user_group_ref"] = stringsField(false)
 	add([]string{"smb_share.create", "smb_share.update"}, true, map[string]JSONField{"cluster": stringField(true), "name": stringField(false), "share_name": stringField(false), "filesystem": stringField(true), "path": stringField(false)})
 	contracts["smb_share.update"].Fields["readonly"] = boolField(false)
 	contracts["smb_share.create"].Fields["readonly"] = boolField(false)

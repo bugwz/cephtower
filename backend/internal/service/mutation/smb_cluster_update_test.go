@@ -62,3 +62,34 @@ func TestSMBClusterDNSUpdate(t *testing.T) {
 		}
 	}
 }
+
+func TestSMBClusterUserGroupReferences(t *testing.T) {
+	request := Request{ResourceKey: "smb/cluster/a", Parameters: map[string]any{"auth_mode": "user", "user_group_ref": []string{"team", "ops"}}}
+	before := []byte(`{"resource_type":"ceph.smb.cluster","cluster_id":"a","auth_mode":"active-directory","domain_settings":{"realm":"EXAMPLE.COM"},"custom_dns":["192.0.2.1"]}`)
+	data, err := smbClusterUpdateJSON(before, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var record map[string]any
+	if err := json.Unmarshal(data, &record); err != nil {
+		t.Fatal(err)
+	}
+	refs := record["user_group_settings"].([]any)
+	if len(refs) != 2 || refs[0].(map[string]any)["ref"] != "team" || refs[0].(map[string]any)["source_type"] != "resource" || record["domain_settings"] != nil || record["custom_dns"] == nil {
+		t.Fatal(record)
+	}
+	if !smbClusterUpdateMatches(data, data, request) || smbClusterUpdateMatches(data, before, request) {
+		t.Fatal("reference readback failed")
+	}
+	for _, bad := range []any{nil, []string{}, []string{"team", "team"}, []string{"bad/id"}, []string{"abcdefghijklmnopqrs"}, "team", []any{1}} {
+		request.Parameters["user_group_ref"] = bad
+		if _, err := smbClusterUpdateJSON(before, request); err == nil {
+			t.Fatalf("invalid references accepted: %v", bad)
+		}
+	}
+	request.Parameters["user_group_ref"] = []string{"team"}
+	request.Parameters["auth_mode"] = "active-directory"
+	if _, err := smbClusterUpdateJSON(before, request); err == nil {
+		t.Fatal("local references accepted in AD mode")
+	}
+}

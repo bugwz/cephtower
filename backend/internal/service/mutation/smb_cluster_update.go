@@ -6,7 +6,10 @@ import (
 	"io"
 	"net"
 	"reflect"
+	"regexp"
 )
+
+var smbResourceIDPattern = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,16}[a-zA-Z0-9])?$`)
 
 func smbClusterRecord(data []byte, request Request) (map[string]any, error) {
 	var record map[string]any
@@ -32,6 +35,24 @@ func smbClusterUpdateJSON(data []byte, request Request) ([]byte, error) {
 		return nil, err
 	}
 	record["auth_mode"] = mode
+	if value, exists := request.Parameters["user_group_ref"]; exists {
+		data, err := json.Marshal(value)
+		var refs []string
+		if err != nil || json.Unmarshal(data, &refs) != nil || len(refs) == 0 || mode != "user" {
+			return nil, invalid("user_group_ref requires a non-empty list in user authentication mode")
+		}
+		sources := make([]map[string]string, 0, len(refs))
+		seen := map[string]bool{}
+		for _, ref := range refs {
+			if !smbResourceIDPattern.MatchString(ref) || seen[ref] {
+				return nil, invalid("user_group_ref requires unique valid SMB resource IDs")
+			}
+			seen[ref] = true
+			sources = append(sources, map[string]string{"source_type": "resource", "ref": ref})
+		}
+		record["user_group_settings"] = sources
+		delete(record, "domain_settings")
+	}
 	if value, exists := request.Parameters["custom_dns"]; exists {
 		data, err := json.Marshal(value)
 		var servers []string
@@ -55,6 +76,9 @@ func smbClusterUpdateMatches(wanted, actual []byte, request Request) bool {
 	}
 	found, err := smbClusterRecord(actual, request)
 	if err != nil {
+		return false
+	}
+	if _, changed := request.Parameters["user_group_ref"]; changed && found["domain_settings"] != nil {
 		return false
 	}
 	for key, value := range expected {

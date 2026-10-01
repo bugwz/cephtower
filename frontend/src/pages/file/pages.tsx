@@ -2,7 +2,7 @@ import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClusterDetails } from './NFSClusterDetails'
 import { SMBClusterDetails } from './SMBClusterDetails'
-import { smbClusterInitialValues, smbClusterDNSBody } from './smbClusterFields'
+import { smbClusterInitialValues, smbClusterDNSBody, smbClusterUserGroupsBody } from './smbClusterFields'
 import { smbCephFS, smbShareInitialValues, smbShareAccessBody, smbBooleanText } from './smbShareFields'
 import { NFSClientsEditor } from './NFSClientsEditor'
 import { nfsClientsBody, nfsFSALBody, nfsRGWUserChoices, nfsRGWBucketChoices } from './nfsExportFields'
@@ -761,6 +761,7 @@ const definitions: Record<
       method: 'PATCH',
       successMessage: 'SMB 集群更新执行成功',
       fields: [
+        { name: 'user_group_ref', label: '用户组资源 ID', type: 'textarea', placeholder: '每行一个已有资源 ID；切换为本地用户模式时将替换域设置', visibleWhen: (values) => values.auth_mode === 'user' },
         { name: 'custom_dns', label: '自定义 DNS 地址', type: 'textarea', placeholder: '每行一个 IPv4/IPv6 地址；清空已知列表表示移除自定义 DNS' },
         {
           name: 'auth_mode',
@@ -778,6 +779,7 @@ const definitions: Record<
         cluster_id: clusterId,
         name: resourceName(row),
         auth_mode: String(values.auth_mode ?? 'user'),
+        ...smbClusterUserGroupsBody(values),
         ...smbClusterDNSBody(values)
       })
     },

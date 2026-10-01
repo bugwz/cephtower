@@ -842,6 +842,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -1521,6 +1525,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -3495,6 +3503,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -4174,6 +4186,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -5071,6 +5087,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -5844,6 +5864,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -6523,6 +6547,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -7393,6 +7421,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -8168,6 +8200,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -8848,6 +8884,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -9771,6 +9811,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -10544,6 +10588,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -11319,6 +11367,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -12092,6 +12144,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -12771,6 +12827,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -13696,6 +13756,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -14871,6 +14935,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -15551,6 +15619,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -16231,6 +16303,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -17548,6 +17624,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -18373,6 +18453,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -19148,6 +19232,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -19827,6 +19915,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -21162,6 +21254,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -21841,6 +21937,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -22537,6 +22637,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -23310,6 +23414,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -23989,6 +24097,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -24669,6 +24781,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -25627,6 +25743,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -26497,6 +26617,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -27270,6 +27394,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -27949,6 +28077,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -28761,6 +28893,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -29441,6 +29577,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -30536,6 +30676,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -31501,6 +31645,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -32274,6 +32422,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -33049,6 +33201,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -33822,6 +33978,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -34501,6 +34661,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -35371,6 +35535,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -36144,6 +36312,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -36823,6 +36995,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -37598,6 +37774,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -38277,6 +38457,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -39052,6 +39236,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -39731,6 +39919,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -40506,6 +40698,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -41279,6 +41475,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -41958,6 +42158,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -42901,6 +43105,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -43675,6 +43883,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -44355,6 +44567,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -45035,6 +45251,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -45809,6 +46029,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -46523,6 +46747,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -47488,6 +47716,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -48261,6 +48493,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -48940,6 +49176,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -49715,6 +49955,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -50395,6 +50639,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -51075,6 +51323,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -51755,6 +52007,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -52530,6 +52786,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -53303,6 +53563,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -53982,6 +54246,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -54779,6 +55047,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -55458,6 +55730,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -56137,6 +56413,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -57203,6 +57483,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -57955,6 +58239,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -58635,6 +58923,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -59314,6 +59606,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -60089,6 +60385,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -60863,6 +61163,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -61543,6 +61847,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -62334,6 +62642,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -63013,6 +63325,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -63692,6 +64008,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -64372,6 +64692,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -65147,6 +65471,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -65920,6 +66248,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -66599,6 +66931,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -67380,6 +67716,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -68060,6 +68400,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -68740,6 +69084,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -69515,6 +69863,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -70195,6 +70547,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -70874,6 +71230,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -71649,6 +72009,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -72328,6 +72692,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -73007,6 +73375,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -73687,6 +74059,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -74557,6 +74933,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -75330,6 +75710,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -76009,6 +76393,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -76689,6 +77077,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -77369,6 +77761,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -78048,6 +78444,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -78728,6 +79128,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -79408,6 +79812,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -80183,6 +80591,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -80862,6 +81274,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -81542,6 +81958,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -82221,6 +82641,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -83231,6 +83655,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -84004,6 +84432,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -84683,6 +85115,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -85458,6 +85894,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -86231,6 +86671,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -86910,6 +87354,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -87685,6 +88133,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -88458,6 +88910,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -89137,6 +89593,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -90007,6 +90467,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
@@ -90687,6 +91151,10 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
                 uuid:
                   type: string
                 value:
