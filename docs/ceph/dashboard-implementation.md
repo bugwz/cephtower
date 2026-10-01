@@ -1841,3 +1841,12 @@ show 数据源一致。严格核对 resource_type、cluster_id、share_id 和重
 展示文件系统、路径、子卷/组及原生 readonly/browseable（未知不当成 false）。
 编辑初值使用原生字段，资源定位统一使用包含集群和共享 ID 的 natural_key；更新
 解析该身份并拒绝跨集群移动。已覆盖列表命令、字段和身份测试，未实测 SMB 集群。
+
+## SMB 共享更新保留配置
+
+原生 share create 为 create_only，不能用于编辑。更新改为先读取目标 show 资源，
+严格核对身份及 CephFS 对象，只覆盖提交的文件系统和路径，保留名称、只读、
+可浏览、子卷/组、provider 等配置，再以 JSON stdin 执行 `smb apply -i -`。
+省略路径保持原值，显式空路径拒绝。读回逐项核对提交资源的全部字段，不一致报
+post_check_failed，避免以命令接受代替更新完成。覆盖保留配置、错误身份及读回
+不一致的执行链路测试；无实际 SMB 部署验证。

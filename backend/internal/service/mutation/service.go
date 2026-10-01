@@ -186,6 +186,16 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			spec.check = []string{"nfs", "export", "ls", cluster, "--detailed", "--format", "json"}
 		}
 	}
+	if request.Action == "smb_share.update" {
+		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if checkErr != nil {
+			return cephdomain.ActionResult{}, normalize(checkErr)
+		}
+		spec.stdin, err = smbShareUpdateJSON(checked.Stdout, request)
+		if err != nil {
+			return cephdomain.ActionResult{}, err
+		}
+	}
 	if request.Action == "subvolume_group.update" && subvolumeGroupHasAttributes(request.Parameters) {
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 		if checkErr != nil {
@@ -215,6 +225,14 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "Ceph keyring import failed"}
 		}
 		return cephdomain.ActionResult{}, normalize(err)
+	}
+	if request.Action == "smb_share.update" {
+		var applied struct {
+			Success bool `json:"success"`
+		}
+		if json.Unmarshal(result.Stdout, &applied) != nil || !applied.Success {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "SMB apply did not confirm a successful resource update"}
+		}
 	}
 	checkSpec := spec
 	for index, followup := range spec.followups {
@@ -264,6 +282,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		if (request.Action == "nfs_cluster.create" || request.Action == "nfs_cluster.delete") && !nfsClusterStateMatches(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "NFS cluster command was accepted but its expected presence or absence could not be verified; the change may already have taken effect", Retryable: true}
+		}
+		if request.Action == "smb_share.update" && !smbShareUpdateMatches(spec.stdin, checked.Stdout, request) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB share update was accepted but requested and preserved settings could not be verified; the change may already have taken effect", Retryable: true}
 		}
 	}
 	if request.Action == "rgw_zone.update" && optional(request.Parameters, "zonegroup") != "" {
@@ -2359,6 +2380,9 @@ func build(request Request, p map[string]any) (command, error) {
 		filesystem, err := required(p, "filesystem")
 		if err != nil {
 			return command{}, err
+		}
+		if action == "smb_share.update" {
+			return ceph([]string{"smb", "apply", "-i", "-", "--format", "json"}, []string{"smb", "show", "ceph.smb.share." + cluster + "." + share, "--format", "json"}), nil
 		}
 		path := optional(p, "path")
 		if path == "" {
