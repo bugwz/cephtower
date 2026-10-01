@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "test": "npm run test:cephfs-performance && npm run test:cephfs-pools && npm run test:cephfs-ranks",
+    "test": "npm run test:cephfs-performance && npm run test:cephfs-pools && npm run test:cephfs-ranks && npm run test:cephfs-group-form",
+    "test:cephfs-group-form": "node scripts/test-cephfs-group-form.mjs",
     "test:cephfs-ranks": "node scripts/test-cephfs-ranks.mjs",
     "test:cephfs-pools": "node scripts/test-cephfs-pools.mjs",
     "test:cephfs-performance": "node scripts/test-cephfs-performance.mjs",

@@ -196,7 +196,11 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	contracts["filesystem.rename"] = RequestContract{Required: true, Fields: map[string]JSONField{
 		"cluster_id": integerField(true), "fs": stringField(true), "new_name": stringField(true), "confirmed": boolField(true),
 	}}
-	add([]string{"subvolume_group.update"}, true, map[string]JSONField{"size": integerField(true)})
+	contracts["subvolume_group.update"] = RequestContract{Required: true, Fields: map[string]JSONField{
+		"cluster_id": integerField(true), "fs": stringField(true), "group": stringField(true),
+		"size": integerField(false), "unlimited": boolField(false), "no_shrink": boolField(false),
+		"pool": stringField(false), "uid": integerField(false), "gid": integerField(false), "mode": stringField(false),
+	}}
 	add([]string{"subvolume.update"}, true, map[string]JSONField{"size": integerField(false), "unlimited": boolField(false), "no_shrink": boolField(false)})
 	add([]string{"cephfs_snapshot.clone"}, true, map[string]JSONField{"target": stringField(true), "group": stringField(false), "target_group": stringField(false), "pool_layout": stringField(false)})
 	add([]string{"subvolume.clone_cancel"}, true, map[string]JSONField{"group": stringField(false)})

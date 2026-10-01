@@ -3,6 +3,7 @@ import { CephFSDirectoryBrowser } from './CephFSDirectoryBrowser'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 import { listResource } from '../../api/resource'
 import { SubvolumeSnapshotVisibility } from './SubvolumeSnapshotVisibility'
+import { groupUpdateBody, groupUpdateInitialValues } from './cephfsGroupForm'
 
 export function FilePoolsPage() {
   return <ResourceListPage definition={definitions.filePools} />
@@ -250,14 +251,23 @@ const definitions: Record<
       })
     },
     updateAction: {
-      title: '更新子卷组',
+      title: '更新子卷组配额与属性',
       path: '/filesystem/subvolume/group',
       method: 'PATCH',
       successMessage: '子卷组更新执行成功',
+      confirmation: (values) => values.edit_attributes ? '将修改子卷组自身的数据池布局、所有者和权限，不递归修改已有子卷。配额与属性分步执行，后续步骤失败时前面的修改可能已生效，确认继续？' : values.unlimited ? '确认取消该子卷组的配额限制？' : undefined,
       fields: [
-        { name: 'size', label: '大小（字节）', type: 'number', required: true, min: 1 }
+        { name: 'size', label: '配额大小（字节）', type: 'number', required: true, min: 1, max: Number.MAX_SAFE_INTEGER, visibleWhen: (values) => !values.unlimited },
+        { name: 'unlimited', label: '取消配额限制', type: 'boolean' },
+        { name: 'no_shrink', label: '不允许配额低于已用空间', type: 'boolean', visibleWhen: (values) => !values.unlimited },
+        { name: 'edit_attributes', label: '同时更新数据池、所有者与权限', type: 'boolean' },
+        { name: 'pool', label: '后续子卷的数据池（不迁移既有数据）', type: 'select', required: true, optionsLoader: cephfsPoolOptions, visibleWhen: (values) => Boolean(values.edit_attributes) },
+        { name: 'uid', label: 'UID', type: 'number', required: true, min: 0, max: 4294967295, visibleWhen: (values) => Boolean(values.edit_attributes) },
+        { name: 'gid', label: 'GID', type: 'number', required: true, min: 0, max: 4294967295, visibleWhen: (values) => Boolean(values.edit_attributes) },
+        { name: 'mode', label: '目录权限（八进制）', required: true, pattern: /^[0-7]{3,4}$/, patternMessage: '请输入 3 或 4 位八进制权限，例如 0755', visibleWhen: (values) => Boolean(values.edit_attributes) }
       ],
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, fs: fsName(row), group: groupName(row), size: Number(values.size) })
+      initialValues: groupUpdateInitialValues,
+      buildBody: (values, clusterId, row) => groupUpdateBody(values, clusterId, fsName(row), groupName(row))
     },
     deleteAction: {
       title: '删除子卷组',

@@ -1255,6 +1255,25 @@ in-progress 状态开放取消操作，调用 `fs clone cancel` 后以 `fs clone
 `--no_shrink`，并继续保留命名组作用域。表单从 bytes_quota 预填当前状态，API 使用
 独立的精确请求结构；离线测试覆盖无限配额、缩容保护和缺失大小校验。
 
+### CephFS 子卷组编辑
+
+参考 `cephfs-subvolumegroup-form.component.ts` 的编辑流程通过 create API 更新已有组的
+数据池、UID/GID、权限及配额。本地 volumes 模块 `create_subvolume_group` 对已有组
+调用 `set_group_attrs`；未提供 UID/GID 时会设为 0，未提供 pool 时重新继承祖先布局，
+mode 也有默认值。因此属性更新要求四个字段同时提供，不把省略字段当作“不修改”。
+
+本项目 `PATCH /filesystem/subvolume/group` 新增可选的 pool、uid、gid、mode，
+并支持 unlimited 和 no_shrink。配额使用 `fs subvolumegroup resize`，取消限制生成
+`inf`；保护开关实际禁止配额低于已用空间，不是禁止一切缩小。属性更新用
+`fs subvolumegroup create` 的命名参数，省略 size，避免覆盖刚设置的配额；
+属性操作前以 info 确认组存在，最后核对 bytes_quota、data_pool、uid、gid 和权限位。
+
+表单从当前 info 字段预填，mode 去除目录类型位后显示八进制；缺失或超出浏览器安全
+整数范围的配额不自动舍入预填。用户可仅更新配额，或显式选择同时更新属性。
+数据池布局更新不迁移既有子卷，配额与属性分步执行，不承诺原子事务；确认框提示
+后续步骤失败可能已有部分修改生效。离线测试覆盖命令顺序、更新前存在性检查、
+逐字段读回、权限位、部分失败、严格 API 契约及版本检查；未在真实集群验证。
+
 ### CephFS 扩展访问权限
 
 对照参考授权弹窗，`fs authorize` 表单新增 quota、snapshot 和 root squash。

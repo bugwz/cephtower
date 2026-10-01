@@ -113,6 +113,15 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if err != nil {
 		return cephdomain.ActionResult{}, err
 	}
+	if request.Action == "subvolume_group.update" && subvolumeGroupHasAttributes(request.Parameters) {
+		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if checkErr != nil {
+			return cephdomain.ActionResult{}, normalize(checkErr)
+		}
+		if !subvolumeGroupInfoValid(checked.Stdout) {
+			return cephdomain.ActionResult{}, invalid("existing subvolume group information is invalid")
+		}
+	}
 	if request.Action == "cephfs_entry.rename" {
 		fs := pathValue(resourceTail(request.ResourceKey), "filesystem")
 		directory := pathpkg.Clean(rawText(request.Parameters, "path"))
@@ -161,6 +170,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			if strings.TrimSpace(string(checked.Stdout)) != want {
 				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "snapshot visibility update could not be verified", Retryable: true}
 			}
+		}
+		if request.Action == "subvolume_group.update" && !subvolumeGroupUpdateMatches(request.Parameters, checked.Stdout) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "subvolume group update was accepted but requested attributes could not be verified", Retryable: true}
 		}
 	}
 	if request.Action == "rgw_zone.update" && optional(request.Parameters, "zonegroup") != "" {
@@ -1121,13 +1133,7 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		return ceph(args, []string{"fs", "subvolumegroup", "info", fs, name, "--format", "json"}), nil
 	case "subvolume_group.update":
-		fs := pathValue(tail, "filesystem")
-		name := last(tail)
-		size := optional(p, "size")
-		if size == "" {
-			return command{}, invalid("size is required")
-		}
-		return ceph([]string{"fs", "subvolumegroup", "resize", fs, name, size}, []string{"fs", "subvolumegroup", "info", fs, name, "--format", "json"}), nil
+		return subvolumeGroupUpdateCommand(request, p)
 	case "subvolume_group.delete":
 		fs := pathValue(tail, "filesystem")
 		name := last(tail)
