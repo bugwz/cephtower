@@ -4,9 +4,15 @@ import ts from 'typescript'
 
 const source = readFileSync(new URL('../src/pages/cluster/ConfigurationPage.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('ConfigurationPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-const names = ['configurationOverrides', 'configurationList', 'configurationRuntime', 'filterConfigurationOptions', 'configurationMetadataBatch', 'configurationWriteBlocked', 'configurationMonWriteBlocked', 'configurationHelpDescription', 'currentConfigurationHelp']
+const names = ['configurationOverrides', 'configurationList', 'configurationRuntime', 'filterConfigurationOptions', 'configurationMetadataBatch', 'configurationWriteBlocked', 'configurationMonWriteBlocked', 'configurationHelpDescription', 'currentConfigurationHelp', 'localizedConfigurationTarget']
 const code = ts.transpileModule(tree.statements.filter((node) => ts.isFunctionDeclaration(node) && names.includes(node.name.text)).map((node) => node.getText(tree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const helpers = new Function(`${code}; return { ${names.join(', ')} }`)()
+assert.equal(helpers.localizedConfigurationTarget('mgr/dashboard/server_port', 'node-a.x1'), 'mgr/dashboard/node-a.x1/server_port')
+assert.equal(helpers.localizedConfigurationTarget('mgr/dashboard/server_port', ''), 'mgr/dashboard/server_port')
+assert.equal(helpers.localizedConfigurationTarget('mgr/dashboard/node-a.x1/server_port', undefined), 'mgr/dashboard/node-a.x1/server_port')
+for (const instance of ['../', '..', '-flag', 'a/b', 'a b', null, 1, 'a'.repeat(257)]) assert.equal(helpers.localizedConfigurationTarget('mgr/dashboard/server_port', instance), undefined)
+assert.equal(helpers.localizedConfigurationTarget('osd_memory_target', 'a'), undefined)
+assert.equal(helpers.localizedConfigurationTarget('mgr/dashboard/a/server_port', 'b'), undefined)
 {
   const scope = { clusterId: 1, moduleName: undefined }
   for (const help of [{ name: 'test', type: 'bool' }, { name: 'test', enum_values: ['a', 'b'] }, null]) {
@@ -106,7 +112,7 @@ for (const action of ['save', 'remove']) for (const timing of ['before', 'mutati
   let modal, finishMutation, finishCollection
   const env = {
     scope, scopeRef, selectedClusterId: 7, running: { current: false }, editing: editable,
-    loading: false, error: null, configurationWriteBlocked: helpers.configurationWriteBlocked, help: null, configurationMonWriteBlocked: helpers.configurationMonWriteBlocked,
+    loading: false, error: null, configurationWriteBlocked: helpers.configurationWriteBlocked, help: null, configurationMonWriteBlocked: helpers.configurationMonWriteBlocked, localizedConfigurationTarget: helpers.localizedConfigurationTarget,
     setBusy: () => {}, setOpen: () => { events.push('close') }, message: { success: () => { events.push('success') } },
     mutateResource: async (path, method, body, options) => {
       assert.equal(path, '/configuration/value'); assert.equal(body.cluster_id, 7); assert.equal(options.ifMatch, '3')
@@ -145,12 +151,25 @@ for (const action of ['save', 'remove']) for (const timing of ['before', 'mutati
 }
 console.log('Configuration mutation scope checks passed')
 
+for (const instance of ['', 'node-a.x1', '../bad']) {
+  const scope = {}, bodies = []
+  const env = {
+    ...helpers, scope, scopeRef: { current: scope }, selectedClusterId: 7, running: { current: false }, editing: null,
+    loading: false, error: null, help: null, setBusy: () => {}, setOpen: () => {},
+    message: { success: () => {}, warning: () => {}, error: () => {} },
+    mutateResource: async (_path, _method, body) => bodies.push(body), refreshResource: async () => {}, refresh: async () => {}
+  }
+  const save = new Function('env', `const { ${Object.keys(env).join(', ')} } = env; ${mutationCode}; return save`)(env)
+  await save({ who: 'mgr', name: 'mgr/dashboard/server_port', instance, value: '8443' })
+  assert.deepEqual(bodies, instance === '../bad' ? [] : [{ cluster_id: 7, who: 'mgr', name: instance ? `mgr/dashboard/${instance}/server_port` : 'mgr/dashboard/server_port', value: '8443' }])
+}
+
 for (const action of ['save', 'remove']) for (const collectionFailed of [false, true]) for (const mutationFailed of [false, true]) {
   const scope = {}, events = []
   let modal
   const env = {
     scope, scopeRef: { current: scope }, selectedClusterId: 7, running: { current: false }, editing: editable,
-    loading: false, error: null, configurationWriteBlocked: helpers.configurationWriteBlocked, help: null, configurationMonWriteBlocked: helpers.configurationMonWriteBlocked,
+    loading: false, error: null, configurationWriteBlocked: helpers.configurationWriteBlocked, help: null, configurationMonWriteBlocked: helpers.configurationMonWriteBlocked, localizedConfigurationTarget: helpers.localizedConfigurationTarget,
     setBusy: () => {}, setOpen: () => events.push('close'),
     message: { success: () => events.push('success'), warning: (text) => { assert.match(text, /修改已执行.*不要重复提交/); events.push('warning') } },
     mutateResource: async () => { events.push('mutate'); if (mutationFailed) throw new Error('write failed') },

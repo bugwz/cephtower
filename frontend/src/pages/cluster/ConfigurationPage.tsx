@@ -14,8 +14,16 @@ import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 import { configurationValueError } from './configurationValue'
 
-interface ConfigurationForm { who: string; name: string; value: string }
+interface ConfigurationForm { who: string; name: string; value: string; instance?: string }
 type OverrideFilter = 'all' | 'configured' | 'unconfigured'
+
+function localizedConfigurationTarget(name: unknown, instance: unknown): string | undefined {
+  if (typeof name !== 'string' || !name) return undefined
+  if (instance === undefined || instance === '') return name
+  if (typeof instance !== 'string' || !/^[A-Za-z0-9_][A-Za-z0-9_.-]{0,255}$/.test(instance)) return undefined
+  const match = /^(mgr\/[A-Za-z][A-Za-z0-9_]*\/)([A-Za-z][A-Za-z0-9_]{0,255})$/.exec(name)
+  return match ? `${match[1]}${instance}/${match[2]}` : undefined
+}
 
 function currentConfigurationHelp<T extends { scope: unknown, name: string, help: ApiRecord | null, error: string }>(snapshot: T | null, scope: unknown, name: unknown, open: boolean): T | null {
   if (!open || !snapshot || snapshot.scope !== scope || snapshot.name !== name) return null
@@ -105,6 +113,8 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
   const [helpSnapshot, setHelpSnapshot] = useState<{ scope: typeof scope, name: string, help: ApiRecord | null, error: string } | null>(null)
   const detailsRequest = useRef(0)
   const watchedName = Form.useWatch('name', form)
+  const watchedInstance = Form.useWatch('instance', form)
+  const localizedTarget = localizedConfigurationTarget(watchedName, watchedInstance)
   const currentHelp = currentConfigurationHelp(helpSnapshot, scope, watchedName, open)
   const help = currentHelp?.help ?? null
   const helpError = currentHelp?.error ?? ''
@@ -157,7 +167,7 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
       if (reason) { message.error(reason); return }
     }
     setEditing(row?.who ? row : null)
-    form.setFieldsValue({ name: textValue(row?.name, ''), who: textValue(row?.who, moduleName ? 'mgr' : 'global'), value: row?.value == null || row.value === '[REDACTED]' ? '' : String(row.value) })
+    form.setFieldsValue({ name: textValue(row?.name, ''), instance: '', who: textValue(row?.who, moduleName ? 'mgr' : 'global'), value: row?.value == null || row.value === '[REDACTED]' ? '' : String(row.value) })
     setOpen(true)
   }
   async function showDetails(name: string) {
@@ -178,8 +188,10 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
       if (values.who !== editing.who || values.name !== editing.name) { message.error('编辑目标已改变，请重新打开表单'); return }
     }
     if (configurationMonWriteBlocked(help, values.name)) { message.error('该选项不允许通过 Monitor 配置库修改'); return }
+    const target = localizedConfigurationTarget(values.name, values.instance)
+    if (!target || (editing && target !== editing.name)) { message.error('实例配置目标无效，请核对配置名和实例名'); return }
     await run(async () => {
-      await mutateResource('/configuration/value', 'PUT', { cluster_id: selectedClusterId, ...values, value: values.value ?? '' }, editing ? { ifMatch: String(editing.resource_version) } : undefined)
+      await mutateResource('/configuration/value', 'PUT', { cluster_id: selectedClusterId, who: values.who, name: target, value: values.value ?? '' }, editing ? { ifMatch: String(editing.resource_version) } : undefined)
       if (scopeRef.current !== scope) return
       setOpen(false); message.success('集群配置已保存'); await refreshAfterMutation()
     })
@@ -296,7 +308,9 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
     </Drawer>
     <DraggableModal title={editing ? '编辑配置覆盖' : '设置配置覆盖'} open={open} confirmLoading={busy} okButtonProps={{ disabled: configurationMonWriteBlocked(help, watchedName) }} onCancel={() => { if (!busy) setOpen(false) }} onOk={() => form.submit()}>
       <Form form={form} layout="vertical" onFinish={save}>
-        <Form.Item name="name" label="配置选项" rules={[{ required: true }]}><Select disabled={Boolean(editing)} showSearch options={data?.options.map((row) => ({ label: String(row.name), value: String(row.name) }))} /></Form.Item>
+        <Form.Item name="name" label="配置选项" rules={[{ required: true }]}><Select disabled={Boolean(editing)} showSearch onChange={() => form.setFieldValue('instance', '')} options={data?.options.map((row) => ({ label: String(row.name), value: String(row.name) }))} /></Form.Item>
+        {!editing && typeof watchedName === 'string' && /^mgr\/[^/]+\/[^/]+$/.test(watchedName) && <Form.Item name="instance" label="MGR 实例名（可选）" preserve={false} extra="留空设置模块级参数；填写实例 ID 创建本地化键。仅使用 localized option 的模块会读取该键，不等同于下方 mgr.<实例> 作用域。" rules={[{ pattern: /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,255}$/, message: '实例名只能含字母、数字、下划线、点和连字符，且不能以点或连字符开头' }]}><Input maxLength={256} placeholder="例如 node-a.x1（不含 mgr. 前缀）" /></Form.Item>}
+        <Typography.Paragraph type="secondary">完整配置键：{localizedTarget ?? '请先选择配置并填写有效实例名'}</Typography.Paragraph>
         <Form.Item name="who" label="作用域" extra="例如 global、osd、client.rgw、osd/host:node-1 或 osd/class:ssd。" rules={[{ required: true }]}><Input disabled={Boolean(editing)} /></Form.Item>
         {helpError && <Alert type="warning" message={`无法读取配置说明：${helpError}`} />}
         {help && help.name === watchedName && <Alert type={help.can_update_at_runtime === true && !configurationMonWriteBlocked(help, watchedName) ? 'info' : 'warning'} message={String(help.desc ?? '')} description={configurationHelpDescription(help)} />}
