@@ -27,15 +27,20 @@ console.log('CRUSH topology tree checks passed')
 
 const poolSource = readFileSync(new URL('../src/pages/cluster/PoolManagementPage.tsx', import.meta.url), 'utf8')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-const poolFunctions = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['topologyCounts', 'crushPath'].includes(node.name.text))
-const poolCode = ts.transpileModule(poolFunctions.map((fn) => fn.getText(poolTree)).join('\n') + '\nexports.counts = topologyCounts', { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+const poolFunctions = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['topologyCounts', 'crushRootNames'].includes(node.name.text))
+const poolCode = ts.transpileModule(poolFunctions.map((fn) => fn.getText(poolTree)).join('\n') + '\nexports.counts = topologyCounts; exports.roots = crushRootNames', { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
 const poolExports = {}
 new Function('exports', 'textValue', 'isRecord', poolCode)(poolExports, (value, fallback) => typeof value === 'string' ? value : fallback, (value) => value !== null && typeof value === 'object' && !Array.isArray(value))
 const osds = [
-  { host: 'a', device_class: 'ssd', crush_path: { root: 'default', host: 'a' } },
-  { host: 'b', device_class: 'hdd', crush_path: { root: 'default', host: 'b' } },
-  { host: 'c', device_class: 'ssd', crush_path: { root: 'archive', host: 'c' } },
-  { host: 'unknown', device_class: 'ssd' }
+  { id: -1, name: 'default', type: 'root', children: [-2, -3] },
+  { id: -2, name: 'a', type: 'host', children: [0] },
+  { id: -3, name: 'b', type: 'host', children: [1] },
+  { id: -4, name: 'archive', type: 'root', children: [2] },
+  { id: -5, name: 'empty', type: 'root', children: [] },
+  { id: 0, name: 'osd.0', type: 'osd', device_class: 'ssd' },
+  { id: 1, name: 'osd.1', type: 'osd', device_class: 'hdd' },
+  { id: 2, name: 'osd.2', type: 'osd', device_class: 'ssd' },
+  { id: 3, name: 'osd.3', type: 'osd', device_class: 'ssd' }
 ]
 assert.equal(poolExports.counts(osds, 'default').osd, 2)
 assert.equal(poolExports.counts(osds, 'default').host, 2)
@@ -44,6 +49,11 @@ assert.equal(poolExports.counts(osds, 'archive').osd, 1)
 assert.equal(poolExports.counts(osds, 'a').osd, 1)
 assert.equal(poolExports.counts(osds, 'missing').osd, 0)
 assert.equal(poolExports.counts([], 'default').osd, 0)
+assert.equal(poolExports.counts(osds, 'default', 'ssd').host, 1)
+assert.equal(poolExports.counts(osds, 'empty').osd, 0)
+assert.ok(poolExports.roots(osds).includes('empty'))
+assert.deepEqual(poolExports.roots([]), [])
+assert.throws(() => poolExports.counts([{ id: -1, name: 'bad', type: 'root', children: [-1] }], 'bad'))
 console.log('CRUSH failure domain root isolation checks passed')
 
 const rulesSource = readFileSync(new URL('../src/pages/cluster/CrushRulesPanel.tsx', import.meta.url), 'utf8')

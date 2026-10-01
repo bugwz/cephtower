@@ -2,7 +2,7 @@ import { InfoCircleOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '
 import { Button, Card, Divider, Form, Input, InputNumber, Select, Space, Tag, Tooltip, Typography } from 'antd'
 import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { isRecord, numberValue, textValue, type ApiRecord } from '../../api/client'
+import { isRecord, jsonInit, request, numberValue, textValue, type ApiRecord } from '../../api/client'
 import { listAllResources, listResource, mutateResource, refreshResource } from '../../api/resource'
 import { DataTable } from '../../components/DataTable'
 import { DraggableModal } from '../../components/DraggableModal'
@@ -83,7 +83,7 @@ interface PoolPageData {
   crushRules: string[]
   erasureCodeProfiles: string[]
   erasureCodeDirectory: string
-  osds: ApiRecord[]
+  crushNodes: ApiRecord[]
   observedAt?: string | null
   stale: boolean
   staleReason?: string | null
@@ -209,13 +209,13 @@ export function PoolManagementPage() {
   })
   const loader = useCallback(async (): Promise<PoolPageData> => {
     if (!selectedClusterId) {
-      return { pools: [], crushRules: ['replicated_rule'], erasureCodeProfiles: [defaultErasureCodeProfile], erasureCodeDirectory: defaultErasureCodeDirectory, osds: [], observedAt: null, stale: false, staleReason: null }
+      return { pools: [], crushRules: ['replicated_rule'], erasureCodeProfiles: [defaultErasureCodeProfile], erasureCodeDirectory: defaultErasureCodeDirectory, crushNodes: [], observedAt: null, stale: false, staleReason: null }
     }
-    const [poolList, crushRules, erasureCodeProfileRows, osds] = await Promise.all([
+    const [poolList, crushRules, erasureCodeProfileRows, crushNodes] = await Promise.all([
       listResource('/pools', selectedClusterId, { filters: poolTableFilters.filters }),
       listAllResources('/crush/rules', selectedClusterId).then((payload) => payload.items.map(resourceName).filter(Boolean)).catch(() => []),
       listAllResources('/erasure/code/profiles', selectedClusterId).then((payload) => payload.items).catch(() => []),
-      listAllResources('/osds', selectedClusterId).then((payload) => payload.items).catch(() => [])
+      request<{ nodes: ApiRecord[] }>('/crush/map', jsonInit('GET', { cluster_id: selectedClusterId })).then((payload) => payload.nodes)
     ])
     const erasureCodeProfiles = erasureCodeProfileRows.map(resourceName).filter(Boolean)
     const erasureCodeDirectory = erasureCodeProfileRows
@@ -226,7 +226,7 @@ export function PoolManagementPage() {
       crushRules: Array.from(new Set(['replicated_rule', ...crushRules])),
       erasureCodeProfiles: Array.from(new Set([defaultErasureCodeProfile, ...erasureCodeProfiles])),
       erasureCodeDirectory,
-      osds,
+      crushNodes,
       observedAt: poolList.observedAt,
       stale: poolList.stale,
       staleReason: poolList.staleReason
@@ -246,24 +246,24 @@ export function PoolManagementPage() {
     [createdErasureCodeProfiles, data?.erasureCodeProfiles]
   )
   const crushRootOptions = useMemo(
-    () => crushRootNames(data?.osds ?? []).map((value) => ({ label: value, value })),
-    [data?.osds]
+    () => crushRootNames(data?.crushNodes ?? []).map((value) => ({ label: value, value })),
+    [data?.crushNodes]
   )
   const crushDeviceClassOptions = useMemo(
     () => [
       { label: '全部设备', value: '' },
-      ...Array.from(new Set((data?.osds ?? []).map((osd) => textValue(osd.device_class, '')).filter(Boolean)))
+      ...Array.from(new Set((data?.crushNodes ?? []).map((osd) => textValue(osd.device_class, '')).filter(Boolean)))
         .map((value) => ({ label: value, value }))
     ],
-    [data?.osds]
+    [data?.crushNodes]
   )
   const crushRuleTopology = useMemo(
-    () => topologyCounts(data?.osds ?? [], crushRuleRoot, crushRuleDeviceClass),
-    [crushRuleDeviceClass, crushRuleRoot, data?.osds]
+    () => topologyCounts(data?.crushNodes ?? [], crushRuleRoot, crushRuleDeviceClass),
+    [crushRuleDeviceClass, crushRuleRoot, data?.crushNodes]
   )
   const erasureCodeTopology = useMemo(
-    () => topologyCounts(data?.osds ?? [], erasureCodeRoot, erasureCodeDeviceClass),
-    [data?.osds, erasureCodeDeviceClass, erasureCodeRoot]
+    () => topologyCounts(data?.crushNodes ?? [], erasureCodeRoot, erasureCodeDeviceClass),
+    [data?.crushNodes, erasureCodeDeviceClass, erasureCodeRoot]
   )
 
   async function refreshPoolData() {
@@ -298,16 +298,18 @@ export function PoolManagementPage() {
   }
 
   function openCrushRuleForm() {
-    const root = crushRootOptions[0]?.value ?? 'default'
-    const topology = topologyCounts(data?.osds ?? [], root)
+    const root = crushRootOptions[0]?.value
+    if (!root || loading || error) { message.error('请先成功读取 CRUSH 拓扑并确认存在可选节点'); return }
+    const topology = topologyCounts(data?.crushNodes ?? [], root)
     const failureDomain = topology.host > 0 ? 'host' : failureDomainOptions(topology)[0]?.value ?? 'osd'
     crushRuleForm.setFieldsValue({ ...defaultCrushRuleValues, root, failure_domain: failureDomain })
     setCrushRuleFormOpen(true)
   }
 
   function openErasureCodeProfileForm() {
-    const root = crushRootOptions[0]?.value ?? 'default'
-    const topology = topologyCounts(data?.osds ?? [], root)
+    const root = crushRootOptions[0]?.value
+    if (!root || loading || error) { message.error('请先成功读取 CRUSH 拓扑并确认存在可选节点'); return }
+    const topology = topologyCounts(data?.crushNodes ?? [], root)
     const failureDomain = topology.host > 0 ? 'host' : failureDomainOptions(topology)[0]?.value ?? 'osd'
     erasureCodeProfileForm.setFieldsValue({
       ...defaultErasureCodeProfileValues,
@@ -1113,46 +1115,28 @@ function nestedModalPopupContainer(trigger: HTMLElement) {
   return trigger.parentElement ?? trigger.ownerDocument.body
 }
 
-function crushRootNames(osds: ApiRecord[]) {
-  const roots = osds.map((osd) => crushPath(osd).root).filter(Boolean)
-  const buckets = osds.flatMap((osd) => Object.values(crushPath(osd)))
-  const values = Array.from(new Set([...roots, ...buckets]))
-  return values.length > 0 ? values : ['default']
+function crushRootNames(crushNodes: ApiRecord[]) {
+  return crushNodes.filter((node) => Array.isArray(node.children)).map((node) => textValue(node.name, '')).filter(Boolean)
 }
 
-function topologyCounts(osds: ApiRecord[], root: string, deviceClass?: string): Record<string, number> {
-  const matching = osds.filter((osd) => {
-    const osdClass = textValue(osd.device_class, '')
-    const path = crushPath(osd)
-    return Object.values(path).includes(root) && (!deviceClass || osdClass === deviceClass)
-  })
-  const counts: Record<string, number> = { osd: matching.length }
-  matching.forEach((osd) => {
-    Object.entries(crushPath(osd)).forEach(([kind]) => {
-      counts[kind] = new Set(matching.map((item) => crushPath(item)[kind]).filter(Boolean)).size
-    })
-  })
-  if (counts.host === undefined) {
-    counts.host = new Set(matching.map((osd) => textValue(osd.host, '')).filter(Boolean)).size
+function topologyCounts(crushNodes: ApiRecord[], root: string, deviceClass?: string): Record<string, number> {
+  const nodes = new Map(crushNodes.map((node) => [Number(node.id), node]))
+  const selected = crushNodes.find((node) => node.name === root)
+  const included = new Set<number>()
+  const visit = (id: number, path: Set<number>): boolean => {
+    const node = nodes.get(id)
+    if (!node || path.has(id)) throw new Error('CRUSH 拓扑包含缺失节点或环路')
+    const next = new Set(path); next.add(id)
+    const children = Array.isArray(node.children) ? node.children : []
+    const matches = children.map((child) => visit(Number(child), next)).some(Boolean)
+    const keep = !deviceClass || (node.type === 'osd' ? node.device_class === deviceClass : matches)
+    if (keep) included.add(id)
+    return keep
   }
+  if (selected) visit(Number(selected.id), new Set())
+  const counts: Record<string, number> = { osd: 0, host: 0 }
+  included.forEach((id) => { const type = textValue(nodes.get(id)?.type, ''); if (type) counts[type] = (counts[type] ?? 0) + 1 })
   return counts
-}
-
-function crushPath(osd: ApiRecord): Record<string, string> {
-  const path: Record<string, string> = {}
-  if (isRecord(osd.crush_path)) {
-    Object.entries(osd.crush_path).forEach(([kind, name]) => {
-      const value = textValue(name, '')
-      if (value) {
-        path[kind] = value
-      }
-    })
-  }
-  const host = textValue(osd.host, '')
-  if (host && !path.host) {
-    path.host = host
-  }
-  return path
 }
 
 function failureDomainOptions(counts: Record<string, number>) {
