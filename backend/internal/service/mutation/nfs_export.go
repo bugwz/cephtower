@@ -4,9 +4,32 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"path"
 	"strconv"
 	"strings"
 )
+
+func nfsExportCreateAvailable(data []byte, cluster, pseudo string) bool {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	var exports []map[string]any
+	if decoder.Decode(&exports) != nil || exports == nil {
+		return false
+	}
+	var extra any
+	if decoder.Decode(&extra) != io.EOF {
+		return false
+	}
+	for _, export := range exports {
+		existing, ok := export["pseudo"].(string)
+		if !ok || !strings.HasPrefix(existing, "/") || path.Clean(existing) == path.Clean(pseudo) {
+			return false
+		}
+		if value, exists := export["cluster_id"]; exists && value != cluster {
+			return false
+		}
+	}
+	return true
+}
 
 func nfsExportRecord(data []byte, cluster, exportID string) (map[string]any, error) {
 	decoder := json.NewDecoder(bytes.NewReader(data))

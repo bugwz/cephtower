@@ -113,6 +113,16 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if err != nil {
 		return cephdomain.ActionResult{}, err
 	}
+	if request.Action == "nfs_export.create" {
+		cluster := optional(request.Parameters, "cluster")
+		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: executor.BinaryCeph, Args: []string{"nfs", "export", "ls", cluster, "--detailed", "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if checkErr != nil {
+			return cephdomain.ActionResult{}, normalize(checkErr)
+		}
+		if !nfsExportCreateAvailable(checked.Stdout, cluster, optional(request.Parameters, "pseudo")) {
+			return cephdomain.ActionResult{}, invalid("NFS pseudo path already exists or its availability could not be verified")
+		}
+	}
 	if request.Action == "nfs_export.delete" || request.Action == "nfs_export.update" {
 		cluster, exportID, identityErr := decodePair(last(resourceTail(request.ResourceKey)))
 		if identityErr != nil {

@@ -115,6 +115,23 @@ func TestNFSExportSecurityLabel(t *testing.T) {
 	}
 }
 
+func TestNFSExportCreateDoesNotOverwriteExistingPseudo(t *testing.T) {
+	for _, output := range []string{`[{"pseudo":"/share"}]`, `[{"pseudo":"/share/"}]`, `[{}]`, `null`, `[{"pseudo":"/other","cluster_id":"nfs-b"}]`} {
+		service, _, id := newCephUserService(t)
+		runner := &directoryRenameExecutor{outputs: map[string]string{"nfs_export.create.pre_check": output}}
+		service.executor = runner
+		_, err := service.Execute(context.Background(), Request{ClusterID: id, Action: "nfs_export.create", ResourceKey: "nfs/export", Parameters: map[string]any{"cluster": "nfs-a", "pseudo": "/share", "path": "/", "filesystem": "cephfs"}})
+		if err == nil || len(runner.specs) != 1 || runner.specs[0].Mutating {
+			t.Fatalf("unexpected create: %v %+v", err, runner.specs)
+		}
+	}
+	for _, output := range []string{`[]`, `[{"pseudo":"/other","cluster_id":"nfs-a"}]`} {
+		if !nfsExportCreateAvailable([]byte(output), "nfs-a", "/share") {
+			t.Fatal("available path rejected")
+		}
+	}
+}
+
 func TestNFSExportDeleteResolvesNativePseudo(t *testing.T) {
 	for _, tt := range []struct {
 		name, output string
