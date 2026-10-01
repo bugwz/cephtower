@@ -79,7 +79,7 @@ assert.deepEqual(smbEditorExports.smbUsersBody('[]'), [])
 for (const bad of [undefined, 'null', '[{"name":"a","password":""}]', '[{"name":"a","password":"p"},{"name":"a","password":"q"}]']) assert.throws(() => smbEditorExports.smbUsersBody(bad))
 for (const [key, path, columns] of [
   ['smbJoinAuths', '/smb/join/auths', ['auth_id', 'username', 'linked_to_cluster']],
-  ['smbUsersGroups', '/smb/usersgroups', ['users_groups_id', 'user_count', 'group_names', 'linked_to_cluster']]
+  ['smbUsersGroups', '/smb/usersgroups', ['users_groups_id', 'user_count', 'user_names', 'group_names', 'linked_to_cluster']]
 ]) {
   const definition = definitionNode.properties.find((property) => property.name.getText(tree) === key).initializer
   const code = ts.transpileModule(`const value = ${definition.getText(tree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
@@ -97,6 +97,11 @@ for (const [key, path, columns] of [
     assert.deepEqual(value.createAction.buildBody({ name: 'auth', username: 'admin', password: 'test-secret' }, 17), { cluster_id: 17, name: 'auth', username: 'admin', password: 'test-secret' })
   } else {
     assert.equal(value.createAction.path, '/smb/usersgroup')
+    const renderNames = value.columns.find((column) => column.key === 'user_names').render
+    assert.equal(renderNames(['alice', 'bob']), 'alice、bob')
+    assert.equal(renderNames([]), '无用户')
+    assert.equal(renderNames(undefined), '未知')
+    assert.equal(renderNames([{ name: 'alice', password: 'must-not-display' }]), '未知')
     assert.deepEqual(value.createAction.buildBody({ ...value.createAction.initialValues, name: 'empty' }, 17), { cluster_id: 17, name: 'empty', users: [], groups: [] })
     assert.deepEqual(value.updateAction.buildBody({ users: '[]' }, 17, { name: 'target' }), { cluster_id: 17, name: 'target', users: [], groups: [] })
     const initial = value.updateAction.initialValues({ user_names: ['alice'], group_names: ['staff'], password: 'must-not-copy' })

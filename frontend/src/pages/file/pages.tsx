@@ -829,6 +829,7 @@ const definitions: Record<
     columns: [
       { key: 'users_groups_id', title: '资源 ID', filterKey: false },
       { key: 'user_count', title: '用户数量', filterKey: false },
+      { key: 'user_names', title: '用户名', filterKey: false, render: (value) => Array.isArray(value) && value.every((name) => typeof name === 'string') ? (value.length ? value.join('、') : '无用户') : '未知' },
       { key: 'group_names', title: '组名', filterKey: false },
       { key: 'linked_to_cluster', title: '绑定 SMB 集群', filterKey: false, render: (value) => value ? String(value) : '未绑定' }
     ]
