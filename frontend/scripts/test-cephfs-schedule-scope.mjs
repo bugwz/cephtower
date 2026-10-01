@@ -13,6 +13,10 @@ assert.deepEqual(switched, { fs: 'b', path: '/', subvol: undefined, group: undef
 assert.deepEqual(exports.scheduleScope(switched), { fs: 'b', path: '/' })
 assert.deepEqual(exports.scheduleScope({ fs: 'a', path: '/', subvol: 'same', group: '_nogroup' }), { fs: 'a', path: '/', subvol: 'same', group: '_nogroup' })
 console.log('CephFS snapshot schedule scope checks passed')
+assert.equal(exports.sameScheduleScope({ fs: 'a', path: '/', subvol: 'home' }, { fs: 'a', path: '/', subvol: 'home', group: '_nogroup' }), true)
+for (const other of [{ fs: 'b', path: '/', subvol: 'home' }, { fs: 'a', path: '/other', subvol: 'home' }, { fs: 'a', path: '/', subvol: 'other' }, { fs: 'a', path: '/', subvol: 'home', group: 'team' }, {}]) {
+  assert.equal(exports.sameScheduleScope({ fs: 'a', path: '/', subvol: 'home' }, other), false)
+}
 
 const textSource = readFileSync(new URL('../src/pages/file/snapshotScheduleText.ts', import.meta.url), 'utf8')
 const textExports = {}

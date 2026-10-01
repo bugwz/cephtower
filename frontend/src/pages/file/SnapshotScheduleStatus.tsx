@@ -2,7 +2,7 @@ import { Alert, Button, Card, Form, Input, Modal, Popconfirm, Select, Space } fr
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { listAllResources, listResource, mutateResource, refreshResource, type ResourceListResult } from '../../api/resource'
-import { scheduleFormScope, scheduleScope } from './snapshotScheduleScope'
+import { sameScheduleScope, scheduleFormScope, scheduleScope } from './snapshotScheduleScope'
 import { buildRetentionRules, buildScheduleInterval, retentionFrequencyOptions, retentionRuleCounts, scheduleActiveText, scheduleFrequencyOptions, scheduleIntervalText, scheduleRetentionText, scheduleToggleAction } from './snapshotScheduleText'
 import { AppTable } from '../../components/AppTable'
 import { RecordDetail } from '../../components/RecordDetail'
@@ -145,7 +145,7 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
     try {
       await mutateResource('/filesystem/snapshot/schedule/action','POST',{ cluster_id:selectedClusterId, ...target, schedule:row.schedule, start:row.start, action })
       await loadDiscovered()
-      if (refreshQuery) await query(scope.current)
+      if (refreshQuery || (rows !== null && sameScheduleScope(target, scope.current))) await query(scope.current)
     } finally { setMutating(false) }
   }
   async function managePath(row: ApiRecord) {
