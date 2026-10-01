@@ -3,9 +3,38 @@ package mutation
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"reflect"
 	"testing"
 )
+
+func TestNFSExportUpdatePreservesNativeAttributes(t *testing.T) {
+	service, _, id := newCephUserService(t)
+	runner := &directoryRenameExecutor{outputs: map[string]string{"nfs_export.update.pre_check": `[{"export_id":2,"cluster_id":"nfs-a","pseudo":"/old","path":"/data","access_type":"RO","squash":"root_squash","protocols":[4],"transports":["TCP"],"clients":[{"addresses":["10.0.0.0/8"],"access_type":"RO"}],"fsal":{"name":"CEPH","fs_name":"cephfs","user_id":"nfs.user","cmount_path":"/"}}]`, "nfs_export.update.post_check": `[]`}}
+	service.executor = runner
+	request := Request{ClusterID: id, Action: "nfs_export.update", ResourceKey: "nfs/export/" + base64.RawURLEncoding.EncodeToString([]byte("nfs-a\x002")), Parameters: map[string]any{"cluster": "nfs-a", "pseudo": "/renamed", "path": "/new", "filesystem": "cephfs", "read_only": false}}
+	if _, err := service.Execute(context.Background(), request); err != nil {
+		t.Fatal(err)
+	}
+	if len(runner.specs) != 3 {
+		t.Fatalf("commands=%+v", runner.specs)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(runner.specs[1].Stdin, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload["export_id"] != float64(2) || payload["pseudo"] != "/renamed" || payload["path"] != "/new" || payload["access_type"] != "RW" || payload["squash"] != "root_squash" {
+		t.Fatalf("payload=%v", payload)
+	}
+	if !reflect.DeepEqual(payload["clients"], []any{map[string]any{"addresses": []any{"10.0.0.0/8"}, "access_type": "RO"}}) || payload["fsal"].(map[string]any)["user_id"] != "nfs.user" {
+		t.Fatalf("attributes lost: %v", payload)
+	}
+	runner.specs = nil
+	request.Parameters["cluster"] = "nfs-b"
+	if _, err := service.Execute(context.Background(), request); err == nil || len(runner.specs) != 0 {
+		t.Fatalf("cross-cluster update accepted: %v", err)
+	}
+}
 
 func TestNFSExportDeleteResolvesNativePseudo(t *testing.T) {
 	for _, tt := range []struct {

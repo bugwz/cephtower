@@ -630,7 +630,7 @@ const definitions: Record<
       method: 'PATCH',
       successMessage: 'NFS 导出更新执行成功',
       fields: [
-        { name: 'cluster', label: 'NFS 集群', required: true },
+        { name: 'cluster', label: 'NFS 集群', required: true, readOnly: true },
         { name: 'pseudo', label: '伪路径', required: true },
         { name: 'path', label: 'CephFS 路径', required: true },
         { name: 'filesystem', label: '文件系统', required: true },

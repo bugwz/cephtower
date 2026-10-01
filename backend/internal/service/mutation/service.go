@@ -113,17 +113,30 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if err != nil {
 		return cephdomain.ActionResult{}, err
 	}
-	if request.Action == "nfs_export.delete" {
-		cluster, exportID, _ := decodePair(last(resourceTail(request.ResourceKey)))
+	if request.Action == "nfs_export.delete" || request.Action == "nfs_export.update" {
+		cluster, exportID, identityErr := decodePair(last(resourceTail(request.ResourceKey)))
+		if identityErr != nil {
+			return cephdomain.ActionResult{}, identityErr
+		}
+		if request.Action == "nfs_export.update" && optional(request.Parameters, "cluster") != cluster {
+			return cephdomain.ActionResult{}, invalid("NFS export cannot move between clusters")
+		}
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: executor.BinaryCeph, Args: []string{"nfs", "export", "ls", cluster, "--detailed", "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 		if checkErr != nil {
 			return cephdomain.ActionResult{}, normalize(checkErr)
 		}
-		pseudo, resolveErr := nfsExportPseudo(checked.Stdout, cluster, exportID)
+		export, resolveErr := nfsExportRecord(checked.Stdout, cluster, exportID)
 		if resolveErr != nil {
 			return cephdomain.ActionResult{}, resolveErr
 		}
-		spec.args = []string{"nfs", "export", "rm", cluster, pseudo}
+		if request.Action == "nfs_export.delete" {
+			spec.args = []string{"nfs", "export", "rm", cluster, export["pseudo"].(string)}
+		} else {
+			spec.stdin, err = nfsExportUpdateJSON(export, request.Parameters)
+			if err != nil {
+				return cephdomain.ActionResult{}, err
+			}
+		}
 	}
 	if request.Action == "subvolume_group.update" && subvolumeGroupHasAttributes(request.Parameters) {
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
