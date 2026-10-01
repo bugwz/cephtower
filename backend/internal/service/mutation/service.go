@@ -90,6 +90,7 @@ func Supports(action string) bool {
 		"nfs_cluster.create", "nfs_cluster.delete", "nfs_export.create", "nfs_export.update", "nfs_export.delete",
 		"smb_cluster.create", "smb_cluster.update", "smb_cluster.delete",
 		"smb_share.create", "smb_share.update", "smb_share.delete",
+		"smb_join_auth.delete", "smb_usersgroups.delete",
 		"config_value.set", "config_value.delete":
 		return true
 	default:
@@ -230,7 +231,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		return cephdomain.ActionResult{}, normalize(err)
 	}
-	if request.Action == "smb_share.update" || request.Action == "smb_cluster.update" {
+	if request.Action == "smb_share.update" || request.Action == "smb_cluster.update" || isSMBAuthDelete(request.Action) {
 		var applied struct {
 			Success bool `json:"success"`
 		}
@@ -292,6 +293,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		if request.Action == "smb_cluster.update" && !smbClusterUpdateMatches(spec.stdin, checked.Stdout, request) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB cluster settings could not be verified; the change may already have taken effect", Retryable: true}
+		}
+		if isSMBAuthDelete(request.Action) && !smbAuthDeleted(request, checked.Stdout) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB authentication removal was accepted but absence could not be verified; the change may already have taken effect", Retryable: true}
 		}
 		if (request.Action == "smb_share.create" || request.Action == "smb_share.delete") && !smbShareStateMatches(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB share command was accepted but its expected presence or absence could not be verified; the change may already have taken effect", Retryable: true}
@@ -2473,6 +2477,15 @@ func build(request Request, p map[string]any) (command, error) {
 		return ceph([]string{"smb", "apply", "-i", "-", "--format", "json"}, []string{"smb", "show", "ceph.smb.cluster." + name, "--format", "json"}), nil
 	case "smb_cluster.delete":
 		return ceph([]string{"smb", "cluster", "rm", last(tail)}, []string{"smb", "cluster", "ls", "--format", "json"}), nil
+	case "smb_join_auth.delete", "smb_usersgroups.delete":
+		id := last(tail)
+		if !smbResourceIDPattern.MatchString(id) {
+			return command{}, invalid("invalid SMB authentication resource ID")
+		}
+		resourceType, idField := smbAuthResourceType(action)
+		result := ceph([]string{"smb", "apply", "-i", "-", "--format", "json"}, []string{"smb", "show", resourceType, "--results=full", "--password-filter=hidden", "--format", "json"})
+		result.stdin, _ = json.Marshal(map[string]any{"resource_type": resourceType, idField: id, "intent": "removed"})
+		return result, nil
 	case "smb_share.create", "smb_share.update":
 		cluster, err := required(p, "cluster")
 		if err != nil {

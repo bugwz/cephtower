@@ -6,6 +6,8 @@ func smbRoutes(h *handler.Handler) []Route {
 	return []Route{
 		{"GET", "/smb/join/auths", h.ListSMBJoinAuths},
 		{"GET", "/smb/usersgroups", h.ListSMBUsersGroups},
+		{"DELETE", "/smb/join/auth", h.DeleteSMBJoinAuth},
+		{"DELETE", "/smb/usersgroup", h.DeleteSMBUsersGroup},
 		{"GET", "/smb/clusters", h.ListSMBClusters},
 		{"POST", "/smb/cluster", h.CreateSMBCluster},
 		{"GET", "/smb/cluster", h.GetSMBCluster},

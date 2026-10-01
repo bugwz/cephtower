@@ -739,6 +739,16 @@ const definitions: Record<
     title: 'SMB 域加入凭据',
     path: '/smb/join/auths',
     requiredCapabilities: ['smb'],
+    deleteAction: {
+      title: '删除域加入凭据',
+      confirmation: (row) => `确认删除域加入凭据 ${resourceName(row)}？密码无法从本系统恢复。仍被集群引用的资源将由 Ceph 拒绝删除，请先调整集群认证引用。`,
+      path: '/smb/join/auth',
+      action: 'smb_join_auth.delete',
+      resourceKind: 'smb_join_auth',
+      successMessage: '域加入凭据删除并核验成功',
+      buildBody: (row, clusterId) => ({ cluster_id: clusterId, name: resourceName(row) }),
+      resourceKey: (row) => `smb/join/auth/${resourceName(row)}`
+    },
     columns: [
       { key: 'auth_id', title: '资源 ID', filterKey: false },
       { key: 'username', title: '域账号名', filterKey: false },
@@ -749,6 +759,16 @@ const definitions: Record<
     title: 'SMB 用户组资源',
     path: '/smb/usersgroups',
     requiredCapabilities: ['smb'],
+    deleteAction: {
+      title: '删除用户组资源',
+      confirmation: (row) => `确认删除用户组资源 ${resourceName(row)} 及其中的认证配置？本系统不保存密码备份。仍被集群引用的资源将由 Ceph 拒绝删除，请先调整集群认证引用。`,
+      path: '/smb/usersgroup',
+      action: 'smb_usersgroups.delete',
+      resourceKind: 'smb_usersgroups',
+      successMessage: '用户组资源删除并核验成功',
+      buildBody: (row, clusterId) => ({ cluster_id: clusterId, name: resourceName(row) }),
+      resourceKey: (row) => `smb/usersgroup/${resourceName(row)}`
+    },
     columns: [
       { key: 'users_groups_id', title: '资源 ID', filterKey: false },
       { key: 'user_count', title: '用户数量', filterKey: false },

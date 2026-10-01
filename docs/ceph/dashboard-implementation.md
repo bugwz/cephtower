@@ -2040,6 +2040,15 @@ SMB 编辑现提供显式替换全部客户端访问地址开关，关闭时保�
 完整配置。测试覆盖保留复杂原值、双栈替换、清空、数量保留及旧地址回读拒绝；
 当前输入每个地址支持一个目标网络，真实客户端连通性尚未验证。
 
+SMB 域加入凭据和用户组资源增加删除操作：DELETE /smb/join/auth 与
+DELETE /smb/usersgroup 接收集群作用域及 name，进入现有高风险异步操作链路。
+参考 controllers/smb.py 删除逻辑，使用 smb apply -i - 提交资源类型、ID 和
+intent: removed；Ceph staging.py 负责拒绝仍被集群引用的资源，不自动解除引用。
+确认 apply 成功后以 password-filter=hidden 列举相应资源类型，严格校验响应并确认
+目标消失才报告成功。前端提示密码无法从本系统恢复以及先调整引用的要求。
+测试覆盖身份映射、原生 stdin、脱敏回读、残留资源、异常响应及失败 apply；没有实际
+删除任何 Ceph 资源，真实集群验证及凭据创建/编辑仍待完成。
+
 SMB 导航新增域加入凭据和用户组资源只读页面，对照参考 smb-join-auth-list 与
 smb-usersgroups-list 展示资源 ID、绑定集群，以及域账号名、用户数量、组名。
 采集仍强制 password-filter=hidden，仅新增 username、user_count、group_names

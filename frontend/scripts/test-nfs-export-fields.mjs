@@ -68,13 +68,18 @@ for (const [key, path, columns] of [
 ]) {
   const definition = definitionNode.properties.find((property) => property.name.getText(tree) === key).initializer
   const code = ts.transpileModule(`const value = ${definition.getText(tree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-  const value = new Function(`${code}; return value`)()
+  const value = new Function('resourceName', `${code}; return value`)((row) => row.name)
   assert.equal(value.path, path)
   assert.deepEqual(value.requiredCapabilities, ['smb'])
   assert.deepEqual(value.columns.map((column) => column.key), columns)
   assert.equal(value.columns.at(-1).render(undefined), '未绑定')
   assert.equal(value.columns.at(-1).render('cluster-a'), 'cluster-a')
   assert.equal(value.createAction, undefined)
+  const deletePath = key === 'smbJoinAuths' ? '/smb/join/auth' : '/smb/usersgroup'
+  assert.equal(value.deleteAction.path, deletePath)
+  assert.deepEqual(value.deleteAction.buildBody({ name: 'target' }, 17), { cluster_id: 17, name: 'target' })
+  assert.equal(value.deleteAction.resourceKey({ name: 'target' }), `${deletePath.slice(1)}/target`)
+  assert.ok(value.deleteAction.confirmation({ name: 'target' }).includes('Ceph 拒绝删除'))
   const navigation = readFileSync(new URL('../src/navigation.ts', import.meta.url), 'utf8')
   assert.ok(navigation.includes(`key: '${key}'`))
   const pages = readFileSync(new URL('../src/pages/index.ts', import.meta.url), 'utf8')

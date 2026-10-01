@@ -729,6 +729,14 @@ func (h *Handler) ListSMBUsersGroups(w http.ResponseWriter, r *http.Request) {
 	h.ReadResource("smb_usersgroups", false)(w, r)
 }
 
+func (h *Handler) DeleteSMBJoinAuth(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("smb_join_auth", "smb_join_auth.delete", "high")(w, r)
+}
+
+func (h *Handler) DeleteSMBUsersGroup(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("smb_usersgroups", "smb_usersgroups.delete", "high")(w, r)
+}
+
 func (h *Handler) CreateSMBCluster(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("smb_cluster", "smb_cluster.create", "medium")(w, r)
 }

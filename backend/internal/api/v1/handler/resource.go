@@ -332,6 +332,10 @@ func resourceLookupKey(kind, resourceKey string) string {
 		return after("export")
 	case "smb_share":
 		return after("share")
+	case "smb_join_auth":
+		return after("auth")
+	case "smb_usersgroups":
+		return after("usersgroup")
 	case "rgw_bucket":
 		return after("bucket")
 	case "nvmeof_subsystem":
@@ -632,6 +636,10 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 		return segments("nfs", "cluster", pathValue("name"))
 	case "smb_cluster":
 		return segments("smb", "cluster", pathValue("name"))
+	case "smb_join_auth":
+		return segments("smb", "join", "auth", pathValue("name"))
+	case "smb_usersgroups":
+		return segments("smb", "usersgroup", pathValue("name"))
 	case "osd":
 		if action == "osd.action" {
 			return segments("osd", pathValue("osd_id"), "action")
