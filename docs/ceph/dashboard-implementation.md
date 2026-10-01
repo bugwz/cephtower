@@ -1821,3 +1821,13 @@ post_check_failed，提示操作可能已经生效，不把查询命令成功当
 删除确认明确列出原生 delete_nfs_cluster 的级联影响：全部导出、配置和 NFS/入口
 服务会一并移除，提醒先迁移客户端并保存配置。通用删除组件支持资源专属提示，
 保留高风险确认、版本校验及原有执行链路。提示文本与接入点已回归测试。
+
+## SMB 集群原生配置展示
+
+根据参考 Dashboard SMBCluster.list/get 的 smb show 调用，名称采集后逐集群执行
+`ceph smb show ceph.smb.cluster.<id> --format json`，核对资源类型和集群 ID。
+经现有 `/smb/clusters` 资源 API 提供认证模式、期望状态、域设置/凭据引用、用户组
+引用、DNS、公开地址、放置及集群模式。详情展示这些原生字段，不补造缺失值；
+失败保留集群名称并标记 info_available=false。编辑不再把未知认证模式默认成 user。
+不查询 join auth 或 usersgroups 密码资源，响应额外顶层字段不转发；沿用资源脱敏。
+已覆盖原生命令、身份不匹配及配置读取测试，尚未真实部署 SMB 验证。

@@ -162,3 +162,16 @@ assert.ok(warning.includes('nfs-a') && warning.includes('全部 NFS 导出') && 
 const resourcePageSource = readFileSync(new URL('../src/pages/ResourceListPage.tsx', import.meta.url), 'utf8')
 assert.equal((resourcePageSource.match(/content: action\.confirmation\?\.\(row\) \?\?/g) ?? []).length, 2)
 console.log('NFS cluster deletion impact warning checks passed')
+
+const smbSource = readFileSync(new URL('../src/pages/file/SMBClusterDetails.tsx', import.meta.url), 'utf8')
+const smbExports = {}
+new Function('require', 'exports', ts.transpileModule(smbSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)((name) => {
+  if (name === 'antd') return { Alert: 'Alert', Card: 'Card', Descriptions: Object.assign(() => null, { Item: 'Item' }) }
+  return require(name)
+}, smbExports)
+assert.equal(smbExports.SMBClusterDetails({ row: {} }).type, 'Alert')
+const smbNodes = nodes(smbExports.SMBClusterDetails({ row: { info_available: true, auth_mode: 'active-directory', domain_settings: { realm: 'EXAMPLE.COM' } } }))
+assert.equal(smbNodes.find((node) => node.props?.label === '认证模式').props.children.props.children, 'active-directory')
+assert.ok(smbNodes.find((node) => node.props?.label === '域设置 / 加域凭据引用').props.children.props.children.includes('EXAMPLE.COM'))
+assert.equal(smbNodes.find((node) => node.props?.label === '公开地址').props.children.props.children, '未提供')
+console.log('SMB cluster configuration display checks passed')

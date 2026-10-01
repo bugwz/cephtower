@@ -905,6 +905,9 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 			if gateway.prefix == "nfs" {
 				payload = p.collectNFSClusterInfo(ctx, access, name)
 			}
+			if gateway.prefix == "smb" {
+				payload = p.collectSMBClusterInfo(ctx, access, name)
+			}
 			rows = append(rows, Observation{Kind: gateway.kind, NaturalKey: name, Name: name, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 		}
 	}

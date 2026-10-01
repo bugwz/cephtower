@@ -1,6 +1,7 @@
 import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClusterDetails } from './NFSClusterDetails'
+import { SMBClusterDetails } from './SMBClusterDetails'
 import { NFSClientsEditor } from './NFSClientsEditor'
 import { nfsClientsBody, nfsFSALBody, nfsRGWUserChoices, nfsRGWBucketChoices } from './nfsExportFields'
 import { nfsAccessOptions, nfsExportEditReason, nfsExportInitialValues, nfsFSAL, nfsTransportBody, nfsTransportOptions, nfsProtocolBody, nfsProtocolOptions, nfsSecurityLabelOptions, nfsSecurityTypeBody, nfsSquashOptions } from './nfsExportFields'
@@ -724,6 +725,7 @@ const definitions: Record<
   },
   smbClusters: {
     title: 'SMB 集群',
+    detailContent: (row) => <SMBClusterDetails row={row} />,
     path: '/smb/clusters',
     requiredCapabilities: ['smb'],
     createAction: {
@@ -768,7 +770,7 @@ const definitions: Record<
           ]
         }
       ],
-      initialValues: (row) => ({ auth_mode: text(row?.auth_mode) || 'user' }),
+      initialValues: (row) => ({ auth_mode: row?.auth_mode === 'user' || row?.auth_mode === 'active-directory' ? row.auth_mode : undefined }),
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
         name: resourceName(row),
@@ -789,6 +791,7 @@ const definitions: Record<
       { key: 'status', title: '状态' },
       { key: 'placement', title: '放置策略' },
       { key: 'auth_mode', title: '认证' },
+      { key: 'info_available', title: '配置采集', render: (value) => value === true ? '已获取' : '未获取' },
       { key: 'resource_version', title: '版本' }
     ]
   },
