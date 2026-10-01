@@ -53,7 +53,7 @@ func TestCrushRuleRenameReadback(t *testing.T) {
 			t.Fatal(bad, err)
 		}
 	}
-	if !crushRuleRenamed("same", "same", []byte(`["same"]`)) {
+	if !nameRenamed("same", "same", []byte(`["same"]`)) {
 		t.Fatal("same-name operation rejected")
 	}
 }

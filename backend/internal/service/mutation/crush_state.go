@@ -21,7 +21,7 @@ func nameAbsent(name string, data []byte) bool {
 	return true
 }
 
-func crushRuleRenamed(old, name string, data []byte) bool {
+func nameRenamed(old, name string, data []byte) bool {
 	var names []string
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	if old == "" || name == "" || decoder.Decode(&names) != nil || decoder.Decode(new(any)) != io.EOF || names == nil {

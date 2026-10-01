@@ -296,8 +296,11 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "pool.delete" && (err != nil || !nameAbsent(last(resourceTail(request.ResourceKey)), checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "pool removal was accepted but absence could not be verified; inspect the pool before retrying", Retryable: false}
 		}
-		if request.Action == "crush_rule.update" && (err != nil || !crushRuleRenamed(last(resourceTail(request.ResourceKey)), optional(request.Parameters, "new_name"), checked.Stdout)) {
+		if request.Action == "crush_rule.update" && (err != nil || !nameRenamed(last(resourceTail(request.ResourceKey)), optional(request.Parameters, "new_name"), checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "CRUSH rule rename was accepted but names could not be verified; inspect the rule before retrying", Retryable: false}
+		}
+		if request.Action == "pool.update" && optional(request.Parameters, "operation") == "rename" && (err != nil || !nameRenamed(last(resourceTail(request.ResourceKey)), optional(request.Parameters, "name"), checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "pool rename was accepted but old and new names could not be verified; inspect pool names before retrying", Retryable: false}
 		}
 		if request.Action == "erasure_code_profile.create" && (err != nil || !erasureProfileCreated(spec.args, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "erasure code profile creation was accepted but submitted parameters could not be verified; inspect the profile before retrying", Retryable: false}
@@ -780,7 +783,7 @@ func build(request Request, p map[string]any) (command, error) {
 			if err != nil {
 				return command{}, err
 			}
-			return ceph([]string{"osd", "pool", "rename", name, newName}, []string{"osd", "pool", "ls", "detail", "--format", "json"}), nil
+			return ceph([]string{"osd", "pool", "rename", name, newName}, []string{"osd", "pool", "ls", "--format", "json"}), nil
 		}
 		field, err := enum(p, "field", poolSetFields()...)
 		if err != nil {
