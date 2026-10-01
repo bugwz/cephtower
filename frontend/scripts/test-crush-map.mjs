@@ -291,13 +291,14 @@ for (const changed of [false, true]) {
 for (const mode of ['create', 'edit']) {
   const fn = poolPage.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submitPool')
   const code = ts.transpileModule(fn.getText(poolTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
-  let finish, touched = false
+  let finish, touched = false, calls = 0
   const scopeRef = { current: { id: 1 } }
-  const run = new Function('clusterScope', 'operationMutation', 'setSubmitting', 'message', 'formMode', 'poolPlacementAvailable', 'poolUpdateBodies', 'poolEditBlocked', 'editingPool', `const selectedClusterId=1, submitting=false, loading=false, error=null, crushRuleOptions=[], erasureCodeProfileOptions=[], data={}; ${code}; return submitPool`)(scopeRef, { run: () => new Promise((resolve) => { finish = resolve }) }, () => {}, { success: () => { touched = true } }, mode, () => true, () => [{}], editBlocked, editable)
+  const run = new Function('clusterScope', 'operationMutation', 'setSubmitting', 'message', 'formMode', 'poolPlacementAvailable', 'poolUpdateBodies', 'poolEditBlocked', 'editingPool', `const selectedClusterId=1, submitting=false, loading=false, error=null, crushRuleOptions=[], erasureCodeProfileOptions=[], data={}; ${code}; return submitPool`)(scopeRef, { run: () => { calls++; return calls === 1 ? new Promise((resolve) => { finish = resolve }) : Promise.resolve() } }, () => {}, { success: () => { touched = true } }, mode, () => true, () => [{ field: 'size' }, { operation: 'rename' }], editBlocked, editable)
   const pending = run({})
   scopeRef.current = { id: 2 }
   finish()
   await pending
+  assert.equal(calls, 1, `${mode} must not submit remaining mutations after switching clusters`)
   assert.equal(touched, false, `${mode} pool completion must not update the new cluster UI`)
 }
 {

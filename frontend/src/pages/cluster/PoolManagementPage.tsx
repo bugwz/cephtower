@@ -468,6 +468,7 @@ export function PoolManagementPage() {
           return
         }
         for (const body of requests) {
+          if (clusterScope.current !== scope) return
           await operationMutation.run(() => mutateResource('/pool', 'PATCH', body, { ifMatch: Number(editingPool.resource_version) }), false)
         }
         if (clusterScope.current !== scope) return
