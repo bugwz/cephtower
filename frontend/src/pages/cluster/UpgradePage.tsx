@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Descriptions, Space } from 'antd'
+import { Alert, Button, Card, Descriptions, Space, Switch } from 'antd'
 import { useEffect, useState } from 'react'
 import { getResource, mutateResource, refreshResource } from '../../api/resource'
 import type { ResourceDTO } from '../../api/types'
@@ -13,6 +13,20 @@ import { RuntimeLogsPanel } from '../monitoring/RuntimeLogsPage'
 
 type UpgradeControl = 'pause' | 'resume' | 'stop'
 const controlLabels = { pause: '暂停升级', resume: '恢复升级', stop: '停止升级' }
+
+export function watchUpgradeStatus(clusterId: number, auto: boolean, onResult: (item: ResourceDTO) => void, onError: (error: unknown) => void) {
+  const abort = new AbortController()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  async function read() {
+    try {
+      const { item } = await getResource('/upgrade', clusterId, {}, { signal: abort.signal, suppressErrorNotification: true })
+      if (!abort.signal.aborted) onResult(item)
+    } catch (error) { if (!abort.signal.aborted) onError(error) }
+    finally { if (auto && !abort.signal.aborted) timer = setTimeout(read, 10000) }
+  }
+  void read()
+  return () => { abort.abort(); clearTimeout(timer) }
+}
 
 export function upgradeControlAllowed(data: ApiRecord, stale: boolean, action: UpgradeControl) {
   if (stale || data.in_progress !== true) return false
@@ -35,20 +49,18 @@ export function UpgradePage() {
   const [revision, setRevision] = useState(0)
   const [record, setRecord] = useState<ResourceDTO | null>(null)
   const [loading, setLoading] = useState(false)
+  const [auto, setAuto] = useState(true)
   const [error, setError] = useState('')
   const [pending, setPending] = useState<{ action: UpgradeControl; clusterId: number } | null>(null)
   const operation = useMutationOperation()
   useEffect(() => {
-    const abort = new AbortController()
     setRecord(null); setError(''); setLoading(false)
-    if (!selectedClusterId) return () => abort.abort()
+    if (!selectedClusterId) return
     setLoading(true)
-    void getResource('/upgrade', selectedClusterId, {}, { signal: abort.signal, suppressErrorNotification: true })
-      .then(({ item }) => { if (!abort.signal.aborted) setRecord(item) })
-      .catch((err) => { if (!abort.signal.aborted) setError(err instanceof Error ? err.message : '升级状态读取失败') })
-      .finally(() => { if (!abort.signal.aborted) setLoading(false) })
-    return () => abort.abort()
-  }, [selectedClusterId, revision])
+    return watchUpgradeStatus(selectedClusterId, auto,
+      (item) => { setRecord(item); setError(''); setLoading(false) },
+      (err) => { setRecord((previous) => previous ? { ...previous, stale: true } : null); setError(err instanceof Error ? err.message : '升级状态读取失败'); setLoading(false) })
+  }, [selectedClusterId, revision, auto])
   useEffect(() => { setPending(null) }, [selectedClusterId])
   async function control() {
     if (!pending || pending.clusterId !== selectedClusterId || !record || operation.loading || !upgradeControlAllowed(record.data, record.stale, pending.action)) return
@@ -70,14 +82,17 @@ export function UpgradePage() {
     } catch (err) { setError(err instanceof Error ? err.message : '采集失败') }
   }
   return <><Card title="集群升级状态" loading={loading} extra={<Space wrap>
+    <Switch aria-label="自动读取升级状态" checked={auto} onChange={setAuto} checkedChildren="自动读取" unCheckedChildren="已暂停读取" />
     {(['pause', 'resume', 'stop'] as const).map((action) => <Button key={action} danger={action === 'stop'} disabled={!selectedClusterId || loading || operation.loading || !record || !upgradeControlAllowed(record.data, record.stale, action)} onClick={() => selectedClusterId && setPending({ action, clusterId: selectedClusterId })}>{controlLabels[action]}</Button>)}
     <Button disabled={!selectedClusterId || loading || operation.loading} onClick={() => setRevision((value) => value + 1)}>重新读取</Button>
     <Button disabled={!selectedClusterId || loading || operation.loading} loading={operation.loading} onClick={() => void collect()}>重新采集</Button>
   </Space>}>
     {!selectedClusterId && <Alert type="info" message="请先选择集群" />}
+    {selectedClusterId && <Alert type="info" message="自动读取每 10 秒更新库存中的升级状态，不会触发集群操作。请结合采集时间判断；需要立即采集时点击重新采集。" />}
     {error && <Alert type="error" message={error} />}
     {record && <>
       <ResourceMetaBar observedAt={record.observed_at} stale={record.stale} />
+      {record.stale && <Alert type="warning" message="升级状态已过期或读取失败，已禁用升级操作，请重新读取或采集。" />}
       <Descriptions column={1} items={upgradeStatusFields(record.data).map(([label, children]) => ({ key: label, label, children }))} />
     </>}
   </Card>

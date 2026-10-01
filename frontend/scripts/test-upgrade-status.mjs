@@ -35,6 +35,43 @@ assert.equal(fields({ services_complete: [{}] })['已完成服务'], '未知')
 assert.equal(fields({})['目标镜像'], '未提供')
 console.log('Native upgrade status display checks passed')
 
+const watchFunction = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'watchUpgradeStatus')
+const watchCode = ts.transpileModule(watchFunction.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+const flush = async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve() }
+for (const auto of [false, true]) {
+  const watcher = {}
+  const timers = new Map()
+  const calls = []
+  const results = []
+  const errors = []
+  let settle
+  new Function('exports', 'getResource', 'setTimeout', 'clearTimeout', watchCode)(watcher,
+    (...args) => { calls.push(args); return new Promise((resolve, reject) => { settle = { resolve, reject } }) },
+    (callback, delay) => { assert.equal(delay, 10000); timers.set(1, callback); return 1 },
+    (id) => timers.delete(id))
+  const stop = watcher.watchUpgradeStatus(7, auto, (item) => results.push(item), (error) => errors.push(error))
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0][0], '/upgrade')
+  assert.equal(calls[0][1], 7)
+  assert.equal(timers.size, 0, 'must wait for request completion')
+  settle.resolve({ item: { stale: false } })
+  await flush()
+  assert.equal(results.length, 1)
+  assert.equal(timers.size, auto ? 1 : 0)
+  if (auto) {
+    const next = timers.get(1); timers.clear(); void next()
+    settle.reject(new Error('offline')); await flush()
+    assert.equal(errors.length, 1)
+    assert.equal(timers.size, 1, 'must continue polling after failure')
+    const pending = timers.get(1); timers.clear(); void pending()
+    stop()
+    assert.equal(calls.at(-1)[3].signal.aborted, true)
+    settle.resolve({ item: { stale: false } }); await flush()
+    assert.equal(results.length, 1, 'must ignore results after cleanup')
+  } else stop()
+  assert.equal(timers.size, 0)
+}
+
 const daemonSource = readFileSync(new URL('../src/pages/cluster/UpgradeDaemons.tsx', import.meta.url), 'utf8')
 const daemonTree = ts.createSourceFile('UpgradeDaemons.tsx', daemonSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const daemonFunction = daemonTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'upgradeDaemonRows')
