@@ -66,6 +66,10 @@ assert.equal(profileDetails.find((item) => item.key === 'plugin').children, '未
 
 const poolSource = readFileSync(new URL('../src/pages/cluster/PoolManagementPage.tsx', import.meta.url), 'utf8')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+assert.ok(poolSource.includes("Form.useWatch('erasure_code_profile', form)"))
+assert.ok(poolSource.includes('resourceName(row) === selectedProfileName'))
+assert.ok(poolSource.includes('items={erasureProfileDetails(selectedProfile)}'))
+assert.ok(poolSource.includes('配置详情尚未采集'))
 const poolPage = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'PoolManagementPage')
 for (const mode of ['create', 'edit']) {
   const fn = poolPage.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submitPool')

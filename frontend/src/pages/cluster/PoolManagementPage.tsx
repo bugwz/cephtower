@@ -1,5 +1,6 @@
 import { InfoCircleOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
-import { Button, Card, Divider, Form, Input, InputNumber, Select, Space, Tag, Tooltip, Typography } from 'antd'
+import { Alert, Button, Card, Collapse, Descriptions, Divider, Form, Input, InputNumber, Select, Space, Tag, Tooltip, Typography } from 'antd'
+import { erasureProfileDetails } from './ErasureProfilesPanel'
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isRecord, jsonInit, request, numberValue, textValue, type ApiRecord } from '../../api/client'
@@ -82,6 +83,7 @@ interface PoolPageData {
   pools: ApiRecord[]
   crushRules: ApiRecord[]
   erasureCodeProfiles: string[]
+  erasureCodeProfileRows: ApiRecord[]
   crushNodes: ApiRecord[]
   observedAt?: string | null
   stale: boolean
@@ -195,6 +197,7 @@ export function PoolManagementPage() {
   }, [selectedClusterId])
   const [refreshingPools, setRefreshingPools] = useState(false)
   const poolType = Form.useWatch('pool_type', form) ?? 'replicated'
+  const selectedProfileName = Form.useWatch('erasure_code_profile', form)
   const pgAutoscaleMode = Form.useWatch('pg_autoscale_mode', form) ?? 'on'
   const applications = Form.useWatch('applications', form) ?? []
   const compressionMode = Form.useWatch('compression_mode', form) ?? 'none'
@@ -216,7 +219,7 @@ export function PoolManagementPage() {
   })
   const loader = useCallback(async (): Promise<PoolPageData> => {
     if (!selectedClusterId) {
-      return { pools: [], crushRules: [], erasureCodeProfiles: [], crushNodes: [], observedAt: null, stale: false, staleReason: null }
+      return { pools: [], crushRules: [], erasureCodeProfiles: [], erasureCodeProfileRows: [], crushNodes: [], observedAt: null, stale: false, staleReason: null }
     }
     const [poolList, crushRules, erasureCodeProfileRows, crushNodes] = await Promise.all([
       listResource('/pools', selectedClusterId, { filters: poolTableFilters.filters }),
@@ -229,6 +232,7 @@ export function PoolManagementPage() {
       pools: poolList.items.map(normalizePoolRow),
       crushRules,
       erasureCodeProfiles: Array.from(new Set(erasureCodeProfiles)),
+      erasureCodeProfileRows,
       crushNodes,
       observedAt: poolList.observedAt,
       stale: poolList.stale,
@@ -236,6 +240,7 @@ export function PoolManagementPage() {
     }
   }, [poolTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
+  const selectedProfile = (data?.erasureCodeProfileRows ?? []).find((row) => resourceName(row) === selectedProfileName)
   const applicationOptions = useMemo(() => {
     const fromRows = (data?.pools ?? []).flatMap((row) => poolApplications(row))
     return Array.from(new Set([...applicationDefaults, ...fromRows])).map((value) => ({ label: value, value }))
@@ -569,6 +574,10 @@ export function PoolManagementPage() {
                     ]}
                   />
                 </Form.Item>
+                {selectedProfileName && <Collapse items={[{
+                  key: 'profile', label: `纠删码配置详情：${selectedProfileName}`,
+                  children: selectedProfile ? <Descriptions bordered column={1} items={erasureProfileDetails(selectedProfile)} /> : <Alert type="info" message="配置详情尚未采集，请刷新后查看；不会以表单默认值代替原生配置。" />
+                }]} />}
               </>
             )}
             <Form.Item
