@@ -35,6 +35,22 @@ assert.equal(fields({ services_complete: [{}] })['已完成服务'], '未知')
 assert.equal(fields({})['目标镜像'], '未提供')
 console.log('Native upgrade status display checks passed')
 
+const daemonSource = readFileSync(new URL('../src/pages/cluster/UpgradeDaemons.tsx', import.meta.url), 'utf8')
+const daemonTree = ts.createSourceFile('UpgradeDaemons.tsx', daemonSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const daemonFunction = daemonTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'upgradeDaemonRows')
+const daemonExports = {}
+new Function('exports', ts.transpileModule(daemonFunction.getText(daemonTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(daemonExports)
+const daemonItems = [{ natural_key: 'mgr.a', name: 'mgr.a', hostname: 'node-a', version: '20.2.2', container_image: 'ceph:v20.2.2', stale: false }, { name: 'mon.b', version: null, stale: true }]
+const daemonRows = daemonExports.upgradeDaemonRows(daemonItems, '')
+assert.equal(daemonRows[0].image, 'ceph:v20.2.2')
+assert.equal(daemonRows[0].freshness, '有效')
+assert.equal(daemonRows[1].version, '未知')
+assert.equal(daemonRows[1].freshness, '已过期')
+assert.equal(daemonExports.upgradeDaemonRows(daemonItems, ' NODE-A ').length, 1)
+assert.equal(daemonExports.upgradeDaemonRows(daemonItems, '20.2').length, 1)
+assert.equal(daemonExports.upgradeDaemonRows(daemonItems, 'missing').length, 0)
+assert.deepEqual(daemonExports.upgradeDaemonRows([], ''), [])
+
 const checkSource = readFileSync(new URL('../src/pages/cluster/UpgradeCheck.tsx', import.meta.url), 'utf8')
 const checkTree = ts.createSourceFile('UpgradeCheck.tsx', checkSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const checkFunctions = checkTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['upgradeCheckVersion', 'upgradeTargetBody', 'upgradeCheckData', 'upgradeStartAllowed'].includes(node.name.text))

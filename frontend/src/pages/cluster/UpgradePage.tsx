@@ -8,6 +8,7 @@ import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
 import { DraggableModal } from '../../components/DraggableModal'
 import { UpgradeCheck } from './UpgradeCheck'
+import { UpgradeDaemons } from './UpgradeDaemons'
 
 type UpgradeControl = 'pause' | 'resume' | 'stop'
 const controlLabels = { pause: '暂停升级', resume: '恢复升级', stop: '停止升级' }
@@ -63,7 +64,7 @@ export function UpgradePage() {
   async function collect() {
     if (!selectedClusterId) return
     try {
-      await operation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['upgrade'] }), '升级状态采集完成')
+      await operation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['upgrade', 'daemon'] }), '升级状态与守护进程采集完成')
       setRevision((value) => value + 1)
     } catch (err) { setError(err instanceof Error ? err.message : '采集失败') }
   }
@@ -80,6 +81,7 @@ export function UpgradePage() {
     </>}
   </Card>
     {selectedClusterId && <UpgradeCheck key={selectedClusterId} clusterId={selectedClusterId} record={record} disabled={loading || operation.loading} onStarted={() => setRevision((value) => value + 1)} />}
+    {selectedClusterId && <UpgradeDaemons key={`daemons-${selectedClusterId}`} clusterId={selectedClusterId} revision={revision} />}
     <DraggableModal title={pending ? controlLabels[pending.action] : ''} open={pending !== null} confirmLoading={operation.loading} onCancel={() => { if (!operation.loading) setPending(null) }} onOk={() => void control()} okButtonProps={{ danger: pending?.action === 'stop' }}>
       <Alert type="warning" message={pending?.action === 'stop' ? '停止后不会回滚已升级的守护进程，集群可能保留混合版本。确认停止？' : pending?.action === 'pause' ? '暂停后不再继续升级，已升级的守护进程不会回滚。确认暂停？' : '恢复后将继续升级守护进程，可能影响服务。确认恢复？'} />
     </DraggableModal>
