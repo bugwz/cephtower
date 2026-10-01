@@ -5,11 +5,12 @@ import { createRequire } from 'node:module'
 
 const source = readFileSync(new URL('../src/pages/file/nfsExportFields.ts', import.meta.url), 'utf8')
 const exports = {}
-new Function('exports', ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
+new Function('exports', ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(exports)
 const row = { cluster_id: 'nfs-a', pseudo: '/share', path: '/data', access_type: 'RO', fsal: { name: 'CEPH', fs_name: 'cephfs-a', user_id: 'nfs.user' } }
 assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', access_type: 'RO', squash: undefined, security_label: undefined, transports: undefined, protocols: undefined, sectype: undefined, clients: undefined, fsal_type: 'CEPH', rgw_user_id: 'nfs.user' })
 assert.deepEqual(exports.nfsFSALBody({ fsal_type: 'RGW', rgw_user_id: 'owner', filesystem: 'stale' }), { fsal_type: 'RGW', rgw_user_id: 'owner' })
 assert.deepEqual(exports.nfsFSALBody({ fsal_type: 'CEPH', filesystem: 'fs', rgw_user_id: 'stale' }), { fsal_type: 'CEPH', filesystem: 'fs' })
+assert.deepEqual(exports.nfsRGWUserChoices([{ uid: 'tenant$user', user_id: 'user', display_name: 'Owner' }, { uid: 'plain' }, { uid: 'plain' }, { user_id: 'unqualified' }, { uid: '' }]), [{ label: 'Owner (tenant$user)', value: 'tenant$user' }, { label: 'plain', value: 'plain' }])
 assert.deepEqual(exports.nfsClientsBody(''), {})
 assert.deepEqual(exports.nfsClientsBody('[]'), { client_rules: [] })
 assert.deepEqual(exports.nfsClientsBody('[{"addresses":["10.0.0.0/8"],"access_type":null,"squash":null}]'), { client_rules: [{ addresses: ['10.0.0.0/8'], access_type: '', squash: '' }] })
@@ -46,6 +47,14 @@ for (const fsal of [null, undefined, [], 'CEPH']) assert.deepEqual(exports.nfsFS
 console.log('NFS native export field checks passed')
 const pagesSource = readFileSync(new URL('../src/pages/file/pages.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('pages.tsx', pagesSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const userLoader = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'nfsRGWUserOptions')
+const userLoaderCode = ts.transpileModule(userLoader.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+const userCalls = []
+const loadUsers = new Function('listAllResources', 'nfsRGWUserChoices', `${userLoaderCode}; return nfsRGWUserOptions`)(async (...args) => { userCalls.push(args); return { items: [{ uid: 'tenant$user' }] } }, exports.nfsRGWUserChoices)
+assert.deepEqual(await loadUsers(7, undefined, { fsal_type: 'CEPH' }), [])
+assert.equal(userCalls.length, 0)
+assert.deepEqual(await loadUsers(7, undefined, { fsal_type: 'RGW' }), [{ label: 'tenant$user', value: 'tenant$user' }])
+assert.deepEqual(userCalls, [['/rgw/users', 7]])
 const identity = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'exportId')
 assert.ok(identity)
 const code = ts.transpileModule(identity.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText

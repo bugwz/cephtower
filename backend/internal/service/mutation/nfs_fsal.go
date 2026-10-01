@@ -1,6 +1,11 @@
 package mutation
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
+
+var nfsRGWUserID = regexp.MustCompile(`^[A-Za-z0-9_.:@$-]{1,512}$`)
 
 func nfsExportFSAL(p map[string]any) (map[string]any, error) {
 	kind := optional(p, "fsal_type")
@@ -18,9 +23,9 @@ func nfsExportFSAL(p map[string]any) (map[string]any, error) {
 		}
 		return map[string]any{"name": "CEPH", "fs_name": filesystem}, nil
 	case "RGW":
-		user, err := required(p, "rgw_user_id")
-		if err != nil {
-			return nil, err
+		user := optional(p, "rgw_user_id")
+		if !nfsRGWUserID.MatchString(user) || strings.HasPrefix(user, "-") {
+			return nil, invalid("rgw_user_id is required or invalid")
 		}
 		return map[string]any{"name": "RGW", "user_id": user}, nil
 	default:

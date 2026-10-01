@@ -59,6 +59,17 @@ export function nfsFSALBody(values: ApiRecord) {
   return { fsal_type: 'CEPH', filesystem: String(values.filesystem ?? '') }
 }
 
+export function nfsRGWUserChoices(rows: ApiRecord[]) {
+  const choices = new Map<string, { label: string; value: string }>()
+  for (const row of rows) {
+    // The collector's uid comes from user list and retains the tenant prefix.
+    if (typeof row.uid !== 'string' || !row.uid.trim()) continue
+    const uid = row.uid.trim()
+    choices.set(uid, { value: uid, label: typeof row.display_name === 'string' && row.display_name ? `${row.display_name} (${uid})` : uid })
+  }
+  return [...choices.values()]
+}
+
 export function nfsExportInitialValues(row?: ApiRecord) {
   return {
     cluster: typeof row?.cluster_id === 'string' ? row.cluster_id : '',

@@ -77,3 +77,26 @@ func TestNFSRGWExport(t *testing.T) {
 		t.Fatal("missing RGW user accepted")
 	}
 }
+
+func TestNFSTenantRGWUser(t *testing.T) {
+	for _, user := range []string{"tenant$user", "plain-user"} {
+		p := map[string]any{"cluster": "nfs-a", "pseudo": "/share", "path": "/", "fsal_type": "RGW", "rgw_user_id": user}
+		cmd, err := build(Request{Action: "nfs_export.create"}, p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var record map[string]any
+		if err := json.Unmarshal(cmd.stdin, &record); err != nil {
+			t.Fatal(err)
+		}
+		if record["fsal"].(map[string]any)["user_id"] != user {
+			t.Fatal("tenant identity lost")
+		}
+	}
+	for _, user := range []string{"-option", "user\"", "user\\", "user;", "user\n"} {
+		p := map[string]any{"cluster": "nfs-a", "pseudo": "/share", "path": "/", "fsal_type": "RGW", "rgw_user_id": user}
+		if _, err := build(Request{Action: "nfs_export.create"}, p); err == nil {
+			t.Fatal("unsafe user accepted")
+		}
+	}
+}
