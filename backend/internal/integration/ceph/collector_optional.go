@@ -524,12 +524,28 @@ func (p *NativeProvider) collectConfigurationOptional(ctx context.Context, acces
 			rows = append(rows, observation("crush_rule", name, name, "ceph_cli", item, now))
 		}
 	}
+	return append(rows, p.collectErasureProfiles(ctx, access, now)...)
+}
+
+func (p *NativeProvider) collectErasureProfiles(ctx context.Context, access ClusterAccess, now time.Time) []Observation {
+	var rows []Observation
 	var profiles []string
 	if p.optional(ctx, access, executor.BinaryCeph, "collect.erasure_code_profile", []string{"osd", "erasure-code-profile", "ls", "--format", "json"}, &profiles) {
+		if profiles == nil {
+			markCollectionUnavailable(ctx, "collect.erasure_code_profile")
+			return nil
+		}
+		seen := map[string]bool{}
 		for _, name := range profiles {
-			var details map[string]any
-			if !p.optional(ctx, access, executor.BinaryCeph, "collect.erasure_code_profile_detail", []string{"osd", "erasure-code-profile", "get", name, "--format", "json"}, &details) {
-				details = map[string]any{"name": name}
+			if strings.TrimSpace(name) == "" || seen[name] {
+				markCollectionUnavailable(ctx, "collect.erasure_code_profile")
+				return nil
+			}
+			seen[name] = true
+			var details map[string]string
+			if !p.optional(ctx, access, executor.BinaryCeph, "collect.erasure_code_profile_detail", []string{"osd", "erasure-code-profile", "get", name, "--format", "json"}, &details) || strings.TrimSpace(details["plugin"]) == "" {
+				markCollectionUnavailable(ctx, "collect.erasure_code_profile")
+				return nil
 			}
 			rows = append(rows, observation("erasure_code_profile", name, name, "ceph_cli", details, now))
 		}
