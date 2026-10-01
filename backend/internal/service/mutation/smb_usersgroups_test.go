@@ -33,7 +33,7 @@ func TestSMBUsersGroupsCreate(t *testing.T) {
 			t.Fatal("invalid readback accepted")
 		}
 	}
-	for _, users := range []any{nil, []any{}, []any{map[string]any{"name": "a"}}, []any{map[string]any{"name": "a", "password": "p"}, map[string]any{"name": "a", "password": "q"}}} {
+	for _, users := range []any{nil, []any{map[string]any{"name": "a"}}, []any{map[string]any{"name": "a", "password": "p"}, map[string]any{"name": "a", "password": "q"}}} {
 		r.Parameters["users"] = users
 		if _, err := smbUsersGroupsJSON(r.Parameters); err == nil {
 			t.Fatal("invalid users accepted")
@@ -66,5 +66,35 @@ func TestSMBUsersGroupsUpdate(t *testing.T) {
 	e.outputs[r.Action+".post_check"] = old
 	if _, err := s.Execute(context.Background(), r); err == nil {
 		t.Fatal("unchanged users accepted")
+	}
+}
+
+func TestSMBUsersGroupsEmptyUsers(t *testing.T) {
+	s, _, id := newCephUserService(t)
+	empty := `{"resources":[{"resource_type":"ceph.smb.usersgroups","users_groups_id":"target","values":{"users":[],"groups":[]}}]}`
+	old := `{"resources":[{"resource_type":"ceph.smb.usersgroups","users_groups_id":"target","values":{"users":[{"name":"old","password":"***"}],"groups":[]}}]}`
+	for _, action := range []string{"smb_usersgroups.create", "smb_usersgroups.update"} {
+		r := Request{ClusterID: id, Action: action, ResourceKey: "smb/usersgroup/target", Parameters: map[string]any{"name": "target", "users": []any{}, "groups": []string{}}}
+		before := old
+		if action == "smb_usersgroups.create" {
+			before = `{"resources":[]}`
+		}
+		e := &directoryRenameExecutor{outputs: map[string]string{action + ".pre_check": before, action: `{"success":true}`, action + ".post_check": empty}}
+		s.executor = e
+		if _, err := s.Execute(context.Background(), r); err != nil {
+			t.Fatal(err)
+		}
+		var payload map[string]any
+		if json.Unmarshal(e.specs[1].Stdin, &payload) != nil {
+			t.Fatal("invalid payload")
+		}
+		users, ok := payload["values"].(map[string]any)["users"].([]any)
+		if !ok || len(users) != 0 {
+			t.Fatal("empty users not serialized as array")
+		}
+		e.outputs[action+".post_check"] = old
+		if _, err := s.Execute(context.Background(), r); err == nil {
+			t.Fatal("stale users accepted after clearing")
+		}
 	}
 }

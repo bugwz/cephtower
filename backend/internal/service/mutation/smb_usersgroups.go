@@ -18,8 +18,8 @@ func smbUsersGroupsJSON(p map[string]any) ([]byte, error) {
 		Name     string `json:"name"`
 		Password string `json:"password"`
 	}
-	if err != nil || json.Unmarshal(encoded, &users) != nil || len(users) == 0 {
-		return nil, invalid("at least one SMB user is required")
+	if err != nil || json.Unmarshal(encoded, &users) != nil || users == nil {
+		return nil, invalid("SMB users must be an array")
 	}
 	seen := map[string]bool{}
 	for _, user := range users {

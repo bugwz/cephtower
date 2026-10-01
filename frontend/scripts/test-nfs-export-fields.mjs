@@ -75,7 +75,8 @@ nodes(smbRenderUsers()).find((node) => node.props['aria-label'] === '用户 1 �
 assert.deepEqual(smbEditorExports.smbUsersBody(smbUsersValue), [{ name: 'alice', password: ' secret ' }])
 nodes(smbRenderUsers()).find((node) => node.type === 'Button' && node.props.danger).props.onClick()
 assert.deepEqual(JSON.parse(smbUsersValue), [])
-for (const bad of [undefined, '[]', '[{"name":"a","password":""}]', '[{"name":"a","password":"p"},{"name":"a","password":"q"}]']) assert.throws(() => smbEditorExports.smbUsersBody(bad))
+assert.deepEqual(smbEditorExports.smbUsersBody('[]'), [])
+for (const bad of [undefined, 'null', '[{"name":"a","password":""}]', '[{"name":"a","password":"p"},{"name":"a","password":"q"}]']) assert.throws(() => smbEditorExports.smbUsersBody(bad))
 for (const [key, path, columns] of [
   ['smbJoinAuths', '/smb/join/auths', ['auth_id', 'username', 'linked_to_cluster']],
   ['smbUsersGroups', '/smb/usersgroups', ['users_groups_id', 'user_count', 'group_names', 'linked_to_cluster']]
@@ -96,6 +97,8 @@ for (const [key, path, columns] of [
     assert.deepEqual(value.createAction.buildBody({ name: 'auth', username: 'admin', password: 'test-secret' }, 17), { cluster_id: 17, name: 'auth', username: 'admin', password: 'test-secret' })
   } else {
     assert.equal(value.createAction.path, '/smb/usersgroup')
+    assert.deepEqual(value.createAction.buildBody({ ...value.createAction.initialValues, name: 'empty' }, 17), { cluster_id: 17, name: 'empty', users: [], groups: [] })
+    assert.deepEqual(value.updateAction.buildBody({ users: '[]' }, 17, { name: 'target' }), { cluster_id: 17, name: 'target', users: [], groups: [] })
     const initial = value.updateAction.initialValues({ user_names: ['alice'], group_names: ['staff'], password: 'must-not-copy' })
     assert.deepEqual(JSON.parse(initial.users), [{ name: 'alice', password: '' }])
     assert.throws(() => smbEditorExports.smbUsersBody(initial.users))

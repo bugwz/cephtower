@@ -30,9 +30,9 @@ export function SMBUsersEditor({ value, onChange, id }: { value?: string; onChan
 }
 
 export function smbUsersBody(value: unknown) {
-  if (typeof value !== 'string') throw new Error('请添加至少一个用户')
+  if (typeof value !== 'string') throw new Error('请提供完整用户列表')
   const users: unknown = JSON.parse(value)
-  if (!Array.isArray(users) || !users.length || users.some((user) => !user || typeof user.name !== 'string' || !user.name.trim() || typeof user.password !== 'string' || !user.password)) throw new Error('请填写每个用户的名称和密码')
+  if (!Array.isArray(users) || users.some((user) => !user || typeof user.name !== 'string' || !user.name.trim() || typeof user.password !== 'string' || !user.password)) throw new Error('请填写每个用户的名称和密码')
   if (new Set(users.map((user) => user.name)).size !== users.length) throw new Error('用户名不能重复')
   return users.map((user) => ({ name: user.name, password: user.password }))
 }
