@@ -3,6 +3,7 @@ package operation
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
@@ -78,6 +79,28 @@ func TestActionDispatcherFailsWhenPostReconcileFails(t *testing.T) {
 	var actionError *cephdomain.ActionError
 	if !errors.As(err, &actionError) || actionError.Code != "post_reconcile_failed" || !actionError.Retryable {
 		t.Fatalf("error = %#v", err)
+	}
+}
+
+func TestFilesystemRenameRefreshesAffectedStorage(t *testing.T) {
+	for _, fail := range []bool{false, true} {
+		mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{"native_output": "renamed"}}}
+		reconciler := &reconcileExecutorFake{}
+		if fail {
+			reconciler.err = errors.New("fixture refresh failure")
+		}
+		result, err := NewActionDispatcher(mutations, nil, reconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "filesystem.rename", ResourceKind: "filesystem", ResourceKey: "filesystem/old"})
+		if !reflect.DeepEqual(reconciler.kinds, []string{"filesystem", "pool"}) || reconciler.kind != "" {
+			t.Fatalf("unexpected refresh: %+v", reconciler)
+		}
+		if fail {
+			var actionError *cephdomain.ActionError
+			if !errors.As(err, &actionError) || actionError.Code != "post_reconcile_failed" {
+				t.Fatalf("refresh error = %v", err)
+			}
+		} else if err != nil || result.Details.(map[string]any)["reconciled"] != true || result.Details.(map[string]any)["native_output"] != "renamed" {
+			t.Fatalf("result = %+v, error = %v", result, err)
+		}
 	}
 }
 

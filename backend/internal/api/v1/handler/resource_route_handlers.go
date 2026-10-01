@@ -461,6 +461,10 @@ func (h *Handler) UpdateFilesystem(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("filesystem", "filesystem.update", "medium")(w, r)
 }
 
+func (h *Handler) RenameFilesystem(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("filesystem", "filesystem.rename", "high")(w, r)
+}
+
 func (h *Handler) DeleteFilesystem(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("filesystem", "filesystem.delete", "high")(w, r)
 }

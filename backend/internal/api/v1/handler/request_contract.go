@@ -193,6 +193,9 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	})
 	add([]string{"cephfs_snapshot.create", "nfs_cluster.create"}, true, map[string]JSONField{"name": stringField(true)})
 	add([]string{"filesystem.update"}, true, map[string]JSONField{"max_mds": integerField(true)})
+	contracts["filesystem.rename"] = RequestContract{Required: true, Fields: map[string]JSONField{
+		"cluster_id": integerField(true), "fs": stringField(true), "new_name": stringField(true), "confirmed": boolField(true),
+	}}
 	add([]string{"subvolume_group.update"}, true, map[string]JSONField{"size": integerField(true)})
 	add([]string{"subvolume.update"}, true, map[string]JSONField{"size": integerField(false), "unlimited": boolField(false), "no_shrink": boolField(false)})
 	add([]string{"cephfs_snapshot.clone"}, true, map[string]JSONField{"target": stringField(true), "group": stringField(false), "target_group": stringField(false), "pool_layout": stringField(false)})

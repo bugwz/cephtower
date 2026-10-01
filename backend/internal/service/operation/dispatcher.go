@@ -72,7 +72,13 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 	if request.Action == "osd_deployment.preview" || d.reconciler == nil {
 		return result, nil
 	}
-	refreshed, err := d.reconciler.RefreshKindIfSupported(ctx, request.ClusterID, request.ResourceKind)
+	var refreshed bool
+	if request.Action == "filesystem.rename" {
+		_, err = d.reconciler.RefreshKinds(ctx, request.ClusterID, []string{"filesystem", "pool"})
+		refreshed = err == nil
+	} else {
+		refreshed, err = d.reconciler.RefreshKindIfSupported(ctx, request.ClusterID, request.ResourceKind)
+	}
 	if err != nil {
 		return cephdomain.ActionResult{}, &cephdomain.ActionError{
 			Code: "post_reconcile_failed", Message: "command succeeded but the cached state could not be refreshed", Retryable: true,

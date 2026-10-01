@@ -36,7 +36,7 @@
 | block / mirroring | `rbd mirror pool/image`、`rbd mirror snapshot schedule` | 已有池状态、模式、peer、bootstrap token、镜像操作与镜像级调度；池/集群级调度管理待补齐 |
 | block / iSCSI | ceph-iscsi REST API | 需要网关 endpoint，不能把所有操作替换成普通 `ceph` CLI；当前已有外部客户端 |
 | block / NVMe-oF | 网关 gRPC | 当前已有 gRPC 客户端；子系统、namespace、listener、host、连接与 QoS 待完整对照 |
-| cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict` | 已有文件系统详情与客户端接口；计数器、rename、auth 与目录操作待核对 |
+| cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict` | 已有文件系统详情、客户端、授权与卷重命名；计数器及其余完整字段待核对 |
 | cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot`、`fs clone` | 已有组范围采集、clone 状态/进度/失败展示、快照克隆和进行中任务取消；metadata 与其余完整参数需核对 |
 | cephfs / snapshot schedule | `fs snap-schedule` | 已有全路径发现、精确状态、创建、删除、激活/停用、retention 和模块启用 |
 | cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 已有实时目录浏览、目录元数据、双维度配额、目录增删/重命名/移动及目录快照列表/创建/删除 |
@@ -190,7 +190,21 @@ ANSI 转义。配额读取最多 8 路并发，且单层目录最多接受 500 �
 `setxattr` 步骤，最后在同一个指定文件系统回读两个属性并逐值核对。能力探测改用
 cephfs-shell 实际支持的 `--help`，不再调用不存在的 `--version`。
 
-## 已实现：CephFS 目录快照
+## 已实现：CephFS 文件系统卷重命名
+
+对照 Dashboard `CephFSUi.rename()`、CephFS 编辑表单和 volumes 模块的
+`rename_fs_volume()`，文件系统列表新增独立“重命名卷”操作。
+`PUT /api/v1/filesystem` 要求 `cluster_id`、`fs`、`new_name`、`confirmed: true`，
+执行 `ceph fs volume rename <old> <new> --yes-i-really-mean-it`。任务风险级别为 high，
+界面确认提醒维护窗口、客户端 CephX 重新授权、可能的存储池与 MDS 服务变更。
+只调用完整的 volumes 操作，不使用仅改变 FS Map 名称的 `fs rename` 替代。
+原生模块负责调整 MDS 服务和存储池，多个数据池时可能仅返回未重命名全部数据池的提示；
+保留脱敏后的原生命令输出与警告到任务详情，不将名称核验冒充全部底层对象的验证。
+后置 `fs volume ls --format json` 必须同时验证新名称存在、旧名称消失；空、畸形或重复
+对象不能证明成功。成功后刷新 filesystem 和 pool 缓存；MDS 服务需重新观测。
+拒绝无确认、相同名称和不合法名称；离线测试覆盖原生命令及回读失败，尚无真实集群验证。
+
+## 已实现：CephFS 目录生命周期与快照
 
 ### 目录创建与删除
 

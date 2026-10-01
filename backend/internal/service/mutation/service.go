@@ -78,7 +78,7 @@ func Supports(action string) bool {
 		"rbd_snapshot.create", "rbd_snapshot.update", "rbd_snapshot.delete", "rbd_snapshot.action",
 		"rbd_namespace.create", "rbd_namespace.delete", "rbd_trash.restore", "rbd_trash.delete",
 		"rbd_trash.purge", "rbd_group.create", "rbd_group.action", "rbd_group.member", "rbd_group.snapshot", "rbd_mirroring.update", "rbd_mirroring.peer",
-		"filesystem.create", "filesystem.update", "filesystem.delete",
+		"filesystem.create", "filesystem.update", "filesystem.delete", "filesystem.rename",
 		"subvolume_group.create", "subvolume_group.update", "subvolume_group.delete",
 		"subvolume.create", "subvolume.update", "subvolume.delete", "subvolume.clone_cancel",
 		"cephfs_snapshot.create", "cephfs_snapshot.delete", "cephfs_snapshot.clone", "snapshot_schedule.create", "snapshot_schedule.action", "snapshot_schedule.retention",
@@ -150,6 +150,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if err != nil || ((request.Action == "cephfs_entry.create" || request.Action == "cephfs_entry.delete") && !cephFSDirectoryMutationMatches(request.Action, request.Parameters, checked.Stdout)) || (request.Action == "cephfs_entry.quota" && !cephFSEntryQuotaMatches(request.Parameters, checked.Stdout)) || (isCephFSEntrySnapshotMutation(request.Action) && !cephFSEntrySnapshotMatches(request.Action, request.Parameters, checked.Stdout)) || (request.Action == "rgw_bucket.quota" && !bucketQuotaMatches(request.Parameters, checked.Stdout)) || ((request.Action == "rgw_zone.update" || request.Action == "rgw_zone.create") && !zoneReadbackMatches(request.Parameters, checked.Stdout)) || (isRBDMirrorScheduleMutation(request.Parameters) && !rbdMirrorScheduleReadbackMatches(request, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "command was accepted but the expected state could not be verified", Retryable: true}
 		}
+		if request.Action == "filesystem.rename" && !filesystemRenameMatches(last(resourceTail(request.ResourceKey)), rawText(request.Parameters, "new_name"), checked.Stdout) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "volume rename was accepted but the new and old names could not be verified", Retryable: true}
+		}
 	}
 	if request.Action == "rgw_zone.update" && optional(request.Parameters, "zonegroup") != "" {
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".group_post_check", Binary: executor.BinaryRGWAdmin, Args: []string{"zonegroup", "get", "--rgw-zonegroup", optional(request.Parameters, "zonegroup"), "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
@@ -169,6 +172,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if request.Action == "osd_deployment.preview" {
 		return cephdomain.ActionResult{Details: map[string]any{"preview": security.Redact(string(result.Stdout))}}, nil
+	}
+	if request.Action == "filesystem.rename" {
+		return cephdomain.ActionResult{Details: map[string]any{"exit_code": result.ExitCode, "duration_ms": result.Duration.Milliseconds(), "native_output": security.Redact(string(result.Stdout)), "native_warning": security.Redact(string(result.Stderr))}}, nil
 	}
 	return cephdomain.ActionResult{Details: map[string]any{"exit_code": result.ExitCode, "duration_ms": result.Duration.Milliseconds()}}, nil
 }
@@ -1083,6 +1089,17 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("max_mds is required")
 		}
 		return ceph([]string{"fs", "set", fs, "max_mds", maxMDS}, []string{"fs", "get", fs, "--format", "json"}), nil
+	case "filesystem.rename":
+		fs, name := last(tail), rawText(p, "new_name")
+		validName := regexp.MustCompile(`^(?:\.[A-Za-z0-9_-]+|[A-Za-z][.A-Za-z0-9_-]*)$`)
+		validExisting := regexp.MustCompile(`^[A-Za-z0-9_.][A-Za-z0-9_.-]*$`)
+		if tail != "filesystem/"+fs || !validExisting.MatchString(fs) || !validName.MatchString(name) || fs == name || (rawText(p, "fs") != "" && rawText(p, "fs") != fs) {
+			return command{}, invalid("existing and new filesystem names must be valid and different")
+		}
+		if confirmed, ok := p["confirmed"].(bool); !ok || !confirmed {
+			return command{}, invalid("volume rename requires explicit confirmation of client reauthorization and pool changes")
+		}
+		return ceph([]string{"fs", "volume", "rename", fs, name, "--yes-i-really-mean-it"}, []string{"fs", "volume", "ls", "--format", "json"}), nil
 	case "subvolume_group.create":
 		fs := pathValue(tail, "filesystem")
 		name, err := required(p, "name")

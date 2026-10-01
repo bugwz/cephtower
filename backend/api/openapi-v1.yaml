@@ -11785,6 +11785,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    put:
+      operationId: put_filesystem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, confirmed, fs, new_name]
+              properties:
+                cluster_id:
+                  type: integer
+                confirmed:
+                  type: boolean
+                fs:
+                  type: string
+                new_name:
+                  type: string
+      responses:
+        '202':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /filesystem/authorization:
     post:
       operationId: post_filesystem_authorization

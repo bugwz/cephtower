@@ -8,6 +8,7 @@ func cephfsRoutes(h *handler.Handler) []Route {
 		{"POST", "/filesystem", h.CreateFilesystem},
 		{"GET", "/filesystem", h.GetFilesystem},
 		{"PATCH", "/filesystem", h.UpdateFilesystem},
+		{"PUT", "/filesystem", h.RenameFilesystem},
 		{"DELETE", "/filesystem", h.DeleteFilesystem},
 		{"GET", "/filesystem/clients", h.ListFilesystemClients},
 		{"DELETE", "/filesystem/client", h.EvictFilesystemClient},

@@ -148,6 +148,22 @@ const definitions: Record<
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, fs: resourceName(row) }),
       resourceKey: (row) => `filesystem/${resourceName(row)}`
     },
+    extraActions: [{
+      title: '重命名 CephFS 文件系统卷',
+      buttonLabel: '重命名卷',
+      path: '/filesystem',
+      method: 'PUT',
+      successMessage: 'CephFS 卷重命名完成；请重新授权客户端并检查 MDS 与存储池',
+      confirmation: (values, row) => `将 ${resourceName(row)} 重命名为 ${String(values.new_name)}？该操作可能中断访问、重命名关联存储池和调整 MDS 服务。客户端 CephX 权限需要重新授权；多个数据池不会自动全部重命名。请在维护窗口执行。`,
+      fields: [{
+        name: 'new_name', label: '新文件系统名称', required: true,
+        pattern: /^(?:\.[A-Za-z0-9_-]+|[A-Za-z][.A-Za-z0-9_-]*)$/,
+        patternMessage: '须以字母或点开头，仅包含字母、数字、点、横线或下划线'
+      }],
+      buildBody: (values, clusterId, row) => ({
+        cluster_id: clusterId, fs: resourceName(row), new_name: String(values.new_name), confirmed: true
+      })
+    }],
     detailPath: (row) => `/file/cephfs/${encodeURIComponent(resourceName(row))}`,
     columns: [
       { key: 'name', title: '名称' },
