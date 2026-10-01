@@ -7,6 +7,35 @@ import (
 	"testing"
 )
 
+func TestSMBShareComment(t *testing.T) {
+	request := Request{ResourceKey: "smb/share/" + base64.RawURLEncoding.EncodeToString([]byte("a\x00docs")), Parameters: map[string]any{"filesystem": "fs"}}
+	before := []byte(`{"resource_type":"ceph.smb.share","cluster_id":"a","share_id":"docs","comment":"old","cephfs":{"volume":"fs","path":"/"}}`)
+	data, err := smbShareUpdateJSON(before, request)
+	if err != nil || !smbShareUpdateMatches(before, data, request) {
+		t.Fatal("omitted comment not preserved", err)
+	}
+	for _, comment := range []string{"团队资料", ""} {
+		request.Parameters["comment"] = comment
+		data, err := smbShareUpdateJSON(before, request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var record map[string]any
+		if err := json.Unmarshal(data, &record); err != nil || record["comment"] != comment {
+			t.Fatalf("wrong comment: %s %v", data, err)
+		}
+		if !smbShareUpdateMatches(data, data, request) || smbShareUpdateMatches(data, before, request) {
+			t.Fatal("comment readback failed")
+		}
+	}
+	for _, bad := range []any{nil, true, 1, "a\nb", "a\rb", "a\x00b"} {
+		request.Parameters["comment"] = bad
+		if _, err := smbShareUpdateJSON(before, request); err == nil {
+			t.Fatalf("invalid comment accepted: %v", bad)
+		}
+	}
+}
+
 func TestSMBShareDisplayName(t *testing.T) {
 	p := map[string]any{"cluster": "a", "name": "docs", "filesystem": "fs", "share_name": "Team Documents"}
 	spec, err := build(Request{Action: "smb_share.create"}, p)

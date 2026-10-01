@@ -864,6 +864,7 @@ const definitions: Record<
       successMessage: 'SMB 共享更新执行成功',
       fields: [
         { name: 'cluster', label: 'SMB 集群（不可更改）', required: true, readOnly: true },
+        { name: 'comment', label: '共享描述', placeholder: '单行文本；清空已有描述可移除内容' },
         { name: 'share_name', label: '客户端共享名称', placeholder: '留空保留原名称；最多 64 个英文字符' },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'path', label: 'CephFS 路径' },
@@ -892,6 +893,7 @@ const definitions: Record<
     },
     columns: [
       { key: 'share_id', title: '共享 ID' },
+      { key: 'comment', title: '描述' },
       { key: 'cluster_id', title: '集群' },
       { key: 'name', title: '名称' },
       { key: 'filesystem', title: '文件系统', filterKey: false, render: (_, row) => text(smbCephFS(row).volume) },

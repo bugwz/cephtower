@@ -6,6 +6,7 @@ import (
 	"io"
 	"reflect"
 	"regexp"
+	"strings"
 )
 
 var smbShareNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_][a-zA-Z0-9. _-]{0,63}$`)
@@ -48,6 +49,13 @@ func smbShareUpdateJSON(data []byte, request Request) ([]byte, error) {
 		return nil, err
 	}
 	fs := record["cephfs"].(map[string]any)
+	if value, exists := request.Parameters["comment"]; exists {
+		comment, ok := value.(string)
+		if !ok || strings.ContainsAny(comment, "\x00\r\n") {
+			return nil, invalid("comment must be a single-line string")
+		}
+		record["comment"] = comment
+	}
 	if name, exists, err := smbShareName(request.Parameters); err != nil {
 		return nil, err
 	} else if exists {

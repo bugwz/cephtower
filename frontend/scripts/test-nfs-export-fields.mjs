@@ -178,7 +178,11 @@ console.log('SMB cluster configuration display checks passed')
 
 const smbFields = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/file/smbShareFields.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(smbFields)
-assert.deepEqual(smbFields.smbShareInitialValues({ cluster_id: 'a', cephfs: { volume: 'fs', path: '/docs' } }), { cluster: 'a', share_name: undefined, filesystem: 'fs', path: '/docs', readonly: undefined, browseable: undefined })
+assert.deepEqual(smbFields.smbShareInitialValues({ cluster_id: 'a', cephfs: { volume: 'fs', path: '/docs' } }), { comment: undefined, cluster: 'a', share_name: undefined, filesystem: 'fs', path: '/docs', readonly: undefined, browseable: undefined })
+assert.equal(smbFields.smbShareInitialValues({ comment: '团队资料' }).comment, '团队资料')
+assert.deepEqual(smbFields.smbShareAccessBody({ comment: '' }), { comment: '' })
+assert.deepEqual(smbFields.smbShareAccessBody({ comment: '团队资料' }), { comment: '团队资料' })
+assert.throws(() => smbFields.smbShareAccessBody({ comment: 'a\nb' }))
 assert.equal(smbFields.smbShareInitialValues({ share_id: 'docs', name: 'Team Documents' }).share_name, 'Team Documents')
 assert.equal(smbFields.smbShareInitialValues({ readonly: false }).readonly, 'false')
 assert.deepEqual(smbFields.smbShareAccessBody({ readonly: 'false', browseable: 'true' }), { readonly: false, browseable: true })
