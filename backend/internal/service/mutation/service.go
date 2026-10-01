@@ -1298,6 +1298,9 @@ func build(request Request, p map[string]any) (command, error) {
 		if fs == "" {
 			return command{}, invalid("filesystem is required")
 		}
+		if !regexp.MustCompile(`^0*[1-9][0-9]*[mhdwMy]$`).MatchString(schedule) {
+			return command{}, invalid("schedule must be a positive interval followed by m, h, d, w, M or y")
+		}
 		args := []string{"fs", "snap-schedule", "add", path, schedule, "--fs", fs}
 		if action == "snapshot_schedule.action" {
 			if _, err := required(p, "start"); err != nil {
