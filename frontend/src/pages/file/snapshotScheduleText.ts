@@ -1,6 +1,14 @@
 const intervals: Record<string, string> = { m: '分钟', h: '小时', d: '天', w: '周', M: '月', y: '年' }
 const retentionUnits: Record<string, string> = { m: '每分钟', h: '每小时', d: '每日', w: '每周', M: '每月', y: '每年', n: '最近' }
 
+export function scheduleActiveText(value: unknown): string {
+  return value === true ? '启用' : value === false ? '停用' : '未知'
+}
+
+export function scheduleToggleAction(value: unknown): 'activate' | 'deactivate' | undefined {
+  return value === true ? 'deactivate' : value === false ? 'activate' : undefined
+}
+
 export function scheduleIntervalText(value: unknown): string {
   if (typeof value !== 'string' || !value) return '未知'
   const match = /^([1-9][0-9]*)([mhdwMy])$/.exec(value)

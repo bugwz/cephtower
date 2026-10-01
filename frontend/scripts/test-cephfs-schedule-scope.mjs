@@ -29,3 +29,11 @@ assert.equal(textExports.scheduleRetentionText({ h: 9007199254740992 }), 'h：�
 assert.equal(textExports.scheduleRetentionText({ M: '9007199254740993' }), '每月保留 9007199254740993 个快照')
 assert.equal(textExports.scheduleRetentionText({ toString: 3 }), 'toString：未知规则')
 console.log('CephFS schedule text checks passed')
+assert.equal(textExports.scheduleActiveText(true), '启用')
+assert.equal(textExports.scheduleActiveText(false), '停用')
+assert.equal(textExports.scheduleToggleAction(true), 'deactivate')
+assert.equal(textExports.scheduleToggleAction(false), 'activate')
+for (const value of [undefined, null, 'false', 'true', 0, 1, {}, []]) {
+  assert.equal(textExports.scheduleActiveText(value), '未知')
+  assert.equal(textExports.scheduleToggleAction(value), undefined)
+}

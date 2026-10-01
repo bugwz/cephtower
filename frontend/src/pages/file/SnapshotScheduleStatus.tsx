@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { listAllResources, listResource, mutateResource, refreshResource } from '../../api/resource'
 import { scheduleFormScope, scheduleScope } from './snapshotScheduleScope'
-import { scheduleIntervalText, scheduleRetentionText } from './snapshotScheduleText'
+import { scheduleActiveText, scheduleIntervalText, scheduleRetentionText, scheduleToggleAction } from './snapshotScheduleText'
 import { AppTable } from '../../components/AppTable'
 import { RecordDetail } from '../../components/RecordDetail'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -116,8 +116,8 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
     } catch (err) { if (!abort.signal.aborted) setError(err instanceof Error ? err.message : '查询失败') }
     finally { if (!abort.signal.aborted) setLoading(false) }
   }
-  async function toggle(row: ApiRecord, action = row.active ? 'deactivate' : 'activate', target: ApiRecord = scope.current, refreshQuery = true) {
-    if (!active.current || !selectedClusterId || mutating) return
+  async function toggle(row: ApiRecord, action: string | undefined = scheduleToggleAction(row.active), target: ApiRecord = scope.current, refreshQuery = true) {
+    if (!active.current || !selectedClusterId || mutating || !action) return
     setMutating(true)
     try {
       await mutateResource('/filesystem/snapshot/schedule/action','POST',{ cluster_id:selectedClusterId, ...target, schedule:row.schedule, start:row.start, action })
@@ -166,12 +166,12 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
         {title:'子卷',dataIndex:'subvol',render:(value) => value || '—'},
         {title:'子卷组',dataIndex:'group',render:(value) => value || '默认组'},
         {title:'周期',dataIndex:'schedule',render:scheduleIntervalText},
-        {title:'状态',dataIndex:'active',render:(value) => value ? '启用' : '停用'},
+        {title:'状态',dataIndex:'active',render:scheduleActiveText},
         {title:'开始时间（UTC）',dataIndex:'start'},
         {title:'保留策略',dataIndex:'retention',render:scheduleRetentionText},
         {title:'已创建',dataIndex:'created_count',render:(value) => value ?? '—'},
         {title:'已清理',dataIndex:'pruned_count',render:(value) => value ?? '—'},
-        {title:'操作',render:(_,row) => <Space><Button disabled={mutating || loading} onClick={() => managePath(row)}>管理路径与保留策略</Button><Popconfirm title="删除这条快照计划？" description="已有快照不会因此删除。" onConfirm={() => toggle(row, 'remove', scheduleScope(row), false)}><Button danger disabled={mutating}>删除</Button></Popconfirm><Button disabled={mutating} onClick={() => toggle(row, row.active ? 'deactivate' : 'activate', scheduleScope(row), false)}>{row.active ? '停用' : '启用'}</Button></Space>}
+        {title:'操作',render:(_,row) => <Space><Button disabled={mutating || loading} onClick={() => managePath(row)}>管理路径与保留策略</Button><Popconfirm title="删除这条快照计划？" description="已有快照不会因此删除。" onConfirm={() => toggle(row, 'remove', scheduleScope(row), false)}><Button danger disabled={mutating}>删除</Button></Popconfirm><Button disabled={mutating || !scheduleToggleAction(row.active)} onClick={() => toggle(row, scheduleToggleAction(row.active), scheduleScope(row), false)}>{row.active === true ? '停用' : '启用'}</Button></Space>}
       ]} />
     </Card>}
     <Form form={form} disabled={mutating} layout="inline" initialValues={{ path: '/' }} onFinish={query} onValuesChange={reset}>
@@ -198,14 +198,14 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
       {title:'路径',dataIndex:'path'},
       {title:'周期',dataIndex:'schedule',render:scheduleIntervalText},
       {title:'保留策略',dataIndex:'retention',render:scheduleRetentionText},
-      {title:'状态',dataIndex:'active',render:(value) => value ? '启用' : '停用'},
+      {title:'状态',dataIndex:'active',render:scheduleActiveText},
       {title:'开始时间（UTC）',dataIndex:'start'},
       {title:'首次快照（UTC）',dataIndex:'first',render:(value) => value ?? '—'},
       {title:'最近快照（UTC）',dataIndex:'last',render:(value) => value ?? '—'},
       {title:'已创建',dataIndex:'created_count',render:(value) => value ?? '—'},
       {title:'已清理',dataIndex:'pruned_count',render:(value) => value ?? '—'},
       {title:'最近清理（UTC）',dataIndex:'last_pruned',render:(value) => value ?? '—'},
-      {title:'操作',render:(_,row) => <Space><Popconfirm title="删除这条快照计划？" description="按周期和开始时间定位；已有快照不会因此删除。" onConfirm={() => toggle(row, 'remove')}><Button danger disabled={mutating || loading}>删除计划</Button></Popconfirm><Button loading={mutating} disabled={loading} onClick={() => toggle(row)}>{row.active ? '停用' : '启用'}</Button></Space>}
+      {title:'操作',render:(_,row) => <Space><Popconfirm title="删除这条快照计划？" description="按周期和开始时间定位；已有快照不会因此删除。" onConfirm={() => toggle(row, 'remove')}><Button danger disabled={mutating || loading}>删除计划</Button></Popconfirm><Button loading={mutating} disabled={loading || !scheduleToggleAction(row.active)} onClick={() => toggle(row)}>{row.active === true ? '停用' : '启用'}</Button></Space>}
     ]} />}
 
   </Card>
