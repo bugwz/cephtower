@@ -2,7 +2,7 @@ import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClusterDetails } from './NFSClusterDetails'
 import { SMBClusterDetails } from './SMBClusterDetails'
-import { smbClusterInitialValues, smbClusterDNSBody, smbClusterUserGroupsBody, smbClusterDomainBody, smbClusterCountBody, smbClusterHostsBody, smbClusterUpdateHostsBody, smbClusterClusteringBody, smbClusterPublicAddressesBody } from './smbClusterFields'
+import { smbClusterInitialValues, smbClusterDNSBody, smbClusterUserGroupsBody, smbClusterDomainBody, smbClusterCountBody, smbClusterHostsBody, smbClusterUpdateHostsBody, smbClusterClusteringBody, smbClusterPublicAddressesBody, smbClusterUpdatePublicAddressesBody } from './smbClusterFields'
 import { smbCephFS, smbShareInitialValues, smbShareAccessBody, smbBooleanText } from './smbShareFields'
 import { NFSClientsEditor } from './NFSClientsEditor'
 import { nfsClientsBody, nfsFSALBody, nfsRGWUserChoices, nfsRGWBucketChoices } from './nfsExportFields'
@@ -781,6 +781,8 @@ const definitions: Record<
         { name: 'clustering', label: '集群协作模式（CTDB）', type: 'select', placeholder: '留空保留原配置', options: [{ label: '自动（单实例时关闭）', value: 'default' }, { label: '始终启用', value: 'always' }, { label: '始终禁用', value: 'never' }] },
         { name: 'replace_smb_hosts', label: '替换部署主机（移除已有标签及主机模式约束）', type: 'boolean' },
         { name: 'replace_smb_label', label: '替换部署标签（移除已有主机及主机模式约束）', type: 'boolean' },
+        { name: 'replace_smb_public_addresses', label: '替换全部客户端访问地址（下方留空将清空）', type: 'boolean' },
+        { name: 'smb_public_addresses', label: '新的客户端访问地址', type: 'textarea', visibleWhen: (values) => values.replace_smb_public_addresses === true, placeholder: '每行 IP/前缀，可附加 %目标网络；留空清除全部访问地址，可能中断客户端访问' },
         { name: 'smb_label', label: '新的部署标签', type: 'select', required: true, optionsLoader: smbLabelOptions, visibleWhen: (values) => values.replace_smb_label === true },
         { name: 'smb_hosts', label: '新的部署主机', type: 'select', multiple: true, required: true, optionsLoader: smbHostOptions, visibleWhen: (values) => values.replace_smb_hosts === true, placeholder: '至少选择一台；关闭替换开关保留原配置' },
         { name: 'domain_realm', label: 'Active Directory 域名', placeholder: 'EXAMPLE.COM', visibleWhen: (values) => values.auth_mode === 'active-directory' },
@@ -807,6 +809,7 @@ const definitions: Record<
         ...smbClusterDomainBody(values),
         ...smbClusterCountBody(values),
         ...smbClusterUpdateHostsBody(values),
+        ...smbClusterUpdatePublicAddressesBody(values),
         ...smbClusterClusteringBody(values),
         ...smbClusterDNSBody(values)
       })

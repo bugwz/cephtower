@@ -82,3 +82,8 @@ export function smbClusterPublicAddressesBody(values: ApiRecord) {
   const addresses = values.smb_public_addresses.split(/[\s,]+/).filter(Boolean)
   return addresses.length ? { smb_public_addresses: addresses } : {}
 }
+
+export function smbClusterUpdatePublicAddressesBody(values: ApiRecord) {
+  if (values.replace_smb_public_addresses !== true) return {}
+  return { smb_public_addresses: smbClusterPublicAddressesBody(values).smb_public_addresses ?? [] }
+}

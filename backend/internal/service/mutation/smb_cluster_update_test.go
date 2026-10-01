@@ -152,6 +152,49 @@ func TestSMBClusterDomainSettings(t *testing.T) {
 	}
 }
 
+func TestSMBClusterPublicAddressUpdate(t *testing.T) {
+	service, _, id := newCephUserService(t)
+	request := Request{ClusterID: id, Action: "smb_cluster.update", ResourceKey: "smb/cluster/a", Parameters: map[string]any{"auth_mode": "user"}}
+	before := `{"resource_type":"ceph.smb.cluster","cluster_id":"a","auth_mode":"user","placement":{"count":2},"public_addrs":[{"address":"192.0.2.1/24","destination":["192.0.2.0/24","198.51.100.0/24"]}]}`
+	unchanged, err := smbClusterUpdateJSON([]byte(before), request)
+	if err != nil || !smbClusterUpdateMatches([]byte(before), unchanged, request) {
+		t.Fatal("existing destinations not preserved", err)
+	}
+	for _, addresses := range [][]string{{"192.0.2.10/24%192.0.2.0/24", "2001:db8::10/64"}, {}} {
+		request.Parameters["smb_public_addresses"] = addresses
+		data, err := smbClusterUpdateJSON([]byte(before), request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var record map[string]any
+		if err := json.Unmarshal(data, &record); err != nil {
+			t.Fatal(err)
+		}
+		items := record["public_addrs"].([]any)
+		if len(items) != len(addresses) || record["placement"].(map[string]any)["count"] != float64(2) {
+			t.Fatal(record)
+		}
+		if len(items) > 0 && (items[0].(map[string]any)["address"] != "192.0.2.10/24" || items[0].(map[string]any)["destination"] != "192.0.2.0/24" || items[1].(map[string]any)["address"] != "2001:db8::10/64") {
+			t.Fatal(items)
+		}
+		runner := &directoryRenameExecutor{outputs: map[string]string{"smb_cluster.update.pre_check": before, "smb_cluster.update": `{"success":true}`, "smb_cluster.update.post_check": string(data)}}
+		service.executor = runner
+		if _, err := service.Execute(context.Background(), request); err != nil {
+			t.Fatal(err)
+		}
+		if len(runner.specs) != 3 || string(runner.specs[1].Stdin) != string(data) {
+			t.Fatal(runner.specs)
+		}
+		if smbClusterUpdateMatches(data, []byte(before), request) {
+			t.Fatal("stale addresses accepted")
+		}
+	}
+	request.Parameters["smb_public_addresses"] = []string{"invalid"}
+	if _, err := smbClusterUpdateJSON([]byte(before), request); err == nil {
+		t.Fatal("invalid address accepted")
+	}
+}
+
 func TestSMBClusterPlacementLabel(t *testing.T) {
 	service, _, id := newCephUserService(t)
 	request := Request{ClusterID: id, Action: "smb_cluster.update", ResourceKey: "smb/cluster/a", Parameters: map[string]any{"auth_mode": "user", "smb_label": "smb"}}

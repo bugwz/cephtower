@@ -86,6 +86,22 @@ func smbClusterUpdateJSON(data []byte, request Request) ([]byte, error) {
 		}
 	}
 	record["auth_mode"] = mode
+	if value, exists := request.Parameters["smb_public_addresses"]; exists {
+		addresses, err := smbPublicAddresses(value)
+		if err != nil {
+			return nil, err
+		}
+		resources := make([]map[string]string, 0, len(addresses))
+		for _, address := range addresses {
+			parts := strings.SplitN(address, "%", 2)
+			resource := map[string]string{"address": parts[0]}
+			if len(parts) == 2 {
+				resource["destination"] = parts[1]
+			}
+			resources = append(resources, resource)
+		}
+		record["public_addrs"] = resources
+	}
 	if _, exists := request.Parameters["clustering"]; exists {
 		clustering, err := enum(request.Parameters, "clustering", "default", "always", "never")
 		if err != nil {
