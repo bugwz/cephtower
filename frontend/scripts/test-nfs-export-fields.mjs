@@ -204,6 +204,15 @@ const smbLoader = new Function('listAllResources', 'resourceName', `${smbLoaderC
 assert.deepEqual(await smbLoader(17), [{ label: 'smb-a', value: 'smb-a' }, { label: 'smb-b', value: 'smb-b' }])
 console.log('SMB cluster selection scope checks passed')
 
+const hostLoaderDeclaration = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'smbHostOptions')
+const hostLoaderCode = ts.transpileModule(hostLoaderDeclaration.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const hostLoader = new Function('listAllResources', `${hostLoaderCode}; return smbHostOptions`)(async (path, clusterId) => {
+  assert.equal(path, '/hosts')
+  assert.equal(clusterId, 17)
+  return { items: [{ hostname: 'node-a' }, { hostname: 'node-a' }, { hostname: 'node-b' }, { name: 'not-a-hostname' }] }
+})
+assert.deepEqual(await hostLoader(17), [{ label: 'node-a', value: 'node-a' }, { label: 'node-b', value: 'node-b' }])
+
 const storageFunctions = ['smbSubvolumeGroupOptions', 'smbSubvolumeOptions', 'smbSubvolumeBody', 'cloneTargetGroupOptions', 'snapshotSubvolumeOptions']
 const storageCode = storageFunctions.map((name) => tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === name).getText(tree)).join('\n')
 const storageCalls = []
@@ -236,8 +245,9 @@ assert.equal(clusterFields.smbClusterInitialValues({ placement: { count: 3, labe
 assert.deepEqual(clusterFields.smbClusterCountBody({ count: 3 }), { count: 3 })
 assert.deepEqual(clusterFields.smbClusterCountBody({ count: '' }), {})
 assert.deepEqual(clusterFields.smbClusterCountBody({}), {})
-assert.deepEqual(clusterFields.smbClusterHostsBody({ smb_hosts: 'node-a, node-b\n' }), { smb_hosts: ['node-a', 'node-b'] })
-assert.deepEqual(clusterFields.smbClusterHostsBody({ smb_hosts: '' }), {})
+assert.deepEqual(clusterFields.smbClusterHostsBody({ smb_hosts: ['node-a', 'node-b'] }), { smb_hosts: ['node-a', 'node-b'] })
+assert.deepEqual(clusterFields.smbClusterHostsBody({ smb_hosts: [] }), {})
+assert.throws(() => clusterFields.smbClusterHostsBody({ smb_hosts: 'node-a' }))
 assert.deepEqual(clusterFields.smbClusterHostsBody({}), {})
 for (const count of [0, -1, 1.5, 'invalid']) assert.throws(() => clusterFields.smbClusterCountBody({ count }))
 assert.equal(clusterFields.smbClusterInitialValues({ domain_settings: { realm: 'EXAMPLE.COM', join_sources: [{ source_type: 'resource', ref: 'join-a' }] } }).domain_join_ref, 'join-a')

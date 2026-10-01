@@ -23,9 +23,9 @@ export function smbClusterCountBody(values: ApiRecord) {
 }
 
 export function smbClusterHostsBody(values: ApiRecord) {
-  if (values.smb_hosts === undefined || values.smb_hosts === '') return {}
-  if (typeof values.smb_hosts !== 'string') throw new Error('主机列表格式无效')
-  const hosts = values.smb_hosts.split(/[\s,]+/).filter(Boolean)
+  if (values.smb_hosts === undefined) return {}
+  if (!Array.isArray(values.smb_hosts) || values.smb_hosts.some((value) => typeof value !== 'string' || !value)) throw new Error('主机列表格式无效')
+  const hosts = values.smb_hosts
   return hosts.length ? { smb_hosts: hosts } : {}
 }
 

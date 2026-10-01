@@ -739,7 +739,7 @@ const definitions: Record<
       fields: [
         { name: 'name', label: '集群名称', required: true },
         { name: 'count', label: 'SMB 实例数量（可选）', type: 'number', min: 1, placeholder: '留空使用 Ceph 默认部署数量' },
-        { name: 'smb_hosts', label: '部署主机（可选）', type: 'textarea', placeholder: '每行一个已有主机名；留空由 Ceph 选择' },
+        { name: 'smb_hosts', label: '部署主机（可选）', type: 'select', multiple: true, optionsLoader: smbHostOptions, placeholder: '选择当前集群主机；留空由 Ceph 选择' },
         { name: 'custom_dns', label: '自定义 DNS 地址（可选）', type: 'textarea', placeholder: '每行一个 IPv4/IPv6 地址' },
         { name: 'domain_realm', label: 'Active Directory 域名', required: true, placeholder: 'EXAMPLE.COM', visibleWhen: (values) => values.auth_mode === 'active-directory' },
         { name: 'domain_join_ref', label: '域加入凭据资源 ID', type: 'textarea', required: true, placeholder: '每行一个已有凭据资源 ID', visibleWhen: (values) => values.auth_mode === 'active-directory' },
@@ -927,6 +927,12 @@ async function nfsClusterOptions(clusterId: number) {
 async function smbClusterOptions(clusterId: number) {
   const payload = await listAllResources('/smb/clusters', clusterId)
   return payload.items.map(resourceName).filter(Boolean).map((name) => ({ label: name, value: name }))
+}
+
+async function smbHostOptions(clusterId: number) {
+  const payload = await listAllResources('/hosts', clusterId)
+  const names = payload.items.map((row) => typeof row.hostname === 'string' ? row.hostname : '').filter(Boolean)
+  return [...new Set(names)].map((name) => ({ label: name, value: name }))
 }
 
 async function smbSubvolumeGroupOptions(clusterId: number, _row?: Record<string, unknown>, values?: Record<string, unknown>) {

@@ -27,6 +27,7 @@ export interface MutationFormField {
   name: string
   label: string
   type?: 'text' | 'number' | 'boolean' | 'select' | 'textarea' | 'password'
+  multiple?: boolean
   required?: boolean
   visibleWhen?: (values: MutationFormValues) => boolean
   placeholder?: string
@@ -41,7 +42,7 @@ export interface MutationFormField {
   renderControl?: () => ReactNode
 }
 
-export type MutationFormValues = Record<string, string | number | boolean | null | undefined | ApiRecord>
+export type MutationFormValues = Record<string, string | string[] | number | boolean | null | undefined | ApiRecord>
 
 export interface ResourceFormAction {
   title: string
@@ -406,7 +407,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
               valuePropName={field.type === 'boolean' ? 'checked' : 'value'}
               rules={[
                 ...(field.required ? [{ required: true, message: `请输入${field.label}` }] : []),
-                ...(field.optionsDependencies ? [{ validator: (_: unknown, value: unknown) => value == null || dynamicOptions[field.name]?.some((option) => option.value === value) ? Promise.resolve() : Promise.reject(new Error(`请选择当前范围内的${field.label}`)) }] : []),
+                ...(field.optionsDependencies || field.multiple ? [{ validator: (_: unknown, value: unknown) => value == null || (field.multiple && Array.isArray(value) ? value : [value]).every((entry) => (dynamicOptions[field.name] ?? field.options)?.some((option) => option.value === entry)) ? Promise.resolve() : Promise.reject(new Error(`请选择当前范围内的${field.label}`)) }] : []),
                 ...(field.pattern ? [{ pattern: field.pattern, message: field.patternMessage ?? `${field.label}格式不正确` }] : [])
               ]}
             >
@@ -550,7 +551,7 @@ function renderFormControl(field: MutationFormField) {
     return <Switch disabled={field.readOnly} />
   }
   if (field.type === 'select') {
-    return <Select options={field.options ?? []} disabled={field.readOnly} />
+    return <Select mode={field.multiple ? 'multiple' : undefined} options={field.options ?? []} disabled={field.readOnly} placeholder={field.placeholder} />
   }
   if (field.type === 'textarea') {
     return <Input.TextArea rows={5} spellCheck={false} placeholder={field.placeholder} readOnly={field.readOnly} />
