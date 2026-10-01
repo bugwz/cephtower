@@ -2370,6 +2370,16 @@ func build(request Request, p map[string]any) (command, error) {
 			args = append(args, "--clustering="+mode)
 		}
 		placement := []string{}
+		if value, exists := p["smb_label"]; exists {
+			label, ok := value.(string)
+			if !ok || !smbPlacementHostPattern.MatchString(label) {
+				return command{}, invalid("smb_label must be a plain non-empty label")
+			}
+			if _, hosts := p["smb_hosts"]; hosts {
+				return command{}, invalid("smb_label and smb_hosts are mutually exclusive")
+			}
+			placement = append(placement, "label:"+label)
+		}
 		if _, exists := p["count"]; exists {
 			count, err := optionalPositiveInteger(p, "count")
 			if err != nil || count == "" {

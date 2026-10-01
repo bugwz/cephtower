@@ -6,6 +6,25 @@ import (
 	"testing"
 )
 
+func TestSMBClusterLabelPlacement(t *testing.T) {
+	p := map[string]any{"name": "smb-a", "user_group_ref": []string{"users"}, "smb_label": "smb", "count": float64(2)}
+	spec, err := build(Request{Action: "smb_cluster.create"}, p)
+	if err != nil || !slices.Contains(spec.args, "--placement=label:smb count:2") {
+		t.Fatalf("wrong label placement: %v %v", spec.args, err)
+	}
+	p["smb_hosts"] = []string{"node-a"}
+	if _, err := build(Request{Action: "smb_cluster.create"}, p); err == nil {
+		t.Fatal("conflicting placement accepted")
+	}
+	delete(p, "smb_hosts")
+	for _, bad := range []any{nil, "", "smb count:5", "smb,other", "smb\nnode-a"} {
+		p["smb_label"] = bad
+		if _, err := build(Request{Action: "smb_cluster.create"}, p); err == nil {
+			t.Fatalf("invalid label accepted: %v", bad)
+		}
+	}
+}
+
 func TestSMBClusterClusteringMode(t *testing.T) {
 	p := map[string]any{"name": "smb-a", "user_group_ref": []string{"users"}}
 	request := Request{ResourceKey: "smb/cluster/smb-a", Parameters: p}

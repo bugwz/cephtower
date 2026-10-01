@@ -741,6 +741,7 @@ const definitions: Record<
         { name: 'count', label: 'SMB 实例数量（可选）', type: 'number', min: 1, placeholder: '留空使用 Ceph 默认部署数量' },
         { name: 'clustering', label: '集群协作模式（CTDB）', type: 'select', placeholder: '留空使用 Ceph 默认值', options: [{ label: '自动（单实例时关闭）', value: 'default' }, { label: '始终启用', value: 'always' }, { label: '始终禁用', value: 'never' }] },
         { name: 'smb_hosts', label: '部署主机（可选）', type: 'select', multiple: true, optionsLoader: smbHostOptions, placeholder: '选择当前集群主机；留空由 Ceph 选择' },
+        { name: 'smb_label', label: '部署主机标签（与主机列表二选一）', type: 'select', optionsLoader: smbLabelOptions, placeholder: '选择当前集群主机标签' },
         { name: 'custom_dns', label: '自定义 DNS 地址（可选）', type: 'textarea', placeholder: '每行一个 IPv4/IPv6 地址' },
         { name: 'domain_realm', label: 'Active Directory 域名', required: true, placeholder: 'EXAMPLE.COM', visibleWhen: (values) => values.auth_mode === 'active-directory' },
         { name: 'domain_join_ref', label: '域加入凭据资源 ID', type: 'textarea', required: true, placeholder: '每行一个已有凭据资源 ID', visibleWhen: (values) => values.auth_mode === 'active-directory' },
@@ -946,6 +947,12 @@ async function smbHostOptions(clusterId: number) {
   const payload = await listAllResources('/hosts', clusterId)
   const names = payload.items.map((row) => typeof row.hostname === 'string' ? row.hostname : '').filter(Boolean)
   return [...new Set(names)].map((name) => ({ label: name, value: name }))
+}
+
+async function smbLabelOptions(clusterId: number) {
+  const payload = await listAllResources('/hosts', clusterId)
+  const labels = payload.items.flatMap((row) => Array.isArray(row.labels) ? row.labels.filter((label): label is string => typeof label === 'string' && !!label) : [])
+  return [...new Set(labels)].sort().map((label) => ({ label, value: label }))
 }
 
 async function smbSubvolumeGroupOptions(clusterId: number, _row?: Record<string, unknown>, values?: Record<string, unknown>) {

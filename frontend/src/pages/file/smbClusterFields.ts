@@ -31,6 +31,11 @@ export function smbClusterClusteringBody(values: ApiRecord) {
 }
 
 export function smbClusterHostsBody(values: ApiRecord) {
+  if (values.smb_label !== undefined && values.smb_label !== '') {
+    if (typeof values.smb_label !== 'string') throw new Error('请选择有效主机标签')
+    if (Array.isArray(values.smb_hosts) && values.smb_hosts.length) throw new Error('主机和标签不能同时指定')
+    return { smb_label: values.smb_label }
+  }
   if (values.smb_hosts === undefined) return {}
   if (!Array.isArray(values.smb_hosts) || values.smb_hosts.some((value) => typeof value !== 'string' || !value)) throw new Error('主机列表格式无效')
   const hosts = values.smb_hosts

@@ -216,6 +216,14 @@ const hostLoader = new Function('listAllResources', `${hostLoaderCode}; return s
   return { items: [{ hostname: 'node-a' }, { hostname: 'node-a' }, { hostname: 'node-b' }, { name: 'not-a-hostname' }] }
 })
 assert.deepEqual(await hostLoader(17), [{ label: 'node-a', value: 'node-a' }, { label: 'node-b', value: 'node-b' }])
+const labelDeclaration = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'smbLabelOptions')
+const labelCode = ts.transpileModule(labelDeclaration.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const labelLoader = new Function('listAllResources', `${labelCode}; return smbLabelOptions`)(async (path, clusterId) => {
+  assert.equal(path, '/hosts')
+  assert.equal(clusterId, 17)
+  return { items: [{ labels: ['smb', 'storage'] }, { labels: ['smb', '', 1] }, {}] }
+})
+assert.deepEqual(await labelLoader(17), [{ label: 'smb', value: 'smb' }, { label: 'storage', value: 'storage' }])
 
 const storageFunctions = ['smbUpdateSubvolumeBody', 'smbSubvolumeGroupOptions', 'smbSubvolumeOptions', 'smbSubvolumeBody', 'cloneTargetGroupOptions', 'snapshotSubvolumeOptions']
 const storageCode = storageFunctions.map((name) => tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === name).getText(tree)).join('\n')
@@ -259,6 +267,8 @@ assert.deepEqual(clusterFields.smbClusterHostsBody({ smb_hosts: ['node-a', 'node
 assert.deepEqual(clusterFields.smbClusterHostsBody({ smb_hosts: [] }), {})
 assert.throws(() => clusterFields.smbClusterHostsBody({ smb_hosts: 'node-a' }))
 assert.deepEqual(clusterFields.smbClusterHostsBody({}), {})
+assert.deepEqual(clusterFields.smbClusterHostsBody({ smb_label: 'smb', smb_hosts: [] }), { smb_label: 'smb' })
+assert.throws(() => clusterFields.smbClusterHostsBody({ smb_label: 'smb', smb_hosts: ['node-a'] }))
 assert.deepEqual(clusterFields.smbClusterClusteringBody({}), {})
 for (const clustering of ['default', 'always', 'never']) {
   assert.deepEqual(clusterFields.smbClusterClusteringBody({ clustering }), { clustering })

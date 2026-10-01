@@ -804,6 +804,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -1502,6 +1504,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -3495,6 +3499,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -4193,6 +4199,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -5109,6 +5117,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -5901,6 +5911,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -6599,6 +6611,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -7488,6 +7502,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -8282,6 +8298,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -8981,6 +8999,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -9923,6 +9943,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -10715,6 +10737,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -11509,6 +11533,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -12301,6 +12327,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -12999,6 +13027,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -13943,6 +13973,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -15137,6 +15169,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -15836,6 +15870,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -16535,6 +16571,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -17871,6 +17909,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -18715,6 +18755,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -19509,6 +19551,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -20207,6 +20251,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -21561,6 +21607,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -22259,6 +22307,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -22974,6 +23024,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -23766,6 +23818,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -24464,6 +24518,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -25163,6 +25219,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -26140,6 +26198,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -27029,6 +27089,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -27821,6 +27883,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -28519,6 +28583,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -29350,6 +29416,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -30049,6 +30117,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -31163,6 +31233,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -32147,6 +32219,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -32939,6 +33013,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -33733,6 +33809,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -34525,6 +34603,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -35223,6 +35303,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -36112,6 +36194,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -36904,6 +36988,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -37602,6 +37688,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -38396,6 +38484,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -39094,6 +39184,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -39888,6 +39980,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -40586,6 +40680,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -41380,6 +41476,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -42172,6 +42270,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -42870,6 +42970,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -43832,6 +43934,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -44625,6 +44729,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -45324,6 +45430,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -46023,6 +46131,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -46816,6 +46926,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -47549,6 +47661,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -48533,6 +48647,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -49325,6 +49441,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -50023,6 +50141,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -50817,6 +50937,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -51516,6 +51638,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -52215,6 +52339,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -52914,6 +53040,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -53708,6 +53836,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -54500,6 +54630,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -55198,6 +55330,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -56014,6 +56148,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -56712,6 +56848,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -57410,6 +57548,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -58495,6 +58635,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -59266,6 +59408,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -59965,6 +60109,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -60663,6 +60809,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -61457,6 +61605,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -62250,6 +62400,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -62949,6 +63101,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -63759,6 +63913,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -64457,6 +64613,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -65155,6 +65313,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -65854,6 +66014,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -66648,6 +66810,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -67440,6 +67604,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -68138,6 +68304,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -68938,6 +69106,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -69637,6 +69807,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -70336,6 +70508,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -71130,6 +71304,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -71829,6 +72005,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -72527,6 +72705,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -73321,6 +73501,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -74019,6 +74201,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -74717,6 +74901,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -75416,6 +75602,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -76305,6 +76493,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -77097,6 +77287,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -77795,6 +77987,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -78494,6 +78688,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -79193,6 +79389,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -79891,6 +80089,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -80590,6 +80790,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -81289,6 +81491,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -82083,6 +82287,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -82781,6 +82987,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -83480,6 +83688,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -84178,6 +84388,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -85207,6 +85419,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -85999,6 +86213,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -86697,6 +86913,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -87491,6 +87709,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -88283,6 +88503,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -88981,6 +89203,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -89775,6 +89999,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -90567,6 +90793,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -91265,6 +91493,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -92154,6 +92384,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
@@ -92853,6 +93085,8 @@ paths:
                   type: array
                   items:
                     type: string
+                smb_label:
+                  type: string
                 snap:
                   type: string
                 squash:
