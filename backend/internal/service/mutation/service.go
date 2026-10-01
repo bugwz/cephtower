@@ -2359,6 +2359,28 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("auth_mode is not supported")
 		}
 		args := []string{"smb", "cluster", "create", name, authMode}
+		_, hasRealm := p["domain_realm"]
+		_, hasJoin := p["domain_join_ref"]
+		if hasRealm || hasJoin || authMode == "active-directory" {
+			realm, ok := p["domain_realm"].(string)
+			if authMode != "active-directory" || !ok || strings.TrimSpace(realm) == "" || strings.ContainsAny(realm, "\x00\r\n") {
+				return command{}, invalid("domain_realm is required in active-directory mode")
+			}
+			data, err := json.Marshal(p["domain_join_ref"])
+			var refs []string
+			if err != nil || json.Unmarshal(data, &refs) != nil || len(refs) == 0 {
+				return command{}, invalid("domain_join_ref requires a non-empty list")
+			}
+			args = append(args, "--domain-realm="+realm)
+			seen := map[string]bool{}
+			for _, ref := range refs {
+				if !smbResourceIDPattern.MatchString(ref) || seen[ref] {
+					return command{}, invalid("domain_join_ref requires unique valid SMB resource IDs")
+				}
+				seen[ref] = true
+				args = append(args, "--domain-join-ref="+ref)
+			}
+		}
 		if value, exists := p["user_group_ref"]; exists || authMode == "user" {
 			data, err := json.Marshal(value)
 			var refs []string
