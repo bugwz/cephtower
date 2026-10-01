@@ -1,4 +1,5 @@
-import { Card, Descriptions } from 'antd'
+import { Card, Descriptions, Space } from 'antd'
+import { ErasureProfileUsage } from './ErasureProfileUsage'
 import type { ApiRecord } from '../../api/client'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 
@@ -37,7 +38,7 @@ const definition: ResourceListPageDefinition = {
   path: '/erasure/code/profiles',
   rowKeyCandidates: ['natural_key', 'name'],
   columns: erasureProfileColumns,
-  detailContent: (row) => <Descriptions title="编码与放置参数" bordered column={1} items={erasureProfileDetails(row)} />,
+  detailContent: (row, clusterId) => <Space direction="vertical" style={{ width: '100%' }}><Descriptions title="编码与放置参数" bordered column={1} items={erasureProfileDetails(row)} /><ErasureProfileUsage key={`${clusterId}/${row.name}`} clusterId={clusterId} profile={String(row.name ?? '')} /></Space>,
   deleteAction: {
     title: '删除纠删码配置', path: '/erasure/code/profile', action: 'erasure_code_profile.delete', resourceKind: 'erasure_code_profile', risk: 'high',
     confirmation: (row) => `确认删除配置 ${row.name}？此操作不可撤销。Ceph 会拒绝删除仍被存储池使用的配置；本操作不会迁移存储池或删除数据。`,

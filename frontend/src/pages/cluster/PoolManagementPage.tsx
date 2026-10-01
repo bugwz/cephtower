@@ -1,6 +1,7 @@
 import { InfoCircleOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Collapse, Descriptions, Divider, Form, Input, InputNumber, Select, Space, Tag, Tooltip, Typography } from 'antd'
 import { erasureProfileDetails } from './ErasureProfilesPanel'
+import { ErasureProfileUsage } from './ErasureProfileUsage'
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isRecord, jsonInit, request, numberValue, textValue, type ApiRecord } from '../../api/client'
@@ -577,7 +578,7 @@ export function PoolManagementPage() {
                 {selectedProfileName && <Collapse items={[{
                   key: 'profile', label: `纠删码配置详情：${selectedProfileName}`,
                   children: selectedProfile ? <Descriptions bordered column={1} items={erasureProfileDetails(selectedProfile)} /> : <Alert type="info" message="配置详情尚未采集，请刷新后查看；不会以表单默认值代替原生配置。" />
-                }]} />}
+                }, { key: 'usage', label: '使用此配置的存储池', children: <ErasureProfileUsage key={`${selectedClusterId}/${selectedProfileName}`} clusterId={selectedClusterId} profile={selectedProfileName} /> }]} />}
               </>
             )}
             <Form.Item

@@ -25,6 +25,16 @@ assert.throws(() => exports.crushTree({ nodes: [{ id: -1, name: 'root', type: 'r
 assert.equal(nodes[0].id, 0, 'must not reorder native metadata')
 console.log('CRUSH topology tree checks passed')
 
+const usageSource = readFileSync(new URL('../src/pages/cluster/ErasureProfileUsage.tsx', import.meta.url), 'utf8')
+const usageTree = ts.createSourceFile('usage.tsx', usageSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const usageFn = usageTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'erasureProfileUsage')
+const usageExports = {}
+new Function('exports', ts.transpileModule(usageFn.getText(usageTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(usageExports)
+assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: false, items: [{ name: 'a', erasure_code_profile: 'ec', stale: false }, { name: 'b', erasure_code_profile: 'other', stale: false }] }), { names: ['a'], stale: false })
+assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: true, items: [] }), { names: [], stale: true })
+assert.equal(usageExports.erasureProfileUsage('ec', { stale: false, items: [{ name: 'a' }] }).stale, true)
+assert.ok(usageSource.includes("listAllResources('/pools', clusterId)"))
+
 const watcher = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'watchCrushMap')
 const watcherExports = {}
 let pending, scheduled, cancelled = false, received = 0
