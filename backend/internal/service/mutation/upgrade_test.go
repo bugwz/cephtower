@@ -46,3 +46,25 @@ func TestUpgradeCheckUsesVersionOption(t *testing.T) {
 		t.Fatal("missing version accepted")
 	}
 }
+
+func TestUpgradeCheckReturnsReport(t *testing.T) {
+	s, _, id := newCephUserService(t)
+	r := Request{ClusterID: id, Action: "upgrade.check", ResourceKey: "upgrade/check", Parameters: map[string]any{"version": "20.2.2"}}
+	good := `{"target_name":"ceph:v20.2.2","target_id":"sha256:abc","target_version":"20.2.2","needs_update":{"mon.a":{"current_name":null,"current_id":null,"current_version":null,"password":"do-not-copy"}},"up_to_date":[],"non_ceph_image_daemons":["prometheus.a"],"password":"do-not-copy"}`
+	e := &directoryRenameExecutor{outputs: map[string]string{r.Action: good}}
+	s.executor = e
+	result, err := s.Execute(context.Background(), r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	report, ok := result.Details.(map[string]any)["check"].(map[string]any)
+	if !ok || report["target_version"] != "20.2.2" || report["password"] != nil || report["needs_update"].(map[string]any)["mon.a"].(map[string]any)["password"] != nil {
+		t.Fatal(result)
+	}
+	for _, bad := range []string{"Incompatible upgrade: downgrade is not supported", "Unable to extract ceph version", `null`, `{}`, good + `{}`, `{"target_name":1}`} {
+		e.outputs[r.Action] = bad
+		if _, err := s.Execute(context.Background(), r); err == nil {
+			t.Fatalf("accepted %s", bad)
+		}
+	}
+}

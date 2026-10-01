@@ -352,6 +352,13 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if request.Action == "osd_deployment.preview" {
 		return cephdomain.ActionResult{Details: map[string]any{"preview": security.Redact(string(result.Stdout))}}, nil
 	}
+	if request.Action == "upgrade.check" {
+		report, ok := upgradeCheckReport(result.Stdout)
+		if !ok {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "upgrade_check_failed", Message: "native upgrade check did not return a valid compatibility report: " + security.Redact(string(result.Stdout))}
+		}
+		return cephdomain.ActionResult{Details: map[string]any{"check": report}}, nil
+	}
 	if request.Action == "filesystem.rename" {
 		return cephdomain.ActionResult{Details: map[string]any{"exit_code": result.ExitCode, "duration_ms": result.Duration.Milliseconds(), "native_output": security.Redact(string(result.Stdout)), "native_warning": security.Redact(string(result.Stderr))}}, nil
 	}
