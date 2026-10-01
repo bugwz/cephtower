@@ -25,6 +25,13 @@ assert.throws(() => exports.crushTree({ nodes: [{ id: -1, name: 'root', type: 'r
 assert.equal(nodes[0].id, 0, 'must not reorder native metadata')
 console.log('CRUSH topology tree checks passed')
 
+const profileSource = readFileSync(new URL('../src/pages/cluster/ErasureProfilesPanel.tsx', import.meta.url), 'utf8')
+assert.ok(profileSource.includes("path: '/erasure/code/profiles'"))
+for (const field of ['name', 'plugin', 'k', 'm', 'technique', 'crush-root', 'crush-failure-domain', 'crush-device-class']) {
+  assert.ok(profileSource.includes(`key: '${field}'`), `missing native profile field ${field}`)
+}
+assert.ok(source.includes('<ErasureProfilesPanel />'))
+
 const poolSource = readFileSync(new URL('../src/pages/cluster/PoolManagementPage.tsx', import.meta.url), 'utf8')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const poolFunctions = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['topologyCounts', 'crushRootNames', 'placementDeviceOptions', 'placementValid', 'failureDomainOptions'].includes(node.name.text))

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { useClusterContext } from '../../state/ClusterContext'
 import { CrushRulesPanel } from './CrushRulesPanel'
+import { ErasureProfilesPanel } from './ErasureProfilesPanel'
 
 interface CrushMap { nodes: ApiRecord[]; roots: number[] }
 interface CrushTreeNode { key: string; title: string; nodeId: number; status: unknown; children: CrushTreeNode[] }
@@ -55,5 +56,5 @@ export function CrushMapPage() {
         </Col>
       </Row>
     </Space>}
-  </Card><CrushRulesPanel /></>
+  </Card><CrushRulesPanel /><ErasureProfilesPanel /></>
 }
