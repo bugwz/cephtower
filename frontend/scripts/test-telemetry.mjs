@@ -89,3 +89,21 @@ for (const scenario of ['ok', 'off', 'unknown', 'disabled', 'unmount', 'failure'
 }
 assert.ok(source.includes('key={`${selectedClusterId}:${data.observed_at}`}'))
 console.log('Telemetry channel mutation, refresh and scope checks passed')
+
+const configSource = readFileSync(new URL('../src/pages/cluster/ConfigurationPage.tsx', import.meta.url), 'utf8')
+const configTree = ts.createSourceFile('config.tsx', configSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const filterNode = configTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'configurationPanelRows')
+const filterCode = ts.transpileModule(filterNode.getText(configTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const panelRows = new Function(`${filterCode}; return configurationPanelRows`)()
+const rows = [{ name: 'mgr/telemetry/interval', who: 'mgr', value: '24' }, { name: 'mgr/telemetry/interval', who: 'mgr.a', value: '48' }, { name: 'mgr/telemetry/enabled' }, { name: 'mgr/telemetry/channel_ident' }, { name: 'mgr/dashboard/interval' }, { name: 'mgr/telemetry2/interval' }]
+assert.deepEqual(panelRows(rows, 'telemetry', ['mgr/telemetry/interval']), rows.slice(0, 2))
+assert.deepEqual(panelRows(rows, 'telemetry'), rows.slice(0, 4))
+assert.deepEqual(panelRows(rows), rows)
+assert.deepEqual(panelRows(rows, 'telemetry', []), [])
+const settingsSource = readFileSync(new URL('../src/pages/cluster/TelemetrySettings.tsx', import.meta.url), 'utf8')
+assert.ok(settingsSource.includes('optionNames={telemetryOptionNames}'))
+assert.ok(!settingsSource.includes("'enabled'"))
+assert.ok(!settingsSource.includes("'channel_ident'"))
+assert.ok(source.includes('<TelemetrySettings key={selectedClusterId}'))
+assert.ok(configSource.includes('scopeRef.current.optionNames !== optionNames'))
+console.log('Telemetry settings configuration scope checks passed')

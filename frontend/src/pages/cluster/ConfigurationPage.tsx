@@ -17,6 +17,11 @@ import { configurationValueError } from './configurationValue'
 interface ConfigurationForm { who: string; name: string; value: string; instance?: string }
 type OverrideFilter = 'all' | 'configured' | 'unconfigured'
 
+function configurationPanelRows(rows: ApiRecord[], moduleName?: string, optionNames?: readonly string[]): ApiRecord[] {
+  const prefix = moduleName ? `mgr/${moduleName}/` : ''
+  return rows.filter((row) => typeof row.name === 'string' && row.name.startsWith(prefix) && (!optionNames || optionNames.includes(row.name)))
+}
+
 function localizedConfigurationTarget(name: unknown, instance: unknown): string | undefined {
   if (typeof name !== 'string' || !name) return undefined
   if (instance === undefined || instance === '') return name
@@ -87,11 +92,11 @@ function configurationRuntime(value: unknown): string {
   return value === true ? '是' : value === false ? '否' : '未采集'
 }
 
-export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) {
+export function ConfigurationPage({ moduleName, optionNames }: { moduleName?: string; optionNames?: readonly string[] } = {}) {
   const { selectedClusterId } = useClusterContext()
-  const scopeRef = useRef({ clusterId: selectedClusterId, moduleName })
-  if (scopeRef.current.clusterId !== selectedClusterId || scopeRef.current.moduleName !== moduleName) {
-    scopeRef.current = { clusterId: selectedClusterId, moduleName }
+  const scopeRef = useRef({ clusterId: selectedClusterId, moduleName, optionNames })
+  if (scopeRef.current.clusterId !== selectedClusterId || scopeRef.current.moduleName !== moduleName || scopeRef.current.optionNames !== optionNames) {
+    scopeRef.current = { clusterId: selectedClusterId, moduleName, optionNames }
   }
   const scope = scopeRef.current
   const running = useRef(false)
@@ -121,11 +126,10 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
   const loader = useCallback(async () => {
     if (!selectedClusterId) return { options: [] as ApiRecord[], values: [] as ApiRecord[], stale: false, observedAt: null }
     const [options, values] = await Promise.all([listAllResources('/configuration/options', selectedClusterId), listAllResources('/configuration/values', selectedClusterId)])
-    const prefix = moduleName ? `mgr/${moduleName}/` : ''
-    return { options: options.items.filter((row) => String(row.name).startsWith(prefix)), values: values.items.filter((row) => String(row.name).startsWith(prefix)), stale: options.stale || values.stale, observedAt: values.observedAt }
-  }, [selectedClusterId, moduleName])
+    return { options: configurationPanelRows(options.items, moduleName, optionNames), values: configurationPanelRows(values.items, moduleName, optionNames), stale: options.stale || values.stale, observedAt: values.observedAt }
+  }, [selectedClusterId, moduleName, optionNames])
   const { data, loading, error, refresh } = useResource(loader)
-  useEffect(() => { setOpen(false); setDetailOpen(false); detailsRequest.current++ }, [selectedClusterId, moduleName])
+  useEffect(() => { setOpen(false); setDetailOpen(false); detailsRequest.current++ }, [selectedClusterId, moduleName, optionNames])
   useEffect(() => {
     setHelpSnapshot(null)
     if (!open || !selectedClusterId || !watchedName) return
@@ -309,7 +313,7 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
     <DraggableModal title={editing ? '编辑配置覆盖' : '设置配置覆盖'} open={open} confirmLoading={busy} okButtonProps={{ disabled: configurationMonWriteBlocked(help, watchedName) }} onCancel={() => { if (!busy) setOpen(false) }} onOk={() => form.submit()}>
       <Form form={form} layout="vertical" onFinish={save}>
         <Form.Item name="name" label="配置选项" rules={[{ required: true }]}><Select disabled={Boolean(editing)} showSearch onChange={() => form.setFieldValue('instance', '')} options={data?.options.map((row) => ({ label: String(row.name), value: String(row.name) }))} /></Form.Item>
-        {!editing && typeof watchedName === 'string' && /^mgr\/[^/]+\/[^/]+$/.test(watchedName) && <Form.Item name="instance" label="MGR 实例名（可选）" preserve={false} extra="留空设置模块级参数；填写实例 ID 创建本地化键。仅使用 localized option 的模块会读取该键，不等同于下方 mgr.<实例> 作用域。" rules={[{ pattern: /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,255}$/, message: '实例名只能含字母、数字、下划线、点和连字符，且不能以点或连字符开头' }]}><Input maxLength={256} placeholder="例如 node-a.x1（不含 mgr. 前缀）" /></Form.Item>}
+        {!optionNames && !editing && typeof watchedName === 'string' && /^mgr\/[^/]+\/[^/]+$/.test(watchedName) && <Form.Item name="instance" label="MGR 实例名（可选）" preserve={false} extra="留空设置模块级参数；填写实例 ID 创建本地化键。仅使用 localized option 的模块会读取该键，不等同于下方 mgr.<实例> 作用域。" rules={[{ pattern: /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,255}$/, message: '实例名只能含字母、数字、下划线、点和连字符，且不能以点或连字符开头' }]}><Input maxLength={256} placeholder="例如 node-a.x1（不含 mgr. 前缀）" /></Form.Item>}
         <Typography.Paragraph type="secondary">完整配置键：{localizedTarget ?? '请先选择配置并填写有效实例名'}</Typography.Paragraph>
         <Form.Item name="who" label="作用域" extra="例如 global、osd、client.rgw、osd/host:node-1 或 osd/class:ssd。" rules={[{ required: true }]}><Input disabled={Boolean(editing)} /></Form.Item>
         {helpError && <Alert type="warning" message={`无法读取配置说明：${helpError}`} />}
