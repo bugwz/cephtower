@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { listAllResources, listResource, mutateResource, refreshResource } from '../../api/resource'
 import { scheduleFormScope, scheduleScope } from './snapshotScheduleScope'
+import { scheduleIntervalText, scheduleRetentionText } from './snapshotScheduleText'
 import { AppTable } from '../../components/AppTable'
 import { RecordDetail } from '../../components/RecordDetail'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -164,10 +165,10 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
         {title:'路径',dataIndex:'path'},
         {title:'子卷',dataIndex:'subvol',render:(value) => value || '—'},
         {title:'子卷组',dataIndex:'group',render:(value) => value || '默认组'},
-        {title:'周期',dataIndex:'schedule'},
+        {title:'周期',dataIndex:'schedule',render:scheduleIntervalText},
         {title:'状态',dataIndex:'active',render:(value) => value ? '启用' : '停用'},
         {title:'开始时间（UTC）',dataIndex:'start'},
-        {title:'保留策略',dataIndex:'retention',render:(value) => typeof value === 'string' ? value || '—' : JSON.stringify(value ?? {})},
+        {title:'保留策略',dataIndex:'retention',render:scheduleRetentionText},
         {title:'已创建',dataIndex:'created_count',render:(value) => value ?? '—'},
         {title:'已清理',dataIndex:'pruned_count',render:(value) => value ?? '—'},
         {title:'操作',render:(_,row) => <Space><Button disabled={mutating || loading} onClick={() => managePath(row)}>管理路径与保留策略</Button><Popconfirm title="删除这条快照计划？" description="已有快照不会因此删除。" onConfirm={() => toggle(row, 'remove', scheduleScope(row), false)}><Button danger disabled={mutating}>删除</Button></Popconfirm><Button disabled={mutating} onClick={() => toggle(row, row.active ? 'deactivate' : 'activate', scheduleScope(row), false)}>{row.active ? '停用' : '启用'}</Button></Space>}
@@ -195,7 +196,8 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
     {rows?.length === 0 && <Alert type="info" message="该路径没有快照计划。查询不包含其他路径。" />}
     {rows && <AppTable<ApiRecord> dataSource={rows} rowKey={(row) => JSON.stringify([row.path,row.schedule,row.start])} expandable={{ expandedRowRender:(row) => <RecordDetail record={row} /> }} columns={[
       {title:'路径',dataIndex:'path'},
-      {title:'周期',dataIndex:'schedule'},
+      {title:'周期',dataIndex:'schedule',render:scheduleIntervalText},
+      {title:'保留策略',dataIndex:'retention',render:scheduleRetentionText},
       {title:'状态',dataIndex:'active',render:(value) => value ? '启用' : '停用'},
       {title:'开始时间（UTC）',dataIndex:'start'},
       {title:'首次快照（UTC）',dataIndex:'first',render:(value) => value ?? '—'},
