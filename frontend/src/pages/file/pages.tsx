@@ -448,8 +448,8 @@ const definitions: Record<
       successMessage: 'CephFS 快照创建执行成功',
       fields: [
         { name: 'fs', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
-        { name: 'subvolume', label: '子卷', required: true },
-        { name: 'group', label: '子卷组', placeholder: '_nogroup' },
+        { name: 'group', label: '子卷组', type: 'select', required: true, optionsDependencies: ['fs'], optionsLoader: snapshotGroupOptions },
+        { name: 'subvolume', label: '子卷', type: 'select', required: true, optionsDependencies: ['fs', 'group'], optionsLoader: snapshotSubvolumeOptions },
         { name: 'name', label: '快照名称', required: true }
       ],
       buildBody: (values, clusterId) => ({
@@ -825,7 +825,7 @@ function filesystemPlacement(values: Record<string, unknown>) {
 }
 
 async function filesystemOptions(clusterId: number) {
-  const payload = await listResource('/filesystems', clusterId)
+  const payload = await listAllResources('/filesystems', clusterId)
   return payload.items
     .map((row) => resourceName(row))
     .filter(Boolean)
@@ -838,6 +838,17 @@ async function cloneTargetGroupOptions(clusterId: number, row?: Record<string, u
   const payload = await listAllResources('/filesystem/subvolume/groups', clusterId, { body: { fs } })
   const names = new Set(['_nogroup', ...payload.items.map(resourceName).filter(Boolean)])
   return Array.from(names, (name) => ({ label: name === '_nogroup' ? '默认组（_nogroup）' : name, value: name }))
+}
+
+async function snapshotGroupOptions(clusterId: number, _row?: Record<string, unknown>, values?: Record<string, unknown>) {
+  if (!values?.fs) return []
+  return cloneTargetGroupOptions(clusterId, { fs: values.fs })
+}
+
+async function snapshotSubvolumeOptions(clusterId: number, _row?: Record<string, unknown>, values?: Record<string, unknown>) {
+  if (!values?.fs || !values.group) return []
+  const payload = await listAllResources('/filesystem/subvolumes', clusterId, { body: { fs: values.fs, group: values.group } })
+  return payload.items.filter((row) => !subvolumeReadyReason(row)).map((row) => ({ label: resourceName(row), value: resourceName(row) }))
 }
 
 async function cephfsPoolOptions(clusterId: number) {

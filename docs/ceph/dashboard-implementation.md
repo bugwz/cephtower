@@ -1414,3 +1414,17 @@ FUSE/libcephfs；不会自动修改客户端配置，也不代表删除快照。
 
 验证：前端测试覆盖源文件系统范围、默认组去重、缺少文件系统及请求失败，
 `make test-frontend` 通过。尚未进行真实 Ceph 集群验证。
+
+## CephFS 快照创建资源联动选择
+
+创建快照表单按文件系统 → 子卷组 → 子卷选择资源，组列表包含 `_nogroup`，
+子卷列表仅提供原生状态为 `complete` 的资源。切换上游选择会级联清空下游值；
+提交时检查依赖选项的当前成员资格。依赖变化触发选项重载，旧请求结果被忽略。
+
+沿用现有命令 `ceph fs subvolumegroup ls <fs> --format json` 和
+`ceph fs subvolume ls <fs> [--group_name <group>] --format json` 的采集结果。
+`/filesystem/subvolume/groups` 按文件系统过滤，`/filesystem/subvolumes` 同时按
+`fs` 和 `group` 过滤；两者读取全部分页。参考快照列表组件的组、子卷选择流程。
+
+验证包含默认组与命名组的请求范围、未选组时不请求、未就绪子卷排除、逆序定义
+下的级联清空；`make test-frontend` 通过。尚未进行真实集群验证。

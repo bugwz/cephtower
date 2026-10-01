@@ -24,3 +24,25 @@ assert.equal(calls.length, 1)
 const failing = new Function('listAllResources', `${compiled}; return cloneTargetGroupOptions`)(async () => { throw new Error('offline') })
 await assert.rejects(failing(42, { fs: 'cephfs-a' }), /offline/)
 console.log('CephFS clone target group scope checks passed')
+
+const dependentSource = readFileSync(new URL('../src/pages/dependentFormFields.ts', import.meta.url), 'utf8')
+const dependentExports = {}
+new Function('exports', ts.transpileModule(dependentSource, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(dependentExports)
+const fields = [{ name: 'subvolume', optionsDependencies: ['group'] }, { name: 'group', optionsDependencies: ['fs'] }, { name: 'fs' }, { name: 'name' }]
+assert.deepEqual(dependentExports.dependentFormFields(fields, ['fs']), ['group', 'subvolume'])
+assert.deepEqual(dependentExports.dependentFormFields(fields, ['group']), ['subvolume'])
+assert.deepEqual(dependentExports.dependentFormFields(fields, ['name']), [])
+const snapshotFunctions = tree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['snapshotSubvolumeOptions', 'resourceName'].includes(node.name?.text))
+const snapshotCode = ts.transpileModule(snapshotFunctions.map((node) => node.getText(tree)).join('\n'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+const scopedCalls = []
+const snapshotLoader = new Function('listAllResources', 'subvolumeReadyReason', `${snapshotCode}; return snapshotSubvolumeOptions`)(async (...args) => {
+  scopedCalls.push(args)
+  return { items: [{ name: 'same-name', state: 'complete' }, { name: 'pending-clone', state: 'pending' }] }
+}, (row) => row.state === 'complete' ? undefined : 'unavailable')
+assert.deepEqual(await snapshotLoader(7, undefined, { fs: 'a' }), [])
+assert.equal(scopedCalls.length, 0)
+for (const group of ['_nogroup', 'team']) {
+  assert.deepEqual(await snapshotLoader(7, undefined, { fs: 'a', group }), [{ label: 'same-name', value: 'same-name' }])
+  assert.deepEqual(scopedCalls.at(-1), ['/filesystem/subvolumes', 7, { body: { fs: 'a', group } }])
+}
+console.log('CephFS snapshot dependent selection checks passed')

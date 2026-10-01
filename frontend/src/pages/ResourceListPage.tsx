@@ -18,6 +18,7 @@ import { useFeatureRequirements, type FeatureRequirements } from '../hooks/useFe
 import { useMutationOperation } from '../hooks/useMutationOperation'
 import { useClusterContext } from '../state/ClusterContext'
 import { resourceColumnFilters, resourceFilterFields } from './resourceColumnFilters'
+import { dependentFormFields } from './dependentFormFields'
 import { message } from '../utils/appMessage'
 
 const { Text } = Typography
@@ -30,7 +31,8 @@ export interface MutationFormField {
   visibleWhen?: (values: MutationFormValues) => boolean
   placeholder?: string
   options?: Array<{ label: string; value: string | number | boolean }>
-  optionsLoader?: (clusterId: number, row?: ApiRecord) => Promise<Array<{ label: string; value: string | number | boolean }>>
+  optionsLoader?: (clusterId: number, row?: ApiRecord, values?: MutationFormValues) => Promise<Array<{ label: string; value: string | number | boolean }>>
+  optionsDependencies?: string[]
   min?: number
   max?: number
   pattern?: RegExp
@@ -106,6 +108,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
   const { data, loading, error, refresh } = useResource(loader)
   const featureStatus = useFeatureRequirements(selectedClusterId, definition)
   const mutationBlocked = featureStatus.loading || featureStatus.blocked || Boolean(featureStatus.error)
+  const optionScope = JSON.stringify(Object.fromEntries((activeAction?.fields.flatMap((field) => field.optionsDependencies ?? []) ?? []).map((name) => [name, formValues?.[name]])))
 
   useEffect(() => {
     let ignore = false
@@ -113,7 +116,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
     if (formOpen && selectedClusterId && activeAction) {
       activeAction.fields.forEach((field) => {
         if (!field.optionsLoader) return
-        void field.optionsLoader(selectedClusterId, activeRow).then((options) => {
+        void field.optionsLoader(selectedClusterId, activeRow, JSON.parse(optionScope)).then((options) => {
           if (!ignore) setDynamicOptions((current) => ({ ...current, [field.name]: options }))
         }).catch(() => {
           if (!ignore) {
@@ -124,7 +127,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
       })
     }
     return () => { ignore = true }
-  }, [activeAction, activeRow, formOpen, selectedClusterId])
+  }, [activeAction, activeRow, formOpen, selectedClusterId, optionScope])
 
   useEffect(() => {
     let ignore = false
@@ -371,7 +374,9 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
         okButtonProps={{ icon: <SaveOutlined />, disabled: mutationBlocked }}
         destroyOnClose
       >
-        <Form form={form} layout="vertical" onFinish={submitForm}>
+        <Form form={form} layout="vertical" onFinish={submitForm} onValuesChange={(changed) => {
+          for (const name of dependentFormFields(activeAction?.fields ?? [], Object.keys(changed))) form.setFieldValue(name, undefined)
+        }}>
           {activeAction?.fields.filter((field) => !field.visibleWhen || field.visibleWhen(formValues ?? {})).map((field) => (
             <Form.Item
               key={field.name}
@@ -381,6 +386,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
               valuePropName={field.type === 'boolean' ? 'checked' : 'value'}
               rules={[
                 ...(field.required ? [{ required: true, message: `请输入${field.label}` }] : []),
+                ...(field.optionsDependencies ? [{ validator: (_: unknown, value: unknown) => value == null || dynamicOptions[field.name]?.some((option) => option.value === value) ? Promise.resolve() : Promise.reject(new Error(`请选择当前范围内的${field.label}`)) }] : []),
                 ...(field.pattern ? [{ pattern: field.pattern, message: field.patternMessage ?? `${field.label}格式不正确` }] : [])
               ]}
             >
