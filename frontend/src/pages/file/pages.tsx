@@ -2,7 +2,7 @@ import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClusterDetails } from './NFSClusterDetails'
 import { SMBClusterDetails } from './SMBClusterDetails'
-import { smbClusterInitialValues, smbClusterDNSBody, smbClusterUserGroupsBody, smbClusterDomainBody, smbClusterCountBody, smbClusterHostsBody, smbClusterUpdateHostsBody, smbClusterClusteringBody } from './smbClusterFields'
+import { smbClusterInitialValues, smbClusterDNSBody, smbClusterUserGroupsBody, smbClusterDomainBody, smbClusterCountBody, smbClusterHostsBody, smbClusterUpdateHostsBody, smbClusterClusteringBody, smbClusterPublicAddressesBody } from './smbClusterFields'
 import { smbCephFS, smbShareInitialValues, smbShareAccessBody, smbBooleanText } from './smbShareFields'
 import { NFSClientsEditor } from './NFSClientsEditor'
 import { nfsClientsBody, nfsFSALBody, nfsRGWUserChoices, nfsRGWBucketChoices } from './nfsExportFields'
@@ -742,6 +742,7 @@ const definitions: Record<
         { name: 'clustering', label: '集群协作模式（CTDB）', type: 'select', placeholder: '留空使用 Ceph 默认值', options: [{ label: '自动（单实例时关闭）', value: 'default' }, { label: '始终启用', value: 'always' }, { label: '始终禁用', value: 'never' }] },
         { name: 'smb_hosts', label: '部署主机（可选）', type: 'select', multiple: true, optionsLoader: smbHostOptions, placeholder: '选择当前集群主机；留空由 Ceph 选择' },
         { name: 'smb_label', label: '部署主机标签（与主机列表二选一）', type: 'select', optionsLoader: smbLabelOptions, placeholder: '选择当前集群主机标签' },
+        { name: 'smb_public_addresses', label: '客户端访问地址（可选）', type: 'textarea', placeholder: '每行一个 IP/前缀，可附加 %目标网络；例如 192.0.2.10/24%192.0.2.0/24' },
         { name: 'custom_dns', label: '自定义 DNS 地址（可选）', type: 'textarea', placeholder: '每行一个 IPv4/IPv6 地址' },
         { name: 'domain_realm', label: 'Active Directory 域名', required: true, placeholder: 'EXAMPLE.COM', visibleWhen: (values) => values.auth_mode === 'active-directory' },
         { name: 'domain_join_ref', label: '域加入凭据资源 ID', type: 'textarea', required: true, placeholder: '每行一个已有凭据资源 ID', visibleWhen: (values) => values.auth_mode === 'active-directory' },
@@ -764,6 +765,7 @@ const definitions: Record<
         ...smbClusterDomainBody(values),
         ...smbClusterCountBody(values),
         ...smbClusterHostsBody(values),
+        ...smbClusterPublicAddressesBody(values),
         ...smbClusterClusteringBody(values),
         ...smbClusterDNSBody(values),
         ...(values.auth_mode ? { auth_mode: String(values.auth_mode) } : {})

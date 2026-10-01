@@ -6,6 +6,24 @@ import (
 	"testing"
 )
 
+func TestSMBClusterPublicAddresses(t *testing.T) {
+	p := map[string]any{"name": "smb-a", "user_group_ref": []string{"users"}, "smb_public_addresses": []string{"192.0.2.10/24%192.0.2.0/24", "2001:db8::10/64"}}
+	spec, err := build(Request{Action: "smb_cluster.create"}, p)
+	if err != nil || !slices.Contains(spec.args, "--public-addrs=192.0.2.10/24%192.0.2.0/24") || !slices.Contains(spec.args, "--public-addrs=2001:db8::10/64") {
+		t.Fatalf("wrong public addresses: %v %v", spec.args, err)
+	}
+	for _, bad := range []any{nil, "192.0.2.1/24", []string{"192.0.2.1"}, []string{"192.0.2.1/33"}, []string{"192.0.2.1/24%192.0.2.2/24"}, []string{"192.0.2.1/24%"}, []string{"192.0.2.1/24%x%y"}} {
+		p["smb_public_addresses"] = bad
+		if _, err := build(Request{Action: "smb_cluster.create"}, p); err == nil {
+			t.Fatalf("invalid address accepted: %v", bad)
+		}
+	}
+	p["smb_public_addresses"] = []string{}
+	if _, err := build(Request{Action: "smb_cluster.create"}, p); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSMBClusterLabelPlacement(t *testing.T) {
 	p := map[string]any{"name": "smb-a", "user_group_ref": []string{"users"}, "smb_label": "smb", "count": float64(2)}
 	spec, err := build(Request{Action: "smb_cluster.create"}, p)

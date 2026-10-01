@@ -2365,6 +2365,15 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("auth_mode is not supported")
 		}
 		args := []string{"smb", "cluster", "create", name, authMode}
+		if value, exists := p["smb_public_addresses"]; exists {
+			addresses, err := smbPublicAddresses(value)
+			if err != nil {
+				return command{}, err
+			}
+			for _, address := range addresses {
+				args = append(args, "--public-addrs="+address)
+			}
+		}
 		if _, exists := p["clustering"]; exists {
 			mode, err := enum(p, "clustering", "default", "always", "never")
 			if err != nil {

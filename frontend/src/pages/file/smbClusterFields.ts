@@ -75,3 +75,10 @@ export function smbClusterDNSBody(values: ApiRecord) {
   if (typeof values.custom_dns !== 'string') throw new Error('DNS 地址格式无效')
   return { custom_dns: values.custom_dns.split(/[\s,]+/).filter(Boolean) }
 }
+
+export function smbClusterPublicAddressesBody(values: ApiRecord) {
+  if (values.smb_public_addresses === undefined) return {}
+  if (typeof values.smb_public_addresses !== 'string') throw new Error('客户端访问地址格式无效')
+  const addresses = values.smb_public_addresses.split(/[\s,]+/).filter(Boolean)
+  return addresses.length ? { smb_public_addresses: addresses } : {}
+}

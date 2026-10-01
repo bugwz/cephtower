@@ -27,6 +27,30 @@ func smbDNSServers(value any) ([]string, error) {
 	return servers, nil
 }
 
+func smbPublicAddresses(value any) ([]string, error) {
+	data, err := json.Marshal(value)
+	var addresses []string
+	if err != nil || json.Unmarshal(data, &addresses) != nil || addresses == nil {
+		return nil, invalid("smb_public_addresses must be an array")
+	}
+	for _, address := range addresses {
+		parts := strings.Split(address, "%")
+		if len(parts) > 2 {
+			return nil, invalid("public address must be IP/prefix or IP/prefix%network")
+		}
+		if _, _, err := net.ParseCIDR(parts[0]); err != nil {
+			return nil, invalid("public address requires an IP address and prefix length")
+		}
+		if len(parts) == 2 {
+			ip, network, err := net.ParseCIDR(parts[1])
+			if err != nil || !ip.Equal(network.IP) {
+				return nil, invalid("public address destination must be a network CIDR without host bits")
+			}
+		}
+	}
+	return addresses, nil
+}
+
 func smbClusterRecord(data []byte, request Request) (map[string]any, error) {
 	var record map[string]any
 	decoder := json.NewDecoder(bytes.NewReader(data))
