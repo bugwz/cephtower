@@ -14,9 +14,9 @@ export function groupPermissionMode(value: unknown): string | undefined {
 }
 
 export function groupUpdateInitialValues(row?: ApiRecord): MutationFormValues {
-  const quota = cephFSSafeInteger(row?.bytes_quota)
+  const quota = cephFSQuotaDecimal(row?.bytes_quota)
   return {
-    size: quota && quota > 0 ? quota : undefined,
+    size: quota,
     unlimited: row?.bytes_quota === 'infinite',
     no_shrink: false,
     edit_attributes: false,
@@ -35,7 +35,13 @@ export function groupUpdateBody(values: MutationFormValues, clusterId: number, f
 
 export function cephFSQuotaUpdateValues(values: MutationFormValues): ApiRecord {
   if (values.unlimited) return { unlimited: true, no_shrink: false }
-  const size = cephFSSafeInteger(values.size)
-  if (size === undefined || size < 1) throw new Error('配额必须是 1 到 9007199254740991 之间的整数字节数')
+  const size = typeof values.size === 'string' ? cephFSQuotaDecimal(values.size) : undefined
+  if (size === undefined) throw new Error('配额必须是 1 到 9223372036854775807 之间的十进制整数字节数')
   return { size, no_shrink: Boolean(values.no_shrink) }
+}
+
+export function cephFSQuotaDecimal(value: unknown): string | undefined {
+  const text = typeof value === 'string' ? value : typeof value === 'number' && Number.isSafeInteger(value) ? String(value) : ''
+  if (!/^[1-9][0-9]*$/.test(text)) return undefined
+  return BigInt(text) <= 9223372036854775807n ? text : undefined
 }

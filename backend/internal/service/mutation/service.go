@@ -1174,12 +1174,17 @@ func build(request Request, p map[string]any) (command, error) {
 	case "subvolume.update":
 		fs := pathValue(tail, "filesystem")
 		name := last(tail)
-		size := optional(p, "size")
-		if boolParameter(p, "unlimited") {
-			size = "inf"
+		unlimited := boolParameter(p, "unlimited")
+		if _, sized := p["size"]; sized && unlimited {
+			return command{}, invalid("size and unlimited cannot be combined")
 		}
-		if size == "" {
-			return command{}, invalid("size is required")
+		size := "inf"
+		if !unlimited {
+			var err error
+			size, err = cephFSQuotaSize(p)
+			if err != nil {
+				return command{}, err
+			}
 		}
 		args := []string{"fs", "subvolume", "resize", fs, name, size}
 		check := []string{"fs", "subvolume", "info", fs, name}
@@ -1187,7 +1192,7 @@ func build(request Request, p map[string]any) (command, error) {
 			args = append(args, group)
 			check = append(check, group)
 		}
-		if boolParameter(p, "no_shrink") {
+		if !unlimited && boolParameter(p, "no_shrink") {
 			args = append(args, "--no_shrink")
 		}
 		check = append(check, "--format", "json")

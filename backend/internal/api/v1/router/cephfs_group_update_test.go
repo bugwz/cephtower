@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -20,11 +21,21 @@ import (
 	"cephtower/backend/internal/store"
 )
 
-type groupUpdateRouteExecutor struct{ specs []executor.CommandSpec }
+type groupUpdateRouteExecutor struct {
+	specs []executor.CommandSpec
+	quota string
+}
 
 func (e *groupUpdateRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.specs = append(e.specs, spec)
-	return executor.CommandResult{Stdout: []byte(`{"data_pool":"hot","uid":1000,"gid":1001,"mode":16832,"bytes_quota":"infinite"}`)}, nil
+	if len(spec.Args) >= 6 && spec.Args[2] == "resize" && spec.Args[5] != "inf" {
+		e.quota = spec.Args[5]
+	}
+	quota := e.quota
+	if quota == "" {
+		quota = `"infinite"`
+	}
+	return executor.CommandResult{Stdout: []byte(fmt.Sprintf(`{"data_pool":"hot","uid":1000,"gid":1001,"mode":16832,"bytes_quota":%s}`, quota))}, nil
 }
 
 func TestSubvolumeGroupUpdateAPIWithoutCluster(t *testing.T) {
@@ -71,6 +82,7 @@ func TestSubvolumeGroupUpdateAPIWithoutCluster(t *testing.T) {
 		{"group": "users", "unlimited": true}, {"fs": "cephfs", "unlimited": true},
 		{"fs": "cephfs", "group": "users", "unlimited": "true"},
 		{"fs": "cephfs", "group": "users", "size": 1.5},
+		{"fs": "cephfs", "group": "users", "size": 1024},
 		{"fs": "cephfs", "group": "users", "uid": "1000"},
 		{"fs": "cephfs", "group": "users", "size": 1024, "extra": true},
 	} {
@@ -108,7 +120,29 @@ func TestSubvolumeGroupUpdateAPIWithoutCluster(t *testing.T) {
 					t.Fatalf("spec %d=%+v", i, spec)
 				}
 			}
-			return
+			runner.specs = nil
+			rec = send(map[string]any{"fs": "cephfs", "group": "users", "size": "9007199254740993", "no_shrink": true})
+			if rec.Code != 202 {
+				t.Fatalf("exact quota request: %d %s", rec.Code, rec.Body.String())
+			}
+			if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+				t.Fatal(err)
+			}
+			deadline = time.Now().Add(2 * time.Second)
+			for time.Now().Before(deadline) {
+				operation, err := db.FindOperation(context.Background(), response.Data.OperationID)
+				if err == nil && operation.Status == store.OperationSucceeded {
+					if len(runner.specs) != 2 || !reflect.DeepEqual(runner.specs[0].Args, []string{"fs", "subvolumegroup", "resize", "cephfs", "users", "9007199254740993", "--no_shrink"}) {
+						t.Fatalf("exact quota specs=%+v", runner.specs)
+					}
+					return
+				}
+				if err == nil && operation.Status == store.OperationFailed {
+					t.Fatalf("exact quota operation=%+v", operation)
+				}
+				time.Sleep(time.Millisecond)
+			}
+			t.Fatal("exact quota operation timed out")
 		}
 		if err == nil && row.Status == store.OperationFailed {
 			t.Fatalf("operation failed=%+v", row)

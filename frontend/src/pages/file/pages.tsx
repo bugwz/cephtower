@@ -271,7 +271,7 @@ const definitions: Record<
       successMessage: '子卷组更新执行成功',
       confirmation: (values) => values.edit_attributes ? '将修改子卷组自身的数据池布局、所有者和权限，不递归修改已有子卷。配额与属性分步执行，后续步骤失败时前面的修改可能已生效，确认继续？' : values.unlimited ? '确认取消该子卷组的配额限制？' : undefined,
       fields: [
-        { name: 'size', label: '配额大小（字节）', type: 'number', required: true, min: 1, max: Number.MAX_SAFE_INTEGER, visibleWhen: (values) => !values.unlimited },
+        { name: 'size', label: '配额大小（十进制字节）', required: true, pattern: /^[1-9][0-9]*$/, patternMessage: '请输入正整数字节数', visibleWhen: (values) => !values.unlimited },
         { name: 'unlimited', label: '取消配额限制', type: 'boolean' },
         { name: 'no_shrink', label: '不允许配额低于已用空间', type: 'boolean', visibleWhen: (values) => !values.unlimited },
         { name: 'edit_attributes', label: '同时更新数据池、所有者与权限', type: 'boolean' },
@@ -365,7 +365,7 @@ const definitions: Record<
       method: 'PATCH',
       successMessage: '子卷更新执行成功',
       fields: [
-        { name: 'size', label: '大小（字节）', type: 'number', required: true, min: 1, max: Number.MAX_SAFE_INTEGER, visibleWhen: (values) => !values.unlimited },
+        { name: 'size', label: '大小（十进制字节）', required: true, pattern: /^[1-9][0-9]*$/, patternMessage: '请输入正整数字节数', visibleWhen: (values) => !values.unlimited },
         { name: 'unlimited', label: '取消配额限制', type: 'boolean' },
         { name: 'no_shrink', label: '不允许配额低于已用空间', type: 'boolean', visibleWhen: (values) => !values.unlimited }
       ],

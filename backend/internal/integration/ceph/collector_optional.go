@@ -290,6 +290,11 @@ func (p *NativeProvider) collectCephFSSubvolumeScope(ctx context.Context, access
 // Native creation time must not collide with the resource envelope's cache timestamp.
 func mergeCephFSInfo(payload, info map[string]any) {
 	for key, value := range info {
+		if key == "bytes_quota" || key == "bytes_used" {
+			if number, ok := value.(json.Number); ok {
+				value = number.String()
+			}
+		}
 		if key == "created_at" {
 			key = "ceph_created_at"
 		}

@@ -15376,7 +15376,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  type: string
                 snap:
                   type: string
                 subsystem_nqn:
@@ -16350,7 +16350,7 @@ paths:
                 pool:
                   type: string
                 size:
-                  type: integer
+                  type: string
                 uid:
                   type: integer
                 unlimited:

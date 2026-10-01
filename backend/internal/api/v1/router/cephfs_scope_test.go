@@ -145,7 +145,7 @@ func TestCephFSGroupScopedReadsAndVersionedOperations(t *testing.T) {
 		method, path string
 		body         map[string]any
 	}{
-		{"PATCH", "/filesystem/subvolume", map[string]any{"fs": "cephfs", "subvolume": "same", "group": "team-b", "size": 2048}},
+		{"PATCH", "/filesystem/subvolume", map[string]any{"fs": "cephfs", "subvolume": "same", "group": "team-b", "size": "2048"}},
 		{"DELETE", "/filesystem/subvolume/snapshot", map[string]any{"fs": "cephfs", "subvolume": "same", "group": "team-b", "snap": "daily"}},
 	} {
 		if rec := send(tt.method, tt.path, "1", tt.body); rec.Code != 409 {
@@ -160,9 +160,9 @@ func TestCephFSGroupScopedReadsAndVersionedOperations(t *testing.T) {
 		body                               map[string]any
 		args                               []string
 	}{
-		{"PATCH", "/filesystem/subvolume", "2", "team-b", "cephfs/team-b/same", map[string]any{"size": 2048}, []string{"fs", "subvolume", "resize", "cephfs", "same", "2048", "team-b"}},
-		{"PATCH", "/filesystem/subvolume", "1", "team-a", "cephfs/team-a/same", map[string]any{"size": 2048}, []string{"fs", "subvolume", "resize", "cephfs", "same", "2048", "team-a"}},
-		{"PATCH", "/filesystem/subvolume", "1", "", "cephfs/_nogroup/same", map[string]any{"size": 2048}, []string{"fs", "subvolume", "resize", "cephfs", "same", "2048"}},
+		{"PATCH", "/filesystem/subvolume", "2", "team-b", "cephfs/team-b/same", map[string]any{"size": "9007199254740993"}, []string{"fs", "subvolume", "resize", "cephfs", "same", "9007199254740993", "team-b"}},
+		{"PATCH", "/filesystem/subvolume", "1", "team-a", "cephfs/team-a/same", map[string]any{"size": "2048"}, []string{"fs", "subvolume", "resize", "cephfs", "same", "2048", "team-a"}},
+		{"PATCH", "/filesystem/subvolume", "1", "", "cephfs/_nogroup/same", map[string]any{"size": "2048"}, []string{"fs", "subvolume", "resize", "cephfs", "same", "2048"}},
 		{"DELETE", "/filesystem/subvolume/snapshot", "2", "team-b", "cephfs/team-b/same/daily", map[string]any{"snap": "daily"}, []string{"fs", "subvolume", "snapshot", "rm", "cephfs", "same", "daily", "team-b"}},
 		{"POST", "/filesystem/subvolume/clone/cancel", "2", "team-b", "cephfs/team-b/same", map[string]any{}, []string{"fs", "clone", "cancel", "cephfs", "same", "--group_name", "team-b"}},
 	} {

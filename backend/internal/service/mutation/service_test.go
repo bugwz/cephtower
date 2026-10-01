@@ -211,7 +211,7 @@ func TestCephFSSubvolumeResizeSupportsUnlimitedAndNoShrink(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []string{"fs", "subvolume", "resize", "cephfs", "home", "inf", "users", "--no_shrink"}
+	want := []string{"fs", "subvolume", "resize", "cephfs", "home", "inf", "users"}
 	if !reflect.DeepEqual(cmd.args, want) {
 		t.Fatalf("args = %#v, want %#v", cmd.args, want)
 	}

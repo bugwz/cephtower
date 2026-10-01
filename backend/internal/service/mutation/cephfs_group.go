@@ -14,6 +14,17 @@ import (
 
 var groupNamePattern = regexp.MustCompile(`^[A-Za-z0-9_.][A-Za-z0-9_.-]{0,254}$`)
 
+func cephFSQuotaSize(p map[string]any) (string, error) {
+	size, ok := p["size"].(string)
+	if !ok || !regexp.MustCompile(`^[1-9][0-9]*$`).MatchString(size) {
+		return "", invalid("size must be a positive decimal string")
+	}
+	if _, err := strconv.ParseInt(size, 10, 64); err != nil {
+		return "", invalid("size exceeds the supported 64-bit range")
+	}
+	return size, nil
+}
+
 func subvolumeGroupHasAttributes(p map[string]any) bool {
 	for _, key := range []string{"pool", "uid", "gid", "mode"} {
 		if _, ok := p[key]; ok {
@@ -43,13 +54,13 @@ func subvolumeGroupUpdateCommand(request Request, p map[string]any) (command, er
 		size := "inf"
 		if !unlimited {
 			var err error
-			size, err = optionalPositiveInteger(p, "size")
+			size, err = cephFSQuotaSize(p)
 			if err != nil || size == "" {
 				return command{}, invalid("size must be a positive integer")
 			}
 		}
 		args := []string{"fs", "subvolumegroup", "resize", fs, group, size}
-		if boolParameter(p, "no_shrink") {
+		if !unlimited && boolParameter(p, "no_shrink") {
 			args = append(args, "--no_shrink")
 		}
 		steps = append(steps, wrap(args))

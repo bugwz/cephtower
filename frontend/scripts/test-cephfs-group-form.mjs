@@ -17,10 +17,10 @@ assert.equal(initial.unlimited, true)
 assert.equal(initial.size, undefined)
 assert.equal(initial.mode, '0700')
 assert.equal(initial.edit_attributes, false)
-assert.equal(groupUpdateInitialValues({ bytes_quota: '9007199254740993' }).size, undefined)
-assert.equal(groupUpdateInitialValues({ bytes_quota: 1024 }).size, 1024)
+assert.equal(groupUpdateInitialValues({ bytes_quota: '9007199254740993' }).size, '9007199254740993')
+assert.equal(groupUpdateInitialValues({ bytes_quota: 1024 }).size, '1024')
 assert.deepEqual(groupUpdateBody({ ...initial, no_shrink: true }, 3, 'cephfs', 'users'), { cluster_id: 3, fs: 'cephfs', group: 'users', unlimited: true, no_shrink: false })
-assert.deepEqual(groupUpdateBody({ ...initial, unlimited: false, size: 2048, no_shrink: true, edit_attributes: true }, 3, 'cephfs', 'users'), {
-  cluster_id: 3, fs: 'cephfs', group: 'users', size: 2048, no_shrink: true, pool: 'cephfs.hot', uid: 1000, gid: 1001, mode: '0700'
+assert.deepEqual(groupUpdateBody({ ...initial, unlimited: false, size: '2048', no_shrink: true, edit_attributes: true }, 3, 'cephfs', 'users'), {
+  cluster_id: 3, fs: 'cephfs', group: 'users', size: '2048', no_shrink: true, pool: 'cephfs.hot', uid: 1000, gid: 1001, mode: '0700'
 })
 console.log('CephFS subvolume group form checks passed')

@@ -30,7 +30,7 @@ func (e *cephFSCreationTimeExecutor) Run(ctx context.Context, access executor.Cl
 		"fs subvolume info enabled clone team --format json":                `{"state":"in-progress","type":"clone"}`,
 		"fs clone status enabled clone team --format json":                  `{"status":{"state":"in-progress","source":{"volume":"enabled","subvolume":"volume","snapshot":"snap"},"progress_report":{"percentage cloned":"42.5%","amount cloned":"4.2K/10.0K","files cloned":"21/50"}}}`,
 		"fs subvolume snapshot ls enabled clone team --format json":         `[]`,
-		"fs subvolume info enabled volume team --format json":               `{"state":"complete","type":"subvolume","pool_namespace":"isolated-volume","created_at":"2020-02-01 01:02:03","bytes_pcent":"50.00"}`,
+		"fs subvolume info enabled volume team --format json":               `{"state":"complete","type":"subvolume","pool_namespace":"isolated-volume","created_at":"2020-02-01 01:02:03","bytes_pcent":"50.00","bytes_quota":9007199254740993,"bytes_used":4503599627370497}`,
 		"fs subvolume info enabled retained team --format json":             `{"state":"snapshot-retained","type":"subvolume","features":["snapshot-retention","snapshot-clone"]}`,
 		"fs subvolume snapshot ls enabled retained team --format json":      `[]`,
 		"fs subvolume info enabled missing team --format json":              `{"bytes_pcent":"undefined"}`,
@@ -145,6 +145,9 @@ func TestCephFSCreationTimesFromNativeCollectionToAPI(t *testing.T) {
 				}
 				if tt.name == "volume" && row.Data["pool_namespace"] != "isolated-volume" {
 					t.Fatal("isolated namespace missing")
+				}
+				if tt.name == "volume" && (row.Data["bytes_quota"] != "9007199254740993" || row.Data["bytes_used"] != "4503599627370497") {
+					t.Fatalf("exact native bytes lost: %v", row.Data)
 				}
 				if tt.name == "retained" {
 					if _, exists := row.Data["path"]; exists {
