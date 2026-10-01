@@ -2,10 +2,49 @@ package mutation
 
 import (
 	"cephtower/backend/internal/integration/ceph/executor"
+	"encoding/json"
+	"io"
 	"regexp"
 	"strings"
 	"time"
 )
+
+func snapshotRetentionMatches(p map[string]any, output []byte) bool {
+	decoder := json.NewDecoder(strings.NewReader(string(output)))
+	decoder.UseNumber()
+	var rows []map[string]any
+	if decoder.Decode(&rows) != nil || len(rows) == 0 {
+		return false
+	}
+	var extra any
+	if decoder.Decode(&extra) != io.EOF {
+		return false
+	}
+	rules := regexp.MustCompile(`([1-9][0-9]*)([nmhdwMy])`).FindAllStringSubmatch(optional(p, "retention"), -1)
+	if len(rules) == 0 {
+		return false
+	}
+	for _, row := range rows {
+		retention, ok := row["retention"].(map[string]any)
+		if !ok {
+			return false
+		}
+		for _, rule := range rules {
+			value, exists := retention[rule[2]]
+			if optional(p, "action") == "remove" {
+				if exists {
+					return false
+				}
+			} else {
+				count, ok := value.(json.Number)
+				if !ok || count.String() != rule[1] {
+					return false
+				}
+			}
+		}
+	}
+	return true
+}
 
 func snapshotRetention(request Request, p map[string]any) (command, error) {
 	fs := pathValue(resourceTail(request.ResourceKey), "filesystem")
