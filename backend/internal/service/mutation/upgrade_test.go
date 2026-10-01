@@ -68,3 +68,32 @@ func TestUpgradeCheckReturnsReport(t *testing.T) {
 		}
 	}
 }
+
+func TestUpgradeStartChecksTarget(t *testing.T) {
+	s, _, id := newCephUserService(t)
+	r := Request{ClusterID: id, Action: "upgrade.action", ResourceKey: "upgrade/action", Parameters: map[string]any{"action": "start", "version": "20.2.2"}}
+	check := `{"target_name":"ceph:v20.2.2","target_id":"abc","target_version":"20.2.2","target_digest":"ceph@sha256:abc","needs_update":{},"up_to_date":[],"non_ceph_image_daemons":[]}`
+	e := &directoryRenameExecutor{outputs: map[string]string{r.Action + ".pre_check": check, r.Action: "Initiating upgrade"}}
+	s.executor = e
+	for _, image := range []string{"ceph:v20.2.2", "ceph@sha256:abc"} {
+		e.specs = nil
+		e.outputs[r.Action+".post_check"] = `{"in_progress":true,"is_paused":false,"target_image":"` + image + `"}`
+		if _, err := s.Execute(context.Background(), r); err != nil {
+			t.Fatal(err)
+		}
+		if len(e.specs) != 3 || !reflect.DeepEqual(e.specs[0].Args, []string{"orch", "upgrade", "check", "--ceph-version", "20.2.2", "--format", "json"}) {
+			t.Fatal(e.specs)
+		}
+	}
+	for _, raw := range []string{`{}`, `{"in_progress":true,"is_paused":false,"target_image":"other"}`, `{"in_progress":true,"is_paused":true,"target_image":"ceph:v20.2.2"}`} {
+		e.outputs[r.Action+".post_check"] = raw
+		if _, err := s.Execute(context.Background(), r); err == nil {
+			t.Fatal("unverified target accepted")
+		}
+	}
+	e.specs = nil
+	e.outputs[r.Action+".pre_check"] = "Incompatible upgrade"
+	if _, err := s.Execute(context.Background(), r); err == nil || len(e.specs) != 1 {
+		t.Fatal("started despite failed check", e.specs)
+	}
+}

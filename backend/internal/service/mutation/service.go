@@ -116,6 +116,18 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if err != nil {
 		return cephdomain.ActionResult{}, err
 	}
+	var upgradeTarget map[string]any
+	if request.Action == "upgrade.action" && optional(request.Parameters, "action") == "start" {
+		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: executor.BinaryCeph, Args: []string{"orch", "upgrade", "check", "--ceph-version", optional(request.Parameters, "version"), "--format", "json"}, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput})
+		if checkErr != nil {
+			return cephdomain.ActionResult{}, normalize(checkErr)
+		}
+		var valid bool
+		upgradeTarget, valid = upgradeCheckReport(checked.Stdout)
+		if !valid {
+			return cephdomain.ActionResult{}, invalid("upgrade target compatibility could not be verified; upgrade was not started")
+		}
+	}
 	if request.Action == "nfs_cluster.create" {
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: executor.BinaryCeph, Args: []string{"nfs", "cluster", "ls", "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 		if checkErr != nil {
@@ -274,6 +286,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		if request.Action == "upgrade.action" && optional(request.Parameters, "action") != "start" && !upgradeControlMatches(optional(request.Parameters, "action"), checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "upgrade control was accepted but the requested state could not be verified; the change may already have taken effect", Retryable: true}
+		}
+		if upgradeTarget != nil && !upgradeStartMatches(upgradeTarget, checked.Stdout) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "upgrade start was accepted but the checked target is not confirmed running; inspect upgrade status before retrying", Retryable: false}
 		}
 		if request.Action == "filesystem.rename" && !filesystemRenameMatches(last(resourceTail(request.ResourceKey)), rawText(request.Parameters, "new_name"), checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "volume rename was accepted but the new and old names could not be verified", Retryable: true}
