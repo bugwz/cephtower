@@ -1,6 +1,6 @@
 import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
-import { nfsExportEditReason, nfsExportInitialValues, nfsFSAL, nfsProtocolBody, nfsProtocolOptions, nfsSecurityLabelOptions, nfsSquashOptions } from './nfsExportFields'
+import { nfsExportEditReason, nfsExportInitialValues, nfsFSAL, nfsTransportBody, nfsTransportOptions, nfsProtocolBody, nfsProtocolOptions, nfsSecurityLabelOptions, nfsSquashOptions } from './nfsExportFields'
 import { CephFSDirectoryBrowser } from './CephFSDirectoryBrowser'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 import { listAllResources, listResource } from '../../api/resource'
@@ -615,6 +615,7 @@ const definitions: Record<
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'read_only', label: '只读', type: 'boolean' },
         { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '使用原生默认值' },
+        { name: 'transports', label: '传输协议', type: 'select', options: nfsTransportOptions },
         { name: 'protocols', label: 'NFS 协议版本', type: 'select', options: nfsProtocolOptions },
         { name: 'security_label', label: '安全标签', type: 'select', options: nfsSecurityLabelOptions, placeholder: '使用原生默认值' }
       ],
@@ -627,6 +628,7 @@ const definitions: Record<
         filesystem: String(values.filesystem ?? ''),
         read_only: Boolean(values.read_only),
         ...nfsProtocolBody(values.protocols),
+        ...nfsTransportBody(values.transports),
         ...(values.squash ? { squash: values.squash } : {}),
         ...(values.security_label ? { security_label: values.security_label === 'enabled' } : {})
       })
@@ -644,6 +646,7 @@ const definitions: Record<
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'read_only', label: '只读', type: 'boolean' },
         { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '保持当前设置' },
+        { name: 'transports', label: '传输协议', type: 'select', options: nfsTransportOptions },
         { name: 'protocols', label: 'NFS 协议版本', type: 'select', options: nfsProtocolOptions },
         { name: 'security_label', label: '安全标签', type: 'select', options: nfsSecurityLabelOptions, placeholder: '保持当前设置' }
       ],
@@ -652,6 +655,7 @@ const definitions: Record<
         cluster_id: clusterId,
         export_id: exportId(row),
         ...nfsProtocolBody(values.protocols),
+        ...nfsTransportBody(values.transports),
         cluster: String(values.cluster ?? ''),
         pseudo: String(values.pseudo ?? ''),
         path: String(values.path ?? ''),

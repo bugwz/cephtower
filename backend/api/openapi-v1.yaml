@@ -777,6 +777,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -1397,6 +1401,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -3312,6 +3320,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -3932,6 +3944,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -4770,6 +4786,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -5484,6 +5504,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -6104,6 +6128,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -6915,6 +6943,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -7631,6 +7663,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -8252,6 +8288,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -9116,6 +9156,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -9830,6 +9874,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -10546,6 +10594,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -11260,6 +11312,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -11880,6 +11936,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -12746,6 +12806,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -13862,6 +13926,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -14483,6 +14551,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -15104,6 +15176,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -16362,6 +16438,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -17128,6 +17208,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -17844,6 +17928,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -18464,6 +18552,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -19740,6 +19832,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -20360,6 +20456,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -20997,6 +21097,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -21711,6 +21815,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -22331,6 +22439,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -22952,6 +23064,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -23851,6 +23967,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -24662,6 +24782,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -25376,6 +25500,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -25996,6 +26124,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -26749,6 +26881,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -27370,6 +27506,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -28406,6 +28546,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -29312,6 +29456,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -30026,6 +30174,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -30742,6 +30894,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -31456,6 +31612,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -32076,6 +32236,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -32887,6 +33051,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -33601,6 +33769,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -34221,6 +34393,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -34937,6 +35113,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -35557,6 +35737,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -36273,6 +36457,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -36893,6 +37081,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -37609,6 +37801,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -38323,6 +38519,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -38943,6 +39143,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -39827,6 +40031,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -40542,6 +40750,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -41163,6 +41375,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -41784,6 +42000,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -42499,6 +42719,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -43154,6 +43378,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -44060,6 +44288,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -44774,6 +45006,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -45394,6 +45630,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -46110,6 +46350,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -46731,6 +46975,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -47352,6 +47600,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -47973,6 +48225,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -48689,6 +48945,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -49403,6 +49663,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -50023,6 +50287,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -50761,6 +51029,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -51381,6 +51653,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -52001,6 +52277,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -53008,6 +53288,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -53701,6 +53985,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -54322,6 +54610,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -54942,6 +55234,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -55658,6 +55954,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -56373,6 +56673,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -56994,6 +57298,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -57726,6 +58034,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -58346,6 +58658,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -58966,6 +59282,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -59587,6 +59907,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -60303,6 +60627,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -61017,6 +61345,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -61637,6 +61969,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -62359,6 +62695,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -62980,6 +63320,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -63601,6 +63945,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -64317,6 +64665,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -64938,6 +65290,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -65558,6 +65914,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -66274,6 +66634,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -66894,6 +67258,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -67514,6 +67882,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -68135,6 +68507,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -68946,6 +69322,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -69660,6 +70040,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -70280,6 +70664,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -70901,6 +71289,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -71522,6 +71914,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -72142,6 +72538,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -72763,6 +73163,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -73384,6 +73788,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -74100,6 +74508,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -74720,6 +75132,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -75341,6 +75757,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -75961,6 +76381,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -76912,6 +77336,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -77626,6 +78054,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -78246,6 +78678,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -78962,6 +79398,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -79676,6 +80116,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -80296,6 +80740,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -81012,6 +81460,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -81726,6 +82178,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -82346,6 +82802,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -83157,6 +83617,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:
@@ -83778,6 +84242,10 @@ paths:
                   enum: ["", "archive"]
                 traddr:
                   type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
                 trsvcid:
                   type: integer
                 ttl:

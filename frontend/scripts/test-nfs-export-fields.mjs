@@ -6,7 +6,7 @@ const source = readFileSync(new URL('../src/pages/file/nfsExportFields.ts', impo
 const exports = {}
 new Function('exports', ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
 const row = { cluster_id: 'nfs-a', pseudo: '/share', path: '/data', access_type: 'RO', fsal: { name: 'CEPH', fs_name: 'cephfs-a', user_id: 'nfs.user' } }
-assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', read_only: true, squash: undefined, security_label: undefined, protocols: undefined })
+assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', read_only: true, squash: undefined, security_label: undefined, transports: undefined, protocols: undefined })
 for (const protocols of [[3], [4], [4, 3]]) {
   const selection = exports.nfsExportInitialValues({ ...row, protocols }).protocols
   assert.deepEqual(exports.nfsProtocolBody(selection), { protocols: [...protocols].sort() })
@@ -14,6 +14,13 @@ for (const protocols of [[3], [4], [4, 3]]) {
 for (const protocols of [[], [3, 3], [5], ['4'], null]) assert.equal(exports.nfsExportInitialValues({ ...row, protocols }).protocols, undefined)
 assert.deepEqual(exports.nfsProtocolBody(undefined), {})
 assert.throws(() => exports.nfsProtocolBody('5'))
+for (const transports of [['TCP'], ['UDP'], ['UDP', 'TCP']]) {
+  const selection = exports.nfsExportInitialValues({ ...row, transports }).transports
+  assert.deepEqual(exports.nfsTransportBody(selection), { transports: [...transports].sort() })
+}
+for (const transports of [[], ['TCP', 'TCP'], ['SCTP'], null]) assert.equal(exports.nfsExportInitialValues({ ...row, transports }).transports, undefined)
+assert.deepEqual(exports.nfsTransportBody(undefined), {})
+assert.throws(() => exports.nfsTransportBody('SCTP'))
 assert.equal(exports.nfsExportInitialValues({ ...row, security_label: false }).security_label, 'disabled')
 assert.equal(exports.nfsExportInitialValues({ ...row, security_label: true }).security_label, 'enabled')
 assert.equal(exports.nfsExportInitialValues({ ...row, squash: 'all_squash' }).squash, 'all_squash')

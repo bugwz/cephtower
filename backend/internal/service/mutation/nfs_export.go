@@ -9,6 +9,23 @@ import (
 	"strings"
 )
 
+func nfsTransports(value any) (int, error) {
+	data, err := json.Marshal(value)
+	var transports []string
+	if err != nil || json.Unmarshal(data, &transports) != nil || len(transports) == 0 {
+		return 0, invalid("transports must contain unique TCP or UDP values")
+	}
+	mask := 0
+	for _, transport := range transports {
+		bit := map[string]int{"TCP": 1, "UDP": 2}[transport]
+		if bit == 0 || mask&bit != 0 {
+			return 0, invalid("transports must contain unique TCP or UDP values")
+		}
+		mask |= bit
+	}
+	return mask, nil
+}
+
 func nfsProtocols(value any) (int, error) {
 	data, err := json.Marshal(value)
 	if err != nil {
@@ -123,6 +140,9 @@ func nfsExportUpdateJSON(export, parameters map[string]any) ([]byte, error) {
 	export["pseudo"] = parameters["pseudo"]
 	export["path"] = parameters["path"]
 	fsal["fs_name"] = parameters["filesystem"]
+	if transports, exists := parameters["transports"]; exists {
+		export["transports"] = transports
+	}
 	if protocols, exists := parameters["protocols"]; exists {
 		export["protocols"] = protocols
 	}
@@ -183,6 +203,13 @@ func nfsExportCreateMatches(p map[string]any, data []byte) bool {
 }
 
 func nfsExportAttributesMatch(export, p map[string]any) bool {
+	if transports, exists := p["transports"]; exists {
+		wanted, err := nfsTransports(transports)
+		actual, actualErr := nfsTransports(export["transports"])
+		if err != nil || actualErr != nil || wanted != actual {
+			return false
+		}
+	}
 	if protocols, exists := p["protocols"]; exists {
 		wanted, err := nfsProtocols(protocols)
 		actual, actualErr := nfsProtocols(export["protocols"])

@@ -16,6 +16,14 @@ export function nfsProtocolBody(value: unknown) {
   return { protocols: String(value).split(',').map(Number) }
 }
 
+export const nfsTransportOptions = [{ label: 'TCP', value: 'TCP' }, { label: 'UDP', value: 'UDP' }, { label: 'TCP + UDP', value: 'TCP,UDP' }]
+
+export function nfsTransportBody(value: unknown) {
+  if (value === undefined || value === '') return {}
+  if (!nfsTransportOptions.some((option) => option.value === value)) throw new Error('请选择有效的传输协议')
+  return { transports: String(value).split(',') }
+}
+
 export function nfsFSAL(row?: ApiRecord): ApiRecord {
   const value = row?.fsal
   return value && typeof value === 'object' && !Array.isArray(value) ? value as ApiRecord : {}
@@ -34,6 +42,7 @@ export function nfsExportInitialValues(row?: ApiRecord) {
     path: typeof row?.path === 'string' ? row.path : '',
     filesystem: typeof nfsFSAL(row).fs_name === 'string' ? String(nfsFSAL(row).fs_name) : '',
     read_only: row?.access_type === 'RO',
+    transports: Array.isArray(row?.transports) && row.transports.length > 0 && new Set(row.transports).size === row.transports.length && row.transports.every((value) => value === 'TCP' || value === 'UDP') ? [...row.transports].sort().join(',') : undefined,
     protocols: Array.isArray(row?.protocols) && row.protocols.length > 0 && new Set(row.protocols).size === row.protocols.length && row.protocols.every((version) => version === 3 || version === 4) ? [...row.protocols].sort().join(',') : undefined,
     security_label: row?.security_label === true ? 'enabled' : row?.security_label === false ? 'disabled' : undefined,
     squash: nfsSquashOptions.some((option) => option.value === row?.squash) ? String(row?.squash) : undefined

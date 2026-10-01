@@ -2207,6 +2207,12 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, err
 		}
 		export := map[string]any{"cluster_id": cluster, "pseudo": pseudo, "path": path, "fsal": map[string]any{"name": "CEPH", "fs_name": filesystem}}
+		if transports, exists := p["transports"]; exists {
+			if _, err := nfsTransports(transports); err != nil {
+				return command{}, err
+			}
+			export["transports"] = transports
+		}
 		if protocols, exists := p["protocols"]; exists {
 			if _, err := nfsProtocols(protocols); err != nil {
 				return command{}, err
