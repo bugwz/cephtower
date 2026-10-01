@@ -56,6 +56,13 @@ assert.equal(profileExports.erasureProfileDeleteBlocked({ name: 'ec', stale: fal
 for (const row of [{ name: 'ec' }, { name: 'ec', stale: true }, { name: '', stale: false }, { name: null, stale: false }]) assert.ok(profileExports.erasureProfileDeleteBlocked(row))
 assert.ok(profileSource.includes("path: '/erasure/code/profile'"))
 assert.ok(profileSource.includes("action: 'erasure_code_profile.delete'"))
+const detailFunction = profileTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'erasureProfileDetails')
+new Function('exports', ts.transpileModule(detailFunction.getText(profileTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(profileExports)
+const profileDetails = profileExports.erasureProfileDetails({ k: '4', m: '2', 'crush-num-failure-domains': '0', l: 0 })
+for (const key of ['plugin', 'k', 'm', 'technique', 'l', 'c', 'd', 'scalar_mds', 'packetsize', 'crush-root', 'crush-failure-domain', 'crush-locality', 'crush-num-failure-domains', 'crush-osds-per-failure-domain', 'crush-device-class', 'directory']) assert.ok(profileDetails.some((item) => item.key === key))
+assert.equal(profileDetails.find((item) => item.key === 'l').children, '0')
+assert.equal(profileDetails.find((item) => item.key === 'crush-num-failure-domains').children, '0')
+assert.equal(profileDetails.find((item) => item.key === 'plugin').children, '未提供')
 
 const poolSource = readFileSync(new URL('../src/pages/cluster/PoolManagementPage.tsx', import.meta.url), 'utf8')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)

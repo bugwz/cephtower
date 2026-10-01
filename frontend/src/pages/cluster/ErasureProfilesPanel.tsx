@@ -1,4 +1,4 @@
-import { Card } from 'antd'
+import { Card, Descriptions } from 'antd'
 import type { ApiRecord } from '../../api/client'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 
@@ -19,11 +19,25 @@ export function erasureProfileDeleteBlocked(row: ApiRecord) {
   return undefined
 }
 
+export function erasureProfileDetails(row: ApiRecord) {
+  const fields = [
+    ['plugin', '插件'], ['k', '数据分片 k'], ['m', '编码分片 m'],
+    ['technique', '编码算法'], ['l', 'LRC 局部分组参数 l'], ['c', 'SHEC 参数 c'],
+    ['d', 'CLAY 辅助分片 d'], ['scalar_mds', 'CLAY 标量 MDS 插件'],
+    ['packetsize', 'Jerasure 包大小'], ['crush-root', 'CRUSH 根节点'],
+    ['crush-failure-domain', '故障域'], ['crush-locality', '局部性域'],
+    ['crush-num-failure-domains', '故障域数量'], ['crush-osds-per-failure-domain', '每故障域 OSD 数'],
+    ['crush-device-class', '设备类别'], ['directory', '配置中的目录参数']
+  ]
+  return fields.map(([key, label]) => ({ key, label: `${label} (${key})`, children: row[key] == null ? '未提供' : typeof row[key] === 'object' ? JSON.stringify(row[key]) : String(row[key]) }))
+}
+
 const definition: ResourceListPageDefinition = {
   title: '纠删码配置',
   path: '/erasure/code/profiles',
   rowKeyCandidates: ['natural_key', 'name'],
   columns: erasureProfileColumns,
+  detailContent: (row) => <Descriptions title="编码与放置参数" bordered column={1} items={erasureProfileDetails(row)} />,
   deleteAction: {
     title: '删除纠删码配置', path: '/erasure/code/profile', action: 'erasure_code_profile.delete', resourceKind: 'erasure_code_profile', risk: 'high',
     confirmation: (row) => `确认删除配置 ${row.name}？此操作不可撤销。Ceph 会拒绝删除仍被存储池使用的配置；本操作不会迁移存储池或删除数据。`,

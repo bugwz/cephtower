@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+纠删码配置详情新增中文参数说明，覆盖参考模型中的 LRC l、SHEC c、CLAY d/scalar_mds、
+Jerasure packetsize 及 CRUSH 局部性/故障域数量等全部已知字段。保留原生字符串和零值，
+缺失参数显示未提供而非套用插件默认值；通用详情仍保留其他原生字段。
+离线字段覆盖和零值测试通过，尚未做真实浏览器验证。
+
 纠删码创建不再预填固定 /usr/lib64 路径，也不复制其他配置的 directory。该字段
 保留为可选显式输入，留空不提交。参考 OSDMonitor::normalize_profile 使用集群
 erasure_code_dir 加载插件，界面不能将任意已有配置字段当作集群目录配置来源。
