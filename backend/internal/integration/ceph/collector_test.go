@@ -428,7 +428,7 @@ func TestCollectStorageAcceptsNumericPoolCrushRuleAndMapsOSDHost(t *testing.T) {
 			if !ok {
 				t.Fatalf("pool payload type = %T", row.Payload)
 			}
-			if payload.CrushRule == nil || *payload.CrushRule != "0" {
+			if payload.CrushRule == nil || *payload.CrushRule != 0 {
 				t.Fatalf("pool crush rule = %v, want 0", payload.CrushRule)
 			}
 			if payload.PGAutoscaleMode == nil || *payload.PGAutoscaleMode != "on" {

@@ -5,6 +5,10 @@
 
 ## 如何追踪调用链
 
+池的 crush_rule 从原生 pg_pool_t::dump 到库存 API 保持整数 ID，不再转成字符串。
+这使 CRUSH 规则引用视图能够按 rule_id 正确匹配，且避免数字规则名称与 ID 混淆。
+缺失 ID 保持 null，零值作为有效规则 ID；离线测试核对库存 JSON 的数值类型。
+
 池库存增加原生 erasure_code_profile 字段：从 osd pool ls detail 的 pg_pool_t::dump
 输出经采集模型、库存 JSON 和现有 API 到达前端，供配置详情和引用匹配使用。
 编辑表单不再将缺失名称补成 default；不可修改的名称缺失时显示未采集，创建时

@@ -735,24 +735,24 @@ type osdDumpWire struct {
 	} `json:"osds"`
 }
 type poolWire struct {
-	Raw                 map[string]any  `json:"-"`
-	Pool                int64           `json:"pool"`
-	PoolID              int64           `json:"pool_id"`
-	PoolName            string          `json:"pool_name"`
-	Type                int             `json:"type"`
-	Size                *int64          `json:"size"`
-	MinSize             *int64          `json:"min_size"`
-	PGNum               *int64          `json:"pg_num"`
-	PGPNum              *int64          `json:"pg_placement_num"`
-	PGAutoscaleMode     *string         `json:"pg_autoscale_mode"`
-	ErasureCodeProfile  *string         `json:"erasure_code_profile"`
-	ApplicationMetadata map[string]any  `json:"application_metadata"`
-	CrushRule           json.RawMessage `json:"crush_rule"`
-	FlagsNames          string          `json:"flags_names"`
-	Options             map[string]any  `json:"options"`
-	QuotaMaxBytes       *int64          `json:"quota_max_bytes"`
-	QuotaMaxObjects     *int64          `json:"quota_max_objects"`
-	Quotas              poolQuotaWire   `json:"quotas"`
+	Raw                 map[string]any `json:"-"`
+	Pool                int64          `json:"pool"`
+	PoolID              int64          `json:"pool_id"`
+	PoolName            string         `json:"pool_name"`
+	Type                int            `json:"type"`
+	Size                *int64         `json:"size"`
+	MinSize             *int64         `json:"min_size"`
+	PGNum               *int64         `json:"pg_num"`
+	PGPNum              *int64         `json:"pg_placement_num"`
+	PGAutoscaleMode     *string        `json:"pg_autoscale_mode"`
+	ErasureCodeProfile  *string        `json:"erasure_code_profile"`
+	ApplicationMetadata map[string]any `json:"application_metadata"`
+	CrushRule           *int64         `json:"crush_rule"`
+	FlagsNames          string         `json:"flags_names"`
+	Options             map[string]any `json:"options"`
+	QuotaMaxBytes       *int64         `json:"quota_max_bytes"`
+	QuotaMaxObjects     *int64         `json:"quota_max_objects"`
+	Quotas              poolQuotaWire  `json:"quotas"`
 }
 type poolQuotaWire struct {
 	MaxBytes   *int64 `json:"max_bytes"`
@@ -870,7 +870,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 			ErasureCodeProfile: wire.ErasureCodeProfile,
 			Name:               wire.PoolName, ID: wire.Pool, Type: kind, Size: wire.Size, MinSize: wire.MinSize, PGNum: wire.PGNum, PGPNum: wire.PGPNum,
 			PGAutoscaleMode: wire.PGAutoscaleMode, Applications: poolApplications(wire.ApplicationMetadata), ApplicationMetadata: wire.ApplicationMetadata,
-			CrushRule: rawTextPointer(wire.CrushRule), Flags: poolFlagNames(wire.FlagsNames), CompressionMode: poolCompressionMode(wire.Options), CompressionAlgorithm: poolOptionStringPointer(wire.Options, "compression_algorithm"),
+			CrushRule: wire.CrushRule, Flags: poolFlagNames(wire.FlagsNames), CompressionMode: poolCompressionMode(wire.Options), CompressionAlgorithm: poolOptionStringPointer(wire.Options, "compression_algorithm"),
 			CompressionMinBlobSize: poolOptionInt64Pointer(wire.Options, "compression_min_blob_size"), CompressionMaxBlobSize: poolOptionInt64Pointer(wire.Options, "compression_max_blob_size"), CompressionRequiredRatio: poolOptionFloat64Pointer(wire.Options, "compression_required_ratio"),
 			QuotaMaxBytes: firstInt64Pointer(quota.QuotaMaxBytes, wire.QuotaMaxBytes, wire.Quotas.MaxBytes), QuotaMaxObjects: firstInt64Pointer(quota.QuotaMaxObjects, wire.QuotaMaxObjects, wire.Quotas.MaxObjects),
 			RBDMirroring: p.collectPoolMirroringMode(ctx, access, wire.PoolName),

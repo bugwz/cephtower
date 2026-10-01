@@ -44,7 +44,7 @@ func TestCollectPoolPGStates(t *testing.T) {
 
 func TestPoolPGStatesReachInventoryPayload(t *testing.T) {
 	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
-		"collect.pool":           []byte(`[{"pool":7,"pool_name":"pg-pool","type":3,"erasure_code_profile":"archive-ec"}]`),
+		"collect.pool":           []byte(`[{"pool":7,"pool_name":"pg-pool","type":3,"erasure_code_profile":"archive-ec","crush_rule":8}]`),
 		"collect.pool_pg_states": []byte(`{"pg_stats":[{"pgid":"7.0","state":"active+degraded"},{"pgid":"8.0","state":"down"}]}`),
 	}}}
 	rows, err := p.Collect(context.Background(), ClusterAccess{}, "storage")
@@ -69,6 +69,9 @@ func TestPoolPGStatesReachInventoryPayload(t *testing.T) {
 		}
 		if decoded["erasure_code_profile"] != "archive-ec" {
 			t.Fatalf("native erasure profile missing from inventory: %s", data)
+		}
+		if decoded["crush_rule"] != float64(8) {
+			t.Fatalf("CRUSH rule must remain a numeric ID: %s", data)
 		}
 		return
 	}

@@ -24,7 +24,7 @@ type Pool struct {
 	PGAutoscaleMode          *string           `json:"pg_autoscale_mode"`
 	Applications             []string          `json:"applications,omitempty"`
 	ApplicationMetadata      map[string]any    `json:"application_metadata,omitempty"`
-	CrushRule                *string           `json:"crush_rule"`
+	CrushRule                *int64            `json:"crush_rule"`
 	Flags                    []string          `json:"flags,omitempty"`
 	CompressionMode          *string           `json:"compression_mode"`
 	CompressionAlgorithm     *string           `json:"compression_algorithm"`
