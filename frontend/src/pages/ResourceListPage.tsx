@@ -1,7 +1,7 @@
 import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Dropdown, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Typography } from 'antd'
 import type { ColumnsType, TableProps } from 'antd/es/table'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listResource, listResourceFilterOptions, mutateResource, refreshResource, type ResourceListResult } from '../api/resource'
 import { textValue, type ApiRecord } from '../api/client'
@@ -77,6 +77,7 @@ export interface ResourceListPageDefinition extends FeatureRequirements {
   extraActions?: ResourceFormAction[]
   deleteAction?: ResourceDeleteAction
   detailPath?: (row: ApiRecord) => string
+  detailContent?: (row: ApiRecord, clusterId?: number) => ReactNode
 }
 
 export function ResourceListPage({ definition, embedded = false }: { definition: ResourceListPageDefinition; embedded?: boolean }) {
@@ -389,6 +390,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
           destroyOnClose
         >
           <RecordDetail record={detailRow} />
+          {detailRow && definition.detailContent?.(detailRow, selectedClusterId)}
         </Drawer>
       ) : null}
     </Page>

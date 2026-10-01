@@ -97,7 +97,7 @@ func successResponseSchema(route router.Route) string {
 	switch key {
 	case "GET /logs":
 		return "CephLogsResponse"
-	case "GET /configuration/option", "GET /osd/inspection", "GET /filesystem/snapshot/schedule/status", "GET /filesystem/performance", "GET /filesystem/pools", "GET /filesystem/mds":
+	case "GET /configuration/option", "GET /osd/inspection", "GET /filesystem/snapshot/schedule/status", "GET /filesystem/performance", "GET /filesystem/pools", "GET /filesystem/mds", "GET /filesystem/subvolume/snapshot/visibility":
 		return "ConfigurationOptionResponse"
 
 	case "GET /ceph/users/export":
@@ -390,6 +390,10 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		return handler.MutationRequestContract("cephfs_snapshot.clone")
 	case "POST /filesystem/subvolume/clone/cancel":
 		return handler.MutationRequestContract("subvolume.clone_cancel")
+	case "PUT /filesystem/subvolume/snapshot/visibility":
+		return handler.MutationRequestContract("subvolume.snapshot_visibility")
+	case "GET /filesystem/subvolume/snapshot/visibility":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true), "subvolume": stringField(true), "group": stringField(false)}
 	case "DELETE /filesystem/subvolume":
 		return handler.MutationRequestContract("subvolume.delete")
 	case "POST /filesystem/subvolume":
@@ -472,7 +476,7 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 func mutationFieldUnion() map[string]handler.JSONField {
 	fields := map[string]handler.JSONField{}
 	for _, action := range handler.MutationContractActions() {
-		if action == "filesystem.rename" {
+		if action == "filesystem.rename" || action == "subvolume.snapshot_visibility" {
 			continue
 		}
 		if action == "cephfs_entry.quota" || action == "cephfs_entry.create" || action == "cephfs_entry.delete" || action == "cephfs_entry.rename" || action == "cephfs_entry_snapshot.create" || action == "cephfs_entry_snapshot.delete" {

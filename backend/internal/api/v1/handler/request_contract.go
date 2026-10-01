@@ -200,6 +200,9 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"subvolume.update"}, true, map[string]JSONField{"size": integerField(false), "unlimited": boolField(false), "no_shrink": boolField(false)})
 	add([]string{"cephfs_snapshot.clone"}, true, map[string]JSONField{"target": stringField(true), "group": stringField(false), "target_group": stringField(false), "pool_layout": stringField(false)})
 	add([]string{"subvolume.clone_cancel"}, true, map[string]JSONField{"group": stringField(false)})
+	contracts["subvolume.snapshot_visibility"] = RequestContract{Required: true, Fields: map[string]JSONField{
+		"cluster_id": integerField(true), "fs": stringField(true), "subvolume": stringField(true), "visible": boolField(true), "group": stringField(false),
+	}}
 	add([]string{"subvolume.delete"}, true, map[string]JSONField{"force": boolField(false), "retain_snapshots": boolField(false)})
 	add([]string{"snapshot_schedule.retention"}, true, map[string]JSONField{"path": stringField(true), "retention": stringField(true), "action": stringField(true, "add", "remove"), "subvol": stringField(false), "group": stringField(false)})
 	add([]string{"snapshot_schedule.action"}, true, map[string]JSONField{"path": stringField(true), "schedule": stringField(true), "action": stringField(true, "activate", "deactivate", "remove"), "start": stringField(true), "subvol": stringField(false), "group": stringField(false)})

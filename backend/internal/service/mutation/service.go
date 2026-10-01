@@ -80,7 +80,7 @@ func Supports(action string) bool {
 		"rbd_trash.purge", "rbd_group.create", "rbd_group.action", "rbd_group.member", "rbd_group.snapshot", "rbd_mirroring.update", "rbd_mirroring.peer",
 		"filesystem.create", "filesystem.update", "filesystem.delete", "filesystem.rename",
 		"subvolume_group.create", "subvolume_group.update", "subvolume_group.delete",
-		"subvolume.create", "subvolume.update", "subvolume.delete", "subvolume.clone_cancel",
+		"subvolume.create", "subvolume.update", "subvolume.delete", "subvolume.clone_cancel", "subvolume.snapshot_visibility",
 		"cephfs_snapshot.create", "cephfs_snapshot.delete", "cephfs_snapshot.clone", "snapshot_schedule.create", "snapshot_schedule.action", "snapshot_schedule.retention",
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota", "cephfs_entry_snapshot.create", "cephfs_entry_snapshot.delete",
 		"cephfs_entry.create", "cephfs_entry.delete", "cephfs_entry.rename",
@@ -152,6 +152,15 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		if request.Action == "filesystem.rename" && !filesystemRenameMatches(last(resourceTail(request.ResourceKey)), rawText(request.Parameters, "new_name"), checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "volume rename was accepted but the new and old names could not be verified", Retryable: true}
+		}
+		if request.Action == "subvolume.snapshot_visibility" {
+			want := "0"
+			if boolParameter(request.Parameters, "visible") {
+				want = "1"
+			}
+			if strings.TrimSpace(string(checked.Stdout)) != want {
+				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "snapshot visibility update could not be verified", Retryable: true}
+			}
 		}
 	}
 	if request.Action == "rgw_zone.update" && optional(request.Parameters, "zonegroup") != "" {
@@ -1176,6 +1185,26 @@ func build(request Request, p map[string]any) (command, error) {
 			args = append(args, "--no_shrink")
 		}
 		check = append(check, "--format", "json")
+		return ceph(args, check), nil
+	case "subvolume.snapshot_visibility":
+		parts := strings.Split(tail, "/")
+		if (len(parts) != 4 && len(parts) != 6) || parts[0] != "filesystem" || parts[2] != "subvolume" || (len(parts) == 6 && parts[4] != "group") {
+			return command{}, invalid("invalid subvolume resource key")
+		}
+		fs, name := parts[1], parts[3]
+		visible, ok := p["visible"].(bool)
+		if !ok || !regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_.-]{0,254}$`).MatchString(fs) || !regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_.-]{0,254}$`).MatchString(name) {
+			return command{}, invalid("valid filesystem, subvolume and boolean visible are required")
+		}
+		args := []string{"fs", "subvolume", "snapshot_visibility", "set", fs, name, strconv.FormatBool(visible)}
+		check := []string{"fs", "subvolume", "snapshot_visibility", "get", fs, name}
+		if group := optional(p, "group"); group != "" && group != "_nogroup" {
+			if !regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_.-]{0,254}$`).MatchString(group) {
+				return command{}, invalid("invalid subvolume group")
+			}
+			args = append(args, "--group_name", group)
+			check = append(check, "--group_name", group)
+		}
 		return ceph(args, check), nil
 	case "subvolume.clone_cancel":
 		fs := pathValue(tail, "filesystem")

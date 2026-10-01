@@ -2,6 +2,7 @@ import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { CephFSDirectoryBrowser } from './CephFSDirectoryBrowser'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 import { listResource } from '../../api/resource'
+import { SubvolumeSnapshotVisibility } from './SubvolumeSnapshotVisibility'
 
 export function FilePoolsPage() {
   return <ResourceListPage definition={definitions.filePools} />
@@ -285,6 +286,7 @@ const definitions: Record<
     path: '/filesystem/subvolumes',
     requiredCapabilities: ['cephfs_volume'],
     rowKeyCandidates: ['natural_key', 'name'],
+    detailContent: (row, clusterId) => <SubvolumeSnapshotVisibility key={`${clusterId}/${fsName(row)}/${groupName(row)}/${subvolumeName(row)}`} clusterId={clusterId} filesystem={fsName(row)} subvolume={subvolumeName(row)} group={groupName(row)} resourceVersion={row.resource_version == null ? undefined : String(row.resource_version)} />,
     createAction: {
       title: '新建子卷',
       buttonLabel: '新建子卷',

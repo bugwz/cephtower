@@ -18959,6 +18959,83 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /filesystem/subvolume/snapshot/visibility:
+    get:
+      operationId: get_filesystem_subvolume_snapshot_visibility
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, fs, subvolume]
+              properties:
+                cluster_id:
+                  type: integer
+                fs:
+                  type: string
+                group:
+                  type: string
+                subvolume:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationOptionResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      operationId: put_filesystem_subvolume_snapshot_visibility
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, fs, subvolume, visible]
+              properties:
+                cluster_id:
+                  type: integer
+                fs:
+                  type: string
+                group:
+                  type: string
+                subvolume:
+                  type: string
+                visible:
+                  type: boolean
+      responses:
+        '202':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /filesystem/subvolume/snapshots:
     get:
       operationId: get_filesystem_subvolume_snapshots

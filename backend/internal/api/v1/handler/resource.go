@@ -289,6 +289,9 @@ func resourceLookupKey(kind, resourceKey string) string {
 	case "subvolume_group":
 		return after("filesystem") + "/" + after("subvolume-group")
 	case "subvolume":
+		if len(path) == 6 && path[0] == "filesystem" && path[2] == "subvolume" && path[4] == "group" {
+			return path[1] + "/" + path[5] + "/" + path[3]
+		}
 		return after("filesystem") + "/" + after("subvolume")
 	case "cephfs_snapshot":
 		return after("filesystem") + "/" + after("subvolume") + "/" + after("snapshot")
@@ -647,6 +650,13 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 		return segments("filesystem", pathValue("fs"), "subvolume-group", pathValue("group", "name"))
 	case "subvolume":
 		key := segments("filesystem", pathValue("fs"), "subvolume", pathValue("subvolume", "name"))
+		if action == "subvolume.snapshot_visibility" {
+			group := pathValue("group")
+			if group == "" {
+				group = "_nogroup"
+			}
+			key = segments(key, "group", group)
+		}
 		if action == "subvolume.clone_cancel" {
 			key = segments(key, "clone", "cancel")
 		}

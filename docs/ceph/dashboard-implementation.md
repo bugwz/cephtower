@@ -37,7 +37,7 @@
 | block / iSCSI | ceph-iscsi REST API | 需要网关 endpoint，不能把所有操作替换成普通 `ceph` CLI；当前已有外部客户端 |
 | block / NVMe-oF | 网关 gRPC | 当前已有 gRPC 客户端；子系统、namespace、listener、host、连接与 QoS 待完整对照 |
 | cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict/perf dump` | 已有文件系统详情、客户端、授权、卷重命名、MDS 计数器会话趋势、Rank/备用 MDS 及池容量；其余完整字段待核对 |
-| cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot`、`fs clone` | 已有组范围采集、clone 状态/进度/失败展示、快照克隆和进行中任务取消；metadata 与其余完整参数需核对 |
+| cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot`、`fs clone` | 已有组范围采集、clone 状态/进度/失败展示、快照克隆、进行中任务取消和快照可见性；metadata 与其余完整参数需核对 |
 | cephfs / snapshot schedule | `fs snap-schedule` | 已有全路径发现、精确状态、创建、删除、激活/停用、retention 和模块启用 |
 | cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 已有实时目录浏览、目录元数据、双维度配额、目录增删/重命名/移动及目录快照列表/创建/删除 |
 | nfs | `nfs cluster`、`nfs export` | 已有基础管理；完整 export 属性、CephFS/RGW FSAL 与 ingress 待核对 |
@@ -1260,3 +1260,21 @@ in-progress 状态开放取消操作，调用 `fs clone cancel` 后以 `fs clone
 对照参考授权弹窗，`fs authorize` 表单新增 quota、snapshot 和 root squash。
 读写权限可组合为 `rwp`、`rws` 或 `rwps`，root squash 作为独立 capability 参数；
 只读模式忽略仅适用于写权限的 p/s 选择。离线测试覆盖完整组合和只读约束。
+
+### CephFS 子卷快照可见性
+
+对照参考 `cephfs-subvolume-form`、`cephfs-subvolume.service.ts` 和 controller 的
+snapshot-visibility GET/PUT，子卷详情新增实时读取与允许快照浏览开关。
+本项目接口为 `GET/PUT /filesystem/subvolume/snapshot/visibility`，请求明确携带
+cluster_id、fs、subvolume、group；PUT 的 visible 必须为 JSON boolean。
+调用 `ceph fs subvolume snapshot_visibility get/set`，默认组省略 --group_name，
+命名组始终保留；设置后读回 0/1 并核对目标值，失败不报告成功。
+
+本地参考 Dashboard 有此功能，但本地 volumes 模块未包含该 CLI 定义，因此另外
+核对了[上游模块源码](https://github.com/ceph/ceph/blob/main/src/pybind/mgr/volumes/module.py)
+及[原生命令文档](https://docs.ceph.com/en/latest/cephfs/fs-volumes/#controlling-subvolume-snapshot-visibility)。
+开关只在客户端启用 client_respect_subvolume_snapshot_visibility 后生效，目前仅支持
+FUSE/libcephfs；不会自动修改客户端配置，也不代表删除快照。页面明确说明限制，旧集群
+命令不支持、输出异常或命令失败时展示未知及错误，不默认当作开启。
+离线测试覆盖默认/命名组、布尔契约、非法作用域、失败读回和异步 API 全链路；
+未在真实 Ceph 集群验证。
