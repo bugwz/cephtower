@@ -8,6 +8,13 @@ export const nfsSquashOptions = [
 ]
 
 export const nfsSecurityLabelOptions = [{ label: '启用', value: 'enabled' }, { label: '禁用', value: 'disabled' }]
+export const nfsProtocolOptions = [{ label: 'NFSv3', value: '3' }, { label: 'NFSv4', value: '4' }, { label: 'NFSv3 + NFSv4', value: '3,4' }]
+
+export function nfsProtocolBody(value: unknown) {
+  if (value === undefined || value === '') return {}
+  if (!nfsProtocolOptions.some((option) => option.value === value)) throw new Error('请选择有效的 NFS 协议版本')
+  return { protocols: String(value).split(',').map(Number) }
+}
 
 export function nfsFSAL(row?: ApiRecord): ApiRecord {
   const value = row?.fsal
@@ -27,6 +34,7 @@ export function nfsExportInitialValues(row?: ApiRecord) {
     path: typeof row?.path === 'string' ? row.path : '',
     filesystem: typeof nfsFSAL(row).fs_name === 'string' ? String(nfsFSAL(row).fs_name) : '',
     read_only: row?.access_type === 'RO',
+    protocols: Array.isArray(row?.protocols) && row.protocols.length > 0 && new Set(row.protocols).size === row.protocols.length && row.protocols.every((version) => version === 3 || version === 4) ? [...row.protocols].sort().join(',') : undefined,
     security_label: row?.security_label === true ? 'enabled' : row?.security_label === false ? 'disabled' : undefined,
     squash: nfsSquashOptions.some((option) => option.value === row?.squash) ? String(row?.squash) : undefined
   }

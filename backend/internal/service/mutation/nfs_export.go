@@ -9,6 +9,25 @@ import (
 	"strings"
 )
 
+func nfsProtocols(value any) (int, error) {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return 0, invalid("protocols must contain unique NFS versions 3 or 4")
+	}
+	var versions []int
+	if json.Unmarshal(data, &versions) != nil || len(versions) == 0 {
+		return 0, invalid("protocols must contain unique NFS versions 3 or 4")
+	}
+	mask := 0
+	for _, version := range versions {
+		if (version != 3 && version != 4) || mask&(1<<version) != 0 {
+			return 0, invalid("protocols must contain unique NFS versions 3 or 4")
+		}
+		mask |= 1 << version
+	}
+	return mask, nil
+}
+
 func nfsExportCreateAvailable(data []byte, cluster, pseudo string) bool {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	var exports []map[string]any
@@ -104,6 +123,9 @@ func nfsExportUpdateJSON(export, parameters map[string]any) ([]byte, error) {
 	export["pseudo"] = parameters["pseudo"]
 	export["path"] = parameters["path"]
 	fsal["fs_name"] = parameters["filesystem"]
+	if protocols, exists := parameters["protocols"]; exists {
+		export["protocols"] = protocols
+	}
 	if label, exists := parameters["security_label"]; exists {
 		export["security_label"] = label
 	}
@@ -161,6 +183,13 @@ func nfsExportCreateMatches(p map[string]any, data []byte) bool {
 }
 
 func nfsExportAttributesMatch(export, p map[string]any) bool {
+	if protocols, exists := p["protocols"]; exists {
+		wanted, err := nfsProtocols(protocols)
+		actual, actualErr := nfsProtocols(export["protocols"])
+		if err != nil || actualErr != nil || wanted != actual {
+			return false
+		}
+	}
 	if label, exists := p["security_label"]; exists && export["security_label"] != label {
 		return false
 	}

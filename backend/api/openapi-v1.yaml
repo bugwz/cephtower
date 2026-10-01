@@ -669,6 +669,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -1285,6 +1289,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -3196,6 +3204,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -3812,6 +3824,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -4646,6 +4662,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -5356,6 +5376,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -5972,6 +5996,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -6779,6 +6807,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -7491,6 +7523,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -8108,6 +8144,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -8968,6 +9008,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -9678,6 +9722,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -10390,6 +10438,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -11100,6 +11152,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -11716,6 +11772,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -12578,6 +12638,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -13690,6 +13754,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -14307,6 +14375,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -14924,6 +14996,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -16178,6 +16254,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -16940,6 +17020,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -17652,6 +17736,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -18268,6 +18356,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -19540,6 +19632,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -20156,6 +20252,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -20789,6 +20889,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -21499,6 +21603,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -22115,6 +22223,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -22732,6 +22844,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -23627,6 +23743,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -24434,6 +24554,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -25144,6 +25268,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -25760,6 +25888,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -26509,6 +26641,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -27126,6 +27262,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -28158,6 +28298,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -29060,6 +29204,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -29770,6 +29918,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -30482,6 +30634,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -31192,6 +31348,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -31808,6 +31968,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -32615,6 +32779,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -33325,6 +33493,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -33941,6 +34113,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -34653,6 +34829,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -35269,6 +35449,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -35981,6 +36165,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -36597,6 +36785,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -37309,6 +37501,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -38019,6 +38215,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -38635,6 +38835,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -39515,6 +39719,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -40226,6 +40434,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -40843,6 +41055,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -41460,6 +41676,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -42171,6 +42391,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -42822,6 +43046,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -43724,6 +43952,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -44434,6 +44666,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -45050,6 +45286,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -45762,6 +46002,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -46379,6 +46623,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -46996,6 +47244,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -47613,6 +47865,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -48325,6 +48581,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -49035,6 +49295,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -49651,6 +49915,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -50385,6 +50653,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -51001,6 +51273,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -51617,6 +51893,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -52620,6 +52900,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -53309,6 +53593,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -53926,6 +54214,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -54542,6 +54834,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -55254,6 +55550,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -55965,6 +56265,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -56582,6 +56886,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -57310,6 +57618,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -57926,6 +58238,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -58542,6 +58858,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -59159,6 +59479,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -59871,6 +60195,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -60581,6 +60909,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -61197,6 +61529,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -61915,6 +62251,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -62532,6 +62872,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -63149,6 +63493,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -63861,6 +64209,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -64478,6 +64830,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -65094,6 +65450,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -65806,6 +66166,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -66422,6 +66786,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -67038,6 +67406,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -67655,6 +68027,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -68462,6 +68838,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -69172,6 +69552,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -69788,6 +70172,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -70405,6 +70793,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -71022,6 +71414,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -71638,6 +72034,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -72255,6 +72655,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -72872,6 +73276,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -73584,6 +73992,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -74200,6 +74612,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -74817,6 +75233,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -75433,6 +75853,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -76380,6 +76804,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -77090,6 +77518,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -77706,6 +78138,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -78418,6 +78854,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -79128,6 +79568,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -79744,6 +80188,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -80456,6 +80904,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -81166,6 +81618,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -81782,6 +82238,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -82589,6 +83049,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:
@@ -83206,6 +83670,10 @@ paths:
                         type: string
                       ip:
                         type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
                 pseudo:
                   type: string
                 psk:

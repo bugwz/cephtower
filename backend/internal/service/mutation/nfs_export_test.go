@@ -115,6 +115,52 @@ func TestNFSExportSecurityLabel(t *testing.T) {
 	}
 }
 
+func TestNFSExportProtocols(t *testing.T) {
+	for _, value := range []any{[]int{3}, []int{4}, []int{4, 3}, []any{float64(3), float64(4)}, []any{json.Number("4")}} {
+		p := map[string]any{"cluster": "nfs-a", "pseudo": "/share", "path": "/", "filesystem": "cephfs", "protocols": value}
+		for _, action := range []string{"nfs_export.create", "nfs_export.update"} {
+			cmd, err := build(Request{Action: action, ResourceKey: "nfs/export"}, p)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var record map[string]any
+			if err := json.Unmarshal(cmd.stdin, &record); err != nil {
+				t.Fatal(err)
+			}
+			if !nfsExportAttributesMatch(record, p) {
+				t.Fatal("protocol payload mismatch")
+			}
+			record["access_type"] = "RW"
+			record["protocols"] = []int{3, 4}
+			data, err := nfsExportUpdateJSON(record, p)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := json.Unmarshal(data, &record); err != nil {
+				t.Fatal(err)
+			}
+			if !nfsExportAttributesMatch(record, p) {
+				t.Fatal("update protocols lost")
+			}
+			record["protocols"] = nil
+			if nfsExportAttributesMatch(record, p) {
+				t.Fatal("missing readback accepted")
+			}
+		}
+	}
+	for _, value := range []any{nil, []int{}, []int{3, 3}, []int{2}, []int{5}, "4", []string{"4"}, []float64{3.5}, []any{true}} {
+		p := map[string]any{"cluster": "nfs-a", "pseudo": "/share", "path": "/", "filesystem": "cephfs", "protocols": value}
+		if _, err := build(Request{Action: "nfs_export.create"}, p); err == nil {
+			t.Fatalf("invalid protocols accepted: %v", value)
+		}
+	}
+	left, err := nfsProtocols([]int{4, 3})
+	right, otherErr := nfsProtocols([]int{3, 4})
+	if err != nil || otherErr != nil || left != right {
+		t.Fatal("protocol order must not matter")
+	}
+}
+
 func TestNFSExportCreateDoesNotOverwriteExistingPseudo(t *testing.T) {
 	for _, output := range []string{`[{"pseudo":"/share"}]`, `[{"pseudo":"/share/"}]`, `[{}]`, `null`, `[{"pseudo":"/other","cluster_id":"nfs-b"}]`} {
 		service, _, id := newCephUserService(t)
