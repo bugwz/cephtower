@@ -1,4 +1,4 @@
-import { Alert, AutoComplete, Button, Card, Descriptions, Space } from 'antd'
+import { Alert, AutoComplete, Button, Card, Descriptions, Select, Space } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { mutateResource, refreshResource } from '../../api/resource'
 import type { ResourceDTO } from '../../api/types'
@@ -10,6 +10,13 @@ export function upgradeCheckVersion(value: string) {
   const version = value.trim()
   if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('请输入目标版本号，例如 20.2.2（不带 v 前缀）')
   return version
+}
+
+export function upgradeTargetBody(mode: 'version' | 'image', value: string) {
+  if (mode === 'version') return { version: upgradeCheckVersion(value) }
+  const image = value.trim()
+  if (!/^[A-Za-z0-9][A-Za-z0-9_.:@/+\-=]{0,511}$/.test(image)) throw new Error('请输入有效的容器镜像名称、标签或摘要')
+  return { image }
 }
 
 export function upgradeCheckData(details: unknown) {
@@ -34,6 +41,7 @@ export function upgradeStartAllowed(record: ResourceDTO | null, version: string,
 
 export function UpgradeCheck({ clusterId, record, disabled, onStarted }: { clusterId: number; record: ResourceDTO | null; disabled: boolean; onStarted: () => void }) {
   const [version, setVersion] = useState('')
+  const [targetMode, setTargetMode] = useState<'version' | 'image'>('version')
   const [versions, setVersions] = useState<{ image: string; registry: string; versions: string[] } | null>(null)
   const [versionsLoading, setVersionsLoading] = useState(false)
   const [versionsError, setVersionsError] = useState('')
@@ -60,8 +68,8 @@ export function UpgradeCheck({ clusterId, record, disabled, onStarted }: { clust
     if (running.current) return
     running.current = true; setBusy(true); setError(''); setResult(null); setCheckedVersion(''); setStarted(false)
     try {
-      const target = upgradeCheckVersion(version)
-      const response = await mutateResource('/upgrade/check', 'POST', { cluster_id: clusterId, version: target })
+      const target = version.trim()
+      const response = await mutateResource('/upgrade/check', 'POST', { cluster_id: clusterId, ...upgradeTargetBody(targetMode, target) })
       if (active.current) { setResult(upgradeCheckData(response.details)); setCheckedVersion(target) }
     } catch (err) { if (active.current) setError(err instanceof Error ? err.message : '检查失败') }
     finally { running.current = false; if (active.current) setBusy(false) }
@@ -71,7 +79,7 @@ export function UpgradeCheck({ clusterId, record, disabled, onStarted }: { clust
     if (!canStart || !record || running.current) return
     running.current = true; setBusy(true); setError('')
     try {
-      await mutateResource('/upgrade/action', 'POST', { cluster_id: clusterId, action: 'start', version: checkedVersion }, { ifMatch: record.resource_version })
+      await mutateResource('/upgrade/action', 'POST', { cluster_id: clusterId, action: 'start', ...upgradeTargetBody(targetMode, checkedVersion) }, { ifMatch: record.resource_version })
       if (active.current) { setStarted(true); setConfirm(false); setCheckedVersion('') }
       await refreshResource({ clusterId, kinds: ['upgrade'] })
     } catch (err) { if (active.current) { setError(err instanceof Error ? err.message : '启动失败，请检查集群状态'); setCheckedVersion(''); setConfirm(false) } }
@@ -80,10 +88,11 @@ export function UpgradeCheck({ clusterId, record, disabled, onStarted }: { clust
   return <Card title="升级前检查" style={{ marginTop: 16 }}>
     <Space direction="vertical" style={{ width: '100%' }}>
       <Alert type="info" message="检查会查询目标容器镜像，可能需要较长时间；不会启动升级。结果仅代表检查时刻的镜像兼容性，不保证升级一定成功。" />
+      <Select aria-label="升级目标类型" value={targetMode} disabled={busy || confirm} style={{ width: 240 }} options={[{ value: 'version', label: 'Ceph 版本' }, { value: 'image', label: '自定义容器镜像' }]} onChange={(value) => { setTargetMode(value); setVersion(''); setResult(null); setCheckedVersion(''); setStarted(false); setError('') }} />
       <Button loading={versionsLoading} disabled={disabled || busy || confirm} onClick={() => void loadVersions()}>加载候选版本</Button>
       {versionsError && <Alert type="error" message={versionsError} />}
       {versions && <Alert type="info" message={`镜像 ${versions.image}（仓库 ${versions.registry}）：${versions.versions.length ? `${versions.versions.length} 个候选版本，可选择或手动输入` : '未返回候选版本，可手动输入'}。候选列表不代表兼容性，启动前仍需检查。`} />}
-      <Space><AutoComplete aria-label="升级检查目标版本" style={{ width: 240 }} placeholder="选择或输入，例如 20.2.2" options={(versions?.versions ?? []).map((value) => ({ value }))} filterOption={(input, option) => !!option?.value.includes(input)} value={version} disabled={busy || confirm} onChange={(value) => { setVersion(value); setResult(null); setCheckedVersion(''); setStarted(false); setError('') }} /><Button loading={busy} disabled={!version.trim() || confirm || disabled} onClick={() => void check()}>检查目标版本</Button><Button danger disabled={!canStart} onClick={() => setConfirm(true)}>启动升级</Button></Space>
+      <Space><AutoComplete aria-label="升级检查目标" style={{ width: 360 }} placeholder={targetMode === 'version' ? '选择或输入，例如 20.2.2' : '例如 quay.io/ceph/ceph:v20.2.2'} options={(targetMode === 'version' ? versions?.versions ?? [] : []).map((value) => ({ value }))} filterOption={(input, option) => !!option?.value.includes(input)} value={version} disabled={busy || confirm} onChange={(value) => { setVersion(value); setResult(null); setCheckedVersion(''); setStarted(false); setError('') }} /><Button loading={busy} disabled={!version.trim() || confirm || disabled} onClick={() => void check()}>检查升级目标</Button><Button danger disabled={!canStart} onClick={() => setConfirm(true)}>启动升级</Button></Space>
       {started && <Alert type="success" message="升级已启动并核验目标，尚未完成升级；请持续检查集群状态。" />}
       {error && <Alert type="error" message={error} />}
       {result && <>

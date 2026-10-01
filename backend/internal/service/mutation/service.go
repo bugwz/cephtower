@@ -118,7 +118,10 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	var upgradeTarget map[string]any
 	if request.Action == "upgrade.action" && optional(request.Parameters, "action") == "start" {
-		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: executor.BinaryCeph, Args: []string{"orch", "upgrade", "check", "--ceph-version", optional(request.Parameters, "version"), "--format", "json"}, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput})
+		targetArgs, _ := upgradeTargetArgs(request.Parameters) // build already validated the target.
+		checkArgs := append([]string{"orch", "upgrade", "check"}, targetArgs...)
+		checkArgs = append(checkArgs, "--format", "json")
+		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: executor.BinaryCeph, Args: checkArgs, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput})
 		if checkErr != nil {
 			return cephdomain.ActionResult{}, normalize(checkErr)
 		}
@@ -525,11 +528,12 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		return ceph([]string{"orch", "daemon", verb, name}, []string{"orch", "ps", "--daemon_name", name, "--refresh", "--format", "json"}), nil
 	case "upgrade.check":
-		version, err := required(p, "version")
+		target, err := upgradeTargetArgs(p)
 		if err != nil {
 			return command{}, err
 		}
-		return ceph([]string{"orch", "upgrade", "check", "--ceph-version", version, "--format", "json"}, nil), nil
+		args := append([]string{"orch", "upgrade", "check"}, target...)
+		return ceph(append(args, "--format", "json"), nil), nil
 	case "upgrade.action":
 		verb, err := enum(p, "action", "start", "pause", "resume", "stop")
 		if err != nil {
@@ -537,11 +541,11 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		args := []string{"orch", "upgrade", verb}
 		if verb == "start" {
-			version, err := required(p, "version")
+			target, err := upgradeTargetArgs(p)
 			if err != nil {
 				return command{}, err
 			}
-			args = append(args, "--ceph-version", version)
+			args = append(args, target...)
 		}
 		return ceph(args, []string{"orch", "upgrade", "status", "--format", "json"}), nil
 	case "manager.fail":

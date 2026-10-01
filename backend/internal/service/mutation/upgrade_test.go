@@ -50,6 +50,45 @@ func TestUpgradeCheckUsesVersionOption(t *testing.T) {
 	}
 }
 
+func TestUpgradeImageTarget(t *testing.T) {
+	for _, action := range []string{"upgrade.check", "upgrade.action"} {
+		p := map[string]any{"image": "registry.example:5000/ceph/custom@sha256:abc", "action": "start"}
+		built, err := build(Request{Action: action, Parameters: p}, p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		verb := "check"
+		if action == "upgrade.action" {
+			verb = "start"
+		}
+		want := []string{"orch", "upgrade", verb, "--image", p["image"].(string)}
+		if verb == "check" {
+			want = append(want, "--format", "json")
+		}
+		if !reflect.DeepEqual(built.args, want) {
+			t.Fatal(built.args)
+		}
+		p["version"] = "20.2.2"
+		if _, err := build(Request{Action: action, Parameters: p}, p); err == nil {
+			t.Fatal("ambiguous target accepted")
+		}
+	}
+	s, _, id := newCephUserService(t)
+	r := Request{ClusterID: id, Action: "upgrade.action", ResourceKey: "upgrade/action", Parameters: map[string]any{"action": "start", "image": "registry.example/ceph:custom"}}
+	e := &directoryRenameExecutor{outputs: map[string]string{
+		r.Action + ".pre_check":  `{"target_name":"registry.example/ceph:custom","target_id":"sha256:abc","target_version":"20.2.2","needs_update":{},"up_to_date":[],"non_ceph_image_daemons":[]}`,
+		r.Action:                 "accepted",
+		r.Action + ".post_check": `{"in_progress":true,"is_paused":false,"target_image":"registry.example/ceph:custom"}`,
+	}}
+	s.executor = e
+	if _, err := s.Execute(context.Background(), r); err != nil {
+		t.Fatal(err)
+	}
+	if len(e.specs) != 3 || !reflect.DeepEqual(e.specs[0].Args, []string{"orch", "upgrade", "check", "--image", "registry.example/ceph:custom", "--format", "json"}) {
+		t.Fatal(e.specs)
+	}
+}
+
 func TestUpgradeCheckReturnsReport(t *testing.T) {
 	s, _, id := newCephUserService(t)
 	r := Request{ClusterID: id, Action: "upgrade.check", ResourceKey: "upgrade/check", Parameters: map[string]any{"version": "20.2.2"}}

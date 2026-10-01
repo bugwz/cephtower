@@ -37,10 +37,13 @@ console.log('Native upgrade status display checks passed')
 
 const checkSource = readFileSync(new URL('../src/pages/cluster/UpgradeCheck.tsx', import.meta.url), 'utf8')
 const checkTree = ts.createSourceFile('UpgradeCheck.tsx', checkSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-const checkFunctions = checkTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['upgradeCheckVersion', 'upgradeCheckData', 'upgradeStartAllowed'].includes(node.name.text))
+const checkFunctions = checkTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['upgradeCheckVersion', 'upgradeTargetBody', 'upgradeCheckData', 'upgradeStartAllowed'].includes(node.name.text))
 const checkExports = {}
 new Function('exports', ts.transpileModule(checkFunctions.map((fn) => fn.getText(checkTree)).join('\n'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(checkExports)
 assert.equal(checkExports.upgradeCheckVersion(' 20.2.2 '), '20.2.2')
+assert.deepEqual(checkExports.upgradeTargetBody('version', '20.2.2'), { version: '20.2.2' })
+assert.deepEqual(checkExports.upgradeTargetBody('image', ' registry:5000/ceph@sha256:abc '), { image: 'registry:5000/ceph@sha256:abc' })
+for (const image of ['', '--image', 'image name', 'image;cmd']) assert.throws(() => checkExports.upgradeTargetBody('image', image))
 const idle = { stale: false, data: { in_progress: false } }
 assert.equal(checkExports.upgradeStartAllowed(idle, '20.2.2', '20.2.2'), true)
 for (const record of [null, { ...idle, stale: true }, { data: {} }, { ...idle, data: { in_progress: true } }]) assert.equal(checkExports.upgradeStartAllowed(record, '20.2.2', '20.2.2'), false)
