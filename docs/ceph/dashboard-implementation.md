@@ -36,7 +36,7 @@
 | block / mirroring | `rbd mirror pool/image`、`rbd mirror snapshot schedule` | 已有池状态、模式、peer、bootstrap token、镜像操作与镜像级调度；池/集群级调度管理待补齐 |
 | block / iSCSI | ceph-iscsi REST API | 需要网关 endpoint，不能把所有操作替换成普通 `ceph` CLI；当前已有外部客户端 |
 | block / NVMe-oF | 网关 gRPC | 当前已有 gRPC 客户端；子系统、namespace、listener、host、连接与 QoS 待完整对照 |
-| cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict/perf dump` | 已有文件系统详情、客户端、授权、卷重命名和 11 项 MDS 计数器会话趋势；其余完整字段待核对 |
+| cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict/perf dump` | 已有文件系统详情、客户端、授权、卷重命名、MDS 计数器会话趋势、Rank/备用 MDS 及池容量；其余完整字段待核对 |
 | cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot`、`fs clone` | 已有组范围采集、clone 状态/进度/失败展示、快照克隆和进行中任务取消；metadata 与其余完整参数需核对 |
 | cephfs / snapshot schedule | `fs snap-schedule` | 已有全路径发现、精确状态、创建、删除、激活/停用、retention 和模块启用 |
 | cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 已有实时目录浏览、目录元数据、双维度配额、目录增删/重命名/移动及目录快照列表/创建/删除 |
@@ -189,6 +189,24 @@ ANSI 转义。配额读取最多 8 路并发，且单层目录最多接受 500 �
 支持同时或分别设置 `max_bytes`、`max_files`，0 表示不限制；双字段写入分成两个明确的
 `setxattr` 步骤，最后在同一个指定文件系统回读两个属性并逐值核对。能力探测改用
 cephfs-shell 实际支持的 `--help`，不再调用不存在的 `--version`。
+
+## 已实现：CephFS Rank 与备用 MDS
+
+对照 Dashboard `fs_status()`、`_find_standby_replays()` 与 Rank 表，新增实时
+`GET /api/v1/filesystem/mds`：`ceph fs dump --format json` 按 `mdsmap.fs_name` 选择 FS，
+从 `in`、`up`、`info` 关联活跃 Rank，未分配的 in Rank 标为 failed，standby-replay
+独立标为 `<rank>-s`；保留 laggy 标记和字符串 GID。全局 standbys 单独展示，明确不是
+该文件系统独占资源。核验重复 Rank、GID/名称、info 键与 GID 一致性及 up→info 关联，
+不把畸形 FS Map 当作空结果。FS 不存在返回 404。
+
+随后 `ceph mds metadata --format json` 读取实例 Ceph 版本；元数据失败不隐藏有效拓扑，
+单独提示，缺失版本显示 —。性能采样新增 `mds_mem.dn/dir/cap`、
+`mds_sessions.session_count` 和 `mds_log.replay`，Rank 表按名称及 GID 匹配已有样本，
+展示 Dentries/Inodes/Dirs/Caps、采样时间及活动速率。active 使用客户端请求速率，
+standby-replay 使用日志回放速率，其他状态与缺失样本不伪造活动。客户端数优先 Rank 0，
+缺失或为零时参考其他 Rank，但不求和；保持字符串精度。拓扑和性能分别采样、展示时间，
+不宣称为跨命令原子快照。离线测试覆盖 failed/replay/laggy、备用实例、版本局部失败、
+拓扑身份异常、路由及前端 GID/速率/客户端计数逻辑；尚未实机验证。
 
 ## 已实现：CephFS 存储池容量
 

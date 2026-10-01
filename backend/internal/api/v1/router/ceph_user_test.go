@@ -45,6 +45,10 @@ func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spe
 		return executor.CommandResult{Stdout: []byte(`{"mdsmap":{"fs_name":"cephfs","metadata_pool":1,"data_pools":[2]}}`)}, nil
 	case "cephfs.pools.df":
 		return executor.CommandResult{Stdout: []byte(`{"pools":[{"id":1,"name":"cephfs.meta","stats":{"stored":50,"max_avail":100,"bytes_used":150}},{"id":2,"name":"cephfs.data","stats":{"stored":9007199254740993,"max_avail":100,"bytes_used":18014398509481986}}]}`)}, nil
+	case "cephfs.mds.map":
+		return executor.CommandResult{Stdout: []byte(`{"filesystems":[{"mdsmap":{"fs_name":"cephfs","in":[0,1],"up":{"mds_0":1},"info":{"gid_1":{"name":"a","gid":1,"rank":0,"state":"up:active"}}}}],"standbys":[]}`)}, nil
+	case "cephfs.mds.metadata":
+		return executor.CommandResult{Stdout: []byte(`[{"name":"a","ceph_version":"ceph fixture"}]`)}, nil
 	case "cephfs.directory.quota":
 		return executor.CommandResult{Stdout: []byte("max_bytes: 1048576\nmax_files: 100\n")}, nil
 	case "cephfs.snapshot.list":
@@ -153,6 +157,18 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 	directoryResult := send("GET", "/filesystem/entries", map[string]any{"fs": "cephfs", "path": "/"})
 	performanceResult := send("GET", "/filesystem/performance", map[string]any{"fs": "cephfs"})
 	poolResult := send("GET", "/filesystem/pools", map[string]any{"fs": "cephfs"})
+	mdsResult := send("GET", "/filesystem/mds", map[string]any{"fs": "cephfs"})
+	missingBody, _ := json.Marshal(map[string]any{"cluster_id": cluster.ID, "fs": "absent"})
+	missingReq := httptest.NewRequest("GET", "/api/v1/filesystem/mds", bytes.NewReader(missingBody))
+	missingReq.Header.Set("Content-Type", "application/json")
+	missingResult := httptest.NewRecorder()
+	mux.ServeHTTP(missingResult, missingReq)
+	if missingResult.Code != http.StatusNotFound {
+		t.Fatalf("missing filesystem returned %d: %s", missingResult.Code, missingResult.Body.String())
+	}
+	if mdsResult.Header().Get("Cache-Control") != "no-store" || !strings.Contains(mdsResult.Body.String(), `"rank":"1","name":"","gid":"","state":"failed"`) || !strings.Contains(mdsResult.Body.String(), `"version":"ceph fixture"`) {
+		t.Fatalf("MDS topology response is incomplete: %s", mdsResult.Body.String())
+	}
 	if poolResult.Header().Get("Cache-Control") != "no-store" || !strings.Contains(poolResult.Body.String(), `"stored":"9007199254740993"`) || !strings.Contains(poolResult.Body.String(), `"size":"150"`) || !strings.Contains(poolResult.Body.String(), `"type":"metadata"`) {
 		t.Fatalf("filesystem pool usage response is incomplete: %s", poolResult.Body.String())
 	}

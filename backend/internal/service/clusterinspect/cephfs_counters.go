@@ -17,6 +17,7 @@ var mdsCounterNames = []string{
 	"mds_server.handle_client_request", "mds_log.ev", "mds_cache.num_strays",
 	"mds.exported", "mds.exported_inodes", "mds.imported", "mds.imported_inodes",
 	"mds.inodes", "mds.caps", "mds.subtrees", "mds_mem.ino",
+	"mds_mem.dn", "mds_mem.dir", "mds_mem.cap", "mds_sessions.session_count", "mds_log.replay",
 }
 
 var mdsDaemonNamePattern = regexp.MustCompile(`^[A-Za-z0-9_.-]{1,255}$`)

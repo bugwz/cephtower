@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { jsonInit, request } from '../../api/client'
 import { AppTable } from '../../components/AppTable'
 import { performancePoints as points, type PerformancePoint as Point } from './cephfsPerformanceSeries'
+import { CephFSRankStatus } from './CephFSRankStatus'
 
 interface Counter { name: string; value: string | null }
 interface Daemon {
@@ -42,9 +43,9 @@ export function CephFSPerformance({ clusterId, filesystem }: { clusterId?: numbe
         setData(response)
         setError('')
         setHistory((previous) => {
-          const next: Record<string, Daemon[]> = {}
+          const next: Record<string, Daemon[]> = Object.create(null)
           for (const daemon of response.items) {
-            const existing = previous[daemon.name] ?? []
+            const existing = Object.prototype.hasOwnProperty.call(previous, daemon.name) ? previous[daemon.name] : []
             const sameInstance = existing[existing.length - 1]?.gid === daemon.gid
             next[daemon.name] = daemon.error ? [] : [...(sameInstance ? existing : []), daemon].slice(-60)
           }
@@ -72,6 +73,7 @@ export function CephFSPerformance({ clusterId, filesystem }: { clusterId?: numbe
   </Space>}>
     <Alert type="info" showIcon message="实时 perf dump；每次完成后间隔 10 秒采样，保留最近 60 次" description="趋势仅来自当前页面会话，不是 ceph-mgr 历史数据。请求速率按相邻采样的累计差值 / 实际秒数计算；MDS 实例变化、计数器回退或读取失败时不衔接旧速率。缺失指标显示 —，不是 0。" />
     {error && <Alert type="error" showIcon message={error} description="下方保留最后一次成功结果，不代表当前状态。" />}
+    <CephFSRankStatus clusterId={clusterId} filesystem={filesystem} automatic={automatic} revision={revision} samples={error ? [] : data?.items ?? []} history={history} />
     {data && data.items.length === 0 && <Alert type="info" showIcon message="该文件系统当前没有关联的 MDS 实例" />}
     {data?.items.map((daemon) => <Card key={daemon.name} type="inner" title={<Space>{daemon.name}<Tag>Rank {daemon.rank}</Tag><Tag>{daemon.state}</Tag></Space>}>
       <Typography.Text type="secondary">GID {daemon.gid} · 采样时间 {new Date(daemon.observed_at).toLocaleString()}</Typography.Text>

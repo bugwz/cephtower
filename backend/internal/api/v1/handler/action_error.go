@@ -18,6 +18,8 @@ func writeActionError(w http.ResponseWriter, r *http.Request, err error) {
 			status = http.StatusNotImplemented
 		case "resource_conflict":
 			status = http.StatusConflict
+		case "resource_not_found":
+			status = http.StatusNotFound
 		}
 		WriteError(w, r, status, actionError.Code, actionError.Message, actionError.Retryable, actionError.Details)
 		return

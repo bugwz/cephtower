@@ -2,6 +2,28 @@ package handler
 
 import "net/http"
 
+func (h *Handler) GetCephFSMDS(w http.ResponseWriter, r *http.Request) {
+	var request struct {
+		ClusterID uint64 `json:"cluster_id"`
+		FS        string `json:"fs"`
+	}
+	if !DecodeStrict(w, r, &request) {
+		return
+	}
+	annotateAudit(r, "filesystem.mds", "filesystem", request.FS, "", &request.ClusterID)
+	if h.Inspection == nil {
+		WriteError(w, r, 501, "capability_unavailable", "cluster inspection is unavailable", false, nil)
+		return
+	}
+	result, err := h.Inspection.CephFSMDS(r.Context(), request.ClusterID, request.FS)
+	if err != nil {
+		writeActionError(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	WriteSuccess(w, 200, "success", result)
+}
+
 func (h *Handler) GetCephFSPools(w http.ResponseWriter, r *http.Request) {
 	var request struct {
 		ClusterID uint64 `json:"cluster_id"`

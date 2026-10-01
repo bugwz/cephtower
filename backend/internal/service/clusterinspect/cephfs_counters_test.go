@@ -25,7 +25,7 @@ func TestCephFSCountersNativeScopeAndPrecision(t *testing.T) {
 		t.Fatalf("result = %+v, err = %v", result, err)
 	}
 	a, b := result.Items[0], result.Items[1]
-	if a.Name != "a" || a.State != "up:active" || len(a.Counters) != 11 || *a.Counters[0].Value != "9007199254740993" || *a.Counters[10].Value != "0" || a.Counters[1].Value != nil || a.ObservedAt.IsZero() {
+	if a.Name != "a" || a.State != "up:active" || len(a.Counters) != 16 || *a.Counters[0].Value != "9007199254740993" || *a.Counters[10].Value != "0" || a.Counters[1].Value != nil || a.ObservedAt.IsZero() {
 		t.Fatalf("invalid sample: %+v", a)
 	}
 	if b.GID != "9007199254740993" || b.Error != "token=[REDACTED]" || len(b.Counters) != 0 {
