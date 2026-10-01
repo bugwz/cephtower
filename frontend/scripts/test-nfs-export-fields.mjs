@@ -217,10 +217,10 @@ const hostLoader = new Function('listAllResources', `${hostLoaderCode}; return s
 })
 assert.deepEqual(await hostLoader(17), [{ label: 'node-a', value: 'node-a' }, { label: 'node-b', value: 'node-b' }])
 
-const storageFunctions = ['smbSubvolumeGroupOptions', 'smbSubvolumeOptions', 'smbSubvolumeBody', 'cloneTargetGroupOptions', 'snapshotSubvolumeOptions']
+const storageFunctions = ['smbUpdateSubvolumeBody', 'smbSubvolumeGroupOptions', 'smbSubvolumeOptions', 'smbSubvolumeBody', 'cloneTargetGroupOptions', 'snapshotSubvolumeOptions']
 const storageCode = storageFunctions.map((name) => tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === name).getText(tree)).join('\n')
 const storageCalls = []
-const storage = new Function('listAllResources', 'resourceName', 'fsName', 'subvolumeReadyReason', `${ts.transpileModule(storageCode, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText}; return { smbSubvolumeGroupOptions, smbSubvolumeOptions, smbSubvolumeBody }`)(async (path, clusterId, options) => {
+const storage = new Function('listAllResources', 'resourceName', 'fsName', 'subvolumeReadyReason', `${ts.transpileModule(storageCode, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText}; return { smbUpdateSubvolumeBody, smbSubvolumeGroupOptions, smbSubvolumeOptions, smbSubvolumeBody }`)(async (path, clusterId, options) => {
   storageCalls.push({ path, clusterId, body: options.body })
   return { items: path.endsWith('/groups') ? [{ name: 'team' }] : [{ name: 'docs' }, { name: 'pending', unavailable: true }] }
 }, (row) => row.name, (row) => row.fs, (row) => row.unavailable ? 'not ready' : '')
@@ -234,6 +234,12 @@ assert.deepEqual(storageCalls, [
   { path: '/filesystem/subvolumes', clusterId: 17, body: { fs: 'fs-a', group: 'team' } }
 ])
 assert.deepEqual(storage.smbSubvolumeBody({}), {})
+assert.deepEqual(storage.smbUpdateSubvolumeBody({}), {})
+assert.deepEqual(storage.smbUpdateSubvolumeBody({ storage_scope: 'preserve', subvolume: 'stale' }), {})
+assert.deepEqual(storage.smbUpdateSubvolumeBody({ storage_scope: 'filesystem', path: '/data', subvolume: 'stale' }), { subvolume: '' })
+assert.deepEqual(storage.smbUpdateSubvolumeBody({ storage_scope: 'subvolume', path: '/', subvolume_group: 'team', subvolume: 'docs' }), { subvolume: 'team/docs' })
+assert.throws(() => storage.smbUpdateSubvolumeBody({ storage_scope: 'filesystem' }))
+assert.throws(() => storage.smbUpdateSubvolumeBody({ storage_scope: 'subvolume', path: '/' }))
 assert.throws(() => storage.smbSubvolumeBody({ subvolume_group: 'team' }), /请选择子卷/)
 assert.throws(() => storage.smbSubvolumeBody({ subvolume_group: '_nogroup', subvolume: '' }), /请选择子卷/)
 assert.deepEqual(storage.smbSubvolumeBody({ subvolume_group: 'team', subvolume: 'docs' }), { subvolume: 'team/docs' })

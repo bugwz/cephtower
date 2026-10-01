@@ -7,6 +7,60 @@ import (
 	"testing"
 )
 
+func TestSMBShareScopeReplacement(t *testing.T) {
+	service, _, id := newCephUserService(t)
+	request := Request{ClusterID: id, Action: "smb_share.update", ResourceKey: "smb/share/" + base64.RawURLEncoding.EncodeToString([]byte("a\x00docs")), Parameters: map[string]any{"cluster": "a", "filesystem": "other", "path": "/target"}}
+	before := `{"resource_type":"ceph.smb.share","cluster_id":"a","share_id":"docs","readonly":true,"cephfs":{"volume":"fs","path":"/","subvolume":"old","subvolumegroup":"oldgroup","provider":"samba-vfs"}}`
+	for _, scope := range []string{"group/new", "new", ""} {
+		request.Parameters["subvolume"] = scope
+		data, err := smbShareUpdateJSON([]byte(before), request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var record map[string]any
+		if err := json.Unmarshal(data, &record); err != nil {
+			t.Fatal(err)
+		}
+		fs := record["cephfs"].(map[string]any)
+		if fs["volume"] != "other" || fs["path"] != "/target" || fs["provider"] != "samba-vfs" || record["readonly"] != true {
+			t.Fatal(record)
+		}
+		if scope == "group/new" && (fs["subvolume"] != "new" || fs["subvolumegroup"] != "group") {
+			t.Fatal(fs)
+		}
+		if scope == "new" && (fs["subvolume"] != "new" || fs["subvolumegroup"] != nil) {
+			t.Fatal(fs)
+		}
+		if scope == "" && (fs["subvolume"] != nil || fs["subvolumegroup"] != nil) {
+			t.Fatal(fs)
+		}
+		runner := &directoryRenameExecutor{outputs: map[string]string{"smb_share.update.pre_check": before, "smb_share.update": `{"success":true}`, "smb_share.update.post_check": string(data)}}
+		service.executor = runner
+		if _, err := service.Execute(context.Background(), request); err != nil {
+			t.Fatal(err)
+		}
+		if len(runner.specs) != 3 || string(runner.specs[1].Stdin) != string(data) {
+			t.Fatal(runner.specs)
+		}
+		fs["subvolumegroup"] = "oldgroup"
+		stale, _ := json.Marshal(record)
+		if smbShareUpdateMatches(data, stale, request) {
+			t.Fatal("stale group accepted")
+		}
+	}
+	for _, bad := range []any{nil, false, "a/b/c", "/sub", "group/", "..", "a\nb"} {
+		request.Parameters["subvolume"] = bad
+		if _, err := smbShareUpdateJSON([]byte(before), request); err == nil {
+			t.Fatalf("invalid scope accepted: %v", bad)
+		}
+	}
+	request.Parameters["subvolume"] = ""
+	delete(request.Parameters, "path")
+	if _, err := smbShareUpdateJSON([]byte(before), request); err == nil {
+		t.Fatal("scope replacement without explicit path accepted")
+	}
+}
+
 func TestSMBShareFilesystemScope(t *testing.T) {
 	for _, scope := range []string{`"subvolume":"sub"`, `"subvolumegroup":"group"`, `"subvolume":"sub","subvolumegroup":"group"`} {
 		service, _, id := newCephUserService(t)

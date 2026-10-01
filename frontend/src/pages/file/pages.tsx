@@ -865,8 +865,11 @@ const definitions: Record<
       fields: [
         { name: 'cluster', label: 'SMB 集群（不可更改）', required: true, readOnly: true },
         { name: 'comment', label: '共享描述', placeholder: '单行文本；清空已有描述可移除内容' },
-        { name: 'share_name', label: '客户端共享名称', placeholder: '留空保留原名称；最多 64 个英文字符' },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
+        { name: 'storage_scope', label: '存储范围操作', type: 'select', placeholder: '未选择则保留原子卷范围', options: [{ label: '保留原子卷范围', value: 'preserve' }, { label: '替换为指定子卷', value: 'subvolume' }, { label: '移除子卷限制（路径相对于文件系统根）', value: 'filesystem' }] },
+        { name: 'subvolume_group', label: '新的子卷组', type: 'select', required: true, visibleWhen: (values) => values.storage_scope === 'subvolume', optionsDependencies: ['filesystem', 'storage_scope'], optionsLoader: smbSubvolumeGroupOptions },
+        { name: 'subvolume', label: '新的子卷', type: 'select', required: true, visibleWhen: (values) => values.storage_scope === 'subvolume', optionsDependencies: ['filesystem', 'storage_scope', 'subvolume_group'], optionsLoader: smbSubvolumeOptions },
+        { name: 'share_name', label: '客户端共享名称', placeholder: '留空保留原名称；最多 64 个英文字符' },
         { name: 'path', label: 'CephFS 路径' },
         { name: 'readonly', label: '只读', type: 'select', placeholder: '未选择则保留', options: [{ label: '只读', value: 'true' }, { label: '允许写入', value: 'false' }] },
         { name: 'browseable', label: '可浏览', type: 'select', placeholder: '未选择则保留', options: [{ label: '显示共享', value: 'true' }, { label: '隐藏共享（不是访问控制）', value: 'false' }] }
@@ -875,6 +878,7 @@ const definitions: Record<
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
         share_id: shareId(row),
+        ...smbUpdateSubvolumeBody(values),
         ...smbShareAccessBody(values),
         ...(values.share_name ? { share_name: String(values.share_name) } : {}),
         cluster: String(values.cluster ?? ''),
@@ -958,6 +962,14 @@ function smbSubvolumeBody(values: Record<string, unknown>) {
   if (!values.subvolume) return {}
   if (!values.subvolume_group) throw new Error('请选择子卷组')
   return { subvolume: `${values.subvolume_group}/${values.subvolume}` }
+}
+
+function smbUpdateSubvolumeBody(values: Record<string, unknown>) {
+  if (values.storage_scope === undefined || values.storage_scope === 'preserve') return {}
+  if (typeof values.path !== 'string' || !values.path.trim()) throw new Error('更换存储范围时请填写目标范围内的路径')
+  if (values.storage_scope === 'filesystem') return { subvolume: '' }
+  if (values.storage_scope !== 'subvolume' || !values.subvolume) throw new Error('请选择新的子卷')
+  return smbSubvolumeBody(values)
 }
 
 async function nfsRGWUserOptions(clusterId: number, _row?: Record<string, unknown>, values?: Record<string, unknown>) {

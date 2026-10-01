@@ -71,7 +71,32 @@ func smbShareUpdateJSON(data []byte, request Request) ([]byte, error) {
 		}
 	}
 	volume := optional(request.Parameters, "filesystem")
-	if fs["volume"] != volume {
+	if value, changed := request.Parameters["subvolume"]; changed {
+		subvolume, ok := value.(string)
+		if !ok || strings.ContainsAny(subvolume, "\x00\r\n") {
+			return nil, invalid("subvolume must be a name, group/name, or empty to use filesystem scope")
+		}
+		if optional(request.Parameters, "path") == "" {
+			return nil, invalid("path is required when replacing the SMB storage scope")
+		}
+		delete(fs, "subvolume")
+		delete(fs, "subvolumegroup")
+		if subvolume != "" {
+			parts := strings.Split(subvolume, "/")
+			if len(parts) > 2 {
+				return nil, invalid("subvolume must be a name or group/name")
+			}
+			for _, part := range parts {
+				if strings.TrimSpace(part) == "" || part == "." || part == ".." {
+					return nil, invalid("subvolume must be a name or group/name")
+				}
+			}
+			fs["subvolume"] = parts[len(parts)-1]
+			if len(parts) == 2 {
+				fs["subvolumegroup"] = parts[0]
+			}
+		}
+	} else if fs["volume"] != volume {
 		for _, field := range []string{"subvolume", "subvolumegroup"} {
 			if value := fs[field]; value != nil && value != "" {
 				return nil, invalid("cannot change the filesystem while preserving an existing SMB subvolume scope")
@@ -97,6 +122,25 @@ func smbShareUpdateMatches(wanted, actual []byte, request Request) bool {
 	found, err := smbShareRecord(actual, request)
 	if err != nil {
 		return false
+	}
+	if _, changed := request.Parameters["subvolume"]; changed {
+		for _, field := range []string{"subvolume", "subvolumegroup"} {
+			wantedScope := expected["cephfs"].(map[string]any)[field]
+			actualScope := found["cephfs"].(map[string]any)[field]
+			if wantedScope == nil {
+				wantedScope = ""
+			}
+			if actualScope == nil {
+				actualScope = ""
+			}
+			if !reflect.DeepEqual(wantedScope, actualScope) {
+				return false
+			}
+			// Empty optional scope fields can be omitted by native serialization.
+			if wantedScope == "" {
+				delete(found["cephfs"].(map[string]any), field)
+			}
+		}
 	}
 	for key, value := range expected {
 		if !reflect.DeepEqual(found[key], value) {
