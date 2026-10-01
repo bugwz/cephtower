@@ -18,6 +18,8 @@ type Pool struct {
 	Size                     *int64            `json:"size"`
 	MinSize                  *int64            `json:"min_size"`
 	PGNum                    *int64            `json:"pg_num"`
+	PGNumTarget              *int64            `json:"pg_num_target"`
+	PGPNumTarget             *int64            `json:"pgp_num_target"`
 	PGStatus                 map[string]uint64 `json:"pg_status"`
 	UsedPercent              *float64          `json:"used_percent"`
 	Stored                   *uint64           `json:"stored"`

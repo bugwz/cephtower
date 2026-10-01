@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+池详情展示当前/目标 PG 和 PGP 数量。osd pool ls detail 原生输出的 pg_num_target、
+pg_placement_num_target 经采集映射为库存 API 的 pg_num_target、pgp_num_target；
+缺失目标不以当前值补齐。与参考池详情一致区分调整中的当前值和目标值。
+离线测试覆盖四个数量不同及缺失目标的序列化，前端验证四字段绑定。
+
 池类型按原生 osd_types.h 的 TYPE_REPLICATED=1、TYPE_ERASURE=3 映射；缺失或其他值
 保留 unknown，不再默认为副本池。前端列表/详情显示未知，编辑入口及表单初始化拒绝
 未知类型，防止按副本池参数编辑未识别的池。离线测试覆盖原生映射及前端未知值处理。

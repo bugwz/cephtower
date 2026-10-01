@@ -202,6 +202,7 @@ assert.ok(detailSource.includes('pg_status_display: poolPGStatus(row.pg_status)'
 assert.ok(!detailSource.includes('active+clean'), 'detail view must not fabricate healthy PG states')
 for (const field of ['stored', 'bytes_used', 'max_avail', 'compress_bytes_used', 'compress_under_bytes']) assert.ok(detailSource.includes(`poolCapacity(data.${field})`))
 assert.ok(detailSource.includes('poolObjectCount(data.objects)'))
+for (const field of ['pg_num', 'pg_num_target', 'pgp_num', 'pgp_num_target']) assert.ok(detailSource.includes(`poolObjectCount(data.${field})`))
 for (const field of ['read_operations', 'write_operations']) assert.ok(detailSource.includes(`poolObjectCount(data.${field})`))
 assert.ok(detailSource.includes('poolUsage(data)'))
 for (const field of ['read_bytes', 'write_bytes']) {

@@ -169,6 +169,10 @@ function renderOverview(data: ApiRecord, decodedName: string) {
       <Descriptions.Item label="数据保护">{textValue(data.data_protection_display)}</Descriptions.Item>
       <Descriptions.Item label="PG 状态">{textValue(data.pg_status_display)}</Descriptions.Item>
       <Descriptions.Item label="PG 自动伸缩">{textValue(data.pg_autoscale_mode)}</Descriptions.Item>
+      <Descriptions.Item label="当前 PG 数量">{poolObjectCount(data.pg_num)}</Descriptions.Item>
+      <Descriptions.Item label="目标 PG 数量">{poolObjectCount(data.pg_num_target)}</Descriptions.Item>
+      <Descriptions.Item label="当前 PGP 数量">{poolObjectCount(data.pgp_num)}</Descriptions.Item>
+      <Descriptions.Item label="目标 PGP 数量">{poolObjectCount(data.pgp_num_target)}</Descriptions.Item>
       <Descriptions.Item label="使用率">{poolUsage(data)}</Descriptions.Item>
       <Descriptions.Item label="用户数据量">{poolCapacity(data.stored)}</Descriptions.Item>
       <Descriptions.Item label="实际占用">{poolCapacity(data.bytes_used)}</Descriptions.Item>

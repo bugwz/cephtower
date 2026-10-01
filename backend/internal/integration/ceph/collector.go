@@ -743,6 +743,8 @@ type poolWire struct {
 	Size                *int64         `json:"size"`
 	MinSize             *int64         `json:"min_size"`
 	PGNum               *int64         `json:"pg_num"`
+	PGNumTarget         *int64         `json:"pg_num_target"`
+	PGPNumTarget        *int64         `json:"pg_placement_num_target"`
 	PGPNum              *int64         `json:"pg_placement_num"`
 	PGAutoscaleMode     *string        `json:"pg_autoscale_mode"`
 	ErasureCodeProfile  *string        `json:"erasure_code_profile"`
@@ -869,6 +871,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		}
 		quota := p.collectPoolQuota(ctx, access, wire.PoolName)
 		payload := cephdomain.Pool{
+			PGNumTarget: wire.PGNumTarget, PGPNumTarget: wire.PGPNumTarget,
 			ReadOperations: poolUsage[wire.Pool].ReadOperations, WriteOperations: poolUsage[wire.Pool].WriteOperations,
 			ReadBytes: poolUsage[wire.Pool].ReadBytes, WriteBytes: poolUsage[wire.Pool].WriteBytes,
 			CompressBytesUsed: poolUsage[wire.Pool].CompressBytesUsed, CompressUnderBytes: poolUsage[wire.Pool].CompressUnderBytes,
