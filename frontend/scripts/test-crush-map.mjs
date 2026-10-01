@@ -108,6 +108,16 @@ await assert.rejects(() => failedPages('/pools', 7), /second page unavailable/)
 assert.ok(poolSource.includes('压缩后大小与原始大小的比例上限'), 'compression ratio is an upper bound, not a minimum ratio')
 assert.ok(poolSource.includes('分配单元对齐和压缩头开销'), 'compression storage is also subject to native allocation constraints')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const adjustmentFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolPGAdjustment')
+const adjustmentCode = ts.transpileModule(adjustmentFn.getText(poolTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const adjustment = new Function(`${adjustmentCode}; return poolPGAdjustment`)()
+const settled = { pg_num: 32, pgp_num: 32, pg_num_target: 32, pgp_num_target: 32 }
+assert.equal(adjustment(settled), '已达到目标数量')
+assert.equal(adjustment({ ...settled, pg_num_target: 64 }), '调整中')
+assert.equal(adjustment({ ...settled, pgp_num_target: 16 }), '调整中')
+assert.equal(adjustment({ pg_num: 16, pgp_num: 32, pg_num_target: 32, pgp_num_target: 16 }), '调整中', 'opposing differences must not cancel each other')
+for (const field of Object.keys(settled)) for (const value of [undefined, null, 0, -1, 1.5, '32']) assert.equal(adjustment({ ...settled, [field]: value }), '未采集')
+assert.ok(poolSource.includes('pg_adjustment_display: poolPGAdjustment(row)'))
 const listFreshnessFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolListFreshnessWarning')
 const listFreshnessCode = ts.transpileModule(listFreshnessFn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const listFreshness = new Function(`${listFreshnessCode}; return poolListFreshnessWarning`)()
@@ -207,6 +217,7 @@ assert.throws(() => history.points({ result_type: 'matrix', series: [{ metric: {
 assert.ok(historySource.includes('controller.current?.abort()'))
 assert.ok(detailSource.includes('data?.history_scope === `${selectedClusterId}/${decodedName}`'))
 const detailTree = ts.createSourceFile('PoolDetailPage.tsx', detailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+assert.ok(detailSource.includes('poolPGAdjustment(data)'))
 for (const field of ['read_bytes_sec', 'write_bytes_sec', 'read_op_per_sec', 'write_op_per_sec']) {
   assert.ok(poolSource.includes(`poolIORate(row.client_io_rate, '${field}')`))
   assert.ok(detailSource.includes(`poolIORate(data.client_io_rate, '${field}')`))

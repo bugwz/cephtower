@@ -511,6 +511,7 @@ export function PoolManagementPage() {
             { key: 'data_protection_display', title: '数据保护', filterKey: 'type', render: (_, row) => <Tag color="default">{textValue(row.data_protection_display)}</Tag> },
             { key: 'applications_display', title: '应用标记', filterKey: 'applications', render: (_, row) => renderApplications(poolApplications(row)) },
             { key: 'pg_status_display', title: 'PG 状态', filterKey: 'pg_autoscale_mode' },
+            { key: 'pg_adjustment_display', title: 'PG 调整（采集时）', filterKey: false },
             { key: 'usage_display', title: '使用率', filterKey: false },
             { key: 'stored_display', title: '用户数据量', filterKey: false },
             { key: 'objects_display', title: '对象数量', filterKey: false },
@@ -1032,6 +1033,14 @@ function poolListFreshnessWarning(data: PoolPageData): string | undefined {
   return undefined
 }
 
+export function poolPGAdjustment(row: ApiRecord): string {
+  const counts = [row.pg_num, row.pgp_num, row.pg_num_target, row.pgp_num_target]
+  if (counts.some((value) => typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0)) return '未采集'
+  return row.pg_num !== row.pg_num_target || row.pgp_num !== row.pgp_num_target
+    ? '调整中'
+    : '已达到目标数量'
+}
+
 export function poolIORate(value: unknown, field: 'read_bytes_sec' | 'write_bytes_sec' | 'read_op_per_sec' | 'write_op_per_sec'): string {
   const rate = isRecord(value) ? value[field] : undefined
   if (typeof rate !== 'number' || !Number.isSafeInteger(rate) || rate < 0) return '未采集'
@@ -1054,6 +1063,7 @@ function normalizePoolRow(row: ApiRecord): ApiRecord {
     applications: poolApplications(row),
     applications_display: poolApplications(row).join(', '),
     pg_status_display: `${poolPGStatus(row.pg_status)} / ${pgAutoscale}`,
+    pg_adjustment_display: poolPGAdjustment(row),
     usage_display: poolUsage(row),
     stored_display: poolCapacity(row.stored),
     objects_display: poolObjectCount(row.objects),

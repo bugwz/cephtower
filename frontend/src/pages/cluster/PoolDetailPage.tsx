@@ -11,7 +11,7 @@ import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
 import { PoolIOHistory } from './PoolIOHistory'
-import { poolPGStatus, poolCapacity, poolObjectCount, poolUsage, poolDataProtection, poolKind, poolIORate } from './PoolManagementPage'
+import { poolPGStatus, poolCapacity, poolObjectCount, poolUsage, poolDataProtection, poolKind, poolIORate, poolPGAdjustment } from './PoolManagementPage'
 
 const { Text } = Typography
 const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
@@ -202,6 +202,7 @@ function renderOverview(data: ApiRecord, decodedName: string) {
       <Descriptions.Item label="Pool 类型">{textValue(data.type)}</Descriptions.Item>
       <Descriptions.Item label="数据保护">{textValue(data.data_protection_display)}</Descriptions.Item>
       <Descriptions.Item label="PG 状态">{textValue(data.pg_status_display)}</Descriptions.Item>
+      <Descriptions.Item label="PG 调整（采集时）">{poolPGAdjustment(data)}</Descriptions.Item>
       <Descriptions.Item label="PG 自动伸缩">{textValue(data.pg_autoscale_mode)}</Descriptions.Item>
       <Descriptions.Item label="当前 PG 数量">{poolObjectCount(data.pg_num)}</Descriptions.Item>
       <Descriptions.Item label="目标 PG 数量">{poolObjectCount(data.pg_num_target)}</Descriptions.Item>
