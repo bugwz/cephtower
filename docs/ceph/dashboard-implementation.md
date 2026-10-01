@@ -5,6 +5,10 @@
 
 ## 如何追踪调用链
 
+存储池列表新增用户数据量（stored）、实际占用（bytes_used）和最大可用（max_avail）
+三列，直接读取已接通的 df detail 库存字段，不以副本数反推容量。按二进制单位显示，
+原生零值显示 0 B，缺失/非法值显示未采集；离线测试覆盖字段绑定、单位及零值。
+
 存储池容量接入 ceph df detail --format json 的 pools[].stats，按数值池 ID 关联。
 原生 percent_used 为 0–1 比例，转换为 API used_percent 的 0–100 百分比；同时保留
 stored、bytes_used、max_avail 字节值。缺失使用率展示未采集，而不是虚构 0%；

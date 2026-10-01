@@ -479,6 +479,9 @@ export function PoolManagementPage() {
             { key: 'applications_display', title: '应用标记', filterKey: 'applications', render: (_, row) => renderApplications(poolApplications(row)) },
             { key: 'pg_status_display', title: 'PG 状态', filterKey: 'pg_autoscale_mode' },
             { key: 'usage_display', title: '使用率', filterKey: false },
+            { key: 'stored_display', title: '用户数据量', filterKey: false },
+            { key: 'bytes_used_display', title: '实际占用', filterKey: false },
+            { key: 'max_avail_display', title: '最大可用', filterKey: false },
             { key: 'read_bytes_display', title: '读字节数', filterKey: false },
             { key: 'write_bytes_display', title: '写字节数', filterKey: false },
             {
@@ -980,6 +983,9 @@ function normalizePoolRow(row: ApiRecord): ApiRecord {
     applications_display: poolApplications(row).join(', '),
     pg_status_display: `${poolPGStatus(row.pg_status)} / ${pgAutoscale}`,
     usage_display: poolUsage(row),
+    stored_display: poolCapacity(row.stored),
+    bytes_used_display: poolCapacity(row.bytes_used),
+    max_avail_display: poolCapacity(row.max_avail),
     read_bytes_display: formatBytes(numberValue(row.read_bytes ?? row.client_read_bytes)),
     write_bytes_display: formatBytes(numberValue(row.write_bytes ?? row.client_write_bytes))
   }
@@ -1486,6 +1492,11 @@ function poolHasFlag(row: ApiRecord, flag: string): boolean {
     return false
   }
   return row.flags.some((value) => textValue(value, '') === flag)
+}
+
+function poolCapacity(value: unknown): string {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return '未采集'
+  return value === 0 ? '0 B' : formatBytes(value)
 }
 
 function poolUsage(row: ApiRecord) {
