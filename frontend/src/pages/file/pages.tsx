@@ -580,9 +580,13 @@ const definitions: Record<
       successMessage: 'NFS 集群创建执行成功',
       fields: [
         { name: 'name', label: '集群名称', required: true },
-        { name: 'nfs_placement', label: '部署放置策略', placeholder: '例如 2 host-a host-b 或 label:nfs；留空使用 Ceph 默认策略' }
+        { name: 'nfs_placement', label: '部署放置策略', placeholder: '例如 2 host-a host-b 或 label:nfs；留空使用 Ceph 默认策略' },
+        { name: 'nfs_port', label: 'NFS 服务端口', type: 'number', min: 1, max: 65535, placeholder: '默认 2049；HAProxy 最大 55535，keepalive-only 最大 58535' },
+        { name: 'ingress', label: '启用高可用入口', type: 'boolean' },
+        { name: 'virtual_ip', label: '虚拟 IP（可带 CIDR 前缀）', required: true, visibleWhen: (values) => Boolean(values.ingress), placeholder: '例如 192.0.2.10/24' },
+        { name: 'ingress_mode', label: '入口模式', type: 'select', visibleWhen: (values) => Boolean(values.ingress), placeholder: '原生默认 HAProxy standard', options: [{ label: 'HAProxy standard', value: 'haproxy-standard' }, { label: 'HAProxy protocol', value: 'haproxy-protocol' }, { label: 'Keepalive only（强制单个 NFS 实例）', value: 'keepalive-only' }] }
       ],
-      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? ''), ...(values.nfs_placement ? { nfs_placement: String(values.nfs_placement) } : {}) })
+      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? ''), ...(values.nfs_placement ? { nfs_placement: String(values.nfs_placement) } : {}), ...(values.nfs_port != null ? { nfs_port: Number(values.nfs_port) } : {}), ...(values.ingress ? { ingress: true, virtual_ip: String(values.virtual_ip ?? ''), ...(values.ingress_mode ? { ingress_mode: String(values.ingress_mode) } : {}) } : {}) })
     },
     deleteAction: {
       title: '删除 NFS 集群',

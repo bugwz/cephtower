@@ -2214,6 +2214,11 @@ func build(request Request, p map[string]any) (command, error) {
 			}
 			args = append(args, "--placement="+strings.TrimSpace(placement))
 		}
+		ingressArgs, err := nfsClusterIngressArgs(p)
+		if err != nil {
+			return command{}, err
+		}
+		args = append(args, ingressArgs...)
 		return ceph(args, []string{"nfs", "cluster", "ls", "--format", "json"}), nil
 	case "nfs_cluster.delete":
 		name := last(tail)

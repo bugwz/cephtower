@@ -531,6 +531,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -635,6 +640,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -836,6 +843,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -1191,6 +1200,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -1295,6 +1309,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -1496,6 +1512,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -3146,6 +3164,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -3250,6 +3273,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -3451,6 +3476,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -3806,6 +3833,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -3910,6 +3942,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -4111,6 +4145,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -4684,6 +4720,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -4788,6 +4829,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -4989,6 +5032,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -5438,6 +5483,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -5542,6 +5592,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -5743,6 +5795,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -6098,6 +6152,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -6202,6 +6261,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -6403,6 +6464,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -6949,6 +7012,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -7053,6 +7121,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -7254,6 +7324,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -7705,6 +7777,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -7809,6 +7886,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -8010,6 +8089,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -8366,6 +8447,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -8470,6 +8556,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -8671,6 +8759,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -9270,6 +9360,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -9374,6 +9469,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -9575,6 +9672,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -10024,6 +10123,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -10128,6 +10232,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -10329,6 +10435,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -10780,6 +10888,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -10884,6 +10997,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -11085,6 +11200,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -11534,6 +11651,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -11638,6 +11760,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -11839,6 +11963,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -12194,6 +12320,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -12298,6 +12429,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -12499,6 +12632,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -13100,6 +13235,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -13204,6 +13344,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -13405,6 +13547,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -14256,6 +14400,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -14360,6 +14509,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -14561,6 +14712,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -14917,6 +15070,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -15021,6 +15179,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -15222,6 +15382,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -15578,6 +15740,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -15682,6 +15849,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -15883,6 +16052,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -16876,6 +17047,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -16980,6 +17156,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -17181,6 +17359,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -17682,6 +17862,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -17786,6 +17971,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -17987,6 +18174,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -18438,6 +18627,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -18542,6 +18736,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -18743,6 +18939,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -19098,6 +19296,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -19202,6 +19405,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -19403,6 +19608,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -20414,6 +20621,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -20518,6 +20730,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -20719,6 +20933,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -21074,6 +21290,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -21178,6 +21399,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -21379,6 +21602,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -21751,6 +21976,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -21855,6 +22085,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -22056,6 +22288,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -22505,6 +22739,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -22609,6 +22848,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -22810,6 +23051,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -23165,6 +23408,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -23269,6 +23517,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -23470,6 +23720,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -23826,6 +24078,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -23930,6 +24187,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -24131,6 +24390,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -24765,6 +25026,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -24869,6 +25135,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -25070,6 +25338,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -25616,6 +25886,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -25720,6 +25995,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -25921,6 +26198,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -26370,6 +26649,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -26474,6 +26758,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -26675,6 +26961,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -27030,6 +27318,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -27134,6 +27427,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -27335,6 +27630,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -27823,6 +28120,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -27927,6 +28229,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -28128,6 +28432,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -28484,6 +28790,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -28588,6 +28899,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -28789,6 +29102,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -29560,6 +29875,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -29664,6 +29984,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -29865,6 +30187,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -30506,6 +30830,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -30610,6 +30939,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -30811,6 +31142,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -31260,6 +31593,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -31364,6 +31702,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -31565,6 +31905,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -32016,6 +32358,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -32120,6 +32467,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -32321,6 +32670,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -32770,6 +33121,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -32874,6 +33230,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -33075,6 +33433,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -33430,6 +33790,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -33534,6 +33899,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -33735,6 +34102,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -34281,6 +34650,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -34385,6 +34759,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -34586,6 +34962,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -35035,6 +35413,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -35139,6 +35522,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -35340,6 +35725,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -35695,6 +36082,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -35799,6 +36191,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -36000,6 +36394,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -36451,6 +36847,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -36555,6 +36956,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -36756,6 +37159,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -37111,6 +37516,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -37215,6 +37625,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -37416,6 +37828,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -37867,6 +38281,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -37971,6 +38390,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -38172,6 +38593,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -38527,6 +38950,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -38631,6 +39059,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -38832,6 +39262,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -39283,6 +39715,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -39387,6 +39824,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -39588,6 +40027,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -40037,6 +40478,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -40141,6 +40587,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -40342,6 +40790,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -40697,6 +41147,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -40801,6 +41256,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -41002,6 +41459,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -41621,6 +42080,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -41725,6 +42189,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -41926,6 +42392,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -42376,6 +42844,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -42480,6 +42953,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -42681,6 +43156,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -43037,6 +43514,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -43141,6 +43623,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -43342,6 +43826,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -43698,6 +44184,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -43802,6 +44293,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -44003,6 +44496,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -44453,6 +44948,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -44557,6 +45057,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -44758,6 +45260,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -45148,6 +45652,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -45252,6 +45761,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -45453,6 +45964,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -46094,6 +46607,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -46198,6 +46716,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -46399,6 +46919,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -46848,6 +47370,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -46952,6 +47479,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -47153,6 +47682,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -47508,6 +48039,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -47612,6 +48148,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -47813,6 +48351,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -48264,6 +48804,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -48368,6 +48913,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -48569,6 +49116,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -48925,6 +49474,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -49029,6 +49583,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -49230,6 +49786,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -49586,6 +50144,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -49690,6 +50253,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -49891,6 +50456,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -50247,6 +50814,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -50351,6 +50923,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -50552,6 +51126,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -51003,6 +51579,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -51107,6 +51688,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -51308,6 +51891,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -51757,6 +52342,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -51861,6 +52451,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -52062,6 +52654,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -52417,6 +53011,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -52521,6 +53120,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -52722,6 +53323,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -53195,6 +53798,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -53299,6 +53907,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -53500,6 +54110,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -53855,6 +54467,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -53959,6 +54576,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -54160,6 +54779,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -54515,6 +55136,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -54619,6 +55245,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -54820,6 +55448,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -55562,6 +56192,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -55666,6 +56301,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -55867,6 +56504,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -56295,6 +56934,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -56399,6 +57043,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -56600,6 +57246,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -56956,6 +57604,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -57060,6 +57713,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -57261,6 +57916,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -57616,6 +58273,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -57720,6 +58382,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -57921,6 +58585,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -58372,6 +59038,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -58476,6 +59147,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -58677,6 +59350,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -59127,6 +59802,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -59231,6 +59911,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -59432,6 +60114,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -59788,6 +60472,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -59892,6 +60581,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -60093,6 +60784,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -60560,6 +61253,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -60664,6 +61362,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -60865,6 +61565,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -61220,6 +61922,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -61324,6 +62031,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -61525,6 +62234,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -61880,6 +62591,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -61984,6 +62700,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -62185,6 +62903,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -62541,6 +63261,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -62645,6 +63370,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -62846,6 +63573,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -63297,6 +64026,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -63401,6 +64135,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -63602,6 +64338,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -64051,6 +64789,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -64155,6 +64898,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -64356,6 +65101,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -64711,6 +65458,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -64815,6 +65567,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -65016,6 +65770,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -65473,6 +66229,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -65577,6 +66338,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -65778,6 +66541,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -66134,6 +66899,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -66238,6 +67008,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -66439,6 +67211,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -66795,6 +67569,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -66899,6 +67678,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -67100,6 +67881,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -67551,6 +68334,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -67655,6 +68443,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -67856,6 +68646,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -68212,6 +69004,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -68316,6 +69113,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -68517,6 +69316,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -68872,6 +69673,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -68976,6 +69782,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -69177,6 +69985,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -69628,6 +70438,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -69732,6 +70547,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -69933,6 +70750,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -70288,6 +71107,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -70392,6 +71216,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -70593,6 +71419,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -70948,6 +71776,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -71052,6 +71885,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -71253,6 +72088,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -71609,6 +72446,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -71713,6 +72555,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -71914,6 +72758,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -72460,6 +73306,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -72564,6 +73415,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -72765,6 +73618,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -73214,6 +74069,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -73318,6 +74178,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -73519,6 +74381,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -73874,6 +74738,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -73978,6 +74847,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -74179,6 +75050,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -74535,6 +75408,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -74639,6 +75517,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -74840,6 +75720,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -75196,6 +76078,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -75300,6 +76187,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -75501,6 +76390,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -75856,6 +76747,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -75960,6 +76856,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -76161,6 +77059,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -76517,6 +77417,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -76621,6 +77526,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -76822,6 +77729,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -77178,6 +78087,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -77282,6 +78196,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -77483,6 +78399,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -77934,6 +78852,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -78038,6 +78961,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -78239,6 +79164,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -78594,6 +79521,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -78698,6 +79630,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -78899,6 +79833,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -79255,6 +80191,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -79359,6 +80300,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -79560,6 +80503,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -79915,6 +80860,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -80019,6 +80969,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -80220,6 +81172,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -80906,6 +81860,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -81010,6 +81969,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -81211,6 +82172,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -81660,6 +82623,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -81764,6 +82732,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -81965,6 +82935,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -82320,6 +83292,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -82424,6 +83401,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -82625,6 +83604,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -83076,6 +84057,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -83180,6 +84166,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -83381,6 +84369,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -83830,6 +84820,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -83934,6 +84929,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -84135,6 +85132,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -84490,6 +85489,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -84594,6 +85598,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -84795,6 +85801,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -85246,6 +86254,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -85350,6 +86363,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -85551,6 +86566,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -86000,6 +87017,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -86104,6 +87126,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -86305,6 +87329,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -86660,6 +87686,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -86764,6 +87795,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -86965,6 +87998,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -87511,6 +88546,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -87615,6 +88655,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -87816,6 +88858,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:
@@ -88172,6 +89216,11 @@ paths:
                   type: string
                 image_spec:
                   type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
                 iqn:
                   type: string
                 k:
@@ -88276,6 +89325,8 @@ paths:
                   type: integer
                 nfs_placement:
                   type: string
+                nfs_port:
+                  type: integer
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -88477,6 +89528,8 @@ paths:
                 versioning:
                   type: string
                   enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
                 weight:
                   type: number
                 who:

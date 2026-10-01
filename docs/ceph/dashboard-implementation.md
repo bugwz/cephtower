@@ -1797,3 +1797,13 @@ show_nfs_cluster_info；已测试命令参数、IPv6、多种缺失/异常返回
 省略时沿用 Ceph 默认策略，不将文本拆成命令参数或交给 shell。使用独立字段避免
 与 service API 的对象型 placement 混淆。创建命令成功不代表守护进程已就绪，
 需查看集群端点及服务状态。命令构造与非法输入已测试，无实际集群部署验证。
+
+## NFS 集群入口部署
+
+创建支持 ingress、virtual_ip、ingress_mode 和 nfs_port，分别映射原生 create 的
+--ingress、--virtual-ip、--ingress-mode、--port。关闭入口时表单不提交隐藏 VIP/模式。
+VIP 支持 IPv4/IPv6 和 CIDR；入口必须有 VIP，VIP/入口模式不能脱离入口单独设置。
+端口必须是 1–65535 整数；依照 nfs/cluster.py 的派生端口逻辑，HAProxy 模式上限
+55535，keepalive-only 上限 58535。省略使用原生默认值。入口模式与 orchestrator
+IngressType 对齐，keepalive-only 原生强制单实例，界面明确提示。
+已覆盖命令参数、依赖校验、端口边界和隐藏字段测试；未实测入口部署或故障切换。

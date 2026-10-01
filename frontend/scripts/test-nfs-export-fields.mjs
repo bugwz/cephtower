@@ -150,3 +150,6 @@ const buildClusterBody = new Function(`return (${ts.transpileModule(clusterBodyS
 assert.deepEqual(buildClusterBody({ name: 'nfs-a', nfs_placement: '2 host-a host-b' }, 7), { cluster_id: 7, name: 'nfs-a', nfs_placement: '2 host-a host-b' })
 assert.deepEqual(buildClusterBody({ name: 'nfs-a', nfs_placement: '' }, 7), { cluster_id: 7, name: 'nfs-a' })
 console.log('NFS cluster placement form checks passed')
+assert.deepEqual(buildClusterBody({ name: 'nfs-a', ingress: true, virtual_ip: '192.0.2.1/24', ingress_mode: 'keepalive-only', nfs_port: 2050 }, 7), { cluster_id: 7, name: 'nfs-a', ingress: true, virtual_ip: '192.0.2.1/24', ingress_mode: 'keepalive-only', nfs_port: 2050 })
+assert.deepEqual(buildClusterBody({ name: 'nfs-a', ingress: false, virtual_ip: 'stale', ingress_mode: 'stale', nfs_port: null }, 7), { cluster_id: 7, name: 'nfs-a' })
+console.log('NFS cluster ingress form checks passed')
