@@ -398,6 +398,10 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		return handler.MutationRequestContract("cephfs_authorization.create")
 	case "PATCH /filesystem/entry/quota":
 		return handler.MutationRequestContract("cephfs_entry.quota")
+	case "POST /filesystem/entry":
+		return handler.MutationRequestContract("cephfs_entry.create")
+	case "DELETE /filesystem/entry":
+		return handler.MutationRequestContract("cephfs_entry.delete")
 	case "POST /filesystem/entry/snapshot":
 		return handler.MutationRequestContract("cephfs_entry_snapshot.create")
 	case "DELETE /filesystem/entry/snapshot":
@@ -462,7 +466,7 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 func mutationFieldUnion() map[string]handler.JSONField {
 	fields := map[string]handler.JSONField{}
 	for _, action := range handler.MutationContractActions() {
-		if action == "cephfs_entry.quota" || action == "cephfs_entry_snapshot.create" || action == "cephfs_entry_snapshot.delete" {
+		if action == "cephfs_entry.quota" || action == "cephfs_entry.create" || action == "cephfs_entry.delete" || action == "cephfs_entry_snapshot.create" || action == "cephfs_entry_snapshot.delete" {
 			continue
 		}
 		if action == "cephfs_authorization.create" || action == "cephfs_snapshot.clone" || action == "subvolume.clone_cancel" || action == "subvolume.create" || action == "subvolume.delete" || action == "subvolume.update" {

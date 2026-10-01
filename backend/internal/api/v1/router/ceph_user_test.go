@@ -44,6 +44,10 @@ func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spe
 		return executor.CommandResult{Stdout: []byte("drwxr-xr-x 0 0 0 2026-09-23 13:00:00 release-one/\n")}, nil
 	case "cephfs_entry_snapshot.delete.post_check":
 		return executor.CommandResult{}, nil
+	case "cephfs_entry.create.post_check":
+		return executor.CommandResult{Stdout: []byte("drwxr-xr-x 0 0 0 2026-10-01 13:00:00 new directory/\n")}, nil
+	case "cephfs_entry.delete.post_check":
+		return executor.CommandResult{}, nil
 	case "collect.ceph_user":
 		return executor.CommandResult{Stdout: []byte(`{"auth_dump":[{"entity":"client.backup","key":"sensitive-fixture-key","caps":{"mon":"allow r"}}]}`)}, nil
 	case "collect.config":
@@ -141,6 +145,8 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 	}
 	send("POST", "/filesystem/entry/snapshot", map[string]any{"fs": "cephfs", "path": "/projects", "name": "release-one"})
 	send("DELETE", "/filesystem/entry/snapshot", map[string]any{"fs": "cephfs", "path": "/projects", "name": "release-one"})
+	send("POST", "/filesystem/entry", map[string]any{"fs": "cephfs", "path": "/projects/new directory"})
+	send("DELETE", "/filesystem/entry", map[string]any{"fs": "cephfs", "path": "/projects/new directory"})
 	send("PUT", "/configuration/value", map[string]any{"who": "osd/host:node-a", "name": "osd_memory_target", "value": "4G"})
 	if _, err := db.FindResource(context.Background(), cluster.ID, "config_value", "osd/host:node-a:osd_memory_target"); !errors.Is(err, store.ErrRecordNotFound) {
 		t.Fatalf("configuration cache must reflect the empty Ceph response: %v", err)

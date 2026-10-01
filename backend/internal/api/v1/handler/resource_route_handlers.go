@@ -553,6 +553,14 @@ func (h *Handler) UpdateCephFSEntryQuota(w http.ResponseWriter, r *http.Request)
 	h.MutateResource("cephfs_entry", "cephfs_entry.quota", "medium")(w, r)
 }
 
+func (h *Handler) CreateCephFSEntry(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("cephfs_entry", "cephfs_entry.create", "medium")(w, r)
+}
+
+func (h *Handler) DeleteCephFSEntry(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("cephfs_entry", "cephfs_entry.delete", "medium")(w, r)
+}
+
 func (h *Handler) CreateCephFSEntrySnapshot(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("cephfs_entry", "cephfs_entry_snapshot.create", "medium")(w, r)
 }

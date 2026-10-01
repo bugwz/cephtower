@@ -334,6 +334,37 @@ func TestCephFSEntrySnapshotCommandsAndReadback(t *testing.T) {
 	}
 }
 
+func TestCephFSDirectoryLifecycleCommands(t *testing.T) {
+	parameters := map[string]any{"path": "/team/shared projects"}
+	for _, action := range []string{"cephfs_entry.create", "cephfs_entry.delete"} {
+		cmd, err := build(Request{Action: action, ResourceKey: "filesystem/cephfs/entry"}, parameters)
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := []string{"--fs", "cephfs", "rmdir", `"/team/shared projects"`}
+		if action == "cephfs_entry.create" {
+			want = []string{"--fs", "cephfs", "mkdir", "-p", "-m", "0755", `"/team/shared projects"`}
+		}
+		if !reflect.DeepEqual(cmd.args, want) || !reflect.DeepEqual(cmd.check, []string{"--fs", "cephfs", "ls", "-la", "/team"}) {
+			t.Fatalf("%s command = %+v", action, cmd)
+		}
+		present := []byte("drwxr-xr-x 0 0 0 2026-10-01 12:00:00 shared projects/\n")
+		if cephFSDirectoryMutationMatches(action, parameters, present) != (action == "cephfs_entry.create") {
+			t.Fatal("incorrect presence verification")
+		}
+		if cephFSDirectoryMutationMatches(action, parameters, []byte("invalid listing")) {
+			t.Fatal("malformed listing verified a mutation")
+		}
+	}
+	for _, directory := range []string{"/", "/data/..", "/.snap/checkpoint", "/data/*", "relative", "/bad,path"} {
+		for _, action := range []string{"cephfs_entry.create", "cephfs_entry.delete"} {
+			if _, err := build(Request{Action: action, ResourceKey: "filesystem/cephfs/entry"}, map[string]any{"path": directory}); err == nil {
+				t.Fatalf("accepted %s %q", action, directory)
+			}
+		}
+	}
+}
+
 func TestFilesystemCreateRequiresPoolPair(t *testing.T) {
 	_, err := build(Request{Action: "filesystem.create", ResourceKey: "filesystem"}, map[string]any{
 		"name": "cephfs", "metadata_pool": "cephfs.meta",

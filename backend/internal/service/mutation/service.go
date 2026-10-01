@@ -83,6 +83,7 @@ func Supports(action string) bool {
 		"subvolume.create", "subvolume.update", "subvolume.delete", "subvolume.clone_cancel",
 		"cephfs_snapshot.create", "cephfs_snapshot.delete", "cephfs_snapshot.clone", "snapshot_schedule.create", "snapshot_schedule.action", "snapshot_schedule.retention",
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota", "cephfs_entry_snapshot.create", "cephfs_entry_snapshot.delete",
+		"cephfs_entry.create", "cephfs_entry.delete",
 		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_bucket.quota",
 		"rgw_account.create", "rgw_account.update", "rgw_account.quota", "rgw_account.delete", "rgw_role.create", "rgw_role.update", "rgw_role.delete", "rgw_role.policy", "rgw_key.create", "rgw_key.delete",
 		"rgw_realm.create", "rgw_realm.update", "rgw_zonegroup.create", "rgw_zonegroup.update", "rgw_zone.create", "rgw_zone.update", "rgw_period.commit",
@@ -135,7 +136,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
-		if err != nil || (request.Action == "cephfs_entry.quota" && !cephFSEntryQuotaMatches(request.Parameters, checked.Stdout)) || (isCephFSEntrySnapshotMutation(request.Action) && !cephFSEntrySnapshotMatches(request.Action, request.Parameters, checked.Stdout)) || (request.Action == "rgw_bucket.quota" && !bucketQuotaMatches(request.Parameters, checked.Stdout)) || ((request.Action == "rgw_zone.update" || request.Action == "rgw_zone.create") && !zoneReadbackMatches(request.Parameters, checked.Stdout)) || (isRBDMirrorScheduleMutation(request.Parameters) && !rbdMirrorScheduleReadbackMatches(request, checked.Stdout)) {
+		if err != nil || ((request.Action == "cephfs_entry.create" || request.Action == "cephfs_entry.delete") && !cephFSDirectoryMutationMatches(request.Action, request.Parameters, checked.Stdout)) || (request.Action == "cephfs_entry.quota" && !cephFSEntryQuotaMatches(request.Parameters, checked.Stdout)) || (isCephFSEntrySnapshotMutation(request.Action) && !cephFSEntrySnapshotMatches(request.Action, request.Parameters, checked.Stdout)) || (request.Action == "rgw_bucket.quota" && !bucketQuotaMatches(request.Parameters, checked.Stdout)) || ((request.Action == "rgw_zone.update" || request.Action == "rgw_zone.create") && !zoneReadbackMatches(request.Parameters, checked.Stdout)) || (isRBDMirrorScheduleMutation(request.Parameters) && !rbdMirrorScheduleReadbackMatches(request, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "command was accepted but the expected state could not be verified", Retryable: true}
 		}
 	}
@@ -1328,6 +1329,26 @@ func build(request Request, p map[string]any) (command, error) {
 			result.check = append(result.check, ",getxattr", path, "ceph.quota.max_files")
 		}
 		return result, nil
+	case "cephfs_entry.create", "cephfs_entry.delete":
+		fs := pathValue(tail, "filesystem")
+		if fs == "" || !identifier.MatchString(fs) || strings.Contains(fs, "/") || strings.HasPrefix(fs, "-") {
+			return command{}, invalid("filesystem is invalid")
+		}
+		directory := rawText(p, "path")
+		if directory == "" || !strings.HasPrefix(directory, "/") || strings.ContainsAny(directory, "\x00\r\n,*") {
+			return command{}, invalid("path must be absolute without wildcards, commas or newlines")
+		}
+		directory = pathpkg.Clean(directory)
+		if directory == "/" || strings.Contains("/"+strings.Trim(directory, "/")+"/", "/.snap/") {
+			return command{}, invalid("root and snapshot directories cannot be managed as ordinary directories")
+		}
+		prefix := []string{"--fs", fs}
+		args := append(append([]string{}, prefix...), "rmdir", quoteCephFSShellToken(directory))
+		if action == "cephfs_entry.create" {
+			args = append(append([]string{}, prefix...), "mkdir", "-p", "-m", "0755", quoteCephFSShellToken(directory))
+		}
+		check := append(append([]string{}, prefix...), "ls", "-la", quoteCephFSShellToken(pathpkg.Dir(directory)))
+		return cephfsShell(args, check), nil
 	case "cephfs_entry_snapshot.create", "cephfs_entry_snapshot.delete":
 		fs := pathValue(tail, "filesystem")
 		if fs == "" || !identifier.MatchString(fs) || strings.Contains(fs, "/") {
@@ -2591,6 +2612,15 @@ func cephFSQuotaValue(parameters map[string]any, key string) (string, error) {
 }
 
 var cephFSShellLongLine = regexp.MustCompile(`^([dl-][rwxStTs-]{9})\s+[0-9]+\s+[0-9]+\s+[0-9]+\s+\S+\s+\S+\s+(.+)$`)
+
+func cephFSDirectoryMutationMatches(action string, parameters map[string]any, data []byte) bool {
+	name := pathpkg.Base(pathpkg.Clean(rawText(parameters, "path")))
+	snapshotAction := "cephfs_entry_snapshot.create"
+	if action == "cephfs_entry.delete" {
+		snapshotAction = "cephfs_entry_snapshot.delete"
+	}
+	return cephFSEntrySnapshotMatches(snapshotAction, map[string]any{"name": name}, data)
+}
 
 func isCephFSEntrySnapshotMutation(action string) bool {
 	return action == "cephfs_entry_snapshot.create" || action == "cephfs_entry_snapshot.delete"

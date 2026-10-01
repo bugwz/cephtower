@@ -39,7 +39,7 @@
 | cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict` | 已有文件系统详情与客户端接口；计数器、rename、auth 与目录操作待核对 |
 | cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot`、`fs clone` | 已有组范围采集、clone 状态/进度/失败展示、快照克隆和进行中任务取消；metadata 与其余完整参数需核对 |
 | cephfs / snapshot schedule | `fs snap-schedule` | 已有全路径发现、精确状态、创建、删除、激活/停用、retention 和模块启用 |
-| cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 已有实时目录浏览、目录元数据、双维度配额及目录快照列表/创建/删除；目录增删和重命名待补齐 |
+| cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 已有实时目录浏览、目录元数据、双维度配额、目录增删及目录快照列表/创建/删除；重命名待补齐 |
 | nfs | `nfs cluster`、`nfs export` | 已有基础管理；完整 export 属性、CephFS/RGW FSAL 与 ingress 待核对 |
 | smb | `smb show/apply/rm` 与模块资源定义 | 已有部分管理；域加入、用户组、资源校验与配置语义需核对 |
 | rgw / user / account / role | `radosgw-admin user/account/role` 与 RGW Admin Ops | 当前存在基础页面；配额、subuser、caps、rate limit、角色策略等需逐项扩展 |
@@ -191,6 +191,16 @@ ANSI 转义。配额读取最多 8 路并发，且单层目录最多接受 500 �
 cephfs-shell 实际支持的 `--help`，不再调用不存在的 `--version`。
 
 ## 已实现：CephFS 目录快照
+
+### 目录创建与删除
+
+对照 Dashboard `mk_dirs()` 与 `rm_dir()`，目录页可在当前位置创建相对路径，或删除直属
+空目录。`POST /api/v1/filesystem/entry` 调用
+`cephfs-shell --fs <fs> mkdir -p -m 0755 <absolute-path>`，允许同时创建缺失父目录。
+`DELETE /api/v1/filesystem/entry` 调用 `cephfs-shell --fs <fs> rmdir <absolute-path>`，
+由 Ceph 检查目录是否为空。两项写操作都回读父目录的 `ls -la`，逐名称验证存在或消失，
+并复用异步任务和审计。根目录、快照目录、通配符、逗号和换行路径会被拒绝，避免误操作。
+测试覆盖含空格的目录、非法作用域、无法解析的后置列表以及路由到任务执行的完整调用链。
 
 目录浏览页新增当前目录的快照表、创建表单和删除确认。参考 Dashboard
 `CephFS.ls_snapshots()`、`mk_snapshot()`、`rm_snapshot()`，数据面调用链为：

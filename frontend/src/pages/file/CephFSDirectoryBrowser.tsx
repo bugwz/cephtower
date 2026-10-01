@@ -47,6 +47,7 @@ export function CephFSDirectoryBrowser() {
   const [queryForm] = Form.useForm()
   const [quotaForm] = Form.useForm()
   const [snapshotForm] = Form.useForm()
+  const [directoryForm] = Form.useForm()
   const [filesystems, setFilesystems] = useState<string[]>([])
   const [result, setResult] = useState<DirectoryList | null>(null)
   const [loading, setLoading] = useState(false)
@@ -57,6 +58,7 @@ export function CephFSDirectoryBrowser() {
   const [snapshotsLoading, setSnapshotsLoading] = useState(false)
   const [snapshotError, setSnapshotError] = useState('')
   const [creatingSnapshot, setCreatingSnapshot] = useState(false)
+  const [creatingDirectory, setCreatingDirectory] = useState(false)
   const pending = useRef<AbortController | null>(null)
   const snapshotPending = useRef<AbortController | null>(null)
 
@@ -90,6 +92,7 @@ export function CephFSDirectoryBrowser() {
     snapshotPending.current?.abort()
     setSnapshots([])
     setCreatingSnapshot(false)
+    setCreatingDirectory(false)
     setEditing(null)
     const controller = new AbortController()
     pending.current = controller
@@ -185,6 +188,31 @@ export function CephFSDirectoryBrowser() {
     }
   }
 
+  async function createDirectory(values: { name: string }) {
+    if (!selectedClusterId || !result || mutating) return
+    setMutating(true)
+    try {
+      const directory = `${result.path === '/' ? '' : result.path}/${values.name}`
+      await mutateResource('/filesystem/entry', 'POST', {
+        cluster_id: selectedClusterId, fs: result.filesystem, path: directory
+      })
+      setCreatingDirectory(false)
+      directoryForm.resetFields()
+      await load(result.filesystem, result.path)
+    } finally { setMutating(false) }
+  }
+
+  async function deleteDirectory(directory: DirectoryEntry) {
+    if (!selectedClusterId || !result || mutating) return
+    setMutating(true)
+    try {
+      await mutateResource('/filesystem/entry', 'DELETE', {
+        cluster_id: selectedClusterId, fs: result.filesystem, path: directory.path
+      })
+      await load(result.filesystem, result.path)
+    } finally { setMutating(false) }
+  }
+
   async function deleteSnapshot(snapshot: DirectorySnapshot) {
     if (!selectedClusterId || !result || mutating) return
     setMutating(true)
@@ -219,6 +247,7 @@ export function CephFSDirectoryBrowser() {
         <Typography.Text>当前位置：<Typography.Text code>{result.path}</Typography.Text></Typography.Text>
         {current?.parent && <Button onClick={() => load(result.filesystem, current.parent!)} disabled={loading || mutating}>返回上级</Button>}
         <Typography.Text type="secondary">观测时间：{new Date(result.observed_at).toLocaleString()}</Typography.Text>
+        <Button type="primary" disabled={mutating || loading} onClick={() => setCreatingDirectory(true)}>新建子目录</Button>
       </Space>
       <AppTable<DirectoryEntry>
         loading={loading}
@@ -233,7 +262,10 @@ export function CephFSDirectoryBrowser() {
           { title: '修改时间', dataIndex: 'modified_at', render: (value) => value || '—' },
           { title: '容量配额', render: (_, row) => formatQuota(row.quotas?.max_bytes, formatBytes) },
           { title: '文件数配额', render: (_, row) => formatQuota(row.quotas?.max_files, (value) => String(value)) },
-          { title: '操作', render: (_, row) => row.quotas ? <Button onClick={() => openQuota(row)}>设置配额</Button> : '根目录不设置配额' }
+          { title: '操作', render: (_, row) => <Space>
+            {row.quotas ? <Button disabled={mutating || loading} onClick={() => openQuota(row)}>设置配额</Button> : '根目录不设置配额'}
+            {row.path !== result.path && <Popconfirm title={`删除目录 ${row.name}？`} description="只允许删除空目录；目录有文件、子目录或快照时 Ceph 会拒绝。" onConfirm={() => deleteDirectory(row)}><Button danger disabled={mutating || loading}>删除目录</Button></Popconfirm>}
+          </Space> }
         ]}
       />
       <Card type="inner" title={`目录快照：${result.path}`} extra={<Space><Button loading={snapshotsLoading} onClick={() => loadSnapshots(result.filesystem, result.path)}>刷新</Button><Button type="primary" disabled={mutating} onClick={() => setCreatingSnapshot(true)}>创建快照</Button></Space>}>
@@ -264,6 +296,13 @@ export function CephFSDirectoryBrowser() {
       <Form form={snapshotForm} layout="vertical" onFinish={createSnapshot}>
         <Form.Item name="name" label="快照名称" rules={[{ required: true }, { pattern: /^(?![_.]{1,2}$)(?!_)[^/\r\n,]+$/, message: '名称不能以 _ 开头，且不能包含 /、逗号或换行' }]}>
           <Input placeholder="例如 release-2026-10-01" />
+        </Form.Item>
+      </Form>
+    </Modal>
+    <Modal title={`新建子目录：${result?.path ?? ''}`} open={creatingDirectory} confirmLoading={mutating} onCancel={() => !mutating && setCreatingDirectory(false)} onOk={() => directoryForm.submit()}>
+      <Form form={directoryForm} layout="vertical" onFinish={createDirectory}>
+        <Form.Item name="name" label="目录名称或相对路径" rules={[{ required: true }, { pattern: /^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))(?!.*[,*\r\n]).+$/, message: '请输入不含上级跳转、通配符、逗号或换行的相对路径' }]}>
+          <Input placeholder="例如 team/project" />
         </Form.Item>
       </Form>
     </Modal>
