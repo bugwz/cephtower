@@ -176,6 +176,8 @@ function renderOverview(data: ApiRecord, decodedName: string) {
       <Descriptions.Item label="对象数量">{poolObjectCount(data.objects)}</Descriptions.Item>
       <Descriptions.Item label="累计读取量">{poolCapacity(data.read_bytes)}</Descriptions.Item>
       <Descriptions.Item label="累计写入量">{poolCapacity(data.write_bytes)}</Descriptions.Item>
+      <Descriptions.Item label="累计读取次数">{poolObjectCount(data.read_operations)}</Descriptions.Item>
+      <Descriptions.Item label="累计写入次数">{poolObjectCount(data.write_operations)}</Descriptions.Item>
       <Descriptions.Item label="压缩数据实际占用">{poolCapacity(data.compress_bytes_used)}</Descriptions.Item>
       <Descriptions.Item label="压缩数据原始大小">{poolCapacity(data.compress_under_bytes)}</Descriptions.Item>
       <Descriptions.Item label="纠删码配置">{textValue(data.erasure_code_profile, '未采集')}</Descriptions.Item>

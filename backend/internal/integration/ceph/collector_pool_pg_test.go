@@ -46,7 +46,7 @@ func TestPoolPGStatesReachInventoryPayload(t *testing.T) {
 	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.pool":           []byte(`[{"pool":7,"pool_name":"pg-pool","type":3,"erasure_code_profile":"archive-ec","crush_rule":8}]`),
 		"collect.pool_pg_states": []byte(`{"pg_stats":[{"pgid":"7.0","state":"active+degraded"},{"pgid":"8.0","state":"down"}]}`),
-		"collect.pool_usage":     []byte(`{"pools":[{"id":7,"stats":{"percent_used":0.25,"stored":1024,"bytes_used":3072,"max_avail":8192,"objects":12345,"compress_bytes_used":512,"compress_under_bytes":1024,"rd_bytes":4096,"wr_bytes":0}}]}`),
+		"collect.pool_usage":     []byte(`{"pools":[{"id":7,"stats":{"percent_used":0.25,"stored":1024,"bytes_used":3072,"max_avail":8192,"objects":12345,"compress_bytes_used":512,"compress_under_bytes":1024,"rd_bytes":4096,"wr_bytes":0,"rd":42,"wr":0}}]}`),
 	}}}
 	rows, err := p.Collect(context.Background(), ClusterAccess{}, "storage")
 	if err != nil {
@@ -79,6 +79,9 @@ func TestPoolPGStatesReachInventoryPayload(t *testing.T) {
 		}
 		if decoded["objects"] != float64(12345) {
 			t.Fatalf("native object count missing: %s", data)
+		}
+		if decoded["read_operations"] != float64(42) || decoded["write_operations"] != float64(0) {
+			t.Fatalf("native IO operation counters missing: %s", data)
 		}
 		if decoded["read_bytes"] != float64(4096) || decoded["write_bytes"] != float64(0) {
 			t.Fatalf("native IO byte counters missing: %s", data)

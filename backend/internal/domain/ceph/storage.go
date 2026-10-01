@@ -23,6 +23,8 @@ type Pool struct {
 	Stored                   *uint64           `json:"stored"`
 	Objects                  *uint64           `json:"objects"`
 	ReadBytes                *uint64           `json:"read_bytes"`
+	ReadOperations           *uint64           `json:"read_operations"`
+	WriteOperations          *uint64           `json:"write_operations"`
 	WriteBytes               *uint64           `json:"write_bytes"`
 	CompressBytesUsed        *uint64           `json:"compress_bytes_used"`
 	CompressUnderBytes       *uint64           `json:"compress_under_bytes"`
