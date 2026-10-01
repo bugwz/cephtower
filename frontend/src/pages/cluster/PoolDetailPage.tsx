@@ -184,6 +184,10 @@ function renderOverview(data: ApiRecord, decodedName: string) {
       <Descriptions.Item label="应用标记" span={2}>{renderApplications(poolApplications(data))}</Descriptions.Item>
       <Descriptions.Item label="CRUSH 规则集">{textValue(data.crush_rule)}</Descriptions.Item>
       <Descriptions.Item label="压缩模式">{textValue(data.compression_mode, '未采集')}</Descriptions.Item>
+      <Descriptions.Item label="压缩算法">{textValue(data.compression_algorithm, '未采集')}</Descriptions.Item>
+      <Descriptions.Item label="最小压缩 Blob 大小">{poolCapacity(data.compression_min_blob_size)}</Descriptions.Item>
+      <Descriptions.Item label="最大压缩 Blob 大小">{poolCapacity(data.compression_max_blob_size)}</Descriptions.Item>
+      <Descriptions.Item label="所需压缩比（配置阈值）">{formatCompressionRatio(data.compression_required_ratio)}</Descriptions.Item>
       <Descriptions.Item label="最大字节数">{formatQuota(data.quota_max_bytes)}</Descriptions.Item>
       <Descriptions.Item label="最大对象数">{formatQuota(data.quota_max_objects)}</Descriptions.Item>
       <Descriptions.Item label="资源版本">{textValue(data.resource_version)}</Descriptions.Item>
@@ -250,6 +254,12 @@ function poolApplications(row: ApiRecord) {
 
 function poolType(row: ApiRecord) {
   return textValue(row.pool_type ?? row.type, 'replicated').toLowerCase() === 'erasure' ? 'erasure' : 'replicated'
+}
+
+function formatCompressionRatio(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
+    ? String(value)
+    : '未采集'
 }
 
 function formatQuota(value: unknown) {
