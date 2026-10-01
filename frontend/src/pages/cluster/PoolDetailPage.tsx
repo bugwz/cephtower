@@ -1,6 +1,6 @@
 import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button, Card, Descriptions, Empty, Input, Space, Table, Tag, Typography } from 'antd'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { isRecord, numberValue, textValue, type ApiRecord } from '../../api/client'
 import { getOptionalResource, refreshResource } from '../../api/resource'
@@ -64,6 +64,10 @@ export function PoolDetailPage() {
   const { name = '' } = useParams()
   const { selectedClusterId } = useClusterContext()
   const decodedName = name
+  const resourceScope = useRef({ clusterId: selectedClusterId, name: decodedName })
+  if (resourceScope.current.clusterId !== selectedClusterId || resourceScope.current.name !== decodedName) {
+    resourceScope.current = { clusterId: selectedClusterId, name: decodedName }
+  }
   const [refreshing, setRefreshing] = useState(false)
   const [detailSearch, setDetailSearch] = useState('')
   const [configSearch, setConfigSearch] = useState('')
@@ -84,8 +88,10 @@ export function PoolDetailPage() {
       return
     }
     setRefreshing(true)
+    const scope = resourceScope.current
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kind: 'pool' }), '刷新成功')
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kind: 'pool' }), false)
+      if (resourceScope.current !== scope) return
       await refresh()
     } finally {
       setRefreshing(false)

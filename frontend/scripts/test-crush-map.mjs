@@ -141,6 +141,20 @@ const pgStatus = new Function('isRecord', `${pgStatusCode}; return poolPGStatus`
 assert.equal(pgStatus({ 'active+clean': 8, down: 2 }), '8 active+clean, 2 down')
 assert.equal(pgStatus({ 'active+degraded': 3 }), '3 active+degraded')
 const detailSource = readFileSync(new URL('../src/pages/cluster/PoolDetailPage.tsx', import.meta.url), 'utf8')
+const detailTree = ts.createSourceFile('PoolDetailPage.tsx', detailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const detailPageFn = detailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'PoolDetailPage')
+const detailRefreshFn = detailPageFn.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'refreshPoolDetail')
+const detailRefreshCode = ts.transpileModule(detailRefreshFn.getText(detailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const changed of [false, true]) {
+  let finish, reads = 0
+  const scope = { current: { clusterId: 1, name: 'a' } }
+  const refreshDetail = new Function('resourceScope', 'operationMutation', 'refresh', `const selectedClusterId=1, decodedName='a', refreshing=false, setRefreshing=()=>{}; ${detailRefreshCode}; return refreshPoolDetail`)(scope, { run: (_action, success) => { assert.equal(success, false); return new Promise((resolve) => { finish = resolve }) } }, () => { reads++ })
+  const pending = refreshDetail()
+  if (changed) scope.current = { clusterId: 2, name: 'b' }
+  finish()
+  await pending
+  assert.equal(reads, changed ? 0 : 1, 'old collection completion must not invoke an obsolete detail loader')
+}
 assert.ok(detailSource.includes('pg_status_display: poolPGStatus(row.pg_status)'))
 assert.ok(!detailSource.includes('active+clean'), 'detail view must not fabricate healthy PG states')
 for (const field of ['stored', 'bytes_used', 'max_avail']) assert.ok(detailSource.includes(`poolCapacity(data.${field})`))
