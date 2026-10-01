@@ -30,6 +30,12 @@ function configurationRuntime(value: unknown): string {
 
 export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) {
   const { selectedClusterId } = useClusterContext()
+  const scopeRef = useRef({ clusterId: selectedClusterId, moduleName })
+  if (scopeRef.current.clusterId !== selectedClusterId || scopeRef.current.moduleName !== moduleName) {
+    scopeRef.current = { clusterId: selectedClusterId, moduleName }
+  }
+  const scope = scopeRef.current
+  const running = useRef(false)
   const [search, setSearch] = useState('')
   const [busy, setBusy] = useState(false)
   const [open, setOpen] = useState(false)
@@ -60,14 +66,16 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
     return () => abort.abort()
   }, [open, selectedClusterId, watchedName])
   async function collect() {
-    if (!selectedClusterId) return
+    if (!selectedClusterId || scopeRef.current !== scope) return
     await refreshResource({ clusterId: selectedClusterId, kinds: ['config_value', 'config_option'] })
+    if (scopeRef.current !== scope) return
     await refresh()
   }
   async function run(work: () => Promise<void>) {
-    if (busy || !selectedClusterId) return
+    if (running.current || !selectedClusterId || scopeRef.current !== scope) return
+    running.current = true
     setBusy(true)
-    try { await work() } finally { setBusy(false) }
+    try { await work() } finally { running.current = false; setBusy(false) }
   }
   function edit(row?: ApiRecord) {
     setEditing(row?.who ? row : null)
@@ -87,15 +95,20 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
   async function save(values: ConfigurationForm) {
     await run(async () => {
       await mutateResource('/configuration/value', 'PUT', { cluster_id: selectedClusterId, ...values, value: values.value ?? '' }, editing ? { ifMatch: String(editing.resource_version) } : undefined)
+      if (scopeRef.current !== scope) return
       setOpen(false); message.success('集群配置已保存'); await collect()
     })
   }
   function remove(row: ApiRecord) {
     Modal.confirm({ title: `删除 ${String(row.who)} 的 ${String(row.name)} 覆盖值`, content: '删除后，该作用域将继承其他适用配置或使用默认值。', okText: '删除', okType: 'danger',
-      onOk: () => run(async () => {
-        await mutateResource('/configuration/value', 'DELETE', { cluster_id: selectedClusterId, who: row.who, name: row.name }, { ifMatch: String(row.resource_version) })
-        message.success('配置覆盖值已删除'); await collect()
-      }) })
+      onOk: () => {
+        if (scopeRef.current !== scope) throw new Error('集群或模块已切换，请重新确认配置删除')
+        return run(async () => {
+          await mutateResource('/configuration/value', 'DELETE', { cluster_id: selectedClusterId, who: row.who, name: row.name }, { ifMatch: String(row.resource_version) })
+          if (scopeRef.current !== scope) return
+          message.success('配置覆盖值已删除'); await collect()
+        })
+      } })
   }
   const matches = (row: ApiRecord) => `${row.name} ${row.who ?? ''} ${row.value ?? ''}`.toLowerCase().includes(search.toLowerCase())
   const blocked = busy || loading || !selectedClusterId || Boolean(error)

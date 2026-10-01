@@ -28,3 +28,48 @@ assert.ok(source.includes('configurationOverrides(data?.values ?? [], detail.nam
 assert.ok(source.includes('覆盖值不等同于某个守护进程最终生效的值'))
 assert.ok(source.includes("value === '' ? '空字符串'"))
 console.log('Configuration metadata and scoped override checks passed')
+
+const page = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ConfigurationPage')
+const mutationCode = ts.transpileModule(page.body.statements.filter((node) => ts.isFunctionDeclaration(node) && ['run', 'collect', 'save', 'remove'].includes(node.name.text)).map((node) => node.getText(tree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const action of ['save', 'remove']) for (const timing of ['before', 'mutation', 'collection', 'unchanged']) {
+  const scope = { clusterId: 7, moduleName: 'test' }, scopeRef = { current: scope }, events = []
+  let modal, finishMutation, finishCollection
+  const env = {
+    scope, scopeRef, selectedClusterId: 7, running: { current: false }, editing: { resource_version: 3 },
+    setBusy: () => {}, setOpen: () => { events.push('close') }, message: { success: () => { events.push('success') } },
+    mutateResource: async (path, method, body, options) => {
+      assert.equal(path, '/configuration/value'); assert.equal(body.cluster_id, 7); assert.equal(options.ifMatch, '3')
+      assert.equal(method, action === 'save' ? 'PUT' : 'DELETE')
+      events.push('mutate'); await new Promise((resolve) => { finishMutation = resolve })
+    },
+    refreshResource: async (body) => {
+      assert.deepEqual(body, { clusterId: 7, kinds: ['config_value', 'config_option'] })
+      events.push('collect'); await new Promise((resolve) => { finishCollection = resolve })
+    },
+    refresh: async () => { events.push('read') }, Modal: { confirm: (options) => { modal = options } }
+  }
+  const functions = new Function('env', `const { ${Object.keys(env).join(', ')} } = env; ${mutationCode}; return { save, remove, run }`)(env)
+  if (action === 'remove') functions.remove({ who: 'global', name: 'test', resource_version: 3 })
+  const invoke = () => action === 'save' ? functions.save({ who: 'global', name: 'test', value: '0' }) : modal.onOk()
+  if (timing === 'before') {
+    scopeRef.current = { ...scope }
+    if (action === 'remove') assert.throws(invoke, /已切换/)
+    else await invoke()
+    assert.deepEqual(events, []); continue
+  }
+  const pending = invoke()
+  await functions.run(async () => assert.fail('synchronous lock must reject overlapping work'))
+  if (timing === 'mutation') scopeRef.current = { ...scope }
+  finishMutation()
+  for (let i = 0; i < 5; i++) await Promise.resolve()
+  if (timing === 'mutation') {
+    await pending; assert.deepEqual(events, ['mutate']); continue
+  }
+  if (timing === 'collection') scopeRef.current = { ...scope }
+  finishCollection(); await pending
+  const expected = action === 'save' ? ['mutate', 'close', 'success', 'collect'] : ['mutate', 'success', 'collect']
+  if (timing === 'unchanged') expected.push('read')
+  assert.deepEqual(events, expected)
+  assert.equal(env.running.current, false)
+}
+console.log('Configuration mutation scope checks passed')
