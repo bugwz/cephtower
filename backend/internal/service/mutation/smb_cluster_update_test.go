@@ -6,6 +6,28 @@ import (
 	"testing"
 )
 
+func TestSMBClusterAuthSwitchRequiresSourcesBeforeApply(t *testing.T) {
+	for _, mode := range []string{"user", "active-directory"} {
+		t.Run(mode, func(t *testing.T) {
+			service, _, id := newCephUserService(t)
+			old := "user"
+			if mode == "user" {
+				old = "active-directory"
+			}
+			before := `{"resource_type":"ceph.smb.cluster","cluster_id":"a","auth_mode":"` + old + `"}`
+			runner := &directoryRenameExecutor{outputs: map[string]string{"smb_cluster.update.pre_check": before}}
+			service.executor = runner
+			request := Request{ClusterID: id, Action: "smb_cluster.update", ResourceKey: "smb/cluster/a", Parameters: map[string]any{"auth_mode": mode}}
+			if _, err := service.Execute(context.Background(), request); err == nil {
+				t.Fatal("mode-only switch accepted")
+			}
+			if len(runner.specs) != 1 || runner.specs[0].Mutating {
+				t.Fatalf("incomplete switch reached mutation: %v", runner.specs)
+			}
+		})
+	}
+}
+
 func TestSMBClusterUpdatePreservesSettings(t *testing.T) {
 	service, _, id := newCephUserService(t)
 	request := Request{ClusterID: id, Action: "smb_cluster.update", ResourceKey: "smb/cluster/a", Parameters: map[string]any{"auth_mode": "user"}}

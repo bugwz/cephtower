@@ -50,6 +50,17 @@ func smbClusterUpdateJSON(data []byte, request Request) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if record["auth_mode"] != mode {
+		if mode == "active-directory" {
+			_, hasRealm := request.Parameters["domain_realm"]
+			_, hasJoin := request.Parameters["domain_join_ref"]
+			if !hasRealm || !hasJoin {
+				return nil, invalid("switching to active-directory requires domain_realm and domain_join_ref")
+			}
+		} else if _, exists := request.Parameters["user_group_ref"]; !exists {
+			return nil, invalid("switching to user authentication requires user_group_ref")
+		}
+	}
 	record["auth_mode"] = mode
 	if _, exists := request.Parameters["clustering"]; exists {
 		clustering, err := enum(request.Parameters, "clustering", "default", "always", "never")
