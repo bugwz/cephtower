@@ -1,4 +1,5 @@
 import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
+import { NFSExportDetails } from './NFSExportDetails'
 import { nfsExportEditReason, nfsExportInitialValues, nfsFSAL, nfsSquashOptions } from './nfsExportFields'
 import { CephFSDirectoryBrowser } from './CephFSDirectoryBrowser'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
@@ -600,6 +601,7 @@ const definitions: Record<
     path: '/nfs/exports',
     requiredCapabilities: ['nfs'],
     rowKeyCandidates: ['natural_key', 'export_id', 'pseudo', 'name'],
+    detailContent: (row) => <NFSExportDetails row={row} />,
     createAction: {
       title: '新建 NFS 导出',
       buttonLabel: '新建导出',
