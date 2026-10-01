@@ -253,6 +253,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "nfs_export.delete" && !nfsExportDeleted(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "NFS export removal was accepted but its absence could not be verified; the change may already have taken effect", Retryable: true}
 		}
+		if (request.Action == "nfs_cluster.create" || request.Action == "nfs_cluster.delete") && !nfsClusterStateMatches(request, checked.Stdout) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "NFS cluster command was accepted but its expected presence or absence could not be verified; the change may already have taken effect", Retryable: true}
+		}
 	}
 	if request.Action == "rgw_zone.update" && optional(request.Parameters, "zonegroup") != "" {
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".group_post_check", Binary: executor.BinaryRGWAdmin, Args: []string{"zonegroup", "get", "--rgw-zonegroup", optional(request.Parameters, "zonegroup"), "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
