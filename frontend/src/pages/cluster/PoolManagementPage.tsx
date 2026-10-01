@@ -983,6 +983,7 @@ export function PoolManagementPage() {
 
 function poolDeleteBlocked(row: ApiRecord): string | undefined {
   if (row.stale !== false) return '池库存过期或状态未知，请重新采集'
+  if (Array.isArray(row.flags) && row.flags.includes('nodelete')) return '存储池已设置 nodelete 删除保护'
   if (!resourceName(row)) return '池名称不可用'
   const version = Number(row.resource_version)
   if (!Number.isSafeInteger(version) || version <= 0) return '资源版本不可用，请重新采集'

@@ -180,6 +180,8 @@ const deleteGuardFn = poolTree.statements.find((node) => ts.isFunctionDeclaratio
 const deleteGuardCode = ts.transpileModule(deleteGuardFn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const deleteGuard = new Function('resourceName', `${deleteGuardCode}; return poolDeleteBlocked`)((row) => row.name ?? '')
 assert.equal(deleteGuard({ name: 'a', stale: false, resource_version: 3 }), undefined)
+assert.equal(deleteGuard({ name: 'a', stale: false, resource_version: 3, flags: ['hashpspool', 'nodelete'] }), '存储池已设置 nodelete 删除保护')
+assert.equal(deleteGuard({ name: 'a', stale: false, resource_version: 3, flags: ['hashpspool'] }), undefined)
 for (const row of [{ name: 'a' }, { name: 'a', stale: true, resource_version: 3 }, { name: 'a', stale: false }, { name: '', stale: false, resource_version: 3 }]) assert.ok(deleteGuard(row))
 const deleteFn = poolPage.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'deletePool')
 const deleteCode = ts.transpileModule(deleteFn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
