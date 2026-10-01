@@ -374,6 +374,16 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		return handler.MutationRequestContract("upgrade.check")
 	case "POST /upgrade/action":
 		return handler.MutationRequestContract("upgrade.action")
+	case "POST /crush/rule":
+		return handler.MutationRequestContract("crush_rule.create")
+	case "PATCH /crush/rule":
+		return handler.MutationRequestContract("crush_rule.update")
+	case "DELETE /crush/rule":
+		return handler.MutationRequestContract("crush_rule.delete")
+	case "POST /erasure/code/profile":
+		return handler.MutationRequestContract("erasure_code_profile.create")
+	case "DELETE /erasure/code/profile":
+		return handler.MutationRequestContract("erasure_code_profile.delete")
 	case "GET /ceph/users/export":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "entities": stringArrayField(true)}
 	case "POST /rbd/mirroring/bootstrap/token":
