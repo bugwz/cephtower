@@ -36,6 +36,21 @@ func smbClusterUpdateJSON(data []byte, request Request) ([]byte, error) {
 		return nil, err
 	}
 	record["auth_mode"] = mode
+	if _, exists := request.Parameters["count"]; exists {
+		count, err := optionalPositiveInteger(request.Parameters, "count")
+		if err != nil || count == "" {
+			return nil, invalid("count must be a positive integer")
+		}
+		placement, ok := record["placement"].(map[string]any)
+		if !ok {
+			if record["placement"] != nil {
+				return nil, invalid("existing SMB placement is invalid")
+			}
+			placement = map[string]any{}
+		}
+		placement["count"] = json.Number(count)
+		record["placement"] = placement
+	}
 	_, hasRealm := request.Parameters["domain_realm"]
 	_, hasJoin := request.Parameters["domain_join_ref"]
 	if hasRealm || hasJoin {

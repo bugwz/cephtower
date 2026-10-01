@@ -361,6 +361,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -1050,6 +1052,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -3034,6 +3038,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -3723,6 +3729,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -4630,6 +4638,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -5413,6 +5423,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -6102,6 +6114,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -6982,6 +6996,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -7767,6 +7783,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -8457,6 +8475,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -9390,6 +9410,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -10173,6 +10195,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -10958,6 +10982,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -11741,6 +11767,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -12430,6 +12458,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -13365,6 +13395,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -14550,6 +14582,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -15240,6 +15274,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -15930,6 +15966,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -17257,6 +17295,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -18092,6 +18132,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -18877,6 +18919,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -19566,6 +19610,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -20911,6 +20957,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -21600,6 +21648,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -22306,6 +22356,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -23089,6 +23141,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -23778,6 +23832,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -24468,6 +24524,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -25436,6 +25494,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -26316,6 +26376,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -27099,6 +27161,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -27788,6 +27852,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -28610,6 +28676,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -29300,6 +29368,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -30405,6 +30475,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -31380,6 +31452,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -32163,6 +32237,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -32948,6 +33024,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -33731,6 +33809,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -34420,6 +34500,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -35300,6 +35382,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -36083,6 +36167,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -36772,6 +36858,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -37557,6 +37645,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -38246,6 +38336,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -39031,6 +39123,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -39720,6 +39814,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -40505,6 +40601,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -41288,6 +41386,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -41977,6 +42077,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -42930,6 +43032,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -43714,6 +43818,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -44404,6 +44510,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -45094,6 +45202,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -45878,6 +45988,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -46602,6 +46714,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -47577,6 +47691,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -48360,6 +48476,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -49049,6 +49167,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -49834,6 +49954,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -50524,6 +50646,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -51214,6 +51338,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -51904,6 +52030,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -52689,6 +52817,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -53472,6 +53602,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -54161,6 +54293,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -54968,6 +55102,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -55657,6 +55793,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -56346,6 +56484,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -57422,6 +57562,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -58184,6 +58326,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -58874,6 +59018,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -59563,6 +59709,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -60348,6 +60496,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -61132,6 +61282,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -61822,6 +61974,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -62623,6 +62777,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -63312,6 +63468,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -64001,6 +64159,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -64691,6 +64851,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -65476,6 +65638,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -66259,6 +66423,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -66948,6 +67114,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -67739,6 +67907,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -68429,6 +68599,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -69119,6 +69291,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -69904,6 +70078,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -70594,6 +70770,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -71283,6 +71461,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -72068,6 +72248,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -72757,6 +72939,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -73446,6 +73630,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -74136,6 +74322,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -75016,6 +75204,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -75799,6 +75989,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -76488,6 +76680,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -77178,6 +77372,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -77868,6 +78064,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -78557,6 +78755,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -79247,6 +79447,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -79937,6 +80139,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -80722,6 +80926,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -81411,6 +81617,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -82101,6 +82309,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -82790,6 +83000,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -83810,6 +84022,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -84593,6 +84807,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -85282,6 +85498,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -86067,6 +86285,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -86850,6 +87070,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -87539,6 +87761,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -88324,6 +88548,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -89107,6 +89333,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -89796,6 +90024,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -90676,6 +90906,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:
@@ -91366,6 +91598,8 @@ paths:
                       type: integer
                 cors:
                   description: action-specific JSON value
+                count:
+                  type: integer
                 create_image:
                   type: boolean
                 createdBy:

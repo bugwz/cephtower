@@ -129,3 +129,29 @@ func TestSMBClusterDomainSettings(t *testing.T) {
 		t.Fatal("domain in user mode accepted")
 	}
 }
+
+func TestSMBClusterPlacementCount(t *testing.T) {
+	request := Request{ResourceKey: "smb/cluster/a", Parameters: map[string]any{"auth_mode": "user", "count": json.Number("3")}}
+	before := []byte(`{"resource_type":"ceph.smb.cluster","cluster_id":"a","auth_mode":"user","placement":{"count":2,"label":"smb","host_pattern":"node*"}}`)
+	data, err := smbClusterUpdateJSON(before, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var record map[string]any
+	if err := json.Unmarshal(data, &record); err != nil {
+		t.Fatal(err)
+	}
+	placement := record["placement"].(map[string]any)
+	if placement["count"] != float64(3) || placement["label"] != "smb" || placement["host_pattern"] != "node*" {
+		t.Fatal(placement)
+	}
+	if smbClusterUpdateMatches(data, before, request) || !smbClusterUpdateMatches(data, data, request) {
+		t.Fatal("count readback not verified")
+	}
+	for _, bad := range []any{nil, 0, -1, 1.5, true, "invalid"} {
+		request.Parameters["count"] = bad
+		if _, err := smbClusterUpdateJSON(before, request); err == nil {
+			t.Fatalf("invalid count accepted: %v", bad)
+		}
+	}
+}

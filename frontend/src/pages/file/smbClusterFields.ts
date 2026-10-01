@@ -4,13 +4,22 @@ export function smbClusterInitialValues(row?: ApiRecord) {
   const sources = row?.user_group_settings
   const domain = row?.domain_settings as ApiRecord | undefined
   const joins = domain?.join_sources
+  const count = (row?.placement as ApiRecord | undefined)?.count
   return {
+    count: typeof count === 'number' ? count : undefined,
     domain_realm: typeof domain?.realm === 'string' ? domain.realm : undefined,
     domain_join_ref: Array.isArray(joins) && joins.every((source) => source && source.source_type === 'resource' && typeof source.ref === 'string') ? joins.map((source) => source.ref).join('\n') : undefined,
     user_group_ref: Array.isArray(sources) && sources.every((source) => source && typeof source === 'object' && source.source_type === 'resource' && typeof source.ref === 'string') ? sources.map((source) => source.ref).join('\n') : undefined,
     auth_mode: row?.auth_mode === 'user' || row?.auth_mode === 'active-directory' ? row.auth_mode : undefined,
     custom_dns: Array.isArray(row?.custom_dns) && row.custom_dns.every((value) => typeof value === 'string') ? row.custom_dns.join('\n') : undefined
   }
+}
+
+export function smbClusterCountBody(values: ApiRecord) {
+  if (values.count === undefined || values.count === null || values.count === '') return {}
+  const count = Number(values.count)
+  if (!Number.isSafeInteger(count) || count < 1) throw new Error('实例数量必须为正整数')
+  return { count }
 }
 
 export function smbClusterDomainBody(values: ApiRecord) {
