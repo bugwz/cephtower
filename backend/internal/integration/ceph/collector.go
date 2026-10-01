@@ -861,8 +861,10 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		if strings.TrimSpace(wire.PoolName) == "" {
 			return nil, fmt.Errorf("parse collect.pool response: pool_name is required")
 		}
-		kind := "replicated"
-		if wire.Type == 3 {
+		kind := "unknown"
+		if wire.Type == 1 {
+			kind = "replicated"
+		} else if wire.Type == 3 {
 			kind = "erasure"
 		}
 		quota := p.collectPoolQuota(ctx, access, wire.PoolName)

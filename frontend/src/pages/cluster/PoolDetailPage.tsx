@@ -10,7 +10,7 @@ import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
-import { poolPGStatus, poolCapacity, poolObjectCount, poolUsage, poolDataProtection } from './PoolManagementPage'
+import { poolPGStatus, poolCapacity, poolObjectCount, poolUsage, poolDataProtection, poolKind } from './PoolManagementPage'
 
 const { Text } = Typography
 const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
@@ -205,7 +205,7 @@ function poolDetailFreshnessWarning(row: ApiRecord): string | undefined {
 }
 
 function normalizePoolDetail(row: ApiRecord): ApiRecord {
-  const type = poolType(row)
+  const type = poolKind(row) ?? '未知'
   return {
     ...row,
     type,
@@ -250,10 +250,6 @@ function poolApplications(row: ApiRecord) {
     return Object.keys(row.application_metadata)
   }
   return []
-}
-
-function poolType(row: ApiRecord) {
-  return textValue(row.pool_type ?? row.type, 'replicated').toLowerCase() === 'erasure' ? 'erasure' : 'replicated'
 }
 
 function formatCompressionRatio(value: unknown) {

@@ -318,6 +318,7 @@ export function PoolManagementPage() {
   }
 
   function openEdit(row: ApiRecord) {
+    if (!poolKind(row)) { message.error('池类型未采集或不受支持，无法编辑'); return }
     setFormMode('edit')
     setEditingPool(row)
     form.setFieldsValue(poolInitialValues(row, data?.crushRules))
@@ -508,7 +509,7 @@ export function PoolManagementPage() {
               filterKey: false,
               render: (_, row) => (
                 <TableActions>
-                  <TableAction onClick={() => openEdit(row)}>编辑</TableAction>
+                  <TableAction disabled={!poolKind(row)} onClick={() => openEdit(row)}>编辑</TableAction>
                   <TableAction onClick={() => navigate(`/cluster/pool/${encodeURIComponent(resourceName(row))}`)}>详情</TableAction>
                   <TableAction danger disabled={loading || Boolean(error) || Boolean(poolDeleteBlocked(row))} title={poolDeleteBlocked(row)} onClick={() => deletePool(row)}>删除</TableAction>
                 </TableActions>
@@ -1004,7 +1005,7 @@ function normalizePoolRow(row: ApiRecord): ApiRecord {
   return {
     ...row,
     name,
-    type: poolType,
+    type: poolType ?? '未知',
     data_protection_display: poolDataProtection(row),
     applications: poolApplications(row),
     applications_display: poolApplications(row).join(', '),
@@ -1020,13 +1021,15 @@ function normalizePoolRow(row: ApiRecord): ApiRecord {
 }
 
 function poolInitialValues(row: ApiRecord, crushRules: ApiRecord[] = []): PoolFormValues {
+  const kind = poolKind(row)
+  if (!kind) throw new Error('池类型未采集或不受支持，无法编辑')
   const quotaBytes = numberValue(row.quota_max_bytes ?? row.max_bytes) ?? 0
   const quota = bytesForForm(quotaBytes, 'GiB')
   const minBlobSize = bytesForForm(numberValue(row.compression_min_blob_size), 'B', true)
   const maxBlobSize = bytesForForm(numberValue(row.compression_max_blob_size), 'MiB', true)
   return {
     name: resourceName(row),
-    pool_type: poolKind(row),
+    pool_type: kind,
     pg_autoscale_mode: poolAutoscaleMode(row),
     pg_num: numberValue(row.pg_num) ?? 32,
     size: numberValue(row.size) ?? 3,
@@ -1491,8 +1494,10 @@ function readableCrushRule(value: unknown, crushRules: ApiRecord[] = []) {
   return textValue(value, '')
 }
 
-function poolKind(row: ApiRecord): 'replicated' | 'erasure' {
-  return textValue(row.pool_type ?? row.type, 'replicated').toLowerCase() === 'erasure' ? 'erasure' : 'replicated'
+export function poolKind(row: ApiRecord): 'replicated' | 'erasure' | undefined {
+  if (row.type === 'replicated') return 'replicated'
+  if (row.type === 'erasure') return 'erasure'
+  return undefined
 }
 
 function poolAutoscaleMode(row: ApiRecord): PoolFormValues['pg_autoscale_mode'] {
