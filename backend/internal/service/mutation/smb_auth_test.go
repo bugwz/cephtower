@@ -82,7 +82,7 @@ func TestSMBJoinAuthCreation(t *testing.T) {
 	}
 	runner.outputs[request.Action+".pre_check"] = `{"resources":[]}`
 	runner.failID = request.Action
-	if _, err := service.Execute(context.Background(), request); err == nil || err.Error() != "SMB credential creation failed" {
+	if _, err := service.Execute(context.Background(), request); err == nil || err.Error() != "SMB credential write failed" {
 		t.Fatalf("native error was not replaced: %v", err)
 	}
 	for _, bad := range []string{`null`, `{"resources":[]}`, `{"resources":[{"resource_type":"ceph.smb.join.auth","auth_id":"target","auth":{"username":"other"}}]}`, good + ` {}`} {
@@ -94,5 +94,37 @@ func TestSMBJoinAuthCreation(t *testing.T) {
 		if _, err := smbJoinAuthCreateJSON(params); err == nil {
 			t.Fatal("invalid creation accepted")
 		}
+	}
+}
+
+func TestSMBJoinAuthUpdate(t *testing.T) {
+	service, _, id := newCephUserService(t)
+	r := Request{ClusterID: id, Action: "smb_join_auth.update", ResourceKey: "smb/join/auth/target", Parameters: map[string]any{"name": "target", "username": "new", "password": "replacement"}}
+	old := `{"resources":[{"resource_type":"ceph.smb.join.auth","auth_id":"target","auth":{"username":"old","password":"***"},"linked_to_cluster":"a"}]}`
+	updated := `{"resources":[{"resource_type":"ceph.smb.join.auth","auth_id":"target","auth":{"username":"new","password":"***"}}]}`
+	runner := &directoryRenameExecutor{outputs: map[string]string{r.Action + ".pre_check": old, r.Action: `{"success":true}`, r.Action + ".post_check": updated}}
+	service.executor = runner
+	if _, err := service.Execute(context.Background(), r); err != nil {
+		t.Fatal(err)
+	}
+	var payload map[string]any
+	if json.Unmarshal(runner.specs[1].Stdin, &payload) != nil || payload["linked_to_cluster"] != nil || payload["auth"].(map[string]any)["password"] != "replacement" {
+		t.Fatal("replacement payload invalid")
+	}
+	for _, before := range []string{`{"resources":[]}`, `null`, `{}`, `{"resources":[null]}`} {
+		runner.specs = nil
+		runner.outputs[r.Action+".pre_check"] = before
+		if _, err := service.Execute(context.Background(), r); err == nil || len(runner.specs) != 1 {
+			t.Fatal("invalid precheck permitted update")
+		}
+	}
+	runner.outputs[r.Action+".pre_check"] = old
+	runner.outputs[r.Action+".post_check"] = old
+	if _, err := service.Execute(context.Background(), r); err == nil {
+		t.Fatal("unchanged credentials accepted")
+	}
+	r.Parameters["name"] = "different"
+	if _, err := build(r, r.Parameters); err == nil {
+		t.Fatal("identity mismatch accepted")
 	}
 }

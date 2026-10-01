@@ -10,8 +10,12 @@ func isSMBAuthDelete(action string) bool {
 	return action == "smb_join_auth.delete" || action == "smb_usersgroups.delete"
 }
 
+func isSMBJoinAuthWrite(action string) bool {
+	return action == "smb_join_auth.create" || action == "smb_join_auth.update"
+}
+
 func smbAuthResourceType(action string) (string, string) {
-	if action == "smb_join_auth.delete" || action == "smb_join_auth.create" {
+	if action == "smb_join_auth.delete" || isSMBJoinAuthWrite(action) {
 		return "ceph.smb.join.auth", "auth_id"
 	}
 	return "ceph.smb.usersgroups", "users_groups_id"
@@ -69,6 +73,10 @@ func smbJoinAuthCreated(request Request, raw []byte) bool {
 }
 
 func smbAuthDeleted(request Request, raw []byte) bool {
+	return smbAuthPresenceMatches(request, raw, false)
+}
+
+func smbAuthPresenceMatches(request Request, raw []byte, present bool) bool {
 	var response struct {
 		Resources []map[string]any `json:"resources"`
 	}
@@ -79,12 +87,14 @@ func smbAuthDeleted(request Request, raw []byte) bool {
 	resourceType, idField := smbAuthResourceType(request.Action)
 	target := last(resourceTail(request.ResourceKey))
 	seen := map[string]bool{}
+	found := false
 	for _, item := range response.Resources {
 		id, _ := item[idField].(string)
-		if item["resource_type"] != resourceType || !smbResourceIDPattern.MatchString(id) || seen[id] || id == target {
+		if item["resource_type"] != resourceType || !smbResourceIDPattern.MatchString(id) || seen[id] {
 			return false
 		}
 		seen[id] = true
+		found = found || id == target
 	}
-	return true
+	return found == present
 }

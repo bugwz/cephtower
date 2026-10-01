@@ -76,6 +76,9 @@ for (const [key, path, columns] of [
   assert.equal(value.columns.at(-1).render('cluster-a'), 'cluster-a')
   if (key === 'smbJoinAuths') {
     assert.equal(value.createAction.fields.find((field) => field.name === 'password').type, 'password')
+    assert.equal(value.updateAction.fields.find((field) => field.name === 'password').required, true)
+    assert.deepEqual(value.updateAction.initialValues({ username: 'admin', password: 'must-not-copy', linked_to_cluster: 'a' }), { username: 'admin', linked_to_cluster: 'a' })
+    assert.deepEqual(value.updateAction.buildBody({ name: 'other', username: 'new', password: 'replacement' }, 17, { name: 'original' }), { cluster_id: 17, name: 'original', username: 'new', password: 'replacement' })
     assert.deepEqual(value.createAction.buildBody({ name: 'auth', username: 'admin', password: 'test-secret' }, 17), { cluster_id: 17, name: 'auth', username: 'admin', password: 'test-secret' })
   } else assert.equal(value.createAction, undefined)
   const deletePath = key === 'smbJoinAuths' ? '/smb/join/auth' : '/smb/usersgroup'

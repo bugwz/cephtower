@@ -737,6 +737,10 @@ func (h *Handler) CreateSMBJoinAuth(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("smb_join_auth", "smb_join_auth.create", "medium")(w, r)
 }
 
+func (h *Handler) UpdateSMBJoinAuth(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("smb_join_auth", "smb_join_auth.update", "high")(w, r)
+}
+
 func (h *Handler) DeleteSMBUsersGroup(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("smb_usersgroups", "smb_usersgroups.delete", "high")(w, r)
 }

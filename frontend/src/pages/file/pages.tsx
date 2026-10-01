@@ -752,6 +752,20 @@ const definitions: Record<
       ],
       buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: values.name, username: values.username, password: values.password, ...(values.linked_to_cluster ? { linked_to_cluster: values.linked_to_cluster } : {}) })
     },
+    updateAction: {
+      title: '更新域加入凭据',
+      path: '/smb/join/auth',
+      method: 'PATCH',
+      successMessage: '凭据更新及元数据核验成功（尚未验证域登录）',
+      confirmation: () => '将替换此凭据的账号、密码和绑定配置，可能影响引用它的集群。绑定留空将解除绑定。确认继续？',
+      fields: [
+        { name: 'username', label: '域账号名', required: true },
+        { name: 'password', label: '域账号密码（必须重新输入，不回填旧密码）', type: 'password', required: true },
+        { name: 'linked_to_cluster', label: '绑定 SMB 集群（留空解除绑定）', type: 'select', optionsLoader: smbClusterOptions }
+      ],
+      initialValues: (row) => ({ username: typeof row?.username === 'string' ? row.username : undefined, linked_to_cluster: typeof row?.linked_to_cluster === 'string' ? row.linked_to_cluster : undefined }),
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: resourceName(row), username: values.username, password: values.password, ...(values.linked_to_cluster ? { linked_to_cluster: values.linked_to_cluster } : {}) })
+    },
     deleteAction: {
       title: '删除域加入凭据',
       confirmation: (row) => `确认删除域加入凭据 ${resourceName(row)}？密码无法从本系统恢复。仍被集群引用的资源将由 Ceph 拒绝删除，请先调整集群认证引用。`,
