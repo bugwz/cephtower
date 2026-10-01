@@ -67,8 +67,15 @@ func smbJoinAuthCreated(request Request, raw []byte) bool {
 			return false
 		}
 		want, _ := request.Parameters["linked_to_cluster"].(string)
-		actual, _ := item["linked_to_cluster"].(string)
-		if actual != want || (item["intent"] != nil && item["intent"] != "present") {
+		if linked := item["linked_to_cluster"]; linked != nil {
+			actual, ok := linked.(string)
+			if !ok || !smbResourceIDPattern.MatchString(actual) || actual != want {
+				return false
+			}
+		} else if want != "" {
+			return false
+		}
+		if item["intent"] != nil && item["intent"] != "present" {
 			return false
 		}
 		found = true

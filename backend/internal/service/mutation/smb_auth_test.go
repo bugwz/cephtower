@@ -123,8 +123,29 @@ func TestSMBJoinAuthUpdate(t *testing.T) {
 	if _, err := service.Execute(context.Background(), r); err == nil {
 		t.Fatal("unchanged credentials accepted")
 	}
+	runner.outputs[r.Action+".post_check"] = `{"resources":[{"resource_type":"ceph.smb.join.auth","auth_id":"target","auth":{"username":"new","password":"***"},"linked_to_cluster":false}]}`
+	if _, err := service.Execute(context.Background(), r); err == nil {
+		t.Fatal("malformed cluster binding reported as successful unlink")
+	}
 	r.Parameters["name"] = "different"
 	if _, err := build(r, r.Parameters); err == nil {
 		t.Fatal("identity mismatch accepted")
+	}
+}
+
+func TestSMBJoinAuthLinkedClusterReadback(t *testing.T) {
+	request := Request{Parameters: map[string]any{"name": "target", "username": "admin"}}
+	for _, wanted := range []string{"", "cluster-a"} {
+		delete(request.Parameters, "linked_to_cluster")
+		if wanted != "" {
+			request.Parameters["linked_to_cluster"] = wanted
+		}
+		for _, field := range []string{"", `,"linked_to_cluster":null`, `,"linked_to_cluster":"cluster-a"`, `,"linked_to_cluster":"cluster-b"`, `,"linked_to_cluster":""`, `,"linked_to_cluster":false`, `,"linked_to_cluster":1`, `,"linked_to_cluster":[]`, `,"linked_to_cluster":{}`} {
+			raw := `{"resources":[{"resource_type":"ceph.smb.join.auth","auth_id":"target","auth":{"username":"admin"}` + field + `}]}`
+			want := wanted == "" && (field == "" || field == `,"linked_to_cluster":null`) || wanted == "cluster-a" && field == `,"linked_to_cluster":"cluster-a"`
+			if got := smbJoinAuthCreated(request, []byte(raw)); got != want {
+				t.Fatalf("wanted cluster %q, readback %s: got %v, want %v", wanted, field, got, want)
+			}
+		}
 	}
 }
