@@ -1,4 +1,5 @@
 import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
+import { nfsExportEditReason, nfsExportInitialValues, nfsFSAL } from './nfsExportFields'
 import { CephFSDirectoryBrowser } from './CephFSDirectoryBrowser'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 import { listAllResources, listResource } from '../../api/resource'
@@ -624,6 +625,7 @@ const definitions: Record<
     },
     updateAction: {
       title: '更新 NFS 导出',
+      disabledWhen: nfsExportEditReason,
       path: '/nfs/export',
       method: 'PATCH',
       successMessage: 'NFS 导出更新执行成功',
@@ -634,13 +636,7 @@ const definitions: Record<
         { name: 'filesystem', label: '文件系统', required: true },
         { name: 'read_only', label: '只读', type: 'boolean' }
       ],
-      initialValues: (row) => ({
-        cluster: text(row?.cluster),
-        pseudo: text(row?.pseudo),
-        path: text(row?.path),
-        filesystem: text(row?.filesystem),
-        read_only: row?.read_only === true
-      }),
+      initialValues: nfsExportInitialValues,
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
         export_id: exportId(row),
@@ -662,11 +658,15 @@ const definitions: Record<
     },
     columns: [
       { key: 'export_id', title: '导出 ID' },
-      { key: 'cluster', title: '集群' },
+      { key: 'cluster_id', title: 'NFS 集群' },
       { key: 'pseudo', title: '伪路径' },
       { key: 'path', title: '路径' },
-      { key: 'filesystem', title: '文件系统' },
-      { key: 'read_only', title: '只读' },
+      { key: 'fsal_name', title: '存储后端', filterKey: false, render: (_, row) => text(nfsFSAL(row).name) },
+      { key: 'fsal_filesystem', title: '文件系统', filterKey: false, render: (_, row) => text(nfsFSAL(row).fs_name) },
+      { key: 'fsal_user', title: '用户', filterKey: false, render: (_, row) => text(nfsFSAL(row).user_id) },
+      { key: 'access_type', title: '访问类型' },
+      { key: 'protocols', title: 'NFS 协议' },
+      { key: 'transports', title: '传输协议' },
       { key: 'status', title: '状态' },
       { key: 'resource_version', title: '版本' }
     ]

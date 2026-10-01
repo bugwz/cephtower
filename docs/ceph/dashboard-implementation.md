@@ -1567,3 +1567,11 @@ listAllResources 汇总的采集状态。过期列表显示警告及刷新/实�
 子卷和组，则重新查询该范围；其他范围保持当前查询。默认组省略与 `_nogroup`
 视为相同范围，同名子卷的不同组不会混淆。测试覆盖各范围差异，
 `make test-frontend` 通过；未实测集群。
+
+## NFS 导出原生字段展示
+
+`nfs export ls <cluster> --detailed --format json` 的原始导出数据直接经资源 API
+提供。列表改用 cluster_id、access_type、fsal.name/fs_name/user_id，并补充
+protocols 与 transports；参考 NFS 列表相同字段。CephFS 导出编辑初始值正确
+映射 RO/RW 与文件系统。当前简化表单不支持 RGW 或其他访问类型，阻止其误用，
+完整 FSAL 编辑仍待补齐。字段映射测试及 `make test-frontend` 通过；未实测集群。

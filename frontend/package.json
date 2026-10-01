@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "npm run test:cephfs-performance && npm run test:cephfs-pools && npm run test:cephfs-ranks && npm run test:cephfs-group-form && npm run test:cephfs-filesystem-state && npm run test:cephfs-creation-time && npm run test:cephfs-subvolume-summary && npm run test:cephfs-subvolume-state && npm run test:cephfs-clone-summary && npm run test:cephfs-snapshot-dependencies && npm run test:cephfs-mount-commands && npm run test:resource-column-filters && npm run test:cephfs-subvolume-form",
-    "test:cephfs-subvolume-form": "node scripts/test-cephfs-subvolume-form.mjs && node scripts/test-cephfs-clone-options.mjs && node scripts/test-cephfs-schedule-scope.mjs",
+    "test:cephfs-subvolume-form": "node scripts/test-cephfs-subvolume-form.mjs && node scripts/test-cephfs-clone-options.mjs && node scripts/test-cephfs-schedule-scope.mjs && node scripts/test-nfs-export-fields.mjs",
     "test:resource-column-filters": "node scripts/test-resource-column-filters.mjs",
     "test:cephfs-mount-commands": "node scripts/test-cephfs-mount-commands.mjs",
     "test:cephfs-snapshot-dependencies": "node scripts/test-cephfs-snapshot-dependencies.mjs",
