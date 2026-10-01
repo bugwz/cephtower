@@ -31,6 +31,7 @@ import { message } from '../../utils/appMessage'
 import { formatDateTime } from '../../utils/time'
 import { OSDInspection } from './OSDInspection'
 import { ConfigurationPage } from './ConfigurationPage'
+import { ManagerModuleDetails, managerOptionRows } from './ManagerModuleDetails'
 import { ClusterDetailPage } from './ClusterDetailPage'
 import { ClusterPage } from './ClusterPage'
 import { HostDetailPage } from './HostDetailPage'
@@ -191,7 +192,8 @@ export function MgrManagementPage() {
   }, [daemonTableFilters.filters, moduleTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [pendingModule, setPendingModule] = useState('')
-  const [moduleDetails, setModuleDetails] = useState<ApiRecord | null>(null)
+  const [moduleSelection, setModuleSelection] = useState<{ scope: typeof scope, row: ApiRecord } | null>(null)
+  const moduleDetails = moduleSelection?.scope === scope ? moduleSelection.row : null
   const [configModule, setConfigModule] = useState('')
   async function toggleModule(row: ApiRecord, enabled: boolean) {
     const name = textValue(row.name, '')
@@ -221,8 +223,8 @@ export function MgrManagementPage() {
       <Modal open={Boolean(configModule)} onCancel={() => setConfigModule('')} footer={null} width="95vw" destroyOnClose>
         {configModule && <ConfigurationPage key={configModule} moduleName={configModule} />}
       </Modal>
-      <Modal title={`模块 ${textValue(moduleDetails?.name, '')}`} open={Boolean(moduleDetails)} onCancel={() => setModuleDetails(null)} footer={null} width={1000}>
-        <RecordDetail record={moduleDetails} preferredKeys={['name', 'enabled', 'always_on', 'can_run', 'error_string', 'options']} />
+      <Modal title={`模块 ${textValue(moduleDetails?.name, '')}`} open={Boolean(moduleDetails)} onCancel={() => setModuleSelection(null)} footer={null} width="min(1200px, 95vw)" destroyOnClose>
+        {moduleDetails && <ManagerModuleDetails key={String(moduleDetails.name)} record={moduleDetails} />}
       </Modal>
       <Card className="page-surface-card" title="MGR管理">
         <Tabs
@@ -259,7 +261,7 @@ export function MgrManagementPage() {
                     { key: 'can_run', title: '可运行', render: (value) => <Tag color={value === false ? 'error' : 'default'}>{value === true ? '是' : value === false ? '否' : '未知'}</Tag> },
                     { key: 'error_string', title: '加载错误' },
                     { key: 'force_disabled', title: '强制停用', render: (value) => value ? '是' : '否' },
-                    { key: 'options', title: '配置项', render: (value, row) => <Button type="link" onClick={() => setModuleDetails(row)}>{Object.keys((value ?? {}) as object).length} 项 · 详情</Button> },
+                    { key: 'options', title: '配置项', render: (value, row) => <Button type="link" onClick={() => setModuleSelection({ scope, row })}>{managerOptionRows(value)?.length ?? '未采集'} 项 · 详情</Button> },
                     { key: 'configure', title: '操作', render: (_, row) => <Button onClick={() => setConfigModule(textValue(row.name, ''))}>编辑配置</Button> }
                   ]}
                 />
