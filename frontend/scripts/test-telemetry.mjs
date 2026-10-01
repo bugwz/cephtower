@@ -60,3 +60,32 @@ for (const enabled of [true, false]) for (const accepted of [true, false]) for (
 assert.ok(controlSource.includes('setAccepted(false); setOpen(true)'))
 assert.ok(source.includes('key={`${selectedClusterId}:${status.enabled}`}'))
 console.log('Telemetry explicit license consent checks passed')
+
+const channelSource = readFileSync(new URL('../src/pages/cluster/TelemetryChannels.tsx', import.meta.url), 'utf8')
+const channelTree = ts.createSourceFile('channels.tsx', channelSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const channelComponent = channelTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'TelemetryChannels')
+const channelSubmit = channelComponent.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submit')
+const channelCode = ts.transpileModule(channelSubmit.getText(channelTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const scenario of ['ok', 'off', 'unknown', 'disabled', 'unmount', 'failure', 'refresh-failure']) {
+  const calls = []
+  let resolve, reject
+  const env = {
+    active: { current: true }, running: { current: false }, disabled: scenario === 'disabled', status: { enabled: scenario !== 'off' },
+    channel: ['ident'], current: scenario === 'unknown' ? undefined : false, clusterId: 7,
+    setBusy: () => {}, setSelected: () => {}, message: { success: () => calls.push('success') },
+    onComplete: async () => { calls.push('refresh'); if (scenario === 'refresh-failure') throw new Error('refresh') },
+    mutateResource: (path, method, body) => { calls.push({ path, method, body }); return new Promise((yes, no) => { resolve = yes; reject = no }) },
+  }
+  const invoke = new Function(...Object.keys(env), `${channelCode}; return submit`)(...Object.values(env))
+  const result = invoke(); await invoke()
+  if (['off', 'unknown', 'disabled'].includes(scenario)) { await result; assert.deepEqual(calls, []); continue }
+  assert.deepEqual(calls, [{ path: '/manager/telemetry/channel', method: 'PATCH', body: { cluster_id: 7, channel: 'ident', enabled: true } }])
+  if (scenario === 'unmount') env.active.current = false
+  if (scenario === 'failure') reject(new Error('unverified')); else resolve()
+  if (['failure', 'refresh-failure'].includes(scenario)) await assert.rejects(result); else await result
+  assert.equal(calls.includes('success'), !['failure', 'unmount'].includes(scenario))
+  assert.equal(calls.includes('refresh'), scenario !== 'unmount')
+  assert.equal(env.running.current, false)
+}
+assert.ok(source.includes('key={`${selectedClusterId}:${data.observed_at}`}'))
+console.log('Telemetry channel mutation, refresh and scope checks passed')

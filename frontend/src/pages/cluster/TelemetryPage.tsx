@@ -6,6 +6,7 @@ import { useResource } from '../../hooks'
 import { useClusterContext } from '../../state/ClusterContext'
 import { TelemetryReportPanel } from './TelemetryReportPanel'
 import { TelemetryControls } from './TelemetryControls'
+import { TelemetryChannels } from './TelemetryChannels'
 
 export function telemetryStatusValue(value: unknown): string {
   if (value == null) return '未提供'
@@ -32,6 +33,7 @@ export function TelemetryPage() {
           <Descriptions bordered size="small" column={1}>
             {([['url', '集群报告地址'], ['device_url', '设备报告地址'], ['interval', '上传间隔（小时）'], ['last_opt_revision', '最后同意的报告修订版'], ['last_upload', '最近上传（Ceph 原始时间）'], ['channel_basic', '基本集群信息'], ['channel_ident', '身份及联系信息'], ['channel_crash', '崩溃信息'], ['channel_device', '设备健康信息'], ['channel_perf', '性能信息'], ['leaderboard', '排行榜'], ['leaderboard_description', '排行榜描述'], ['description', '描述'], ['organization', '组织'], ['contact', '联系人'], ['proxy', '代理']] as const).map(([key, label]) => <Descriptions.Item key={key} label={label}>{key === 'last_upload' && (status[key] === null || status[key] === 0) ? '尚无上传记录' : telemetryStatusValue(status[key])}</Descriptions.Item>)}
           </Descriptions>
+          {selectedClusterId && <TelemetryChannels key={`${selectedClusterId}:${data.observed_at}`} clusterId={selectedClusterId} status={status} disabled={loading || Boolean(error)} onComplete={refresh} />}
         </>}
       </Space>
     </Card>

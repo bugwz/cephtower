@@ -33,3 +33,33 @@ func telemetryStateMatches(data []byte, enabled bool) bool {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	return decoder.Decode(&state) == nil && decoder.Decode(new(any)) == io.EOF && state.Enabled != nil && *state.Enabled == enabled
 }
+
+func telemetryChannelCommand(p map[string]any) (command, error) {
+	channel, _ := p["channel"].(string)
+	switch channel {
+	case "basic", "ident", "crash", "device", "perf":
+	default:
+		return command{}, invalid("unknown telemetry channel")
+	}
+	enabled, ok := p["enabled"].(bool)
+	if !ok {
+		return command{}, invalid("enabled must be boolean")
+	}
+	action := "disable"
+	if enabled {
+		action = "enable"
+	}
+	return command{binary: executor.BinaryCeph, args: []string{"telemetry", action, "channel", channel}, check: []string{"telemetry", "status", "--format", "json"}, timeout: time.Minute}, nil
+}
+
+func telemetryChannelMatches(data []byte, p map[string]any) bool {
+	var state map[string]json.RawMessage
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	if decoder.Decode(&state) != nil || decoder.Decode(new(any)) != io.EOF {
+		return false
+	}
+	var active, enabled *bool
+	channel, _ := p["channel"].(string)
+	return json.Unmarshal(state["enabled"], &active) == nil && active != nil && *active &&
+		json.Unmarshal(state["channel_"+channel], &enabled) == nil && enabled != nil && *enabled == p["enabled"]
+}

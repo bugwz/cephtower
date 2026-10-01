@@ -99,6 +99,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"monitor.action"}, true, map[string]JSONField{"action": stringField(true, "scrub", "ok-to-stop"), "names": stringsField(false)})
 	add([]string{"manager_module.update"}, true, map[string]JSONField{"enabled": boolField(true)})
 	add([]string{"telemetry.update"}, true, map[string]JSONField{"enabled": boolField(true), "license": stringField(false, "sharing-1-0")})
+	add([]string{"telemetry.channel.update"}, true, map[string]JSONField{"enabled": boolField(true), "channel": stringField(true, "basic", "ident", "crash", "device", "perf")})
 	add([]string{"osd.action"}, true, map[string]JSONField{"action": stringField(true, "in", "out", "down", "reweight", "scrub", "deep-scrub"), "weight": numberField(false)})
 	add([]string{"osd_flag.update"}, true, map[string]JSONField{"action": stringField(true, "set", "unset"), "flag": stringField(true)})
 	add([]string{"osd.removal_check"}, true, map[string]JSONField{"osd_ids": stringsField(true)})

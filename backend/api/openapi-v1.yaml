@@ -274,6 +274,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -1006,6 +1009,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -3033,6 +3039,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -3765,6 +3774,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -5325,6 +5337,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -6153,6 +6168,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -6886,6 +6904,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -8276,6 +8297,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -9102,6 +9126,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -9834,6 +9861,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -10812,6 +10842,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -12040,6 +12073,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -12773,6 +12809,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -13506,6 +13545,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -14876,6 +14918,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -15754,6 +15799,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -16582,6 +16630,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -17314,6 +17365,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -18702,6 +18756,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -19434,6 +19491,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -20183,6 +20243,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -21009,6 +21072,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -21741,6 +21807,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -22474,6 +22543,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -23485,6 +23557,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -24408,6 +24483,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -25234,6 +25312,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -25966,6 +26047,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -26831,6 +26915,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -27564,6 +27651,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -28416,6 +28506,108 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /manager/telemetry/channel:
+    patch:
+      operationId: patch_manager_telemetry_channel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [channel, cluster_id, enabled]
+              properties:
+                account_id:
+                  type: string
+                binding_id:
+                  type: integer
+                bucket_id:
+                  type: string
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
+                client_id:
+                  type: string
+                cluster_id:
+                  type: integer
+                code:
+                  type: string
+                device_id:
+                  type: string
+                enabled:
+                  type: boolean
+                endpoint_id:
+                  type: integer
+                export_id:
+                  type: string
+                fs:
+                  type: string
+                group:
+                  type: string
+                host:
+                  type: string
+                host_nqn:
+                  type: string
+                id:
+                  type: string
+                image_id:
+                  type: string
+                image_spec:
+                  type: string
+                iqn:
+                  type: string
+                listener_id:
+                  type: string
+                name:
+                  type: string
+                namespace:
+                  type: string
+                nqn:
+                  type: string
+                nsid:
+                  type: string
+                osd_id:
+                  type: string
+                pool:
+                  type: string
+                service_id:
+                  type: string
+                share_id:
+                  type: string
+                silence_id:
+                  type: string
+                snap:
+                  type: string
+                subsystem_nqn:
+                  type: string
+                subvolume:
+                  type: string
+                uid:
+                  type: string
+                who:
+                  type: string
+      responses:
+        '202':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /manager/telemetry/report:
     get:
       operationId: get_manager_telemetry_report
@@ -28875,6 +29067,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -29893,6 +30088,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -30719,6 +30917,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -31547,6 +31748,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -32373,6 +32577,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -33105,6 +33312,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -34028,6 +34238,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -34854,6 +35067,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -35586,6 +35802,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -36414,6 +36633,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -37146,6 +37368,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -37974,6 +38199,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -38706,6 +38934,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -39534,6 +39765,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -40360,6 +40594,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -41092,6 +41329,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -42088,6 +42328,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -42915,6 +43158,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -43648,6 +43894,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -44381,6 +44630,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -45208,6 +45460,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -45975,6 +46230,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -46993,6 +47251,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -47819,6 +48080,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -48551,6 +48815,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -49379,6 +49646,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -50112,6 +50382,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -50845,6 +51118,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -51578,6 +51854,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -52406,6 +52685,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -53232,6 +53514,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -53964,6 +54249,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -54814,6 +55102,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -55546,6 +55837,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -56278,6 +56572,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -57397,6 +57694,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -58202,6 +58502,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -58935,6 +59238,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -59667,6 +59973,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -60495,6 +60804,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -61322,6 +61634,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -62055,6 +62370,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -62899,6 +63217,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -63631,6 +63952,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -64363,6 +64687,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -65096,6 +65423,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -65924,6 +66254,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -66750,6 +67083,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -67482,6 +67818,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -68316,6 +68655,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -69049,6 +69391,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -69782,6 +70127,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -70610,6 +70958,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -71343,6 +71694,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -72075,6 +72429,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -72903,6 +73260,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -73635,6 +73995,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -74367,6 +74730,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -75100,6 +75466,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -76023,6 +76392,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -76849,6 +77221,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -77581,6 +77956,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -78314,6 +78692,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -79047,6 +79428,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -79779,6 +80163,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -80512,6 +80899,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -81245,6 +81635,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -82073,6 +82466,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -82805,6 +83201,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -83538,6 +83937,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -84270,6 +84672,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -85333,6 +85738,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -86159,6 +86567,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -86891,6 +87302,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -87719,6 +88133,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -88545,6 +88962,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -89277,6 +89697,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -90105,6 +90528,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -90837,6 +91263,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -91569,6 +91998,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -92397,6 +92829,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -93223,6 +93658,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -93955,6 +94393,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -94783,6 +95224,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -95515,6 +95959,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:
@@ -96247,6 +96694,9 @@ paths:
                       type: string
                 case_sensitive:
                   type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
                 client_id:
                   type: string
                 client_rules:

@@ -56,3 +56,45 @@ func TestTelemetryMutationVerifiesRequestedState(t *testing.T) {
 		}
 	}
 }
+
+func TestTelemetryChannelCommands(t *testing.T) {
+	for _, channel := range []string{"basic", "ident", "crash", "device", "perf"} {
+		for _, enabled := range []bool{true, false} {
+			cmd, err := telemetryChannelCommand(map[string]any{"channel": channel, "enabled": enabled})
+			action := "disable"
+			if enabled {
+				action = "enable"
+			}
+			if err != nil || !reflect.DeepEqual(cmd.args, []string{"telemetry", action, "channel", channel}) {
+				t.Fatalf("%+v %v", cmd, err)
+			}
+		}
+	}
+	for _, p := range []map[string]any{{}, {"channel": "all", "enabled": true}, {"channel": "--help", "enabled": true}, {"channel": "basic", "enabled": "true"}} {
+		if _, err := telemetryChannelCommand(p); err == nil {
+			t.Fatalf("accepted %v", p)
+		}
+	}
+}
+
+func TestTelemetryChannelChecksActualState(t *testing.T) {
+	s, _, id := newCephUserService(t)
+	for _, output := range []string{`{"enabled":true,"channel_ident":true}`, `{"enabled":false,"channel_ident":true}`, `{"enabled":true,"channel_ident":false}`, `{"enabled":true}`, `{"enabled":true,"channel_ident":null}`, `{"enabled":true,"channel_ident":"true"}`, `null`, `[]`, `{} {}`} {
+		e := &directoryRenameExecutor{outputs: map[string]string{"telemetry.channel.update.post_check": output}}
+		s.executor = e
+		_, err := s.Execute(context.Background(), Request{ClusterID: id, Action: "telemetry.channel.update", ResourceKey: "manager-module/telemetry", Parameters: map[string]any{"channel": "ident", "enabled": true}})
+		if output == `{"enabled":true,"channel_ident":true}` {
+			if err != nil {
+				t.Fatal(err)
+			}
+		} else {
+			var ae *cephdomain.ActionError
+			if !errors.As(err, &ae) || ae.Code != "post_check_failed" || ae.Retryable {
+				t.Fatalf("%s: %v", output, err)
+			}
+		}
+		if len(e.specs) != 2 || !e.specs[0].Mutating || e.specs[1].Mutating {
+			t.Fatalf("%+v", e.specs)
+		}
+	}
+}

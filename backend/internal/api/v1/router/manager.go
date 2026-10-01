@@ -7,6 +7,7 @@ func managerRoutes(h *handler.Handler) []Route {
 		{"GET", "/manager/telemetry/status", h.GetTelemetryStatus},
 		{"GET", "/manager/telemetry/report", h.GetTelemetryReport},
 		{"PATCH", "/manager/telemetry", h.UpdateTelemetry},
+		{"PATCH", "/manager/telemetry/channel", h.UpdateTelemetryChannel},
 		{"GET", "/managers", h.ListManagers},
 		{"POST", "/manager/fail", h.FailManager},
 	}
