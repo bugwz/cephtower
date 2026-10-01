@@ -6,7 +6,12 @@ const source = readFileSync(new URL('../src/pages/file/nfsExportFields.ts', impo
 const exports = {}
 new Function('exports', ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
 const row = { cluster_id: 'nfs-a', pseudo: '/share', path: '/data', access_type: 'RO', fsal: { name: 'CEPH', fs_name: 'cephfs-a', user_id: 'nfs.user' } }
-assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', access_type: 'RO', squash: undefined, security_label: undefined, transports: undefined, protocols: undefined })
+assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', access_type: 'RO', squash: undefined, security_label: undefined, transports: undefined, protocols: undefined, sectype: undefined })
+assert.deepEqual(exports.nfsSecurityTypeBody('none, sys, krb5,krb5i,krb5p'), { sectype: ['none', 'sys', 'krb5', 'krb5i', 'krb5p'] })
+assert.deepEqual(exports.nfsSecurityTypeBody('default'), { sectype: [] })
+assert.deepEqual(exports.nfsSecurityTypeBody(''), {})
+assert.equal(exports.nfsExportInitialValues({ ...row, sectype: ['sys', 'krb5p'] }).sectype, 'sys,krb5p')
+for (const value of ['sys,sys', 'invalid', 'sys,', true]) assert.throws(() => exports.nfsSecurityTypeBody(value))
 for (const protocols of [[3], [4], [4, 3]]) {
   const selection = exports.nfsExportInitialValues({ ...row, protocols }).protocols
   assert.deepEqual(exports.nfsProtocolBody(selection), { protocols: [...protocols].sort() })

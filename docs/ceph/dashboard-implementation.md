@@ -1679,3 +1679,11 @@ API 使用 transports 字符串数组，写入 `nfs export apply` 的原生 JSON
 NONE 表示导出默认拒绝访问，客户端规则仍可覆盖；更新保留现有客户端规则。
 原生 apply JSON 与读回校验均使用 access_type，允许编辑已有 NONE 导出。
 省略字段时保留原生默认或当前设置；无真实集群验证。
+
+## NFS 导出认证方式
+
+创建和编辑支持原生 sectype 数组：none、sys、krb5、krb5i、krb5p。
+表单逗号分隔输入，留空保留设置，default 显式提交空数组恢复原生默认。
+后端校验枚举与重复值，通过 export apply 写入，读回按集合比较；原生
+to_dict 在空数组时省略 sectype，因此恢复默认允许读回缺失字段。
+Kerberos 需预先配置服务端，本功能不创建 Kerberos 环境。未实测集群。

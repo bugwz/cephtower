@@ -722,6 +722,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -1349,6 +1353,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -3271,6 +3279,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -3898,6 +3910,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -4743,6 +4759,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -5464,6 +5484,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -6091,6 +6115,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -6909,6 +6937,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -7632,6 +7664,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -8260,6 +8296,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -9131,6 +9171,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -9852,6 +9896,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -10575,6 +10623,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -11296,6 +11348,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -11923,6 +11979,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -12796,6 +12856,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -13919,6 +13983,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -14547,6 +14615,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -15175,6 +15247,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -16440,6 +16516,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -17213,6 +17293,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -17936,6 +18020,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -18563,6 +18651,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -19846,6 +19938,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -20473,6 +20569,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -21117,6 +21217,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -21838,6 +21942,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -22465,6 +22573,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -23093,6 +23205,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -23999,6 +24115,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -24817,6 +24937,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -25538,6 +25662,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -26165,6 +26293,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -26925,6 +27057,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -27553,6 +27689,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -28596,6 +28736,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -29509,6 +29653,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -30230,6 +30378,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -30953,6 +31105,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -31674,6 +31830,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -32301,6 +32461,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -33119,6 +33283,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -33840,6 +34008,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -34467,6 +34639,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -35190,6 +35366,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -35817,6 +35997,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -36540,6 +36724,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -37167,6 +37355,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -37890,6 +38082,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -38611,6 +38807,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -39238,6 +39438,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -40129,6 +40333,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -40851,6 +41059,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -41479,6 +41691,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -42107,6 +42323,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -42829,6 +43049,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -43491,6 +43715,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -44404,6 +44632,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -45125,6 +45357,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -45752,6 +45988,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -46475,6 +46715,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -47103,6 +47347,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -47731,6 +47979,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -48359,6 +48611,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -49082,6 +49338,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -49803,6 +50063,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -50430,6 +50694,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -51175,6 +51443,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -51802,6 +52074,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -52429,6 +52705,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -53443,6 +53723,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -54143,6 +54427,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -54771,6 +55059,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -55398,6 +55690,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -56121,6 +56417,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -56843,6 +57143,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -57471,6 +57775,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -58210,6 +58518,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -58837,6 +59149,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -59464,6 +59780,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -60092,6 +60412,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -60815,6 +61139,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -61536,6 +61864,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -62163,6 +62495,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -62892,6 +63228,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -63520,6 +63860,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -64148,6 +64492,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -64871,6 +65219,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -65499,6 +65851,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -66126,6 +66482,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -66849,6 +67209,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -67476,6 +67840,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -68103,6 +68471,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -68731,6 +69103,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -69549,6 +69925,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -70270,6 +70650,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -70897,6 +71281,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -71525,6 +71913,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -72153,6 +72545,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -72780,6 +73176,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -73408,6 +73808,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -74036,6 +74440,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -74759,6 +75167,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -75386,6 +75798,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -76014,6 +76430,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -76641,6 +77061,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -77599,6 +78023,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -78320,6 +78748,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -78947,6 +79379,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -79670,6 +80106,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -80391,6 +80831,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -81018,6 +81462,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -81741,6 +82189,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -82462,6 +82914,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -83089,6 +83545,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -83907,6 +84367,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:
@@ -84535,6 +84999,10 @@ paths:
                 secret_key:
                   type: string
                   writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
                 secure:
                   type: boolean
                 security_label:

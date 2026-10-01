@@ -25,6 +25,15 @@ export function nfsTransportBody(value: unknown) {
   return { transports: String(value).split(',') }
 }
 
+export function nfsSecurityTypeBody(value: unknown) {
+  if (value === undefined || value === '') return {}
+  if (value === 'default') return { sectype: [] }
+  if (typeof value !== 'string') throw new Error('认证方式格式无效')
+  const types = value.split(',').map((entry) => entry.trim())
+  if (new Set(types).size !== types.length || types.some((entry) => !['none', 'sys', 'krb5', 'krb5i', 'krb5p'].includes(entry))) throw new Error('认证方式须为 none、sys、krb5、krb5i、krb5p，以逗号分隔且不重复')
+  return { sectype: types }
+}
+
 export function nfsFSAL(row?: ApiRecord): ApiRecord {
   const value = row?.fsal
   return value && typeof value === 'object' && !Array.isArray(value) ? value as ApiRecord : {}
@@ -38,6 +47,7 @@ export function nfsExportEditReason(row: ApiRecord): string | undefined {
 export function nfsExportInitialValues(row?: ApiRecord) {
   return {
     cluster: typeof row?.cluster_id === 'string' ? row.cluster_id : '',
+    sectype: Array.isArray(row?.sectype) && row.sectype.every((value) => typeof value === 'string') ? row.sectype.join(',') : undefined,
     pseudo: typeof row?.pseudo === 'string' ? row.pseudo : '',
     path: typeof row?.path === 'string' ? row.path : '',
     filesystem: typeof nfsFSAL(row).fs_name === 'string' ? String(nfsFSAL(row).fs_name) : '',

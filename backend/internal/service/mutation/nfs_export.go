@@ -9,6 +9,23 @@ import (
 	"strings"
 )
 
+func nfsSecurityTypes(value any) (int, error) {
+	data, err := json.Marshal(value)
+	var types []string
+	if err != nil || json.Unmarshal(data, &types) != nil || types == nil {
+		return 0, invalid("sectype must be an array of none, sys, krb5, krb5i or krb5p")
+	}
+	mask := 0
+	for _, securityType := range types {
+		bit := map[string]int{"none": 16, "sys": 1, "krb5": 2, "krb5i": 4, "krb5p": 8}[securityType]
+		if bit == 0 || mask&bit != 0 {
+			return 0, invalid("sectype must contain unique none, sys, krb5, krb5i or krb5p values")
+		}
+		mask |= bit
+	}
+	return mask, nil
+}
+
 func nfsTransports(value any) (int, error) {
 	data, err := json.Marshal(value)
 	var transports []string
@@ -137,6 +154,9 @@ func nfsExportUpdateJSON(export, parameters map[string]any) ([]byte, error) {
 	export["pseudo"] = parameters["pseudo"]
 	export["path"] = parameters["path"]
 	fsal["fs_name"] = parameters["filesystem"]
+	if securityTypes, exists := parameters["sectype"]; exists {
+		export["sectype"] = securityTypes
+	}
 	if transports, exists := parameters["transports"]; exists {
 		export["transports"] = transports
 	}
@@ -200,6 +220,17 @@ func nfsExportCreateMatches(p map[string]any, data []byte) bool {
 }
 
 func nfsExportAttributesMatch(export, p map[string]any) bool {
+	if securityTypes, exists := p["sectype"]; exists {
+		wanted, err := nfsSecurityTypes(securityTypes)
+		actualValue, present := export["sectype"]
+		if !present {
+			actualValue = []string{}
+		}
+		actual, actualErr := nfsSecurityTypes(actualValue)
+		if err != nil || actualErr != nil || wanted != actual {
+			return false
+		}
+	}
 	if transports, exists := p["transports"]; exists {
 		wanted, err := nfsTransports(transports)
 		actual, actualErr := nfsTransports(export["transports"])
