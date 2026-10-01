@@ -1,9 +1,9 @@
-import { Alert, Button, Card, Descriptions, Input, Space } from 'antd'
+import { Alert, AutoComplete, Button, Card, Descriptions, Space } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { mutateResource, refreshResource } from '../../api/resource'
 import type { ResourceDTO } from '../../api/types'
 import { DraggableModal } from '../../components/DraggableModal'
-import type { ApiRecord } from '../../api/client'
+import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { DataTable } from '../../components/DataTable'
 
 export function upgradeCheckVersion(value: string) {
@@ -34,6 +34,10 @@ export function upgradeStartAllowed(record: ResourceDTO | null, version: string,
 
 export function UpgradeCheck({ clusterId, record, disabled, onStarted }: { clusterId: number; record: ResourceDTO | null; disabled: boolean; onStarted: () => void }) {
   const [version, setVersion] = useState('')
+  const [versions, setVersions] = useState<{ image: string; registry: string; versions: string[] } | null>(null)
+  const [versionsLoading, setVersionsLoading] = useState(false)
+  const [versionsError, setVersionsError] = useState('')
+  const versionsRunning = useRef(false)
   const [result, setResult] = useState<ReturnType<typeof upgradeCheckData> | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -43,6 +47,15 @@ export function UpgradeCheck({ clusterId, record, disabled, onStarted }: { clust
   const active = useRef(true)
   const running = useRef(false)
   useEffect(() => { active.current = true; return () => { active.current = false } }, [])
+  async function loadVersions() {
+    if (versionsRunning.current) return
+    versionsRunning.current = true; setVersionsLoading(true); setVersionsError(''); setVersions(null)
+    try {
+      const response = await request<{ image: string; registry: string; versions: string[] }>('/upgrade/versions', jsonInit('GET', { cluster_id: clusterId }, { suppressErrorNotification: true }))
+      if (active.current) setVersions(response)
+    } catch (err) { if (active.current) setVersionsError(err instanceof Error ? err.message : '版本列表加载失败') }
+    finally { versionsRunning.current = false; if (active.current) setVersionsLoading(false) }
+  }
   async function check() {
     if (running.current) return
     running.current = true; setBusy(true); setError(''); setResult(null); setCheckedVersion(''); setStarted(false)
@@ -67,7 +80,10 @@ export function UpgradeCheck({ clusterId, record, disabled, onStarted }: { clust
   return <Card title="升级前检查" style={{ marginTop: 16 }}>
     <Space direction="vertical" style={{ width: '100%' }}>
       <Alert type="info" message="检查会查询目标容器镜像，可能需要较长时间；不会启动升级。结果仅代表检查时刻的镜像兼容性，不保证升级一定成功。" />
-      <Space><Input aria-label="升级检查目标版本" placeholder="例如 20.2.2" value={version} disabled={busy || confirm} onChange={(event) => { setVersion(event.target.value); setResult(null); setCheckedVersion(''); setStarted(false); setError('') }} /><Button loading={busy} disabled={!version.trim() || confirm || disabled} onClick={() => void check()}>检查目标版本</Button><Button danger disabled={!canStart} onClick={() => setConfirm(true)}>启动升级</Button></Space>
+      <Button loading={versionsLoading} disabled={disabled || busy || confirm} onClick={() => void loadVersions()}>加载候选版本</Button>
+      {versionsError && <Alert type="error" message={versionsError} />}
+      {versions && <Alert type="info" message={`镜像 ${versions.image}（仓库 ${versions.registry}）：${versions.versions.length ? `${versions.versions.length} 个候选版本，可选择或手动输入` : '未返回候选版本，可手动输入'}。候选列表不代表兼容性，启动前仍需检查。`} />}
+      <Space><AutoComplete aria-label="升级检查目标版本" style={{ width: 240 }} placeholder="选择或输入，例如 20.2.2" options={(versions?.versions ?? []).map((value) => ({ value }))} filterOption={(input, option) => !!option?.value.includes(input)} value={version} disabled={busy || confirm} onChange={(value) => { setVersion(value); setResult(null); setCheckedVersion(''); setStarted(false); setError('') }} /><Button loading={busy} disabled={!version.trim() || confirm || disabled} onClick={() => void check()}>检查目标版本</Button><Button danger disabled={!canStart} onClick={() => setConfirm(true)}>启动升级</Button></Space>
       {started && <Alert type="success" message="升级已启动并核验目标，尚未完成升级；请持续检查集群状态。" />}
       {error && <Alert type="error" message={error} />}
       {result && <>

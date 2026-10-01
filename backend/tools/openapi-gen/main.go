@@ -97,6 +97,8 @@ func successResponseSchema(route router.Route) string {
 	switch key {
 	case "GET /logs":
 		return "CephLogsResponse"
+	case "GET /upgrade/versions":
+		return "ConfigurationOptionResponse"
 	case "GET /configuration/option", "GET /osd/inspection", "GET /filesystem/snapshot/schedule/status", "GET /filesystem/performance", "GET /filesystem/pools", "GET /filesystem/mds", "GET /filesystem/subvolume/snapshot/visibility":
 		return "ConfigurationOptionResponse"
 
@@ -366,6 +368,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "osd_id": stringField(true), "section": {Type: "string", Required: true, Enum: []string{"metadata", "histogram"}}}
 	case "GET /configuration/option":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "name": stringField(true)}
+	case "GET /upgrade/versions":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
 	case "GET /ceph/users/export":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "entities": stringArrayField(true)}
 	case "POST /rbd/mirroring/bootstrap/token":
