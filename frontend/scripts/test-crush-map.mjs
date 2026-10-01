@@ -125,7 +125,18 @@ const kindCode = ts.transpileModule(kindFn.getText(poolTree).replace('export ', 
 const kind = new Function(`${kindCode}; return poolKind`)()
 for (const type of ['replicated', 'erasure']) assert.equal(kind({ type }), type)
 for (const type of [undefined, null, '', 'unknown', 1, 3, 'other']) assert.equal(kind({ type }), undefined)
-assert.ok(poolSource.includes('disabled={!poolKind(row)}'))
+assert.ok(poolSource.includes('Boolean(poolEditBlocked(row))'))
+const editBlockedFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolEditBlocked')
+const editBlockedCode = ts.transpileModule(editBlockedFn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const editBlocked = new Function('poolKind', 'resourceName', `${editBlockedCode}; return poolEditBlocked`)(kind, (row) => row.name ?? '')
+const editable = { type: 'replicated', name: 'pool', stale: false, resource_version: 2 }
+assert.equal(editBlocked(editable), undefined)
+assert.equal(editBlocked({ ...editable, flags: ['nodelete'] }), undefined, 'deletion protection must not disable editing')
+for (const stale of [true, undefined, null]) assert.match(editBlocked({ ...editable, stale }), /库存/)
+for (const resource_version of [undefined, null, 0, -1, 1.5, Infinity]) assert.match(editBlocked({ ...editable, resource_version }), /版本/)
+assert.match(editBlocked({ ...editable, type: 'unknown' }), /类型/)
+assert.match(editBlocked({ ...editable, name: '' }), /名称/)
+assert.ok(poolSource.includes('editingPool ? poolEditBlocked(editingPool)'))
 assert.ok(poolSource.includes("if (!kind) throw new Error('池类型未采集或不受支持，无法编辑')"))
 const initialFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolInitialValues')
 const initialCode = ts.transpileModule(initialFn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
@@ -282,12 +293,22 @@ for (const mode of ['create', 'edit']) {
   const code = ts.transpileModule(fn.getText(poolTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
   let finish, touched = false
   const scopeRef = { current: { id: 1 } }
-  const run = new Function('clusterScope', 'operationMutation', 'setSubmitting', 'message', 'formMode', 'poolPlacementAvailable', 'poolUpdateBodies', `const selectedClusterId=1, submitting=false, loading=false, error=null, crushRuleOptions=[], erasureCodeProfileOptions=[], editingPool={}, data={}; ${code}; return submitPool`)(scopeRef, { run: () => new Promise((resolve) => { finish = resolve }) }, () => {}, { success: () => { touched = true } }, mode, () => true, () => [{}])
+  const run = new Function('clusterScope', 'operationMutation', 'setSubmitting', 'message', 'formMode', 'poolPlacementAvailable', 'poolUpdateBodies', 'poolEditBlocked', 'editingPool', `const selectedClusterId=1, submitting=false, loading=false, error=null, crushRuleOptions=[], erasureCodeProfileOptions=[], data={}; ${code}; return submitPool`)(scopeRef, { run: () => new Promise((resolve) => { finish = resolve }) }, () => {}, { success: () => { touched = true } }, mode, () => true, () => [{}], editBlocked, editable)
   const pending = run({})
   scopeRef.current = { id: 2 }
   finish()
   await pending
   assert.equal(touched, false, `${mode} pool completion must not update the new cluster UI`)
+}
+{
+  const fn = poolPage.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submitPool')
+  const code = ts.transpileModule(fn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+  for (const editingPool of [null, { ...editable, stale: true }, { ...editable, resource_version: 0 }]) {
+    let reported = false
+    const run = new Function('editingPool', 'poolEditBlocked', 'message', `const selectedClusterId=1, submitting=false, formMode='edit', loading=false, error=null; ${code}; return submitPool`)(editingPool, editBlocked, { error: () => { reported = true } })
+    await run({})
+    assert.equal(reported, true, 'invalid edits must stop before mutation state or requests are touched')
+  }
 }
 for (const name of ['submitCrushRule', 'submitErasureCodeProfile']) {
   const fn = poolPage.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === name)

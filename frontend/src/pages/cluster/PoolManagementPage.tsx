@@ -318,7 +318,9 @@ export function PoolManagementPage() {
   }
 
   function openEdit(row: ApiRecord) {
-    if (!poolKind(row)) { message.error('池类型未采集或不受支持，无法编辑'); return }
+    if (loading || error) { message.error('请先成功读取当前集群的存储池库存'); return }
+    const blocked = poolEditBlocked(row)
+    if (blocked) { message.error(blocked); return }
     setFormMode('edit')
     setEditingPool(row)
     form.setFieldsValue(poolInitialValues(row, data?.crushRules))
@@ -445,6 +447,13 @@ export function PoolManagementPage() {
       message.error('请选择当前集群已读取或已成功创建的放置配置')
       return
     }
+    if (formMode === 'edit') {
+      const blocked = editingPool ? poolEditBlocked(editingPool) : '编辑目标已失效，请重新打开表单'
+      if (loading || error || blocked) {
+        message.error(blocked ?? '请先成功读取当前集群的存储池库存')
+        return
+      }
+    }
     setSubmitting(true)
     const scope = clusterScope.current
     try {
@@ -459,7 +468,7 @@ export function PoolManagementPage() {
           return
         }
         for (const body of requests) {
-          await operationMutation.run(() => mutateResource('/pool', 'PATCH', body, { ifMatch: Number(editingPool.resource_version ?? 0) }), false)
+          await operationMutation.run(() => mutateResource('/pool', 'PATCH', body, { ifMatch: Number(editingPool.resource_version) }), false)
         }
         if (clusterScope.current !== scope) return
         message.success('存储池已更新')
@@ -510,7 +519,7 @@ export function PoolManagementPage() {
               filterKey: false,
               render: (_, row) => (
                 <TableActions>
-                  <TableAction disabled={!poolKind(row)} onClick={() => openEdit(row)}>编辑</TableAction>
+                  <TableAction disabled={loading || Boolean(error) || Boolean(poolEditBlocked(row))} title={poolEditBlocked(row)} onClick={() => openEdit(row)}>编辑</TableAction>
                   <TableAction onClick={() => navigate(`/cluster/pool/${encodeURIComponent(resourceName(row))}`)}>详情</TableAction>
                   <TableAction danger disabled={loading || Boolean(error) || Boolean(poolDeleteBlocked(row))} title={poolDeleteBlocked(row)} onClick={() => deletePool(row)}>删除</TableAction>
                 </TableActions>
@@ -981,6 +990,15 @@ export function PoolManagementPage() {
       </DraggableModal>
     </Page>
   )
+}
+
+function poolEditBlocked(row: ApiRecord): string | undefined {
+  if (row.stale !== false) return '池库存过期或状态未知，请重新采集'
+  if (!poolKind(row)) return '池类型未采集或不受支持，无法编辑'
+  if (!resourceName(row)) return '池名称不可用'
+  const version = Number(row.resource_version)
+  if (!Number.isSafeInteger(version) || version <= 0) return '资源版本不可用，请重新采集'
+  return undefined
 }
 
 function poolDeleteBlocked(row: ApiRecord): string | undefined {
