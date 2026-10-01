@@ -7,7 +7,7 @@ export function smbCephFS(row?: ApiRecord): ApiRecord {
 
 export function smbShareInitialValues(row?: ApiRecord) {
   const fs = smbCephFS(row)
-  return { cluster: typeof row?.cluster_id === 'string' ? row.cluster_id : '', filesystem: typeof fs.volume === 'string' ? fs.volume : '', path: typeof fs.path === 'string' ? fs.path : '', readonly: typeof row?.readonly === 'boolean' ? String(row.readonly) : undefined, browseable: typeof row?.browseable === 'boolean' ? String(row.browseable) : undefined }
+  return { cluster: typeof row?.cluster_id === 'string' ? row.cluster_id : '', share_name: typeof row?.name === 'string' ? row.name : undefined, filesystem: typeof fs.volume === 'string' ? fs.volume : '', path: typeof fs.path === 'string' ? fs.path : '', readonly: typeof row?.readonly === 'boolean' ? String(row.readonly) : undefined, browseable: typeof row?.browseable === 'boolean' ? String(row.browseable) : undefined }
 }
 
 export function smbShareAccessBody(values: ApiRecord) {

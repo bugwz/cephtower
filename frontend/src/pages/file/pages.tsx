@@ -809,7 +809,8 @@ const definitions: Record<
       successMessage: 'SMB 共享创建执行成功',
       fields: [
         { name: 'cluster', label: 'SMB 集群', type: 'select', required: true, optionsLoader: smbClusterOptions },
-        { name: 'name', label: '共享名称', required: true },
+        { name: 'name', label: '共享 ID（创建后不可更改）', required: true },
+        { name: 'share_name', label: '客户端共享名称', placeholder: '留空使用共享 ID；最多 64 个英文字符' },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'path', label: 'CephFS 路径', required: true, placeholder: '/data' }
       ],
@@ -818,6 +819,7 @@ const definitions: Record<
         cluster_id: clusterId,
         cluster: String(values.cluster ?? ''),
         name: String(values.name ?? ''),
+        ...(values.share_name ? { share_name: String(values.share_name) } : {}),
         filesystem: String(values.filesystem ?? ''),
         path: String(values.path ?? '')
       })
@@ -829,6 +831,7 @@ const definitions: Record<
       successMessage: 'SMB 共享更新执行成功',
       fields: [
         { name: 'cluster', label: 'SMB 集群（不可更改）', required: true, readOnly: true },
+        { name: 'share_name', label: '客户端共享名称', placeholder: '留空保留原名称；最多 64 个英文字符' },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'path', label: 'CephFS 路径' },
         { name: 'readonly', label: '只读', type: 'select', placeholder: '未选择则保留', options: [{ label: '只读', value: 'true' }, { label: '允许写入', value: 'false' }] },
@@ -839,6 +842,7 @@ const definitions: Record<
         cluster_id: clusterId,
         share_id: shareId(row),
         ...smbShareAccessBody(values),
+        ...(values.share_name ? { share_name: String(values.share_name) } : {}),
         cluster: String(values.cluster ?? ''),
         filesystem: String(values.filesystem ?? ''),
         ...(values.path ? { path: String(values.path) } : {})

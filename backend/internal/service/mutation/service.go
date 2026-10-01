@@ -2388,7 +2388,13 @@ func build(request Request, p map[string]any) (command, error) {
 		if path == "" {
 			path = "/"
 		}
-		return ceph([]string{"smb", "share", "create", cluster, share, filesystem, path}, []string{"smb", "share", "ls", cluster, "--format", "json"}), nil
+		args := []string{"smb", "share", "create", cluster, share, filesystem, path}
+		if name, exists, err := smbShareName(p); err != nil {
+			return command{}, err
+		} else if exists {
+			args = append(args, "--share-name="+name)
+		}
+		return ceph(args, []string{"smb", "share", "ls", cluster, "--format", "json"}), nil
 	case "smb_share.delete":
 		cluster, share, err := decodePair(last(tail))
 		if err != nil {

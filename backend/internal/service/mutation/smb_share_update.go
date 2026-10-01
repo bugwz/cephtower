@@ -5,7 +5,22 @@ import (
 	"encoding/json"
 	"io"
 	"reflect"
+	"regexp"
 )
+
+var smbShareNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_][a-zA-Z0-9. _-]{0,63}$`)
+
+func smbShareName(parameters map[string]any) (string, bool, error) {
+	value, exists := parameters["share_name"]
+	if !exists {
+		return "", false, nil
+	}
+	name, ok := value.(string)
+	if !ok || !smbShareNamePattern.MatchString(name) {
+		return "", true, invalid("share_name must contain 1 to 64 ASCII letters, digits, spaces, dots, underscores or hyphens and start with a letter, digit or underscore")
+	}
+	return name, true, nil
+}
 
 func smbShareRecord(data []byte, request Request) (map[string]any, error) {
 	cluster, share, err := decodePair(last(resourceTail(request.ResourceKey)))
@@ -33,6 +48,11 @@ func smbShareUpdateJSON(data []byte, request Request) ([]byte, error) {
 		return nil, err
 	}
 	fs := record["cephfs"].(map[string]any)
+	if name, exists, err := smbShareName(request.Parameters); err != nil {
+		return nil, err
+	} else if exists {
+		record["name"] = name
+	}
 	for _, field := range []string{"readonly", "browseable"} {
 		if value, exists := request.Parameters[field]; exists {
 			flag, ok := value.(bool)

@@ -779,6 +779,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -1451,6 +1453,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -3420,6 +3424,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -4092,6 +4098,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -4984,6 +4992,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -5751,6 +5761,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -6423,6 +6435,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -7288,6 +7302,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -8057,6 +8073,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -8730,6 +8748,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -9648,6 +9668,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -10414,6 +10436,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -11184,6 +11208,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -11951,6 +11977,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -12623,6 +12651,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -13542,6 +13572,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -14712,6 +14744,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -15386,6 +15420,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -16059,6 +16095,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -17371,6 +17409,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -18190,6 +18230,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -18959,6 +19001,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -19631,6 +19675,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -20961,6 +21007,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -21633,6 +21681,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -22323,6 +22373,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -23091,6 +23143,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -23763,6 +23817,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -24437,6 +24493,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -25390,6 +25448,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -26254,6 +26314,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -27021,6 +27083,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -27693,6 +27757,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -28500,6 +28566,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -29173,6 +29241,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -30263,6 +30333,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -31222,6 +31294,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -31988,6 +32062,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -32758,6 +32834,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -33525,6 +33603,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -34197,6 +34277,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -35062,6 +35144,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -35829,6 +35913,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -36501,6 +36587,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -37271,6 +37359,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -37943,6 +38033,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -38713,6 +38805,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -39385,6 +39479,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -40155,6 +40251,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -40922,6 +41020,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -41594,6 +41694,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -42532,6 +42634,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -43300,6 +43404,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -43974,6 +44080,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -44647,6 +44755,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -45416,6 +45526,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -46123,6 +46235,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -47083,6 +47197,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -47850,6 +47966,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -48522,6 +48640,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -49292,6 +49412,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -49965,6 +50087,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -50640,6 +50764,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -51313,6 +51439,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -52083,6 +52211,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -52850,6 +52980,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -53522,6 +53654,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -54314,6 +54448,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -54987,6 +55123,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -55659,6 +55797,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -56720,6 +56860,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -57466,6 +57608,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -58140,6 +58284,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -58812,6 +58958,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -59582,6 +59730,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -60350,6 +60500,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -61023,6 +61175,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -61809,6 +61963,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -62481,6 +62637,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -63155,6 +63313,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -63828,6 +63988,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -64598,6 +64760,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -65365,6 +65529,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -66037,6 +66203,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -66813,6 +66981,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -67487,6 +67657,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -68160,6 +68332,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -68930,6 +69104,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -69604,6 +69780,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -70276,6 +70454,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -71046,6 +71226,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -71718,6 +71900,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -72392,6 +72576,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -73065,6 +73251,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -73930,6 +74118,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -74697,6 +74887,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -75369,6 +75561,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -76044,6 +76238,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -76718,6 +76914,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -77390,6 +77588,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -78065,6 +78265,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -78738,6 +78940,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -79508,6 +79712,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -80180,6 +80386,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -80855,6 +81063,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -81527,6 +81737,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -82532,6 +82744,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -83299,6 +83513,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -83971,6 +84187,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -84741,6 +84959,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -85508,6 +85728,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -86180,6 +86402,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -86950,6 +87174,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -87717,6 +87943,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -88389,6 +88617,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string
@@ -89254,6 +89484,8 @@ paths:
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
                   type: string
+                share_name:
+                  type: string
                 silence_id:
                   type: string
                 size:
@@ -89927,6 +90159,8 @@ paths:
                   type: string
                   enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
                 share_id:
+                  type: string
+                share_name:
                   type: string
                 silence_id:
                   type: string

@@ -1860,3 +1860,11 @@ SMB 共享创建从当前 Ceph 集群 `/smb/clusters` 全分页选择集群，�
 `/filesystems` 选择文件系统，对齐参考表单 filesystems 数据源。编辑集群只读，
 与后端禁止跨集群移动一致。沿用现有 cluster ls、fs dump 采集及表单加载错误处理，
 不新增命令或兼容字段。已测试选择器请求作用域，未实测集群。
+
+SMB 共享 ID 与客户端名称分离：创建的 `name` 参数仍表示不可变 share_id，新增
+`share_name` 对应原生 `smb share create --share-name`；编辑通过 show/apply 更新
+资源 `name`，不更改 ID。名称验证依据参考 smb/validation.py（1–64 个 ASCII
+字母、数字、空格、点、下划线、短横线，首字符限字母数字下划线）。省略创建名称
+使用原生 ID 默认值，省略编辑名称保留原值，显式空字符串 API 拒绝。界面明确区分
+两个字段，编辑初值来自原生 name，回读不一致拒绝报告成功。已做命令与 fixture
+测试，尚未实测客户端重连或 SMB 名称修改的集群行为。
