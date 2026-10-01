@@ -37,10 +37,15 @@ console.log('Native upgrade status display checks passed')
 
 const checkSource = readFileSync(new URL('../src/pages/cluster/UpgradeCheck.tsx', import.meta.url), 'utf8')
 const checkTree = ts.createSourceFile('UpgradeCheck.tsx', checkSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-const checkFunctions = checkTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['upgradeCheckVersion', 'upgradeCheckData'].includes(node.name.text))
+const checkFunctions = checkTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['upgradeCheckVersion', 'upgradeCheckData', 'upgradeStartAllowed'].includes(node.name.text))
 const checkExports = {}
 new Function('exports', ts.transpileModule(checkFunctions.map((fn) => fn.getText(checkTree)).join('\n'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(checkExports)
 assert.equal(checkExports.upgradeCheckVersion(' 20.2.2 '), '20.2.2')
+const idle = { stale: false, data: { in_progress: false } }
+assert.equal(checkExports.upgradeStartAllowed(idle, '20.2.2', '20.2.2'), true)
+for (const record of [null, { ...idle, stale: true }, { data: {} }, { ...idle, data: { in_progress: true } }]) assert.equal(checkExports.upgradeStartAllowed(record, '20.2.2', '20.2.2'), false)
+assert.equal(checkExports.upgradeStartAllowed(idle, '20.2.2', ''), false)
+assert.equal(checkExports.upgradeStartAllowed(idle, '20.2.3', '20.2.2'), false)
 for (const version of ['', 'v20.2.2', '--image', '20.2']) assert.throws(() => checkExports.upgradeCheckVersion(version))
 const report = { target_name: 'ceph:v20.2.2', target_id: 'abc', target_version: '20.2.2', needs_update: { 'mon.a': { current_name: 'ceph:old', current_id: null, current_version: '19.2.1', ignored: 'not-a-column' } }, up_to_date: [], non_ceph_image_daemons: ['prometheus.a'] }
 assert.deepEqual(checkExports.upgradeCheckData({ check: report }).rows, [{ name: 'mon.a', current_name: 'ceph:old', current_id: null, current_version: '19.2.1' }])

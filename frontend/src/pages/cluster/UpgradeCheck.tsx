@@ -1,6 +1,8 @@
 import { Alert, Button, Card, Descriptions, Input, Space } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { mutateResource } from '../../api/resource'
+import { mutateResource, refreshResource } from '../../api/resource'
+import type { ResourceDTO } from '../../api/types'
+import { DraggableModal } from '../../components/DraggableModal'
 import type { ApiRecord } from '../../api/client'
 import { DataTable } from '../../components/DataTable'
 
@@ -26,28 +28,47 @@ export function upgradeCheckData(details: unknown) {
   return { report, rows }
 }
 
-export function UpgradeCheck({ clusterId }: { clusterId: number }) {
+export function upgradeStartAllowed(record: ResourceDTO | null, version: string, checkedVersion: string) {
+  return !!record && !record.stale && record.data.in_progress === false && !!checkedVersion && version.trim() === checkedVersion
+}
+
+export function UpgradeCheck({ clusterId, record, disabled, onStarted }: { clusterId: number; record: ResourceDTO | null; disabled: boolean; onStarted: () => void }) {
   const [version, setVersion] = useState('')
   const [result, setResult] = useState<ReturnType<typeof upgradeCheckData> | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [checkedVersion, setCheckedVersion] = useState('')
+  const [confirm, setConfirm] = useState(false)
+  const [started, setStarted] = useState(false)
   const active = useRef(true)
   const running = useRef(false)
   useEffect(() => { active.current = true; return () => { active.current = false } }, [])
   async function check() {
     if (running.current) return
-    running.current = true; setBusy(true); setError(''); setResult(null)
+    running.current = true; setBusy(true); setError(''); setResult(null); setCheckedVersion(''); setStarted(false)
     try {
       const target = upgradeCheckVersion(version)
       const response = await mutateResource('/upgrade/check', 'POST', { cluster_id: clusterId, version: target })
-      if (active.current) setResult(upgradeCheckData(response.details))
+      if (active.current) { setResult(upgradeCheckData(response.details)); setCheckedVersion(target) }
     } catch (err) { if (active.current) setError(err instanceof Error ? err.message : '检查失败') }
     finally { running.current = false; if (active.current) setBusy(false) }
+  }
+  const canStart = !disabled && !busy && !!result && upgradeStartAllowed(record, version, checkedVersion)
+  async function start() {
+    if (!canStart || !record || running.current) return
+    running.current = true; setBusy(true); setError('')
+    try {
+      await mutateResource('/upgrade/action', 'POST', { cluster_id: clusterId, action: 'start', version: checkedVersion }, { ifMatch: record.resource_version })
+      if (active.current) { setStarted(true); setConfirm(false); setCheckedVersion('') }
+      await refreshResource({ clusterId, kinds: ['upgrade'] })
+    } catch (err) { if (active.current) { setError(err instanceof Error ? err.message : '启动失败，请检查集群状态'); setCheckedVersion(''); setConfirm(false) } }
+    finally { running.current = false; if (active.current) { setBusy(false); onStarted() } }
   }
   return <Card title="升级前检查" style={{ marginTop: 16 }}>
     <Space direction="vertical" style={{ width: '100%' }}>
       <Alert type="info" message="检查会查询目标容器镜像，可能需要较长时间；不会启动升级。结果仅代表检查时刻的镜像兼容性，不保证升级一定成功。" />
-      <Space><Input aria-label="升级检查目标版本" placeholder="例如 20.2.2" value={version} disabled={busy} onChange={(event) => { setVersion(event.target.value); setResult(null); setError('') }} /><Button loading={busy} disabled={!version.trim()} onClick={() => void check()}>检查目标版本</Button></Space>
+      <Space><Input aria-label="升级检查目标版本" placeholder="例如 20.2.2" value={version} disabled={busy || confirm} onChange={(event) => { setVersion(event.target.value); setResult(null); setCheckedVersion(''); setStarted(false); setError('') }} /><Button loading={busy} disabled={!version.trim() || confirm || disabled} onClick={() => void check()}>检查目标版本</Button><Button danger disabled={!canStart} onClick={() => setConfirm(true)}>启动升级</Button></Space>
+      {started && <Alert type="success" message="升级已启动并核验目标，尚未完成升级；请持续检查集群状态。" />}
       {error && <Alert type="error" message={error} />}
       {result && <>
         <Descriptions column={1} items={[
@@ -61,5 +82,8 @@ export function UpgradeCheck({ clusterId }: { clusterId: number }) {
         <Card size="small" title={`待升级守护进程（${result.rows.length}）`}><DataTable data={result.rows} columns={[{ key: 'name', title: '守护进程' }, { key: 'current_name', title: '当前镜像' }, { key: 'current_id', title: '当前镜像 ID' }, { key: 'current_version', title: '当前版本' }]} /></Card>
       </>}
     </Space>
+    <DraggableModal title="确认启动集群升级" open={confirm} confirmLoading={busy} onCancel={() => { if (!busy) setConfirm(false) }} onOk={() => void start()} okButtonProps={{ danger: true, disabled: !canStart }}>
+      <Alert type="warning" message={`将集群 ${clusterId} 升级到 ${checkedVersion}。升级会逐步重启守护进程，可能影响服务；停止升级不会回滚已升级的组件。请确认维护窗口、备份与集群健康状况。`} />
+    </DraggableModal>
   </Card>
 }

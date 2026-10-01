@@ -79,7 +79,7 @@ export function UpgradePage() {
       <Descriptions column={1} items={upgradeStatusFields(record.data).map(([label, children]) => ({ key: label, label, children }))} />
     </>}
   </Card>
-    {selectedClusterId && <UpgradeCheck key={selectedClusterId} clusterId={selectedClusterId} />}
+    {selectedClusterId && <UpgradeCheck key={selectedClusterId} clusterId={selectedClusterId} record={record} disabled={loading || operation.loading} onStarted={() => setRevision((value) => value + 1)} />}
     <DraggableModal title={pending ? controlLabels[pending.action] : ''} open={pending !== null} confirmLoading={operation.loading} onCancel={() => { if (!operation.loading) setPending(null) }} onOk={() => void control()} okButtonProps={{ danger: pending?.action === 'stop' }}>
       <Alert type="warning" message={pending?.action === 'stop' ? '停止后不会回滚已升级的守护进程，集群可能保留混合版本。确认停止？' : pending?.action === 'pause' ? '暂停后不再继续升级，已升级的守护进程不会回滚。确认暂停？' : '恢复后将继续升级守护进程，可能影响服务。确认恢复？'} />
     </DraggableModal>
