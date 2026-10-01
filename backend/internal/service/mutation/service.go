@@ -131,6 +131,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		if request.Action == "nfs_export.delete" {
 			spec.args = []string{"nfs", "export", "rm", cluster, export["pseudo"].(string)}
+			spec.check = []string{"nfs", "export", "ls", cluster, "--detailed", "--format", "json"}
 		} else {
 			spec.stdin, err = nfsExportUpdateJSON(export, request.Parameters)
 			if err != nil {
@@ -208,6 +209,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		if request.Action == "nfs_export.update" && !nfsExportUpdateMatches(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "NFS export update was accepted but requested attributes could not be verified; the change may already have taken effect", Retryable: true}
+		}
+		if request.Action == "nfs_export.delete" && !nfsExportDeleted(request, checked.Stdout) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "NFS export removal was accepted but its absence could not be verified; the change may already have taken effect", Retryable: true}
 		}
 	}
 	if request.Action == "rgw_zone.update" && optional(request.Parameters, "zonegroup") != "" {

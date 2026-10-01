@@ -1615,3 +1615,10 @@ Dashboard NFS 表单。前后端测试和 OpenAPI 检查通过，未实测集群
 CephFS 文件系统；读取全部分页，选项按当前 Ceph 集群隔离。复用原生
 `nfs cluster ls` 与 `fs dump` 的采集数据和通用选项加载错误提示。
 `make test-frontend` 通过；未实测集群。
+
+## NFS 导出删除后验证
+
+删除后读取同集群详细导出列表，验证原 export_id 已消失。有效空列表表示没有
+剩余导出；null、错误结构、错误集群、非法 ID 或原 ID 仍存在均视为无法验证，
+返回 post_check_failed 并说明删除可能已经生效。命令链与读回测试、
+`make test-backend` 和 OpenAPI 检查通过；未实测集群。

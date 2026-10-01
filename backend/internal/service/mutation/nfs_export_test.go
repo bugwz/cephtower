@@ -108,3 +108,17 @@ func TestNFSExportDeleteResolvesNativePseudo(t *testing.T) {
 		})
 	}
 }
+
+func TestNFSExportDeletionReadback(t *testing.T) {
+	request := Request{ResourceKey: "nfs/export/" + base64.RawURLEncoding.EncodeToString([]byte("nfs-a\x002"))}
+	for _, data := range []string{`[]`, `[{"export_id":1,"cluster_id":"nfs-a","pseudo":"/other"}]`} {
+		if !nfsExportDeleted(request, []byte(data)) {
+			t.Fatalf("valid deletion rejected: %s", data)
+		}
+	}
+	for _, data := range []string{`null`, `{}`, `[{}]`, `[{"export_id":2}]`, `[{"export_id":1,"cluster_id":"nfs-b"}]`, `[] {}`, `["/export"]`} {
+		if nfsExportDeleted(request, []byte(data)) {
+			t.Fatalf("unverified deletion accepted: %s", data)
+		}
+	}
+}

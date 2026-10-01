@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -37,6 +38,36 @@ func nfsExportRecord(data []byte, cluster, exportID string) (map[string]any, err
 		return nil, invalid("NFS export no longer exists")
 	}
 	return found, nil
+}
+
+func nfsExportDeleted(request Request, data []byte) bool {
+	cluster, id, err := decodePair(last(resourceTail(request.ResourceKey)))
+	if err != nil {
+		return false
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	var exports []map[string]any
+	if decoder.Decode(&exports) != nil || exports == nil {
+		return false
+	}
+	var extra any
+	if decoder.Decode(&extra) != io.EOF {
+		return false
+	}
+	for _, export := range exports {
+		current, ok := export["export_id"].(json.Number)
+		if !ok || current.String() == id {
+			return false
+		}
+		if _, err := strconv.ParseUint(current.String(), 10, 64); err != nil {
+			return false
+		}
+		if value, exists := export["cluster_id"]; exists && value != cluster {
+			return false
+		}
+	}
+	return true
 }
 
 func nfsExportUpdateJSON(export, parameters map[string]any) ([]byte, error) {
