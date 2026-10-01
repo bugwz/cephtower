@@ -44,7 +44,7 @@ func TestCollectPoolPGStates(t *testing.T) {
 
 func TestPoolPGStatesReachInventoryPayload(t *testing.T) {
 	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
-		"collect.pool":           []byte(`[{"pool":7,"pool_name":"pg-pool","type":1}]`),
+		"collect.pool":           []byte(`[{"pool":7,"pool_name":"pg-pool","type":3,"erasure_code_profile":"archive-ec"}]`),
 		"collect.pool_pg_states": []byte(`{"pg_stats":[{"pgid":"7.0","state":"active+degraded"},{"pgid":"8.0","state":"down"}]}`),
 	}}}
 	rows, err := p.Collect(context.Background(), ClusterAccess{}, "storage")
@@ -67,7 +67,23 @@ func TestPoolPGStatesReachInventoryPayload(t *testing.T) {
 		if !reflect.DeepEqual(decoded["pg_status"], map[string]any{"active+degraded": float64(1)}) {
 			t.Fatalf("payload = %s", data)
 		}
+		if decoded["erasure_code_profile"] != "archive-ec" {
+			t.Fatalf("native erasure profile missing from inventory: %s", data)
+		}
 		return
 	}
 	t.Fatal("pool observation missing")
+}
+
+func TestPoolProfileMissingStaysUnknown(t *testing.T) {
+	var wire poolWire
+	if err := json.Unmarshal([]byte(`{"pool":1,"pool_name":"unknown","type":3}`), &wire); err != nil {
+		t.Fatal(err)
+	}
+	if wire.ErasureCodeProfile != nil {
+		t.Fatalf("invented profile: %v", wire.ErasureCodeProfile)
+	}
+	if err := json.Unmarshal([]byte(`{"pool":1,"pool_name":"bad","erasure_code_profile":42}`), &wire); err == nil {
+		t.Fatal("numeric profile accepted")
+	}
 }

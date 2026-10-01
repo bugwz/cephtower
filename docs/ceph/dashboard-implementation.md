@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+池库存增加原生 erasure_code_profile 字段：从 osd pool ls detail 的 pg_pool_t::dump
+输出经采集模型、库存 JSON 和现有 API 到达前端，供配置详情和引用匹配使用。
+编辑表单不再将缺失名称补成 default；不可修改的名称缺失时显示未采集，创建时
+仍要求显式选择配置。离线用例覆盖非默认配置透传、缺失值及非法字段类型。
+
 修正存储池主列表固定显示 active+clean 的错误。参考 CephService.get_pool_list_with_stats
 和 pool-list 的状态计数格式，界面仅格式化有效 pg_status 计数；缺失或异常明确显示
 未采集，不再根据 pg_num 编造健康状态。后端 storage 采集增加一次

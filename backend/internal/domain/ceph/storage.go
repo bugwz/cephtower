@@ -19,6 +19,7 @@ type Pool struct {
 	MinSize                  *int64            `json:"min_size"`
 	PGNum                    *int64            `json:"pg_num"`
 	PGStatus                 map[string]uint64 `json:"pg_status"`
+	ErasureCodeProfile       *string           `json:"erasure_code_profile"`
 	PGPNum                   *int64            `json:"pgp_num"`
 	PGAutoscaleMode          *string           `json:"pg_autoscale_mode"`
 	Applications             []string          `json:"applications,omitempty"`

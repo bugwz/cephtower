@@ -745,6 +745,7 @@ type poolWire struct {
 	PGNum               *int64          `json:"pg_num"`
 	PGPNum              *int64          `json:"pg_placement_num"`
 	PGAutoscaleMode     *string         `json:"pg_autoscale_mode"`
+	ErasureCodeProfile  *string         `json:"erasure_code_profile"`
 	ApplicationMetadata map[string]any  `json:"application_metadata"`
 	CrushRule           json.RawMessage `json:"crush_rule"`
 	FlagsNames          string          `json:"flags_names"`
@@ -865,8 +866,9 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		}
 		quota := p.collectPoolQuota(ctx, access, wire.PoolName)
 		payload := cephdomain.Pool{
-			PGStatus: poolPGStates[wire.Pool],
-			Name:     wire.PoolName, ID: wire.Pool, Type: kind, Size: wire.Size, MinSize: wire.MinSize, PGNum: wire.PGNum, PGPNum: wire.PGPNum,
+			PGStatus:           poolPGStates[wire.Pool],
+			ErasureCodeProfile: wire.ErasureCodeProfile,
+			Name:               wire.PoolName, ID: wire.Pool, Type: kind, Size: wire.Size, MinSize: wire.MinSize, PGNum: wire.PGNum, PGPNum: wire.PGPNum,
 			PGAutoscaleMode: wire.PGAutoscaleMode, Applications: poolApplications(wire.ApplicationMetadata), ApplicationMetadata: wire.ApplicationMetadata,
 			CrushRule: rawTextPointer(wire.CrushRule), Flags: poolFlagNames(wire.FlagsNames), CompressionMode: poolCompressionMode(wire.Options), CompressionAlgorithm: poolOptionStringPointer(wire.Options, "compression_algorithm"),
 			CompressionMinBlobSize: poolOptionInt64Pointer(wire.Options, "compression_min_blob_size"), CompressionMaxBlobSize: poolOptionInt64Pointer(wire.Options, "compression_max_blob_size"), CompressionRequiredRatio: poolOptionFloat64Pointer(wire.Options, "compression_required_ratio"),

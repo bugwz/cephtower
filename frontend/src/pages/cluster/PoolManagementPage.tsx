@@ -115,7 +115,6 @@ const rbdPoolConfigurationFields = [
   { key: 'rbd_qos_write_bps_burst', label: '写 BPS 突发', unit: 'B/s', description: '所需的写入的字节数突发上限。' },
   { key: 'rbd_qos_write_iops_burst', label: '写 IOPS 突发', unit: 'IOPS', description: '所需的写操作次数突发上限。' }
 ] as const
-const defaultErasureCodeProfile = 'default'
 const erasureCodePlugins: Array<{ label: string, value: ErasureCodePlugin }> = [
   { label: 'Jerasure', value: 'jerasure' },
   { label: 'LRC', value: 'lrc' },
@@ -563,8 +562,8 @@ export function PoolManagementPage() {
               <>
                 <Form.Item label={<HelpLabel label="纠删码配置" title="选择现有 EC Profile，或使用右侧按钮在当前 Ceph 集群中创建。" />} required>
                   <Space.Compact block className="pool-inline-create-control">
-                    <Form.Item name="erasure_code_profile" noStyle rules={[{ required: true, message: '请选择纠删码配置' }]}>
-                      <Select disabled={formMode === 'edit'} showSearch placeholder="请选择纠删码配置" options={erasureCodeProfileOptions} />
+                    <Form.Item name="erasure_code_profile" noStyle rules={[{ required: formMode === 'create', message: '请选择纠删码配置' }]}>
+                      <Select disabled={formMode === 'edit'} showSearch placeholder={formMode === 'edit' ? '未采集纠删码配置名称' : '请选择纠删码配置'} options={erasureCodeProfileOptions} />
                     </Form.Item>
                     <Tooltip title="创建 EC Profile">
                       <Button icon={<PlusOutlined />} disabled={formMode === 'edit'} onClick={openErasureCodeProfileForm} aria-label="创建 EC Profile" />
@@ -998,7 +997,7 @@ function poolInitialValues(row: ApiRecord, crushRules: ApiRecord[] = []): PoolFo
     pg_num: numberValue(row.pg_num) ?? 32,
     size: numberValue(row.size) ?? 3,
     applications: poolApplications(row),
-    erasure_code_profile: textValue(row.erasure_code_profile, defaultErasureCodeProfile),
+    erasure_code_profile: textValue(row.erasure_code_profile, ''),
     crush_rule: readableCrushRule(row.crush_rule, crushRules),
     allow_ec_overwrites: poolHasFlag(row, allowECOverwritesPoolFlag) ? 'on' : 'off',
     compression_mode: poolCompressionMode(row),
