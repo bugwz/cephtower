@@ -2184,18 +2184,21 @@ func build(request Request, p map[string]any) (command, error) {
 		name := last(tail)
 		return ceph([]string{"nfs", "cluster", "rm", name}, []string{"nfs", "cluster", "ls", "--format", "json"}), nil
 	case "nfs_export.create", "nfs_export.update":
+		if err := validateNFSConfigStrings(p); err != nil {
+			return command{}, err
+		}
 		cluster, err := required(p, "cluster")
 		if err != nil {
 			return command{}, err
 		}
-		pseudo, err := required(p, "pseudo")
+		pseudo, err := requiredNFSPath(p, "pseudo")
 		if err != nil {
 			return command{}, err
 		}
 		if !strings.HasPrefix(pseudo, "/") || pseudo == "/" {
 			return command{}, invalid("NFS pseudo path must be absolute and cannot be root")
 		}
-		path, err := required(p, "path")
+		path, err := requiredNFSPath(p, "path")
 		if err != nil {
 			return command{}, err
 		}

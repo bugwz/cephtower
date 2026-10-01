@@ -1712,3 +1712,12 @@ Kerberos 需预先配置服务端，本功能不创建 Kerberos 环境。未实�
 后端原生详细列表预读保留凭据，经 export apply 交给 Ceph 管理模块处理，
 表单不接收密钥。读回检查 FSAL、用户和路径，发现数据继续使用既有脱敏链路。
 参考 nfs/export.py 的 _apply_export 与 _create_rgw_export_user；未实测集群。
+
+## NFS 路径与配置字符串边界
+
+参考 ganesha_conf.py 的 _format_val 对字符串直接加双引号而不转义，因此
+JSON stdin 本身不能阻止后续 Ganesha 配置注入。旧通用标识符校验同时误拒绝
+中文及带空格路径，现为路径与伪路径采用专门校验（最多 4096 字节）。创建/编辑在执行任何命令前
+拒绝 cluster、pseudo、path、filesystem、rgw_user_id 中的双引号、反斜杠和
+控制字符；路径保留中文、普通空格、单引号及引号内安全的分号等字符，集群、文件系统与用户标识符仍使用原有限制。
+测试覆盖 CephFS/RGW 参数及执行器零调用，不依赖真实集群。
