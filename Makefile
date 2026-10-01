@@ -125,4 +125,5 @@ test-backend: check-backend-env
 	cd $(BACKEND_DIR) && env CGO_ENABLED=$(CGO_ENABLED) GOCACHE=$(GO_CACHE) GOMODCACHE=$(GO_MODULE_CACHE) go run ./tools/openapi-gen -check -output api/openapi-v1.yaml
 
 test-frontend: ensure-frontend-deps
+	cd $(FRONTEND_DIR) && npm test
 	cd $(FRONTEND_DIR) && npm run build

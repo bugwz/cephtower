@@ -10,6 +10,7 @@ import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
+import { CephFSPerformance } from './CephFSPerformance'
 
 const { Text } = Typography
 const detailColumns = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
@@ -88,6 +89,7 @@ export function FilesystemDetailPage() {
         )}
         <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} staleReason={data?.staleReason} />
       </Card>
+      <CephFSPerformance clusterId={selectedClusterId} filesystem={filesystemName} />
     </Page>
   )
 }

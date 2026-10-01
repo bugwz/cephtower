@@ -36,7 +36,7 @@
 | block / mirroring | `rbd mirror pool/image`、`rbd mirror snapshot schedule` | 已有池状态、模式、peer、bootstrap token、镜像操作与镜像级调度；池/集群级调度管理待补齐 |
 | block / iSCSI | ceph-iscsi REST API | 需要网关 endpoint，不能把所有操作替换成普通 `ceph` CLI；当前已有外部客户端 |
 | block / NVMe-oF | 网关 gRPC | 当前已有 gRPC 客户端；子系统、namespace、listener、host、连接与 QoS 待完整对照 |
-| cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict` | 已有文件系统详情、客户端、授权与卷重命名；计数器及其余完整字段待核对 |
+| cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict/perf dump` | 已有文件系统详情、客户端、授权、卷重命名和 11 项 MDS 计数器会话趋势；其余完整字段待核对 |
 | cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot`、`fs clone` | 已有组范围采集、clone 状态/进度/失败展示、快照克隆和进行中任务取消；metadata 与其余完整参数需核对 |
 | cephfs / snapshot schedule | `fs snap-schedule` | 已有全路径发现、精确状态、创建、删除、激活/停用、retention 和模块启用 |
 | cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 已有实时目录浏览、目录元数据、双维度配额、目录增删/重命名/移动及目录快照列表/创建/删除 |
@@ -189,6 +189,29 @@ ANSI 转义。配额读取最多 8 路并发，且单层目录最多接受 500 �
 支持同时或分别设置 `max_bytes`、`max_files`，0 表示不限制；双字段写入分成两个明确的
 `setxattr` 步骤，最后在同一个指定文件系统回读两个属性并逐值核对。能力探测改用
 cephfs-shell 实际支持的 `--help`，不再调用不存在的 `--version`。
+
+## 已实现：CephFS MDS 性能计数器
+
+参考 Dashboard `CephFS._mds_counters()` 的 11 项非标签计数器与 `CephfsChartComponent`
+的 inode/request 趋势，新增实时 `GET /api/v1/filesystem/performance`。
+先执行 `ceph fs get <fs> --format json`，核验 `mdsmap.fs_name` 并从 `info` 定位该文件系统
+的全部 MDS（包含 standby-replay，不引入无归属的全局 standby）；再逐实例执行
+`ceph tell mds.<name> perf dump --format json`。`ceph_context.cc` 注册的 `perf dump`
+返回非标签指标，与参考 mgr `get_unlabeled_counter` 的指标来源对应。此读取链不依赖
+volumes 模块或外部 Prometheus。MDS 名称/GID 校验、排序和最多 256 实例限制防止不受控目标。
+每个实例返回身份、rank、state、采样时间和指标：
+`mds_server.handle_client_request`、`mds_log.ev`、`mds_cache.num_strays`、
+`mds.exported`、`mds.exported_inodes`、`mds.imported`、`mds.imported_inodes`、
+`mds.inodes`、`mds.caps`、`mds.subtrees`、`mds_mem.ino`。
+uint64 值与 GID 以字符串提供，缺失指标为 null；错误单独挂在实例上，不伪造 0 或吞掉错误。
+
+详情页每轮完成后间隔 10 秒采样，手动采样可用，最多保留 60 次当前页面会话样本。
+展示全部当前值与 inode 数/请求速率图；速率由累计差值除以真实采样秒数得到，使用 BigInt
+先求差再转换，实例 GID 变化、负差、缺失值、读取失败与无效时间都断开趋势。
+原生命令不提供 ceph-mgr 已保存历史，因此不将页面会话趋势冒充 mgr 历史；超过安全整数
+范围的 gauge 保留精确表值，不绘制失真的图点。空关联 MDS 与局部失败均有明确提示。
+离线测试覆盖命令作用域、大整数、部分失败、缺失项、畸形返回、实时路由和前端速率边界；
+尚未进行真实集群验证。
 
 ## 已实现：CephFS 文件系统卷重命名
 

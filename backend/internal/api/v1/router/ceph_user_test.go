@@ -37,6 +37,10 @@ func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spe
 		return executor.CommandResult{Stdout: []byte(`{"name":"osd_memory_target","type":"size","default":"4G","can_update_at_runtime":true}`)}, nil
 	case "cephfs.directory.list":
 		return executor.CommandResult{Stdout: []byte("drwxr-xr-x 4096 1000 1000 2026-09-23 12:00:00 projects/\n")}, nil
+	case "cephfs.performance.map":
+		return executor.CommandResult{Stdout: []byte(`{"mdsmap":{"fs_name":"cephfs","info":{"gid_1":{"name":"a","gid":1,"rank":0,"state":"up:active"}}}}`)}, nil
+	case "cephfs.performance.dump":
+		return executor.CommandResult{Stdout: []byte(`{"mds_mem":{"ino":123},"mds_server":{"handle_client_request":9007199254740993}}`)}, nil
 	case "cephfs.directory.quota":
 		return executor.CommandResult{Stdout: []byte("max_bytes: 1048576\nmax_files: 100\n")}, nil
 	case "cephfs.snapshot.list":
@@ -143,6 +147,10 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 		t.Fatal("configuration metadata missing")
 	}
 	directoryResult := send("GET", "/filesystem/entries", map[string]any{"fs": "cephfs", "path": "/"})
+	performanceResult := send("GET", "/filesystem/performance", map[string]any{"fs": "cephfs"})
+	if performanceResult.Header().Get("Cache-Control") != "no-store" || !strings.Contains(performanceResult.Body.String(), `"value":"9007199254740993"`) || !strings.Contains(performanceResult.Body.String(), `"name":"mds_log.ev","value":null`) {
+		t.Fatalf("performance response is incomplete: %s", performanceResult.Body.String())
+	}
 	if directoryResult.Header().Get("Cache-Control") != "no-store" || !strings.Contains(directoryResult.Body.String(), `"path":"/projects"`) || !strings.Contains(directoryResult.Body.String(), `"max_files":100`) {
 		t.Fatalf("directory browser response is incomplete: %s", directoryResult.Body.String())
 	}

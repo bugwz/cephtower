@@ -4,6 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "test": "npm run test:cephfs-performance",
+    "test:cephfs-performance": "node scripts/test-cephfs-performance.mjs",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
