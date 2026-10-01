@@ -109,5 +109,6 @@ type ConfigValue struct {
 	Section       *string `json:"section,omitempty"`
 	LocationType  *string `json:"location_type,omitempty"`
 	LocationValue *string `json:"location_value,omitempty"`
+	DeviceClass   *string `json:"device_class,omitempty"`
 	Mask          *string `json:"mask,omitempty"`
 }

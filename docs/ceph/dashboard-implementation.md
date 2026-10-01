@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+配置库存保留完整原生 mask，不再用单独 location 字段覆盖组合限制。缺少 mask 时由
+location 与 device_class 组合构造 who，并保留 device_class 元数据；字段冲突或位置
+信息不完整则拒绝采集。同主机上不同设备类别的同名选项具有独立库存标识，前端可
+按正确作用域展示、编辑与删除。离线采集/序列化测试验证组合限制与冲突拒绝。
+
 配置覆盖删除后检查 config dump 中目标作用域与名称是否确实不存在，而非仅检查命令
 退出码。依据 ConfigMap 的 section、mask、location_type/location_value、device_class
 恢复作用域，组合位置与设备类别限制不丢失，限制顺序不影响匹配。其他作用域同名值

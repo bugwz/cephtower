@@ -12,6 +12,9 @@ func TestConfigurationRejectsUnknownOrAmbiguousValues(t *testing.T) {
 		`[{"section":"global","name":"test"}]`,
 		`[{"section":"global","name":"test","value":null}]`,
 		`[{"section":"global","name":"test","value":0}]`,
+		`[{"section":"osd","name":"test","value":"0","location_type":"host"}]`,
+		`[{"section":"osd","name":"test","value":"0","location_type":"host","location_value":"a","mask":"host:b/class:ssd"}]`,
+		`[{"section":"osd","name":"test","value":"0","device_class":"ssd","mask":"class:hdd"}]`,
 		`[{"section":"global","name":"test","value":"a"},{"section":"global","name":"test","value":"b"}]`,
 		`[{"section":"osd","mask":"class:ssd","name":"test","value":"a"},{"section":"osd","location_type":"class","location_value":"ssd","name":"test","value":"a"}]`,
 	} {
@@ -22,6 +25,37 @@ func TestConfigurationRejectsUnknownOrAmbiguousValues(t *testing.T) {
 				t.Fatalf("invalid configuration returned rows=%d err=%v", len(rows), err)
 			}
 		})
+	}
+}
+
+func TestConfigurationCombinedRestrictionsReachInventory(t *testing.T) {
+	for _, mask := range []string{``, `,"mask":"host:node1/class:ssd"`} {
+		response := `[{"section":"osd","name":"test","value":"1","location_type":"host","location_value":"node1","device_class":"ssd"` + mask + `},{"section":"osd","name":"test","value":"2","location_type":"host","location_value":"node1","mask":"host:node1/class:hdd"}]`
+		provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.config": []byte(response)}}}
+		rows, err := provider.Collect(context.Background(), ClusterAccess{}, "configuration")
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := map[string]map[string]any{}
+		for _, row := range rows {
+			if row.Kind != "config_value" {
+				continue
+			}
+			data, err := json.Marshal(row.Payload)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var payload map[string]any
+			if err := json.Unmarshal(data, &payload); err != nil {
+				t.Fatal(err)
+			}
+			got[row.NaturalKey] = payload
+		}
+		ssd := got["osd/host:node1/class:ssd:test"]
+		hdd := got["osd/host:node1/class:hdd:test"]
+		if len(got) != 2 || ssd["who"] != "osd/host:node1/class:ssd" || ssd["device_class"] != "ssd" || hdd["who"] != "osd/host:node1/class:hdd" {
+			t.Fatal(got)
+		}
 	}
 }
 

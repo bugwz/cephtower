@@ -1502,6 +1502,7 @@ type configValueWire struct {
 	Section       *string `json:"section"`
 	LocationType  *string `json:"location_type"`
 	LocationValue *string `json:"location_value"`
+	DeviceClass   *string `json:"device_class"`
 	Mask          *string `json:"mask"`
 }
 
@@ -1527,7 +1528,7 @@ func (p *NativeProvider) collectConfiguration(ctx context.Context, access Cluste
 			return nil, fmt.Errorf("parse collect.config response: duplicate configuration scope and name")
 		}
 		seen[key] = true
-		payload := cephdomain.ConfigValue{Who: who, Name: name, Value: *wire.Value, Level: wire.Level, Section: wire.Section, LocationType: wire.LocationType, LocationValue: wire.LocationValue, Mask: wire.Mask}
+		payload := cephdomain.ConfigValue{Who: who, Name: name, Value: *wire.Value, Level: wire.Level, Section: wire.Section, LocationType: wire.LocationType, LocationValue: wire.LocationValue, DeviceClass: wire.DeviceClass, Mask: wire.Mask}
 		rows = append(rows, Observation{Kind: "config_value", NaturalKey: key, Name: name, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	rows = append(rows, p.collectConfigurationOptional(ctx, access, now)...)
@@ -1541,15 +1542,36 @@ func configValueWho(wire configValueWire) string {
 	}
 	locationType := trimStringPointer(wire.LocationType)
 	locationValue := trimStringPointer(wire.LocationValue)
+	deviceClass := trimStringPointer(wire.DeviceClass)
+	if who == "" || (locationType == "") != (locationValue == "") {
+		return ""
+	}
 	scope := trimStringPointer(wire.Mask)
+	var restrictions []string
 	if locationType != "" && locationValue != "" {
-		scope = locationType + ":" + locationValue
+		restrictions = append(restrictions, locationType+":"+locationValue)
+	}
+	if deviceClass != "" {
+		restrictions = append(restrictions, "class:"+deviceClass)
+	}
+	if scope == "" {
+		scope = strings.Join(restrictions, "/")
+	} else {
+		parts := strings.Split(scope, "/")
+		for _, restriction := range restrictions {
+			found := false
+			for _, part := range parts {
+				if part == restriction {
+					found = true
+				}
+			}
+			if !found {
+				return ""
+			}
+		}
 	}
 	if scope == "" {
 		return who
-	}
-	if who == "" {
-		return scope
 	}
 	return who + "/" + scope
 }
