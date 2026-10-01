@@ -51,6 +51,31 @@ func smbClusterUpdateJSON(data []byte, request Request) ([]byte, error) {
 		return nil, err
 	}
 	record["auth_mode"] = mode
+	if value, exists := request.Parameters["smb_hosts"]; exists {
+		data, err := json.Marshal(value)
+		var hosts []string
+		if err != nil || json.Unmarshal(data, &hosts) != nil || len(hosts) == 0 {
+			return nil, invalid("smb_hosts must be a non-empty list of hostnames")
+		}
+		seen := map[string]bool{}
+		for _, host := range hosts {
+			if !smbPlacementHostPattern.MatchString(host) || strings.Trim(host, "0123456789") == "" || seen[host] {
+				return nil, invalid("smb_hosts requires unique plain hostnames")
+			}
+			seen[host] = true
+		}
+		placement, ok := record["placement"].(map[string]any)
+		if !ok {
+			if record["placement"] != nil {
+				return nil, invalid("existing SMB placement is invalid")
+			}
+			placement = map[string]any{}
+		}
+		placement["hosts"] = hosts
+		delete(placement, "label")
+		delete(placement, "host_pattern")
+		record["placement"] = placement
+	}
 	if _, exists := request.Parameters["count"]; exists {
 		count, err := optionalPositiveInteger(request.Parameters, "count")
 		if err != nil || count == "" {

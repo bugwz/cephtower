@@ -130,6 +130,32 @@ func TestSMBClusterDomainSettings(t *testing.T) {
 	}
 }
 
+func TestSMBClusterPlacementHosts(t *testing.T) {
+	request := Request{ResourceKey: "smb/cluster/a", Parameters: map[string]any{"auth_mode": "user", "smb_hosts": []string{"node-a", "node-b"}}}
+	before := []byte(`{"resource_type":"ceph.smb.cluster","cluster_id":"a","auth_mode":"user","placement":{"count":2,"label":"smb","host_pattern":"node*"}}`)
+	data, err := smbClusterUpdateJSON(before, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var record map[string]any
+	if err := json.Unmarshal(data, &record); err != nil {
+		t.Fatal(err)
+	}
+	placement := record["placement"].(map[string]any)
+	if placement["count"] != float64(2) || placement["label"] != nil || placement["host_pattern"] != nil || len(placement["hosts"].([]any)) != 2 {
+		t.Fatal(placement)
+	}
+	if !smbClusterUpdateMatches(data, data, request) || smbClusterUpdateMatches(data, before, request) {
+		t.Fatal("host changes not verified")
+	}
+	for _, bad := range []any{nil, []string{}, []string{"node-a", "node-a"}, []string{"label:smb"}, []string{"node*"}, []string{"123"}, "node-a"} {
+		request.Parameters["smb_hosts"] = bad
+		if _, err := smbClusterUpdateJSON(before, request); err == nil {
+			t.Fatalf("invalid hosts accepted: %v", bad)
+		}
+	}
+}
+
 func TestSMBClusterPlacementCount(t *testing.T) {
 	request := Request{ResourceKey: "smb/cluster/a", Parameters: map[string]any{"auth_mode": "user", "count": json.Number("3")}}
 	before := []byte(`{"resource_type":"ceph.smb.cluster","cluster_id":"a","auth_mode":"user","placement":{"count":2,"label":"smb","host_pattern":"node*"}}`)
