@@ -293,6 +293,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "crush_rule.delete" && (err != nil || !nameAbsent(last(resourceTail(request.ResourceKey)), checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "CRUSH rule removal was accepted but absence could not be verified; inspect the rule before retrying", Retryable: false}
 		}
+		if request.Action == "pool.delete" && (err != nil || !nameAbsent(last(resourceTail(request.ResourceKey)), checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "pool removal was accepted but absence could not be verified; inspect the pool before retrying", Retryable: false}
+		}
 		if request.Action == "crush_rule.update" && (err != nil || !crushRuleRenamed(last(resourceTail(request.ResourceKey)), optional(request.Parameters, "new_name"), checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "CRUSH rule rename was accepted but names could not be verified; inspect the rule before retrying", Retryable: false}
 		}
@@ -797,7 +800,7 @@ func build(request Request, p map[string]any) (command, error) {
 		return result, nil
 	case "pool.delete":
 		name := last(tail)
-		return ceph([]string{"osd", "pool", "rm", name, name, "--yes-i-really-really-mean-it"}, []string{"osd", "pool", "ls", "detail", "--format", "json"}), nil
+		return ceph([]string{"osd", "pool", "rm", name, name, "--yes-i-really-really-mean-it"}, []string{"osd", "pool", "ls", "--format", "json"}), nil
 	case "rbd_image.create":
 		spec, err := required(p, "image_spec")
 		if err != nil {
