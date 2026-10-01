@@ -1775,3 +1775,12 @@ JSON stdin 本身不能阻止后续 Ganesha 配置注入。旧通用标识符校
 挂载根路径时移除旧 user_id/cephx_key，让 Ceph 生成新身份；其他 FSAL 配置保留。
 原生模块可能重启 NFS 服务，操作需注意客户端影响。读回校验挂载路径；覆盖路径、
 身份重建及前端转换测试。未连接实际集群验证授权和服务重启行为。
+
+## NFS 集群端点信息
+
+集群名称列表之外，逐集群执行 `ceph nfs cluster info <name> --format json`，
+按返回对象的集群键取值，采集 VIP、入口/监控端口、入口模式和后端主机/IP/端口。
+数据随现有 nfs_cluster 资源由 `/nfs/clusters` API 提供；页面新增结构化端点详情，
+移除没有采集来源的放置策略列。字段缺失不猜测默认端口，查询失败仍保留集群，
+以 info_available=false 明示端点信息未获取。源自 nfs/cluster.py 的
+show_nfs_cluster_info；已测试命令参数、IPv6、多种缺失/异常返回，未实测集群。

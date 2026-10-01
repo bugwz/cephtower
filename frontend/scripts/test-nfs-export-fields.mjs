@@ -122,3 +122,18 @@ value = '[{}]'
 assert.equal(renderEditor().type, 'Alert')
 assert.equal(value, '[{}]')
 console.log('NFS client editor interaction checks passed')
+
+const clusterSource = readFileSync(new URL('../src/pages/file/NFSClusterDetails.tsx', import.meta.url), 'utf8')
+const clusterExports = {}
+new Function('require', 'exports', ts.transpileModule(clusterSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)((name) => {
+  if (name === 'antd') return { Alert: 'Alert', Card: 'Card', Descriptions: Object.assign(() => null, { Item: 'Item' }) }
+  if (name === '../../components/AppTable') return { AppTable: 'Table' }
+  return require(name)
+}, clusterExports)
+assert.equal(clusterExports.NFSClusterDetails({ row: {} }).type, 'Alert')
+const backend = [{ hostname: 'host', ip: '2001:db8::1', port: 12049 }]
+const clusterNodes = nodes(clusterExports.NFSClusterDetails({ row: { info_available: true, backend, port: 2049 } }))
+assert.deepEqual(clusterNodes.find((node) => node.type === 'Table').props.dataSource, backend)
+assert.equal(clusterNodes.find((node) => node.props?.label === 'VIP').props.children, '未提供')
+assert.equal(clusterNodes.find((node) => node.props?.label === '入口端口').props.children, '2049')
+console.log('NFS cluster endpoint display checks passed')

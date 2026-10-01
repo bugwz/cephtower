@@ -1,5 +1,6 @@
 import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
+import { NFSClusterDetails } from './NFSClusterDetails'
 import { NFSClientsEditor } from './NFSClientsEditor'
 import { nfsClientsBody, nfsFSALBody, nfsRGWUserChoices, nfsRGWBucketChoices } from './nfsExportFields'
 import { nfsAccessOptions, nfsExportEditReason, nfsExportInitialValues, nfsFSAL, nfsTransportBody, nfsTransportOptions, nfsProtocolBody, nfsProtocolOptions, nfsSecurityLabelOptions, nfsSecurityTypeBody, nfsSquashOptions } from './nfsExportFields'
@@ -569,6 +570,7 @@ const definitions: Record<
   nfsClusters: {
     title: 'NFS 集群',
     path: '/nfs/clusters',
+    detailContent: (row) => <NFSClusterDetails row={row} />,
     requiredCapabilities: ['nfs'],
     createAction: {
       title: '新建 NFS 集群',
@@ -593,8 +595,10 @@ const definitions: Record<
     columns: [
       { key: 'name', title: '名称' },
       { key: 'status', title: '状态' },
-      { key: 'placement', title: '放置策略' },
       { key: 'virtual_ip', title: 'VIP' },
+      { key: 'port', title: '入口端口' },
+      { key: 'ingress_mode', title: '入口模式' },
+      { key: 'info_available', title: '端点信息', render: (value) => value === true ? '已获取' : '未获取' },
       { key: 'resource_version', title: '版本' }
     ]
   },

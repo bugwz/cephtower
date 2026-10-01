@@ -901,7 +901,11 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 			continue
 		}
 		for _, name := range names {
-			rows = append(rows, Observation{Kind: gateway.kind, NaturalKey: name, Name: name, Status: "available", Source: "ceph_cli", Payload: cephdomain.GatewayCluster{Name: name}, ObservedAt: now})
+			var payload any = cephdomain.GatewayCluster{Name: name}
+			if gateway.prefix == "nfs" {
+				payload = p.collectNFSClusterInfo(ctx, access, name)
+			}
+			rows = append(rows, Observation{Kind: gateway.kind, NaturalKey: name, Name: name, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 		}
 	}
 	rows = append(rows, p.collectStorageOptional(ctx, access, pools, fs, now)...)
