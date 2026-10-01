@@ -1608,3 +1608,10 @@ post_check_failed，并说明操作可能已生效。执行链测试及 `make te
 更新读回比对请求策略。未指定时创建采用原生默认值，更新保留现有策略及客户端
 级规则；已有其他原生别名不自动改写。参考 ganesha_conf.py 的 squash 校验及
 Dashboard NFS 表单。前后端测试和 OpenAPI 检查通过，未实测集群。
+
+## NFS 导出资源选择
+
+创建导出从 `/nfs/clusters` 选择 NFS 集群，创建及编辑从 `/filesystems` 选择
+CephFS 文件系统；读取全部分页，选项按当前 Ceph 集群隔离。复用原生
+`nfs cluster ls` 与 `fs dump` 的采集数据和通用选项加载错误提示。
+`make test-frontend` 通过；未实测集群。
