@@ -1946,3 +1946,8 @@ SMB AD 创建接入 domain_realm/domain_join_ref：表单按模式要求填写�
 SMB 集群创建补齐 custom_dns：表单沿用编辑时的换行/逗号解析，API 字符串数组
 经共用 IPv4/IPv6 校验后逐项生成 --custom-dns 参数；省略或空列表不传参数，
 保留原生命令默认行为。测试覆盖双栈、空列表和非法输入，未实测容器解析域名。
+
+SMB 集群创建支持可选实例数量 count，校验正整数并生成
+`--placement=count:<n>`，由原生 PlacementSpec.from_string 解析。前端复用编辑
+数量转换；省略不传 placement，不猜测默认数量。测试覆盖命令参数、非法数量及
+省略行为。其他创建放置约束仍待补齐，未实测守护进程部署数量。

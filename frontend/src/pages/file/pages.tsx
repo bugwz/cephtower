@@ -738,6 +738,7 @@ const definitions: Record<
       successMessage: 'SMB 集群创建执行成功',
       fields: [
         { name: 'name', label: '集群名称', required: true },
+        { name: 'count', label: 'SMB 实例数量（可选）', type: 'number', min: 1, placeholder: '留空使用 Ceph 默认部署数量' },
         { name: 'custom_dns', label: '自定义 DNS 地址（可选）', type: 'textarea', placeholder: '每行一个 IPv4/IPv6 地址' },
         { name: 'domain_realm', label: 'Active Directory 域名', required: true, placeholder: 'EXAMPLE.COM', visibleWhen: (values) => values.auth_mode === 'active-directory' },
         { name: 'domain_join_ref', label: '域加入凭据资源 ID', type: 'textarea', required: true, placeholder: '每行一个已有凭据资源 ID', visibleWhen: (values) => values.auth_mode === 'active-directory' },
@@ -758,6 +759,7 @@ const definitions: Record<
         name: String(values.name ?? ''),
         ...smbClusterUserGroupsBody(values),
         ...smbClusterDomainBody(values),
+        ...smbClusterCountBody(values),
         ...smbClusterDNSBody(values),
         ...(values.auth_mode ? { auth_mode: String(values.auth_mode) } : {})
       })

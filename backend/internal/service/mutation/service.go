@@ -2359,6 +2359,13 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("auth_mode is not supported")
 		}
 		args := []string{"smb", "cluster", "create", name, authMode}
+		if _, exists := p["count"]; exists {
+			count, err := optionalPositiveInteger(p, "count")
+			if err != nil || count == "" {
+				return command{}, invalid("count must be a positive integer")
+			}
+			args = append(args, "--placement=count:"+count)
+		}
 		if value, exists := p["custom_dns"]; exists {
 			servers, err := smbDNSServers(value)
 			if err != nil {

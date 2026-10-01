@@ -48,6 +48,25 @@ func TestSMBClusterCreateDNS(t *testing.T) {
 	}
 }
 
+func TestSMBClusterCreateCount(t *testing.T) {
+	p := map[string]any{"name": "smb-a", "user_group_ref": []string{"users"}, "count": float64(3)}
+	spec, err := build(Request{Action: "smb_cluster.create"}, p)
+	if err != nil || !slices.Contains(spec.args, "--placement=count:3") {
+		t.Fatalf("count not passed: %v %v", spec.args, err)
+	}
+	for _, bad := range []any{nil, 0, -1, 1.5, true, "bad"} {
+		p["count"] = bad
+		if _, err := build(Request{Action: "smb_cluster.create"}, p); err == nil {
+			t.Fatalf("invalid count accepted: %v", bad)
+		}
+	}
+	delete(p, "count")
+	spec, err = build(Request{Action: "smb_cluster.create"}, p)
+	if err != nil || len(spec.args) != 6 {
+		t.Fatalf("default placement changed: %v %v", spec.args, err)
+	}
+}
+
 func TestSMBClusterCreateDomainReferences(t *testing.T) {
 	p := map[string]any{"name": "smb-a", "auth_mode": "active-directory", "domain_realm": "EXAMPLE.COM", "domain_join_ref": []string{"join-a", "join-b"}}
 	spec, err := build(Request{Action: "smb_cluster.create"}, p)
