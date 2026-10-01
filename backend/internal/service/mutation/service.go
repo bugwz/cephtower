@@ -2389,6 +2389,15 @@ func build(request Request, p map[string]any) (command, error) {
 			path = "/"
 		}
 		args := []string{"smb", "share", "create", cluster, share, filesystem, path}
+		if value, exists := p["readonly"]; exists {
+			readonly, ok := value.(bool)
+			if !ok {
+				return command{}, invalid("readonly must be a boolean")
+			}
+			if readonly {
+				args = append(args, "--readonly")
+			}
+		}
 		if name, exists, err := smbShareName(p); err != nil {
 			return command{}, err
 		} else if exists {

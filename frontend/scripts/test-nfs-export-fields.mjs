@@ -182,6 +182,8 @@ assert.deepEqual(smbFields.smbShareInitialValues({ cluster_id: 'a', cephfs: { vo
 assert.equal(smbFields.smbShareInitialValues({ share_id: 'docs', name: 'Team Documents' }).share_name, 'Team Documents')
 assert.equal(smbFields.smbShareInitialValues({ readonly: false }).readonly, 'false')
 assert.deepEqual(smbFields.smbShareAccessBody({ readonly: 'false', browseable: 'true' }), { readonly: false, browseable: true })
+assert.deepEqual(smbFields.smbShareAccessBody({ readonly: 'false' }), { readonly: false })
+assert.deepEqual(smbFields.smbShareAccessBody({ readonly: 'true' }), { readonly: true })
 assert.deepEqual(smbFields.smbShareAccessBody({}), {})
 assert.throws(() => smbFields.smbShareAccessBody({ readonly: 'invalid' }))
 assert.equal(smbFields.smbBooleanText(false), '否')

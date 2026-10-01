@@ -1854,7 +1854,7 @@ post_check_failed，避免以命令接受代替更新完成。覆盖保留配置
 SMB 共享编辑支持 readonly/browseable，对照参考 smb-share-form 的布尔字段。
 API 严格接受可选布尔值，省略保留；前端用显式选择区分 false 与未知，不把未采集
 的设置自动覆盖为默认值。通过上述 apply 链路写入并读回验证。隐藏共享仅控制
-浏览可见性，不替代访问控制，表单明确提示。创建表单这两项尚待接入。
+浏览可见性，不替代访问控制，表单明确提示。创建表单的可浏览选项尚待接入。
 
 SMB 共享创建从当前 Ceph 集群 `/smb/clusters` 全分页选择集群，创建/编辑从
 `/filesystems` 选择文件系统，对齐参考表单 filesystems 数据源。编辑集群只读，
@@ -1868,3 +1868,8 @@ SMB 共享 ID 与客户端名称分离：创建的 `name` 参数仍表示不可�
 使用原生 ID 默认值，省略编辑名称保留原值，显式空字符串 API 拒绝。界面明确区分
 两个字段，编辑初值来自原生 name，回读不一致拒绝报告成功。已做命令与 fixture
 测试，尚未实测客户端重连或 SMB 名称修改的集群行为。
+
+SMB 创建支持原生 readonly：对照参考 Dashboard 表单的默认 false 和 module.py
+share_create 布尔参数，API 接受严格布尔值，true 添加 `--readonly`，false 或省略
+使用原生命令的 false 默认值。前端显式选择只读或允许写入，将字符串选项转换为
+JSON 布尔值。命令测试覆盖 true、false、省略及非法类型，未实测 SMB 挂载写入。
