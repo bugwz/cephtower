@@ -7,6 +7,7 @@ import (
 	"net"
 	"reflect"
 	"regexp"
+	"strings"
 )
 
 var smbResourceIDPattern = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,16}[a-zA-Z0-9])?$`)
@@ -35,6 +36,30 @@ func smbClusterUpdateJSON(data []byte, request Request) ([]byte, error) {
 		return nil, err
 	}
 	record["auth_mode"] = mode
+	_, hasRealm := request.Parameters["domain_realm"]
+	_, hasJoin := request.Parameters["domain_join_ref"]
+	if hasRealm || hasJoin {
+		realm, ok := request.Parameters["domain_realm"].(string)
+		if mode != "active-directory" || !hasRealm || !hasJoin || !ok || strings.TrimSpace(realm) == "" || strings.ContainsAny(realm, "\x00\r\n") {
+			return nil, invalid("AD configuration requires domain_realm and domain_join_ref in active-directory mode")
+		}
+		data, err := json.Marshal(request.Parameters["domain_join_ref"])
+		var refs []string
+		if err != nil || json.Unmarshal(data, &refs) != nil || len(refs) == 0 {
+			return nil, invalid("domain_join_ref must be a non-empty list")
+		}
+		sources := make([]map[string]string, 0, len(refs))
+		seen := map[string]bool{}
+		for _, ref := range refs {
+			if !smbResourceIDPattern.MatchString(ref) || seen[ref] {
+				return nil, invalid("domain_join_ref requires unique valid SMB resource IDs")
+			}
+			seen[ref] = true
+			sources = append(sources, map[string]string{"source_type": "resource", "ref": ref})
+		}
+		record["domain_settings"] = map[string]any{"realm": realm, "join_sources": sources}
+		delete(record, "user_group_settings")
+	}
 	if value, exists := request.Parameters["user_group_ref"]; exists {
 		data, err := json.Marshal(value)
 		var refs []string
@@ -80,6 +105,11 @@ func smbClusterUpdateMatches(wanted, actual []byte, request Request) bool {
 	}
 	if _, changed := request.Parameters["user_group_ref"]; changed && found["domain_settings"] != nil {
 		return false
+	}
+	if _, changed := request.Parameters["domain_join_ref"]; changed {
+		if sources, ok := found["user_group_settings"].([]any); found["user_group_settings"] != nil && (!ok || len(sources) != 0) {
+			return false
+		}
 	}
 	for key, value := range expected {
 		if !reflect.DeepEqual(found[key], value) {

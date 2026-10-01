@@ -443,6 +443,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -1126,6 +1132,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -3104,6 +3116,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -3787,6 +3805,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -4688,6 +4712,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -5465,6 +5495,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -6148,6 +6184,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -7022,6 +7064,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -7801,6 +7849,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -8485,6 +8539,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -9412,6 +9472,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -10189,6 +10255,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -10968,6 +11040,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -11745,6 +11823,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -12428,6 +12512,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -13357,6 +13447,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -14536,6 +14632,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -15220,6 +15322,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -15904,6 +16012,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -17225,6 +17339,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -18054,6 +18174,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -18833,6 +18959,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -19516,6 +19648,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -20855,6 +20993,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -21538,6 +21682,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -22238,6 +22388,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -23015,6 +23171,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -23698,6 +23860,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -24382,6 +24550,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -25344,6 +25518,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -26218,6 +26398,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -26995,6 +27181,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -27678,6 +27870,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -28494,6 +28692,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -29178,6 +29382,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -30277,6 +30487,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -31246,6 +31462,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -32023,6 +32245,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -32802,6 +33030,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -33579,6 +33813,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -34262,6 +34502,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -35136,6 +35382,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -35913,6 +36165,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -36596,6 +36854,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -37375,6 +37639,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -38058,6 +38328,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -38837,6 +39113,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -39520,6 +39802,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -40299,6 +40587,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -41076,6 +41370,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -41759,6 +42059,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -42706,6 +43012,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -43484,6 +43796,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -44168,6 +44486,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -44852,6 +45176,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -45630,6 +45960,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -46348,6 +46684,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -47317,6 +47659,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -48094,6 +48442,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -48777,6 +49131,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -49556,6 +49916,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -50240,6 +50606,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -50924,6 +51296,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -51608,6 +51986,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -52387,6 +52771,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -53164,6 +53554,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -53847,6 +54243,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -54648,6 +55050,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -55331,6 +55739,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -56014,6 +56428,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -57084,6 +57504,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -57840,6 +58266,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -58524,6 +58956,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -59207,6 +59645,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -59986,6 +60430,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -60764,6 +61214,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -61448,6 +61904,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -62243,6 +62705,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -62926,6 +63394,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -63609,6 +64083,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -64293,6 +64773,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -65072,6 +65558,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -65849,6 +66341,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -66532,6 +67030,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -67317,6 +67821,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -68001,6 +68511,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -68685,6 +69201,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -69464,6 +69986,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -70148,6 +70676,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -70831,6 +71365,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -71610,6 +72150,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -72293,6 +72839,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -72976,6 +73528,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -73660,6 +74218,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -74534,6 +75098,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -75311,6 +75881,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -75994,6 +76570,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -76678,6 +77260,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -77362,6 +77950,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -78045,6 +78639,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -78729,6 +79329,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -79413,6 +80019,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -80192,6 +80804,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -80875,6 +81493,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -81559,6 +82183,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -82242,6 +82872,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -83256,6 +83892,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -84033,6 +84675,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -84716,6 +85364,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -85495,6 +86149,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -86272,6 +86932,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -86955,6 +87621,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -87734,6 +88406,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -88511,6 +89189,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -89194,6 +89878,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -90068,6 +90758,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:
@@ -90752,6 +91448,12 @@ paths:
                   type: string
                 document:
                   description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
                 email:
                   type: string
                 enable_ha:

@@ -93,3 +93,39 @@ func TestSMBClusterUserGroupReferences(t *testing.T) {
 		t.Fatal("local references accepted in AD mode")
 	}
 }
+
+func TestSMBClusterDomainSettings(t *testing.T) {
+	request := Request{ResourceKey: "smb/cluster/a", Parameters: map[string]any{"auth_mode": "active-directory", "domain_realm": "EXAMPLE.COM", "domain_join_ref": []string{"join-a"}}}
+	before := []byte(`{"resource_type":"ceph.smb.cluster","cluster_id":"a","auth_mode":"user","user_group_settings":[{"source_type":"resource","ref":"users"}]}`)
+	data, err := smbClusterUpdateJSON(before, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var record map[string]any
+	if err := json.Unmarshal(data, &record); err != nil {
+		t.Fatal(err)
+	}
+	domain := record["domain_settings"].(map[string]any)
+	if domain["realm"] != "EXAMPLE.COM" || domain["join_sources"].([]any)[0].(map[string]any)["ref"] != "join-a" || record["user_group_settings"] != nil {
+		t.Fatal(record)
+	}
+	if !smbClusterUpdateMatches(data, data, request) || smbClusterUpdateMatches(data, before, request) {
+		t.Fatal("domain readback failed")
+	}
+	for _, bad := range []any{nil, []string{}, []string{"join-a", "join-a"}, []string{"bad/id"}, "join-a"} {
+		request.Parameters["domain_join_ref"] = bad
+		if _, err := smbClusterUpdateJSON(before, request); err == nil {
+			t.Fatalf("invalid join refs accepted: %v", bad)
+		}
+	}
+	request.Parameters["domain_join_ref"] = []string{"join-a"}
+	delete(request.Parameters, "domain_realm")
+	if _, err := smbClusterUpdateJSON(before, request); err == nil {
+		t.Fatal("missing realm accepted")
+	}
+	request.Parameters["domain_realm"] = "EXAMPLE.COM"
+	request.Parameters["auth_mode"] = "user"
+	if _, err := smbClusterUpdateJSON(before, request); err == nil {
+		t.Fatal("domain in user mode accepted")
+	}
+}

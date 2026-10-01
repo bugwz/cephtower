@@ -2,7 +2,7 @@ import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClusterDetails } from './NFSClusterDetails'
 import { SMBClusterDetails } from './SMBClusterDetails'
-import { smbClusterInitialValues, smbClusterDNSBody, smbClusterUserGroupsBody } from './smbClusterFields'
+import { smbClusterInitialValues, smbClusterDNSBody, smbClusterUserGroupsBody, smbClusterDomainBody } from './smbClusterFields'
 import { smbCephFS, smbShareInitialValues, smbShareAccessBody, smbBooleanText } from './smbShareFields'
 import { NFSClientsEditor } from './NFSClientsEditor'
 import { nfsClientsBody, nfsFSALBody, nfsRGWUserChoices, nfsRGWBucketChoices } from './nfsExportFields'
@@ -761,6 +761,8 @@ const definitions: Record<
       method: 'PATCH',
       successMessage: 'SMB 集群更新执行成功',
       fields: [
+        { name: 'domain_realm', label: 'Active Directory 域名', placeholder: 'EXAMPLE.COM', visibleWhen: (values) => values.auth_mode === 'active-directory' },
+        { name: 'domain_join_ref', label: '域加入凭据资源 ID', type: 'textarea', placeholder: '每行一个已有 ID；提交后替换本地用户组设置，不删除凭据资源', visibleWhen: (values) => values.auth_mode === 'active-directory' },
         { name: 'user_group_ref', label: '用户组资源 ID', type: 'textarea', placeholder: '每行一个已有资源 ID；切换为本地用户模式时将替换域设置', visibleWhen: (values) => values.auth_mode === 'user' },
         { name: 'custom_dns', label: '自定义 DNS 地址', type: 'textarea', placeholder: '每行一个 IPv4/IPv6 地址；清空已知列表表示移除自定义 DNS' },
         {
@@ -780,6 +782,7 @@ const definitions: Record<
         name: resourceName(row),
         auth_mode: String(values.auth_mode ?? 'user'),
         ...smbClusterUserGroupsBody(values),
+        ...smbClusterDomainBody(values),
         ...smbClusterDNSBody(values)
       })
     },
