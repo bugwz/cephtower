@@ -140,6 +140,27 @@ func (h *Handler) GetConfigurationOption(w http.ResponseWriter, r *http.Request)
 	WriteSuccess(w, 200, "success", result)
 }
 
+func (h *Handler) GetTelemetryStatus(w http.ResponseWriter, r *http.Request) {
+	var request struct {
+		ClusterID uint64 `json:"cluster_id"`
+	}
+	if !DecodeStrict(w, r, &request) {
+		return
+	}
+	annotateAudit(r, "telemetry.get", "telemetry", "status", "", &request.ClusterID)
+	if h.Inspection == nil {
+		WriteError(w, r, 501, "capability_unavailable", "cluster inspection is unavailable", false, nil)
+		return
+	}
+	result, err := h.Inspection.TelemetryStatus(r.Context(), request.ClusterID)
+	if err != nil {
+		writeActionError(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	WriteSuccess(w, 200, "success", result)
+}
+
 func (h *Handler) GetOSDInspection(w http.ResponseWriter, r *http.Request) {
 	var request struct {
 		ClusterID uint64 `json:"cluster_id"`
