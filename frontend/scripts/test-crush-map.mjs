@@ -160,6 +160,10 @@ assert.ok(!detailSource.includes('active+clean'), 'detail view must not fabricat
 for (const field of ['stored', 'bytes_used', 'max_avail', 'compress_bytes_used', 'compress_under_bytes']) assert.ok(detailSource.includes(`poolCapacity(data.${field})`))
 assert.ok(detailSource.includes('poolObjectCount(data.objects)'))
 assert.ok(detailSource.includes('poolUsage(data)'))
+for (const field of ['read_bytes', 'write_bytes']) {
+  assert.ok(poolSource.includes(`${field}_display: poolCapacity(row.${field})`))
+  assert.ok(detailSource.includes(`poolCapacity(data.${field})`))
+}
 for (const value of [undefined, null, {}, [], 'active+clean', { down: -1 }, { down: '2' }, { down: 1.5 }, { '': 1 }]) assert.equal(pgStatus(value), '未采集')
 assert.ok(poolSource.includes('poolPGStatus(row.pg_status)'), 'pool health must use observed state counts')
 assert.ok(!poolSource.includes('`${pgNum} active+clean'), 'PG count must not imply healthy PGs')

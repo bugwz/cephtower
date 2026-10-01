@@ -5,6 +5,10 @@
 
 ## 如何追踪调用链
 
+池读写字节数接通 df detail 的 rd_bytes/wr_bytes（原生已将 KiB 计数转换为字节），
+以 read_bytes/write_bytes 进入库存 API。列表和详情标为累计读取量/累计写入量，
+不冒充吞吐率；保留零值和未知值。离线库存序列化测试覆盖非零读取与零写入。
+
 池详情增加压缩数据实际占用及原始大小，复用 df detail 的 compress_bytes_used
 （data_compressed_allocated）和 compress_under_bytes（data_compressed_original）。
 两者不是全部池容量，也不把实际分配空间误称为纯压缩后数据长度；未知值保持未采集。

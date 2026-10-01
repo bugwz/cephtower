@@ -483,8 +483,8 @@ export function PoolManagementPage() {
             { key: 'objects_display', title: '对象数量', filterKey: false },
             { key: 'bytes_used_display', title: '实际占用', filterKey: false },
             { key: 'max_avail_display', title: '最大可用', filterKey: false },
-            { key: 'read_bytes_display', title: '读字节数', filterKey: false },
-            { key: 'write_bytes_display', title: '写字节数', filterKey: false },
+            { key: 'read_bytes_display', title: '累计读取量', filterKey: false },
+            { key: 'write_bytes_display', title: '累计写入量', filterKey: false },
             {
               key: 'actions',
               title: '操作',
@@ -988,8 +988,8 @@ function normalizePoolRow(row: ApiRecord): ApiRecord {
     objects_display: poolObjectCount(row.objects),
     bytes_used_display: poolCapacity(row.bytes_used),
     max_avail_display: poolCapacity(row.max_avail),
-    read_bytes_display: formatBytes(numberValue(row.read_bytes ?? row.client_read_bytes)),
-    write_bytes_display: formatBytes(numberValue(row.write_bytes ?? row.client_write_bytes))
+    read_bytes_display: poolCapacity(row.read_bytes),
+    write_bytes_display: poolCapacity(row.write_bytes)
   }
 }
 

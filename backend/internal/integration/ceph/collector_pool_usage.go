@@ -6,6 +6,8 @@ import (
 )
 
 type poolUsageWire struct {
+	ReadBytes          *uint64  `json:"rd_bytes"`
+	WriteBytes         *uint64  `json:"wr_bytes"`
 	CompressBytesUsed  *uint64  `json:"compress_bytes_used"`
 	CompressUnderBytes *uint64  `json:"compress_under_bytes"`
 	Objects            *uint64  `json:"objects"`
