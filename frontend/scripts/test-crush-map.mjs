@@ -160,6 +160,21 @@ assert.equal(pgStatus({ 'active+clean': 8, down: 2 }), '8 active+clean, 2 down')
 assert.equal(pgStatus({ 'active+degraded': 3 }), '3 active+degraded')
 const detailSource = readFileSync(new URL('../src/pages/cluster/PoolDetailPage.tsx', import.meta.url), 'utf8')
 const detailTree = ts.createSourceFile('PoolDetailPage.tsx', detailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+for (const name of ['autoscaleNumber', 'autoscaleBoolean']) {
+  const fn = detailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === name)
+  const code = ts.transpileModule(fn.getText(detailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+  const format = new Function(`${code}; return ${name}`)()
+  if (name === 'autoscaleNumber') {
+    for (const value of [0, 0.25, 1.5]) assert.equal(format(value), String(value))
+    for (const value of [null, undefined, '1', -1, NaN, Infinity]) assert.equal(format(value), '未采集')
+  } else {
+    assert.equal(format(false), '否')
+    assert.equal(format(true), '是')
+    for (const value of [null, undefined, 'false', 0]) assert.equal(format(value), '未采集')
+  }
+}
+assert.ok(detailSource.includes('renderAutoscaleStatus(data?.autoscale_status)'))
+for (const field of ['pg_num_final', 'would_adjust', 'target_bytes', 'subtree_capacity', 'target_ratio', 'effective_target_ratio', 'bias', 'bulk']) assert.ok(detailSource.includes(`value.${field}`))
 assert.ok(detailSource.includes("const type = poolKind(row) ?? '未知'"))
 const compressionRatioFn = detailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'formatCompressionRatio')
 const compressionRatioCode = ts.transpileModule(compressionRatioFn.getText(detailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText

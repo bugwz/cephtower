@@ -5,6 +5,12 @@
 
 ## 如何追踪调用链
 
+新增独立自动伸缩建议区块：参考 Dashboard 池属性之外，以 Ceph pg_autoscaler/module.py
+的 osd pool autoscale-status --format json 获取建议 PG 数、would_adjust、目标容量、
+CRUSH 子树容量、目标/有效比例、偏置和 bulk 标志，按 pool_id 关联至 autoscale_status。
+此区块明确为采集时建议，不表示已执行调整，不触发写操作。可选命令不可用时为 null；
+零值和 false 保留，缺失值不补默认。离线测试覆盖命令参数、异常响应、跨池隔离和 API 序列化。
+
 池详情展示当前/目标 PG 和 PGP 数量。osd pool ls detail 原生输出的 pg_num_target、
 pg_placement_num_target 经采集映射为库存 API 的 pg_num_target、pgp_num_target；
 缺失目标不以当前值补齐。与参考池详情一致区分调整中的当前值和目标值。

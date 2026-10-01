@@ -117,6 +117,11 @@ export function PoolDetailPage() {
           )}
         </Card>
 
+        <Card className="page-surface-card" title="自动伸缩建议">
+          <Text type="secondary">来源：ceph osd pool autoscale-status。以下为采集时的建议与计算依据，不代表已执行调整。</Text>
+          {renderAutoscaleStatus(data?.autoscale_status)}
+        </Card>
+
         <Card className="page-surface-card" title="详细信息">
           <Space direction="vertical" size={12} className="full-width-control">
             <Text type="secondary">来源：Ceph pool 详情，采集命令为 ceph osd pool ls detail --format json。</Text>
@@ -158,6 +163,28 @@ export function PoolDetailPage() {
       </Space>
     </Page>
   )
+}
+
+function autoscaleNumber(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? String(value) : '未采集'
+}
+
+function autoscaleBoolean(value: unknown) {
+  return value === true ? '是' : value === false ? '否' : '未采集'
+}
+
+function renderAutoscaleStatus(value: unknown) {
+  if (!isRecord(value)) return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="未采集自动伸缩建议，模块不可用或命令失败时不会推断建议。" />
+  return <Descriptions size="small" column={twoColumnDescriptions} bordered>
+    <Descriptions.Item label="建议 PG 数量">{poolObjectCount(value.pg_num_final)}</Descriptions.Item>
+    <Descriptions.Item label="建议调整">{autoscaleBoolean(value.would_adjust)}</Descriptions.Item>
+    <Descriptions.Item label="目标数据量">{poolCapacity(value.target_bytes)}</Descriptions.Item>
+    <Descriptions.Item label="CRUSH 子树容量">{poolCapacity(value.subtree_capacity)}</Descriptions.Item>
+    <Descriptions.Item label="目标比例">{autoscaleNumber(value.target_ratio)}</Descriptions.Item>
+    <Descriptions.Item label="有效目标比例">{autoscaleNumber(value.effective_target_ratio)}</Descriptions.Item>
+    <Descriptions.Item label="自动伸缩偏置">{autoscaleNumber(value.bias)}</Descriptions.Item>
+    <Descriptions.Item label="Bulk 标志">{autoscaleBoolean(value.bulk)}</Descriptions.Item>
+  </Descriptions>
 }
 
 function renderOverview(data: ApiRecord, decodedName: string) {
