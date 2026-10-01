@@ -293,7 +293,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "crush_rule.delete" && (err != nil || !nameAbsent(last(resourceTail(request.ResourceKey)), checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "CRUSH rule removal was accepted but absence could not be verified; inspect the rule before retrying", Retryable: false}
 		}
-		if request.Action == "crush_rule.update" && (err != nil || !crushRuleRenamed(last(resourceTail(request.ResourceKey)), optional(request.Parameters, "name"), checked.Stdout)) {
+		if request.Action == "crush_rule.update" && (err != nil || !crushRuleRenamed(last(resourceTail(request.ResourceKey)), optional(request.Parameters, "new_name"), checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "CRUSH rule rename was accepted but names could not be verified; inspect the rule before retrying", Retryable: false}
 		}
 		if request.Action == "erasure_code_profile.create" && (err != nil || !erasureProfileCreated(spec.args, checked.Stdout)) {
@@ -671,7 +671,7 @@ func build(request Request, p map[string]any) (command, error) {
 		return ceph(args, []string{"osd", "crush", "rule", "dump", name, "--format", "json"}), nil
 	case "crush_rule.update":
 		old := last(tail)
-		name, err := required(p, "name")
+		name, err := required(p, "new_name")
 		if err != nil {
 			return command{}, err
 		}

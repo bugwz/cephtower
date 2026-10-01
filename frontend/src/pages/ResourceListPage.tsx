@@ -240,6 +240,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
         closeForm()
       }
       message.success(action.successMessage)
+      if (action.path === '/crush/rule') await refreshResource({ clusterId: selectedClusterId, kinds: ['crush_rule'] })
       if (action.path.startsWith('/rbd/')) {
         await refreshResource({ clusterId: selectedClusterId, kinds: ['rbd_image', 'rbd_snapshot', 'rbd_namespace', 'rbd_trash', 'rbd_group', 'rbd_mirroring'] })
       }

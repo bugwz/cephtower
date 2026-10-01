@@ -27,6 +27,14 @@ const definition: ResourceListPageDefinition = {
     { key: 'type', title: '规则类型', render: crushRuleType },
     { key: 'min_size', title: '最小副本/分片数' }, { key: 'max_size', title: '最大副本/分片数' }
   ],
+  updateAction: {
+    title: '重命名 CRUSH 规则', buttonLabel: '重命名', path: '/crush/rule', method: 'PATCH',
+    successMessage: 'CRUSH 规则重命名已核验', disabledWhen: crushRuleDeleteBlocked,
+    fields: [{ name: 'new_name', label: '新名称', required: true, pattern: /^[A-Za-z0-9_.-]+$/, patternMessage: '使用字母、数字、点、下划线或连字符' }],
+    initialValues: (row) => ({ new_name: String(row?.rule_name ?? '') }),
+    confirmation: (values, row) => `将规则 ${row?.rule_name} 重命名为 ${values.new_name}？请同步调整外部脚本中的名称引用。`,
+    buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: row?.rule_name, new_name: values.new_name })
+  },
   deleteAction: {
     title: '删除 CRUSH 规则', path: '/crush/rule', action: 'crush_rule.delete', resourceKind: 'crush_rule', risk: 'high',
     confirmation: (row) => `确认删除规则 ${row.rule_name}？此操作不可撤销。Ceph 会拒绝删除仍被存储池使用的规则；本操作不会迁移存储池或删除数据。`,

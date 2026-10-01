@@ -35,7 +35,11 @@ func TestCrushRuleCreationReadback(t *testing.T) {
 
 func TestCrushRuleRenameReadback(t *testing.T) {
 	s, _, id := newCephUserService(t)
-	r := Request{ClusterID: id, Action: "crush_rule.update", ResourceKey: "crush-rule/old", Parameters: map[string]any{"name": "new"}}
+	r := Request{ClusterID: id, Action: "crush_rule.update", ResourceKey: "crush-rule/old", Parameters: map[string]any{"name": "old", "new_name": "new"}}
+	spec, err := build(r, r.Parameters)
+	if err != nil || strings.Join(spec.args, " ") != "osd crush rule rename old new" {
+		t.Fatal(spec, err)
+	}
 	e := &directoryRenameExecutor{outputs: map[string]string{r.Action: "renamed", r.Action + ".post_check": `["new","other"]`}}
 	s.executor = e
 	if _, err := s.Execute(context.Background(), r); err != nil {

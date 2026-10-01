@@ -104,7 +104,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	dataDevices := objectField(true, map[string]JSONField{"all": boolField(false), "paths": stringsField(false), "rotational": boolField(false), "model": stringField(false), "vendor": stringField(false), "size": stringField(false)})
 	add([]string{"osd_deployment.preview", "osd_deployment.create"}, true, map[string]JSONField{"service_id": stringField(false), "host_pattern": stringField(false), "data_devices": dataDevices})
 	add([]string{"crush_rule.create"}, true, map[string]JSONField{"name": stringField(true), "root": stringField(true), "failure_domain": stringField(false), "device_class": stringField(false)})
-	add([]string{"crush_rule.update"}, true, map[string]JSONField{"name": stringField(true)})
+	add([]string{"crush_rule.update"}, true, map[string]JSONField{"name": stringField(true), "new_name": stringField(true)})
 	add([]string{"erasure_code_profile.create"}, true, map[string]JSONField{
 		"name": stringField(true), "plugin": stringField(false), "k": integerField(false), "m": integerField(false),
 		"technique": stringField(false), "packetsize": integerField(false), "l": integerField(false),
