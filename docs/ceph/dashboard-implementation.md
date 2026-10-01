@@ -1873,3 +1873,9 @@ SMB 创建支持原生 readonly：对照参考 Dashboard 表单的默认 false �
 share_create 布尔参数，API 接受严格布尔值，true 添加 `--readonly`，false 或省略
 使用原生命令的 false 默认值。前端显式选择只读或允许写入，将字符串选项转换为
 JSON 布尔值。命令测试覆盖 true、false、省略及非法类型，未实测 SMB 挂载写入。
+
+SMB 创建/删除后严格解析目标集群的 `smb share ls --format json` 字符串列表，
+分别确认共享 ID 存在/消失；删除身份从资源键解析，不信任额外名称参数。null、
+错误结构、空 ID、重复 ID、尾随 JSON 或未达到目标状态均返回 post_check_failed，
+提醒操作可能已经生效。此检查证明资源存在性，不证明 Samba 已部署或客户端可用；
+创建属性的完整回读仍待完善。已覆盖执行链路与异常 fixture，无真实集群验证。

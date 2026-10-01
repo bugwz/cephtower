@@ -286,6 +286,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "smb_share.update" && !smbShareUpdateMatches(spec.stdin, checked.Stdout, request) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB share update was accepted but requested and preserved settings could not be verified; the change may already have taken effect", Retryable: true}
 		}
+		if (request.Action == "smb_share.create" || request.Action == "smb_share.delete") && !smbShareStateMatches(request, checked.Stdout) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB share command was accepted but its expected presence or absence could not be verified; the change may already have taken effect", Retryable: true}
+		}
 	}
 	if request.Action == "rgw_zone.update" && optional(request.Parameters, "zonegroup") != "" {
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".group_post_check", Binary: executor.BinaryRGWAdmin, Args: []string{"zonegroup", "get", "--rgw-zonegroup", optional(request.Parameters, "zonegroup"), "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
