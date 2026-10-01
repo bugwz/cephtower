@@ -15,6 +15,18 @@ export function scheduleIntervalText(value: unknown): string {
   return match ? `每 ${match[1]} ${intervals[match[2]]}（${value}）` : value
 }
 
+export const scheduleFrequencyOptions = [
+  { label: '小时', value: 'h' }, { label: '天', value: 'd' },
+  { label: '周', value: 'w' }, { label: '月（30 天）', value: 'M' },
+  { label: '年（365 天）', value: 'y' }
+]
+
+export function buildScheduleInterval(interval: unknown, frequency: unknown): string {
+  if (typeof interval !== 'string' || !/^[1-9][0-9]*$/.test(interval)) throw new Error('周期间隔必须为正整数')
+  if (!scheduleFrequencyOptions.some((option) => option.value === frequency)) throw new Error('请选择周期单位')
+  return `${interval}${frequency}`
+}
+
 export function scheduleRetentionText(value: unknown): string {
   if (value == null) return '未知'
   let entries: Array<[string, unknown]>

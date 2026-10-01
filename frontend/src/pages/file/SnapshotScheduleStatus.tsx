@@ -1,9 +1,9 @@
-import { Alert, Button, Card, Form, Input, Modal, Popconfirm, Space } from 'antd'
+import { Alert, Button, Card, Form, Input, Modal, Popconfirm, Select, Space } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { listAllResources, listResource, mutateResource, refreshResource } from '../../api/resource'
 import { scheduleFormScope, scheduleScope } from './snapshotScheduleScope'
-import { scheduleActiveText, scheduleIntervalText, scheduleRetentionText, scheduleToggleAction } from './snapshotScheduleText'
+import { buildScheduleInterval, scheduleActiveText, scheduleFrequencyOptions, scheduleIntervalText, scheduleRetentionText, scheduleToggleAction } from './snapshotScheduleText'
 import { AppTable } from '../../components/AppTable'
 import { RecordDetail } from '../../components/RecordDetail'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -147,7 +147,7 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
     if (!active.current) return
     setMutating(true)
     try {
-      await mutateResource('/filesystem/snapshot/schedule','POST',{ cluster_id:selectedClusterId, ...target, ...values })
+      await mutateResource('/filesystem/snapshot/schedule','POST',{ cluster_id:selectedClusterId, ...target, schedule: buildScheduleInterval(values.interval, values.frequency), ...(values.start ? { start: values.start } : {}) })
       if (!active.current) return
       setCreating(false)
       await loadDiscovered()
@@ -183,8 +183,9 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
     </Form>
     <Button disabled={!selectedClusterId || mutating || loading || moduleState !== 'enabled'} onClick={() => { void form.validateFields().then(() => setCreating(true)) }}>为当前路径新建计划</Button>
     <Modal title="新建快照计划" open={creating} confirmLoading={mutating} onCancel={() => { if (!mutating) setCreating(false) }} onOk={() => createForm.submit()}>
-      <Form form={createForm} layout="vertical" onFinish={create}>
-        <Form.Item name="schedule" label="周期" rules={[{ required:true }]}><Input placeholder="1h" /></Form.Item>
+      <Form form={createForm} layout="vertical" onFinish={create} initialValues={{ interval: '1', frequency: 'd' }}>
+        <Form.Item name="interval" label="每隔" rules={[{ required:true }, { pattern: /^[1-9][0-9]*$/, message: '请输入正整数' }]}><Input inputMode="numeric" /></Form.Item>
+        <Form.Item name="frequency" label="周期单位" rules={[{ required:true }]}><Select options={scheduleFrequencyOptions} /></Form.Item>
         <Form.Item name="start" label="开始时间（可选）"><Input placeholder="2026-09-14T00:00:00" /></Form.Item>
       </Form>
     </Modal>
