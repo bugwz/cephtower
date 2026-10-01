@@ -12,6 +12,7 @@ import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
 import { CephFSPerformance } from './CephFSPerformance'
 import { CephFSPoolUsage } from './CephFSPoolUsage'
+import { filesystemEnabledText } from './cephfsFilesystemState'
 
 const { Text } = Typography
 const detailColumns = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
@@ -71,6 +72,8 @@ export function FilesystemDetailPage() {
         {filesystem ? (
           <Descriptions className="host-detail-descriptions" size="small" column={detailColumns} bordered>
             <Descriptions.Item label="名称">{resourceName(filesystem)}</Descriptions.Item>
+            <Descriptions.Item label="启用状态">{filesystemEnabledText(filesystem.enabled)}</Descriptions.Item>
+            <Descriptions.Item label="Ceph 创建时间">{formatDateTime(filesystem.created)}</Descriptions.Item>
             <Descriptions.Item label="状态">
               <Tag color={filesystem.stale === true ? 'warning' : 'success'}>
                 {filesystem.stale === true ? '数据已过期' : textValue(filesystem.status, '可用')}

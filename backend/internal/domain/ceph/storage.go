@@ -44,6 +44,8 @@ type PoolConfig struct {
 type Filesystem struct {
 	Name         string           `json:"name"`
 	ID           int64            `json:"id"`
+	Enabled      *bool            `json:"enabled"`
+	Created      *string          `json:"created"`
 	MaxMDS       *int64           `json:"max_mds"`
 	MetadataPool *int64           `json:"metadata_pool,omitempty"`
 	DataPools    []int64          `json:"data_pools,omitempty"`

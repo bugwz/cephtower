@@ -4,6 +4,8 @@ import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceLi
 import { listResource } from '../../api/resource'
 import { SubvolumeSnapshotVisibility } from './SubvolumeSnapshotVisibility'
 import { groupUpdateBody, groupUpdateInitialValues } from './cephfsGroupForm'
+import { filesystemEnabledText } from './cephfsFilesystemState'
+import { formatDateTime } from '../../utils/time'
 
 export function FilePoolsPage() {
   return <ResourceListPage definition={definitions.filePools} />
@@ -169,6 +171,8 @@ const definitions: Record<
     detailPath: (row) => `/file/cephfs/${encodeURIComponent(resourceName(row))}`,
     columns: [
       { key: 'name', title: '名称' },
+      { key: 'enabled', title: '启用状态', render: filesystemEnabledText },
+      { key: 'created', title: 'Ceph 创建时间', render: (value) => formatDateTime(value) },
       { key: 'status', title: '状态' },
       { key: 'metadata_pool', title: '元数据池' },
       { key: 'data_pools', title: '数据池' },

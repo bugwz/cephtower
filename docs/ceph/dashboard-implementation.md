@@ -1289,6 +1289,19 @@ mode 也有默认值。因此属性更新要求四个字段同时提供，不把
 后续步骤失败可能已有部分修改生效。离线测试覆盖命令顺序、更新前存在性检查、
 逐字段读回、权限位、部分失败、严格 API 契约及版本检查；未在真实集群验证。
 
+### CephFS 文件系统启用状态与创建时间
+
+参考 `cephfs-list.component.ts` 显示 mdsmap.enabled 与 mdsmap.created。
+本地 `MDSMap::dump` 在 `fs dump --format json` 输出这两个原生字段，现由采集器
+保留为 enabled 与 created，经 reconciler、资源缓存及文件系统 GET/list 接口提供给
+列表和详情页。enabled 使用可空布尔，不根据 MDS 数量或缓存 status 推测；false
+明确显示未启用，缺失显示未知。created 保留原生字符串，与 CephTower 缓存记录的
+created_at 分开，缺失时不填充当前时间。
+
+离线测试走真实 NativeProvider → reconciler → store → API 链路，验证 enabled 的
+true/false/缺失、Ceph 创建时间原值与本地缓存时间分离，并拒绝字符串伪布尔响应。
+前端单元检查确认缺失和非布尔值不会误显示已启用；未在真实集群验证。
+
 ### CephFS 扩展访问权限
 
 对照参考授权弹窗，`fs authorize` 表单新增 quota、snapshot 和 root squash。

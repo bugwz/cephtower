@@ -776,6 +776,8 @@ type fsDumpWire struct {
 		MDSMap struct {
 			FSName       string           `json:"fs_name"`
 			ID           int64            `json:"id"`
+			Enabled      *bool            `json:"enabled"`
+			Created      *string          `json:"created"`
 			MaxMDS       *int64           `json:"max_mds"`
 			MetadataPool *int64           `json:"metadata_pool"`
 			DataPools    []int64          `json:"data_pools"`
@@ -867,6 +869,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		}
 		payload := cephdomain.Filesystem{
 			Name: m.FSName, ID: m.ID, MaxMDS: m.MaxMDS, MetadataPool: m.MetadataPool,
+			Enabled: m.Enabled, Created: m.Created,
 			DataPools: m.DataPools, In: m.In, Up: m.Up,
 		}
 		rows = append(rows, Observation{Kind: "filesystem", NaturalKey: m.FSName, Name: m.FSName, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
