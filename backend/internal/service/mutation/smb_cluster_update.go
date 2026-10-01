@@ -11,6 +11,7 @@ import (
 )
 
 var smbResourceIDPattern = regexp.MustCompile(`^[a-zA-Z0-9]([a-zA-Z0-9-]{0,16}[a-zA-Z0-9])?$`)
+var smbPlacementHostPattern = regexp.MustCompile(`^[a-zA-Z0-9_][a-zA-Z0-9_.-]{0,252}$`)
 
 func smbDNSServers(value any) ([]string, error) {
 	data, err := json.Marshal(value)

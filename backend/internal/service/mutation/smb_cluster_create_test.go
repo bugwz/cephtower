@@ -67,6 +67,25 @@ func TestSMBClusterCreateCount(t *testing.T) {
 	}
 }
 
+func TestSMBClusterCreateHosts(t *testing.T) {
+	p := map[string]any{"name": "smb-a", "user_group_ref": []string{"users"}, "count": float64(2), "smb_hosts": []string{"node-a", "node-b"}}
+	spec, err := build(Request{Action: "smb_cluster.create"}, p)
+	if err != nil || !slices.Contains(spec.args, "--placement=count:2 node-a node-b") {
+		t.Fatalf("placement not combined: %v %v", spec.args, err)
+	}
+	delete(p, "count")
+	spec, err = build(Request{Action: "smb_cluster.create"}, p)
+	if err != nil || !slices.Contains(spec.args, "--placement=node-a node-b") {
+		t.Fatalf("host placement failed: %v %v", spec.args, err)
+	}
+	for _, bad := range []any{nil, []string{}, "node-a", []string{"node-a", "node-a"}, []string{"label:smb"}, []string{"node-a count:5"}, []string{"*"}, []string{"123"}} {
+		p["smb_hosts"] = bad
+		if _, err := build(Request{Action: "smb_cluster.create"}, p); err == nil {
+			t.Fatalf("invalid hosts accepted: %v", bad)
+		}
+	}
+}
+
 func TestSMBClusterCreateDomainReferences(t *testing.T) {
 	p := map[string]any{"name": "smb-a", "auth_mode": "active-directory", "domain_realm": "EXAMPLE.COM", "domain_join_ref": []string{"join-a", "join-b"}}
 	spec, err := build(Request{Action: "smb_cluster.create"}, p)

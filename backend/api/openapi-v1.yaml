@@ -797,6 +797,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -1488,6 +1492,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -3474,6 +3482,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -4165,6 +4177,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -5074,6 +5090,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -5859,6 +5879,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -6550,6 +6574,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -7432,6 +7460,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -8219,6 +8251,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -8911,6 +8947,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -9846,6 +9886,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -10631,6 +10675,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -11418,6 +11466,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -12203,6 +12255,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -12894,6 +12950,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -13831,6 +13891,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -15018,6 +15082,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -15710,6 +15778,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -16402,6 +16474,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -17731,6 +17807,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -18568,6 +18648,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -19355,6 +19439,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -20046,6 +20134,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -21393,6 +21485,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -22084,6 +22180,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -22792,6 +22892,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -23577,6 +23681,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -24268,6 +24376,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -24960,6 +25072,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -25930,6 +26046,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -26812,6 +26932,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -27597,6 +27721,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -28288,6 +28416,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -29112,6 +29244,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -29804,6 +29940,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -30911,6 +31051,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -31888,6 +32032,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -32673,6 +32821,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -33460,6 +33612,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -34245,6 +34401,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -34936,6 +35096,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -35818,6 +35982,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -36603,6 +36771,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -37294,6 +37466,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -38081,6 +38257,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -38772,6 +38952,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -39559,6 +39743,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -40250,6 +40438,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -41037,6 +41229,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -41822,6 +42018,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -42513,6 +42713,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -43468,6 +43672,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -44254,6 +44462,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -44946,6 +45158,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -45638,6 +45854,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -46424,6 +46644,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -47150,6 +47374,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -48127,6 +48355,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -48912,6 +49144,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -49603,6 +49839,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -50390,6 +50630,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -51082,6 +51326,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -51774,6 +52022,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -52466,6 +52718,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -53253,6 +53509,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -54038,6 +54298,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -54729,6 +54993,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -55538,6 +55806,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -56229,6 +56501,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -56920,6 +57196,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -57998,6 +58278,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -58762,6 +59046,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -59454,6 +59742,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -60145,6 +60437,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -60932,6 +61228,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -61718,6 +62018,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -62410,6 +62714,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -63213,6 +63521,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -63904,6 +64216,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -64595,6 +64911,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -65287,6 +65607,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -66074,6 +66398,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -66859,6 +67187,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -67550,6 +67882,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -68343,6 +68679,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -69035,6 +69375,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -69727,6 +70071,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -70514,6 +70862,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -71206,6 +71558,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -71897,6 +72253,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -72684,6 +73044,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -73375,6 +73739,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -74066,6 +74434,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -74758,6 +75130,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -75640,6 +76016,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -76425,6 +76805,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -77116,6 +77500,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -77808,6 +78196,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -78500,6 +78892,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -79191,6 +79587,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -79883,6 +80283,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -80575,6 +80979,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -81362,6 +81770,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -82053,6 +82465,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -82745,6 +83161,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -83436,6 +83856,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -84458,6 +84882,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -85243,6 +85671,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -85934,6 +86366,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -86721,6 +87157,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -87506,6 +87946,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -88197,6 +88641,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -88984,6 +89432,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -89769,6 +90221,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -90460,6 +90916,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -91342,6 +91802,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:
@@ -92034,6 +92498,10 @@ paths:
                   type: string
                 size:
                   description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
                 snap:
                   type: string
                 squash:

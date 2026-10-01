@@ -2359,12 +2359,31 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("auth_mode is not supported")
 		}
 		args := []string{"smb", "cluster", "create", name, authMode}
+		placement := []string{}
 		if _, exists := p["count"]; exists {
 			count, err := optionalPositiveInteger(p, "count")
 			if err != nil || count == "" {
 				return command{}, invalid("count must be a positive integer")
 			}
-			args = append(args, "--placement=count:"+count)
+			placement = append(placement, "count:"+count)
+		}
+		if value, exists := p["smb_hosts"]; exists {
+			data, err := json.Marshal(value)
+			var hosts []string
+			if err != nil || json.Unmarshal(data, &hosts) != nil || len(hosts) == 0 {
+				return command{}, invalid("smb_hosts must be a non-empty list of hostnames")
+			}
+			seen := map[string]bool{}
+			for _, host := range hosts {
+				if !smbPlacementHostPattern.MatchString(host) || strings.Trim(host, "0123456789") == "" || seen[host] {
+					return command{}, invalid("smb_hosts requires unique plain hostnames")
+				}
+				seen[host] = true
+				placement = append(placement, host)
+			}
+		}
+		if len(placement) > 0 {
+			args = append(args, "--placement="+strings.Join(placement, " "))
 		}
 		if value, exists := p["custom_dns"]; exists {
 			servers, err := smbDNSServers(value)

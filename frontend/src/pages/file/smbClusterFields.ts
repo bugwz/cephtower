@@ -22,6 +22,13 @@ export function smbClusterCountBody(values: ApiRecord) {
   return { count }
 }
 
+export function smbClusterHostsBody(values: ApiRecord) {
+  if (values.smb_hosts === undefined || values.smb_hosts === '') return {}
+  if (typeof values.smb_hosts !== 'string') throw new Error('主机列表格式无效')
+  const hosts = values.smb_hosts.split(/[\s,]+/).filter(Boolean)
+  return hosts.length ? { smb_hosts: hosts } : {}
+}
+
 export function smbClusterDomainBody(values: ApiRecord) {
   if (values.auth_mode !== 'active-directory' || (values.domain_realm === undefined && values.domain_join_ref === undefined)) return {}
   if (typeof values.domain_realm !== 'string' || !values.domain_realm.trim() || typeof values.domain_join_ref !== 'string') throw new Error('请填写域名和域加入凭据资源 ID')
