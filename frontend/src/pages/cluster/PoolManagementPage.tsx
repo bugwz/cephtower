@@ -231,7 +231,7 @@ export function PoolManagementPage() {
     ])
     const erasureCodeProfiles = erasureCodeProfileRows.map(resourceName).filter(Boolean)
     return {
-      pools: poolList.items.map(normalizePoolRow),
+      pools: poolList.items.map((row) => normalizePoolRow(row, erasureCodeProfileRows)),
       crushRules,
       erasureCodeProfiles: Array.from(new Set(erasureCodeProfiles)),
       erasureCodeProfileRows,
@@ -1056,7 +1056,7 @@ export function poolIORate(value: unknown, field: 'read_bytes_sec' | 'write_byte
   return field.endsWith('bytes_sec') ? `${poolCapacity(rate)}/s` : `${rate.toLocaleString('zh-CN')} op/s`
 }
 
-function normalizePoolRow(row: ApiRecord): ApiRecord {
+function normalizePoolRow(row: ApiRecord, profiles: ApiRecord[] = []): ApiRecord {
   const name = resourceName(row)
   const poolType = poolKind(row)
   const pgAutoscale = textValue(row.pg_autoscale_mode, '未知')
@@ -1068,7 +1068,7 @@ function normalizePoolRow(row: ApiRecord): ApiRecord {
     write_rate_display: poolIORate(row.client_io_rate, 'write_bytes_sec'),
     read_iops_display: poolIORate(row.client_io_rate, 'read_op_per_sec'),
     write_iops_display: poolIORate(row.client_io_rate, 'write_op_per_sec'),
-    data_protection_display: poolDataProtection(row),
+    data_protection_display: poolDataProtection(row, profiles),
     applications: poolApplications(row),
     applications_display: poolApplications(row).join(', '),
     pg_status_display: `${poolPGStatus(row.pg_status)} / ${pgAutoscale}`,
@@ -1590,9 +1590,21 @@ function poolHasFlag(row: ApiRecord, flag: string): boolean {
   return row.flags.some((value) => textValue(value, '') === flag)
 }
 
-export function poolDataProtection(row: ApiRecord): string {
+export function poolDataProtection(row: ApiRecord, profiles: ApiRecord[] = []): string {
   const type = row.pool_type ?? row.type
-  if (type === 'erasure' || type === 3) return '纠删码'
+  if (type === 'erasure' || type === 3) {
+    const matches = typeof row.erasure_code_profile === 'string' && row.erasure_code_profile
+      ? profiles.filter((profile) => profile.name === row.erasure_code_profile)
+      : []
+    const profile = matches.length === 1 ? matches[0] : undefined
+    const shardCount = (value: unknown) => {
+      const count = typeof value === 'string' && /^[1-9]\d*$/.test(value) ? Number(value) : value
+      return typeof count === 'number' && Number.isSafeInteger(count) && count > 0 ? count : undefined
+    }
+    const k = shardCount(profile?.k)
+    const m = shardCount(profile?.m)
+    return profile?.stale === false && k !== undefined && m !== undefined ? `EC: ${k}+${m}` : '纠删码（分片数未采集）'
+  }
   if (type !== 'replicated' && type !== 1) return '未采集'
   return typeof row.size === 'number' && Number.isSafeInteger(row.size) && row.size > 0
     ? `replica: x${row.size}` : '副本数未采集'

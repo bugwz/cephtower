@@ -156,7 +156,14 @@ const protectionFn = poolTree.statements.find((node) => ts.isFunctionDeclaration
 const protectionCode = ts.transpileModule(protectionFn.getText(poolTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const protection = new Function(`${protectionCode}; return poolDataProtection`)()
 assert.equal(protection({ type: 'replicated', size: 2 }), 'replica: x2')
-assert.equal(protection({ type: 'erasure', size: 6 }), '纠删码')
+assert.equal(protection({ type: 'erasure', size: 6 }), '纠删码（分片数未采集）')
+const erasurePool = { type: 'erasure', erasure_code_profile: 'archive' }
+const erasureProfile = { name: 'archive', k: '4', m: '2', stale: false }
+assert.equal(protection(erasurePool, [erasureProfile]), 'EC: 4+2')
+assert.equal(protection(erasurePool, [{ ...erasureProfile, k: 6, m: 3 }]), 'EC: 6+3')
+for (const profiles of [[], [{ ...erasureProfile, name: 'other' }], [erasureProfile, erasureProfile], [{ ...erasureProfile, stale: true }], [{ ...erasureProfile, stale: undefined }]]) assert.equal(protection(erasurePool, profiles), '纠删码（分片数未采集）')
+for (const field of ['k', 'm']) for (const value of [undefined, null, true, 0, -1, 1.5, '1.5', '4oops', Number.MAX_SAFE_INTEGER + 1]) assert.equal(protection(erasurePool, [{ ...erasureProfile, [field]: value }]), '纠删码（分片数未采集）')
+assert.ok(poolSource.includes('normalizePoolRow(row, erasureCodeProfileRows)'))
 assert.equal(protection({}), '未采集')
 for (const size of [undefined, null, 0, -1, 1.5, '3']) assert.equal(protection({ type: 'replicated', size }), '副本数未采集')
 const objectCountFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolObjectCount')
