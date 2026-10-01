@@ -27,8 +27,8 @@ console.log('CRUSH topology tree checks passed')
 
 const poolSource = readFileSync(new URL('../src/pages/cluster/PoolManagementPage.tsx', import.meta.url), 'utf8')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-const poolFunctions = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['topologyCounts', 'crushRootNames'].includes(node.name.text))
-const poolCode = ts.transpileModule(poolFunctions.map((fn) => fn.getText(poolTree)).join('\n') + '\nexports.counts = topologyCounts; exports.roots = crushRootNames', { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+const poolFunctions = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['topologyCounts', 'crushRootNames', 'placementDeviceOptions', 'placementValid', 'failureDomainOptions'].includes(node.name.text))
+const poolCode = ts.transpileModule(poolFunctions.map((fn) => fn.getText(poolTree)).join('\n') + '\nexports.counts = topologyCounts; exports.roots = crushRootNames; exports.devices = placementDeviceOptions; exports.valid = placementValid; exports.domains = failureDomainOptions', { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
 const poolExports = {}
 new Function('exports', 'textValue', 'isRecord', poolCode)(poolExports, (value, fallback) => typeof value === 'string' ? value : fallback, (value) => value !== null && typeof value === 'object' && !Array.isArray(value))
 const osds = [
@@ -54,6 +54,14 @@ assert.equal(poolExports.counts(osds, 'empty').osd, 0)
 assert.ok(poolExports.roots(osds).includes('empty'))
 assert.deepEqual(poolExports.roots([]), [])
 assert.throws(() => poolExports.counts([{ id: -1, name: 'bad', type: 'root', children: [-1] }], 'bad'))
+assert.deepEqual(poolExports.devices(osds, 'archive').map((option) => option.value), ['', 'ssd'])
+assert.deepEqual(poolExports.devices(osds, 'empty').map((option) => option.value), [''])
+assert.equal(poolExports.valid(osds, 'default', 'host', 'ssd'), true)
+assert.equal(poolExports.valid(osds, 'archive', 'osd', 'hdd'), false)
+assert.equal(poolExports.valid(osds, 'empty', 'osd'), false)
+assert.equal(poolExports.valid(osds, 'default', 'rack'), false)
+assert.equal(poolExports.valid(osds, 'default', 'root'), false)
+assert.deepEqual(poolExports.domains({ osd: 0, host: 0, root: 1 }), [])
 console.log('CRUSH failure domain root isolation checks passed')
 
 const rulesSource = readFileSync(new URL('../src/pages/cluster/CrushRulesPanel.tsx', import.meta.url), 'utf8')

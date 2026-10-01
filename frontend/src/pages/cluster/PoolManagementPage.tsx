@@ -1,6 +1,6 @@
 import { InfoCircleOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Button, Card, Divider, Form, Input, InputNumber, Select, Space, Tag, Tooltip, Typography } from 'antd'
-import { type ReactNode, useCallback, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isRecord, jsonInit, request, numberValue, textValue, type ApiRecord } from '../../api/client'
 import { listAllResources, listResource, mutateResource, refreshResource } from '../../api/resource'
@@ -250,12 +250,12 @@ export function PoolManagementPage() {
     [data?.crushNodes]
   )
   const crushDeviceClassOptions = useMemo(
-    () => [
-      { label: '全部设备', value: '' },
-      ...Array.from(new Set((data?.crushNodes ?? []).map((osd) => textValue(osd.device_class, '')).filter(Boolean)))
-        .map((value) => ({ label: value, value }))
-    ],
-    [data?.crushNodes]
+    () => placementDeviceOptions(data?.crushNodes ?? [], crushRuleRoot),
+    [data?.crushNodes, crushRuleRoot]
+  )
+  const erasureDeviceClassOptions = useMemo(
+    () => placementDeviceOptions(data?.crushNodes ?? [], erasureCodeRoot),
+    [data?.crushNodes, erasureCodeRoot]
   )
   const crushRuleTopology = useMemo(
     () => topologyCounts(data?.crushNodes ?? [], crushRuleRoot, crushRuleDeviceClass),
@@ -265,6 +265,18 @@ export function PoolManagementPage() {
     () => topologyCounts(data?.crushNodes ?? [], erasureCodeRoot, erasureCodeDeviceClass),
     [data?.crushNodes, erasureCodeDeviceClass, erasureCodeRoot]
   )
+  useEffect(() => {
+    if (crushRuleDeviceClass && !crushDeviceClassOptions.some((option) => option.value === crushRuleDeviceClass)) crushRuleForm.setFieldValue('device_class', '')
+    const domain = crushRuleForm.getFieldValue('failure_domain')
+    if (domain && !failureDomainOptions(crushRuleTopology).some((option) => option.value === domain)) crushRuleForm.setFieldValue('failure_domain', undefined)
+  }, [crushDeviceClassOptions, crushRuleDeviceClass, crushRuleForm, crushRuleTopology])
+  useEffect(() => {
+    if (erasureCodeDeviceClass && !erasureDeviceClassOptions.some((option) => option.value === erasureCodeDeviceClass)) erasureCodeProfileForm.setFieldValue('crush_device_class', '')
+    for (const field of ['crush_failure_domain', 'crush_locality'] as const) {
+      const domain = erasureCodeProfileForm.getFieldValue(field)
+      if (domain && !failureDomainOptions(erasureCodeTopology).some((option) => option.value === domain)) erasureCodeProfileForm.setFieldValue(field, undefined)
+    }
+  }, [erasureCodeDeviceClass, erasureDeviceClassOptions, erasureCodeProfileForm, erasureCodeTopology])
 
   async function refreshPoolData() {
     if (refreshingPools) {
@@ -345,6 +357,7 @@ export function PoolManagementPage() {
     if (!selectedClusterId || submittingCrushRule) {
       return
     }
+    if (loading || error || !placementValid(data?.crushNodes ?? [], values.root, values.failure_domain, values.device_class)) { message.error('CRUSH 放置选项不可用，请重新选择有效节点、故障域和设备类别'); return }
     setSubmittingCrushRule(true)
     try {
       await operationMutation.run(() => mutateResource('/crush/rule', 'POST', {
@@ -370,6 +383,7 @@ export function PoolManagementPage() {
     if (!selectedClusterId || submittingErasureCodeProfile) {
       return
     }
+    if (loading || error || !placementValid(data?.crushNodes ?? [], values.crush_root, values.crush_failure_domain, values.crush_device_class)) { message.error('CRUSH 放置选项不可用，请重新选择有效节点、故障域和设备类别'); return }
     setSubmittingErasureCodeProfile(true)
     try {
       await operationMutation.run(() => mutateResource('/erasure/code/profile', 'POST', erasureCodeProfileBody(values, selectedClusterId)), false)
@@ -892,7 +906,7 @@ export function PoolManagementPage() {
               label={<HelpLabel label="CRUSH 设备类型" title={`限定放置数据的设备类型。当前选择范围内可用 OSD：${erasureCodeTopology.osd}`} />}
             >
               <Select
-                options={crushDeviceClassOptions}
+                options={erasureDeviceClassOptions}
                 getPopupContainer={nestedModalPopupContainer}
               />
             </Form.Item>
@@ -1142,9 +1156,20 @@ function topologyCounts(crushNodes: ApiRecord[], root: string, deviceClass?: str
 function failureDomainOptions(counts: Record<string, number>) {
   const order = (kind: string) => kind === 'host' ? 0 : kind === 'osd' ? 1 : 2
   return Object.entries(counts)
-    .filter(([kind]) => kind !== 'root')
+    .filter(([kind, count]) => kind !== 'root' && count > 0)
     .sort(([left], [right]) => order(left) - order(right) || left.localeCompare(right))
     .map(([kind, count]) => ({ label: `${kind} (${count})`, value: kind }))
+}
+
+function placementDeviceOptions(nodes: ApiRecord[], root: string) {
+  const classes = Array.from(new Set(nodes.filter((node) => node.type === 'osd').map((node) => textValue(node.device_class, '')).filter(Boolean)))
+  return [{ label: '全部设备', value: '' }, ...classes.filter((value) => topologyCounts(nodes, root, value).osd > 0).map((value) => ({ label: value, value }))]
+}
+
+function placementValid(nodes: ApiRecord[], root: string, domain: string, deviceClass?: string) {
+  if (!crushRootNames(nodes).includes(root) || !domain || domain === 'root') return false
+  const counts = topologyCounts(nodes, root, deviceClass)
+  return counts.osd > 0 && (counts[domain] ?? 0) > 0
 }
 
 function uniqueNameRule(existingNames: string[], messageText: string) {
