@@ -433,7 +433,11 @@ export function PoolManagementPage() {
       async onOk() {
         if (clusterScope.current !== scope) throw new Error('集群已切换，请在当前集群重新确认')
         await operationMutation.run(() => mutateResource('/pool', 'DELETE', { cluster_id: selectedClusterId, pool }, { ifMatch: Number(row.resource_version) }), false)
-        await refreshResource({ clusterId: selectedClusterId, kind: 'pool' })
+        try {
+          await refreshResource({ clusterId: selectedClusterId, kind: 'pool' })
+        } catch {
+          if (clusterScope.current === scope) message.warning('存储池删除已执行，但重新采集失败；请刷新库存核实，不要重复删除。')
+        }
         if (clusterScope.current === scope) await refresh()
       }
     })

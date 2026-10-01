@@ -309,12 +309,12 @@ assert.equal(deleteGuard({ name: 'a', stale: false, resource_version: 3, flags: 
 for (const row of [{ name: 'a' }, { name: 'a', stale: true, resource_version: 3 }, { name: 'a', stale: false }, { name: '', stale: false, resource_version: 3 }]) assert.ok(deleteGuard(row))
 const deleteFn = poolPage.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'deletePool')
 const deleteCode = ts.transpileModule(deleteFn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-for (const changed of [false, true]) {
-  let modal, calls = []
+for (const changed of [false, true]) for (const collectionFailed of [false, true]) {
+  let modal, calls = [], warned = false, reads = 0
   const scope = { current: { id: 7 } }
-  const remove = new Function('Modal', 'clusterScope', 'poolDeleteBlocked', 'resourceName', 'operationMutation', 'mutateResource', 'refreshResource', 'refresh', `const selectedClusterId=7, loading=false, error=null; ${deleteCode}; return deletePool`)(
+  const remove = new Function('Modal', 'clusterScope', 'poolDeleteBlocked', 'resourceName', 'operationMutation', 'mutateResource', 'refreshResource', 'refresh', 'message', `const selectedClusterId=7, loading=false, error=null; ${deleteCode}; return deletePool`)(
     { confirm: (options) => { modal = options } }, scope, deleteGuard, (row) => row.name,
-    { run: (action) => action() }, (...args) => { calls.push(args) }, async () => {}, async () => {}
+    { run: (action) => action() }, (...args) => { calls.push(args) }, async () => { if (collectionFailed) throw new Error('collection unavailable') }, async () => { reads++ }, { warning: (text) => { warned = true; assert.match(text, /删除已执行.*不要重复删除/) } }
   )
   remove({ name: 'a', stale: false, resource_version: 3 })
   assert.ok(modal.content.includes('永久删除池内全部对象'))
@@ -322,9 +322,13 @@ for (const changed of [false, true]) {
     scope.current = { id: 8 }
     await assert.rejects(() => modal.onOk(), /集群已切换/)
     assert.equal(calls.length, 0)
+    assert.equal(warned, false)
+    assert.equal(reads, 0)
   } else {
     await modal.onOk()
     assert.deepEqual(calls, [['/pool', 'DELETE', { cluster_id: 7, pool: 'a' }, { ifMatch: 3 }]])
+    assert.equal(warned, collectionFailed)
+    assert.equal(reads, 1)
   }
 }
 for (const mode of ['create', 'edit']) {
