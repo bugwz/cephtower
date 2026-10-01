@@ -1,7 +1,7 @@
 import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { CephFSDirectoryBrowser } from './CephFSDirectoryBrowser'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
-import { listResource } from '../../api/resource'
+import { listAllResources, listResource } from '../../api/resource'
 import { SubvolumeSnapshotVisibility } from './SubvolumeSnapshotVisibility'
 import { groupUpdateBody, groupUpdateInitialValues } from './cephfsGroupForm'
 import { filesystemEnabledText } from './cephfsFilesystemState'
@@ -467,7 +467,7 @@ const definitions: Record<
       successMessage: 'CephFS 快照克隆已启动',
       fields: [
         { name: 'target', label: '目标子卷名称', required: true },
-        { name: 'target_group', label: '目标子卷组', placeholder: '_nogroup' },
+        { name: 'target_group', label: '目标子卷组', type: 'select', required: true, optionsLoader: cloneTargetGroupOptions },
         { name: 'pool_layout', label: '目标数据池', type: 'select', optionsLoader: cephfsPoolOptions }
       ],
       initialValues: { target_group: '_nogroup' },
@@ -830,6 +830,14 @@ async function filesystemOptions(clusterId: number) {
     .map((row) => resourceName(row))
     .filter(Boolean)
     .map((name) => ({ label: name, value: name }))
+}
+
+async function cloneTargetGroupOptions(clusterId: number, row?: Record<string, unknown>) {
+  const fs = fsName(row)
+  if (!fs) throw new Error('缺少源文件系统')
+  const payload = await listAllResources('/filesystem/subvolume/groups', clusterId, { body: { fs } })
+  const names = new Set(['_nogroup', ...payload.items.map(resourceName).filter(Boolean)])
+  return Array.from(names, (name) => ({ label: name === '_nogroup' ? '默认组（_nogroup）' : name, value: name }))
 }
 
 async function cephfsPoolOptions(clusterId: number) {

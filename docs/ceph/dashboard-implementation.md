@@ -1402,3 +1402,15 @@ FUSE/libcephfs；不会自动修改客户端配置，也不代表删除快照。
 命令不支持、输出异常或命令失败时展示未知及错误，不默认当作开启。
 离线测试覆盖默认/命名组、布尔契约、非法作用域、失败读回和异步 API 全链路；
 未在真实 Ceph 集群验证。
+
+## CephFS 快照克隆目标组选择补齐
+
+快照克隆表单的目标子卷组使用源快照所在文件系统的组列表，包含默认
+`_nogroup`，并通过 `listAllResources` 读取全部分页。数据来自现有
+`/filesystem/subvolume/groups` 接口的 `fs` 范围过滤及 CephFS 子卷组采集链路。
+参考 Dashboard 的 `cephfs-subvolume-snapshots-list.component.ts` 同样为克隆
+表单提供子卷组列表。通用表单选项加载支持当前行上下文，并在关闭、切换操作或
+切换集群后忽略旧请求结果；加载失败会提示重试。
+
+验证：前端测试覆盖源文件系统范围、默认组去重、缺少文件系统及请求失败，
+`make test-frontend` 通过。尚未进行真实 Ceph 集群验证。

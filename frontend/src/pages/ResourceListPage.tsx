@@ -30,7 +30,7 @@ export interface MutationFormField {
   visibleWhen?: (values: MutationFormValues) => boolean
   placeholder?: string
   options?: Array<{ label: string; value: string | number | boolean }>
-  optionsLoader?: (clusterId: number) => Promise<Array<{ label: string; value: string | number | boolean }>>
+  optionsLoader?: (clusterId: number, row?: ApiRecord) => Promise<Array<{ label: string; value: string | number | boolean }>>
   min?: number
   max?: number
   pattern?: RegExp
@@ -109,6 +109,25 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
 
   useEffect(() => {
     let ignore = false
+    setDynamicOptions({})
+    if (formOpen && selectedClusterId && activeAction) {
+      activeAction.fields.forEach((field) => {
+        if (!field.optionsLoader) return
+        void field.optionsLoader(selectedClusterId, activeRow).then((options) => {
+          if (!ignore) setDynamicOptions((current) => ({ ...current, [field.name]: options }))
+        }).catch(() => {
+          if (!ignore) {
+            setDynamicOptions((current) => ({ ...current, [field.name]: [] }))
+            message.error(`${field.label}选项加载失败，请关闭表单后重试`)
+          }
+        })
+      })
+    }
+    return () => { ignore = true }
+  }, [activeAction, activeRow, formOpen, selectedClusterId])
+
+  useEffect(() => {
+    let ignore = false
     async function loadOptions() {
       if (!selectedClusterId || filterFields.length === 0) {
         setFilterOptions({})
@@ -163,18 +182,6 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
     form.setFieldsValue({ ...initialValues })
     setDynamicOptions({})
     setFormOpen(true)
-    if (selectedClusterId) {
-      action.fields.forEach((field) => {
-        if (!field.optionsLoader) {
-          return
-        }
-        void field.optionsLoader(selectedClusterId).then((options) => {
-          setDynamicOptions((current) => ({ ...current, [field.name]: options }))
-        }).catch(() => {
-          setDynamicOptions((current) => ({ ...current, [field.name]: [] }))
-        })
-      })
-    }
   }
 
   function closeForm() {
