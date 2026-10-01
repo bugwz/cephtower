@@ -67,6 +67,18 @@ assert.equal(profileDetails.find((item) => item.key === 'plugin').children, '未
 const poolSource = readFileSync(new URL('../src/pages/cluster/PoolManagementPage.tsx', import.meta.url), 'utf8')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const poolPage = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'PoolManagementPage')
+for (const mode of ['create', 'edit']) {
+  const fn = poolPage.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submitPool')
+  const code = ts.transpileModule(fn.getText(poolTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+  let finish, touched = false
+  const scopeRef = { current: { id: 1 } }
+  const run = new Function('clusterScope', 'operationMutation', 'setSubmitting', 'message', 'formMode', 'poolPlacementAvailable', 'poolUpdateBodies', `const selectedClusterId=1, submitting=false, loading=false, error=null, crushRuleOptions=[], erasureCodeProfileOptions=[], editingPool={}, data={}; ${code}; return submitPool`)(scopeRef, { run: () => new Promise((resolve) => { finish = resolve }) }, () => {}, { success: () => { touched = true } }, mode, () => true, () => [{}])
+  const pending = run({})
+  scopeRef.current = { id: 2 }
+  finish()
+  await pending
+  assert.equal(touched, false, `${mode} pool completion must not update the new cluster UI`)
+}
 for (const name of ['submitCrushRule', 'submitErasureCodeProfile']) {
   const fn = poolPage.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === name)
   const code = ts.transpileModule(fn.getText(poolTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText

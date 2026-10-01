@@ -290,8 +290,11 @@ export function PoolManagementPage() {
       return
     }
     setRefreshingPools(true)
+    const scope = clusterScope.current
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['pool', 'crush_rule', 'erasure_code_profile'] }), '刷新成功')
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['pool', 'crush_rule', 'erasure_code_profile'] }), false)
+      if (clusterScope.current !== scope) return
+      message.success('刷新成功')
       await refresh()
     } finally {
       setRefreshingPools(false)
@@ -417,9 +420,11 @@ export function PoolManagementPage() {
       return
     }
     setSubmitting(true)
+    const scope = clusterScope.current
     try {
       if (formMode === 'create') {
         await operationMutation.run(() => mutateResource('/pool', 'POST', poolCreateBody(values, selectedClusterId)), false)
+        if (clusterScope.current !== scope) return
         message.success('存储池创建执行成功')
       } else if (editingPool) {
         const requests = poolUpdateBodies(editingPool, values, selectedClusterId, data?.crushRules)
@@ -430,6 +435,7 @@ export function PoolManagementPage() {
         for (const body of requests) {
           await operationMutation.run(() => mutateResource('/pool', 'PATCH', body, { ifMatch: Number(editingPool.resource_version ?? 0) }), false)
         }
+        if (clusterScope.current !== scope) return
         message.success('存储池已更新')
       }
       setFormOpen(false)
