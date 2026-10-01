@@ -46,3 +46,21 @@ for (const group of ['_nogroup', 'team']) {
   assert.deepEqual(scopedCalls.at(-1), ['/filesystem/subvolumes', 7, { body: { fs: 'a', group } }])
 }
 console.log('CephFS snapshot dependent selection checks passed')
+
+const poolFunctions = tree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['filesystemDataPoolOptions', 'resourceName', 'fsName'].includes(node.name?.text))
+const poolCode = ts.transpileModule(poolFunctions.map((node) => node.getText(tree)).join('\n'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+const poolCalls = []
+const poolLoader = new Function('listAllResources', `${poolCode}; return filesystemDataPoolOptions`)(async (path, cluster) => {
+  poolCalls.push([path, cluster])
+  return { items: path === '/filesystems' ? [{ name: 'a', data_pools: [0, 2] }, { name: 'b', data_pools: [3] }] : [
+    { name: 'data-zero', id: 0 }, { name: 'metadata', id: 1 }, { name: 'data-two', id: 2 }, { name: 'other-fs', id: 3 }
+  ] }
+})
+assert.deepEqual(await poolLoader(7), [])
+assert.equal(poolCalls.length, 0)
+const dataOptions = [{ label: 'data-zero', value: 'data-zero' }, { label: 'data-two', value: 'data-two' }]
+assert.deepEqual(await poolLoader(7, undefined, { fs: 'a' }), dataOptions)
+assert.deepEqual(await poolLoader(7, { fs: 'a' }), dataOptions)
+assert.deepEqual(await poolLoader(7, undefined, { fs: 'missing' }), [])
+assert.ok(poolCalls.every(([, cluster]) => cluster === 7))
+console.log('CephFS filesystem data pool scope checks passed')

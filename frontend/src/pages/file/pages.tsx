@@ -232,7 +232,7 @@ const definitions: Record<
         { name: 'fs', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'name', label: '子卷组名称', required: true },
         { name: 'size', label: '配额大小（字节，0 表示不限制）', type: 'number', min: 0 },
-        { name: 'pool', label: 'CephFS 数据池', type: 'select', required: true, optionsLoader: cephfsPoolOptions },
+        { name: 'pool', label: 'CephFS 数据池', type: 'select', required: true, optionsDependencies: ['fs'], optionsLoader: filesystemDataPoolOptions },
         { name: 'uid', label: 'UID', type: 'number', min: 0 },
         { name: 'gid', label: 'GID', type: 'number', min: 0 },
         { name: 'mode', label: '目录权限模式', placeholder: '0755' },
@@ -319,9 +319,9 @@ const definitions: Record<
       fields: [
         { name: 'fs', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'name', label: '子卷名称', required: true },
-        { name: 'group', label: '子卷组', required: true, placeholder: '_nogroup' },
+        { name: 'group', label: '子卷组', type: 'select', required: true, optionsDependencies: ['fs'], optionsLoader: snapshotGroupOptions },
         { name: 'size', label: '配额大小（字节，0 表示不限制）', type: 'number', min: 0 },
-        { name: 'pool', label: 'CephFS 数据池', type: 'select', required: true, optionsLoader: cephfsPoolOptions },
+        { name: 'pool', label: 'CephFS 数据池', type: 'select', required: true, optionsDependencies: ['fs'], optionsLoader: filesystemDataPoolOptions },
         { name: 'uid', label: 'UID', type: 'number', min: 0 },
         { name: 'gid', label: 'GID', type: 'number', min: 0 },
         { name: 'mode', label: '目录权限模式', placeholder: '0755' },
@@ -468,7 +468,7 @@ const definitions: Record<
       fields: [
         { name: 'target', label: '目标子卷名称', required: true },
         { name: 'target_group', label: '目标子卷组', type: 'select', required: true, optionsLoader: cloneTargetGroupOptions },
-        { name: 'pool_layout', label: '目标数据池', type: 'select', optionsLoader: cephfsPoolOptions }
+        { name: 'pool_layout', label: '目标数据池', type: 'select', optionsLoader: filesystemDataPoolOptions }
       ],
       initialValues: { target_group: '_nogroup' },
       buildBody: (values, clusterId, row) => ({
@@ -849,6 +849,19 @@ async function snapshotSubvolumeOptions(clusterId: number, _row?: Record<string,
   if (!values?.fs || !values.group) return []
   const payload = await listAllResources('/filesystem/subvolumes', clusterId, { body: { fs: values.fs, group: values.group } })
   return payload.items.filter((row) => !subvolumeReadyReason(row)).map((row) => ({ label: resourceName(row), value: resourceName(row) }))
+}
+
+async function filesystemDataPoolOptions(clusterId: number, row?: Record<string, unknown>, values?: Record<string, unknown>) {
+  const fs = values?.fs ? String(values.fs) : row ? fsName(row) : ''
+  if (!fs) return []
+  const [filesystems, pools] = await Promise.all([
+    listAllResources('/filesystems', clusterId),
+    listAllResources('/pools', clusterId)
+  ])
+  const filesystem = filesystems.items.find((item) => resourceName(item) === fs)
+  const ids = new Set(Array.isArray(filesystem?.data_pools) ? filesystem.data_pools.map(String) : [])
+  return pools.items.filter((pool) => pool.id != null && ids.has(String(pool.id)))
+    .map((pool) => ({ label: resourceName(pool), value: resourceName(pool) }))
 }
 
 async function cephfsPoolOptions(clusterId: number) {
