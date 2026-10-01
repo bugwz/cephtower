@@ -347,8 +347,8 @@ export function listMgrModules(): Promise<ApiRecord[]> {
   return listResource('/manager/modules').then((payload) => payload.items)
 }
 
-export function setMgrModuleEnabled(name: string, enabled: boolean): Promise<ActionResult> {
-  return mutateResource('/manager/module', 'PATCH', { cluster_id: requiredClusterId(), name, enabled })
+export function setMgrModuleEnabled(clusterId: number, name: string, enabled: boolean): Promise<ActionResult> {
+  return mutateResource('/manager/module', 'PATCH', { cluster_id: clusterId, name, enabled })
 }
 
 export function listPools(): Promise<ApiRecord[]> {

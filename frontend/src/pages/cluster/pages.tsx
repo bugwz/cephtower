@@ -1,6 +1,6 @@
 import { ArrowLeftOutlined, BulbOutlined, DeleteOutlined, PlusOutlined, PoweroffOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button, Card, Descriptions, Form, Input, InputNumber, Modal, Space, Switch, Tabs, Tag, Typography } from 'antd'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import {
@@ -163,6 +163,10 @@ export function MonManagementPage() {
 
 export function MgrManagementPage() {
   const { selectedClusterId } = useClusterContext()
+  const moduleScope = useRef({ clusterId: selectedClusterId })
+  if (moduleScope.current.clusterId !== selectedClusterId) moduleScope.current = { clusterId: selectedClusterId }
+  const scope = moduleScope.current
+  const moduleRunning = useRef(false)
   const moduleTableFilters = useResourceTableFilters({
     path: '/manager/modules',
     fields: ['name', 'enabled', 'always_on'],
@@ -189,19 +193,25 @@ export function MgrManagementPage() {
   const [pendingModule, setPendingModule] = useState('')
   const [moduleDetails, setModuleDetails] = useState<ApiRecord | null>(null)
   const [configModule, setConfigModule] = useState('')
-  const operationMutation = useMutationOperation()
-
   async function toggleModule(row: ApiRecord, enabled: boolean) {
     const name = textValue(row.name, '')
-    if (!name || pendingModule) {
+    if (!selectedClusterId || moduleScope.current !== scope || moduleRunning.current || loading || error || !name || row.stale !== false || typeof row.enabled !== 'boolean' || row.enabled === enabled || row.always_on !== false || (enabled && row.can_run !== true)) {
       return
     }
+    moduleRunning.current = true
     setPendingModule(name)
     try {
-      await operationMutation.run(() => setMgrModuleEnabled(name, enabled), enabled ? 'Mgr 模块启用执行成功' : 'Mgr 模块停用执行成功')
-      if (selectedClusterId) await refreshResource({ clusterId: selectedClusterId, kind: 'mgr_module' })
-      refresh()
+      await setMgrModuleEnabled(selectedClusterId, name, enabled)
+      if (moduleScope.current !== scope) return
+      message.success(enabled ? 'Mgr 模块启用已核验' : 'Mgr 模块停用已核验')
+      try {
+        await refreshResource({ clusterId: selectedClusterId, kind: 'mgr_module' })
+      } catch {
+        if (moduleScope.current === scope) message.warning('模块状态修改已核验，但重新采集失败；请刷新核对，不要重复提交。')
+      }
+      if (moduleScope.current === scope) await refresh()
     } finally {
+      moduleRunning.current = false
       setPendingModule('')
     }
   }
@@ -237,8 +247,8 @@ export function MgrManagementPage() {
                         const name = textValue(row.name, '')
                         return (
                           <Switch
-                            checked={Boolean(value)}
-                            disabled={Boolean(row.always_on) || (!value && row.can_run === false) || (Boolean(pendingModule) && pendingModule !== name)}
+                            checked={value === true}
+                            disabled={loading || Boolean(error) || row.stale !== false || typeof value !== 'boolean' || row.always_on !== false || (!value && row.can_run !== true) || Boolean(pendingModule)}
                             loading={pendingModule === name}
                             onChange={(checked) => toggleModule(row, checked)}
                           />
