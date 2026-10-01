@@ -43,3 +43,52 @@ func TestTelemetryStatusReadsNativeConfiguration(t *testing.T) {
 		t.Fatal("command failure presented as disabled telemetry")
 	}
 }
+
+func TestTelemetryReportCommandsAndPrecision(t *testing.T) {
+	s, runner, id := testInspection(t)
+	runner.output = `{"report":{"counter":18446744073709551615,"secret_key":"do-not-expose"},"device_report":{}}`
+	for _, mode := range []string{"current", "preview"} {
+		result, err := s.TelemetryReport(context.Background(), id, mode)
+		if err != nil || result.Mode != mode || !strings.Contains(result.ReportJSON, "18446744073709551615") || strings.Contains(result.ReportJSON, "do-not-expose") || result.Message != "" {
+			t.Fatalf("report=%+v err=%v", result, err)
+		}
+		command := "show-all"
+		if mode == "preview" {
+			command = "preview-all"
+		}
+		spec := runner.specs[len(runner.specs)-1]
+		if spec.Mutating || !reflect.DeepEqual(spec.Args, []string{"telemetry", command, "--format", "json"}) {
+			t.Fatalf("unexpected command: %+v", spec)
+		}
+	}
+	count := len(runner.specs)
+	for _, mode := range []string{"", "send", "on", "off", "--help"} {
+		if _, err := s.TelemetryReport(context.Background(), id, mode); err == nil {
+			t.Fatal("invalid command accepted")
+		}
+	}
+	if len(runner.specs) != count {
+		t.Fatal("invalid mode executed a command")
+	}
+	runner.fail = true
+	if _, err := s.TelemetryReport(context.Background(), id, "current"); err == nil {
+		t.Fatal("failed command produced report")
+	}
+}
+
+func TestTelemetryReportAvailabilityMessages(t *testing.T) {
+	for mode, text := range map[string]string{
+		"current": "Telemetry is off. Please consider opting-in with `ceph telemetry on`.\nPreview sample reports with `ceph telemetry preview`.",
+		"preview": "Telemetry is up to date, see report with `ceph telemetry show`.",
+	} {
+		result, err := parseTelemetryReport([]byte(text), mode)
+		if err != nil || result.Message != text || result.ReportJSON != "" {
+			t.Fatalf("message=%+v err=%v", result, err)
+		}
+	}
+	for _, data := range []string{"", "null", "[]", "failed", `{} {}`, `{"report":`} {
+		if _, err := parseTelemetryReport([]byte(data), "preview"); err == nil {
+			t.Fatalf("accepted invalid report: %s", data)
+		}
+	}
+}

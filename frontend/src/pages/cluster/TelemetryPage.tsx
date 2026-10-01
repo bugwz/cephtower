@@ -4,6 +4,7 @@ import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
 import { useClusterContext } from '../../state/ClusterContext'
+import { TelemetryReportPanel } from './TelemetryReportPanel'
 
 export function telemetryStatusValue(value: unknown): string {
   if (value == null) return '未提供'
@@ -20,7 +21,7 @@ export function TelemetryPage() {
   return <Page title="遥测状态" loading={loading} error={error}>
     <Card title="Ceph Telemetry" extra={<Button disabled={!selectedClusterId || loading} onClick={() => refresh()}>读取最新状态</Button>}>
       <Space direction="vertical" style={{ width: '100%' }}>
-        <Alert type="info" showIcon message="此页仅执行 ceph telemetry status，不会启用遥测或发送报告。遥测启用后，Ceph 可能按配置周期向外部地址上传集群信息。" />
+        <Alert type="info" showIcon message="状态读取执行 ceph telemetry status，不会启用遥测或发送报告。遥测启用后，Ceph 可能按配置周期向外部地址上传集群信息。" />
         {!selectedClusterId && <Alert type="info" message="请先选择集群" />}
         {status && <>
           <Typography.Text>读取时间：{data.observed_at}</Typography.Text>
@@ -32,5 +33,6 @@ export function TelemetryPage() {
         </>}
       </Space>
     </Card>
+    {selectedClusterId && <TelemetryReportPanel key={selectedClusterId} clusterId={selectedClusterId} />}
   </Page>
 }

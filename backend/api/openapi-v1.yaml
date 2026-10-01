@@ -28224,6 +28224,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /manager/telemetry/report:
+    get:
+      operationId: get_manager_telemetry_report
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, mode]
+              properties:
+                cluster_id:
+                  type: integer
+                mode:
+                  type: string
+                  enum: ["current", "preview"]
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationOptionResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /manager/telemetry/status:
     get:
       operationId: get_manager_telemetry_status
