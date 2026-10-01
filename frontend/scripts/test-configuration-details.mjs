@@ -4,7 +4,7 @@ import ts from 'typescript'
 
 const source = readFileSync(new URL('../src/pages/cluster/ConfigurationPage.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('ConfigurationPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-const names = ['configurationOverrides', 'configurationList', 'configurationRuntime', 'filterConfigurationOptions', 'configurationMetadataBatch', 'configurationWriteBlocked']
+const names = ['configurationOverrides', 'configurationList', 'configurationRuntime', 'filterConfigurationOptions', 'configurationMetadataBatch', 'configurationWriteBlocked', 'configurationMonWriteBlocked', 'configurationHelpDescription']
 const code = ts.transpileModule(tree.statements.filter((node) => ts.isFunctionDeclaration(node) && names.includes(node.name.text)).map((node) => node.getText(tree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const helpers = new Function(`${code}; return { ${names.join(', ')} }`)()
 const editable = { who: 'global', name: 'test', stale: false, resource_version: 3 }
@@ -16,6 +16,14 @@ const invalidRows = [
   ...[undefined, null, 0, -1, 1.5, true, {}, '', 'bad', Number.MAX_SAFE_INTEGER + 1].map((resource_version) => ({ ...editable, resource_version }))
 ]
 for (const row of invalidRows) assert.ok(helpers.configurationWriteBlocked(row))
+const protectedOption = { name: 'test', flags: ['no_mon_update'], can_update_at_runtime: true }
+assert.equal(helpers.configurationMonWriteBlocked(protectedOption, 'test'), true)
+assert.equal(helpers.configurationMonWriteBlocked(protectedOption, 'other'), false)
+assert.equal(helpers.configurationMonWriteBlocked(null, 'test'), false)
+assert.match(helpers.configurationHelpDescription(protectedOption), /不能通过 Monitor/)
+assert.match(helpers.configurationHelpDescription({ can_update_at_runtime: false }), /可能需要重启/)
+for (const value of [undefined, null, 'false']) assert.match(helpers.configurationHelpDescription({ can_update_at_runtime: value }), /未采集/)
+assert.equal(helpers.configurationHelpDescription({ can_update_at_runtime: true, default: false }), '默认值：false')
 const rows = [
   { name: 'option', who: 'global', value: 'false', natural_key: 'a' },
   { name: 'option', who: 'osd/class:ssd', value: '0', natural_key: 'b' },
@@ -82,7 +90,7 @@ for (const action of ['save', 'remove']) for (const timing of ['before', 'mutati
   let modal, finishMutation, finishCollection
   const env = {
     scope, scopeRef, selectedClusterId: 7, running: { current: false }, editing: editable,
-    loading: false, error: null, configurationWriteBlocked: helpers.configurationWriteBlocked,
+    loading: false, error: null, configurationWriteBlocked: helpers.configurationWriteBlocked, help: null, configurationMonWriteBlocked: helpers.configurationMonWriteBlocked,
     setBusy: () => {}, setOpen: () => { events.push('close') }, message: { success: () => { events.push('success') } },
     mutateResource: async (path, method, body, options) => {
       assert.equal(path, '/configuration/value'); assert.equal(body.cluster_id, 7); assert.equal(options.ifMatch, '3')
@@ -126,7 +134,7 @@ for (const action of ['save', 'remove']) for (const collectionFailed of [false, 
   let modal
   const env = {
     scope, scopeRef: { current: scope }, selectedClusterId: 7, running: { current: false }, editing: editable,
-    loading: false, error: null, configurationWriteBlocked: helpers.configurationWriteBlocked,
+    loading: false, error: null, configurationWriteBlocked: helpers.configurationWriteBlocked, help: null, configurationMonWriteBlocked: helpers.configurationMonWriteBlocked,
     setBusy: () => {}, setOpen: () => events.push('close'),
     message: { success: () => events.push('success'), warning: (text) => { assert.match(text, /修改已执行.*不要重复提交/); events.push('warning') } },
     mutateResource: async () => { events.push('mutate'); if (mutationFailed) throw new Error('write failed') },
@@ -149,6 +157,12 @@ for (const action of ['save', 'remove']) for (const collectionFailed of [false, 
   assert.equal(env.running.current, false)
 }
 console.log('Configuration collection failures remain distinct from mutation failures')
+{
+  let reported = false
+  const save = new Function('configurationMonWriteBlocked', 'help', 'message', `const loading=false, error=null, editing=null; ${mutationCode}; return save`)(helpers.configurationMonWriteBlocked, protectedOption, { error: () => { reported = true } })
+  await save({ name: 'test', who: 'global', value: 'x' })
+  assert.equal(reported, true, 'protected options must stop before a request is sent')
+}
 for (const editing of [...invalidRows, editable]) {
   let errors = 0
   const env = { editing, loading: false, error: null, configurationWriteBlocked: helpers.configurationWriteBlocked, message: { error: () => { errors++ } } }

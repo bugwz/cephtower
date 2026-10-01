@@ -16,6 +16,17 @@ import { message } from '../../utils/appMessage'
 interface ConfigurationForm { who: string; name: string; value: string }
 type OverrideFilter = 'all' | 'configured' | 'unconfigured'
 
+function configurationMonWriteBlocked(help: ApiRecord | null, name: unknown): boolean {
+  return typeof name === 'string' && help?.name === name && Array.isArray(help.flags) && help.flags.includes('no_mon_update')
+}
+
+function configurationHelpDescription(help: ApiRecord): string {
+  if (configurationMonWriteBlocked(help, help.name)) return '该选项标记为 no_mon_update，不能通过 Monitor 配置库写入；请按该选项的部署配置方式管理。'
+  if (help.can_update_at_runtime === false) return '该选项不能在运行时更新，保存后可能需要重启相关守护进程才能生效。'
+  if (help.can_update_at_runtime !== true) return '运行时更新能力未采集，不能据此判断是否需要重启。'
+  return `默认值：${String(help.default ?? '未采集')}`
+}
+
 function configurationWriteBlocked(row: ApiRecord): string | undefined {
   if (row.stale !== false) return '配置库存已过期或新鲜度未知，请先刷新'
   if (typeof row.who !== 'string' || !row.who.trim() || typeof row.name !== 'string' || !row.name.trim()) return '配置作用域或名称未采集'
@@ -152,6 +163,7 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
       if (reason) { message.error(reason); return }
       if (values.who !== editing.who || values.name !== editing.name) { message.error('编辑目标已改变，请重新打开表单'); return }
     }
+    if (configurationMonWriteBlocked(help, values.name)) { message.error('该选项不允许通过 Monitor 配置库修改'); return }
     await run(async () => {
       await mutateResource('/configuration/value', 'PUT', { cluster_id: selectedClusterId, ...values, value: values.value ?? '' }, editing ? { ifMatch: String(editing.resource_version) } : undefined)
       if (scopeRef.current !== scope) return
@@ -268,12 +280,12 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
         <RecordDetail record={detail} />
       </>}</Card>
     </Drawer>
-    <DraggableModal title={editing ? '编辑配置覆盖' : '设置配置覆盖'} open={open} confirmLoading={busy} onCancel={() => { if (!busy) setOpen(false) }} onOk={() => form.submit()}>
+    <DraggableModal title={editing ? '编辑配置覆盖' : '设置配置覆盖'} open={open} confirmLoading={busy} okButtonProps={{ disabled: configurationMonWriteBlocked(help, watchedName) }} onCancel={() => { if (!busy) setOpen(false) }} onOk={() => form.submit()}>
       <Form form={form} layout="vertical" onFinish={save}>
         <Form.Item name="name" label="配置选项" rules={[{ required: true }]}><Select disabled={Boolean(editing)} showSearch options={data?.options.map((row) => ({ label: String(row.name), value: String(row.name) }))} /></Form.Item>
         <Form.Item name="who" label="作用域" extra="例如 global、osd、client.rgw、osd/host:node-1 或 osd/class:ssd。" rules={[{ required: true }]}><Input disabled={Boolean(editing)} /></Form.Item>
         {helpError && <Alert type="warning" message={`无法读取配置说明：${helpError}`} />}
-        {help && <Alert type={help.can_update_at_runtime ? 'info' : 'warning'} message={String(help.desc ?? '')} description={help.can_update_at_runtime ? `默认值：${String(help.default ?? '')}` : '该选项不能在运行时更新，保存后可能需要重启相关守护进程才能生效。'} />}
+        {help && help.name === watchedName && <Alert type={help.can_update_at_runtime === true && !configurationMonWriteBlocked(help, watchedName) ? 'info' : 'warning'} message={String(help.desc ?? '')} description={configurationHelpDescription(help)} />}
         <Form.Item name="value" label="配置值" rules={editing?.value === '[REDACTED]' ? [{ required: true, message: '请输入新的配置值；原值已隐藏' }] : []} extra="空字符串会写入空值；删除覆盖请使用列表中的删除操作。">
           {Array.isArray(help?.enum_values) && help.enum_values.length ? <Select options={help.enum_values.map((value) => ({ label: String(value), value: String(value) }))} /> : help?.type === 'bool' ? <Select options={[{ label: 'true', value: 'true' }, { label: 'false', value: 'false' }]} /> : <Input.TextArea rows={3} maxLength={32768} />}
         </Form.Item>
