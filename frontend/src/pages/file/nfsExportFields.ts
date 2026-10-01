@@ -55,7 +55,7 @@ export function nfsExportEditReason(row: ApiRecord): string | undefined {
 }
 
 export function nfsFSALBody(values: ApiRecord) {
-  if (values.fsal_type === 'RGW' && values.rgw_export_type === 'bucket') return { fsal_type: 'RGW', path: String(values.path ?? '') }
+  if (values.fsal_type === 'RGW' && values.rgw_export_type === 'bucket') return { fsal_type: 'RGW', path: String(values.rgw_bucket ?? '') }
   if (values.fsal_type === 'RGW') return { fsal_type: 'RGW', path: '/', rgw_user_id: String(values.rgw_user_id ?? '') }
   return { fsal_type: 'CEPH', filesystem: String(values.filesystem ?? '') }
 }
@@ -71,11 +71,16 @@ export function nfsRGWUserChoices(rows: ApiRecord[]) {
   return [...choices.values()]
 }
 
+export function nfsRGWBucketChoices(rows: ApiRecord[]) {
+  return [...new Set(rows.filter((row) => row.tenant === '' && typeof row.bucket === 'string' && row.bucket && !row.bucket.includes('/')).map((row) => String(row.bucket)))].map((bucket) => ({ label: bucket, value: bucket }))
+}
+
 export function nfsExportInitialValues(row?: ApiRecord) {
   return {
     cluster: typeof row?.cluster_id === 'string' ? row.cluster_id : '',
     fsal_type: typeof nfsFSAL(row).name === 'string' ? String(nfsFSAL(row).name) : 'CEPH',
     rgw_export_type: nfsFSAL(row).name === 'RGW' && row?.path !== '/' ? 'bucket' : 'user',
+    rgw_bucket: nfsFSAL(row).name === 'RGW' && typeof row?.path === 'string' && row.path !== '/' ? row.path : undefined,
     rgw_user_id: typeof nfsFSAL(row).user_id === 'string' ? String(nfsFSAL(row).user_id) : '',
     clients: Array.isArray(row?.clients) ? JSON.stringify(row.clients, null, 2) : undefined,
     sectype: Array.isArray(row?.sectype) && row.sectype.every((value) => typeof value === 'string') ? row.sectype.join(',') : undefined,

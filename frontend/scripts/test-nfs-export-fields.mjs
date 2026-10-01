@@ -7,10 +7,12 @@ const source = readFileSync(new URL('../src/pages/file/nfsExportFields.ts', impo
 const exports = {}
 new Function('exports', ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(exports)
 const row = { cluster_id: 'nfs-a', pseudo: '/share', path: '/data', access_type: 'RO', fsal: { name: 'CEPH', fs_name: 'cephfs-a', user_id: 'nfs.user' } }
-assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', access_type: 'RO', squash: undefined, security_label: undefined, transports: undefined, protocols: undefined, sectype: undefined, clients: undefined, fsal_type: 'CEPH', rgw_export_type: 'user', rgw_user_id: 'nfs.user' })
+assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', access_type: 'RO', squash: undefined, security_label: undefined, transports: undefined, protocols: undefined, sectype: undefined, clients: undefined, fsal_type: 'CEPH', rgw_export_type: 'user', rgw_bucket: undefined, rgw_user_id: 'nfs.user' })
 assert.deepEqual(exports.nfsFSALBody({ fsal_type: 'RGW', rgw_user_id: 'owner', filesystem: 'stale' }), { fsal_type: 'RGW', path: '/', rgw_user_id: 'owner' })
 assert.deepEqual(exports.nfsFSALBody({ fsal_type: 'CEPH', filesystem: 'fs', rgw_user_id: 'stale' }), { fsal_type: 'CEPH', filesystem: 'fs' })
-assert.deepEqual(exports.nfsFSALBody({ fsal_type: 'RGW', rgw_export_type: 'bucket', path: 'bucket', rgw_user_id: 'stale' }), { fsal_type: 'RGW', path: 'bucket' })
+assert.deepEqual(exports.nfsFSALBody({ fsal_type: 'RGW', rgw_export_type: 'bucket', path: 'stale', rgw_bucket: 'bucket', rgw_user_id: 'stale' }), { fsal_type: 'RGW', path: 'bucket' })
+assert.deepEqual(exports.nfsRGWBucketChoices([{ tenant: '', bucket: 'a' }, { tenant: 'tenant', bucket: 'a' }, { bucket: 'unknown' }, { tenant: '', bucket: 'a' }, { tenant: '', bucket: 'x/y' }]), [{ label: 'a', value: 'a' }])
+assert.equal(exports.nfsExportInitialValues({ fsal: { name: 'RGW' }, path: 'a' }).rgw_bucket, 'a')
 assert.equal(exports.nfsExportInitialValues({ fsal: { name: 'RGW' }, path: 'bucket' }).rgw_export_type, 'bucket')
 assert.equal(exports.nfsExportInitialValues({ fsal: { name: 'RGW' }, path: '/' }).rgw_export_type, 'user')
 assert.deepEqual(exports.nfsRGWUserChoices([{ uid: 'tenant$user', user_id: 'user', display_name: 'Owner' }, { uid: 'plain' }, { uid: 'plain' }, { user_id: 'unqualified' }, { uid: '' }]), [{ label: 'Owner (tenant$user)', value: 'tenant$user' }, { label: 'plain', value: 'plain' }])
@@ -60,6 +62,14 @@ assert.deepEqual(await loadUsers(7, undefined, { fsal_type: 'RGW', rgw_export_ty
 assert.equal(userCalls.length, 0)
 assert.deepEqual(await loadUsers(7, undefined, { fsal_type: 'RGW', rgw_export_type: 'user' }), [{ label: 'tenant$user', value: 'tenant$user' }])
 assert.deepEqual(userCalls, [['/rgw/users', 7]])
+const bucketLoader = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'nfsRGWBucketOptions')
+const bucketLoaderCode = ts.transpileModule(bucketLoader.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+const bucketCalls = []
+const loadBuckets = new Function('listAllResources', 'nfsRGWBucketChoices', `${bucketLoaderCode}; return nfsRGWBucketOptions`)(async (...args) => { bucketCalls.push(args); return { items: [{ tenant: '', bucket: 'a' }] } }, exports.nfsRGWBucketChoices)
+assert.deepEqual(await loadBuckets(9, undefined, { fsal_type: 'RGW', rgw_export_type: 'user' }), [])
+assert.equal(bucketCalls.length, 0)
+assert.deepEqual(await loadBuckets(9, undefined, { fsal_type: 'RGW', rgw_export_type: 'bucket' }), [{ label: 'a', value: 'a' }])
+assert.deepEqual(bucketCalls, [['/rgw/buckets', 9]])
 const identity = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'exportId')
 assert.ok(identity)
 const code = ts.transpileModule(identity.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText

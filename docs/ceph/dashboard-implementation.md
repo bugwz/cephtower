@@ -1738,3 +1738,11 @@ JSON stdin 本身不能阻止后续 Ganesha 配置注入。旧通用标识符校
 保留已有身份与凭据，不改变现有授权。读回必须
 包含已解析用户，根目录没有用户时拒绝执行。参考 Dashboard 的 setUsers/setBucket
 与 nfs/export.py；桶路径仍手工输入，无真实集群验证。
+
+## NFS RGW 桶选择
+
+单桶表单改为当前集群 `/rgw/buckets` 全分页选择，使用 bucket 与 tenant 字段，
+不使用不透明 natural_key。当前原生 NFS 拥有者查询不传 --tenant，因此选择器
+仅提供 tenant 明确为空的桶，不将租户桶误映射到同名普通桶；标签说明限制。
+租户单桶调用链仍待实现。用户根目录模式不加载桶列表，切换范围清除旧桶选择。
+沿用 bucket list/stats 采集和 NFS apply 链路，无真实集群验证。

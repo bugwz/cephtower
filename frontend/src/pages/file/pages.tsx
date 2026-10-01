@@ -1,7 +1,7 @@
 import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClientsEditor } from './NFSClientsEditor'
-import { nfsClientsBody, nfsFSALBody, nfsRGWUserChoices } from './nfsExportFields'
+import { nfsClientsBody, nfsFSALBody, nfsRGWUserChoices, nfsRGWBucketChoices } from './nfsExportFields'
 import { nfsAccessOptions, nfsExportEditReason, nfsExportInitialValues, nfsFSAL, nfsTransportBody, nfsTransportOptions, nfsProtocolBody, nfsProtocolOptions, nfsSecurityLabelOptions, nfsSecurityTypeBody, nfsSquashOptions } from './nfsExportFields'
 import { CephFSDirectoryBrowser } from './CephFSDirectoryBrowser'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
@@ -615,7 +615,8 @@ const definitions: Record<
         { name: 'pseudo', label: '伪路径', required: true, placeholder: '/export', pattern: /^\/[^\r\n\0]+$/, patternMessage: '请输入非根目录的绝对伪路径' },
         { name: 'fsal_type', label: '存储后端', type: 'select', required: true, options: [{ label: 'CephFS', value: 'CEPH' }, { label: '对象网关 RGW', value: 'RGW' }] },
         { name: 'rgw_export_type', label: 'RGW 导出范围', type: 'select', required: true, options: [{ label: '用户根目录', value: 'user' }, { label: '单个桶（自动查询拥有者）', value: 'bucket' }], visibleWhen: (values) => values.fsal_type === 'RGW' },
-        { name: 'path', label: 'CephFS 绝对路径 / RGW 桶名', required: true, visibleWhen: (values) => values.fsal_type !== 'RGW' || values.rgw_export_type === 'bucket' },
+        { name: 'path', label: 'CephFS 绝对路径', required: true, visibleWhen: (values) => values.fsal_type !== 'RGW' },
+        { name: 'rgw_bucket', label: 'RGW 桶（仅无租户桶；租户可使用用户根目录模式）', type: 'select', required: true, optionsLoader: nfsRGWBucketOptions, optionsDependencies: ['fsal_type', 'rgw_export_type'], visibleWhen: (values) => values.fsal_type === 'RGW' && values.rgw_export_type === 'bucket' },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions, visibleWhen: (values) => values.fsal_type !== 'RGW' },
         { name: 'rgw_user_id', label: 'RGW 用户', type: 'select', required: true, optionsLoader: nfsRGWUserOptions, optionsDependencies: ['fsal_type', 'rgw_export_type'], visibleWhen: (values) => values.fsal_type === 'RGW' && values.rgw_export_type === 'user' },
         { name: 'access_type', label: '访问类型', type: 'select', required: true, options: nfsAccessOptions },
@@ -653,7 +654,8 @@ const definitions: Record<
         { name: 'pseudo', label: '伪路径', required: true, pattern: /^\/[^\r\n\0]+$/, patternMessage: '请输入非根目录的绝对伪路径' },
         { name: 'fsal_type', label: '存储后端（不可更改）', required: true, readOnly: true },
         { name: 'rgw_export_type', label: 'RGW 导出范围', type: 'select', required: true, options: [{ label: '用户根目录', value: 'user' }, { label: '单个桶（自动查询拥有者）', value: 'bucket' }], visibleWhen: (values) => values.fsal_type === 'RGW' },
-        { name: 'path', label: 'CephFS 绝对路径 / RGW 桶名', required: true, visibleWhen: (values) => values.fsal_type !== 'RGW' || values.rgw_export_type === 'bucket' },
+        { name: 'path', label: 'CephFS 绝对路径', required: true, visibleWhen: (values) => values.fsal_type !== 'RGW' },
+        { name: 'rgw_bucket', label: 'RGW 桶（仅无租户桶；租户可使用用户根目录模式）', type: 'select', required: true, optionsLoader: nfsRGWBucketOptions, optionsDependencies: ['fsal_type', 'rgw_export_type'], visibleWhen: (values) => values.fsal_type === 'RGW' && values.rgw_export_type === 'bucket' },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions, visibleWhen: (values) => values.fsal_type !== 'RGW' },
         { name: 'rgw_user_id', label: 'RGW 用户', type: 'select', required: true, optionsLoader: nfsRGWUserOptions, optionsDependencies: ['fsal_type', 'rgw_export_type'], visibleWhen: (values) => values.fsal_type === 'RGW' && values.rgw_export_type === 'user' },
         { name: 'access_type', label: '访问类型', type: 'select', required: true, options: nfsAccessOptions },
@@ -876,6 +878,12 @@ async function nfsRGWUserOptions(clusterId: number, _row?: Record<string, unknow
   if (values?.fsal_type !== 'RGW' || values.rgw_export_type !== 'user') return []
   const payload = await listAllResources('/rgw/users', clusterId)
   return nfsRGWUserChoices(payload.items)
+}
+
+async function nfsRGWBucketOptions(clusterId: number, _row?: Record<string, unknown>, values?: Record<string, unknown>) {
+  if (values?.fsal_type !== 'RGW' || values.rgw_export_type !== 'bucket') return []
+  const payload = await listAllResources('/rgw/buckets', clusterId)
+  return nfsRGWBucketChoices(payload.items)
 }
 
 async function cloneTargetGroupOptions(clusterId: number, row?: Record<string, unknown>) {
