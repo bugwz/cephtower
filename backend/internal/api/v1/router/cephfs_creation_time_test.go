@@ -26,7 +26,10 @@ func (e *cephFSCreationTimeExecutor) Run(ctx context.Context, access executor.Cl
 		"fs subvolumegroup ls enabled --format json":                        `[{"name":"team"}]`,
 		"fs subvolumegroup info enabled team --format json":                 `{"created_at":"2020-01-01 01:02:03","bytes_pcent":"25.00"}`,
 		"fs subvolume ls enabled --format json":                             `[]`,
-		"fs subvolume ls enabled team --format json":                        `[{"name":"volume"},{"name":"missing"},{"name":"retained"}]`,
+		"fs subvolume ls enabled team --format json":                        `[{"name":"volume"},{"name":"missing"},{"name":"retained"},{"name":"clone"}]`,
+		"fs subvolume info enabled clone team --format json":                `{"state":"in-progress","type":"clone"}`,
+		"fs clone status enabled clone team --format json":                  `{"status":{"state":"in-progress","source":{"volume":"enabled","subvolume":"volume","snapshot":"snap"},"progress_report":{"percentage cloned":"42.5%","amount cloned":"4.2K/10.0K","files cloned":"21/50"}}}`,
+		"fs subvolume snapshot ls enabled clone team --format json":         `[]`,
 		"fs subvolume info enabled volume team --format json":               `{"state":"complete","type":"subvolume","pool_namespace":"isolated-volume","created_at":"2020-02-01 01:02:03","bytes_pcent":"50.00"}`,
 		"fs subvolume info enabled retained team --format json":             `{"state":"snapshot-retained","type":"subvolume","features":["snapshot-retention","snapshot-clone"]}`,
 		"fs subvolume snapshot ls enabled retained team --format json":      `[]`,
@@ -74,6 +77,7 @@ func TestCephFSCreationTimesFromNativeCollectionToAPI(t *testing.T) {
 		{"/filesystem/subvolumes", "volume", "2020-02-01 01:02:03", "50.00"},
 		{"/filesystem/subvolumes", "missing", "", "undefined"},
 		{"/filesystem/subvolumes", "retained", "", ""},
+		{"/filesystem/subvolumes", "clone", "", ""},
 		{"/filesystem/subvolume/snapshots", "snap", "2020-03-01 01:02:03", ""},
 	} {
 		body, _ := json.Marshal(map[string]any{"cluster_id": cluster.ID, "fs": "enabled", "name": tt.name})
@@ -114,11 +118,15 @@ func TestCephFSCreationTimesFromNativeCollectionToAPI(t *testing.T) {
 				t.Fatalf("usage=%v", row.Data["bytes_pcent"])
 			}
 			if tt.path == "/filesystem/subvolumes" {
-				wantState := map[string]string{"volume": "complete", "missing": "unknown", "retained": "snapshot-retained"}[tt.name]
+				wantState := map[string]string{"volume": "complete", "missing": "unknown", "retained": "snapshot-retained", "clone": "in-progress"}[tt.name]
 				if row.Status != wantState {
 					t.Fatalf("subvolume %s status=%s want=%s", tt.name, row.Status, wantState)
 				}
-				if tt.name != "missing" && (row.Data["state"] != wantState || row.Data["type"] != "subvolume") {
+				wantType := "subvolume"
+				if tt.name == "clone" {
+					wantType = "clone"
+				}
+				if tt.name != "missing" && (row.Data["state"] != wantState || row.Data["type"] != wantType) {
 					t.Fatalf("native state/type=%v", row.Data)
 				}
 				if tt.name == "volume" && row.Data["pool_namespace"] != "isolated-volume" {
@@ -127,6 +135,12 @@ func TestCephFSCreationTimesFromNativeCollectionToAPI(t *testing.T) {
 				if tt.name == "retained" {
 					if _, exists := row.Data["path"]; exists {
 						t.Fatal("retained subvolume has fabricated path")
+					}
+				}
+				if tt.name == "clone" {
+					progress, ok := row.Data["clone_progress"].(map[string]any)
+					if !ok || progress["percentage cloned"] != "42.5%" || progress["amount cloned"] != "4.2K/10.0K" || progress["files cloned"] != "21/50" || row.Data["clone_state"] != "in-progress" {
+						t.Fatalf("clone report=%v", row.Data)
 					}
 				}
 			}

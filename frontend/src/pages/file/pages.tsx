@@ -10,6 +10,8 @@ import { CephFSPermissions, CephFSUsage } from './CephFSResourceUsage'
 import { cephFSBytes, cephFSQuota } from './cephfsSubvolumeSummary'
 import { Alert, Tag } from 'antd'
 import { subvolumeReadyReason, subvolumeState, subvolumeType } from './cephfsSubvolumeState'
+import { cloneFailure, cloneSource } from './cephfsCloneSummary'
+import { CephFSCloneProgress } from './CephFSCloneProgress'
 
 export function FilePoolsPage() {
   return <ResourceListPage definition={definitions.filePools} />
@@ -426,10 +428,10 @@ const definitions: Record<
       { key: 'state', title: '子卷状态', render: (value) => { const state = subvolumeState(value); return <Tag color={state.color}>{state.text}</Tag> } },
       { key: 'type', title: '类型', render: subvolumeType },
       { key: 'pool_namespace', title: 'RADOS 隔离命名空间' },
-      { key: 'clone_state', title: '克隆状态' },
-      { key: 'source', title: '克隆来源' },
-      { key: 'clone_progress', title: '克隆进度' },
-      { key: 'clone_failure', title: '克隆错误' },
+      { key: 'clone_state', title: '克隆状态', render: (value, row) => { if (row.type !== 'clone') return '—'; const state = subvolumeState(value); return <Tag color={state.color}>{state.text}</Tag> } },
+      { key: 'source', title: '克隆来源', render: (value, row) => row.type === 'clone' ? cloneSource(row.clone_source ?? value) : '—' },
+      { key: 'clone_progress', title: '克隆进度', render: (value) => <CephFSCloneProgress report={value} /> },
+      { key: 'clone_failure', title: '克隆错误', render: cloneFailure },
       { key: 'path', title: '路径' },
       { key: 'data_pool', title: '数据池' },
       { key: 'bytes_quota', title: '配额', render: cephFSQuota },

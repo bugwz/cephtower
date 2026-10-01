@@ -37,6 +37,7 @@ type recordingExecutor struct {
 type cephFSCloneFixtureExecutor struct {
 	t     *testing.T
 	calls *[]executor.CommandSpec
+	info  string
 }
 
 func (f cephFSCloneFixtureExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
@@ -44,11 +45,14 @@ func (f cephFSCloneFixtureExecutor) Run(_ context.Context, _ executor.ClusterAcc
 	fixtures := map[string]string{
 		"fs subvolume ls cephfs team --format json":                               `[{"name":"clone-a"}]`,
 		"fs subvolume info cephfs clone-a team --format json":                     `{"state":"in-progress","type":"clone","created_at":"2026-09-22 06:00:00","bytes_pcent":"42.00","path":"/volumes/team/clone-a","source":{"volume":"cephfs","group":"_nogroup","subvolume":"source-a","snapshot":"snap-a"}}`,
-		"fs clone status cephfs clone-a team --format json":                       `{"status":{"state":"in-progress","source":{"volume":"cephfs","subvolume":"source-a","snapshot":"snap-a"},"progress_report":{"percentage cloned":"42%","entries cloned":21,"bytes cloned":4096}}}`,
+		"fs clone status cephfs clone-a team --format json":                       `{"status":{"state":"in-progress","source":{"volume":"cephfs","subvolume":"source-a","snapshot":"snap-a"},"progress_report":{"percentage cloned":"42%","amount cloned":"4.0K/10.0K","files cloned":"21/50"}}}`,
 		"fs subvolume snapshot ls cephfs clone-a team --format json":              `[{"name":"checkpoint"}]`,
 		"fs subvolume snapshot info cephfs clone-a checkpoint team --format json": `{"created_at":"2026-09-23 07:00:00","data_pool":"cephfs.hot","has_pending_clones":"yes"}`,
 	}
 	data, ok := fixtures[strings.Join(spec.Args, " ")]
+	if spec.ID == "collect.cephfs_subvolume_detail" && f.info != "" {
+		data = f.info
+	}
 	if !ok {
 		return executor.CommandResult{}, fmt.Errorf("unexpected command %s", strings.Join(spec.Args, " "))
 	}
@@ -79,7 +83,7 @@ func TestCollectCephFSCloneStatusForNamedGroup(t *testing.T) {
 		t.Fatal("native subvolume time collides with cache metadata")
 	}
 	progress, ok := payload["clone_progress"].(map[string]any)
-	if !ok || progress["percentage cloned"] != "42%" {
+	if !ok || progress["percentage cloned"] != "42%" || progress["amount cloned"] != "4.0K/10.0K" || progress["files cloned"] != "21/50" {
 		t.Fatalf("clone progress = %#v", payload["clone_progress"])
 	}
 	if rows[1].NaturalKey != "cephfs/team/clone-a/checkpoint" {
@@ -108,6 +112,42 @@ func TestCollectCephFSCloneStatusForNamedGroup(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("commands = %#v, want %#v", got, want)
+	}
+}
+
+func TestCollectCephFSCloneIdentityUsesNativeType(t *testing.T) {
+	for _, tt := range []struct {
+		name, info string
+		query      bool
+	}{
+		{"clone without source", `{"type":"clone","state":"in-progress"}`, true},
+		{"clone unavailable source", `{"type":"clone","state":"complete","source":"N/A"}`, true},
+		{"normal with unexpected source", `{"type":"subvolume","state":"complete","source":{}}`, false},
+		{"retained clone", `{"type":"clone","state":"snapshot-retained"}`, false},
+		{"unknown type", `{"state":"complete","source":{}}`, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var calls []executor.CommandSpec
+			provider := NativeProvider{Executor: cephFSCloneFixtureExecutor{t: t, calls: &calls, info: tt.info}}
+			rows := provider.collectCephFSSubvolumeScope(context.Background(), ClusterAccess{}, "cephfs", "team", time.Unix(0, 0).UTC())
+			queried := false
+			for _, spec := range calls {
+				if spec.ID == "collect.cephfs_clone_status" {
+					queried = true
+				}
+			}
+			if queried != tt.query {
+				t.Fatalf("queried=%v want=%v", queried, tt.query)
+			}
+			if len(rows) != 2 {
+				t.Fatalf("rows=%d", len(rows))
+			}
+			payload := rows[0].Payload.(map[string]any)
+			_, exists := payload["clone_status"]
+			if exists != tt.query {
+				t.Fatalf("clone status exists=%v", exists)
+			}
+		})
 	}
 }
 

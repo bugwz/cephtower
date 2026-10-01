@@ -233,7 +233,7 @@ func (p *NativeProvider) collectCephFSSubvolumeScope(ctx context.Context, access
 		var details map[string]any
 		if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_subvolume_detail", infoArgs, &details) {
 			mergeCephFSInfo(payload, details)
-			if _, isClone := details["source"]; isClone {
+			if details["type"] == "clone" && details["state"] != "snapshot-retained" {
 				statusArgs := []string{"fs", "clone", "status", filesystem, subvolume.Name}
 				if group != "" {
 					statusArgs = append(statusArgs, group)

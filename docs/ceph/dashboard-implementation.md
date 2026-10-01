@@ -1217,8 +1217,9 @@ Zone 创建和编辑统一验证 zone get 返回的名称及非空原生 ID，�
 ### CephFS 子卷克隆状态与取消
 
 对照 volumes 模块的 `fs subvolume info`、`fs clone status` 和
-`fs clone cancel`，采集默认组及所有命名组中的子卷。只有 info 返回 source 的
-克隆子卷才继续查询状态，并向页面提供 state、source、progress_report 和 failure。
+`fs clone cancel`，采集默认组及所有命名组中的子卷。以 info 的 type=clone 识别克隆，
+不以 source 是否存在作为身份判断；来源缺失或为 N/A 仍查询克隆状态，保留快照的
+已删除克隆不查询目录克隆状态。向页面提供 state、source、progress_report 和 failure。
 子卷与快照缓存键包含组名，更新、删除、快照创建/删除也保留组作用域，避免同名
 资源碰撞或操作错误对象。
 
@@ -1227,6 +1228,12 @@ CephFS 快照页新增克隆操作，支持源组、目标组和 pool layout，�
 `fs subvolume snapshot info`，展示创建时间、数据池和待处理克隆标记。子卷页仅对 pending 或
 in-progress 状态开放取消操作，调用 `fs clone cancel` 后以 `fs clone status`
 读回。离线测试覆盖命名组采集、状态字段和精确命令参数；未在真实集群验证。
+
+原生进度使用 `percentage cloned`、`amount cloned`、`files cloned`，来自 volumes 的
+stats_util 和 `_get_clone_progress_report`。页面展示百分比进度条、原生容量比及文件比，
+缺失报告不假定为 0% 或完成。来源按文件系统/组/子卷@快照展示，N/A 明确标记不可用；
+错误展示原生 error_msg 与 errno。离线夹具改用真实字段，测试覆盖采集→API、类型识别、
+缺失来源和页面组件输出。取消条件仍只使用成功读取的 clone_state。
 
 ### CephFS 子卷高级删除
 
