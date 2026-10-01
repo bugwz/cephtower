@@ -68,13 +68,16 @@ for (const [key, path, columns] of [
 ]) {
   const definition = definitionNode.properties.find((property) => property.name.getText(tree) === key).initializer
   const code = ts.transpileModule(`const value = ${definition.getText(tree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-  const value = new Function('resourceName', `${code}; return value`)((row) => row.name)
+  const value = new Function('resourceName', 'smbClusterOptions', `${code}; return value`)((row) => row.name, async () => [])
   assert.equal(value.path, path)
   assert.deepEqual(value.requiredCapabilities, ['smb'])
   assert.deepEqual(value.columns.map((column) => column.key), columns)
   assert.equal(value.columns.at(-1).render(undefined), '未绑定')
   assert.equal(value.columns.at(-1).render('cluster-a'), 'cluster-a')
-  assert.equal(value.createAction, undefined)
+  if (key === 'smbJoinAuths') {
+    assert.equal(value.createAction.fields.find((field) => field.name === 'password').type, 'password')
+    assert.deepEqual(value.createAction.buildBody({ name: 'auth', username: 'admin', password: 'test-secret' }, 17), { cluster_id: 17, name: 'auth', username: 'admin', password: 'test-secret' })
+  } else assert.equal(value.createAction, undefined)
   const deletePath = key === 'smbJoinAuths' ? '/smb/join/auth' : '/smb/usersgroup'
   assert.equal(value.deleteAction.path, deletePath)
   assert.deepEqual(value.deleteAction.buildBody({ name: 'target' }, 17), { cluster_id: 17, name: 'target' })

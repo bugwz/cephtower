@@ -68,6 +68,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 		}
 	}
 	empty := map[string]JSONField{}
+	add([]string{"smb_join_auth.create"}, true, map[string]JSONField{"name": stringField(true), "username": stringField(true), "password": {Type: "string", Required: true, WriteOnly: true}, "linked_to_cluster": stringField(false)})
 	add([]string{"smb_join_auth.delete", "smb_usersgroups.delete"}, true, map[string]JSONField{"name": stringField(true)})
 	add([]string{"ceph_user.create", "ceph_user.update"}, true, map[string]JSONField{
 		"entity": stringField(true), "caps": objectField(true, map[string]JSONField{"mon": stringField(false), "osd": stringField(false), "mds": stringField(false), "mgr": stringField(false)}),

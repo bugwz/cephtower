@@ -91,6 +91,7 @@ func Supports(action string) bool {
 		"smb_cluster.create", "smb_cluster.update", "smb_cluster.delete",
 		"smb_share.create", "smb_share.update", "smb_share.delete",
 		"smb_join_auth.delete", "smb_usersgroups.delete",
+		"smb_join_auth.create",
 		"config_value.set", "config_value.delete":
 		return true
 	default:
@@ -221,8 +222,17 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			return cephdomain.ActionResult{}, invalid("source must be an existing directory")
 		}
 	}
+	if request.Action == "smb_join_auth.create" {
+		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if checkErr != nil || !smbAuthDeleted(request, checked.Stdout) {
+			return cephdomain.ActionResult{}, invalid("SMB credential already exists or its absence could not be verified")
+		}
+	}
 	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: request.Action != "osd_deployment.preview", SensitiveArgs: spec.sensitive})
 	if err != nil {
+		if request.Action == "smb_join_auth.create" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "SMB credential creation failed"}
+		}
 		if request.Action == "config_value.set" && len(spec.sensitive) > 0 {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "Ceph rejected the sensitive configuration update"}
 		}
@@ -231,7 +241,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		return cephdomain.ActionResult{}, normalize(err)
 	}
-	if request.Action == "smb_share.update" || request.Action == "smb_cluster.update" || isSMBAuthDelete(request.Action) {
+	if request.Action == "smb_share.update" || request.Action == "smb_cluster.update" || isSMBAuthDelete(request.Action) || request.Action == "smb_join_auth.create" {
 		var applied struct {
 			Success bool `json:"success"`
 		}
@@ -296,6 +306,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		if isSMBAuthDelete(request.Action) && !smbAuthDeleted(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB authentication removal was accepted but absence could not be verified; the change may already have taken effect", Retryable: true}
+		}
+		if request.Action == "smb_join_auth.create" && !smbJoinAuthCreated(request, checked.Stdout) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB credential metadata could not be verified; creation may already have taken effect", Retryable: true}
 		}
 		if (request.Action == "smb_share.create" || request.Action == "smb_share.delete") && !smbShareStateMatches(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB share command was accepted but its expected presence or absence could not be verified; the change may already have taken effect", Retryable: true}
@@ -2477,6 +2490,14 @@ func build(request Request, p map[string]any) (command, error) {
 		return ceph([]string{"smb", "apply", "-i", "-", "--format", "json"}, []string{"smb", "show", "ceph.smb.cluster." + name, "--format", "json"}), nil
 	case "smb_cluster.delete":
 		return ceph([]string{"smb", "cluster", "rm", last(tail)}, []string{"smb", "cluster", "ls", "--format", "json"}), nil
+	case "smb_join_auth.create":
+		payload, err := smbJoinAuthCreateJSON(p)
+		if err != nil {
+			return command{}, err
+		}
+		result := ceph([]string{"smb", "apply", "-i", "-", "--password-filter-out=hidden", "--format", "json"}, []string{"smb", "show", "ceph.smb.join.auth", "--results=full", "--password-filter=hidden", "--format", "json"})
+		result.stdin = payload
+		return result, nil
 	case "smb_join_auth.delete", "smb_usersgroups.delete":
 		id := last(tail)
 		if !smbResourceIDPattern.MatchString(id) {

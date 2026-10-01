@@ -58,3 +58,41 @@ func TestSMBAuthDeletion(t *testing.T) {
 		})
 	}
 }
+
+func TestSMBJoinAuthCreation(t *testing.T) {
+	service, _, clusterID := newCephUserService(t)
+	request := Request{ClusterID: clusterID, Action: "smb_join_auth.create", ResourceKey: "smb/join/auth/target", Parameters: map[string]any{"name": "target", "username": "admin", "password": " secret \n", "linked_to_cluster": "cluster-a"}}
+	good := `{"resources":[{"resource_type":"ceph.smb.join.auth","auth_id":"target","intent":"present","auth":{"username":"admin","password":"***"},"linked_to_cluster":"cluster-a"}]}`
+	runner := &directoryRenameExecutor{outputs: map[string]string{request.Action + ".pre_check": `{"resources":[]}`, request.Action: `{"success":true}`, request.Action + ".post_check": good}}
+	service.executor = runner
+	if _, err := service.Execute(context.Background(), request); err != nil {
+		t.Fatal(err)
+	}
+	if len(runner.specs) != 3 || !reflect.DeepEqual(runner.specs[1].Args, []string{"smb", "apply", "-i", "-", "--password-filter-out=hidden", "--format", "json"}) {
+		t.Fatal(runner.specs)
+	}
+	var payload map[string]any
+	if json.Unmarshal(runner.specs[1].Stdin, &payload) != nil || payload["auth"].(map[string]any)["password"] != " secret \n" {
+		t.Fatal("password changed")
+	}
+	runner.outputs[request.Action+".pre_check"] = good
+	runner.specs = nil
+	if _, err := service.Execute(context.Background(), request); err == nil || len(runner.specs) != 1 {
+		t.Fatal("existing credential overwritten")
+	}
+	runner.outputs[request.Action+".pre_check"] = `{"resources":[]}`
+	runner.failID = request.Action
+	if _, err := service.Execute(context.Background(), request); err == nil || err.Error() != "SMB credential creation failed" {
+		t.Fatalf("native error was not replaced: %v", err)
+	}
+	for _, bad := range []string{`null`, `{"resources":[]}`, `{"resources":[{"resource_type":"ceph.smb.join.auth","auth_id":"target","auth":{"username":"other"}}]}`, good + ` {}`} {
+		if smbJoinAuthCreated(request, []byte(bad)) {
+			t.Fatal("invalid creation readback accepted")
+		}
+	}
+	for _, params := range []map[string]any{{"name": "bad.id", "username": "a", "password": "p"}, {"name": "a", "username": "a"}, {"name": "a", "username": "a", "password": "p", "linked_to_cluster": "bad.id"}} {
+		if _, err := smbJoinAuthCreateJSON(params); err == nil {
+			t.Fatal("invalid creation accepted")
+		}
+	}
+}

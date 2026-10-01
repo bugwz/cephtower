@@ -739,6 +739,19 @@ const definitions: Record<
     title: 'SMB 域加入凭据',
     path: '/smb/join/auths',
     requiredCapabilities: ['smb'],
+    createAction: {
+      title: '新建域加入凭据',
+      path: '/smb/join/auth',
+      method: 'POST',
+      successMessage: '凭据创建及元数据核验成功（尚未验证域登录）',
+      fields: [
+        { name: 'name', label: '资源 ID', required: true, pattern: /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,16}[a-zA-Z0-9])?$/, patternMessage: '1–18 个英文字母、数字或连字符，首尾为字母或数字' },
+        { name: 'username', label: '域账号名', required: true },
+        { name: 'password', label: '域账号密码', type: 'password', required: true },
+        { name: 'linked_to_cluster', label: '绑定 SMB 集群（可选）', type: 'select', optionsLoader: smbClusterOptions, placeholder: '绑定后仅该集群可用，并随集群删除' }
+      ],
+      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: values.name, username: values.username, password: values.password, ...(values.linked_to_cluster ? { linked_to_cluster: values.linked_to_cluster } : {}) })
+    },
     deleteAction: {
       title: '删除域加入凭据',
       confirmation: (row) => `确认删除域加入凭据 ${resourceName(row)}？密码无法从本系统恢复。仍被集群引用的资源将由 Ceph 拒绝删除，请先调整集群认证引用。`,

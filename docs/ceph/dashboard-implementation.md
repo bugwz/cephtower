@@ -2040,6 +2040,15 @@ SMB 编辑现提供显式替换全部客户端访问地址开关，关闭时保�
 完整配置。测试覆盖保留复杂原值、双栈替换、清空、数量保留及旧地址回读拒绝；
 当前输入每个地址支持一个目标网络，真实客户端连通性尚未验证。
 
+SMB 域加入凭据支持创建：POST /smb/join/auth 接收 name、username、write-only
+password 和可选 linked_to_cluster。表单提供密码控件及当前集群内的 SMB 绑定选择。
+沿用操作队列加密参数存储，密码只进入 smb apply 标准输入，不进入命令参数；强制
+--password-filter-out=hidden，命令失败使用固定错误，不透传可能含密码的原始输出。
+执行前脱敏列举拒绝已有 ID，执行后核验 ID、账号名及绑定信息，不回读密码，也不声称
+验证了域登录。原生 apply 不提供 create-only CLI 参数，外部并发同名写入仍有竞争窗口。
+密码原值保留、已有资源拒绝、失败错误屏蔽、非法输入、回读与前端请求测试已覆盖。
+本地用户组资源创建、凭据编辑、浏览器及真实集群验证仍待完成。
+
 SMB 域加入凭据和用户组资源增加删除操作：DELETE /smb/join/auth 与
 DELETE /smb/usersgroup 接收集群作用域及 name，进入现有高风险异步操作链路。
 参考 controllers/smb.py 删除逻辑，使用 smb apply -i - 提交资源类型、ID 和
