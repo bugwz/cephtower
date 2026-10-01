@@ -2206,7 +2206,15 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return ceph([]string{"nfs", "cluster", "create", name}, []string{"nfs", "cluster", "ls", "--format", "json"}), nil
+		args := []string{"nfs", "cluster", "create", name}
+		if value, exists := p["nfs_placement"]; exists {
+			placement, ok := value.(string)
+			if !ok || len(placement) > 1024 || strings.TrimSpace(placement) == "" || strings.IndexFunc(placement, func(r rune) bool { return r < 32 || r == 127 }) >= 0 {
+				return command{}, invalid("nfs_placement must be a non-empty placement expression of at most 1024 bytes without control characters")
+			}
+			args = append(args, "--placement="+strings.TrimSpace(placement))
+		}
+		return ceph(args, []string{"nfs", "cluster", "ls", "--format", "json"}), nil
 	case "nfs_cluster.delete":
 		name := last(tail)
 		return ceph([]string{"nfs", "cluster", "rm", name}, []string{"nfs", "cluster", "ls", "--format", "json"}), nil

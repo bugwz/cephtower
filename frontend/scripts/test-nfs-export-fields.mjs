@@ -137,3 +137,16 @@ assert.deepEqual(clusterNodes.find((node) => node.type === 'Table').props.dataSo
 assert.equal(clusterNodes.find((node) => node.props?.label === 'VIP').props.children, '未提供')
 assert.equal(clusterNodes.find((node) => node.props?.label === '入口端口').props.children, '2049')
 console.log('NFS cluster endpoint display checks passed')
+
+let clusterDefinition
+function findClusterDefinition(node) {
+  if (ts.isPropertyAssignment(node) && node.name.getText(tree) === 'nfsClusters') clusterDefinition = node.initializer
+  ts.forEachChild(node, findClusterDefinition)
+}
+findClusterDefinition(tree)
+const createCluster = clusterDefinition.properties.find((node) => node.name?.getText(tree) === 'createAction').initializer
+const clusterBodySource = createCluster.properties.find((node) => node.name?.getText(tree) === 'buildBody').initializer.getText(tree)
+const buildClusterBody = new Function(`return (${ts.transpileModule(clusterBodySource, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText.trim().replace(/;$/, '')})`)()
+assert.deepEqual(buildClusterBody({ name: 'nfs-a', nfs_placement: '2 host-a host-b' }, 7), { cluster_id: 7, name: 'nfs-a', nfs_placement: '2 host-a host-b' })
+assert.deepEqual(buildClusterBody({ name: 'nfs-a', nfs_placement: '' }, 7), { cluster_id: 7, name: 'nfs-a' })
+console.log('NFS cluster placement form checks passed')

@@ -192,6 +192,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 		"normalization": stringField(false, "nfd", "nfc", "nfkd", "nfkc"), "case_sensitive": boolField(false),
 	})
 	add([]string{"cephfs_snapshot.create", "nfs_cluster.create"}, true, map[string]JSONField{"name": stringField(true)})
+	contracts["nfs_cluster.create"].Fields["nfs_placement"] = stringField(false)
 	add([]string{"filesystem.update"}, true, map[string]JSONField{"max_mds": integerField(true)})
 	contracts["filesystem.rename"] = RequestContract{Required: true, Fields: map[string]JSONField{
 		"cluster_id": integerField(true), "fs": stringField(true), "new_name": stringField(true), "confirmed": boolField(true),

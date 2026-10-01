@@ -579,9 +579,10 @@ const definitions: Record<
       method: 'POST',
       successMessage: 'NFS 集群创建执行成功',
       fields: [
-        { name: 'name', label: '集群名称', required: true }
+        { name: 'name', label: '集群名称', required: true },
+        { name: 'nfs_placement', label: '部署放置策略', placeholder: '例如 2 host-a host-b 或 label:nfs；留空使用 Ceph 默认策略' }
       ],
-      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? '') })
+      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? ''), ...(values.nfs_placement ? { nfs_placement: String(values.nfs_placement) } : {}) })
     },
     deleteAction: {
       title: '删除 NFS 集群',

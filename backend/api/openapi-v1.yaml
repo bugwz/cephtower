@@ -633,6 +633,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -1291,6 +1293,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -3244,6 +3248,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -3902,6 +3908,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -4778,6 +4786,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -5530,6 +5540,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -6188,6 +6200,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -7037,6 +7051,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -7791,6 +7807,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -8450,6 +8468,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -9352,6 +9372,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -10104,6 +10126,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -10858,6 +10882,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -11610,6 +11636,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -12268,6 +12296,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -13172,6 +13202,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -14326,6 +14358,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -14985,6 +15019,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -15644,6 +15680,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -16940,6 +16978,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -17744,6 +17784,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -18498,6 +18540,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -19156,6 +19200,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -20470,6 +20516,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -21128,6 +21176,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -21803,6 +21853,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -22555,6 +22607,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -23213,6 +23267,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -23872,6 +23928,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -24809,6 +24867,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -25658,6 +25718,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -26410,6 +26472,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -27068,6 +27132,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -27859,6 +27925,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -28518,6 +28586,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -29592,6 +29662,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -30536,6 +30608,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -31288,6 +31362,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -32042,6 +32118,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -32794,6 +32872,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -33452,6 +33532,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -34301,6 +34383,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -35053,6 +35137,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -35711,6 +35797,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -36465,6 +36553,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -37123,6 +37213,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -37877,6 +37969,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -38535,6 +38629,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -39289,6 +39385,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -40041,6 +40139,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -40699,6 +40799,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -41621,6 +41723,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -42374,6 +42478,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -43033,6 +43139,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -43692,6 +43800,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -44445,6 +44555,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -45138,6 +45250,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -46082,6 +46196,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -46834,6 +46950,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -47492,6 +47610,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -48246,6 +48366,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -48905,6 +49027,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -49564,6 +49688,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -50223,6 +50349,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -50977,6 +51105,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -51729,6 +51859,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -52387,6 +52519,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -53163,6 +53297,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -53821,6 +53957,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -54479,6 +54617,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -55524,6 +55664,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -56255,6 +56397,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -56914,6 +57058,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -57572,6 +57718,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -58326,6 +58474,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -59079,6 +59229,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -59738,6 +59890,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -60508,6 +60662,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -61166,6 +61322,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -61824,6 +61982,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -62483,6 +62643,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -63237,6 +63399,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -63989,6 +64153,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -64647,6 +64813,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -65407,6 +65575,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -66066,6 +66236,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -66725,6 +66897,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -67479,6 +67653,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -68138,6 +68314,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -68796,6 +68974,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -69550,6 +69730,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -70208,6 +70390,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -70866,6 +71050,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -71525,6 +71711,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -72374,6 +72562,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -73126,6 +73316,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -73784,6 +73976,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -74443,6 +74637,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -75102,6 +75298,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -75760,6 +75958,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -76419,6 +76619,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -77078,6 +77280,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -77832,6 +78036,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -78490,6 +78696,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -79149,6 +79357,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -79807,6 +80017,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -80796,6 +81008,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -81548,6 +81762,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -82206,6 +82422,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -82960,6 +83178,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -83712,6 +83932,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -84370,6 +84592,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -85124,6 +85348,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -85876,6 +86102,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -86534,6 +86762,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -87383,6 +87613,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
@@ -88042,6 +88274,8 @@ paths:
                   type: string
                 new_size:
                   type: integer
+                nfs_placement:
+                  type: string
                 no_auto_visible:
                   type: boolean
                 no_group_append:
