@@ -350,6 +350,24 @@ for (const mode of ['create', 'edit']) {
     assert.equal(reported, true, 'invalid edits must stop before mutation state or requests are touched')
   }
 }
+for (const formMode of ['create', 'edit']) for (const failed of [false, true]) {
+  const fn = poolPage.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submitPool')
+  const code = ts.transpileModule(fn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+  const events = []
+  const env = {
+    formMode, editingPool: editable, poolEditBlocked: editBlocked,
+    clusterScope: { current: {} }, setSubmitting: () => {},
+    operationMutation: { run: async () => { events.push('mutate') } },
+    message: { success: () => {}, warning: (text) => { assert.match(text, /不要重复提交/); events.push('warning') } },
+    setFormOpen: (open) => { assert.equal(open, false); events.push('close') }, setEditingPool: () => {},
+    poolPlacementAvailable: () => true, poolUpdateBodies: () => [{}],
+    refreshResource: async (input) => { assert.deepEqual(input, { clusterId: 1, kind: 'pool' }); events.push('collect'); if (failed) throw new Error('collection failed') },
+    refresh: async () => { events.push('read') }
+  }
+  const run = new Function('env', `const { ${Object.keys(env).join(', ')} } = env; const selectedClusterId=1, submitting=false, loading=false, error=null, data={}, crushRuleOptions=[], erasureCodeProfileOptions=[]; ${code}; return submitPool`)(env)
+  await run({})
+  assert.deepEqual(events, failed ? ['mutate', 'close', 'collect', 'warning', 'read'] : ['mutate', 'close', 'collect', 'read'])
+}
 for (const name of ['submitCrushRule', 'submitErasureCodeProfile']) {
   const fn = poolPage.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === name)
   const code = ts.transpileModule(fn.getText(poolTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText

@@ -476,7 +476,12 @@ export function PoolManagementPage() {
       }
       setFormOpen(false)
       setEditingPool(null)
-      void refresh({ showLoading: false })
+      try {
+        await refreshResource({ clusterId: selectedClusterId, kind: 'pool' })
+      } catch {
+        if (clusterScope.current === scope) message.warning('存储池修改已执行，但重新采集失败；请使用刷新按钮核实结果，不要重复提交修改。')
+      }
+      if (clusterScope.current === scope) await refresh({ showLoading: false })
     } finally {
       setSubmitting(false)
     }
