@@ -43,8 +43,13 @@ export function smbClusterHostsBody(values: ApiRecord) {
 }
 
 export function smbClusterUpdateHostsBody(values: ApiRecord) {
+  if (values.replace_smb_label === true) {
+    if (values.replace_smb_hosts === true) throw new Error('不能同时替换部署主机和标签')
+    if (typeof values.smb_label !== 'string' || !values.smb_label) throw new Error('请选择部署标签')
+    return { smb_label: values.smb_label }
+  }
   if (values.replace_smb_hosts !== true) return {}
-  const body = smbClusterHostsBody(values)
+  const body = smbClusterHostsBody({ smb_hosts: values.smb_hosts })
   if (!body.smb_hosts?.length) throw new Error('替换部署主机时至少选择一台主机')
   return body
 }

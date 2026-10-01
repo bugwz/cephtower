@@ -279,6 +279,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	contracts["smb_cluster.update"].Fields["custom_dns"] = stringsField(false)
 	contracts["smb_cluster.update"].Fields["count"] = integerField(false)
 	contracts["smb_cluster.update"].Fields["smb_hosts"] = stringsField(false)
+	contracts["smb_cluster.update"].Fields["smb_label"] = stringField(false)
 	contracts["smb_cluster.update"].Fields["clustering"] = stringField(false, "default", "always", "never")
 	contracts["smb_cluster.update"].Fields["user_group_ref"] = stringsField(false)
 	contracts["smb_cluster.update"].Fields["domain_realm"] = stringField(false)

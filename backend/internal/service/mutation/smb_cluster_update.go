@@ -69,6 +69,26 @@ func smbClusterUpdateJSON(data []byte, request Request) ([]byte, error) {
 		}
 		record["clustering"] = clustering
 	}
+	if value, exists := request.Parameters["smb_label"]; exists {
+		label, ok := value.(string)
+		if !ok || !smbPlacementHostPattern.MatchString(label) {
+			return nil, invalid("smb_label must be a plain non-empty label")
+		}
+		if _, hosts := request.Parameters["smb_hosts"]; hosts {
+			return nil, invalid("smb_label and smb_hosts are mutually exclusive")
+		}
+		placement, ok := record["placement"].(map[string]any)
+		if !ok {
+			if record["placement"] != nil {
+				return nil, invalid("existing SMB placement is invalid")
+			}
+			placement = map[string]any{}
+		}
+		placement["label"] = label
+		delete(placement, "hosts")
+		delete(placement, "host_pattern")
+		record["placement"] = placement
+	}
 	if value, exists := request.Parameters["smb_hosts"]; exists {
 		data, err := json.Marshal(value)
 		var hosts []string

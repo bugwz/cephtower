@@ -152,6 +152,48 @@ func TestSMBClusterDomainSettings(t *testing.T) {
 	}
 }
 
+func TestSMBClusterPlacementLabel(t *testing.T) {
+	service, _, id := newCephUserService(t)
+	request := Request{ClusterID: id, Action: "smb_cluster.update", ResourceKey: "smb/cluster/a", Parameters: map[string]any{"auth_mode": "user", "smb_label": "smb"}}
+	before := `{"resource_type":"ceph.smb.cluster","cluster_id":"a","auth_mode":"user","placement":{"count":2,"hosts":["node-a"],"host_pattern":"node*"}}`
+	data, err := smbClusterUpdateJSON([]byte(before), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var record map[string]any
+	if err := json.Unmarshal(data, &record); err != nil {
+		t.Fatal(err)
+	}
+	placement := record["placement"].(map[string]any)
+	if placement["label"] != "smb" || placement["count"] != float64(2) || placement["hosts"] != nil || placement["host_pattern"] != nil {
+		t.Fatal(placement)
+	}
+	runner := &directoryRenameExecutor{outputs: map[string]string{"smb_cluster.update.pre_check": before, "smb_cluster.update": `{"success":true}`, "smb_cluster.update.post_check": string(data)}}
+	service.executor = runner
+	if _, err := service.Execute(context.Background(), request); err != nil {
+		t.Fatal(err)
+	}
+	if len(runner.specs) != 3 || string(runner.specs[1].Stdin) != string(data) {
+		t.Fatal(runner.specs)
+	}
+	placement["hosts"] = []string{"node-a"}
+	stale, _ := json.Marshal(record)
+	if smbClusterUpdateMatches(data, stale, request) {
+		t.Fatal("stale hosts accepted")
+	}
+	request.Parameters["smb_hosts"] = []string{"node-a"}
+	if _, err := smbClusterUpdateJSON([]byte(before), request); err == nil {
+		t.Fatal("conflicting selectors accepted")
+	}
+	delete(request.Parameters, "smb_hosts")
+	for _, bad := range []any{nil, "", "smb other", "smb:other"} {
+		request.Parameters["smb_label"] = bad
+		if _, err := smbClusterUpdateJSON([]byte(before), request); err == nil {
+			t.Fatalf("invalid label accepted: %v", bad)
+		}
+	}
+}
+
 func TestSMBClusterPlacementHosts(t *testing.T) {
 	request := Request{ResourceKey: "smb/cluster/a", Parameters: map[string]any{"auth_mode": "user", "smb_hosts": []string{"node-a", "node-b"}}}
 	before := []byte(`{"resource_type":"ceph.smb.cluster","cluster_id":"a","auth_mode":"user","placement":{"count":2,"label":"smb","host_pattern":"node*"}}`)
