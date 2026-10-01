@@ -25,6 +25,23 @@ assert.throws(() => exports.crushTree({ nodes: [{ id: -1, name: 'root', type: 'r
 assert.equal(nodes[0].id, 0, 'must not reorder native metadata')
 console.log('CRUSH topology tree checks passed')
 
+const watcher = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'watchCrushMap')
+const watcherExports = {}
+let pending, scheduled, cancelled = false, received = 0
+new Function('exports', 'request', 'jsonInit', 'crushTree', 'setTimeout', 'clearTimeout', ts.transpileModule(watcher.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(watcherExports, () => new Promise((resolve) => { pending = resolve }), () => ({}), exports.crushTree, (fn, delay) => { assert.equal(delay, 5000); scheduled = fn; return 1 }, () => { cancelled = true })
+const stopWatch = watcherExports.watchCrushMap(1, true, () => received++, () => assert.fail('unexpected error'))
+assert.equal(scheduled, undefined, 'do not overlap pending reads')
+pending({ nodes, roots: [-1] })
+await new Promise((resolve) => setImmediate(resolve))
+assert.equal(received, 1)
+assert.equal(typeof scheduled, 'function')
+scheduled()
+stopWatch()
+pending({ nodes, roots: [-1] })
+await new Promise((resolve) => setImmediate(resolve))
+assert.equal(received, 1, 'ignore late response after cleanup')
+assert.equal(cancelled, true)
+
 const profileSource = readFileSync(new URL('../src/pages/cluster/ErasureProfilesPanel.tsx', import.meta.url), 'utf8')
 assert.ok(profileSource.includes("path: '/erasure/code/profiles'"))
 for (const field of ['name', 'plugin', 'k', 'm', 'technique', 'crush-root', 'crush-failure-domain', 'crush-device-class']) {

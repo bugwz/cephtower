@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Col, Descriptions, Row, Space, Tag, Tree } from 'antd'
+import { Alert, Button, Card, Col, Descriptions, Row, Space, Switch, Tag, Tree } from 'antd'
 import { useEffect, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -24,6 +24,24 @@ export function crushTree(data: CrushMap): CrushTreeNode[] {
   return data.roots.map((id) => build(id, new Set(), String(id)))
 }
 
+export function watchCrushMap(clusterId: number, automatic: boolean, onData: (value: CrushMap) => void, onError: (error: string) => void) {
+  const abort = new AbortController()
+  let timer: ReturnType<typeof setTimeout> | undefined
+  async function read() {
+    try {
+      const value = await request<CrushMap>('/crush/map', jsonInit('GET', { cluster_id: clusterId }, { signal: abort.signal, suppressErrorNotification: true }))
+      crushTree(value)
+      if (!abort.signal.aborted) onData(value)
+    } catch (err) {
+      if (!abort.signal.aborted) onError(err instanceof Error ? err.message : 'CRUSH 拓扑读取失败')
+    } finally {
+      if (automatic && !abort.signal.aborted) timer = setTimeout(read, 5000)
+    }
+  }
+  void read()
+  return () => { abort.abort(); clearTimeout(timer) }
+}
+
 export function CrushMapPage() {
   const { selectedClusterId } = useClusterContext()
   const [data, setData] = useState<CrushMap | null>(null)
@@ -31,22 +49,21 @@ export function CrushMapPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [revision, setRevision] = useState(0)
+  const [automatic, setAutomatic] = useState(true)
   useEffect(() => {
-    const abort = new AbortController()
     setData(null); setSelected(null); setError(''); setLoading(false)
-    if (!selectedClusterId) return () => abort.abort()
+    if (!selectedClusterId) return
     setLoading(true)
-    void request<CrushMap>('/crush/map', jsonInit('GET', { cluster_id: selectedClusterId }, { signal: abort.signal, suppressErrorNotification: true }))
-      .then((value) => { crushTree(value); if (!abort.signal.aborted) setData(value) })
-      .catch((err) => { if (!abort.signal.aborted) setError(err instanceof Error ? err.message : 'CRUSH 拓扑读取失败') })
-      .finally(() => { if (!abort.signal.aborted) setLoading(false) })
-    return () => abort.abort()
-  }, [selectedClusterId, revision])
-  return <><Card title="CRUSH 拓扑" loading={loading} extra={<Button disabled={!selectedClusterId || loading} onClick={() => setRevision((value) => value + 1)}>刷新</Button>}>
+    return watchCrushMap(selectedClusterId, automatic, (value) => {
+      setData(value); setError(''); setLoading(false)
+      setSelected((current) => current ? value.nodes.find((node) => node.id === current.id) ?? null : null)
+    }, (reason) => { setError(reason); setData(null); setSelected(null); setLoading(false) })
+  }, [selectedClusterId, revision, automatic])
+  return <><Card title="CRUSH 拓扑" loading={loading} extra={<Space><Switch checked={automatic} onChange={setAutomatic} checkedChildren="自动刷新" unCheckedChildren="已暂停" /><Button disabled={!selectedClusterId || loading} onClick={() => setRevision((value) => value + 1)}>刷新</Button></Space>}>
     {!selectedClusterId && <Alert type="info" message="请先选择集群" />}
     {error && <Alert type="error" message={error} />}
     {data && <Space direction="vertical" style={{ width: '100%' }}>
-      <Alert type="info" message="来自 ceph osd tree 的即时只读快照。点击节点查看权重、设备类别及状态等原生元数据；刷新会清除当前选择。" />
+      <Alert type="info" message="来自 ceph osd tree 的只读快照。自动刷新在每次请求结束 5 秒后读取拓扑；不刷新下方规则和配置库存。手动刷新清除选择，自动刷新同步所选节点详情。" />
       <Row gutter={[24, 16]} style={{ width: '100%' }}>
         <Col xs={24} lg={12}>
           {data.nodes.length ? <Tree defaultExpandAll treeData={crushTree(data)} titleRender={(node) => <Space>{node.status !== undefined && <Tag color={crushStatus(node.status).color}>{crushStatus(node.status).label}</Tag>}<span>{node.title}</span></Space>} onSelect={(keys, info) => setSelected(keys.length ? data.nodes.find((node) => Number(node.id) === info.node.nodeId) ?? null : null)} /> : <Alert type="info" message="当前 CRUSH 树没有节点" />}
