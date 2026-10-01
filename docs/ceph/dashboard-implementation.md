@@ -1235,6 +1235,18 @@ stats_util 和 `_get_clone_progress_report`。页面展示百分比进度条、�
 错误展示原生 error_msg 与 errno。离线夹具改用真实字段，测试覆盖采集→API、类型识别、
 缺失来源和页面组件输出。取消条件仍只使用成功读取的 clone_state。
 
+### CephFS 子卷挂载命令
+
+对照参考子卷 Attach 与 cephfs-mount-details，已就绪子卷的详情展示可复制的内核、
+FUSE 和 NFS 挂载模板。FSID 使用集群 API 的发现数据（原生 status/discovery），
+路径使用 `fs subvolume info` 经缓存/API 提供的 path，不推导子卷目录，也不复用服务端
+客户端用户名或密钥。缺失/无效 FSID、路径或错误集群身份时不生成命令；仅 complete
+状态展示入口。FUSE 按本地文档使用当前 `--client_fs` 参数，不复制旧兼容选项。
+客户端名称与挂载目录可编辑，shell 参数统一引用，离线测试验证特殊路径不会被 shell
+解释为命令。客户端仍需准备对应集群 ceph.conf/keyring 和本地目录；本功能不执行
+任何挂载。NFS 模板明确要求已有导出并手动替换主机、端口、导出路径，不假设子卷
+内部路径就是 NFS export。测试覆盖命令参数、缺失信息、集群身份及组件输出。
+
 ### CephFS 快照克隆依赖
 
 对照快照列表的 Pending Clones 列与 volumes `snapshot_info/get_pending_clones`，

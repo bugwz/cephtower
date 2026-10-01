@@ -8,12 +8,13 @@ import { filesystemEnabledText } from './cephfsFilesystemState'
 import { formatDateTime } from '../../utils/time'
 import { CephFSPermissions, CephFSUsage } from './CephFSResourceUsage'
 import { cephFSBytes, cephFSQuota } from './cephfsSubvolumeSummary'
-import { Alert, Tag } from 'antd'
+import { Alert, Space, Tag } from 'antd'
 import { subvolumeReadyReason, subvolumeState, subvolumeType } from './cephfsSubvolumeState'
 import { cloneFailure, cloneSource } from './cephfsCloneSummary'
 import { CephFSCloneProgress } from './CephFSCloneProgress'
 import { SnapshotCloneDependenciesPanel } from './SnapshotCloneDependenciesPanel'
 import { snapshotDeleteReason, snapshotDependencies, snapshotPendingText } from './cephfsSnapshotDependencies'
+import { CephFSSubvolumeMount } from './CephFSAttachCommands'
 
 export function FilePoolsPage() {
   return <ResourceListPage definition={definitions.filePools} />
@@ -308,7 +309,7 @@ const definitions: Record<
     path: '/filesystem/subvolumes',
     requiredCapabilities: ['cephfs_volume'],
     rowKeyCandidates: ['natural_key', 'name'],
-    detailContent: (row, clusterId) => subvolumeReadyReason(row) ? <Alert type="warning" showIcon message={subvolumeReadyReason(row)} description="当前不读取或修改子卷目录的快照可见性；保留快照仍可在 CephFS 快照页面查看和管理。" /> : <SubvolumeSnapshotVisibility key={`${clusterId}/${fsName(row)}/${groupName(row)}/${subvolumeName(row)}`} clusterId={clusterId} filesystem={fsName(row)} subvolume={subvolumeName(row)} group={groupName(row)} resourceVersion={row.resource_version == null ? undefined : String(row.resource_version)} />,
+    detailContent: (row, clusterId) => subvolumeReadyReason(row) ? <Alert type="warning" showIcon message={subvolumeReadyReason(row)} description="当前不生成挂载命令或读取/修改子卷目录的快照可见性；保留快照仍可在 CephFS 快照页面查看和管理。" /> : <Space direction="vertical" style={{ width: '100%' }}><CephFSSubvolumeMount clusterId={clusterId} filesystem={fsName(row)} path={row.path} /><SubvolumeSnapshotVisibility key={`${clusterId}/${fsName(row)}/${groupName(row)}/${subvolumeName(row)}`} clusterId={clusterId} filesystem={fsName(row)} subvolume={subvolumeName(row)} group={groupName(row)} resourceVersion={row.resource_version == null ? undefined : String(row.resource_version)} /></Space>,
     createAction: {
       title: '新建子卷',
       buttonLabel: '新建子卷',
