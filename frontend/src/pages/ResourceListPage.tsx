@@ -1,7 +1,7 @@
 import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Dropdown, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Typography } from 'antd'
 import type { ColumnsType, TableProps } from 'antd/es/table'
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listResource, listResourceFilterOptions, mutateResource, refreshResource, type ResourceListResult } from '../api/resource'
 import { textValue, type ApiRecord } from '../api/client'
@@ -86,6 +86,11 @@ export interface ResourceListPageDefinition extends FeatureRequirements {
 export function ResourceListPage({ definition, embedded = false }: { definition: ResourceListPageDefinition; embedded?: boolean }) {
   const navigate = useNavigate()
   const { selectedClusterId } = useClusterContext()
+  const currentClusterId = useRef(selectedClusterId)
+  const clusterGeneration = useRef(0)
+  if (currentClusterId.current !== selectedClusterId) clusterGeneration.current += 1
+  currentClusterId.current = selectedClusterId
+  const [formClusterId, setFormClusterId] = useState<number | undefined>()
   const [refreshing, setRefreshing] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [activeAction, setActiveAction] = useState<ResourceFormAction | null>(null)
@@ -109,6 +114,15 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
   const featureStatus = useFeatureRequirements(selectedClusterId, definition)
   const mutationBlocked = featureStatus.loading || featureStatus.blocked || Boolean(featureStatus.error)
   const optionScope = JSON.stringify(Object.fromEntries((activeAction?.fields.flatMap((field) => field.optionsDependencies ?? []) ?? []).map((name) => [name, formValues?.[name]])))
+
+  useEffect(() => {
+    form.resetFields()
+    setFormOpen(false)
+    setActiveAction(null)
+    setActiveRow(undefined)
+    setDetailRow(null)
+    setFormClusterId(undefined)
+  }, [form, selectedClusterId])
 
   useEffect(() => {
     let ignore = false
@@ -179,6 +193,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
       }
     }
     setActiveAction(action)
+    setFormClusterId(selectedClusterId)
     setActiveRow(row)
     form.resetFields()
     const initialValues = typeof action.initialValues === 'function' ? action.initialValues(row) : action.initialValues
@@ -193,10 +208,11 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
   }
 
   async function submitForm(values: MutationFormValues) {
-    if (!selectedClusterId || !activeAction || submitting || mutationBlocked) {
+    if (!selectedClusterId || formClusterId !== selectedClusterId || !activeAction || submitting || mutationBlocked) {
       return
     }
     const action = activeAction
+    const generation = clusterGeneration.current
     setSubmitting(true)
     try {
       const confirmation = action.confirmation?.(values, activeRow)
@@ -206,12 +222,14 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
         })
         if (!approved) return
       }
+      if (currentClusterId.current !== formClusterId || clusterGeneration.current !== generation) return
       const result = await operationMutation.run(() => mutateResource(
         action.path,
         action.method,
         action.buildBody(values, selectedClusterId, activeRow),
         activeRow?.resource_version ? { ifMatch: String(activeRow.resource_version) } : undefined
       ), false)
+      if (currentClusterId.current !== formClusterId || clusterGeneration.current !== generation) return
       if (action.resultValues) {
         form.setFieldsValue(action.resultValues(result as unknown as ApiRecord, values, activeRow))
       }
@@ -366,7 +384,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
 
       <DraggableModal
         title={activeAction?.title ?? ''}
-        open={formOpen}
+        open={formOpen && formClusterId === selectedClusterId}
         onCancel={closeForm}
         onOk={() => form.submit()}
         okText="提交"
