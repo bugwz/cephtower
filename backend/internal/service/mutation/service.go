@@ -136,6 +136,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			if err != nil {
 				return cephdomain.ActionResult{}, err
 			}
+			spec.check = []string{"nfs", "export", "ls", cluster, "--detailed", "--format", "json"}
 		}
 	}
 	if request.Action == "subvolume_group.update" && subvolumeGroupHasAttributes(request.Parameters) {
@@ -204,6 +205,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		if request.Action == "snapshot_schedule.retention" && !snapshotRetentionMatches(request.Parameters, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "retention change was accepted but the requested policy could not be verified; the change may already have taken effect", Retryable: true}
+		}
+		if request.Action == "nfs_export.update" && !nfsExportUpdateMatches(request, checked.Stdout) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "NFS export update was accepted but requested attributes could not be verified; the change may already have taken effect", Retryable: true}
 		}
 	}
 	if request.Action == "rgw_zone.update" && optional(request.Parameters, "zonegroup") != "" {

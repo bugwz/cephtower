@@ -55,3 +55,23 @@ func nfsExportUpdateJSON(export, parameters map[string]any) ([]byte, error) {
 	}
 	return json.Marshal(export)
 }
+
+func nfsExportUpdateMatches(request Request, data []byte) bool {
+	cluster, id, err := decodePair(last(resourceTail(request.ResourceKey)))
+	if err != nil {
+		return false
+	}
+	export, err := nfsExportRecord(data, cluster, id)
+	if err != nil {
+		return false
+	}
+	p := request.Parameters
+	fsal, ok := export["fsal"].(map[string]any)
+	if !ok || fsal["name"] != "CEPH" || fsal["fs_name"] != p["filesystem"] || export["pseudo"] != p["pseudo"] || export["path"] != p["path"] {
+		return false
+	}
+	if readOnly, ok := p["read_only"].(bool); ok {
+		return export["access_type"] == map[bool]string{true: "RO", false: "RW"}[readOnly]
+	}
+	return true
+}

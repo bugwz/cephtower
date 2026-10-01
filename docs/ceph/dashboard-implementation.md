@@ -1592,3 +1592,11 @@ pseudo、path、fsal.fs_name 和显式 read_only 对应的 access_type，保留 
 识别伪路径重命名，避免误创建另一个导出。前后端禁止跨 NFS 集群移动；后端
 同样拒绝简化表单不支持的 FSAL 和访问类型。执行测试验证属性保留和跨集群拒绝，
 前后端完整检查通过；未实测集群。
+
+## NFS 导出更新读回验证
+
+原生 AppliedExportResults 通过非零退出码报告 apply 失败，现有执行器处理该错误。
+更新成功后进一步读取详细导出列表，按原集群和 export_id 验证 pseudo、path、
+CephFS 名称及显式访问类型。缺失、原值未变或只有其他 ID 匹配时返回
+post_check_failed，并说明操作可能已生效。执行链测试及 `make test-backend`
+通过，未实测集群。
