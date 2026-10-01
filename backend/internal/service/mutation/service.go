@@ -2199,14 +2199,11 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		if !strings.HasPrefix(path, "/") {
-			return command{}, invalid("CephFS export path must be absolute")
-		}
-		filesystem, err := required(p, "filesystem")
+		fsal, err := nfsExportFSAL(p)
 		if err != nil {
 			return command{}, err
 		}
-		export := map[string]any{"cluster_id": cluster, "pseudo": pseudo, "path": path, "fsal": map[string]any{"name": "CEPH", "fs_name": filesystem}}
+		export := map[string]any{"cluster_id": cluster, "pseudo": pseudo, "path": path, "fsal": fsal}
 		if value, exists := p["client_rules"]; exists {
 			clients, err := nfsClients(value)
 			if err != nil {

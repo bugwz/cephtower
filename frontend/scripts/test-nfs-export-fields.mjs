@@ -7,7 +7,9 @@ const source = readFileSync(new URL('../src/pages/file/nfsExportFields.ts', impo
 const exports = {}
 new Function('exports', ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
 const row = { cluster_id: 'nfs-a', pseudo: '/share', path: '/data', access_type: 'RO', fsal: { name: 'CEPH', fs_name: 'cephfs-a', user_id: 'nfs.user' } }
-assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', access_type: 'RO', squash: undefined, security_label: undefined, transports: undefined, protocols: undefined, sectype: undefined, clients: undefined })
+assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', access_type: 'RO', squash: undefined, security_label: undefined, transports: undefined, protocols: undefined, sectype: undefined, clients: undefined, fsal_type: 'CEPH', rgw_user_id: 'nfs.user' })
+assert.deepEqual(exports.nfsFSALBody({ fsal_type: 'RGW', rgw_user_id: 'owner', filesystem: 'stale' }), { fsal_type: 'RGW', rgw_user_id: 'owner' })
+assert.deepEqual(exports.nfsFSALBody({ fsal_type: 'CEPH', filesystem: 'fs', rgw_user_id: 'stale' }), { fsal_type: 'CEPH', filesystem: 'fs' })
 assert.deepEqual(exports.nfsClientsBody(''), {})
 assert.deepEqual(exports.nfsClientsBody('[]'), { client_rules: [] })
 assert.deepEqual(exports.nfsClientsBody('[{"addresses":["10.0.0.0/8"],"access_type":null,"squash":null}]'), { client_rules: [{ addresses: ['10.0.0.0/8'], access_type: '', squash: '' }] })
@@ -37,7 +39,8 @@ assert.equal(exports.nfsExportInitialValues({ ...row, squash: 'all_squash' }).sq
 assert.equal(exports.nfsExportInitialValues({ ...row, squash: 'native-alias' }).squash, undefined)
 assert.equal(exports.nfsExportEditReason(row), undefined)
 assert.equal(exports.nfsExportInitialValues({ ...row, access_type: 'RW' }).access_type, 'RW')
-assert.ok(exports.nfsExportEditReason({ ...row, fsal: { name: 'RGW' } }))
+assert.equal(exports.nfsExportEditReason({ ...row, fsal: { name: 'RGW' } }), undefined)
+assert.ok(exports.nfsExportEditReason({ ...row, fsal: { name: 'UNKNOWN' } }))
 assert.equal(exports.nfsExportEditReason({ ...row, access_type: 'NONE' }), undefined)
 for (const fsal of [null, undefined, [], 'CEPH']) assert.deepEqual(exports.nfsFSAL({ fsal }), {})
 console.log('NFS native export field checks passed')

@@ -1,7 +1,7 @@
 import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClientsEditor } from './NFSClientsEditor'
-import { nfsClientsBody } from './nfsExportFields'
+import { nfsClientsBody, nfsFSALBody } from './nfsExportFields'
 import { nfsAccessOptions, nfsExportEditReason, nfsExportInitialValues, nfsFSAL, nfsTransportBody, nfsTransportOptions, nfsProtocolBody, nfsProtocolOptions, nfsSecurityLabelOptions, nfsSecurityTypeBody, nfsSquashOptions } from './nfsExportFields'
 import { CephFSDirectoryBrowser } from './CephFSDirectoryBrowser'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
@@ -613,8 +613,10 @@ const definitions: Record<
       fields: [
         { name: 'cluster', label: 'NFS 集群', type: 'select', required: true, optionsLoader: nfsClusterOptions },
         { name: 'pseudo', label: '伪路径', required: true, placeholder: '/export', pattern: /^\/[^\r\n\0]+$/, patternMessage: '请输入非根目录的绝对伪路径' },
-        { name: 'path', label: 'CephFS 路径', required: true, placeholder: '/data', pattern: /^\/[^\r\n\0]*$/, patternMessage: '请输入绝对路径' },
-        { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
+        { name: 'fsal_type', label: '存储后端', type: 'select', required: true, options: [{ label: 'CephFS', value: 'CEPH' }, { label: '对象网关 RGW', value: 'RGW' }] },
+        { name: 'path', label: 'CephFS 绝对路径 / RGW 桶名（/ 表示用户根目录）', required: true },
+        { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions, visibleWhen: (values) => values.fsal_type !== 'RGW' },
+        { name: 'rgw_user_id', label: 'RGW 用户 ID', required: true, visibleWhen: (values) => values.fsal_type === 'RGW' },
         { name: 'access_type', label: '访问类型', type: 'select', required: true, options: nfsAccessOptions },
         { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '使用原生默认值' },
         { name: 'clients', label: '客户端规则', renderControl: () => <NFSClientsEditor /> },
@@ -623,13 +625,13 @@ const definitions: Record<
         { name: 'protocols', label: 'NFS 协议版本', type: 'select', options: nfsProtocolOptions },
         { name: 'security_label', label: '安全标签', type: 'select', options: nfsSecurityLabelOptions, placeholder: '使用原生默认值' }
       ],
-      initialValues: { pseudo: '/export', path: '/', access_type: 'RW' },
+      initialValues: { pseudo: '/export', path: '/', access_type: 'RW', fsal_type: 'CEPH' },
       buildBody: (values, clusterId) => ({
         cluster_id: clusterId,
         cluster: String(values.cluster ?? ''),
         pseudo: String(values.pseudo ?? ''),
         path: String(values.path ?? ''),
-        filesystem: String(values.filesystem ?? ''),
+        ...nfsFSALBody(values),
         access_type: String(values.access_type ?? ''),
         ...nfsProtocolBody(values.protocols),
         ...nfsClientsBody(values.clients),
@@ -648,8 +650,10 @@ const definitions: Record<
       fields: [
         { name: 'cluster', label: 'NFS 集群', required: true, readOnly: true },
         { name: 'pseudo', label: '伪路径', required: true, pattern: /^\/[^\r\n\0]+$/, patternMessage: '请输入非根目录的绝对伪路径' },
-        { name: 'path', label: 'CephFS 路径', required: true, pattern: /^\/[^\r\n\0]*$/, patternMessage: '请输入绝对路径' },
-        { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
+        { name: 'fsal_type', label: '存储后端（不可更改）', required: true, readOnly: true },
+        { name: 'path', label: 'CephFS 绝对路径 / RGW 桶名（/ 表示用户根目录）', required: true },
+        { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions, visibleWhen: (values) => values.fsal_type !== 'RGW' },
+        { name: 'rgw_user_id', label: 'RGW 用户 ID', required: true, visibleWhen: (values) => values.fsal_type === 'RGW' },
         { name: 'access_type', label: '访问类型', type: 'select', required: true, options: nfsAccessOptions },
         { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '保持当前设置' },
         { name: 'clients', label: '客户端规则', renderControl: () => <NFSClientsEditor /> },
@@ -669,7 +673,7 @@ const definitions: Record<
         cluster: String(values.cluster ?? ''),
         pseudo: String(values.pseudo ?? ''),
         path: String(values.path ?? ''),
-        filesystem: String(values.filesystem ?? ''),
+        ...nfsFSALBody(values),
         access_type: String(values.access_type ?? ''),
         ...(values.squash ? { squash: values.squash } : {}),
         ...(values.security_label ? { security_label: values.security_label === 'enabled' } : {})

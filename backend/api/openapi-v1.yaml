@@ -485,6 +485,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -725,6 +728,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -1132,6 +1137,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -1372,6 +1380,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -3074,6 +3084,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -3314,6 +3327,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -3721,6 +3736,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -3961,6 +3979,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -4586,6 +4606,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -4826,6 +4849,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -5327,6 +5352,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -5567,6 +5595,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -5974,6 +6004,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -6214,6 +6247,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -6812,6 +6847,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -7052,6 +7090,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -7555,6 +7595,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -7795,6 +7838,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -8203,6 +8248,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -8443,6 +8491,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -9094,6 +9144,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -9334,6 +9387,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -9835,6 +9890,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -10075,6 +10133,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -10578,6 +10638,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -10818,6 +10881,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -11319,6 +11384,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -11559,6 +11627,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -11966,6 +12036,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -12206,6 +12279,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -12859,6 +12934,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -13099,6 +13177,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -14002,6 +14082,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -14242,6 +14325,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -14650,6 +14735,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -14890,6 +14978,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -15298,6 +15388,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -15538,6 +15631,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -16583,6 +16678,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -16823,6 +16921,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -17376,6 +17476,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -17616,6 +17719,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -18119,6 +18224,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -18359,6 +18467,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -18766,6 +18876,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -19006,6 +19119,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -20069,6 +20184,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -20309,6 +20427,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -20716,6 +20836,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -20956,6 +21079,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -21380,6 +21505,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -21620,6 +21748,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -22121,6 +22251,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -22361,6 +22494,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -22768,6 +22903,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -23008,6 +23146,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -23416,6 +23556,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -23656,6 +23799,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -24342,6 +24487,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -24582,6 +24730,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -25180,6 +25330,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -25420,6 +25573,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -25921,6 +26076,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -26161,6 +26319,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -26568,6 +26728,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -26808,6 +26971,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -27348,6 +27513,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -27588,6 +27756,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -27996,6 +28166,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -28236,6 +28409,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -29059,6 +29234,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -29299,6 +29477,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -29992,6 +30172,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -30232,6 +30415,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -30733,6 +30918,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -30973,6 +31161,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -31476,6 +31666,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -31716,6 +31909,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -32217,6 +32412,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -32457,6 +32655,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -32864,6 +33064,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -33104,6 +33307,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -33702,6 +33907,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -33942,6 +34150,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -34443,6 +34653,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -34683,6 +34896,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -35090,6 +35305,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -35330,6 +35548,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -35833,6 +36053,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -36073,6 +36296,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -36480,6 +36705,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -36720,6 +36948,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -37223,6 +37453,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -37463,6 +37696,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -37870,6 +38105,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -38110,6 +38348,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -38613,6 +38853,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -38853,6 +39096,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -39354,6 +39599,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -39594,6 +39842,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -40001,6 +40251,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -40241,6 +40494,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -40912,6 +41167,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -41152,6 +41410,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -41654,6 +41914,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -41894,6 +42157,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -42302,6 +42567,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -42542,6 +42810,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -42950,6 +43220,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -43190,6 +43463,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -43692,6 +43967,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -43932,6 +44210,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -44374,6 +44654,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -44614,6 +44897,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -45307,6 +45592,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -45547,6 +45835,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -46048,6 +46338,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -46288,6 +46581,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -46695,6 +46990,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -46935,6 +47233,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -47438,6 +47738,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -47678,6 +47981,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -48086,6 +48391,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -48326,6 +48634,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -48734,6 +49044,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -48974,6 +49287,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -49382,6 +49697,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -49622,6 +49940,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -50125,6 +50445,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -50365,6 +50688,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -50866,6 +51191,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -51106,6 +51434,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -51513,6 +51843,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -51753,6 +52086,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -52278,6 +52613,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -52518,6 +52856,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -52925,6 +53265,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -53165,6 +53508,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -53572,6 +53917,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -53812,6 +54160,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -54606,6 +54956,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -54846,6 +55199,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -55326,6 +55681,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -55566,6 +55924,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -55974,6 +56334,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -56214,6 +56577,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -56621,6 +56986,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -56861,6 +57229,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -57364,6 +57734,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -57604,6 +57977,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -58106,6 +58481,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -58346,6 +58724,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -58754,6 +59134,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -58994,6 +59377,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -59513,6 +59898,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -59753,6 +60141,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -60160,6 +60550,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -60400,6 +60793,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -60807,6 +61202,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -61047,6 +61445,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -61455,6 +61855,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -61695,6 +62098,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -62198,6 +62603,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -62438,6 +62846,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -62939,6 +63349,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -63179,6 +63592,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -63586,6 +64001,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -63826,6 +64244,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -64335,6 +64755,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -64575,6 +64998,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -64983,6 +65408,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -65223,6 +65651,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -65631,6 +66061,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -65871,6 +66304,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -66374,6 +66809,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -66614,6 +67052,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -67022,6 +67462,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -67262,6 +67705,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -67669,6 +68114,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -67909,6 +68357,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -68412,6 +68862,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -68652,6 +69105,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -69059,6 +69514,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -69299,6 +69757,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -69706,6 +70166,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -69946,6 +70409,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -70354,6 +70819,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -70594,6 +71062,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -71192,6 +71662,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -71432,6 +71905,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -71933,6 +72408,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -72173,6 +72651,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -72580,6 +73060,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -72820,6 +73303,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -73228,6 +73713,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -73468,6 +73956,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -73876,6 +74366,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -74116,6 +74609,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -74523,6 +75018,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -74763,6 +75261,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -75171,6 +75671,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -75411,6 +75914,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -75819,6 +76324,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -76059,6 +76567,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -76562,6 +77072,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -76802,6 +77315,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -77209,6 +77724,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -77449,6 +77967,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -77857,6 +78377,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -78097,6 +78620,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -78504,6 +79029,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -78744,6 +79272,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -79482,6 +80012,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -79722,6 +80255,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -80223,6 +80758,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -80463,6 +81001,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -80870,6 +81410,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -81110,6 +81653,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -81613,6 +82158,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -81853,6 +82401,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -82354,6 +82904,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -82594,6 +83147,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -83001,6 +83556,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -83241,6 +83799,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -83744,6 +84304,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -83984,6 +84547,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -84485,6 +85050,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -84725,6 +85293,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -85132,6 +85702,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -85372,6 +85945,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -85970,6 +86545,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -86210,6 +86788,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string
@@ -86618,6 +87198,9 @@ paths:
                   type: boolean
                 fs:
                   type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
                 gid:
                   type: integer
                 group:
@@ -86858,6 +87441,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_user_id:
                   type: string
                 root:
                   type: string

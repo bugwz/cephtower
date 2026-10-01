@@ -50,13 +50,20 @@ export function nfsClientsBody(value: unknown) {
 }
 
 export function nfsExportEditReason(row: ApiRecord): string | undefined {
-  if (nfsFSAL(row).name !== 'CEPH') return '当前编辑表单仅支持 CephFS 导出'
+  if (nfsFSAL(row).name !== 'CEPH' && nfsFSAL(row).name !== 'RGW') return '当前编辑表单不支持此存储后端'
   return undefined
+}
+
+export function nfsFSALBody(values: ApiRecord) {
+  if (values.fsal_type === 'RGW') return { fsal_type: 'RGW', rgw_user_id: String(values.rgw_user_id ?? '') }
+  return { fsal_type: 'CEPH', filesystem: String(values.filesystem ?? '') }
 }
 
 export function nfsExportInitialValues(row?: ApiRecord) {
   return {
     cluster: typeof row?.cluster_id === 'string' ? row.cluster_id : '',
+    fsal_type: typeof nfsFSAL(row).name === 'string' ? String(nfsFSAL(row).name) : 'CEPH',
+    rgw_user_id: typeof nfsFSAL(row).user_id === 'string' ? String(nfsFSAL(row).user_id) : '',
     clients: Array.isArray(row?.clients) ? JSON.stringify(row.clients, null, 2) : undefined,
     sectype: Array.isArray(row?.sectype) && row.sectype.every((value) => typeof value === 'string') ? row.sectype.join(',') : undefined,
     pseudo: typeof row?.pseudo === 'string' ? row.pseudo : '',

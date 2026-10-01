@@ -148,12 +148,18 @@ func nfsExportDeleted(request Request, data []byte) bool {
 
 func nfsExportUpdateJSON(export, parameters map[string]any) ([]byte, error) {
 	fsal, ok := export["fsal"].(map[string]any)
-	if !ok || fsal["name"] != "CEPH" {
-		return nil, invalid("this update form requires a CephFS export")
+	wantedFSAL, err := nfsExportFSAL(parameters)
+	if err != nil {
+		return nil, err
+	}
+	if !ok || fsal["name"] != wantedFSAL["name"] {
+		return nil, invalid("changing the NFS storage backend is not allowed")
 	}
 	export["pseudo"] = parameters["pseudo"]
 	export["path"] = parameters["path"]
-	fsal["fs_name"] = parameters["filesystem"]
+	for key, value := range wantedFSAL {
+		fsal[key] = value
+	}
 	if value, exists := parameters["client_rules"]; exists {
 		clients, err := nfsClients(value)
 		if err != nil {
@@ -262,8 +268,14 @@ func nfsExportAttributesMatch(export, p map[string]any) bool {
 		return false
 	}
 	fsal, ok := export["fsal"].(map[string]any)
-	if !ok || fsal["name"] != "CEPH" || fsal["fs_name"] != p["filesystem"] || path.Clean(optional(export, "pseudo")) != path.Clean(optional(p, "pseudo")) || path.Clean(optional(export, "path")) != path.Clean(optional(p, "path")) {
+	wantedFSAL, err := nfsExportFSAL(p)
+	if !ok || err != nil || path.Clean(optional(export, "pseudo")) != path.Clean(optional(p, "pseudo")) || path.Clean(optional(export, "path")) != path.Clean(optional(p, "path")) {
 		return false
+	}
+	for key, value := range wantedFSAL {
+		if fsal[key] != value {
+			return false
+		}
 	}
 	if access, exists := p["access_type"]; exists {
 		return export["access_type"] == access
