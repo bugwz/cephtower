@@ -2,6 +2,7 @@ import { InfoCircleOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '
 import { Alert, Button, Card, Collapse, Descriptions, Divider, Form, Input, InputNumber, Select, Space, Tag, Tooltip, Typography } from 'antd'
 import { erasureProfileDetails } from './ErasureProfilesPanel'
 import { ErasureProfileUsage } from './ErasureProfileUsage'
+import { CrushRuleDetails } from './CrushRulesPanel'
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isRecord, jsonInit, request, numberValue, textValue, type ApiRecord } from '../../api/client'
@@ -199,6 +200,7 @@ export function PoolManagementPage() {
   const [refreshingPools, setRefreshingPools] = useState(false)
   const poolType = Form.useWatch('pool_type', form) ?? 'replicated'
   const selectedProfileName = Form.useWatch('erasure_code_profile', form)
+  const selectedRuleName = Form.useWatch('crush_rule', form)
   const pgAutoscaleMode = Form.useWatch('pg_autoscale_mode', form) ?? 'on'
   const applications = Form.useWatch('applications', form) ?? []
   const compressionMode = Form.useWatch('compression_mode', form) ?? 'none'
@@ -242,6 +244,7 @@ export function PoolManagementPage() {
   }, [poolTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const selectedProfile = (data?.erasureCodeProfileRows ?? []).find((row) => resourceName(row) === selectedProfileName)
+  const selectedRule = (data?.crushRules ?? []).find((row) => row.rule_name === selectedRuleName)
   const applicationOptions = useMemo(() => {
     const fromRows = (data?.pools ?? []).flatMap((row) => poolApplications(row))
     return Array.from(new Set([...applicationDefaults, ...fromRows])).map((value) => ({ label: value, value }))
@@ -551,6 +554,10 @@ export function PoolManagementPage() {
                     </Tooltip>
                   </Space.Compact>
                 </Form.Item>
+                {selectedRuleName && <Collapse items={[{
+                  key: 'rule', label: `CRUSH 规则详情：${selectedRuleName}`,
+                  children: selectedRule ? <CrushRuleDetails row={selectedRule} /> : <Alert type="info" message="规则详情尚未采集，请刷新后查看。" />
+                }]} />}
               </div>
             ) : (
               <>

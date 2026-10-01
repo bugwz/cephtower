@@ -42,13 +42,15 @@ const definition: ResourceListPageDefinition = {
     buildBody: (row, clusterId) => ({ cluster_id: clusterId, name: row.rule_name }),
     resourceKey: (row) => `crush-rule/${row.rule_name}`
   },
-  detailContent: (row) => {
+  detailContent: (row) => <CrushRuleDetails row={row} />
+}
+
+export function CrushRuleDetails({ row }: { row: ApiRecord }) {
     const steps = crushRuleSteps(row.steps)
     return <Space direction="vertical" style={{ width: '100%' }}>
       <Alert type="info" message="步骤按原生命令返回顺序展示；num 为 0 等值保留原义，不转换为实际副本数。" />
       {steps ? <DataTable rowKeyCandidates={['sequence']} data={steps} columns={[{ key: 'sequence', title: '顺序' }, { key: 'op', title: '操作' }, { key: 'item', title: '节点 ID' }, { key: 'item_name', title: '节点名称' }, { key: 'type', title: '故障域' }, { key: 'num', title: '数量参数' }, { key: 'details', title: '原生步骤', render: (_value, step) => { const { sequence: _sequence, ...native } = step; return <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{JSON.stringify(native, null, 2)}</pre> } }]} /> : <Alert type="warning" message="规则步骤未提供或格式异常" />}
     </Space>
-  }
 }
 
 export function CrushRulesPanel() {
