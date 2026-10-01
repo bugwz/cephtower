@@ -280,6 +280,9 @@ func nfsExportAttributesMatch(export, p map[string]any) bool {
 		return false
 	}
 	for key, value := range wantedFSAL {
+		if key == "sec_label_xattr" && value == "" && fsal[key] == nil {
+			continue // Native Ceph omits an explicitly cleared attribute.
+		}
 		if fsal[key] != value {
 			return false
 		}

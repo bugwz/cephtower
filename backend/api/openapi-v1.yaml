@@ -742,6 +742,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -1396,6 +1398,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -3345,6 +3349,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -3999,6 +4005,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -4871,6 +4879,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -5619,6 +5629,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -6273,6 +6285,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -7118,6 +7132,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -7868,6 +7884,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -8523,6 +8541,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -9421,6 +9441,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -10169,6 +10191,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -10919,6 +10943,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -11667,6 +11693,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -12321,6 +12349,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -13221,6 +13251,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -14371,6 +14403,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -15026,6 +15060,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -15681,6 +15717,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -16973,6 +17011,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -17773,6 +17813,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -18523,6 +18565,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -19177,6 +19221,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -20487,6 +20533,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -21141,6 +21189,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -21812,6 +21862,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -22560,6 +22612,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -23214,6 +23268,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -23869,6 +23925,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -24802,6 +24860,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -25647,6 +25707,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -26395,6 +26457,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -27049,6 +27113,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -27836,6 +27902,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -28491,6 +28559,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -29561,6 +29631,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -30501,6 +30573,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -31249,6 +31323,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -31999,6 +32075,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -32747,6 +32825,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -33401,6 +33481,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -34246,6 +34328,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -34994,6 +35078,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -35648,6 +35734,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -36398,6 +36486,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -37052,6 +37142,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -37802,6 +37894,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -38456,6 +38550,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -39206,6 +39302,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -39954,6 +40052,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -40608,6 +40708,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -41526,6 +41628,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -42275,6 +42379,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -42930,6 +43036,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -43585,6 +43693,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -44334,6 +44444,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -45023,6 +45135,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -45963,6 +46077,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -46711,6 +46827,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -47365,6 +47483,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -48115,6 +48235,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -48770,6 +48892,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -49425,6 +49549,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -50080,6 +50206,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -50830,6 +50958,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -51578,6 +51708,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -52232,6 +52364,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -53004,6 +53138,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -53658,6 +53794,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -54312,6 +54450,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -55353,6 +55493,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -56080,6 +56222,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -56735,6 +56879,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -57389,6 +57535,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -58139,6 +58287,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -58888,6 +59038,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -59543,6 +59695,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -60309,6 +60463,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -60963,6 +61119,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -61617,6 +61775,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -62272,6 +62432,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -63022,6 +63184,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -63770,6 +63934,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -64424,6 +64590,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -65180,6 +65348,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -65835,6 +66005,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -66490,6 +66662,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -67240,6 +67414,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -67895,6 +68071,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -68549,6 +68727,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -69299,6 +69479,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -69953,6 +70135,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -70607,6 +70791,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -71262,6 +71448,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -72107,6 +72295,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -72855,6 +73045,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -73509,6 +73701,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -74164,6 +74358,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -74819,6 +75015,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -75473,6 +75671,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -76128,6 +76328,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -76783,6 +76985,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -77533,6 +77737,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -78187,6 +78393,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -78842,6 +79050,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -79496,6 +79706,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -80481,6 +80693,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -81229,6 +81443,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -81883,6 +82099,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -82633,6 +82851,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -83381,6 +83601,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -84035,6 +84257,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -84785,6 +85009,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -85533,6 +85759,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -86187,6 +86415,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -87032,6 +87262,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true
@@ -87687,6 +87919,8 @@ paths:
                 scope:
                   type: string
                   enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
                 secret_key:
                   type: string
                   writeOnly: true

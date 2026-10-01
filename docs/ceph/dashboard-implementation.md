@@ -1754,3 +1754,13 @@ JSON stdin 本身不能阻止后续 Ganesha 配置注入。旧通用标识符校
 --tenant 的自动查询。无租户不传该命令参数。创建/编辑读回核对已解析 UID，
 同名桶跨租户更新不会保留旧身份。源代码 rgw_lib.h 用用户身份确定 bucket_tenant。
 只支持可解析为同租户用户的拥有者；账户拥有者尚需独立处理，未实测集群。
+
+## NFS CephFS 安全标签扩展属性
+
+创建、编辑与详情支持 FSAL 的 sec_label_xattr，对应参考 Dashboard 的同名表单及
+`nfs/ganesha_conf.py` 的 CephFSFSAL 序列化。API 可选字符串通过
+`ceph nfs export apply <cluster> -i -` 写入嵌套 FSAL；省略保持已有值，空字符串
+清空配置，原生详细列表省略空属性时视为清空成功，非空值必须精确读回。
+仅 CephFS 可用，属性名限制为最多 255 个 ASCII 字母、数字、点、下划线和连字符，
+防止原生配置未转义字符串注入；不自动启用 security_label，也不修改 CephX 身份。
+已覆盖 payload、保留/清空、读回不一致、非法值与前端转换测试；未实测集群。

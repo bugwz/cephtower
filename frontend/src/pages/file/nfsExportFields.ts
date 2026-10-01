@@ -62,7 +62,7 @@ export function nfsFSALBody(values: ApiRecord) {
     return { fsal_type: 'RGW', path: bucket[1], rgw_bucket_tenant: bucket[0] }
   }
   if (values.fsal_type === 'RGW') return { fsal_type: 'RGW', path: '/', rgw_user_id: String(values.rgw_user_id ?? '') }
-  return { fsal_type: 'CEPH', filesystem: String(values.filesystem ?? '') }
+  return { fsal_type: 'CEPH', filesystem: String(values.filesystem ?? ''), ...(values.sec_label_xattr !== undefined ? { sec_label_xattr: String(values.sec_label_xattr) } : {}) }
 }
 
 export function nfsRGWUserChoices(rows: ApiRecord[]) {
@@ -98,6 +98,7 @@ export function nfsExportInitialValues(row?: ApiRecord) {
     pseudo: typeof row?.pseudo === 'string' ? row.pseudo : '',
     path: typeof row?.path === 'string' ? row.path : '',
     filesystem: typeof nfsFSAL(row).fs_name === 'string' ? String(nfsFSAL(row).fs_name) : '',
+    sec_label_xattr: typeof nfsFSAL(row).sec_label_xattr === 'string' ? String(nfsFSAL(row).sec_label_xattr) : undefined,
     access_type: nfsAccessOptions.some((option) => option.value === row?.access_type) ? String(row?.access_type) : undefined,
     transports: Array.isArray(row?.transports) && row.transports.length > 0 && new Set(row.transports).size === row.transports.length && row.transports.every((value) => value === 'TCP' || value === 'UDP') ? [...row.transports].sort().join(',') : undefined,
     protocols: Array.isArray(row?.protocols) && row.protocols.length > 0 && new Set(row.protocols).size === row.protocols.length && row.protocols.every((version) => version === 3 || version === 4) ? [...row.protocols].sort().join(',') : undefined,
