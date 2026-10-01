@@ -808,9 +808,9 @@ const definitions: Record<
       method: 'POST',
       successMessage: 'SMB 共享创建执行成功',
       fields: [
-        { name: 'cluster', label: 'SMB 集群', required: true },
+        { name: 'cluster', label: 'SMB 集群', type: 'select', required: true, optionsLoader: smbClusterOptions },
         { name: 'name', label: '共享名称', required: true },
-        { name: 'filesystem', label: '文件系统', required: true },
+        { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'path', label: 'CephFS 路径', required: true, placeholder: '/data' }
       ],
       initialValues: { path: '/' },
@@ -828,8 +828,8 @@ const definitions: Record<
       method: 'PATCH',
       successMessage: 'SMB 共享更新执行成功',
       fields: [
-        { name: 'cluster', label: 'SMB 集群', required: true },
-        { name: 'filesystem', label: '文件系统', required: true },
+        { name: 'cluster', label: 'SMB 集群（不可更改）', required: true, readOnly: true },
+        { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'path', label: 'CephFS 路径' },
         { name: 'readonly', label: '只读', type: 'select', placeholder: '未选择则保留', options: [{ label: '只读', value: 'true' }, { label: '允许写入', value: 'false' }] },
         { name: 'browseable', label: '可浏览', type: 'select', placeholder: '未选择则保留', options: [{ label: '显示共享', value: 'true' }, { label: '隐藏共享（不是访问控制）', value: 'false' }] }
@@ -891,6 +891,11 @@ async function filesystemOptions(clusterId: number) {
 
 async function nfsClusterOptions(clusterId: number) {
   const payload = await listAllResources('/nfs/clusters', clusterId)
+  return payload.items.map(resourceName).filter(Boolean).map((name) => ({ label: name, value: name }))
+}
+
+async function smbClusterOptions(clusterId: number) {
+  const payload = await listAllResources('/smb/clusters', clusterId)
   return payload.items.map(resourceName).filter(Boolean).map((name) => ({ label: name, value: name }))
 }
 

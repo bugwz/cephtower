@@ -190,3 +190,13 @@ const shareIdentityFn = new Function(`${ts.transpileModule(shareIdentity.getText
 assert.equal(shareIdentityFn({ share_id: 'docs', natural_key: 'opaque' }), 'opaque')
 assert.equal(shareIdentityFn({ share_id: 'docs' }), '')
 console.log('SMB native share field checks passed')
+
+const smbLoaderDeclaration = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'smbClusterOptions')
+const smbLoaderCode = ts.transpileModule(smbLoaderDeclaration.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const smbLoader = new Function('listAllResources', 'resourceName', `${smbLoaderCode}; return smbClusterOptions`)(async (path, clusterId) => {
+  assert.equal(path, '/smb/clusters')
+  assert.equal(clusterId, 17)
+  return { items: [{ name: 'smb-a' }, { name: 'smb-b' }, { name: '' }] }
+}, (row) => row.name)
+assert.deepEqual(await smbLoader(17), [{ label: 'smb-a', value: 'smb-a' }, { label: 'smb-b', value: 'smb-b' }])
+console.log('SMB cluster selection scope checks passed')
