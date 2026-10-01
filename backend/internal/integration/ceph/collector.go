@@ -570,10 +570,20 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 	}
 	var upgrade map[string]any
 	if err := p.runInto(ctx, access, "collect.upgrade", []string{"orch", "upgrade", "status", "--format", "json"}, &upgrade); err == nil {
-		status := textValue(upgrade["in_progress"])
-		rows = append(rows, Observation{Kind: "upgrade", NaturalKey: "upgrade", Name: "upgrade", Status: status, Source: "ceph_cli", Payload: upgrade, ObservedAt: now})
+		if validUpgradeStatus(upgrade) {
+			status := textValue(upgrade["in_progress"])
+			rows = append(rows, Observation{Kind: "upgrade", NaturalKey: "upgrade", Name: "upgrade", Status: status, Source: "ceph_cli", Payload: upgrade, ObservedAt: now})
+		} else {
+			markCollectionUnavailable(ctx, "collect.upgrade")
+		}
 	}
 	return rows, nil
+}
+
+func validUpgradeStatus(state map[string]any) bool {
+	running, runningOK := state["in_progress"].(bool)
+	paused, pausedOK := state["is_paused"].(bool)
+	return runningOK && pausedOK && (running || !paused)
 }
 
 func (p *NativeProvider) collectMgrStatsThreshold(ctx context.Context, access ClusterAccess) (int, bool) {
