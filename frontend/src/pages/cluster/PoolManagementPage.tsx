@@ -1,7 +1,7 @@
 import { InfoCircleOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Collapse, Descriptions, Divider, Form, Input, InputNumber, Select, Space, Tag, Tooltip, Typography } from 'antd'
 import { erasureProfileDetails } from './ErasureProfilesPanel'
-import { ErasureProfileUsage } from './ErasureProfileUsage'
+import { CrushRuleUsage, ErasureProfileUsage } from './ErasureProfileUsage'
 import { CrushRuleDetails } from './CrushRulesPanel'
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -557,7 +557,7 @@ export function PoolManagementPage() {
                 {selectedRuleName && <Collapse items={[{
                   key: 'rule', label: `CRUSH 规则详情：${selectedRuleName}`,
                   children: selectedRule ? <CrushRuleDetails row={selectedRule} /> : <Alert type="info" message="规则详情尚未采集，请刷新后查看。" />
-                }]} />}
+                }, { key: 'usage', label: '使用此规则的存储池', children: selectedRule ? <CrushRuleUsage key={`${selectedClusterId}/${selectedRule.rule_id}`} clusterId={selectedClusterId} name={String(selectedRule.rule_name)} id={Number(selectedRule.rule_id)} /> : <Alert type="info" message="请先采集规则详情" /> }]} />}
               </div>
             ) : (
               <>

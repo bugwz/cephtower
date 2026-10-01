@@ -1,4 +1,5 @@
 import { Alert, Card, Space } from 'antd'
+import { CrushRuleUsage } from './ErasureProfileUsage'
 import { DataTable } from '../../components/DataTable'
 import type { ApiRecord } from '../../api/client'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
@@ -42,7 +43,7 @@ const definition: ResourceListPageDefinition = {
     buildBody: (row, clusterId) => ({ cluster_id: clusterId, name: row.rule_name }),
     resourceKey: (row) => `crush-rule/${row.rule_name}`
   },
-  detailContent: (row) => <CrushRuleDetails row={row} />
+  detailContent: (row, clusterId) => <Space direction="vertical" style={{ width: '100%' }}><CrushRuleDetails row={row} /><CrushRuleUsage key={`${clusterId}/${row.rule_id}`} clusterId={clusterId} name={String(row.rule_name ?? '')} id={Number(row.rule_id)} /></Space>
 }
 
 export function CrushRuleDetails({ row }: { row: ApiRecord }) {

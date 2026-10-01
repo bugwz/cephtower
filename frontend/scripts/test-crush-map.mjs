@@ -34,6 +34,10 @@ assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: false, items: [
 assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: true, items: [] }), { names: [], stale: true })
 assert.equal(usageExports.erasureProfileUsage('ec', { stale: false, items: [{ name: 'a' }] }).stale, true)
 assert.ok(usageSource.includes("listAllResources('/pools', clusterId)"))
+const crushUsageFn = usageTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'crushRuleUsage')
+new Function('exports', ts.transpileModule(crushUsageFn.getText(usageTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(usageExports)
+assert.deepEqual(usageExports.crushRuleUsage('ssd', 8, { stale: false, items: [{ name: 'by-id', crush_rule: 8, stale: false }, { name: 'by-name', crush_rule: 'ssd', stale: false }, { name: 'other', crush_rule: 0, stale: false }] }), { names: ['by-id', 'by-name'], stale: false })
+assert.deepEqual(usageExports.crushRuleUsage('ssd', 8, { stale: true, items: [] }), { names: [], stale: true })
 
 const watcher = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'watchCrushMap')
 const watcherExports = {}

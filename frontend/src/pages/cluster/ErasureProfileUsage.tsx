@@ -10,7 +10,21 @@ export function erasureProfileUsage(profile: string, inventory: ResourceListResu
   return { names: Array.from(new Set(names)), stale }
 }
 
+export function crushRuleUsage(name: string, id: number, inventory: ResourceListResult) {
+  const matches = inventory.items.filter((row) => row.crush_rule === name || (Number.isSafeInteger(id) && id >= 0 && row.crush_rule === id))
+  const names = matches.map((row) => row.name ?? row.pool_name ?? row.natural_key).filter((value): value is string => typeof value === 'string' && value.length > 0)
+  return { names: Array.from(new Set(names)), stale: inventory.stale !== false || inventory.items.some((row) => row.stale !== false) }
+}
+
 export function ErasureProfileUsage({ clusterId, profile }: { clusterId?: number, profile: string }) {
+  return <PoolPlacementUsage clusterId={clusterId} profile={profile} />
+}
+
+export function CrushRuleUsage({ clusterId, name, id }: { clusterId?: number, name: string, id: number }) {
+  return <PoolPlacementUsage clusterId={clusterId} profile={name} ruleId={id} />
+}
+
+function PoolPlacementUsage({ clusterId, profile, ruleId }: { clusterId?: number, profile: string, ruleId?: number }) {
   const [result, setResult] = useState<ReturnType<typeof erasureProfileUsage> | null>(null)
   const [error, setError] = useState('')
   const [revision, setRevision] = useState(0)
@@ -19,10 +33,10 @@ export function ErasureProfileUsage({ clusterId, profile }: { clusterId?: number
     setResult(null); setError('')
     if (!clusterId || !profile) return
     void listAllResources('/pools', clusterId).then((inventory) => {
-      if (active) setResult(erasureProfileUsage(profile, inventory))
+      if (active) setResult(ruleId === undefined ? erasureProfileUsage(profile, inventory) : crushRuleUsage(profile, ruleId, inventory))
     }).catch((err) => { if (active) setError(err instanceof Error ? err.message : '引用读取失败') })
     return () => { active = false }
-  }, [clusterId, profile, revision])
+  }, [clusterId, profile, ruleId, revision])
   return <Space direction="vertical" style={{ width: '100%' }}>
     <Button size="small" disabled={!clusterId} onClick={() => setRevision((value) => value + 1)}>重新读取存储池引用</Button>
     {error ? <Alert type="error" message={error} /> : !clusterId ? <Alert type="info" message="请先选择集群" /> : !result ? <Spin /> : <>
