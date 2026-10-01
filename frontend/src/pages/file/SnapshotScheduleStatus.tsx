@@ -9,6 +9,15 @@ import { useClusterContext } from '../../state/ClusterContext'
 
 export function SnapshotScheduleStatus() {
   const { selectedClusterId } = useClusterContext()
+  return <ClusterSnapshotScheduleStatus key={selectedClusterId ?? 'none'} selectedClusterId={selectedClusterId} />
+}
+
+function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterId?: number }) {
+  const active = useRef(true)
+  useEffect(() => {
+    active.current = true
+    return () => { active.current = false }
+  }, [])
   const [form] = Form.useForm()
   const [createForm] = Form.useForm()
   const [creating, setCreating] = useState(false)
@@ -35,6 +44,7 @@ export function SnapshotScheduleStatus() {
     setModuleError('')
     try {
       const result = await listResource('/manager/modules', selectedClusterId, { filters: { name: ['snap_schedule'] } })
+      if (!active.current) return
       const module = result.items.find((item) => item.name === 'snap_schedule')
       if (!module) {
         setModuleState('unavailable')
@@ -46,11 +56,13 @@ export function SnapshotScheduleStatus() {
         setModuleState(module.enabled === true ? 'enabled' : 'disabled')
       }
     } catch (err) {
+      if (!active.current) return
       setModuleState('unavailable')
       setModuleError(err instanceof Error ? err.message : '读取模块状态失败')
     }
   }, [selectedClusterId])
   const loadDiscovered = useCallback(async (refresh = false) => {
+    if (!active.current) return
     if (!selectedClusterId) {
       setDiscoveredRows([])
       return
@@ -59,12 +71,15 @@ export function SnapshotScheduleStatus() {
     setDiscoveredError('')
     try {
       if (refresh) await refreshResource({ clusterId: selectedClusterId, kind: 'snapshot_schedule' })
+      if (!active.current) return
       const result = await listAllResources('/filesystem/snapshot/schedules', selectedClusterId)
+      if (!active.current) return
       setDiscoveredRows(result.items)
     } catch (err) {
+      if (!active.current) return
       setDiscoveredError(err instanceof Error ? err.message : '读取快照计划列表失败')
     } finally {
-      setDiscoveredLoading(false)
+      if (active.current) setDiscoveredLoading(false)
     }
   }, [selectedClusterId])
   useEffect(() => {
@@ -78,16 +93,18 @@ export function SnapshotScheduleStatus() {
     if (moduleState === 'disabled' || moduleState === 'unavailable') setDiscoveredRows([])
   }, [loadDiscovered, moduleState])
   async function enableModule() {
-    if (!selectedClusterId || mutating || moduleState !== 'disabled') return
+    if (!active.current || !selectedClusterId || mutating || moduleState !== 'disabled') return
     setMutating(true)
     try {
       await mutateResource('/manager/module', 'PATCH', { cluster_id:selectedClusterId, name:'snap_schedule', enabled:true })
+      if (!active.current) return
       await refreshResource({ clusterId:selectedClusterId, kind:'mgr_module' })
+      if (!active.current) return
       await loadModule()
     } finally { setMutating(false) }
   }
   async function query(values: ApiRecord) {
-    if (!selectedClusterId || loading) return
+    if (!active.current || !selectedClusterId || loading) return
     scope.current = values
     pending.current?.abort()
     const abort = new AbortController(); pending.current = abort
@@ -99,7 +116,7 @@ export function SnapshotScheduleStatus() {
     finally { if (!abort.signal.aborted) setLoading(false) }
   }
   async function toggle(row: ApiRecord, action = row.active ? 'deactivate' : 'activate', target: ApiRecord = scope.current, refreshQuery = true) {
-    if (!selectedClusterId || mutating) return
+    if (!active.current || !selectedClusterId || mutating) return
     setMutating(true)
     try {
       await mutateResource('/filesystem/snapshot/schedule/action','POST',{ cluster_id:selectedClusterId, ...target, schedule:row.schedule, start:row.start, action })
@@ -115,7 +132,7 @@ export function SnapshotScheduleStatus() {
     await query(target)
   }
   async function changeRetention(action: 'add' | 'remove') {
-    if (!selectedClusterId || mutating) return
+    if (!active.current || !selectedClusterId || mutating) return
     setMutating(true)
     try {
       await mutateResource('/filesystem/snapshot/schedule/retention','POST',{ cluster_id:selectedClusterId, ...scope.current, retention, action })
@@ -124,11 +141,13 @@ export function SnapshotScheduleStatus() {
     } finally { setMutating(false) }
   }
   async function create(values: ApiRecord) {
-    if (!selectedClusterId || mutating) return
+    if (!active.current || !selectedClusterId || mutating) return
     const target = await form.validateFields()
+    if (!active.current) return
     setMutating(true)
     try {
       await mutateResource('/filesystem/snapshot/schedule','POST',{ cluster_id:selectedClusterId, ...target, ...values })
+      if (!active.current) return
       setCreating(false)
       await loadDiscovered()
       await query(target)
