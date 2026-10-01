@@ -8,6 +8,10 @@ import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 import { useClusterContext } from '../../state/ClusterContext'
 
 export function RuntimeLogsPage() {
+  return <RuntimeLogsPanel />
+}
+
+export function RuntimeLogsPanel({ compact = false }: { compact?: boolean }) {
   const { selectedClusterId } = useClusterContext()
   const [channel, setChannel] = useState('cluster')
   const [level, setLevel] = useState('debug')
@@ -50,20 +54,21 @@ export function RuntimeLogsPage() {
     const link = document.createElement('a'); link.href = url; link.download = `ceph-${channel === '*' ? 'all' : channel}.log`; link.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
-  return <Page title="运行日志" error={error}>
+  const content = <>
+    {compact && error && <Alert type="error" message={error} />}
     <Space direction="vertical" size={16} className="page-stack">
       <Alert type="info" showIcon message="显示 MON 日志缓冲区的最近记录。自动刷新每 10 秒读取一次；此视图不提供长期日志归档。" />
       <Card>
         <Space wrap>
-          <Select aria-label="日志频道" value={channel} onChange={setChannel} style={{ width: 160 }} options={[
+          {!compact && <><Select aria-label="日志频道" value={channel} onChange={setChannel} style={{ width: 160 }} options={[
             { value: 'cluster', label: '集群日志' }, { value: 'audit', label: 'Ceph 审计日志' }, { value: 'cephadm', label: 'Cephadm' }, { value: '*', label: '全部频道' }
           ]} />
           <Select aria-label="最低级别" value={level} onChange={setLevel} style={{ width: 140 }} options={['debug', 'info', 'sec', 'warn', 'error'].map((value) => ({ value, label: `最低 ${value}` }))} />
-          <Select aria-label="读取条数" value={limit} onChange={setLimit} options={[30, 100, 300, 500].map((value) => ({ value, label: `${value} 条` }))} />
+          <Select aria-label="读取条数" value={limit} onChange={setLimit} options={[30, 100, 300, 500].map((value) => ({ value, label: `${value} 条` }))} /></>}
           <Switch checked={auto} onChange={setAuto} checkedChildren="自动刷新" unCheckedChildren="已暂停" />
           <Button icon={<ReloadOutlined />} loading={loading} disabled={!selectedClusterId} onClick={() => setRevision((n) => n + 1)}>刷新</Button>
-          <Button icon={<DownloadOutlined />} disabled={!filtered.length} onClick={download}>下载当前结果</Button>
-          <Input.Search allowClear placeholder="搜索消息、来源或时间" value={search} onChange={(event) => setSearch(event.target.value)} />
+          {!compact && <><Button icon={<DownloadOutlined />} disabled={!filtered.length} onClick={download}>下载当前结果</Button>
+          <Input.Search allowClear placeholder="搜索消息、来源或时间" value={search} onChange={(event) => setSearch(event.target.value)} /></>}
         </Space>
         <ResourceMetaBar observedAt={observed} />
         {error && observed && <Alert type="warning" message="刷新失败，以下为上次成功获取的日志。" />}
@@ -78,5 +83,6 @@ export function RuntimeLogsPage() {
           ]} />
       </Card>
     </Space>
-  </Page>
+  </>
+  return compact ? <Card title="集群日志" style={{ marginTop: 16 }}>{content}</Card> : <Page title="运行日志" error={error}>{content}</Page>
 }
