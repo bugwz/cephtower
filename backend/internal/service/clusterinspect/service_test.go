@@ -112,6 +112,32 @@ func TestConfigurationMetadataUsesHelp(t *testing.T) {
 	}
 }
 
+func TestConfigurationMetadataRejectsMalformedFields(t *testing.T) {
+	service, runner, id := testInspection(t)
+	for _, fields := range []string{
+		`"can_update_at_runtime":"false"`, `"can_update_at_runtime":null`,
+		`"type":1`, `"level":{}`, `"desc":false`, `"long_desc":[]`,
+		`"enum_values":[1]`, `"tags":null`, `"services":"osd"`,
+		`"see_also":[{}]`, `"flags":[true]`,
+		`"default":{}`, `"daemon_default":[]`, `"min":null`, `"max":[]`,
+	} {
+		runner.output = `{"name":"test",` + fields + `}`
+		if _, err := service.ConfigurationOption(context.Background(), id, "test"); err == nil {
+			t.Fatalf("accepted %s", fields)
+		}
+	}
+	for _, fields := range []string{
+		`"can_update_at_runtime":false,"default":false,"min":"","max":0`,
+		`"enum_values":[],"tags":["rados"],"services":["osd"],"flags":["runtime"],"see_also":[]`,
+		`"default":18446744073709551615,"daemon_default":"4G"`,
+	} {
+		runner.output = `{"name":"test",` + fields + `}`
+		if _, err := service.ConfigurationOption(context.Background(), id, "test"); err != nil {
+			t.Fatal(fields, err)
+		}
+	}
+}
+
 func TestOSDInspectionCommandsAndFailures(t *testing.T) {
 	service, runner, id := testInspection(t)
 	for _, tc := range []struct {

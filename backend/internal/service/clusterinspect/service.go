@@ -116,7 +116,7 @@ func (s *Service) ConfigurationOption(ctx context.Context, clusterID uint64, nam
 	if err := s.read(ctx, clusterID, "configuration.help", []string{"config", "help", name, "--format", "json"}, &option); err != nil {
 		return nil, err
 	}
-	if option["name"] != name {
+	if !validConfigurationMetadata(option, name) {
 		return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph returned an unexpected configuration option"}
 	}
 	return option, nil
