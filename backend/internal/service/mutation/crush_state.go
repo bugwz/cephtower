@@ -6,6 +6,20 @@ import (
 	"io"
 )
 
+func crushRuleDeleted(name string, data []byte) bool {
+	var names []string
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	if name == "" || decoder.Decode(&names) != nil || decoder.Decode(new(any)) != io.EOF || names == nil {
+		return false
+	}
+	for _, item := range names {
+		if item == "" || item == name {
+			return false
+		}
+	}
+	return true
+}
+
 func crushRuleCreated(parameters map[string]any, data []byte) bool {
 	var rule struct {
 		Name  string `json:"rule_name"`

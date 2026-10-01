@@ -14,6 +14,12 @@ export function crushRuleSteps(value: unknown): ApiRecord[] | null {
   return value.map((step, index) => ({ ...step, sequence: index + 1 }))
 }
 
+export function crushRuleDeleteBlocked(row: ApiRecord) {
+  if (row.stale !== false) return '规则库存过期或状态未知，请重新采集'
+  if (typeof row.rule_name !== 'string' || !row.rule_name.trim()) return '规则名称不可用'
+  return undefined
+}
+
 const definition: ResourceListPageDefinition = {
   title: 'CRUSH 规则', path: '/crush/rules', rowKeyCandidates: ['natural_key', 'rule_id'],
   columns: [
@@ -21,6 +27,13 @@ const definition: ResourceListPageDefinition = {
     { key: 'type', title: '规则类型', render: crushRuleType },
     { key: 'min_size', title: '最小副本/分片数' }, { key: 'max_size', title: '最大副本/分片数' }
   ],
+  deleteAction: {
+    title: '删除 CRUSH 规则', path: '/crush/rule', action: 'crush_rule.delete', resourceKind: 'crush_rule', risk: 'high',
+    confirmation: (row) => `确认删除规则 ${row.rule_name}？此操作不可撤销。Ceph 会拒绝删除仍被存储池使用的规则；本操作不会迁移存储池或删除数据。`,
+    successMessage: 'CRUSH 规则删除已核验', disabledWhen: crushRuleDeleteBlocked,
+    buildBody: (row, clusterId) => ({ cluster_id: clusterId, name: row.rule_name }),
+    resourceKey: (row) => `crush-rule/${row.rule_name}`
+  },
   detailContent: (row) => {
     const steps = crushRuleSteps(row.steps)
     return <Space direction="vertical" style={{ width: '100%' }}>
