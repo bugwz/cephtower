@@ -15,6 +15,19 @@ import { message } from '../../utils/appMessage'
 
 interface ConfigurationForm { who: string; name: string; value: string }
 
+function configurationOverrides(rows: ApiRecord[], name: unknown): ApiRecord[] {
+  return typeof name === 'string' && name.length > 0 ? rows.filter((row) => row.name === name) : []
+}
+
+function configurationList(value: unknown): string {
+  if (!Array.isArray(value) || !value.every((item) => typeof item === 'string')) return '未采集'
+  return value.length ? value.join('、') : '无'
+}
+
+function configurationRuntime(value: unknown): string {
+  return value === true ? '是' : value === false ? '否' : '未采集'
+}
+
 export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) {
   const { selectedClusterId } = useClusterContext()
   const [search, setSearch] = useState('')
@@ -119,9 +132,29 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
           <Descriptions.Item label="详细说明">{String(detail.long_desc ?? '')}</Descriptions.Item>
           <Descriptions.Item label="默认值">{String(detail.default ?? '—')}</Descriptions.Item>
           <Descriptions.Item label="守护进程默认值">{String(detail.daemon_default ?? '—')}</Descriptions.Item>
-          <Descriptions.Item label="运行时可更新">{detail.can_update_at_runtime ? '是' : '否'}</Descriptions.Item>
+          <Descriptions.Item label="运行时可更新">{configurationRuntime(detail.can_update_at_runtime)}</Descriptions.Item>
           <Descriptions.Item label="范围">{String(detail.min ?? '—')} ～ {String(detail.max ?? '—')}</Descriptions.Item>
+          <Descriptions.Item label="标志">{configurationList(detail.flags)}</Descriptions.Item>
+          <Descriptions.Item label="服务">{configurationList(detail.services)}</Descriptions.Item>
+          <Descriptions.Item label="标签">{configurationList(detail.tags)}</Descriptions.Item>
+          <Descriptions.Item label="可选值">{configurationList(detail.enum_values)}</Descriptions.Item>
+          <Descriptions.Item label="相关选项">{configurationList(detail.see_also)}</Descriptions.Item>
         </Descriptions>
+        <Typography.Title level={5}>已设置的作用域覆盖值</Typography.Title>
+        <Typography.Paragraph type="secondary">来源：ceph config dump 库存；元数据来源：ceph config help。覆盖值不等同于某个守护进程最终生效的值。</Typography.Paragraph>
+        <ResourceMetaBar observedAt={data?.observedAt} stale={data?.stale} />
+        {(loading || error || !data || data.stale) && <Alert type="warning" showIcon message="配置库存正在读取、读取失败或已过期，不能据此确认当前覆盖值。" />}
+        <AppTable<ApiRecord>
+          size="small" rowKey="natural_key"
+          dataSource={configurationOverrides(data?.values ?? [], detail.name)}
+          pagination={{ defaultPageSize: 10, showSizeChanger: true }}
+          locale={{ emptyText: loading || error || !data || data.stale ? '覆盖值未确认' : '本次采集未发现该选项的显式覆盖；请结合默认值与继承规则判断' }}
+          columns={[
+            { title: '作用域（含位置限制）', dataIndex: 'who' },
+            { title: '值', dataIndex: 'value', render: (value) => <Typography.Text style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{value === '' ? '空字符串' : String(value ?? '未采集')}</Typography.Text> },
+            { title: '级别', dataIndex: 'level' }
+          ]}
+        />
         <RecordDetail record={detail} />
       </>}</Card>
     </Drawer>
