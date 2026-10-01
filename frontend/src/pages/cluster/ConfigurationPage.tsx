@@ -12,6 +12,7 @@ import { TableAction, TableActions } from '../../components/TableActions'
 import { useResource } from '../../hooks'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
+import { configurationValueError } from './configurationValue'
 
 interface ConfigurationForm { who: string; name: string; value: string }
 type OverrideFilter = 'all' | 'configured' | 'unconfigured'
@@ -299,7 +300,11 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
         <Form.Item name="who" label="作用域" extra="例如 global、osd、client.rgw、osd/host:node-1 或 osd/class:ssd。" rules={[{ required: true }]}><Input disabled={Boolean(editing)} /></Form.Item>
         {helpError && <Alert type="warning" message={`无法读取配置说明：${helpError}`} />}
         {help && help.name === watchedName && <Alert type={help.can_update_at_runtime === true && !configurationMonWriteBlocked(help, watchedName) ? 'info' : 'warning'} message={String(help.desc ?? '')} description={configurationHelpDescription(help)} />}
-        <Form.Item name="value" label="配置值" rules={editing?.value === '[REDACTED]' ? [{ required: true, message: '请输入新的配置值；原值已隐藏' }] : []} extra="空字符串会写入空值；删除覆盖请使用列表中的删除操作。">
+        {help && <Typography.Paragraph type="secondary">类型：{String(help.type ?? '未采集')}；范围：{String(help.min ?? '未采集')} ～ {String(help.max ?? '未采集')}。整数单位 K/M/G 按十进制，size 容量单位按 1024 换算；最终约束由 Ceph 校验。</Typography.Paragraph>}
+        <Form.Item name="value" label="配置值" dependencies={['name']} rules={[
+          ...(editing?.value === '[REDACTED]' ? [{ required: true, message: '请输入新的配置值；原值已隐藏' }] : []),
+          { validator: (_, value) => { const reason = configurationValueError(help, form.getFieldValue('name'), value ?? ''); return reason ? Promise.reject(new Error(reason)) : Promise.resolve() } }
+        ]} extra="空字符串会写入空值（数值类型不允许）；删除覆盖请使用列表中的删除操作。">
           {Array.isArray(help?.enum_values) && help.enum_values.length ? <Select options={help.enum_values.map((value) => ({ label: String(value), value: String(value) }))} /> : help?.type === 'bool' ? <Select options={[{ label: 'true', value: 'true' }, { label: 'false', value: 'false' }]} /> : <Input.TextArea rows={3} maxLength={32768} />}
         </Form.Item>
       </Form>
