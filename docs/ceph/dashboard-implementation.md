@@ -1235,6 +1235,17 @@ stats_util 和 `_get_clone_progress_report`。页面展示百分比进度条、�
 错误展示原生 error_msg 与 errno。离线夹具改用真实字段，测试覆盖采集→API、类型识别、
 缺失来源和页面组件输出。取消条件仍只使用成功读取的 clone_state。
 
+### CephFS 快照克隆依赖
+
+对照快照列表的 Pending Clones 列与 volumes `snapshot_info/get_pending_clones`，
+快照详情展示 `pending_clones` 的目标子卷和 target_group，省略目标组表示 `_nogroup`；
+列表把 has_pending_clones 的 yes/no 显示为中文状态，并展示 orphan_clones_count。
+原生 info 已由 `fs subvolume snapshot info` 采集，不新增额外命令。未知、无依赖、
+目标列表缺失和孤儿记录分别显示，不能把未知当作无依赖；有待处理目标或孤儿记录
+时禁用删除并提示刷新和检查集群，不自动取消克隆或清理索引。原生 snapshot rm 仍
+负责执行时的依赖检查，缓存提示不能替代它。离线 API 测试核对组范围和完整原生
+依赖数据，前端测试覆盖默认组、命名组、未知数据及组件输出；未连接真实集群。
+
 ### CephFS 子卷高级删除
 
 对照参考界面删除确认框与 `fs subvolume rm` 原生参数，子卷页新增高级删除，

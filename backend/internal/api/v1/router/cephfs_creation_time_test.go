@@ -36,7 +36,7 @@ func (e *cephFSCreationTimeExecutor) Run(ctx context.Context, access executor.Cl
 		"fs subvolume info enabled missing team --format json":              `{"bytes_pcent":"undefined"}`,
 		"fs subvolume snapshot ls enabled volume team --format json":        `[{"name":"snap","created_at":"2019-01-01 00:00:00"}]`,
 		"fs subvolume snapshot ls enabled missing team --format json":       `[]`,
-		"fs subvolume snapshot info enabled volume snap team --format json": `{"created_at":"2020-03-01 01:02:03"}`,
+		"fs subvolume snapshot info enabled volume snap team --format json": `{"created_at":"2020-03-01 01:02:03","has_pending_clones":"yes","pending_clones":[{"name":"clone-default"},{"name":"clone-team","target_group":"team"}],"orphan_clones_count":2}`,
 	}
 	if output, ok := fixtures[strings.Join(spec.Args, " ")]; ok {
 		if spec.Binary != executor.BinaryCeph || spec.Mutating {
@@ -116,6 +116,20 @@ func TestCephFSCreationTimesFromNativeCollectionToAPI(t *testing.T) {
 			}
 			if tt.usage != "" && row.Data["bytes_pcent"] != tt.usage {
 				t.Fatalf("usage=%v", row.Data["bytes_pcent"])
+			}
+			if tt.path == "/filesystem/subvolume/snapshots" {
+				clones, ok := row.Data["pending_clones"].([]any)
+				if !ok || len(clones) != 2 || row.Data["has_pending_clones"] != "yes" || row.Data["orphan_clones_count"] != float64(2) {
+					t.Fatalf("snapshot dependencies=%v", row.Data)
+				}
+				first := clones[0].(map[string]any)
+				second := clones[1].(map[string]any)
+				if first["name"] != "clone-default" || second["name"] != "clone-team" || second["target_group"] != "team" {
+					t.Fatalf("native clone scope=%v", clones)
+				}
+				if _, exists := first["target_group"]; exists {
+					t.Fatal("default group must remain native omission in API")
+				}
 			}
 			if tt.path == "/filesystem/subvolumes" {
 				wantState := map[string]string{"volume": "complete", "missing": "unknown", "retained": "snapshot-retained", "clone": "in-progress"}[tt.name]

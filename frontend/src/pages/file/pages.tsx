@@ -12,6 +12,8 @@ import { Alert, Tag } from 'antd'
 import { subvolumeReadyReason, subvolumeState, subvolumeType } from './cephfsSubvolumeState'
 import { cloneFailure, cloneSource } from './cephfsCloneSummary'
 import { CephFSCloneProgress } from './CephFSCloneProgress'
+import { SnapshotCloneDependenciesPanel } from './SnapshotCloneDependenciesPanel'
+import { snapshotDeleteReason, snapshotDependencies, snapshotPendingText } from './cephfsSnapshotDependencies'
 
 export function FilePoolsPage() {
   return <ResourceListPage definition={definitions.filePools} />
@@ -447,6 +449,7 @@ const definitions: Record<
     path: '/filesystem/subvolume/snapshots',
     requiredCapabilities: ['cephfs_volume'],
     rowKeyCandidates: ['natural_key', 'name'],
+    detailContent: (row) => <SnapshotCloneDependenciesPanel row={row} />,
     createAction: {
       title: '新建 CephFS 快照',
       buttonLabel: '新建快照',
@@ -491,6 +494,7 @@ const definitions: Record<
     }],
     deleteAction: {
       title: '删除 CephFS 快照',
+      disabledWhen: snapshotDeleteReason,
       path: '/filesystem/subvolume/snapshot',
       action: 'cephfs_snapshot.delete',
       resourceKind: 'cephfs_snapshot',
@@ -511,7 +515,8 @@ const definitions: Record<
       { key: 'name', title: '快照' },
       { key: 'ceph_created_at', title: '创建时间', render: (value) => formatDateTime(value) },
       { key: 'data_pool', title: '数据池' },
-      { key: 'has_pending_clones', title: '存在待处理克隆' },
+      { key: 'has_pending_clones', title: '克隆依赖', render: snapshotPendingText },
+      { key: 'orphan_clones_count', title: '孤儿克隆记录', render: (_value, row) => snapshotDependencies(row).orphans ?? '未知' },
       { key: 'resource_version', title: '版本' }
     ]
   },
