@@ -3,7 +3,7 @@ import { Button, Card, Divider, Form, Input, InputNumber, Select, Space, Tag, To
 import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isRecord, numberValue, textValue, type ApiRecord } from '../../api/client'
-import { listResource, mutateResource, refreshResource } from '../../api/resource'
+import { listAllResources, listResource, mutateResource, refreshResource } from '../../api/resource'
 import { DataTable } from '../../components/DataTable'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
@@ -213,9 +213,9 @@ export function PoolManagementPage() {
     }
     const [poolList, crushRules, erasureCodeProfileRows, osds] = await Promise.all([
       listResource('/pools', selectedClusterId, { filters: poolTableFilters.filters }),
-      listResource('/crush/rules', selectedClusterId).then((payload) => payload.items.map(resourceName).filter(Boolean)).catch(() => []),
-      listResource('/erasure/code/profiles', selectedClusterId).then((payload) => payload.items).catch(() => []),
-      listResource('/osds', selectedClusterId).then((payload) => payload.items).catch(() => [])
+      listAllResources('/crush/rules', selectedClusterId).then((payload) => payload.items.map(resourceName).filter(Boolean)).catch(() => []),
+      listAllResources('/erasure/code/profiles', selectedClusterId).then((payload) => payload.items).catch(() => []),
+      listAllResources('/osds', selectedClusterId).then((payload) => payload.items).catch(() => [])
     ])
     const erasureCodeProfiles = erasureCodeProfileRows.map(resourceName).filter(Boolean)
     const erasureCodeDirectory = erasureCodeProfileRows
@@ -1124,7 +1124,7 @@ function topologyCounts(osds: ApiRecord[], root: string, deviceClass?: string): 
   const matching = osds.filter((osd) => {
     const osdClass = textValue(osd.device_class, '')
     const path = crushPath(osd)
-    return (root === 'default' || Object.values(path).includes(root)) && (!deviceClass || osdClass === deviceClass)
+    return Object.values(path).includes(root) && (!deviceClass || osdClass === deviceClass)
   })
   const counts: Record<string, number> = { osd: matching.length }
   matching.forEach((osd) => {

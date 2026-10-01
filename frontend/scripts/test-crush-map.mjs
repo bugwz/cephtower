@@ -24,3 +24,24 @@ assert.throws(() => exports.crushTree({ nodes, roots: [99] }))
 assert.throws(() => exports.crushTree({ nodes: [{ id: -1, name: 'root', type: 'root', children: [-1] }], roots: [-1] }))
 assert.equal(nodes[0].id, 0, 'must not reorder native metadata')
 console.log('CRUSH topology tree checks passed')
+
+const poolSource = readFileSync(new URL('../src/pages/cluster/PoolManagementPage.tsx', import.meta.url), 'utf8')
+const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const poolFunctions = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['topologyCounts', 'crushPath'].includes(node.name.text))
+const poolCode = ts.transpileModule(poolFunctions.map((fn) => fn.getText(poolTree)).join('\n') + '\nexports.counts = topologyCounts', { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+const poolExports = {}
+new Function('exports', 'textValue', 'isRecord', poolCode)(poolExports, (value, fallback) => typeof value === 'string' ? value : fallback, (value) => value !== null && typeof value === 'object' && !Array.isArray(value))
+const osds = [
+  { host: 'a', device_class: 'ssd', crush_path: { root: 'default', host: 'a' } },
+  { host: 'b', device_class: 'hdd', crush_path: { root: 'default', host: 'b' } },
+  { host: 'c', device_class: 'ssd', crush_path: { root: 'archive', host: 'c' } },
+  { host: 'unknown', device_class: 'ssd' }
+]
+assert.equal(poolExports.counts(osds, 'default').osd, 2)
+assert.equal(poolExports.counts(osds, 'default').host, 2)
+assert.equal(poolExports.counts(osds, 'default', 'ssd').osd, 1)
+assert.equal(poolExports.counts(osds, 'archive').osd, 1)
+assert.equal(poolExports.counts(osds, 'a').osd, 1)
+assert.equal(poolExports.counts(osds, 'missing').osd, 0)
+assert.equal(poolExports.counts([], 'default').osd, 0)
+console.log('CRUSH failure domain root isolation checks passed')
