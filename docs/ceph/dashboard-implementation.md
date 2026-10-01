@@ -1341,6 +1341,12 @@ sticky 位以及 0000 无权限状态。数据仍由 `fs subvolume info` 和
 低于已用空间”，而非禁止一切配额缩小。离线测试覆盖大整数采集→API、异步操作→
 准确 argv、数值契约拒绝、上下界、异常值和表单预填；未连接真实集群。
 
+子卷 resize 在命令成功后必须以同一文件系统、子卷和组范围的 `fs subvolume info`
+确认 bytes_quota 精确等于请求值，取消限制时必须为原生 infinite。空响应、旧配额、
+失真整数、错误类型、尾随 JSON 或读回失败均为 post_check_failed，不显示成功。
+该错误明确提示修改可能已生效，需刷新实际状态；不自动回滚。离线执行测试覆盖
+有限/无限配额、精确大整数、失败场景及命令组范围。
+
 ### CephFS 子卷组编辑
 
 参考 `cephfs-subvolumegroup-form.component.ts` 的编辑流程通过 create API 更新已有组的

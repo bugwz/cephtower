@@ -156,3 +156,24 @@ func subvolumeGroupUpdateMatches(p map[string]any, data []byte) bool {
 	}
 	return true
 }
+
+func subvolumeQuotaUpdateMatches(p map[string]any, data []byte) bool {
+	info, ok := subvolumeGroupInfo(data)
+	if !ok {
+		return false
+	}
+	var quota string
+	switch value := info["bytes_quota"].(type) {
+	case string:
+		quota = value
+	case json.Number:
+		quota = value.String()
+	default:
+		return false
+	}
+	if boolParameter(p, "unlimited") {
+		return quota == "infinite"
+	}
+	want, err := cephFSQuotaSize(p)
+	return err == nil && quota == want
+}

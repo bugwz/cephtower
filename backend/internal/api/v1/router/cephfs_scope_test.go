@@ -20,10 +20,28 @@ import (
 	"cephtower/backend/internal/store"
 )
 
-type scopedCephFSExecutor struct{ specs []executor.CommandSpec }
+type scopedCephFSExecutor struct {
+	specs    []executor.CommandSpec
+	quota    string
+	mismatch bool
+}
 
 func (e *scopedCephFSExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.specs = append(e.specs, spec)
+	if spec.ID == "subvolume.update" {
+		e.quota = spec.Args[5]
+	}
+	if spec.ID == "subvolume.update.post_check" {
+		quota := e.quota
+		if quota == "inf" {
+			quota = "infinite"
+		}
+		if e.mismatch {
+			quota = "1"
+		}
+		data, _ := json.Marshal(map[string]string{"bytes_quota": quota})
+		return executor.CommandResult{Stdout: data}, nil
+	}
 	return executor.CommandResult{Stdout: []byte(`{"status":{"state":"canceled"}}`)}, nil
 }
 
@@ -198,4 +216,32 @@ func TestCephFSGroupScopedReadsAndVersionedOperations(t *testing.T) {
 			time.Sleep(time.Millisecond)
 		}
 	}
+	runner.mismatch = true
+	rec := send("PATCH", "/filesystem/subvolume", "2", map[string]any{"fs": "cephfs", "subvolume": "same", "group": "team-b", "size": "2048"})
+	if rec.Code != 202 {
+		t.Fatalf("mismatch request: %d %s", rec.Code, rec.Body.String())
+	}
+	var result struct {
+		Data struct {
+			OperationID uint64 `json:"operation_id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		row, err := db.FindOperation(context.Background(), result.Data.OperationID)
+		if err == nil && row.Status == store.OperationSucceeded {
+			t.Fatal("unchanged quota was marked successful")
+		}
+		if err == nil && row.Status == store.OperationFailed {
+			if row.ErrorCode == nil || *row.ErrorCode != "post_check_failed" || row.LockKey != "cephfs/team-b/same" {
+				t.Fatalf("mismatch operation=%+v", row)
+			}
+			return
+		}
+		time.Sleep(time.Millisecond)
+	}
+	t.Fatal("mismatch operation did not finish")
 }
