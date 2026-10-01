@@ -12,28 +12,29 @@ type OSD struct {
 	CrushPath   map[string]string `json:"crush_path,omitempty"`
 }
 type Pool struct {
-	Name                     string         `json:"name"`
-	ID                       int64          `json:"id"`
-	Type                     string         `json:"type"`
-	Size                     *int64         `json:"size"`
-	MinSize                  *int64         `json:"min_size"`
-	PGNum                    *int64         `json:"pg_num"`
-	PGPNum                   *int64         `json:"pgp_num"`
-	PGAutoscaleMode          *string        `json:"pg_autoscale_mode"`
-	Applications             []string       `json:"applications,omitempty"`
-	ApplicationMetadata      map[string]any `json:"application_metadata,omitempty"`
-	CrushRule                *string        `json:"crush_rule"`
-	Flags                    []string       `json:"flags,omitempty"`
-	CompressionMode          *string        `json:"compression_mode"`
-	CompressionAlgorithm     *string        `json:"compression_algorithm"`
-	CompressionMinBlobSize   *int64         `json:"compression_min_blob_size"`
-	CompressionMaxBlobSize   *int64         `json:"compression_max_blob_size"`
-	CompressionRequiredRatio *float64       `json:"compression_required_ratio"`
-	QuotaMaxBytes            *int64         `json:"quota_max_bytes"`
-	QuotaMaxObjects          *int64         `json:"quota_max_objects"`
-	RBDMirroring             *string        `json:"rbd_mirroring,omitempty"`
-	RawDetail                map[string]any `json:"raw_detail,omitempty"`
-	Configuration            []PoolConfig   `json:"configuration,omitempty"`
+	Name                     string            `json:"name"`
+	ID                       int64             `json:"id"`
+	Type                     string            `json:"type"`
+	Size                     *int64            `json:"size"`
+	MinSize                  *int64            `json:"min_size"`
+	PGNum                    *int64            `json:"pg_num"`
+	PGStatus                 map[string]uint64 `json:"pg_status"`
+	PGPNum                   *int64            `json:"pgp_num"`
+	PGAutoscaleMode          *string           `json:"pg_autoscale_mode"`
+	Applications             []string          `json:"applications,omitempty"`
+	ApplicationMetadata      map[string]any    `json:"application_metadata,omitempty"`
+	CrushRule                *string           `json:"crush_rule"`
+	Flags                    []string          `json:"flags,omitempty"`
+	CompressionMode          *string           `json:"compression_mode"`
+	CompressionAlgorithm     *string           `json:"compression_algorithm"`
+	CompressionMinBlobSize   *int64            `json:"compression_min_blob_size"`
+	CompressionMaxBlobSize   *int64            `json:"compression_max_blob_size"`
+	CompressionRequiredRatio *float64          `json:"compression_required_ratio"`
+	QuotaMaxBytes            *int64            `json:"quota_max_bytes"`
+	QuotaMaxObjects          *int64            `json:"quota_max_objects"`
+	RBDMirroring             *string           `json:"rbd_mirroring,omitempty"`
+	RawDetail                map[string]any    `json:"raw_detail,omitempty"`
+	Configuration            []PoolConfig      `json:"configuration,omitempty"`
 }
 type PoolConfig struct {
 	Name        string `json:"name"`

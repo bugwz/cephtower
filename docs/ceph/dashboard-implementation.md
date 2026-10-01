@@ -7,8 +7,11 @@
 
 修正存储池主列表固定显示 active+clean 的错误。参考 CephService.get_pool_list_with_stats
 和 pool-list 的状态计数格式，界面仅格式化有效 pg_status 计数；缺失或异常明确显示
-未采集，不再根据 pg_num 编造健康状态。后端按池 PG 状态采集链路仍需补齐，当前
-缺失字段的池不会显示为健康。离线测试覆盖混合、降级及未知状态。
+未采集，不再根据 pg_num 编造健康状态。后端 storage 采集增加一次
+`ceph pg dump pgs_brief --format json`，按 pgid 的池 ID 汇总原生 state，写入 Pool
+库存载荷的 pg_status，由现有列表 API 提供给前端。命令失败、缺失字段、非法 PG ID
+或重复 PG 会舍弃本次全部状态计数；不回退为健康。离线测试覆盖原生命令参数、
+多池隔离、混合/降级状态、异常输出及库存 JSON 序列化，尚未做真实集群验证。
 
 存储池主列表改为读取全部筛选后分页，再由表格分页展示，与参考 PoolService.getList
 的完整列表语义一致。跨页保留集群及筛选条件，合并过期状态和最早采集时间；后续页

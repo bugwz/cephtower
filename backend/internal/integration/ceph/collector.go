@@ -854,6 +854,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		payload := cephdomain.OSD{ID: node.ID, Name: node.Name, Status: node.Status, Up: &up, In: &in, Weight: node.CrushWeight, DeviceClass: node.DeviceClass, Host: hosts[node.ID], CrushPath: crushPaths[node.ID]}
 		rows = append(rows, Observation{Kind: "osd", NaturalKey: strconv.Itoa(node.ID), Name: node.Name, Status: node.Status, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
+	poolPGStates := p.collectPoolPGStates(ctx, access)
 	for _, wire := range pools {
 		if strings.TrimSpace(wire.PoolName) == "" {
 			return nil, fmt.Errorf("parse collect.pool response: pool_name is required")
@@ -864,7 +865,8 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		}
 		quota := p.collectPoolQuota(ctx, access, wire.PoolName)
 		payload := cephdomain.Pool{
-			Name: wire.PoolName, ID: wire.Pool, Type: kind, Size: wire.Size, MinSize: wire.MinSize, PGNum: wire.PGNum, PGPNum: wire.PGPNum,
+			PGStatus: poolPGStates[wire.Pool],
+			Name:     wire.PoolName, ID: wire.Pool, Type: kind, Size: wire.Size, MinSize: wire.MinSize, PGNum: wire.PGNum, PGPNum: wire.PGPNum,
 			PGAutoscaleMode: wire.PGAutoscaleMode, Applications: poolApplications(wire.ApplicationMetadata), ApplicationMetadata: wire.ApplicationMetadata,
 			CrushRule: rawTextPointer(wire.CrushRule), Flags: poolFlagNames(wire.FlagsNames), CompressionMode: poolCompressionMode(wire.Options), CompressionAlgorithm: poolOptionStringPointer(wire.Options, "compression_algorithm"),
 			CompressionMinBlobSize: poolOptionInt64Pointer(wire.Options, "compression_min_blob_size"), CompressionMaxBlobSize: poolOptionInt64Pointer(wire.Options, "compression_max_blob_size"), CompressionRequiredRatio: poolOptionFloat64Pointer(wire.Options, "compression_required_ratio"),
