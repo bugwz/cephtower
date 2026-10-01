@@ -37,6 +37,24 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
   const [discoveredMeta, setDiscoveredMeta] = useState<Pick<ResourceListResult, 'observedAt' | 'stale' | 'staleReason'>>()
   const [discoveredLoading, setDiscoveredLoading] = useState(false)
   const [discoveredError, setDiscoveredError] = useState('')
+  const [filesystems, setFilesystems] = useState<Array<{ label: string; value: string }>>([])
+  const [filesystemsLoading, setFilesystemsLoading] = useState(false)
+  const [filesystemsError, setFilesystemsError] = useState('')
+  const loadFilesystems = useCallback(async () => {
+    if (!selectedClusterId || !active.current) return
+    setFilesystemsLoading(true)
+    setFilesystemsError('')
+    try {
+      const result = await listAllResources('/filesystems', selectedClusterId)
+      if (!active.current) return
+      setFilesystems(result.items.filter((row) => typeof row.name === 'string' && row.name).map((row) => ({ label: String(row.name), value: String(row.name) })))
+    } catch (err) {
+      if (active.current) setFilesystemsError(err instanceof Error ? err.message : '读取文件系统失败')
+    } finally {
+      if (active.current) setFilesystemsLoading(false)
+    }
+  }, [selectedClusterId])
+  useEffect(() => { void loadFilesystems() }, [loadFilesystems])
   const pending = useRef<AbortController | null>(null)
   function reset() { pending.current?.abort(); setRows(null); setError(''); setLoading(false); setRetentionCounts({}) }
   const loadModule = useCallback(async () => {
@@ -181,8 +199,12 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
         {title:'操作',render:(_,row) => <Space><Button disabled={mutating || loading} onClick={() => managePath(row)}>管理路径与保留策略</Button><Popconfirm title="删除这条快照计划？" description="已有快照不会因此删除。" onConfirm={() => toggle(row, 'remove', scheduleScope(row), false)}><Button danger disabled={mutating}>删除</Button></Popconfirm><Button disabled={mutating || !scheduleToggleAction(row.active)} onClick={() => toggle(row, scheduleToggleAction(row.active), scheduleScope(row), false)}>{row.active === true ? '停用' : '启用'}</Button></Space>}
       ]} />
     </Card>}
-    <Form form={form} disabled={mutating} layout="inline" initialValues={{ path: '/' }} onFinish={query} onValuesChange={reset}>
-      <Form.Item name="fs" label="文件系统" rules={[{ required: true }]}><Input /></Form.Item>
+    {filesystemsError && <Alert type="error" message="文件系统列表加载失败" description={filesystemsError} action={<Button loading={filesystemsLoading} onClick={loadFilesystems}>重试</Button>} />}
+    <Form form={form} disabled={mutating} layout="inline" initialValues={{ path: '/' }} onFinish={query} onValuesChange={(changed) => {
+      if ('fs' in changed) form.setFieldsValue({ path: '/', subvol: undefined, group: undefined })
+      reset()
+    }}>
+      <Form.Item name="fs" label="文件系统" rules={[{ required: true }]}><Select showSearch optionFilterProp="label" loading={filesystemsLoading} options={filesystems} style={{ minWidth: 180 }} /></Form.Item>
       <Form.Item name="path" label="路径" rules={[{ required: true }]}><Input /></Form.Item>
       <Form.Item name="subvol" label="子卷"><Input /></Form.Item>
       <Form.Item name="group" label="子卷组" dependencies={['subvol']} rules={[({ getFieldValue }) => ({ validator: (_, value) => !value || getFieldValue('subvol') ? Promise.resolve() : Promise.reject(new Error('指定子卷组时必须填写子卷')) })]}><Input /></Form.Item>
