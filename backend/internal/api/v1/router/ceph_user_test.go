@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -47,6 +48,12 @@ func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spe
 	case "cephfs_entry.create.post_check":
 		return executor.CommandResult{Stdout: []byte("drwxr-xr-x 0 0 0 2026-10-01 13:00:00 new directory/\n")}, nil
 	case "cephfs_entry.delete.post_check":
+		return executor.CommandResult{}, nil
+	case "cephfs_entry.rename.pre_check":
+		return executor.CommandResult{Stdout: []byte("drwxr-xr-x 0 0 0 2026-10-01 13:00:00 new directory/\n")}, nil
+	case "cephfs_entry.rename.destination_post_check":
+		return executor.CommandResult{Stdout: []byte("drwxr-xr-x 0 0 0 2026-10-01 13:00:00 renamed directory/\n")}, nil
+	case "cephfs_entry.rename.path_post_check":
 		return executor.CommandResult{}, nil
 	case "collect.ceph_user":
 		return executor.CommandResult{Stdout: []byte(`{"auth_dump":[{"entity":"client.backup","key":"sensitive-fixture-key","caps":{"mon":"allow r"}}]}`)}, nil
@@ -147,6 +154,16 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 	send("DELETE", "/filesystem/entry/snapshot", map[string]any{"fs": "cephfs", "path": "/projects", "name": "release-one"})
 	send("POST", "/filesystem/entry", map[string]any{"fs": "cephfs", "path": "/projects/new directory"})
 	send("DELETE", "/filesystem/entry", map[string]any{"fs": "cephfs", "path": "/projects/new directory"})
+	send("PATCH", "/filesystem/entry", map[string]any{"fs": "cephfs", "path": "/projects/new directory", "destination": "/archive/renamed directory"})
+	var renameCommands []executor.CommandSpec
+	for _, spec := range runner.specs {
+		if strings.HasPrefix(spec.ID, "cephfs_entry.rename") {
+			renameCommands = append(renameCommands, spec)
+		}
+	}
+	if len(renameCommands) != 4 || renameCommands[0].Mutating || !renameCommands[1].Mutating || renameCommands[2].Mutating || renameCommands[3].Mutating || !reflect.DeepEqual(renameCommands[1].Args, []string{"--fs", "cephfs", "mv", `"/projects/new directory"`, `"/archive/renamed directory"`}) || !reflect.DeepEqual(renameCommands[2].Args, []string{"--fs", "cephfs", "ls", "-la", "/archive"}) || !reflect.DeepEqual(renameCommands[3].Args, []string{"--fs", "cephfs", "ls", "-la", "/projects"}) {
+		t.Fatalf("unexpected directory rename chain: %+v", renameCommands)
+	}
 	send("PUT", "/configuration/value", map[string]any{"who": "osd/host:node-a", "name": "osd_memory_target", "value": "4G"})
 	if _, err := db.FindResource(context.Background(), cluster.ID, "config_value", "osd/host:node-a:osd_memory_target"); !errors.Is(err, store.ErrRecordNotFound) {
 		t.Fatalf("configuration cache must reflect the empty Ceph response: %v", err)

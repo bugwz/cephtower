@@ -83,7 +83,7 @@ func Supports(action string) bool {
 		"subvolume.create", "subvolume.update", "subvolume.delete", "subvolume.clone_cancel",
 		"cephfs_snapshot.create", "cephfs_snapshot.delete", "cephfs_snapshot.clone", "snapshot_schedule.create", "snapshot_schedule.action", "snapshot_schedule.retention",
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota", "cephfs_entry_snapshot.create", "cephfs_entry_snapshot.delete",
-		"cephfs_entry.create", "cephfs_entry.delete",
+		"cephfs_entry.create", "cephfs_entry.delete", "cephfs_entry.rename",
 		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_bucket.quota",
 		"rgw_account.create", "rgw_account.update", "rgw_account.quota", "rgw_account.delete", "rgw_role.create", "rgw_role.update", "rgw_role.delete", "rgw_role.policy", "rgw_key.create", "rgw_key.delete",
 		"rgw_realm.create", "rgw_realm.update", "rgw_zonegroup.create", "rgw_zonegroup.update", "rgw_zone.create", "rgw_zone.update", "rgw_period.commit",
@@ -112,6 +112,17 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	spec, err := build(request, request.Parameters)
 	if err != nil {
 		return cephdomain.ActionResult{}, err
+	}
+	if request.Action == "cephfs_entry.rename" {
+		fs := pathValue(resourceTail(request.ResourceKey), "filesystem")
+		directory := pathpkg.Clean(rawText(request.Parameters, "path"))
+		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: executor.BinaryCephFSShell, Args: []string{"--fs", fs, "ls", "-la", quoteCephFSShellToken(pathpkg.Dir(directory))}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if checkErr != nil {
+			return cephdomain.ActionResult{}, normalize(checkErr)
+		}
+		if !cephFSDirectoryMutationMatches("cephfs_entry.create", request.Parameters, checked.Stdout) {
+			return cephdomain.ActionResult{}, invalid("source must be an existing directory")
+		}
 	}
 	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: request.Action != "osd_deployment.preview", SensitiveArgs: spec.sensitive})
 	if err != nil {
@@ -144,6 +155,16 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".group_post_check", Binary: executor.BinaryRGWAdmin, Args: []string{"zonegroup", "get", "--rgw-zonegroup", optional(request.Parameters, "zonegroup"), "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 		if checkErr != nil || !zoneGroupUpdateMatches(request.Parameters, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "zone command was accepted but zonegroup member state could not be verified", Retryable: true}
+		}
+	}
+	if request.Action == "cephfs_entry.rename" {
+		fs := pathValue(resourceTail(request.ResourceKey), "filesystem")
+		for _, target := range []struct{ field, action string }{{"destination", "cephfs_entry.create"}, {"path", "cephfs_entry.delete"}} {
+			directory := pathpkg.Clean(rawText(request.Parameters, target.field))
+			checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + "." + target.field + "_post_check", Binary: executor.BinaryCephFSShell, Args: []string{"--fs", fs, "ls", "-la", quoteCephFSShellToken(pathpkg.Dir(directory))}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+			if checkErr != nil || !cephFSDirectoryMutationMatches(target.action, map[string]any{"path": directory}, checked.Stdout) {
+				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "rename was accepted but source removal and destination directory could not be verified", Retryable: true}
+			}
 		}
 	}
 	if request.Action == "osd_deployment.preview" {
@@ -1329,7 +1350,7 @@ func build(request Request, p map[string]any) (command, error) {
 			result.check = append(result.check, ",getxattr", path, "ceph.quota.max_files")
 		}
 		return result, nil
-	case "cephfs_entry.create", "cephfs_entry.delete":
+	case "cephfs_entry.create", "cephfs_entry.delete", "cephfs_entry.rename":
 		fs := pathValue(tail, "filesystem")
 		if fs == "" || !identifier.MatchString(fs) || strings.Contains(fs, "/") || strings.HasPrefix(fs, "-") {
 			return command{}, invalid("filesystem is invalid")
@@ -1343,6 +1364,17 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("root and snapshot directories cannot be managed as ordinary directories")
 		}
 		prefix := []string{"--fs", fs}
+		if action == "cephfs_entry.rename" {
+			destination := rawText(p, "destination")
+			if !strings.HasPrefix(destination, "/") || strings.ContainsAny(destination, "\x00\r\n,*") {
+				return command{}, invalid("destination must be absolute without wildcards, commas or newlines")
+			}
+			destination = pathpkg.Clean(destination)
+			if destination == "/" || destination == directory || strings.HasPrefix(destination, directory+"/") || strings.Contains("/"+strings.Trim(destination, "/")+"/", "/.snap/") {
+				return command{}, invalid("destination cannot be root, a snapshot path, the source or its descendant")
+			}
+			return cephfsShell(append(prefix, "mv", quoteCephFSShellToken(directory), quoteCephFSShellToken(destination)), nil), nil
+		}
 		args := append(append([]string{}, prefix...), "rmdir", quoteCephFSShellToken(directory))
 		if action == "cephfs_entry.create" {
 			args = append(append([]string{}, prefix...), "mkdir", "-p", "-m", "0755", quoteCephFSShellToken(directory))

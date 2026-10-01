@@ -206,6 +206,9 @@ func buildMutationRequestContracts() map[string]RequestContract {
 		"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true),
 		"max_bytes": integerField(false), "max_files": integerField(false),
 	}}
+	contracts["cephfs_entry.rename"] = RequestContract{Required: true, Fields: map[string]JSONField{
+		"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true), "destination": stringField(true),
+	}}
 	for _, action := range []string{"cephfs_entry_snapshot.create", "cephfs_entry_snapshot.delete"} {
 		contracts[action] = RequestContract{Required: true, Fields: map[string]JSONField{
 			"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true), "name": stringField(true),

@@ -39,7 +39,7 @@
 | cephfs / filesystem | `fs dump/status/get/set`、`fs volume`、`tell mds.* client ls/evict` | 已有文件系统详情与客户端接口；计数器、rename、auth 与目录操作待核对 |
 | cephfs / subvolume | `fs subvolumegroup`、`fs subvolume`、`fs subvolume snapshot`、`fs clone` | 已有组范围采集、clone 状态/进度/失败展示、快照克隆和进行中任务取消；metadata 与其余完整参数需核对 |
 | cephfs / snapshot schedule | `fs snap-schedule` | 已有全路径发现、精确状态、创建、删除、激活/停用、retention 和模块启用 |
-| cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 已有实时目录浏览、目录元数据、双维度配额、目录增删及目录快照列表/创建/删除；重命名待补齐 |
+| cephfs / directory | libcephfs 或 CephFS 数据面客户端 | 已有实时目录浏览、目录元数据、双维度配额、目录增删/重命名/移动及目录快照列表/创建/删除 |
 | nfs | `nfs cluster`、`nfs export` | 已有基础管理；完整 export 属性、CephFS/RGW FSAL 与 ingress 待核对 |
 | smb | `smb show/apply/rm` 与模块资源定义 | 已有部分管理；域加入、用户组、资源校验与配置语义需核对 |
 | rgw / user / account / role | `radosgw-admin user/account/role` 与 RGW Admin Ops | 当前存在基础页面；配额、subuser、caps、rate limit、角色策略等需逐项扩展 |
@@ -201,6 +201,20 @@ cephfs-shell 实际支持的 `--help`，不再调用不存在的 `--version`。
 由 Ceph 检查目录是否为空。两项写操作都回读父目录的 `ls -la`，逐名称验证存在或消失，
 并复用异步任务和审计。根目录、快照目录、通配符、逗号和换行路径会被拒绝，避免误操作。
 测试覆盖含空格的目录、非法作用域、无法解析的后置列表以及路由到任务执行的完整调用链。
+
+### 目录重命名与移动
+
+目录行新增目标绝对路径表单，`PATCH /api/v1/filesystem/entry` 接收 `fs`、`path`、
+`destination`。对照 Dashboard `rename_path()` 与原生 shell `do_mv()`，执行
+`cephfs-shell --fs <fs> mv <source> <destination>`，最终调用 LibCephFS `rename`。
+执行前读取源父目录，确认源是目录；执行后分别读取目标父目录和源父目录，验证目标目录
+存在、源目录消失。未能读取或解析列表会让任务失败，而不是将命令接受当作验证成功。
+拒绝根目录、快照路径、源和目标相同、目标位于源子树，以及通配符/逗号/换行。
+保留 Ceph 原生替换语义：可能替换空目标目录，非空目标由 Ceph 拒绝，界面明确提示。
+这不是事务性的目录身份验证，其他客户端并发修改仍可能造成竞态；尚未进行真实集群验证。
+离线测试覆盖跨父目录含空格命令、作用域校验、路由任务及前置/双后置调用链。
+
+### 目录快照
 
 目录浏览页新增当前目录的快照表、创建表单和删除确认。参考 Dashboard
 `CephFS.ls_snapshots()`、`mk_snapshot()`、`rm_snapshot()`，数据面调用链为：

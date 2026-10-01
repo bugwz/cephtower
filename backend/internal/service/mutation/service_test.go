@@ -365,6 +365,26 @@ func TestCephFSDirectoryLifecycleCommands(t *testing.T) {
 	}
 }
 
+func TestCephFSDirectoryRenameCommand(t *testing.T) {
+	p := map[string]any{"path": "/team/shared projects", "destination": "/archive/new name"}
+	cmd, err := build(Request{Action: "cephfs_entry.rename", ResourceKey: "filesystem/cephfs/entry"}, p)
+	if err != nil || cmd.binary != executor.BinaryCephFSShell || !reflect.DeepEqual(cmd.args, []string{"--fs", "cephfs", "mv", `"/team/shared projects"`, `"/archive/new name"`}) {
+		t.Fatalf("rename command = %+v, %v", cmd, err)
+	}
+	for _, destination := range []string{"", "relative", "/", "/archive/..", "/team/shared projects", "/team/shared projects/child", "/archive/.snap/release", "/archive/*", "/bad,path", "/bad\npath"} {
+		p["destination"] = destination
+		if _, err := build(Request{Action: "cephfs_entry.rename", ResourceKey: "filesystem/cephfs/entry"}, p); err == nil {
+			t.Fatalf("accepted destination %q", destination)
+		}
+	}
+	for _, source := range []string{"/", "relative", "/.snap/release", "/team/*"} {
+		p["path"], p["destination"] = source, "/archive/new"
+		if _, err := build(Request{Action: "cephfs_entry.rename", ResourceKey: "filesystem/cephfs/entry"}, p); err == nil {
+			t.Fatalf("accepted source %q", source)
+		}
+	}
+}
+
 func TestFilesystemCreateRequiresPoolPair(t *testing.T) {
 	_, err := build(Request{Action: "filesystem.create", ResourceKey: "filesystem"}, map[string]any{
 		"name": "cephfs", "metadata_pool": "cephfs.meta",

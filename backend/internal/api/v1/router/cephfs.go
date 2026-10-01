@@ -35,6 +35,7 @@ func cephfsRoutes(h *handler.Handler) []Route {
 		{"POST", "/filesystem/authorization", h.CreateCephFSAuthorization},
 		{"GET", "/filesystem/entries", h.ListCephFSEntries},
 		{"POST", "/filesystem/entry", h.CreateCephFSEntry},
+		{"PATCH", "/filesystem/entry", h.RenameCephFSEntry},
 		{"DELETE", "/filesystem/entry", h.DeleteCephFSEntry},
 		{"PATCH", "/filesystem/entry/quota", h.UpdateCephFSEntryQuota},
 		{"GET", "/filesystem/entry/snapshots", h.ListCephFSEntrySnapshots},

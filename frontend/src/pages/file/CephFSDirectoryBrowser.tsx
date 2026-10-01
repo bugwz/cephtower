@@ -48,6 +48,7 @@ export function CephFSDirectoryBrowser() {
   const [quotaForm] = Form.useForm()
   const [snapshotForm] = Form.useForm()
   const [directoryForm] = Form.useForm()
+  const [renameForm] = Form.useForm()
   const [filesystems, setFilesystems] = useState<string[]>([])
   const [result, setResult] = useState<DirectoryList | null>(null)
   const [loading, setLoading] = useState(false)
@@ -59,6 +60,7 @@ export function CephFSDirectoryBrowser() {
   const [snapshotError, setSnapshotError] = useState('')
   const [creatingSnapshot, setCreatingSnapshot] = useState(false)
   const [creatingDirectory, setCreatingDirectory] = useState(false)
+  const [renaming, setRenaming] = useState<DirectoryEntry | null>(null)
   const pending = useRef<AbortController | null>(null)
   const snapshotPending = useRef<AbortController | null>(null)
 
@@ -93,6 +95,7 @@ export function CephFSDirectoryBrowser() {
     setSnapshots([])
     setCreatingSnapshot(false)
     setCreatingDirectory(false)
+    setRenaming(null)
     setEditing(null)
     const controller = new AbortController()
     pending.current = controller
@@ -213,6 +216,19 @@ export function CephFSDirectoryBrowser() {
     } finally { setMutating(false) }
   }
 
+  async function renameDirectory(values: { destination: string }) {
+    if (!selectedClusterId || !result || !renaming || mutating) return
+    setMutating(true)
+    try {
+      await mutateResource('/filesystem/entry', 'PATCH', {
+        cluster_id: selectedClusterId, fs: result.filesystem,
+        path: renaming.path, destination: values.destination
+      })
+      setRenaming(null)
+      await load(result.filesystem, result.path)
+    } finally { setMutating(false) }
+  }
+
   async function deleteSnapshot(snapshot: DirectorySnapshot) {
     if (!selectedClusterId || !result || mutating) return
     setMutating(true)
@@ -264,6 +280,7 @@ export function CephFSDirectoryBrowser() {
           { title: '文件数配额', render: (_, row) => formatQuota(row.quotas?.max_files, (value) => String(value)) },
           { title: '操作', render: (_, row) => <Space>
             {row.quotas ? <Button disabled={mutating || loading} onClick={() => openQuota(row)}>设置配额</Button> : '根目录不设置配额'}
+            {row.path !== result.path && <Button disabled={mutating || loading} onClick={() => { setRenaming(row); renameForm.setFieldsValue({ destination: row.path }) }}>重命名 / 移动</Button>}
             {row.path !== result.path && <Popconfirm title={`删除目录 ${row.name}？`} description="只允许删除空目录；目录有文件、子目录或快照时 Ceph 会拒绝。" onConfirm={() => deleteDirectory(row)}><Button danger disabled={mutating || loading}>删除目录</Button></Popconfirm>}
           </Space> }
         ]}
@@ -303,6 +320,14 @@ export function CephFSDirectoryBrowser() {
       <Form form={directoryForm} layout="vertical" onFinish={createDirectory}>
         <Form.Item name="name" label="目录名称或相对路径" rules={[{ required: true }, { pattern: /^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))(?!.*[,*\r\n]).+$/, message: '请输入不含上级跳转、通配符、逗号或换行的相对路径' }]}>
           <Input placeholder="例如 team/project" />
+        </Form.Item>
+      </Form>
+    </Modal>
+    <Modal title={`重命名 / 移动目录：${renaming?.path ?? ''}`} open={Boolean(renaming)} confirmLoading={mutating} onCancel={() => !mutating && setRenaming(null)} onOk={() => renameForm.submit()}>
+      <Alert type="warning" showIcon message="目标填写完整绝对路径；目标父目录必须存在" description="按 Ceph 原生 rename 语义执行，可跨父目录移动；已存在的空目标目录可能被替换，非空目标由 Ceph 拒绝。" />
+      <Form form={renameForm} layout="vertical" onFinish={renameDirectory}>
+        <Form.Item name="destination" label="目标绝对路径" rules={[{ required: true }, { pattern: /^\/(?!.*[,*\r\n]).+$/, message: '请输入不含通配符、逗号或换行的绝对路径' }]}>
+          <Input placeholder="例如 /archive/project" />
         </Form.Item>
       </Form>
     </Modal>
