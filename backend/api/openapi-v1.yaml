@@ -729,6 +729,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -1380,6 +1382,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -3328,6 +3332,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -3979,6 +3985,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -4850,6 +4858,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -5596,6 +5606,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -6247,6 +6259,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -7091,6 +7105,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -7839,6 +7855,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -8491,6 +8509,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -9388,6 +9408,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -10133,6 +10155,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -10882,6 +10906,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -11628,6 +11654,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -12279,6 +12307,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -13177,6 +13207,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -14326,6 +14358,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -14979,6 +15013,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -15631,6 +15667,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -16922,6 +16960,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -17720,6 +17760,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -18468,6 +18510,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -19119,6 +19163,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -20428,6 +20474,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -21079,6 +21127,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -21748,6 +21798,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -22495,6 +22547,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -23146,6 +23200,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -23799,6 +23855,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -24731,6 +24789,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -25574,6 +25634,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -26320,6 +26382,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -26971,6 +27035,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -27757,6 +27823,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -28409,6 +28477,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -29478,6 +29548,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -30416,6 +30488,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -31161,6 +31235,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -31910,6 +31986,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -32656,6 +32734,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -33307,6 +33387,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -34151,6 +34233,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -34897,6 +34981,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -35548,6 +35634,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -36297,6 +36385,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -36948,6 +37038,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -37697,6 +37789,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -38348,6 +38442,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -39097,6 +39193,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -39843,6 +39941,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -40494,6 +40594,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -41411,6 +41513,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -42158,6 +42262,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -42811,6 +42917,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -43463,6 +43571,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -44211,6 +44321,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -44897,6 +45009,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -45836,6 +45950,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -46582,6 +46698,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -47233,6 +47351,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -47982,6 +48102,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -48634,6 +48756,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -49288,6 +49412,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -49940,6 +50066,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -50689,6 +50817,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -51435,6 +51565,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -52086,6 +52218,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -52857,6 +52991,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -53509,6 +53645,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -54160,6 +54298,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -55200,6 +55340,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -55925,6 +56067,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -56578,6 +56722,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -57229,6 +57375,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -57978,6 +58126,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -58725,6 +58875,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -59377,6 +59529,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -60142,6 +60296,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -60793,6 +60949,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -61446,6 +61604,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -62098,6 +62258,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -62847,6 +63009,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -63593,6 +63757,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -64244,6 +64410,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -64999,6 +65167,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -65652,6 +65822,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -66304,6 +66476,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -67053,6 +67227,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -67706,6 +67882,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -68357,6 +68535,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -69106,6 +69286,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -69757,6 +69939,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -70410,6 +70594,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -71062,6 +71248,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -71906,6 +72094,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -72652,6 +72842,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -73303,6 +73495,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -73957,6 +74151,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -74610,6 +74806,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -75261,6 +75459,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -75915,6 +76115,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -76567,6 +76769,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -77316,6 +77520,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -77967,6 +78173,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -78621,6 +78829,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -79272,6 +79482,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -80256,6 +80468,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -81002,6 +81216,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -81653,6 +81869,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -82402,6 +82620,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -83148,6 +83368,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -83799,6 +84021,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -84548,6 +84772,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -85294,6 +85520,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -85945,6 +86173,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string
@@ -86789,6 +87019,8 @@ paths:
                     type: string
                 retention:
                   type: string
+                rgw_bucket_tenant:
+                  type: string
                 rgw_user_id:
                   type: string
                 root:
@@ -87441,6 +87673,8 @@ paths:
                   items:
                     type: string
                 retention:
+                  type: string
+                rgw_bucket_tenant:
                   type: string
                 rgw_user_id:
                   type: string

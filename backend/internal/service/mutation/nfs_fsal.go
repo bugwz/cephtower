@@ -24,6 +24,16 @@ func nfsExportFSAL(p map[string]any) (map[string]any, error) {
 		}
 		return map[string]any{"name": "CEPH", "fs_name": filesystem}, nil
 	case "RGW":
+		if value, exists := p["rgw_bucket_tenant"]; exists {
+			tenant, ok := value.(string)
+			if !ok || (tenant != "" && (!regexp.MustCompile(`^[A-Za-z0-9_.-]{1,512}$`).MatchString(tenant) || strings.HasPrefix(tenant, "-"))) {
+				return nil, invalid("invalid RGW bucket tenant")
+			}
+			bucket := optional(p, "path")
+			if bucket == "" || strings.Contains(bucket, "/") || bucket == "." || bucket == ".." || strings.HasPrefix(bucket, "-") {
+				return nil, invalid("invalid RGW bucket name")
+			}
+		}
 		user := optional(p, "rgw_user_id")
 		if user == "" {
 			bucket := optional(p, "path")

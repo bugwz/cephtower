@@ -113,6 +113,33 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if err != nil {
 		return cephdomain.ActionResult{}, err
 	}
+	if (request.Action == "nfs_export.create" || request.Action == "nfs_export.update") && optional(request.Parameters, "fsal_type") == "RGW" {
+		if _, scoped := request.Parameters["rgw_bucket_tenant"]; scoped {
+			bucket, tenant := optional(request.Parameters, "path"), optional(request.Parameters, "rgw_bucket_tenant")
+			args := []string{"bucket", "stats", "--bucket", bucket, "--format", "json"}
+			if tenant != "" {
+				args = append(args, "--tenant", tenant)
+			}
+			checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".bucket_owner", Binary: executor.BinaryRGWAdmin, Args: args, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+			if checkErr != nil {
+				return cephdomain.ActionResult{}, normalize(checkErr)
+			}
+			owner, ownerErr := nfsBucketOwner(checked.Stdout, bucket, tenant)
+			if ownerErr != nil {
+				return cephdomain.ActionResult{}, ownerErr
+			}
+			parameters := make(map[string]any, len(request.Parameters)+1)
+			for key, value := range request.Parameters {
+				parameters[key] = value
+			}
+			parameters["rgw_user_id"] = owner
+			request.Parameters = parameters
+			spec, err = build(request, parameters)
+			if err != nil {
+				return cephdomain.ActionResult{}, err
+			}
+		}
+	}
 	if request.Action == "nfs_export.create" {
 		cluster := optional(request.Parameters, "cluster")
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: executor.BinaryCeph, Args: []string{"nfs", "export", "ls", cluster, "--detailed", "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
