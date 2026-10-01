@@ -4,12 +4,32 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"path"
 	"reflect"
 	"regexp"
 	"strings"
 )
 
 var smbShareNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_][a-zA-Z0-9. _-]{0,63}$`)
+
+func smbSharePath(value string) (string, error) {
+	if value == "" || strings.ContainsAny(value, "\x00\r\n") {
+		return "", invalid("path must be a non-empty single-line string")
+	}
+	cleaned := path.Clean(value)
+	// Python posixpath.normpath preserves exactly two leading slashes.
+	if strings.HasPrefix(value, "//") && !strings.HasPrefix(value, "///") {
+		cleaned = "/" + cleaned
+	}
+	if cleaned != "/" {
+		for _, part := range strings.Split(strings.TrimLeft(cleaned, "/"), "/") {
+			if part == "" || part == "." || part == ".." {
+				return "", invalid("path must resolve within the selected SMB storage scope")
+			}
+		}
+	}
+	return cleaned, nil
+}
 
 func smbShareName(parameters map[string]any) (string, bool, error) {
 	value, exists := parameters["share_name"]
@@ -109,7 +129,11 @@ func smbShareUpdateJSON(data []byte, request Request) ([]byte, error) {
 		if !ok || path == "" {
 			return nil, invalid("path must be a non-empty string")
 		}
-		fs["path"] = path
+		cleaned, err := smbSharePath(path)
+		if err != nil {
+			return nil, err
+		}
+		fs["path"] = cleaned
 	}
 	return json.Marshal(record)
 }

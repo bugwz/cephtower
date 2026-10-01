@@ -2482,6 +2482,11 @@ func build(request Request, p map[string]any) (command, error) {
 			path = "/"
 		}
 		args := []string{"smb", "share", "create", cluster, share, filesystem, path}
+		cleanedPath, err := smbSharePath(path)
+		if err != nil {
+			return command{}, err
+		}
+		args[len(args)-1] = cleanedPath
 		if value, exists := p["subvolume"]; exists {
 			subvolume, ok := value.(string)
 			if !ok || subvolume == "" || strings.ContainsAny(subvolume, "\x00\r\n") {
