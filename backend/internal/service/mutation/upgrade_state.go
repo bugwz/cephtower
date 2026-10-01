@@ -1,0 +1,28 @@
+package mutation
+
+import (
+	"bytes"
+	"encoding/json"
+	"io"
+)
+
+func upgradeControlMatches(action string, data []byte) bool {
+	var state struct {
+		InProgress *bool `json:"in_progress"`
+		Paused     *bool `json:"is_paused"`
+	}
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	if decoder.Decode(&state) != nil || decoder.Decode(new(any)) != io.EOF || state.InProgress == nil || state.Paused == nil {
+		return false
+	}
+	switch action {
+	case "pause":
+		return *state.InProgress && *state.Paused
+	case "resume":
+		return *state.InProgress && !*state.Paused
+	case "stop":
+		return !*state.InProgress && !*state.Paused
+	default:
+		return false
+	}
+}
