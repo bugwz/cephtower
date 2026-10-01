@@ -108,6 +108,18 @@ await assert.rejects(() => failedPages('/pools', 7), /second page unavailable/)
 assert.ok(poolSource.includes('压缩后大小与原始大小的比例上限'), 'compression ratio is an upper bound, not a minimum ratio')
 assert.ok(poolSource.includes('分配单元对齐和压缩头开销'), 'compression storage is also subject to native allocation constraints')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const listFreshnessFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolListFreshnessWarning')
+const listFreshnessCode = ts.transpileModule(listFreshnessFn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const listFreshness = new Function(`${listFreshnessCode}; return poolListFreshnessWarning`)()
+assert.equal(listFreshness({ stale: false, pools: [{ stale: false }] }), undefined)
+assert.equal(listFreshness({ stale: false, pools: [] }), undefined)
+assert.match(listFreshness({ stale: true, pools: [] }), /历史采集/)
+assert.match(listFreshness({ stale: false, pools: [{ stale: false }, { stale: true }] }), /历史采集/)
+for (const stale of [undefined, null, 'false', 0]) {
+  assert.match(listFreshness({ stale, pools: [] }), /时效未知/)
+  assert.match(listFreshness({ stale: false, pools: [{ stale }] }), /时效未知/)
+}
+assert.ok(poolSource.includes('message={poolListFreshnessWarning(data)}'))
 const kindFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolKind')
 const kindCode = ts.transpileModule(kindFn.getText(poolTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const kind = new Function(`${kindCode}; return poolKind`)()

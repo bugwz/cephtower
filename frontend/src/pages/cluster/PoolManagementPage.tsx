@@ -484,6 +484,7 @@ export function PoolManagementPage() {
           </Space>
         }
       >
+        {data && poolListFreshnessWarning(data) && <Alert type="warning" showIcon message={poolListFreshnessWarning(data)} />}
         <DataTable
           data={data?.pools ?? []}
           filterOptions={poolTableFilters.filterOptions}
@@ -996,6 +997,16 @@ export function poolPGStatus(value: unknown): string {
   const states = Object.entries(value)
   if (!states.length || states.some(([state, count]) => !state.trim() || typeof count !== 'number' || !Number.isSafeInteger(count) || count < 0)) return '未采集'
   return states.map(([state, count]) => `${count} ${state}`).join(', ')
+}
+
+function poolListFreshnessWarning(data: PoolPageData): string | undefined {
+  if (data.stale === true || data.pools.some((row) => row.stale === true)) {
+    return '存储池列表包含过期库存，容量、PG 状态及配置仅反映历史采集结果，请刷新后再判断。'
+  }
+  if (data.stale !== false || data.pools.some((row) => row.stale !== false)) {
+    return '存储池列表的库存时效未知，请重新采集后再判断容量、PG 状态及配置。'
+  }
+  return undefined
 }
 
 function normalizePoolRow(row: ApiRecord): ApiRecord {
