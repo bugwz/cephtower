@@ -2040,6 +2040,14 @@ SMB 编辑现提供显式替换全部客户端访问地址开关，关闭时保�
 完整配置。测试覆盖保留复杂原值、双栈替换、清空、数量保留及旧地址回读拒绝；
 当前输入每个地址支持一个目标网络，真实客户端连通性尚未验证。
 
+SMB 导航新增域加入凭据和用户组资源只读页面，对照参考 smb-join-auth-list 与
+smb-usersgroups-list 展示资源 ID、绑定集群，以及域账号名、用户数量、组名。
+采集仍强制 password-filter=hidden，仅新增 username、user_count、group_names
+展示字段白名单，不持久化 auth/values 原始对象或密码。缺失统计显示未知而非零。
+两个列表使用现有分页、集群作用域、SMB 能力与采集状态提示；不提供未实现的写入按钮。
+测试覆盖展示字段提取、密码排除、页面列、路由注册和绑定信息；凭据增删改与真实环境
+验证仍待补齐。
+
 SMB 认证引用库存现独立采集 ceph.smb.join.auth 与 ceph.smb.usersgroups，命令为
 smb show <资源类型> --results=full --password-filter=hidden --format json。
 仅保存资源类型、ID、intent、linked_to_cluster 白名单元数据，不保存 auth、values

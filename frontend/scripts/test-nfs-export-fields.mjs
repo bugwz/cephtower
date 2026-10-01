@@ -61,6 +61,25 @@ for (const fsal of [null, undefined, [], 'CEPH']) assert.deepEqual(exports.nfsFS
 console.log('NFS native export field checks passed')
 const pagesSource = readFileSync(new URL('../src/pages/file/pages.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('pages.tsx', pagesSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const definitionNode = tree.statements.filter(ts.isVariableStatement).flatMap((statement) => [...statement.declarationList.declarations]).find((declaration) => declaration.name.getText(tree) === 'definitions').initializer
+for (const [key, path, columns] of [
+  ['smbJoinAuths', '/smb/join/auths', ['auth_id', 'username', 'linked_to_cluster']],
+  ['smbUsersGroups', '/smb/usersgroups', ['users_groups_id', 'user_count', 'group_names', 'linked_to_cluster']]
+]) {
+  const definition = definitionNode.properties.find((property) => property.name.getText(tree) === key).initializer
+  const code = ts.transpileModule(`const value = ${definition.getText(tree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+  const value = new Function(`${code}; return value`)()
+  assert.equal(value.path, path)
+  assert.deepEqual(value.requiredCapabilities, ['smb'])
+  assert.deepEqual(value.columns.map((column) => column.key), columns)
+  assert.equal(value.columns.at(-1).render(undefined), '未绑定')
+  assert.equal(value.columns.at(-1).render('cluster-a'), 'cluster-a')
+  assert.equal(value.createAction, undefined)
+  const navigation = readFileSync(new URL('../src/navigation.ts', import.meta.url), 'utf8')
+  assert.ok(navigation.includes(`key: '${key}'`))
+  const pages = readFileSync(new URL('../src/pages/index.ts', import.meta.url), 'utf8')
+  assert.ok(pages.includes(`${key}:`))
+}
 const userLoader = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'nfsRGWUserOptions')
 const userLoaderCode = ts.transpileModule(userLoader.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
 const userCalls = []

@@ -8,8 +8,8 @@ import (
 
 var smbInventoryID = regexp.MustCompile(`^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,16}[a-zA-Z0-9])?$`)
 
-// Authentication contents must never enter inventory, even if a server ignores
-// the password filter. Only explicitly allowed reference metadata is retained.
+// Passwords and raw authentication objects must never enter inventory, even if
+// a server ignores the filter. Only explicitly allowed display fields remain.
 func (p *NativeProvider) collectSMBAuthResources(ctx context.Context, access ClusterAccess, now time.Time) []Observation {
 	var rows []Observation
 	for _, spec := range []struct{ kind, resourceType, idField string }{
@@ -34,6 +34,27 @@ func (p *NativeProvider) collectSMBAuthResources(ctx context.Context, access Clu
 			}
 			seen[id] = true
 			payload := map[string]any{"resource_type": spec.resourceType, spec.idField: id}
+			if auth, ok := item["auth"].(map[string]any); ok && spec.kind == "smb_join_auth" {
+				if username, ok := auth["username"].(string); ok {
+					payload["username"] = username
+				}
+			}
+			if values, ok := item["values"].(map[string]any); ok && spec.kind == "smb_usersgroups" {
+				if users, ok := values["users"].([]any); ok {
+					payload["user_count"] = len(users)
+				}
+				if groups, ok := values["groups"].([]any); ok {
+					names := make([]string, 0, len(groups))
+					for _, group := range groups {
+						if object, ok := group.(map[string]any); ok {
+							if name, ok := object["name"].(string); ok {
+								names = append(names, name)
+							}
+						}
+					}
+					payload["group_names"] = names
+				}
+			}
 			for _, key := range []string{"intent", "linked_to_cluster"} {
 				if value, exists := item[key]; exists && value != nil {
 					text, ok := value.(string)

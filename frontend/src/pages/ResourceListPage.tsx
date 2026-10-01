@@ -519,6 +519,8 @@ function refreshKinds(definition: ResourceListPageDefinition) {
     '/rgw/zonegroups': ['rgw_zonegroup', 'rgw_zone'],
     '/rgw/zones': ['rgw_zone'],
     '/smb/clusters': ['smb_cluster'],
+    '/smb/join/auths': ['smb_join_auth'],
+    '/smb/usersgroups': ['smb_usersgroups'],
     '/smb/shares': ['smb_share']
   }
   return pathKinds[definition.path] ?? []

@@ -77,6 +77,14 @@ export function SmbPage() {
   return <ResourceListPage definition={definitions.smb} />
 }
 
+export function SmbJoinAuthsPage() {
+  return <ResourceListPage definition={definitions.smbJoinAuths} />
+}
+
+export function SmbUsersGroupsPage() {
+  return <ResourceListPage definition={definitions.smbUsersGroups} />
+}
+
 const definitions: Record<
   | 'filePools'
   | 'cephfs'
@@ -88,6 +96,8 @@ const definitions: Record<
   | 'nfsClusters'
   | 'nfs'
   | 'smbClusters'
+  | 'smbJoinAuths'
+  | 'smbUsersGroups'
   | 'smb',
   ResourceListPageDefinition
 > = {
@@ -723,6 +733,27 @@ const definitions: Record<
       { key: 'transports', title: '传输协议' },
       { key: 'status', title: '状态' },
       { key: 'resource_version', title: '版本' }
+    ]
+  },
+  smbJoinAuths: {
+    title: 'SMB 域加入凭据',
+    path: '/smb/join/auths',
+    requiredCapabilities: ['smb'],
+    columns: [
+      { key: 'auth_id', title: '资源 ID', filterKey: false },
+      { key: 'username', title: '域账号名', filterKey: false },
+      { key: 'linked_to_cluster', title: '绑定 SMB 集群', filterKey: false, render: (value) => value ? String(value) : '未绑定' }
+    ]
+  },
+  smbUsersGroups: {
+    title: 'SMB 用户组资源',
+    path: '/smb/usersgroups',
+    requiredCapabilities: ['smb'],
+    columns: [
+      { key: 'users_groups_id', title: '资源 ID', filterKey: false },
+      { key: 'user_count', title: '用户数量', filterKey: false },
+      { key: 'group_names', title: '组名', filterKey: false },
+      { key: 'linked_to_cluster', title: '绑定 SMB 集群', filterKey: false, render: (value) => value ? String(value) : '未绑定' }
     ]
   },
   smbClusters: {

@@ -34,6 +34,8 @@ export type PageKey =
   | 'nfsClusters'
   | 'nfs'
   | 'smbClusters'
+  | 'smbJoinAuths'
+  | 'smbUsersGroups'
   | 'smb'
   | 'rgwOverview'
   | 'rgwUsers'
@@ -221,6 +223,8 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
         icon: 'smb',
         children: [
           { key: 'smbClusters', label: '集群', path: '/file/smb/clusters', icon: 'cluster', permission: 'storage' },
+          { key: 'smbJoinAuths', label: '域加入凭据', path: '/file/smb/join/auths', icon: 'smb', permission: 'storage' },
+          { key: 'smbUsersGroups', label: '用户组资源', path: '/file/smb/usersgroups', icon: 'smb', permission: 'storage' },
           { key: 'smb', label: '共享', path: '/file/smb', icon: 'smb', permission: 'storage' }
         ]
       }

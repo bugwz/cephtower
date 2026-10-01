@@ -15,7 +15,7 @@ func TestSMBAuthInventory(t *testing.T) {
 		{"smb_usersgroups", "ceph.smb.usersgroups", "users_groups_id"},
 	} {
 		t.Run(spec.kind, func(t *testing.T) {
-			item := map[string]any{"resource_type": spec.resourceType, spec.idField: "auth-a", "intent": "present", "linked_to_cluster": "cluster-a", "auth": map[string]any{"password": "secret"}, "values": map[string]any{"users": []string{"secret"}}, "unexpected": "secret"}
+			item := map[string]any{"resource_type": spec.resourceType, spec.idField: "auth-a", "intent": "present", "linked_to_cluster": "cluster-a", "auth": map[string]any{"username": "administrator", "password": "secret"}, "values": map[string]any{"users": []any{map[string]any{"name": "alice", "password": "secret"}}, "groups": []any{map[string]any{"name": "staff", "unexpected": "secret"}}}, "unexpected": "secret"}
 			data, _ := json.Marshal(map[string]any{"resources": []any{item}})
 			runner := &nfsInfoExecutor{data: string(data)}
 			provider := NativeProvider{Executor: runner}
@@ -24,8 +24,16 @@ func TestSMBAuthInventory(t *testing.T) {
 				t.Fatal(rows)
 			}
 			encoded, _ := json.Marshal(rows[0].Payload)
-			if strings.Contains(string(encoded), "secret") || len(rows[0].Payload.(map[string]any)) != 4 {
+			if strings.Contains(string(encoded), "secret") {
 				t.Fatal(string(encoded))
+			}
+			payload := rows[0].Payload.(map[string]any)
+			if spec.kind == "smb_join_auth" {
+				if payload["username"] != "administrator" || len(payload) != 5 {
+					t.Fatal(payload)
+				}
+			} else if payload["user_count"] != 1 || !reflect.DeepEqual(payload["group_names"], []string{"staff"}) || len(payload) != 6 {
+				t.Fatal(payload)
 			}
 			for _, call := range runner.calls {
 				resourceType := "ceph.smb.join.auth"
