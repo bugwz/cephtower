@@ -21,6 +21,22 @@ func nameAbsent(name string, data []byte) bool {
 	return true
 }
 
+func crushRuleRenamed(old, name string, data []byte) bool {
+	var names []string
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	if old == "" || name == "" || decoder.Decode(&names) != nil || decoder.Decode(new(any)) != io.EOF || names == nil {
+		return false
+	}
+	seen := map[string]bool{}
+	for _, item := range names {
+		if item == "" || seen[item] || (old != name && item == old) {
+			return false
+		}
+		seen[item] = true
+	}
+	return seen[name]
+}
+
 func crushRuleCreated(parameters map[string]any, data []byte) bool {
 	var rule struct {
 		Name  string `json:"rule_name"`
