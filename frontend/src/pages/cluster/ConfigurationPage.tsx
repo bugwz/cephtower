@@ -16,6 +16,14 @@ import { message } from '../../utils/appMessage'
 interface ConfigurationForm { who: string; name: string; value: string }
 type OverrideFilter = 'all' | 'configured' | 'unconfigured'
 
+function configurationWriteBlocked(row: ApiRecord): string | undefined {
+  if (row.stale !== false) return '配置库存已过期或新鲜度未知，请先刷新'
+  if (typeof row.who !== 'string' || !row.who.trim() || typeof row.name !== 'string' || !row.name.trim()) return '配置作用域或名称未采集'
+  const version = typeof row.resource_version === 'number' || typeof row.resource_version === 'string' ? Number(row.resource_version) : NaN
+  if (!Number.isSafeInteger(version) || version <= 0) return '配置资源版本无效，请先刷新'
+  return undefined
+}
+
 async function configurationMetadataBatch(names: string[], read: (name: string) => Promise<ApiRecord>, active: () => boolean) {
   const pending = [...new Set(names)]
   const items: Record<string, ApiRecord> = Object.create(null)
@@ -117,7 +125,12 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
     setBusy(true)
     try { await work() } finally { running.current = false; setBusy(false) }
   }
-  function edit(row?: ApiRecord) {
+  function edit(row?: ApiRecord, existing = false) {
+    if (loading || error) return
+    if (existing && row) {
+      const reason = configurationWriteBlocked(row)
+      if (reason) { message.error(reason); return }
+    }
     setEditing(row?.who ? row : null)
     form.setFieldsValue({ name: textValue(row?.name, ''), who: textValue(row?.who, moduleName ? 'mgr' : 'global'), value: row?.value == null || row.value === '[REDACTED]' ? '' : String(row.value) })
     setOpen(true)
@@ -133,6 +146,12 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
     finally { if (revision === detailsRequest.current) setDetailLoading(false) }
   }
   async function save(values: ConfigurationForm) {
+    if (loading || error) { message.error('请先成功读取当前配置库存'); return }
+    if (editing) {
+      const reason = configurationWriteBlocked(editing)
+      if (reason) { message.error(reason); return }
+      if (values.who !== editing.who || values.name !== editing.name) { message.error('编辑目标已改变，请重新打开表单'); return }
+    }
     await run(async () => {
       await mutateResource('/configuration/value', 'PUT', { cluster_id: selectedClusterId, ...values, value: values.value ?? '' }, editing ? { ifMatch: String(editing.resource_version) } : undefined)
       if (scopeRef.current !== scope) return
@@ -140,6 +159,9 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
     })
   }
   function remove(row: ApiRecord) {
+    if (loading || error) return
+    const reason = configurationWriteBlocked(row)
+    if (reason) { message.error(reason); return }
     Modal.confirm({ title: `删除 ${String(row.who)} 的 ${String(row.name)} 覆盖值`, content: '删除后，该作用域将继承其他适用配置或使用默认值。', okText: '删除', okType: 'danger',
       onOk: () => {
         if (scopeRef.current !== scope) throw new Error('集群或模块已切换，请重新确认配置删除')
@@ -182,8 +204,8 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
     { title: '级别', dataIndex: 'level' },
     { title: '操作', render: (_, row) => <TableActions>
       <TableAction onClick={() => showDetails(String(row.name))}>说明</TableAction>
-      <TableAction disabled={blocked || Boolean(row.stale)} onClick={() => edit(row)}>编辑</TableAction>
-      <TableAction disabled={blocked || Boolean(row.stale)} onClick={() => remove(row)}>删除覆盖</TableAction>
+      <TableAction disabled={blocked || Boolean(configurationWriteBlocked(row))} onClick={() => edit(row, true)}>编辑</TableAction>
+      <TableAction disabled={blocked || Boolean(configurationWriteBlocked(row))} onClick={() => remove(row)}>删除覆盖</TableAction>
     </TableActions> }
   ]} />
   return <Page title={moduleName ? `${moduleName} 模块配置` : "集群配置"} loading={loading} error={error}>

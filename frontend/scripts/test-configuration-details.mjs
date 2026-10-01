@@ -4,9 +4,18 @@ import ts from 'typescript'
 
 const source = readFileSync(new URL('../src/pages/cluster/ConfigurationPage.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('ConfigurationPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-const names = ['configurationOverrides', 'configurationList', 'configurationRuntime', 'filterConfigurationOptions', 'configurationMetadataBatch']
+const names = ['configurationOverrides', 'configurationList', 'configurationRuntime', 'filterConfigurationOptions', 'configurationMetadataBatch', 'configurationWriteBlocked']
 const code = ts.transpileModule(tree.statements.filter((node) => ts.isFunctionDeclaration(node) && names.includes(node.name.text)).map((node) => node.getText(tree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const helpers = new Function(`${code}; return { ${names.join(', ')} }`)()
+const editable = { who: 'global', name: 'test', stale: false, resource_version: 3 }
+assert.equal(helpers.configurationWriteBlocked(editable), undefined)
+assert.equal(helpers.configurationWriteBlocked({ ...editable, resource_version: '3' }), undefined)
+const invalidRows = [
+  { ...editable, stale: true }, { ...editable, stale: undefined },
+  { ...editable, who: '' }, { ...editable, name: undefined },
+  ...[undefined, null, 0, -1, 1.5, true, {}, '', 'bad', Number.MAX_SAFE_INTEGER + 1].map((resource_version) => ({ ...editable, resource_version }))
+]
+for (const row of invalidRows) assert.ok(helpers.configurationWriteBlocked(row))
 const rows = [
   { name: 'option', who: 'global', value: 'false', natural_key: 'a' },
   { name: 'option', who: 'osd/class:ssd', value: '0', natural_key: 'b' },
@@ -72,7 +81,8 @@ for (const action of ['save', 'remove']) for (const timing of ['before', 'mutati
   const scope = { clusterId: 7, moduleName: 'test' }, scopeRef = { current: scope }, events = []
   let modal, finishMutation, finishCollection
   const env = {
-    scope, scopeRef, selectedClusterId: 7, running: { current: false }, editing: { resource_version: 3 },
+    scope, scopeRef, selectedClusterId: 7, running: { current: false }, editing: editable,
+    loading: false, error: null, configurationWriteBlocked: helpers.configurationWriteBlocked,
     setBusy: () => {}, setOpen: () => { events.push('close') }, message: { success: () => { events.push('success') } },
     mutateResource: async (path, method, body, options) => {
       assert.equal(path, '/configuration/value'); assert.equal(body.cluster_id, 7); assert.equal(options.ifMatch, '3')
@@ -86,7 +96,7 @@ for (const action of ['save', 'remove']) for (const timing of ['before', 'mutati
     refresh: async () => { events.push('read') }, Modal: { confirm: (options) => { modal = options } }
   }
   const functions = new Function('env', `const { ${Object.keys(env).join(', ')} } = env; ${mutationCode}; return { save, remove, run }`)(env)
-  if (action === 'remove') functions.remove({ who: 'global', name: 'test', resource_version: 3 })
+  if (action === 'remove') functions.remove(editable)
   const invoke = () => action === 'save' ? functions.save({ who: 'global', name: 'test', value: '0' }) : modal.onOk()
   if (timing === 'before') {
     scopeRef.current = { ...scope }
@@ -115,7 +125,8 @@ for (const action of ['save', 'remove']) for (const collectionFailed of [false, 
   const scope = {}, events = []
   let modal
   const env = {
-    scope, scopeRef: { current: scope }, selectedClusterId: 7, running: { current: false }, editing: { resource_version: 3 },
+    scope, scopeRef: { current: scope }, selectedClusterId: 7, running: { current: false }, editing: editable,
+    loading: false, error: null, configurationWriteBlocked: helpers.configurationWriteBlocked,
     setBusy: () => {}, setOpen: () => events.push('close'),
     message: { success: () => events.push('success'), warning: (text) => { assert.match(text, /修改已执行.*不要重复提交/); events.push('warning') } },
     mutateResource: async () => { events.push('mutate'); if (mutationFailed) throw new Error('write failed') },
@@ -123,7 +134,7 @@ for (const action of ['save', 'remove']) for (const collectionFailed of [false, 
     refresh: async () => { events.push('read') }, Modal: { confirm: (options) => { modal = options } }
   }
   const functions = new Function('env', `const { ${Object.keys(env).join(', ')} } = env; ${mutationCode}; return { save, remove }`)(env)
-  functions.remove({ who: 'global', name: 'test', resource_version: 3 })
+  functions.remove(editable)
   const invoke = () => action === 'save' ? functions.save({ who: 'global', name: 'test', value: '0' }) : modal.onOk()
   if (mutationFailed) {
     await assert.rejects(invoke, /write failed/)
@@ -138,3 +149,11 @@ for (const action of ['save', 'remove']) for (const collectionFailed of [false, 
   assert.equal(env.running.current, false)
 }
 console.log('Configuration collection failures remain distinct from mutation failures')
+for (const editing of [...invalidRows, editable]) {
+  let errors = 0
+  const env = { editing, loading: false, error: null, configurationWriteBlocked: helpers.configurationWriteBlocked, message: { error: () => { errors++ } } }
+  const functions = new Function('env', `const { ${Object.keys(env).join(', ')} } = env; ${mutationCode}; return { save, remove }`)(env)
+  await functions.save({ who: 'different', name: 'test', value: 'x' })
+  assert.equal(errors, 1, 'invalid records or changed identity must stop before acquiring locks or sending requests')
+  if (editing !== editable) { functions.remove(editing); assert.equal(errors, 2) }
+}
