@@ -1000,13 +1000,12 @@ export function poolPGStatus(value: unknown): string {
 function normalizePoolRow(row: ApiRecord): ApiRecord {
   const name = resourceName(row)
   const poolType = poolKind(row)
-  const size = numberValue(row.size)
   const pgAutoscale = textValue(row.pg_autoscale_mode, '未知')
   return {
     ...row,
     name,
     type: poolType,
-    data_protection_display: poolType === 'erasure' ? 'erasure' : `replica: x${size ?? 3}`,
+    data_protection_display: poolDataProtection(row),
     applications: poolApplications(row),
     applications_display: poolApplications(row).join(', '),
     pg_status_display: `${poolPGStatus(row.pg_status)} / ${pgAutoscale}`,
@@ -1521,6 +1520,14 @@ function poolHasFlag(row: ApiRecord, flag: string): boolean {
     return false
   }
   return row.flags.some((value) => textValue(value, '') === flag)
+}
+
+export function poolDataProtection(row: ApiRecord): string {
+  const type = row.pool_type ?? row.type
+  if (type === 'erasure' || type === 3) return '纠删码'
+  if (type !== 'replicated' && type !== 1) return '未采集'
+  return typeof row.size === 'number' && Number.isSafeInteger(row.size) && row.size > 0
+    ? `replica: x${row.size}` : '副本数未采集'
 }
 
 export function poolObjectCount(value: unknown): string {
