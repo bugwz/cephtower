@@ -21,6 +21,7 @@ type Pool struct {
 	PGStatus                 map[string]uint64 `json:"pg_status"`
 	UsedPercent              *float64          `json:"used_percent"`
 	Stored                   *uint64           `json:"stored"`
+	Objects                  *uint64           `json:"objects"`
 	BytesUsed                *uint64           `json:"bytes_used"`
 	MaxAvail                 *uint64           `json:"max_avail"`
 	ErasureCodeProfile       *string           `json:"erasure_code_profile"`

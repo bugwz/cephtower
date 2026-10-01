@@ -480,6 +480,7 @@ export function PoolManagementPage() {
             { key: 'pg_status_display', title: 'PG 状态', filterKey: 'pg_autoscale_mode' },
             { key: 'usage_display', title: '使用率', filterKey: false },
             { key: 'stored_display', title: '用户数据量', filterKey: false },
+            { key: 'objects_display', title: '对象数量', filterKey: false },
             { key: 'bytes_used_display', title: '实际占用', filterKey: false },
             { key: 'max_avail_display', title: '最大可用', filterKey: false },
             { key: 'read_bytes_display', title: '读字节数', filterKey: false },
@@ -984,6 +985,7 @@ function normalizePoolRow(row: ApiRecord): ApiRecord {
     pg_status_display: `${poolPGStatus(row.pg_status)} / ${pgAutoscale}`,
     usage_display: poolUsage(row),
     stored_display: poolCapacity(row.stored),
+    objects_display: poolObjectCount(row.objects),
     bytes_used_display: poolCapacity(row.bytes_used),
     max_avail_display: poolCapacity(row.max_avail),
     read_bytes_display: formatBytes(numberValue(row.read_bytes ?? row.client_read_bytes)),
@@ -1492,6 +1494,10 @@ function poolHasFlag(row: ApiRecord, flag: string): boolean {
     return false
   }
   return row.flags.some((value) => textValue(value, '') === flag)
+}
+
+function poolObjectCount(value: unknown): string {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value.toLocaleString('zh-CN') : '未采集'
 }
 
 function poolCapacity(value: unknown): string {

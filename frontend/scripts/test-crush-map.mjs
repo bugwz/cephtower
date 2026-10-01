@@ -108,6 +108,13 @@ await assert.rejects(() => failedPages('/pools', 7), /second page unavailable/)
 assert.ok(poolSource.includes('压缩后大小与原始大小的比例上限'), 'compression ratio is an upper bound, not a minimum ratio')
 assert.ok(poolSource.includes('分配单元对齐和压缩头开销'), 'compression storage is also subject to native allocation constraints')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const objectCountFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolObjectCount')
+const objectCountCode = ts.transpileModule(objectCountFn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const objectCount = new Function(`${objectCountCode}; return poolObjectCount`)()
+assert.equal(objectCount(0), '0')
+assert.equal(objectCount(12345), '12,345')
+for (const value of [undefined, null, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, '2']) assert.equal(objectCount(value), '未采集')
+assert.ok(poolSource.includes('objects_display: poolObjectCount(row.objects)'))
 const capacityFns = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['poolCapacity', 'formatBytes'].includes(node.name.text))
 const capacityCode = ts.transpileModule(capacityFns.map((fn) => fn.getText(poolTree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const capacity = new Function(`${capacityCode}; return poolCapacity`)()
