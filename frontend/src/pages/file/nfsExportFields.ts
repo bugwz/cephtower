@@ -1,5 +1,12 @@
 import type { ApiRecord } from '../../api/client'
 
+export const nfsSquashOptions = [
+  { label: '映射 root 用户（root_squash）', value: 'root_squash' },
+  { label: '映射 root 身份（root_id_squash）', value: 'root_id_squash' },
+  { label: '映射所有用户（all_squash）', value: 'all_squash' },
+  { label: '不映射 root（no_root_squash）', value: 'no_root_squash' }
+]
+
 export function nfsFSAL(row?: ApiRecord): ApiRecord {
   const value = row?.fsal
   return value && typeof value === 'object' && !Array.isArray(value) ? value as ApiRecord : {}
@@ -17,6 +24,7 @@ export function nfsExportInitialValues(row?: ApiRecord) {
     pseudo: typeof row?.pseudo === 'string' ? row.pseudo : '',
     path: typeof row?.path === 'string' ? row.path : '',
     filesystem: typeof nfsFSAL(row).fs_name === 'string' ? String(nfsFSAL(row).fs_name) : '',
-    read_only: row?.access_type === 'RO'
+    read_only: row?.access_type === 'RO',
+    squash: nfsSquashOptions.some((option) => option.value === row?.squash) ? String(row?.squash) : undefined
   }
 }

@@ -2184,6 +2184,13 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, err
 		}
 		export := map[string]any{"cluster_id": cluster, "pseudo": pseudo, "path": path, "fsal": map[string]any{"name": "CEPH", "fs_name": filesystem}}
+		if _, exists := p["squash"]; exists {
+			squash, err := enum(p, "squash", "root_squash", "root_id_squash", "all_squash", "no_root_squash")
+			if err != nil {
+				return command{}, err
+			}
+			export["squash"] = squash
+		}
 		if readOnly, ok := p["read_only"].(bool); ok {
 			export["access_type"] = map[bool]string{true: "RO", false: "RW"}[readOnly]
 		}

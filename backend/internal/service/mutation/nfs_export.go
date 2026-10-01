@@ -50,6 +50,9 @@ func nfsExportUpdateJSON(export, parameters map[string]any) ([]byte, error) {
 	export["pseudo"] = parameters["pseudo"]
 	export["path"] = parameters["path"]
 	fsal["fs_name"] = parameters["filesystem"]
+	if squash, exists := parameters["squash"]; exists {
+		export["squash"] = squash
+	}
 	if readOnly, ok := parameters["read_only"].(bool); ok {
 		export["access_type"] = map[bool]string{true: "RO", false: "RW"}[readOnly]
 	}
@@ -66,6 +69,9 @@ func nfsExportUpdateMatches(request Request, data []byte) bool {
 		return false
 	}
 	p := request.Parameters
+	if squash, exists := p["squash"]; exists && export["squash"] != squash {
+		return false
+	}
 	fsal, ok := export["fsal"].(map[string]any)
 	if !ok || fsal["name"] != "CEPH" || fsal["fs_name"] != p["filesystem"] || export["pseudo"] != p["pseudo"] || export["path"] != p["path"] {
 		return false

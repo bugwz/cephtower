@@ -1600,3 +1600,11 @@ pseudo、path、fsal.fs_name 和显式 read_only 对应的 access_type，保留 
 CephFS 名称及显式访问类型。缺失、原值未变或只有其他 ID 匹配时返回
 post_check_failed，并说明操作可能已生效。执行链测试及 `make test-backend`
 通过，未实测集群。
+
+## NFS 导出 squash 设置
+
+创建/编辑表单提供 root_squash、root_id_squash、all_squash、no_root_squash，
+列表展示原生 squash。API 枚举与命令构造双重验证，apply JSON 携带显式选择，
+更新读回比对请求策略。未指定时创建采用原生默认值，更新保留现有策略及客户端
+级规则；已有其他原生别名不自动改写。参考 ganesha_conf.py 的 squash 校验及
+Dashboard NFS 表单。前后端测试和 OpenAPI 检查通过，未实测集群。

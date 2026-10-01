@@ -732,6 +732,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -1343,6 +1346,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -3249,6 +3255,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -3860,6 +3869,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -4689,6 +4701,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -5394,6 +5409,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -6005,6 +6023,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -6807,6 +6828,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -7514,6 +7538,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -8126,6 +8153,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -8981,6 +9011,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -9686,6 +9719,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -10393,6 +10429,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -11098,6 +11137,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -11709,6 +11751,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -12566,6 +12611,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -13673,6 +13721,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -14285,6 +14336,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -14897,6 +14951,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -16146,6 +16203,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -16903,6 +16963,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -17610,6 +17673,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -18221,6 +18287,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -19488,6 +19557,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -20099,6 +20171,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -20727,6 +20802,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -21432,6 +21510,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -22043,6 +22124,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -22655,6 +22739,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -23545,6 +23632,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -24347,6 +24437,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -25052,6 +25145,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -25663,6 +25759,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -26407,6 +26506,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -27019,6 +27121,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -28046,6 +28151,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -28943,6 +29051,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -29648,6 +29759,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -30355,6 +30469,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -31060,6 +31177,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -31671,6 +31791,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -32473,6 +32596,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -33178,6 +33304,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -33789,6 +33918,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -34496,6 +34628,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -35107,6 +35242,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -35814,6 +35952,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -36425,6 +36566,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -37132,6 +37276,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -37837,6 +37984,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -38448,6 +38598,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -39323,6 +39476,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -40029,6 +40185,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -40641,6 +40800,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -41253,6 +41415,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -41959,6 +42124,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -42605,6 +42773,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -43502,6 +43673,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -44207,6 +44381,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -44818,6 +44995,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -45525,6 +45705,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -46137,6 +46320,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -46749,6 +46935,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -47361,6 +47550,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -48068,6 +48260,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -48773,6 +48968,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -49384,6 +49582,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -50113,6 +50314,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -50724,6 +50928,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -51335,6 +51542,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -52333,6 +52543,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -53017,6 +53230,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -53629,6 +53845,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -54240,6 +54459,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -54947,6 +55169,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -55653,6 +55878,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -56265,6 +56493,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -56988,6 +57219,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -57599,6 +57833,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -58210,6 +58447,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -58822,6 +59062,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -59529,6 +59772,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -60234,6 +60480,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -60845,6 +61094,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -61558,6 +61810,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -62170,6 +62425,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -62782,6 +63040,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -63489,6 +63750,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -64101,6 +64365,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -64712,6 +64979,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -65419,6 +65689,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -66030,6 +66303,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -66641,6 +66917,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -67253,6 +67532,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -68055,6 +68337,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -68760,6 +69045,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -69371,6 +69659,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -69983,6 +70274,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -70595,6 +70889,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -71206,6 +71503,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -71818,6 +72118,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -72430,6 +72733,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -73137,6 +73443,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -73748,6 +74057,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -74360,6 +74672,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -74971,6 +75286,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -75913,6 +76231,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -76618,6 +76939,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -77229,6 +77553,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -77936,6 +78263,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -78641,6 +78971,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -79252,6 +79585,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -79959,6 +80295,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -80664,6 +81003,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -81275,6 +81617,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -82077,6 +82422,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:
@@ -82689,6 +83037,9 @@ paths:
                   description: action-specific JSON value
                 snap:
                   type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
                 start:
                   type: string
                 startsAt:

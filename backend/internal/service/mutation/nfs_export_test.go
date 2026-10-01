@@ -47,6 +47,37 @@ func TestNFSExportUpdatePreservesNativeAttributes(t *testing.T) {
 	}
 }
 
+func TestNFSExportSquashOptions(t *testing.T) {
+	for _, squash := range []string{"root_squash", "root_id_squash", "all_squash", "no_root_squash"} {
+		params := map[string]any{"cluster": "nfs-a", "pseudo": "/share", "path": "/", "filesystem": "cephfs", "squash": squash}
+		cmd, err := build(Request{Action: "nfs_export.create", ResourceKey: "nfs/export"}, params)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var payload map[string]any
+		if err := json.Unmarshal(cmd.stdin, &payload); err != nil {
+			t.Fatal(err)
+		}
+		if payload["squash"] != squash {
+			t.Fatalf("squash lost: %v", payload)
+		}
+		existing := map[string]any{"fsal": map[string]any{"name": "CEPH"}, "access_type": "RW", "squash": "root_squash"}
+		updated, err := nfsExportUpdateJSON(existing, params)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := json.Unmarshal(updated, &payload); err != nil {
+			t.Fatal(err)
+		}
+		if payload["squash"] != squash {
+			t.Fatalf("update lost squash: %v", payload)
+		}
+	}
+	if _, err := build(Request{Action: "nfs_export.create", ResourceKey: "nfs/export"}, map[string]any{"cluster": "nfs-a", "pseudo": "/share", "path": "/", "filesystem": "cephfs", "squash": "invalid"}); err == nil {
+		t.Fatal("invalid squash accepted")
+	}
+}
+
 func TestNFSExportDeleteResolvesNativePseudo(t *testing.T) {
 	for _, tt := range []struct {
 		name, output string

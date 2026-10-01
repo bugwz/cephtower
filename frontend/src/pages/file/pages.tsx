@@ -1,5 +1,5 @@
 import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
-import { nfsExportEditReason, nfsExportInitialValues, nfsFSAL } from './nfsExportFields'
+import { nfsExportEditReason, nfsExportInitialValues, nfsFSAL, nfsSquashOptions } from './nfsExportFields'
 import { CephFSDirectoryBrowser } from './CephFSDirectoryBrowser'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 import { listAllResources, listResource } from '../../api/resource'
@@ -611,7 +611,8 @@ const definitions: Record<
         { name: 'pseudo', label: '伪路径', required: true, placeholder: '/export' },
         { name: 'path', label: 'CephFS 路径', required: true, placeholder: '/data' },
         { name: 'filesystem', label: '文件系统', required: true },
-        { name: 'read_only', label: '只读', type: 'boolean' }
+        { name: 'read_only', label: '只读', type: 'boolean' },
+        { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '使用原生默认值' }
       ],
       initialValues: { pseudo: '/export', path: '/', read_only: false },
       buildBody: (values, clusterId) => ({
@@ -620,7 +621,8 @@ const definitions: Record<
         pseudo: String(values.pseudo ?? ''),
         path: String(values.path ?? ''),
         filesystem: String(values.filesystem ?? ''),
-        read_only: Boolean(values.read_only)
+        read_only: Boolean(values.read_only),
+        ...(values.squash ? { squash: values.squash } : {})
       })
     },
     updateAction: {
@@ -634,7 +636,8 @@ const definitions: Record<
         { name: 'pseudo', label: '伪路径', required: true },
         { name: 'path', label: 'CephFS 路径', required: true },
         { name: 'filesystem', label: '文件系统', required: true },
-        { name: 'read_only', label: '只读', type: 'boolean' }
+        { name: 'read_only', label: '只读', type: 'boolean' },
+        { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '保持当前设置' }
       ],
       initialValues: nfsExportInitialValues,
       buildBody: (values, clusterId, row) => ({
@@ -644,7 +647,8 @@ const definitions: Record<
         pseudo: String(values.pseudo ?? ''),
         path: String(values.path ?? ''),
         filesystem: String(values.filesystem ?? ''),
-        read_only: Boolean(values.read_only)
+        read_only: Boolean(values.read_only),
+        ...(values.squash ? { squash: values.squash } : {})
       })
     },
     deleteAction: {
@@ -665,6 +669,7 @@ const definitions: Record<
       { key: 'fsal_filesystem', title: '文件系统', filterKey: false, render: (_, row) => text(nfsFSAL(row).fs_name) },
       { key: 'fsal_user', title: '用户', filterKey: false, render: (_, row) => text(nfsFSAL(row).user_id) },
       { key: 'access_type', title: '访问类型' },
+      { key: 'squash', title: '身份映射策略' },
       { key: 'protocols', title: 'NFS 协议' },
       { key: 'transports', title: '传输协议' },
       { key: 'status', title: '状态' },
