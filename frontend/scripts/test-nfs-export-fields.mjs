@@ -82,7 +82,7 @@ for (const [key, path, columns] of [
 ]) {
   const definition = definitionNode.properties.find((property) => property.name.getText(tree) === key).initializer
   const code = ts.transpileModule(`const value = ${definition.getText(tree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
-  const value = new Function('resourceName', 'smbClusterOptions', 'smbUsersBody', `${code}; return value`)((row) => row.name, async () => [], smbEditorExports.smbUsersBody)
+  const value = new Function('resourceName', 'smbClusterOptions', 'smbUsersBody', 'smbUsersInitialValues', `${code}; return value`)((row) => row.name, async () => [], smbEditorExports.smbUsersBody, smbEditorExports.smbUsersInitialValues)
   assert.equal(value.path, path)
   assert.deepEqual(value.requiredCapabilities, ['smb'])
   assert.deepEqual(value.columns.map((column) => column.key), columns)
@@ -96,6 +96,12 @@ for (const [key, path, columns] of [
     assert.deepEqual(value.createAction.buildBody({ name: 'auth', username: 'admin', password: 'test-secret' }, 17), { cluster_id: 17, name: 'auth', username: 'admin', password: 'test-secret' })
   } else {
     assert.equal(value.createAction.path, '/smb/usersgroup')
+    const initial = value.updateAction.initialValues({ user_names: ['alice'], group_names: ['staff'], password: 'must-not-copy' })
+    assert.deepEqual(JSON.parse(initial.users), [{ name: 'alice', password: '' }])
+    assert.throws(() => smbEditorExports.smbUsersBody(initial.users))
+    assert.equal(value.updateAction.method, 'PATCH')
+    assert.ok(value.updateAction.confirmation().includes('旧用户将被移除'))
+    assert.deepEqual(value.updateAction.buildBody({ users: '[{"name":"new","password":"p"}]' }, 17, { name: 'target' }), { cluster_id: 17, name: 'target', users: [{ name: 'new', password: 'p' }], groups: [] })
     assert.deepEqual(value.createAction.buildBody({ name: 'users', users: '[{"name":"alice","password":"p"}]', groups: 'staff\nops' }, 17), { cluster_id: 17, name: 'users', users: [{ name: 'alice', password: 'p' }], groups: ['staff', 'ops'] })
   }
   const deletePath = key === 'smbJoinAuths' ? '/smb/join/auth' : '/smb/usersgroup'

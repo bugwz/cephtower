@@ -32,7 +32,7 @@ func TestSMBAuthInventory(t *testing.T) {
 				if payload["username"] != "administrator" || len(payload) != 5 {
 					t.Fatal(payload)
 				}
-			} else if payload["user_count"] != 1 || !reflect.DeepEqual(payload["group_names"], []string{"staff"}) || len(payload) != 6 {
+			} else if payload["user_count"] != 1 || !reflect.DeepEqual(payload["user_names"], []string{"alice"}) || !reflect.DeepEqual(payload["group_names"], []string{"staff"}) || len(payload) != 7 {
 				t.Fatal(payload)
 			}
 			for _, call := range runner.calls {

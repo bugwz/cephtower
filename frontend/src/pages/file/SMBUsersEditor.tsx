@@ -1,4 +1,13 @@
 import { Alert, Button, Input, Space } from 'antd'
+import type { ApiRecord } from '../../api/client'
+
+export function smbUsersInitialValues(row?: ApiRecord) {
+  return {
+    users: Array.isArray(row?.user_names) && row.user_names.every((name) => typeof name === 'string') ? JSON.stringify(row.user_names.map((name) => ({ name, password: '' }))) : undefined,
+    groups: Array.isArray(row?.group_names) && row.group_names.every((name) => typeof name === 'string') ? row.group_names.join('\n') : undefined,
+    linked_to_cluster: typeof row?.linked_to_cluster === 'string' ? row.linked_to_cluster : undefined
+  }
+}
 
 export function SMBUsersEditor({ value, onChange, id }: { value?: string; onChange?: (value: string) => void; id?: string }) {
   let users: Array<{ name: string; password: string }>

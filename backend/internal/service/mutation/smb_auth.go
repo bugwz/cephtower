@@ -15,7 +15,7 @@ func isSMBJoinAuthWrite(action string) bool {
 }
 
 func isSMBAuthWrite(action string) bool {
-	return isSMBJoinAuthWrite(action) || action == "smb_usersgroups.create"
+	return isSMBJoinAuthWrite(action) || action == "smb_usersgroups.create" || action == "smb_usersgroups.update"
 }
 
 func smbAuthResourceType(action string) (string, string) {

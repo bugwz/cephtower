@@ -42,6 +42,17 @@ func (p *NativeProvider) collectSMBAuthResources(ctx context.Context, access Clu
 			if values, ok := item["values"].(map[string]any); ok && spec.kind == "smb_usersgroups" {
 				if users, ok := values["users"].([]any); ok {
 					payload["user_count"] = len(users)
+					names := make([]string, 0, len(users))
+					for _, user := range users {
+						if object, ok := user.(map[string]any); ok {
+							if name, ok := object["name"].(string); ok {
+								names = append(names, name)
+							}
+						}
+					}
+					if len(names) == len(users) {
+						payload["user_names"] = names
+					}
 				}
 				if groups, ok := values["groups"].([]any); ok {
 					names := make([]string, 0, len(groups))

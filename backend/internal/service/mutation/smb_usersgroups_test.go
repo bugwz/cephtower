@@ -40,3 +40,31 @@ func TestSMBUsersGroupsCreate(t *testing.T) {
 		}
 	}
 }
+
+func TestSMBUsersGroupsUpdate(t *testing.T) {
+	s, _, id := newCephUserService(t)
+	r := Request{ClusterID: id, Action: "smb_usersgroups.update", ResourceKey: "smb/usersgroup/target", Parameters: map[string]any{"name": "target", "users": []any{map[string]any{"name": "new", "password": "replacement"}}, "groups": []string{}}}
+	old := `{"resources":[{"resource_type":"ceph.smb.usersgroups","users_groups_id":"target","values":{"users":[{"name":"old","password":"***"}],"groups":[{"name":"staff"}]},"linked_to_cluster":"a"}]}`
+	updated := `{"resources":[{"resource_type":"ceph.smb.usersgroups","users_groups_id":"target","values":{"users":[{"name":"new","password":"***"}],"groups":[]}}]}`
+	e := &directoryRenameExecutor{outputs: map[string]string{r.Action + ".pre_check": old, r.Action: `{"success":true}`, r.Action + ".post_check": updated}}
+	s.executor = e
+	if _, err := s.Execute(context.Background(), r); err != nil {
+		t.Fatal(err)
+	}
+	var payload map[string]any
+	if json.Unmarshal(e.specs[1].Stdin, &payload) != nil || payload["linked_to_cluster"] != nil {
+		t.Fatal("binding not cleared")
+	}
+	for _, before := range []string{`{"resources":[]}`, `null`, `{}`, `{"resources":[null]}`} {
+		e.specs = nil
+		e.outputs[r.Action+".pre_check"] = before
+		if _, err := s.Execute(context.Background(), r); err == nil || len(e.specs) != 1 {
+			t.Fatal("invalid precheck accepted")
+		}
+	}
+	e.outputs[r.Action+".pre_check"] = old
+	e.outputs[r.Action+".post_check"] = old
+	if _, err := s.Execute(context.Background(), r); err == nil {
+		t.Fatal("unchanged users accepted")
+	}
+}

@@ -92,7 +92,7 @@ func Supports(action string) bool {
 		"smb_share.create", "smb_share.update", "smb_share.delete",
 		"smb_join_auth.delete", "smb_usersgroups.delete",
 		"smb_join_auth.create", "smb_join_auth.update",
-		"smb_usersgroups.create",
+		"smb_usersgroups.create", "smb_usersgroups.update",
 		"config_value.set", "config_value.delete":
 		return true
 	default:
@@ -225,7 +225,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if isSMBAuthWrite(request.Action) {
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
-		if checkErr != nil || !smbAuthPresenceMatches(request, checked.Stdout, request.Action == "smb_join_auth.update") {
+		if checkErr != nil || !smbAuthPresenceMatches(request, checked.Stdout, strings.HasSuffix(request.Action, ".update")) {
 			return cephdomain.ActionResult{}, invalid("SMB credential existence does not match the requested operation or could not be verified")
 		}
 	}
@@ -311,8 +311,8 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if isSMBJoinAuthWrite(request.Action) && !smbJoinAuthCreated(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB credential metadata could not be verified; the change may already have taken effect", Retryable: true}
 		}
-		if request.Action == "smb_usersgroups.create" && !smbUsersGroupsCreated(request, checked.Stdout) {
-			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB user group metadata could not be verified; creation may already have taken effect", Retryable: true}
+		if (request.Action == "smb_usersgroups.create" || request.Action == "smb_usersgroups.update") && !smbUsersGroupsCreated(request, checked.Stdout) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB user group metadata could not be verified; the change may already have taken effect", Retryable: true}
 		}
 		if (request.Action == "smb_share.create" || request.Action == "smb_share.delete") && !smbShareStateMatches(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB share command was accepted but its expected presence or absence could not be verified; the change may already have taken effect", Retryable: true}
@@ -2494,7 +2494,7 @@ func build(request Request, p map[string]any) (command, error) {
 		return ceph([]string{"smb", "apply", "-i", "-", "--format", "json"}, []string{"smb", "show", "ceph.smb.cluster." + name, "--format", "json"}), nil
 	case "smb_cluster.delete":
 		return ceph([]string{"smb", "cluster", "rm", last(tail)}, []string{"smb", "cluster", "ls", "--format", "json"}), nil
-	case "smb_usersgroups.create":
+	case "smb_usersgroups.create", "smb_usersgroups.update":
 		if optional(p, "name") != last(tail) {
 			return command{}, invalid("SMB resource identity mismatch")
 		}
