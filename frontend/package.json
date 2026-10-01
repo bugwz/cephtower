@@ -4,7 +4,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "test": "npm run test:cephfs-performance && npm run test:cephfs-pools && npm run test:cephfs-ranks && npm run test:cephfs-group-form && npm run test:cephfs-filesystem-state && npm run test:cephfs-creation-time",
+    "test": "npm run test:cephfs-performance && npm run test:cephfs-pools && npm run test:cephfs-ranks && npm run test:cephfs-group-form && npm run test:cephfs-filesystem-state && npm run test:cephfs-creation-time && npm run test:cephfs-subvolume-summary",
+    "test:cephfs-subvolume-summary": "node scripts/test-cephfs-subvolume-summary.mjs",
     "test:cephfs-creation-time": "node scripts/test-cephfs-creation-time.mjs",
     "test:cephfs-filesystem-state": "node scripts/test-cephfs-filesystem-state.mjs",
     "test:cephfs-group-form": "node scripts/test-cephfs-group-form.mjs",

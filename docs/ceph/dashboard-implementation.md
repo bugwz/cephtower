@@ -1266,6 +1266,16 @@ in-progress 状态开放取消操作，调用 `fs clone cancel` 后以 `fs clone
 表格统一格式化原生时间，原生 info 不返回时间时显示缺失，不用缓存时间代替。
 无需新增命令或推导近似值；离线测试验证字段隔离，未连接真实集群。
 
+### CephFS 配额使用率和权限展示
+
+子卷与子卷组列表根据原生 info 的 bytes_quota、bytes_used、bytes_pcent 展示二进制
+容量及使用率进度条。`infinite` 显示“无限制”，不再向用户显示 `undefined`；缺失的
+使用率保持不可用，不用缺失信息推导百分比。超过 100% 时保留原生百分比并告警，
+进度条宽度限制为 100%。整数容量超过 JavaScript 安全精度时只接受精确数字字符串，
+不展示已经失真的数字。原生 mode 展示 rwx 和八进制权限，并保留 setuid、setgid、
+sticky 位以及 0000 无权限状态。数据仍由 `fs subvolume info` 和
+`fs subvolumegroup info` 经现有采集/API 链路提供；离线测试覆盖格式和组件输出。
+
 ### CephFS 子卷配额更新
 
 子卷编辑支持取消配额限制和禁止缩容。取消限制生成原生大小 `inf`，保护开关生成

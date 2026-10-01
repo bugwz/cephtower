@@ -6,6 +6,8 @@ import { SubvolumeSnapshotVisibility } from './SubvolumeSnapshotVisibility'
 import { groupUpdateBody, groupUpdateInitialValues } from './cephfsGroupForm'
 import { filesystemEnabledText } from './cephfsFilesystemState'
 import { formatDateTime } from '../../utils/time'
+import { CephFSPermissions, CephFSUsage } from './CephFSResourceUsage'
+import { cephFSBytes, cephFSQuota } from './cephfsSubvolumeSummary'
 
 export function FilePoolsPage() {
   return <ResourceListPage definition={definitions.filePools} />
@@ -287,10 +289,10 @@ const definitions: Record<
       { key: 'filesystem', title: '文件系统名称' },
       { key: 'name', title: '名称' },
       { key: 'data_pool', title: '数据池' },
-      { key: 'bytes_quota', title: '配额' },
-      { key: 'bytes_used', title: '已用' },
-      { key: 'bytes_pcent', title: '配额使用率' },
-      { key: 'mode', title: '模式' },
+      { key: 'bytes_quota', title: '配额', render: cephFSQuota },
+      { key: 'bytes_used', title: '已用', render: cephFSBytes },
+      { key: 'bytes_pcent', title: '配额使用率', render: (value, row) => <CephFSUsage quota={row.bytes_quota} used={row.bytes_used} percent={value} /> },
+      { key: 'mode', title: '权限', render: (value) => <CephFSPermissions mode={value} /> },
       { key: 'ceph_created_at', title: '创建时间', render: (value) => formatDateTime(value) },
       { key: 'resource_version', title: '版本' }
     ]
@@ -424,10 +426,10 @@ const definitions: Record<
       { key: 'clone_failure', title: '克隆错误' },
       { key: 'path', title: '路径' },
       { key: 'data_pool', title: '数据池' },
-      { key: 'bytes_quota', title: '配额' },
-      { key: 'bytes_used', title: '已用' },
-      { key: 'bytes_pcent', title: '配额使用率' },
-      { key: 'mode', title: '模式' },
+      { key: 'bytes_quota', title: '配额', render: cephFSQuota },
+      { key: 'bytes_used', title: '已用', render: cephFSBytes },
+      { key: 'bytes_pcent', title: '配额使用率', render: (value, row) => <CephFSUsage quota={row.bytes_quota} used={row.bytes_used} percent={value} /> },
+      { key: 'mode', title: '权限', render: (value) => <CephFSPermissions mode={value} /> },
       { key: 'ceph_created_at', title: '创建时间', render: (value) => formatDateTime(value) },
       { key: 'resource_version', title: '版本' }
     ]
