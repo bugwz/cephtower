@@ -92,6 +92,22 @@ func TestMutationContractsRejectUnknownAndWrongType(t *testing.T) {
 	}
 }
 
+func TestCephFSCreateQuotaStringContract(t *testing.T) {
+	for _, action := range []string{"subvolume.create", "subvolume_group.create"} {
+		body := map[string]any{"cluster_id": float64(1), "fs": "cephfs", "name": "test", "pool": "data", "size": "9007199254740993"}
+		if action == "subvolume.create" {
+			body["group"] = "_nogroup"
+		}
+		if err := ValidateMutationRequest(action, body); err != nil {
+			t.Fatal(err)
+		}
+		body["size"] = float64(1024)
+		if err := ValidateMutationRequest(action, body); err == nil {
+			t.Fatalf("%s accepted numeric quota", action)
+		}
+	}
+}
+
 func TestHostMutationContractsAcceptManagementFields(t *testing.T) {
 	if err := ValidateMutationRequest("host.create", map[string]any{
 		"cluster_id": float64(1), "hostname": "node-1", "address": "192.0.2.10",

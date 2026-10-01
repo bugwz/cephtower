@@ -729,7 +729,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -1340,7 +1340,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -3246,7 +3246,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -3857,7 +3857,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -4686,7 +4686,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -5391,7 +5391,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -6002,7 +6002,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -6804,7 +6804,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -7511,7 +7511,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -8123,7 +8123,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -8978,7 +8978,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -9683,7 +9683,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -10390,7 +10390,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -11095,7 +11095,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -11706,7 +11706,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -12563,7 +12563,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -13670,7 +13670,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -14282,7 +14282,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -14894,7 +14894,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -15489,7 +15489,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  type: string
                 snap:
                   type: string
                 subsystem_nqn:
@@ -16143,7 +16143,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -16900,7 +16900,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -17607,7 +17607,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -18218,7 +18218,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -19485,7 +19485,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -20096,7 +20096,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -20724,7 +20724,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -21429,7 +21429,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -22040,7 +22040,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -22652,7 +22652,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -23542,7 +23542,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -24344,7 +24344,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -25049,7 +25049,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -25660,7 +25660,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -26404,7 +26404,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -27016,7 +27016,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -28043,7 +28043,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -28940,7 +28940,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -29645,7 +29645,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -30352,7 +30352,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -31057,7 +31057,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -31668,7 +31668,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -32470,7 +32470,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -33175,7 +33175,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -33786,7 +33786,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -34493,7 +34493,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -35104,7 +35104,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -35811,7 +35811,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -36422,7 +36422,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -37129,7 +37129,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -37834,7 +37834,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -38445,7 +38445,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -39320,7 +39320,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -40026,7 +40026,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -40638,7 +40638,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -41250,7 +41250,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -41956,7 +41956,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -42602,7 +42602,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -43499,7 +43499,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -44204,7 +44204,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -44815,7 +44815,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -45522,7 +45522,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -46134,7 +46134,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -46746,7 +46746,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -47358,7 +47358,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -48065,7 +48065,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -48770,7 +48770,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -49381,7 +49381,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -50110,7 +50110,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -50721,7 +50721,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -51332,7 +51332,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -52330,7 +52330,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -53014,7 +53014,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -53626,7 +53626,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -54237,7 +54237,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -54944,7 +54944,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -55650,7 +55650,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -56262,7 +56262,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -56985,7 +56985,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -57596,7 +57596,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -58207,7 +58207,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -58819,7 +58819,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -59526,7 +59526,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -60231,7 +60231,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -60842,7 +60842,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -61555,7 +61555,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -62167,7 +62167,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -62779,7 +62779,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -63486,7 +63486,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -64098,7 +64098,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -64709,7 +64709,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -65416,7 +65416,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -66027,7 +66027,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -66638,7 +66638,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -67250,7 +67250,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -68052,7 +68052,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -68757,7 +68757,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -69368,7 +69368,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -69980,7 +69980,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -70592,7 +70592,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -71203,7 +71203,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -71815,7 +71815,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -72427,7 +72427,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -73134,7 +73134,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -73745,7 +73745,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -74357,7 +74357,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -74968,7 +74968,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -75910,7 +75910,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -76615,7 +76615,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -77226,7 +77226,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -77933,7 +77933,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -78638,7 +78638,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -79249,7 +79249,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -79956,7 +79956,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -80661,7 +80661,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -81272,7 +81272,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -82074,7 +82074,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:
@@ -82686,7 +82686,7 @@ paths:
                 silence_id:
                   type: string
                 size:
-                  type: integer
+                  description: action-specific JSON value
                 snap:
                   type: string
                 start:

@@ -180,13 +180,13 @@ func buildMutationRequestContracts() map[string]RequestContract {
 		"data_pool":     stringField(false),
 	})
 	add([]string{"subvolume_group.create"}, true, map[string]JSONField{
-		"name": stringField(true), "size": integerField(false), "pool": stringField(true),
+		"name": stringField(true), "size": stringField(false), "pool": stringField(true),
 		"uid": integerField(false), "gid": integerField(false), "mode": stringField(false),
 		"normalization":  stringField(false, "nfd", "nfc", "nfkd", "nfkc"),
 		"case_sensitive": boolField(false),
 	})
 	add([]string{"subvolume.create"}, true, map[string]JSONField{
-		"name": stringField(true), "group": stringField(true), "size": integerField(false),
+		"name": stringField(true), "group": stringField(true), "size": stringField(false),
 		"pool": stringField(true), "uid": integerField(false), "gid": integerField(false),
 		"mode": stringField(false), "namespace_isolated": boolField(false), "earmark": stringField(false),
 		"normalization": stringField(false, "nfd", "nfc", "nfkd", "nfkc"), "case_sensitive": boolField(false),

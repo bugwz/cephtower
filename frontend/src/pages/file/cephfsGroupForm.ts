@@ -45,3 +45,10 @@ export function cephFSQuotaDecimal(value: unknown): string | undefined {
   if (!/^[1-9][0-9]*$/.test(text)) return undefined
   return BigInt(text) <= 9223372036854775807n ? text : undefined
 }
+
+export function cephFSCreateQuota(value: unknown): string {
+  if (value === undefined || value === '0') return '0'
+  const size = typeof value === 'string' ? cephFSQuotaDecimal(value) : undefined
+  if (size === undefined) throw new Error('配额必须是 0 到 9223372036854775807 之间的十进制整数字节数')
+  return size
+}

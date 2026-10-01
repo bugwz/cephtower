@@ -3,7 +3,7 @@ import { CephFSDirectoryBrowser } from './CephFSDirectoryBrowser'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 import { listAllResources, listResource } from '../../api/resource'
 import { SubvolumeSnapshotVisibility } from './SubvolumeSnapshotVisibility'
-import { groupUpdateBody, groupUpdateInitialValues } from './cephfsGroupForm'
+import { cephFSCreateQuota, groupUpdateBody, groupUpdateInitialValues } from './cephfsGroupForm'
 import { filesystemEnabledText } from './cephfsFilesystemState'
 import { formatDateTime } from '../../utils/time'
 import { CephFSPermissions, CephFSUsage } from './CephFSResourceUsage'
@@ -231,7 +231,7 @@ const definitions: Record<
       fields: [
         { name: 'fs', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'name', label: '子卷组名称', required: true },
-        { name: 'size', label: '配额大小（字节，0 表示不限制）', type: 'number', min: 0 },
+        { name: 'size', label: '配额大小（字节，0 表示不限制）', pattern: /^(0|[1-9][0-9]*)$/ },
         { name: 'pool', label: 'CephFS 数据池', type: 'select', required: true, optionsDependencies: ['fs'], optionsLoader: filesystemDataPoolOptions },
         { name: 'uid', label: 'UID', type: 'number', min: 0 },
         { name: 'gid', label: 'GID', type: 'number', min: 0 },
@@ -250,12 +250,12 @@ const definitions: Record<
         },
         { name: 'case_sensitive', label: '区分大小写', type: 'boolean' }
       ],
-      initialValues: { size: 0, uid: 0, gid: 0, mode: '0755', normalization: '', case_sensitive: true },
+      initialValues: { size: '0', uid: 0, gid: 0, mode: '0755', normalization: '', case_sensitive: true },
       buildBody: (values, clusterId) => ({
         cluster_id: clusterId,
         fs: String(values.fs ?? ''),
         name: String(values.name ?? ''),
-        size: Number(values.size ?? 0),
+        size: cephFSCreateQuota(values.size),
         pool: String(values.pool ?? ''),
         uid: Number(values.uid ?? 0),
         gid: Number(values.gid ?? 0),
@@ -320,7 +320,7 @@ const definitions: Record<
         { name: 'fs', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'name', label: '子卷名称', required: true },
         { name: 'group', label: '子卷组', type: 'select', required: true, optionsDependencies: ['fs'], optionsLoader: snapshotGroupOptions },
-        { name: 'size', label: '配额大小（字节，0 表示不限制）', type: 'number', min: 0 },
+        { name: 'size', label: '配额大小（字节，0 表示不限制）', pattern: /^(0|[1-9][0-9]*)$/ },
         { name: 'pool', label: 'CephFS 数据池', type: 'select', required: true, optionsDependencies: ['fs'], optionsLoader: filesystemDataPoolOptions },
         { name: 'uid', label: 'UID', type: 'number', min: 0 },
         { name: 'gid', label: 'GID', type: 'number', min: 0 },
@@ -341,13 +341,13 @@ const definitions: Record<
         },
         { name: 'case_sensitive', label: '区分文件名大小写', type: 'boolean' }
       ],
-      initialValues: { group: '_nogroup', size: 0, mode: '0755', namespace_isolated: false, normalization: '', case_sensitive: true },
+      initialValues: { group: '_nogroup', size: '0', mode: '0755', namespace_isolated: false, normalization: '', case_sensitive: true },
       buildBody: (values, clusterId) => ({
         cluster_id: clusterId,
         fs: String(values.fs ?? ''),
         name: String(values.name ?? ''),
         group: String(values.group ?? '_nogroup'),
-        size: Number(values.size ?? 0),
+        size: cephFSCreateQuota(values.size),
         pool: String(values.pool ?? ''),
         ...(values.uid !== undefined && values.uid !== null && values.uid !== '' ? { uid: Number(values.uid) } : {}),
         ...(values.gid !== undefined && values.gid !== null && values.gid !== '' ? { gid: Number(values.gid) } : {}),

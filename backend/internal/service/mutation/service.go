@@ -2496,10 +2496,11 @@ func subvolumeGroupCreateArgs(fs, name string, p map[string]any) ([]string, erro
 	if err != nil {
 		return nil, err
 	}
-	size, uid, gid := optional(p, "size"), optional(p, "uid"), optional(p, "gid")
-	if size == "" {
-		size = "0"
+	size, err := cephFSCreateQuotaSize(p)
+	if err != nil {
+		return nil, err
 	}
+	uid, gid := optional(p, "uid"), optional(p, "gid")
 	if uid == "" {
 		uid = "0"
 	}
@@ -2536,7 +2537,11 @@ func subvolumeCreateArgs(fs, name string, p map[string]any) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	size, uid, gid := optional(p, "size"), optional(p, "uid"), optional(p, "gid")
+	size, err := cephFSCreateQuotaSize(p)
+	if err != nil {
+		return nil, err
+	}
+	uid, gid := optional(p, "uid"), optional(p, "gid")
 	mode := optional(p, "mode")
 	if mode == "" {
 		mode = "0755"

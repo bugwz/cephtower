@@ -8,6 +8,10 @@ const module = { exports: {} }
 new Function('module', 'exports', compiled)(module, module.exports)
 const { groupPermissionMode, groupUpdateInitialValues, groupUpdateBody } = module.exports
 
+for (const size of ['0', '1', '9007199254740993', '9223372036854775807']) assert.equal(module.exports.cephFSCreateQuota(size), size)
+assert.equal(module.exports.cephFSCreateQuota(undefined), '0')
+for (const size of [0, 1024, null, '', '01', '-1', '1.5', '1e3', '9223372036854775808']) assert.throws(() => module.exports.cephFSCreateQuota(size))
+
 assert.equal(groupPermissionMode(16877), '0755')
 assert.equal(groupPermissionMode(0o42750), '2750')
 assert.equal(groupPermissionMode(0), '0000')

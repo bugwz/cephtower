@@ -14,6 +14,14 @@ import (
 
 var groupNamePattern = regexp.MustCompile(`^[A-Za-z0-9_.][A-Za-z0-9_.-]{0,254}$`)
 
+func cephFSCreateQuotaSize(p map[string]any) (string, error) {
+	value, exists := p["size"]
+	if !exists || value == "0" {
+		return "0", nil
+	}
+	return cephFSQuotaSize(p)
+}
+
 func cephFSQuotaSize(p map[string]any) (string, error) {
 	size, ok := p["size"].(string)
 	if !ok || !regexp.MustCompile(`^[1-9][0-9]*$`).MatchString(size) {
