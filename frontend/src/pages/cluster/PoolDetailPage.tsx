@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Button, Card, Descriptions, Empty, Input, Space, Table, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Descriptions, Empty, Input, Space, Table, Tag, Typography } from 'antd'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { isRecord, numberValue, textValue, type ApiRecord } from '../../api/client'
@@ -101,6 +101,7 @@ export function PoolDetailPage() {
   return (
     <Page title="存储池详情" loading={loading} error={error}>
       <Space direction="vertical" size={16} className="page-stack">
+        {data && poolDetailFreshnessWarning(data) && <Alert type="warning" showIcon message={poolDetailFreshnessWarning(data)} />}
         <Card
           className="page-surface-card"
           title="基础信息"
@@ -188,6 +189,13 @@ function renderOverview(data: ApiRecord, decodedName: string) {
       <Descriptions.Item label="更新时间">{formatDateTime(data.updated_at)}</Descriptions.Item>
     </Descriptions>
   )
+}
+
+function poolDetailFreshnessWarning(row: ApiRecord): string | undefined {
+  if (row.stale === false) return undefined
+  return row.stale === true
+    ? '存储池库存已过期，以下状态和统计仅反映历史采集结果，请刷新后再判断。'
+    : '存储池库存时效未知，无法确认以下状态和统计是否仍然有效，请重新采集。'
 }
 
 function normalizePoolDetail(row: ApiRecord): ApiRecord {

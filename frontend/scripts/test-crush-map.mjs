@@ -142,6 +142,13 @@ assert.equal(pgStatus({ 'active+clean': 8, down: 2 }), '8 active+clean, 2 down')
 assert.equal(pgStatus({ 'active+degraded': 3 }), '3 active+degraded')
 const detailSource = readFileSync(new URL('../src/pages/cluster/PoolDetailPage.tsx', import.meta.url), 'utf8')
 const detailTree = ts.createSourceFile('PoolDetailPage.tsx', detailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const detailFreshnessFn = detailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolDetailFreshnessWarning')
+const detailFreshnessCode = ts.transpileModule(detailFreshnessFn.getText(detailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const detailFreshness = new Function(`${detailFreshnessCode}; return poolDetailFreshnessWarning`)()
+assert.equal(detailFreshness({ stale: false }), undefined)
+assert.match(detailFreshness({ stale: true }), /历史采集/)
+for (const stale of [undefined, null, 'false', 0]) assert.match(detailFreshness({ stale }), /时效未知/)
+assert.ok(detailSource.includes('message={poolDetailFreshnessWarning(data)}'))
 const detailPageFn = detailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'PoolDetailPage')
 const detailRefreshFn = detailPageFn.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'refreshPoolDetail')
 const detailRefreshCode = ts.transpileModule(detailRefreshFn.getText(detailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
