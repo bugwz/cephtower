@@ -4,11 +4,21 @@ import ts from 'typescript'
 
 const source = readFileSync(new URL('../src/pages/cluster/UpgradePage.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('UpgradePage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-const fn = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'upgradeStatusFields')
-const code = ts.transpileModule(fn.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+const functions = tree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['upgradeStatusFields', 'upgradeControlAllowed'].includes(node.name.text))
+const code = ts.transpileModule(functions.map((fn) => fn.getText(tree)).join('\n'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
 const exports = {}
 new Function('exports', code)(exports)
 const fields = (value) => Object.fromEntries(exports.upgradeStatusFields(value))
+for (const action of ['pause', 'resume', 'stop']) {
+  assert.equal(exports.upgradeControlAllowed({}, false, action), false)
+  assert.equal(exports.upgradeControlAllowed({ in_progress: false, is_paused: false }, false, action), false)
+  assert.equal(exports.upgradeControlAllowed({ in_progress: true, is_paused: action === 'resume' }, true, action), false)
+  assert.equal(exports.upgradeControlAllowed({ in_progress: true, is_paused: action === 'resume' }, false, action), true)
+}
+assert.equal(exports.upgradeControlAllowed({ in_progress: true, is_paused: true }, false, 'pause'), false)
+assert.equal(exports.upgradeControlAllowed({ in_progress: true, is_paused: false }, false, 'resume'), false)
+assert.equal(exports.upgradeControlAllowed({ in_progress: true }, false, 'pause'), false)
+assert.equal(exports.upgradeControlAllowed({ in_progress: true }, false, 'resume'), false)
 assert.equal(fields({})['升级状态'], '未知')
 assert.equal(fields({ in_progress: false })['升级状态'], '未在升级')
 assert.equal(fields({ in_progress: true, is_paused: true })['升级状态'], '已暂停')
