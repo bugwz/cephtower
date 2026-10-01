@@ -151,6 +151,24 @@ assert.ok(poolSource.includes("if (!kind) throw new Error('池类型未采集或
 const initialFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolInitialValues')
 const initialCode = ts.transpileModule(initialFn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const initial = new Function('poolKind', `${initialCode}; return poolInitialValues`)(kind)
+const quotaUpdateCode = ts.transpileModule(poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['observedPoolQuota', 'poolQuotaUpdates'].includes(node.name.text)).map((node) => node.getText(poolTree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const quotaUpdate = new Function('quotaUnits', `${quotaUpdateCode}; return poolQuotaUpdates`)(['B', 'KiB', 'MiB', 'GiB', 'TiB'])
+const quotaValues = { quota_unit: 'GiB' }
+for (const unknown of [undefined, null, -1, 1.5, '0', NaN, Number.MAX_SAFE_INTEGER + 1]) {
+  const row = { quota_max_bytes: unknown, quota_max_objects: unknown, max_bytes: 100, max_objects: 100 }
+  assert.deepEqual(quotaUpdate(row, quotaValues, 7, 'p'), [])
+  assert.deepEqual(quotaUpdate(row, { ...quotaValues, quota_max_objects: 0 }, 7, 'p'), [{ cluster_id: 7, pool: 'p', operation: 'quota', field: 'max_objects', value: '0' }])
+}
+assert.deepEqual(quotaUpdate({ quota_max_bytes: 1024 ** 3, quota_max_objects: 12 }, { ...quotaValues, quota_max_bytes: 1, quota_max_objects: 12 }, 7, 'p'), [])
+assert.deepEqual(quotaUpdate({ quota_max_bytes: 1024, quota_max_objects: 12 }, { ...quotaValues, quota_max_bytes: null, quota_max_objects: null }, 7, 'p').map(({ field, value }) => ({ field, value })), [{ field: 'max_bytes', value: '0' }, { field: 'max_objects', value: '0' }])
+assert.deepEqual(quotaUpdate({}, { ...quotaValues, quota_max_bytes: 2 }, 7, 'p'), [{ cluster_id: 7, pool: 'p', operation: 'quota', field: 'max_bytes', value: String(2 * 1024 ** 3), quota_unit: 'GiB' }])
+for (const invalid of [-1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) assert.throws(() => quotaUpdate({}, { ...quotaValues, quota_max_objects: invalid }, 7, 'p'), /配额/)
+assert.throws(() => quotaUpdate({}, { ...quotaValues, quota_max_bytes: Number.MAX_SAFE_INTEGER }, 7, 'p'), /配额/)
+assert.throws(() => quotaUpdate({}, { quota_unit: 'invalid', quota_max_bytes: 0 }, 7, 'p'), /配额/)
+assert.ok(initialCode.includes('observedPoolQuota(row.quota_max_bytes)'))
+assert.ok(initialCode.includes('quota_max_bytes: quota.value'))
+assert.ok(initialCode.includes('quota_max_objects: observedPoolQuota(row.quota_max_objects)'))
+assert.ok(poolSource.includes('requests.push(...poolQuotaUpdates(row, values, clusterId, pool))'))
 for (const type of [undefined, null, 'unknown', 'other']) assert.throws(() => initial({ type }), /池类型未采集或不受支持/)
 const protectionFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolDataProtection')
 const protectionCode = ts.transpileModule(protectionFn.getText(poolTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText

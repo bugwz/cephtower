@@ -736,12 +736,12 @@ export function PoolManagementPage() {
               </Form.Item>
             ) : null}
             <Divider className="pool-form-divider" />
-            <Form.Item name="quota_max_bytes" label={<HelpLabel label="最大字节数" title="留空或设置为 0 表示禁用此配额；有效配额必须大于 0。" />}>
+            <Form.Item name="quota_max_bytes" label={<HelpLabel label="最大字节数" title="0 表示禁用配额。编辑时未采集的配额留空表示不修改；清空已知配额表示禁用。" />}>
               <InputNumber
                 min={0}
                 precision={0}
                 className="full-width-control"
-                placeholder="0"
+                placeholder={formMode === 'edit' ? '未采集 / 清空已知值以禁用' : '0'}
                 addonAfter={(
                   <Form.Item name="quota_unit" noStyle>
                     <Select className="pool-quota-unit-select" options={quotaUnits.map((value) => ({ label: value, value }))} />
@@ -749,8 +749,8 @@ export function PoolManagementPage() {
                 )}
               />
             </Form.Item>
-            <Form.Item name="quota_max_objects" label={<HelpLabel label="最大对象数" title="留空或设置为 0 表示禁用此配额；有效配额必须大于 0。" />}>
-              <InputNumber min={0} precision={0} className="full-width-control" placeholder="0" />
+            <Form.Item name="quota_max_objects" label={<HelpLabel label="最大对象数" title="0 表示禁用配额。编辑时未采集的配额留空表示不修改；清空已知配额表示禁用。" />}>
+              <InputNumber min={0} precision={0} className="full-width-control" placeholder={formMode === 'edit' ? '未采集 / 清空已知值以禁用' : '0'} />
             </Form.Item>
             {rbdConfigurationEnabled ? (
               <>
@@ -1086,8 +1086,8 @@ function normalizePoolRow(row: ApiRecord, profiles: ApiRecord[] = []): ApiRecord
 function poolInitialValues(row: ApiRecord, crushRules: ApiRecord[] = []): PoolFormValues {
   const kind = poolKind(row)
   if (!kind) throw new Error('池类型未采集或不受支持，无法编辑')
-  const quotaBytes = numberValue(row.quota_max_bytes ?? row.max_bytes) ?? 0
-  const quota = bytesForForm(quotaBytes, 'GiB')
+  const observedQuotaBytes = observedPoolQuota(row.quota_max_bytes)
+  const quota = observedQuotaBytes === undefined ? { value: undefined, unit: 'GiB' as QuotaUnit } : bytesForForm(observedQuotaBytes, 'GiB')
   const minBlobSize = bytesForForm(numberValue(row.compression_min_blob_size), 'B', true)
   const maxBlobSize = bytesForForm(numberValue(row.compression_max_blob_size), 'MiB', true)
   return {
@@ -1107,9 +1107,9 @@ function poolInitialValues(row: ApiRecord, crushRules: ApiRecord[] = []): PoolFo
     compression_max_blob_size: maxBlobSize.value,
     compression_max_blob_size_unit: maxBlobSize.unit,
     compression_required_ratio: numberValue(row.compression_required_ratio) ?? 0.875,
-    quota_max_bytes: quota.value ?? 0,
+    quota_max_bytes: quota.value,
     quota_unit: quota.unit,
-    quota_max_objects: numberValue(row.quota_max_objects ?? row.max_objects) ?? 0,
+    quota_max_objects: observedPoolQuota(row.quota_max_objects),
     rbd_mirroring: poolRbdMirroringMode(row),
     configuration: poolRbdConfiguration(row)
   }
@@ -1183,16 +1183,7 @@ function poolUpdateBodies(row: ApiRecord, values: PoolFormValues, clusterId: num
     pushField('compression_required_ratio', compressionRatioForUpdate(values.compression_required_ratio, current.compression_required_ratio), current.compression_required_ratio)
   }
 
-  const nextQuotaBytes = quotaBytes(values.quota_max_bytes, values.quota_unit)
-  const currentQuotaBytes = quotaBytes(current.quota_max_bytes, current.quota_unit)
-  if (nextQuotaBytes !== currentQuotaBytes) {
-    requests.push({ cluster_id: clusterId, pool, operation: 'quota', field: 'max_bytes', value: String(nextQuotaBytes), quota_unit: values.quota_unit })
-  }
-  const nextObjects = Math.trunc(values.quota_max_objects ?? 0)
-  const currentObjects = Math.trunc(current.quota_max_objects ?? 0)
-  if (nextObjects !== currentObjects) {
-    requests.push({ cluster_id: clusterId, pool, operation: 'quota', field: 'max_objects', value: String(nextObjects) })
-  }
+  requests.push(...poolQuotaUpdates(row, values, clusterId, pool))
 
   const nextApps = new Set(values.applications ?? [])
   const currentApps = new Set(current.applications ?? [])
@@ -1639,6 +1630,27 @@ function formatBytes(value?: number) {
     unitIndex += 1
   }
   return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`
+}
+
+function observedPoolQuota(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : undefined
+}
+
+function poolQuotaUpdates(row: ApiRecord, values: PoolFormValues, clusterId: number, pool: string): ApiRecord[] {
+  const requests: ApiRecord[] = []
+  for (const field of ['max_bytes', 'max_objects'] as const) {
+    const key = `quota_${field}` as const
+    const previous = observedPoolQuota(row[key])
+    const value = values[key]
+    if ((value === undefined || value === null) && previous === undefined) continue
+    const amount = value ?? 0
+    const next = field === 'max_bytes' ? amount * (1024 ** quotaUnits.indexOf(values.quota_unit)) : amount
+    if (observedPoolQuota(amount) === undefined || observedPoolQuota(next) === undefined || (field === 'max_bytes' && !quotaUnits.includes(values.quota_unit))) {
+      throw new Error('配额必须为非负安全整数，且字节数不能超出精确表示范围')
+    }
+    if (next !== previous) requests.push({ cluster_id: clusterId, pool, operation: 'quota', field, value: String(next), ...(field === 'max_bytes' ? { quota_unit: values.quota_unit } : {}) })
+  }
+  return requests
 }
 
 function quotaBytes(value: number | undefined, unit: QuotaUnit) {
