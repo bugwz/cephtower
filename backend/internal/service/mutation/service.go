@@ -2354,6 +2354,9 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
+		if !smbResourceIDPattern.MatchString(name) {
+			return command{}, invalid("SMB cluster ID must be 1 to 18 alphanumeric or hyphen characters, starting and ending with an alphanumeric character")
+		}
 		authMode := optional(p, "auth_mode")
 		if authMode == "" {
 			authMode = "user"
@@ -2479,6 +2482,9 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		if share == "" {
 			return command{}, invalid("name is required")
+		}
+		if !smbResourceIDPattern.MatchString(cluster) || !smbResourceIDPattern.MatchString(share) {
+			return command{}, invalid("SMB cluster and share IDs must be 1 to 18 alphanumeric or hyphen characters, starting and ending with an alphanumeric character")
 		}
 		filesystem, err := required(p, "filesystem")
 		if err != nil {

@@ -737,7 +737,7 @@ const definitions: Record<
       method: 'POST',
       successMessage: 'SMB 集群创建执行成功',
       fields: [
-        { name: 'name', label: '集群名称', required: true },
+        { name: 'name', label: '集群 ID', required: true, pattern: /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,16}[a-zA-Z0-9])?$/, patternMessage: '1–18 个英文字母、数字或连字符，首尾必须为字母或数字' },
         { name: 'count', label: 'SMB 实例数量（可选）', type: 'number', min: 1, placeholder: '留空使用 Ceph 默认部署数量' },
         { name: 'clustering', label: '集群协作模式（CTDB）', type: 'select', placeholder: '留空使用 Ceph 默认值', options: [{ label: '自动（单实例时关闭）', value: 'default' }, { label: '始终启用', value: 'always' }, { label: '始终禁用', value: 'never' }] },
         { name: 'smb_hosts', label: '部署主机（可选）', type: 'select', multiple: true, optionsLoader: smbHostOptions, placeholder: '选择当前集群主机；留空由 Ceph 选择' },
@@ -840,7 +840,7 @@ const definitions: Record<
       successMessage: 'SMB 共享创建执行成功',
       fields: [
         { name: 'cluster', label: 'SMB 集群', type: 'select', required: true, optionsLoader: smbClusterOptions },
-        { name: 'name', label: '共享 ID（创建后不可更改）', required: true },
+        { name: 'name', label: '共享 ID（创建后不可更改）', required: true, pattern: /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,16}[a-zA-Z0-9])?$/, patternMessage: '1–18 个英文字母、数字或连字符，首尾必须为字母或数字' },
         { name: 'share_name', label: '客户端共享名称', placeholder: '留空使用共享 ID；最多 64 个英文字符' },
         { name: 'readonly', label: '只读', type: 'select', required: true, options: [{ label: '只读', value: 'true' }, { label: '允许写入', value: 'false' }] },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
