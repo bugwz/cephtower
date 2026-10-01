@@ -551,7 +551,7 @@ function renderFormControl(field: MutationFormField) {
     return <Switch disabled={field.readOnly} />
   }
   if (field.type === 'select') {
-    return <Select mode={field.multiple ? 'multiple' : undefined} options={field.options ?? []} disabled={field.readOnly} placeholder={field.placeholder} />
+    return <Select allowClear={!field.required && !field.readOnly} mode={field.multiple ? 'multiple' : undefined} options={field.options ?? []} disabled={field.readOnly} placeholder={field.placeholder} />
   }
   if (field.type === 'textarea') {
     return <Input.TextArea rows={5} spellCheck={false} placeholder={field.placeholder} readOnly={field.readOnly} />
