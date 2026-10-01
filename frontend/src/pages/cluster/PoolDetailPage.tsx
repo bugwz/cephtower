@@ -10,7 +10,7 @@ import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
-import { poolPGStatus, poolCapacity, poolObjectCount, poolUsage, poolDataProtection, poolKind } from './PoolManagementPage'
+import { poolPGStatus, poolCapacity, poolObjectCount, poolUsage, poolDataProtection, poolKind, poolIORate } from './PoolManagementPage'
 
 const { Text } = Typography
 const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
@@ -209,6 +209,10 @@ function renderOverview(data: ApiRecord, decodedName: string) {
       <Descriptions.Item label="实际占用">{poolCapacity(data.bytes_used)}</Descriptions.Item>
       <Descriptions.Item label="最大可用">{poolCapacity(data.max_avail)}</Descriptions.Item>
       <Descriptions.Item label="对象数量">{poolObjectCount(data.objects)}</Descriptions.Item>
+      <Descriptions.Item label="读取速率（采集时）">{poolIORate(data.client_io_rate, 'read_bytes_sec')}</Descriptions.Item>
+      <Descriptions.Item label="写入速率（采集时）">{poolIORate(data.client_io_rate, 'write_bytes_sec')}</Descriptions.Item>
+      <Descriptions.Item label="读取 IOPS（采集时）">{poolIORate(data.client_io_rate, 'read_op_per_sec')}</Descriptions.Item>
+      <Descriptions.Item label="写入 IOPS（采集时）">{poolIORate(data.client_io_rate, 'write_op_per_sec')}</Descriptions.Item>
       <Descriptions.Item label="累计读取量">{poolCapacity(data.read_bytes)}</Descriptions.Item>
       <Descriptions.Item label="累计写入量">{poolCapacity(data.write_bytes)}</Descriptions.Item>
       <Descriptions.Item label="累计读取次数">{poolObjectCount(data.read_operations)}</Descriptions.Item>

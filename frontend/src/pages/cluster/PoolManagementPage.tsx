@@ -504,6 +504,10 @@ export function PoolManagementPage() {
           rowKeyCandidates={['natural_key', 'name', 'pool_name']}
           columns={[
             { key: 'name', title: '名称' },
+            { key: 'read_rate_display', title: '读取速率（采集时）' },
+            { key: 'write_rate_display', title: '写入速率（采集时）' },
+            { key: 'read_iops_display', title: '读取 IOPS（采集时）' },
+            { key: 'write_iops_display', title: '写入 IOPS（采集时）' },
             { key: 'data_protection_display', title: '数据保护', filterKey: 'type', render: (_, row) => <Tag color="default">{textValue(row.data_protection_display)}</Tag> },
             { key: 'applications_display', title: '应用标记', filterKey: 'applications', render: (_, row) => renderApplications(poolApplications(row)) },
             { key: 'pg_status_display', title: 'PG 状态', filterKey: 'pg_autoscale_mode' },
@@ -1028,6 +1032,12 @@ function poolListFreshnessWarning(data: PoolPageData): string | undefined {
   return undefined
 }
 
+export function poolIORate(value: unknown, field: 'read_bytes_sec' | 'write_bytes_sec' | 'read_op_per_sec' | 'write_op_per_sec'): string {
+  const rate = isRecord(value) ? value[field] : undefined
+  if (typeof rate !== 'number' || !Number.isSafeInteger(rate) || rate < 0) return '未采集'
+  return field.endsWith('bytes_sec') ? `${poolCapacity(rate)}/s` : `${rate.toLocaleString('zh-CN')} op/s`
+}
+
 function normalizePoolRow(row: ApiRecord): ApiRecord {
   const name = resourceName(row)
   const poolType = poolKind(row)
@@ -1036,6 +1046,10 @@ function normalizePoolRow(row: ApiRecord): ApiRecord {
     ...row,
     name,
     type: poolType ?? '未知',
+    read_rate_display: poolIORate(row.client_io_rate, 'read_bytes_sec'),
+    write_rate_display: poolIORate(row.client_io_rate, 'write_bytes_sec'),
+    read_iops_display: poolIORate(row.client_io_rate, 'read_op_per_sec'),
+    write_iops_display: poolIORate(row.client_io_rate, 'write_op_per_sec'),
     data_protection_display: poolDataProtection(row),
     applications: poolApplications(row),
     applications_display: poolApplications(row).join(', '),

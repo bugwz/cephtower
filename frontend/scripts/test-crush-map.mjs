@@ -159,6 +159,15 @@ assert.ok(poolSource.includes('objects_display: poolObjectCount(row.objects)'))
 const capacityFns = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['poolCapacity', 'formatBytes'].includes(node.name.text))
 const capacityCode = ts.transpileModule(capacityFns.map((fn) => fn.getText(poolTree).replace('export ', '')).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const capacity = new Function(`${capacityCode}; return poolCapacity`)()
+const ioRateFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolIORate')
+const ioRateCode = ts.transpileModule(ioRateFn.getText(poolTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const ioRate = new Function('isRecord', 'poolCapacity', `${ioRateCode}; return poolIORate`)((value) => value !== null && typeof value === 'object' && !Array.isArray(value), capacity)
+assert.equal(ioRate({ read_bytes_sec: 1024 }, 'read_bytes_sec'), '1.0 KiB/s')
+assert.equal(ioRate({ write_bytes_sec: 0 }, 'write_bytes_sec'), '0 B/s')
+assert.equal(ioRate({ read_op_per_sec: 2 }, 'read_op_per_sec'), '2 op/s')
+assert.equal(ioRate({ write_op_per_sec: 0 }, 'write_op_per_sec'), '0 op/s')
+for (const value of [undefined, null, -1, 1.5, '4', Infinity]) assert.equal(ioRate({ read_bytes_sec: value }, 'read_bytes_sec'), '未采集')
+assert.equal(ioRate({}, 'read_bytes_sec'), '未采集')
 assert.equal(capacity(0), '0 B')
 assert.equal(capacity(1024), '1.0 KiB')
 assert.equal(capacity(1099511627776), '1.0 TiB')
@@ -183,6 +192,10 @@ assert.equal(pgStatus({ 'active+clean': 8, down: 2 }), '8 active+clean, 2 down')
 assert.equal(pgStatus({ 'active+degraded': 3 }), '3 active+degraded')
 const detailSource = readFileSync(new URL('../src/pages/cluster/PoolDetailPage.tsx', import.meta.url), 'utf8')
 const detailTree = ts.createSourceFile('PoolDetailPage.tsx', detailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+for (const field of ['read_bytes_sec', 'write_bytes_sec', 'read_op_per_sec', 'write_op_per_sec']) {
+  assert.ok(poolSource.includes(`poolIORate(row.client_io_rate, '${field}')`))
+  assert.ok(detailSource.includes(`poolIORate(data.client_io_rate, '${field}')`))
+}
 for (const name of ['autoscaleNumber', 'autoscaleBoolean']) {
   const fn = detailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === name)
   const code = ts.transpileModule(fn.getText(detailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText

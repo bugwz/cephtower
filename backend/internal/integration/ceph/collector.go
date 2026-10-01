@@ -860,6 +860,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 	poolPGStates := p.collectPoolPGStates(ctx, access)
 	poolUsage := p.collectPoolUsage(ctx, access)
 	poolAutoscale := p.collectPoolAutoscale(ctx, access)
+	poolIO := p.collectPoolIO(ctx, access)
 	for _, wire := range pools {
 		if strings.TrimSpace(wire.PoolName) == "" {
 			return nil, fmt.Errorf("parse collect.pool response: pool_name is required")
@@ -872,6 +873,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		}
 		quota := p.collectPoolQuota(ctx, access, wire.PoolName)
 		payload := cephdomain.Pool{
+			ClientIORate:    poolIO[wire.Pool],
 			AutoscaleStatus: poolAutoscale[wire.Pool],
 			PGNumTarget:     wire.PGNumTarget, PGPNumTarget: wire.PGPNumTarget,
 			ReadOperations: poolUsage[wire.Pool].ReadOperations, WriteOperations: poolUsage[wire.Pool].WriteOperations,

@@ -12,6 +12,7 @@ type OSD struct {
 	CrushPath   map[string]string `json:"crush_path,omitempty"`
 }
 type Pool struct {
+	ClientIORate             *PoolClientIORate    `json:"client_io_rate"`
 	AutoscaleStatus          *PoolAutoscaleStatus `json:"autoscale_status"`
 	Name                     string               `json:"name"`
 	ID                       int64                `json:"id"`
@@ -65,6 +66,13 @@ type PoolAutoscaleStatus struct {
 	EffectiveTargetRatio *float64 `json:"effective_target_ratio"`
 	Bias                 *float64 `json:"bias"`
 	Bulk                 *bool    `json:"bulk"`
+}
+
+type PoolClientIORate struct {
+	ReadBytesSec  *uint64 `json:"read_bytes_sec"`
+	WriteBytesSec *uint64 `json:"write_bytes_sec"`
+	ReadOpsSec    *uint64 `json:"read_op_per_sec"`
+	WriteOpsSec   *uint64 `json:"write_op_per_sec"`
 }
 type PoolConfig struct {
 	Name        string `json:"name"`
