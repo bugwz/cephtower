@@ -2362,6 +2362,13 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("auth_mode is not supported")
 		}
 		args := []string{"smb", "cluster", "create", name, authMode}
+		if _, exists := p["clustering"]; exists {
+			mode, err := enum(p, "clustering", "default", "always", "never")
+			if err != nil {
+				return command{}, err
+			}
+			args = append(args, "--clustering="+mode)
+		}
 		placement := []string{}
 		if _, exists := p["count"]; exists {
 			count, err := optionalPositiveInteger(p, "count")

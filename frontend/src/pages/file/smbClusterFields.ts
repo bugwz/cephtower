@@ -5,7 +5,9 @@ export function smbClusterInitialValues(row?: ApiRecord) {
   const domain = row?.domain_settings as ApiRecord | undefined
   const joins = domain?.join_sources
   const count = (row?.placement as ApiRecord | undefined)?.count
+  const clustering = row?.clustering
   return {
+    clustering: typeof clustering === 'string' && ['default', 'always', 'never'].includes(clustering) ? clustering : undefined,
     count: typeof count === 'number' ? count : undefined,
     domain_realm: typeof domain?.realm === 'string' ? domain.realm : undefined,
     domain_join_ref: Array.isArray(joins) && joins.every((source) => source && source.source_type === 'resource' && typeof source.ref === 'string') ? joins.map((source) => source.ref).join('\n') : undefined,
@@ -20,6 +22,12 @@ export function smbClusterCountBody(values: ApiRecord) {
   const count = Number(values.count)
   if (!Number.isSafeInteger(count) || count < 1) throw new Error('实例数量必须为正整数')
   return { count }
+}
+
+export function smbClusterClusteringBody(values: ApiRecord) {
+  if (values.clustering === undefined) return {}
+  if (typeof values.clustering !== 'string' || !['default', 'always', 'never'].includes(values.clustering)) throw new Error('请选择有效的集群协作模式')
+  return { clustering: values.clustering }
 }
 
 export function smbClusterHostsBody(values: ApiRecord) {

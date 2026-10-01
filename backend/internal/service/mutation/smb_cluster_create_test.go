@@ -6,6 +6,36 @@ import (
 	"testing"
 )
 
+func TestSMBClusterClusteringMode(t *testing.T) {
+	p := map[string]any{"name": "smb-a", "user_group_ref": []string{"users"}}
+	request := Request{ResourceKey: "smb/cluster/smb-a", Parameters: p}
+	p["auth_mode"] = "user"
+	before := []byte(`{"resource_type":"ceph.smb.cluster","cluster_id":"smb-a","auth_mode":"user","clustering":"never"}`)
+	for _, mode := range []string{"default", "always", "never"} {
+		p["clustering"] = mode
+		spec, err := build(Request{Action: "smb_cluster.create"}, p)
+		if err != nil || !slices.Contains(spec.args, "--clustering="+mode) {
+			t.Fatalf("wrong clustering command: %v %v", spec.args, err)
+		}
+		data, err := smbClusterUpdateJSON(before, request)
+		if err != nil || !smbClusterUpdateMatches(data, data, request) {
+			t.Fatalf("invalid update: %s %v", data, err)
+		}
+		if mode != "never" && smbClusterUpdateMatches(data, before, request) {
+			t.Fatal("stale mode accepted")
+		}
+	}
+	for _, bad := range []any{nil, true, "", "invalid"} {
+		p["clustering"] = bad
+		if _, err := build(Request{Action: "smb_cluster.create"}, p); err == nil {
+			t.Fatalf("invalid mode accepted: %v", bad)
+		}
+		if _, err := smbClusterUpdateJSON(before, request); err == nil {
+			t.Fatalf("invalid update accepted: %v", bad)
+		}
+	}
+}
+
 func TestSMBClusterCreateUserReferences(t *testing.T) {
 	p := map[string]any{"name": "smb-a", "user_group_ref": []string{"team", "ops"}}
 	spec, err := build(Request{Action: "smb_cluster.create"}, p)

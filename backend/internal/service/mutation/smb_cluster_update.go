@@ -51,6 +51,13 @@ func smbClusterUpdateJSON(data []byte, request Request) ([]byte, error) {
 		return nil, err
 	}
 	record["auth_mode"] = mode
+	if _, exists := request.Parameters["clustering"]; exists {
+		clustering, err := enum(request.Parameters, "clustering", "default", "always", "never")
+		if err != nil {
+			return nil, err
+		}
+		record["clustering"] = clustering
+	}
 	if value, exists := request.Parameters["smb_hosts"]; exists {
 		data, err := json.Marshal(value)
 		var hosts []string

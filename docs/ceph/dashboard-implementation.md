@@ -1974,3 +1974,9 @@ SMB 集群编辑支持显式替换部署主机：界面开关默认关闭，开�
 不允许 hosts 与 label 共存，因此替换时移除 label 和 host_pattern，保留 count 等其他
 配置；未提交该字段则完全保留原部署配置。沿用更新前读取、更新后完整配置回读校验。
 测试覆盖互斥约束替换、数量保留、非法主机及前端显式选择；未实测真实服务重新部署。
+
+SMB 创建和编辑表单增加 CTDB clustering 模式，匹配参考枚举 default/always/never。
+创建通过 `smb cluster create --clustering=...`，编辑在保留原配置的基础上通过
+`smb apply` 更新 clustering 并回读校验。API 只允许三个原生枚举值，字段省略时
+创建使用原生默认、编辑保留原值。测试覆盖三种模式、非法值和前端初始化/请求转换；
+尚未验证真实 CTDB 服务行为。

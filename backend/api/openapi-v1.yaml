@@ -309,6 +309,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -1004,6 +1007,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -2994,6 +3000,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -3689,6 +3698,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -4602,6 +4614,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -5391,6 +5406,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -6086,6 +6104,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -6972,6 +6993,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -7763,6 +7787,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -8459,6 +8486,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -9398,6 +9428,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -10187,6 +10220,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -10978,6 +11014,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -11767,6 +11806,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -12462,6 +12504,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -13403,6 +13448,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -14594,6 +14642,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -15290,6 +15341,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -15986,6 +16040,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -17319,6 +17376,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -18160,6 +18220,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -18951,6 +19014,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -19646,6 +19712,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -20997,6 +21066,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -21692,6 +21764,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -22404,6 +22479,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -23193,6 +23271,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -23888,6 +23969,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -24584,6 +24668,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -25558,6 +25645,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -26444,6 +26534,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -27233,6 +27326,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -27928,6 +28024,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -28756,6 +28855,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -29452,6 +29554,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -30563,6 +30668,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -31544,6 +31652,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -32333,6 +32444,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -33124,6 +33238,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -33913,6 +34030,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -34608,6 +34728,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -35494,6 +35617,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -36283,6 +36409,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -36978,6 +37107,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -37769,6 +37901,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -38464,6 +38599,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -39255,6 +39393,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -39950,6 +40091,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -40741,6 +40885,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -41530,6 +41677,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -42225,6 +42375,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -43184,6 +43337,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -43974,6 +44130,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -44670,6 +44829,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -45366,6 +45528,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -46156,6 +46321,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -46886,6 +47054,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -47867,6 +48038,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -48656,6 +48830,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -49351,6 +49528,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -50142,6 +50322,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -50838,6 +51021,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -51534,6 +51720,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -52230,6 +52419,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -53021,6 +53213,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -53810,6 +54005,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -54505,6 +54703,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -55318,6 +55519,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -56013,6 +56217,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -56708,6 +56915,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -57790,6 +58000,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -58558,6 +58771,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -59254,6 +59470,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -59949,6 +60168,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -60740,6 +60962,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -61530,6 +61755,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -62226,6 +62454,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -63033,6 +63264,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -63728,6 +63962,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -64423,6 +64660,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -65119,6 +65359,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -65910,6 +66153,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -66699,6 +66945,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -67394,6 +67643,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -68191,6 +68443,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -68887,6 +69142,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -69583,6 +69841,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -70374,6 +70635,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -71070,6 +71334,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -71765,6 +72032,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -72556,6 +72826,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -73251,6 +73524,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -73946,6 +74222,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -74642,6 +74921,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -75528,6 +75810,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -76317,6 +76602,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -77012,6 +77300,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -77708,6 +77999,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -78404,6 +78698,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -79099,6 +79396,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -79795,6 +80095,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -80491,6 +80794,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -81282,6 +81588,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -81977,6 +82286,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -82673,6 +82985,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -83368,6 +83683,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -84394,6 +84712,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -85183,6 +85504,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -85878,6 +86202,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -86669,6 +86996,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -87458,6 +87788,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -88153,6 +88486,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -88944,6 +89280,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -89733,6 +90072,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -90428,6 +90770,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -91314,6 +91659,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:
@@ -92010,6 +92358,9 @@ paths:
                   type: string
                 cluster_id:
                   type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
                 cmount_path:
                   type: string
                 code:

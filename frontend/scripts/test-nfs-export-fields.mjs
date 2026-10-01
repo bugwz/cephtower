@@ -249,6 +249,12 @@ assert.deepEqual(clusterFields.smbClusterHostsBody({ smb_hosts: ['node-a', 'node
 assert.deepEqual(clusterFields.smbClusterHostsBody({ smb_hosts: [] }), {})
 assert.throws(() => clusterFields.smbClusterHostsBody({ smb_hosts: 'node-a' }))
 assert.deepEqual(clusterFields.smbClusterHostsBody({}), {})
+assert.deepEqual(clusterFields.smbClusterClusteringBody({}), {})
+for (const clustering of ['default', 'always', 'never']) {
+  assert.deepEqual(clusterFields.smbClusterClusteringBody({ clustering }), { clustering })
+  assert.equal(clusterFields.smbClusterInitialValues({ clustering }).clustering, clustering)
+}
+assert.throws(() => clusterFields.smbClusterClusteringBody({ clustering: 'invalid' }))
 assert.deepEqual(clusterFields.smbClusterUpdateHostsBody({ smb_hosts: ['node-a'] }), {})
 assert.deepEqual(clusterFields.smbClusterUpdateHostsBody({ replace_smb_hosts: true, smb_hosts: ['node-a'] }), { smb_hosts: ['node-a'] })
 assert.throws(() => clusterFields.smbClusterUpdateHostsBody({ replace_smb_hosts: true, smb_hosts: [] }))
