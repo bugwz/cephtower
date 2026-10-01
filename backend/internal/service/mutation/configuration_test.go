@@ -1,11 +1,57 @@
 package mutation
 
 import (
+	cephdomain "cephtower/backend/internal/domain/ceph"
+	"context"
 	"encoding/base64"
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
 )
+
+func TestConfigurationDeletionConfirmsScopedAbsence(t *testing.T) {
+	s, _, id := newCephUserService(t)
+	r := Request{ClusterID: id, Action: "config_value.delete", ResourceKey: configurationTestKey("osd/class:ssd/host:node1", "test")}
+	e := &directoryRenameExecutor{outputs: map[string]string{r.Action: "removed"}}
+	s.executor = e
+	for _, test := range []struct {
+		data  string
+		valid bool
+	}{
+		{`[]`, true},
+		{`[{"section":"global","name":"test","value":""}]`, true},
+		{`[{"section":"osd","mask":"class:ssd","name":"test","value":"0"}]`, true},
+		{`[{"section":"osd","mask":"host:node1/class:ssd","name":"other","value":"false"}]`, true},
+		{`[{"section":"osd","mask":"host:node1/class:ssd","name":"test","value":""}]`, false},
+		{`[{"section":"osd","location_type":"host","location_value":"node1","device_class":"ssd","name":"test","value":"0"}]`, false},
+		{`null`, false}, {`{}`, false}, {`[] {}`, false},
+		{`[{"section":"global","name":"other"}]`, false},
+		{`[{"section":"global","name":"other","value":null}]`, false},
+		{`[{"section":"osd","location_type":"host","name":"other","value":""}]`, false},
+		{`[{"section":"osd","mask":"class:hdd","device_class":"ssd","name":"other","value":""}]`, false},
+		{`[{"section":"global","name":"other","value":""},{"section":"global","name":"other","value":""}]`, false},
+	} {
+		e.outputs[r.Action+".post_check"] = test.data
+		_, err := s.Execute(context.Background(), r)
+		if test.valid {
+			if err != nil {
+				t.Fatal(test.data, err)
+			}
+			continue
+		}
+		var failure *cephdomain.ActionError
+		if !errors.As(err, &failure) || failure.Code != "post_check_failed" || failure.Retryable {
+			t.Fatal(test.data, err)
+		}
+	}
+	e.failID = r.Action + ".post_check"
+	_, err := s.Execute(context.Background(), r)
+	var failure *cephdomain.ActionError
+	if !errors.As(err, &failure) || failure.Code != "post_check_failed" || failure.Retryable {
+		t.Fatal(err)
+	}
+}
 
 func TestConfigurationPreservesScopesAndValues(t *testing.T) {
 	for _, value := range []string{"", "-1", "prefix with spaces", `{"setting":true}`, "--help", " x ", "first\nsecond", "--help\nsecond"} {

@@ -284,6 +284,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "config_value.delete" && (err != nil || !configurationDeleted(request.ResourceKey, checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "configuration removal was accepted but scoped absence could not be verified; inspect configuration before retrying", Retryable: false}
+		}
 		if upgradeTarget != nil && (err != nil || !upgradeStartMatches(upgradeTarget, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "upgrade start was accepted but the checked target is not confirmed running; inspect upgrade status before retrying", Retryable: false}
 		}
