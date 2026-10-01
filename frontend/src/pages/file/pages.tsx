@@ -8,6 +8,8 @@ import { filesystemEnabledText } from './cephfsFilesystemState'
 import { formatDateTime } from '../../utils/time'
 import { CephFSPermissions, CephFSUsage } from './CephFSResourceUsage'
 import { cephFSBytes, cephFSQuota } from './cephfsSubvolumeSummary'
+import { Alert, Tag } from 'antd'
+import { subvolumeReadyReason, subvolumeState, subvolumeType } from './cephfsSubvolumeState'
 
 export function FilePoolsPage() {
   return <ResourceListPage definition={definitions.filePools} />
@@ -302,7 +304,7 @@ const definitions: Record<
     path: '/filesystem/subvolumes',
     requiredCapabilities: ['cephfs_volume'],
     rowKeyCandidates: ['natural_key', 'name'],
-    detailContent: (row, clusterId) => <SubvolumeSnapshotVisibility key={`${clusterId}/${fsName(row)}/${groupName(row)}/${subvolumeName(row)}`} clusterId={clusterId} filesystem={fsName(row)} subvolume={subvolumeName(row)} group={groupName(row)} resourceVersion={row.resource_version == null ? undefined : String(row.resource_version)} />,
+    detailContent: (row, clusterId) => subvolumeReadyReason(row) ? <Alert type="warning" showIcon message={subvolumeReadyReason(row)} description="当前不读取或修改子卷目录的快照可见性；保留快照仍可在 CephFS 快照页面查看和管理。" /> : <SubvolumeSnapshotVisibility key={`${clusterId}/${fsName(row)}/${groupName(row)}/${subvolumeName(row)}`} clusterId={clusterId} filesystem={fsName(row)} subvolume={subvolumeName(row)} group={groupName(row)} resourceVersion={row.resource_version == null ? undefined : String(row.resource_version)} />,
     createAction: {
       title: '新建子卷',
       buttonLabel: '新建子卷',
@@ -353,6 +355,7 @@ const definitions: Record<
     },
     updateAction: {
       title: '更新子卷',
+      disabledWhen: subvolumeReadyReason,
       path: '/filesystem/subvolume',
       method: 'PATCH',
       successMessage: '子卷更新执行成功',
@@ -420,6 +423,9 @@ const definitions: Record<
       { key: 'fs', title: '文件系统' },
       { key: 'group', title: '子卷组' },
       { key: 'name', title: '名称' },
+      { key: 'state', title: '子卷状态', render: (value) => { const state = subvolumeState(value); return <Tag color={state.color}>{state.text}</Tag> } },
+      { key: 'type', title: '类型', render: subvolumeType },
+      { key: 'pool_namespace', title: 'RADOS 隔离命名空间' },
       { key: 'clone_state', title: '克隆状态' },
       { key: 'source', title: '克隆来源' },
       { key: 'clone_progress', title: '克隆进度' },

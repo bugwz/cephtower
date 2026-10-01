@@ -427,7 +427,7 @@ function buildColumns(
       <TableActions>
         <TableAction onClick={() => openDetail(row)}>详情</TableAction>
         {definition.updateAction ? (
-          <TableAction disabled={mutationBlocked} onClick={() => openForm(definition.updateAction!, row)}>编辑</TableAction>
+          <TableAction disabled={mutationBlocked || Boolean(definition.updateAction.disabledWhen?.(row))} title={definition.updateAction.disabledWhen?.(row)} onClick={() => openForm(definition.updateAction!, row)}>编辑</TableAction>
         ) : null}
         {definition.extraActions?.length ? (
           <Dropdown

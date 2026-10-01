@@ -251,7 +251,11 @@ func (p *NativeProvider) collectCephFSSubvolumeScope(ctx context.Context, access
 				}
 			}
 		}
-		rows = append(rows, Observation{Kind: "subvolume", NaturalKey: parent, ParentKind: "filesystem", ParentKey: filesystem, Name: subvolume.Name, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
+		state := textField(payload, "state")
+		if state == "" {
+			state = "unknown"
+		}
+		rows = append(rows, Observation{Kind: "subvolume", NaturalKey: parent, ParentKind: "filesystem", ParentKey: filesystem, Name: subvolume.Name, Status: state, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 
 		snapshotArgs := []string{"fs", "subvolume", "snapshot", "ls", filesystem, subvolume.Name}
 		if group != "" {

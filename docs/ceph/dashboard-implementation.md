@@ -1266,6 +1266,18 @@ in-progress 状态开放取消操作，调用 `fs clone cancel` 后以 `fs clone
 表格统一格式化原生时间，原生 info 不返回时间时显示缺失，不用缓存时间代替。
 无需新增命令或推导近似值；离线测试验证字段隔离，未连接真实集群。
 
+### CephFS 子卷就绪状态
+
+子卷列表展示 `fs subvolume info` 的 state、type 和 pool_namespace，区分普通子卷、
+克隆子卷和隔离命名空间。资源 status 改为原生 state；缺失时为 unknown，不再固定
+为 available。参考 volumes 的 V2 info 在 snapshot-retained 状态只返回类型、特性和
+状态：子卷目录已删除但快照保留。因此页面显示明确警告，只有 complete 状态开放
+配额编辑和目录快照可见性入口，不对保留快照的子卷发起目录可见性读取。保留快照
+仍可在快照页面管理，删除和克隆取消仍按各自规则处理。后端原生命令继续验证操作
+结果；页面就绪限制不替代后端权限、版本校验或原生命令的实际状态检查。
+离线测试覆盖原生采集→数据库→API 的 complete、snapshot-retained、unknown 状态、
+克隆状态与命名空间，以及全部状态的页面就绪规则。未连接真实集群。
+
 ### CephFS 配额使用率和权限展示
 
 子卷与子卷组列表根据原生 info 的 bytes_quota、bytes_used、bytes_pcent 展示二进制
