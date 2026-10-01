@@ -10,7 +10,7 @@ import (
 )
 
 func TestSMBShareLifecycleReadback(t *testing.T) {
-	for _, action := range []string{"smb_share.create", "smb_share.delete"} {
+	for _, action := range []string{"smb_share.delete"} {
 		t.Run(action, func(t *testing.T) {
 			service, _, id := newCephUserService(t)
 			request := Request{ClusterID: id, Action: action, ResourceKey: "smb/share/" + base64.RawURLEncoding.EncodeToString([]byte("a\x00docs")), Parameters: map[string]any{"cluster": "a", "name": "docs", "filesystem": "fs"}}

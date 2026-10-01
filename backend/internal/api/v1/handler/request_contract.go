@@ -297,7 +297,11 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	contracts["smb_share.update"].Fields["browseable"] = boolField(false)
 	contracts["smb_share.update"].Fields["comment"] = stringField(false)
 	contracts["smb_share.update"].Fields["restrict_access"] = boolField(false)
+	contracts["smb_share.create"].Fields["restrict_access"] = boolField(false)
+	contracts["smb_share.create"].Fields["browseable"] = boolField(false)
+	contracts["smb_share.create"].Fields["comment"] = stringField(false)
 	contracts["smb_share.update"].Fields["login_control"] = objectArrayField(false, map[string]JSONField{"name": stringField(true), "category": stringField(true, "user", "group"), "access": stringField(true, "none", "read", "read-write", "admin")})
+	contracts["smb_share.create"].Fields["login_control"] = contracts["smb_share.update"].Fields["login_control"]
 	add([]string{"config_value.set"}, true, map[string]JSONField{"value": stringField(true)})
 	matcher := map[string]JSONField{"name": stringField(true), "value": stringField(true), "isRegex": boolField(true), "isEqual": boolField(true)}
 	add([]string{"silence.create"}, true, map[string]JSONField{"matchers": objectArrayField(true, matcher), "startsAt": stringField(true), "endsAt": stringField(true), "createdBy": stringField(true), "comment": stringField(true)})

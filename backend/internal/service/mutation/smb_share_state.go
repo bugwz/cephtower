@@ -8,19 +8,11 @@ import (
 )
 
 func smbShareStateMatches(request Request, data []byte) bool {
-	name := optional(request.Parameters, "name")
-	switch request.Action {
-	case "smb_share.create":
-	case "smb_share.delete":
-		_, share, err := decodePair(last(resourceTail(request.ResourceKey)))
-		if err != nil {
-			return false
-		}
-		name = share
-	default:
+	if request.Action != "smb_share.delete" {
 		return false
 	}
-	return smbResourcePresenceMatches(data, name, request.Action == "smb_share.create")
+	_, share, err := decodePair(last(resourceTail(request.ResourceKey)))
+	return err == nil && smbResourcePresenceMatches(data, share, false)
 }
 
 func smbClusterStateMatches(request Request, data []byte) bool {

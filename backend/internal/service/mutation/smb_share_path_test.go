@@ -14,7 +14,7 @@ func TestSMBShareNativePaths(t *testing.T) {
 		}
 		p := map[string]any{"cluster": "a", "name": "docs", "filesystem": "fs", "path": input}
 		spec, err := build(Request{Action: "smb_share.create"}, p)
-		if err != nil || spec.args[6] != want {
+		if err != nil || shareCreatePayload(t, spec.stdin)["cephfs"].(map[string]any)["path"] != want {
 			t.Fatalf("create path: %v %v", spec.args, err)
 		}
 		request := Request{ResourceKey: "smb/share/" + base64.RawURLEncoding.EncodeToString([]byte("a\x00docs")), Parameters: p}

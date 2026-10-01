@@ -39,7 +39,7 @@ func TestSMBShareComment(t *testing.T) {
 func TestSMBShareDisplayName(t *testing.T) {
 	p := map[string]any{"cluster": "a", "name": "docs", "filesystem": "fs", "share_name": "Team Documents"}
 	spec, err := build(Request{Action: "smb_share.create"}, p)
-	if err != nil || spec.args[len(spec.args)-1] != "--share-name=Team Documents" || spec.args[4] != "docs" {
+	if err != nil || shareCreatePayload(t, spec.stdin)["name"] != "Team Documents" || shareCreatePayload(t, spec.stdin)["share_id"] != "docs" {
 		t.Fatalf("name and identity not separated: %v %v", spec.args, err)
 	}
 	request := Request{ResourceKey: "smb/share/" + base64.RawURLEncoding.EncodeToString([]byte("a\x00docs")), Parameters: p}

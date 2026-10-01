@@ -223,6 +223,12 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			return cephdomain.ActionResult{}, invalid("source must be an existing directory")
 		}
 	}
+	if request.Action == "smb_share.create" {
+		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: []string{"smb", "share", "ls", optional(request.Parameters, "cluster"), "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if checkErr != nil || !smbResourcePresenceMatches(checked.Stdout, optional(request.Parameters, "name"), false) {
+			return cephdomain.ActionResult{}, invalid("SMB share already exists or absence could not be verified")
+		}
+	}
 	if isSMBAuthWrite(request.Action) {
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 		if checkErr != nil || !smbAuthPresenceMatches(request, checked.Stdout, strings.HasSuffix(request.Action, ".update")) {
@@ -242,7 +248,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		return cephdomain.ActionResult{}, normalize(err)
 	}
-	if request.Action == "smb_share.update" || request.Action == "smb_cluster.update" || isSMBAuthDelete(request.Action) || isSMBAuthWrite(request.Action) {
+	if request.Action == "smb_share.create" || request.Action == "smb_share.update" || request.Action == "smb_cluster.update" || isSMBAuthDelete(request.Action) || isSMBAuthWrite(request.Action) {
 		var applied struct {
 			Success bool `json:"success"`
 		}
@@ -314,7 +320,10 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if (request.Action == "smb_usersgroups.create" || request.Action == "smb_usersgroups.update") && !smbUsersGroupsCreated(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB user group metadata could not be verified; the change may already have taken effect", Retryable: true}
 		}
-		if (request.Action == "smb_share.create" || request.Action == "smb_share.delete") && !smbShareStateMatches(request, checked.Stdout) {
+		if request.Action == "smb_share.create" && !smbShareUpdateMatches(spec.stdin, checked.Stdout, smbShareCreateRequest(request.Parameters)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB share settings could not be verified; creation may already have taken effect", Retryable: true}
+		}
+		if request.Action == "smb_share.delete" && !smbShareStateMatches(request, checked.Stdout) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "SMB share command was accepted but its expected presence or absence could not be verified; the change may already have taken effect", Retryable: true}
 		}
 		if (request.Action == "smb_cluster.create" || request.Action == "smb_cluster.delete") && !smbClusterStateMatches(request, checked.Stdout) {
@@ -2554,47 +2563,13 @@ func build(request Request, p map[string]any) (command, error) {
 		if action == "smb_share.update" {
 			return ceph([]string{"smb", "apply", "-i", "-", "--format", "json"}, []string{"smb", "show", "ceph.smb.share." + cluster + "." + share, "--format", "json"}), nil
 		}
-		path := optional(p, "path")
-		if path == "" {
-			path = "/"
-		}
-		args := []string{"smb", "share", "create", cluster, share, filesystem, path}
-		cleanedPath, err := smbSharePath(path)
+		payload, err := smbShareCreateJSON(p, cluster, share, filesystem)
 		if err != nil {
 			return command{}, err
 		}
-		args[len(args)-1] = cleanedPath
-		if value, exists := p["subvolume"]; exists {
-			subvolume, ok := value.(string)
-			if !ok || subvolume == "" || strings.ContainsAny(subvolume, "\x00\r\n") {
-				return command{}, invalid("subvolume must be a name or group/name")
-			}
-			parts := strings.Split(subvolume, "/")
-			if len(parts) > 2 {
-				return command{}, invalid("subvolume must be a name or group/name")
-			}
-			for _, part := range parts {
-				if strings.TrimSpace(part) == "" || part == "." || part == ".." {
-					return command{}, invalid("subvolume must be a name or group/name")
-				}
-			}
-			args = append(args, "--subvolume="+subvolume)
-		}
-		if value, exists := p["readonly"]; exists {
-			readonly, ok := value.(bool)
-			if !ok {
-				return command{}, invalid("readonly must be a boolean")
-			}
-			if readonly {
-				args = append(args, "--readonly")
-			}
-		}
-		if name, exists, err := smbShareName(p); err != nil {
-			return command{}, err
-		} else if exists {
-			args = append(args, "--share-name="+name)
-		}
-		return ceph(args, []string{"smb", "share", "ls", cluster, "--format", "json"}), nil
+		result := ceph([]string{"smb", "apply", "-i", "-", "--format", "json"}, []string{"smb", "show", "ceph.smb.share." + cluster + "." + share, "--format", "json"})
+		result.stdin = payload
+		return result, nil
 	case "smb_share.delete":
 		cluster, share, err := decodePair(last(tail))
 		if err != nil {

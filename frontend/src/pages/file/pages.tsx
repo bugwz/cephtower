@@ -952,6 +952,11 @@ const definitions: Record<
       method: 'POST',
       successMessage: 'SMB 共享创建执行成功',
       fields: [
+        { name: 'replace_login_control', label: '配置登录控制', type: 'boolean' },
+        { name: 'restrict_access', label: '仅允许规则中获准的用户/组访问', type: 'boolean', visibleWhen: (values) => values.replace_login_control === true },
+        { name: 'login_control', label: '登录控制规则', renderControl: () => <SMBLoginControlEditor />, visibleWhen: (values) => values.replace_login_control === true },
+        { name: 'comment', label: '共享描述', placeholder: '单行文本' },
+        { name: 'browseable', label: '可浏览', type: 'select', options: [{ label: '显示共享', value: 'true' }, { label: '隐藏共享（不是访问控制）', value: 'false' }] },
         { name: 'cluster', label: 'SMB 集群', type: 'select', required: true, optionsLoader: smbClusterOptions },
         { name: 'name', label: '共享 ID（创建后不可更改）', required: true, pattern: /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,16}[a-zA-Z0-9])?$/, patternMessage: '1–18 个英文字母、数字或连字符，首尾必须为字母或数字' },
         { name: 'share_name', label: '客户端共享名称', placeholder: '留空使用共享 ID；最多 64 个英文字符' },
@@ -967,7 +972,8 @@ const definitions: Record<
         cluster: String(values.cluster ?? ''),
         name: String(values.name ?? ''),
         ...(values.share_name ? { share_name: String(values.share_name) } : {}),
-        ...smbShareAccessBody({ readonly: values.readonly }),
+        ...smbShareAccessBody(values),
+        ...smbLoginControlBody(values),
         ...smbSubvolumeBody(values),
         filesystem: String(values.filesystem ?? ''),
         path: String(values.path ?? '')
