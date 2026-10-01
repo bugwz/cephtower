@@ -1831,3 +1831,13 @@ post_check_failed，提示操作可能已经生效，不把查询命令成功当
 失败保留集群名称并标记 info_available=false。编辑不再把未知认证模式默认成 user。
 不查询 join auth 或 usersgroups 密码资源，响应额外顶层字段不转发；沿用资源脱敏。
 已覆盖原生命令、身份不匹配及配置读取测试，尚未真实部署 SMB 验证。
+
+## SMB 共享原生列表
+
+修正将 `smb share ls` 的字符串 ID 列表误当对象的问题，改用
+`smb show ceph.smb.share.<cluster> --results=full --format json`，与 Dashboard 的
+show 数据源一致。严格核对 resource_type、cluster_id、share_id 和重复 ID；异常
+标记采集不可用，不将异常当作空列表删除已有资源。保留嵌套 cephfs 配置，前端从中
+展示文件系统、路径、子卷/组及原生 readonly/browseable（未知不当成 false）。
+编辑初值使用原生字段，资源定位统一使用包含集群和共享 ID 的 natural_key；更新
+解析该身份并拒绝跨集群移动。已覆盖列表命令、字段和身份测试，未实测 SMB 集群。

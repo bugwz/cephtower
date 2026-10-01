@@ -484,13 +484,12 @@ func (p *NativeProvider) collectGatewayOptional(ctx context.Context, access Clus
 			continue
 		}
 		for _, cluster := range clusters {
-			var list any
-			args := []string{gateway.prefix}
-			if gateway.prefix == "nfs" {
-				args = append(args, "export", "ls", cluster, "--detailed", "--format", "json")
-			} else {
-				args = append(args, "share", "ls", cluster, "--format", "json")
+			if gateway.prefix == "smb" {
+				rows = append(rows, p.collectSMBShares(ctx, access, cluster, now)...)
+				continue
 			}
+			var list any
+			args := []string{"nfs", "export", "ls", cluster, "--detailed", "--format", "json"}
 			if !p.optional(ctx, access, executor.BinaryCeph, "collect."+gateway.kind, args, &list) {
 				continue
 			}

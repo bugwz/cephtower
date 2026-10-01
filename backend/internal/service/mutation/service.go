@@ -2343,8 +2343,15 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, err
 		}
 		share := optional(p, "name")
-		if action == "smb_share.update" && share == "" {
-			share = last(tail)
+		if action == "smb_share.update" {
+			keyCluster, keyShare, err := decodePair(last(tail))
+			if err != nil {
+				return command{}, err
+			}
+			if keyCluster != cluster {
+				return command{}, invalid("moving an SMB share between clusters is not allowed")
+			}
+			share = keyShare
 		}
 		if share == "" {
 			return command{}, invalid("name is required")

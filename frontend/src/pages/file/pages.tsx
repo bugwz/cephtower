@@ -2,6 +2,7 @@ import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClusterDetails } from './NFSClusterDetails'
 import { SMBClusterDetails } from './SMBClusterDetails'
+import { smbCephFS, smbShareInitialValues, smbBooleanText } from './smbShareFields'
 import { NFSClientsEditor } from './NFSClientsEditor'
 import { nfsClientsBody, nfsFSALBody, nfsRGWUserChoices, nfsRGWBucketChoices } from './nfsExportFields'
 import { nfsAccessOptions, nfsExportEditReason, nfsExportInitialValues, nfsFSAL, nfsTransportBody, nfsTransportOptions, nfsProtocolBody, nfsProtocolOptions, nfsSecurityLabelOptions, nfsSecurityTypeBody, nfsSquashOptions } from './nfsExportFields'
@@ -831,11 +832,7 @@ const definitions: Record<
         { name: 'filesystem', label: '文件系统', required: true },
         { name: 'path', label: 'CephFS 路径' }
       ],
-      initialValues: (row) => ({
-        cluster: text(row?.cluster),
-        filesystem: text(row?.filesystem),
-        path: text(row?.path)
-      }),
+      initialValues: smbShareInitialValues,
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
         share_id: shareId(row),
@@ -855,12 +852,15 @@ const definitions: Record<
     },
     columns: [
       { key: 'share_id', title: '共享 ID' },
-      { key: 'cluster', title: '集群' },
+      { key: 'cluster_id', title: '集群' },
       { key: 'name', title: '名称' },
-      { key: 'filesystem', title: '文件系统' },
-      { key: 'path', title: '路径' },
+      { key: 'filesystem', title: '文件系统', filterKey: false, render: (_, row) => text(smbCephFS(row).volume) },
+      { key: 'path', title: '路径', filterKey: false, render: (_, row) => text(smbCephFS(row).path) },
+      { key: 'readonly', title: '只读', render: smbBooleanText },
+      { key: 'browseable', title: '可浏览', render: smbBooleanText },
+      { key: 'subvolume', title: '子卷', filterKey: false, render: (_, row) => text(smbCephFS(row).subvolume) },
+      { key: 'subvolumegroup', title: '子卷组', filterKey: false, render: (_, row) => text(smbCephFS(row).subvolumegroup) },
       { key: 'status', title: '状态' },
-      { key: 'auth_mode', title: '认证' },
       { key: 'resource_version', title: '版本' }
     ]
   }
@@ -972,7 +972,7 @@ function exportId(row?: Record<string, unknown>) {
 }
 
 function shareId(row?: Record<string, unknown>) {
-  return String(row?.share_id ?? row?.id ?? row?.natural_key ?? row?.name ?? '').trim()
+  return String(row?.natural_key ?? '').trim()
 }
 
 function text(value: unknown) {

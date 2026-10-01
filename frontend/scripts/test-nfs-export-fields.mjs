@@ -175,3 +175,14 @@ assert.equal(smbNodes.find((node) => node.props?.label === '认证模式').props
 assert.ok(smbNodes.find((node) => node.props?.label === '域设置 / 加域凭据引用').props.children.props.children.includes('EXAMPLE.COM'))
 assert.equal(smbNodes.find((node) => node.props?.label === '公开地址').props.children.props.children, '未提供')
 console.log('SMB cluster configuration display checks passed')
+
+const smbFields = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/file/smbShareFields.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(smbFields)
+assert.deepEqual(smbFields.smbShareInitialValues({ cluster_id: 'a', cephfs: { volume: 'fs', path: '/docs' } }), { cluster: 'a', filesystem: 'fs', path: '/docs' })
+assert.equal(smbFields.smbBooleanText(false), '否')
+assert.equal(smbFields.smbBooleanText(undefined), '未知')
+const shareIdentity = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name?.text === 'shareId')
+const shareIdentityFn = new Function(`${ts.transpileModule(shareIdentity.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText}; return shareId`)()
+assert.equal(shareIdentityFn({ share_id: 'docs', natural_key: 'opaque' }), 'opaque')
+assert.equal(shareIdentityFn({ share_id: 'docs' }), '')
+console.log('SMB native share field checks passed')
