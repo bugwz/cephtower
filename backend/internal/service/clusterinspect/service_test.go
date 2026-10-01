@@ -112,6 +112,25 @@ func TestConfigurationMetadataUsesHelp(t *testing.T) {
 	}
 }
 
+func TestConfigurationMetadataPreservesNumericText(t *testing.T) {
+	service, runner, id := testInspection(t)
+	runner.output = `{"name":"test","default":18446744073709551615,"daemon_default":9007199254740993,"min":-9223372036854775808,"max":1.234567890123456789e20}`
+	option, err := service.ConfigurationOption(context.Background(), id, "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for key, want := range map[string]string{"default": "18446744073709551615", "daemon_default": "9007199254740993", "min": "-9223372036854775808", "max": "1.234567890123456789e20"} {
+		if option[key] != want {
+			t.Fatalf("%s = %#v", key, option[key])
+		}
+	}
+	runner.output = `{"name":"test","default":false,"daemon_default":"","min":0,"max":"4G"}`
+	option, err = service.ConfigurationOption(context.Background(), id, "test")
+	if err != nil || option["default"] != false || option["daemon_default"] != "" || option["min"] != "0" || option["max"] != "4G" {
+		t.Fatalf("option=%v err=%v", option, err)
+	}
+}
+
 func TestConfigurationMetadataRejectsMalformedFields(t *testing.T) {
 	service, runner, id := testInspection(t)
 	for _, fields := range []string{

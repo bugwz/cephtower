@@ -119,6 +119,13 @@ func (s *Service) ConfigurationOption(ctx context.Context, clusterID uint64, nam
 	if !validConfigurationMetadata(option, name) {
 		return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph returned an unexpected configuration option"}
 	}
+	// These fields are presentation metadata, not arithmetic operands. Preserve
+	// their native numeric spelling across JavaScript JSON decoding.
+	for _, key := range []string{"default", "daemon_default", "min", "max"} {
+		if number, ok := option[key].(json.Number); ok {
+			option[key] = number.String()
+		}
+	}
 	return option, nil
 }
 func (s *Service) read(ctx context.Context, clusterID uint64, id string, args []string, out any) error {
