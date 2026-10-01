@@ -15,7 +15,7 @@ func TestNFSExportUpdatePreservesNativeAttributes(t *testing.T) {
 	runner := &directoryRenameExecutor{outputs: map[string]string{"nfs_export.update.pre_check": `[{"export_id":2,"cluster_id":"nfs-a","pseudo":"/old","path":"/data","access_type":"RO","squash":"root_squash","protocols":[4],"transports":["TCP"],"clients":[{"addresses":["10.0.0.0/8"],"access_type":"RO"}],"fsal":{"name":"CEPH","fs_name":"cephfs","user_id":"nfs.user","cmount_path":"/"}}]`, "nfs_export.update.post_check": `[]`}}
 	service.executor = runner
 	runner.outputs["nfs_export.update.post_check"] = `[{"export_id":2,"cluster_id":"nfs-a","pseudo":"/renamed","path":"/new","access_type":"RW","fsal":{"name":"CEPH","fs_name":"cephfs"}}]`
-	request := Request{ClusterID: id, Action: "nfs_export.update", ResourceKey: "nfs/export/" + base64.RawURLEncoding.EncodeToString([]byte("nfs-a\x002")), Parameters: map[string]any{"cluster": "nfs-a", "pseudo": "/renamed", "path": "/new", "filesystem": "cephfs", "read_only": false}}
+	request := Request{ClusterID: id, Action: "nfs_export.update", ResourceKey: "nfs/export/" + base64.RawURLEncoding.EncodeToString([]byte("nfs-a\x002")), Parameters: map[string]any{"cluster": "nfs-a", "pseudo": "/renamed", "path": "/new", "filesystem": "cephfs", "access_type": "RW"}}
 	if _, err := service.Execute(context.Background(), request); err != nil {
 		t.Fatal(err)
 	}
@@ -191,7 +191,7 @@ func TestNFSExportCreationReadback(t *testing.T) {
 		service, _, id := newCephUserService(t)
 		runner := &directoryRenameExecutor{outputs: map[string]string{"nfs_export.create.pre_check": "[]", "nfs_export.create.post_check": tt.post}}
 		service.executor = runner
-		_, err := service.Execute(context.Background(), Request{ClusterID: id, Action: "nfs_export.create", ResourceKey: "nfs/export", Parameters: map[string]any{"cluster": "nfs-a", "pseudo": "/share/", "path": "/", "filesystem": "cephfs", "read_only": true}})
+		_, err := service.Execute(context.Background(), Request{ClusterID: id, Action: "nfs_export.create", ResourceKey: "nfs/export", Parameters: map[string]any{"cluster": "nfs-a", "pseudo": "/share/", "path": "/", "filesystem": "cephfs", "access_type": "RO"}})
 		if tt.valid {
 			if err != nil {
 				t.Fatal(err)

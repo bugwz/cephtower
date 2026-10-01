@@ -6,7 +6,7 @@ const source = readFileSync(new URL('../src/pages/file/nfsExportFields.ts', impo
 const exports = {}
 new Function('exports', ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
 const row = { cluster_id: 'nfs-a', pseudo: '/share', path: '/data', access_type: 'RO', fsal: { name: 'CEPH', fs_name: 'cephfs-a', user_id: 'nfs.user' } }
-assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', read_only: true, squash: undefined, security_label: undefined, transports: undefined, protocols: undefined })
+assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', access_type: 'RO', squash: undefined, security_label: undefined, transports: undefined, protocols: undefined })
 for (const protocols of [[3], [4], [4, 3]]) {
   const selection = exports.nfsExportInitialValues({ ...row, protocols }).protocols
   assert.deepEqual(exports.nfsProtocolBody(selection), { protocols: [...protocols].sort() })
@@ -26,9 +26,9 @@ assert.equal(exports.nfsExportInitialValues({ ...row, security_label: true }).se
 assert.equal(exports.nfsExportInitialValues({ ...row, squash: 'all_squash' }).squash, 'all_squash')
 assert.equal(exports.nfsExportInitialValues({ ...row, squash: 'native-alias' }).squash, undefined)
 assert.equal(exports.nfsExportEditReason(row), undefined)
-assert.equal(exports.nfsExportInitialValues({ ...row, access_type: 'RW' }).read_only, false)
+assert.equal(exports.nfsExportInitialValues({ ...row, access_type: 'RW' }).access_type, 'RW')
 assert.ok(exports.nfsExportEditReason({ ...row, fsal: { name: 'RGW' } }))
-assert.ok(exports.nfsExportEditReason({ ...row, access_type: 'NONE' }))
+assert.equal(exports.nfsExportEditReason({ ...row, access_type: 'NONE' }), undefined)
 for (const fsal of [null, undefined, [], 'CEPH']) assert.deepEqual(exports.nfsFSAL({ fsal }), {})
 console.log('NFS native export field checks passed')
 const pagesSource = readFileSync(new URL('../src/pages/file/pages.tsx', import.meta.url), 'utf8')

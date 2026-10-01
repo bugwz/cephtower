@@ -1671,3 +1671,11 @@ apply 之间仍存在外部并发窗口，尚不声称提供 Ceph 侧原子创�
 API 使用 transports 字符串数组，写入 `nfs export apply` 的原生 JSON；
 只接受非空、不重复的大写 TCP/UDP，省略时使用原生默认或保留现有配置。
 创建和更新读回按集合验证传输配置。测试基于原生结构，无真实集群验证。
+
+## NFS 导出访问类型
+
+用 access_type 枚举替换旧 read_only 布尔接口及表单开关，不保留旧参数别名。
+创建和编辑可选 RO、RW、NONE，与 nfs/ganesha_conf.py 的原生访问类型一致。
+NONE 表示导出默认拒绝访问，客户端规则仍可覆盖；更新保留现有客户端规则。
+原生 apply JSON 与读回校验均使用 access_type，允许编辑已有 NONE 导出。
+省略字段时保留原生默认或当前设置；无真实集群验证。

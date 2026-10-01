@@ -2233,8 +2233,12 @@ func build(request Request, p map[string]any) (command, error) {
 			}
 			export["squash"] = squash
 		}
-		if readOnly, ok := p["read_only"].(bool); ok {
-			export["access_type"] = map[bool]string{true: "RO", false: "RW"}[readOnly]
+		if _, exists := p["access_type"]; exists {
+			access, err := enum(p, "access_type", "RO", "RW", "NONE")
+			if err != nil {
+				return command{}, err
+			}
+			export["access_type"] = access
 		}
 		stdin, _ := json.Marshal(export)
 		result := ceph([]string{"nfs", "export", "apply", cluster, "-i", "-"}, []string{"nfs", "export", "ls", cluster, "--detailed", "--format", "json"})

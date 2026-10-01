@@ -219,6 +219,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -843,6 +846,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -2762,6 +2768,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -3386,6 +3395,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -4228,6 +4240,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -4946,6 +4961,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -5570,6 +5588,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -6385,6 +6406,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -7105,6 +7129,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -7730,6 +7757,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -8598,6 +8628,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -9316,6 +9349,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -10036,6 +10072,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -10754,6 +10793,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -11378,6 +11420,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -12248,6 +12293,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -13368,6 +13416,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -13993,6 +14044,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -14618,6 +14672,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -15880,6 +15937,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -16650,6 +16710,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -17370,6 +17433,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -17994,6 +18060,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -19274,6 +19343,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -19898,6 +19970,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -20539,6 +20614,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -21257,6 +21335,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -21881,6 +21962,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -22506,6 +22590,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -23409,6 +23496,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -24224,6 +24314,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -24942,6 +25035,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -25566,6 +25662,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -26323,6 +26422,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -26948,6 +27050,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -27988,6 +28093,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -28898,6 +29006,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -29616,6 +29727,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -30336,6 +30450,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -31054,6 +31171,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -31678,6 +31798,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -32493,6 +32616,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -33211,6 +33337,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -33835,6 +33964,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -34555,6 +34687,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -35179,6 +35314,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -35899,6 +36037,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -36523,6 +36664,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -37243,6 +37387,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -37961,6 +38108,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -38585,6 +38735,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -39473,6 +39626,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -40192,6 +40348,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -40817,6 +40976,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -41442,6 +41604,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -42161,6 +42326,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -42820,6 +42988,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -43730,6 +43901,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -44448,6 +44622,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -45072,6 +45249,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -45792,6 +45972,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -46417,6 +46600,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -47042,6 +47228,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -47667,6 +47856,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -48387,6 +48579,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -49105,6 +49300,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -49729,6 +49927,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -50471,6 +50672,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -51095,6 +51299,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -51719,6 +51926,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -52730,6 +52940,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -53427,6 +53640,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -54052,6 +54268,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -54676,6 +54895,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -55396,6 +55618,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -56115,6 +56340,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -56740,6 +56968,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -57476,6 +57707,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -58100,6 +58334,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -58724,6 +58961,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -59349,6 +59589,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -60069,6 +60312,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -60787,6 +61033,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -61411,6 +61660,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -62137,6 +62389,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -62762,6 +63017,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -63387,6 +63645,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -64107,6 +64368,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -64732,6 +64996,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -65356,6 +65623,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -66076,6 +66346,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -66700,6 +66973,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -67324,6 +67600,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -67949,6 +68228,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -68764,6 +69046,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -69482,6 +69767,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -70106,6 +70394,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -70731,6 +71022,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -71356,6 +71650,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -71980,6 +72277,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -72605,6 +72905,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -73230,6 +73533,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -73950,6 +74256,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -74574,6 +74883,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -75199,6 +75511,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -75823,6 +76138,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -76778,6 +77096,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -77496,6 +77817,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -78120,6 +78444,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -78840,6 +79167,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -79558,6 +79888,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -80182,6 +80515,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -80902,6 +81238,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -81620,6 +81959,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -82244,6 +82586,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -83059,6 +83404,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:
@@ -83684,6 +84032,9 @@ paths:
                 access_key:
                   type: string
                   writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
                 account_id:
                   type: string
                 account_name:

@@ -134,9 +134,6 @@ func nfsExportUpdateJSON(export, parameters map[string]any) ([]byte, error) {
 	if !ok || fsal["name"] != "CEPH" {
 		return nil, invalid("this update form requires a CephFS export")
 	}
-	if export["access_type"] != "RO" && export["access_type"] != "RW" {
-		return nil, invalid("this update form requires RO or RW access")
-	}
 	export["pseudo"] = parameters["pseudo"]
 	export["path"] = parameters["path"]
 	fsal["fs_name"] = parameters["filesystem"]
@@ -152,8 +149,8 @@ func nfsExportUpdateJSON(export, parameters map[string]any) ([]byte, error) {
 	if squash, exists := parameters["squash"]; exists {
 		export["squash"] = squash
 	}
-	if readOnly, ok := parameters["read_only"].(bool); ok {
-		export["access_type"] = map[bool]string{true: "RO", false: "RW"}[readOnly]
+	if access, exists := parameters["access_type"]; exists {
+		export["access_type"] = access
 	}
 	return json.Marshal(export)
 }
@@ -227,8 +224,8 @@ func nfsExportAttributesMatch(export, p map[string]any) bool {
 	if !ok || fsal["name"] != "CEPH" || fsal["fs_name"] != p["filesystem"] || path.Clean(optional(export, "pseudo")) != path.Clean(optional(p, "pseudo")) || path.Clean(optional(export, "path")) != path.Clean(optional(p, "path")) {
 		return false
 	}
-	if readOnly, ok := p["read_only"].(bool); ok {
-		return export["access_type"] == map[bool]string{true: "RO", false: "RW"}[readOnly]
+	if access, exists := p["access_type"]; exists {
+		return export["access_type"] == access
 	}
 	return true
 }

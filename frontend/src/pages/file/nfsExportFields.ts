@@ -8,6 +8,7 @@ export const nfsSquashOptions = [
 ]
 
 export const nfsSecurityLabelOptions = [{ label: '启用', value: 'enabled' }, { label: '禁用', value: 'disabled' }]
+export const nfsAccessOptions = [{ label: '读写（RW）', value: 'RW' }, { label: '只读（RO）', value: 'RO' }, { label: '默认禁止访问（NONE，客户端规则可覆盖）', value: 'NONE' }]
 export const nfsProtocolOptions = [{ label: 'NFSv3', value: '3' }, { label: 'NFSv4', value: '4' }, { label: 'NFSv3 + NFSv4', value: '3,4' }]
 
 export function nfsProtocolBody(value: unknown) {
@@ -31,7 +32,6 @@ export function nfsFSAL(row?: ApiRecord): ApiRecord {
 
 export function nfsExportEditReason(row: ApiRecord): string | undefined {
   if (nfsFSAL(row).name !== 'CEPH') return '当前编辑表单仅支持 CephFS 导出'
-  if (row.access_type !== 'RO' && row.access_type !== 'RW') return '当前访问类型不能使用只读开关编辑'
   return undefined
 }
 
@@ -41,7 +41,7 @@ export function nfsExportInitialValues(row?: ApiRecord) {
     pseudo: typeof row?.pseudo === 'string' ? row.pseudo : '',
     path: typeof row?.path === 'string' ? row.path : '',
     filesystem: typeof nfsFSAL(row).fs_name === 'string' ? String(nfsFSAL(row).fs_name) : '',
-    read_only: row?.access_type === 'RO',
+    access_type: nfsAccessOptions.some((option) => option.value === row?.access_type) ? String(row?.access_type) : undefined,
     transports: Array.isArray(row?.transports) && row.transports.length > 0 && new Set(row.transports).size === row.transports.length && row.transports.every((value) => value === 'TCP' || value === 'UDP') ? [...row.transports].sort().join(',') : undefined,
     protocols: Array.isArray(row?.protocols) && row.protocols.length > 0 && new Set(row.protocols).size === row.protocols.length && row.protocols.every((version) => version === 3 || version === 4) ? [...row.protocols].sort().join(',') : undefined,
     security_label: row?.security_label === true ? 'enabled' : row?.security_label === false ? 'disabled' : undefined,
