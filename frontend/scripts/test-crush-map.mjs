@@ -75,6 +75,18 @@ assert.equal(placement.valid({ pool_type: 'erasure', erasure_code_profile: 'crea
 assert.equal(placement.valid({ pool_type: 'replicated', crush_rule: '' }, [{ value: '' }], []), false)
 assert.ok(!poolSource.includes(".catch(() => [])"), 'placement load errors must not become empty success')
 
+const ruleFunction = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'readableCrushRule')
+const ruleCode = ts.transpileModule(ruleFunction.getText(poolTree) + '\nexports.name = readableCrushRule', { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+const mapping = {}
+new Function('exports', 'textValue', ruleCode)(mapping, (value, fallback) => typeof value === 'string' ? value : fallback)
+const sparseRules = [{ rule_id: 8, rule_name: 'ssd' }, { rule_id: 0, rule_name: 'hdd' }]
+assert.equal(mapping.name(0, sparseRules), 'hdd')
+assert.equal(mapping.name('8', sparseRules), 'ssd')
+assert.equal(mapping.name(1, sparseRules), '1')
+assert.equal(mapping.name(null, sparseRules), '')
+assert.equal(mapping.name('8', [...sparseRules, { rule_id: 9, rule_name: '8' }]), '8')
+assert.equal(mapping.name('ssd', sparseRules), 'ssd')
+
 const rulesSource = readFileSync(new URL('../src/pages/cluster/CrushRulesPanel.tsx', import.meta.url), 'utf8')
 const rulesTree = ts.createSourceFile('CrushRulesPanel.tsx', rulesSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const rulesFunctions = rulesTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['crushRuleType', 'crushRuleSteps', 'crushRuleDeleteBlocked'].includes(node.name.text))

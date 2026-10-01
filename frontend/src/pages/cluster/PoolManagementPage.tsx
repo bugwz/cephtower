@@ -80,7 +80,7 @@ type RbdPoolConfigurationKey = typeof rbdPoolConfigurationFields[number]['key']
 
 interface PoolPageData {
   pools: ApiRecord[]
-  crushRules: string[]
+  crushRules: ApiRecord[]
   erasureCodeProfiles: string[]
   erasureCodeDirectory: string
   crushNodes: ApiRecord[]
@@ -220,7 +220,7 @@ export function PoolManagementPage() {
     }
     const [poolList, crushRules, erasureCodeProfileRows, crushNodes] = await Promise.all([
       listResource('/pools', selectedClusterId, { filters: poolTableFilters.filters }),
-      listAllResources('/crush/rules', selectedClusterId).then((payload) => payload.items.map(resourceName).filter(Boolean)),
+      listAllResources('/crush/rules', selectedClusterId).then((payload) => payload.items),
       listAllResources('/erasure/code/profiles', selectedClusterId).then((payload) => payload.items),
       request<{ nodes: ApiRecord[] }>('/crush/map', jsonInit('GET', { cluster_id: selectedClusterId })).then((payload) => payload.nodes)
     ])
@@ -230,7 +230,7 @@ export function PoolManagementPage() {
       .find(Boolean) ?? defaultErasureCodeDirectory
     return {
       pools: poolList.items.map(normalizePoolRow),
-      crushRules: Array.from(new Set(crushRules)),
+      crushRules,
       erasureCodeProfiles: Array.from(new Set(erasureCodeProfiles)),
       erasureCodeDirectory,
       crushNodes,
@@ -245,7 +245,7 @@ export function PoolManagementPage() {
     return Array.from(new Set([...applicationDefaults, ...fromRows])).map((value) => ({ label: value, value }))
   }, [data?.pools])
   const crushRuleOptions = useMemo(
-    () => Array.from(new Set([...(data?.crushRules ?? []), ...createdCrushRules])).map((value) => ({ label: value, value })),
+    () => Array.from(new Set([...(data?.crushRules ?? []).filter((rule) => rule.type === 1).map((rule) => textValue(rule.rule_name, '')).filter(Boolean), ...createdCrushRules])).map((value) => ({ label: value, value })),
     [createdCrushRules, data?.crushRules]
   )
   const erasureCodeProfileOptions = useMemo(
@@ -955,7 +955,7 @@ function normalizePoolRow(row: ApiRecord): ApiRecord {
   }
 }
 
-function poolInitialValues(row: ApiRecord, crushRules: string[] = []): PoolFormValues {
+function poolInitialValues(row: ApiRecord, crushRules: ApiRecord[] = []): PoolFormValues {
   const quotaBytes = numberValue(row.quota_max_bytes ?? row.max_bytes) ?? 0
   const quota = bytesForForm(quotaBytes, 'GiB')
   const minBlobSize = bytesForForm(numberValue(row.compression_min_blob_size), 'B', true)
@@ -1013,7 +1013,7 @@ function poolCreateBody(values: PoolFormValues, clusterId: number): ApiRecord {
   }
 }
 
-function poolUpdateBodies(row: ApiRecord, values: PoolFormValues, clusterId: number, crushRules: string[] = []): ApiRecord[] {
+function poolUpdateBodies(row: ApiRecord, values: PoolFormValues, clusterId: number, crushRules: ApiRecord[] = []): ApiRecord[] {
   const current = poolInitialValues(row, crushRules)
   const pool = current.name
   const requests: ApiRecord[] = []
@@ -1403,13 +1403,14 @@ function resourceName(row: ApiRecord) {
   return textValue(row.name ?? row.pool_name ?? row.natural_key, '')
 }
 
-function readableCrushRule(value: unknown, crushRules: string[] = []) {
-  const raw = textValue(value, 'replicated_rule')
-  const index = Number(raw)
-  if (Number.isInteger(index) && index >= 0 && crushRules[index]) {
-    return crushRules[index]
+function readableCrushRule(value: unknown, crushRules: ApiRecord[] = []) {
+  if (typeof value === 'string' && crushRules.some((rule) => rule.rule_name === value)) return value
+  const id = typeof value === 'number' ? value : typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : NaN
+  if (Number.isSafeInteger(id) && id >= 0) {
+    const rule = crushRules.find((item) => item.rule_id === id)
+    return textValue(rule?.rule_name, String(id))
   }
-  return raw
+  return textValue(value, '')
 }
 
 function poolKind(row: ApiRecord): 'replicated' | 'erasure' {
