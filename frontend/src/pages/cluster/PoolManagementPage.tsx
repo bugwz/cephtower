@@ -6,7 +6,7 @@ import { CrushRuleDetails } from './CrushRulesPanel'
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isRecord, jsonInit, request, numberValue, textValue, type ApiRecord } from '../../api/client'
-import { listAllResources, listResource, mutateResource, refreshResource } from '../../api/resource'
+import { listAllResources, mutateResource, refreshResource } from '../../api/resource'
 import { DataTable } from '../../components/DataTable'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
@@ -225,7 +225,7 @@ export function PoolManagementPage() {
       return { pools: [], crushRules: [], erasureCodeProfiles: [], erasureCodeProfileRows: [], crushNodes: [], observedAt: null, stale: false, staleReason: null }
     }
     const [poolList, crushRules, erasureCodeProfileRows, crushNodes] = await Promise.all([
-      listResource('/pools', selectedClusterId, { filters: poolTableFilters.filters }),
+      listAllResources('/pools', selectedClusterId, { filters: poolTableFilters.filters }),
       listAllResources('/crush/rules', selectedClusterId).then((payload) => poolPlacementRows(payload, 'CRUSH 规则')),
       listAllResources('/erasure/code/profiles', selectedClusterId).then((payload) => poolPlacementRows(payload, '纠删码配置')),
       request<{ nodes: ApiRecord[] }>('/crush/map', jsonInit('GET', { cluster_id: selectedClusterId })).then((payload) => payload.nodes)

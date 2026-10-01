@@ -79,6 +79,32 @@ assert.equal(profileDetails.find((item) => item.key === 'crush-num-failure-domai
 assert.equal(profileDetails.find((item) => item.key === 'plugin').children, '未提供')
 
 const poolSource = readFileSync(new URL('../src/pages/cluster/PoolManagementPage.tsx', import.meta.url), 'utf8')
+assert.ok(poolSource.includes("listAllResources('/pools', selectedClusterId, { filters: poolTableFilters.filters })"), 'pool table must consume all filtered inventory pages')
+const resourceSource = readFileSync(new URL('../src/api/resource.ts', import.meta.url), 'utf8')
+const resourceTree = ts.createSourceFile('resource.ts', resourceSource, ts.ScriptTarget.Latest, true)
+const allPagesFn = resourceTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'listAllResources')
+const allPagesCode = ts.transpileModule(allPagesFn.getText(resourceTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const pageCalls = []
+const loadAllPages = new Function('listResource', `${allPagesCode}; return listAllResources`)(async (path, cluster, options) => {
+  pageCalls.push({ path, cluster, options })
+  return options.cursor
+    ? { items: [{ name: 'second' }], stale: true, staleReason: 'expired', observedAt: '2026-01-01', nextCursor: null }
+    : { items: [{ name: 'first' }], stale: false, observedAt: '2026-01-02', nextCursor: 'next' }
+})
+const poolFilters = { type: ['replicated'] }
+const allPools = await loadAllPages('/pools', 7, { filters: poolFilters })
+assert.deepEqual(allPools.items.map((row) => row.name), ['first', 'second'])
+assert.equal(allPools.stale, true)
+assert.equal(allPools.staleReason, 'expired')
+assert.equal(allPools.observedAt, '2026-01-01')
+assert.deepEqual(pageCalls.map(({ path, cluster, options }) => [path, cluster, options.filters]), [
+  ['/pools', 7, poolFilters], ['/pools', 7, poolFilters]
+])
+const failedPages = new Function('listResource', `${allPagesCode}; return listAllResources`)(async (_path, _cluster, options) => {
+  if (options.cursor) throw new Error('second page unavailable')
+  return { items: [{ name: 'first' }], stale: false, nextCursor: 'next' }
+})
+await assert.rejects(() => failedPages('/pools', 7), /second page unavailable/)
 assert.ok(poolSource.includes('压缩后大小与原始大小的比例上限'), 'compression ratio is an upper bound, not a minimum ratio')
 assert.ok(poolSource.includes('分配单元对齐和压缩头开销'), 'compression storage is also subject to native allocation constraints')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
