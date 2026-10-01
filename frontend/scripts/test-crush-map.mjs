@@ -31,6 +31,14 @@ for (const field of ['name', 'plugin', 'k', 'm', 'technique', 'crush-root', 'cru
   assert.ok(profileSource.includes(`key: '${field}'`), `missing native profile field ${field}`)
 }
 assert.ok(source.includes('<ErasureProfilesPanel />'))
+const profileTree = ts.createSourceFile('ErasureProfilesPanel.tsx', profileSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const profileGuard = profileTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'erasureProfileDeleteBlocked')
+const profileExports = {}
+new Function('exports', ts.transpileModule(profileGuard.getText(profileTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(profileExports)
+assert.equal(profileExports.erasureProfileDeleteBlocked({ name: 'ec', stale: false }), undefined)
+for (const row of [{ name: 'ec' }, { name: 'ec', stale: true }, { name: '', stale: false }, { name: null, stale: false }]) assert.ok(profileExports.erasureProfileDeleteBlocked(row))
+assert.ok(profileSource.includes("path: '/erasure/code/profile'"))
+assert.ok(profileSource.includes("action: 'erasure_code_profile.delete'"))
 
 const poolSource = readFileSync(new URL('../src/pages/cluster/PoolManagementPage.tsx', import.meta.url), 'utf8')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)

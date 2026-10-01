@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+纠删码配置面板接入高风险删除确认，使用 DELETE /erasure/code/profile 与资源版本
+前置条件；禁用过期/未知库存和缺失名称。后端执行 profile rm，再用 ls 验证消失，
+前端成功后重新采集配置库存。原生 OSDMonitor 会拒绝删除被存储池使用的配置，不自动
+解除引用或删除池；离线前端测试通过，未实际删除集群资源。
+
 CRUSH 页面新增纠删码配置库存面板，展示名称、插件、k/m、算法、根节点、故障域和
 设备类别；使用原生 profile ls/get 采集及 GET /erasure/code/profiles，沿用通用列表
 分页、刷新、过期提示和详情。字段依据参考 erasure-code-profile 模型及表单，独立
