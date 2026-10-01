@@ -504,7 +504,7 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return ceph([]string{"orch", "upgrade", "check", version, "--format", "json"}, nil), nil
+		return ceph([]string{"orch", "upgrade", "check", "--ceph-version", version, "--format", "json"}, nil), nil
 	case "upgrade.action":
 		verb, err := enum(p, "action", "start", "pause", "resume", "stop")
 		if err != nil {
