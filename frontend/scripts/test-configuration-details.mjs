@@ -4,9 +4,25 @@ import ts from 'typescript'
 
 const source = readFileSync(new URL('../src/pages/cluster/ConfigurationPage.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('ConfigurationPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-const names = ['configurationOverrides', 'configurationList', 'configurationRuntime', 'filterConfigurationOptions', 'configurationMetadataBatch', 'configurationWriteBlocked', 'configurationMonWriteBlocked', 'configurationHelpDescription']
+const names = ['configurationOverrides', 'configurationList', 'configurationRuntime', 'filterConfigurationOptions', 'configurationMetadataBatch', 'configurationWriteBlocked', 'configurationMonWriteBlocked', 'configurationHelpDescription', 'currentConfigurationHelp']
 const code = ts.transpileModule(tree.statements.filter((node) => ts.isFunctionDeclaration(node) && names.includes(node.name.text)).map((node) => node.getText(tree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const helpers = new Function(`${code}; return { ${names.join(', ')} }`)()
+{
+  const scope = { clusterId: 1, moduleName: undefined }
+  for (const help of [{ name: 'test', type: 'bool' }, { name: 'test', enum_values: ['a', 'b'] }, null]) {
+    const snapshot = { scope, name: 'test', help, error: help ? '' : 'failed' }
+    assert.equal(helpers.currentConfigurationHelp(snapshot, scope, 'test', true), snapshot)
+    assert.equal(helpers.currentConfigurationHelp(snapshot, scope, 'other', true), null)
+    assert.equal(helpers.currentConfigurationHelp(snapshot, { ...scope }, 'test', true), null)
+    assert.equal(helpers.currentConfigurationHelp(snapshot, scope, 'test', false), null)
+  }
+  assert.equal(helpers.currentConfigurationHelp(null, scope, 'test', true), null)
+  assert.equal(helpers.currentConfigurationHelp({ scope, name: 'test', help: { name: 'other' }, error: '' }, scope, 'test', true), null)
+  assert.ok(source.includes('currentConfigurationHelp(helpSnapshot, scope, watchedName, open)'))
+  assert.ok(source.includes('const help = currentHelp?.help ?? null'))
+  assert.ok(source.includes("const helpError = currentHelp?.error ?? ''"))
+  assert.ok(source.includes("if (value.name !== watchedName) throw new Error"))
+}
 const editable = { who: 'global', name: 'test', stale: false, resource_version: 3 }
 assert.equal(helpers.configurationWriteBlocked(editable), undefined)
 assert.equal(helpers.configurationWriteBlocked({ ...editable, resource_version: '3' }), undefined)

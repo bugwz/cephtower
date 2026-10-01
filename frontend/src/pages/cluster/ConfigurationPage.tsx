@@ -16,6 +16,12 @@ import { message } from '../../utils/appMessage'
 interface ConfigurationForm { who: string; name: string; value: string }
 type OverrideFilter = 'all' | 'configured' | 'unconfigured'
 
+function currentConfigurationHelp<T extends { scope: unknown, name: string, help: ApiRecord | null, error: string }>(snapshot: T | null, scope: unknown, name: unknown, open: boolean): T | null {
+  if (!open || !snapshot || snapshot.scope !== scope || snapshot.name !== name) return null
+  if (snapshot.help && snapshot.help.name !== name) return null
+  return snapshot
+}
+
 function configurationMonWriteBlocked(help: ApiRecord | null, name: unknown): boolean {
   return typeof name === 'string' && help?.name === name && Array.isArray(help.flags) && help.flags.includes('no_mon_update')
 }
@@ -95,10 +101,12 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState('')
   const [form] = Form.useForm<ConfigurationForm>()
-  const [helpError, setHelpError] = useState('')
-  const [help, setHelp] = useState<ApiRecord | null>(null)
+  const [helpSnapshot, setHelpSnapshot] = useState<{ scope: typeof scope, name: string, help: ApiRecord | null, error: string } | null>(null)
   const detailsRequest = useRef(0)
   const watchedName = Form.useWatch('name', form)
+  const currentHelp = currentConfigurationHelp(helpSnapshot, scope, watchedName, open)
+  const help = currentHelp?.help ?? null
+  const helpError = currentHelp?.error ?? ''
   const loader = useCallback(async () => {
     if (!selectedClusterId) return { options: [] as ApiRecord[], values: [] as ApiRecord[], stale: false, observedAt: null }
     const [options, values] = await Promise.all([listAllResources('/configuration/options', selectedClusterId), listAllResources('/configuration/values', selectedClusterId)])
@@ -108,13 +116,18 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
   const { data, loading, error, refresh } = useResource(loader)
   useEffect(() => { setOpen(false); setDetailOpen(false); detailsRequest.current++ }, [selectedClusterId, moduleName])
   useEffect(() => {
-    setHelp(null); setHelpError('')
+    setHelpSnapshot(null)
     if (!open || !selectedClusterId || !watchedName) return
     const abort = new AbortController()
     void request<ApiRecord>('/configuration/option', jsonInit('GET', { cluster_id: selectedClusterId, name: watchedName }, { signal: abort.signal, suppressErrorNotification: true }))
-      .then((value) => { if (!abort.signal.aborted) setHelp(value) }).catch((err) => { if (!abort.signal.aborted) setHelpError(err instanceof Error ? err.message : '元数据读取失败') })
+      .then((value) => {
+        if (value.name !== watchedName) throw new Error('配置说明与请求的选项不一致')
+        if (!abort.signal.aborted && scopeRef.current === scope) setHelpSnapshot({ scope, name: watchedName, help: value, error: '' })
+      }).catch((err) => {
+        if (!abort.signal.aborted && scopeRef.current === scope) setHelpSnapshot({ scope, name: watchedName, help: null, error: err instanceof Error ? err.message : '元数据读取失败' })
+      })
     return () => abort.abort()
-  }, [open, selectedClusterId, watchedName])
+  }, [open, selectedClusterId, watchedName, scope])
   async function collect() {
     if (!selectedClusterId || scopeRef.current !== scope) return
     await refreshResource({ clusterId: selectedClusterId, kinds: ['config_value', 'config_option'] })
