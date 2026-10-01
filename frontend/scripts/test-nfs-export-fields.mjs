@@ -221,7 +221,8 @@ assert.deepEqual(storageCalls, [
   { path: '/filesystem/subvolumes', clusterId: 17, body: { fs: 'fs-a', group: 'team' } }
 ])
 assert.deepEqual(storage.smbSubvolumeBody({}), {})
-assert.deepEqual(storage.smbSubvolumeBody({ subvolume_group: 'team' }), {})
+assert.throws(() => storage.smbSubvolumeBody({ subvolume_group: 'team' }), /请选择子卷/)
+assert.throws(() => storage.smbSubvolumeBody({ subvolume_group: '_nogroup', subvolume: '' }), /请选择子卷/)
 assert.deepEqual(storage.smbSubvolumeBody({ subvolume_group: 'team', subvolume: 'docs' }), { subvolume: 'team/docs' })
 assert.deepEqual(storage.smbSubvolumeBody({ subvolume_group: '_nogroup', subvolume: 'docs' }), { subvolume: '_nogroup/docs' })
 assert.throws(() => storage.smbSubvolumeBody({ subvolume: 'docs' }))

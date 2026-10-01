@@ -814,7 +814,7 @@ const definitions: Record<
         { name: 'readonly', label: '只读', type: 'select', required: true, options: [{ label: '只读', value: 'true' }, { label: '允许写入', value: 'false' }] },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'subvolume_group', label: '子卷组（可选）', type: 'select', optionsDependencies: ['filesystem'], optionsLoader: smbSubvolumeGroupOptions },
-        { name: 'subvolume', label: '子卷（可选）', type: 'select', placeholder: '不选子卷则使用文件系统范围', optionsDependencies: ['filesystem', 'subvolume_group'], optionsLoader: smbSubvolumeOptions },
+        { name: 'subvolume', label: '子卷（选择组后必须选择）', type: 'select', placeholder: '使用文件系统范围请同时清空子卷组', optionsDependencies: ['filesystem', 'subvolume_group'], optionsLoader: smbSubvolumeOptions },
         { name: 'path', label: 'CephFS 路径', required: true, placeholder: '/data' }
       ],
       initialValues: { path: '/', readonly: 'false' },
@@ -918,6 +918,7 @@ async function smbSubvolumeOptions(clusterId: number, _row?: Record<string, unkn
 }
 
 function smbSubvolumeBody(values: Record<string, unknown>) {
+  if (values.subvolume_group && !values.subvolume) throw new Error('已选择子卷组，请选择子卷；如需使用文件系统范围，请清空子卷组')
   if (!values.subvolume) return {}
   if (!values.subvolume_group) throw new Error('请选择子卷组')
   return { subvolume: `${values.subvolume_group}/${values.subvolume}` }
