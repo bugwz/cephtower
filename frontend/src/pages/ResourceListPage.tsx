@@ -38,6 +38,7 @@ export interface MutationFormField {
   pattern?: RegExp
   patternMessage?: string
   readOnly?: boolean
+  renderControl?: () => ReactNode
 }
 
 export type MutationFormValues = Record<string, string | number | boolean | null | undefined | ApiRecord>
@@ -539,6 +540,7 @@ function hasFeatureRequirementAlert(status: ReturnType<typeof useFeatureRequirem
 }
 
 function renderFormControl(field: MutationFormField) {
+  if (field.renderControl) return field.renderControl()
   if (field.type === 'password') return <Input.Password autoComplete="new-password" readOnly={field.readOnly} />
   if (field.type === 'number') {
     return <InputNumber min={field.min} max={field.max} className="full-width-control" readOnly={field.readOnly} />

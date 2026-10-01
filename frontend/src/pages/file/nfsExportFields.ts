@@ -44,6 +44,7 @@ export function nfsClientsBody(value: unknown) {
   if (typeof value !== 'string') throw new Error('客户端规则必须为 JSON 数组')
   let clients: unknown
   try { clients = JSON.parse(value) } catch { throw new Error('客户端规则 JSON 格式无效') }
+  if (Array.isArray(clients)) clients = clients.map((client) => client && typeof client === 'object' && Array.isArray(client.addresses) ? { ...client, addresses: client.addresses.map((address: unknown) => typeof address === 'string' ? address.trim() : address) } : client)
   if (!Array.isArray(clients) || clients.some((client) => !client || typeof client !== 'object' || !Array.isArray(client.addresses) || !client.addresses.length || client.addresses.some((address: unknown) => typeof address !== 'string' || !/^[A-Za-z0-9_.:@*?/-]+$/.test(address)))) throw new Error('每条客户端规则需包含非空 addresses 数组及有效地址')
   return { client_rules: clients.map((client) => ({ ...client, access_type: client.access_type ?? '', squash: client.squash ?? '' })) }
 }

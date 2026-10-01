@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
+import { createRequire } from 'node:module'
 
 const source = readFileSync(new URL('../src/pages/file/nfsExportFields.ts', import.meta.url), 'utf8')
 const exports = {}
@@ -48,3 +49,40 @@ const code = ts.transpileModule(identity.getText(tree), { compilerOptions: { mod
 const exportId = new Function(`${code}; return exportId`)()
 assert.equal(exportId({ export_id: 2, natural_key: 'bmZzLWEAMg' }), 'bmZzLWEAMg')
 assert.equal(exportId({ export_id: 2 }), '')
+
+// Exercise the controlled editor callbacks without a running Ceph cluster or browser.
+const require = createRequire(import.meta.url)
+const editorSource = readFileSync(new URL('../src/pages/file/NFSClientsEditor.tsx', import.meta.url), 'utf8')
+const editorExports = {}
+const editorCode = ts.transpileModule(editorSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText
+new Function('require', 'exports', editorCode)((name) => {
+  if (name === './nfsExportFields') return exports
+  if (name === 'antd') return { Alert: 'Alert', Button: 'Button', Card: 'Card', Input: 'Input', Select: 'Select', Space: 'Space', Typography: { Text: 'Text' } }
+  return require(name)
+}, editorExports)
+function nodes(tree) {
+  if (!tree || typeof tree !== 'object') return []
+  if (Array.isArray(tree)) return tree.flatMap(nodes)
+  return [tree, ...nodes(tree.props?.children), ...nodes(tree.props?.extra)]
+}
+let value
+const renderEditor = () => editorExports.NFSClientsEditor({ value, onChange: (next) => { value = next } })
+let elements = nodes(renderEditor())
+elements.find((node) => node.type === 'Button' && node.props.children === '新增客户端规则').props.onClick()
+assert.deepEqual(JSON.parse(value), [{ addresses: [''], access_type: '', squash: '' }])
+elements = nodes(renderEditor())
+elements.find((node) => node.type === 'Input').props.onChange({ target: { value: '10.0.0.0/8, host.example.com' } })
+assert.deepEqual(exports.nfsClientsBody(value).client_rules[0].addresses, ['10.0.0.0/8', 'host.example.com'])
+elements = nodes(renderEditor())
+elements.find((node) => node.type === 'Select' && node.props['aria-label'].endsWith('访问类型')).props.onChange('RO')
+assert.equal(exports.nfsClientsBody(value).client_rules[0].access_type, 'RO')
+elements = nodes(renderEditor())
+elements.find((node) => node.type === 'Button' && node.props.danger).props.onClick()
+assert.deepEqual(exports.nfsClientsBody(value), { client_rules: [] })
+value = JSON.stringify([{ addresses: ['*'], access_type: null, squash: 'root' }])
+elements = nodes(renderEditor())
+assert.ok(elements.find((node) => node.type === 'Select' && node.props.options.some((option) => option.value === 'root')))
+value = '[{}]'
+assert.equal(renderEditor().type, 'Alert')
+assert.equal(value, '[{}]')
+console.log('NFS client editor interaction checks passed')
