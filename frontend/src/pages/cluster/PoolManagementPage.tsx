@@ -220,8 +220,8 @@ export function PoolManagementPage() {
     }
     const [poolList, crushRules, erasureCodeProfileRows, crushNodes] = await Promise.all([
       listResource('/pools', selectedClusterId, { filters: poolTableFilters.filters }),
-      listAllResources('/crush/rules', selectedClusterId).then((payload) => payload.items),
-      listAllResources('/erasure/code/profiles', selectedClusterId).then((payload) => payload.items),
+      listAllResources('/crush/rules', selectedClusterId).then((payload) => poolPlacementRows(payload, 'CRUSH 规则')),
+      listAllResources('/erasure/code/profiles', selectedClusterId).then((payload) => poolPlacementRows(payload, '纠删码配置')),
       request<{ nodes: ApiRecord[] }>('/crush/map', jsonInit('GET', { cluster_id: selectedClusterId })).then((payload) => payload.nodes)
     ])
     const erasureCodeProfiles = erasureCodeProfileRows.map(resourceName).filter(Boolean)
@@ -295,7 +295,7 @@ export function PoolManagementPage() {
     }
     setRefreshingPools(true)
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kind: 'pool' }), '刷新成功')
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['pool', 'crush_rule', 'erasure_code_profile'] }), '刷新成功')
       await refresh()
     } finally {
       setRefreshingPools(false)
@@ -1391,6 +1391,16 @@ function poolApplications(row: ApiRecord) {
   }
   const value = textValue(row.application_metadata, '')
   return value ? value.split(',').map((item) => item.trim()).filter(Boolean) : []
+}
+
+function poolPlacementRows(payload: { items: ApiRecord[], stale: boolean }, label: string): ApiRecord[] {
+  if (payload.stale !== false || payload.items.some((row) => row.stale !== false)) {
+    throw new Error(`${label}库存已过期或状态未知，请刷新后重试`)
+  }
+  if (label === '纠删码配置' && payload.items.some((row) => typeof row.plugin !== 'string' || !row.plugin.trim())) {
+    throw new Error('纠删码配置详情不完整，请刷新后重试')
+  }
+  return payload.items
 }
 
 function poolPlacementAvailable(values: PoolFormValues, rules: Array<{ value: string }>, profiles: Array<{ value: string }>) {

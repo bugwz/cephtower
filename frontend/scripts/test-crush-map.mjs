@@ -87,6 +87,17 @@ assert.equal(mapping.name(null, sparseRules), '')
 assert.equal(mapping.name('8', [...sparseRules, { rule_id: 9, rule_name: '8' }]), '8')
 assert.equal(mapping.name('ssd', sparseRules), 'ssd')
 
+const freshnessFunction = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolPlacementRows')
+const freshnessCode = ts.transpileModule(freshnessFunction.getText(poolTree) + '\nexports.rows = poolPlacementRows', { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+const freshness = {}
+new Function('exports', freshnessCode)(freshness)
+assert.deepEqual(freshness.rows({ stale: false, items: [] }, 'CRUSH 规则'), [])
+assert.throws(() => freshness.rows({ stale: true, items: [] }, 'CRUSH 规则'))
+assert.throws(() => freshness.rows({ stale: false, items: [{ stale: true }] }, 'CRUSH 规则'))
+assert.throws(() => freshness.rows({ stale: false, items: [{}] }, 'CRUSH 规则'))
+assert.throws(() => freshness.rows({ stale: false, items: [{ stale: false, name: 'partial' }] }, '纠删码配置'))
+assert.equal(freshness.rows({ stale: false, items: [{ stale: false, plugin: 'isa' }] }, '纠删码配置').length, 1)
+
 const rulesSource = readFileSync(new URL('../src/pages/cluster/CrushRulesPanel.tsx', import.meta.url), 'utf8')
 const rulesTree = ts.createSourceFile('CrushRulesPanel.tsx', rulesSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const rulesFunctions = rulesTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['crushRuleType', 'crushRuleSteps', 'crushRuleDeleteBlocked'].includes(node.name.text))
