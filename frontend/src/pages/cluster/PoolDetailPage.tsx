@@ -2,7 +2,7 @@ import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Descriptions, Empty, Input, Space, Table, Tag, Typography } from 'antd'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { isRecord, numberValue, textValue, type ApiRecord } from '../../api/client'
+import { isRecord, textValue, type ApiRecord } from '../../api/client'
 import { getOptionalResource, refreshResource } from '../../api/resource'
 import type { ResourceDTO } from '../../api/types'
 import { Page } from '../../components/Page'
@@ -183,9 +183,9 @@ function renderOverview(data: ApiRecord, decodedName: string) {
       <Descriptions.Item label="纠删码配置">{textValue(data.erasure_code_profile, '未采集')}</Descriptions.Item>
       <Descriptions.Item label="应用标记" span={2}>{renderApplications(poolApplications(data))}</Descriptions.Item>
       <Descriptions.Item label="CRUSH 规则集">{textValue(data.crush_rule)}</Descriptions.Item>
-      <Descriptions.Item label="压缩模式">{textValue(data.compression_mode, 'none')}</Descriptions.Item>
-      <Descriptions.Item label="最大字节数">{formatQuota(data.quota_max_bytes ?? data.max_bytes)}</Descriptions.Item>
-      <Descriptions.Item label="最大对象数">{textValue(data.quota_max_objects ?? data.max_objects ?? 0)}</Descriptions.Item>
+      <Descriptions.Item label="压缩模式">{textValue(data.compression_mode, '未采集')}</Descriptions.Item>
+      <Descriptions.Item label="最大字节数">{formatQuota(data.quota_max_bytes)}</Descriptions.Item>
+      <Descriptions.Item label="最大对象数">{formatQuota(data.quota_max_objects)}</Descriptions.Item>
       <Descriptions.Item label="资源版本">{textValue(data.resource_version)}</Descriptions.Item>
       <Descriptions.Item label="采集时间">{formatDateTime(data.observed_at)}</Descriptions.Item>
       <Descriptions.Item label="更新时间">{formatDateTime(data.updated_at)}</Descriptions.Item>
@@ -253,11 +253,10 @@ function poolType(row: ApiRecord) {
 }
 
 function formatQuota(value: unknown) {
-  const bytes = numberValue(value) ?? 0
-  if (bytes <= 0) {
-    return '0'
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
+    return '未采集'
   }
-  return textValue(bytes)
+  return value === 0 ? '无限制（0）' : value.toLocaleString('zh-CN')
 }
 
 function poolDetailRows(row: ApiRecord | null | undefined): DetailRow[] {
