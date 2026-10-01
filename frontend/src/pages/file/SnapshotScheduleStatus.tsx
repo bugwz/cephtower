@@ -1,7 +1,8 @@
 import { Alert, Button, Card, Form, Input, Modal, Popconfirm, Space } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
-import { listResource, mutateResource, refreshResource } from '../../api/resource'
+import { listAllResources, listResource, mutateResource, refreshResource } from '../../api/resource'
+import { scheduleFormScope, scheduleScope } from './snapshotScheduleScope'
 import { AppTable } from '../../components/AppTable'
 import { RecordDetail } from '../../components/RecordDetail'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -58,7 +59,7 @@ export function SnapshotScheduleStatus() {
     setDiscoveredError('')
     try {
       if (refresh) await refreshResource({ clusterId: selectedClusterId, kind: 'snapshot_schedule' })
-      const result = await listResource('/filesystem/snapshot/schedules', selectedClusterId)
+      const result = await listAllResources('/filesystem/snapshot/schedules', selectedClusterId)
       setDiscoveredRows(result.items)
     } catch (err) {
       setDiscoveredError(err instanceof Error ? err.message : '读取快照计划列表失败')
@@ -106,6 +107,13 @@ export function SnapshotScheduleStatus() {
       if (refreshQuery) await query(scope.current)
     } finally { setMutating(false) }
   }
+  async function managePath(row: ApiRecord) {
+    if (loading || mutating) return
+    const target = scheduleScope(row)
+    form.setFieldsValue(scheduleFormScope(row))
+    setRetention('')
+    await query(target)
+  }
   async function changeRetention(action: 'add' | 'remove') {
     if (!selectedClusterId || mutating) return
     setMutating(true)
@@ -136,13 +144,14 @@ export function SnapshotScheduleStatus() {
         {title:'文件系统',dataIndex:'fs'},
         {title:'路径',dataIndex:'path'},
         {title:'子卷',dataIndex:'subvol',render:(value) => value || '—'},
+        {title:'子卷组',dataIndex:'group',render:(value) => value || '默认组'},
         {title:'周期',dataIndex:'schedule'},
         {title:'状态',dataIndex:'active',render:(value) => value ? '启用' : '停用'},
         {title:'开始时间（UTC）',dataIndex:'start'},
         {title:'保留策略',dataIndex:'retention',render:(value) => typeof value === 'string' ? value || '—' : JSON.stringify(value ?? {})},
         {title:'已创建',dataIndex:'created_count',render:(value) => value ?? '—'},
         {title:'已清理',dataIndex:'pruned_count',render:(value) => value ?? '—'},
-        {title:'操作',render:(_,row) => <Space><Popconfirm title="删除这条快照计划？" description="已有快照不会因此删除。" onConfirm={() => toggle(row, 'remove', scheduleScope(row), false)}><Button danger disabled={mutating}>删除</Button></Popconfirm><Button disabled={mutating} onClick={() => toggle(row, row.active ? 'deactivate' : 'activate', scheduleScope(row), false)}>{row.active ? '停用' : '启用'}</Button></Space>}
+        {title:'操作',render:(_,row) => <Space><Button disabled={mutating || loading} onClick={() => managePath(row)}>管理路径与保留策略</Button><Popconfirm title="删除这条快照计划？" description="已有快照不会因此删除。" onConfirm={() => toggle(row, 'remove', scheduleScope(row), false)}><Button danger disabled={mutating}>删除</Button></Popconfirm><Button disabled={mutating} onClick={() => toggle(row, row.active ? 'deactivate' : 'activate', scheduleScope(row), false)}>{row.active ? '停用' : '启用'}</Button></Space>}
       ]} />
     </Card>}
     <Form form={form} disabled={mutating} layout="inline" initialValues={{ path: '/' }} onFinish={query} onValuesChange={reset}>
@@ -179,13 +188,4 @@ export function SnapshotScheduleStatus() {
     ]} />}
 
   </Card>
-}
-
-function scheduleScope(row: ApiRecord): ApiRecord {
-  return {
-    fs: row.fs,
-    path: row.path,
-    ...(row.subvol ? { subvol: row.subvol } : {}),
-    ...(row.group ? { group: row.group } : {})
-  }
 }
