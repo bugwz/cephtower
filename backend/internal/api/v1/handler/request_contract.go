@@ -271,6 +271,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"smb_share.create", "smb_share.update"}, true, map[string]JSONField{"cluster": stringField(true), "name": stringField(false), "share_name": stringField(false), "filesystem": stringField(true), "path": stringField(false)})
 	contracts["smb_share.update"].Fields["readonly"] = boolField(false)
 	contracts["smb_share.create"].Fields["readonly"] = boolField(false)
+	contracts["smb_share.create"].Fields["subvolume"] = stringField(false)
 	contracts["smb_share.update"].Fields["browseable"] = boolField(false)
 	add([]string{"config_value.set"}, true, map[string]JSONField{"value": stringField(true)})
 	matcher := map[string]JSONField{"name": stringField(true), "value": stringField(true), "isRegex": boolField(true), "isEqual": boolField(true)}

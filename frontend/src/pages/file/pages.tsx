@@ -811,6 +811,7 @@ const definitions: Record<
         { name: 'cluster', label: 'SMB 集群', type: 'select', required: true, optionsLoader: smbClusterOptions },
         { name: 'name', label: '共享 ID（创建后不可更改）', required: true },
         { name: 'share_name', label: '客户端共享名称', placeholder: '留空使用共享 ID；最多 64 个英文字符' },
+        { name: 'subvolume', label: 'CephFS 子卷（可选）', placeholder: '子卷名或子卷组/子卷名；留空使用文件系统' },
         { name: 'readonly', label: '只读', type: 'select', required: true, options: [{ label: '只读', value: 'true' }, { label: '允许写入', value: 'false' }] },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'path', label: 'CephFS 路径', required: true, placeholder: '/data' }
@@ -822,6 +823,7 @@ const definitions: Record<
         name: String(values.name ?? ''),
         ...(values.share_name ? { share_name: String(values.share_name) } : {}),
         ...smbShareAccessBody({ readonly: values.readonly }),
+        ...(values.subvolume ? { subvolume: String(values.subvolume) } : {}),
         filesystem: String(values.filesystem ?? ''),
         path: String(values.path ?? '')
       })

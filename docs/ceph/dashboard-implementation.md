@@ -1879,3 +1879,10 @@ SMB 创建/删除后严格解析目标集群的 `smb share ls --format json` 字
 错误结构、空 ID、重复 ID、尾随 JSON 或未达到目标状态均返回 post_check_failed，
 提醒操作可能已经生效。此检查证明资源存在性，不证明 Samba 已部署或客户端可用；
 创建属性的完整回读仍待完善。已覆盖执行链路与异常 fixture，无真实集群验证。
+
+SMB 创建支持指定 CephFS 子卷：API 可选 subvolume 字符串映射原生命令
+`smb share create --subvolume=<name>` 或 `<group>/<name>`，由 CephFSStorage
+拆分为 subvolumegroup/subvolume，对应参考表单的两个存储字段。省略仍使用文件系统
+根范围；路径在选定子卷范围内解释。拒绝空值、多层路径、点目录、NUL 和换行。
+前端当前提供带格式提示的文本输入，库存联动选择和编辑存储范围仍待完善；已覆盖
+原生命令参数测试，尚未进行实际子卷共享验证。

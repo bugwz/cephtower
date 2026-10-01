@@ -2392,6 +2392,22 @@ func build(request Request, p map[string]any) (command, error) {
 			path = "/"
 		}
 		args := []string{"smb", "share", "create", cluster, share, filesystem, path}
+		if value, exists := p["subvolume"]; exists {
+			subvolume, ok := value.(string)
+			if !ok || subvolume == "" || strings.ContainsAny(subvolume, "\x00\r\n") {
+				return command{}, invalid("subvolume must be a name or group/name")
+			}
+			parts := strings.Split(subvolume, "/")
+			if len(parts) > 2 {
+				return command{}, invalid("subvolume must be a name or group/name")
+			}
+			for _, part := range parts {
+				if strings.TrimSpace(part) == "" || part == "." || part == ".." {
+					return command{}, invalid("subvolume must be a name or group/name")
+				}
+			}
+			args = append(args, "--subvolume="+subvolume)
+		}
 		if value, exists := p["readonly"]; exists {
 			readonly, ok := value.(bool)
 			if !ok {
