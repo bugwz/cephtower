@@ -39,6 +39,15 @@ export function nfsFSAL(row?: ApiRecord): ApiRecord {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as ApiRecord : {}
 }
 
+export function nfsClientsBody(value: unknown) {
+  if (value === undefined || value === '') return {}
+  if (typeof value !== 'string') throw new Error('客户端规则必须为 JSON 数组')
+  let clients: unknown
+  try { clients = JSON.parse(value) } catch { throw new Error('客户端规则 JSON 格式无效') }
+  if (!Array.isArray(clients) || clients.some((client) => !client || typeof client !== 'object' || !Array.isArray(client.addresses) || !client.addresses.length || client.addresses.some((address: unknown) => typeof address !== 'string' || !/^[A-Za-z0-9_.:@*?/-]+$/.test(address)))) throw new Error('每条客户端规则需包含非空 addresses 数组及有效地址')
+  return { client_rules: clients.map((client) => ({ ...client, access_type: client.access_type ?? '', squash: client.squash ?? '' })) }
+}
+
 export function nfsExportEditReason(row: ApiRecord): string | undefined {
   if (nfsFSAL(row).name !== 'CEPH') return '当前编辑表单仅支持 CephFS 导出'
   return undefined
@@ -47,6 +56,7 @@ export function nfsExportEditReason(row: ApiRecord): string | undefined {
 export function nfsExportInitialValues(row?: ApiRecord) {
   return {
     cluster: typeof row?.cluster_id === 'string' ? row.cluster_id : '',
+    clients: Array.isArray(row?.clients) ? JSON.stringify(row.clients, null, 2) : undefined,
     sectype: Array.isArray(row?.sectype) && row.sectype.every((value) => typeof value === 'string') ? row.sectype.join(',') : undefined,
     pseudo: typeof row?.pseudo === 'string' ? row.pseudo : '',
     path: typeof row?.path === 'string' ? row.path : '',

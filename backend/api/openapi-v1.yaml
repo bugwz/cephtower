@@ -274,6 +274,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -905,6 +921,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -2831,6 +2863,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -3462,6 +3510,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -4311,6 +4375,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -5036,6 +5116,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -5667,6 +5763,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -6489,6 +6601,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -7216,6 +7344,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -7848,6 +7992,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -8723,6 +8883,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -9448,6 +9624,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -10175,6 +10367,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -10900,6 +11108,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -11531,6 +11755,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -12408,6 +12648,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -13535,6 +13791,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -14167,6 +14439,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -14799,6 +15087,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -16068,6 +16372,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -16845,6 +17165,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -17572,6 +17908,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -18203,6 +18555,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -19490,6 +19858,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -20121,6 +20505,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -20769,6 +21169,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -21494,6 +21910,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -22125,6 +22557,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -22757,6 +23205,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -23667,6 +24131,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -24489,6 +24969,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -25214,6 +25710,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -25845,6 +26357,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -26609,6 +27137,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -27241,6 +27785,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -28288,6 +28848,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -29205,6 +29781,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -29930,6 +30522,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -30657,6 +31265,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -31382,6 +32006,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -32013,6 +32653,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -32835,6 +33491,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -33560,6 +34232,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -34191,6 +34879,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -34918,6 +35622,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -35549,6 +36269,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -36276,6 +37012,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -36907,6 +37659,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -37634,6 +38402,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -38359,6 +39143,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -38990,6 +39790,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -39885,6 +40701,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -40611,6 +41443,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -41243,6 +42091,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -41875,6 +42739,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -42601,6 +43481,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -43267,6 +44163,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -44184,6 +45096,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -44909,6 +45837,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -45540,6 +46484,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -46267,6 +47227,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -46899,6 +47875,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -47531,6 +48523,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -48163,6 +49171,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -48890,6 +49914,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -49615,6 +50655,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -50246,6 +51302,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -50995,6 +52067,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -51626,6 +52714,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -52257,6 +53361,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -53275,6 +54395,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -53979,6 +55115,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -54611,6 +55763,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -55242,6 +56410,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -55969,6 +57153,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -56695,6 +57895,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -57327,6 +58543,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -58070,6 +59302,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -58701,6 +59949,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -59332,6 +60596,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -59964,6 +61244,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -60691,6 +61987,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -61416,6 +62728,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -62047,6 +63375,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -62780,6 +64124,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -63412,6 +64772,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -64044,6 +65420,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -64771,6 +66163,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -65403,6 +66811,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -66034,6 +67458,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -66761,6 +68201,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -67392,6 +68848,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -68023,6 +69495,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -68655,6 +70143,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -69477,6 +70981,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -70202,6 +71722,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -70833,6 +72369,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -71465,6 +73017,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -72097,6 +73665,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -72728,6 +74312,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -73360,6 +74960,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -73992,6 +75608,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -74719,6 +76351,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -75350,6 +76998,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -75982,6 +77646,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -76613,6 +78293,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -77575,6 +79271,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -78300,6 +80012,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -78931,6 +80659,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -79658,6 +81402,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -80383,6 +82143,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -81014,6 +82790,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -81741,6 +83533,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -82466,6 +84274,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -83097,6 +84921,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -83919,6 +85759,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:
@@ -84551,6 +86407,22 @@ paths:
                   type: boolean
                 client_id:
                   type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
                 clients:
                   type: array
                   items:

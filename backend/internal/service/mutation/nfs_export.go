@@ -154,6 +154,13 @@ func nfsExportUpdateJSON(export, parameters map[string]any) ([]byte, error) {
 	export["pseudo"] = parameters["pseudo"]
 	export["path"] = parameters["path"]
 	fsal["fs_name"] = parameters["filesystem"]
+	if value, exists := parameters["client_rules"]; exists {
+		clients, err := nfsClients(value)
+		if err != nil {
+			return nil, err
+		}
+		export["clients"] = clients
+	}
 	if securityTypes, exists := parameters["sectype"]; exists {
 		export["sectype"] = securityTypes
 	}
@@ -220,6 +227,9 @@ func nfsExportCreateMatches(p map[string]any, data []byte) bool {
 }
 
 func nfsExportAttributesMatch(export, p map[string]any) bool {
+	if clients, exists := p["client_rules"]; exists && !nfsClientsMatch(export["clients"], clients) {
+		return false
+	}
 	if securityTypes, exists := p["sectype"]; exists {
 		wanted, err := nfsSecurityTypes(securityTypes)
 		actualValue, present := export["sectype"]

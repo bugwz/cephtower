@@ -6,7 +6,11 @@ const source = readFileSync(new URL('../src/pages/file/nfsExportFields.ts', impo
 const exports = {}
 new Function('exports', ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
 const row = { cluster_id: 'nfs-a', pseudo: '/share', path: '/data', access_type: 'RO', fsal: { name: 'CEPH', fs_name: 'cephfs-a', user_id: 'nfs.user' } }
-assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', access_type: 'RO', squash: undefined, security_label: undefined, transports: undefined, protocols: undefined, sectype: undefined })
+assert.deepEqual(exports.nfsExportInitialValues(row), { cluster: 'nfs-a', pseudo: '/share', path: '/data', filesystem: 'cephfs-a', access_type: 'RO', squash: undefined, security_label: undefined, transports: undefined, protocols: undefined, sectype: undefined, clients: undefined })
+assert.deepEqual(exports.nfsClientsBody(''), {})
+assert.deepEqual(exports.nfsClientsBody('[]'), { client_rules: [] })
+assert.deepEqual(exports.nfsClientsBody('[{"addresses":["10.0.0.0/8"],"access_type":null,"squash":null}]'), { client_rules: [{ addresses: ['10.0.0.0/8'], access_type: '', squash: '' }] })
+for (const value of ['null', '{}', '[{}]', '[{"addresses":["x;}"]}]', '[']) assert.throws(() => exports.nfsClientsBody(value))
 assert.deepEqual(exports.nfsSecurityTypeBody('none, sys, krb5,krb5i,krb5p'), { sectype: ['none', 'sys', 'krb5', 'krb5i', 'krb5p'] })
 assert.deepEqual(exports.nfsSecurityTypeBody('default'), { sectype: [] })
 assert.deepEqual(exports.nfsSecurityTypeBody(''), {})

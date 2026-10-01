@@ -1,5 +1,6 @@
 import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
+import { nfsClientsBody } from './nfsExportFields'
 import { nfsAccessOptions, nfsExportEditReason, nfsExportInitialValues, nfsFSAL, nfsTransportBody, nfsTransportOptions, nfsProtocolBody, nfsProtocolOptions, nfsSecurityLabelOptions, nfsSecurityTypeBody, nfsSquashOptions } from './nfsExportFields'
 import { CephFSDirectoryBrowser } from './CephFSDirectoryBrowser'
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
@@ -615,6 +616,7 @@ const definitions: Record<
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'access_type', label: '访问类型', type: 'select', required: true, options: nfsAccessOptions },
         { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '使用原生默认值' },
+        { name: 'clients', label: '客户端规则 JSON（留空保留，[] 清空）', type: 'textarea', placeholder: '[{"addresses":["10.0.0.0/8"],"access_type":"RO","squash":"root_squash"}]' },
         { name: 'sectype', label: '认证方式（逗号分隔；default 恢复默认）', placeholder: 'none,sys,krb5,krb5i,krb5p；Kerberos 需预先配置' },
         { name: 'transports', label: '传输协议', type: 'select', options: nfsTransportOptions },
         { name: 'protocols', label: 'NFS 协议版本', type: 'select', options: nfsProtocolOptions },
@@ -629,6 +631,7 @@ const definitions: Record<
         filesystem: String(values.filesystem ?? ''),
         access_type: String(values.access_type ?? ''),
         ...nfsProtocolBody(values.protocols),
+        ...nfsClientsBody(values.clients),
         ...nfsSecurityTypeBody(values.sectype),
         ...nfsTransportBody(values.transports),
         ...(values.squash ? { squash: values.squash } : {}),
@@ -648,6 +651,7 @@ const definitions: Record<
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
         { name: 'access_type', label: '访问类型', type: 'select', required: true, options: nfsAccessOptions },
         { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '保持当前设置' },
+        { name: 'clients', label: '客户端规则 JSON（留空保留，[] 清空）', type: 'textarea', placeholder: 'access_type 和 squash 留空字符串表示继承导出设置' },
         { name: 'sectype', label: '认证方式（逗号分隔；default 恢复默认）', placeholder: '留空保留；Kerberos 需预先配置服务端' },
         { name: 'transports', label: '传输协议', type: 'select', options: nfsTransportOptions },
         { name: 'protocols', label: 'NFS 协议版本', type: 'select', options: nfsProtocolOptions },
@@ -657,6 +661,7 @@ const definitions: Record<
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
         export_id: exportId(row),
+        ...nfsClientsBody(values.clients),
         ...nfsSecurityTypeBody(values.sectype),
         ...nfsProtocolBody(values.protocols),
         ...nfsTransportBody(values.transports),

@@ -1687,3 +1687,13 @@ NONE 表示导出默认拒绝访问，客户端规则仍可覆盖；更新保留
 后端校验枚举与重复值，通过 export apply 写入，读回按集合比较；原生
 to_dict 在空数组时省略 sectype，因此恢复默认允许读回缺失字段。
 Kerberos 需预先配置服务端，本功能不创建 Kerberos 环境。未实测集群。
+
+## NFS 客户端规则写入
+
+创建和编辑提供客户端规则 JSON 编辑区，支持地址数组、访问类型、身份映射，
+留空不修改，[] 清空规则。API 字段名为 client_rules，后端转换为原生 clients，
+避免与 iSCSI clients 契约混淆。空 access_type/squash 继承导出设置；原生 null
+读回与空字符串按继承语义比较。后端校验结构和枚举，拒绝地址中的配置分隔符、
+引号与控制字符，通过 export apply 写入并按原顺序读回验证。当前地址检查是
+配置安全字符检查，不替代 DNS/IP 可达性检测。逐行可视化编辑器尚未实现。
+参考 nfs-form-client、ganesha_conf.py Client；无真实集群验证。
