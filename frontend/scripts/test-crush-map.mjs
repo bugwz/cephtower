@@ -447,6 +447,48 @@ for (const formMode of ['create', 'edit']) for (const failed of [false, true]) {
   await run({})
   assert.deepEqual(events, failed ? ['mutate', 'close', 'collect', 'warning', 'read'] : ['mutate', 'close', 'collect', 'read'])
 }
+for (const failedIndex of [0, 1, 2]) for (const changed of [false, true]) for (const collectionFailed of [false, true]) {
+  const fn = poolPage.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submitPool')
+  const code = ts.transpileModule(fn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+  const calls = [], events = [], notices = []
+  const clusterScope = { current: {} }
+  const requests = [{ field: 'pg_num' }, { operation: 'quota' }, { operation: 'rename' }]
+  const env = {
+    formMode: 'edit', editingPool: editable, poolEditBlocked: editBlocked,
+    clusterScope, setSubmitting: () => {},
+    poolUpdateBodies: () => requests,
+    operationMutation: { run: async (action) => action() },
+    mutateResource: async (path, method, body, options) => {
+      assert.equal(path, '/pool'); assert.equal(method, 'PATCH')
+      assert.equal(options.ifMatch, Number(editable.resource_version))
+      calls.push(body)
+      if (calls.length - 1 === failedIndex) {
+        if (changed) clusterScope.current = {}
+        throw new Error('mutation outcome unavailable')
+      }
+    },
+    Modal: { warning: (notice) => { notices.push(notice); events.push('notice') } },
+    message: { success: () => assert.fail('partial failure must not report success'), warning: () => { events.push('collection-warning') } },
+    setFormOpen: (open) => { assert.equal(open, false); events.push('close') },
+    setEditingPool: (row) => { assert.equal(row, null) },
+    refreshResource: async () => { events.push('collect'); if (collectionFailed) throw new Error('collection failed') },
+    refresh: async () => { events.push('read') }
+  }
+  const run = new Function('env', `const { ${Object.keys(env).join(', ')} } = env; const selectedClusterId=1, submitting=false, loading=false, error=null, data={}; ${code}; return submitPool`)(env)
+  await run({})
+  assert.deepEqual(calls, requests.slice(0, failedIndex + 1), 'must never send later edits or retry the failed edit')
+  if (changed) {
+    assert.deepEqual(events, [])
+  } else {
+    assert.equal(notices.length, 1)
+    assert.ok(notices[0].content.includes(`已确认成功 ${failedIndex}/3 项`))
+    assert.ok(notices[0].content.includes(`第 ${failedIndex + 1} 项请求失败或结果未确认`))
+    assert.match(notices[0].content, /不会自动回滚/)
+    if (failedIndex > 0) assert.match(notices[0].content, /pg_num/)
+    if (failedIndex > 1) assert.match(notices[0].content, /quota/)
+    assert.deepEqual(events, collectionFailed ? ['notice', 'close', 'collect', 'collection-warning', 'read'] : ['notice', 'close', 'collect', 'read'])
+  }
+}
 for (const name of ['submitCrushRule', 'submitErasureCodeProfile']) {
   const fn = poolPage.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === name)
   const code = ts.transpileModule(fn.getText(poolTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText

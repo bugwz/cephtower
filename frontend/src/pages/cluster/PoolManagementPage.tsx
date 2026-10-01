@@ -471,19 +471,36 @@ export function PoolManagementPage() {
           message.info('没有需要提交的更改')
           return
         }
+        let completed = 0
+        let failed = false
         for (const body of requests) {
           if (clusterScope.current !== scope) return
-          await operationMutation.run(() => mutateResource('/pool', 'PATCH', body, { ifMatch: Number(editingPool.resource_version) }), false)
+          try {
+            await operationMutation.run(() => mutateResource('/pool', 'PATCH', body, { ifMatch: Number(editingPool.resource_version) }), false)
+            completed += 1
+          } catch {
+            failed = true
+            break
+          }
         }
         if (clusterScope.current !== scope) return
-        message.success('存储池已更新')
+        if (failed) {
+          const confirmed = requests.slice(0, completed).map((body) => String(body.field ?? body.operation ?? '修改')).join('、') || '无'
+          Modal.warning({
+            title: '存储池修改未全部完成',
+            content: `已确认成功 ${completed}/${requests.length} 项：${confirmed}。第 ${completed + 1} 项请求失败或结果未确认，后续请求未发送。已成功的修改不会自动回滚；请核对操作记录和刷新后的库存，再重新打开编辑表单，不要直接重复提交。`,
+            okText: '知道了'
+          })
+        } else {
+          message.success('存储池已更新')
+        }
       }
       setFormOpen(false)
       setEditingPool(null)
       try {
         await refreshResource({ clusterId: selectedClusterId, kind: 'pool' })
       } catch {
-        if (clusterScope.current === scope) message.warning('存储池修改已执行，但重新采集失败；请使用刷新按钮核实结果，不要重复提交修改。')
+        if (clusterScope.current === scope) message.warning('存储池修改请求已结束，但重新采集失败；请使用刷新按钮核实结果，不要重复提交修改。')
       }
       if (clusterScope.current === scope) await refresh({ showLoading: false })
     } finally {
