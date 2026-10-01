@@ -1,11 +1,12 @@
 import { Alert, Button, Card, Form, Input, Modal, Popconfirm, Select, Space } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
-import { listAllResources, listResource, mutateResource, refreshResource } from '../../api/resource'
+import { listAllResources, listResource, mutateResource, refreshResource, type ResourceListResult } from '../../api/resource'
 import { scheduleFormScope, scheduleScope } from './snapshotScheduleScope'
 import { buildScheduleInterval, scheduleActiveText, scheduleFrequencyOptions, scheduleIntervalText, scheduleRetentionText, scheduleToggleAction } from './snapshotScheduleText'
 import { AppTable } from '../../components/AppTable'
 import { RecordDetail } from '../../components/RecordDetail'
+import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 import { useClusterContext } from '../../state/ClusterContext'
 
 export function SnapshotScheduleStatus() {
@@ -31,6 +32,7 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
   const [moduleState, setModuleState] = useState<'loading' | 'enabled' | 'disabled' | 'unavailable'>('loading')
   const [moduleError, setModuleError] = useState('')
   const [discoveredRows, setDiscoveredRows] = useState<ApiRecord[]>([])
+  const [discoveredMeta, setDiscoveredMeta] = useState<Pick<ResourceListResult, 'observedAt' | 'stale' | 'staleReason'>>()
   const [discoveredLoading, setDiscoveredLoading] = useState(false)
   const [discoveredError, setDiscoveredError] = useState('')
   const pending = useRef<AbortController | null>(null)
@@ -76,6 +78,7 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
       const result = await listAllResources('/filesystem/snapshot/schedules', selectedClusterId)
       if (!active.current) return
       setDiscoveredRows(result.items)
+      setDiscoveredMeta({ observedAt: result.observedAt, stale: result.stale, staleReason: result.staleReason })
     } catch (err) {
       if (!active.current) return
       setDiscoveredError(err instanceof Error ? err.message : '读取快照计划列表失败')
@@ -160,6 +163,8 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
     {moduleState === 'unavailable' && <Alert type="error" showIcon message="快照计划模块不可用" description={moduleError} />}
     {moduleState === 'enabled' && <Card type="inner" title="全部已发现的快照计划" extra={<Button loading={discoveredLoading} onClick={() => loadDiscovered(true)}>刷新</Button>}>
       {discoveredError && <Alert type="error" message={discoveredError} />}
+      {discoveredMeta?.stale && <Alert type="warning" showIcon message="快照计划列表已过期" description={discoveredMeta.staleReason || '请刷新列表，或进入路径管理查询实时状态。'} />}
+      <ResourceMetaBar observedAt={discoveredMeta?.observedAt} stale={discoveredMeta?.stale} staleReason={discoveredMeta?.staleReason} />
       <AppTable<ApiRecord> loading={discoveredLoading} dataSource={discoveredRows} rowKey={(row) => String(row.natural_key)} expandable={{ expandedRowRender:(row) => <RecordDetail record={row} /> }} columns={[
         {title:'文件系统',dataIndex:'fs'},
         {title:'路径',dataIndex:'path'},
