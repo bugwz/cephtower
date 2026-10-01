@@ -17,6 +17,7 @@ const { Text } = Typography
 const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
 const excludedFallbackDetailKeys = new Set([
   'history_scope',
+  'profile_warning',
   'configuration',
   'raw_detail',
   'kind',
@@ -78,8 +79,7 @@ export function PoolDetailPage() {
     if (!selectedClusterId || !decodedName) {
       return null
     }
-    const payload = await getOptionalResource('/pool', selectedClusterId, { pool: decodedName })
-    return payload ? { ...normalizePoolDetail(resourceToRecord(payload.item)), history_scope: `${selectedClusterId}/${decodedName}` } : null
+    return loadPoolDetail(selectedClusterId, decodedName)
   }, [decodedName, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const detailRows = useMemo(() => filterRows(poolDetailRows(data), detailSearch), [data, detailSearch])
@@ -104,6 +104,7 @@ export function PoolDetailPage() {
     <Page title="存储池详情" loading={loading} error={error}>
       <Space direction="vertical" size={16} className="page-stack">
         {data && poolDetailFreshnessWarning(data) && <Alert type="warning" showIcon message={poolDetailFreshnessWarning(data)} />}
+        {typeof data?.profile_warning === 'string' && <Alert type="warning" showIcon message={data.profile_warning} />}
         <Card
           className="page-surface-card"
           title="基础信息"
@@ -248,12 +249,34 @@ function poolDetailFreshnessWarning(row: ApiRecord): string | undefined {
     : '存储池库存时效未知，无法确认以下状态和统计是否仍然有效，请重新采集。'
 }
 
-function normalizePoolDetail(row: ApiRecord): ApiRecord {
+async function loadPoolDetail(clusterId: number, name: string): Promise<ApiRecord | null> {
+  const payload = await getOptionalResource('/pool', clusterId, { pool: name })
+  if (!payload) return null
+  const row = resourceToRecord(payload.item)
+  const profiles: ApiRecord[] = []
+  let warning: string | undefined
+  if (poolKind(row) === 'erasure') {
+    if (typeof row.erasure_code_profile === 'string' && row.erasure_code_profile.trim()) {
+      try {
+        const profile = await getOptionalResource('/erasure/code/profile', clusterId, { name: row.erasure_code_profile })
+        if (profile) profiles.push(resourceToRecord(profile.item))
+      } catch {
+        // Optional profile inventory must not hide the successfully loaded pool.
+      }
+    }
+    if (!poolDataProtection(row, profiles).startsWith('EC: ')) {
+      warning = '纠删码 profile 不可用、已过期或分片参数无效，无法确认 k+m；池详情仍展示已采集的数据。'
+    }
+  }
+  return { ...normalizePoolDetail(row, profiles), profile_warning: warning, history_scope: `${clusterId}/${name}` }
+}
+
+function normalizePoolDetail(row: ApiRecord, profiles: ApiRecord[] = []): ApiRecord {
   const type = poolKind(row) ?? '未知'
   return {
     ...row,
     type,
-    data_protection_display: poolDataProtection(row),
+    data_protection_display: poolDataProtection(row, profiles),
     pg_status_display: poolPGStatus(row.pg_status)
   }
 }

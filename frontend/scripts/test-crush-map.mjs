@@ -224,6 +224,36 @@ assert.throws(() => history.points({ result_type: 'matrix', series: [{ metric: {
 assert.ok(historySource.includes('controller.current?.abort()'))
 assert.ok(detailSource.includes('data?.history_scope === `${selectedClusterId}/${decodedName}`'))
 const detailTree = ts.createSourceFile('PoolDetailPage.tsx', detailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const detailLoaderCode = ts.transpileModule(detailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'loadPoolDetail').getText(detailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const scenario of ['fresh', 'stale', 'missing', 'failure', 'invalid', 'wrong-name', 'replicated', 'no-profile', 'no-pool', 'pool-failure']) {
+  const calls = []
+  const load = new Function('getOptionalResource', 'resourceToRecord', 'poolKind', 'poolDataProtection', 'normalizePoolDetail', `${detailLoaderCode}; return loadPoolDetail`)(async (path, clusterId, body) => {
+    calls.push({ path, clusterId, body })
+    if (path === '/pool') {
+      if (scenario === 'pool-failure') throw new Error('pool read failed')
+      if (scenario === 'no-pool') return undefined
+      return { item: { name: 'p', type: scenario === 'replicated' ? 'replicated' : 'erasure', size: 3, erasure_code_profile: scenario === 'no-profile' ? undefined : 'ec' } }
+    }
+    if (scenario === 'failure') throw new Error('profile read failed')
+    if (scenario === 'missing') return undefined
+    return { item: { name: scenario === 'wrong-name' ? 'other' : 'ec', stale: scenario === 'stale', k: scenario === 'invalid' ? 0 : '4', m: '2' } }
+  }, (item) => item, (row) => row.type, protection, (row, profiles) => ({ ...row, data_protection_display: protection(row, profiles) }))
+  if (scenario === 'pool-failure') { await assert.rejects(load(7, 'p'), /pool read failed/); continue }
+  const result = await load(7, 'p')
+  assert.deepEqual(calls[0], { path: '/pool', clusterId: 7, body: { pool: 'p' } })
+  if (scenario === 'no-pool') { assert.equal(result, null); assert.equal(calls.length, 1); continue }
+  assert.equal(result.history_scope, '7/p')
+  if (scenario === 'fresh' || scenario === 'replicated') {
+    assert.equal(result.data_protection_display, scenario === 'fresh' ? 'EC: 4+2' : 'replica: x3')
+    assert.equal(result.profile_warning, undefined)
+  } else {
+    assert.equal(result.data_protection_display, '纠删码（分片数未采集）')
+    assert.match(result.profile_warning, /无法确认 k\+m/)
+  }
+  if (scenario === 'replicated' || scenario === 'no-profile') assert.equal(calls.length, 1)
+  else assert.deepEqual(calls[1], { path: '/erasure/code/profile', clusterId: 7, body: { name: 'ec' } })
+}
+assert.ok(detailSource.includes('data_protection_display: poolDataProtection(row, profiles)'))
 const minimumSizeFn = detailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolMinimumSize')
 const minimumSizeCode = ts.transpileModule(minimumSizeFn.getText(detailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const minimumSize = new Function(`${minimumSizeCode}; return poolMinimumSize`)()
