@@ -1,5 +1,6 @@
 const dateTimeFields = new Set([
   'created_at',
+  'ceph_created_at',
   'updated_at',
   'observed_at',
   'occurred_at',

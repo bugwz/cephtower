@@ -1261,8 +1261,10 @@ in-progress 状态开放取消操作，调用 `fs clone cancel` 后以 `fs clone
 ### CephFS 子卷摘要字段
 
 参考子卷列表使用 `fs subvolume info` 的 bytes_pcent 和 created_at 展示配额使用率
-与创建时间。本项目采集器已经保留这两个原生字段，现已在子卷表格直接展示，
-无需新增命令或推导近似值。
+与创建时间。子卷表格展示 bytes_pcent，并将原生 created_at 规范为 ceph_created_at，
+避免资源信封的同名缓存记录创建时间覆盖它。子卷组及快照使用同样的字段规范，
+表格统一格式化原生时间，原生 info 不返回时间时显示缺失，不用缓存时间代替。
+无需新增命令或推导近似值；离线测试验证字段隔离，未连接真实集群。
 
 ### CephFS 子卷配额更新
 

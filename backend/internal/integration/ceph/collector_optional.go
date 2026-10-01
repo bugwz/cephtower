@@ -182,9 +182,7 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 				payload := map[string]any{"filesystem": name, "name": group.Name}
 				var details map[string]any
 				if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_group", []string{"fs", "subvolumegroup", "info", name, group.Name, "--format", "json"}, &details) {
-					for key, value := range details {
-						payload[key] = value
-					}
+					mergeCephFSInfo(payload, details)
 				}
 				rows = append(rows, Observation{Kind: "subvolume_group", NaturalKey: name + "/" + group.Name, ParentKind: "filesystem", ParentKey: name, Name: group.Name, Status: "available", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 				rows = append(rows, p.collectCephFSSubvolumeScope(ctx, access, name, group.Name, now)...)
@@ -234,9 +232,7 @@ func (p *NativeProvider) collectCephFSSubvolumeScope(ctx context.Context, access
 		infoArgs = append(infoArgs, "--format", "json")
 		var details map[string]any
 		if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_subvolume_detail", infoArgs, &details) {
-			for key, value := range details {
-				payload[key] = value
-			}
+			mergeCephFSInfo(payload, details)
 			if _, isClone := details["source"]; isClone {
 				statusArgs := []string{"fs", "clone", "status", filesystem, subvolume.Name}
 				if group != "" {
@@ -270,9 +266,7 @@ func (p *NativeProvider) collectCephFSSubvolumeScope(ctx context.Context, access
 					continue
 				}
 				snapshotPayload := map[string]any{"fs": filesystem, "filesystem": filesystem, "group": groupKey, "subvolume": subvolume.Name, "name": snapshotName}
-				for key, value := range snapshot {
-					snapshotPayload[key] = value
-				}
+				mergeCephFSInfo(snapshotPayload, snapshot)
 				infoArgs := []string{"fs", "subvolume", "snapshot", "info", filesystem, subvolume.Name, snapshotName}
 				if group != "" {
 					infoArgs = append(infoArgs, group)
@@ -280,15 +274,23 @@ func (p *NativeProvider) collectCephFSSubvolumeScope(ctx context.Context, access
 				infoArgs = append(infoArgs, "--format", "json")
 				var snapshotInfo map[string]any
 				if p.optional(ctx, access, executor.BinaryCeph, "collect.cephfs_snapshot_info", infoArgs, &snapshotInfo) {
-					for key, value := range snapshotInfo {
-						snapshotPayload[key] = value
-					}
+					mergeCephFSInfo(snapshotPayload, snapshotInfo)
 				}
 				rows = append(rows, Observation{Kind: "cephfs_snapshot", NaturalKey: parent + "/" + snapshotName, ParentKind: "subvolume", ParentKey: parent, Name: snapshotName, Status: "available", Source: "ceph_cli", Payload: snapshotPayload, ObservedAt: now})
 			}
 		}
 	}
 	return rows
+}
+
+// Native creation time must not collide with the resource envelope's cache timestamp.
+func mergeCephFSInfo(payload, info map[string]any) {
+	for key, value := range info {
+		if key == "created_at" {
+			key = "ceph_created_at"
+		}
+		payload[key] = value
+	}
 }
 
 func (p *NativeProvider) collectPoolMirroringMode(ctx context.Context, access ClusterAccess, pool string) *string {

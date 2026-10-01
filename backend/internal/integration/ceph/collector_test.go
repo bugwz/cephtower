@@ -43,7 +43,7 @@ func (f cephFSCloneFixtureExecutor) Run(_ context.Context, _ executor.ClusterAcc
 	*f.calls = append(*f.calls, spec)
 	fixtures := map[string]string{
 		"fs subvolume ls cephfs team --format json":                               `[{"name":"clone-a"}]`,
-		"fs subvolume info cephfs clone-a team --format json":                     `{"path":"/volumes/team/clone-a","source":{"volume":"cephfs","group":"_nogroup","subvolume":"source-a","snapshot":"snap-a"}}`,
+		"fs subvolume info cephfs clone-a team --format json":                     `{"created_at":"2026-09-22 06:00:00","bytes_pcent":"42.00","path":"/volumes/team/clone-a","source":{"volume":"cephfs","group":"_nogroup","subvolume":"source-a","snapshot":"snap-a"}}`,
 		"fs clone status cephfs clone-a team --format json":                       `{"status":{"state":"in-progress","source":{"volume":"cephfs","subvolume":"source-a","snapshot":"snap-a"},"progress_report":{"percentage cloned":"42%","entries cloned":21,"bytes cloned":4096}}}`,
 		"fs subvolume snapshot ls cephfs clone-a team --format json":              `[{"name":"checkpoint"}]`,
 		"fs subvolume snapshot info cephfs clone-a checkpoint team --format json": `{"created_at":"2026-09-23 07:00:00","data_pool":"cephfs.hot","has_pending_clones":"yes"}`,
@@ -69,6 +69,12 @@ func TestCollectCephFSCloneStatusForNamedGroup(t *testing.T) {
 	if rows[0].NaturalKey != "cephfs/team/clone-a" || payload["group"] != "team" || payload["clone_state"] != "in-progress" {
 		t.Fatalf("subvolume = key %q payload %#v", rows[0].NaturalKey, payload)
 	}
+	if payload["ceph_created_at"] != "2026-09-22 06:00:00" || payload["bytes_pcent"] != "42.00" {
+		t.Fatalf("native subvolume summary = %#v", payload)
+	}
+	if _, exists := payload["created_at"]; exists {
+		t.Fatal("native subvolume time collides with cache metadata")
+	}
 	progress, ok := payload["clone_progress"].(map[string]any)
 	if !ok || progress["percentage cloned"] != "42%" {
 		t.Fatalf("clone progress = %#v", payload["clone_progress"])
@@ -79,6 +85,12 @@ func TestCollectCephFSCloneStatusForNamedGroup(t *testing.T) {
 	snapshot, ok := rows[1].Payload.(map[string]any)
 	if !ok || snapshot["has_pending_clones"] != "yes" || snapshot["data_pool"] != "cephfs.hot" {
 		t.Fatalf("snapshot payload = %#v", rows[1].Payload)
+	}
+	if snapshot["ceph_created_at"] != "2026-09-23 07:00:00" {
+		t.Fatalf("native snapshot creation time = %#v", snapshot)
+	}
+	if _, exists := snapshot["created_at"]; exists {
+		t.Fatal("native snapshot time collides with cache metadata")
 	}
 	want := [][]string{
 		{"fs", "subvolume", "ls", "cephfs", "team", "--format", "json"},
