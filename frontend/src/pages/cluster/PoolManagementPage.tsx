@@ -960,12 +960,18 @@ export function PoolManagementPage() {
   )
 }
 
+function poolPGStatus(value: unknown): string {
+  if (!isRecord(value)) return '未采集'
+  const states = Object.entries(value)
+  if (!states.length || states.some(([state, count]) => !state.trim() || typeof count !== 'number' || !Number.isSafeInteger(count) || count < 0)) return '未采集'
+  return states.map(([state, count]) => `${count} ${state}`).join(', ')
+}
+
 function normalizePoolRow(row: ApiRecord): ApiRecord {
   const name = resourceName(row)
   const poolType = poolKind(row)
   const size = numberValue(row.size)
-  const pgNum = numberValue(row.pg_num)
-  const pgAutoscale = textValue(row.pg_autoscale_mode, 'on')
+  const pgAutoscale = textValue(row.pg_autoscale_mode, '未知')
   return {
     ...row,
     name,
@@ -973,7 +979,7 @@ function normalizePoolRow(row: ApiRecord): ApiRecord {
     data_protection_display: poolType === 'erasure' ? 'erasure' : `replica: x${size ?? 3}`,
     applications: poolApplications(row),
     applications_display: poolApplications(row).join(', '),
-    pg_status_display: pgNum ? `${pgNum} active+clean / ${pgAutoscale}` : `active+clean / ${pgAutoscale}`,
+    pg_status_display: `${poolPGStatus(row.pg_status)} / ${pgAutoscale}`,
     usage_display: poolUsage(row),
     read_bytes_display: formatBytes(numberValue(row.read_bytes ?? row.client_read_bytes)),
     write_bytes_display: formatBytes(numberValue(row.write_bytes ?? row.client_write_bytes))
