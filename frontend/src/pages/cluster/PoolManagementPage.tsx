@@ -1,5 +1,5 @@
 import { InfoCircleOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Collapse, Descriptions, Divider, Form, Input, InputNumber, Select, Space, Tag, Tooltip, Typography } from 'antd'
+import { Alert, Button, Card, Collapse, Descriptions, Divider, Form, Input, InputNumber, Modal, Select, Space, Tag, Tooltip, Typography } from 'antd'
 import { erasureProfileDetails } from './ErasureProfilesPanel'
 import { CrushRuleUsage, ErasureProfileUsage } from './ErasureProfileUsage'
 import { CrushRuleDetails } from './CrushRulesPanel'
@@ -419,6 +419,23 @@ export function PoolManagementPage() {
     }
   }
 
+  function deletePool(row: ApiRecord) {
+    if (!selectedClusterId || loading || error || poolDeleteBlocked(row)) return
+    const scope = clusterScope.current
+    const pool = resourceName(row)
+    Modal.confirm({
+      title: `永久删除存储池 ${pool}`,
+      content: '此操作将永久删除池内全部对象及数据，无法恢复。请先确认备份和应用依赖。Ceph 的删除保护仍然生效，本操作不会自动启用 mon_allow_pool_delete。',
+      okText: '永久删除', okType: 'danger', cancelText: '取消',
+      async onOk() {
+        if (clusterScope.current !== scope) throw new Error('集群已切换，请在当前集群重新确认')
+        await operationMutation.run(() => mutateResource('/pool', 'DELETE', { cluster_id: selectedClusterId, pool }, { ifMatch: Number(row.resource_version) }), false)
+        await refreshResource({ clusterId: selectedClusterId, kind: 'pool' })
+        if (clusterScope.current === scope) await refresh()
+      }
+    })
+  }
+
   async function submitPool(values: PoolFormValues) {
     if (!selectedClusterId || submitting) {
       return
@@ -493,6 +510,7 @@ export function PoolManagementPage() {
                 <TableActions>
                   <TableAction onClick={() => openEdit(row)}>编辑</TableAction>
                   <TableAction onClick={() => navigate(`/cluster/pool/${encodeURIComponent(resourceName(row))}`)}>详情</TableAction>
+                  <TableAction danger disabled={loading || Boolean(error) || Boolean(poolDeleteBlocked(row))} title={poolDeleteBlocked(row)} onClick={() => deletePool(row)}>删除</TableAction>
                 </TableActions>
               )
             }
@@ -961,6 +979,14 @@ export function PoolManagementPage() {
       </DraggableModal>
     </Page>
   )
+}
+
+function poolDeleteBlocked(row: ApiRecord): string | undefined {
+  if (row.stale !== false) return '池库存过期或状态未知，请重新采集'
+  if (!resourceName(row)) return '池名称不可用'
+  const version = Number(row.resource_version)
+  if (!Number.isSafeInteger(version) || version <= 0) return '资源版本不可用，请重新采集'
+  return undefined
 }
 
 export function poolPGStatus(value: unknown): string {
