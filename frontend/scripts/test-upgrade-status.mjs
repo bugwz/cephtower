@@ -34,3 +34,16 @@ assert.equal(fields({ services_complete: [] })['已完成服务'], '无')
 assert.equal(fields({ services_complete: [{}] })['已完成服务'], '未知')
 assert.equal(fields({})['目标镜像'], '未提供')
 console.log('Native upgrade status display checks passed')
+
+const checkSource = readFileSync(new URL('../src/pages/cluster/UpgradeCheck.tsx', import.meta.url), 'utf8')
+const checkTree = ts.createSourceFile('UpgradeCheck.tsx', checkSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const checkFunctions = checkTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['upgradeCheckVersion', 'upgradeCheckData'].includes(node.name.text))
+const checkExports = {}
+new Function('exports', ts.transpileModule(checkFunctions.map((fn) => fn.getText(checkTree)).join('\n'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(checkExports)
+assert.equal(checkExports.upgradeCheckVersion(' 20.2.2 '), '20.2.2')
+for (const version of ['', 'v20.2.2', '--image', '20.2']) assert.throws(() => checkExports.upgradeCheckVersion(version))
+const report = { target_name: 'ceph:v20.2.2', target_id: 'abc', target_version: '20.2.2', needs_update: { 'mon.a': { current_name: 'ceph:old', current_id: null, current_version: '19.2.1', ignored: 'not-a-column' } }, up_to_date: [], non_ceph_image_daemons: ['prometheus.a'] }
+assert.deepEqual(checkExports.upgradeCheckData({ check: report }).rows, [{ name: 'mon.a', current_name: 'ceph:old', current_id: null, current_version: '19.2.1' }])
+assert.deepEqual(checkExports.upgradeCheckData({ check: { ...report, needs_update: {} } }).rows, [])
+for (const check of [null, {}, { ...report, target_name: null }, { ...report, up_to_date: null }, { ...report, needs_update: [] }, { ...report, needs_update: { 'mon.a': {} } }]) assert.throws(() => checkExports.upgradeCheckData({ check }))
+console.log('Upgrade compatibility report checks passed')
