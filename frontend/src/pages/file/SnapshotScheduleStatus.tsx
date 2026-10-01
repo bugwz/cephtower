@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { listAllResources, listResource, mutateResource, refreshResource, type ResourceListResult } from '../../api/resource'
 import { scheduleFormScope, scheduleScope } from './snapshotScheduleScope'
-import { buildScheduleInterval, scheduleActiveText, scheduleFrequencyOptions, scheduleIntervalText, scheduleRetentionText, scheduleToggleAction } from './snapshotScheduleText'
+import { buildRetentionRules, buildScheduleInterval, retentionFrequencyOptions, scheduleActiveText, scheduleFrequencyOptions, scheduleIntervalText, scheduleRetentionText, scheduleToggleAction } from './snapshotScheduleText'
 import { AppTable } from '../../components/AppTable'
 import { RecordDetail } from '../../components/RecordDetail'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
@@ -26,7 +26,8 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
   const [loading, setLoading] = useState(false)
   const [rows, setRows] = useState<ApiRecord[] | null>(null)
   const scope = useRef<ApiRecord>({})
-  const [retention, setRetention] = useState('')
+  const [retentionCounts, setRetentionCounts] = useState<Record<string, string>>({})
+  const retention = buildRetentionRules(retentionCounts)
   const [mutating, setMutating] = useState(false)
   const [error, setError] = useState('')
   const [moduleState, setModuleState] = useState<'loading' | 'enabled' | 'disabled' | 'unavailable'>('loading')
@@ -36,7 +37,7 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
   const [discoveredLoading, setDiscoveredLoading] = useState(false)
   const [discoveredError, setDiscoveredError] = useState('')
   const pending = useRef<AbortController | null>(null)
-  function reset() { pending.current?.abort(); setRows(null); setError(''); setLoading(false) }
+  function reset() { pending.current?.abort(); setRows(null); setError(''); setLoading(false); setRetentionCounts({}) }
   const loadModule = useCallback(async () => {
     if (!selectedClusterId) {
       setModuleState('unavailable')
@@ -132,11 +133,11 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
     if (loading || mutating) return
     const target = scheduleScope(row)
     form.setFieldsValue(scheduleFormScope(row))
-    setRetention('')
+    setRetentionCounts({})
     await query(target)
   }
   async function changeRetention(action: 'add' | 'remove') {
-    if (!active.current || !selectedClusterId || mutating) return
+    if (!active.current || !selectedClusterId || mutating || !retention) return
     setMutating(true)
     try {
       await mutateResource('/filesystem/snapshot/schedule/retention','POST',{ cluster_id:selectedClusterId, ...scope.current, retention, action })
@@ -196,7 +197,10 @@ function ClusterSnapshotScheduleStatus({ selectedClusterId }: { selectedClusterI
     </Modal>
     {Boolean(rows?.length) && <Card title="路径保留策略">
       <Alert type="info" message="保留策略作用于当前路径的全部计划。n 为最近快照数量；m/h/d/w/M/y 为分钟、小时、日、周、月、年。" />
-      <Space><Input value={retention} onChange={(event) => setRetention(event.target.value)} placeholder="例如 24h7d4w" disabled={mutating} /><Button disabled={mutating || loading || !retention} onClick={() => changeRetention('add')}>添加保留规则</Button><Button disabled={mutating || loading || !retention} onClick={() => changeRetention('remove')}>移除保留规则</Button></Space>
+      <Space wrap>{retentionFrequencyOptions.map(({ value, label }) => <label key={value}>{label}保留数量<Input aria-label={`${label}保留数量`} inputMode="numeric" value={retentionCounts[value] ?? ''} onChange={(event) => setRetentionCounts((current) => ({ ...current, [value]: event.target.value }))} placeholder="留空不修改" disabled={mutating} status={retentionCounts[value] && !/^[1-9][0-9]*$/.test(retentionCounts[value]) ? 'error' : undefined} /></label>)}</Space>
+      <p>填写正整数数量；留空的单位不参与本次操作。移除时填写当前规则的数量。</p>
+      {retention && <p>{scheduleRetentionText(retention)}</p>}
+      <Space><Button disabled={mutating || loading || !retention} onClick={() => changeRetention('add')}>添加保留规则</Button><Button disabled={mutating || loading || !retention} onClick={() => changeRetention('remove')}>移除保留规则</Button></Space>
     </Card>}
     {error && <Alert type="error" message={error} />}
     {rows?.length === 0 && <Alert type="info" message="该路径没有快照计划。查询不包含其他路径。" />}
