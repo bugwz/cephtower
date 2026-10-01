@@ -201,6 +201,7 @@ function renderOverview(data: ApiRecord, decodedName: string) {
       <Descriptions.Item label="状态">{textValue(data.status)}</Descriptions.Item>
       <Descriptions.Item label="Pool 类型">{textValue(data.type)}</Descriptions.Item>
       <Descriptions.Item label="数据保护">{textValue(data.data_protection_display)}</Descriptions.Item>
+      <Descriptions.Item label="I/O 所需最小副本/分片数">{poolMinimumSize(data.min_size)}</Descriptions.Item>
       <Descriptions.Item label="PG 状态">{textValue(data.pg_status_display)}</Descriptions.Item>
       <Descriptions.Item label="PG 调整（采集时）">{poolPGAdjustment(data)}</Descriptions.Item>
       <Descriptions.Item label="PG 自动伸缩">{textValue(data.pg_autoscale_mode)}</Descriptions.Item>
@@ -293,6 +294,10 @@ function poolApplications(row: ApiRecord) {
     return Object.keys(row.application_metadata)
   }
   return []
+}
+
+function poolMinimumSize(value: unknown) {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 ? String(value) : '未采集'
 }
 
 function formatCompressionRatio(value: unknown) {

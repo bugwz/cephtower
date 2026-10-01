@@ -217,6 +217,12 @@ assert.throws(() => history.points({ result_type: 'matrix', series: [{ metric: {
 assert.ok(historySource.includes('controller.current?.abort()'))
 assert.ok(detailSource.includes('data?.history_scope === `${selectedClusterId}/${decodedName}`'))
 const detailTree = ts.createSourceFile('PoolDetailPage.tsx', detailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const minimumSizeFn = detailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolMinimumSize')
+const minimumSizeCode = ts.transpileModule(minimumSizeFn.getText(detailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const minimumSize = new Function(`${minimumSizeCode}; return poolMinimumSize`)()
+for (const value of [1, 2, 5]) assert.equal(minimumSize(value), String(value))
+for (const value of [undefined, null, 0, -1, 1.5, '2', Infinity]) assert.equal(minimumSize(value), '未采集')
+assert.ok(detailSource.includes('poolMinimumSize(data.min_size)'))
 assert.ok(detailSource.includes('poolPGAdjustment(data)'))
 for (const field of ['read_bytes_sec', 'write_bytes_sec', 'read_op_per_sec', 'write_op_per_sec']) {
   assert.ok(poolSource.includes(`poolIORate(row.client_io_rate, '${field}')`))
