@@ -1,6 +1,8 @@
-import { Alert, Descriptions, Input, Space, Typography } from 'antd'
-import { useState } from 'react'
+import { Alert, Button, Descriptions, Input, Space, Typography } from 'antd'
+import { useCallback, useState } from 'react'
 import type { ApiRecord } from '../../api/client'
+import { listAllResources } from '../../api/resource'
+import { useResource } from '../../hooks'
 import { AppTable } from '../../components/AppTable'
 import { RecordDetail } from '../../components/RecordDetail'
 
@@ -20,8 +22,21 @@ export function managerOptionValue(value: unknown): string {
   return '未采集'
 }
 
-export function ManagerModuleDetails({ record }: { record: ApiRecord }) {
+export function managerModuleOverrides(rows: ApiRecord[], moduleName: unknown): ApiRecord[] {
+  if (typeof moduleName !== 'string' || !moduleName || moduleName.includes('/')) return []
+  const prefix = `mgr/${moduleName}/`
+  return rows.filter((row) => typeof row.name === 'string' && row.name.startsWith(prefix) && row.name.length > prefix.length)
+}
+
+export function ManagerModuleDetails({ record, clusterId }: { record: ApiRecord, clusterId: number }) {
   const [search, setSearch] = useState('')
+  const moduleName = record.name
+  const loader = useCallback(async () => {
+    const result = await listAllResources('/configuration/values', clusterId)
+    return { ...result, items: managerModuleOverrides(result.items, moduleName) }
+  }, [clusterId, moduleName])
+  const { data: overrides, loading, error, refresh } = useResource(loader)
+  const confirmed = !loading && !error && overrides?.stale === false && overrides.items.every((row) => row.stale === false)
   const rows = managerOptionRows(record.options)
   const query = search.trim().toLowerCase()
   const filtered = (rows ?? []).filter((row) => ['option_name', 'type', 'desc', 'long_desc', 'tags'].some((key) => managerOptionValue(row[key]).toLowerCase().includes(query)))
@@ -32,7 +47,7 @@ export function ManagerModuleDetails({ record }: { record: ApiRecord }) {
       <Descriptions.Item label="加载错误">{managerOptionValue(record.error_string)}</Descriptions.Item>
       {(['enabled', 'always_on', 'can_run', 'force_disabled'] as const).map((key, index) => <Descriptions.Item key={key} label={['启用', '常驻', '可运行', '强制停用'][index]}>{record[key] === true ? '是' : record[key] === false ? '否' : '未采集'}</Descriptions.Item>)}
     </Descriptions>
-    <Typography.Paragraph type="secondary">来源：ceph mgr dump 的 module_options。这里展示参数定义和原始默认值，不代表当前守护进程的生效值；显式覆盖请通过“编辑配置”查看。</Typography.Paragraph>
+    <Typography.Paragraph type="secondary">来源：ceph mgr dump 的 module_options。这里展示参数定义和原始默认值，不代表当前守护进程的生效值。</Typography.Paragraph>
     {rows === null && <Alert type="warning" message="未取得有效的模块参数定义，不能据此判断该模块没有配置项。" />}
     <Input.Search allowClear placeholder="搜索参数名、类型、标签或说明" value={search} onChange={(event) => setSearch(event.target.value)} />
     <AppTable<ApiRecord> size="small" rowKey="option_name" dataSource={filtered}
@@ -44,6 +59,18 @@ export function ManagerModuleDetails({ record }: { record: ApiRecord }) {
       expandable={{ expandedRowRender: (row) => <Descriptions size="small" column={1} bordered>
         {([['long_desc', '详细说明'], ['enum_allowed', '可选值'], ['flags', '原始标志'], ['tags', '标签'], ['see_also', '相关选项']] as const).map(([key, label]) => <Descriptions.Item key={key} label={label}>{managerOptionValue(row[key])}</Descriptions.Item>)}
       </Descriptions> }}
+    />
+    <Space><Typography.Title level={5} style={{ margin: 0 }}>显式配置覆盖</Typography.Title><Button loading={loading} onClick={() => refresh()}>重新读取库存</Button></Space>
+    <Typography.Paragraph type="secondary">来源：ceph config dump 库存，配置键前缀 mgr/{String(moduleName)}/。保留各作用域和本地化键，不合并推断运行时生效值。修改请使用模块列表中的“编辑配置”。</Typography.Paragraph>
+    {!confirmed && <Alert type="warning" showIcon message={error ? `配置覆盖读取失败：${error}` : '配置覆盖正在读取、已过期或新鲜度未知，不能据此确认当前配置。'} />}
+    <AppTable<ApiRecord> size="small" rowKey="natural_key" loading={loading} dataSource={overrides?.items ?? []}
+      locale={{ emptyText: confirmed ? '本次采集未发现该模块的显式覆盖' : '配置覆盖未确认' }}
+      columns={[
+        { title: '完整配置键', dataIndex: 'name', render: managerOptionValue },
+        { title: '作用域（含位置限制）', dataIndex: 'who', render: managerOptionValue },
+        { title: '配置值', dataIndex: 'value', render: (value) => <Typography.Text style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{managerOptionValue(value)}</Typography.Text> },
+        { title: '采集时间', dataIndex: 'observed_at', render: managerOptionValue }
+      ]}
     />
     <details><summary>原始模块记录</summary><RecordDetail record={record} /></details>
   </Space>

@@ -224,7 +224,7 @@ export function MgrManagementPage() {
         {configModule && <ConfigurationPage key={configModule} moduleName={configModule} />}
       </Modal>
       <Modal title={`模块 ${textValue(moduleDetails?.name, '')}`} open={Boolean(moduleDetails)} onCancel={() => setModuleSelection(null)} footer={null} width="min(1200px, 95vw)" destroyOnClose>
-        {moduleDetails && <ManagerModuleDetails key={String(moduleDetails.name)} record={moduleDetails} />}
+        {moduleDetails && selectedClusterId && <ManagerModuleDetails key={`${selectedClusterId}:${String(moduleDetails.name)}`} record={moduleDetails} clusterId={selectedClusterId} />}
       </Modal>
       <Card className="page-surface-card" title="MGR管理">
         <Tabs
