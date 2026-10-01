@@ -69,6 +69,9 @@ func smbShareUpdateJSON(data []byte, request Request) ([]byte, error) {
 		return nil, err
 	}
 	fs := record["cephfs"].(map[string]any)
+	if err := applySMBLoginControl(record, request.Parameters); err != nil {
+		return nil, err
+	}
 	if value, exists := request.Parameters["comment"]; exists {
 		comment, ok := value.(string)
 		if !ok || strings.ContainsAny(comment, "\x00\r\n") {
@@ -167,6 +170,12 @@ func smbShareUpdateMatches(wanted, actual []byte, request Request) bool {
 		}
 	}
 	for key, value := range expected {
+		// Native serialization omits the quiet false restrict_access field.
+		if key == "restrict_access" && value == false {
+			if _, exists := found[key]; !exists {
+				continue
+			}
+		}
 		if !reflect.DeepEqual(found[key], value) {
 			return false
 		}

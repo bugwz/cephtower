@@ -230,6 +230,21 @@ assert.equal(smbNodes.find((node) => node.props?.label === '公开地址').props
 console.log('SMB cluster configuration display checks passed')
 
 const smbFields = {}
+const loginExports = {}
+const loginCode = ts.transpileModule(readFileSync(new URL('../src/pages/file/SMBLoginControlEditor.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText
+new Function('exports', 'require', loginCode)(loginExports, (name) => name === 'antd' ? { Alert: 'Alert', Button: 'Button', Input: 'Input', Select: 'Select', Space: 'Space' } : require(name))
+assert.deepEqual(loginExports.smbLoginControlBody({}), {})
+assert.deepEqual(loginExports.smbLoginControlBody({ replace_login_control: true }), { login_control: [], restrict_access: false })
+let loginValue
+const renderLogin = () => loginExports.SMBLoginControlEditor({ value: loginValue, onChange: (value) => { loginValue = value } })
+nodes(renderLogin()).find((node) => node.type === 'Button' && node.props.children === '新增登录规则').props.onClick()
+nodes(renderLogin()).find((node) => node.type === 'Input').props.onChange({ target: { value: 'staff' } })
+nodes(renderLogin()).find((node) => node.props['aria-label'] === '规则 1 类型').props.onChange('group')
+nodes(renderLogin()).find((node) => node.props['aria-label'] === '规则 1 权限').props.onChange('read-write')
+assert.deepEqual(loginExports.smbLoginControlBody({ replace_login_control: true, restrict_access: true, login_control: loginValue }), { login_control: [{ name: 'staff', category: 'group', access: 'read-write' }], restrict_access: true })
+nodes(renderLogin()).find((node) => node.type === 'Button' && node.props.danger).props.onClick()
+assert.throws(() => loginExports.smbLoginControlBody({ replace_login_control: true, restrict_access: true, login_control: loginValue }))
+assert.throws(() => loginExports.smbLoginControlBody({ replace_login_control: true, restrict_access: true, login_control: '[{"name":"a","category":"user","access":"none"}]' }))
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/file/smbShareFields.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(smbFields)
 assert.deepEqual(smbFields.smbShareInitialValues({ cluster_id: 'a', cephfs: { volume: 'fs', path: '/docs' } }), { comment: undefined, cluster: 'a', share_name: undefined, filesystem: 'fs', path: '/docs', readonly: undefined, browseable: undefined })
 assert.equal(smbFields.smbShareInitialValues({ comment: '团队资料' }).comment, '团队资料')

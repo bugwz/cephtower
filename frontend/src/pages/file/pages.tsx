@@ -2,6 +2,7 @@ import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClusterDetails } from './NFSClusterDetails'
 import { SMBClusterDetails } from './SMBClusterDetails'
+import { SMBLoginControlEditor, smbLoginControlBody } from './SMBLoginControlEditor'
 import { SMBUsersEditor, smbUsersBody, smbUsersInitialValues } from './SMBUsersEditor'
 import { smbClusterInitialValues, smbClusterDNSBody, smbClusterUserGroupsBody, smbClusterDomainBody, smbClusterCountBody, smbClusterHostsBody, smbClusterUpdateHostsBody, smbClusterClusteringBody, smbClusterPublicAddressesBody, smbClusterUpdatePublicAddressesBody } from './smbClusterFields'
 import { smbCephFS, smbShareInitialValues, smbShareAccessBody, smbBooleanText } from './smbShareFields'
@@ -977,7 +978,11 @@ const definitions: Record<
       path: '/smb/share',
       method: 'PATCH',
       successMessage: 'SMB 共享更新执行成功',
+      confirmation: (values) => values.replace_login_control ? '将替换全部登录控制规则，可能中断访问或扩大访问范围。管理员规则授予高级权限，请确认规则及限制访问开关。' : undefined,
       fields: [
+        { name: 'replace_login_control', label: '替换登录控制配置', type: 'boolean' },
+        { name: 'restrict_access', label: '仅允许规则中获准的用户/组访问', type: 'boolean', visibleWhen: (values) => values.replace_login_control === true },
+        { name: 'login_control', label: '完整登录控制规则（留空清除）', renderControl: () => <SMBLoginControlEditor />, visibleWhen: (values) => values.replace_login_control === true },
         { name: 'cluster', label: 'SMB 集群（不可更改）', required: true, readOnly: true },
         { name: 'comment', label: '共享描述', placeholder: '单行文本；清空已有描述可移除内容' },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions },
@@ -989,12 +994,13 @@ const definitions: Record<
         { name: 'readonly', label: '只读', type: 'select', placeholder: '未选择则保留', options: [{ label: '只读', value: 'true' }, { label: '允许写入', value: 'false' }] },
         { name: 'browseable', label: '可浏览', type: 'select', placeholder: '未选择则保留', options: [{ label: '显示共享', value: 'true' }, { label: '隐藏共享（不是访问控制）', value: 'false' }] }
       ],
-      initialValues: smbShareInitialValues,
+      initialValues: (row) => ({ ...smbShareInitialValues(row), login_control: Array.isArray(row?.login_control) ? JSON.stringify(row.login_control) : undefined, restrict_access: row?.restrict_access === true }),
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
         share_id: shareId(row),
         ...smbUpdateSubvolumeBody(values),
         ...smbShareAccessBody(values),
+        ...smbLoginControlBody(values),
         ...(values.share_name ? { share_name: String(values.share_name) } : {}),
         cluster: String(values.cluster ?? ''),
         filesystem: String(values.filesystem ?? ''),
@@ -1019,6 +1025,8 @@ const definitions: Record<
       { key: 'path', title: '路径', filterKey: false, render: (_, row) => text(smbCephFS(row).path) },
       { key: 'readonly', title: '只读', render: smbBooleanText },
       { key: 'browseable', title: '可浏览', render: smbBooleanText },
+      { key: 'restrict_access', title: '限制登录', render: smbBooleanText, filterKey: false },
+      { key: 'login_control', title: '登录控制规则', filterKey: false },
       { key: 'subvolume', title: '子卷', filterKey: false, render: (_, row) => text(smbCephFS(row).subvolume) },
       { key: 'subvolumegroup', title: '子卷组', filterKey: false, render: (_, row) => text(smbCephFS(row).subvolumegroup) },
       { key: 'status', title: '状态' },

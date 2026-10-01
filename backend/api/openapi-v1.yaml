@@ -573,6 +573,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -749,6 +764,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -1283,6 +1300,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -1459,6 +1491,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -3288,6 +3322,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -3464,6 +3513,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -3998,6 +4049,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -4174,6 +4240,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -4926,6 +4994,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -5102,6 +5185,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -5730,6 +5815,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -5906,6 +6006,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -6440,6 +6542,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -6616,6 +6733,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -7341,6 +7460,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -7517,6 +7651,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -8147,6 +8283,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -8323,6 +8474,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -8858,6 +9011,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -9034,6 +9202,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -9812,6 +9982,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -9988,6 +10173,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -10616,6 +10803,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -10792,6 +10994,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -11422,6 +11626,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -11598,6 +11817,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -12226,6 +12447,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -12402,6 +12638,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -12936,6 +13174,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -13112,6 +13365,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -13892,6 +14147,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -14068,6 +14338,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -15098,6 +15370,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -15274,6 +15561,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -15809,6 +16098,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -15985,6 +16289,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -16520,6 +16826,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -16696,6 +17017,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -17868,6 +18191,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -18044,6 +18382,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -18724,6 +19064,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -18900,6 +19255,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -19530,6 +19887,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -19706,6 +20078,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -20240,6 +20614,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -20416,6 +20805,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -21606,6 +21997,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -21782,6 +22188,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -22316,6 +22724,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -22492,6 +22915,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -23043,6 +23468,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -23219,6 +23659,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -23847,6 +24289,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -24023,6 +24480,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -24557,6 +25016,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -24733,6 +25207,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -25268,6 +25744,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -25444,6 +25935,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -26257,6 +26750,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -26433,6 +26941,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -27158,6 +27668,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -27334,6 +27859,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -27962,6 +28489,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -28138,6 +28680,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -28672,6 +29216,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -28848,6 +29407,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -29515,6 +30076,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -29691,6 +30267,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -30226,6 +30804,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -30402,6 +30995,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -31352,6 +31947,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -31528,6 +32138,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -32348,6 +32960,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -32524,6 +33151,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -33152,6 +33781,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -33328,6 +33972,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -33958,6 +34604,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -34134,6 +34795,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -34762,6 +35425,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -34938,6 +35616,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -35472,6 +36152,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -35648,6 +36343,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -36373,6 +37070,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -36549,6 +37261,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -37177,6 +37891,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -37353,6 +38082,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -37887,6 +38618,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -38063,6 +38809,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -38693,6 +39441,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -38869,6 +39632,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -39403,6 +40168,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -39579,6 +40359,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -40209,6 +40991,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -40385,6 +41182,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -40919,6 +41718,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -41095,6 +41909,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -41725,6 +42541,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -41901,6 +42732,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -42529,6 +43362,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -42705,6 +43553,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -43239,6 +44089,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -43415,6 +44280,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -44213,6 +45080,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -44389,6 +45271,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -45018,6 +45902,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -45194,6 +46093,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -45729,6 +46630,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -45905,6 +46821,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -46440,6 +47358,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -46616,6 +47549,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -47245,6 +48180,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -47421,6 +48371,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -47990,6 +48942,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -48166,6 +49133,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -48986,6 +49955,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -49162,6 +50146,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -49790,6 +50776,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -49966,6 +50967,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -50500,6 +51503,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -50676,6 +51694,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -51306,6 +52326,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -51482,6 +52517,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -52017,6 +53054,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -52193,6 +53245,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -52728,6 +53782,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -52904,6 +53973,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -53439,6 +54510,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -53615,6 +54701,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -54245,6 +55333,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -54421,6 +55524,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -55049,6 +56154,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -55225,6 +56345,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -55759,6 +56881,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -55935,6 +57072,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -56587,6 +57726,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -56763,6 +57917,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -57297,6 +58453,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -57473,6 +58644,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -58007,6 +59180,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -58183,6 +59371,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -59104,6 +60294,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -59280,6 +60485,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -59887,6 +61094,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -60063,6 +61285,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -60598,6 +61822,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -60774,6 +62013,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -61308,6 +62549,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -61484,6 +62740,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -62114,6 +63372,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -62290,6 +63563,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -62919,6 +64194,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -63095,6 +64385,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -63630,6 +64922,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -63806,6 +65113,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -64452,6 +65761,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -64628,6 +65952,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -65162,6 +66488,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -65338,6 +66679,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -65872,6 +67215,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -66048,6 +67406,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -66583,6 +67943,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -66759,6 +68134,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -67389,6 +68766,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -67565,6 +68957,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -68193,6 +69587,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -68369,6 +69778,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -68903,6 +70314,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -69079,6 +70505,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -69715,6 +71143,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -69891,6 +71334,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -70426,6 +71871,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -70602,6 +72062,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -71137,6 +72599,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -71313,6 +72790,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -71943,6 +73422,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -72119,6 +73613,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -72654,6 +74150,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -72830,6 +74341,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -73364,6 +74877,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -73540,6 +75068,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -74170,6 +75700,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -74346,6 +75891,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -74880,6 +76427,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -75056,6 +76618,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -75590,6 +77154,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -75766,6 +77345,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -76301,6 +77882,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -76477,6 +78073,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -77202,6 +78800,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -77378,6 +78991,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -78006,6 +79621,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -78182,6 +79812,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -78716,6 +80348,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -78892,6 +80539,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -79427,6 +81076,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -79603,6 +81267,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -80138,6 +81804,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -80314,6 +81995,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -80848,6 +82531,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -81024,6 +82722,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -81559,6 +83259,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -81735,6 +83450,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -82270,6 +83987,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -82446,6 +84178,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -83076,6 +84810,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -83252,6 +85001,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -83786,6 +85537,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -83962,6 +85728,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -84497,6 +86265,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -84673,6 +86456,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -85207,6 +86992,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -85383,6 +87183,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -86248,6 +88050,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -86424,6 +88241,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -87052,6 +88871,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -87228,6 +89062,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -87762,6 +89598,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -87938,6 +89789,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -88568,6 +90421,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -88744,6 +90612,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -89372,6 +91242,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -89548,6 +91433,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -90082,6 +91969,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -90258,6 +92160,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -90888,6 +92792,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -91064,6 +92983,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -91598,6 +93519,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -91774,6 +93710,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -92308,6 +94246,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -92484,6 +94437,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -93114,6 +95069,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -93290,6 +95260,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -93918,6 +95890,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -94094,6 +96081,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -94628,6 +96617,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -94804,6 +96808,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -95434,6 +97440,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -95610,6 +97631,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -96144,6 +98167,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -96320,6 +98358,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -96854,6 +98894,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -97030,6 +99085,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -97755,6 +99812,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -97931,6 +100003,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
@@ -98466,6 +100540,21 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
                 m:
                   type: integer
                 maintenance:
@@ -98642,6 +100731,8 @@ paths:
                   type: array
                   items:
                     type: string
+                restrict_access:
+                  type: boolean
                 retention:
                   type: string
                 rgw_bucket_tenant:
