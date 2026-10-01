@@ -79,6 +79,8 @@ assert.equal(profileDetails.find((item) => item.key === 'crush-num-failure-domai
 assert.equal(profileDetails.find((item) => item.key === 'plugin').children, '未提供')
 
 const poolSource = readFileSync(new URL('../src/pages/cluster/PoolManagementPage.tsx', import.meta.url), 'utf8')
+assert.ok(poolSource.includes('压缩后大小与原始大小的比例上限'), 'compression ratio is an upper bound, not a minimum ratio')
+assert.ok(poolSource.includes('分配单元对齐和压缩头开销'), 'compression storage is also subject to native allocation constraints')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 assert.ok(poolSource.includes("Form.useWatch('erasure_code_profile', form)"))
 assert.ok(poolSource.includes('resourceName(row) === selectedProfileName'))

@@ -673,7 +673,7 @@ export function PoolManagementPage() {
                 </Form.Item>
                 <Form.Item
                   name="compression_required_ratio"
-                  label={<HelpLabel label="压缩比例" title="压缩后数据块相对原始大小的比例必须至少达到此值，才会保存压缩版本。" />}
+                  label={<HelpLabel label="压缩比例" title="压缩后大小与原始大小的比例上限。例如 0.875 表示目标至少节省 12.5% 的空间；实际是否保存压缩版本还取决于分配单元对齐和压缩头开销。" />}
                   rules={[{ required: true, type: 'number', min: 0, max: 1, message: '请输入 0 到 1 之间的压缩比例' }]}
                 >
                   <InputNumber min={0} max={1} step={0.001} precision={3} className="full-width-control" placeholder="0.875" />
