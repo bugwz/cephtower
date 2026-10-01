@@ -71,6 +71,15 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
     if (scopeRef.current !== scope) return
     await refresh()
   }
+  async function refreshAfterMutation() {
+    if (scopeRef.current !== scope) return
+    try {
+      await refreshResource({ clusterId: selectedClusterId, kinds: ['config_value', 'config_option'] })
+    } catch {
+      if (scopeRef.current === scope) message.warning('配置修改已执行，但重新采集失败；请刷新并核对结果，不要重复提交修改。')
+    }
+    if (scopeRef.current === scope) await refresh()
+  }
   async function run(work: () => Promise<void>) {
     if (running.current || !selectedClusterId || scopeRef.current !== scope) return
     running.current = true
@@ -96,7 +105,7 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
     await run(async () => {
       await mutateResource('/configuration/value', 'PUT', { cluster_id: selectedClusterId, ...values, value: values.value ?? '' }, editing ? { ifMatch: String(editing.resource_version) } : undefined)
       if (scopeRef.current !== scope) return
-      setOpen(false); message.success('集群配置已保存'); await collect()
+      setOpen(false); message.success('集群配置已保存'); await refreshAfterMutation()
     })
   }
   function remove(row: ApiRecord) {
@@ -106,7 +115,7 @@ export function ConfigurationPage({ moduleName }: { moduleName?: string } = {}) 
         return run(async () => {
           await mutateResource('/configuration/value', 'DELETE', { cluster_id: selectedClusterId, who: row.who, name: row.name }, { ifMatch: String(row.resource_version) })
           if (scopeRef.current !== scope) return
-          message.success('配置覆盖值已删除'); await collect()
+          message.success('配置覆盖值已删除'); await refreshAfterMutation()
         })
       } })
   }

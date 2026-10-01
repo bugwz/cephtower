@@ -30,7 +30,7 @@ assert.ok(source.includes("value === '' ? '空字符串'"))
 console.log('Configuration metadata and scoped override checks passed')
 
 const page = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ConfigurationPage')
-const mutationCode = ts.transpileModule(page.body.statements.filter((node) => ts.isFunctionDeclaration(node) && ['run', 'collect', 'save', 'remove'].includes(node.name.text)).map((node) => node.getText(tree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const mutationCode = ts.transpileModule(page.body.statements.filter((node) => ts.isFunctionDeclaration(node) && ['run', 'collect', 'refreshAfterMutation', 'save', 'remove'].includes(node.name.text)).map((node) => node.getText(tree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 for (const action of ['save', 'remove']) for (const timing of ['before', 'mutation', 'collection', 'unchanged']) {
   const scope = { clusterId: 7, moduleName: 'test' }, scopeRef = { current: scope }, events = []
   let modal, finishMutation, finishCollection
@@ -73,3 +73,31 @@ for (const action of ['save', 'remove']) for (const timing of ['before', 'mutati
   assert.equal(env.running.current, false)
 }
 console.log('Configuration mutation scope checks passed')
+
+for (const action of ['save', 'remove']) for (const collectionFailed of [false, true]) for (const mutationFailed of [false, true]) {
+  const scope = {}, events = []
+  let modal
+  const env = {
+    scope, scopeRef: { current: scope }, selectedClusterId: 7, running: { current: false }, editing: { resource_version: 3 },
+    setBusy: () => {}, setOpen: () => events.push('close'),
+    message: { success: () => events.push('success'), warning: (text) => { assert.match(text, /修改已执行.*不要重复提交/); events.push('warning') } },
+    mutateResource: async () => { events.push('mutate'); if (mutationFailed) throw new Error('write failed') },
+    refreshResource: async () => { events.push('collect'); if (collectionFailed) throw new Error('collection failed') },
+    refresh: async () => { events.push('read') }, Modal: { confirm: (options) => { modal = options } }
+  }
+  const functions = new Function('env', `const { ${Object.keys(env).join(', ')} } = env; ${mutationCode}; return { save, remove }`)(env)
+  functions.remove({ who: 'global', name: 'test', resource_version: 3 })
+  const invoke = () => action === 'save' ? functions.save({ who: 'global', name: 'test', value: '0' }) : modal.onOk()
+  if (mutationFailed) {
+    await assert.rejects(invoke, /write failed/)
+    assert.deepEqual(events, ['mutate'])
+  } else {
+    await invoke()
+    const expected = action === 'save' ? ['mutate', 'close', 'success', 'collect'] : ['mutate', 'success', 'collect']
+    if (collectionFailed) expected.push('warning')
+    expected.push('read')
+    assert.deepEqual(events, expected)
+  }
+  assert.equal(env.running.current, false)
+}
+console.log('Configuration collection failures remain distinct from mutation failures')
