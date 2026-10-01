@@ -3,6 +3,7 @@ export type PageKey =
   | 'clusterManagement'
   | 'cephUsers'
   | 'clusterConfiguration'
+  | 'clusterUpgrade'
   | 'poolManagement'
   | 'hostManagement'
   | 'monManagement'
@@ -136,6 +137,7 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     icon: 'cluster',
     children: [
       { key: 'clusterConfiguration', label: '集群配置', path: '/cluster/configuration', icon: 'config', permission: 'cluster' },
+      { key: 'clusterUpgrade', label: '集群升级', path: '/cluster/upgrade', icon: 'cluster', permission: 'cluster' },
       { key: 'cephUsers', label: 'CephX 用户', path: '/cluster/ceph-users', icon: 'user', permission: 'cluster' },
       { key: 'clusterManagement', label: '集群列表', path: '/cluster/cluster', icon: 'cluster', permission: 'cluster' },
       { key: 'poolManagement', label: '存储池管理', path: '/cluster/pool', icon: 'pool', permission: 'cluster' },
