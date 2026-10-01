@@ -10,11 +10,13 @@ import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
+import { PoolIOHistory } from './PoolIOHistory'
 import { poolPGStatus, poolCapacity, poolObjectCount, poolUsage, poolDataProtection, poolKind, poolIORate } from './PoolManagementPage'
 
 const { Text } = Typography
 const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
 const excludedFallbackDetailKeys = new Set([
+  'history_scope',
   'configuration',
   'raw_detail',
   'kind',
@@ -72,12 +74,12 @@ export function PoolDetailPage() {
   const [detailSearch, setDetailSearch] = useState('')
   const [configSearch, setConfigSearch] = useState('')
   const operationMutation = useMutationOperation()
-  const loader = useCallback(async () => {
+  const loader = useCallback(async (): Promise<ApiRecord | null> => {
     if (!selectedClusterId || !decodedName) {
       return null
     }
     const payload = await getOptionalResource('/pool', selectedClusterId, { pool: decodedName })
-    return payload ? normalizePoolDetail(resourceToRecord(payload.item)) : null
+    return payload ? { ...normalizePoolDetail(resourceToRecord(payload.item)), history_scope: `${selectedClusterId}/${decodedName}` } : null
   }, [decodedName, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const detailRows = useMemo(() => filterRows(poolDetailRows(data), detailSearch), [data, detailSearch])
@@ -117,6 +119,7 @@ export function PoolDetailPage() {
           )}
         </Card>
 
+        {selectedClusterId && !loading && !error && data?.history_scope === `${selectedClusterId}/${decodedName}` && typeof data.id === 'number' && Number.isSafeInteger(data.id) && data.id >= 0 && <PoolIOHistory key={`${selectedClusterId}/${data.id}`} clusterId={selectedClusterId} poolId={data.id} />}
         <Card className="page-surface-card" title="自动伸缩建议">
           <Text type="secondary">来源：ceph osd pool autoscale-status。以下为采集时的建议与计算依据，不代表已执行调整。</Text>
           {renderAutoscaleStatus(data?.autoscale_status)}

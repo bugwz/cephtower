@@ -191,6 +191,21 @@ const pgStatus = new Function('isRecord', `${pgStatusCode}; return poolPGStatus`
 assert.equal(pgStatus({ 'active+clean': 8, down: 2 }), '8 active+clean, 2 down')
 assert.equal(pgStatus({ 'active+degraded': 3 }), '3 active+degraded')
 const detailSource = readFileSync(new URL('../src/pages/cluster/PoolDetailPage.tsx', import.meta.url), 'utf8')
+const historySource = readFileSync(new URL('../src/pages/cluster/PoolIOHistory.tsx', import.meta.url), 'utf8')
+const historyTree = ts.createSourceFile('PoolIOHistory.tsx', historySource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const historyFns = historyTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['poolHistoryPoints', 'poolHistoryPath'].includes(node.name.text))
+const historyCode = ts.transpileModule(historyFns.map((fn) => fn.getText(historyTree).replace('export ', '')).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const history = new Function('isRecord', `${historyCode}; return { points: poolHistoryPoints, path: poolHistoryPath }`)((value) => value !== null && typeof value === 'object' && !Array.isArray(value))
+const response = { result_type: 'matrix', series: [{ metric: { pool_id: '7' }, values: [[1030, '1.5'], [1000, '0'], [1060, 'NaN'], [1090, '2']] }, { metric: { pool_id: '8' }, values: [[1000, '999']] }] }
+const points = history.points(response, 7)
+assert.deepEqual(points, [{ time: 1000000, value: 0 }, { time: 1030000, value: 1.5 }, { time: 1090000, value: 2 }])
+assert.deepEqual(history.points(response, 9), [])
+assert.equal((history.path(points).match(/M/g) ?? []).length, 2, 'missing samples must break the chart line')
+assert.throws(() => history.points({ result_type: 'vector', series: [] }, 7), /时间序列/)
+assert.throws(() => history.points({ ...response, series: [response.series[0], response.series[0]] }, 7), /重复历史序列/)
+assert.throws(() => history.points({ result_type: 'matrix', series: [{ metric: { pool_id: '7' }, values: [[1, '2'], [1, '3']] }] }, 7), /重复时间戳/)
+assert.ok(historySource.includes('controller.current?.abort()'))
+assert.ok(detailSource.includes('data?.history_scope === `${selectedClusterId}/${decodedName}`'))
 const detailTree = ts.createSourceFile('PoolDetailPage.tsx', detailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 for (const field of ['read_bytes_sec', 'write_bytes_sec', 'read_op_per_sec', 'write_op_per_sec']) {
   assert.ok(poolSource.includes(`poolIORate(row.client_io_rate, '${field}')`))

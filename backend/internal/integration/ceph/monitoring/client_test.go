@@ -48,6 +48,27 @@ func TestHostMetricQueriesAreRegistered(t *testing.T) {
 	}
 }
 
+func TestPoolMetricRangeRetainsPoolIdentity(t *testing.T) {
+	for metric, counter := range map[string]string{"pool_read_bytes": "rd_bytes", "pool_write_bytes": "wr_bytes", "pool_read_ops": "rd", "pool_write_ops": "wr"} {
+		t.Run(metric, func(t *testing.T) {
+			client, err := New("https://prometheus.example.test", "", &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+				want := "sum by (pool_id) (rate(ceph_pool_" + counter + "[5m]))"
+				if r.URL.Path != "/api/v1/query_range" || r.URL.Query().Get("query") != want || r.URL.Query().Get("step") != "30" {
+					t.Fatalf("request = %s", r.URL)
+				}
+				return jsonResponse(200, `{"status":"success","data":{"resultType":"matrix","result":[{"metric":{"pool_id":"7"},"values":[[1000,"1.5"]]}]}}`), nil
+			})})
+			if err != nil {
+				t.Fatal(err)
+			}
+			result, err := client.QueryRange(context.Background(), metric, time.Unix(1000, 0), time.Unix(4600, 0), 30*time.Second)
+			if err != nil || result.Data.ResultType != "matrix" || len(result.Data.Result) != 1 {
+				t.Fatalf("result=%#v err=%v", result, err)
+			}
+		})
+	}
+}
+
 func TestAlertmanagerSilenceUsesTypedPayload(t *testing.T) {
 	httpClient := &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
 		if r.URL.Path != "/api/v2/silences" || r.Method != http.MethodPost {

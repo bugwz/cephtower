@@ -53,14 +53,14 @@ export async function queryMetric(clusterId: number, input: MetricQueryInput, in
   return readMetric(`/metric/query?${query}`, clusterId, init)
 }
 
-export async function queryMetricRange(clusterId: number, input: MetricRangeInput) {
+export async function queryMetricRange(clusterId: number, input: MetricRangeInput, init?: ApiRequestInit) {
   const query = new URLSearchParams({
     metric_id: input.metricId,
     start: input.start,
     end: input.end,
     step: input.step
   })
-  return readMetric(`/metric/range?${query}`, clusterId)
+  return readMetric(`/metric/range?${query}`, clusterId, init)
 }
 
 async function readMetric(path: string, clusterId?: number, init?: ApiRequestInit) {

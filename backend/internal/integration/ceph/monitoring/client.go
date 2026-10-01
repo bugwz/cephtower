@@ -40,6 +40,10 @@ type PrometheusResult struct {
 }
 
 var metricQueries = map[string]string{
+	"pool_read_bytes":       "sum by (pool_id) (rate(ceph_pool_rd_bytes[5m]))",
+	"pool_write_bytes":      "sum by (pool_id) (rate(ceph_pool_wr_bytes[5m]))",
+	"pool_read_ops":         "sum by (pool_id) (rate(ceph_pool_rd[5m]))",
+	"pool_write_ops":        "sum by (pool_id) (rate(ceph_pool_wr[5m]))",
 	"cluster_health":        "ceph_health_status",
 	"capacity_used_percent": "100 * (ceph_cluster_total_used_bytes / ceph_cluster_total_bytes)",
 	"client_read_bytes":     "sum(rate(ceph_pool_rd_bytes[5m]))",

@@ -5,6 +5,13 @@
 
 ## 如何追踪调用链
 
+池详情新增可手动查询的最近一小时 I/O 历史曲线。使用现有 Prometheus 范围 API，
+固定白名单查询 sum by(pool_id)(rate(ceph_pool_rd_bytes/wr_bytes/rd/wr[5m]))，
+按 pool_id 精确筛选，30 秒步长，展示吞吐和 IOPS 四条曲线。需要已配置 Prometheus；
+无样本、查询失败、非矩阵或重复池序列明确处理，不用 CLI 快照补历史。缺失点断线，
+切换池/集群卸载时中止请求；仅匹配当前详情作用域时挂载。离线验证查询、池隔离、
+小数/零值、异常样本和断点；尚未连接真实 Prometheus 或进行浏览器视觉验收。
+
 池 I/O 速率通过 osd pool stats --format json 的 client_io_rate 采集，按 pool_id 关联，
 提供读写 bytes/sec、op/sec 至库存 API；列表和详情与累计量分开展示，标注采集时。
 参考 Dashboard 的 rd_bytes/wr_bytes 使用速率序列，本实现当前提供原生速率快照，尚无
