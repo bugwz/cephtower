@@ -66,6 +66,19 @@ assert.equal(profileDetails.find((item) => item.key === 'plugin').children, '未
 
 const poolSource = readFileSync(new URL('../src/pages/cluster/PoolManagementPage.tsx', import.meta.url), 'utf8')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const poolPage = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'PoolManagementPage')
+for (const name of ['submitCrushRule', 'submitErasureCodeProfile']) {
+  const fn = poolPage.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === name)
+  const code = ts.transpileModule(fn.getText(poolTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+  let finish, wrote = false
+  const scopeRef = { current: { id: 1 } }
+  const run = new Function('clusterScope', 'operationMutation', 'setSubmittingCrushRule', 'setSubmittingErasureCodeProfile', 'setCreatedCrushRules', 'setCreatedErasureCodeProfiles', 'placementValid', 'erasureLocalityValid', `const selectedClusterId=1, submittingCrushRule=false, submittingErasureCodeProfile=false, loading=false, error=null, data={crushNodes:[]}; ${code}; return ${name}`)(scopeRef, { run: () => new Promise((resolve) => { finish = resolve }) }, () => {}, () => {}, () => { wrote = true }, () => { wrote = true }, () => true, () => true)
+  const pendingWrite = run({})
+  scopeRef.current = { id: 2 }
+  finish()
+  await pendingWrite
+  assert.equal(wrote, false, `${name} must ignore previous cluster completion`)
+}
 assert.ok(!poolSource.includes('/usr/lib64/ceph/erasure-code'), 'do not invent a deployment-specific plugin directory')
 assert.ok(!poolSource.includes('profile.directory'), 'do not copy an unrelated profile directory')
 const profileBodyFns = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['erasureCodeProfileBody', 'positiveInteger'].includes(node.name.text))

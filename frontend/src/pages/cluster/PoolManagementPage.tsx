@@ -1,6 +1,6 @@
 import { InfoCircleOutlined, PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Button, Card, Divider, Form, Input, InputNumber, Select, Space, Tag, Tooltip, Typography } from 'antd'
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isRecord, jsonInit, request, numberValue, textValue, type ApiRecord } from '../../api/client'
 import { listAllResources, listResource, mutateResource, refreshResource } from '../../api/resource'
@@ -171,6 +171,8 @@ const defaultPoolValues: PoolFormValues = {
 export function PoolManagementPage() {
   const navigate = useNavigate()
   const { selectedClusterId } = useClusterContext()
+  const clusterScope = useRef({ id: selectedClusterId, revision: 0 })
+  if (clusterScope.current.id !== selectedClusterId) clusterScope.current = { id: selectedClusterId, revision: clusterScope.current.revision + 1 }
   const [form] = Form.useForm<PoolFormValues>()
   const [crushRuleForm] = Form.useForm<CrushRuleFormValues>()
   const [erasureCodeProfileForm] = Form.useForm<ErasureCodeProfileFormValues>()
@@ -361,6 +363,7 @@ export function PoolManagementPage() {
     }
     if (loading || error || !placementValid(data?.crushNodes ?? [], values.root, values.failure_domain, values.device_class)) { message.error('CRUSH 放置选项不可用，请重新选择有效节点、故障域和设备类别'); return }
     setSubmittingCrushRule(true)
+    const scope = clusterScope.current
     try {
       await operationMutation.run(() => mutateResource('/crush/rule', 'POST', {
         cluster_id: selectedClusterId,
@@ -369,13 +372,14 @@ export function PoolManagementPage() {
         failure_domain: values.failure_domain,
         device_class: values.device_class || undefined
       }), false)
+      if (clusterScope.current !== scope) return
       setCreatedCrushRules((current) => Array.from(new Set([...current, values.name])))
       form.setFieldValue('crush_rule', values.name)
       setCrushRuleFormOpen(false)
       message.success('CRUSH 规则创建成功并已写入集群')
       void refreshResource({ clusterId: selectedClusterId, kind: 'crush_rule' })
-        .then(() => refresh({ showLoading: false }))
-        .catch(() => refresh({ showLoading: false }))
+        .then(() => { if (clusterScope.current === scope) return refresh({ showLoading: false }) })
+        .catch(() => { if (clusterScope.current === scope) return refresh({ showLoading: false }) })
     } finally {
       setSubmittingCrushRule(false)
     }
@@ -388,15 +392,17 @@ export function PoolManagementPage() {
     if (loading || error || !placementValid(data?.crushNodes ?? [], values.crush_root, values.crush_failure_domain, values.crush_device_class)) { message.error('CRUSH 放置选项不可用，请重新选择有效节点、故障域和设备类别'); return }
     if (!erasureLocalityValid(values, data?.crushNodes ?? [])) { message.error('LRC 局部性不属于当前根节点和设备类别，请重新选择或清空'); return }
     setSubmittingErasureCodeProfile(true)
+    const scope = clusterScope.current
     try {
       await operationMutation.run(() => mutateResource('/erasure/code/profile', 'POST', erasureCodeProfileBody(values, selectedClusterId)), false)
+      if (clusterScope.current !== scope) return
       setCreatedErasureCodeProfiles((current) => Array.from(new Set([...current, values.name])))
       form.setFieldValue('erasure_code_profile', values.name)
       setErasureCodeProfileFormOpen(false)
       message.success('EC Profile 创建成功并已写入集群')
       void refreshResource({ clusterId: selectedClusterId, kind: 'erasure_code_profile' })
-        .then(() => refresh({ showLoading: false }))
-        .catch(() => refresh({ showLoading: false }))
+        .then(() => { if (clusterScope.current === scope) return refresh({ showLoading: false }) })
+        .catch(() => { if (clusterScope.current === scope) return refresh({ showLoading: false }) })
     } finally {
       setSubmittingErasureCodeProfile(false)
     }
