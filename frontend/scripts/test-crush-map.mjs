@@ -151,6 +151,20 @@ assert.ok(poolSource.includes("if (!kind) throw new Error('池类型未采集或
 const initialFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolInitialValues')
 const initialCode = ts.transpileModule(initialFn.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const initial = new Function('poolKind', `${initialCode}; return poolInitialValues`)(kind)
+const pgUpdateCode = ts.transpileModule(poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['poolAutoscaleMode', 'poolPGUpdates'].includes(node.name.text)).map((node) => node.getText(poolTree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const pgHelpers = new Function(`${pgUpdateCode}; return { poolPGUpdates, poolAutoscaleMode }`)()
+for (const mode of [undefined, null, '', 'invalid', 1]) assert.equal(pgHelpers.poolAutoscaleMode({ pg_autoscale_mode: mode }), undefined)
+for (const mode of ['on', 'off', 'warn']) assert.equal(pgHelpers.poolAutoscaleMode({ pg_autoscale_mode: mode }), mode)
+assert.deepEqual(pgHelpers.poolPGUpdates({}, {}, 7, 'p'), [])
+assert.deepEqual(pgHelpers.poolPGUpdates({}, { pg_autoscale_mode: 'off' }, 7, 'p'), [{ cluster_id: 7, pool: 'p', field: 'pg_autoscale_mode', value: 'off' }])
+assert.deepEqual(pgHelpers.poolPGUpdates({ pg_autoscale_mode: 'warn', pg_num: 64 }, { pg_autoscale_mode: 'warn', pg_num: 64 }, 7, 'p'), [])
+assert.deepEqual(pgHelpers.poolPGUpdates({ pg_autoscale_mode: 'off' }, { pg_autoscale_mode: 'off', pg_num: 64 }, 7, 'p'), [{ cluster_id: 7, pool: 'p', field: 'pg_num', value: '64' }])
+for (const pg_num of [undefined, null]) assert.deepEqual(pgHelpers.poolPGUpdates({ pg_autoscale_mode: 'off', pg_num: 64 }, { pg_autoscale_mode: 'off', pg_num }, 7, 'p'), [])
+assert.deepEqual(pgHelpers.poolPGUpdates({ pg_autoscale_mode: 'on' }, { pg_autoscale_mode: 'on', pg_num: 64 }, 7, 'p'), [])
+for (const pg_num of [0, -1, 1.5, '64', NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) assert.throws(() => pgHelpers.poolPGUpdates({}, { pg_autoscale_mode: 'off', pg_num }, 7, 'p'), /PG 数量/)
+assert.throws(() => pgHelpers.poolPGUpdates({}, { pg_autoscale_mode: 'invalid' }, 7, 'p'), /自动伸缩模式/)
+assert.ok(!initialCode.includes('pg_num: numberValue(row.pg_num) ?? 32'))
+assert.ok(poolSource.includes('requests.push(...poolPGUpdates(row, values, clusterId, pool))'))
 const quotaUpdateCode = ts.transpileModule(poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['observedPoolQuota', 'poolQuotaUpdates'].includes(node.name.text)).map((node) => node.getText(poolTree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const quotaUpdate = new Function('quotaUnits', `${quotaUpdateCode}; return poolQuotaUpdates`)(['B', 'KiB', 'MiB', 'GiB', 'TiB'])
 const quotaValues = { quota_unit: 'GiB' }

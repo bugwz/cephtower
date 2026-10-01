@@ -29,7 +29,7 @@ type PoolFlagState = 'on' | 'off'
 interface PoolFormValues {
   name: string
   pool_type: 'replicated' | 'erasure'
-  pg_autoscale_mode: 'on' | 'off' | 'warn'
+  pg_autoscale_mode?: 'on' | 'off' | 'warn'
   pg_num?: number
   size?: number
   applications: string[]
@@ -200,7 +200,7 @@ export function PoolManagementPage() {
   const poolType = Form.useWatch('pool_type', form) ?? 'replicated'
   const selectedProfileName = Form.useWatch('erasure_code_profile', form)
   const selectedRuleName = Form.useWatch('crush_rule', form)
-  const pgAutoscaleMode = Form.useWatch('pg_autoscale_mode', form) ?? 'on'
+  const pgAutoscaleMode = Form.useWatch('pg_autoscale_mode', form)
   const applications = Form.useWatch('applications', form) ?? []
   const compressionMode = Form.useWatch('compression_mode', form) ?? 'none'
   const rbdMirroringMode = Form.useWatch('rbd_mirroring', form) ?? 'disabled'
@@ -638,10 +638,10 @@ export function PoolManagementPage() {
             <Form.Item
               name="pg_autoscale_mode"
               label={<HelpLabel label="PG 自动伸缩" title={pgAutoscaleDescription(pgAutoscaleMode)} />}
-              rules={[{ required: true, message: '请选择 PG 自动伸缩模式' }]}
+              rules={[{ required: formMode === 'create', message: '请选择 PG 自动伸缩模式' }]}
             >
               <Select
-                placeholder="请选择自动伸缩模式"
+                placeholder={formMode === 'edit' ? '未采集；不选择则不修改' : '请选择自动伸缩模式'}
                 options={[
                   { label: 'on', value: 'on' },
                   { label: 'off', value: 'off' },
@@ -649,7 +649,7 @@ export function PoolManagementPage() {
                 ]}
               />
             </Form.Item>
-            {pgAutoscaleMode !== 'on' ? (
+            {pgAutoscaleMode === 'off' || pgAutoscaleMode === 'warn' ? (
               <Form.Item
                 name="pg_num"
                 label={(
@@ -658,9 +658,9 @@ export function PoolManagementPage() {
                     title={<a href={calculationHelpURL} target="_blank" rel="noreferrer">计算帮助</a>}
                   />
                 )}
-                rules={[{ required: true, message: '请输入 PG 数量' }]}
+                rules={[{ required: formMode === 'create', message: '请输入 PG 数量' }]}
               >
-                <InputNumber min={1} precision={0} className="full-width-control" placeholder="32" />
+                <InputNumber min={1} precision={0} className="full-width-control" placeholder={formMode === 'edit' ? '未采集；留空不修改' : '32'} />
               </Form.Item>
             ) : null}
             <Form.Item name="compression_mode" label={<HelpLabel label="压缩模式" title={compressionModeDescription(compressionMode)} />}>
@@ -1094,7 +1094,7 @@ function poolInitialValues(row: ApiRecord, crushRules: ApiRecord[] = []): PoolFo
     name: resourceName(row),
     pool_type: kind,
     pg_autoscale_mode: poolAutoscaleMode(row),
-    pg_num: numberValue(row.pg_num) ?? 32,
+    pg_num: typeof row.pg_num === 'number' && Number.isSafeInteger(row.pg_num) && row.pg_num > 0 ? row.pg_num : undefined,
     size: numberValue(row.size) ?? 3,
     applications: poolApplications(row),
     erasure_code_profile: textValue(row.erasure_code_profile, ''),
@@ -1153,10 +1153,7 @@ function poolUpdateBodies(row: ApiRecord, values: PoolFormValues, clusterId: num
     }
     requests.push({ cluster_id: clusterId, pool, field, value: String(value) })
   }
-  pushField('pg_autoscale_mode', values.pg_autoscale_mode, current.pg_autoscale_mode)
-  if (values.pg_autoscale_mode !== 'on') {
-    pushField('pg_num', Math.trunc(values.pg_num ?? 32), Math.trunc(current.pg_num ?? 32))
-  }
+  requests.push(...poolPGUpdates(row, values, clusterId, pool))
   if (values.compression_mode === 'none') {
     if (current.compression_mode !== 'none') {
       pushField('compression_mode', 'unset', current.compression_mode)
@@ -1476,6 +1473,7 @@ function erasureCodeTechniqueDescription(plugin: ErasureCodePlugin) {
 
 function pgAutoscaleDescription(mode: PoolFormValues['pg_autoscale_mode']) {
   const detail = 'PG 用于在 Ceph 中分布数据，自动伸缩会随每个存储池的使用情况调整 PG 数量。'
+  if (mode === undefined) return `自动伸缩模式未采集，不推断为已启用。${detail}`
   if (mode === 'off') {
     return `禁用此存储池的自动伸缩。${detail}`
   }
@@ -1555,8 +1553,20 @@ export function poolKind(row: ApiRecord): 'replicated' | 'erasure' | undefined {
 }
 
 function poolAutoscaleMode(row: ApiRecord): PoolFormValues['pg_autoscale_mode'] {
-  const mode = textValue(row.pg_autoscale_mode, 'on')
-  return mode === 'off' || mode === 'warn' ? mode : 'on'
+  const mode = row.pg_autoscale_mode
+  return mode === 'on' || mode === 'off' || mode === 'warn' ? mode : undefined
+}
+
+function poolPGUpdates(row: ApiRecord, values: PoolFormValues, clusterId: number, pool: string): ApiRecord[] {
+  const requests: ApiRecord[] = []
+  const mode = values.pg_autoscale_mode
+  if (mode !== undefined && mode !== 'on' && mode !== 'off' && mode !== 'warn') throw new Error('无效的 PG 自动伸缩模式')
+  if (mode !== undefined && mode !== poolAutoscaleMode(row)) requests.push({ cluster_id: clusterId, pool, field: 'pg_autoscale_mode', value: mode })
+  if ((mode === 'off' || mode === 'warn') && values.pg_num !== undefined && values.pg_num !== null) {
+    if (!Number.isSafeInteger(values.pg_num) || values.pg_num <= 0) throw new Error('PG 数量必须为正安全整数')
+    if (values.pg_num !== row.pg_num) requests.push({ cluster_id: clusterId, pool, field: 'pg_num', value: String(values.pg_num) })
+  }
+  return requests
 }
 
 function poolCompressionMode(row: ApiRecord): PoolFormValues['compression_mode'] {
