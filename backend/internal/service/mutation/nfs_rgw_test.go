@@ -100,3 +100,59 @@ func TestNFSTenantRGWUser(t *testing.T) {
 		}
 	}
 }
+
+func TestNFSRGWBucketOwnerResolution(t *testing.T) {
+	p := map[string]any{"cluster": "nfs-a", "pseudo": "/share", "path": "bucket", "fsal_type": "RGW"}
+	cmd, err := build(Request{Action: "nfs_export.create"}, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var record map[string]any
+	if err := json.Unmarshal(cmd.stdin, &record); err != nil {
+		t.Fatal(err)
+	}
+	fsal := record["fsal"].(map[string]any)
+	if fsal["user_id"] != nil {
+		t.Fatal("bucket create supplied an owner")
+	}
+	if nfsExportAttributesMatch(record, p) {
+		t.Fatal("unresolved owner accepted")
+	}
+	fsal["user_id"] = "resolved-owner"
+	if !nfsExportAttributesMatch(record, p) {
+		t.Fatal("resolved owner rejected")
+	}
+	fsal["access_key_id"] = "old-access"
+	fsal["secret_access_key"] = "old-secret"
+	unchanged, err := nfsExportUpdateJSON(record, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var preserved map[string]any
+	if err := json.Unmarshal(unchanged, &preserved); err != nil {
+		t.Fatal(err)
+	}
+	if preserved["fsal"].(map[string]any)["user_id"] != "resolved-owner" {
+		t.Fatal("unchanged bucket identity lost")
+	}
+	p["path"] = "another-bucket"
+	data, err := nfsExportUpdateJSON(record, p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var updated map[string]any
+	if err := json.Unmarshal(data, &updated); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"user_id", "access_key_id", "secret_access_key"} {
+		if _, exists := updated["fsal"].(map[string]any)[key]; exists {
+			t.Fatal("old bucket credentials retained")
+		}
+	}
+	for _, root := range []string{"/", "/a/..", ".", ""} {
+		p["path"] = root
+		if _, err := build(Request{Action: "nfs_export.create"}, p); err == nil {
+			t.Fatal("root export accepted without user")
+		}
+	}
+}

@@ -614,9 +614,10 @@ const definitions: Record<
         { name: 'cluster', label: 'NFS 集群', type: 'select', required: true, optionsLoader: nfsClusterOptions },
         { name: 'pseudo', label: '伪路径', required: true, placeholder: '/export', pattern: /^\/[^\r\n\0]+$/, patternMessage: '请输入非根目录的绝对伪路径' },
         { name: 'fsal_type', label: '存储后端', type: 'select', required: true, options: [{ label: 'CephFS', value: 'CEPH' }, { label: '对象网关 RGW', value: 'RGW' }] },
-        { name: 'path', label: 'CephFS 绝对路径 / RGW 桶名（/ 表示用户根目录）', required: true },
+        { name: 'rgw_export_type', label: 'RGW 导出范围', type: 'select', required: true, options: [{ label: '用户根目录', value: 'user' }, { label: '单个桶（自动查询拥有者）', value: 'bucket' }], visibleWhen: (values) => values.fsal_type === 'RGW' },
+        { name: 'path', label: 'CephFS 绝对路径 / RGW 桶名', required: true, visibleWhen: (values) => values.fsal_type !== 'RGW' || values.rgw_export_type === 'bucket' },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions, visibleWhen: (values) => values.fsal_type !== 'RGW' },
-        { name: 'rgw_user_id', label: 'RGW 用户', type: 'select', required: true, optionsLoader: nfsRGWUserOptions, optionsDependencies: ['fsal_type'], visibleWhen: (values) => values.fsal_type === 'RGW' },
+        { name: 'rgw_user_id', label: 'RGW 用户', type: 'select', required: true, optionsLoader: nfsRGWUserOptions, optionsDependencies: ['fsal_type', 'rgw_export_type'], visibleWhen: (values) => values.fsal_type === 'RGW' && values.rgw_export_type === 'user' },
         { name: 'access_type', label: '访问类型', type: 'select', required: true, options: nfsAccessOptions },
         { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '使用原生默认值' },
         { name: 'clients', label: '客户端规则', renderControl: () => <NFSClientsEditor /> },
@@ -625,7 +626,7 @@ const definitions: Record<
         { name: 'protocols', label: 'NFS 协议版本', type: 'select', options: nfsProtocolOptions },
         { name: 'security_label', label: '安全标签', type: 'select', options: nfsSecurityLabelOptions, placeholder: '使用原生默认值' }
       ],
-      initialValues: { pseudo: '/export', path: '/', access_type: 'RW', fsal_type: 'CEPH' },
+      initialValues: { pseudo: '/export', path: '/', access_type: 'RW', fsal_type: 'CEPH', rgw_export_type: 'user' },
       buildBody: (values, clusterId) => ({
         cluster_id: clusterId,
         cluster: String(values.cluster ?? ''),
@@ -651,9 +652,10 @@ const definitions: Record<
         { name: 'cluster', label: 'NFS 集群', required: true, readOnly: true },
         { name: 'pseudo', label: '伪路径', required: true, pattern: /^\/[^\r\n\0]+$/, patternMessage: '请输入非根目录的绝对伪路径' },
         { name: 'fsal_type', label: '存储后端（不可更改）', required: true, readOnly: true },
-        { name: 'path', label: 'CephFS 绝对路径 / RGW 桶名（/ 表示用户根目录）', required: true },
+        { name: 'rgw_export_type', label: 'RGW 导出范围', type: 'select', required: true, options: [{ label: '用户根目录', value: 'user' }, { label: '单个桶（自动查询拥有者）', value: 'bucket' }], visibleWhen: (values) => values.fsal_type === 'RGW' },
+        { name: 'path', label: 'CephFS 绝对路径 / RGW 桶名', required: true, visibleWhen: (values) => values.fsal_type !== 'RGW' || values.rgw_export_type === 'bucket' },
         { name: 'filesystem', label: '文件系统', type: 'select', required: true, optionsLoader: filesystemOptions, visibleWhen: (values) => values.fsal_type !== 'RGW' },
-        { name: 'rgw_user_id', label: 'RGW 用户', type: 'select', required: true, optionsLoader: nfsRGWUserOptions, optionsDependencies: ['fsal_type'], visibleWhen: (values) => values.fsal_type === 'RGW' },
+        { name: 'rgw_user_id', label: 'RGW 用户', type: 'select', required: true, optionsLoader: nfsRGWUserOptions, optionsDependencies: ['fsal_type', 'rgw_export_type'], visibleWhen: (values) => values.fsal_type === 'RGW' && values.rgw_export_type === 'user' },
         { name: 'access_type', label: '访问类型', type: 'select', required: true, options: nfsAccessOptions },
         { name: 'squash', label: '身份映射策略', type: 'select', options: nfsSquashOptions, placeholder: '保持当前设置' },
         { name: 'clients', label: '客户端规则', renderControl: () => <NFSClientsEditor /> },
@@ -871,7 +873,7 @@ async function nfsClusterOptions(clusterId: number) {
 }
 
 async function nfsRGWUserOptions(clusterId: number, _row?: Record<string, unknown>, values?: Record<string, unknown>) {
-  if (values?.fsal_type !== 'RGW') return []
+  if (values?.fsal_type !== 'RGW' || values.rgw_export_type !== 'user') return []
   const payload = await listAllResources('/rgw/users', clusterId)
   return nfsRGWUserChoices(payload.items)
 }

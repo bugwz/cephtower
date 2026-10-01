@@ -155,10 +155,17 @@ func nfsExportUpdateJSON(export, parameters map[string]any) ([]byte, error) {
 	if !ok || fsal["name"] != wantedFSAL["name"] {
 		return nil, invalid("changing the NFS storage backend is not allowed")
 	}
+	previousPath := path.Clean(optional(export, "path"))
 	export["pseudo"] = parameters["pseudo"]
 	export["path"] = parameters["path"]
 	for key, value := range wantedFSAL {
 		fsal[key] = value
+	}
+	if wantedFSAL["name"] == "RGW" && wantedFSAL["user_id"] == nil && previousPath != path.Clean(optional(parameters, "path")) {
+		// Force the native module to resolve the new bucket owner and credentials.
+		delete(fsal, "user_id")
+		delete(fsal, "access_key_id")
+		delete(fsal, "secret_access_key")
 	}
 	if value, exists := parameters["client_rules"]; exists {
 		clients, err := nfsClients(value)
@@ -276,6 +283,9 @@ func nfsExportAttributesMatch(export, p map[string]any) bool {
 		if fsal[key] != value {
 			return false
 		}
+	}
+	if wantedFSAL["name"] == "RGW" && optional(fsal, "user_id") == "" {
+		return false
 	}
 	if access, exists := p["access_type"]; exists {
 		return export["access_type"] == access

@@ -1,6 +1,7 @@
 package mutation
 
 import (
+	"path"
 	"regexp"
 	"strings"
 )
@@ -24,6 +25,13 @@ func nfsExportFSAL(p map[string]any) (map[string]any, error) {
 		return map[string]any{"name": "CEPH", "fs_name": filesystem}, nil
 	case "RGW":
 		user := optional(p, "rgw_user_id")
+		if user == "" {
+			bucket := optional(p, "path")
+			if bucket == "" || path.Clean(bucket) == "/" || path.Clean(bucket) == "." {
+				return nil, invalid("an RGW bucket path or user id is required")
+			}
+			return map[string]any{"name": "RGW"}, nil
+		}
 		if !nfsRGWUserID.MatchString(user) || strings.HasPrefix(user, "-") {
 			return nil, invalid("rgw_user_id is required or invalid")
 		}
