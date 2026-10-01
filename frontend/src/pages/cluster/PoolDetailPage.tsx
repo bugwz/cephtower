@@ -179,6 +179,10 @@ function renderAutoscaleStatus(value: unknown) {
     <Descriptions.Item label="建议 PG 数量">{poolObjectCount(value.pg_num_final)}</Descriptions.Item>
     <Descriptions.Item label="建议调整">{autoscaleBoolean(value.would_adjust)}</Descriptions.Item>
     <Descriptions.Item label="目标数据量">{poolCapacity(value.target_bytes)}</Descriptions.Item>
+    <Descriptions.Item label="自动伸缩逻辑用量">{poolCapacity(value.logical_used)}</Descriptions.Item>
+    <Descriptions.Item label="冗余开销倍数">{autoscaleNumber(value.raw_used_rate)}</Descriptions.Item>
+    <Descriptions.Item label="实际容量占比（原始比值）">{autoscaleNumber(value.actual_capacity_ratio)}</Descriptions.Item>
+    <Descriptions.Item label="计算容量占比（含目标用量）">{autoscaleNumber(value.capacity_ratio)}</Descriptions.Item>
     <Descriptions.Item label="CRUSH 子树容量">{poolCapacity(value.subtree_capacity)}</Descriptions.Item>
     <Descriptions.Item label="目标比例">{autoscaleNumber(value.target_ratio)}</Descriptions.Item>
     <Descriptions.Item label="有效目标比例">{autoscaleNumber(value.effective_target_ratio)}</Descriptions.Item>

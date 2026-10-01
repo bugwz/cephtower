@@ -174,6 +174,8 @@ for (const name of ['autoscaleNumber', 'autoscaleBoolean']) {
   }
 }
 assert.ok(detailSource.includes('renderAutoscaleStatus(data?.autoscale_status)'))
+assert.ok(detailSource.includes('poolCapacity(value.logical_used)'))
+for (const field of ['raw_used_rate', 'actual_capacity_ratio', 'capacity_ratio']) assert.ok(detailSource.includes(`autoscaleNumber(value.${field})`))
 for (const field of ['pg_num_final', 'would_adjust', 'target_bytes', 'subtree_capacity', 'target_ratio', 'effective_target_ratio', 'bias', 'bulk']) assert.ok(detailSource.includes(`value.${field}`))
 assert.ok(detailSource.includes("const type = poolKind(row) ?? '未知'"))
 const compressionRatioFn = detailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'formatCompressionRatio')

@@ -53,6 +53,10 @@ type Pool struct {
 }
 
 type PoolAutoscaleStatus struct {
+	LogicalUsed          *float64 `json:"logical_used"`
+	RawUsedRate          *float64 `json:"raw_used_rate"`
+	ActualCapacityRatio  *float64 `json:"actual_capacity_ratio"`
+	CapacityRatio        *float64 `json:"capacity_ratio"`
 	PGNumFinal           *uint64  `json:"pg_num_final"`
 	WouldAdjust          *bool    `json:"would_adjust"`
 	TargetBytes          *uint64  `json:"target_bytes"`

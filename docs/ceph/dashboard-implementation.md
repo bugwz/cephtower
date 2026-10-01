@@ -5,6 +5,10 @@
 
 ## 如何追踪调用链
 
+自动伸缩建议补齐 logical_used、raw_used_rate、actual_capacity_ratio、capacity_ratio。
+按原生计算保留浮点值：逻辑用量由实际原始占用除以冗余开销得到；计算容量占比还会
+考虑目标字节数，不与实际容量占比混淆。前端分别标明字节、倍数和比值，缺失值不补零。
+
 新增独立自动伸缩建议区块：参考 Dashboard 池属性之外，以 Ceph pg_autoscaler/module.py
 的 osd pool autoscale-status --format json 获取建议 PG 数、would_adjust、目标容量、
 CRUSH 子树容量、目标/有效比例、偏置和 bulk 标志，按 pool_id 关联至 autoscale_status。

@@ -23,7 +23,7 @@ func (p *NativeProvider) collectPoolAutoscale(ctx context.Context, access Cluste
 		if _, exists := result[*row.ID]; exists {
 			return nil
 		}
-		for _, value := range []*float64{row.TargetRatio, row.EffectiveTargetRatio, row.Bias} {
+		for _, value := range []*float64{row.TargetRatio, row.EffectiveTargetRatio, row.Bias, row.LogicalUsed, row.RawUsedRate, row.ActualCapacityRatio, row.CapacityRatio} {
 			if value != nil && *value < 0 {
 				return nil
 			}

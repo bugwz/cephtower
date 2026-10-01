@@ -69,3 +69,33 @@ func TestPoolAutoscaleInventoryPayload(t *testing.T) {
 		t.Fatalf("pool count %d", found)
 	}
 }
+
+func TestPoolAutoscaleSizingInputs(t *testing.T) {
+	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+		"collect.pool_autoscale": []byte(`[{"pool_id":7,"logical_used":1024.5,"raw_used_rate":1.5,"actual_capacity_ratio":0.25,"capacity_ratio":1.25},{"pool_id":8,"logical_used":0,"actual_capacity_ratio":0}]`),
+	}}}
+	got := p.collectPoolAutoscale(context.Background(), ClusterAccess{})
+	if len(got) != 2 {
+		t.Fatalf("status = %#v", got)
+	}
+	data, err := json.Marshal(got[7])
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded map[string]any
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	for key, want := range map[string]float64{"logical_used": 1024.5, "raw_used_rate": 1.5, "actual_capacity_ratio": 0.25, "capacity_ratio": 1.25} {
+		if decoded[key] != want {
+			t.Fatalf("%s = %v, want %v", key, decoded[key], want)
+		}
+		p.Executor = malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.pool_autoscale": []byte(`[{"pool_id":7,"` + key + `":-1}]`)}}
+		if bad := p.collectPoolAutoscale(context.Background(), ClusterAccess{}); bad != nil {
+			t.Fatalf("accepted negative %s", key)
+		}
+	}
+	if got[8].LogicalUsed == nil || *got[8].LogicalUsed != 0 || got[8].ActualCapacityRatio == nil || *got[8].ActualCapacityRatio != 0 || got[8].RawUsedRate != nil || got[8].CapacityRatio != nil {
+		t.Fatalf("zero or unknown values lost: %#v", got[8])
+	}
+}
