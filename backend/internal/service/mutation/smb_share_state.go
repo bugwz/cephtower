@@ -20,6 +20,21 @@ func smbShareStateMatches(request Request, data []byte) bool {
 	default:
 		return false
 	}
+	return smbResourcePresenceMatches(data, name, request.Action == "smb_share.create")
+}
+
+func smbClusterStateMatches(request Request, data []byte) bool {
+	switch request.Action {
+	case "smb_cluster.create":
+		return smbResourcePresenceMatches(data, optional(request.Parameters, "name"), true)
+	case "smb_cluster.delete":
+		return smbResourcePresenceMatches(data, last(resourceTail(request.ResourceKey)), false)
+	default:
+		return false
+	}
+}
+
+func smbResourcePresenceMatches(data []byte, name string, present bool) bool {
 	if name == "" {
 		return false
 	}
@@ -39,5 +54,5 @@ func smbShareStateMatches(request Request, data []byte) bool {
 		}
 		seen[entry] = true
 	}
-	return seen[name] == (request.Action == "smb_share.create")
+	return seen[name] == present
 }
