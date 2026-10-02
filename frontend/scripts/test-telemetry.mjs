@@ -61,6 +61,31 @@ assert.ok(controlSource.includes('setAccepted(false); setOpen(true)'))
 assert.ok(source.includes('key={`${selectedClusterId}:${status.enabled}`}'))
 console.log('Telemetry explicit license consent checks passed')
 
+for (const scenario of ['success', 'write-failure', 'refresh-failure', 'unmount']) {
+  const events = []
+  let finish, fail
+  const env = {
+    active: { current: true }, running: { current: false }, enabled: false, accepted: true, disabled: false, clusterId: 8,
+    setBusy: (value) => events.push(['busy', value]), setOpen: (value) => events.push(['open', value]), setAccepted: (value) => events.push(['accepted', value]),
+    message: { success: () => events.push(['success']) },
+    onComplete: async () => { events.push(['refresh']); if (scenario === 'refresh-failure') throw new Error('refresh') },
+    mutateResource: () => { events.push(['write']); return new Promise((resolve, reject) => { finish = resolve; fail = reject }) },
+  }
+  const invoke = new Function(...Object.keys(env), `${submitCode}; return submit`)(...Object.values(env))
+  const pending = invoke(); await invoke()
+  assert.equal(events.filter(([kind]) => kind === 'write').length, 1)
+  if (scenario === 'unmount') env.active.current = false
+  if (scenario === 'write-failure') fail(new Error('unverified')); else finish()
+  if (scenario.endsWith('failure')) await assert.rejects(pending); else await pending
+  assert.equal(env.running.current, false)
+  assert.equal(events.some(([kind]) => kind === 'refresh'), scenario !== 'unmount')
+  assert.equal(events.some(([kind]) => kind === 'success'), ['success', 'refresh-failure'].includes(scenario))
+  assert.equal(events.some(([kind, value]) => kind === 'accepted' && value === false), scenario !== 'unmount')
+  assert.equal(events.some(([kind, value]) => kind === 'open' && value === false), scenario !== 'unmount')
+  if (scenario === 'unmount') assert.deepEqual(events, [['busy', true], ['write']])
+}
+console.log('Telemetry uncertain mutation recovery and lifecycle checks passed')
+
 const channelSource = readFileSync(new URL('../src/pages/cluster/TelemetryChannels.tsx', import.meta.url), 'utf8')
 const channelTree = ts.createSourceFile('channels.tsx', channelSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const channelComponent = channelTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'TelemetryChannels')

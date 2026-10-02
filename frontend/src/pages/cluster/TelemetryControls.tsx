@@ -16,10 +16,14 @@ export function TelemetryControls({ clusterId, enabled, disabled, onComplete }: 
     try {
       await mutateResource('/manager/telemetry', 'PATCH', { cluster_id: clusterId, enabled: !enabled, ...(!enabled ? { license: 'sharing-1-0' } : {}) })
       if (!active.current) return
-      setOpen(false); setAccepted(false)
       message.success(enabled ? '遥测停用状态已核验' : '遥测启用状态已核验')
-      await onComplete()
-    } finally { running.current = false; if (active.current) setBusy(false) }
+    } finally {
+      // A failed post-check does not prove the command had no effect.
+      // Clear consent and reload state before allowing another submission.
+      try {
+        if (active.current) { setOpen(false); setAccepted(false); await onComplete() }
+      } finally { running.current = false; if (active.current) setBusy(false) }
+    }
   }
   return <>
     <Button danger={!enabled} disabled={disabled || busy} onClick={() => { setAccepted(false); setOpen(true) }}>{enabled ? '停用遥测' : '启用遥测'}</Button>
