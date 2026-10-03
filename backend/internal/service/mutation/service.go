@@ -315,6 +315,12 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if mask, present := request.Parameters["op_mask"]; request.Action == "rgw_user.update" && present {
+			expected, ok := mask.(string)
+			if err != nil || !ok || !rgwUserOperationMaskMatches(checked.Stdout, expected, last(resourceTail(request.ResourceKey))) {
+				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user modification was accepted but the operation mask could not be verified; inspect user info before retrying", Retryable: false}
+			}
+		}
 		if request.Action == "rgw_user.update" && rgwUserPlacementRequested(request.Parameters) && (err != nil || !rgwUserPlacementMatches(checked.Stdout, request.Parameters, last(resourceTail(request.ResourceKey)))) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user modification was accepted but placement settings could not be verified; inspect user info before retrying", Retryable: false}
 		}
