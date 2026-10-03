@@ -13,7 +13,7 @@ import { RgwQuota } from './RgwQuota'
 import { RgwStorage } from './RgwStorage'
 import { RgwRateLimit } from './RgwRateLimit'
 import { RgwPermissions } from './RgwPermissions'
-import { rgwBucketLimit } from './rgwBucketLimit'
+import { rgwBucketLimit, rgwBucketLimitInput } from './rgwBucketLimit'
 import { rgwAccountLimit } from './rgwAccountLimit'
 import { rgwUserSuspension, rgwUserBooleanFlag } from './rgwUserFlags'
 import { rgwUserFlagPatch } from './rgwUserFlagPatch'
@@ -112,7 +112,7 @@ const definitions: Record<
         uid: String(values.uid ?? ''),
         ...(values.display_name ? { display_name: String(values.display_name) } : {}),
         ...(values.email ? { email: String(values.email) } : {}),
-        ...(values.max_buckets != null ? {max_buckets:Number(values.max_buckets)} : {})
+        ...rgwBucketLimitInput(values.max_buckets)
       })
     },
     updateAction: {
@@ -123,7 +123,7 @@ const definitions: Record<
       fields: [
         { name: 'display_name', label: '显示名' },
         { name: 'email', label: '邮箱' },
-        { name: 'max_buckets', label: '最大 Bucket 数（-1 禁止创建，0 无限制）', type: 'number', min: -1 },
+        { name: 'max_buckets', label: '最大 Bucket 数（留空不修改，-1 禁止创建，0 无限制）', type: 'number', min: -1, max: 2147483647 },
         { name: 'suspended', label: '暂停用户', type: 'select', options: [{ label: '保持不变', value: 'keep' }, { label: '暂停', value: 'enable' }, { label: '解除暂停', value: 'disable' }] },
         { name: 'system', label: '系统用户', type: 'select', options: [{ label: '保持不变', value: 'keep' }, { label: '启用', value: 'enable' }, { label: '关闭', value: 'disable' }] }
       ],
@@ -139,7 +139,7 @@ const definitions: Record<
         uid: userId(row),
         ...(values.display_name ? { display_name: String(values.display_name) } : {}),
         email: String(values.email ?? ''),
-        ...(values.max_buckets !== undefined ? { max_buckets: Number(values.max_buckets) } : {}),
+        ...rgwBucketLimitInput(values.max_buckets),
         ...rgwUserFlagPatch(values)
       })
     },

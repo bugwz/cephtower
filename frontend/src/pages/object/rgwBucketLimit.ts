@@ -1,3 +1,11 @@
+export function rgwBucketLimitInput(value: unknown) {
+  if (value === undefined || value === null || value === '') return {}
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < -1 || value > 2147483647) {
+    throw new Error('最大 Bucket 数必须是 -1 到 2147483647 之间的整数')
+  }
+  return { max_buckets: value }
+}
+
 export function rgwBucketLimit(value: unknown) {
   if (typeof value !== 'number' || !Number.isInteger(value) || value < -2147483648 || value > 2147483647) {
     return 'Bucket 上限未返回或无效'
