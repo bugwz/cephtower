@@ -22,8 +22,9 @@ func TestPoolMirrorScheduleSchemaUsesRuntimeContract(t *testing.T) {
 	if _, exists := got.Fields["password"]; exists {
 		t.Fatal("unrelated fields leaked into schedule schema")
 	}
+	unrelated, _ := requestSchema(router.Route{Method: "POST", Path: "/pool"})
 	for _, key := range []string{"interval", "start_time"} {
-		if _, exists := mutationFieldUnion()[key]; exists {
+		if _, exists := unrelated.Fields[key]; exists {
 			t.Fatalf("schedule field %s leaked into unrelated routes", key)
 		}
 	}

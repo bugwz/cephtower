@@ -266,6 +266,13 @@ func routeParameters(route router.Route) []parameterSpec {
 }
 
 func requestSchema(route router.Route) (handler.RequestContract, bool) {
+	if action, ok := mutationRouteActions[route.Method+" "+route.Path]; ok {
+		contract, exists := handler.MutationRequestContract(action)
+		if !exists {
+			panic("missing mutation contract: " + action)
+		}
+		return contract, true
+	}
 	stringField := func(required bool) handler.JSONField { return handler.JSONField{Type: "string", Required: required} }
 	boolField := func(required bool) handler.JSONField { return handler.JSONField{Type: "boolean", Required: required} }
 	integerField := func(required bool) handler.JSONField { return handler.JSONField{Type: "integer", Required: required} }
@@ -316,8 +323,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 	var fields map[string]handler.JSONField
 	required := true
 	switch key {
-	case "DELETE /rgw/bucket/policy":
-		return handler.MutationRequestContract("rgw_bucket_policy.delete")
+	case "PATCH /host/ssh":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "hostname": stringField(false), "host": stringField(false), "ssh_address": stringField(true), "ssh_port": integerField(false), "ssh_user": stringField(true), "ssh_password": {OneOf: []handler.JSONField{{Type: "string"}, {Type: "null"}}, WriteOnly: true}, "sync_hostnames": stringArrayField(false)}
 	case "POST /bootstrap/run":
 		database := object(true, map[string]handler.JSONField{
 			"engine": stringField(true),
@@ -376,28 +383,6 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "mode": {Type: "string", Required: true, Enum: []string{"current", "preview"}}}
 	case "GET /rbd/mirroring/schedule/status", "GET /rbd/mirroring/schedules", "GET /erasure/code/info", "GET /upgrade/versions", "GET /crush/map", "GET /manager/telemetry/status":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
-	case "POST /upgrade/check":
-		return handler.MutationRequestContract("upgrade.check")
-	case "POST /service":
-		return handler.MutationRequestContract("service.create")
-	case "PATCH /service":
-		return handler.MutationRequestContract("service.update")
-	case "POST /upgrade/action":
-		return handler.MutationRequestContract("upgrade.action")
-	case "PATCH /manager/telemetry":
-		return handler.MutationRequestContract("telemetry.update")
-	case "PATCH /manager/telemetry/channel":
-		return handler.MutationRequestContract("telemetry.channel.update")
-	case "POST /crush/rule":
-		return handler.MutationRequestContract("crush_rule.create")
-	case "PATCH /crush/rule":
-		return handler.MutationRequestContract("crush_rule.update")
-	case "DELETE /crush/rule":
-		return handler.MutationRequestContract("crush_rule.delete")
-	case "POST /erasure/code/profile":
-		return handler.MutationRequestContract("erasure_code_profile.create")
-	case "DELETE /erasure/code/profile":
-		return handler.MutationRequestContract("erasure_code_profile.delete")
 	case "GET /ceph/users/export":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "entities": stringArrayField(true)}
 	case "POST /rbd/mirroring/bootstrap/token":
@@ -414,56 +399,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 			"direction":  {Type: "string", Required: true, Enum: []string{"rx-only", "rx-tx"}},
 			"token":      {Type: "string", Required: true, WriteOnly: true},
 		}
-	case "POST /rbd/image/action":
-		return handler.MutationRequestContract("rbd_image.action")
-	case "POST /rbd/mirroring/schedule":
-		return handler.MutationRequestContract("rbd_mirroring.schedule")
-	case "POST /rbd/mirroring/global/schedule":
-		return handler.MutationRequestContract("rbd_mirroring.global_schedule")
-	case "POST /rbd/namespace/schedule":
-		return handler.MutationRequestContract("rbd_namespace.schedule")
-	case "POST /rbd/image/snapshot/action":
-		return handler.MutationRequestContract("rbd_snapshot.action")
-	case "POST /filesystem/subvolume/snapshot/clone":
-		return handler.MutationRequestContract("cephfs_snapshot.clone")
-	case "POST /filesystem/subvolume/clone/cancel":
-		return handler.MutationRequestContract("subvolume.clone_cancel")
-	case "PUT /filesystem/subvolume/snapshot/visibility":
-		return handler.MutationRequestContract("subvolume.snapshot_visibility")
 	case "GET /filesystem/subvolume/snapshot/visibility":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true), "subvolume": stringField(true), "group": stringField(false)}
-	case "DELETE /filesystem/subvolume":
-		return handler.MutationRequestContract("subvolume.delete")
-	case "POST /filesystem/subvolume":
-		return handler.MutationRequestContract("subvolume.create")
-	case "PATCH /filesystem/subvolume":
-		return handler.MutationRequestContract("subvolume.update")
-	case "PATCH /filesystem/subvolume/group":
-		return handler.MutationRequestContract("subvolume_group.update")
-	case "POST /filesystem/authorization":
-		return handler.MutationRequestContract("cephfs_authorization.create")
-	case "PUT /filesystem":
-		return handler.MutationRequestContract("filesystem.rename")
-	case "PATCH /filesystem/entry/quota":
-		return handler.MutationRequestContract("cephfs_entry.quota")
-	case "POST /filesystem/entry":
-		return handler.MutationRequestContract("cephfs_entry.create")
-	case "PATCH /filesystem/entry":
-		return handler.MutationRequestContract("cephfs_entry.rename")
-	case "DELETE /filesystem/entry":
-		return handler.MutationRequestContract("cephfs_entry.delete")
-	case "POST /filesystem/entry/snapshot":
-		return handler.MutationRequestContract("cephfs_entry_snapshot.create")
-	case "DELETE /filesystem/entry/snapshot":
-		return handler.MutationRequestContract("cephfs_entry_snapshot.delete")
-	case "POST /ceph/user":
-		return handler.MutationRequestContract("ceph_user.create")
-	case "PATCH /ceph/user":
-		return handler.MutationRequestContract("ceph_user.update")
-	case "DELETE /ceph/user":
-		return handler.MutationRequestContract("ceph_user.delete")
-	case "POST /ceph/users/import":
-		return handler.MutationRequestContract("ceph_user.import")
 	case "POST /role":
 		fields = map[string]handler.JSONField{"name": stringField(true), "description": stringField(false)}
 	case "POST /role/binding":
@@ -504,43 +441,11 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 			return handler.RequestContract{Required: true, Fields: fields}, true
 		}
 		if route.Method != "GET" && isClusterScopedRoute(route) {
-			fields := mutationFieldUnion()
-			fields["cluster_id"] = integerField(true)
-			return handler.RequestContract{Required: true, Fields: fields}, true
+			panic("missing request contract: " + key)
 		}
 		return handler.RequestContract{}, false
 	}
 	return handler.RequestContract{Required: required, Fields: fields}, true
-}
-
-func mutationFieldUnion() map[string]handler.JSONField {
-	fields := map[string]handler.JSONField{}
-	for _, action := range handler.MutationContractActions() {
-		if action == "rbd_mirroring.schedule" || action == "rbd_namespace.schedule" || action == "rbd_mirroring.global_schedule" {
-			continue
-		}
-		if action == "filesystem.rename" || action == "subvolume.snapshot_visibility" || action == "subvolume_group.update" {
-			continue
-		}
-		if action == "cephfs_entry.quota" || action == "cephfs_entry.create" || action == "cephfs_entry.delete" || action == "cephfs_entry.rename" || action == "cephfs_entry_snapshot.create" || action == "cephfs_entry_snapshot.delete" {
-			continue
-		}
-		if action == "cephfs_authorization.create" || action == "cephfs_snapshot.clone" || action == "subvolume.clone_cancel" || action == "subvolume.create" || action == "subvolume.delete" || action == "subvolume.update" {
-			continue
-		}
-		contract, _ := handler.MutationRequestContract(action)
-		for name, field := range contract.Fields {
-			if action == "rbd_image.action" && (name == "interval" || name == "start_time") {
-				continue
-			}
-			field.Required = false
-			if existing, ok := fields[name]; ok && existing.Type != field.Type {
-				field = handler.JSONField{}
-			}
-			fields[name] = field
-		}
-	}
-	return fields
 }
 
 func writeRequestSchema(b *strings.Builder, schema handler.RequestContract, indent int) {
@@ -572,6 +477,9 @@ func writeObjectSchema(b *strings.Builder, fields map[string]handler.JSONField, 
 
 func writeFieldSchema(b *strings.Builder, field handler.JSONField, indent int) {
 	pad := strings.Repeat(" ", indent)
+	if field.WriteOnly {
+		b.WriteString(pad + "writeOnly: true\n")
+	}
 	if len(field.OneOf) > 0 {
 		b.WriteString(pad + "oneOf:\n")
 		for _, variant := range field.OneOf {
@@ -587,14 +495,15 @@ func writeFieldSchema(b *strings.Builder, field handler.JSONField, indent int) {
 	if field.Type == "object" {
 		writeObjectSchema(b, field.Properties, indent)
 	} else {
-		b.WriteString(pad + "type: " + field.Type + "\n")
+		fieldType := field.Type
+		if fieldType == "null" {
+			fieldType = "'null'"
+		}
+		b.WriteString(pad + "type: " + fieldType + "\n")
 		if field.Type == "array" && field.Items != nil {
 			b.WriteString(pad + "items:\n")
 			writeFieldSchema(b, *field.Items, indent+2)
 		}
-	}
-	if field.WriteOnly {
-		b.WriteString(pad + "writeOnly: true\n")
 	}
 	if len(field.Enum) > 0 {
 		values := append([]string(nil), field.Enum...)
