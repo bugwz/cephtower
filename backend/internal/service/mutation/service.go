@@ -563,6 +563,13 @@ func build(request Request, p map[string]any) (command, error) {
 			serviceID = expectedID
 		}
 		spec := map[string]any{"service_type": serviceType}
+		if raw, exists := p["unmanaged"]; exists {
+			unmanaged, ok := raw.(bool)
+			if !ok {
+				return command{}, invalid("unmanaged must be a boolean")
+			}
+			spec["unmanaged"] = unmanaged
+		}
 		if serviceID != "" {
 			spec["service_id"] = serviceID
 		}

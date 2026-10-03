@@ -78,3 +78,29 @@ func TestServiceCreationNeverOverwritesExistingSpec(t *testing.T) {
 		t.Fatalf("update changed: %+v %v", cmd, err)
 	}
 }
+
+func TestServiceManagementModeUpdatesPreserveSpec(t *testing.T) {
+	for _, unmanaged := range []bool{true, false} {
+		cmd, err := build(Request{Action: "service.update", ResourceKey: "service/rgw.a"}, map[string]any{"service_type": "rgw", "unmanaged": unmanaged})
+		if err != nil {
+			t.Fatal(err)
+		}
+		merged, err := mergeServiceSpec([]byte(`[{"service_name":"rgw.a","service_type":"rgw","service_id":"a","unmanaged":true,"placement":{"count":2},"spec":{"ssl":true}}]`), cmd.stdin, "rgw.a")
+		if err != nil {
+			t.Fatal(err)
+		}
+		var value map[string]json.RawMessage
+		if err := json.Unmarshal(merged, &value); err != nil {
+			t.Fatal(err)
+		}
+		want, _ := json.Marshal(unmanaged)
+		if string(value["unmanaged"]) != string(want) || string(value["spec"]) != `{"ssl":true}` || string(value["placement"]) != `{"count":2}` {
+			t.Fatalf("unexpected merged spec: %s", merged)
+		}
+	}
+	for _, value := range []any{nil, "false", 0} {
+		if _, err := build(Request{Action: "service.create", ResourceKey: "service"}, map[string]any{"service_type": "mgr", "unmanaged": value}); err == nil {
+			t.Fatalf("invalid management mode accepted: %#v", value)
+		}
+	}
+}

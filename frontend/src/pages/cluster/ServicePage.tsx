@@ -1,5 +1,5 @@
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Form, Input, Modal, Select, Space, Tabs } from 'antd'
+import { Alert, Button, Card, Form, Input, Modal, Select, Space, Switch, Tabs } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { textValue, type ApiRecord } from '../../api/client'
 import { listAllResources, mutateResource, refreshResource } from '../../api/resource'
@@ -18,6 +18,7 @@ interface ServiceFormValues {
   service_type: string
   service_id?: string
   placement_json?: string
+  unmanaged?: boolean
 }
 
 const serviceTypeOptions = [
@@ -101,7 +102,7 @@ function ServicePageContent() {
     if (!active.current || running.current || !selectedClusterId) return
     setEditingService(null)
     form.resetFields()
-    form.setFieldsValue({ service_type: 'rgw', placement_json: '{}' })
+    form.setFieldsValue({ service_type: 'rgw', placement_json: '{}', unmanaged: false })
     setFormOpen(true)
   }
 
@@ -112,6 +113,7 @@ function ServicePageContent() {
     form.setFieldsValue({
       service_type: serviceType(row),
       service_id: serviceId(row),
+      unmanaged: typeof row.unmanaged === 'boolean' ? row.unmanaged : undefined,
       placement_json: JSON.stringify(readObject(row.placement), null, 2)
     })
     setFormOpen(true)
@@ -135,6 +137,7 @@ function ServicePageContent() {
         ...(editingService ? { name: serviceName(editingService) } : {}),
         service_type: values.service_type,
         ...(values.service_id ? { service_id: values.service_id } : {}),
+        ...(typeof values.unmanaged === 'boolean' ? { unmanaged: values.unmanaged } : {}),
         placement
       }
       const successMessage = editingService ? '服务更新执行成功' : '服务创建执行成功'
@@ -290,6 +293,9 @@ function ServicePageContent() {
           </Form.Item>
           <Form.Item name="service_id" label="Service ID">
             <Input disabled={Boolean(editingService)} />
+          </Form.Item>
+          <Form.Item name="unmanaged" label="非托管" valuePropName="checked" extra="启用后 Ceph 编排器停止自动部署和移除该服务的守护进程；关闭后恢复自动管理，并可能按放置策略调整守护进程。">
+            <Switch />
           </Form.Item>
           <Form.Item name="placement_json" label="Placement JSON" extra='支持 count、count_per_host、hosts、label 和 host_pattern。count 与 count_per_host 互斥；每主机数量必须指定主机选择条件。host_pattern 支持通配符字符串或 {"pattern":"node-[0-9]+","pattern_type":"regex"}，正则语法由 Ceph 校验。'>
             <Input.TextArea rows={5} spellCheck={false} placeholder='{"count":1,"host_pattern":"*"}' />

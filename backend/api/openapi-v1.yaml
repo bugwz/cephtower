@@ -880,6 +880,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -1615,6 +1617,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -3645,6 +3649,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -4380,6 +4386,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -5943,6 +5951,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -6774,6 +6784,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -7510,6 +7522,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -8903,6 +8917,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -9732,6 +9748,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -10467,6 +10485,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -11448,6 +11468,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -12679,6 +12701,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -13415,6 +13439,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -14151,6 +14177,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -15524,6 +15552,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -16405,6 +16435,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -17236,6 +17268,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -17971,6 +18005,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -19362,6 +19398,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -20097,6 +20135,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -20849,6 +20889,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -21678,6 +21720,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -22413,6 +22457,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -23149,6 +23195,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -24163,6 +24211,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -25089,6 +25139,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -25918,6 +25970,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -26653,6 +26707,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -27521,6 +27577,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -28257,6 +28315,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -29673,6 +29733,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -30694,6 +30756,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -31523,6 +31587,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -32354,6 +32420,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -33183,6 +33251,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -33918,6 +33988,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -34844,6 +34916,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -35673,6 +35747,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -36408,6 +36484,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -37239,6 +37317,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -37974,6 +38054,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -38805,6 +38887,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -39540,6 +39624,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -40371,6 +40457,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -41200,6 +41288,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -41935,6 +42025,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -42934,6 +43026,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -43764,6 +43858,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -44500,6 +44596,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -45236,6 +45334,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -46066,6 +46166,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -46836,6 +46938,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -47857,6 +47961,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -48686,6 +48792,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -49421,6 +49529,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -50252,6 +50362,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -50988,6 +51100,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -51724,6 +51838,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -52460,6 +52576,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -53291,6 +53409,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -54120,6 +54240,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -54855,6 +54977,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -55708,6 +55832,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -56443,6 +56569,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -57178,6 +57306,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -58300,6 +58430,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -59108,6 +59240,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -59844,6 +59978,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -60579,6 +60715,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -61410,6 +61548,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -62240,6 +62380,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -62976,6 +63118,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -63823,6 +63967,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -64558,6 +64704,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -65293,6 +65441,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -66029,6 +66179,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -66860,6 +67012,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -67689,6 +67843,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -68424,6 +68580,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -69261,6 +69419,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -69997,6 +70157,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -70733,6 +70895,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -71564,6 +71728,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -72300,6 +72466,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -73035,6 +73203,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -73866,6 +74036,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -74601,6 +74773,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -75336,6 +75510,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -76072,6 +76248,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -76998,6 +77176,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -77827,6 +78007,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -78562,6 +78744,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -79298,6 +79482,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -80034,6 +80220,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -80769,6 +80957,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -81505,6 +81695,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -82241,6 +82433,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -83072,6 +83266,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -83807,6 +84003,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -84543,6 +84741,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -85278,6 +85478,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -86344,6 +86546,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -86602,6 +86806,8 @@ paths:
                   type: string
                 uid:
                   type: string
+                unmanaged:
+                  type: boolean
                 who:
                   type: string
       responses:
@@ -86729,6 +86935,8 @@ paths:
                   type: string
                 uid:
                   type: string
+                unmanaged:
+                  type: boolean
                 who:
                   type: string
       responses:
@@ -87554,6 +87762,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -88383,6 +88593,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -89118,6 +89330,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -89949,6 +90163,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -90684,6 +90900,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -91419,6 +91637,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -92250,6 +92470,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -93079,6 +93301,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -93814,6 +94038,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -94645,6 +94871,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -95380,6 +95608,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:
@@ -96115,6 +96345,8 @@ paths:
                   type: string
                 uid:
                   description: action-specific JSON value
+                unmanaged:
+                  type: boolean
                 user_group_ref:
                   type: array
                   items:

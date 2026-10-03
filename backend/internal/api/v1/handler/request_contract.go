@@ -95,6 +95,9 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	hostPattern := JSONField{OneOf: []JSONField{stringField(false), objectField(false, map[string]JSONField{"pattern": stringField(true), "pattern_type": stringField(false, "fnmatch", "regex")})}}
 	placement := objectField(false, map[string]JSONField{"count": integerField(false), "count_per_host": integerField(false), "host_pattern": hostPattern, "hosts": stringsField(false), "label": stringField(false)})
 	add([]string{"service.create", "service.update"}, true, map[string]JSONField{"service_type": stringField(true, "mon", "mgr", "mds", "rgw", "nfs", "smb", "prometheus", "alertmanager", "grafana", "node-exporter", "crash"), "service_id": stringField(false), "placement": placement})
+	for _, action := range []string{"service.create", "service.update"} {
+		contracts[action].Fields["unmanaged"] = boolField(false)
+	}
 	add([]string{"daemon.action"}, true, map[string]JSONField{"action": stringField(true, "start", "stop", "restart", "reconfig", "redeploy", "rotate-key")})
 	add([]string{"upgrade.check"}, true, map[string]JSONField{"version": stringField(false), "image": stringField(false)})
 	add([]string{"upgrade.action"}, true, map[string]JSONField{"action": stringField(true, "start", "pause", "resume", "stop"), "version": stringField(false), "image": stringField(false)})
