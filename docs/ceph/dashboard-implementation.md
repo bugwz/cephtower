@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+- **Bucket / Zonegroup 管道目标存储类**：现有管道编辑 API 增加可选 `storage_class`，映射 `sync group pipe modify --storage-class`，沿用完整快照与写后策略核验、Zonegroup Realm Period 发布。参考 `rgw_sync_pipe_dest_params::set_storage_class`，明确保存空字符串不等于 reset optional；表单提供保持、设置完整名称、显式空字符串三种行为，忽略隐藏旧值，不虚构“移除覆盖”命令。保留 ACL、过滤器、优先级和 Zone 成员；不验证目标放置配置或声明已有对象已迁移。
+  - 增加非空/空值、仅改存储类、无变化拒绝、回读不符、ACL 漂移、两种 Realm 归属、API 类型与实际表单绑定测试；OpenAPI 重新生成。无真实集群及浏览器视觉验证，ACL 和过滤器编辑等剩余项继续推进。
+  - `make test-backend`（含 OpenAPI 一致性）、`make test-frontend`（含类型检查和生产构建）通过；补充“缺失字段 → 显式空字符串”用例后，存储类专项测试再次通过。
+
 - **Bucket / Zonegroup 同步管道优先级写入**：在已有管道编辑 API 与表单增加可选 `priority`，映射原生 `sync group pipe modify --priority`。依据 `rgw_sync_pipe_params::priority` 的 int32 类型，前后端拒绝小数、字符串和越界值，避免 CLI `atoi` 的隐式转换；留空不发送，显式 0 保留，允许仅修改优先级。沿用完整组快照、完整策略/Zonegroup 回读、资源锁与 Realm Period 发布核验，过滤器、目标 ACL/存储类及 Zone 成员保持不变。确认框列出新优先级或“保持原值”，提示管道选择变化和非事务风险。
   - 新增仅改优先级、无变化拒绝、错误回读、其他字段漂移、负数/零/边界值、API 类型校验及两类实际表单绑定测试；更新 OpenAPI。无真实集群或浏览器视觉验证；其余高级管道参数写入仍待补齐。
   - `make test-backend`（含 OpenAPI 一致性）与 `make test-frontend`（含类型检查、生产构建）通过。

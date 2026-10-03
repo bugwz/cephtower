@@ -20980,6 +20980,8 @@ paths:
                   type: string
                 source_tenant:
                   type: string
+                storage_class:
+                  type: string
                 subsystem_nqn:
                   type: string
                 subvolume:
@@ -26016,6 +26018,8 @@ paths:
                 source_bucket_id:
                   type: string
                 source_tenant:
+                  type: string
+                storage_class:
                   type: string
                 subsystem_nqn:
                   type: string

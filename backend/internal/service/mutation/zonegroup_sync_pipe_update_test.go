@@ -12,7 +12,7 @@ import (
 func TestZonegroupSyncPipeUpdate(t *testing.T) {
 	for _, realm := range []string{"", "realm"} {
 		for _, mode := range []string{"system", "user"} {
-			for _, scenario := range []string{"success", "priority", "missing", "duplicate", "stale", "unchanged", "write", "post_check", "period.commit", "published_policy_check"} {
+			for _, scenario := range []string{"success", "priority", "storage class", "empty storage class", "missing", "duplicate", "stale", "unchanged", "write", "post_check", "period.commit", "published_policy_check"} {
 				if realm == "" && (scenario == "period.commit" || scenario == "published_policy_check") {
 					continue
 				}
@@ -51,6 +51,14 @@ func TestZonegroupSyncPipeUpdate(t *testing.T) {
 					}
 					zg := map[string]any{"id": "zg", "name": "east", "realm_id": realm, "zones": []any{}, "sync_policy": map[string]any{"groups": []any{group}}}
 					before := encode(zg)
+					if scenario == "storage class" || scenario == "empty storage class" {
+						value := "ARCHIVE"
+						if scenario == "empty storage class" {
+							value = ""
+						}
+						params["storage_class"] = value
+						nativeParams["dest"].(map[string]any)["storage_class"] = value
+					}
 					if scenario == "priority" {
 						params["priority"] = -2147483648
 						nativeParams["priority"] = json.Number("-2147483648")
@@ -95,7 +103,7 @@ func TestZonegroupSyncPipeUpdate(t *testing.T) {
 					}
 					service.executor = runner
 					_, err := service.Execute(context.Background(), Request{ClusterID: cluster, Action: "rgw_zonegroup.sync_pipe_update", Parameters: params})
-					if scenario == "success" || scenario == "priority" {
+					if scenario == "success" || scenario == "priority" || scenario == "storage class" || scenario == "empty storage class" {
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -116,6 +124,9 @@ func TestZonegroupSyncPipeUpdate(t *testing.T) {
 							}
 							if scenario == "priority" {
 								args = append(args, "--priority", "-2147483648")
+							}
+							if value, ok := params["storage_class"].(string); ok {
+								args = append(args, "--storage-class", value)
 							}
 							args = append(args, "--zonegroup-id", "zg", "--format", "json")
 							if !call.Mutating || !reflect.DeepEqual(call.Args, args) {

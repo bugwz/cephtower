@@ -28,8 +28,20 @@ func syncPipePriority(p map[string]any) (string, bool, error) {
 	return strconv.FormatInt(n, 10), true, nil
 }
 
+func syncPipeStorageClass(p map[string]any) (string, bool, error) {
+	value, present := p["storage_class"]
+	if !present {
+		return "", false, nil
+	}
+	text, ok := value.(string)
+	if !ok || (text != "" && !syncFlowToken(text)) {
+		return "", true, invalid("invalid destination storage class")
+	}
+	return text, true, nil
+}
+
 // Validate the same explicit selectors and identity as creation, but never send
-// zone flags. Only an explicit priority changes that advanced parameter.
+// zone flags. Advanced parameters change only when explicitly supplied.
 func bucketSyncPipeUpdateArgs(p map[string]any) ([]string, error) {
 	copy := map[string]any{}
 	for k, v := range p {
@@ -55,6 +67,13 @@ func bucketSyncPipeUpdateArgs(p map[string]any) ([]string, error) {
 	}
 	if present {
 		result = append(result, "--priority", priority)
+	}
+	storageClass, present, err := syncPipeStorageClass(p)
+	if err != nil {
+		return nil, err
+	}
+	if present {
+		result = append(result, "--storage-class", storageClass)
 	}
 	return result, nil
 }
@@ -92,6 +111,18 @@ func updateBucketSyncPipe(group map[string]any, p map[string]any) error {
 	if present {
 		changed = changed || !reflect.DeepEqual(params["priority"], json.Number(priority))
 		params["priority"] = json.Number(priority)
+	}
+	storageClass, present, err := syncPipeStorageClass(p)
+	if err != nil {
+		return err
+	}
+	if present {
+		dest, ok := params["dest"].(map[string]any)
+		if !ok {
+			return invalid("pipe destination params unavailable")
+		}
+		changed = changed || !reflect.DeepEqual(dest["storage_class"], storageClass)
+		dest["storage_class"] = storageClass
 	}
 	if syncGroupString(p, "mode") == "user" {
 		changed = changed || params["user"] != syncGroupString(p, "user")
