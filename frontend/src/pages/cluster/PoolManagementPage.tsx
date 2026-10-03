@@ -137,7 +137,7 @@ const defaultErasureCodeProfileValues: ErasureCodeProfileFormValues = {
   technique: 'reed_sol_van',
   packetsize: 2048,
   l: 3,
-  crush_locality: 'host',
+  crush_locality: undefined,
   c: 2,
   d: 9,
   scalar_mds: 'isa',
@@ -215,6 +215,8 @@ export function PoolManagementPage() {
   const erasureCodeK = Form.useWatch('k', erasureCodeProfileForm)
   const erasureCodeM = Form.useWatch('m', erasureCodeProfileForm)
   const erasureCodeL = Form.useWatch('l', erasureCodeProfileForm)
+  const erasureCodeLocality = Form.useWatch('crush_locality', erasureCodeProfileForm)
+  const erasureCodeFailureDomain = Form.useWatch('crush_failure_domain', erasureCodeProfileForm)
   const lrcLayout = lrcLayoutPreview(erasureCodeK, erasureCodeM, erasureCodeL)
   const rbdApplicationEnabled = applications.includes('rbd')
   const rbdConfigurationEnabled = poolType === 'replicated' && rbdApplicationEnabled
@@ -350,7 +352,7 @@ export function PoolManagementPage() {
       ...defaultErasureCodeProfileValues,
       crush_root: root,
       crush_failure_domain: failureDomain,
-      crush_locality: failureDomain,
+      crush_locality: undefined,
       directory: undefined
     })
     setErasureCodeProfileFormOpen(true)
@@ -982,7 +984,8 @@ export function PoolManagementPage() {
                 <Alert type="info" showIcon message="LRC 分组预览（表单计算）" description={lrcLayout
                   ? `${lrcLayout.groups} 个局部分组；每组 ${lrcLayout.dataPerGroup} 个数据块、${lrcLayout.codingPerGroup} 个编码块及 1 个额外局部校验块，共 ${lrcLayout.totalChunks} 个分片。这不是集群实际放置结果，也不表示已具备故障容忍能力。`
                   : '请输入满足分组约束的 k、m、l 后查看预览；不会用默认值推测布局。'} />
-                <Form.Item name="crush_locality" label={<HelpLabel label="CRUSH 局部性" title="LRC 局部恢复组使用的 CRUSH 故障域。" />}>
+                <Alert type="info" showIcon message="LRC 原生放置步骤（表单计算）" description={lrcPlacementPreview(erasureCodeK, erasureCodeM, erasureCodeL, erasureCodeLocality, erasureCodeFailureDomain)} />
+                <Form.Item name="crush_locality" label={<HelpLabel label="CRUSH 局部性" title="可选。指定后先选择局部分组，再在每组内选择 l+1 个故障域；留空则直接按故障域放置全部分片。" />}>
                   <Select
                     allowClear
                     options={failureDomainOptions(erasureCodeTopology)}
@@ -1430,6 +1433,15 @@ function lrcLayoutPreview(k: unknown, m: unknown, l: unknown) {
   const groups = (k + m) / l
   if ((k + m) % l !== 0 || k % groups !== 0 || m % groups !== 0 || !Number.isSafeInteger(k + m + groups)) return null
   return { groups, dataPerGroup: k / groups, codingPerGroup: m / groups, totalChunks: k + m + groups }
+}
+
+function lrcPlacementPreview(k: unknown, m: unknown, l: unknown, locality: unknown, failureDomain: unknown) {
+  const layout = lrcLayoutPreview(k, m, l)
+  if (!layout || typeof failureDomain !== 'string' || !failureDomain) return '请选择故障域并输入有效的 k、m、l 后查看放置步骤。'
+  const steps = typeof locality === 'string' && locality
+    ? `choose ${locality} ${layout.groups} → chooseleaf ${failureDomain} ${Number(l) + 1}`
+    : `chooseleaf ${failureDomain} 0（0 表示按全部 ${layout.totalChunks} 个分片放置）`
+  return `${steps}。这是原生规则步骤预览，未验证每组可用故障域、CRUSH 权重或实际映射结果。`
 }
 
 function shecParameterRule({ getFieldValue }: { getFieldValue: (name: keyof ErasureCodeProfileFormValues) => unknown }) {
