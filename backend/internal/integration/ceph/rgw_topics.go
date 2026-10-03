@@ -122,5 +122,14 @@ func rgwTopicPayload(data map[string]any) (map[string]any, bool) {
 		payload["endpoint_redacted"] = true
 	}
 	payload["endpoint_args_hidden"] = true
+	payload["endpoint_options_status"] = "unavailable"
+	if raw, ok := dest["push_endpoint_args"].(string); ok {
+		if options, valid := s3.TopicOptions(raw); valid {
+			payload["endpoint_options"] = options
+			payload["endpoint_options_status"] = "parsed"
+		} else {
+			payload["endpoint_options_status"] = "malformed"
+		}
+	}
 	return payload, true
 }

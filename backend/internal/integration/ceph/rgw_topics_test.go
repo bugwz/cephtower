@@ -117,3 +117,24 @@ func TestTopicMetadataRevisionPrecision(t *testing.T) {
 		}
 	}
 }
+
+func TestTopicOptionAvailability(t *testing.T) {
+	for _, tc := range []struct {
+		args   any
+		status string
+	}{
+		{nil, "unavailable"}, {42, "unavailable"}, {"", "parsed"}, {"verify-ssl=false&password=never-store", "parsed"}, {"password=%zz", "malformed"},
+	} {
+		payload, ok := rgwTopicPayload(map[string]any{"name": "events", "owner": "u", "arn": "a", "dest": map[string]any{"push_endpoint": "", "push_endpoint_args": tc.args}})
+		if !ok || payload["endpoint_options_status"] != tc.status {
+			t.Fatalf("wrong availability %v", payload)
+		}
+		if tc.status != "parsed" && payload["endpoint_options"] != nil {
+			t.Fatal("invented default options")
+		}
+		body, _ := json.Marshal(payload)
+		if strings.Contains(string(body), "never-store") {
+			t.Fatal("secret entered observation")
+		}
+	}
+}

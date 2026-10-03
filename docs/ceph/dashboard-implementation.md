@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **RGW Topic 投递协议参数安全展示**：原生 `push_endpoint_args` 不再只能整体隐藏；采集后仅投影 11 个已识别的非凭据参数到 `endpoint_options`，通过现有 Topic API 和详情展示 verify-ssl/use-ssl、CloudEvents、CA 路径、AMQP 版本/Exchange/确认级别、HTTP/Kafka 确认级别、Kafka SASL 机制和 Brokers。用户名、密码、未知参数与原始参数串仍不入库。Brokers 中的凭据式内容及不符合安全展示规则的值不返回原文。
+  - 依据 `RGWHTTPArgs::parse`，先按 `&` 分段，对整个段进行 query 解码，再拆首个 `=`，不误用先拆键值的通用 query 解析器。保留明确 false、空字符串，区分 unset、returned、duplicate、hidden_invalid；原始字段缺失与损坏分别记录 unavailable/malformed，无法完整解析时不输出部分结果来冒充完整配置。未知/未设置不推断协议默认或有效状态。
+  - 对照 `driver/rados/rgw_pubsub_push.cc` 标注 HTTP ack-level 当前未用于发送结果判定；显示配置不代表适用于当前协议或成功投递。新增解析、脱敏、缺失/重复/编码边界、采集入库到 API 和前端详情回归。无真实集群或浏览器视觉验证。
+  - 后续写操作的源码证据：`ListTopics` 对非 Account 用户按 GetTopicAttributes 权限过滤，因此列表中不存在不能证明创建不会覆盖已有 Topic；`SetTopicAttributes` 对独立参数按子串替换，且 user-name/password 分支不执行端点秘密标记检查。Topic 创建及独立参数编辑尚未完成，不能以此只读投影代替写操作，也不直接修改参考源码绕过原生行为。
+
 - **RGW Topic 推送端点替换与清空**：新增 `PATCH /rgw/topic/endpoint` 和密码型完整 URL 输入，使用原生 SNS `SetTopicAttributes(push-endpoint)`。根据 `rgw_url.cc::parse_url_userinfo` 及推送工厂支持 http(s)、amqp(s)、kafka，拒绝原生不接受的残缺凭据对/URL 格式；不会自动开启明文秘密配置。SNS 管理链路强制 HTTPS，推送链路本身的协议安全由用户明确确认，不以管理链路 TLS 冒充投递链路加密。
   - 输入使用 `endpoint_secret` 敏感字段及 OpenAPI writeOnly，操作参数加密保存，不在确认、错误或结果回显完整 URL。采集和提交前检查复用同一脱敏投影；必须完整填写新 URL，不从脱敏库存自动恢复凭据。前置快照只比较可见 URL、脱敏标记和 stored-secret 标记，明确不能发现隐藏凭据变化，不声称具备完整版本锁或跨工具 CAS。
   - 回读核验完整原始 URL，比较其他全部 Topic/EndPoint 字段，保留 EndpointArgs。依据 `validate_and_update_endpoint_secret`，新凭据只会把 HasStoredSecret 设置为 true，替换/清空无凭据 URL 不会自动清除旧标记。明确既有 EndpointArgs 凭据可能覆盖 URL 凭据，跨协议参数不会自动清理；清空持久化端点可能删除队列及未投递消息，恢复端点可能创建队列。失败不自动回滚或重试。

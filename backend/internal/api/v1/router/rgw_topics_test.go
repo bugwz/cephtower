@@ -33,7 +33,7 @@ func (e *topicAPIExecutor) Run(ctx context.Context, access executor.ClusterAcces
 		}
 		return executor.CommandResult{Stdout: []byte(`["tenant:events"]`)}, nil
 	case "collect.rgw_topic_detail":
-		return executor.CommandResult{Stdout: []byte(`{"key":"topic:tenant:events","ver":{"tag":"t","ver":9007199254740993},"data":{"name":"events","owner":"tenant$user","arn":"arn:aws:sns:zone:tenant:events","dest":{"push_endpoint":"https://user:secret-value@host/path?token=secret-value","push_endpoint_args":"password=secret-value","persistent":false,"max_retries":"18446744073709551615"}}}`)}, nil
+		return executor.CommandResult{Stdout: []byte(`{"key":"topic:tenant:events","ver":{"tag":"t","ver":9007199254740993},"data":{"name":"events","owner":"tenant$user","arn":"arn:aws:sns:zone:tenant:events","dest":{"push_endpoint":"https://user:secret-value@host/path?token=secret-value","push_endpoint_args":"password=secret-value&verify-ssl=false&amqp-exchange=events&kafka-brokers=user:secret-value@broker","persistent":false,"max_retries":"18446744073709551615"}}}`)}, nil
 	}
 	return e.filesystemFieldsExecutor.Run(ctx, access, spec)
 }
@@ -85,6 +85,22 @@ func TestRGWTopicsNativeToAPI(t *testing.T) {
 			t.Fatalf("%d %s", rec.Code, rec.Body.String())
 		}
 		data := response.Data.Items[0].Data
+		if data["endpoint_options_status"] != "parsed" {
+			t.Fatal("options did not reach API")
+		}
+		options, ok := data["endpoint_options"].([]any)
+		if !ok || len(options) != 11 {
+			t.Fatal("option projection missing")
+		}
+		for _, item := range options {
+			option := item.(map[string]any)
+			if option["name"] == "verify-ssl" && (option["status"] != "returned" || option["value"] != "false") {
+				t.Fatal("explicit false lost")
+			}
+			if option["name"] == "kafka-brokers" && (option["status"] != "hidden_invalid" || option["value"] != nil) {
+				t.Fatal("unsafe brokers exposed")
+			}
+		}
 		if data["metadata_version"] != `{"tag":"t","ver":9007199254740993}` {
 			t.Fatalf("native version rounded: %v", data["metadata_version"])
 		}

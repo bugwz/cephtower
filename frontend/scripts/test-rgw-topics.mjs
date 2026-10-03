@@ -23,6 +23,21 @@ assert.match(details.props.children[0].props.children,/不代表.*消息已投�
 const fields = details.props.children.find(child => child.type === 'dl').props.children
 const policy = fields.find(field => field.props.children[0].props.children === 'Topic Policy')
 assert.equal(policy.props.children[1].props.children.props.children,'<script>bad</script>')
+assert.deepEqual(api.topicOptionRows({}),[])
+assert.deepEqual(api.topicOptionRows({endpoint_options_status:'malformed',endpoint_options:[]}),[])
+const optionRows = api.topicOptionRows({endpoint_options_status:'parsed',endpoint_options:[
+  {name:'verify-ssl',status:'returned',value:'false'}, {name:'ca-location',status:'returned',value:''},
+  {name:'amqp-exchange',status:'returned',value:'<tag>'}, {name:'mechanism',status:'hidden_invalid',value:'must-not-show'},
+  {name:'kafka-brokers',status:'duplicate',value:'must-not-show'}, {name:'use-ssl',status:'unset'},
+  {name:'password',status:'returned',value:'must-not-show'}, {name:'unknown',status:'returned',value:'must-not-show'}
+]})
+assert.equal(optionRows.length,11)
+assert.equal(optionRows.find(row=>row.name==='verify-ssl').value,'false')
+assert.equal(optionRows.find(row=>row.name==='ca-location').value,'原生空值')
+assert.equal(optionRows.find(row=>row.name==='amqp-exchange').value,'<tag>')
+assert.match(optionRows.find(row=>row.name==='use-ssl').value,/不推断/)
+assert.ok(!JSON.stringify(optionRows).includes('must-not-show'))
+assert.match(optionRows.find(row=>row.name==='http-ack-level').title,/尚未用于/)
 const text = readFileSync(new URL('../src/pages/object/pages.tsx',import.meta.url),'utf8')
 const source = ts.createSourceFile('pages.tsx',text,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX)
 let definition
