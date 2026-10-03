@@ -28,6 +28,17 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：补齐桶本地同步策略采集与展示。依据参考 rgw_client.py/get_sync_policy、
+  radosgw-admin.cc/SyncPolicyContext 及 rgw_sync_policy_info::dump，对每个已核对身份的桶
+  执行 radosgw-admin sync policy get --bucket NAME --tenant TENANT --format json；
+  全局租户也显式传入空租户值。结果通过现有桶资源 API 的 data.bucket_sync_policy 返回，
+  保留完整 groups/data_flow/pipes，并区分空 groups 与采集失败/格式错误（null）。
+  页面展示 enabled、allowed、forbidden 和未知状态，可展开原生策略；
+  明确这是桶本地配置，不代表 Zonegroup 继承策略、最终有效复制链路或同步进度。
+  采集错误归入 rgw_bucket 的不可用元数据。测试覆盖租户、命令参数、完整管道、
+  空组、未知状态、重复组、损坏响应及命令失败；前后端全量测试与构建通过，
+  无真实集群或浏览器视觉验证。同步策略修改及复制配置修改仍待继续实现。
+
 - 2026-10-04：新增 S3 桶复制配置读取与展示。依据 Dashboard 的
   rgw_client.get_bucket_replication、controllers/rgw.py/_get_replication，
   及 rgw_rest_s3.cc/ReplicationConfiguration 与 GET 响应实现，通过签名

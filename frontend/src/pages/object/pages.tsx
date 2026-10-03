@@ -51,6 +51,7 @@ import { rgwBucketEncryptionSummary } from './rgwBucketEncryptionSummary'
 import { RgwBucketCorsRules } from './RgwBucketCorsRules'
 import { RgwBucketLifecycleRules } from './RgwBucketLifecycleRules'
 import { rgwLifecycleProgress } from './rgwLifecycleProgress'
+import { rgwBucketSyncPolicy } from './rgwBucketSyncPolicy'
 import { rgwBucketConfigurationReadOptions } from './rgwBucketConfiguration'
 import { rgwBucketObjectLockSummary } from './rgwBucketObjectLockSummary'
 import { RgwBucketAcl } from './RgwBucketAcl'
@@ -642,6 +643,7 @@ const definitions: Record<
       { key: 'mfa_enabled', title: 'MFA Delete', render: rgwBucketBooleanState },
       { key: 'reshard_status', title: '重新分片状态（采集时）', ellipsis: false, render: rgwBucketReshardState },
       { key: 'lifecycle_progress', title: '生命周期处理进度（采集时）', ellipsis: false, render: rgwLifecycleProgress },
+      { key: 'bucket_sync_policy', title: '桶本地同步策略（采集时）', ellipsis: false, render: (value) => <div>{rgwBucketSyncPolicy(value)}{value != null && <details><summary>查看原生策略（数据流与管道）</summary><pre>{JSON.stringify(value, null, 2)}</pre></details>}</div> },
       { key: 'status', title: '状态' },
       { key: 'usage', title: '使用量', ellipsis: false, render: (value) => <RgwStorage value={value} categorized /> },
       { key: 'rate_limit', title: 'Bucket 限流（每 RGW）', ellipsis: false, render: (value) => <RgwRateLimit value={value} /> },

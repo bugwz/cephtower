@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
+import './test-rgw-bucket-sync-policy.mjs'
 const api = {}
 const jsx = (type, props) => ({ type, props })
 new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwBucketReplication.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText)(api, name => name === 'antd' ? { Table: 'Table' } : { jsx, jsxs: jsx })

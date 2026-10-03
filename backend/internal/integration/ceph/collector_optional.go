@@ -486,6 +486,16 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 				}
 			}
 			key := opaquePair(tenant, bucket)
+			var syncPolicy any
+			details["bucket_sync_policy"] = nil
+			if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_bucket_sync_policy",
+				[]string{"sync", "policy", "get", "--bucket", bucket, "--tenant", tenant, "--format", "json"}, &syncPolicy) {
+				if policy, valid := rgwBucketSyncPolicy(syncPolicy); valid {
+					details["bucket_sync_policy"] = policy
+				} else {
+					markCollectionUnavailable(ctx, "collect.rgw_bucket_sync_policy")
+				}
+			}
 			details["lifecycle_progress"] = rgwBucketLifecycleProgress(details, progressEntries, progressAvailable && progressValid)
 			rows = append(rows, observation("rgw_bucket", key, bucket, "rgw_admin", details, now))
 		}
