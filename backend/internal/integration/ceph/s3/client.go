@@ -193,10 +193,26 @@ func (c *Client) signService(req *http.Request, now time.Time, payloadHash, serv
 }
 
 func canonicalQuery(values url.Values) string {
-	if len(values) == 0 {
-		return ""
+	// SigV4 sorts encoded pairs and encodes spaces as %20, never form-style +.
+	escape := func(value string) string { return strings.ReplaceAll(url.QueryEscape(value), "+", "%20") }
+	type pair struct{ key, value string }
+	pairs := []pair{}
+	for key, entries := range values {
+		for _, value := range entries {
+			pairs = append(pairs, pair{escape(key), escape(value)})
+		}
 	}
-	return values.Encode()
+	sort.Slice(pairs, func(i, j int) bool {
+		if pairs[i].key != pairs[j].key {
+			return pairs[i].key < pairs[j].key
+		}
+		return pairs[i].value < pairs[j].value
+	})
+	encoded := make([]string, len(pairs))
+	for i, entry := range pairs {
+		encoded[i] = entry.key + "=" + entry.value
+	}
+	return strings.Join(encoded, "&")
 }
 func sha256Hex(value []byte) string {
 	sum := sha256.Sum256(value)
