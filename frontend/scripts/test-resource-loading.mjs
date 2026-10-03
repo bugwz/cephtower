@@ -35,7 +35,9 @@ assert.match(timeExports.formatDateTime('2026-10-03T01:02:03Z'), /^\d{4}-\d{2}-\
 console.log('Device prediction creation timestamp display checks passed')
 const inventoryNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'normalizeInventoryDeviceRow')
 const inventoryCode = ts.transpileModule(inventoryNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-const normalizeInventory = new Function('isRecord', 'stringArray', 'textValue', 'numberValue', 'formatBytes', `${inventoryCode}; return normalizeInventoryDeviceRow`)(
+const osdNamesNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'inventoryOSDNames')
+const osdNamesCode = ts.transpileModule(osdNamesNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const normalizeInventory = new Function('isRecord', 'stringArray', 'textValue', 'numberValue', 'formatBytes', `${osdNamesCode}; ${inventoryCode}; return normalizeInventoryDeviceRow`)(
   (v) => v !== null && typeof v === 'object' && !Array.isArray(v),
   (v) => Array.isArray(v) ? v.filter((item) => typeof item === 'string') : [],
   (v, fallback) => v ?? fallback, (v) => typeof v === 'number' ? v : undefined, String)
@@ -52,6 +54,10 @@ assert.equal(normalizeInventory({ available: false }, []).availability_display, 
 assert.equal(normalizeInventory({ available: true }, []).availability_display, 'available')
 assert.equal(normalizeInventory({ available: 'false' }, []).availability_display, 'unknown')
 console.log('Disk inventory distinguishes missing type and availability from explicit values')
+const osdDisk = normalizeInventory({ path: '/dev/sda', osd_ids: [0, 1, '1'], lvs: [{ osd_id: '01' }, { osd_id: '2' }] }, [{ name_display: 'sda', daemons_display: ['osd.1', 'osd.3', 'mon.a'] }])
+assert.deepEqual(osdDisk.osd_display, ['osd.0', 'osd.1', 'osd.2', 'osd.3'])
+assert.deepEqual(normalizeInventory({ osd_ids: [null, false, -1, 1.5, '', 'osd.', 'osd.-1', 'mon.1', Number.MAX_SAFE_INTEGER + 1] }, []).osd_display, [])
+assert.deepEqual(normalizeInventory({ osd_ids: ['9007199254740993'] }, []).osd_display, ['osd.9007199254740993'])
 const diagnosticDisk = normalizeInventory({ lsm_data: { health: 'Fail', serialNum: 'lsm-serial' }, rejected_reasons: ['Has a FileSystem', 'LVM detected'] }, [])
 assert.equal(diagnosticDisk.serial_display, 'lsm-serial')
 assert.equal(diagnosticDisk.health_display, 'Fail')

@@ -547,21 +547,14 @@ function normalizeInventoryDeviceRow(row: ApiRecord, deviceInfo: ApiRecord[]): A
   const sysAPI = isRecord(row.sys_api) ? row.sys_api : {}
   const lsmData = isRecord(row.lsm_data) ? row.lsm_data : {}
   const lvs = Array.isArray(row.lvs) ? row.lvs.filter(isRecord) : []
-  const osdIDs = stringArray(row.osd_ids)
-  lvs.forEach((lv) => {
-    const osdID = textValue(lv.osd_id, '')
-    if (osdID && !osdIDs.includes(osdID)) {
-      osdIDs.push(osdID)
-    }
-  })
   const path = textValue(row.path ?? sysAPI.path ?? row.name, '')
   const deviceName = path.split('/').filter(Boolean).pop() ?? path
   const linkedDevice = deviceInfo.find((device) => textValue(device.name_display, '').split(', ').includes(deviceName))
-  stringArray(linkedDevice?.daemons_display).forEach((daemon) => {
-    if (daemon.startsWith('osd.') && !osdIDs.includes(daemon)) {
-      osdIDs.push(daemon)
-    }
-  })
+  const osdIDs = inventoryOSDNames([
+    ...(Array.isArray(row.osd_ids) ? row.osd_ids : []),
+    ...lvs.map((lv) => lv.osd_id),
+    ...stringArray(linkedDevice?.daemons_display)
+  ])
   const rotational = row.rotational ?? sysAPI.rotational
   const inferredType = rotational === true || rotational === '1' || rotational === 1 ? 'HDD'
     : rotational === false || rotational === '0' || rotational === 0 ? 'SSD' : '未知'
@@ -579,9 +572,21 @@ function normalizeInventoryDeviceRow(row: ApiRecord, deviceInfo: ApiRecord[]): A
     model_display: textValue(row.model ?? sysAPI.model, ''),
     serial_display: textValue(row.serial ?? lsmData.serialNum, ''),
     size_display: size ? formatBytes(size) : '-',
-    osd_display: osdIDs.map((id) => id.startsWith('osd.') ? id : `osd.${id}`),
+    osd_display: osdIDs,
     health_display: textValue(lsmData.health, '')
   }
+}
+
+function inventoryOSDNames(values: unknown[]): string[] {
+  const names = new Set<string>()
+  for (const value of values) {
+    if (typeof value === 'number' && (!Number.isSafeInteger(value) || value < 0)) continue
+    if (typeof value !== 'string' && typeof value !== 'number') continue
+    const id = String(value).replace(/^osd\./, '')
+    if (!/^\d+$/.test(id)) continue
+    names.add(`osd.${BigInt(id)}`)
+  }
+  return [...names]
 }
 
 function normalizeSMARTData(value: ApiRecord): ApiRecord[] {
