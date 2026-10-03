@@ -32,6 +32,38 @@ for (const tags of ['fast', 'fast,archive', 'space tag, raw ', '--option=value']
 for (const tags of [undefined, null, false, [], '', ' ', ',', 'a,', ',a', 'a,,b', 'a, ,b', 'a\nb', 'a\0b']) assert.throws(() => placementForm.rgwUserPlacementTagsInput({ placement_tags_csv: tags }))
 assert.ok(pages.includes('...rgwUserPlacementTagsInput(values)'))
 assert.ok(pages.includes('JSON.stringify(rgwUserPlacementTagsInput(values).placement_tags_csv)'))
+const placementSource = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const placementActions = new Map()
+function findPlacementActions(node) {
+  if (ts.isObjectLiteralExpression(node)) {
+    const title = node.properties.find(property => ts.isPropertyAssignment(property) && property.name.getText(placementSource) === 'title')
+    if (title && ["'设置用户默认放置'", "'替换用户放置标签'"].includes(title.initializer.getText(placementSource))) {
+      const expression = node.getText(placementSource)
+      placementActions.set(title.initializer.text, new Function('rgwUserPlacementInput', 'rgwUserPlacementTagsInput', 'userId', `return (${expression})`)(placementForm.rgwUserPlacementInput, placementForm.rgwUserPlacementTagsInput, row => row.uid))
+    }
+  }
+  ts.forEachChild(node, findPlacementActions)
+}
+findPlacementActions(placementSource)
+assert.equal(placementActions.size, 2)
+const placementRow = { uid: 'tenant$user' }
+for (const [title, values] of [
+  ['设置用户默认放置', { default_placement: ' custom ', default_storage_class: 'ARCHIVE' }],
+  ['设置用户默认放置', { default_placement: 'custom', default_storage_class: '' }],
+  ['替换用户放置标签', { placement_tags_csv: 'fast, raw ' }]
+]) {
+  const action = placementActions.get(title)
+  assert.equal(action.path, '/rgw/user')
+  assert.equal(action.method, 'PATCH')
+  assert.deepEqual(action.buildBody(values, 'cluster', placementRow), { cluster_id: 'cluster', uid: placementRow.uid, ...values })
+  const confirmation = action.confirmation(values, placementRow)
+  assert.ok(confirmation.includes(JSON.stringify(placementRow.uid)))
+  for (const value of Object.values(values)) {
+    assert.ok(confirmation.includes(value === '' ? '原生默认类（空值）' : JSON.stringify(value)))
+  }
+  assert.throws(() => action.buildBody({}, 'cluster', placementRow))
+  assert.throws(() => action.confirmation({}, placementRow))
+}
 assert.ok(pages.includes('detailContent: (row) => <RgwUserDetails row={row} />'))
 const userDetailsExports = {}
 new Function('exports', 'require', ts.transpileModule(userDetailsSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(userDetailsExports, (name) => {

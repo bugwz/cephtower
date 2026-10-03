@@ -180,12 +180,15 @@ const definitions: Record<
           { name: 'default_placement', label: '默认放置规则（必须存在，不支持清空）', required: true },
           { name: 'default_storage_class', label: '默认存储类（留空使用原生默认类）' }
         ],
-        confirmation: () => '将替换用户默认放置规则和存储类，不迁移已有 Bucket 或对象。请确认目标配置。',
+        confirmation: (values, row) => {
+          const placement = rgwUserPlacementInput(values)
+          return `将替换用户 ${JSON.stringify(userId(row))} 的默认放置规则为 ${JSON.stringify(placement.default_placement)}，存储类为 ${placement.default_storage_class === '' ? '原生默认类（空值）' : JSON.stringify(placement.default_storage_class)}。不迁移已有 Bucket 或对象。`
+        },
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserPlacementInput(values) })
       },
       { title: '替换用户放置标签', path: '/rgw/user', method: 'PATCH', successMessage: '放置标签替换执行成功',
         fields: [{ name: 'placement_tags_csv', label: '完整标签列表（逗号分隔，不支持清空；空格属于标签）', required: true }],
-        confirmation: (values) => `将整体替换用户放置标签，可能改变可使用的放置目标；这不是追加操作。新列表：${JSON.stringify(rgwUserPlacementTagsInput(values).placement_tags_csv)}`,
+        confirmation: (values, row) => `将整体替换用户 ${JSON.stringify(userId(row))} 的放置标签，可能改变可使用的放置目标；这不是追加操作。新列表：${JSON.stringify(rgwUserPlacementTagsInput(values).placement_tags_csv)}`,
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserPlacementTagsInput(values) })
       },
       { title: '用户限流设置', path: '/rgw/user/ratelimit', method: 'PUT', successMessage: '用户限流设置执行成功',
