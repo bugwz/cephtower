@@ -45,6 +45,7 @@ func rgwRoutes(h *handler.Handler) []Route {
 		{"POST", "/rgw/bucket/replication", h.EnableRGWBucketReplication},
 		{"DELETE", "/rgw/bucket/notification", h.DeleteRGWBucketNotification},
 		{"POST", "/rgw/bucket/notification", h.SetRGWBucketNotification},
+		{"PATCH", "/rgw/bucket/mfa", h.SetRGWBucketMFA},
 		{"PATCH", "/rgw/bucket/sync/group", h.UpdateRGWBucketSyncGroup},
 		{"POST", "/rgw/bucket/sync/group", h.CreateRGWBucketSyncGroup},
 		{"DELETE", "/rgw/bucket/sync/group", h.DeleteRGWBucketSyncGroup},

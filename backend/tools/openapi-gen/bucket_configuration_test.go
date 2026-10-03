@@ -104,6 +104,19 @@ func TestBucketNotificationWriteContract(t *testing.T) {
 	}
 }
 
+func TestBucketMFAContract(t *testing.T) {
+	got, ok := requestSchema(router.Route{Method: "PATCH", Path: "/rgw/bucket/mfa"})
+	want, _ := handler.MutationRequestContract("rgw_bucket.mfa")
+	if !ok || !reflect.DeepEqual(got, want) {
+		t.Fatal("MFA contract mismatch")
+	}
+	for _, key := range []string{"mfa_serial_secret", "mfa_token"} {
+		if !got.Fields[key].Required || !got.Fields[key].WriteOnly {
+			t.Fatal("MFA secret exposed in contract")
+		}
+	}
+}
+
 func TestBucketReplicationReadContract(t *testing.T) {
 	found := false
 	for _, parameter := range routeParameters(router.Route{Method: "GET", Path: "/rgw/bucket/policy"}) {

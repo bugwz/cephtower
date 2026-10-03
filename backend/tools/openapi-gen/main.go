@@ -897,6 +897,13 @@ const components = `components:
         configured: {type: boolean}
         document: {type: string, nullable: true}
         content_type: {type: string, nullable: true}
+        versioning:
+          type: object
+          additionalProperties: false
+          required: [status, mfa_delete]
+          properties:
+            status: {type: string, enum: ['', Enabled, Suspended]}
+            mfa_delete: {type: string, nullable: true, enum: [Enabled, Disabled, null]}
         notifications:
           type: array
           description: Native notification rules; an empty array is a successful empty configuration, not a read failure.

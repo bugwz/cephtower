@@ -701,6 +701,10 @@ func (h *Handler) SetRGWBucketNotification(w http.ResponseWriter, r *http.Reques
 	h.MutateResource("rgw_bucket", "rgw_bucket.notification_set", "high")(w, r)
 }
 
+func (h *Handler) SetRGWBucketMFA(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_bucket", "rgw_bucket.mfa", "high")(w, r)
+}
+
 func (h *Handler) UpdateRGWBucketSyncGroup(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_bucket", "rgw_bucket.sync_group", "high")(w, r)
 }

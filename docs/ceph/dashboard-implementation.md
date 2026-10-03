@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **RGW Bucket MFA Delete 操作**：对照参考 Bucket 表单、`RGWSetBucketVersioning`、`RGWSetBucketVersioning_ObjStore_S3` 与 `RadosUser::verify_mfa`，新增 `PATCH /rgw/bucket/mfa` 高风险操作。配置页可读取并结构化展示版本控制及 MFA Delete，区分从未启用、暂停、Enabled/Disabled 与未返回 MFA 字段；新表单明确提交两个目标状态及当前用户已绑定设备的序列号/验证码。
+  - 原生链路使用 HTTPS S3 `PUT ?versioning`，XML 字段为参考版本实际使用的 `MfaDelete`，设备序列号和验证码仅放入签名的 `x-amz-mfa` 请求头，不进入 URL/XML。独立请求客户端禁止所有重定向，避免凭据转发或 HTTPS 降级，且不修改共享客户端。凭据为 writeOnly 密码输入，沿现有加密操作队列保存，确认文案与错误不回显；数值码作为字符串保留前导零，格式校验不冒充服务端 OTP 验证。
+  - 写前准确匹配完整版本配置快照，拒绝未知 MFA 状态与无变化提交；写后同时比较版本控制和 MFA Delete 两项，错误或字段不完整不当成功。该操作不注册 MFA 设备；验证码排队时可能过期，失败先刷新并获取新码，不自动重试/回滚。对象锁是否禁止暂停及用户设备/权限由 Ceph 判定，不宣称覆盖全部删除路径。
+  - 补充租户范围、启停 MFA、首次版本控制、MFA 下版本状态变化、各阶段故障、签名头、HTTP/重定向拒绝、队列加密、OpenAPI writeOnly 和前端确认脱敏回归。`make test-backend`（含 OpenAPI 一致性）与 `make test-frontend`（含生产构建）通过，无真实集群、OTP 设备或浏览器视觉验证。
+
 - **RGW Bucket 通知创建与编辑**：新增 `POST /rgw/bucket/notification` 高风险操作（显式 create/edit）及可视化规则编辑器，覆盖准确 ID、Topic ARN、事件多选与 S3Key/S3Metadata/S3Tags 条件增删。编辑从已读取的唯一 ID 加载独立草稿，ID 不可改名；创建要求 ID 不存在，空配置可创建。规则经后端生成安全 XML，发送一条非空 TopicConfiguration，不把未列出的其他规则当作删除目标。
   - 对照 `RGWPSCreateNotifOp`、`topic_to_unique`、`rgw_s3_filter.cc` 与 `rgw_notify_event_type.cc`：先核对完整快照及原生 ID_TopicName 键碰撞，再通过 SNS GetTopicAttributes 核验准确目标 ARN/Name；需要 HTTPS 和额外 Topic 读取权限，原生 Publish 与 Bucket 通知读写权限仍由 RGW 判定。同名 Topic 更新直接 PUT；更换 Topic 名称先 DELETE 旧 ID、回读其余规则，再 PUT 新规则，明确提示非事务空窗及可能只完成删除，无自动重试/回滚。
   - 事件按真实 RGW 后端白名单提供，包括前端参考遗漏的 Post、生命周期和复制事件；不提供参考界面中后端不识别的 ObjectRestore。空事件列表按源码回读为 ObjectCreated:* 与 ObjectRemoved:*；处理 NonCurrent 别名及 AbortMultipartUpload 写入/AbortMPU 返回不对称。S3Key 空值在原生回读省略，元数据/标签空值保留；重复过滤名称拒绝而非静默去重，正则只传递，不用 JavaScript/Go 正则冒充 C++ 校验。

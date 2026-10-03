@@ -84,6 +84,7 @@ import { rgwBucketObjectLockSummary } from './rgwBucketObjectLockSummary'
 import { RgwBucketAcl } from './RgwBucketAcl'
 import { RgwBucketReplication } from './RgwBucketReplication'
 import { RgwBucketNotifications } from './RgwBucketNotifications'
+import { bucketVersioningSummary, bucketMFABlocked, bucketMFAInitial, bucketMFAInput, bucketMFAConfirmation } from './rgwBucketMFA'
 import { RgwBucketNotificationEditor } from './RgwBucketNotificationEditor'
 import { notificationFormBlocked, notificationFormInitial, notificationFormInput, notificationFormConfirmation } from './rgwBucketNotificationForm'
 import { bucketNotificationDeleteBlocked, bucketNotificationDeleteInitial, bucketNotificationDeleteInput, bucketNotificationDeleteConfirmation } from './rgwBucketNotificationDelete'
@@ -1359,6 +1360,19 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...rgwBucketConfigurationDeleteInput(row) })
     },
     extraActions: [{
+      title: '设置 MFA Delete 与版本控制', buttonLabel: '设置 MFA Delete', path: '/rgw/bucket/mfa', method: 'PATCH',
+      successMessage: '版本控制与 MFA Delete 已回读核验', visibleWhen: row => row.kind === 'versioning',
+      disabledWhen: bucketMFABlocked, initialValues: bucketMFAInitial, confirmation: bucketMFAConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'status', label: '版本控制', type: 'select', required: true, options: [{ value: 'Enabled', label: '启用' }, { value: 'Suspended', label: '暂停（不是关闭）' }] },
+        { name: 'mfa_delete', label: 'MFA Delete', type: 'select', required: true, options: [{ value: 'Enabled', label: '启用 MFA 删除保护' }, { value: 'Disabled', label: '停用 MFA 删除保护' }] },
+        { name: 'mfa_serial_secret', label: '当前 S3 用户已绑定的 MFA 设备序列号', type: 'password', required: true },
+        { name: 'mfa_token', label: '当前验证码（保留前导零）', type: 'password', required: true },
+        { name: 'confirm_mfa', label: '保护及版本控制确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '确认 MFA 保护变化与验证码过期风险，失败先核对再重试' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketMFAInput(values, row) })
+    }, {
       title: '创建或编辑 Bucket 通知', buttonLabel: '创建 / 编辑通知', path: '/rgw/bucket/notification', method: 'POST',
       successMessage: '通知配置已回读核验（不代表消息投递成功）',
       visibleWhen: row => row.kind === 'notification', disabledWhen: notificationFormBlocked, initialValues: notificationFormInitial, confirmation: notificationFormConfirmation,
@@ -1485,6 +1499,7 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       { key: 'bucket_id', title: 'Bucket ID' },
       { key: 'kind', title: '配置类型' },
       { key: 'configured', title: '配置状态', render: (value) => value === true ? '已配置' : value === false ? '未配置' : '状态不可用' },
+      { key: 'versioning', title: '版本控制 / MFA', ellipsis: false, render: bucketVersioningSummary },
       { key: 'tags', title: '标签条目', ellipsis: false, render: (value, row) => row.kind === 'tagging' ? <RgwBucketTagEntries value={value} /> : '—' },
       { key: 'encryption', title: '默认加密', ellipsis: false, render: rgwBucketEncryptionSummary },
       { key: 'object_lock', title: '对象锁默认保留', ellipsis: false, render: rgwBucketObjectLockSummary },

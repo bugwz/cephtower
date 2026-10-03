@@ -58,6 +58,7 @@ type httpCredential struct {
 func Supports(action string) bool {
 	switch action {
 	case "silence.create", "silence.delete",
+		"rgw_bucket.mfa",
 		"rgw_bucket.notification_set",
 		"rgw_topic.policy", "rgw_topic.attribute", "rgw_topic.endpoint", "rgw_topic.option", "rgw_topic.create",
 		"rgw_bucket.create", "rgw_bucket.update", "rgw_bucket.delete", "rgw_bucket.acl", "rgw_bucket.replication_enable", "rgw_bucket.notification_delete", "rgw_bucket_policy.update", "rgw_bucket_policy.delete",
@@ -328,6 +329,13 @@ func (s *Service) readBucketPolicy(ctx context.Context, clusterID uint64, key st
 		return nil, failure("s3_failed", err.Error(), true)
 	}
 	row := map[string]any{"bucket_id": key, "kind": kind, "configured": true, "document": string(body), "content_type": contentType}
+	if kind == "versioning" {
+		configuration, err := s3.BucketVersioning(body)
+		if err != nil {
+			return nil, failure("s3_failed", err.Error(), false)
+		}
+		row["versioning"] = configuration
+	}
 	if kind == "notification" {
 		rules, err := s3.BucketNotifications(body)
 		if err != nil {
@@ -467,6 +475,8 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 		}
 	}
 	switch request.Action {
+	case "rgw_bucket.mfa":
+		return setBucketMFA(ctx, api, bucket, parameters)
 	case "rgw_bucket.notification_set":
 		return setBucketNotification(ctx, api, bucket, parameters)
 	case "rgw_bucket.notification_delete":

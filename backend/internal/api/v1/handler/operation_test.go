@@ -385,6 +385,23 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if err != nil || notificationWrite.Action != "rgw_bucket.notification_set" || notificationWrite.Risk != "high" || notificationWrite.ResourceKey != row.ResourceKey || notificationWrite.LockKey != updated.LockKey {
 			t.Fatalf("incorrect notification write identity: %+v %v", notificationWrite, err)
 		}
+		response = sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/bucket/mfa", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"status":"Enabled","mfa_delete":"Enabled","expected_document":"<VersioningConfiguration/>","mfa_serial_secret":"private-device-serial","mfa_token":"009876"}`, cluster.ID, id), "bucket-mfa-"+tenant)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("MFA queue: %d %s", response.Code, response.Body.String())
+		}
+		mfaOperation, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || mfaOperation.Action != "rgw_bucket.mfa" || mfaOperation.Risk != "high" || mfaOperation.ResourceKey != row.ResourceKey || mfaOperation.LockKey != updated.LockKey {
+			t.Fatalf("wrong MFA identity: %+v %v", mfaOperation, err)
+		}
+		for _, secret := range []string{"private-device-serial", "009876"} {
+			if strings.Contains(response.Body.String(), secret) || strings.Contains(mfaOperation.ParametersCiphertext, secret) {
+				t.Fatal("MFA secret exposed")
+			}
+		}
+		mfaPlain, err := security.Decrypt(mfaOperation.ParametersCiphertext, contractKey)
+		if err != nil || !strings.Contains(string(mfaPlain), "009876") || !strings.Contains(string(mfaPlain), "private-device-serial") {
+			t.Fatal("MFA credentials not preserved encrypted")
+		}
 		for _, kind := range []string{"policy", "cors", "lifecycle", "encryption", "tagging"} {
 			response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/bucket/policy", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"kind":%q,"document":"raw"}`, cluster.ID, id, kind), "bucket-config-"+tenant+"-"+kind)
 			if response.Code != http.StatusAccepted {

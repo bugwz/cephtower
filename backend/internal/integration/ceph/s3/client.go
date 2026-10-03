@@ -167,6 +167,9 @@ func (c *Client) signService(req *http.Request, now time.Time, payloadHash, serv
 	if req.Header.Get("X-Amz-Acl") != "" {
 		headerNames = append(headerNames, "x-amz-acl")
 	}
+	if req.Header.Get("X-Amz-Mfa") != "" {
+		headerNames = append(headerNames, "x-amz-mfa")
+	}
 	if c.credentials.SessionToken != "" {
 		headerNames = append(headerNames, "x-amz-security-token")
 	}
