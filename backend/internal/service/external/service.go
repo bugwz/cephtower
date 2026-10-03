@@ -407,6 +407,14 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 		}
 		body := []byte("<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Status>" + status + "</Status></VersioningConfiguration>")
 		err = api.PutBucketConfiguration(ctx, bucket, "versioning", body)
+		if err != nil {
+			return cephdomain.ActionResult{}, failure("s3_failed", "versioning write outcome is uncertain; refresh before retrying: "+err.Error(), false)
+		}
+		actual, _, readErr := api.GetBucketConfiguration(ctx, bucket, "versioning")
+		actualStatus, parseErr := s3.BucketVersioningStatus(actual)
+		if readErr != nil || parseErr != nil || actualStatus != status {
+			return cephdomain.ActionResult{}, failure("post_check_failed", "bucket versioning was submitted but could not be verified; refresh before another change", false)
+		}
 	case "rgw_bucket_policy.update":
 		kind, _ := parameters["kind"].(string)
 		document, _ := parameters["document"].(string)
