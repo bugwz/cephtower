@@ -117,6 +117,17 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		return cephdomain.ActionResult{}, err
 	}
 	var upgradeTarget map[string]any
+	if request.Action == "service.update" {
+		name := last(resourceTail(request.ResourceKey))
+		current, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: "service.update.pre_check", Binary: executor.BinaryCeph, Args: []string{"orch", "ls", "--service-name", name, "--export", "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if readErr != nil {
+			return cephdomain.ActionResult{}, normalize(readErr)
+		}
+		spec.stdin, err = mergeServiceSpec(current.Stdout, spec.stdin, name)
+		if err != nil {
+			return cephdomain.ActionResult{}, err
+		}
+	}
 	if request.Action == "upgrade.action" && optional(request.Parameters, "action") == "start" {
 		targetArgs, _ := upgradeTargetArgs(request.Parameters) // build already validated the target.
 		checkArgs := append([]string{"orch", "upgrade", "check"}, targetArgs...)
