@@ -16,3 +16,19 @@ for (const value of [undefined, null, '1', NaN, Infinity, 0.5, Number.MAX_SAFE_I
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
 assert.equal(pages.match(/<RgwQuota value=\{value\} \/>/g).length, 5)
 console.log('RGW quota display preserves enabled, unlimited, zero and unavailable states')
+const form = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwQuotaForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(form)
+assert.deepEqual(form.rgwQuotaInitial(null), { enabled: undefined, max_size: undefined, max_objects: undefined })
+assert.deepEqual(form.rgwQuotaInitial({ enabled: false, max_size: -1, max_objects: 0 }), { enabled: 'disable', max_size: -1, max_objects: 0 })
+for (const enabled of ['enable', 'disable']) {
+  assert.deepEqual(form.rgwQuotaInput({ enabled, max_size: -1, max_objects: 0 }), { enabled: enabled === 'enable', max_size: -1, max_objects: 0 })
+}
+for (const value of [null, undefined, '', '0', false, -2, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+  for (const key of ['max_size', 'max_objects']) {
+    assert.throws(() => form.rgwQuotaInput({ enabled: 'enable', max_size: 0, max_objects: 0, [key]: value }))
+    assert.equal(form.rgwQuotaInitial({ [key]: value })[key], undefined)
+  }
+}
+for (const enabled of [null, undefined, true, false, 'false']) assert.throws(() => form.rgwQuotaInput({ enabled, max_size: 0, max_objects: 0 }))
+assert.equal(pages.match(/\.\.\.rgwQuotaInput\(values\)/g).length, 3)
+assert.equal(pages.match(/initialValues: \(row\) => rgwQuotaInitial/g).length, 3)

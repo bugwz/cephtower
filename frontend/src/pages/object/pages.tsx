@@ -19,6 +19,7 @@ import { rgwUserSuspension, rgwUserBooleanFlag } from './rgwUserFlags'
 import { rgwUserFlagPatch } from './rgwUserFlagPatch'
 import { rgwUserEmailPatch } from './rgwUserEmailPatch'
 import { rgwRateLimitInitial, rgwRateLimitInput } from './rgwRateLimitForm'
+import { rgwQuotaInitial, rgwQuotaInput } from './rgwQuotaForm'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -150,12 +151,12 @@ const definitions: Record<
     extraActions: [...(['user', 'bucket'] as const).map<ResourceFormAction>((scope) => ({
       title: scope === 'user' ? '用户总配额' : '默认 Bucket 配额', path: '/rgw/user/quota', method: 'PUT' as const, successMessage: '用户配额更新执行成功',
       fields: [
-        { name: 'enabled', label: '启用配额', type: 'boolean' as const },
+        { name: 'enabled', label: '配额状态', type: 'select' as const, required: true, options: [{ label: '启用', value: 'enable' }, { label: '关闭', value: 'disable' }] },
         { name: 'max_size', label: '容量上限（字节，向上取整至 KiB；-1 为无限制）', type: 'number' as const, min: -1, max: Number.MAX_SAFE_INTEGER, required: true },
         { name: 'max_objects', label: '对象数量上限（-1 为无限制）', type: 'number' as const, min: -1, max: Number.MAX_SAFE_INTEGER, required: true }
       ],
-      initialValues: (row) => { const quota = row?.[scope === 'user' ? 'user_quota' : 'bucket_quota'] as ApiRecord | undefined; return { enabled: quota?.enabled === true, max_size: Number(quota?.max_size ?? -1), max_objects: Number(quota?.max_objects ?? -1) } },
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), scope, enabled: Boolean(values.enabled), max_size: Number(values.max_size), max_objects: Number(values.max_objects) })
+      initialValues: (row) => rgwQuotaInitial(row?.[scope === 'user' ? 'user_quota' : 'bucket_quota']),
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), scope, ...rgwQuotaInput(values) })
     })),
       { title: '用户限流设置', path: '/rgw/user/ratelimit', method: 'PUT', successMessage: '用户限流设置执行成功',
         fields: [
@@ -243,12 +244,12 @@ const definitions: Record<
     extraActions: (['account', 'bucket'] as const).map((scope) => ({
       title: scope === 'account' ? '账户总配额' : '默认 Bucket 配额', path: '/rgw/account/quota', method: 'PUT' as const, successMessage: '账户配额更新执行成功',
       fields: [
-        { name: 'enabled', label: '启用配额', type: 'boolean' as const },
+        { name: 'enabled', label: '配额状态', type: 'select' as const, required: true, options: [{ label: '启用', value: 'enable' }, { label: '关闭', value: 'disable' }] },
         { name: 'max_size', label: '容量上限（字节，向上取整至 KiB；-1 为无限制）', type: 'number' as const, min: -1, max: Number.MAX_SAFE_INTEGER, required: true },
         { name: 'max_objects', label: '对象数量上限（-1 为无限制）', type: 'number' as const, min: -1, max: Number.MAX_SAFE_INTEGER, required: true }
       ],
-      initialValues: (row) => { const quota = row?.[scope === 'account' ? 'quota' : 'bucket_quota'] as ApiRecord | undefined; return { enabled: quota?.enabled === true, max_size: Number(quota?.max_size ?? -1), max_objects: Number(quota?.max_objects ?? -1) } },
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, account_id: String(row?.account_id ?? row?.natural_key ?? ''), scope, enabled: Boolean(values.enabled), max_size: Number(values.max_size), max_objects: Number(values.max_objects) })
+      initialValues: (row) => rgwQuotaInitial(row?.[scope === 'account' ? 'quota' : 'bucket_quota']),
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, account_id: String(row?.account_id ?? row?.natural_key ?? ''), scope, ...rgwQuotaInput(values) })
     })),
     deleteAction: {
       title: '删除 RGW Account', path: '/rgw/account', action: 'rgw_account.delete', resourceKind: 'rgw_account',
@@ -382,12 +383,12 @@ const definitions: Record<
     },
     extraActions: [{ title: 'Bucket 配额设置', path: '/rgw/bucket/quota', method: 'PUT', successMessage: 'Bucket 配额设置执行成功',
       fields: [
-        { name: 'enabled', label: '启用配额', type: 'boolean' },
+        { name: 'enabled', label: '配额状态', type: 'select', required: true, options: [{ label: '启用', value: 'enable' }, { label: '关闭', value: 'disable' }] },
         { name: 'max_size', label: '容量上限（字节，向上取整至 KiB；-1 为无限制）', type: 'number', min: -1, max: Number.MAX_SAFE_INTEGER, required: true },
         { name: 'max_objects', label: '对象上限（-1 为无限制）', type: 'number', min: -1, max: Number.MAX_SAFE_INTEGER, required: true }
       ],
-      initialValues: (row) => { const quota=row?.bucket_quota as ApiRecord | undefined; return { enabled: quota?.enabled === true, max_size: Number(quota?.max_size ?? -1), max_objects: Number(quota?.max_objects ?? -1) } },
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, bucket_id: bucketId(row), enabled: Boolean(values.enabled), max_size: Number(values.max_size), max_objects: Number(values.max_objects) })
+      initialValues: (row) => rgwQuotaInitial(row?.bucket_quota),
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, bucket_id: bucketId(row), ...rgwQuotaInput(values) })
     }, { title: 'Bucket 限流设置', path: '/rgw/bucket/ratelimit', method: 'PUT', successMessage: 'Bucket 限流设置执行成功',
         fields: [
           { name: 'enabled', label: '限流状态', type: 'select', required: true, options: [{ label: '启用', value: 'enable' }, { label: '关闭', value: 'disable' }] },
