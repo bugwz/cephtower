@@ -24,7 +24,7 @@ func TestRGWUserCreateInAccount(t *testing.T) {
 				response, fail string
 				valid          bool
 			}{
-				{`{"full_user_id":"` + uid + `","account_id":"` + account + `","type":"` + kind + `","keys":[],"swift_keys":[]}`, "", true},
+				{`{"full_user_id":"` + uid + `","display_name":"valid-name","account_id":"` + account + `","type":"` + kind + `","keys":[],"swift_keys":[]}`, "", true},
 				{`{}`, "", false}, {`{}`, "rgw_user.create", false}, {`{}`, "rgw_user.create.post_check", false},
 			} {
 				runner := &directoryRenameExecutor{outputs: map[string]string{"rgw_user.create.pre_check": `[]`, "rgw_user.create.post_check": tc.response}, failID: tc.fail}

@@ -441,6 +441,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "rgw_user.create" && (err != nil || !rgwUserCreateKeysMatch(checked.Stdout, request.Parameters)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user creation was accepted but identity or requested credential state could not be verified; inspect user info before any manual retry", Retryable: false}
 		}
+		if request.Action == "rgw_user.create" && !rgwUserCreatePropertiesMatch(checked.Stdout, request.Parameters) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user creation was accepted but requested name, email or bucket limit could not be verified; inspect user info before any manual retry", Retryable: false}
+		}
 		if rgwUserAccountMigrationRequested(request) {
 			root := false
 			if err != nil || !rgwUserAccountRootMatches(checked.Stdout, last(resourceTail(request.ResourceKey)), rawText(request.Parameters, "target_account_id"), &root) {

@@ -20,7 +20,7 @@ func TestRGWUserCreationCredentials(t *testing.T) {
 			p["access_key"], p["secret_key"] = "ACCESS123", "SavedSecret"
 			keys = `[{"user":"tenant$ns$user","access_key":"ACCESS123","secret_key":"SavedSecret","active":true}]`
 		}
-		valid := `{"full_user_id":"tenant$ns$user","keys":` + keys + `,"swift_keys":[]}`
+		valid := `{"full_user_id":"tenant$ns$user","display_name":"User","keys":` + keys + `,"swift_keys":[]}`
 		for _, scenario := range []string{"success", "existing", "pre-error", "write-error", "post-error", "wrong-uid", "missing-keys", "wrong-keys", "swift-key"} {
 			runner := &directoryRenameExecutor{outputs: map[string]string{"rgw_user.create.pre_check": `[]`, "rgw_user.create.post_check": valid}}
 			count := 3
