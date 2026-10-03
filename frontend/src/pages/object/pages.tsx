@@ -23,7 +23,7 @@ import { rgwQuotaInitial, rgwQuotaInput } from './rgwQuotaForm'
 import { rgwRoleInitial, rgwRolePatch } from './rgwRoleEdit'
 import { RgwRoleTagsTable } from './RgwRoleTagsTable'
 import { RgwPolicyDocument, RgwRolePolicyDetails } from './RgwRolePolicyDetails'
-import { rgwPolicyChanged, rgwPolicyDeleteOptions, rgwPolicyMutation } from './rgwRolePolicies'
+import { rgwPolicyChanged, rgwPolicyConfirmation, rgwPolicyDeleteOptions, rgwPolicyMutation } from './rgwRolePolicies'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -324,7 +324,7 @@ const definitions: Record<
         { name: 'existing_policy', label: '已有内联策略（切换将重新载入文档）', type: 'select', required: true, visibleWhen: (values) => values.action === 'delete' || values.action === 'edit', optionsDependencies: ['action'], optionsLoader: async (_clusterId, row, values) => values?.action === 'delete' || values?.action === 'edit' ? rgwPolicyDeleteOptions(row) : [] },
         { name: 'policy_document', label: '权限策略（JSON）', type: 'textarea', required: true, visibleWhen: (values) => values.action === 'put' || values.action === 'edit' }
       ],
-      confirmation: (values) => values.action === 'delete' ? '确认删除该角色的指定内联权限策略？' : '同名策略将被替换，确认提交？',
+      confirmation: rgwPolicyConfirmation,
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...(row?.AccountId ? { account_id: String(row.AccountId) } : {}), name: String(row?.RoleName ?? row?.natural_key ?? ''), ...rgwPolicyMutation(values, row) })
     }],
     deleteAction: {

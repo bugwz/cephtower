@@ -36,3 +36,13 @@ export function rgwPolicyChanged(changed: Record<string, unknown>, values: Recor
   const matches = policies?.filter(policy => policy.name === values.existing_policy)
   return { policy_document: matches?.length === 1 ? matches[0].document : undefined }
 }
+
+export function rgwPolicyConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const mutation = rgwPolicyMutation(values, row)
+  const role = String(row?.RoleName ?? row?.natural_key ?? '')
+  const account = typeof row?.AccountId === 'string' && row.AccountId !== '' ? `账户 ${JSON.stringify(row.AccountId)}，` : ''
+  const target = `${account}角色 ${JSON.stringify(role)} 的内联策略 ${JSON.stringify(mutation.policy_name)}`
+  return mutation.action === 'delete'
+    ? `确认删除${target}？依赖该策略授予的权限可能失效。`
+    : `确认新增或替换${target}？同名策略将完整替换，可能改变该角色的访问权限。`
+}
