@@ -25,7 +25,13 @@ assert.ok(pages.includes('...rgwAccountLimitPatch(values, row)'))
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 let fieldsExpression
 let bodyExpression
+let createExpression
+let createFields
 function visit(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(property => ts.isPropertyAssignment(property) && property.name.getText(source) === 'title' && property.initializer.getText(source) === "'新建 RGW Account'")) {
+    createExpression = node.properties.find(property => ts.isPropertyAssignment(property) && property.name.getText(source) === 'buildBody').initializer.getText(source)
+    createFields = node.properties.find(property => ts.isPropertyAssignment(property) && property.name.getText(source) === 'fields').initializer.getText(source)
+  }
   if (ts.isObjectLiteralExpression(node) && node.properties.some(property => ts.isPropertyAssignment(property) && property.name.getText(source) === 'title' && property.initializer.getText(source) === "'编辑 RGW Account'")) {
     fieldsExpression = node.properties.find(property => ts.isPropertyAssignment(property) && property.name.getText(source) === 'fields').initializer.getText(source)
     bodyExpression = node.properties.find(property => ts.isPropertyAssignment(property) && property.name.getText(source) === 'buildBody').initializer.getText(source)
@@ -33,6 +39,21 @@ function visit(node) {
   ts.forEachChild(node, visit)
 }
 visit(source)
+assert.ok(createExpression)
+const createBody = new Function('rgwAccountLimitPatch', `return (${createExpression})`)(patch)
+assert.deepEqual(createBody({ account_id: 'RGW123' }, 'cluster'), { cluster_id: 'cluster', account_id: 'RGW123' })
+const createFieldExports = {}
+new Function('exports', ts.transpileModule('export const fields = ' + createFields, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(createFieldExports)
+for (const key of ['max_users', 'max_roles', 'max_groups', 'max_buckets', 'max_access_keys']) {
+  const field = createFieldExports.fields.find(field => field.name === key)
+  assert.equal(field.type, 'number')
+  assert.equal(field.min, -1)
+  assert.equal(field.max, 2147483647)
+  assert.ok(field.label.includes('留空使用默认值'))
+  for (const value of [-1, 0, 2147483647]) assert.deepEqual(createBody({ account_id: 'RGW123', [key]: value }, 'cluster'), { cluster_id: 'cluster', account_id: 'RGW123', [key]: value })
+  for (const value of [undefined, null, '']) assert.deepEqual(createBody({ account_id: 'RGW123', [key]: value }, 'cluster'), { cluster_id: 'cluster', account_id: 'RGW123' })
+  for (const value of [-2, 0.5, 2147483648, false, '0']) assert.throws(() => createBody({ account_id: 'RGW123', [key]: value }, 'cluster'))
+}
 const editExports = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwAccountEdit.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(editExports)
 const buildBody = new Function('rgwAccountTextPatch', 'rgwAccountLimitPatch', `return (${bodyExpression})`)(editExports.rgwAccountTextPatch, patch)

@@ -1719,6 +1719,30 @@ func TestRGWAccountDeleteCommand(t *testing.T) {
 	}
 }
 
+func TestRGWAccountCreateLimits(t *testing.T) {
+	for _, field := range []string{"max_users", "max_roles", "max_groups", "max_buckets", "max_access_keys"} {
+		for _, value := range []any{nil, "", true, false, json.Number("-2"), json.Number("0.5"), json.Number("2147483648")} {
+			if _, err := build(Request{Action: "rgw_account.create"}, map[string]any{"account_id": "RGW123", field: value}); err == nil {
+				t.Fatalf("accepted invalid %s = %#v", field, value)
+			}
+		}
+		for _, value := range []string{"-1", "0", "1", "2147483647"} {
+			cmd, err := build(Request{Action: "rgw_account.create"}, map[string]any{"account_id": "RGW123", field: json.Number(value)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := []string{"account", "create", "--account-id", "RGW123", "--" + strings.ReplaceAll(field, "_", "-"), value, "--format", "json"}
+			if !reflect.DeepEqual(cmd.args, want) || !reflect.DeepEqual(cmd.check, []string{"account", "get", "--account-id", "RGW123", "--format", "json"}) {
+				t.Fatalf("unexpected command: %#v", cmd)
+			}
+		}
+	}
+	cmd, err := build(Request{Action: "rgw_account.create"}, map[string]any{"account_id": "RGW123"})
+	if err != nil || !reflect.DeepEqual(cmd.args, []string{"account", "create", "--account-id", "RGW123", "--format", "json"}) {
+		t.Fatalf("omitted limits must use native defaults: %#v, %v", cmd, err)
+	}
+}
+
 func TestRGWAccountUpdateText(t *testing.T) {
 	for _, field := range []string{"account_name", "email"} {
 		for _, value := range []any{nil, false, 1, map[string]any{}, "", "  ", "\t", "bad\ntext", "bad\rtext", "bad\x00text", "name\n", strings.Repeat("a", (32<<10)+1)} {

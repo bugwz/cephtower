@@ -27,7 +27,7 @@ for (const value of [undefined, null, '0', NaN, Infinity, 0.5, 2147483648, -2147
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
 assert.equal(pages.match(/render: rgwBucketLimit/g).length, 2)
 assert.ok(!pages.includes('最大 Bucket 数（-1 为无限制）'))
-assert.equal(pages.match(/-1 禁止创建，0 无限制/g).length, 3)
+assert.equal(pages.match(/-1 禁止创建，0 无限制/g).length, 4)
 assert.equal(pages.match(/\.\.\.rgwBucketLimitInput\(values.max_buckets\)/g).length, 1)
 assert.ok(pages.includes('...rgwBucketLimitPatch(values.max_buckets, row?.max_buckets)'))
 assert.ok(!pages.includes('values.max_buckets !== undefined ?'))

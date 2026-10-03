@@ -188,6 +188,21 @@ func TestMutationContractsCoverAllRegisteredActions(t *testing.T) {
 	}
 }
 
+func TestRGWAccountCreateLimitContract(t *testing.T) {
+	for _, field := range []string{"max_users", "max_roles", "max_groups", "max_buckets", "max_access_keys"} {
+		for _, value := range []any{float64(-1), float64(0), float64(2147483647)} {
+			if err := ValidateMutationRequest("rgw_account.create", map[string]any{"cluster_id": float64(1), "account_id": "RGW123", field: value}); err != nil {
+				t.Fatalf("rejected %s = %v: %v", field, value, err)
+			}
+		}
+		for _, value := range []any{"0", false, float64(0.5)} {
+			if err := ValidateMutationRequest("rgw_account.create", map[string]any{"cluster_id": float64(1), "account_id": "RGW123", field: value}); err == nil {
+				t.Fatalf("accepted invalid %s = %v", field, value)
+			}
+		}
+	}
+}
+
 func TestHealthMuteContract(t *testing.T) {
 	if err := ValidateMutationRequest("health.mute", map[string]any{"cluster_id": float64(1), "code": "OSD_DOWN", "ttl": "1h", "sticky": true}); err != nil {
 		t.Fatal(err)

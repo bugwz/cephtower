@@ -248,14 +248,16 @@ const definitions: Record<
         { name: 'account_id', label: 'Account ID', required: true },
         { name: 'account_name', label: 'Account Name' },
         { name: 'email', label: 'Email' },
-        { name: 'tenant', label: 'Tenant' }
+        { name: 'tenant', label: 'Tenant' },
+        ...['max_users', 'max_roles', 'max_groups', 'max_buckets', 'max_access_keys'].map((name, index) => ({ name, label: ['用户上限', '角色上限', '用户组上限', 'Bucket 上限', '每用户访问密钥上限'][index] + (name === 'max_buckets' ? '（-1 禁止创建，0 无限制；留空使用默认值）' : '（-1 无限制，0 禁止新增；留空使用默认值）'), type: 'number' as const, min: -1, max: 2147483647 }))
       ],
       buildBody: (values, clusterId) => ({
         cluster_id: clusterId,
         account_id: String(values.account_id ?? ''),
         ...(values.account_name ? { account_name: String(values.account_name) } : {}),
         ...(values.email ? { email: String(values.email) } : {}),
-        ...(values.tenant ? { tenant: String(values.tenant) } : {})
+        ...(values.tenant ? { tenant: String(values.tenant) } : {}),
+        ...rgwAccountLimitPatch(values)
       })
     },
     updateAction: {

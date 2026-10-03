@@ -2088,6 +2088,15 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, err
 		}
 		args := []string{"account", "create", "--account-id", accountID}
+		for _, field := range []string{"max_users", "max_roles", "max_groups", "max_buckets", "max_access_keys"} {
+			if _, exists := p[field]; exists {
+				value, err := strconv.ParseInt(optional(p, field), 10, 32)
+				if err != nil || value < -1 {
+					return command{}, invalid(field + " must be -1 or a nonnegative integer")
+				}
+				args = append(args, "--"+strings.ReplaceAll(field, "_", "-"), strconv.FormatInt(value, 10))
+			}
+		}
 		for field, flag := range map[string]string{"account_name": "--account-name", "email": "--email", "tenant": "--tenant"} {
 			if value := rawText(p, field); value != "" {
 				args = append(args, flag, value)
