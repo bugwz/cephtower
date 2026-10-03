@@ -58,6 +58,20 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 			t.Fatalf("response risk differs: %s", response.Body.String())
 		}
 	}
+	for _, root := range []bool{false, true} {
+		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/user", fmt.Sprintf(`{"cluster_id":%d,"uid":"new-user","display_name":"valid-name","account_id":"RGW12345678901234567","account_root":%t}`, cluster.ID, root), fmt.Sprintf("create-account-user-%t", root))
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("account user create: %d %s", response.Code, response.Body.String())
+		}
+		row, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		want := "medium"
+		if root {
+			want = "high"
+		}
+		if err != nil || row.Risk != want {
+			t.Fatalf("wrong creation risk: %+v %v", row, err)
+		}
+	}
 	for _, action := range []string{"start", "stop", "restart", "redeploy", "reconfig", "rotate-key"} {
 		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/daemon/action", fmt.Sprintf(`{"cluster_id":%d,"name":"osd.1","action":%q}`, cluster.ID, action), "daemon-"+action)
 		if response.Code != http.StatusAccepted {

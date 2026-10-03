@@ -35,6 +35,7 @@ import { rgwUserOperationMaskInput, rgwUserOperationMaskOptions } from './rgwUse
 import { rgwUserAccountRootBlocked, rgwUserAccountRootInput } from './rgwUserAccountRoot'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
+import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
 import { rgwUserPlacementInput, rgwUserPlacementTagsInput } from './rgwUserPlacementForm'
 
 export function RgwOverviewPage() {
@@ -121,8 +122,17 @@ const definitions: Record<
       path: '/rgw/user',
       method: 'POST',
       successMessage: 'RGW 用户创建执行成功',
+      initialValues: { account_mode: 'independent' },
+      changedValues: (changed) => Object.prototype.hasOwnProperty.call(changed, 'uid') || Object.prototype.hasOwnProperty.call(changed, 'account_mode') ? { account_id: undefined, account_root: undefined } : {},
+      confirmation: (values) => {
+        const account = rgwUserCreateAccountInput(values)
+        return account.account_id ? `在账户 ${JSON.stringify(account.account_id)} 中创建用户 ${JSON.stringify(values.uid)}；${account.account_root ? '授予账户根用户权限' : '普通账户用户需要策略授权才能访问资源'}，创建后不能迁出账户。` : undefined
+      },
       fields: [
         { name: 'uid', label: 'UID', required: true },
+        { name: 'account_mode', label: '用户归属', type: 'select', required: true, options: [{ label: '独立用户', value: 'independent' }, { label: '账户用户', value: 'account' }] },
+        { name: 'account_id', label: '账户（按 UID 租户筛选）', type: 'select', required: true, visibleWhen: values => values.account_mode === 'account', optionsDependencies: ['uid', 'account_mode'], optionsLoader: (clusterId, _row, values) => loadRgwCreateAccountOptions(clusterId, values) },
+        { name: 'account_root', label: '账户根用户权限', type: 'select', required: true, visibleWhen: values => values.account_mode === 'account', options: [{ label: '普通账户用户', value: 'disable' }, { label: '账户根用户', value: 'enable' }] },
         { name: 'display_name', label: '显示名', required:true },
         { name: 'email', label: '邮箱' },
         { name:'max_buckets',label:'最大 Bucket 数（-1 禁止创建，0 无限制）',type:'number',min:-1,max:2147483647 }
@@ -132,7 +142,8 @@ const definitions: Record<
         uid: String(values.uid ?? ''),
         ...(values.display_name ? { display_name: String(values.display_name) } : {}),
         ...(values.email ? { email: String(values.email) } : {}),
-        ...rgwBucketLimitInput(values.max_buckets)
+        ...rgwBucketLimitInput(values.max_buckets),
+        ...rgwUserCreateAccountInput(values)
       })
     },
     updateAction: {

@@ -213,6 +213,9 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 		if _, changesRoot := body["account_root"]; action == "rgw_user.update" && changesRoot {
 			requestRisk = "high"
 		}
+		if root, _ := body["account_root"].(bool); action == "rgw_user.create" && root {
+			requestRisk = "high"
+		}
 		if _, migratesAccount := body["target_account_id"]; action == "rgw_user.update" && migratesAccount {
 			requestRisk = "high"
 		}

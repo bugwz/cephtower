@@ -1,0 +1,39 @@
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import ts from 'typescript'
+const helpers = {}, calls = []
+new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserCreateAccount.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers, () => ({ loadRgwMigrationAccountOptions: async (...args) => { calls.push(args); return [] } }))
+const values = { uid: 'tenant$user', account_mode: 'account', account_id: 'RGW12345678901234567', account_root: 'disable', display_name: 'valid-name' }
+assert.deepEqual(helpers.rgwUserCreateAccountInput({}), {})
+assert.deepEqual(helpers.rgwUserCreateAccountInput({ ...values, account_mode: 'independent' }), {})
+for (const root of ['enable', 'disable']) assert.deepEqual(helpers.rgwUserCreateAccountInput({ ...values, account_root: root }), { account_id: values.account_id, account_root: root === 'enable' })
+for (const patch of [{ account_mode: null }, { account_id: '' }, { account_id: values.account_id + '\n' }, { account_root: false }, { display_name: 'invalid name' }, { display_name: 'valid\n' }]) assert.throws(() => helpers.rgwUserCreateAccountInput({ ...values, ...patch }))
+for (const [uid, tenant] of [['user', ''], ['tenant$user', 'tenant'], ['tenant$ns$user', 'tenant'], ['$ns$user', '']]) {
+  await helpers.loadRgwCreateAccountOptions(7, { ...values, uid })
+  assert.deepEqual(calls.pop(), [7, { tenant }])
+}
+await helpers.loadRgwCreateAccountOptions(7, {})
+assert.equal(calls.length, 0)
+const source = ts.createSourceFile('pages.tsx', readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+let node
+function visit(value) {
+  if (ts.isObjectLiteralExpression(value) && value.properties.some(prop => ts.isPropertyAssignment(prop) && prop.name.getText(source) === 'title' && ts.isStringLiteral(prop.initializer) && prop.initializer.text === '新建 RGW 用户')) node = value
+  ts.forEachChild(value, visit)
+}
+visit(source)
+assert.ok(node)
+const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const action = new Function('loadRgwCreateAccountOptions', 'rgwUserCreateAccountInput', 'rgwBucketLimitInput', `${code}; return action`)(helpers.loadRgwCreateAccountOptions, helpers.rgwUserCreateAccountInput, () => ({}))
+assert.deepEqual(action.buildBody(values, 7), { cluster_id: 7, uid: values.uid, display_name: values.display_name, account_id: values.account_id, account_root: false })
+assert.ok(action.confirmation(values).includes(values.account_id))
+assert.ok(action.confirmation({ ...values, account_root: 'enable' }).includes('根用户权限'))
+assert.equal(action.confirmation({ ...values, account_mode: 'independent' }), undefined)
+for (const field of ['uid', 'account_mode']) assert.deepEqual(action.changedValues({ [field]: 'changed' }), { account_id: undefined, account_root: undefined })
+assert.deepEqual(action.changedValues({ email: 'new' }), {})
+const accountField = action.fields.find(field => field.name === 'account_id')
+assert.deepEqual(accountField.optionsDependencies, ['uid', 'account_mode'])
+assert.equal(accountField.visibleWhen(values), true)
+assert.equal(accountField.visibleWhen({ account_mode: 'independent' }), false)
+await accountField.optionsLoader(9, undefined, values)
+assert.deepEqual(calls.pop(), [9, { tenant: 'tenant' }])
+console.log('RGW account user creation preserves explicit root choice and tenant-scoped options')

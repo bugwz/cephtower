@@ -294,6 +294,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: request.Action != "osd_deployment.preview", SensitiveArgs: spec.sensitive})
 	if err != nil {
+		if request.Action == "rgw_user.create" && rawText(request.Parameters, "account_id") != "" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "account user creation failed; inspect user existence and credentials before any manual retry", Retryable: false}
+		}
 		if rgwUserAccountMigrationRequested(request) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "account migration failed and bucket ownership may have partially changed; inspect user and bucket ownership before any manual retry", Retryable: false}
 		}
@@ -347,6 +350,12 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "rgw_user.create" && rawText(request.Parameters, "account_id") != "" {
+			root, _ := request.Parameters["account_root"].(bool)
+			if err != nil || !rgwUserAccountRootMatches(checked.Stdout, rawText(request.Parameters, "uid"), rawText(request.Parameters, "account_id"), &root) {
+				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "account user creation was accepted but membership and root status could not be verified; inspect user info before retrying", Retryable: false}
+			}
+		}
 		if rgwUserAccountMigrationRequested(request) {
 			root := false
 			if err != nil || !rgwUserAccountRootMatches(checked.Stdout, last(resourceTail(request.ResourceKey)), rawText(request.Parameters, "target_account_id"), &root) {
@@ -1870,14 +1879,25 @@ func build(request Request, p map[string]any) (command, error) {
 		check := append(append([]string{}, prefix...), "ls", "-la", quoteCephFSShellToken(pathpkg.Join(directory, ".snap")))
 		return cephfsShell(args, check), nil
 	case "rgw_user.create":
-		uid, err := required(p, "uid")
-		if err != nil {
-			return command{}, err
+		uid, validUID := p["uid"].(string)
+		if !validUID || !regexp.MustCompile(`^[A-Za-z0-9_.:@$-]+$`).MatchString(uid) || strings.HasPrefix(uid, "-") {
+			return command{}, invalid("uid is required or invalid")
 		}
 		if strings.TrimSpace(rawText(p, "display_name")) == "" {
 			return command{}, invalid("display_name is required")
 		}
 		args := []string{"user", "create", "--uid", uid}
+		if raw, present := p["account_id"]; present {
+			account, ok := raw.(string)
+			root, rootOK := p["account_root"].(bool)
+			name, nameOK := p["display_name"].(string)
+			if !ok || !regexp.MustCompile(`^RGW[0-9]{17}$`).MatchString(account) || !rootOK || !nameOK || !rgwMigrationName.MatchString(name) {
+				return command{}, invalid("account user creation requires an account id, explicit root boolean and IAM-compatible display name")
+			}
+			args = append(args, "--account-id="+account, "--account-root="+strconv.FormatBool(root))
+		} else if _, present := p["account_root"]; present {
+			return command{}, invalid("account_root requires account_id when creating a user")
+		}
 		if _, exists := p["max_buckets"]; exists {
 			limit, err := strconv.ParseInt(optional(p, "max_buckets"), 10, 32)
 			if err != nil || limit < -1 {
