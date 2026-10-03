@@ -20,7 +20,7 @@ func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
 		"collect.rbd_image_info":        []byte(`{"name":"image","features":["fast-diff"]}`),
 		"collect.rbd_image_usage":       []byte(`{"images":[{"name":"image","snapshot":"snap","used_size":256},{"name":"image","used_size":512}]}`),
 		"collect.rbd_snapshot":          []byte(`[{"name":"snap","id":1,"size":1024,"protected":"true","timestamp":"Tue Sep 23 02:03:04 2026"}]`),
-		"collect.rbd_snapshot_children": []byte(`[{"pool":"child-pool","pool_namespace":"apps","image":"child"}]`),
+		"collect.rbd_snapshot_children": []byte(`[{"pool":"child-pool","pool_namespace":"apps","image":"child","id":"child-id","trash":true}]`),
 		"collect.rbd_trash":             []byte(`[{"name":"image","id":"abc123"}]`),
 	}}
 	var calls []executor.CommandSpec
@@ -63,7 +63,7 @@ func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
 				t.Fatalf("snapshot details lost: %+v", payload)
 			}
 			children := objectList(payload["children"])
-			if len(children) != 1 || children[0]["pool"] != "child-pool" || children[0]["pool_namespace"] != "apps" || children[0]["image"] != "child" {
+			if len(children) != 1 || children[0]["pool"] != "child-pool" || children[0]["pool_namespace"] != "apps" || children[0]["image"] != "child" || children[0]["id"] != "child-id" || children[0]["trash"] != true {
 				t.Fatalf("snapshot children lost: %+v", payload)
 			}
 		}
@@ -101,8 +101,8 @@ func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
 		}
 	}
 	for _, command := range []string{
-		"children pool/image@snap --format json",
-		"children pool/team/image@snap --format json",
+		"children pool/image@snap --all --format json",
+		"children pool/team/image@snap --all --format json",
 	} {
 		if childCalls[command] != 1 {
 			t.Fatalf("children command %q count=%d, all=%v", command, childCalls[command], childCalls)

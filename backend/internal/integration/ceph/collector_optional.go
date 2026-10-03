@@ -81,7 +81,7 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 							snapshot["children"] = []map[string]any{}
 							if payload.MirrorMode != "snapshot" {
 								var children []map[string]any
-								if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_snapshot_children", []string{"children", spec + "@" + name, "--format", "json"}, &children) {
+								if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_snapshot_children", []string{"children", spec + "@" + name, "--all", "--format", "json"}, &children) {
 									if children == nil {
 										markCollectionUnavailable(ctx, "collect.rbd_snapshot_children")
 										continue

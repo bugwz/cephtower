@@ -5,6 +5,12 @@
 
 ## 如何追踪调用链
 
+RBD 快照子镜像采集使用 rbd children <image@snapshot> --all --format json，
+按原生 Children.cc 包含回收站子镜像及 id/trash，避免默认命令隐藏依赖。
+前端子镜像表显示池、命名空间、名称、ID 和回收站状态；空列表与无效响应区分，
+缺失名称仍保留 ID，回收站中的子镜像也计入现有删除依赖检查。
+当前快照同步模式仍沿用跳过 children 查询的既有逻辑，此次未扩大该路径。
+
 RBD 父镜像展示沿用 rbd info <image-spec> --format json → RBDImage.Parent →
 镜像库存 API 链路，按原生 Info.cc 的 pool/pool_namespace/image/snapshot 组合父快照
 路径，并显示 id 和 trash。对照参考 rbd-details.component.html 的父镜像展示；

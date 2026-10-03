@@ -39,6 +39,18 @@ assert.equal(parentDetails({ ...parent, image: ' base ' }).path, 'images/team/ b
 for (const value of [null, [], {}, { ...parent, snapshot: null }, { ...parent, pool_namespace: undefined }, { ...parent, pool_namespace: 1 }]) assert.equal(parentDetails(value), undefined)
 console.log('Native RBD parent paths preserve namespace and explicit trash state')
 
+const childSource = readFileSync(new URL('../src/pages/block/RbdChildren.tsx', import.meta.url), 'utf8')
+const childTree = ts.createSourceFile('children.tsx', childSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const childNode = childTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'rbdChildRows')
+const childCode = ts.transpileModule(childNode.getText(childTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const childRows = new Function(`${childCode}; return rbdChildRows`)()
+assert.deepEqual(childRows([]), [])
+assert.deepEqual(childRows([{ pool: 'p', pool_namespace: '', image: 'i', id: 'abc', trash: true }]), [{ key: 0, pool: 'p', namespace: '默认命名空间', image: 'i', id: 'abc', trash: '位于回收站' }])
+assert.equal(childRows([{ pool: '', pool_namespace: 'team', image: '', id: 'orphan', trash: false }])[0].image, '名称未解析')
+assert.equal(childRows([{ pool: 'p', pool_namespace: 'team', image: 'i' }])[0].trash, '未返回')
+for (const value of [null, {}, [null], [{}], [{ pool: 'p', image: 'i' }]]) assert.equal(childRows(value), undefined)
+console.log('RBD child dependencies retain namespace, trash membership and unresolved names')
+
 const usageExports = {}
 const usageCode = ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdUsage.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
 new Function('exports', usageCode)(usageExports)
