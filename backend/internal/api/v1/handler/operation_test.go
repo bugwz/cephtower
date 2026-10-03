@@ -85,6 +85,15 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 			t.Fatalf("pipe: %d %s", pipe.Code, pipe.Body.String())
 		}
 		pipeOperation, pipeErr := db.FindOperation(context.Background(), operationIDFromResponse(t, pipe))
+		pipeZonesBody := fmt.Sprintf(`{"cluster_id":%d,"name":"east","zonegroup_id":"zg","realm_id":%q,"group_id":"g","expected_group":%q,"pipe_id":"p","source_zones":["*"],"dest_zones":["z"]}`, cluster.ID, realm, `{"id":"g","status":"allowed","data_flow":{},"pipes":[{"id":"p"}]}`)
+		pipeZones := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/sync/pipe/zones", pipeZonesBody, "zonegroup-pipe-zones-"+realm)
+		if pipeZones.Code != http.StatusAccepted {
+			t.Fatalf("pipe zones: %d %s", pipeZones.Code, pipeZones.Body.String())
+		}
+		pipeZoneOperation, pipeZoneErr := db.FindOperation(context.Background(), operationIDFromResponse(t, pipeZones))
+		if pipeZoneErr != nil || pipeZoneOperation.Action != "rgw_zonegroup.sync_pipe_zones" || pipeZoneOperation.Risk != "high" || pipeZoneOperation.ResourceKey != op.ResourceKey || pipeZoneOperation.LockKey != op.LockKey {
+			t.Fatalf("pipe zones: %+v %v", pipeZoneOperation, pipeZoneErr)
+		}
 		pipeUpdateBody := fmt.Sprintf(`{"cluster_id":%d,"name":"east","zonegroup_id":"zg","realm_id":%q,"group_id":"g","expected_group":%q,"pipe_id":"p","source_bucket":"*","dest_bucket":"photos","mode":"system"}`, cluster.ID, realm, `{"id":"g","status":"allowed","data_flow":{},"pipes":[{"id":"p"}]}`)
 		pipeUpdate := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/sync/pipe", pipeUpdateBody, "zonegroup-pipe-update-"+realm)
 		if pipeUpdate.Code != http.StatusAccepted {

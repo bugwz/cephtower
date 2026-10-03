@@ -35,15 +35,21 @@ type pipeZoneChange struct {
 // Native add_zones switches wildcard to a concrete set directly. Removing '*'
 // afterwards is unnecessary and risks discarding the intended wildcard state.
 func planPipeZones(entity map[string]any, desired any, zoneBody []byte) (pipeZoneChange, error) {
+	return planSyncPipeZones(entity, desired, zoneBody, false)
+}
+
+func planSyncPipeZones(entity map[string]any, desired any, zoneBody []byte, nativeIDs bool) (pipeZoneChange, error) {
 	result := pipeZoneChange{entity: entity}
 	ids, err := pipeZoneIDs(desired)
 	if err != nil {
 		return result, err
 	}
-	// Validate the entire mapping even when both sides use wildcards.
-	_, err = resolveBucketSyncFlow(map[string]any{"flow_type": "symmetrical", "zones": []any{}}, zoneBody)
-	if err != nil {
-		return result, err
+	// Name-formatted bucket output needs an unambiguous mapping. Zonegroup
+	// snapshots use IDs directly and validate the membership below.
+	if !nativeIDs {
+		if _, err := resolveBucketSyncFlow(map[string]any{"flow_type": "symmetrical", "zones": []any{}}, zoneBody); err != nil {
+			return result, err
+		}
 	}
 	var document struct {
 		Zones []struct {
@@ -54,8 +60,18 @@ func planPipeZones(entity map[string]any, desired any, zoneBody []byte) (pipeZon
 	if json.Unmarshal(zoneBody, &document) != nil {
 		return result, invalid("zone mapping invalid")
 	}
+	if nativeIDs && document.Zones == nil {
+		return result, invalid("zone membership unavailable")
+	}
 	byName, byID := map[string]string{}, map[string]string{}
 	for _, zone := range document.Zones {
+		if nativeIDs {
+			if _, err := pipeZoneIDs([]any{zone.ID}); err != nil || zone.ID == "*" || byID[zone.ID] != "" {
+				return result, invalid("zone IDs invalid or ambiguous")
+			}
+			byID[zone.ID] = zone.ID
+			continue
+		}
 		if zone.Name == "*" {
 			return result, invalid("zone name conflicts with wildcard")
 		}
@@ -77,6 +93,9 @@ func planPipeZones(entity map[string]any, desired any, zoneBody []byte) (pipeZon
 		for _, raw := range old {
 			name, ok := raw.(string)
 			id := byName[name]
+			if nativeIDs {
+				id = name
+			}
 			if !ok || id == "" || id == "*" || oldIDs[id] {
 				return result, invalid("existing zone mapping unavailable or ambiguous")
 			}
@@ -108,6 +127,11 @@ func planPipeZones(entity map[string]any, desired any, zoneBody []byte) (pipeZon
 	for id := range oldIDs {
 		if !target[id] {
 			result.removed = append(result.removed, id)
+		}
+	}
+	if nativeIDs {
+		for id := range oldIDs {
+			byID[id] = id
 		}
 	}
 	sort.Strings(result.removed)

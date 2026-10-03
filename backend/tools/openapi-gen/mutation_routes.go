@@ -3,6 +3,7 @@ package main
 // mutationRouteActions mirrors the action selected by each runtime route handler.
 // TestMutationRouteActionsMatchHandlers guards this mapping against route drift.
 var mutationRouteActions = map[string]string{
+	"PATCH /rgw/zonegroup/sync/pipe/zones":          "rgw_zonegroup.sync_pipe_zones",
 	"PATCH /rgw/zonegroup/sync/pipe":                "rgw_zonegroup.sync_pipe_update",
 	"DELETE /rgw/zonegroup/sync/pipe":               "rgw_zonegroup.sync_pipe_delete",
 	"POST /rgw/zonegroup/sync/pipe":                 "rgw_zonegroup.sync_pipe_create",

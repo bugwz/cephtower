@@ -9,6 +9,25 @@ function snapshot(row?: Record<string, unknown>, allowEmpty = false) {
 }
 export function zonegroupSyncInitial(row?: Record<string, unknown>) { const { groups: _, ...identity } = snapshot(row); return { ...identity, group_id: undefined, status: undefined, confirm_change: undefined } }
 export function zonegroupSyncBlocked(row: Record<string, unknown>) { try { snapshot(row); return undefined } catch (error) { return (error as Error).message } }
+export function zonegroupPipeZonesInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const selected = zonegroupPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
+  const available = row?.zones
+  const validID = (v: unknown): v is string => token(v) && !/[\s,;=*]/u.test(v)
+  if (!Array.isArray(available) || available.some(z => !record(z) || !validID(z.id)) || new Set(available.map(z => z.id)).size !== available.length) throw new Error('当前 Zone ID 列表不可用或有歧义')
+  const zones = (side: string) => {
+    let ids: unknown
+    try { ids = JSON.parse(String(values[side + '_zones_json'])) } catch { throw new Error('Zone ID 必须为 JSON 数组') }
+    if (!Array.isArray(ids) || !ids.length || new Set(ids).size !== ids.length || !(ids.length === 1 && ids[0] === '*') && ids.some(id => !validID(id) || !available.some(z => z.id === id))) throw new Error('最终集合必须非空、无重复，且为当前 Zone ID 或单独 ["*"]')
+    return ids as string[]
+  }
+  const source = zones('source'), dest = zones('dest')
+  if (values.confirm_pipe_zones !== 'acknowledged') throw new Error('请确认成员与发布范围')
+  return { ...selected, source_zones: source, dest_zones: dest }
+}
+export function zonegroupPipeZonesConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const p = zonegroupPipeZonesInput(values,row)
+  return `确认修改 Zonegroup ${JSON.stringify(p.name)}（${p.zonegroup_id}）中同步组 ${JSON.stringify(p.group_id)} 的管道 ${JSON.stringify(p.pipe_id)}？最终源 Zone IDs ${JSON.stringify(p.source_zones)}，目标 ${JSON.stringify(p.dest_zones)}。* 匹配全部 Zone；明确集合先增后删，通配直接切换，中间复制范围可能扩大。保留桶选择器、执行身份和高级参数。${p.realm_id ? `随后提交 Realm ${JSON.stringify(p.realm_id)} 的 Period，可能发布其他待提交变更。` : '无 Realm，不提交 Period。'}请备份并避免外部或其他页面并发；非事务，失败可能部分生效，不自动回滚或重试；成功不代表远端复制完成。`
+}
 export function zonegroupPipeUpdateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {
   const selected = zonegroupPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
   const group = JSON.parse(selected.expected_group)

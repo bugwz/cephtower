@@ -21,6 +21,13 @@ func zonegroupSyncGroupCommand(action string, p map[string]any, rgw func([]strin
 		return command{}, invalid("explicit realm_id is required, empty for standalone zonegroup")
 	}
 	status := syncGroupString(p, "status")
+	if action == "rgw_zonegroup.sync_pipe_zones" {
+		args, err := bucketSyncPipeZonesArgs(p)
+		if err != nil {
+			return command{}, err
+		}
+		return rgw(append(args, "--zonegroup-id", syncGroupString(p, "zonegroup_id")), []string{"zonegroup", "get", "--zonegroup-id", syncGroupString(p, "zonegroup_id")}), nil
+	}
 	if action == "rgw_zonegroup.sync_pipe_update" {
 		args, err := bucketSyncPipeUpdateArgs(p)
 		if err != nil {
@@ -131,13 +138,14 @@ func (s *Service) executeZonegroupSyncGroup(ctx context.Context, access executor
 		pipeCreate := request.Action == "rgw_zonegroup.sync_pipe_create"
 		pipeDelete := request.Action == "rgw_zonegroup.sync_pipe_delete"
 		pipeUpdate := request.Action == "rgw_zonegroup.sync_pipe_update"
+		pipeZones := request.Action == "rgw_zonegroup.sync_pipe_zones"
 		if flow {
 			// Validate membership, but keep native IDs: zonegroup get is not name-formatted.
 			if _, err := resolveBucketSyncFlow(p, before.Stdout); err != nil {
 				return fail("pre_check_failed", err.Error())
 			}
 		}
-		if !deleting && !flow && !flowDelete && !flowUpdate && !pipeCreate && !pipeDelete && !pipeUpdate && group["status"] == syncGroupString(p, "status") {
+		if !deleting && !flow && !flowDelete && !flowUpdate && !pipeCreate && !pipeDelete && !pipeUpdate && !pipeZones && group["status"] == syncGroupString(p, "status") {
 			return fail("pre_check_failed", "sync group status unchanged")
 		}
 		// Update the original array, not the canonical index used for comparison.
@@ -145,6 +153,14 @@ func (s *Service) executeZonegroupSyncGroup(ctx context.Context, access executor
 		for _, raw := range policy["groups"].([]any) {
 			g := raw.(map[string]any)
 			if g["id"] == id {
+				if pipeZones {
+					writes, err = zonegroupPipeMembership(wanted, g, p, spec)
+					if err != nil {
+						return fail("pre_check_failed", err.Error())
+					}
+					remaining = append(remaining, raw)
+					continue
+				}
 				if pipeUpdate {
 					if err := updateBucketSyncPipe(g, p); err != nil {
 						return fail("pre_check_failed", err.Error())

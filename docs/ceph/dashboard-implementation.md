@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### Zonegroup 管道 Zone 成员编辑
+
+新增 PATCH /api/v1/rgw/zonegroup/sync/pipe/zones 与源/目标完整 Zone ID 集合表单。复用原生 add_zones/remove_zones 的集合语义：明确集合先增后删，切换到 ["*"] 重置明确集合，从 ["*"] 切到明确集合直接用 modify 设置，不再移除通配符。两侧差异合并为必要的添加/移除命令，每一步核验完整 Zonegroup；全部成功后才发布和核验 Realm Period。
+
+保留桶选择器、权限模式、UID 和高级参数。Zonegroup 使用原始 ID 校验成员；允许移除旧孤立 ID，新明确目标必须属于当前 Zonegroup。空当前成员列表仍可设置通配，缺失/重复/非法成员、混合通配和空目标集合拒绝；未改变不写入。表单提示中间复制范围扩大、Realm 其他待发布变更和非事务部分生效风险。离线测试覆盖双侧替换、单纯移除、空集合补齐、双向通配切换、孤立 ID、两种 Realm 归属、各阶段停止、精确参数和前端绑定；无真实集群或浏览器视觉验证。整体 Dashboard 迁移仍未完成，高级管道参数写入等继续核对。
+
 #### Zonegroup 管道桶选择器与权限模式编辑
 
 新增 PATCH /api/v1/rgw/zonegroup/sync/pipe 和对应表单，使用原生 sync group pipe modify 更新完整源/目标租户、桶、实例选择器以及 system/user 模式和 UID。请求不接受 Zone 成员或高级参数；校验唯一已有管道和完整组快照，回读完整 Zonegroup，保留组状态、流、管道 Zone 成员、过滤器、优先级、目标 ACL/存储类及其他参数。system 模式按原生语义保留已存储 UID，不删除用户或凭据；未改变配置拒绝写入。

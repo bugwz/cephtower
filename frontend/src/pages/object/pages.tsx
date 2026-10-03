@@ -11,6 +11,7 @@ import { zonegroupFlowUpdateInput, zonegroupFlowUpdateConfirmation } from './rgw
 import { zonegroupPipeCreateInput, zonegroupPipeCreateConfirmation } from './rgwZonegroupSyncGroup'
 import { zonegroupPipeDeleteInput, zonegroupPipeDeleteConfirmation } from './rgwZonegroupSyncGroup'
 import { zonegroupPipeUpdateInput, zonegroupPipeUpdateConfirmation } from './rgwZonegroupSyncGroup'
+import { zonegroupPipeZonesInput, zonegroupPipeZonesConfirmation } from './rgwZonegroupSyncGroup'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAction } from '../ResourceListPage'
 import { ServiceDaemons } from '../cluster/ServiceDaemons'
@@ -1026,6 +1027,21 @@ const definitions: Record<
         { name: 'confirm_pipe_update', label: '配置与发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，确认完整选择器与权限模式，了解 Realm 发布及并发风险' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupPipeUpdateInput(values,row) })
+    }, {
+      title: '编辑 Zonegroup 管道 Zone', path: '/rgw/zonegroup/sync/pipe/zones', method: 'PATCH',
+      successMessage: 'Zonegroup 管道 Zone 成员与适用的 Period 发布已核验',
+      disabledWhen: zonegroupSyncBlocked, initialValues: zonegroupSyncInitial, confirmation: zonegroupPipeZonesConfirmation,
+      fields: [
+        { name: 'name', label: 'Zonegroup 名称（不可更改）', readOnly: true },
+        { name: 'zonegroup_id', label: 'Zonegroup ID（不可更改）', readOnly: true },
+        { name: 'realm_id', label: 'Realm ID（不可更改）', readOnly: true },
+        { name: 'group_id', label: '已有同步组 ID', required: true },
+        { name: 'pipe_id', label: '已有管道 ID', required: true },
+        { name: 'source_zones_json', label: '最终源 Zone ID 数组（全部填 ["*"]）', type: 'textarea', required: true },
+        { name: 'dest_zones_json', label: '最终目标 Zone ID 数组（全部填 ["*"]）', type: 'textarea', required: true },
+        { name: 'confirm_pipe_zones', label: '成员与发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，了解中间范围变化、Realm 发布与部分生效风险' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupPipeZonesInput(values,row) })
     }, {
       title: '删除 Zonegroup 同步组', path: '/rgw/zonegroup/sync/group', method: 'DELETE',
       successMessage: 'Zonegroup 同步组删除与适用的 Period 发布已核验',

@@ -26,6 +26,7 @@ func (e *zonegroupSyncExecutor) Run(_ context.Context, _ executor.ClusterAccess,
 	stage = strings.TrimPrefix(stage, "rgw_zonegroup.sync_pipe_create.")
 	stage = strings.TrimPrefix(stage, "rgw_zonegroup.sync_pipe_delete.")
 	stage = strings.TrimPrefix(stage, "rgw_zonegroup.sync_pipe_update.")
+	stage = strings.TrimPrefix(stage, "rgw_zonegroup.sync_pipe_zones.")
 	if stage == e.failure {
 		return executor.CommandResult{}, errors.New("injected failure")
 	}
