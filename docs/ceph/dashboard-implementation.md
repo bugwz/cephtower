@@ -9,7 +9,8 @@ RBD 快照子镜像采集使用 rbd children <image@snapshot> --all --format jso
 按原生 Children.cc 包含回收站子镜像及 id/trash，避免默认命令隐藏依赖。
 前端子镜像表显示池、命名空间、名称、ID 和回收站状态；空列表与无效响应区分，
 缺失名称仍保留 ID，回收站中的子镜像也计入现有删除依赖检查。
-当前快照同步模式仍沿用跳过 children 查询的既有逻辑，此次未扩大该路径。
+快照同步镜像也读取用户快照依赖：本项目 snap ls 未带 --all，按原生 Snap.cc
+仅返回用户快照，不套用参考 Dashboard 对包含内部快照列表的整镜像跳过逻辑。
 
 RBD 父镜像展示沿用 rbd info <image-spec> --format json → RBDImage.Parent →
 镜像库存 API 链路，按原生 Info.cc 的 pool/pool_namespace/image/snapshot 组合父快照

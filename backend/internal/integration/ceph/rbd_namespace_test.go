@@ -291,6 +291,42 @@ func TestSnapshotChildrenFailureDoesNotPublishEmptyDependencies(t *testing.T) {
 	}
 }
 
+func TestSnapshotMirroringStillReadsUserSnapshotChildren(t *testing.T) {
+	for _, output := range []string{`[{"pool":"p","pool_namespace":"","image":"child","id":"id","trash":true}]`, `invalid`} {
+		var calls []executor.CommandSpec
+		provider := NativeProvider{Executor: recordingExecutor{base: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+			"collect.rbd_namespace":         []byte(`[]`),
+			"collect.rbd_image_detail":      []byte(`[{"image":"image","size":1024,"format":2}]`),
+			"collect.rbd_image_info":        []byte(`{"features":[],"mirroring":{"mode":"snapshot","state":"enabled"}}`),
+			"collect.rbd_snapshot":          []byte(`[{"name":"user-snap","protected":false}]`),
+			"collect.rbd_snapshot_children": []byte(output),
+		}}, calls: &calls}}
+		rows := provider.collectStorageOptional(context.Background(), ClusterAccess{}, []poolWire{{PoolName: "pool"}}, fsDumpWire{}, time.Now())
+		queried := false
+		for _, call := range calls {
+			if call.ID == "collect.rbd_snapshot_children" {
+				queried = strings.Join(call.Args, " ") == "children pool/image@user-snap --all --format json"
+			}
+		}
+		if !queried {
+			t.Fatal("mirroring mode skipped user snapshot dependencies")
+		}
+		count := 0
+		for _, row := range rows {
+			if row.Kind == "rbd_snapshot" {
+				count++
+				children := objectList(row.Payload.(map[string]any)["children"])
+				if len(children) != 1 || children[0]["trash"] != true {
+					t.Fatal(row)
+				}
+			}
+		}
+		if (output == "invalid" && count != 0) || (output != "invalid" && count != 1) {
+			t.Fatalf("%s: snapshot count %d", output, count)
+		}
+	}
+}
+
 func TestRBDImageInfoDefaultsToDisabledMirroring(t *testing.T) {
 	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rbd_image_info": []byte(`{"name":"image","features":[]}`),
