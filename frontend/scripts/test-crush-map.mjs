@@ -556,6 +556,23 @@ const profileBodyFns = poolTree.statements.filter((node) => ts.isFunctionDeclara
 const bodyExports = {}
 new Function('exports', ts.transpileModule(profileBodyFns.map((fn) => fn.getText(poolTree)).join('\n') + '\nexports.body = erasureCodeProfileBody', { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(bodyExports)
 const profileValues = { name: 'ec', plugin: 'isa', k: 4, m: 2 }
+for (const field of ['k', 'm', 'crush_num_failure_domains', 'crush_osds_per_failure_domain']) {
+  for (const value of [1.5, -1, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, '4', false]) assert.throws(() => bodyExports.body({ ...profileValues, [field]: value }, 1))
+}
+for (const field of ['k', 'm']) for (const value of [undefined, null, 0]) assert.throws(() => bodyExports.body({ ...profileValues, [field]: value }, 1))
+for (const [plugin, field] of [['jerasure', 'packetsize'], ['lrc', 'l'], ['shec', 'c'], ['clay', 'd']]) {
+  for (const value of [0, -1, 2.5, Infinity, Number.MAX_SAFE_INTEGER + 1, '3']) assert.throws(() => bodyExports.body({ ...profileValues, plugin, [field]: value }, 1))
+  assert.equal(bodyExports.body({ ...profileValues, plugin, [field]: 3 }, 1)[field], 3)
+  if (field !== 'packetsize') assert.throws(() => bodyExports.body({ ...profileValues, plugin }, 1))
+}
+for (const value of [undefined, null, 0]) {
+  const body = bodyExports.body({ ...profileValues, crush_num_failure_domains: value, crush_osds_per_failure_domain: value }, 1)
+  assert.ok(!('crush-num-failure-domains' in body))
+  assert.ok(!('crush-osds-per-failure-domain' in body))
+}
+assert.equal(bodyExports.body({ ...profileValues, plugin: 'jerasure' }, 1).packetsize, undefined)
+assert.equal(bodyExports.body({ ...profileValues, crush_num_failure_domains: 2 }, 1)['crush-num-failure-domains'], 2)
+console.log('Erasure profile requests reject lossy integer conversion and preserve optional fields')
 for (const directory of [undefined, '', '  ']) assert.ok(!('directory' in JSON.parse(JSON.stringify(bodyExports.body({ ...profileValues, directory }, 1)))))
 assert.equal(bodyExports.body({ ...profileValues, directory: ' /custom/plugins ' }, 1).directory, '/custom/plugins')
 const poolFunctions = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['topologyCounts', 'crushRootNames', 'placementDeviceOptions', 'placementValid', 'failureDomainOptions'].includes(node.name.text))

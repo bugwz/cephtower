@@ -1452,15 +1452,15 @@ function erasureCodeProfileBody(values: ErasureCodeProfileFormValues, clusterId:
     cluster_id: clusterId,
     name: values.name,
     plugin: values.plugin,
-    k: Math.trunc(values.k),
-    m: Math.trunc(values.m),
+    k: positiveInteger(values.k, 'k', 2),
+    m: positiveInteger(values.m, 'm'),
     'crush-failure-domain': values.crush_failure_domain,
     'crush-root': values.crush_root,
     'crush-device-class': values.crush_device_class || undefined,
     directory: values.directory?.trim() || undefined
   }
-  const numFailureDomains = positiveInteger(values.crush_num_failure_domains)
-  const osdsPerFailureDomain = positiveInteger(values.crush_osds_per_failure_domain)
+  const numFailureDomains = positiveInteger(values.crush_num_failure_domains, 'CRUSH 故障域数量', 0, true)
+  const osdsPerFailureDomain = positiveInteger(values.crush_osds_per_failure_domain, '每故障域 OSD 数', 0, true)
   if (numFailureDomains !== undefined) {
     body['crush-num-failure-domains'] = numFailureDomains
   }
@@ -1471,22 +1471,25 @@ function erasureCodeProfileBody(values: ErasureCodeProfileFormValues, clusterId:
     body.technique = values.technique
   }
   if (values.plugin === 'jerasure') {
-    body.packetsize = positiveInteger(values.packetsize)
+    body.packetsize = positiveInteger(values.packetsize, 'packetsize', 1, true)
   } else if (values.plugin === 'lrc') {
-    body.l = positiveInteger(values.l)
+    body.l = positiveInteger(values.l, 'l')
     body['crush-locality'] = values.crush_locality
   } else if (values.plugin === 'shec') {
-    body.c = positiveInteger(values.c)
+    body.c = positiveInteger(values.c, 'c')
   } else if (values.plugin === 'clay') {
-    body.d = positiveInteger(values.d)
+    body.d = positiveInteger(values.d, 'd')
     body.scalar_mds = values.scalar_mds
   }
   return body
 }
 
-function positiveInteger(value?: number) {
-  const number = Math.trunc(value ?? 0)
-  return number > 0 ? number : undefined
+function positiveInteger(value: number | undefined, field: string, minimum = 1, optional = false) {
+  if (optional && value == null) return undefined
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < minimum) {
+    throw new Error(`${field} 必须是大于或等于 ${minimum} 的精确整数`)
+  }
+  return minimum === 0 && value === 0 ? undefined : value
 }
 
 function erasureCodeTechniqueOptions(plugin: ErasureCodePlugin, scalarMDS?: ErasureCodeProfileFormValues['scalar_mds']) {
