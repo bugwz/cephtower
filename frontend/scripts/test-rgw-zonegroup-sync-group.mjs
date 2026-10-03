@@ -134,6 +134,12 @@ for(const realm of ['','realm']){
  const values={...pipeUpdateAction.initialValues(row),group_id:g.id,pipe_id:'p',source_bucket:'*',dest_bucket:'archive',mode:'system',confirm_pipe_update:'acknowledged'}
  assert.deepEqual(pipeUpdateAction.buildBody(values,7,row),{cluster_id:7,name:'east',zonegroup_id:'zg',realm_id:realm,group_id:g.id,pipe_id:'p',source_tenant:'',source_bucket:'*',source_bucket_id:'*',dest_tenant:'',dest_bucket:'archive',dest_bucket_id:'*',mode:'system',expected_group:JSON.stringify(g)})
  assert.equal(pipeUpdateAction.buildBody({...values,mode:'user',user:'new$u'},7,row).user,'new$u')
+ for (const priority of [-2147483648,0,2147483647]) {
+   assert.equal(pipeUpdateAction.buildBody({...values,priority},7,row).priority,priority)
+   assert.ok(pipeUpdateAction.confirmation({...values,priority},row).includes(`优先级：${priority}`))
+ }
+ for (const priority of [-2147483649,2147483648,0.5,'1',NaN]) assert.throws(()=>pipeUpdateAction.buildBody({...values,priority},7,row))
+ assert.equal(pipeUpdateAction.fields.find(field=>field.name==='priority').min,-2147483648)
  assert.match(pipeUpdateAction.confirmation(values,row),/保留已存储 UID.*保留 Zone 成员、过滤器.*非事务.*不自动回滚或重试/)
  for(const change of [{pipe_id:'missing'},{group_id:'missing'},{realm_id:'wrong'},{confirm_pipe_update:true},{mode:'user'},{user:'u'},{source_bucket:'a/b'}])assert.throws(()=>pipeUpdateAction.buildBody({...values,...change},7,row))
  assert.equal(pipeUpdateAction.buildBody({...values,source_zones_json:'["*"]'},7,row).source_zones,undefined)

@@ -12,7 +12,7 @@ import (
 func TestZonegroupSyncPipeUpdate(t *testing.T) {
 	for _, realm := range []string{"", "realm"} {
 		for _, mode := range []string{"system", "user"} {
-			for _, scenario := range []string{"success", "missing", "duplicate", "stale", "unchanged", "write", "post_check", "period.commit", "published_policy_check"} {
+			for _, scenario := range []string{"success", "priority", "missing", "duplicate", "stale", "unchanged", "write", "post_check", "period.commit", "published_policy_check"} {
 				if realm == "" && (scenario == "period.commit" || scenario == "published_policy_check") {
 					continue
 				}
@@ -51,6 +51,10 @@ func TestZonegroupSyncPipeUpdate(t *testing.T) {
 					}
 					zg := map[string]any{"id": "zg", "name": "east", "realm_id": realm, "zones": []any{}, "sync_policy": map[string]any{"groups": []any{group}}}
 					before := encode(zg)
+					if scenario == "priority" {
+						params["priority"] = -2147483648
+						nativeParams["priority"] = json.Number("-2147483648")
+					}
 					source["bucket"] = "team/new:id"
 					dest["bucket"] = "archive"
 					nativeParams["mode"] = mode
@@ -91,7 +95,7 @@ func TestZonegroupSyncPipeUpdate(t *testing.T) {
 					}
 					service.executor = runner
 					_, err := service.Execute(context.Background(), Request{ClusterID: cluster, Action: "rgw_zonegroup.sync_pipe_update", Parameters: params})
-					if scenario == "success" {
+					if scenario == "success" || scenario == "priority" {
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -109,6 +113,9 @@ func TestZonegroupSyncPipeUpdate(t *testing.T) {
 							args := []string{"sync", "group", "pipe", "modify", "--group-id", "g", "--pipe-id", "p", "--source-tenant", "team", "--source-bucket", "new", "--source-bucket-id", "id", "--dest-tenant", "", "--dest-bucket", "archive", "--dest-bucket-id", "*", "--mode", mode}
 							if mode == "user" {
 								args = append(args, "--uid", "new$u")
+							}
+							if scenario == "priority" {
+								args = append(args, "--priority", "-2147483648")
 							}
 							args = append(args, "--zonegroup-id", "zg", "--format", "json")
 							if !call.Mutating || !reflect.DeepEqual(call.Args, args) {

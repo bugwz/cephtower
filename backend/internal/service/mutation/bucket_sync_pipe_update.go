@@ -1,9 +1,35 @@
 package mutation
 
-import "reflect"
+import (
+	"encoding/json"
+	"fmt"
+	"reflect"
+	"strconv"
+)
+
+func syncPipePriority(p map[string]any) (string, bool, error) {
+	value, present := p["priority"]
+	if !present {
+		return "", false, nil
+	}
+	switch value.(type) {
+	case int, int32, int64, float64, json.Number:
+	default:
+		return "", true, invalid("priority must be a signed 32-bit integer")
+	}
+	text := fmt.Sprint(value)
+	if number, ok := value.(float64); ok {
+		text = strconv.FormatFloat(number, 'f', -1, 64)
+	}
+	n, err := strconv.ParseInt(text, 10, 32)
+	if err != nil {
+		return "", true, invalid("priority must be a signed 32-bit integer")
+	}
+	return strconv.FormatInt(n, 10), true, nil
+}
 
 // Validate the same explicit selectors and identity as creation, but never send
-// zone flags: native modify preserves the existing zone sets and advanced params.
+// zone flags. Only an explicit priority changes that advanced parameter.
 func bucketSyncPipeUpdateArgs(p map[string]any) ([]string, error) {
 	copy := map[string]any{}
 	for k, v := range p {
@@ -22,6 +48,13 @@ func bucketSyncPipeUpdateArgs(p map[string]any) ([]string, error) {
 			continue
 		}
 		result = append(result, args[i])
+	}
+	priority, present, err := syncPipePriority(p)
+	if err != nil {
+		return nil, err
+	}
+	if present {
+		result = append(result, "--priority", priority)
 	}
 	return result, nil
 }
@@ -52,6 +85,14 @@ func updateBucketSyncPipe(group map[string]any, p map[string]any) error {
 		return invalid("pipe params unavailable")
 	}
 	changed := params["mode"] != syncGroupString(p, "mode")
+	priority, present, err := syncPipePriority(p)
+	if err != nil {
+		return err
+	}
+	if present {
+		changed = changed || !reflect.DeepEqual(params["priority"], json.Number(priority))
+		params["priority"] = json.Number(priority)
+	}
 	if syncGroupString(p, "mode") == "user" {
 		changed = changed || params["user"] != syncGroupString(p, "user")
 		params["user"] = syncGroupString(p, "user")

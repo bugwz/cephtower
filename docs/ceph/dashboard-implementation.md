@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+- **Bucket / Zonegroup 同步管道优先级写入**：在已有管道编辑 API 与表单增加可选 `priority`，映射原生 `sync group pipe modify --priority`。依据 `rgw_sync_pipe_params::priority` 的 int32 类型，前后端拒绝小数、字符串和越界值，避免 CLI `atoi` 的隐式转换；留空不发送，显式 0 保留，允许仅修改优先级。沿用完整组快照、完整策略/Zonegroup 回读、资源锁与 Realm Period 发布核验，过滤器、目标 ACL/存储类及 Zone 成员保持不变。确认框列出新优先级或“保持原值”，提示管道选择变化和非事务风险。
+  - 新增仅改优先级、无变化拒绝、错误回读、其他字段漂移、负数/零/边界值、API 类型校验及两类实际表单绑定测试；更新 OpenAPI。无真实集群或浏览器视觉验证；其余高级管道参数写入仍待补齐。
+  - `make test-backend`（含 OpenAPI 一致性）与 `make test-frontend`（含类型检查、生产构建）通过。
+
 - **用户托管策略未知状态与集合校验**：原生 `ManagedPolicies::arns` 是 `flat_set`，`user policy list attached` 直接输出该集合。采集与写后核验现在拒绝重复 ARN，不再发布畸形列表或将其视为操作成功。前端对缺失、损坏、重复及过期的策略采集禁用操作，参考选择器不再把未知列表视作空列表；真实 `[]` 仍允许关联。新增采集不可用标记、关联/解除重复回读及前端异常状态测试。无真实集群验证。
   - `make test-backend`（含 OpenAPI 一致性）与 `make test-frontend`（含类型检查、生产构建）通过。
 

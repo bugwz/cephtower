@@ -326,6 +326,16 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		}
 		pipeUpdateBody := fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"group_id":"g","pipe_id":"p","expected_group":%q,"source_bucket":"*","dest_bucket":"photos","mode":"system"}`, cluster.ID, id, `{"id":"g","status":"allowed","data_flow":{},"pipes":[{"id":"p"}]}`)
 		pipeUpdateResponse := sendOperationRequest(t, nativeMux, http.MethodPatch, "/api/v1/rgw/bucket/sync/pipe", pipeUpdateBody, "sync-pipe-update-"+tenant)
+		for _, priority := range []string{"0", "-2147483648", "2147483647", "0.5", `"0"`, "null"} {
+			response := sendOperationRequest(t, nativeMux, http.MethodPatch, "/api/v1/rgw/bucket/sync/pipe", strings.TrimSuffix(pipeUpdateBody, "}")+`,"priority":`+priority+`}`, "sync-priority-"+tenant+priority)
+			want := http.StatusAccepted
+			if priority == "0.5" || priority == `"0"` || priority == "null" {
+				want = http.StatusBadRequest
+			}
+			if response.Code != want {
+				t.Fatalf("priority %s: %d %s", priority, response.Code, response.Body.String())
+			}
+		}
 		if pipeUpdateResponse.Code != http.StatusAccepted {
 			t.Fatalf("pipe update queue: %d %s", pipeUpdateResponse.Code, pipeUpdateResponse.Body.String())
 		}

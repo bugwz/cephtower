@@ -20964,6 +20964,8 @@ paths:
                   type: string
                 pool:
                   type: string
+                priority:
+                  type: integer
                 service_id:
                   type: string
                 share_id:
@@ -25997,6 +25999,8 @@ paths:
                   type: string
                 pool:
                   type: string
+                priority:
+                  type: integer
                 realm_id:
                   type: string
                 service_id:

@@ -154,7 +154,12 @@ export function bucketSyncPipeZonesConfirmation(values: Record<string, unknown>,
   return `确认修改 Bucket ID ${p.bucket_id} 的组 ${JSON.stringify(p.group_id)} 中管道 ${JSON.stringify(p.pipe_id)}？完整源 Zone IDs ${JSON.stringify(p.source_zones)}；完整目标 Zone IDs ${JSON.stringify(p.dest_zones)}。* 匹配全部 Zone，可能扩大复制范围。明确集合先增后删，通配与明确集合直接切换；非事务操作，中间范围可能变化，失败可能部分生效，不自动回滚或重试。保留桶选择器、执行身份和高级参数，不修改组状态、数据流或 Zonegroup/period。请备份并避免外部并发，核验成功不代表同步完成。`
 }
 
-export function bucketSyncPipeUpdateInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+export function syncPipePriorityInput(values: Record<string, unknown>) {
+  if (values.priority === undefined || values.priority === null || values.priority === '') return {}
+  if (typeof values.priority !== 'number' || !Number.isInteger(values.priority) || values.priority < -2147483648 || values.priority > 2147483647) throw new Error('优先级必须为有符号 32 位整数')
+  return {priority:values.priority}
+}
+export function bucketSyncPipeUpdateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {
   const selected = bucketSyncPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
   const group = JSON.parse(selected.expected_group)
   group.pipes = group.pipes.filter((pipe: { id: string }) => pipe.id !== values.pipe_id)
@@ -163,11 +168,11 @@ export function bucketSyncPipeUpdateInput(values: Record<string, unknown>, row?:
   delete input.source_zones
   delete input.dest_zones
   input.expected_group = selected.expected_group
-  return input
+  return {...input,...syncPipePriorityInput(values)}
 }
 export function bucketSyncPipeUpdateConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const input = bucketSyncPipeUpdateInput(values, row)
-  return `确认修改 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中管道 ${JSON.stringify(input.pipe_id)}？源租户/桶/实例 ${JSON.stringify([input.source_tenant, input.source_bucket, input.source_bucket_id])}；目标 ${JSON.stringify([input.dest_tenant, input.dest_bucket, input.dest_bucket_id])}；模式 ${input.mode}，用户 ${JSON.stringify(input.user)}。* 为通配，空租户不限定租户。system 模式保留已存储 UID（不使用其权限检查），不会删除用户或凭据。保留 Zone 成员、过滤器、优先级、目标 ACL 和存储类。可能改变复制范围或权限；请备份并避免外部并发，失败不代表未生效，不自动回滚。仅修改桶本地管道，不提交 period，不代表同步完成。`
+  return `确认修改 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中管道 ${JSON.stringify(input.pipe_id)}？源租户/桶/实例 ${JSON.stringify([input.source_tenant, input.source_bucket, input.source_bucket_id])}；目标 ${JSON.stringify([input.dest_tenant, input.dest_bucket, input.dest_bucket_id])}；模式 ${input.mode}，用户 ${JSON.stringify(input.user)}。* 为通配，空租户不限定租户。system 模式保留已存储 UID（不使用其权限检查），不会删除用户或凭据。优先级：${input.priority === undefined ? '保持原值' : input.priority}，可能改变匹配管道的选择。保留 Zone 成员、过滤器、目标 ACL 和存储类。可能改变复制范围或权限；请备份并避免外部并发，失败不代表未生效，不自动回滚。仅修改桶本地管道，不提交 period，不代表同步完成。`
 }
 
 export function bucketSyncPipeCreateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {

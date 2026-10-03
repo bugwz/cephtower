@@ -92,6 +92,13 @@ assert.equal(updatePipeAction.path, '/rgw/bucket/sync/pipe')
 assert.deepEqual(updatePipeAction.buildBody(pipeEditValues, 7, pipeEditRow), { cluster_id: 7, bucket_id: row.natural_key, group_id: group.id, pipe_id: ' 管道 ', expected_group: JSON.stringify(pipeEditGroup), source_bucket: 'photos', dest_bucket: '*', source_tenant: '', dest_tenant: '', source_bucket_id: '*', dest_bucket_id: '*', mode: 'system' })
 assert.match(updatePipeAction.confirmation(pipeEditValues, pipeEditRow), /system 模式保留已存储 UID.*保留 Zone 成员.*不自动回滚/)
 assert.equal(updatePipeAction.buildBody({ ...pipeEditValues, mode: 'user', user: 'tenant$uid' }, 7, pipeEditRow).user, 'tenant$uid')
+for (const priority of [-2147483648,0,2147483647]) {
+ assert.equal(updatePipeAction.buildBody({...pipeEditValues,priority},7,pipeEditRow).priority,priority)
+ assert.ok(updatePipeAction.confirmation({...pipeEditValues,priority},pipeEditRow).includes(`优先级：${priority}`))
+}
+for (const priority of [-2147483649,2147483648,0.5,'0',NaN]) assert.throws(()=>updatePipeAction.buildBody({...pipeEditValues,priority},7,pipeEditRow))
+for (const priority of [undefined,null,'']) assert.equal(updatePipeAction.buildBody({...pipeEditValues,priority},7,pipeEditRow).priority,undefined)
+assert.equal(updatePipeAction.fields.find(field=>field.name==='priority').max,2147483647)
 for (const change of [{ bucket_id:'other' }, { group_id:'other' }, { pipe_id:'missing' }, { confirm_pipe_update:true }, { source_bucket:'' }, { source_bucket:'a/b' }, { mode:'unknown' }, { user:'unexpected' }, { mode:'user' }]) assert.throws(() => updatePipeAction.buildBody({ ...pipeEditValues, ...change }, 7, pipeEditRow))
 assert.ok(updatePipeAction.disabledWhen({ ...pipeEditRow, stale: true }))
 assert.equal(pipeEditGroup.pipes[0].params.user, 'old')
