@@ -132,8 +132,13 @@ func (p *NativeProvider) attachRBDMirrorSnapshotSchedules(ctx context.Context, a
 		"mirror", "snapshot", "schedule", "status", "--format", "json",
 	}, &status) {
 		for _, item := range status.ScheduledImages {
-			if name := strings.TrimSpace(item.Image); name != "" && strings.TrimSpace(item.ScheduleTime) != "" {
-				nextRuns[name] = strings.TrimSpace(item.ScheduleTime)
+			if strings.TrimSpace(item.Image) == "" || strings.TrimSpace(item.ScheduleTime) == "" {
+				continue
+			}
+			// Native status is ordered by execution time; Dashboard also uses
+			// the first exact image match rather than the last queued task.
+			if _, exists := nextRuns[item.Image]; !exists {
+				nextRuns[item.Image] = item.ScheduleTime
 			}
 		}
 	}

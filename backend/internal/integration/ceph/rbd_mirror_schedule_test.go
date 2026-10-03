@@ -14,6 +14,7 @@ import (
 type rbdMirrorScheduleExecutor struct {
 	calls          []executor.CommandSpec
 	scheduleOutput *string
+	statusOutput   *string
 	fail           bool
 }
 
@@ -57,6 +58,9 @@ func (e *rbdMirrorScheduleExecutor) Run(_ context.Context, _ executor.ClusterAcc
           {"pool":"images","namespace":"team","image":"vm-1","items":[{"interval":"10m","start_time":""}]}
         ]`)}, nil
 	case "collect.rbd_mirror_schedule_status":
+		if e.statusOutput != nil {
+			return executor.CommandResult{Stdout: []byte(*e.statusOutput)}, nil
+		}
 		return executor.CommandResult{Stdout: []byte(`{"scheduled_images":[{"schedule_time":"2026-09-23 12:30:00","image":"images/team/vm-1"}]}`)}, nil
 	default:
 		return executor.CommandResult{}, fmt.Errorf("unexpected command %s", spec.ID)
@@ -87,6 +91,29 @@ func TestAttachRBDMirrorSnapshotSchedulesUsesMostSpecificSchedule(t *testing.T) 
 	for index, args := range want {
 		if runner.calls[index].Binary != executor.BinaryRBD || !reflect.DeepEqual(runner.calls[index].Args, args) || runner.calls[index].Mutating {
 			t.Fatalf("command %d=%+v", index, runner.calls[index])
+		}
+	}
+}
+
+func TestMirrorNextRunUsesFirstExactImageMatch(t *testing.T) {
+	output := `{"scheduled_images":[
+		{"image":"images/team/vm-1","schedule_time":"2026-10-03 12:00:00"},
+		{"image":"images/team/vm-1 ","schedule_time":"2026-10-03 12:30:00"},
+		{"image":"images/team/vm-1","schedule_time":"2026-10-03 13:00:00"},
+		{"image":" images/team/vm-2","schedule_time":"2026-10-03 14:00:00"}
+	]}`
+	provider := NativeProvider{Executor: &rbdMirrorScheduleExecutor{statusOutput: &output}}
+	rows := []Observation{}
+	for _, name := range []string{"vm-1", "vm-1 ", "vm-2"} {
+		rows = append(rows, Observation{Kind: "rbd_image", Payload: cephdomain.RBDImage{
+			ImagePath: "images/team/" + name, Pool: "images", Namespace: "team", Name: name,
+		}})
+	}
+	provider.attachRBDMirrorSnapshotSchedules(context.Background(), ClusterAccess{}, rows)
+	for i, expected := range []string{"2026-10-03 12:00:00", "2026-10-03 12:30:00", ""} {
+		image := rows[i].Payload.(cephdomain.RBDImage)
+		if image.ScheduleInfo == nil || image.ScheduleInfo.NextRun != expected {
+			t.Fatalf("image %q: schedule %+v, expected next run %q", image.ImagePath, image.ScheduleInfo, expected)
 		}
 	}
 }
