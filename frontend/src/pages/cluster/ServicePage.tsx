@@ -77,7 +77,7 @@ function ServicePageContent() {
   async function refreshAfterMutation() {
     if (!active.current || !selectedClusterId) return
     try { await refreshResource({ clusterId: selectedClusterId, kinds: ['service', 'daemon'] }) }
-    catch { if (active.current) message.warning('修改已执行，但重新采集失败，请刷新核对，不要重复提交。') }
+    catch { if (active.current) message.warning('操作后的重新采集失败，请刷新核对实际状态，不要直接重复提交。') }
     if (active.current) await refresh()
   }
 
@@ -124,6 +124,7 @@ function ServicePageContent() {
       return
     }
     running.current = true; setSubmitting(true)
+    let attempted = false
     try {
       let placement: ApiRecord
       try {
@@ -141,13 +142,20 @@ function ServicePageContent() {
         placement
       }
       const successMessage = editingService ? '服务更新执行成功' : '服务创建执行成功'
+      attempted = true
       await mutateResource('/service', editingService ? 'PATCH' : 'POST', body, editingService ? { ifMatch: String(editingService.resource_version) } : undefined)
       if (!active.current) return
-      setFormOpen(false)
       message.success(successMessage)
-      await refreshAfterMutation()
+    } catch (err) {
+      if (active.current) message.warning('服务操作未确认成功，请核对刷新后的状态，再决定是否重新操作。')
+      throw err
     } finally {
-      running.current = false; if (active.current) setSubmitting(false)
+      try {
+        if (attempted && active.current) {
+          setFormOpen(false)
+          await refreshAfterMutation()
+        }
+      } finally { running.current = false; if (active.current) setSubmitting(false) }
     }
   }
 
@@ -164,7 +172,7 @@ function ServicePageContent() {
     }
     const generation = String(row.resource_version)
     const parameters = { cluster_id: selectedClusterId, name }
-    Modal.confirm({
+    const confirmation = Modal.confirm({
       title: `删除服务 ${name}`,
       content: '该操作为高风险操作，确认后将直接执行删除操作。',
       okText: '提交删除',
@@ -178,8 +186,14 @@ function ServicePageContent() {
           await mutateResource('/service', 'DELETE', parameters, { ifMatch: generation })
           if (!active.current) return
           message.success('服务删除执行成功')
-          await refreshAfterMutation()
-        } finally { running.current = false; if (active.current) setSubmitting(false) }
+        } catch (err) {
+          if (active.current) message.warning('删除结果未确认，请核对刷新后的服务状态，不要直接重复删除。')
+          throw err
+        } finally {
+          confirmation.destroy()
+          try { if (active.current) await refreshAfterMutation() }
+          finally { running.current = false; if (active.current) setSubmitting(false) }
+        }
       }
     })
   }

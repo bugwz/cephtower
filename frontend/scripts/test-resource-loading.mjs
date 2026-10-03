@@ -48,7 +48,7 @@ for (const scenario of ['ok', 'inactive', 'unmount', 'stale', 'error']) {
     active: { current: scenario !== 'inactive' }, running: { current: false }, selectedClusterId: 7, loading: false, error: '',
     editingService: { name: 'rgw.a', resource_version: '9007199254740993', stale: scenario === 'stale' }, serviceWritable: (row) => !row.stale,
     setSubmitting: () => {}, setFormOpen: () => calls.push('close'), parsePlacement: JSON.parse, serviceName: (row) => row.name,
-    message: { error: () => {}, success: () => calls.push('success') }, refreshAfterMutation: async () => calls.push('collect'),
+    message: { error: () => {}, warning: () => calls.push('warning'), success: () => calls.push('success') }, refreshAfterMutation: async () => calls.push('collect'),
     mutateResource: (...args) => { calls.push(args); return new Promise((yes, no) => { resolve = yes; reject = no }) },
   }
   const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
@@ -60,13 +60,39 @@ for (const scenario of ['ok', 'inactive', 'unmount', 'stale', 'error']) {
   if (scenario === 'unmount') env.active.current = false
   if (scenario === 'error') { reject(new Error('failure')); await assert.rejects(pending) } else { resolve(); await pending }
   assert.equal(calls.includes('success'), scenario === 'ok')
-  assert.equal(calls.includes('collect'), scenario === 'ok')
+  assert.equal(calls.includes('collect'), ['ok', 'error'].includes(scenario))
+  assert.equal(calls.includes('close'), ['ok', 'error'].includes(scenario))
   assert.equal(env.running.current, false)
 }
 assert.ok(servicePage.includes("<ServicePageContent key={selectedClusterId ?? 'none'}"))
 assert.ok(servicePage.includes("if (!active.current) throw new Error('集群已切换，请重新确认删除')"))
 assert.ok(!servicePage.includes('window.setTimeout'))
 console.log('Service mutation cluster isolation and duplicate submission checks passed')
+
+const deleteServiceNode = serviceContent.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'deleteService')
+const deleteServiceCode = ts.transpileModule(deleteServiceNode.getText(servicePageTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const scenario of ['ok', 'error', 'unmount', 'refresh-error']) {
+  const calls = []
+  let dialog
+  const active = { current: true }, running = { current: false }
+  const env = {
+    active, running, selectedClusterId: 7, loading: false, error: '', serviceWritable: () => true,
+    serviceName: (row) => row.name, setSubmitting: () => {},
+    Modal: { confirm: (options) => { dialog = options; return { destroy: () => calls.push('destroy') } } },
+    message: { error: () => {}, warning: () => calls.push('warning'), success: () => calls.push('success') },
+    mutateResource: async () => { calls.push('mutate'); if (scenario === 'unmount') active.current = false; if (scenario === 'error') throw new Error('unconfirmed') },
+    refreshAfterMutation: async () => { calls.push('refresh'); if (scenario === 'refresh-error') throw new Error('refresh failed') },
+  }
+  const remove = new Function(...Object.keys(env), `${deleteServiceCode}; return deleteService`)(...Object.values(env))
+  await remove({ name: 'rgw.a', resource_version: '9007199254740993' })
+  if (['error', 'refresh-error'].includes(scenario)) await assert.rejects(dialog.onOk())
+  else await dialog.onOk()
+  assert.equal(calls.filter((call) => call === 'mutate').length, 1)
+  assert.equal(calls.includes('destroy'), true)
+  assert.equal(calls.includes('refresh'), scenario !== 'unmount')
+  assert.equal(running.current, false)
+}
+console.log('Service uncertain deletion recovery checks passed')
 
 const writableNode = servicePageTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'serviceWritable')
 const writableCode = ts.transpileModule(writableNode.getText(servicePageTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
