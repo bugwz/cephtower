@@ -12,10 +12,12 @@ func rgwUserPolicyMatches(raw []byte, parameters map[string]any) bool {
 		return false
 	}
 	found := false
+	seen := make(map[string]bool, len(policies))
 	for _, policy := range policies {
-		if policy == "" {
+		if policy == "" || seen[policy] {
 			return false
 		}
+		seen[policy] = true
 		if policy == arn {
 			found = true
 		}

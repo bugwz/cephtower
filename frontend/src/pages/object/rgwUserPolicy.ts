@@ -2,19 +2,25 @@ import { rgwIdentityList } from './rgwUserIdentity'
 
 // Mirrors the Dashboard user form; target Ceph still validates support.
 const referencePolicies = ['AmazonS3FullAccess', 'AmazonS3ReadOnlyAccess'].map(label => ({label, value: `arn:aws:iam::aws:policy/${label}`}))
-export function rgwUserPolicyAttachOptions(row?: Record<string, unknown>) {
+function userPolicies(row?: Record<string, unknown>) {
   const policies = rgwIdentityList(row?.managed_user_policies)
-  return referencePolicies.filter(option => !policies?.includes(option.value))
+  if (!policies || new Set(policies).size !== policies.length) throw new Error('托管策略列表不可用或重复，请重新采集')
+  return policies
+}
+export function rgwUserPolicyAttachOptions(row?: Record<string, unknown>) {
+  const policies = userPolicies(row)
+  return referencePolicies.filter(option => !policies.includes(option.value))
 }
 
 export function rgwUserPolicyBlocked(row?: Record<string, unknown>) {
   if (typeof row?.account_id !== 'string' || row.account_id === '' || typeof row.type !== 'string' || row.type === '' || row.type === 'root') return '仅支持已采集到账户信息的非 root 用户'
+  if (row.stale === true) return '用户信息已过期，请重新采集'
+  try { userPolicies(row) } catch (error) { return (error as Error).message }
   return undefined
 }
 
 export function rgwUserPolicyOptions(row?: Record<string, unknown>) {
-  const policies = rgwIdentityList(row?.managed_user_policies)
-  if (!policies) throw new Error('托管策略列表不可用，请重新采集')
+  const policies = userPolicies(row)
   return policies.map(arn => ({ label: arn, value: arn }))
 }
 

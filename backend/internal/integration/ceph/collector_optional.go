@@ -406,11 +406,13 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 					var policies []string
 					if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_user_policies", []string{"user", "policy", "list", "attached", "--uid", id, "--format", "json"}, &policies) {
 						valid := policies != nil
+						seen := make(map[string]bool, len(policies))
 						for _, arn := range policies {
-							if arn == "" {
+							if arn == "" || seen[arn] {
 								valid = false
 								break
 							}
+							seen[arn] = true
 						}
 						if valid {
 							details["managed_user_policies"] = policies

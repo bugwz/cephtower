@@ -189,6 +189,15 @@ for (const row of [undefined, {}, { account_id: '', type: 'rgw' }, { account_id:
 for (const value of ['', '--policy', arn + '\n', arn + ';other', null]) assert.throws(() => policy.rgwUserPolicyInput({ action: 'attach', policy_source: 'custom', policy_arn: value }, accountUser))
 assert.equal(policy.rgwUserPolicyAttachOptions(accountUser).length,1)
 assert.equal(policy.rgwUserPolicyAttachOptions({...accountUser,managed_user_policies:[]}).length,2)
+for (const managed_user_policies of [undefined,null,{},[arn,arn],[''],[null]]) {
+  const invalid={...accountUser,managed_user_policies}
+  assert.ok(policy.rgwUserPolicyBlocked(invalid))
+  assert.throws(()=>policy.rgwUserPolicyAttachOptions(invalid))
+  assert.throws(()=>policy.rgwUserPolicyOptions(invalid))
+  for (const action of ['attach','detach']) assert.throws(()=>policy.rgwUserPolicyInput({action,policy_source:'custom',policy_arn:arn,existing_policy:arn},invalid))
+}
+assert.ok(policy.rgwUserPolicyBlocked({...accountUser,stale:true}))
+assert.equal(policy.rgwUserPolicyBlocked({...accountUser,managed_user_policies:[]}),undefined)
 const referenceValues={action:'attach',policy_source:'reference',reference_policy:arn,policy_arn:'stale'}
 assert.deepEqual(policy.rgwUserPolicyInput(referenceValues,{...accountUser,managed_user_policies:[]}),{action:'attach',policy_arn:arn})
 assert.throws(()=>policy.rgwUserPolicyInput(referenceValues,accountUser))

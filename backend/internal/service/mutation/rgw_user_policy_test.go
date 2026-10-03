@@ -23,6 +23,8 @@ func TestRGWUserPolicyExecutionReadback(t *testing.T) {
 		{"detach remains", "detach", `["` + arn + `"]`, "", false},
 		{"other policy", "attach", `["arn:aws:iam::aws:policy/Other"]`, "", false},
 		{"null list", "detach", `null`, "", false},
+		{"duplicate target", "attach", `["` + arn + `","` + arn + `"]`, "", false},
+		{"duplicate other", "detach", `["other","other"]`, "", false},
 		{"wrong shape", "detach", `{"AttachedPolicies":[]}`, "", false},
 		{"trailing data", "detach", `[] {}`, "", false},
 		{"read failure", "attach", `["` + arn + `"]`, "rgw_user.policy.post_check", false},

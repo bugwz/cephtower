@@ -47,6 +47,7 @@ func TestRGWUserManagedPolicies(t *testing.T) {
 	}{
 		{"populated", `["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"]`, true},
 		{"empty", `[]`, true},
+		{"duplicate", `["arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess","arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"]`, false},
 		{"null", `null`, false},
 		{"object", `{"AttachedPolicies":[]}`, false},
 		{"empty ARN", `[""]`, false},
@@ -81,6 +82,10 @@ func TestRGWUserManagedPolicies(t *testing.T) {
 			}
 			if !found {
 				t.Fatal("user missing")
+			}
+			_, unavailable := trace.unavailable["rgw_user"]
+			if !tc.valid && !unavailable {
+				t.Fatalf("unavailable = %v, valid = %v", unavailable, tc.valid)
 			}
 		})
 	}
