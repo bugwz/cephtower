@@ -39,6 +39,7 @@ import { rgwSwiftRotationOptions, rgwSwiftRotationInput } from './rgwSwiftKeyRot
 import { rgwS3KeyOwnerOptions, rgwS3KeyCreateInput } from './rgwS3KeyCreate'
 import { rgwS3KeyDeleteOptions, rgwS3KeyDeleteInput } from './rgwS3KeyDelete'
 import { rgwS3KeyRotateInput } from './rgwS3KeyRotate'
+import { RgwGeneratedCredentialInput } from './RgwGeneratedCredentialInput'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
@@ -262,8 +263,8 @@ const definitions: Record<
         changedValues: changed => Object.keys(changed).some(key => ['owner', 'access_key', 'secret_key'].includes(key)) ? { credentials_saved: undefined, confirm_owner: undefined } : {},
         fields: [
           { name: 'owner', label: '凭据所属用户', type: 'select', required: true, optionsLoader: async (_clusterId, row) => rgwS3KeyOwnerOptions(row) },
-          { name: 'access_key', label: '尚未使用的 Access Key（预先保存）', type: 'password', required: true },
-          { name: 'secret_key', label: '高强度 Secret Key（预先保存，提交后不回显）', type: 'password', required: true },
+          { name: 'access_key', label: '尚未使用的 Access Key（预先保存）', type: 'password', required: true, renderControl: () => <RgwGeneratedCredentialInput kind="access" /> },
+          { name: 'secret_key', label: '高强度 Secret Key（预先保存，提交后不回显）', type: 'password', required: true, renderControl: () => <RgwGeneratedCredentialInput kind="secret" /> },
           { name: 'credentials_saved', label: '凭据保存确认', type: 'select', required: true, options: [{ label: '已安全保存本次凭据', value: 'saved' }] },
           { name: 'confirm_owner', label: '输入完整凭据所属用户 ID 确认', required: true }
         ],
@@ -276,7 +277,7 @@ const definitions: Record<
         fields: [
           { name: 'owner', label: '已有密钥所属用户', type: 'select', required: true, optionsLoader: async (_clusterId, row) => rgwS3KeyDeleteOptions(row) },
           { name: 'access_key', label: '原 Access Key（保持不变，请从安全保存位置提供）', type: 'password', required: true },
-          { name: 'secret_key', label: '不同于旧值的新 Secret Key（预先保存，提交后不回显）', type: 'password', required: true },
+          { name: 'secret_key', label: '不同于旧值的新 Secret Key（预先保存，提交后不回显）', type: 'password', required: true, renderControl: () => <RgwGeneratedCredentialInput kind="secret" /> },
           { name: 'credentials_saved', label: '确认保存新凭据并准备更新客户端', type: 'select', required: true, options: [{ label: '已安全保存并准备切换客户端', value: 'saved' }] },
           { name: 'confirm_owner', label: '输入完整凭据所属用户 ID 确认', required: true }
         ],
@@ -300,8 +301,8 @@ const definitions: Record<
           { name: 'subuser', label: '本地子用户名（不含 UID 或冒号）', required: true },
           { name: 'subuser_permission', label: '子用户权限', type: 'select', required: true, options: rgwSubuserPermissionOptions },
           { name: 'key_type', label: '密钥类型', type: 'select', required: true, options: [{ label: 'S3', value: 's3' }, { label: 'Swift', value: 'swift' }] },
-          { name: 'access_key', label: '预先保存的 S3 Access Key', type: 'password', required: true, visibleWhen: values => values.key_type === 's3' },
-          { name: 'secret_key', label: '预先保存的高强度 Secret Key（提交后不回显）', type: 'password', required: true },
+          { name: 'access_key', label: '预先保存的 S3 Access Key', type: 'password', required: true, visibleWhen: values => values.key_type === 's3', renderControl: () => <RgwGeneratedCredentialInput kind="access" /> },
+          { name: 'secret_key', label: '预先保存的高强度 Secret Key（提交后不回显）', type: 'password', required: true, renderControl: () => <RgwGeneratedCredentialInput kind="secret" /> },
           { name: 'credentials_saved', label: '凭据保存确认', type: 'select', required: true, options: [{ label: '已将本次凭据保存在安全位置', value: 'saved' }] },
           { name: 'confirm_subuser', label: '输入完整子用户 ID 确认（UID:子用户名）', required: true }
         ],
@@ -316,7 +317,7 @@ const definitions: Record<
         changedValues: changed => Object.keys(changed).some(key => ['subuser', 'secret_key'].includes(key)) ? { credentials_saved: undefined, confirm_subuser: undefined } : {},
         fields: [
           { name: 'subuser', label: 'Swift 子用户密钥', type: 'select', required: true, optionsLoader: async (_clusterId, row) => rgwSwiftRotationOptions(row) },
-          { name: 'secret_key', label: '不同于旧值的新 Secret Key（预先保存，提交后不回显）', type: 'password', required: true },
+          { name: 'secret_key', label: '不同于旧值的新 Secret Key（预先保存，提交后不回显）', type: 'password', required: true, renderControl: () => <RgwGeneratedCredentialInput kind="secret" /> },
           { name: 'credentials_saved', label: '确认保存新凭据并准备更新客户端', type: 'select', required: true, options: [{ label: '已安全保存并准备切换客户端', value: 'saved' }] },
           { name: 'confirm_subuser', label: '输入完整子用户 ID 确认（UID:子用户名）', required: true }
         ],

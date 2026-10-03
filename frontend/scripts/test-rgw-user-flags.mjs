@@ -13,6 +13,7 @@ import './test-rgw-swift-rotation.mjs'
 import './test-rgw-s3-key-create.mjs'
 import './test-rgw-s3-key-delete.mjs'
 import './test-rgw-s3-key-rotate.mjs'
+import './test-rgw-credential-generator.mjs'
 const exports = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserFlags.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
 assert.equal(exports.rgwUserSuspension(0), '未暂停')

@@ -23,7 +23,7 @@ function visit(item) {
 }
 visit(source)
 assert.ok(node)
-const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
 const action = new Function('rgwS3KeyRotateInput', 'rgwS3KeyDeleteOptions', 'userId', `${code}; return action`)(helpers.rgwS3KeyRotateInput, remove.rgwS3KeyDeleteOptions, row => row.uid)
 assert.equal(action.method, 'PATCH')
 assert.equal(action.path, '/rgw/user/key')

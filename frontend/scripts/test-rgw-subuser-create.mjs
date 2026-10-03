@@ -28,7 +28,7 @@ function visit(item) {
 }
 visit(source)
 assert.ok(node)
-const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
 const action = new Function('rgwSubuserCreateInput', 'rgwSubuserPermissionOptions', 'userId', `${code}; return action`)(helpers.rgwSubuserCreateInput, subusers.rgwSubuserPermissionOptions, row => row.uid)
 assert.equal(action.path, '/rgw/user/subuser')
 assert.equal(action.method, 'POST')
