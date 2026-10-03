@@ -86,6 +86,22 @@ for (const state of ['not running', 'not ok', 'broken']) {
 assert.equal(daemonStateHelpers.daemonStatusColor('running'), 'success')
 assert.equal(daemonStateHelpers.daemonStatusText('stopped'), '已停止')
 console.log('Native daemon status codes and unrecognized descriptions remain distinct')
+for (const state of ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf']) {
+  const normalized = daemonStateHelpers.nativeDaemonStatus({ status: state })
+  assert.equal(normalized, state)
+  assert.equal(daemonStateHelpers.daemonStatusColor(normalized), 'default')
+  assert.equal(daemonStateHelpers.daemonStatusText(normalized), state)
+}
+const deviceHealthNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'renderDeviceHealth')
+const deviceHealthCode = ts.transpileModule(deviceHealthNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
+const renderDeviceHealth = new Function('React', 'Tag', 'textValue', `${deviceHealthCode}; return renderDeviceHealth`)({ createElement: (_, props, label) => ({ color: props.color, label }) }, 'Tag', (value, fallback = '-') => typeof value === 'string' && value.trim() ? value : fallback)
+for (const state of ['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf', 'new-health-state']) {
+  assert.deepEqual(renderDeviceHealth(state), { label: state, color: 'default' })
+}
+assert.deepEqual(renderDeviceHealth('good'), { label: '良好', color: 'success' })
+assert.deepEqual(renderDeviceHealth('failed'), { label: '异常', color: 'error' })
+assert.deepEqual(renderDeviceHealth(null), { label: '未知', color: 'default' })
+console.log('Unrecognized daemon and device health states cannot resolve inherited properties')
 const deviceInfoTable = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HostDeviceInfoTable')
 assert.ok(deviceInfoTable.getText(hostDetailTree).includes("key: 'life_expectancy_stamp'"))
 const timeSource = readFileSync(new URL('../src/utils/time.ts', import.meta.url), 'utf8')

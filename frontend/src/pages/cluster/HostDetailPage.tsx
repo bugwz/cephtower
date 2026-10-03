@@ -670,7 +670,7 @@ function renderDeviceHealth(value: unknown) {
     unknown: { label: '未知', color: 'default' },
     unavailable: { label: '读取失败（健康未知）', color: 'error' }
   }
-  const item = mapping[status] ?? { label: textValue(value), color: 'default' }
+  const item = Object.prototype.hasOwnProperty.call(mapping, status) ? mapping[status] : { label: textValue(value), color: 'default' }
   return <Tag color={item.color}>{item.label}</Tag>
 }
 
@@ -839,8 +839,8 @@ function normalizeDaemonRow(row: ApiRecord): ApiRecord {
 
 function nativeDaemonStatus(row: ApiRecord): string {
   const codes: Record<string, string> = { '-2': 'unknown', '-1': 'error', '0': 'stopped', '1': 'running', '2': 'starting' }
-  if (typeof row.status === 'number') return codes[String(row.status)] ?? 'unknown'
-  if (typeof row.status === 'string' && row.status.trim()) return codes[row.status] ?? row.status
+  if (typeof row.status === 'number') return Object.prototype.hasOwnProperty.call(codes, String(row.status)) ? codes[String(row.status)] : 'unknown'
+  if (typeof row.status === 'string' && row.status.trim()) return Object.prototype.hasOwnProperty.call(codes, row.status) ? codes[row.status] : row.status
   return typeof row.status_desc === 'string' && row.status_desc.trim() ? row.status_desc : 'unknown'
 }
 
