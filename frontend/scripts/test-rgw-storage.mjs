@@ -20,6 +20,12 @@ for (const size of [undefined, null, -1, 0.5, NaN, Infinity, '1', Number.MAX_SAF
 assert.equal(rows({ stats: { num_objects: 0 } })[0].objects, '0')
 assert.equal(rows({ stats: { size_kb: 1 } })[0].size, '未返回或超出精确显示范围')
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
-assert.equal(pages.match(/<RgwStorage value=\{value\} \/>/g).length, 2)
+assert.equal(pages.match(/<RgwStorage value=\{value\} \/>/g).length, 1)
+assert.equal(pages.match(/<RgwStorage value=\{value\} account \/>/g).length, 1)
 assert.equal(pages.match(/<RgwStorage value=\{value\} categorized \/>/g).length, 1)
 console.log('RGW storage statistics preserve category, units, zero and unavailable values')
+const times = exports.rgwStorageTimes
+assert.deepEqual(times({ last_stats_sync: '2026-10-03 12:00:00.123456Z', last_stats_update: '2026-10-03 12:01:00Z' }), { synced: '2026-10-03 12:00:00.123456Z', updated: '2026-10-03 12:01:00Z' })
+assert.deepEqual(times({ last_synced: 'sync', last_updated: 'update' }, true), { synced: 'sync', updated: 'update' })
+assert.equal(times({ last_synced: 'wrong scope' }).synced, '未返回或格式无效')
+for (const value of [null, undefined, '', 0, false, []]) assert.equal(times({ last_stats_sync: value }).synced, '未返回或格式无效')

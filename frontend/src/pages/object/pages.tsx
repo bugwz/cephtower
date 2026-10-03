@@ -271,7 +271,7 @@ const definitions: Record<
       { key: 'tenant', title: 'Tenant' },
       { key: 'quota', title: '账户配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'bucket_quota', title: '默认 Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
-      { key: 'storage_stats', title: '容量与对象统计', ellipsis: false, render: (value) => <RgwStorage value={value} /> },
+      { key: 'storage_stats', title: '容量与对象统计', ellipsis: false, render: (value) => <RgwStorage value={value} account /> },
       { key: 'max_users', title: '用户上限', render: rgwAccountLimit },
       { key: 'max_roles', title: '角色上限', render: rgwAccountLimit },
       { key: 'max_groups', title: '用户组上限', render: rgwAccountLimit },

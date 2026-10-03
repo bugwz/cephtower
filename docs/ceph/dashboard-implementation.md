@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+用户/账户用量明细补充统计同步与更新时间：user stats 原生字段为 last_stats_sync /
+last_stats_update，account stats 为 last_synced / last_updated。按资源类型读取，保留
+命令时间原文，不替换为库存更新时间或推断时区；Bucket 分类表不展示这些汇总时间。
+复用现有统计采集对象，离线测试验证字段映射与缺失值，未进行浏览器或真实集群验证。
+
 用户放置配置补充 default_placement、default_storage_class 与 placement_tags，依据
 driver/rados/rgw_user.cc 的 user info 输出，复用现有采集/API。空字符串表示未显式设置，
 不推断最终继承的放置目标或存储类；缺失值明确标记不可用，标签逐项保留原值。
