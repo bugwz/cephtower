@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+已有 Swift 子用户密钥增加显式凭据轮换入口，复用高风险 `POST /rgw/user/subuser` 的 `rotate-swift-key` 操作，映射 `key create --subuser --key-type=swift --secret-key --key-active`。依据参考用户表单子用户更新、`RGWAccessKeyPool::execute_add/modify_key` 和 CLI `KEY_CREATE`：已有 Swift key 会被替换，原生实现重新构造密钥对象，因此必须显式保留激活状态，避免停用密钥被意外启用。前端从同 UID 子用户与 Swift 密钥关联中选择，拒绝重复或未知状态；确认旧凭据失效、新凭据已保存及客户端切换。后端预检实际 UID、子用户、唯一 Swift key、预期激活状态以及新旧密钥不同，回读核验新密钥与保留状态，不传权限或 S3 密钥参数；敏感参数加密落库、命令参数脱敏，写入/回读/库存失败不自动重试。测试覆盖两种激活状态、状态漂移、重复项、旧密钥提交、读写失败、表单绑定及 API 高风险入队；完整前后端检查和 OpenAPI 校验通过。未真实集群或浏览器视觉验证；S3 密钥管理、自动生成及一次性安全发放仍不因此宣称完成。
+
 RGW 子用户创建支持 S3/Swift 及显式提供凭据，对齐参考 `controllers/rgw.py::create_subuser` 的手动密钥模式。复用 `POST /rgw/user/subuser`，映射 `subuser create --key-type --access --secret-key`，S3 另传 `--access-key`；依据 `rgw_user.h` 的密钥操作标记及 `RGWSubUserPool::add/execute_add`。前端要求预先安全保存凭据、完整子用户 ID 确认，密码字段不进入确认文字；Swift 不提交残留的 S3 Access Key。执行前检查完整 UID、子用户与关联密钥均不存在，执行后检查权限、密钥所属子用户、内容及激活状态。参数随既有任务加密落库，敏感命令参数标记脱敏，操作结果不包含原生用户信息，失败沿用不可自动重试策略。API 入队、两种协议五种权限、异常回读、预检、敏感参数与前端绑定测试及完整前后端检查通过；OpenAPI 已再生成。仍未实机或浏览器视觉验证；服务端自动生成及一次性安全发放密钥、已有子用户密钥轮换尚未完成，不能将本次手动凭据创建视为完整密钥管理覆盖。
 
 已有 RGW 子用户增加权限修改与删除入口，通过 `POST /rgw/user/subuser` 高风险操作映射 `radosgw-admin subuser modify/rm`。权限提供无权限、读、写、读写、完全控制；`none` 映射显式 `--access=`，回读 `<none>`，依据 `common/ceph_argparse.cc`、`rgw_common.cc` 及 CLI 的 `set_perm` 分支。子用户从当前 UID 的库存中选择，要求输入完整 ID 确认；传给原生命令的仅为本地子用户名，拒绝冒号以避免 `RGWUserAdminOpState::set_subuser` 重定向用户。执行前实时核验完整 UID 和子用户存在，执行后核验权限或子用户及 S3/Swift 密钥关联均已移除。删除清除全部关联密钥的行为来自 `RGWSubUserPool::execute_remove`，前端明确提示不可恢复；修改不生成或轮换密钥。写入、回读及库存刷新失败不自动重试。API 入队、权限映射、参数拒绝、执行链、关联密钥残留、表单确认和刷新测试已覆盖，`make test-backend`（含 OpenAPI 校验）与 `make test-frontend` 通过；未实机或浏览器视觉验证。创建子用户与安全密钥发放仍未实现，此项不是子用户全功能完成声明。

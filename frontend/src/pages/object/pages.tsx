@@ -35,6 +35,7 @@ import { rgwUserOperationMaskInput, rgwUserOperationMaskOptions } from './rgwUse
 import { rgwUserAccountRootBlocked, rgwUserAccountRootInput } from './rgwUserAccountRoot'
 import { rgwSubuserOptions, rgwSubuserInput, rgwSubuserPermissionOptions } from './rgwUserSubuser'
 import { rgwSubuserCreateInput } from './rgwSubuserCreate'
+import { rgwSwiftRotationOptions, rgwSwiftRotationInput } from './rgwSwiftKeyRotation'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
@@ -270,6 +271,21 @@ const definitions: Record<
           return `为 ${JSON.stringify(input.confirm_subuser)} 创建 ${input.key_type} 凭据，授予 ${JSON.stringify(input.subuser_permission)} 权限？请确认已安全保存密钥，本系统不会提供密钥查询。`
         },
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwSubuserCreateInput(values, row) })
+      },
+      { title: '轮换 Swift 子用户密钥', path: '/rgw/user/subuser', method: 'POST', successMessage: 'Swift 密钥已轮换并核验原激活状态；请更新使用旧凭据的客户端',
+        disabledWhen: row => rgwSwiftRotationOptions(row).length ? undefined : '没有状态明确的 Swift 子用户密钥，请先刷新库存',
+        changedValues: changed => Object.keys(changed).some(key => ['subuser', 'secret_key'].includes(key)) ? { credentials_saved: undefined, confirm_subuser: undefined } : {},
+        fields: [
+          { name: 'subuser', label: 'Swift 子用户密钥', type: 'select', required: true, optionsLoader: async (_clusterId, row) => rgwSwiftRotationOptions(row) },
+          { name: 'secret_key', label: '不同于旧值的新 Secret Key（预先保存，提交后不回显）', type: 'password', required: true },
+          { name: 'credentials_saved', label: '确认保存新凭据并准备更新客户端', type: 'select', required: true, options: [{ label: '已安全保存并准备切换客户端', value: 'saved' }] },
+          { name: 'confirm_subuser', label: '输入完整子用户 ID 确认（UID:子用户名）', required: true }
+        ],
+        confirmation: (values, row) => {
+          const input = rgwSwiftRotationInput(values, row)
+          return `轮换 ${JSON.stringify(input.confirm_subuser)} 的 Swift 密钥？旧凭据将失效，客户端需更新；保留${input.expected_key_active ? '已激活' : '已停用'}状态，不修改权限或 S3 密钥。新密钥不会提供后续查询。`
+        },
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwSwiftRotationInput(values, row) })
       },
       { title: '管理已有子用户', path: '/rgw/user/subuser', method: 'POST', successMessage: '子用户变更已执行并回读验证',
         disabledWhen: (row) => rgwSubuserOptions(row).length ? undefined : '没有可操作的子用户，请先刷新用户库存',

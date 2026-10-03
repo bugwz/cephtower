@@ -58,10 +58,13 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 			t.Fatalf("response risk differs: %s", response.Body.String())
 		}
 	}
-	for _, action := range []string{"modify", "rm"} {
+	for _, action := range []string{"modify", "rm", "rotate-swift-key"} {
 		fields := ""
 		if action == "modify" {
 			fields = `,"subuser_permission":"read"`
+		}
+		if action == "rotate-swift-key" {
+			fields = `,"expected_key_active":false,"secret_key":"NewSwiftSecret"`
 		}
 		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/user/subuser", fmt.Sprintf(`{"cluster_id":%d,"uid":"tenant$user","subuser":"swift","confirm_subuser":"tenant$user:swift","action":%q%s}`, cluster.ID, action, fields), "subuser-"+action)
 		if response.Code != http.StatusAccepted {

@@ -3,6 +3,7 @@ package mutation
 import (
 	"encoding/json"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -22,12 +23,33 @@ func buildRGWSubuser(p map[string]any, rgw func([]string, []string) command) (co
 	if !regexp.MustCompile(`^[A-Za-z0-9_.:@$-]+$`).MatchString(uid) || strings.HasPrefix(uid, "-") || !rgwSubuserName.MatchString(name) || strings.HasPrefix(name, "-") {
 		return command{}, invalid("uid or local subuser name is invalid; qualified subuser names are not accepted")
 	}
-	verb, err := enum(p, "action", "create", "modify", "rm")
+	verb, err := enum(p, "action", "create", "modify", "rm", "rotate-swift-key")
 	if err != nil {
 		return command{}, err
 	}
 	if rawText(p, "confirm_subuser") != uid+":"+name {
 		return command{}, invalid("confirm_subuser must match the full subuser id")
+	}
+	if verb == "rotate-swift-key" {
+		for _, field := range []string{"key_type", "access_key", "subuser_permission"} {
+			if _, present := p[field]; present {
+				return command{}, invalid("Swift rotation cannot change protocol, access key or permissions")
+			}
+		}
+		active, ok := p["expected_key_active"].(bool)
+		if !ok {
+			return command{}, invalid("expected_key_active must be an explicit boolean")
+		}
+		secret, err := rgwSubuserSecret(p)
+		if err != nil {
+			return command{}, err
+		}
+		cmd := rgw([]string{"key", "create", "--uid", uid, "--subuser=" + name, "--key-type=swift", "--key-active=" + strconv.FormatBool(active), "--secret-key=" + secret}, []string{"user", "info", "--uid", uid})
+		cmd.sensitive = map[int]struct{}{7: {}}
+		return cmd, nil
+	}
+	if _, present := p["expected_key_active"]; present {
+		return command{}, invalid("expected_key_active is only accepted for Swift rotation")
 	}
 	args := []string{"subuser", verb, "--uid", uid, "--subuser=" + name}
 	if verb != "rm" {
@@ -54,9 +76,9 @@ func buildRGWSubuser(p map[string]any, rgw func([]string, []string) command) (co
 	if !ok || (kind != "s3" && kind != "swift") {
 		return command{}, invalid("key_type must be s3 or swift")
 	}
-	secret, ok := p["secret_key"].(string)
-	if !ok || len(secret) == 0 || len(secret) > 256 || secret != strings.TrimSpace(secret) || regexp.MustCompile(`[\x00-\x1f\x7f]`).MatchString(secret) {
-		return command{}, invalid("secret_key must be an explicit nonempty credential without surrounding whitespace or control characters")
+	secret, err := rgwSubuserSecret(p)
+	if err != nil {
+		return command{}, err
 	}
 	args = append(args, "--key-type="+kind, "--secret-key="+secret)
 	sensitive := map[int]struct{}{len(args) - 1: {}}
@@ -73,6 +95,14 @@ func buildRGWSubuser(p map[string]any, rgw func([]string, []string) command) (co
 	cmd := rgw(args, []string{"user", "info", "--uid", uid})
 	cmd.sensitive = sensitive
 	return cmd, nil
+}
+
+func rgwSubuserSecret(p map[string]any) (string, error) {
+	secret, ok := p["secret_key"].(string)
+	if !ok || len(secret) == 0 || len(secret) > 256 || secret != strings.TrimSpace(secret) || regexp.MustCompile(`[\x00-\x1f\x7f]`).MatchString(secret) {
+		return "", invalid("secret_key must be an explicit nonempty credential without surrounding whitespace or control characters")
+	}
+	return secret, nil
 }
 
 type rgwSubuserKey struct {
@@ -105,10 +135,33 @@ func rgwSubuserMatches(raw []byte, p map[string]any, before bool) bool {
 		seen[sub.ID] = true
 		if sub.ID == id {
 			found = true
-			if !before && (rawText(p, "action") == "rm" || sub.Permissions == nil || *sub.Permissions != rgwSubuserPermissions[rawText(p, "subuser_permission")]) {
+			if !before && rawText(p, "action") != "rotate-swift-key" && (rawText(p, "action") == "rm" || sub.Permissions == nil || *sub.Permissions != rgwSubuserPermissions[rawText(p, "subuser_permission")]) {
 				return false
 			}
 		}
+	}
+	if rawText(p, "action") == "rotate-swift-key" {
+		if !found || info.SwiftKeys == nil {
+			return false
+		}
+		active, ok := p["expected_key_active"].(bool)
+		if !ok {
+			return false
+		}
+		secret, _ := p["secret_key"].(string)
+		matches := 0
+		for _, key := range info.SwiftKeys {
+			if key.User == "" {
+				return false
+			}
+			if key.User == id {
+				if key.Active == nil || *key.Active != active || key.Secret == "" || (before && key.Secret == secret) || (!before && key.Secret != secret) {
+					return false
+				}
+				matches++
+			}
+		}
+		return matches == 1
 	}
 	if rawText(p, "action") == "create" {
 		if info.Keys == nil || info.SwiftKeys == nil {
