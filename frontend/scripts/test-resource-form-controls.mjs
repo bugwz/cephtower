@@ -84,6 +84,16 @@ assert.equal(rows[0].startTime, '01:00:00+08:00')
 assert.equal(rows[1].startTime, '未指定')
 assert.equal(new Set(rows.map((row) => row.key)).size, 8)
 assert.deepEqual(mirrorRows([]), [])
+const emptyScopes = [
+  { pool: '-', namespace: '-', image: '-', items: [] },
+  { pool: 'images', namespace: '-', image: '-', items: [] },
+  { pool: 'images', namespace: 'team', image: '-', items: [] },
+  { pool: 'images', namespace: '', image: 'vm', items: [] }
+]
+assert.deepEqual(mirrorRows(emptyScopes).map((row) => row.scope), ['集群', '池', '命名空间', '镜像'])
+assert.ok(mirrorRows(emptyScopes).every((row) => row.interval === '此范围未返回调度项'))
+assert.equal(mirrorRows([emptyScopes[0], { ...emptyScopes[1], items }]).length, 3)
+assert.equal(new Set(mirrorRows(emptyScopes).map((row) => row.key)).size, 4)
 const duplicateScope = { pool: '-', namespace: '-', image: '-', items }
 assert.equal(mirrorRows([duplicateScope, { ...duplicateScope, items: [] }]), undefined)
 assert.equal(mirrorRows([{ pool: 'images', image: 'vm', items }]), undefined)

@@ -51,6 +51,9 @@ export function mirrorScheduleRows(value: unknown): MirrorScheduleRow[] | undefi
       scope = '镜像'
       target = `${pool} / ${namespace || '默认命名空间'} / ${image}`
     } else return undefined
+    if (!items.length) {
+      rows.push({ key: `${index}:empty`, scope, target, interval: '此范围未返回调度项', startTime: '—' })
+    }
     for (const [itemIndex, item] of items.entries()) {
       if (!item || typeof item !== 'object' || typeof item.interval !== 'string' || !/^[1-9][0-9]*[mhd]$/.test(item.interval) || (item.start_time != null && typeof item.start_time !== 'string')) return undefined
       rows.push({ key: `${index}:${itemIndex}`, scope, target, interval: item.interval, startTime: item.start_time || '未指定' })
