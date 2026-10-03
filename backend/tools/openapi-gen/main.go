@@ -988,6 +988,46 @@ const components = `components:
         configured: {type: boolean}
         document: {type: string, nullable: true}
         content_type: {type: string, nullable: true}
+        lifecycle_rules:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, status, selector, actions]
+            properties:
+              id: {type: string}
+              status: {type: string, enum: [Enabled, Disabled]}
+              selector:
+                type: object
+                additionalProperties: false
+                required: [kind, and, prefix, tags, object_size_greater_than, object_size_less_than, archive_zone]
+                properties:
+                  kind: {type: string, enum: [Prefix, Filter]}
+                  and: {type: boolean}
+                  prefix: {type: string, nullable: true}
+                  tags:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [key, value]
+                      properties:
+                        key: {type: string}
+                        value: {type: string}
+                  object_size_greater_than: {type: string, nullable: true}
+                  object_size_less_than: {type: string, nullable: true}
+                  archive_zone: {type: boolean}
+              actions:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [type, fields]
+                  properties:
+                    type: {type: string, enum: [Expiration, NoncurrentVersionExpiration, AbortIncompleteMultipartUpload, Transition, NoncurrentVersionTransition]}
+                    fields:
+                      type: object
+                      additionalProperties: {type: string}
         cors_rules:
           type: array
           items:

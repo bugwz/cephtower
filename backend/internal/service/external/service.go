@@ -307,6 +307,9 @@ func (s *Service) readBucketPolicy(ctx context.Context, clusterID uint64, key st
 		if kind == "cors" {
 			row["cors_rules"] = []s3.BucketCORSRule{}
 		}
+		if kind == "lifecycle" {
+			row["lifecycle_rules"] = []s3.BucketLifecycleRule{}
+		}
 		if kind == "tagging" {
 			row["tags"] = []s3.BucketTag{}
 		}
@@ -316,6 +319,13 @@ func (s *Service) readBucketPolicy(ctx context.Context, clusterID uint64, key st
 		return nil, failure("s3_failed", err.Error(), true)
 	}
 	row := map[string]any{"bucket_id": key, "kind": kind, "configured": true, "document": string(body), "content_type": contentType}
+	if kind == "lifecycle" {
+		rules, err := s3.BucketLifecycle(body)
+		if err != nil {
+			return nil, failure("s3_failed", err.Error(), false)
+		}
+		row["lifecycle_rules"] = rules
+	}
 	if kind == "cors" {
 		rules, err := s3.BucketCORS(body)
 		if err != nil {

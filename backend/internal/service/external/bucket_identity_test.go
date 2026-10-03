@@ -113,6 +113,9 @@ func TestBucketRequestsPreserveFullInventoryIdentity(t *testing.T) {
 					t.Fatalf("wrong read target: %s", r.URL)
 				}
 				body := "native"
+				if kind == "lifecycle" {
+					body = "<LifecycleConfiguration><Rule><Status>Enabled</Status><Filter/><Expiration><Days>30</Days></Expiration></Rule></LifecycleConfiguration>"
+				}
 				if kind == "cors" {
 					body = "<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin></CORSRule></CORSConfiguration>"
 				}

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 import './test-external-form-confirmation.mjs'
 import './test-rgw-bucket-tag-form.mjs'
+import './test-rgw-bucket-lifecycle.mjs'
 const helpers = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketCorsForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 const cors = {}
@@ -138,7 +139,7 @@ assert.ok(tagAction.confirmation(tagValues, tagRow).includes('整体替换'))
 assert.equal(typeof tagAction.fields.find(field => field.name === 'tag_set').renderControl, 'function')
 assert.equal(definition.buildQuery({ kind: 'cors' }).toString(), 'kind=cors')
 assert.deepEqual(definition.filterFields.find(field => field.name === 'kind').options, helpers.rgwBucketConfigurationOptions)
-assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'encryption', 'cors_rules', 'content_type', 'document'])
+assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'encryption', 'cors_rules', 'lifecycle_rules', 'content_type', 'document'])
 const encryption = definition.columns.find(column => column.key === 'encryption').render
 assert.equal(encryption(null, { kind: 'policy' }), '—')
 assert.match(encryption(null, { kind: 'encryption', configured: false }), /未设置/)

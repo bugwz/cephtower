@@ -49,6 +49,7 @@ import { rgwUserCreateFlags } from './rgwUserCreateFlags'
 import { rgwBucketConfigurationOptions, rgwBucketConfigurationInput, rgwBucketConfigurationDeleteBlocked, rgwBucketConfigurationDeleteInput, rgwBucketConfigurationDeleteConfirmation, rgwBucketConfigurationEditBlocked, rgwBucketConfigurationEditInitial, rgwBucketConfigurationEditInput, rgwBucketConfigurationUpdateConfirmation } from './rgwBucketConfiguration'
 import { rgwBucketEncryptionSummary } from './rgwBucketEncryptionSummary'
 import { RgwBucketCorsRules } from './RgwBucketCorsRules'
+import { RgwBucketLifecycleRules } from './RgwBucketLifecycleRules'
 import { RgwBucketCorsEditor } from './RgwBucketCorsEditor'
 import { corsFormInitial, corsFormBlocked, corsFormInput, corsFormConfirmation } from './rgwBucketCorsForm'
 import { bucketDeleteInput, bucketDeleteBlocked, bucketDeleteConfirmation } from './rgwBucketDelete'
@@ -959,6 +960,7 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       { key: 'tags', title: '标签条目', ellipsis: false, render: (value, row) => row.kind === 'tagging' ? <RgwBucketTagEntries value={value} /> : '—' },
       { key: 'encryption', title: '默认加密', ellipsis: false, render: rgwBucketEncryptionSummary },
       { key: 'cors_rules', title: 'CORS 规则', ellipsis: false, render: (value, row) => row.kind === 'cors' ? <RgwBucketCorsRules value={value} configured={row.configured} /> : '—' },
+      { key: 'lifecycle_rules', title: '生命周期规则', ellipsis: false, render: (value, row) => row.kind === 'lifecycle' ? <RgwBucketLifecycleRules value={value} configured={row.configured} /> : '—' },
       { key: 'content_type', title: '响应类型' },
       { key: 'document', title: '原始配置文档', ellipsis: false, render: (value, row) => <pre style={{ whiteSpace: 'pre-wrap', maxHeight: 240, overflow: 'auto' }}>{row.configured === false ? '未配置，无配置文档' : typeof value === 'string' ? value : '配置文档不可用'}</pre> }
     ]
