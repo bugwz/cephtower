@@ -7,6 +7,7 @@ import { queryMetric, type MetricResponse } from '../../api/external'
 import { getHostDeviceInfo, getHostSMART, getOptionalResource, listDaemons, listHostDevices, listResource, mutateResource, refreshResource } from '../../api/resource'
 import type { ResourceDTO } from '../../api/types'
 import { DataTable } from '../../components/DataTable'
+import { HostHardware } from './HostHardware'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
@@ -291,6 +292,7 @@ function HostDetailTabs({
         defaultActiveKey="devices"
         destroyInactiveTabPane
         items={[
+          { key: 'hardware', label: '硬件健康', children: clusterId ? <HostHardware key={`${clusterId}:${hostname}`} clusterId={clusterId} host={hostname} /> : null },
           {
             key: 'devices',
             label: '设备信息',

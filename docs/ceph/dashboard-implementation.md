@@ -5,6 +5,16 @@
 
 ## 如何追踪调用链
 
+主机详情新增按类别读取的硬件健康页签：参考 Dashboard `services/hardware.py`
+通过 `hardware.common` 获取组件数据，对应原生 `orch hardware status --hostname
+<host> --category <category> --format json`（orchestrator/module.py `_common_table`）。
+CephTower `/host/hardware` 支持 memory、storage、processors、network、power、fans，
+保留系统/机箱及组件身份、原生 health/state，并以文本提供脱敏详情以保留整数精度。
+节点身份不匹配、响应形状异常、命令失败不会解释为健康；有效空结果明确提示无法判断。
+前端按集群、主机、类别隔离结果并支持手动刷新。依赖部署 node-proxy 和相应 Ceph 权限；
+当前不包含全群硬件汇总、固件清单、指示灯或电源操作。离线命令、API 和加载隔离测试
+已覆盖，未进行真实 node-proxy 集群或浏览器视觉验证。
+
 配置表单区分 no_mon_update（禁止 Monitor 配置库写入）与不可运行时更新（可能需重启）。
 匹配当前选项的 no_mon_update 元数据会禁用提交并在保存处理再次拦截；不添加 force
 绕过。缺失更新能力明确标注未知，旧选项的说明不用于当前选项。离线测试覆盖标志

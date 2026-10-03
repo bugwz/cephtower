@@ -2,6 +2,29 @@ package handler
 
 import "net/http"
 
+func (h *Handler) GetHostHardware(w http.ResponseWriter, r *http.Request) {
+	var request struct {
+		ClusterID uint64 `json:"cluster_id"`
+		Host      string `json:"host"`
+		Category  string `json:"category"`
+	}
+	if !DecodeStrict(w, r, &request) {
+		return
+	}
+	annotateAudit(r, "host.hardware", "host", request.Host, "", &request.ClusterID)
+	if h.Inspection == nil {
+		WriteError(w, r, 501, "capability_unavailable", "cluster inspection is unavailable", false, nil)
+		return
+	}
+	result, err := h.Inspection.Hardware(r.Context(), request.ClusterID, request.Host, request.Category)
+	if err != nil {
+		writeActionError(w, r, err)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	WriteSuccess(w, 200, "success", result)
+}
+
 func (h *Handler) GetDaemonPerf(w http.ResponseWriter, r *http.Request) {
 	var request struct {
 		ClusterID uint64 `json:"cluster_id"`

@@ -31,6 +31,8 @@ type authRouteExecutor struct{ specs []executor.CommandSpec }
 func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.specs = append(e.specs, spec)
 	switch spec.ID {
+	case "host.hardware":
+		return executor.CommandResult{Stdout: []byte(`{"node1":{"sys":{"dimm1":{"status":{"health":"OK"}}}}}`)}, nil
 	case "daemon.perf.schema":
 		return executor.CommandResult{Stdout: []byte(`{"osd":{"counter":{"description":"counter","type":10,"units":"bytes"}}}`)}, nil
 	case "daemon.perf.dump":
@@ -157,6 +159,10 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 		return rec
 	}
 	perfResult := send("GET", "/daemon/perf", map[string]any{"name": "osd.1"})
+	hardwareResult := send("GET", "/host/hardware", map[string]any{"host": "node1", "category": "memory"})
+	if hardwareResult.Header().Get("Cache-Control") != "no-store" || !strings.Contains(hardwareResult.Body.String(), `"health":"OK"`) || !strings.Contains(hardwareResult.Body.String(), `"host":"node1"`) {
+		t.Fatalf("hardware response is incomplete: %s", hardwareResult.Body.String())
+	}
 	if perfResult.Header().Get("Cache-Control") != "no-store" || !strings.Contains(perfResult.Body.String(), `"daemon_name":"osd.1"`) || !strings.Contains(perfResult.Body.String(), `"raw_value":"18446744073709551615"`) {
 		t.Fatalf("daemon performance snapshot lost identity or precision: %s", perfResult.Body.String())
 	}

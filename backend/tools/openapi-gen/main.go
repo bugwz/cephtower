@@ -99,7 +99,7 @@ func successResponseSchema(route router.Route) string {
 		return "CephLogsResponse"
 	case "GET /upgrade/versions", "GET /crush/map", "GET /manager/telemetry/status", "GET /manager/telemetry/report", "GET /service/daemons", "GET /daemon/perf":
 		return "ConfigurationOptionResponse"
-	case "GET /configuration/option", "GET /osd/inspection", "GET /filesystem/snapshot/schedule/status", "GET /filesystem/performance", "GET /filesystem/pools", "GET /filesystem/mds", "GET /filesystem/subvolume/snapshot/visibility":
+	case "GET /host/hardware", "GET /configuration/option", "GET /osd/inspection", "GET /filesystem/snapshot/schedule/status", "GET /filesystem/performance", "GET /filesystem/pools", "GET /filesystem/mds", "GET /filesystem/subvolume/snapshot/visibility":
 		return "ConfigurationOptionResponse"
 
 	case "GET /ceph/users/export":
@@ -356,6 +356,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"username": stringField(true), "password": {Type: "string", Required: true, WriteOnly: true}}
 	case "GET /logs":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "channel": {Type: "string", Enum: []string{"cluster", "audit", "cephadm", "*"}}, "level": {Type: "string", Enum: []string{"debug", "info", "sec", "warn", "error"}}, "limit": integerField(false)}
+	case "GET /host/hardware":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "host": stringField(true), "category": {Type: "string", Required: true, Enum: []string{"memory", "storage", "processors", "network", "power", "fans"}}}
 	case "GET /filesystem/snapshot/schedule/status":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true), "subvol": stringField(false), "group": stringField(false)}
 	case "GET /filesystem/entries":

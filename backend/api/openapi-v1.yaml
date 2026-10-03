@@ -23471,6 +23471,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /host/hardware:
+    get:
+      operationId: get_host_hardware
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [category, cluster_id, host]
+              properties:
+                category:
+                  type: string
+                  enum: ["fans", "memory", "network", "power", "processors", "storage"]
+                cluster_id:
+                  type: integer
+                host:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationOptionResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /host/smart:
     get:
       operationId: get_host_smart

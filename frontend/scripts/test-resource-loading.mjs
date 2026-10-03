@@ -2,6 +2,22 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 
+const hardwareSource = readFileSync(new URL('../src/pages/cluster/HostHardware.tsx', import.meta.url), 'utf8')
+const hardwareTree = ts.createSourceFile('hardware.tsx', hardwareSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const hardwareFn = hardwareTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HardwareCategory')
+const hardwareLoader = hardwareFn.body.statements.find((node) => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(hardwareTree) === 'loader').declarationList.declarations[0].initializer.arguments[0]
+const hardwareCode = ts.transpileModule(`const load = ${hardwareLoader.getText(hardwareTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const response of [{ host: 'node1', category: 'memory', items: [] }, { host: 'other', category: 'memory', items: [] }, { host: 'node1', category: 'fans', items: [] }, { host: 'node1', category: 'memory', items: null }]) {
+  const calls = []
+  const load = new Function('request', 'jsonInit', 'clusterId', 'host', 'category', `${hardwareCode}; return load`)(async (...args) => { calls.push(args); return response }, (method, body) => ({ method, body }), 7, 'node1', 'memory')
+  if (response.host === 'node1' && response.category === 'memory' && Array.isArray(response.items)) assert.equal(await load(), response)
+  else await assert.rejects(load())
+  assert.deepEqual(calls, [['/host/hardware', { method: 'GET', body: { cluster_id: 7, host: 'node1', category: 'memory' } }]])
+}
+assert.ok(hardwareSource.includes('key={`${clusterId}:${host}:${category}`}'))
+assert.ok(hardwareSource.includes('未知（未返回）'))
+console.log('Hardware request identity and category scope checks passed')
+
 const perfSource = readFileSync(new URL('../src/pages/cluster/DaemonPerf.tsx', import.meta.url), 'utf8')
 const perfTree = ts.createSourceFile('perf.tsx', perfSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const perfFn = perfTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'DaemonPerf')

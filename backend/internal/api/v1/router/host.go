@@ -9,6 +9,7 @@ func hostRoutes(h *handler.Handler) []Route {
 		{"GET", "/host", h.GetHost},
 		{"GET", "/host/devices", h.GetHostDevices},
 		{"GET", "/host/smart", h.GetHostSMART},
+		{"GET", "/host/hardware", h.GetHostHardware},
 		{"PATCH", "/host", h.UpdateHost},
 		{"DELETE", "/host", h.DeleteHost},
 		{"GET", "/host/ssh", h.GetHostSSH},

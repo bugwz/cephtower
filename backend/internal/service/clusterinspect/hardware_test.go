@@ -1,0 +1,56 @@
+package clusterinspect
+
+import (
+	"context"
+	"encoding/json"
+	"reflect"
+	"strings"
+	"testing"
+)
+
+func TestHardwareNativeCategories(t *testing.T) {
+	s, runner, id := testInspection(t)
+	for _, category := range []string{"memory", "storage", "processors", "network", "power", "fans"} {
+		runner.output = `{"node1":{"system1":{"part1":{"status":{"health":"OK","state":"Enabled"},"capacity_bytes":18446744073709551615},"part2":{}}}}`
+		result, err := s.Hardware(context.Background(), id, "node1", category)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rows := result["items"].([]map[string]any)
+		if len(rows) != 2 || rows[0]["health"] != "OK" || rows[1]["health"] != nil || !strings.Contains(rows[0]["details"].(string), "18446744073709551615") {
+			t.Fatalf("%+v", result)
+		}
+		spec := runner.specs[len(runner.specs)-1]
+		if spec.Mutating || !reflect.DeepEqual(spec.Args, []string{"orch", "hardware", "status", "--hostname", "node1", "--category", category, "--format", "json"}) {
+			t.Fatalf("%+v", spec)
+		}
+	}
+	for _, output := range []string{`null`, `[]`, `{} {}`, `{"other":{}}`, `{"node1":null}`, `{"node1":{"s":null}}`, `{"node1":{"s":{"p":null}}}`, `{"node1":{"s":{"p":{"status":{"health":false}}}}}`} {
+		runner.output = output
+		if result, err := s.Hardware(context.Background(), id, "node1", "memory"); err == nil || result != nil {
+			t.Fatalf("accepted %s", output)
+		}
+	}
+	runner.output = `{}`
+	result, err := s.Hardware(context.Background(), id, "node1", "memory")
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := json.Marshal(result)
+	if !strings.Contains(string(raw), `"items":[]`) {
+		t.Fatal(string(raw))
+	}
+	count := len(runner.specs)
+	for _, args := range [][2]string{{"--help", "memory"}, {"node1", "shutdown"}, {"node1", ""}} {
+		if _, err := s.Hardware(context.Background(), id, args[0], args[1]); err == nil {
+			t.Fatal(args)
+		}
+	}
+	if len(runner.specs) != count {
+		t.Fatal("invalid request executed")
+	}
+	runner.fail = true
+	if _, err := s.Hardware(context.Background(), id, "node1", "memory"); err == nil {
+		t.Fatal("command error hidden")
+	}
+}
