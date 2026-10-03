@@ -36,6 +36,7 @@ import { rgwUserAccountRootBlocked, rgwUserAccountRootInput } from './rgwUserAcc
 import { rgwSubuserOptions, rgwSubuserInput, rgwSubuserPermissionOptions } from './rgwUserSubuser'
 import { rgwSubuserCreateInput } from './rgwSubuserCreate'
 import { rgwSwiftRotationOptions, rgwSwiftRotationInput } from './rgwSwiftKeyRotation'
+import { rgwS3KeyOwnerOptions, rgwS3KeyCreateInput } from './rgwS3KeyCreate'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
@@ -254,6 +255,18 @@ const definitions: Record<
           return `确认对用户 ${JSON.stringify(userId(row))} ${policy.action === 'attach' ? '关联' : '解除关联'}策略 ${JSON.stringify(policy.policy_arn)}？该操作会改变用户权限，可能导致权限扩大或现有访问失败。`
         },
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserPolicyInput(values, row) })
+      },
+      { title: '创建 S3 访问密钥', path: '/rgw/user/key', method: 'POST', successMessage: 'S3 密钥及归属已回读验证；请使用预先保存的凭据',
+        changedValues: changed => Object.keys(changed).some(key => ['owner', 'access_key', 'secret_key'].includes(key)) ? { credentials_saved: undefined, confirm_owner: undefined } : {},
+        fields: [
+          { name: 'owner', label: '凭据所属用户', type: 'select', required: true, optionsLoader: async (_clusterId, row) => rgwS3KeyOwnerOptions(row) },
+          { name: 'access_key', label: '尚未使用的 Access Key（预先保存）', type: 'password', required: true },
+          { name: 'secret_key', label: '高强度 Secret Key（预先保存，提交后不回显）', type: 'password', required: true },
+          { name: 'credentials_saved', label: '凭据保存确认', type: 'select', required: true, options: [{ label: '已安全保存本次凭据', value: 'saved' }] },
+          { name: 'confirm_owner', label: '输入完整凭据所属用户 ID 确认', required: true }
+        ],
+        confirmation: (values, row) => `为 ${JSON.stringify(rgwS3KeyCreateInput(values, row).confirm_owner)} 创建已激活的 S3 访问密钥？该凭据将具有目标用户的现有权限；本系统不提供密钥查询，请确认已安全保存。`,
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwS3KeyCreateInput(values, row) })
       },
       { title: '创建子用户', path: '/rgw/user/subuser', method: 'POST', successMessage: '子用户、权限及凭据已创建并回读验证；密钥不会显示在库存中',
         changedValues: (changed) => Object.keys(changed).some(key => ['subuser', 'key_type', 'access_key', 'secret_key'].includes(key)) ? { credentials_saved: undefined, confirm_subuser: undefined } : {},

@@ -614,7 +614,7 @@ func (h *Handler) DeleteRGWUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateRGWUserKey(w http.ResponseWriter, r *http.Request) {
-	h.MutateResource("rgw_key", "rgw_key.create", "medium")(w, r)
+	h.MutateResource("rgw_key", "rgw_key.create", "high")(w, r)
 }
 
 func (h *Handler) DeleteRGWUserKey(w http.ResponseWriter, r *http.Request) {

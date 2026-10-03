@@ -212,6 +212,7 @@ func TestRGWUserMutationIdentity(t *testing.T) {
 			}
 			if action == "rgw_key.create" {
 				value["secret_key"] = "test-secret"
+				value["confirm_owner"] = uid
 			}
 			return value
 		}

@@ -367,6 +367,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -1139,6 +1141,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -3206,6 +3210,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -3978,6 +3984,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -5578,6 +5586,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -6477,6 +6487,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -7250,6 +7262,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -8709,6 +8723,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -9575,6 +9591,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -10347,6 +10365,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -11365,6 +11385,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -12633,6 +12655,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -13406,6 +13430,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -14179,6 +14205,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -15589,6 +15617,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -16507,6 +16537,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -17375,6 +17407,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -18147,6 +18181,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -19575,6 +19611,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -20347,6 +20385,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -21136,6 +21176,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -22002,6 +22044,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -22774,6 +22818,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -23547,6 +23593,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -24632,6 +24680,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -25595,6 +25645,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -26461,6 +26513,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -27233,6 +27287,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -28138,6 +28194,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -28911,6 +28969,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -30364,6 +30424,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -31422,6 +31484,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -32288,6 +32352,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -33156,6 +33222,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -34022,6 +34090,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -34794,6 +34864,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -35757,6 +35829,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -36623,6 +36697,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -37395,6 +37471,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -38263,6 +38341,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -39035,6 +39115,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -39903,6 +39985,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -40675,6 +40759,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -41543,6 +41629,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -42409,6 +42497,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -43181,6 +43271,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -44217,6 +44309,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -45084,6 +45178,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -45857,6 +45953,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -46630,6 +46728,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -47497,6 +47597,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -48304,6 +48406,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -49362,6 +49466,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -50228,6 +50334,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -51000,6 +51108,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -51868,6 +51978,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -52641,6 +52753,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -53414,6 +53528,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -54187,6 +54303,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -55055,6 +55173,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -55921,6 +56041,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -56693,6 +56815,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -57583,6 +57707,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -58355,6 +58481,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -59127,6 +59255,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -60286,6 +60416,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -61173,6 +61305,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -62108,6 +62242,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -62880,6 +63016,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -63852,6 +63990,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -64719,6 +64859,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -65492,6 +65634,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -66376,6 +66520,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -67148,6 +67294,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -67920,6 +68068,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -68693,6 +68843,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -69561,6 +69713,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -70427,6 +70581,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -71199,6 +71355,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -72073,6 +72231,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -72846,6 +73006,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -73619,6 +73781,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -74487,6 +74651,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -75260,6 +75426,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -76032,6 +76200,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -76900,6 +77070,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -77672,6 +77844,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -78444,6 +78618,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -79217,6 +79393,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -80180,6 +80358,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -81046,6 +81226,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -81818,6 +82000,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -82591,6 +82775,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -83364,6 +83550,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -84136,6 +84324,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -84909,6 +85099,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -85682,6 +85874,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -86455,6 +86649,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -87228,6 +87424,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -88096,6 +88294,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -88868,6 +89068,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -89641,6 +89843,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -90413,6 +90617,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -91516,6 +91722,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -92775,6 +92983,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -93641,6 +93851,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -94413,6 +94625,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -95281,6 +95495,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -96053,6 +96269,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -96825,6 +97043,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -97693,6 +97913,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -98559,6 +98781,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -99331,6 +99555,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -100199,6 +100425,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -100971,6 +101199,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:
@@ -101743,6 +101973,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_owner:
+                  type: string
                 confirm_subuser:
                   type: string
                 cors:

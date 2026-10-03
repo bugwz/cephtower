@@ -137,23 +137,29 @@ func TestRGWAccountMigrationRefreshesAffectedResources(t *testing.T) {
 }
 
 func TestRGWSubuserRefreshDoesNotRepeatMutation(t *testing.T) {
-	for _, fail := range []bool{false, true} {
-		mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{}}}
-		reconciler := &reconcileExecutorFake{refreshResult: true}
-		if fail {
-			reconciler.err = errors.New("refresh failed")
-		}
-		_, err := NewActionDispatcher(mutations, nil, reconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_user.subuser", ResourceKind: "rgw_user"})
-		if reconciler.kind != "rgw_user" || len(reconciler.kinds) != 0 {
-			t.Fatalf("unexpected refresh: %+v", reconciler)
-		}
-		if fail {
-			var actionErr *cephdomain.ActionError
-			if !errors.As(err, &actionErr) || actionErr.Code != "post_reconcile_failed" || actionErr.Retryable {
+	for _, action := range []string{"rgw_user.subuser", "rgw_key.create"} {
+		for _, fail := range []bool{false, true} {
+			mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{}}}
+			reconciler := &reconcileExecutorFake{refreshResult: true}
+			if fail {
+				reconciler.err = errors.New("refresh failed")
+			}
+			kind := "rgw_user"
+			if action == "rgw_key.create" {
+				kind = "rgw_key"
+			}
+			_, err := NewActionDispatcher(mutations, nil, reconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: action, ResourceKind: kind})
+			if reconciler.kind != "rgw_user" || len(reconciler.kinds) != 0 {
+				t.Fatalf("unexpected refresh: %+v", reconciler)
+			}
+			if fail {
+				var actionErr *cephdomain.ActionError
+				if !errors.As(err, &actionErr) || actionErr.Code != "post_reconcile_failed" || actionErr.Retryable {
+					t.Fatal(err)
+				}
+			} else if err != nil {
 				t.Fatal(err)
 			}
-		} else if err != nil {
-			t.Fatal(err)
 		}
 	}
 }

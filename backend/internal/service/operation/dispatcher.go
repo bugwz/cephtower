@@ -80,6 +80,8 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 	} else if account, _ := request.Parameters["account_id"].(string); request.Action == "rgw_user.create" && account != "" {
 		_, err = d.reconciler.RefreshKinds(ctx, request.ClusterID, []string{"rgw_user", "rgw_account"})
 		refreshed = err == nil
+	} else if request.Action == "rgw_key.create" {
+		refreshed, err = d.reconciler.RefreshKindIfSupported(ctx, request.ClusterID, "rgw_user")
 	} else if request.Action == "filesystem.rename" {
 		_, err = d.reconciler.RefreshKinds(ctx, request.ClusterID, []string{"filesystem", "pool"})
 		refreshed = err == nil
@@ -90,8 +92,8 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		if request.Action == "rgw_user.create" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "user creation completed but inventory refresh failed; refresh user and account inventory without repeating creation", Retryable: false}
 		}
-		if request.Action == "rgw_user.subuser" {
-			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "subuser change was verified but inventory refresh failed; refresh user inventory without repeating the change", Retryable: false}
+		if request.Action == "rgw_user.subuser" || request.Action == "rgw_key.create" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "user credential change was verified but inventory refresh failed; refresh user inventory without repeating the change", Retryable: false}
 		}
 		if request.Action == "rgw_user.update" && migration {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "account migration was verified but inventory refresh failed; refresh user, account and bucket inventory without repeating migration", Retryable: false}
