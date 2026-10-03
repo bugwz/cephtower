@@ -19,7 +19,7 @@
     "test:cephfs-pools": "node scripts/test-cephfs-pools.mjs",
     "test:cephfs-performance": "node scripts/test-cephfs-performance.mjs",
     "test:telemetry": "node scripts/test-telemetry.mjs",
-    "test:rgw-quota": "node scripts/test-rgw-quota.mjs && node scripts/test-rgw-storage.mjs",
+    "test:rgw-quota": "node scripts/test-rgw-quota.mjs && node scripts/test-rgw-storage.mjs && node scripts/test-rgw-rate-limit.mjs",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview"

@@ -11,6 +11,7 @@ import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAct
 import { ServiceDaemons } from '../cluster/ServiceDaemons'
 import { RgwQuota } from './RgwQuota'
 import { RgwStorage } from './RgwStorage'
+import { RgwRateLimit } from './RgwRateLimit'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -181,7 +182,7 @@ const definitions: Record<
       { key: 'email', title: '邮箱' },
       { key: 'status', title: '状态' },
       { key: 'caps', title: 'Caps' },
-      { key: 'rate_limit', title: '用户限流' },
+      { key: 'rate_limit', title: '用户限流（每 RGW）', ellipsis: false, render: (value) => <RgwRateLimit value={value} /> },
       { key: 'user_quota', title: '用户总配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'bucket_quota', title: '默认 Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'stats_scope', title: '统计范围', render:(value)=>value === 'account' ? '所属账户' : '用户' },
@@ -405,7 +406,7 @@ const definitions: Record<
       { key: 'reshard_status', title: '重新分片状态' },
       { key: 'status', title: '状态' },
       { key: 'usage', title: '使用量', ellipsis: false, render: (value) => <RgwStorage value={value} categorized /> },
-      { key: 'rate_limit', title: 'Bucket 限流' },
+      { key: 'rate_limit', title: 'Bucket 限流（每 RGW）', ellipsis: false, render: (value) => <RgwRateLimit value={value} /> },
       { key: 'id', title: '原生 Bucket ID' },
       { key: 'creation_time', title: '创建时间' },
       { key: 'mtime', title: '修改时间' },

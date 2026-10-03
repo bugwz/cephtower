@@ -5,6 +5,12 @@
 
 ## 如何追踪调用链
 
+RGW 用户和 Bucket 限流按参考 rgw-rate-limit-details 展示启用状态及四项限制，复用
+ratelimit get --ratelimit-scope user/bucket 的采集结果。对应 rgw_ratelimit.h 的原生
+判断，非正整数表示无限制；禁用不展示配置为生效限制，未知不当作禁用。显示每 RGW、
+每分钟口径，字节限制不与操作次数混用；缺失和不精确整数显式提示。离线测试覆盖
+启用、禁用、无限制和无效数值，未进行真实集群或浏览器验证。
+
 RGW 用户、账户容量和 Bucket 分类用量改为结构化统计表，复用现有 user stats / account
 stats / bucket stats 采集链路和库存 API。字段口径以 RGWStorageStats::dump 为准：size
 是逻辑字节数，size_actual 是取整字节数，size_utilized 是压缩/加密后字节数，num_objects
