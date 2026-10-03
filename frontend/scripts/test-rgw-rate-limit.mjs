@@ -11,3 +11,18 @@ for (const enabled of [null, undefined, 'true', 1]) assert.equal(details({ enabl
 for (const value of [null, undefined, '0', NaN, Infinity, 0.5, Number.MAX_SAFE_INTEGER + 1]) assert.equal(details({ enabled: true, max_read_ops: value }).limits[0], '未返回或超出精确显示范围')
 assert.equal(readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8').match(/<RgwRateLimit value=\{value\} \/>/g).length, 2)
 console.log('RGW rate limits distinguish disabled, unlimited and unavailable states')
+const form = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwRateLimitForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(form)
+const values = { max_read_ops: 0, max_write_ops: 1, max_read_bytes: 1024, max_write_bytes: Number.MAX_SAFE_INTEGER }
+assert.deepEqual(form.rgwRateLimitInput(values), values)
+assert.deepEqual(form.rgwRateLimitInitial({ ...values, enabled: true }), { ...values, enabled: true })
+for (const value of [undefined, null, '', '0', false, -1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+  for (const key of Object.keys(values)) {
+    assert.throws(() => form.rgwRateLimitInput({ ...values, [key]: value }))
+    assert.equal(form.rgwRateLimitInitial({ ...values, [key]: value })[key], undefined)
+  }
+}
+assert.equal(form.rgwRateLimitInitial(null).max_read_ops, undefined)
+const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
+assert.equal(pages.match(/\.\.\.rgwRateLimitInput\(values\)/g).length, 2)
+assert.equal(pages.match(/rgwRateLimitInitial\(row\?\.rate_limit\)/g).length, 2)
