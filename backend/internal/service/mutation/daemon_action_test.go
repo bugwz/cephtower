@@ -3,7 +3,9 @@ package mutation
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
@@ -13,7 +15,8 @@ func TestDaemonActionUsesNativeScopedQuery(t *testing.T) {
 	s, _, id := newCephUserService(t)
 	for _, name := range []string{"osd.1", "rgw.realm.zone.node1.abcdef", "node-exporter.node1"} {
 		for _, action := range []string{"start", "stop", "restart", "reconfig", "redeploy", "rotate-key"} {
-			e := &directoryRenameExecutor{outputs: map[string]string{"daemon.action": "Scheduled to " + action + " " + name + " on host 'node1'"}}
+			typ, identifier, _ := strings.Cut(name, ".")
+			e := &directoryRenameExecutor{outputs: map[string]string{"daemon.action": "Scheduled to " + action + " " + name + " on host 'node1'", "daemon.action.post_check": fmt.Sprintf(`[{"daemon_name":%q,"daemon_type":%q,"daemon_id":%q}]`, name, typ, identifier)}}
 			s.executor = e
 			_, err := s.Execute(context.Background(), Request{ClusterID: id, Action: "daemon.action", ResourceKey: "daemon/" + name + "/action", Parameters: map[string]any{"action": action}})
 			if err != nil || len(e.specs) != 2 {
@@ -31,6 +34,19 @@ func TestDaemonActionUsesNativeScopedQuery(t *testing.T) {
 			if !e.specs[0].Mutating || !reflect.DeepEqual(e.specs[0].Args, []string{"orch", "daemon", action, name}) || e.specs[1].Mutating || !reflect.DeepEqual(e.specs[1].Args, []string{"orch", "ps", "--daemon-type", daemonType, "--daemon-id", daemonID, "--refresh", "--format", "json"}) {
 				t.Fatalf("unexpected command chain: %+v", e.specs)
 			}
+		}
+	}
+}
+
+func TestDaemonActionRejectsUnverifiedTarget(t *testing.T) {
+	s, _, id := newCephUserService(t)
+	for _, output := range []string{"", "No daemons reported", "null", "[]", "{}", `[null]`, `[{"daemon_name":"osd.1"}]`, `[{"daemon_name":"osd.1","daemon_type":"osd","daemon_id":"2"}]`, `[{"daemon_name":"osd.2","daemon_type":"osd","daemon_id":"2"}]`, `[{"daemon_name":"osd.1","daemon_type":"osd","daemon_id":"1"}] {}`} {
+		e := &directoryRenameExecutor{outputs: map[string]string{"daemon.action": "Scheduled to restart osd.1 on host 'node1'", "daemon.action.post_check": output}}
+		s.executor = e
+		_, err := s.Execute(context.Background(), Request{ClusterID: id, Action: "daemon.action", ResourceKey: "daemon/osd.1/action", Parameters: map[string]any{"action": "restart"}})
+		var ae *cephdomain.ActionError
+		if !errors.As(err, &ae) || ae.Code != "post_check_failed" || ae.Retryable || len(e.specs) != 2 {
+			t.Fatalf("unverified target accepted: %q %v", output, err)
 		}
 	}
 }

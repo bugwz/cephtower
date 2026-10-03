@@ -313,6 +313,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "daemon.action" && (err != nil || !daemonActionTargetVisible(checked.Stdout, pathValue(resourceTail(request.ResourceKey), "daemon"))) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "daemon action was scheduled but the target could not be verified in inventory; inspect daemon state before retrying", Retryable: false}
+		}
 		if request.Action == "service.delete" && (err != nil || !serviceSpecAbsent(checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "service removal was accepted but configuration absence could not be verified; inspect service state before retrying", Retryable: false}
 		}
