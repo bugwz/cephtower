@@ -363,6 +363,9 @@ function HostPhysicalDiskTable({ devices }: { devices: ApiRecord[] }) {
         { key: 'availability_display', title: '可用性', render: (_, row) => renderDeviceAvailability(row) },
         { key: 'vendor_display', title: '供应商' },
         { key: 'model_display', title: '型号' },
+        { key: 'serial_display', title: '序列号' },
+        { key: 'health_display', title: 'LSM 健康状态' },
+        { key: 'rejected_reasons_display', title: '不可用原因', ellipsis: false },
         { key: 'size_display', title: '容量' },
         { key: 'osd_display', title: 'OSD' }
       ]}

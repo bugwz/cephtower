@@ -52,6 +52,13 @@ assert.equal(normalizeInventory({ available: false }, []).availability_display, 
 assert.equal(normalizeInventory({ available: true }, []).availability_display, 'available')
 assert.equal(normalizeInventory({ available: 'false' }, []).availability_display, 'unknown')
 console.log('Disk inventory distinguishes missing type and availability from explicit values')
+const diagnosticDisk = normalizeInventory({ lsm_data: { health: 'Fail', serialNum: 'lsm-serial' }, rejected_reasons: ['Has a FileSystem', 'LVM detected'] }, [])
+assert.equal(diagnosticDisk.serial_display, 'lsm-serial')
+assert.equal(diagnosticDisk.health_display, 'Fail')
+assert.deepEqual(diagnosticDisk.rejected_reasons_display, ['Has a FileSystem', 'LVM detected'])
+assert.equal(normalizeInventory({ lsm_data: { serialNum: 'lsm-serial' } }, []).serial_display, 'lsm-serial')
+const physicalTable = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HostPhysicalDiskTable').getText(hostDetailTree)
+for (const field of ['serial_display', 'health_display', 'rejected_reasons_display']) assert.ok(physicalTable.includes(`key: '${field}'`))
 const smartNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'normalizeSMARTData')
 const smartCode = ts.transpileModule(smartNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const smartNumberNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'smartMetricNumber')
