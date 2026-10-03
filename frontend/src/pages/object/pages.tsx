@@ -13,6 +13,7 @@ import { RgwQuota } from './RgwQuota'
 import { RgwStorage } from './RgwStorage'
 import { RgwRateLimit } from './RgwRateLimit'
 import { RgwPermissions } from './RgwPermissions'
+import { rgwBucketLimit } from './rgwBucketLimit'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -101,7 +102,7 @@ const definitions: Record<
         { name: 'uid', label: 'UID', required: true },
         { name: 'display_name', label: '显示名', required:true },
         { name: 'email', label: '邮箱' },
-        { name:'max_buckets',label:'最大 Bucket 数（-1 为无限制）',type:'number',min:-1 }
+        { name:'max_buckets',label:'最大 Bucket 数（-1 禁止创建，0 无限制）',type:'number',min:-1 }
       ],
       buildBody: (values, clusterId) => ({
         cluster_id: clusterId,
@@ -119,7 +120,7 @@ const definitions: Record<
       fields: [
         { name: 'display_name', label: '显示名' },
         { name: 'email', label: '邮箱' },
-        { name: 'max_buckets', label: '最大 Bucket 数（-1 为无限制）', type: 'number', min: -1 },
+        { name: 'max_buckets', label: '最大 Bucket 数（-1 禁止创建，0 无限制）', type: 'number', min: -1 },
         { name: 'suspended', label: '暂停用户', type: 'boolean' },
         { name: 'system', label: '系统用户', type: 'boolean' }
       ],
@@ -181,6 +182,7 @@ const definitions: Record<
       { key: 'uid', title: 'UID' },
       { key: 'display_name', title: '显示名' },
       { key: 'email', title: '邮箱' },
+      { key: 'max_buckets', title: '最大 Bucket 数', render: rgwBucketLimit },
       { key: 'status', title: '状态' },
       { key: 'caps', title: '管理权限', ellipsis: false, render: (value) => <RgwPermissions value={value} /> },
       { key: 'subusers', title: '子用户', ellipsis: false, render: (value) => <RgwPermissions value={value} subusers /> },
@@ -221,7 +223,7 @@ const definitions: Record<
       fields: [
         { name: 'account_name', label: '账户名称（不支持清空）' },
         { name: 'email', label: '邮箱（不支持清空）' },
-        ...['max_users', 'max_roles', 'max_groups', 'max_buckets', 'max_access_keys'].map((name, index) => ({ name, label: ['用户上限', '角色上限', '用户组上限', 'Bucket 上限', '访问密钥上限'][index] + '（-1 为无限制）', type: 'number' as const, min: -1 }))
+        ...['max_users', 'max_roles', 'max_groups', 'max_buckets', 'max_access_keys'].map((name, index) => ({ name, label: ['用户上限', '角色上限', '用户组上限', 'Bucket 上限', '访问密钥上限'][index] + (name === 'max_buckets' ? '（-1 禁止创建，0 无限制）' : '（-1 为无限制）'), type: 'number' as const, min: -1 }))
       ],
       initialValues: (row) => ({ account_name: text(row?.account_name), email: text(row?.email), ...Object.fromEntries(['max_users', 'max_roles', 'max_groups', 'max_buckets', 'max_access_keys'].map((key) => [key, numberOrUndefined(row?.[key])])) }),
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, account_id: String(row?.account_id ?? row?.natural_key ?? ''),
@@ -256,7 +258,7 @@ const definitions: Record<
       { key: 'max_users', title: '用户上限' },
       { key: 'max_roles', title: '角色上限' },
       { key: 'max_groups', title: '用户组上限' },
-      { key: 'max_buckets', title: 'Bucket 上限' },
+      { key: 'max_buckets', title: 'Bucket 上限', render: rgwBucketLimit },
       { key: 'max_access_keys', title: '访问密钥上限' },
       { key: 'resource_version', title: '版本' }
     ]

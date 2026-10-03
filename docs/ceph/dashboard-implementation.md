@@ -5,6 +5,12 @@
 
 ## 如何追踪调用链
 
+RGW 用户和账户的 max_buckets 按 rgw_op.cc 的 check_owner_max_buckets 解释：负数禁止
+创建 Bucket，零无限制，正整数为数量上限。修正用户创建/编辑及账户编辑表单此前错误的
+“-1 为无限制”提示，并在两类列表展示该字段含义；复用 user info / account get 字段。
+此语义不套用到 max_users 等其他账户上限。离线测试验证 int32 边界、特殊值与缺失值；
+尚未进行真实集群或浏览器验证。
+
 RGW 用户管理权限与子用户以明细表展示，对照参考 rgw-user-details 的 caps 与 subusers。
 复用 user info --uid 的原始采集字段，通过库存 API 提供 type/perm 和 id/permissions。
 不将管理权限误当作 S3 对象访问权限；权限字符串和子用户完整 ID 保留命令原值。
