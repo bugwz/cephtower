@@ -363,6 +363,7 @@ const definitions: Record<
       action: 'rgw_user.delete',
       resourceKind: 'rgw_user',
       successMessage: 'RGW 用户删除执行成功',
+      confirmation: (row) => `删除 RGW 用户 ${JSON.stringify(userId(row))}？该用户的凭据将失效，操作不可恢复。本操作不清理 Bucket 或对象数据；若用户仍拥有 Bucket，Ceph 将拒绝删除，请先处理其归属。`,
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, uid: userId(row) }),
       resourceKey: (row) => `rgw/user/${userId(row)}`
     },

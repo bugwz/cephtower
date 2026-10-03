@@ -137,7 +137,7 @@ func TestRGWAccountMigrationRefreshesAffectedResources(t *testing.T) {
 }
 
 func TestRGWSubuserRefreshDoesNotRepeatMutation(t *testing.T) {
-	for _, action := range []string{"rgw_user.caps", "rgw_user.subuser", "rgw_key.create", "rgw_key.update", "rgw_key.delete"} {
+	for _, action := range []string{"rgw_user.delete", "rgw_user.caps", "rgw_user.subuser", "rgw_key.create", "rgw_key.update", "rgw_key.delete"} {
 		for _, fail := range []bool{false, true} {
 			mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{}}}
 			reconciler := &reconcileExecutorFake{refreshResult: true}

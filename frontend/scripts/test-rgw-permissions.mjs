@@ -53,3 +53,18 @@ for (const [action, wording] of [['add', '合并添加'], ['rm', '仅移除']]) 
   for (const expected of [wording, 'tenant$ns$user', 'users', 'write', '不是整体替换', '其它权限保留', '其他用户的数据']) assert.ok(text.includes(expected))
 }
 console.log('RGW capability confirmation identifies scoped additive and subtractive semantics')
+
+let deletion
+function findDeletion(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(item => ts.isPropertyAssignment(item) && item.name.getText(source) === 'title' && item.initializer.text === '删除 RGW 用户')) {
+    const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+    deletion = new Function('userId', `${code}; return action`)(row => row.uid)
+  }
+  ts.forEachChild(node, findDeletion)
+}
+findDeletion(source)
+assert.equal(deletion.path, '/rgw/user')
+assert.deepEqual(deletion.buildBody(capRow, 7), { cluster_id: 7, uid: capRow.uid })
+assert.equal(deletion.resourceKey(capRow), `rgw/user/${capRow.uid}`)
+for (const text of [capRow.uid, '凭据将失效', '不可恢复', '不清理 Bucket', 'Ceph 将拒绝删除']) assert.ok(deletion.confirmation(capRow).includes(text))
+console.log('RGW user deletion confirms exact UID and native non-purging behavior')

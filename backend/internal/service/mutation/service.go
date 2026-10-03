@@ -121,6 +121,15 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	var upgradeTarget map[string]any
 	var s3KeyActive *bool
 	var expectedCaps map[string]uint8
+	if request.Action == "rgw_user.delete" {
+		checked, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if readErr != nil {
+			return cephdomain.ActionResult{}, normalize(readErr)
+		}
+		if !rgwUserPresence(checked.Stdout, last(resourceTail(request.ResourceKey)), true) {
+			return cephdomain.ActionResult{}, invalid("user existence could not be verified from the complete user list; no changes were made")
+		}
+	}
 	if request.Action == "rgw_user.caps" {
 		checked, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 		if readErr != nil {
@@ -331,6 +340,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "rgw_user.caps" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "capability command failed; inspect user capabilities before any manual retry", Retryable: false}
 		}
+		if request.Action == "rgw_user.delete" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "user removal failed; users owning buckets cannot be removed without purging data, which this operation does not request; inspect user state before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_user.subuser" || request.Action == "rgw_key.create" || request.Action == "rgw_key.update" || request.Action == "rgw_key.delete" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "user credential command failed; inspect user, subuser and key state before any manual retry", Retryable: false}
 		}
@@ -393,6 +405,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "rgw_user.delete" && (err != nil || !rgwUserPresence(checked.Stdout, last(resourceTail(request.ResourceKey)), false)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user removal was accepted but absence could not be verified from the complete user list; inspect user state before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_user.caps" && (err != nil || !rgwUserCapsMatch(checked.Stdout, rawText(request.Parameters, "uid"), expectedCaps)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "capability command was accepted but permissions could not be verified; inspect user capabilities before any manual retry", Retryable: false}
 		}
