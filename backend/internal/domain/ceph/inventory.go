@@ -41,15 +41,20 @@ type Daemon struct {
 	LastRefresh    *string `json:"last_refresh,omitempty"`
 }
 type Service struct {
-	Name        string   `json:"name"`
-	Type        string   `json:"type"`
-	Running     *int     `json:"running"`
-	Size        *int     `json:"size"`
-	Placement   any      `json:"placement,omitempty"`
-	Unmanaged   bool     `json:"unmanaged"`
-	LastRefresh *string  `json:"last_refresh"`
-	Ports       []int    `json:"ports"`
-	Events      []string `json:"events"`
+	ContainerImageName *string  `json:"container_image_name"`
+	ContainerImageID   *string  `json:"container_image_id"`
+	ServiceURL         *string  `json:"service_url"`
+	VirtualIP          *string  `json:"virtual_ip"`
+	CephCreatedAt      *string  `json:"ceph_created_at"`
+	Name               string   `json:"name"`
+	Type               string   `json:"type"`
+	Running            *int     `json:"running"`
+	Size               *int     `json:"size"`
+	Placement          any      `json:"placement,omitempty"`
+	Unmanaged          bool     `json:"unmanaged"`
+	LastRefresh        *string  `json:"last_refresh"`
+	Ports              []int    `json:"ports"`
+	Events             []string `json:"events"`
 }
 type Monitor struct {
 	Name         string `json:"name"`

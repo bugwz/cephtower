@@ -29,7 +29,7 @@ for (const [name, type, id] of [['mon', 'mon', ''], ['rgw.foo', 'rgw', 'foo'], [
 assert.ok(servicePage.includes('<Select disabled={Boolean(editingService)} options={serviceTypeOptions}'))
 console.log('Service edit identity checks passed')
 
-for (const key of ['unmanaged', 'last_refresh', 'ports', 'events']) assert.ok(servicePage.includes(`key: '${key}'`))
+for (const key of ['unmanaged', 'last_refresh', 'ports', 'events', 'service_url', 'virtual_ip', 'container_image_name', 'container_image_id', 'ceph_created_at']) assert.ok(servicePage.includes(`key: '${key}'`))
 assert.ok(servicePage.includes('serviceMeta: services, daemonMeta: daemons'))
 assert.ok(servicePage.includes('data?.serviceMeta?.stale && <Alert'))
 assert.ok(servicePage.includes('data?.daemonMeta?.stale && <Alert'))

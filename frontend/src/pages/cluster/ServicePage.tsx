@@ -221,6 +221,11 @@ function ServicePageContent() {
                     { key: 'size', title: '目标数' },
                     { key: 'last_refresh', title: 'Ceph 最近刷新', filterKey: false },
                     { key: 'ports', title: '端口', filterKey: false },
+                    { key: 'service_url', title: '服务访问地址', filterKey: false },
+                    { key: 'virtual_ip', title: '虚拟 IP', filterKey: false },
+                    { key: 'container_image_name', title: '容器镜像', filterKey: false },
+                    { key: 'container_image_id', title: '镜像 ID', filterKey: false },
+                    { key: 'ceph_created_at', title: 'Ceph 服务创建时间', filterKey: false },
                     { key: 'events', title: '服务事件', filterKey: false, render: (value) => Array.isArray(value) ? <div style={{ whiteSpace: 'pre-wrap' }}>{value.map(String).join('\n')}</div> : '本次未返回事件' },
                     {
                       key: 'actions',

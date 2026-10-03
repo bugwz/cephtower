@@ -378,10 +378,15 @@ type serviceWire struct {
 	Unmanaged   bool     `json:"unmanaged"`
 	Events      []string `json:"events"`
 	Status      struct {
-		Running     *int    `json:"running"`
-		Size        *int    `json:"size"`
-		LastRefresh *string `json:"last_refresh"`
-		Ports       []int   `json:"ports"`
+		ContainerImageName *string `json:"container_image_name"`
+		ContainerImageID   *string `json:"container_image_id"`
+		ServiceURL         *string `json:"service_url"`
+		VirtualIP          *string `json:"virtual_ip"`
+		Created            *string `json:"created"`
+		Running            *int    `json:"running"`
+		Size               *int    `json:"size"`
+		LastRefresh        *string `json:"last_refresh"`
+		Ports              []int   `json:"ports"`
 	} `json:"status"`
 }
 type monDumpWire struct {
@@ -520,6 +525,11 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 			}
 		}
 		payload := cephdomain.Service{Name: wire.ServiceName, Type: wire.ServiceType, Running: wire.Status.Running, Size: wire.Status.Size, Placement: wire.Placement, Unmanaged: wire.Unmanaged, LastRefresh: wire.Status.LastRefresh, Ports: wire.Status.Ports, Events: wire.Events}
+		payload.ContainerImageName = wire.Status.ContainerImageName
+		payload.ContainerImageID = wire.Status.ContainerImageID
+		payload.ServiceURL = wire.Status.ServiceURL
+		payload.VirtualIP = wire.Status.VirtualIP
+		payload.CephCreatedAt = wire.Status.Created
 		rows = append(rows, Observation{Kind: "service", NaturalKey: wire.ServiceName, Name: wire.ServiceName, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	quorumSet := make(map[string]struct{}, len(quorum.QuorumNames))
