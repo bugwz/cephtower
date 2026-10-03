@@ -402,6 +402,11 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 	switch request.Action {
 	case "rgw_bucket.create":
 		err = api.CreateBucket(ctx, bucket)
+		if err == nil {
+			if err := api.HeadBucket(ctx, bucket); err != nil {
+				return cephdomain.ActionResult{}, failure("post_check_failed", "bucket creation was accepted but existence could not be verified; refresh before another change", false)
+			}
+		}
 	case "rgw_bucket.delete":
 		err = api.DeleteBucket(ctx, bucket)
 	case "rgw_bucket.update":
