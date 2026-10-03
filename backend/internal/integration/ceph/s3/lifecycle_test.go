@@ -41,6 +41,37 @@ func TestLifecycleRuleActionConflicts(t *testing.T) {
 	}
 }
 
+func TestLifecycleDates(t *testing.T) {
+	for _, tc := range []struct {
+		value string
+		valid bool
+	}{
+		{"1970", true}, {"2030-02", true}, {"2028-02-29", true},
+		{"2030-01-01T00Z", true}, {"2030-01-01T00:00Z", true},
+		{"2030-01-01T00:00:00Z", true}, {"2030-01-01T00:00:00.000000000Z", true},
+		{"2030-01-01T00:00:00.0Z", true},
+		{"1969-12-31", false}, {"3000", false}, {"2030-02-29", false},
+		{"2030-13", false}, {"2030-00", false}, {"2030-01-00", false},
+		{"2030-01-01T24Z", false}, {"2030-01-01T00:01Z", false},
+		{"2030-01-01T00:00:01Z", false}, {"2030-01-01T00:00:00.000000001Z", false},
+		{"2030-01-01T00:00:00.0000000000Z", false},
+		{"2030-01-01T00:00:00+00:00", false}, {"2030-01-01T00:00:00z", false},
+		{"2030 garbage", false}, {"2030-01-01T00Z trailing", false},
+		{"", false}, {" 2030", false}, {"2030-01-01T00:00:00", false},
+	} {
+		for _, action := range []string{"Expiration", "Transition"} {
+			extra := ""
+			if action == "Transition" {
+				extra = "<StorageClass>COLD</StorageClass>"
+			}
+			body := []byte("<LifecycleConfiguration><Rule><Status>Enabled</Status><Filter/><" + action + "><Date>" + tc.value + "</Date>" + extra + "</" + action + "></Rule></LifecycleConfiguration>")
+			if err := ValidateBucketConfiguration("lifecycle", body); (err == nil) != tc.valid {
+				t.Fatalf("%s date=%q valid=%v err=%v", action, tc.value, tc.valid, err)
+			}
+		}
+	}
+}
+
 func TestLifecycleNumericActions(t *testing.T) {
 	wrap := func(action string) []byte {
 		return []byte("<LifecycleConfiguration><Rule><Status>Enabled</Status><Filter/>" + action + "</Rule></LifecycleConfiguration>")

@@ -3,8 +3,10 @@ package s3
 import (
 	"encoding/xml"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type lifecycleField struct {
@@ -14,7 +16,7 @@ type lifecycleField struct {
 }
 
 // Validate the native rule structure and supported local semantic checks.
-// RGW remains authoritative for dates, placement and cross-rule constraints.
+// RGW remains authoritative for placement and cross-rule constraints.
 func validateBucketLifecycle(body []byte) error {
 	var document struct {
 		Rules []struct {
@@ -218,6 +220,9 @@ func validateLifecycleAction(action lifecycleField) error {
 		if key == "ExpiredObjectDeleteMarker" && child.Text != "true" && child.Text != "false" {
 			return fmt.Errorf("ExpiredObjectDeleteMarker must be exactly true or false")
 		}
+		if key == "Date" && !validLifecycleDate(child.Text) {
+			return fmt.Errorf("lifecycle Date must be a valid UTC midnight within the native clock range")
+		}
 	}
 	switch name {
 	case "Expiration":
@@ -242,4 +247,25 @@ func validateLifecycleAction(action lifecycleField) error {
 		}
 	}
 	return nil
+}
+
+// Ceph accepts partial ISO dates and UTC times. Reject whitespace termination
+// and calendar normalization instead of silently changing the user's intent.
+var lifecycleDatePattern = regexp.MustCompile(`^[0-9]{4}(-[0-9]{2}(-[0-9]{2}(T[0-9]{2}(:[0-9]{2}(:[0-9]{2}(\.[0-9]{1,9})?)?)?Z)?)?)?$`)
+
+func validLifecycleDate(value string) bool {
+	if !lifecycleDatePattern.MatchString(value) {
+		return false
+	}
+	for _, layout := range []string{"2006", "2006-01", "2006-01-02", "2006-01-02T15Z", "2006-01-02T15:04Z", time.RFC3339Nano} {
+		parsed, err := time.Parse(layout, value)
+		if err != nil {
+			continue
+		}
+		seconds := parsed.Unix()
+		// real_clock uses unsigned 64-bit nanoseconds; reject wraparound.
+		return seconds >= 0 && uint64(seconds) <= ^uint64(0)/1_000_000_000 &&
+			seconds%86400 == 0 && parsed.Nanosecond() == 0
+	}
+	return false
 }
