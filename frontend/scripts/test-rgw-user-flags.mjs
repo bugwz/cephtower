@@ -22,6 +22,12 @@ assert.deepEqual(identity.rgwIdentityList([]), [])
 assert.deepEqual(identity.rgwIdentityList(['mfa:one', 'group,id']), ['mfa:one', 'group,id'])
 for (const value of [null, undefined, {}, [null], [''], [1]]) assert.equal(identity.rgwIdentityList(value), undefined)
 const userDetailsSource = readFileSync(new URL('../src/pages/object/RgwUserDetails.tsx', import.meta.url), 'utf8')
+const placementForm = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserPlacementForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(placementForm)
+for (const storage of [undefined, null, '', 'STANDARD', 'ARCHIVE']) assert.deepEqual(placementForm.rgwUserPlacementInput({ default_placement: 'custom', default_storage_class: storage }), { default_placement: 'custom', default_storage_class: storage ?? '' })
+for (const value of [undefined, null, '', false, 1, ' ', 'bad\nname']) assert.throws(() => placementForm.rgwUserPlacementInput({ default_placement: value }))
+for (const value of [false, 1, ' ', 'bad\nclass']) assert.throws(() => placementForm.rgwUserPlacementInput({ default_placement: 'custom', default_storage_class: value }))
+assert.ok(pages.includes('...rgwUserPlacementInput(values)'))
 assert.ok(pages.includes('detailContent: (row) => <RgwUserDetails row={row} />'))
 const userDetailsExports = {}
 new Function('exports', 'require', ts.transpileModule(userDetailsSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(userDetailsExports, (name) => {

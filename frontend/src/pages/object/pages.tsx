@@ -33,6 +33,7 @@ import { RgwRoleTagsTable } from './RgwRoleTagsTable'
 import { RgwPolicyDocument, RgwRolePolicyDetails, RgwRoleManagedPolicies } from './RgwRolePolicyDetails'
 import { rgwPolicyChanged, rgwPolicyConfirmation, rgwPolicyDeleteOptions, rgwPolicyMutation } from './rgwRolePolicies'
 import { RgwUserDetails } from './RgwUserDetails'
+import { rgwUserPlacementInput } from './rgwUserPlacementForm'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -174,6 +175,14 @@ const definitions: Record<
       initialValues: (row) => rgwQuotaInitial(row?.[scope === 'user' ? 'user_quota' : 'bucket_quota']),
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), scope, ...rgwQuotaInput(values) })
     })),
+      { title: '设置用户默认放置', path: '/rgw/user', method: 'PATCH', successMessage: '默认放置设置执行成功',
+        fields: [
+          { name: 'default_placement', label: '默认放置规则（必须存在，不支持清空）', required: true },
+          { name: 'default_storage_class', label: '默认存储类（留空使用原生默认类）' }
+        ],
+        confirmation: () => '将替换用户默认放置规则和存储类，不迁移已有 Bucket 或对象。请确认目标配置。',
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserPlacementInput(values) })
+      },
       { title: '用户限流设置', path: '/rgw/user/ratelimit', method: 'PUT', successMessage: '用户限流设置执行成功',
         fields: [
           { name: 'enabled', label: '限流状态', type: 'select', required: true, options: [{ label: '启用', value: 'enable' }, { label: '关闭', value: 'disable' }] },

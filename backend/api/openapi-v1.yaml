@@ -415,6 +415,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -1158,6 +1162,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -3196,6 +3204,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -3939,6 +3951,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -5510,6 +5526,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -6380,6 +6400,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -7124,6 +7148,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -8554,6 +8582,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -9391,6 +9423,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -10134,6 +10170,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -11123,6 +11163,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -12362,6 +12406,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -13106,6 +13154,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -13850,6 +13902,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -15231,6 +15287,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -16120,6 +16180,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -16959,6 +17023,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -17702,6 +17770,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -19101,6 +19173,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -19844,6 +19920,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -20604,6 +20684,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -21441,6 +21525,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -22184,6 +22272,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -22928,6 +23020,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -23984,6 +24080,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -24918,6 +25018,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -25755,6 +25859,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -26498,6 +26606,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -27374,6 +27486,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -28118,6 +28234,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -29542,6 +29662,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -30571,6 +30695,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -31408,6 +31536,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -32247,6 +32379,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -33084,6 +33220,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -33827,6 +33967,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -34761,6 +34905,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -35598,6 +35746,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -36341,6 +36493,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -37180,6 +37336,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -37923,6 +38083,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -38762,6 +38926,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -39505,6 +39673,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -40344,6 +40516,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -41181,6 +41357,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -41924,6 +42104,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -42931,6 +43115,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -43769,6 +43957,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -44513,6 +44705,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -45257,6 +45453,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -46095,6 +46295,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -46873,6 +47077,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -47902,6 +48110,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -48739,6 +48951,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -49482,6 +49698,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -50321,6 +50541,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -51065,6 +51289,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -51809,6 +52037,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -52553,6 +52785,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -53392,6 +53628,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -54229,6 +54469,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -54972,6 +55216,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -55833,6 +56081,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -56576,6 +56828,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -57319,6 +57575,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -58449,6 +58709,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -59307,6 +59571,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -60213,6 +60481,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -60956,6 +61228,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -61899,6 +62175,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -62737,6 +63017,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -63481,6 +63765,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -64336,6 +64624,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -65079,6 +65371,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -65822,6 +66118,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -66566,6 +66866,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -67405,6 +67709,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -68242,6 +68550,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -68985,6 +69297,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -69830,6 +70146,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -70574,6 +70894,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -71318,6 +71642,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -72157,6 +72485,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -72901,6 +73233,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -73644,6 +73980,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -74483,6 +74823,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -75226,6 +75570,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -75969,6 +76317,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -76713,6 +77065,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -77647,6 +78003,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -78484,6 +78844,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -79227,6 +79591,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -79971,6 +80339,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -80715,6 +81087,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -81458,6 +81834,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -82202,6 +82582,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -82946,6 +83330,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -83690,6 +84078,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -84529,6 +84921,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -85272,6 +85668,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -86016,6 +86416,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -86759,6 +87163,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -87833,6 +88241,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -89063,6 +89475,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -89900,6 +90316,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -90643,6 +91063,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -91482,6 +91906,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -92225,6 +92653,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -92968,6 +93400,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -93807,6 +94243,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -94644,6 +95084,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -95387,6 +95831,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -96226,6 +96674,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -96969,6 +97421,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:
@@ -97712,6 +98168,10 @@ paths:
                   type: string
                 default:
                   type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
                 description:
                   type: string
                 destination:

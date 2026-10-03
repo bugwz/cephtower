@@ -1719,6 +1719,32 @@ func TestRGWAccountDeleteCommand(t *testing.T) {
 	}
 }
 
+func TestRGWUserDefaultPlacement(t *testing.T) {
+	request := Request{Action: "rgw_user.update", ResourceKey: "rgw/user/test"}
+	for _, storage := range []string{"", "STANDARD", "ARCHIVE"} {
+		cmd, err := build(request, map[string]any{"default_placement": "custom", "default_storage_class": storage})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !slices.Contains(cmd.args, "--placement-id=custom") || !slices.Contains(cmd.args, "--storage-class="+storage) || !reflect.DeepEqual(cmd.check, []string{"user", "info", "--uid", "test", "--format", "json"}) {
+			t.Fatalf("unexpected command: %#v", cmd)
+		}
+	}
+	for _, params := range []map[string]any{
+		{"default_storage_class": "STANDARD"}, {"default_placement": "custom"},
+		{"default_placement": "", "default_storage_class": ""},
+		{"default_placement": "bad\nname", "default_storage_class": ""},
+		{"default_placement": "custom", "default_storage_class": nil},
+		{"default_placement": "custom", "default_storage_class": "bad\nclass"},
+		{"default_placement": false, "default_storage_class": ""},
+	} {
+		params["email"] = "valid@example.org"
+		if _, err := build(request, params); err == nil {
+			t.Fatalf("accepted invalid placement: %#v", params)
+		}
+	}
+}
+
 func TestRGWAccountCreateText(t *testing.T) {
 	for _, field := range []string{"account_name", "email", "tenant"} {
 		for _, value := range []any{nil, true, 123, map[string]any{}, "  ", "bad\ntext", "bad\rtext", "bad\x00text", strings.Repeat("x", (32<<10)+1)} {

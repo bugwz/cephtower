@@ -1841,6 +1841,19 @@ func build(request Request, p map[string]any) (command, error) {
 	case "rgw_user.update":
 		uid := last(tail)
 		args := []string{"user", "modify", "--uid", uid}
+		if _, present := p["default_placement"]; present {
+			placement, ok := p["default_placement"].(string)
+			if !ok || strings.TrimSpace(placement) == "" || strings.ContainsAny(placement, "\x00\r\n") || len(placement) > 32<<10 {
+				return command{}, invalid("default_placement must be nonempty single-line text")
+			}
+			storage, ok := p["default_storage_class"].(string)
+			if !ok || strings.ContainsAny(storage, "\x00\r\n") || len(storage) > 32<<10 || (storage != "" && strings.TrimSpace(storage) == "") {
+				return command{}, invalid("default_storage_class must be explicit single-line text; empty selects the native default")
+			}
+			args = append(args, "--placement-id="+placement, "--storage-class="+storage)
+		} else if _, present := p["default_storage_class"]; present {
+			return command{}, invalid("default_storage_class requires default_placement")
+		}
 		if value := rawText(p, "display_name"); value != "" {
 			args = append(args, "--display-name", value)
 		}
