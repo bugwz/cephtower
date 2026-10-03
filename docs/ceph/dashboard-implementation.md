@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **RGW Topic 通知属性编辑**：新增 `PATCH /rgw/topic/attribute` 和单属性编辑表单，覆盖参考 Topic 表单中的 Opaque Data、持久化、TTL、最大重试次数及重试间隔。使用原生 SNS `SetTopicAttributes`，不通过重新创建覆盖全部 Topic，也不直接写元数据。沿用 HTTPS、SNS 签名和 Topic 范围绑定，提交前比较选中属性快照，提交后比较全部外层属性和完整 EndPoint 字段（含不回传的端点秘密与未知字段），只允许目标字段变化。
+  - 根据 `rgw_pubsub.cc::to_json_str` 核验 SNS 的大写 EndPoint 字段名与类型，不把它当作 CLI 的小写 dest。持久化值保持布尔，Opaque Data 保留空串/Unicode/空白。根据 `RGWHTTPArgs::get_int` 及 `strict_strtol`，显式数值限制在 0–2147483647，避免溢出后默默回退默认；原生显示的 `None` 通过明确选择全局默认转换为 `-1` 哨兵。
+  - 前端分别说明 TTL/重试次数为 0 表示无限、重试间隔为 0 表示无延迟，默认不是 0。关闭持久化由原生删除队列，可能永久丢失待投递消息；开启可能创建队列，但属性回读不证明队列健康或消息成功投递。不自动回滚/重试，不更改 Policy、推送地址或桶通知规则。
+  - 增加三种 scope、全部五个属性、设置/清除/默认/整数边界、前后阶段故障、未知字段保持、秘密不回显、API 高风险资源锁和表单绑定回归。无真实集群或浏览器视觉验证。Topic 创建、推送端点/认证参数编辑与桶通知规则仍是整体目标的未完成项。
+
 - **RGW Topic Policy 设置与清除**：新增 `PATCH /rgw/topic/policy` 高风险操作和 Topic 列表表单。根据 `rgw_rest_pubsub.cc::RGWPSSetTopicAttributesOp` 的原生属性更新路径，使用 HTTPS RGW 端点上的 SNS `GetTopicAttributes → SetTopicAttributes(Policy) → GetTopicAttributes`，不是直接修改元数据。复用已配置的 S3 端点、凭据及 TLS 设置，但使用 SNS SigV4 签名域；Policy 通过表单请求体传输，不放入 URL，也不自动启用明文秘密配置。
   - 绑定规范编码的完整 Topic 元数据键与 ARN，提交前校验当前 Policy 快照，回读比较除 Policy 外的全部原生属性。端点及其秘密仅在后端内存参与比较，远端失败正文不回显；缺失、重复或损坏属性拒绝核验，失败不自动重试或回滚。沿用 Topic 删除相同的资源锁；此检查不是跨工具原子 CAS。
   - 前端要求明确选择替换完整 JSON Policy 或清除，拒绝陈旧数据、错误身份、未变化和超限请求；确认说明权限立即变化、清除不保证私有、可能失去回读权限。提交完成后重新采集 Topic；不修改推送端点、队列或桶通知规则。

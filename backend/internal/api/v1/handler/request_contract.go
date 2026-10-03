@@ -267,6 +267,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"rgw_role.delete"}, true, map[string]JSONField{"name": stringField(true), "account_id": stringField(false)})
 	add([]string{"rgw_topic.delete"}, true, map[string]JSONField{"topic_id": stringField(true), "expected_version": stringField(true)})
 	add([]string{"rgw_topic.policy"}, true, map[string]JSONField{"topic_id": stringField(true), "topic_arn": stringField(true), "expected_policy": stringField(true), "policy": stringField(true)})
+	add([]string{"rgw_topic.attribute"}, true, map[string]JSONField{"topic_id": stringField(true), "topic_arn": stringField(true), "expected_value": stringField(true), "value": stringField(true), "attribute": stringField(true, "OpaqueData", "persistent", "time_to_live", "max_retries", "retry_sleep_duration")})
 	add([]string{"rgw_role.create"}, true, map[string]JSONField{"account_id": stringField(false), "name": stringField(true), "description": stringField(false), "max_session_duration": integerField(false), "path": stringField(false), "assume_role_policy": stringField(true)})
 	secret := stringField(true)
 	secret.WriteOnly = true

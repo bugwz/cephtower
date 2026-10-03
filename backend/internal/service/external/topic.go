@@ -13,7 +13,7 @@ import (
 	"cephtower/backend/internal/integration/ceph/s3"
 )
 
-func (s *Service) topicPolicy(ctx context.Context, request Request) (cephdomain.ActionResult, error) {
+func topicIdentity(request Request) (string, string, error) {
 	p := request.Parameters
 	id, _ := p["topic_id"].(string)
 	arn, _ := p["topic_arn"].(string)
@@ -22,8 +22,16 @@ func (s *Service) topicPolicy(ctx context.Context, request Request) (cephdomain.
 	scope, name, scoped := strings.Cut(key, ":")
 	parts := strings.SplitN(arn, ":", 6)
 	if err != nil || !utf8.Valid(decoded) || base64.RawURLEncoding.EncodeToString(decoded) != id || !scoped || name == "" || strings.IndexFunc(key, unicode.IsControl) >= 0 || len(parts) != 6 || parts[0] != "arn" || parts[1] != "aws" || parts[2] != "sns" || parts[3] == "" || parts[4] != scope || parts[5] != name || request.ResourceKey != "rgw/topic/"+id {
-		return cephdomain.ActionResult{}, failure("invalid_request", "topic identity and ARN must agree", false)
+		return "", "", failure("invalid_request", "topic identity and ARN must agree", false)
 	}
+	return arn, name, nil
+}
+func (s *Service) topicPolicy(ctx context.Context, request Request) (cephdomain.ActionResult, error) {
+	arn, name, err := topicIdentity(request)
+	if err != nil {
+		return cephdomain.ActionResult{}, err
+	}
+	p := request.Parameters
 	expected, expectedOK := p["expected_policy"].(string)
 	policy, policyOK := p["policy"].(string)
 	if !expectedOK || !policyOK || expected == policy {

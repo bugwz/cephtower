@@ -85,6 +85,19 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if policyInvalid.Code != http.StatusBadRequest {
 			t.Fatalf("unknown policy field accepted: %d", policyInvalid.Code)
 		}
+		attributeBody := fmt.Sprintf(`{"cluster_id":%d,"topic_id":%q,"topic_arn":%q,"attribute":"persistent","expected_value":"true","value":"false"}`, cluster.ID, id, "arn:aws:sns:default:"+scope+":events")
+		attributeResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/topic/attribute", attributeBody, "topic-attribute-"+scope)
+		if attributeResponse.Code != http.StatusAccepted {
+			t.Fatalf("attribute queue: %d %s", attributeResponse.Code, attributeResponse.Body.String())
+		}
+		attributeOp, err := db.FindOperation(context.Background(), operationIDFromResponse(t, attributeResponse))
+		if err != nil || attributeOp.Action != "rgw_topic.attribute" || attributeOp.Risk != "high" || attributeOp.ResourceKey != op.ResourceKey || attributeOp.LockKey != op.LockKey {
+			t.Fatalf("wrong attribute operation %+v %v", attributeOp, err)
+		}
+		attributeInvalid := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/topic/attribute", strings.Replace(attributeBody, `"attribute":"persistent"`, `"attribute":"password"`, 1), "topic-attribute-invalid-"+scope)
+		if attributeInvalid.Code != http.StatusBadRequest {
+			t.Fatalf("unsupported attribute accepted: %d", attributeInvalid.Code)
+		}
 	}
 	for _, realm := range []string{"", "realm"} {
 		response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/sync/group", fmt.Sprintf(`{"cluster_id":%d,"name":"east","zonegroup_id":"zg","realm_id":%q,"group_id":"g","expected_group":%q,"status":"enabled"}`, cluster.ID, realm, `{"id":"g","status":"allowed","data_flow":{},"pipes":[]}`), "zonegroup-sync-"+realm)

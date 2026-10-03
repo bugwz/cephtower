@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 const api = {}
 new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicPolicy.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
+new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicAttribute.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api,()=>api)
 new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicDelete.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
 const jsx = (type, props) => ({ type, props })
 new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwTopicDetails.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText)(api,()=>({jsx,jsxs:jsx}))
@@ -53,6 +54,40 @@ for (const scope of ['', 'team', 'RGW12345678901234567']) {
   for (const change of [{stale:true},{natural_key:'other'},{metadata_version:null},{metadata_key:'other:events'},{scope:undefined}]) assert.throws(()=>action.buildBody({...row,...change},42))
 }
 const navigation = readFileSync(new URL('../src/navigation.ts',import.meta.url),'utf8')
+for (const scope of ['', 'team', 'RGW12345678901234567']) {
+  const row = {scope,name:'events',metadata_key:`${scope}:events`,natural_key:Buffer.from(`${scope}:events`).toString('base64url'),arn:`arn:aws:sns:default:${scope}:events`,opaqueData:'old',persistent:true,time_to_live:'None',max_retries:'10',retry_sleep_duration:'0'}
+  const action = definition.extraActions[1]
+  assert.equal(action.path,'/rgw/topic/attribute')
+  assert.equal(action.method,'PATCH')
+  assert.equal(action.disabledWhen(row),undefined)
+  const initial = action.initialValues(row)
+  for (const [attribute,extra,expected_value,value] of [
+    ['OpaqueData',{mode:'set',value:' 中文 &+<>\n'},'old',' 中文 &+<>\n'],
+    ['OpaqueData',{mode:'clear'},'old',''],
+    ['persistent',{persistent:'false'},'true','false'],
+    ['time_to_live',{mode:'set',value:'0'},'None','0'],
+    ['max_retries',{mode:'set',value:'2147483647'},'10','2147483647'],
+    ['max_retries',{mode:'default'},'10','None'],
+    ['retry_sleep_duration',{mode:'set',value:'1'},'0','1']
+  ]) {
+    const values = {...initial,attribute,...extra}
+    assert.deepEqual(action.buildBody(values,42,row),{cluster_id:42,...initial,attribute,expected_value,value})
+    for (const change of [{stale:true},{natural_key:'other'},{arn:'wrong'},{scope:undefined}]) assert.throws(()=>action.buildBody(values,42,{...row,...change}))
+    assert.throws(()=>action.buildBody({...values,topic_id:'other'},42,row))
+    for (const warning of ['HTTPS','原子锁','回滚','Policy']) assert.ok(action.confirmation(values,row).includes(warning))
+  }
+  for (const value of ['-1','2147483648','01','1.5','','None',' 1','1e3']) assert.throws(()=>action.buildBody({...initial,attribute:'max_retries',mode:'set',value},42,row))
+  for (const values of [
+    {attribute:'password',value:'secret'}, {attribute:'persistent',persistent:'1'},
+    {attribute:'persistent',persistent:'true'}, {attribute:'time_to_live',mode:'default'},
+    {attribute:'OpaqueData',mode:'set',value:''}, {attribute:'OpaqueData',mode:'default'},
+    {attribute:'max_retries',mode:'clear'}, {attribute:'max_retries',value:'1'},
+    {attribute:'OpaqueData',mode:'set',value:'x'.repeat(1024*1024)}
+  ]) assert.throws(()=>action.buildBody({...initial,...values},42,row))
+  assert.throws(()=>action.buildBody({...initial,attribute:'persistent',persistent:'false'},42,{...row,persistent:undefined}))
+  assert.match(action.confirmation({...initial,attribute:'persistent',persistent:'false'},row),/永久丢失/)
+  assert.match(action.confirmation({...initial,attribute:'max_retries',mode:'default'},row),/全局默认不是 0/)
+}
 for (const scope of ['', 'team', 'RGW12345678901234567']) {
   const row = {scope,name:'events',metadata_key:`${scope}:events`,natural_key:Buffer.from(`${scope}:events`).toString('base64url'),arn:`arn:aws:sns:default:${scope}:events`,policy:'{"Statement":[]}'}
   const action = definition.extraActions[0]

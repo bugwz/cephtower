@@ -649,6 +649,10 @@ func (h *Handler) UpdateRGWTopicPolicy(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_topic", "rgw_topic.policy", "high")(w, r)
 }
 
+func (h *Handler) UpdateRGWTopicAttribute(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_topic", "rgw_topic.attribute", "high")(w, r)
+}
+
 func (h *Handler) CreateRGWRole(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_role", "rgw_role.create", "medium")(w, r)
 }

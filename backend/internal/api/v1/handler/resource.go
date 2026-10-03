@@ -197,7 +197,7 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 			clusterError(w, r, err)
 			return
 		}
-		if action == "rgw_topic.policy" {
+		if action == "rgw_topic.policy" || action == "rgw_topic.attribute" {
 			if h.Endpoints == nil {
 				WriteError(w, r, http.StatusNotImplemented, "capability_unavailable", "s3 endpoint is not configured", false, nil)
 				return

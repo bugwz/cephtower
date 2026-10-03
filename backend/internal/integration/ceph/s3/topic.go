@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -37,7 +38,40 @@ func (c *Client) SetTopicPolicy(ctx context.Context, arn, policy string) error {
 			return err
 		}
 	}
-	body, err := c.topicRequest(ctx, url.Values{"Action": {"SetTopicAttributes"}, "TopicArn": {arn}, "AttributeName": {"Policy"}, "AttributeValue": {policy}})
+	return c.setTopicAttribute(ctx, arn, "Policy", policy)
+}
+
+// Numeric attributes are parsed by RGWHTTPArgs::get_int, not an unsigned parser.
+// None is the displayed global-default sentinel; send its explicit signed value.
+func TopicAttributeWireValue(attribute, value string) (string, error) {
+	switch attribute {
+	case "OpaqueData":
+		return value, nil
+	case "persistent":
+		if value == "true" || value == "false" {
+			return value, nil
+		}
+	case "time_to_live", "max_retries", "retry_sleep_duration":
+		if value == "None" {
+			return "-1", nil
+		}
+		if n, err := strconv.ParseUint(value, 10, 31); err == nil && strconv.FormatUint(n, 10) == value {
+			return value, nil
+		}
+	}
+	return "", fmt.Errorf("invalid SNS topic attribute or value")
+}
+
+func (c *Client) SetTopicAttribute(ctx context.Context, arn, attribute, value string) error {
+	wire, err := TopicAttributeWireValue(attribute, value)
+	if err != nil {
+		return err
+	}
+	return c.setTopicAttribute(ctx, arn, attribute, wire)
+}
+
+func (c *Client) setTopicAttribute(ctx context.Context, arn, attribute, value string) error {
+	body, err := c.topicRequest(ctx, url.Values{"Action": {"SetTopicAttributes"}, "TopicArn": {arn}, "AttributeName": {attribute}, "AttributeValue": {value}})
 	if err != nil {
 		return err
 	}

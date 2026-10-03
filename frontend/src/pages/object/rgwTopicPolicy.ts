@@ -1,12 +1,14 @@
-export function topicPolicyBlocked(row: Record<string, unknown>) {
+export function topicIdentityBlocked(row: Record<string, unknown>) {
   if (row.stale === true) return 'Topic 库存已过期，请刷新'
   if (typeof row.scope !== 'string' || typeof row.name !== 'string' || !row.name || row.metadata_key !== `${row.scope}:${row.name}`) return 'Topic 身份不完整'
   const id = btoa(Array.from(new TextEncoder().encode(String(row.metadata_key)), byte => String.fromCharCode(byte)).join('')).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
   if (row.natural_key !== id) return 'Topic 编码身份不一致'
   const arn = typeof row.arn === 'string' ? row.arn.split(':') : []
   if (arn.length !== 6 || arn[0] !== 'arn' || arn[1] !== 'aws' || arn[2] !== 'sns' || !arn[3] || arn[4] !== row.scope || arn[5] !== row.name) return 'Topic ARN 与身份不一致'
-  if (typeof row.policy !== 'string') return '当前 Policy 未返回，请刷新'
   return undefined
+}
+export function topicPolicyBlocked(row: Record<string, unknown>) {
+  return topicIdentityBlocked(row) ?? (typeof row.policy !== 'string' ? '当前 Policy 未返回，请刷新' : undefined)
 }
 export function topicPolicyInitial(row?: Record<string, unknown>) {
   if (!row) throw new Error('请选择 Topic')
