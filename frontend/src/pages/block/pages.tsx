@@ -6,6 +6,7 @@ import { RbdRuntimeStatus } from './RbdRuntimeStatus'
 import { RbdConfiguration } from './RbdConfiguration'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
 import { useClusterContext } from '../../state/ClusterContext'
+import { useState } from 'react'
 
 export function BlockPoolsPage() {
   return <PoolPage />
@@ -33,7 +34,8 @@ export function RbdGroupsPage() {
 
 export function ImageMirroringPage() {
   const { selectedClusterId } = useClusterContext()
-  return <><ResourceListPage definition={resourceDefinitions.imageMirroring} />{selectedClusterId && <LiveMirrorSchedules key={selectedClusterId} clusterId={selectedClusterId} />}</>
+  const [scheduleRevision, setScheduleRevision] = useState(0)
+  return <><ResourceListPage definition={resourceDefinitions.imageMirroring} onFormMutationSuccess={() => setScheduleRevision((value) => value + 1)} />{selectedClusterId && <LiveMirrorSchedules key={`${selectedClusterId}/${scheduleRevision}`} clusterId={selectedClusterId} />}</>
 }
 
 export function IscsiPage() {

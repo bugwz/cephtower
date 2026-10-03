@@ -87,7 +87,7 @@ export interface ResourceListPageDefinition extends FeatureRequirements {
   detailContent?: (row: ApiRecord, clusterId?: number) => ReactNode
 }
 
-export function ResourceListPage({ definition, embedded = false }: { definition: ResourceListPageDefinition; embedded?: boolean }) {
+export function ResourceListPage({ definition, embedded = false, onFormMutationSuccess }: { definition: ResourceListPageDefinition; embedded?: boolean; onFormMutationSuccess?: () => void }) {
   const navigate = useNavigate()
   const { selectedClusterId } = useClusterContext()
   const currentClusterId = useRef(selectedClusterId)
@@ -234,6 +234,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
         activeRow?.resource_version ? { ifMatch: String(activeRow.resource_version) } : undefined
       ), false)
       if (currentClusterId.current !== formClusterId || clusterGeneration.current !== generation) return
+      onFormMutationSuccess?.()
       if (action.resultValues) {
         form.setFieldsValue(action.resultValues(result as unknown as ApiRecord, values, activeRow))
       }

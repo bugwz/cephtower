@@ -102,9 +102,33 @@ const liveData = { schedules: [{ pool: '-', namespace: '-', image: '-', items }]
 assert.deepEqual(await loadLive(liveData), liveData)
 assert.deepEqual((await loadLive({ ...liveData, schedules: [] })).schedules, [])
 for (const payload of [null, {}, { ...liveData, schedules: null }, { ...liveData, schedules: [duplicateScope, duplicateScope] }, { ...liveData, observed_at: null }]) await assert.rejects(loadLive(payload))
-assert.ok(blockSource.includes('<LiveMirrorSchedules key={selectedClusterId} clusterId={selectedClusterId} />'))
+assert.ok(blockSource.includes('<LiveMirrorSchedules key={`${selectedClusterId}/${scheduleRevision}`} clusterId={selectedClusterId} />'))
+assert.ok(blockSource.includes('onFormMutationSuccess={() => setScheduleRevision((value) => value + 1)}'))
 assert.ok(liveSource.includes('下方为上次成功读取结果，不代表当前配置。'))
 console.log('Live mirror schedules preserve cluster scope, empty results and read failures')
+const resourceFn = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ResourceListPage')
+const submitNode = resourceFn.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submitForm')
+const submitCode = ts.transpileModule(submitNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const mode of ['success', 'cancel', 'switch-confirm', 'switch-result', 'failed', 'refresh-failed']) {
+  const currentClusterId = { current: 7 }
+  const clusterGeneration = { current: 0 }
+  let writes = 0, notified = 0
+  const env = {
+    selectedClusterId: 7, formClusterId: 7, submitting: false, mutationBlocked: false, currentClusterId, clusterGeneration,
+    activeRow: undefined, activeAction: { path: '/rbd/mirroring/global/schedule', method: 'POST', confirmation: () => 'confirm', buildBody: () => ({ cluster_id: 7 }) },
+    setSubmitting() {}, closeForm() {}, message: { success() {} }, form: {},
+    Modal: { confirm(options) { if (mode === 'switch-confirm') currentClusterId.current = 9; if (mode === 'cancel') options.onCancel(); else options.onOk() } },
+    operationMutation: { run: async (fn) => { const result = await fn(); if (mode === 'switch-result') { currentClusterId.current = 9; clusterGeneration.current++ } return result } },
+    mutateResource: async () => { writes++; if (mode === 'failed') throw new Error('operation failed'); return {} },
+    onFormMutationSuccess: () => { notified++ },
+    refreshResource: async () => { if (mode === 'refresh-failed') throw new Error('inventory unavailable') }, refresh: async () => {},
+  }
+  const submit = new Function(...Object.keys(env), `${submitCode}; return submitForm`)(...Object.values(env))
+  if (mode === 'failed' || mode === 'refresh-failed') await assert.rejects(submit({})); else await submit({})
+  assert.equal(writes, mode === 'cancel' || mode === 'switch-confirm' ? 0 : 1)
+  assert.equal(notified, mode === 'success' || mode === 'refresh-failed' ? 1 : 0)
+}
+console.log('Successful current-cluster mutations invalidate live schedules before inventory refresh')
 
 const imageScheduleDetails = mirrorExports.imageMirrorScheduleDetails
 for (const [origin, label] of [['cluster', '继承集群'], ['pool', '继承池'], ['namespace', '继承命名空间'], ['', '镜像专属']]) {
