@@ -29,6 +29,12 @@ for (const [name, type, id] of [['mon', 'mon', ''], ['rgw.foo', 'rgw', 'foo'], [
 assert.ok(servicePage.includes('<Select disabled={Boolean(editingService)} options={serviceTypeOptions}'))
 console.log('Service edit identity checks passed')
 
+for (const key of ['unmanaged', 'last_refresh', 'ports', 'events']) assert.ok(servicePage.includes(`key: '${key}'`))
+assert.ok(servicePage.includes('serviceMeta: services, daemonMeta: daemons'))
+assert.ok(servicePage.includes('data?.serviceMeta?.stale && <Alert'))
+assert.ok(servicePage.includes('data?.daemonMeta?.stale && <Alert'))
+console.log('Service runtime metadata and stale inventory bindings passed')
+
 const source = readFileSync(new URL('../src/hooks.ts', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('hooks.ts', source, ts.ScriptTarget.Latest, true)
 const fn = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'useResource')

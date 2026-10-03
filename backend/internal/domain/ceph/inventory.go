@@ -41,11 +41,15 @@ type Daemon struct {
 	LastRefresh    *string `json:"last_refresh,omitempty"`
 }
 type Service struct {
-	Name      string `json:"name"`
-	Type      string `json:"type"`
-	Running   *int   `json:"running"`
-	Size      *int   `json:"size"`
-	Placement any    `json:"placement,omitempty"`
+	Name        string   `json:"name"`
+	Type        string   `json:"type"`
+	Running     *int     `json:"running"`
+	Size        *int     `json:"size"`
+	Placement   any      `json:"placement,omitempty"`
+	Unmanaged   bool     `json:"unmanaged"`
+	LastRefresh *string  `json:"last_refresh"`
+	Ports       []int    `json:"ports"`
+	Events      []string `json:"events"`
 }
 type Monitor struct {
 	Name         string `json:"name"`

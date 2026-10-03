@@ -1,5 +1,5 @@
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Button, Card, Form, Input, Modal, Select, Space, Tabs } from 'antd'
+import { Alert, Button, Card, Form, Input, Modal, Select, Space, Tabs } from 'antd'
 import { useCallback, useState } from 'react'
 import { textValue, type ApiRecord } from '../../api/client'
 import { listAllResources, mutateResource, refreshResource } from '../../api/resource'
@@ -13,6 +13,7 @@ import { useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 import { ServiceDaemons } from './ServiceDaemons'
+import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 
 interface ServiceFormValues {
   service_type: string
@@ -38,7 +39,7 @@ export function ServicePage() {
   const { selectedClusterId } = useClusterContext()
   const serviceTableFilters = useResourceTableFilters({
     path: '/services',
-    fields: ['name', 'type', 'status', 'running', 'size'],
+    fields: ['name', 'type', 'running', 'size'],
     clusterId: selectedClusterId
   })
   const daemonTableFilters = useResourceTableFilters({
@@ -48,13 +49,13 @@ export function ServicePage() {
   })
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
-      return { services: [], daemons: [] }
+      return { services: [], daemons: [], serviceMeta: null, daemonMeta: null }
     }
     const [services, daemons] = await Promise.all([
-      listAllResources('/services', selectedClusterId, { filters: serviceTableFilters.filters }).then((payload) => payload.items),
-      listAllResources('/daemons', selectedClusterId, { filters: daemonTableFilters.filters }).then((payload) => payload.items)
+      listAllResources('/services', selectedClusterId, { filters: serviceTableFilters.filters }),
+      listAllResources('/daemons', selectedClusterId, { filters: daemonTableFilters.filters })
     ])
-    return { services, daemons }
+    return { services: services.items, daemons: daemons.items, serviceMeta: services, daemonMeta: daemons }
   }, [daemonTableFilters.filters, selectedClusterId, serviceTableFilters.filters])
   const { data, loading, error, refresh } = useResource(loader)
   const [form] = Form.useForm<ServiceFormValues>()
@@ -182,6 +183,8 @@ export function ServicePage() {
               label: '服务',
               children: (
                 <div className="embedded-panel">
+                <ResourceMetaBar observedAt={data?.serviceMeta?.observedAt} stale={data?.serviceMeta?.stale} staleReason={data?.serviceMeta?.staleReason} />
+                {data?.serviceMeta?.stale && <Alert type="warning" message="服务库存已过期，请刷新后核对运行数与配置。" />}
                 <DataTable
                   data={data?.services ?? []}
                   filterOptions={serviceTableFilters.filterOptions}
@@ -192,9 +195,12 @@ export function ServicePage() {
                     { key: 'name', title: '服务名' },
                     { key: 'type', title: '类型' },
                     { key: 'placement', title: '放置策略' },
-                    { key: 'status', title: '状态' },
+                    { key: 'unmanaged', title: '管理模式', filterKey: false, render: (value) => value === true ? '非托管' : value === false ? '编排器管理' : '未采集' },
                     { key: 'running', title: '运行数' },
                     { key: 'size', title: '目标数' },
+                    { key: 'last_refresh', title: 'Ceph 最近刷新', filterKey: false },
+                    { key: 'ports', title: '端口', filterKey: false },
+                    { key: 'events', title: '服务事件', filterKey: false, render: (value) => Array.isArray(value) ? <div style={{ whiteSpace: 'pre-wrap' }}>{value.map(String).join('\n')}</div> : '本次未返回事件' },
                     {
                       key: 'actions',
                       title: '操作',
@@ -217,6 +223,8 @@ export function ServicePage() {
               label: '守护进程',
               children: (
                 <div className="embedded-panel">
+                <ResourceMetaBar observedAt={data?.daemonMeta?.observedAt} stale={data?.daemonMeta?.stale} staleReason={data?.daemonMeta?.staleReason} />
+                {data?.daemonMeta?.stale && <Alert type="warning" message="守护进程库存已过期，请刷新后核对状态。" />}
                 <DataTable
                   data={data?.daemons ?? []}
                   filterOptions={daemonTableFilters.filterOptions}

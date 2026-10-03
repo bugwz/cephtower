@@ -372,12 +372,16 @@ type daemonWire struct {
 	LastRefresh        *string `json:"last_refresh"`
 }
 type serviceWire struct {
-	ServiceName string `json:"service_name"`
-	ServiceType string `json:"service_type"`
-	Placement   any    `json:"placement"`
+	ServiceName string   `json:"service_name"`
+	ServiceType string   `json:"service_type"`
+	Placement   any      `json:"placement"`
+	Unmanaged   bool     `json:"unmanaged"`
+	Events      []string `json:"events"`
 	Status      struct {
-		Running *int `json:"running"`
-		Size    *int `json:"size"`
+		Running     *int    `json:"running"`
+		Size        *int    `json:"size"`
+		LastRefresh *string `json:"last_refresh"`
+		Ports       []int   `json:"ports"`
 	} `json:"status"`
 }
 type monDumpWire struct {
@@ -510,7 +514,12 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 		if (wire.Status.Running != nil && *wire.Status.Running < 0) || (wire.Status.Size != nil && *wire.Status.Size < 0) {
 			return nil, fmt.Errorf("parse collect.service response: counts must be nonnegative")
 		}
-		payload := cephdomain.Service{Name: wire.ServiceName, Type: wire.ServiceType, Running: wire.Status.Running, Size: wire.Status.Size, Placement: wire.Placement}
+		for _, port := range wire.Status.Ports {
+			if port < 1 || port > 65535 {
+				return nil, fmt.Errorf("parse collect.service response: invalid port")
+			}
+		}
+		payload := cephdomain.Service{Name: wire.ServiceName, Type: wire.ServiceType, Running: wire.Status.Running, Size: wire.Status.Size, Placement: wire.Placement, Unmanaged: wire.Unmanaged, LastRefresh: wire.Status.LastRefresh, Ports: wire.Status.Ports, Events: wire.Events}
 		rows = append(rows, Observation{Kind: "service", NaturalKey: wire.ServiceName, Name: wire.ServiceName, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	quorumSet := make(map[string]struct{}, len(quorum.QuorumNames))

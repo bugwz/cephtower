@@ -282,7 +282,7 @@ func TestCollectTopologyPreservesDaemonRuntimeMetrics(t *testing.T) {
 }
 
 func TestCollectServiceNestedStatus(t *testing.T) {
-	for _, status := range []string{`{"running":-1}`, `{"size":-2}`, `{"running":1.5}`, `{"size":"3"}`, `[]`} {
+	for _, status := range []string{`{"running":-1}`, `{"size":-2}`, `{"running":1.5}`, `{"size":"3"}`, `{"ports":[-1]}`, `{"ports":[65536]}`, `[]`} {
 		provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 			"collect.service": []byte(`[{"service_name":"mgr","service_type":"mgr","status":` + status + `}]`),
 		}}}
@@ -325,6 +325,27 @@ func TestCollectServiceNestedStatus(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestCollectServiceRuntimeDetails(t *testing.T) {
+	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+		"collect.service": []byte(`[{"service_name":"rgw.a","service_type":"rgw","unmanaged":true,"events":["service was updated"],"status":{"running":1,"size":2,"ports":[80,443],"last_refresh":"2026-10-03T00:00:00Z"}}]`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "topology")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range rows {
+		if row.Kind != "service" {
+			continue
+		}
+		value := row.Payload.(cephdomain.Service)
+		if !value.Unmanaged || value.LastRefresh == nil || *value.LastRefresh != "2026-10-03T00:00:00Z" || !reflect.DeepEqual(value.Ports, []int{80, 443}) || !reflect.DeepEqual(value.Events, []string{"service was updated"}) {
+			t.Fatalf("%+v", value)
+		}
+		return
+	}
+	t.Fatal("service missing")
 }
 
 func TestCollectTopologyStoresMonitorStatusAndPerfCounters(t *testing.T) {
