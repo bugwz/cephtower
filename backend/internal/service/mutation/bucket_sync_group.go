@@ -38,8 +38,14 @@ func bucketSyncGroupCommand(action string, p map[string]any, rgw func([]string, 
 		return command{}, invalid("invalid group_id")
 	}
 	status := syncGroupString(p, "status")
-	if action == "rgw_bucket.sync_flow_create" {
-		args, err := bucketSyncFlowArgs(p)
+	if action == "rgw_bucket.sync_flow_create" || action == "rgw_bucket.sync_flow_delete" {
+		var args []string
+		var err error
+		if action == "rgw_bucket.sync_flow_delete" {
+			args, err = bucketSyncFlowDeleteArgs(p)
+		} else {
+			args, err = bucketSyncFlowArgs(p)
+		}
 		if err != nil {
 			return command{}, err
 		}
@@ -125,13 +131,17 @@ func (s *Service) executeBucketSyncGroup(ctx context.Context, access executor.Cl
 		}
 		group = map[string]any{"id": id, "data_flow": map[string]any{}, "pipes": []any{}}
 		groups[id] = group
-	} else if request.Action == "rgw_bucket.sync_group_delete" || request.Action == "rgw_bucket.sync_flow_create" {
+	} else if request.Action == "rgw_bucket.sync_group_delete" || request.Action == "rgw_bucket.sync_flow_create" || request.Action == "rgw_bucket.sync_flow_delete" {
 		_, expected, valid := bucketSyncPolicyDocument([]byte(`{"groups":[` + syncGroupString(request.Parameters, "expected_group") + `]}`))
 		if !valid || len(expected) != 1 || group == nil || !reflect.DeepEqual(group, expected[id]) {
 			return fail("pre_check_failed", "sync group missing or changed; refresh before changing it")
 		}
 		if request.Action == "rgw_bucket.sync_group_delete" {
 			delete(groups, id)
+		} else if request.Action == "rgw_bucket.sync_flow_delete" && syncGroupString(request.Parameters, "flow_type") == "symmetrical" {
+			if err := removeBucketSyncFlow(group, request.Parameters); err != nil {
+				return fail("pre_check_failed", err.Error())
+			}
 		} else {
 			zones, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".zones", Binary: spec.binary, Args: []string{"zonegroup", "get", "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 			if err != nil {
@@ -141,14 +151,20 @@ func (s *Service) executeBucketSyncGroup(ctx context.Context, access executor.Cl
 			if err != nil {
 				return fail("pre_check_failed", err.Error())
 			}
-			if err := addBucketSyncFlow(group, resolved); err != nil {
-				return fail("pre_check_failed", err.Error())
+			var changeErr error
+			if request.Action == "rgw_bucket.sync_flow_delete" {
+				changeErr = removeBucketSyncFlow(group, resolved)
+			} else {
+				changeErr = addBucketSyncFlow(group, resolved)
+			}
+			if changeErr != nil {
+				return fail("pre_check_failed", changeErr.Error())
 			}
 		}
 	} else if group == nil || group["status"] != syncGroupString(request.Parameters, "expected_status") {
 		return fail("pre_check_failed", "sync group missing or status changed; refresh before retrying")
 	}
-	if request.Action != "rgw_bucket.sync_group_delete" && request.Action != "rgw_bucket.sync_flow_create" {
+	if request.Action == "rgw_bucket.sync_group" || request.Action == "rgw_bucket.sync_group_create" {
 		group["status"] = syncGroupString(request.Parameters, "status")
 	}
 	_, err = s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Mutating: true, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput})

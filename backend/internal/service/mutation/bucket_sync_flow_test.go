@@ -20,7 +20,7 @@ type syncFlowExecutor struct {
 }
 
 func (e *syncFlowExecutor) Run(ctx context.Context, access executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
-	if spec.ID == "rgw_bucket.sync_flow_create.zones" {
+	if spec.ID == "rgw_bucket.sync_flow_create.zones" || spec.ID == "rgw_bucket.sync_flow_delete.zones" {
 		e.zoneCalls++
 		if spec.Mutating || spec.Binary != executor.BinaryRGWAdmin || !reflect.DeepEqual(spec.Args, []string{"zonegroup", "get", "--format", "json"}) {
 			return executor.CommandResult{}, errors.New("wrong zone lookup")

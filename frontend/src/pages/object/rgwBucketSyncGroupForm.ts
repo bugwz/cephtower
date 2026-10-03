@@ -77,6 +77,33 @@ export function bucketSyncFlowConfirmation(values: Record<string, unknown>, row?
   return `确认在 Bucket ID ${input.bucket_id} 的同步组 ${JSON.stringify(input.group_id)} 创建 ${input.flow_type} 数据流：${target}？可能影响现有管道的复制行为。不创建管道、不修改组状态、Zonegroup 或提交 period；不代表已建立有效复制链路或同步完成。请备份策略并避免外部并发；核验失败不代表未生效，不自动回滚。`
 }
 
+export function bucketSyncFlowDeleteInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const group = groups(row).find(group => group.id === values.group_id)
+  if (values.bucket_id !== row!.natural_key) throw new Error('Bucket ID 不可更改')
+  if (!group) throw new Error('请输入当前策略中准确的同步组 ID')
+  if (values.confirm_flow_delete !== 'acknowledged') throw new Error('请确认删除整个数据流')
+  const kind = values.flow_type
+  if (kind !== 'symmetrical' && kind !== 'directional') throw new Error('请选择数据流类型')
+  const flow = (group as unknown as { data_flow: Record<string, unknown> }).data_flow
+  const entries = flow?.[kind]
+  if (!Array.isArray(entries) || !entries.length || entries.some(entry => !entry || typeof entry !== 'object')) throw new Error('所选类型的数据流不存在或不可用')
+  const base = { bucket_id: row!.natural_key as string, group_id: group.id, flow_type: kind, expected_group: JSON.stringify(group) }
+  if (kind === 'symmetrical') {
+    if (entries.filter(entry => entry.id === values.flow_id).length !== 1 || typeof values.flow_id !== 'string' || !values.flow_id) throw new Error('请输入唯一存在的对称流 ID')
+    if (values.source_zone || values.dest_zone) throw new Error('对称流请清空源/目标 Zone 字段')
+    return { ...base, flow_id: values.flow_id }
+  }
+  const zone = (v: unknown): v is string => typeof v === 'string' && !!v && !v.startsWith('-') && new TextEncoder().encode(v).length <= 512 && !/[\s,;=*\p{Cc}]/u.test(v) && ![...v].some(c => { const n = c.codePointAt(0)!; return n >= 0xd800 && n <= 0xdfff })
+  if (!zone(values.source_zone) || !zone(values.dest_zone) || values.source_zone === values.dest_zone) throw new Error('请输入不同的源/目标 Zone ID，由后端核验对应数据流')
+  if (values.flow_id) throw new Error('定向流没有存储的流 ID，请留空')
+  return { ...base, source_zone: values.source_zone, dest_zone: values.dest_zone }
+}
+export function bucketSyncFlowDeleteConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const input = bucketSyncFlowDeleteInput(values, row)
+  const target = 'flow_id' in input ? `对称流 ID ${JSON.stringify(input.flow_id)}（包含全部 Zone）` : `定向 Zone ID ${JSON.stringify(input.source_zone)} → ${JSON.stringify(input.dest_zone)}`
+  return `确认从 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 删除${target}？只移除此数据流，保留组状态、其他流和管道，不删除已有对象副本；不保证所有复制停止。不修改 Zonegroup 或提交 period。请备份策略并避免外部并发修改，核验失败不代表未生效，不自动回滚。`
+}
+
 export function bucketSyncGroupCreateBlocked(row: Record<string, unknown>) {
   try { groups(row, true); return undefined } catch (error) { return (error as Error).message }
 }

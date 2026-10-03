@@ -17,8 +17,12 @@ console.log('bucket local sync policy summary checks passed')
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketSyncGroupForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(api)
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-let action, createAction, deleteAction, flowAction
+let action, createAction, deleteAction, flowAction, deleteFlowAction
 function visit(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '删除桶数据流')) {
+    const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+    deleteFlowAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
+  }
   if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '创建桶数据流')) {
     const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
     flowAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
@@ -99,3 +103,23 @@ for (const change of [{ source_zone: 'b' }, { dest_zone: '' }, { flow_id: 'f' },
 const existingRow = { ...row, bucket_sync_policy: { groups: [{ ...group, data_flow: { symmetrical: [{ id: ' 流 ', zones: ['a'] }], directional: [{ source_zone: 'a', dest_zone: 'b' }] } }] } }
 for (const values of [sym, dir]) assert.throws(() => flowAction.buildBody(values, 7, existingRow))
 console.log('bucket sync flow creation form and binding checks passed')
+assert.equal(deleteFlowAction.path, '/rgw/bucket/sync/flow')
+assert.equal(deleteFlowAction.method, 'DELETE')
+assert.ok(deleteFlowAction.disabledWhen({ ...existingRow, stale: true }))
+const deleteBase = { ...deleteFlowAction.initialValues(existingRow), group_id: group.id, confirm_flow_delete: 'acknowledged' }
+const deleteSym = { ...deleteBase, flow_type: 'symmetrical', flow_id: ' 流 ' }
+const deleteDir = { ...deleteBase, flow_type: 'directional', source_zone: 'source-id', dest_zone: 'dest-id' }
+for (const values of [deleteSym, deleteDir]) {
+  const body = deleteFlowAction.buildBody(values, 7, existingRow)
+  assert.equal(body.cluster_id, 7)
+  assert.equal(body.expected_group, JSON.stringify(existingRow.bucket_sync_policy.groups[0]))
+  assert.equal(body.zones, undefined)
+  assert.match(deleteFlowAction.confirmation(values, existingRow), /保留组状态、其他流和管道.*不自动回滚/)
+  for (const change of [{ bucket_id: 'other' }, { group_id: 'other' }, { confirm_flow_delete: true }, { flow_type: 'unknown' }]) assert.throws(() => deleteFlowAction.buildBody({ ...values, ...change }, 7, existingRow))
+  assert.throws(() => deleteFlowAction.buildBody(values, 7, row))
+}
+assert.match(deleteFlowAction.confirmation(deleteSym, existingRow), /包含全部 Zone/)
+assert.equal(deleteFlowAction.buildBody(deleteDir, 7, existingRow).source_zone, 'source-id')
+for (const change of [{ flow_id: 'missing' }, { source_zone: 'a' }]) assert.throws(() => deleteFlowAction.buildBody({ ...deleteSym, ...change }, 7, existingRow))
+for (const change of [{ source_zone: 'dest-id' }, { dest_zone: '*' }, { source_zone: 'a;b' }, { flow_id: 'f' }]) assert.throws(() => deleteFlowAction.buildBody({ ...deleteDir, ...change }, 7, existingRow))
+console.log('bucket sync flow deletion form and binding checks passed')
