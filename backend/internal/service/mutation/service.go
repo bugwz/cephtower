@@ -2056,9 +2056,9 @@ func build(request Request, p map[string]any) (command, error) {
 		args := []string{"account", "modify", "--account-id", id}
 		for _, field := range []string{"account_name", "email"} {
 			if _, exists := p[field]; exists {
-				value := rawText(p, field)
-				if value == "" {
-					return command{}, invalid(field + " cannot be cleared by the native account command")
+				value, ok := p[field].(string)
+				if !ok || strings.TrimSpace(value) == "" || len(value) > 32<<10 || strings.ContainsAny(value, "\x00\r\n") {
+					return command{}, invalid(field + " must be nonempty single-line text and cannot be cleared by the native account command")
 				}
 				args = append(args, "--"+strings.ReplaceAll(field, "_", "-")+"="+value)
 			}
