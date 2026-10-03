@@ -15,6 +15,8 @@ import { rgwUserDisplayNamePatch } from './rgwUserDisplayName'
 import { rgwAccountTextPatch } from './rgwAccountEdit'
 import { RgwBucketDetails } from './RgwBucketDetails'
 import { RgwBucketTagEntries } from './RgwBucketTagEntries'
+import { RgwBucketTagEditor } from './RgwBucketTagEditor'
+import { bucketTagFormBlocked, bucketTagFormInitial, bucketTagFormInput, bucketTagFormConfirmation } from './rgwBucketTagForm'
 import { RgwAccountDetails } from './RgwAccountDetails'
 import { rgwBucketIndexCount, rgwBucketIndexText } from './rgwBucketIndex'
 import { rgwBucketVersioning, rgwBucketBooleanState, rgwBucketReshardState } from './rgwBucketState'
@@ -892,6 +894,23 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       resourceKey: (row) => `${rgwBucketConfigurationDeleteInput(row).bucket_id} / ${row.kind}`,
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...rgwBucketConfigurationDeleteInput(row) })
     },
+    extraActions: [{
+      title: '逐条编辑 Bucket 标签',
+      buttonLabel: '编辑标签',
+      path: '/rgw/bucket/policy',
+      method: 'PATCH',
+      successMessage: 'Bucket 标签提交成功并已回读核验',
+      visibleWhen: (row) => row.kind === 'tagging',
+      disabledWhen: bucketTagFormBlocked,
+      initialValues: bucketTagFormInitial,
+      confirmation: bucketTagFormConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'kind', label: '配置类型（不可更改）', readOnly: true },
+        { name: 'tag_set', label: '完整标签集合', required: true, renderControl: (disabled) => <RgwBucketTagEditor disabled={disabled} /> }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketTagFormInput(values, row) })
+    }],
     columns: [
       { key: 'bucket_id', title: 'Bucket ID' },
       { key: 'kind', title: '配置类型' },

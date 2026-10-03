@@ -31,6 +31,7 @@ export interface ExternalListPageDefinition extends FeatureRequirements {
   rowKeyCandidates?: string[]
   createAction?: ResourceFormAction
   updateAction?: ResourceFormAction
+  extraActions?: Array<ResourceFormAction & { visibleWhen?: (row: ApiRecord) => boolean }>
   deleteAction?: ResourceDeleteAction
 }
 
@@ -310,7 +311,7 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
               valuePropName={field.type === 'boolean' ? 'checked' : 'value'}
               rules={field.required ? [{ required: true, message: `请输入${field.label}` }] : undefined}
             >
-              {renderFormControl(field)}
+              {renderFormControl(field, submitting)}
             </Form.Item>
           ))}
         </Form>
@@ -360,7 +361,7 @@ function buildColumns(
   columns.push({
     title: '操作',
     key: 'actions',
-    width: definition.updateAction && definition.deleteAction ? 150 : 110,
+    width: definition.extraActions?.length ? 250 : definition.updateAction && definition.deleteAction ? 150 : 110,
     fixed: 'right',
     render: (_, row) => (
       <TableActions>
@@ -368,6 +369,9 @@ function buildColumns(
         {definition.updateAction ? (
           <TableAction disabled={mutationBlocked || Boolean(definition.updateAction.disabledWhen?.(row))} onClick={() => openForm(definition.updateAction!, row)}>编辑</TableAction>
         ) : null}
+        {definition.extraActions?.filter(action => !action.visibleWhen || action.visibleWhen(row)).map(action => (
+          <TableAction key={action.title} disabled={mutationBlocked || Boolean(action.disabledWhen?.(row))} onClick={() => openForm(action, row)}>{action.buttonLabel ?? action.title}</TableAction>
+        ))}
         {definition.deleteAction ? (
           <TableAction danger disabled={mutationBlocked || Boolean(definition.deleteAction.disabledWhen?.(row))} onClick={() => deleteRow(row)}>删除</TableAction>
         ) : null}
@@ -395,7 +399,8 @@ function hasFeatureRequirementAlert(status: ReturnType<typeof useFeatureRequirem
   return status.loading || Boolean(status.error) || status.reasons.length > 0
 }
 
-function renderFormControl(field: MutationFormField) {
+function renderFormControl(field: MutationFormField, disabled = false) {
+  if (field.renderControl) return field.renderControl(disabled || field.readOnly)
   if (field.type === 'number') {
     return <InputNumber min={field.min} max={field.max} className="full-width-control" readOnly={field.readOnly} />
   }

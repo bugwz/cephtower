@@ -2,8 +2,10 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 import './test-external-form-confirmation.mjs'
+import './test-rgw-bucket-tag-form.mjs'
 const helpers = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketConfiguration.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketTagForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 for (const [kind, document] of [['policy', '{"Statement":[],"large":9007199254740993}'], ['cors', '<CORSConfiguration/>'], ['lifecycle', '<LifecycleConfiguration/>'], ['encryption', '<ServerSideEncryptionConfiguration/>'], ['tagging', '<Tagging><TagSet/></Tagging>']]) {
   const input = { bucket_id: 'AGJ1Y2tldA', kind, document }
   assert.deepEqual(helpers.rgwBucketConfigurationInput(input), input)
@@ -22,6 +24,17 @@ function visit(node) {
 }
 visit(source)
 assert.ok(definition)
+const tagAction = definition.extraActions.find(action => action.title === '逐条编辑 Bucket 标签')
+assert.ok(tagAction.visibleWhen({ kind: 'tagging' }))
+assert.ok(!tagAction.visibleWhen({ kind: 'policy' }))
+const tagRow = { bucket_id: 'AGJ1Y2tldA', kind: 'tagging', configured: true, tags: [{ key: 'a', value: '' }] }
+const tagValues = tagAction.initialValues(tagRow)
+assert.equal(tagAction.disabledWhen(tagRow), undefined)
+assert.deepEqual(tagAction.buildBody(tagValues, 7, tagRow), { cluster_id: 7, ...helpers.bucketTagFormInput(tagValues, tagRow) })
+assert.equal(tagAction.path, '/rgw/bucket/policy')
+assert.equal(tagAction.method, 'PATCH')
+assert.ok(tagAction.confirmation(tagValues, tagRow).includes('整体替换'))
+assert.equal(typeof tagAction.fields.find(field => field.name === 'tag_set').renderControl, 'function')
 assert.equal(definition.buildQuery({ kind: 'cors' }).toString(), 'kind=cors')
 assert.deepEqual(definition.filterFields.find(field => field.name === 'kind').options, helpers.rgwBucketConfigurationOptions)
 assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'content_type', 'document'])

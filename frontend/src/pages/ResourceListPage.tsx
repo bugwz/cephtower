@@ -39,7 +39,7 @@ export interface MutationFormField {
   pattern?: RegExp
   patternMessage?: string
   readOnly?: boolean
-  renderControl?: () => ReactNode
+  renderControl?: (disabled?: boolean) => ReactNode
 }
 
 export type MutationFormValues = Record<string, string | string[] | number | boolean | null | undefined | ApiRecord>

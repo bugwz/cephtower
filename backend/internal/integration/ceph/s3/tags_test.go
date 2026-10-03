@@ -44,3 +44,13 @@ func TestBucketTagsPreserveNativeEntries(t *testing.T) {
 		t.Fatal("missing bucket misclassified")
 	}
 }
+
+func TestBucketTagsDecodeStructuredEditorEscapes(t *testing.T) {
+	// Golden XML also asserted by the frontend serializer test.
+	body := "<Tagging xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><TagSet><Tag><Key> same </Key><Value></Value></Tag><Tag><Key> same </Key><Value>&amp;&lt; &gt;&quot;&apos;&#13;\n\t😀</Value></Tag></TagSet></Tagging>"
+	tags, err := BucketTags([]byte(body))
+	want := []BucketTag{{Key: " same ", Value: ""}, {Key: " same ", Value: "&< >\"'\r\n\t😀"}}
+	if err != nil || !reflect.DeepEqual(tags, want) {
+		t.Fatalf("editor XML changed tag values: %+v %v", tags, err)
+	}
+}
