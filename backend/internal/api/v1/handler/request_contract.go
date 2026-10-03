@@ -324,6 +324,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"rgw_bucket.create"}, true, map[string]JSONField{"name": stringField(true)})
 	add([]string{"rgw_bucket.update"}, true, map[string]JSONField{"versioning": stringField(true, "enabled", "suspended")})
 	add([]string{"rgw_bucket_policy.update"}, true, map[string]JSONField{"kind": stringField(true, "policy", "cors", "lifecycle", "encryption"), "document": stringField(true)})
+	add([]string{"rgw_bucket_policy.delete"}, true, map[string]JSONField{"kind": stringField(true, "policy", "cors", "lifecycle", "encryption"), "bucket_id": stringField(true)})
 	portal := objectArrayField(false, map[string]JSONField{"host": stringField(true), "ip": stringField(true)})
 	disk := objectArrayField(false, map[string]JSONField{"pool": stringField(true), "image": stringField(true), "backstore": stringField(false)})
 	initiator := objectArrayField(false, map[string]JSONField{"iqn": stringField(true), "luns": stringsField(false)})

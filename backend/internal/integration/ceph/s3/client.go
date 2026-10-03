@@ -76,6 +76,18 @@ func (c *Client) GetBucketConfiguration(ctx context.Context, bucket, kind string
 	return c.request(ctx, http.MethodGet, bucket, url.Values{kind: []string{""}}, nil)
 }
 
+func DeletableBucketConfiguration(kind string) bool {
+	return kind == "policy" || kind == "cors" || kind == "lifecycle" || kind == "encryption"
+}
+
+func (c *Client) DeleteBucketConfiguration(ctx context.Context, bucket, kind string) error {
+	if !DeletableBucketConfiguration(kind) {
+		return fmt.Errorf("unsupported S3 bucket configuration deletion %q", kind)
+	}
+	_, _, err := c.request(ctx, http.MethodDelete, bucket, url.Values{kind: {""}}, nil)
+	return err
+}
+
 func (c *Client) request(ctx context.Context, method, bucket string, query url.Values, body []byte) ([]byte, string, error) {
 	if bucket == "" || strings.ContainsAny(bucket, "/\x00") {
 		return nil, "", fmt.Errorf("invalid S3 bucket name")

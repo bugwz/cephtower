@@ -52,7 +52,7 @@ type httpCredential struct {
 func Supports(action string) bool {
 	switch action {
 	case "silence.create", "silence.delete",
-		"rgw_bucket.create", "rgw_bucket.update", "rgw_bucket.delete", "rgw_bucket_policy.update",
+		"rgw_bucket.create", "rgw_bucket.update", "rgw_bucket.delete", "rgw_bucket_policy.update", "rgw_bucket_policy.delete",
 		"iscsi_target.create", "iscsi_target.update", "iscsi_target.delete",
 		"nvmeof_subsystem.create", "nvmeof_subsystem.update", "nvmeof_subsystem.delete",
 		"nvmeof_namespace.create", "nvmeof_namespace.update", "nvmeof_namespace.delete",
@@ -392,6 +392,20 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 			return cephdomain.ActionResult{}, failure("invalid_request", err.Error(), false)
 		}
 		err = api.PutBucketConfiguration(ctx, bucket, kind, body)
+	case "rgw_bucket_policy.delete":
+		kind, _ := parameters["kind"].(string)
+		if !s3.DeletableBucketConfiguration(kind) {
+			return cephdomain.ActionResult{}, failure("invalid_request", "unsupported bucket configuration deletion", false)
+		}
+		if _, _, err := api.GetBucketConfiguration(ctx, bucket, kind); err != nil {
+			return cephdomain.ActionResult{}, failure("pre_check_failed", "cannot confirm existing bucket configuration: "+err.Error(), false)
+		}
+		if err := api.DeleteBucketConfiguration(ctx, bucket, kind); err != nil {
+			return cephdomain.ActionResult{}, failure("s3_failed", "configuration deletion outcome is uncertain; refresh before retrying: "+err.Error(), false)
+		}
+		if _, _, err := api.GetBucketConfiguration(ctx, bucket, kind); !s3.IsConfigurationMissing(kind, err) {
+			return cephdomain.ActionResult{}, failure("post_check_failed", "configuration deletion was sent but absence could not be verified; refresh before another change", false)
+		}
 	}
 	if err != nil {
 		return cephdomain.ActionResult{}, failure("s3_failed", err.Error(), request.Action != "rgw_bucket_policy.update")

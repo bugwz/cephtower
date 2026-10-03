@@ -12,7 +12,7 @@ import (
 func bucketResourceID(action, key string) (string, error) {
 	parts := strings.Split(key, "/")
 	valid := len(parts) == 3 && (action == "rgw_bucket.update" || action == "rgw_bucket.delete")
-	if action == "rgw_bucket_policy.update" {
+	if action == "rgw_bucket_policy.update" || action == "rgw_bucket_policy.delete" {
 		valid = len(parts) == 4 && parts[3] == "policy"
 	}
 	if !valid || parts[0] != "rgw" || parts[1] != "bucket" || parts[2] == "" {

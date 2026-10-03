@@ -27,6 +27,20 @@ func TestBucketConfigurationContractRequiresRawDocument(t *testing.T) {
 	}
 }
 
+func TestBucketConfigurationDeleteContract(t *testing.T) {
+	for _, kind := range []string{"policy", "cors", "lifecycle", "encryption"} {
+		if err := ValidateMutationRequest("rgw_bucket_policy.delete", map[string]any{"cluster_id": float64(1), "bucket_id": "AGJ1Y2tldA", "kind": kind}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, fields := range []map[string]any{{"bucket_id": "AGJ1Y2tldA"}, {"kind": "cors"}, {"bucket_id": "AGJ1Y2tldA", "kind": "versioning"}, {"bucket_id": "AGJ1Y2tldA", "kind": "cors", "document": "x"}} {
+		fields["cluster_id"] = float64(1)
+		if err := ValidateMutationRequest("rgw_bucket_policy.delete", fields); err == nil {
+			t.Fatalf("invalid deletion accepted: %v", fields)
+		}
+	}
+}
+
 func TestMutationContractsRejectUnknownAndWrongType(t *testing.T) {
 	if err := ValidateMutationRequest("host.create", map[string]any{"hostname": "node-1", "password": "secret"}); err == nil {
 		t.Fatal("unknown field was accepted")

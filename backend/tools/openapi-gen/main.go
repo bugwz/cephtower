@@ -316,6 +316,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 	var fields map[string]handler.JSONField
 	required := true
 	switch key {
+	case "DELETE /rgw/bucket/policy":
+		return handler.MutationRequestContract("rgw_bucket_policy.delete")
 	case "POST /bootstrap/run":
 		database := object(true, map[string]handler.JSONField{
 			"engine": stringField(true),
@@ -979,12 +981,13 @@ const components = `components:
     BucketConfiguration:
       type: object
       additionalProperties: false
-      required: [bucket_id, kind, document, content_type]
+      required: [bucket_id, kind, configured, document, content_type]
       properties:
         bucket_id: {type: string}
         kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning]}
-        document: {type: string}
-        content_type: {type: string}
+        configured: {type: boolean}
+        document: {type: string, nullable: true}
+        content_type: {type: string, nullable: true}
     MetricData:
       type: object
       additionalProperties: false

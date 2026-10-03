@@ -56,6 +56,14 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 			if err != nil || row.Action != "rgw_bucket_policy.update" || row.ResourceKey != "rgw/bucket/"+id+"/policy" {
 				t.Fatalf("incorrect bucket configuration identity: %+v %v", row, err)
 			}
+			response = sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/bucket/policy", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"kind":%q}`, cluster.ID, id, kind), "bucket-config-delete-"+tenant+"-"+kind)
+			if response.Code != http.StatusAccepted {
+				t.Fatalf("delete configuration queue: %d %s", response.Code, response.Body.String())
+			}
+			row, err = db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+			if err != nil || row.Action != "rgw_bucket_policy.delete" || row.Risk != "high" || row.ResourceKey != "rgw/bucket/"+id+"/policy" {
+				t.Fatalf("unsafe deletion queue: %+v %v", row, err)
+			}
 		}
 	}
 	for index, tc := range []struct{ fields, risk string }{

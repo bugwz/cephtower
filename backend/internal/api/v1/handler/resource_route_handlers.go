@@ -669,6 +669,10 @@ func (h *Handler) UpdateRGWBucketPolicy(w http.ResponseWriter, r *http.Request) 
 	h.MutateResource("rgw_bucket_policy", "rgw_bucket_policy.update", "medium")(w, r)
 }
 
+func (h *Handler) DeleteRGWBucketPolicy(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_bucket_policy", "rgw_bucket_policy.delete", "high")(w, r)
+}
+
 func (h *Handler) ListRGWRealms(w http.ResponseWriter, r *http.Request) {
 	h.ReadResource("rgw_realm", false)(w, r)
 }

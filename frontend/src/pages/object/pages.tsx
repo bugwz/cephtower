@@ -43,7 +43,7 @@ import { RgwGeneratedCredentialInput } from './RgwGeneratedCredentialInput'
 import { rgwCapabilityOptions, rgwCapabilityInput } from './rgwUserCapsForm'
 import { rgwUserCreateCredentials } from './rgwUserCreateCredentials'
 import { rgwUserCreateFlags } from './rgwUserCreateFlags'
-import { rgwBucketConfigurationOptions, rgwBucketConfigurationInput } from './rgwBucketConfiguration'
+import { rgwBucketConfigurationOptions, rgwBucketConfigurationInput, rgwBucketConfigurationDeleteBlocked, rgwBucketConfigurationDeleteInput, rgwBucketConfigurationDeleteConfirmation } from './rgwBucketConfiguration'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
@@ -862,6 +862,18 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       ],
       initialValues: { kind: 'policy' },
       buildBody: (values, clusterId) => ({ cluster_id: clusterId, ...rgwBucketConfigurationInput(values) })
+    },
+    deleteAction: {
+      title: '删除 Bucket 配置',
+      path: '/rgw/bucket/policy',
+      action: 'rgw_bucket_policy.delete',
+      resourceKind: 'rgw_bucket_policy',
+      risk: 'high',
+      successMessage: 'Bucket 配置删除完成并已确认未配置',
+      disabledWhen: rgwBucketConfigurationDeleteBlocked,
+      confirmation: rgwBucketConfigurationDeleteConfirmation,
+      resourceKey: (row) => `${rgwBucketConfigurationDeleteInput(row).bucket_id} / ${row.kind}`,
+      buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...rgwBucketConfigurationDeleteInput(row) })
     },
     columns: [
       { key: 'bucket_id', title: 'Bucket ID' },

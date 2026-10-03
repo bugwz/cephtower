@@ -32,5 +32,26 @@ const input = { bucket_id: 'id', kind: 'cors', document: '<CORSConfiguration/>' 
 assert.deepEqual(definition.createAction.buildBody(input, 7), { cluster_id: 7, ...input })
 assert.equal(definition.createAction.method, 'PATCH')
 assert.equal(definition.createAction.path, '/rgw/bucket/policy')
+assert.equal(definition.deleteAction.path, '/rgw/bucket/policy')
+assert.equal(definition.deleteAction.action, 'rgw_bucket_policy.delete')
+assert.equal(definition.deleteAction.risk, 'high')
+for (const kind of ['policy', 'cors', 'lifecycle', 'encryption']) {
+  const row = { bucket_id: 'dGVhbQBiaWc', kind, configured: true, document: 'private-document' }
+  assert.equal(definition.deleteAction.disabledWhen(row), undefined)
+  assert.deepEqual(definition.deleteAction.buildBody(row, 7), { cluster_id: 7, bucket_id: row.bucket_id, kind })
+  assert.equal(definition.deleteAction.resourceKey(row), `${row.bucket_id} / ${kind}`)
+  const confirmation = definition.deleteAction.confirmation(row)
+  assert.ok(confirmation.includes(row.bucket_id) && confirmation.includes(kind))
+  assert.ok(confirmation.includes('不会删除 Bucket 或对象') && confirmation.includes('外部并发'))
+  assert.ok(!confirmation.includes(row.document))
+}
+for (const row of [{}, { configured: false }, { configured: 'true' }, { configured: true, bucket_id: 'id', kind: 'versioning' }, { configured: true, bucket_id: ' id', kind: 'policy' }]) {
+  assert.ok(definition.deleteAction.disabledWhen(row))
+  assert.throws(() => definition.deleteAction.buildBody(row, 7))
+}
+const externalPage = readFileSync(new URL('../src/pages/ExternalListPage.tsx', import.meta.url), 'utf8')
+assert.ok(externalPage.includes('const blocked = action.disabledWhen?.(row)'))
+assert.ok(externalPage.includes('Boolean(definition.deleteAction.disabledWhen?.(row))'))
+assert.equal((externalPage.match(/content: action\.confirmation\?\.\(row\)/g) ?? []).length, 2)
 assert.ok(readFileSync(new URL('../src/pages/ExternalListPage.tsx', import.meta.url), 'utf8').includes('definition.buildQuery?.(queryBody)'))
 console.log('Bucket configuration preserves raw JSON/XML and query-scoped reads')

@@ -108,6 +108,11 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
       return
     }
     const action = definition.deleteAction
+    const blocked = action.disabledWhen?.(row)
+    if (blocked) {
+      message.warning(blocked)
+      return
+    }
     const resourceKey = action.resourceKey(row)
     if (!resourceKey) {
       message.error('无法识别资源标识')
@@ -117,7 +122,7 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
     if (action.risk && action.risk !== 'high') {
       Modal.confirm({
         title: `${action.title} ${resourceKey}`,
-        content: '确认后将直接执行该操作。',
+        content: action.confirmation?.(row) ?? '确认后将直接执行该操作。',
         okText: '提交',
         okType: action.risk === 'medium' ? 'danger' : 'primary',
         cancelText: '取消',
@@ -133,7 +138,7 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
     }
     Modal.confirm({
       title: `${action.title} ${resourceKey}`,
-      content: '该操作为高风险操作，确认后将直接执行操作。',
+      content: action.confirmation?.(row) ?? '该操作为高风险操作，确认后将直接执行操作。',
       okText: '提交',
       okType: 'danger',
       cancelText: '取消',
@@ -309,7 +314,7 @@ function buildColumns(
           <TableAction disabled={mutationBlocked} onClick={() => openForm(definition.updateAction!, row)}>编辑</TableAction>
         ) : null}
         {definition.deleteAction ? (
-          <TableAction danger disabled={mutationBlocked} onClick={() => deleteRow(row)}>删除</TableAction>
+          <TableAction danger disabled={mutationBlocked || Boolean(definition.deleteAction.disabledWhen?.(row))} onClick={() => deleteRow(row)}>删除</TableAction>
         ) : null}
       </TableActions>
     )

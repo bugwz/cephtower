@@ -37,6 +37,7 @@ func rgwRoutes(h *handler.Handler) []Route {
 		{"DELETE", "/rgw/bucket", h.DeleteRGWBucket},
 		{"GET", "/rgw/bucket/policy", h.GetRGWBucketPolicy},
 		{"PATCH", "/rgw/bucket/policy", h.UpdateRGWBucketPolicy},
+		{"DELETE", "/rgw/bucket/policy", h.DeleteRGWBucketPolicy},
 		{"GET", "/rgw/realms", h.ListRGWRealms},
 		{"POST", "/rgw/realm", h.CreateRGWRealm},
 		{"PATCH", "/rgw/realm", h.UpdateRGWRealm},

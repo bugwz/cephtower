@@ -61,3 +61,18 @@ func TestS3ErrorIsBounded(t *testing.T) {
 		t.Fatalf("error length = %d, error = %v", len(err.Error()), err)
 	}
 }
+
+func TestConfigurationDeletionRejectsUnsupportedSubresources(t *testing.T) {
+	client, err := New("https://s3.example.test", Credentials{AccessKey: "access", SecretKey: "secret"}, &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		t.Fatal("unsupported deletion reached network")
+		return nil, nil
+	})})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, kind := range []string{"", "versioning", "objects", "policy&cors"} {
+		if err := client.DeleteBucketConfiguration(context.Background(), ":bucket", kind); err == nil {
+			t.Fatal(kind)
+		}
+	}
+}
