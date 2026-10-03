@@ -42,6 +42,7 @@ import { rgwS3KeyRotateInput } from './rgwS3KeyRotate'
 import { RgwGeneratedCredentialInput } from './RgwGeneratedCredentialInput'
 import { rgwCapabilityOptions, rgwCapabilityInput } from './rgwUserCapsForm'
 import { rgwUserCreateCredentials } from './rgwUserCreateCredentials'
+import { rgwUserCreateFlags } from './rgwUserCreateFlags'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
@@ -131,7 +132,7 @@ const definitions: Record<
       path: '/rgw/user',
       method: 'POST',
       successMessage: 'RGW 用户创建执行成功',
-      initialValues: { account_mode: 'independent', credential_mode: 'none' },
+      initialValues: { account_mode: 'independent', credential_mode: 'none', system: 'disable', suspended: 'disable' },
       changedValues: (changed) => ({
         ...(Object.prototype.hasOwnProperty.call(changed, 'uid') || Object.prototype.hasOwnProperty.call(changed, 'account_mode') ? { account_id: undefined, account_root: undefined } : {}),
         ...(['uid', 'credential_mode', 'access_key', 'secret_key'].some(key => Object.prototype.hasOwnProperty.call(changed, key)) ? { credentials_saved: undefined } : {})
@@ -139,8 +140,9 @@ const definitions: Record<
       confirmation: (values) => {
         const account = rgwUserCreateAccountInput(values)
         rgwUserCreateCredentials(values)
+        const flags = rgwUserCreateFlags(values)
         const scope = account.account_id ? `在账户 ${JSON.stringify(account.account_id)} 中创建用户 ${JSON.stringify(values.uid)}；${account.account_root ? '授予账户根用户权限' : '普通账户用户需要策略授权才能访问资源'}，创建后不能迁出账户。` : `创建独立用户 ${JSON.stringify(values.uid)}。`
-        return scope + (values.credential_mode === 's3' ? '同时创建已安全保存的 S3 凭据，提交后不提供密钥回显。' : '不创建访问密钥；之后可通过“创建 S3 访问密钥”配置访问凭据。')
+        return scope + (flags.system ? '启用系统用户标志，授予 RGW 内部系统操作能力，请确认确有此需求。' : '不启用系统用户标志。') + (flags.suspended ? '创建后另行暂停，并非原子操作；期间用户尚未暂停，第二步失败时用户可能已存在且仍启用，请检查状态，不要重复创建。' : '用户创建后保持启用。') + (values.credential_mode === 's3' ? '同时创建已安全保存的 S3 凭据，提交后不提供密钥回显。' : '不创建访问密钥；之后可通过“创建 S3 访问密钥”配置访问凭据。')
       },
       fields: [
         { name: 'uid', label: 'UID', required: true },
@@ -149,6 +151,8 @@ const definitions: Record<
         { name: 'account_root', label: '账户根用户权限', type: 'select', required: true, visibleWhen: values => values.account_mode === 'account', options: [{ label: '普通账户用户', value: 'disable' }, { label: '账户根用户', value: 'enable' }] },
         { name: 'display_name', label: '显示名', required:true },
         { name: 'email', label: '邮箱' },
+        { name: 'system', label: '系统用户标志（高权限）', type: 'select', required: true, options: [{ label: '关闭', value: 'disable' }, { label: '启用系统用户', value: 'enable' }] },
+        { name: 'suspended', label: '创建后状态', type: 'select', required: true, options: [{ label: '保持启用', value: 'disable' }, { label: '创建后暂停（非原子操作）', value: 'enable' }] },
         { name: 'credential_mode', label: '首次访问凭据', type: 'select', required: true, options: [{ label: '暂不创建密钥', value: 'none' }, { label: '创建已保存的 S3 凭据', value: 's3' }] },
         { name: 'access_key', label: 'Access Key', type: 'password', required: true, visibleWhen: values => values.credential_mode === 's3', renderControl: () => <RgwGeneratedCredentialInput kind="access" /> },
         { name: 'secret_key', label: 'Secret Key', type: 'password', required: true, visibleWhen: values => values.credential_mode === 's3', renderControl: () => <RgwGeneratedCredentialInput kind="secret" /> },
@@ -162,6 +166,7 @@ const definitions: Record<
         ...(values.email ? { email: String(values.email) } : {}),
         ...rgwBucketLimitInput(values.max_buckets),
         ...rgwUserCreateCredentials(values),
+        ...rgwUserCreateFlags(values),
         ...rgwUserCreateAccountInput(values)
       })
     },

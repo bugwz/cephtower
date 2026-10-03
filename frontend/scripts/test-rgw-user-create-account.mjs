@@ -3,9 +3,11 @@ import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 const helpers = {}, calls = []
 const credentials = {}
+const flags = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserCreateFlags.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(flags)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserCreateCredentials.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(credentials)
 new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserCreateAccount.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers, () => ({ loadRgwMigrationAccountOptions: async (...args) => { calls.push(args); return [] } }))
-const values = { uid: 'tenant$user', account_mode: 'account', account_id: 'RGW12345678901234567', account_root: 'disable', display_name: 'valid-name', credential_mode: 'none' }
+const values = { uid: 'tenant$user', account_mode: 'account', account_id: 'RGW12345678901234567', account_root: 'disable', display_name: 'valid-name', credential_mode: 'none', system: 'disable', suspended: 'disable' }
 assert.deepEqual(helpers.rgwUserCreateAccountInput({}), {})
 assert.deepEqual(helpers.rgwUserCreateAccountInput({ ...values, account_mode: 'independent' }), {})
 for (const root of ['enable', 'disable']) assert.deepEqual(helpers.rgwUserCreateAccountInput({ ...values, account_root: root }), { account_id: values.account_id, account_root: root === 'enable' })
@@ -25,8 +27,8 @@ function visit(value) {
 visit(source)
 assert.ok(node)
 const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
-const action = new Function('loadRgwCreateAccountOptions', 'rgwUserCreateAccountInput', 'rgwBucketLimitInput', 'rgwUserCreateCredentials', `${code}; return action`)(helpers.loadRgwCreateAccountOptions, helpers.rgwUserCreateAccountInput, () => ({}), credentials.rgwUserCreateCredentials)
-assert.deepEqual(action.buildBody(values, 7), { cluster_id: 7, uid: values.uid, display_name: values.display_name, account_id: values.account_id, account_root: false })
+const action = new Function('loadRgwCreateAccountOptions', 'rgwUserCreateAccountInput', 'rgwBucketLimitInput', 'rgwUserCreateCredentials', 'rgwUserCreateFlags', `${code}; return action`)(helpers.loadRgwCreateAccountOptions, helpers.rgwUserCreateAccountInput, () => ({}), credentials.rgwUserCreateCredentials, flags.rgwUserCreateFlags)
+assert.deepEqual(action.buildBody(values, 7), { cluster_id: 7, uid: values.uid, display_name: values.display_name, account_id: values.account_id, account_root: false, system: false, suspended: false })
 assert.ok(action.confirmation(values).includes(values.account_id))
 assert.ok(action.confirmation({ ...values, account_root: 'enable' }).includes('根用户权限'))
 assert.ok(action.confirmation({ ...values, account_mode: 'independent' }).includes('不创建访问密钥'))
@@ -53,3 +55,14 @@ for (const field of ['access_key', 'secret_key', 'credentials_saved']) {
   assert.equal(definition.visibleWhen(values), false)
 }
 console.log('RGW user creation requires explicit key mode and saved credentials')
+for (const system of ['enable', 'disable']) for (const suspended of ['enable', 'disable']) {
+  const input = { ...values, system, suspended }
+  assert.deepEqual(flags.rgwUserCreateFlags(input), { system: system === 'enable', suspended: suspended === 'enable' })
+  assert.equal(action.buildBody(input, 7).system, system === 'enable')
+  assert.equal(action.buildBody(input, 7).suspended, suspended === 'enable')
+  const text = action.confirmation(input)
+  assert.ok(text.includes(system === 'enable' ? '授予 RGW 内部系统操作能力' : '不启用系统用户标志'))
+  assert.ok(text.includes(suspended === 'enable' ? '第二步失败' : '保持启用'))
+}
+for (const field of ['system', 'suspended']) for (const value of [undefined, null, true, 'keep']) assert.throws(() => flags.rgwUserCreateFlags({ ...values, [field]: value }))
+console.log('RGW initial flags preserve explicit false and explain non-atomic suspension')

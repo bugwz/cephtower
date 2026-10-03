@@ -403,6 +403,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		stepID := fmt.Sprintf("%s.step%d", request.Action, index+2)
 		result, err = s.executor.Run(ctx, access, executor.CommandSpec{ID: stepID, Binary: followup.binary, Args: followup.args, Stdin: followup.stdin, Timeout: followup.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true, SensitiveArgs: followup.sensitive})
 		if err != nil {
+			if request.Action == "rgw_user.create" {
+				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "user was created but suspension failed; the user may still be enabled; inspect and suspend it before any manual retry", Retryable: false}
+			}
 			if request.Action == "rgw_user.caps" {
 				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "capability replacement failed after removal; permissions may be missing; inspect user capabilities before any manual retry", Retryable: false}
 			}
@@ -442,7 +445,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user creation was accepted but identity or requested credential state could not be verified; inspect user info before any manual retry", Retryable: false}
 		}
 		if request.Action == "rgw_user.create" && !rgwUserCreatePropertiesMatch(checked.Stdout, request.Parameters) {
-			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user creation was accepted but requested name, email or bucket limit could not be verified; inspect user info before any manual retry", Retryable: false}
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user creation was accepted but requested properties or flags could not be verified; inspect user info before any manual retry", Retryable: false}
 		}
 		if rgwUserAccountMigrationRequested(request) {
 			root := false
@@ -1975,6 +1978,17 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("display_name is required")
 		}
 		args := []string{"user", "create", "--uid", uid}
+		for _, field := range []string{"system", "suspended"} {
+			if raw, exists := p[field]; exists {
+				value, ok := raw.(bool)
+				if !ok {
+					return command{}, invalid(field + " must be a boolean")
+				}
+				if field == "system" {
+					args = append(args, "--system="+strconv.FormatBool(value))
+				}
+			}
+		}
 		if raw, present := p["account_id"]; present {
 			account, ok := raw.(string)
 			root, rootOK := p["account_root"].(bool)
@@ -2005,6 +2019,9 @@ func build(request Request, p map[string]any) (command, error) {
 		result := rgw(append(args, keyArgs...), []string{"user", "info", "--uid", uid})
 		if len(keyArgs) == 3 {
 			result.sensitive = map[int]struct{}{len(args) + 1: {}, len(args) + 2: {}}
+		}
+		if suspended, _ := p["suspended"].(bool); suspended {
+			result.followups = []command{rgw([]string{"user", "suspend", "--uid", uid}, []string{"user", "info", "--uid", uid})}
 		}
 		return result, nil
 	case "rgw_user.update":

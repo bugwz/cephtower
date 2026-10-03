@@ -119,6 +119,20 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 			t.Fatalf("wrong key rotation: %+v %v", row, err)
 		}
 	}
+	for _, system := range []bool{true, false} {
+		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/user", fmt.Sprintf(`{"cluster_id":%d,"uid":"new-flags-user","display_name":"User","system":%t,"suspended":true}`, cluster.ID, system), fmt.Sprintf("create-flags-user-%t", system))
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("flag creation: %d %s", response.Code, response.Body.String())
+		}
+		row, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		want := "medium"
+		if system {
+			want = "high"
+		}
+		if err != nil || row.Risk != want || row.Action != "rgw_user.create" || !strings.Contains(response.Body.String(), `"risk":"`+want+`"`) {
+			t.Fatalf("wrong creation risk: %+v %v", row, err)
+		}
+	}
 	for _, account := range []bool{false, true} {
 		fields := ""
 		if account {
