@@ -133,8 +133,27 @@ assert.equal(normalizeInventory({ available: false }, []).availability_display, 
 assert.equal(normalizeInventory({ available: true }, []).availability_display, 'available')
 assert.equal(normalizeInventory({ available: 'false' }, []).availability_display, 'unknown')
 console.log('Disk inventory distinguishes missing type and availability from explicit values')
-const osdDisk = normalizeInventory({ path: '/dev/sda', osd_ids: [0, 1, '1'], lvs: [{ osd_id: '01' }, { osd_id: '2' }] }, [{ name_display: 'sda', daemons_display: ['osd.1', 'osd.3', 'mon.a'] }])
+const osdDisk = normalizeInventory({ path: '/dev/sda', osd_ids: [0, 1, '1'], lvs: [{ osd_id: '01' }, { osd_id: '2' }] }, [{ device_names: ['sda'], daemons_display: ['osd.1', 'osd.3', 'mon.a'] }])
 assert.deepEqual(osdDisk.osd_display, ['osd.0', 'osd.1', 'osd.2', 'osd.3'])
+const cephDeviceNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'normalizeCephDeviceRow')
+const cephDeviceCode = ts.transpileModule(cephDeviceNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const normalizeCephDevice = new Function('isRecord', 'stringArray', 'textValue', 'formatLifeExpectancy', `${cephDeviceCode}; return normalizeCephDeviceRow`)(
+  (v) => v !== null && typeof v === 'object' && !Array.isArray(v),
+  (v) => Array.isArray(v) ? v.filter((item) => typeof item === 'string') : [],
+  (v, fallback) => typeof v === 'string' && v.trim() ? v : fallback, () => '-')
+const sharedDevice = { devid: 'shared-disk', location: [{ host: 'node1', dev: 'sda' }, { host: 'node2', dev: 'sdb' }, { dev: 'sdc' }, null], daemons: ['osd.3'] }
+const node1Device = normalizeCephDevice(sharedDevice, 'node1')
+const node2Device = normalizeCephDevice(sharedDevice, 'node2')
+assert.deepEqual(node1Device.device_names, ['sda'])
+assert.equal(node1Device.name_display, 'sda')
+assert.deepEqual(node2Device.device_names, ['sdb'])
+assert.equal(normalizeCephDevice(sharedDevice, 'node3').name_display, '-')
+assert.deepEqual(normalizeInventory({ path: '/dev/sdb' }, [node1Device]).osd_display, [])
+assert.deepEqual(normalizeInventory({ path: '/dev/sda' }, [node1Device]).osd_display, ['osd.3'])
+assert.deepEqual(normalizeInventory({ path: '/dev/sdb' }, [node2Device]).osd_display, ['osd.3'])
+for (const location of [null, {}, [], [null], [{ host: 'node1' }]]) assert.deepEqual(normalizeCephDevice({ location }, 'node1').device_names, [])
+assert.deepEqual(normalizeInventory({ path: '/dev/sda' }, [{ name_display: 'sda', device_names: [], daemons_display: ['osd.9'] }]).osd_display, [])
+console.log('Host device locations and derived OSD associations stay within the selected host')
 assert.deepEqual(normalizeInventory({ osd_ids: [null, false, -1, 1.5, '', 'osd.', 'osd.-1', 'mon.1', Number.MAX_SAFE_INTEGER + 1] }, []).osd_display, [])
 assert.deepEqual(normalizeInventory({ osd_ids: ['9007199254740993'] }, []).osd_display, ['osd.9007199254740993'])
 const diagnosticDisk = normalizeInventory({ lsm_data: { health: 'Fail', serialNum: 'lsm-serial' }, rejected_reasons: ['Has a FileSystem', 'LVM detected'] }, [])

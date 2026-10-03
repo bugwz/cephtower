@@ -307,7 +307,7 @@ function HostDetailTabs({
   deviceInfoError: string
   smartError: string
 }) {
-  const deviceInfoRows = useMemo(() => deviceInfo.map(normalizeCephDeviceRow), [deviceInfo])
+  const deviceInfoRows = useMemo(() => deviceInfo.map((device) => normalizeCephDeviceRow(device, hostname)), [deviceInfo, hostname])
   const physicalDiskRows = useMemo(
     () => devices.map((device) => normalizeInventoryDeviceRow(device, deviceInfoRows)),
     [deviceInfoRows, devices]
@@ -563,8 +563,8 @@ function HostDeviceHealthPanel({ devices }: { devices: ApiRecord[] }) {
   )
 }
 
-function normalizeCephDeviceRow(row: ApiRecord): ApiRecord {
-  const locations = Array.isArray(row.location) ? row.location.filter(isRecord) : []
+function normalizeCephDeviceRow(row: ApiRecord, hostname: string): ApiRecord {
+  const locations = Array.isArray(row.location) ? row.location.filter((location) => isRecord(location) && location.host === hostname) : []
   const deviceNames = locations
     .map((location) => textValue(location.dev ?? location.path ?? location.name, ''))
     .filter(Boolean)
@@ -575,6 +575,7 @@ function normalizeCephDeviceRow(row: ApiRecord): ApiRecord {
     device_id_display: textValue(row.devid ?? row.device_id ?? row.id, ''),
     health_display: textValue(row.state ?? row.health, 'unknown'),
     life_expectancy_display: formatLifeExpectancy(row),
+    device_names: deviceNames,
     name_display: deviceNames.length ? deviceNames.join(', ') : '-',
     daemons_display: daemons.length ? daemons : []
   }
@@ -586,7 +587,7 @@ function normalizeInventoryDeviceRow(row: ApiRecord, deviceInfo: ApiRecord[]): A
   const lvs = Array.isArray(row.lvs) ? row.lvs.filter(isRecord) : []
   const path = textValue(row.path ?? sysAPI.path ?? row.name, '')
   const deviceName = path.split('/').filter(Boolean).pop() ?? path
-  const linkedDevice = deviceInfo.find((device) => textValue(device.name_display, '').split(', ').includes(deviceName))
+  const linkedDevice = deviceInfo.find((device) => stringArray(device.device_names).includes(deviceName))
   const osdIDs = inventoryOSDNames([
     ...(Array.isArray(row.osd_ids) ? row.osd_ids : []),
     ...lvs.map((lv) => lv.osd_id),

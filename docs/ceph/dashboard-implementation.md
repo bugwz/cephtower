@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+主机设备名称按参考 `device-list.component.html` 的 `location.host === hostname`
+筛选：沿用 `device ls-by-host` → 主机设备 API 的原生 location 数组，不将其他主机或
+缺失主机身份的位置展示为当前设备路径。物理磁盘补充 OSD 关联使用筛选后的设备名数组，
+不再拆分展示文本；切换主机时重新计算。离线测试覆盖多主机位置、缺失位置和 OSD 关联。
+
 主机详情的守护进程状态遵循原生 `DaemonDescriptionStatus` 的 -2 至 2 状态码；
 未知文本保留原文和中性色。设备健康标签同样只匹配自身定义的状态，避免
 `constructor`、`__proto__` 等未知文本误取 JavaScript 继承属性而导致渲染异常或标签丢失。
