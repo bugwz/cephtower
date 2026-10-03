@@ -170,10 +170,13 @@ export function bucketSyncPipeUpdateConfirmation(values: Record<string, unknown>
   return `确认修改 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中管道 ${JSON.stringify(input.pipe_id)}？源租户/桶/实例 ${JSON.stringify([input.source_tenant, input.source_bucket, input.source_bucket_id])}；目标 ${JSON.stringify([input.dest_tenant, input.dest_bucket, input.dest_bucket_id])}；模式 ${input.mode}，用户 ${JSON.stringify(input.user)}。* 为通配，空租户不限定租户。system 模式保留已存储 UID（不使用其权限检查），不会删除用户或凭据。保留 Zone 成员、过滤器、优先级、目标 ACL 和存储类。可能改变复制范围或权限；请备份并避免外部并发，失败不代表未生效，不自动回滚。仅修改桶本地管道，不提交 period，不代表同步完成。`
 }
 
-export function bucketSyncPipeCreateInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+export function bucketSyncPipeCreateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {
   const group = groups(row).find(group => group.id === values.group_id)
   if (values.bucket_id !== row!.natural_key) throw new Error('Bucket ID 不可更改')
   if (!group) throw new Error('请输入当前策略中准确的同步组 ID')
+  return { bucket_id: row!.natural_key, ...syncPipeCreateFields(values, group) }
+}
+export function syncPipeCreateFields(values: Record<string, unknown>, group: { id: string; status: string }) {
   const token = (v: unknown): v is string => typeof v === 'string' && !!v && !v.startsWith('-') && new TextEncoder().encode(v).length <= 512 && !/\p{Cc}/u.test(v) && ![...v].some(c => { const n = c.codePointAt(0)!; return n >= 0xd800 && n <= 0xdfff })
   if (!token(values.pipe_id)) throw new Error('请输入合法的新管道 ID')
   const pipes = (group as unknown as { pipes: unknown }).pipes
@@ -187,7 +190,7 @@ export function bucketSyncPipeCreateInput(values: Record<string, unknown>, row?:
     const parts = user.split('$')
     if (!(parts.length === 1 || (parts.length === 2 && parts.every(Boolean)) || (parts.length === 3 && parts[1] && parts[2]))) throw new Error('用户 UID 格式无效')
   }
-  const result: Record<string, unknown> = { bucket_id: row!.natural_key, group_id: group.id, pipe_id: values.pipe_id, expected_group: JSON.stringify(group), mode: values.mode }
+  const result: Record<string, unknown> = { group_id: group.id, pipe_id: values.pipe_id, expected_group: JSON.stringify(group), mode: values.mode }
   if (values.mode === 'user') result.user = user
   for (const side of ['source', 'dest']) {
     let zones: unknown

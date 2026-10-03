@@ -1,3 +1,4 @@
+import { syncPipeCreateFields } from './rgwBucketSyncGroupForm'
 const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 const token = (v: unknown): v is string => typeof v === 'string' && !!v && !v.startsWith('-') && new TextEncoder().encode(v).length <= 512 && !/\p{Cc}/u.test(v) && ![...v].some(c => { const n = c.codePointAt(0)!; return n >= 0xd800 && n <= 0xdfff })
 function snapshot(row?: Record<string, unknown>, allowEmpty = false) {
@@ -8,6 +9,24 @@ function snapshot(row?: Record<string, unknown>, allowEmpty = false) {
 }
 export function zonegroupSyncInitial(row?: Record<string, unknown>) { const { groups: _, ...identity } = snapshot(row); return { ...identity, group_id: undefined, status: undefined, confirm_change: undefined } }
 export function zonegroupSyncBlocked(row: Record<string, unknown>) { try { snapshot(row); return undefined } catch (error) { return (error as Error).message } }
+export function zonegroupPipeCreateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {
+  const { groups, ...identity } = snapshot(row)
+  if (values.name !== identity.name || values.zonegroup_id !== identity.zonegroup_id || values.realm_id !== identity.realm_id) throw new Error('Zonegroup 和 Realm 身份不可修改')
+  const group = groups.find(g => g.id === values.group_id)
+  if (!group) throw new Error('请输入准确的已有同步组 ID')
+  const input = syncPipeCreateFields(values, group as { id: string; status: string })
+  for (const side of ['source','dest']) {
+    const ids = input[side + '_zones'] as string[]
+    if (ids.length === 1 && ids[0] === '*') continue
+    const available = row?.zones
+    if (!Array.isArray(available) || available.some(z => !record(z) || !token(z.id) || !token(z.name)) || new Set(available.map(z => z.id)).size !== available.length || new Set(available.map(z => z.name)).size !== available.length || ids.some(id => !available.some(z => z.id === id))) throw new Error('明确的 Zone ID 必须属于当前 Zonegroup，且成员列表不能有歧义')
+  }
+  return { ...identity, ...input }
+}
+export function zonegroupPipeCreateConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const p = zonegroupPipeCreateInput(values,row)
+  return `确认在 Zonegroup ${JSON.stringify(p.name)}（${p.zonegroup_id}）的组 ${JSON.stringify(p.group_id)} 创建管道 ${JSON.stringify(p.pipe_id)}？源 Zone IDs ${JSON.stringify(p.source_zones)}，租户/桶/实例 ${JSON.stringify([p.source_tenant,p.source_bucket,p.source_bucket_id])}；目标 ${JSON.stringify(p.dest_zones)}，${JSON.stringify([p.dest_tenant,p.dest_bucket,p.dest_bucket_id])}。模式 ${p.mode}，用户 ${JSON.stringify(p.user)}。* 为通配，空租户不限租户，不代表仅全局租户。优先级 0，无前缀/标签过滤或目标 ACL/存储类覆盖；可能改变复制范围，不更改组状态和流。${p.realm_id ? `随后提交 Realm ${JSON.stringify(p.realm_id)} 的 Period，可能发布其他待提交变更。` : '无 Realm，不提交 Period。'}请备份并避免外部或其他页面并发；非事务，失败可能部分生效，不自动回滚或重试；成功不代表远端复制完成。`
+}
 export function zonegroupFlowUpdateInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const { groups, ...identity } = snapshot(row)
   if (values.name !== identity.name || values.zonegroup_id !== identity.zonegroup_id || values.realm_id !== identity.realm_id) throw new Error('Zonegroup 和 Realm 身份不可修改')

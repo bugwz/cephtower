@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### Zonegroup 同步管道创建
+
+新增 POST /api/v1/rgw/zonegroup/sync/pipe 与管道创建表单，对齐原生 SYNC_GROUP_PIPE_CREATE 的源/目标 Zone、桶选择器、system/user 模式及完整 UID 参数。创建前核验完整组快照和管道 ID 不存在，拒绝原生同名更新；明确 Zone ID 必须属于当前 Zonegroup，或单独使用通配数组 ["*"]。共享桶管道参数校验，但 Zonegroup 期望结果保持原始 ID，不转换为桶策略的名称格式。
+
+明确空或 * 租户均不限租户、空或 * 实例均不限实例；新管道默认优先级 0、无过滤或目标 ACL/存储类覆盖，保留已有管道及组状态/流。完整 Zonegroup 回读通过后按 Realm 发布并核验 Period，前端提示范围、权限、其他待发布变更与非事务并发风险。离线测试覆盖两种模式、两种 Realm 归属、显式/通配 Zone、同名/过期/未知 Zone 拒绝、各阶段失败、精确命令、大整数保留、API 锁与前端绑定。无真实集群或浏览器视觉验证；管道删除、配置修改及 Zone 成员编辑待后续补齐。
+
 #### Zonegroup 对称流成员修改
 
 新增 PATCH /api/v1/rgw/zonegroup/sync/flow 与对称流成员表单。按参考 create_sync_flow 的先添加后移除顺序计算 Zone ID 差集，分别调用 sync group flow create/remove，并在每一步回读完整 Zonegroup 配置；最终策略通过后才提交和核验对应 Realm 的 Period。复用明确身份、完整组快照和失败不重试规则，成员列表必须非空且属于当前 Zonegroup；允许移除旧的孤立 ID，不依赖桶策略的名称格式。未改变、缺失或歧义流、无效旧集合及不可用 Zone 列表均在写前拒绝。

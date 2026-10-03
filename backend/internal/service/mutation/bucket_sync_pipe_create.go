@@ -92,6 +92,10 @@ func bucketSyncPipeCreateArgs(p map[string]any) ([]string, error) {
 }
 
 func addBucketSyncPipe(group map[string]any, p map[string]any, zoneDocument []byte) error {
+	return addSyncPipe(group, p, zoneDocument, true)
+}
+
+func addSyncPipe(group map[string]any, p map[string]any, zoneDocument []byte, resolveNames bool) error {
 	pipes := group["pipes"].([]any)
 	id := syncGroupString(p, "pipe_id")
 	for _, raw := range pipes {
@@ -122,6 +126,9 @@ func addBucketSyncPipe(group map[string]any, p map[string]any, zoneDocument []by
 				return err
 			}
 			zones = resolved["zones"].([]any)
+			if !resolveNames {
+				zones = rawIDs
+			}
 		}
 		tenant, name, bucketID, _ := pipeBucketFields(p, side)
 		if tenant == "*" {
