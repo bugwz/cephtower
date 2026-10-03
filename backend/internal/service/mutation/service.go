@@ -286,6 +286,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if request.Action == "service.delete" && strings.TrimSpace(string(result.Stdout)) != "Removed service "+last(resourceTail(request.ResourceKey)) {
 		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "Ceph did not confirm service removal; inspect service state before retrying", Retryable: false}
 	}
+	if request.Action == "daemon.action" && !daemonActionScheduled(result.Stdout, pathValue(resourceTail(request.ResourceKey), "daemon"), optional(request.Parameters, "action")) {
+		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "Ceph did not confirm scheduling the requested daemon action; inspect daemon state before retrying", Retryable: false}
+	}
 	if request.Action == "smb_share.create" || request.Action == "smb_share.update" || request.Action == "smb_cluster.update" || isSMBAuthDelete(request.Action) || isSMBAuthWrite(request.Action) {
 		var applied struct {
 			Success bool `json:"success"`
