@@ -45,6 +45,13 @@ assert.deepEqual(trashStatus(`expired at ${deadline}`), { label: '已到期（�
 for (const value of [null, undefined, 0, '']) assert.equal(trashStatus(value).label, '延期状态未知')
 for (const value of ['expired at ', 'protected until ', 'unexpected']) assert.deepEqual(trashStatus(value), { label: '无法识别的延期状态', color: 'default', deadline: value })
 console.log('Trash deferment display preserves native times and collection-time state')
+const restoreNode = trashTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'rbdTrashRestoreReason')
+const restoreCode = ts.transpileModule(restoreNode.getText(trashTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const restoreReason = new Function(`${restoreCode}; return rbdTrashRestoreReason`)()
+for (const trash_source of ['USER', 'USER_PARENT', 'MIRRORING']) assert.equal(restoreReason({ trash_source }), undefined)
+assert.match(restoreReason({ trash_source: 'MIGRATION' }), /迁移来源/)
+assert.match(restoreReason({ trash_source: 'REMOVING' }), /正在删除/)
+for (const trash_source of [null, undefined, '', 'user', 'unknown', ['USER'], {}]) assert.match(restoreReason({ trash_source }), /来源未知/)
 
 const parentSource = readFileSync(new URL('../src/pages/block/RbdParent.tsx', import.meta.url), 'utf8')
 const parentTree = ts.createSourceFile('parent.tsx', parentSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
@@ -94,6 +101,7 @@ console.log('RBD usage distinguishes missing fast-diff, unavailable statistics a
 
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')
 assert.ok(blockSource.includes('disabledWhen: rbdSnapshotDeleteReason'))
+assert.ok(blockSource.includes('disabledWhen: rbdTrashRestoreReason'))
 const blockTree = ts.createSourceFile('pages.tsx', blockSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 let scheduleNode
 function findSchedule(node) {

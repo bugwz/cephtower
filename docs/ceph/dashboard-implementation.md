@@ -11,6 +11,9 @@ Trash.cc 的 protected until / expired at 前缀展示采集时延期状态和�
 不把 ctime 文本按浏览器时区解析，也不将到期等同于删除完成；未知格式保留原文。
 --all 对齐参考 RbdTrash._trash_pool_list 的完整来源范围，避免默认 CLI 隐藏
 MIRRORING、MIGRATION 等条目。每个命名空间独立采集，未增加自动变更操作。
+恢复入口按 librbd/api/Trash.cc 的 ALLOWED_RESTORE_SOURCES 允许 USER、USER_PARENT、
+MIRRORING；MIGRATION、REMOVING 及未知来源显示禁用原因。该提示依赖库存，
+实际执行仍由原生 trash restore 校验来源及状态，不绕过原生限制。
 
 RBD 快照子镜像采集使用 rbd children <image@snapshot> --all --format json，
 按原生 Children.cc 包含回收站子镜像及 id/trash，避免默认命令隐藏依赖。

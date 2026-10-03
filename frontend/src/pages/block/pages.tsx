@@ -6,7 +6,7 @@ import { RbdRuntimeStatus } from './RbdRuntimeStatus'
 import { RbdConfiguration } from './RbdConfiguration'
 import { RbdParent } from './RbdParent'
 import { RbdSnapshotProtection } from './RbdSnapshotProtection'
-import { RbdTrashStatus } from './RbdTrashStatus'
+import { RbdTrashStatus, rbdTrashRestoreReason } from './RbdTrashStatus'
 import { RbdChildren, rbdSnapshotDeleteReason } from './RbdChildren'
 import { rbdUsageText } from './rbdUsage'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
@@ -405,6 +405,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       buildBody:(values,clusterId,row)=>({cluster_id:clusterId,pool:trashPool(row),...(values.expired_before?{expired_before:String(values.expired_before)}:{})})
     },{
       title:'恢复回收站镜像',buttonLabel:'恢复',path:'/rbd/trash/restore',method:'POST',successMessage:'镜像已恢复',
+      disabledWhen: rbdTrashRestoreReason,
       fields:[{name:'name',label:'恢复后名称',required:true}],
       initialValues:(row) => ({name:String(row?.name ?? '')}),
       buildBody:(values,clusterId,row) => ({cluster_id:clusterId,pool:trashPool(row),image_id:trashImageID(row),name:String(values.name ?? '')})
