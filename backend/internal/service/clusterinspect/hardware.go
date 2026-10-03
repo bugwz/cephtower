@@ -77,7 +77,32 @@ func (s *Service) Hardware(ctx context.Context, clusterID uint64, host, category
 				if err != nil {
 					return bad()
 				}
-				items = append(items, map[string]any{"id": string(identity), "host": hostname, "system": system, "component": component, "health": health, "state": state, "details": string(encoded)})
+				item := map[string]any{"id": string(identity), "host": hostname, "system": system, "component": component, "health": health, "state": state, "details": string(encoded)}
+				fields := map[string][]string{
+					"memory":     {"description"},
+					"storage":    {"description", "model", "capacity_bytes", "protocol", "serial_number"},
+					"processors": {"model", "total_cores", "total_threads"},
+					"network":    {"name", "speed_mbps"},
+					"power":      {"name", "model", "manufacturer"},
+					"fans":       {"name"},
+				}[category]
+				attributes, ok := redacted.(map[string]any)
+				if !ok {
+					return bad()
+				}
+				for _, field := range fields {
+					switch value := attributes[field].(type) {
+					case nil:
+						item[field] = nil
+					case string:
+						item[field] = value
+					case json.Number:
+						item[field] = value.String()
+					default:
+						return bad()
+					}
+				}
+				items = append(items, item)
 			}
 		}
 	}

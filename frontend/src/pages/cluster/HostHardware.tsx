@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { DataTable } from '../../components/DataTable'
 import { useResource } from '../../hooks'
-import { hardwareHealthCounts, hardwareHealthGroup, type HardwareHealthGroup } from './hardwareHealth'
+import { hardwareAttributeColumns, hardwareHealthCounts, hardwareHealthGroup, type HardwareHealthGroup } from './hardwareHealth'
 import { HostHardwareSummary } from './HostHardwareSummary'
 
 export function HostHardware({ clusterId, host }: { clusterId: number; host: string }) {
@@ -44,10 +44,9 @@ function HardwareCategory({ clusterId, host, category }: { clusterId: number; ho
     {!loading && !error && data?.items.length === 0 && <Alert type="warning" message="当前查询范围未返回该类别的硬件组件，不能据此判断健康" />}
     <DataTable data={rows} rowKeyCandidates={['id']} columns={[
       { key: 'host', title: '报告主机' },
-      ...(category === 'firmwares' ? [
-        { key: 'name', title: '固件名称' }, { key: 'version', title: '版本（原值）' }, { key: 'release_date', title: '发布日期（原值）' },
-      ] : [{ key: 'system', title: '系统 / 机箱' }]),
+      ...(category === 'firmwares' ? [] : [{ key: 'system', title: '系统 / 机箱' }]),
       { key: 'component', title: '组件' },
+      ...hardwareAttributeColumns(category),
       { key: 'health', title: '原生健康状态', render: (value) => hardwareHealthGroup(value) === 'unknown' ? '未知（未返回）' : String(value) },
       { key: 'state', title: '原生运行状态', render: (value) => value == null ? '未知（未返回）' : String(value) },
       { key: 'details', title: '原生详情', ellipsis: false, render: (value) => <details><summary>展开详情</summary><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{String(value ?? '')}</pre></details> },

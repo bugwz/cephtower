@@ -24,6 +24,9 @@ SCSI 的操作与纠错计数、增长缺陷数，以及 NVMe 健康日志字段
 <host> --category <category> --format json`（orchestrator/module.py `_common_table`）。
 CephTower `/host/hardware` 支持 memory、storage、processors、network、power、fans，
 保留系统/机箱及组件身份、原生 health/state，并以文本提供脱敏详情以保留整数精度。
+六类硬件表格还按 orchestrator `_common_table` 字段展示内存描述，存储型号/容量/
+协议/序列号，CPU 型号/核心/线程，网络名称/速率，电源名称/型号/制造商及风扇名称。
+投影仅取脱敏后的原生标量，数值作为精确文本返回，零值不丢失，缺失字段不补默认值。
 节点身份不匹配、响应形状异常、命令失败不会解释为健康；有效空结果明确提示无法判断。
 前端按集群、主机、类别隔离结果并支持手动刷新。依赖部署 node-proxy 和相应 Ceph 权限；
 主机列表的“集群硬件报告”省略 hostname 参数读取所有已报告主机，组件身份包含主机，

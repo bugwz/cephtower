@@ -246,6 +246,18 @@ assert.equal(healthModule.hardwareHealthGroup('OK'), 'ok')
 for (const value of ['Warning', 'Critical', 'Unknown', 'NEW_STATUS', 'ok']) assert.equal(healthModule.hardwareHealthGroup(value), 'other')
 assert.deepEqual(healthModule.hardwareHealthCounts([{ health: 'OK' }, { health: 'Warning' }, { health: 'Critical' }, {}, { health: '' }]), { total: 5, ok: 1, other: 2, unknown: 2 })
 assert.deepEqual(healthModule.hardwareHealthCounts([]), { total: 0, ok: 0, other: 0, unknown: 0 })
+for (const [category, keys] of Object.entries({ memory: ['description'], storage: ['description', 'model', 'capacity_bytes', 'protocol', 'serial_number'], processors: ['model', 'total_cores', 'total_threads'], network: ['name', 'speed_mbps'], power: ['name', 'model', 'manufacturer'], fans: ['name'], firmwares: ['name', 'version', 'release_date'] })) {
+  const columns = healthModule.hardwareAttributeColumns(category)
+  assert.deepEqual(columns.map((column) => column.key), keys)
+  for (const column of columns) {
+    assert.equal(column.render('18446744073709551615'), '18446744073709551615')
+    assert.equal(column.render('0'), '0')
+    assert.equal(column.render('01.02'), '01.02')
+    for (const value of [null, undefined, '', '  ', false, {}, []]) assert.equal(column.render(value), '未知（未返回）')
+  }
+}
+assert.deepEqual(healthModule.hardwareAttributeColumns('constructor'), [])
+console.log('Native hardware attribute column checks passed')
 console.log('Hardware health counts and unknown-state classification checks passed')
 const summarySource = readFileSync(new URL('../src/pages/cluster/HostHardwareSummary.tsx', import.meta.url), 'utf8')
 const summaryTree = ts.createSourceFile('summary.tsx', summarySource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)

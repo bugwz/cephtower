@@ -98,3 +98,42 @@ func TestHardwareClusterScopePreservesHostIdentity(t *testing.T) {
 		t.Fatal("missing cluster accepted")
 	}
 }
+
+func TestHardwareNativeAttributesAreProjectedPrecisely(t *testing.T) {
+	s, runner, id := testInspection(t)
+	for category, fields := range map[string]map[string]any{
+		"memory":     {"description": "DIMM A1"},
+		"storage":    {"description": "Disk 1", "model": "SSD", "capacity_bytes": "18446744073709551615", "protocol": "NVMe", "serial_number": "000123"},
+		"processors": {"model": "CPU", "total_cores": "64", "total_threads": "128"},
+		"network":    {"name": "NIC 1", "speed_mbps": "0"},
+		"power":      {"name": "PSU 1", "model": "P1", "manufacturer": "Vendor"},
+		"fans":       {"name": "Fan 1"},
+	} {
+		values, _ := json.Marshal(fields)
+		// Exercise native numeric JSON, rather than an already-stringified fixture.
+		raw := strings.ReplaceAll(string(values), `"18446744073709551615"`, `18446744073709551615`)
+		raw = strings.ReplaceAll(raw, `"0"`, `0`)
+		raw = strings.ReplaceAll(raw, `"64"`, `64`)
+		raw = strings.ReplaceAll(raw, `"128"`, `128`)
+		runner.output = `{"node1":{"sys":{"part":` + raw + `,"missing":{}}}}`
+		result, err := s.Hardware(context.Background(), id, "node1", category)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rows := result["items"].([]map[string]any)
+		for field, want := range fields {
+			if rows[1][field] != want || rows[0][field] != nil {
+				t.Fatalf("%s %s: %#v", category, field, rows)
+			}
+		}
+		if rows[1]["health"] != nil {
+			t.Fatal("attributes fabricated health")
+		}
+	}
+	for _, value := range []string{`true`, `{}`, `[]`} {
+		runner.output = `{"node1":{"sys":{"part":{"capacity_bytes":` + value + `}}}}`
+		if _, err := s.Hardware(context.Background(), id, "node1", "storage"); err == nil {
+			t.Fatalf("accepted malformed attribute %s", value)
+		}
+	}
+}
