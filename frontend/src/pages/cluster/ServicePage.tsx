@@ -177,7 +177,7 @@ function ServicePageContent() {
     const parameters = { cluster_id: selectedClusterId, name }
     const confirmation = Modal.confirm({
       title: `删除服务 ${name}`,
-      content: '该操作为高风险操作，确认后将直接执行删除操作。',
+      content: '将移除服务配置，并由 Ceph 编排器异步清理关联守护进程，可能中断服务。mon 和 mgr 服务不能删除，可改为非托管。确认后执行。',
       okText: '提交删除',
       okType: 'danger',
       cancelText: '取消',
@@ -188,7 +188,7 @@ function ServicePageContent() {
         try {
           await mutateResource('/service', 'DELETE', parameters, { ifMatch: generation })
           if (!active.current) return
-          message.success('服务删除执行成功')
+          message.success('服务配置已移除；守护进程清理由 Ceph 异步执行，请继续核对状态。')
         } catch (err) {
           if (active.current) message.warning('删除结果未确认，请核对刷新后的服务状态，不要直接重复删除。')
           throw err

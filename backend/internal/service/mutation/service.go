@@ -283,6 +283,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "service creation was skipped or not confirmed; inspect service state before retrying", Retryable: false}
 		}
 	}
+	if request.Action == "service.delete" && strings.TrimSpace(string(result.Stdout)) != "Removed service "+last(resourceTail(request.ResourceKey)) {
+		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "Ceph did not confirm service removal; inspect service state before retrying", Retryable: false}
+	}
 	if request.Action == "smb_share.create" || request.Action == "smb_share.update" || request.Action == "smb_cluster.update" || isSMBAuthDelete(request.Action) || isSMBAuthWrite(request.Action) {
 		var applied struct {
 			Success bool `json:"success"`
@@ -304,6 +307,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "service.delete" && (err != nil || !serviceSpecAbsent(checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "service removal was accepted but configuration absence could not be verified; inspect service state before retrying", Retryable: false}
+		}
 		if request.Action == "telemetry.update" && (err != nil || !telemetryStateMatches(checked.Stdout, request.Parameters["enabled"].(bool))) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "telemetry command was accepted but the requested state could not be verified; inspect telemetry status before retrying", Retryable: false}
 		}
@@ -605,7 +611,7 @@ func build(request Request, p map[string]any) (command, error) {
 		return result, nil
 	case "service.delete":
 		name := last(tail)
-		return ceph([]string{"orch", "rm", name}, []string{"orch", "ls", "--export", "--format", "json"}), nil
+		return ceph([]string{"orch", "rm", name}, []string{"orch", "ls", "--service-name", name, "--export", "--format", "json"}), nil
 	case "daemon.action":
 		name := pathValue(tail, "daemon")
 		daemonType, daemonID, found := strings.Cut(name, ".")

@@ -4,7 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"strings"
 )
+
+// Export excludes specs marked deleted even while their daemons are being removed.
+func serviceSpecAbsent(output []byte) bool {
+	if strings.TrimSpace(string(output)) == "No services reported" {
+		return true
+	}
+	var specs []json.RawMessage
+	return json.Unmarshal(output, &specs) == nil && specs != nil && len(specs) == 0
+}
 
 // Export returns ServiceSpec objects, not ServiceDescription status wrappers.
 // RawMessage retains fields unknown to this application and exact numeric values.

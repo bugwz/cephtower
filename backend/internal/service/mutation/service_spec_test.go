@@ -138,3 +138,38 @@ func TestServiceNetworkUpdates(t *testing.T) {
 		}
 	}
 }
+
+func TestServiceDeletionRequiresNativeConfirmationAndAbsence(t *testing.T) {
+	s, _, id := newCephUserService(t)
+	for _, tc := range []struct {
+		ack, inventory string
+		ok             bool
+	}{
+		{"Removed service rgw.a", "[]", true},
+		{"Removed service rgw.a\n", "No services reported\n", true},
+		{"Unable to remove rgw.a service.", "[]", false},
+		{"Invalid service 'rgw.a'.", "[]", false},
+		{"Removed service rgw.b", "[]", false},
+		{"Removed service rgw.a", `[{"service_name":"rgw.a"}]`, false},
+		{"Removed service rgw.a", "null", false},
+		{"Removed service rgw.a", "[] {}", false},
+		{"Removed service rgw.a", "", false},
+	} {
+		e := &directoryRenameExecutor{outputs: map[string]string{"service.delete": tc.ack, "service.delete.post_check": tc.inventory}}
+		s.executor = e
+		_, err := s.Execute(context.Background(), Request{ClusterID: id, Action: "service.delete", ResourceKey: "service/rgw.a"})
+		if tc.ok {
+			if err != nil {
+				t.Fatal(err)
+			}
+		} else {
+			var ae *cephdomain.ActionError
+			if !errors.As(err, &ae) || ae.Code != "post_check_failed" || ae.Retryable {
+				t.Fatalf("unconfirmed removal accepted: %+v %v", tc, err)
+			}
+		}
+		if len(e.specs) > 1 && (!reflect.DeepEqual(e.specs[1].Args, []string{"orch", "ls", "--service-name", "rgw.a", "--export", "--format", "json"}) || e.specs[1].Mutating) {
+			t.Fatalf("incorrect verification: %+v", e.specs)
+		}
+	}
+}
