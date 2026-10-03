@@ -460,7 +460,7 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 		}
 	}
 	if err != nil {
-		return cephdomain.ActionResult{}, failure("s3_failed", err.Error(), request.Action != "rgw_bucket_policy.update")
+		return cephdomain.ActionResult{}, failure("s3_failed", "bucket mutation outcome is uncertain; refresh before another change: "+err.Error(), false)
 	}
 	return cephdomain.ActionResult{ResourceURL: fmt.Sprintf("/api/v1/cluster/%d/rgw/bucket/%s", clusterID, encodedID)}, nil
 }
