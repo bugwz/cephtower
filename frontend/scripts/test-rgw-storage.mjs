@@ -25,6 +25,20 @@ assert.equal(pages.match(/<RgwStorage value=\{value\} account \/>/g).length, 1)
 assert.equal(pages.match(/<RgwStorage value=\{value\} categorized \/>/g).length, 1)
 console.log('RGW storage statistics preserve category, units, zero and unavailable values')
 const times = exports.rgwStorageTimes
+const storageView = {}
+const jsx = (type, props) => ({ type, props })
+new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwStorage.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(storageView, (name) => name === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : name === './rgwStorageDetails' ? exports : { Table: 'Table', Descriptions: 'Descriptions' })
+for (const value of [undefined, null, [], { main: null }]) {
+  const result = storageView.RgwStorage({ value, categorized: true })
+  assert.equal(result.type, 'span')
+  assert.ok(result.props.children.includes('缺失不代表零用量'))
+}
+assert.equal(storageView.RgwStorage({ value: undefined }).props.children, '容量与对象统计不可用')
+const emptyUsage = storageView.RgwStorage({ value: {}, categorized: true })
+assert.deepEqual(emptyUsage.props.children[0].props.dataSource, [])
+assert.equal(emptyUsage.props.children[0].props.locale.emptyText, '本次采集未返回用量分类')
+const zeroUsage = storageView.RgwStorage({ value: { main: { size: 0, size_actual: 0, size_utilized: 0, num_objects: 0 } }, categorized: true })
+assert.equal(zeroUsage.props.children[0].props.dataSource[0].objects, '0')
 const tags = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketTags.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(tags)
 assert.deepEqual(tags.rgwBucketTags({}), [])
