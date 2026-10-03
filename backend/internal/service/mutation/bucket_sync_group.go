@@ -52,11 +52,13 @@ func bucketSyncGroupCommand(action string, p map[string]any, rgw func([]string, 
 		target := []string{"--bucket", pair[1], "--tenant", pair[0]}
 		return rgw(append(args, target...), append([]string{"sync", "policy", "get"}, target...)), nil
 	}
-	if action == "rgw_bucket.sync_flow_create" || action == "rgw_bucket.sync_flow_delete" {
+	if action == "rgw_bucket.sync_flow_create" || action == "rgw_bucket.sync_flow_delete" || action == "rgw_bucket.sync_flow_update" {
 		var args []string
 		var err error
 		if action == "rgw_bucket.sync_flow_delete" {
 			args, err = bucketSyncFlowDeleteArgs(p)
+		} else if action == "rgw_bucket.sync_flow_update" {
+			args, err = bucketSyncFlowArgs(symmetricalFlowParameters(p))
 		} else {
 			args, err = bucketSyncFlowArgs(p)
 		}

@@ -18,8 +18,12 @@ console.log('bucket local sync policy summary checks passed')
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketSyncGroupForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(api)
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-let action, createAction, deleteAction, flowAction, deleteFlowAction, deletePipeAction, createPipeAction
+let action, createAction, deleteAction, flowAction, deleteFlowAction, deletePipeAction, createPipeAction, updateFlowAction
 function visit(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '编辑桶对称数据流')) {
+    const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+    updateFlowAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
+  }
   if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '创建桶同步管道')) {
     const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
     createPipeAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
@@ -55,6 +59,18 @@ assert.ok(action)
 assert.equal(action.path, '/rgw/bucket/sync/group')
 assert.equal(action.method, 'PATCH')
 const row = { natural_key: 'AGJ1Y2tldA', bucket_sync_policy: { groups: [group] } }
+const updateGroup = { ...group, data_flow: { symmetrical: [{ id: ' 流 ', zones: ['Zeta', 'Alpha'] }] } }
+const updateRow = { ...row, bucket_sync_policy: { groups: [updateGroup] } }
+const updateValues = { bucket_id: row.natural_key, group_id: group.id, flow_id: ' 流 ', zones_json: '["b","c"]', confirm_flow_update: 'acknowledged' }
+assert.equal(updateFlowAction.method, 'PATCH')
+assert.equal(updateFlowAction.path, '/rgw/bucket/sync/flow')
+assert.deepEqual(updateFlowAction.buildBody(updateValues, 7, updateRow), { cluster_id: 7, bucket_id: row.natural_key, group_id: group.id, flow_id: ' 流 ', expected_group: JSON.stringify(updateGroup), zones: ['b', 'c'] })
+assert.match(updateFlowAction.confirmation(updateValues, updateRow), /先添加再移除.*非事务.*部分生效.*不自动回滚或重试/)
+assert.ok(updateFlowAction.disabledWhen({ ...updateRow, stale: true }))
+for (const change of [{ bucket_id:'wrong' }, { group_id:'wrong' }, { flow_id:'wrong' }, { confirm_flow_update:true }, ...['[]','["a","a"]','["*"]','["a;b"]','["a=b"]','["-a"]','["a b"]','[null]','{}','broken'].map(zones_json => ({ zones_json }))]) assert.throws(() => updateFlowAction.buildBody({ ...updateValues, ...change }, 7, updateRow))
+assert.throws(() => updateFlowAction.buildBody(updateValues, 7, { ...updateRow, bucket_sync_policy: { groups: [{ ...updateGroup, data_flow: { symmetrical: [updateGroup.data_flow.symmetrical[0], updateGroup.data_flow.symmetrical[0]] } }] } }))
+assert.deepEqual(updateGroup.data_flow.symmetrical[0].zones, ['Zeta', 'Alpha'])
+console.log('bucket symmetrical flow membership edit checks passed')
 const initial = action.initialValues(row)
 assert.equal(initial.status, undefined)
 assert.equal(initial.group_id, undefined)

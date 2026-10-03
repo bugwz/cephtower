@@ -58,6 +58,7 @@ import { bucketSyncGroupBlocked, bucketSyncGroupInitial, bucketSyncGroupInput, b
 import { bucketSyncGroupCreateBlocked, bucketSyncGroupCreateInitial, bucketSyncGroupCreateInput, bucketSyncGroupCreateConfirmation } from './rgwBucketSyncGroupForm'
 import { bucketSyncGroupDeleteInput, bucketSyncGroupDeleteConfirmation } from './rgwBucketSyncGroupForm'
 import { bucketSyncFlowInput, bucketSyncFlowConfirmation } from './rgwBucketSyncGroupForm'
+import { bucketSyncFlowUpdateInput, bucketSyncFlowUpdateConfirmation } from './rgwBucketSyncGroupForm'
 import { bucketSyncFlowDeleteInput, bucketSyncFlowDeleteConfirmation } from './rgwBucketSyncGroupForm'
 import { bucketSyncPipeDeleteInput, bucketSyncPipeDeleteConfirmation } from './rgwBucketSyncGroupForm'
 import { bucketSyncPipeCreateInput, bucketSyncPipeCreateConfirmation } from './rgwBucketSyncGroupForm'
@@ -647,6 +648,18 @@ const definitions: Record<
         { name: 'confirm_flow', label: '数据流影响确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '我确认 Zone ID 正确，已备份策略并了解复制影响' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketSyncFlowInput(values, row) })
+    }, {
+      title: '编辑桶对称数据流', path: '/rgw/bucket/sync/flow', method: 'PATCH',
+      successMessage: '对称流 Zone 成员已回读核验（不代表同步完成）',
+      disabledWhen: bucketSyncGroupBlocked, initialValues: bucketSyncGroupInitial, confirmation: bucketSyncFlowUpdateConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'group_id', label: '已有同步组 ID', required: true },
+        { name: 'flow_id', label: '已有对称流 ID', required: true },
+        { name: 'zones_json', label: '完整目标 Zone ID JSON 数组（不是名称，不可为空）', type: 'textarea', required: true },
+        { name: 'confirm_flow_update', label: '分步修改确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，了解先添加再移除及部分生效风险' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketSyncFlowUpdateInput(values, row) })
     }, {
       title: '删除桶数据流', path: '/rgw/bucket/sync/flow', method: 'DELETE',
       successMessage: '桶本地数据流删除已回读核验',

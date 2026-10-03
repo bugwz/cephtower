@@ -77,6 +77,23 @@ export function bucketSyncFlowConfirmation(values: Record<string, unknown>, row?
   return `确认在 Bucket ID ${input.bucket_id} 的同步组 ${JSON.stringify(input.group_id)} 创建 ${input.flow_type} 数据流：${target}？可能影响现有管道的复制行为。不创建管道、不修改组状态、Zonegroup 或提交 period；不代表已建立有效复制链路或同步完成。请备份策略并避免外部并发；核验失败不代表未生效，不自动回滚。`
 }
 
+export function bucketSyncFlowUpdateInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const selected = bucketSyncFlowDeleteInput({ ...values, flow_type: 'symmetrical', confirm_flow_delete: 'acknowledged' }, row)
+  const group = JSON.parse(selected.expected_group)
+  const flow = group.data_flow.symmetrical.find((entry: { id: string }) => entry.id === values.flow_id)
+  if (!Array.isArray(flow.zones) || flow.zones.some((zone: unknown) => typeof zone !== 'string')) throw new Error('已有 Zone 列表不可用')
+  // Reuse creation validation on a copy without the selected flow; preserve the real snapshot below.
+  group.data_flow.symmetrical = group.data_flow.symmetrical.filter((entry: { id: string }) => entry.id !== values.flow_id)
+  const input = bucketSyncFlowInput({ ...values, flow_type: 'symmetrical', confirm_flow: 'acknowledged' }, { ...row, bucket_sync_policy: { groups: [group] } })
+  if (values.confirm_flow_update !== 'acknowledged') throw new Error('请确认非事务分步修改及部分生效风险')
+  if (!('zones' in input)) throw new Error('仅支持编辑对称流')
+  return { bucket_id: selected.bucket_id, group_id: selected.group_id, flow_id: values.flow_id as string, expected_group: selected.expected_group, zones: input.zones }
+}
+export function bucketSyncFlowUpdateConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const input = bucketSyncFlowUpdateInput(values, row)
+  return `确认修改 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中对称流 ${JSON.stringify(input.flow_id)}，完整目标 Zone ID 列表为 ${JSON.stringify(input.zones)}？先添加再移除，非事务操作，中间并集可能临时扩大复制范围；失败可能部分生效，不自动回滚或重试。空列表请使用删除流操作。不修改管道、组状态、Zonegroup 或 period。请备份策略并避免外部并发；核验成功不代表同步完成。`
+}
+
 export function bucketSyncFlowDeleteInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const group = groups(row).find(group => group.id === values.group_id)
   if (values.bucket_id !== row!.natural_key) throw new Error('Bucket ID 不可更改')

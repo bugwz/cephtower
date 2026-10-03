@@ -66,7 +66,7 @@ type command struct {
 
 func Supports(action string) bool {
 	switch action {
-	case "rgw_bucket.sync_group", "rgw_bucket.sync_group_create", "rgw_bucket.sync_group_delete", "rgw_bucket.sync_flow_create", "rgw_bucket.sync_flow_delete", "rgw_bucket.sync_pipe_delete", "rgw_bucket.sync_pipe_create":
+	case "rgw_bucket.sync_group", "rgw_bucket.sync_group_create", "rgw_bucket.sync_group_delete", "rgw_bucket.sync_flow_create", "rgw_bucket.sync_flow_delete", "rgw_bucket.sync_pipe_delete", "rgw_bucket.sync_pipe_create", "rgw_bucket.sync_flow_update":
 		return true
 	case "ceph_user.create", "ceph_user.update", "ceph_user.delete", "ceph_user.import",
 		"cluster.refresh", "health.mute", "health.unmute", "telemetry.update", "telemetry.channel.update",
@@ -119,6 +119,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	spec, err := build(request, request.Parameters)
 	if err != nil {
 		return cephdomain.ActionResult{}, err
+	}
+	if request.Action == "rgw_bucket.sync_flow_update" {
+		return s.executeBucketSyncFlowUpdate(ctx, access, request, spec)
 	}
 	if request.Action == "rgw_bucket.sync_group" || request.Action == "rgw_bucket.sync_group_create" || request.Action == "rgw_bucket.sync_group_delete" || request.Action == "rgw_bucket.sync_flow_create" || request.Action == "rgw_bucket.sync_flow_delete" || request.Action == "rgw_bucket.sync_pipe_delete" || request.Action == "rgw_bucket.sync_pipe_create" {
 		return s.executeBucketSyncGroup(ctx, access, request, spec)
@@ -658,7 +661,7 @@ func build(request Request, p map[string]any) (command, error) {
 		return command{binary: executor.BinaryCephFSShell, args: args, check: check, timeout: 2 * time.Minute}
 	}
 	switch action {
-	case "rgw_bucket.sync_group", "rgw_bucket.sync_group_create", "rgw_bucket.sync_group_delete", "rgw_bucket.sync_flow_create", "rgw_bucket.sync_flow_delete", "rgw_bucket.sync_pipe_delete", "rgw_bucket.sync_pipe_create":
+	case "rgw_bucket.sync_group", "rgw_bucket.sync_group_create", "rgw_bucket.sync_group_delete", "rgw_bucket.sync_flow_create", "rgw_bucket.sync_flow_delete", "rgw_bucket.sync_pipe_delete", "rgw_bucket.sync_pipe_create", "rgw_bucket.sync_flow_update":
 		return bucketSyncGroupCommand(action, p, rgw)
 	case "ceph_user.create", "ceph_user.update", "ceph_user.delete", "ceph_user.import":
 		return cephUserCommand(request, p)

@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### 桶对称数据流 Zone 成员编辑
+
+参考 `rgw_client.py::create_sync_flow` 的先添加后移除顺序，以及 `rgw_sync_policy.cc::remove_symmetrical` 的部分 Zone 删除语义，增加 `PATCH /api/v1/rgw/bucket/sync/flow` 和“编辑桶对称数据流”入口。前端提交完整目标 Zone ID 列表与原组快照；后端先读取桶本地策略及 `zonegroup get`，将展示名称映射为 ID，计算差集，通过 `radosgw-admin sync group flow create/remove --zone-ids` 执行。每步回读完整策略，检查其他组、流、管道和大整数参数未变；快照过期、映射不明确、无变化和空列表不写入。沿用桶资源高风险队列及锁，不要求 S3 端点，不修改 Zonegroup 或提交 period。
+
+新增、删除两步不具备事务性，中间 Zone 并集可能临时扩大复制范围；任一步命令或回读失败立即停止，不重试或自动回滚，前端确认明确提示部分生效与外部并发风险。单独添加、单独移除、两步修改、读取/执行故障及中间状态异常均有离线测试，覆盖全局和租户桶。前端验证完整快照、非法 Zone ID、重复流、确认和实际按钮绑定，API 验证高风险入队及资源锁。完成后运行全量后端、OpenAPI 校验及前端测试/构建；没有真实 Ceph 集群或浏览器视觉验证。该增量不包含定向流编辑、管道编辑或 Zonegroup 级策略管理。
+
 - 2026-10-04：补齐桶本地基本同步管道创建。对照参考 create_sync_pipe、
   SYNC_GROUP_PIPE_CREATE、bucket_key/set_bucket 及参数序列化，接入高风险
   POST /rgw/bucket/sync/pipe → 队列 → 策略/Zonegroup 读取 → 原生创建 → 完整策略核验。
