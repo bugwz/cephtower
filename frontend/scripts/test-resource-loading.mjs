@@ -17,6 +17,16 @@ for (const response of [{ host: 'node1', category: 'memory', items: [] }, { host
 assert.ok(hardwareSource.includes('key={`${clusterId}:${host}:${category}`}'))
 assert.ok(hardwareSource.includes('未知（未返回）'))
 console.log('Hardware request identity and category scope checks passed')
+const healthSource = readFileSync(new URL('../src/pages/cluster/hardwareHealth.ts', import.meta.url), 'utf8')
+const healthCode = ts.transpileModule(healthSource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText
+const healthModule = {}
+new Function('exports', healthCode)(healthModule)
+for (const value of [null, undefined, '', '  ', 0, false]) assert.equal(healthModule.hardwareHealthGroup(value), 'unknown')
+assert.equal(healthModule.hardwareHealthGroup('OK'), 'ok')
+for (const value of ['Warning', 'Critical', 'Unknown', 'NEW_STATUS', 'ok']) assert.equal(healthModule.hardwareHealthGroup(value), 'other')
+assert.deepEqual(healthModule.hardwareHealthCounts([{ health: 'OK' }, { health: 'Warning' }, { health: 'Critical' }, {}, { health: '' }]), { total: 5, ok: 1, other: 2, unknown: 2 })
+assert.deepEqual(healthModule.hardwareHealthCounts([]), { total: 0, ok: 0, other: 0, unknown: 0 })
+console.log('Hardware health counts and unknown-state classification checks passed')
 
 const perfSource = readFileSync(new URL('../src/pages/cluster/DaemonPerf.tsx', import.meta.url), 'utf8')
 const perfTree = ts.createSourceFile('perf.tsx', perfSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
