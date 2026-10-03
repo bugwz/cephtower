@@ -5,6 +5,10 @@
 
 ## 如何追踪调用链
 
+池使用率展示只读取当前 API 的 used_percent（后端已将 ceph df 的 0–1 比例换算为
+0–100 百分数），不再读取旧别名或将越界值截为 0% / 100%。非数值、非有限值及越界
+数据明确显示未采集；列表与详情共用校验。离线覆盖合法边界、比例单位和无效值。
+
 存储池详情新增缓存层表，按参考 pool-list.getSelectionTiers / PoolDetailsComponent
 将 tiers ID 与同集群完整池库存关联，显示模式、最短淘汰/刷写秒数、目标字节和对象数。
 复用 ceph osd pool ls detail → raw_detail → /pools 链路，四个原生计数转为精确十进制

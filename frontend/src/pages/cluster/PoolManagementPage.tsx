@@ -1711,11 +1711,11 @@ export function poolCapacity(value: unknown): string {
 }
 
 export function poolUsage(row: ApiRecord) {
-  const percent = numberValue(row.used_percent ?? row.percent_used ?? row.usage_percent)
-  if (percent === undefined) {
+  const percent = row.used_percent
+  if (typeof percent !== 'number' || !Number.isFinite(percent) || percent < 0 || percent > 100) {
     return '未采集'
   }
-  return `${Math.max(0, Math.min(100, percent)).toFixed(percent >= 10 ? 0 : 1)}%`
+  return `${percent.toFixed(percent >= 10 ? 0 : 1)}%`
 }
 
 function formatBytes(value?: number) {

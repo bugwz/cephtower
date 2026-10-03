@@ -388,6 +388,12 @@ const poolUsageDisplay = new Function('numberValue', `${usageDisplayCode}; retur
 assert.equal(poolUsageDisplay({}), '未采集')
 assert.equal(poolUsageDisplay({ used_percent: 0 }), '0.0%')
 assert.equal(poolUsageDisplay({ used_percent: 25 }), '25%')
+assert.equal(poolUsageDisplay({ used_percent: 100 }), '100%')
+assert.equal(poolUsageDisplay({ used_percent: 0.25 }), '0.3%')
+for (const used_percent of [null, undefined, -0.1, 100.1, NaN, Infinity, -Infinity, '25', true]) {
+  assert.equal(poolUsageDisplay({ used_percent, percent_used: 25, usage_percent: 25 }), '未采集', 'invalid current data must not be clamped or replaced by aliases')
+}
+assert.equal(poolUsageDisplay({ percent_used: 0.25, usage_percent: 25 }), '未采集')
 assert.ok(poolSource.includes("erasure_code_profile: textValue(row.erasure_code_profile, '')"), 'edit form must preserve missing profile data')
 assert.ok(!poolSource.includes("const defaultErasureCodeProfile = 'default'"), 'do not invent an existing pool profile')
 assert.ok(poolSource.includes("required: formMode === 'create', message: '请选择纠删码配置'"), 'immutable missing profile must not prevent unrelated edits')
