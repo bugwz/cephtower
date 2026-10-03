@@ -16,6 +16,23 @@ for (const response of [{ daemon_name: 'osd.1', items: [] }, { daemon_name: 'osd
 }
 assert.ok(!perfSource.includes('JSON.parse'))
 
+const rateSource = readFileSync(new URL('../src/pages/cluster/daemonPerfRate.ts', import.meta.url), 'utf8')
+const rateCode = ts.transpileModule(rateSource.replace('export function', 'function'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText
+const rate = new Function('exports', `${rateCode}; return daemonPerfRate`)({})
+const counter = (raw_value, type = 10) => ({ name: 'osd.bytes', units: 'bytes', type, raw_value })
+assert.equal(rate(counter('9007199254740994'), counter('9007199254740993'), 2000), '0.500000 /s')
+assert.equal(rate(counter('18446744073709551615'), counter('0'), 1000), '18446744073709551615.000000 /s')
+assert.equal(rate(counter('1'), counter('0'), 3000), '0.333333 /s')
+assert.equal(rate(counter('0'), counter('0'), 1000), '0.000000 /s')
+assert.match(rate(counter('0'), counter('1'), 1000), /重置/)
+assert.match(rate(counter('1'), undefined, 1000), /无基线/)
+for (const value of [null, undefined, 1, '-1', '1.5', '{}']) assert.match(rate(counter(value), counter('0'), 1000), /格式无效/)
+for (const ms of [0, -1, NaN, Infinity, 0.5]) assert.match(rate(counter('1'), counter('0'), ms), /较新的快照/)
+for (const type of [1, 2, 5, 6, 9, 14, 18, null]) assert.match(rate(counter('1', type), counter('0'), 1000), /不适用/)
+assert.match(rate(counter('18446744073709551616'), counter('0'), 1000), /超出/)
+assert.match(rate(counter('1'), { ...counter('0'), units: 'none' }, 1000), /定义已变化/)
+console.log('Native uint64 snapshot rate precision and reset checks passed')
+
 const logsSource = readFileSync(new URL('../src/pages/monitoring/RuntimeLogsPage.tsx', import.meta.url), 'utf8')
 const logsTree = ts.createSourceFile('logs.tsx', logsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const logsPanelNode = logsTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'RuntimeLogsPanel')
