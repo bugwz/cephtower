@@ -24,13 +24,26 @@ assert.ok(pages.includes("title: '每用户访问密钥上限'"))
 assert.ok(pages.includes('...rgwAccountLimitPatch(values, row)'))
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 let fieldsExpression
+let bodyExpression
 function visit(node) {
   if (ts.isObjectLiteralExpression(node) && node.properties.some(property => ts.isPropertyAssignment(property) && property.name.getText(source) === 'title' && property.initializer.getText(source) === "'编辑 RGW Account'")) {
     fieldsExpression = node.properties.find(property => ts.isPropertyAssignment(property) && property.name.getText(source) === 'fields').initializer.getText(source)
+    bodyExpression = node.properties.find(property => ts.isPropertyAssignment(property) && property.name.getText(source) === 'buildBody').initializer.getText(source)
   }
   ts.forEachChild(node, visit)
 }
 visit(source)
+const editExports = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwAccountEdit.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(editExports)
+const buildBody = new Function('rgwAccountTextPatch', 'rgwAccountLimitPatch', `return (${bodyExpression})`)(editExports.rgwAccountTextPatch, patch)
+const row = { account_id: 'RGW123', account_name: 'Original', email: 'old@example.test', max_users: 10 }
+for (const values of [{}, { account_name: row.account_name, email: row.email, max_users: 10 }]) assert.throws(() => buildBody(values, 'cluster', row), /没有需要提交/)
+assert.deepEqual(buildBody({ max_users: 0 }, 'cluster', row), { cluster_id: 'cluster', account_id: 'RGW123', max_users: 0 })
+for (const key of ['account_name', 'email']) {
+  assert.deepEqual(buildBody({ [key]: 'New' }, 'cluster', row), { cluster_id: 'cluster', account_id: 'RGW123', [key]: 'New' })
+  for (const value of ['', null, false, 1, {}, '  ', 'bad\ntext', 'bad\0text']) assert.throws(() => buildBody({ [key]: value, max_users: 0 }, 'cluster', row), /非空单行文本/)
+}
+assert.deepEqual(buildBody({ account_name: '', email: '', max_users: -1 }, 'cluster', { natural_key: 'RGW456' }), { cluster_id: 'cluster', account_id: 'RGW456', max_users: -1 })
 assert.ok(fieldsExpression)
 const fieldExports = {}
 new Function('exports', ts.transpileModule('export const fields = ' + fieldsExpression, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(fieldExports)

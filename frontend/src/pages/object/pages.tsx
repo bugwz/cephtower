@@ -13,6 +13,7 @@ import { RgwQuota } from './RgwQuota'
 import { RgwStorage } from './RgwStorage'
 import { rgwStorageScope } from './rgwStorageDetails'
 import { rgwUserDisplayNamePatch } from './rgwUserDisplayName'
+import { rgwAccountTextPatch } from './rgwAccountEdit'
 import { RgwBucketDetails } from './RgwBucketDetails'
 import { rgwBucketIndexCount, rgwBucketIndexText } from './rgwBucketIndex'
 import { rgwBucketVersioning, rgwBucketBooleanState, rgwBucketReshardState } from './rgwBucketState'
@@ -265,10 +266,11 @@ const definitions: Record<
         ...['max_users', 'max_roles', 'max_groups', 'max_buckets', 'max_access_keys'].map((name, index) => ({ name, label: ['用户上限', '角色上限', '用户组上限', 'Bucket 上限', '每用户访问密钥上限'][index] + (name === 'max_buckets' ? '（-1 禁止创建，0 无限制）' : '（-1 无限制，0 禁止新增）'), type: 'number' as const, min: -1, max: 2147483647 }))
       ],
       initialValues: (row) => ({ account_name: text(row?.account_name), email: text(row?.email), ...Object.fromEntries(['max_users', 'max_roles', 'max_groups', 'max_buckets', 'max_access_keys'].map((key) => [key, numberOrUndefined(row?.[key])])) }),
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, account_id: String(row?.account_id ?? row?.natural_key ?? ''),
-        ...(values.account_name !== text(row?.account_name) ? { account_name: String(values.account_name ?? '') } : {}),
-        ...(values.email !== text(row?.email) ? { email: String(values.email ?? '') } : {}),
-        ...rgwAccountLimitPatch(values, row) })
+      buildBody: (values, clusterId, row) => {
+        const patch = { ...rgwAccountTextPatch(values, row), ...rgwAccountLimitPatch(values, row) }
+        if (Object.keys(patch).length === 0) throw new Error('没有需要提交的账户修改')
+        return { cluster_id: clusterId, account_id: String(row?.account_id ?? row?.natural_key ?? ''), ...patch }
+      }
     },
     extraActions: (['account', 'bucket'] as const).map((scope) => ({
       title: scope === 'account' ? '账户总配额' : '默认 Bucket 配额', path: '/rgw/account/quota', method: 'PUT' as const, successMessage: '账户配额更新执行成功',
