@@ -151,7 +151,7 @@ function ServicePageContent() {
         ...(Array.isArray(values.networks) ? { networks: values.networks } : {}),
         placement
       }
-      const successMessage = editingService ? '服务更新执行成功' : '服务创建执行成功'
+      const successMessage = editingService ? '服务更新已安排，请核对刷新后的配置与运行状态。' : '服务创建已安排，请核对刷新后的配置与运行状态。'
       attempted = true
       await mutateResource('/service', editingService ? 'PATCH' : 'POST', body, editingService ? { ifMatch: String(editingService.resource_version) } : undefined)
       if (!active.current) return

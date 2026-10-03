@@ -34,7 +34,7 @@ func TestServiceUpdateMergesExportedSpec(t *testing.T) {
 		}
 	}
 	s, _, id := newCephUserService(t)
-	e := &directoryRenameExecutor{outputs: map[string]string{"service.update.pre_check": original}}
+	e := &directoryRenameExecutor{outputs: map[string]string{"service.update.pre_check": original, "service.update": "Scheduled rgw.realm.zone update..."}}
 	s.executor = e
 	_, err = s.Execute(context.Background(), Request{ClusterID: id, Action: "service.update", ResourceKey: "service/rgw.realm.zone", Parameters: map[string]any{"service_type": "rgw", "placement": map[string]any{"count": 3}}})
 	if err != nil {
@@ -170,6 +170,28 @@ func TestServiceDeletionRequiresNativeConfirmationAndAbsence(t *testing.T) {
 		}
 		if len(e.specs) > 1 && (!reflect.DeepEqual(e.specs[1].Args, []string{"orch", "ls", "--service-name", "rgw.a", "--export", "--format", "json"}) || e.specs[1].Mutating) {
 			t.Fatalf("incorrect verification: %+v", e.specs)
+		}
+	}
+}
+
+func TestServiceUpdateRequiresTargetAcknowledgement(t *testing.T) {
+	s, _, id := newCephUserService(t)
+	for _, output := range []string{"Scheduled rgw.realm.zone update...\n", "", "Scheduled rgw.other update...", "Skipped rgw.realm.zone service spec.", "Scheduled rgw.realm.zone update...\nfailed"} {
+		e := &directoryRenameExecutor{outputs: map[string]string{
+			"service.update.pre_check": `[{"service_name":"rgw.realm.zone","service_type":"rgw","service_id":"realm.zone"}]`,
+			"service.update":           output,
+		}}
+		s.executor = e
+		_, err := s.Execute(context.Background(), Request{ClusterID: id, Action: "service.update", ResourceKey: "service/rgw.realm.zone", Parameters: map[string]any{"service_type": "rgw"}})
+		if output == "Scheduled rgw.realm.zone update...\n" {
+			if err != nil || len(e.specs) != 3 {
+				t.Fatalf("valid update rejected: %v %+v", err, e.specs)
+			}
+		} else {
+			var ae *cephdomain.ActionError
+			if !errors.As(err, &ae) || ae.Code != "post_check_failed" || ae.Retryable || len(e.specs) != 2 {
+				t.Fatalf("invalid update accepted: %q %v", output, err)
+			}
 		}
 	}
 }

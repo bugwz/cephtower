@@ -274,13 +274,16 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		return cephdomain.ActionResult{}, normalize(err)
 	}
-	if request.Action == "service.create" {
+	if request.Action == "service.create" || request.Action == "service.update" {
 		name := optional(request.Parameters, "service_type")
 		if id := optional(request.Parameters, "service_id"); id != "" {
 			name += "." + id
 		}
+		if request.Action == "service.update" {
+			name = last(resourceTail(request.ResourceKey))
+		}
 		if strings.TrimSpace(string(result.Stdout)) != "Scheduled "+name+" update..." {
-			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "service creation was skipped or not confirmed; inspect service state before retrying", Retryable: false}
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "service apply was skipped or not confirmed; inspect service state before retrying", Retryable: false}
 		}
 	}
 	if request.Action == "service.delete" && strings.TrimSpace(string(result.Stdout)) != "Removed service "+last(resourceTail(request.ResourceKey)) {
