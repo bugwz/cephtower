@@ -12,9 +12,13 @@ func rgwUserPlacementRequested(params map[string]any) bool {
 	return placement || tags
 }
 
-func rgwUserPlacementMatches(raw []byte, params map[string]any) bool {
+func rgwUserPlacementMatches(raw []byte, params map[string]any, uid string) bool {
 	var info map[string]json.RawMessage
 	if json.Unmarshal(raw, &info) != nil || info == nil {
+		return false
+	}
+	var actualUID *string
+	if uid == "" || json.Unmarshal(info["full_user_id"], &actualUID) != nil || actualUID == nil || *actualUID != uid {
 		return false
 	}
 	if _, present := params["default_placement"]; present {

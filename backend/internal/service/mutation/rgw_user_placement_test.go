@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
@@ -29,7 +30,8 @@ func TestRGWUserPlacementExecution(t *testing.T) {
 		{"write failed", `{}`, "rgw_user.update", false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			runner := &directoryRenameExecutor{outputs: map[string]string{"rgw_user.update.post_check": tc.response}, failID: tc.failID}
+			response := strings.Replace(tc.response, `{"`, `{"full_user_id":"test","`, 1)
+			runner := &directoryRenameExecutor{outputs: map[string]string{"rgw_user.update.post_check": response}, failID: tc.failID}
 			service.executor = runner
 			_, err := service.Execute(context.Background(), Request{ClusterID: clusterID, Action: "rgw_user.update", ResourceKey: "rgw/user/test", Parameters: map[string]any{"default_placement": "custom", "default_storage_class": "", "placement_tags_csv": "fast, raw "}})
 			if tc.wantSuccess {
@@ -84,7 +86,8 @@ func TestRGWUserPlacementIndependentExecution(t *testing.T) {
 					if state != "unchanged" {
 						params["suspended"] = state == "suspend"
 					}
-					runner := &directoryRenameExecutor{outputs: map[string]string{"rgw_user.update.post_check": response}}
+					readback := strings.Replace(response, `{"`, `{"full_user_id":"tenant$user","`, 1)
+					runner := &directoryRenameExecutor{outputs: map[string]string{"rgw_user.update.post_check": readback}}
 					service.executor = runner
 					_, err := service.Execute(context.Background(), Request{ClusterID: clusterID, Action: "rgw_user.update", ResourceKey: "rgw/user/tenant$user", Parameters: params})
 					if response == tc.response {
@@ -112,6 +115,26 @@ func TestRGWUserPlacementIndependentExecution(t *testing.T) {
 					}
 				})
 			}
+		}
+	}
+}
+
+func TestRGWUserPlacementReadbackIdentity(t *testing.T) {
+	params := map[string]any{"placement_tags_csv": "fast"}
+	for _, uid := range []string{"user", "tenant$user", "tenant$namespace$user", "$namespace$user"} {
+		if !rgwUserPlacementMatches([]byte(`{"full_user_id":"`+uid+`","placement_tags":["fast"]}`), params, uid) {
+			t.Fatalf("rejected native identity %q", uid)
+		}
+	}
+	for _, raw := range []string{
+		`{"placement_tags":["fast"]}`,
+		`{"full_user_id":null,"placement_tags":["fast"]}`,
+		`{"full_user_id":123,"placement_tags":["fast"]}`,
+		`{"full_user_id":"user","placement_tags":["fast"]}`,
+		`{"full_user_id":"other$user","placement_tags":["fast"]}`,
+	} {
+		if rgwUserPlacementMatches([]byte(raw), params, "tenant$user") {
+			t.Fatalf("accepted wrong identity: %s", raw)
 		}
 	}
 }
