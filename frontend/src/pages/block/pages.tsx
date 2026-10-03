@@ -11,6 +11,7 @@ import { RbdTrashStatus, rbdTrashRestoreReason } from './RbdTrashStatus'
 import { RbdChildren, rbdSnapshotDeleteReason } from './RbdChildren'
 import { rbdUsageText } from './rbdUsage'
 import { rbdSnapshotLimitText } from './rbdSnapshotLimit'
+import { rbdMirrorRoleReason } from './rbdMirrorRole'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
 import { LiveMirrorScheduleStatus } from './LiveMirrorScheduleStatus'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -202,7 +203,11 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
         {label:'创建同步快照',value:'mirror-snapshot'}
       ]},
       {name:'force',label:'强制执行（仅提升或停用时可选）',type:'boolean',visibleWhen:(values)=>values.action==='mirror-promote' || values.action==='mirror-disable'}],
-      buildBody:(values,clusterId,row) => ({cluster_id:clusterId,image_spec:imageSpec(row),action:String(values.action),...(['mirror-promote','mirror-disable'].includes(String(values.action))?{force:Boolean(values.force)}:{})})
+      buildBody:(values,clusterId,row) => {
+        const reason = rbdMirrorRoleReason(values.action, row ?? {})
+        if (reason) throw new Error(reason)
+        return {cluster_id:clusterId,image_spec:imageSpec(row),action:String(values.action),...(['mirror-promote','mirror-disable'].includes(String(values.action))?{force:Boolean(values.force)}:{})}
+      }
     }, {
       title:'同步快照调度',buttonLabel:'快照调度',path:'/rbd/image/action',method:'POST',successMessage:'同步快照调度已更新',
       confirmation:(values,row)=>values.action==='mirror-schedule-remove' ? `移除镜像 ${imageSpec(row)} ${values.remove_interval ? `的 ${String(values.remove_interval)} 调度` : '的全部专属调度'}？继承的池或集群调度不会被删除。` : undefined,

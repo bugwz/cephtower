@@ -1276,6 +1276,12 @@ which could collapse multiple paths and schedules into one resource key.
 
 ### RBD feature mutation
 
+Mirror promote, demote and resync submissions require collected `mirror_state=enabled`
+and an explicit boolean primary role. Promote/resync require a non-primary image;
+demote requires a primary image, following Dashboard's role guards. Unknown role data
+requires refreshing rather than being treated as non-primary. Native Ceph still checks
+the live state when executing these existing commands.
+
 The image flatten operation is a dedicated action, following Dashboard's parent
 dependency guard. Complete collected parent identity is required both when opening
 and building the request; users confirm the dependency removal and possible space

@@ -107,6 +107,20 @@ for (const children of [undefined, null, {}, '']) assert.match(snapshotDeleteRea
 for (const children of [[{ trash: true }], [{}], [null]]) assert.match(snapshotDeleteReason({ is_protected: false, children }), /仍有子镜像/)
 
 const usageExports = {}
+const roleExports = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdMirrorRole.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(roleExports)
+const roleReason = roleExports.rbdMirrorRoleReason
+for (const action of ['mirror-promote', 'mirror-demote', 'mirror-resync']) {
+  for (const mirror_state of [undefined, null, 'disabled', 'disabling', 'unknown']) assert.match(roleReason(action, { mirror_state, primary: false }), /同步已启用/)
+  for (const primary of [undefined, null, 0, 1, 'false']) assert.match(roleReason(action, { mirror_state: 'enabled', primary }), /角色未知/)
+}
+assert.equal(roleReason('mirror-promote', { mirror_state: 'enabled', primary: false }), undefined)
+assert.equal(roleReason('mirror-demote', { mirror_state: 'enabled', primary: true }), undefined)
+assert.equal(roleReason('mirror-resync', { mirror_state: 'enabled', primary: false }), undefined)
+assert.match(roleReason('mirror-promote', { mirror_state: 'enabled', primary: true }), /已是主镜像/)
+assert.match(roleReason('mirror-demote', { mirror_state: 'enabled', primary: false }), /已是非主镜像/)
+assert.match(roleReason('mirror-resync', { mirror_state: 'enabled', primary: true }), /不能/)
+for (const action of ['mirror-enable-journal', 'mirror-enable-snapshot', 'mirror-disable']) assert.equal(roleReason(action, {}), undefined)
 const limitExports = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdSnapshotLimit.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(limitExports)
 for (const value of ['0', '1', '9007199254740993', '18446744073709551614']) assert.equal(limitExports.rbdSnapshotLimitText(value), value)
@@ -122,6 +136,7 @@ console.log('RBD usage distinguishes missing fast-diff, unavailable statistics a
 
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')
 assert.ok(blockSource.includes('disabledWhen: rbdFlattenReason'))
+assert.ok(blockSource.includes('const reason = rbdMirrorRoleReason(values.action, row ?? {})'))
 assert.ok(blockSource.includes('const reason = rbdFlattenReason(row ?? {})'))
 assert.ok(!blockSource.includes("value:'flatten'"))
 const flattenPageTree = ts.createSourceFile('pages.tsx', blockSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
@@ -137,6 +152,21 @@ const flattenBodyCode = ts.transpileModule(`const build = ${flattenBodyNode.getT
 const buildFlatten = new Function('rbdFlattenReason', 'imageSpec', `${flattenBodyCode}; return build`)(flattenReason, (row) => row.image_spec)
 assert.deepEqual(buildFlatten({}, 'cluster', { image_spec: 'encoded-image', parent }), { cluster_id: 'cluster', image_spec: 'encoded-image', action: 'flatten' })
 assert.throws(() => buildFlatten({}, 'cluster', { image_spec: 'encoded-image' }), /父快照依赖/)
+let roleActionNode
+function findRoleAction(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some((property) => ts.isPropertyAssignment(property) && property.name.getText(flattenPageTree) === 'buttonLabel' && property.initializer.getText(flattenPageTree) === "'同步操作'")) roleActionNode = node
+  ts.forEachChild(node, findRoleAction)
+}
+findRoleAction(flattenPageTree)
+assert.ok(roleActionNode)
+const roleBodyNode = roleActionNode.properties.find((property) => property.name?.getText(flattenPageTree) === 'buildBody').initializer
+const roleBodyCode = ts.transpileModule(`const build = ${roleBodyNode.getText(flattenPageTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const buildRole = new Function('rbdMirrorRoleReason', 'imageSpec', `${roleBodyCode}; return build`)(roleReason, (row) => row.image_spec)
+const secondaryImage = { image_spec: 'encoded-image', mirror_state: 'enabled', primary: false }
+assert.deepEqual(buildRole({ action: 'mirror-promote', force: true }, 'cluster', secondaryImage), { cluster_id: 'cluster', image_spec: 'encoded-image', action: 'mirror-promote', force: true })
+assert.deepEqual(buildRole({ action: 'mirror-resync', force: true }, 'cluster', secondaryImage), { cluster_id: 'cluster', image_spec: 'encoded-image', action: 'mirror-resync' })
+assert.throws(() => buildRole({ action: 'mirror-resync' }, 'cluster', { ...secondaryImage, primary: true }), /不能/)
+assert.throws(() => buildRole({ action: 'mirror-promote', force: true }, 'cluster', { ...secondaryImage, primary: undefined }), /角色未知/)
 assert.ok(blockSource.includes("key: 'snapshot_limit', title: '快照数量上限', render: (value) => rbdSnapshotLimitText(value)"))
 assert.ok(blockSource.includes('<RbdImageFlags details={row.details} />'))
 assert.ok(blockSource.includes("key: 'used_bytes', title: '占用（bytes）', render: (value, row) => rbdUsageText(value, row.image_features)"))
