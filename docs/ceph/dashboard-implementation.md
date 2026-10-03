@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+Bucket 重新分片状态按 rgw_bucket_layout.cc 的 None / InLogrecord / InProgress 显示
+当前无分片阶段、日志记录阶段、分片进行中，并保留原值。列标题说明这是采集时状态，
+None 不推断为任务成功或未入队；未知枚举及缺失值单独显示。复用 bucket stats 原生
+reshard_status 字段，新增离线状态测试，未进行浏览器或真实集群验证。
+
 Bucket 显式存储池详情展示 explicit_placement 的 data_pool、data_extra_pool 和 index_pool。
 依据 rgw_data_placement_target::dump 与 rgw_pool 的 JSON 编码，保留命令返回的池字符串，
 不拆分池/命名空间，不以放置规则名称猜测实际池。空字符串表示未显式指定，与缺失/无效

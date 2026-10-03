@@ -14,7 +14,7 @@ import { RgwStorage } from './RgwStorage'
 import { rgwStorageScope } from './rgwStorageDetails'
 import { RgwBucketIndexDetails } from './RgwBucketIndexDetails'
 import { RgwBucketPlacementDetails } from './RgwBucketPlacementDetails'
-import { rgwBucketVersioning, rgwBucketBooleanState } from './rgwBucketState'
+import { rgwBucketVersioning, rgwBucketBooleanState, rgwBucketReshardState } from './rgwBucketState'
 import { rgwUserPolicyBlocked, rgwUserPolicyInput, rgwUserPolicyOptions } from './rgwUserPolicy'
 import { RgwRateLimit } from './RgwRateLimit'
 import { RgwPermissions } from './RgwPermissions'
@@ -448,7 +448,7 @@ const definitions: Record<
       { key: 'bucket_quota', title: 'Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'object_lock_enabled', title: '对象锁启用标记（非保留策略）', render: rgwBucketBooleanState },
       { key: 'mfa_enabled', title: 'MFA Delete', render: rgwBucketBooleanState },
-      { key: 'reshard_status', title: '重新分片状态' },
+      { key: 'reshard_status', title: '重新分片状态（采集时）', ellipsis: false, render: rgwBucketReshardState },
       { key: 'status', title: '状态' },
       { key: 'usage', title: '使用量', ellipsis: false, render: (value) => <RgwStorage value={value} categorized /> },
       { key: 'rate_limit', title: 'Bucket 限流（每 RGW）', ellipsis: false, render: (value) => <RgwRateLimit value={value} /> },

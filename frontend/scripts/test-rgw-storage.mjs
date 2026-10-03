@@ -46,6 +46,12 @@ for (const value of [undefined, null, '', 0, 1, 'false', {}]) assert.equal(state
 assert.equal(pages.match(/render: rgwBucketBooleanState/g).length, 2)
 assert.ok(pages.includes('render: rgwBucketVersioning'))
 assert.ok(pages.includes("title: 'MFA Delete'"))
+assert.equal(state.rgwBucketReshardState('None'), '当前未处于重新分片阶段（None）')
+assert.equal(state.rgwBucketReshardState('InLogrecord'), '日志记录阶段（InLogrecord）')
+assert.equal(state.rgwBucketReshardState('InProgress'), '重新分片进行中（InProgress）')
+for (const value of ['future', 'none', 'toString', '__proto__']) assert.equal(state.rgwBucketReshardState(value), `未知重新分片状态：${value}`)
+for (const value of [undefined, null, '', 0, false, {}]) assert.equal(state.rgwBucketReshardState(value), '重新分片状态未返回或无效')
+assert.ok(pages.includes("title: '重新分片状态（采集时）', ellipsis: false, render: rgwBucketReshardState"))
 const index = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketIndex.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(index)
 for (const value of [0, 1, Number.MAX_SAFE_INTEGER]) assert.equal(index.rgwBucketIndexCount(value), String(value))

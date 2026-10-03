@@ -10,3 +10,12 @@ export function rgwBucketVersioning(value: unknown) {
 export function rgwBucketBooleanState(value: unknown) {
   return value === true ? '已启用' : value === false ? '未启用' : '状态未返回或无效'
 }
+
+export function rgwBucketReshardState(value: unknown) {
+  switch (value) {
+    case 'None': return '当前未处于重新分片阶段（None）'
+    case 'InLogrecord': return '日志记录阶段（InLogrecord）'
+    case 'InProgress': return '重新分片进行中（InProgress）'
+    default: return typeof value === 'string' && value !== '' ? `未知重新分片状态：${value}` : '重新分片状态未返回或无效'
+  }
+}
