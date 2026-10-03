@@ -13,6 +13,57 @@ import (
 	"time"
 )
 
+func TestSnapshotUsagePrecisionAndAvailability(t *testing.T) {
+	for _, tc := range []struct{ features, usage, want string }{
+		{`["fast-diff"]`, `0`, "0"},
+		{`["fast-diff"]`, `18446744073709551615`, "18446744073709551615"},
+		{`["fast-diff"]`, `null`, ""},
+		{`[]`, `0`, ""},
+		{`null`, `0`, ""},
+	} {
+		t.Run(tc.features+tc.usage, func(t *testing.T) {
+			provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+				"collect.rbd_namespace":         []byte(`[]`),
+				"collect.rbd_image_detail":      []byte(`[{"image":"image"}]`),
+				"collect.rbd_image_info":        []byte(`{"features":` + tc.features + `}`),
+				"collect.rbd_image_usage":       []byte(`{"images":[{"snapshot":"snap","used_size":` + tc.usage + `},{"used_size":0}]}`),
+				"collect.rbd_snapshot":          []byte(`[{"name":"snap","protected":false}]`),
+				"collect.rbd_snapshot_children": []byte(`[]`),
+			}}}
+			count := 0
+			for _, row := range provider.collectStorageOptional(context.Background(), ClusterAccess{}, []poolWire{{PoolName: "pool"}}, fsDumpWire{}, time.Now()) {
+				if row.Kind != "rbd_snapshot" {
+					continue
+				}
+				count++
+				encoded, err := json.Marshal(row.Payload)
+				if err != nil {
+					t.Fatal(err)
+				}
+				var payload map[string]json.RawMessage
+				if err := json.Unmarshal(encoded, &payload); err != nil {
+					t.Fatal(err)
+				}
+				if string(payload["image_features"]) != tc.features {
+					t.Fatalf("feature availability lost: %s", encoded)
+				}
+				for _, key := range []string{"used_bytes", "disk_usage"} {
+					if tc.want == "" {
+						if _, ok := payload[key]; ok {
+							t.Fatalf("unavailable usage published: %s", encoded)
+						}
+					} else if string(payload[key]) != `"`+tc.want+`"` {
+						t.Fatalf("usage precision lost: %s", encoded)
+					}
+				}
+			}
+			if count != 1 {
+				t.Fatalf("snapshot count = %d", count)
+			}
+		})
+	}
+}
+
 func TestRBDUsageRejectsPartialAndAmbiguousRows(t *testing.T) {
 	for _, rows := range []string{
 		`null`, `[]`, `{}`, `[null]`,
@@ -143,7 +194,7 @@ func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
 			if payload["image_spec"] != base64.RawURLEncoding.EncodeToString([]byte(expected)) || payload["image_path"] != expected || payload["pool_name"] != "pool" {
 				t.Fatalf("snapshot identity lost: %+v", payload)
 			}
-			if payload["protected"] != true || payload["is_protected"] != true || payload["used_bytes"] != uint64(256) || payload["disk_usage"] != uint64(256) || payload["timestamp"] != "Tue Sep 23 02:03:04 2026" {
+			if payload["protected"] != true || payload["is_protected"] != true || payload["used_bytes"] != "256" || payload["disk_usage"] != "256" || payload["timestamp"] != "Tue Sep 23 02:03:04 2026" {
 				t.Fatalf("snapshot details lost: %+v", payload)
 			}
 			children := objectList(payload["children"])

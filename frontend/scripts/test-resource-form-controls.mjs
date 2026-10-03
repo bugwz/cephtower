@@ -99,6 +99,7 @@ for (const value of [undefined, null, 0, 4096, -1, 0.5, NaN, Infinity, Number.MA
 console.log('RBD usage distinguishes missing fast-diff, unavailable statistics and valid zero')
 
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')
+assert.ok(blockSource.includes("key: 'used_bytes', title: '占用（bytes）', render: (value, row) => rbdUsageText(value, row.image_features)"))
 assert.ok(blockSource.includes("key: 'image_created_at', title: '镜像创建时间（命令原值）'"))
 const resourceApiSource = readFileSync(new URL('../src/api/resource.ts', import.meta.url), 'utf8')
 const resourceApiTree = ts.createSourceFile('resource.ts', resourceApiSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)

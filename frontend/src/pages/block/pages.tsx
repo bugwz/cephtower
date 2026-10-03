@@ -316,7 +316,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'pool_name', title: 'Pool' },
       { key: 'namespace', title: '命名空间' },
       { key: 'size', title: '容量' },
-      { key: 'used_bytes', title: '占用（bytes）' },
+      { key: 'used_bytes', title: '占用（bytes）', render: (value, row) => rbdUsageText(value, row.image_features) },
       { key: 'is_protected', title: '保护状态', render: (value) => <RbdSnapshotProtection value={value} /> },
       { key: 'timestamp', title: '时间' },
       { key: 'children', title: '子镜像（含回收站）', ellipsis: false, render: (value) => <RbdChildren value={value} /> },

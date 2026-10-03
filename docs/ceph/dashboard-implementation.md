@@ -1321,11 +1321,13 @@ which could collapse multiple paths and schedules into one resource key.
   following `Snap.cc`; string protection values are normalized to booleans for API and
   UI action state.
 - For fast-diff images, the already collected `rbd du` rows are joined by snapshot name
-  and exposed as `used_bytes`/`disk_usage`, without another command per snapshot. The
+  and exposed as exact uint64 decimal strings in `used_bytes`/`disk_usage`, without
+  another command per snapshot. Collected `image_features` lets the UI distinguish
+  missing fast-diff from unavailable usage and valid zero. The
   action form defaults to protect or unprotect according to the observed state.
-- Non-snapshot-mirrored images query `rbd children <image@snapshot> --format json`,
+- User snapshots query `rbd children <image@snapshot> --all --format json`,
   matching `Children.cc`; child pool, namespace, and image identities are displayed.
-  Snapshot-mirrored images skip this fan-out, matching Dashboard behavior.
+  This includes user snapshots on snapshot-mirrored images and children in trash.
 - Delete is disabled with an explanatory tooltip while the snapshot is protected or
   still has child images. The submit path repeats the guard before issuing any request.
 - Snapshot actions now include independent copy alongside clone. Copy maps to

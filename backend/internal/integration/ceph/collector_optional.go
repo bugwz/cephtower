@@ -89,9 +89,10 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 								continue
 							}
 							snapshot["children"] = children
+							snapshot["image_features"] = payload.Features
 							if used, ok := payload.SnapshotUsage[name]; ok {
-								snapshot["used_bytes"] = used
-								snapshot["disk_usage"] = used
+								snapshot["used_bytes"] = strconv.FormatUint(used, 10)
+								snapshot["disk_usage"] = strconv.FormatUint(used, 10)
 							}
 							rows = append(rows, Observation{Kind: "rbd_snapshot", NaturalKey: imageKey + "@" + name, ParentKind: "rbd_image", ParentKey: imageKey, Name: name, Status: "available", Source: "rbd_cli", Payload: snapshot, ObservedAt: now})
 						}
