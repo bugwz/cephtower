@@ -281,6 +281,52 @@ func TestCollectTopologyPreservesDaemonRuntimeMetrics(t *testing.T) {
 	t.Fatal("daemon observation was not collected")
 }
 
+func TestCollectServiceNestedStatus(t *testing.T) {
+	for _, status := range []string{`{"running":-1}`, `{"size":-2}`, `{"running":1.5}`, `{"size":"3"}`, `[]`} {
+		provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+			"collect.service": []byte(`[{"service_name":"mgr","service_type":"mgr","status":` + status + `}]`),
+		}}}
+		if _, err := provider.Collect(context.Background(), ClusterAccess{}, "topology"); err == nil {
+			t.Fatalf("accepted invalid counts: %s", status)
+		}
+	}
+	for _, tc := range []struct {
+		status        string
+		running, size *int
+	}{
+		{`{"running":0,"size":3}`, intPointer(0), intPointer(3)},
+		{`{}`, nil, nil},
+	} {
+		var calls []executor.CommandSpec
+		provider := NativeProvider{Executor: recordingExecutor{base: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+			"collect.service": []byte(`[{"service_name":"mgr","service_type":"mgr","status":` + tc.status + `}]`),
+		}}, calls: &calls}}
+		rows, err := provider.Collect(context.Background(), ClusterAccess{}, "topology")
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for _, row := range rows {
+			if row.Kind != "service" {
+				continue
+			}
+			found = true
+			value := row.Payload.(cephdomain.Service)
+			if !reflect.DeepEqual(value.Running, tc.running) || !reflect.DeepEqual(value.Size, tc.size) {
+				t.Fatalf("%+v", value)
+			}
+		}
+		if !found {
+			t.Fatal("service missing")
+		}
+		for _, spec := range calls {
+			if spec.ID == "collect.service" && (!reflect.DeepEqual(spec.Args, []string{"orch", "ls", "--refresh", "--format", "json"}) || spec.Mutating) {
+				t.Fatalf("%+v", spec)
+			}
+		}
+	}
+}
+
 func TestCollectTopologyStoresMonitorStatusAndPerfCounters(t *testing.T) {
 	base := fixtureExecutor{t}
 	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{

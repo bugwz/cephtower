@@ -374,9 +374,11 @@ type daemonWire struct {
 type serviceWire struct {
 	ServiceName string `json:"service_name"`
 	ServiceType string `json:"service_type"`
-	Running     *int   `json:"running"`
-	Size        *int   `json:"size"`
 	Placement   any    `json:"placement"`
+	Status      struct {
+		Running *int `json:"running"`
+		Size    *int `json:"size"`
+	} `json:"status"`
 }
 type monDumpWire struct {
 	Mons []struct {
@@ -442,7 +444,7 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 		return nil, err
 	}
 	var services []serviceWire
-	if err := p.runInto(ctx, access, "collect.service", []string{"orch", "ls", "--export", "--format", "json"}, &services); err != nil {
+	if err := p.runInto(ctx, access, "collect.service", []string{"orch", "ls", "--refresh", "--format", "json"}, &services); err != nil {
 		return nil, err
 	}
 	var mons monDumpWire
@@ -505,7 +507,10 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 		if strings.TrimSpace(wire.ServiceName) == "" || strings.TrimSpace(wire.ServiceType) == "" {
 			return nil, fmt.Errorf("parse collect.service response: service_name and service_type are required")
 		}
-		payload := cephdomain.Service{Name: wire.ServiceName, Type: wire.ServiceType, Running: wire.Running, Size: wire.Size, Placement: wire.Placement}
+		if (wire.Status.Running != nil && *wire.Status.Running < 0) || (wire.Status.Size != nil && *wire.Status.Size < 0) {
+			return nil, fmt.Errorf("parse collect.service response: counts must be nonnegative")
+		}
+		payload := cephdomain.Service{Name: wire.ServiceName, Type: wire.ServiceType, Running: wire.Status.Running, Size: wire.Status.Size, Placement: wire.Placement}
 		rows = append(rows, Observation{Kind: "service", NaturalKey: wire.ServiceName, Name: wire.ServiceName, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	quorumSet := make(map[string]struct{}, len(quorum.QuorumNames))
