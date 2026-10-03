@@ -5,6 +5,10 @@
 
 ## 如何追踪调用链
 
+主机 SMART 返回范围限定为 `device ls-by-host` 的设备 ID；缺失或重复的清单 ID
+视为无效响应，守护进程返回的清单外设备不会进入当前主机详情。清单内未返回报告
+（包括无关联守护进程）的设备保留为读取失败、健康未知，不默认为健康或隐藏。
+
 主机 SMART 详情沿用 `device ls-by-host` → `device query-daemon-health-metrics` →
 `/host/smart` 链路，设备行可展开查看 ATA 属性表、SCSI 错误计数、NVMe 健康日志及
 其他原生字段。后端精确解码数值并结构化脱敏，将 SMART 数值字段转为文本，避免大

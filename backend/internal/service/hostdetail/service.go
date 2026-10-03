@@ -37,6 +37,17 @@ func (s *Service) Devices(ctx context.Context, clusterID uint64, hostname string
 	if devices == nil {
 		return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph device list must be an array"}
 	}
+	seen := make(map[string]struct{}, len(devices))
+	for _, device := range devices {
+		id, ok := device["devid"].(string)
+		if !ok || strings.TrimSpace(id) == "" {
+			return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph device identity is missing"}
+		}
+		if _, exists := seen[id]; exists {
+			return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph device identity is duplicated"}
+		}
+		seen[id] = struct{}{}
+	}
 	return devices, nil
 }
 
@@ -46,7 +57,9 @@ func (s *Service) SMART(ctx context.Context, clusterID uint64, hostname string) 
 		return nil, err
 	}
 	daemons := make(map[string]struct{})
+	hostDevices := make(map[string]struct{}, len(devices))
 	for _, device := range devices {
+		hostDevices[device["devid"].(string)] = struct{}{}
 		for _, daemon := range stringValues(device["daemons"]) {
 			if strings.HasPrefix(daemon, "mon.") || strings.HasPrefix(daemon, "osd.") {
 				daemons[daemon] = struct{}{}
@@ -69,11 +82,19 @@ func (s *Service) SMART(ctx context.Context, clusterID uint64, hostname string) 
 			return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph SMART response must be an object"}
 		}
 		for deviceID, data := range payload {
+			if _, belongsToHost := hostDevices[deviceID]; !belongsToHost {
+				continue
+			}
 			redacted, err := security.RedactJSON(data)
 			if err != nil {
 				return nil, err
 			}
 			result[deviceID] = smartNumbersAsText(redacted)
+		}
+	}
+	for deviceID := range hostDevices {
+		if _, reported := result[deviceID]; !reported {
+			result[deviceID] = map[string]any{"error": "No SMART report returned for this host device; health is unknown"}
 		}
 	}
 	return result, nil

@@ -129,6 +129,48 @@ func TestSMARTPreservesDetailedCountersAndRedactsSecrets(t *testing.T) {
 	}
 }
 
+func TestDevicesRejectsAmbiguousIdentities(t *testing.T) {
+	for _, output := range []string{`[null]`, `[{}]`, `[{"devid":1}]`, `[{"devid":" "}]`, `[{"devid":"disk-1"},{"devid":"disk-1"}]`} {
+		t.Run(output, func(t *testing.T) {
+			service, runner, id := testService(t, []byte(output))
+			if result, err := service.SMART(context.Background(), id, "node-1"); err == nil || result != nil {
+				t.Fatal("accepted ambiguous inventory")
+			}
+			if len(runner.args) != 1 {
+				t.Fatal("queried SMART with invalid inventory")
+			}
+		})
+	}
+}
+
+func TestSMARTScopesReportsAndRetainsMissingDevices(t *testing.T) {
+	service, _, id := testService(t,
+		[]byte(`[{"devid":"disk-1","daemons":["osd.1"]},{"devid":"disk-2"}]`),
+		[]byte(`{"disk-1":{"smart_status":{"passed":true}},"foreign-disk":{"smart_status":{"passed":true}}}`),
+	)
+	result, err := service.SMART(context.Background(), id, "node-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result) != 2 || result["foreign-disk"] != nil || result["disk-1"] == nil {
+		t.Fatalf("unscoped reports: %#v", result)
+	}
+	missing, ok := result["disk-2"].(map[string]any)
+	if !ok || missing["error"] == nil || missing["smart_status"] != nil {
+		t.Fatalf("missing device incorrectly reported: %#v", result)
+	}
+	for _, inventory := range []string{`[{"devid":"disk-1"}]`, `[{"devid":"disk-1","daemons":["osd.1"]}]`} {
+		service, _, id := testService(t, []byte(inventory), []byte(`{}`))
+		result, err := service.SMART(context.Background(), id, "node-1")
+		if err != nil || len(result) != 1 {
+			t.Fatalf("missing device disappeared: %#v, %v", result, err)
+		}
+		if row, ok := result["disk-1"].(map[string]any); !ok || row["error"] == nil {
+			t.Fatalf("missing report not marked unknown: %#v", result)
+		}
+	}
+}
+
 func testService(t *testing.T, outputs ...[]byte) (*Service, *fakeExecutor, uint64) {
 	t.Helper()
 	db, err := store.Open(config.DatabaseConfig{EncryptionKey: testEncryptionKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "hostdetail.db"}}, t.TempDir())
