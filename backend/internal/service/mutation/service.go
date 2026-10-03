@@ -274,6 +274,15 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		return cephdomain.ActionResult{}, normalize(err)
 	}
+	if request.Action == "service.create" {
+		name := optional(request.Parameters, "service_type")
+		if id := optional(request.Parameters, "service_id"); id != "" {
+			name += "." + id
+		}
+		if strings.TrimSpace(string(result.Stdout)) != "Scheduled "+name+" update..." {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "service creation was skipped or not confirmed; inspect service state before retrying", Retryable: false}
+		}
+	}
 	if request.Action == "smb_share.create" || request.Action == "smb_share.update" || request.Action == "smb_cluster.update" || isSMBAuthDelete(request.Action) || isSMBAuthWrite(request.Action) {
 		var applied struct {
 			Success bool `json:"success"`
@@ -570,7 +579,11 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, invalid("service spec is invalid")
 		}
-		result := ceph([]string{"orch", "apply", "-i", "-"}, []string{"orch", "ls", "--export", "--format", "json"})
+		args := []string{"orch", "apply", "-i", "-"}
+		if action == "service.create" {
+			args = append(args, "--no-overwrite")
+		}
+		result := ceph(args, []string{"orch", "ls", "--export", "--format", "json"})
 		result.stdin = stdin
 		return result, nil
 	case "service.delete":

@@ -1,8 +1,10 @@
 package mutation
 
 import (
+	cephdomain "cephtower/backend/internal/domain/ceph"
 	"context"
 	"encoding/json"
+	"errors"
 	"reflect"
 	"testing"
 )
@@ -48,5 +50,31 @@ func TestServiceUpdateMergesExportedSpec(t *testing.T) {
 	e.outputs["service.update.pre_check"] = `[]`
 	if _, err = s.Execute(context.Background(), Request{ClusterID: id, Action: "service.update", ResourceKey: "service/rgw.realm.zone", Parameters: map[string]any{"service_type": "rgw"}}); err == nil || len(e.specs) != 1 {
 		t.Fatalf("missing service written: %v %+v", err, e.specs)
+	}
+}
+
+func TestServiceCreationNeverOverwritesExistingSpec(t *testing.T) {
+	s, _, id := newCephUserService(t)
+	for _, output := range []string{"Scheduled rgw.a update...", "Skipped rgw.a service spec. To change rgw.a spec omit --no-overwrite flag", "", "Scheduled rgw.other update...", "Failed to apply spec"} {
+		e := &directoryRenameExecutor{outputs: map[string]string{"service.create": output}}
+		s.executor = e
+		_, err := s.Execute(context.Background(), Request{ClusterID: id, Action: "service.create", ResourceKey: "service/rgw.a", Parameters: map[string]any{"service_type": "rgw", "service_id": "a"}})
+		if output == "Scheduled rgw.a update..." {
+			if err != nil || len(e.specs) != 2 {
+				t.Fatalf("%v %+v", err, e.specs)
+			}
+		} else {
+			var ae *cephdomain.ActionError
+			if !errors.As(err, &ae) || ae.Code != "post_check_failed" || ae.Retryable || len(e.specs) != 1 {
+				t.Fatalf("unconfirmed create accepted: %s %v", output, err)
+			}
+		}
+		if !reflect.DeepEqual(e.specs[0].Args, []string{"orch", "apply", "-i", "-", "--no-overwrite"}) || !e.specs[0].Mutating {
+			t.Fatalf("unsafe create: %+v", e.specs[0])
+		}
+	}
+	cmd, err := build(Request{Action: "service.update", ResourceKey: "service/rgw.a"}, map[string]any{"service_type": "rgw"})
+	if err != nil || !reflect.DeepEqual(cmd.args, []string{"orch", "apply", "-i", "-"}) {
+		t.Fatalf("update changed: %+v %v", cmd, err)
 	}
 }
