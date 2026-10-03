@@ -159,7 +159,7 @@ for (const value of [undefined, null, 0, 'false', []]) assert.match(imageDeleteR
 const roleExports = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdMirrorRole.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(roleExports)
 const roleReason = roleExports.rbdMirrorRoleReason
-for (const action of ['mirror-promote', 'mirror-demote', 'mirror-resync']) {
+for (const action of ['mirror-promote', 'mirror-demote', 'mirror-resync', 'mirror-snapshot']) {
   for (const mirror_state of [undefined, null, 'disabled', 'disabling', 'unknown']) assert.match(roleReason(action, { mirror_state, primary: false }), /同步已启用/)
   for (const primary of [undefined, null, 0, 1, 'false']) assert.match(roleReason(action, { mirror_state: 'enabled', primary }), /角色未知/)
 }
@@ -169,6 +169,9 @@ assert.equal(roleReason('mirror-resync', { mirror_state: 'enabled', primary: fal
 assert.match(roleReason('mirror-promote', { mirror_state: 'enabled', primary: true }), /已是主镜像/)
 assert.match(roleReason('mirror-demote', { mirror_state: 'enabled', primary: false }), /已是非主镜像/)
 assert.match(roleReason('mirror-resync', { mirror_state: 'enabled', primary: true }), /不能/)
+assert.equal(roleReason('mirror-snapshot', { mirror_state: 'enabled', primary: true, mirror_mode: 'snapshot' }), undefined)
+assert.match(roleReason('mirror-snapshot', { mirror_state: 'enabled', primary: false, mirror_mode: 'snapshot' }), /仅主镜像/)
+for (const mirror_mode of [undefined, null, 'journal', 'disabled', 'unknown']) assert.match(roleReason('mirror-snapshot', { mirror_state: 'enabled', primary: true, mirror_mode }), /快照同步模式/)
 for (const action of ['mirror-enable-journal', 'mirror-enable-snapshot', 'mirror-disable']) assert.equal(roleReason(action, {}), undefined)
 const limitExports = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdSnapshotLimit.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(limitExports)
@@ -221,6 +224,9 @@ assert.deepEqual(buildRole({ action: 'mirror-promote', force: true }, 'cluster',
 assert.deepEqual(buildRole({ action: 'mirror-resync', force: true }, 'cluster', secondaryImage), { cluster_id: 'cluster', image_spec: 'encoded-image', action: 'mirror-resync' })
 assert.throws(() => buildRole({ action: 'mirror-resync' }, 'cluster', { ...secondaryImage, primary: true }), /不能/)
 assert.throws(() => buildRole({ action: 'mirror-promote', force: true }, 'cluster', { ...secondaryImage, primary: undefined }), /角色未知/)
+assert.deepEqual(buildRole({ action: 'mirror-snapshot', force: true }, 'cluster', { ...secondaryImage, primary: true, mirror_mode: 'snapshot' }), { cluster_id: 'cluster', image_spec: 'encoded-image', action: 'mirror-snapshot' })
+assert.throws(() => buildRole({ action: 'mirror-snapshot' }, 'cluster', { ...secondaryImage, mirror_mode: 'snapshot' }), /仅主镜像/)
+assert.throws(() => buildRole({ action: 'mirror-snapshot' }, 'cluster', { ...secondaryImage, primary: true, mirror_mode: 'journal' }), /快照同步模式/)
 let trashMoveActionNode
 function findTrashMoveAction(node) {
   if (ts.isObjectLiteralExpression(node) && node.properties.some((property) => ts.isPropertyAssignment(property) && property.name.getText(flattenPageTree) === 'buttonLabel' && property.initializer.getText(flattenPageTree) === "'移入回收站'")) trashMoveActionNode = node

@@ -1386,6 +1386,17 @@ func TestRBDObjectSizeBounds(t *testing.T) {
 	}
 }
 
+func TestRBDMirrorSnapshotCommand(t *testing.T) {
+	spec := "pool/ns/image"
+	cmd, err := build(Request{Action: "rbd_image.action", ResourceKey: "rbd/image/" + base64.RawURLEncoding.EncodeToString([]byte(spec)) + "/action"}, map[string]any{"action": "mirror-snapshot"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(cmd.args, []string{"mirror", "image", "snapshot", spec}) || !reflect.DeepEqual(cmd.check, []string{"mirror", "image", "status", spec, "--format", "json"}) {
+		t.Fatalf("command=%+v", cmd)
+	}
+}
+
 func TestRBDImageSnapshotPurge(t *testing.T) {
 	spec := "pool/ns/image"
 	cmd, err := build(Request{Action: "rbd_image.action", ResourceKey: "rbd/image/" + base64.RawURLEncoding.EncodeToString([]byte(spec)) + "/action"}, map[string]any{"action": "snapshot-purge"})

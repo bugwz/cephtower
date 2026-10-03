@@ -1314,6 +1314,9 @@ and an explicit boolean primary role. Promote/resync require a non-primary image
 demote requires a primary image, following Dashboard's role guards. Unknown role data
 requires refreshing rather than being treated as non-primary. Native Ceph still checks
 the live state when executing these existing commands.
+Creating a mirror snapshot additionally requires snapshot mirroring mode and a primary
+image, matching `Mirror.cc` and `mirror/snapshot/CreatePrimaryRequest.cc`. Unknown
+state does not enable this action; the existing request builder checks before sending.
 
 The image flatten operation is a dedicated action, following Dashboard's parent
 dependency guard. Complete collected parent identity is required both when opening
