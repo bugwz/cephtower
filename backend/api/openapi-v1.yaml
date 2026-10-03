@@ -86564,7 +86564,19 @@ paths:
                     count_per_host:
                       type: integer
                     host_pattern:
-                      type: string
+                      oneOf:
+                        -
+                          type: string
+                        -
+                          type: object
+                          additionalProperties: false
+                          required: [pattern]
+                          properties:
+                            pattern:
+                              type: string
+                            pattern_type:
+                              type: string
+                              enum: ["fnmatch", "regex"]
                     hosts:
                       type: array
                       items:
@@ -86679,7 +86691,19 @@ paths:
                     count_per_host:
                       type: integer
                     host_pattern:
-                      type: string
+                      oneOf:
+                        -
+                          type: string
+                        -
+                          type: object
+                          additionalProperties: false
+                          required: [pattern]
+                          properties:
+                            pattern:
+                              type: string
+                            pattern_type:
+                              type: string
+                              enum: ["fnmatch", "regex"]
                     hosts:
                       type: array
                       items:

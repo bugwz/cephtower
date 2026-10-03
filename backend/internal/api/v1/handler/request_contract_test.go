@@ -92,6 +92,19 @@ func TestMutationContractsRejectUnknownAndWrongType(t *testing.T) {
 	}
 }
 
+func TestServiceHostPatternUnion(t *testing.T) {
+	for _, value := range []any{"node-*", map[string]any{"pattern": "node-[0-9]+", "pattern_type": "regex"}, map[string]any{"pattern": "node-*"}} {
+		if err := ValidateMutationRequest("service.create", map[string]any{"cluster_id": float64(1), "service_type": "rgw", "placement": map[string]any{"host_pattern": value}}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, value := range []any{nil, true, []any{}, map[string]any{}, map[string]any{"pattern": 3}, map[string]any{"pattern": "a", "pattern_type": "shell"}, map[string]any{"pattern": "a", "unknown": true}} {
+		if err := ValidateMutationRequest("service.update", map[string]any{"cluster_id": float64(1), "service_type": "rgw", "placement": map[string]any{"host_pattern": value}}); err == nil {
+			t.Fatalf("accepted %v", value)
+		}
+	}
+}
+
 func TestCephFSCreateQuotaStringContract(t *testing.T) {
 	for _, action := range []string{"subvolume.create", "subvolume_group.create"} {
 		body := map[string]any{"cluster_id": float64(1), "fs": "cephfs", "name": "test", "pool": "data", "size": "9007199254740993"}

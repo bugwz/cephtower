@@ -15,6 +15,7 @@ type JSONField struct {
 	Enum       []string
 	Properties map[string]JSONField
 	Items      *JSONField
+	OneOf      []JSONField
 }
 
 type RequestContract struct {
@@ -91,7 +92,8 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	})
 	add([]string{"device.identify"}, true, map[string]JSONField{"device": stringField(true), "state": stringField(true, "on", "off"), "light": stringField(false, "ident", "fault")})
 	add([]string{"device.zap"}, true, map[string]JSONField{"host": stringField(true), "device": stringField(true)})
-	placement := objectField(false, map[string]JSONField{"count": integerField(false), "count_per_host": integerField(false), "host_pattern": stringField(false), "hosts": stringsField(false), "label": stringField(false)})
+	hostPattern := JSONField{OneOf: []JSONField{stringField(false), objectField(false, map[string]JSONField{"pattern": stringField(true), "pattern_type": stringField(false, "fnmatch", "regex")})}}
+	placement := objectField(false, map[string]JSONField{"count": integerField(false), "count_per_host": integerField(false), "host_pattern": hostPattern, "hosts": stringsField(false), "label": stringField(false)})
 	add([]string{"service.create", "service.update"}, true, map[string]JSONField{"service_type": stringField(true, "mon", "mgr", "mds", "rgw", "nfs", "smb", "prometheus", "alertmanager", "grafana", "node-exporter", "crash"), "service_id": stringField(false), "placement": placement})
 	add([]string{"daemon.action"}, true, map[string]JSONField{"action": stringField(true, "start", "stop", "restart", "reconfig", "redeploy", "rotate-key")})
 	add([]string{"upgrade.check"}, true, map[string]JSONField{"version": stringField(false), "image": stringField(false)})
@@ -413,6 +415,18 @@ func validateObject(path string, value map[string]any, fields map[string]JSONFie
 }
 
 func validateField(path string, value any, field JSONField) error {
+	if len(field.OneOf) > 0 {
+		matches := 0
+		for _, variant := range field.OneOf {
+			if validateField(path, value, variant) == nil {
+				matches++
+			}
+		}
+		if matches != 1 {
+			return fmt.Errorf("%s must match exactly one supported JSON shape", path)
+		}
+		return nil
+	}
 	if field.Type == "" {
 		return nil
 	}

@@ -23,13 +23,35 @@ func validateServicePlacement(p map[string]any) error {
 		}
 	}
 	var label, pattern string
-	for key, target := range map[string]*string{"label": &label, "host_pattern": &pattern} {
+	for key, target := range map[string]*string{"label": &label} {
 		if value, exists := p[key]; exists {
 			text, ok := value.(string)
 			if !ok {
 				return invalid(key + " must be a string")
 			}
 			*target = text
+		}
+	}
+	if value, exists := p["host_pattern"]; exists {
+		switch typed := value.(type) {
+		case string:
+			pattern = typed
+		case map[string]any:
+			for key := range typed {
+				if key != "pattern" && key != "pattern_type" {
+					return invalid("unknown host pattern field")
+				}
+			}
+			text, ok := typed["pattern"].(string)
+			if !ok || text == "" {
+				return invalid("host pattern object requires a non-empty pattern")
+			}
+			pattern = text
+			if kind, exists := typed["pattern_type"]; exists && kind != "fnmatch" && kind != "regex" {
+				return invalid("host pattern type must be fnmatch or regex")
+			}
+		default:
+			return invalid("host_pattern must be a string or pattern object")
 		}
 	}
 	var hosts []string

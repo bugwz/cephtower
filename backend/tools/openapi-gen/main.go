@@ -559,6 +559,14 @@ func writeObjectSchema(b *strings.Builder, fields map[string]handler.JSONField, 
 
 func writeFieldSchema(b *strings.Builder, field handler.JSONField, indent int) {
 	pad := strings.Repeat(" ", indent)
+	if len(field.OneOf) > 0 {
+		b.WriteString(pad + "oneOf:\n")
+		for _, variant := range field.OneOf {
+			b.WriteString(pad + "  -\n")
+			writeFieldSchema(b, variant, indent+4)
+		}
+		return
+	}
 	if field.Type == "" {
 		b.WriteString(pad + "description: action-specific JSON value\n")
 		return
