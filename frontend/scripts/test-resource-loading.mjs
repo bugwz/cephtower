@@ -219,6 +219,24 @@ for (const response of [{ host: 'node1', category: 'memory', items: [] }, { host
 assert.ok(hardwareSource.includes('key={`${clusterId}:${host}:${category}`}'))
 assert.ok(hardwareSource.includes('未知（未返回）'))
 console.log('Hardware request identity and category scope checks passed')
+
+const firmwareResponse = { host: 'node1', category: 'firmwares', items: [{ id: 'bios', version: '01.02' }] }
+const firmwareCalls = []
+const firmwareLoad = new Function('request', 'jsonInit', 'clusterId', 'host', 'category', `${hardwareCode}; return load`)(async (...args) => { firmwareCalls.push(args); return firmwareResponse }, (method, body) => ({ method, body }), 7, 'node1', 'firmwares')
+assert.equal(await firmwareLoad(), firmwareResponse)
+assert.deepEqual(firmwareCalls, [['/host/hardware', { method: 'GET', body: { cluster_id: 7, host: 'node1', category: 'firmwares' } }]])
+const hostHardwareFn = hardwareTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HostHardware')
+let hardwareOptions
+function findHardwareOptions(node) {
+  if (ts.isJsxAttribute(node) && node.name.text === 'options') hardwareOptions = node.initializer.expression
+  ts.forEachChild(node, findHardwareOptions)
+}
+findHardwareOptions(hostHardwareFn)
+const optionsCode = ts.transpileModule(`const options = ${hardwareOptions.getText(hardwareTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const hardwareOptionsForHost = new Function('host', `${optionsCode}; return options`)
+assert.equal(hardwareOptionsForHost('node1').some((option) => option.value === 'firmwares'), true)
+assert.equal(hardwareOptionsForHost('').some((option) => option.value === 'firmwares'), false)
+console.log('Firmware request and host-only selection checks passed')
 const healthSource = readFileSync(new URL('../src/pages/cluster/hardwareHealth.ts', import.meta.url), 'utf8')
 const healthCode = ts.transpileModule(healthSource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText
 const healthModule = {}
