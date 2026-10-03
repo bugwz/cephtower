@@ -47,6 +47,16 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	}
 	for _, tenant := range []string{"", "team"} {
 		id := base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00same-bucket"))
+		nativeMux := http.NewServeMux()
+		router.Register(nativeMux, handler.New(handler.Dependencies{Clusters: clusters, Operations: operations, Database: database, AuthEnabled: func() bool { return false }}))
+		nativeResponse := sendOperationRequest(t, nativeMux, http.MethodPatch, "/api/v1/rgw/bucket/sync/group", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"group_id":"g","expected_status":"allowed","status":"enabled"}`, cluster.ID, id), "sync-group-"+tenant)
+		if nativeResponse.Code != http.StatusAccepted {
+			t.Fatalf("native sync group should not require S3 endpoint: %d %s", nativeResponse.Code, nativeResponse.Body.String())
+		}
+		nativeOperation, err := db.FindOperation(context.Background(), operationIDFromResponse(t, nativeResponse))
+		if err != nil || nativeOperation.Action != "rgw_bucket.sync_group" || nativeOperation.Risk != "high" || nativeOperation.ResourceKey != "rgw/bucket/"+id {
+			t.Fatalf("wrong sync group operation: %+v %v", nativeOperation, err)
+		}
 		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/bucket", fmt.Sprintf(`{"cluster_id":%d,"name":"same-bucket","tenant":%q}`, cluster.ID, tenant), "bucket-create-"+tenant)
 		if response.Code != http.StatusAccepted {
 			t.Fatalf("bucket creation queue: %d %s", response.Code, response.Body.String())

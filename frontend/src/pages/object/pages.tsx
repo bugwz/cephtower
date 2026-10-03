@@ -52,6 +52,7 @@ import { RgwBucketCorsRules } from './RgwBucketCorsRules'
 import { RgwBucketLifecycleRules } from './RgwBucketLifecycleRules'
 import { rgwLifecycleProgress } from './rgwLifecycleProgress'
 import { rgwBucketSyncPolicy } from './rgwBucketSyncPolicy'
+import { bucketSyncGroupBlocked, bucketSyncGroupInitial, bucketSyncGroupInput, bucketSyncGroupConfirmation } from './rgwBucketSyncGroupForm'
 import { rgwBucketConfigurationReadOptions } from './rgwBucketConfiguration'
 import { rgwBucketObjectLockSummary } from './rgwBucketObjectLockSummary'
 import { RgwBucketAcl } from './RgwBucketAcl'
@@ -602,7 +603,18 @@ const definitions: Record<
         ...bucketVersioningInput(values, bucketId(row))
       })
     },
-    extraActions: [{ title: 'Bucket 配额设置', path: '/rgw/bucket/quota', method: 'PUT', successMessage: 'Bucket 配额设置执行成功',
+    extraActions: [{
+      title: '修改桶同步组状态', path: '/rgw/bucket/sync/group', method: 'PATCH',
+      successMessage: '桶同步组状态已回读核验（不代表同步完成）',
+      disabledWhen: bucketSyncGroupBlocked, initialValues: bucketSyncGroupInitial, confirmation: bucketSyncGroupConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'group_id', label: '已有同步组 ID（从原生策略中复制）', required: true },
+        { name: 'status', label: '目标状态', type: 'select', required: true, options: [{ value: 'enabled', label: 'enabled 启用' }, { value: 'allowed', label: 'allowed 允许但不启用' }, { value: 'forbidden', label: 'forbidden 禁止' }] },
+        { name: 'confirm_change', label: '复制影响确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '我确认此修改可能改变复制行为，且不会删除已有副本' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketSyncGroupInput(values, row) })
+    }, { title: 'Bucket 配额设置', path: '/rgw/bucket/quota', method: 'PUT', successMessage: 'Bucket 配额设置执行成功',
       fields: [
         { name: 'enabled', label: '配额状态', type: 'select', required: true, options: [{ label: '启用', value: 'enable' }, { label: '关闭', value: 'disable' }] },
         { name: 'max_size', label: '容量上限（字节，向上取整至 KiB；-1 为无限制）', type: 'number', min: -1, max: Number.MAX_SAFE_INTEGER, required: true },

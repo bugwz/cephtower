@@ -28,6 +28,20 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：补齐桶本地已有同步组的状态修改。依据参考 Dashboard
+  update_sync_policy_group 与 radosgw-admin 的 SYNC_GROUP_MODIFY，实现高风险
+  PATCH /rgw/bucket/sync/group → 操作队列 → sync policy get / sync group modify /
+  sync policy get。桶及租户始终显式指定，组 ID 原样保留；不依赖 S3 端点，
+  通过 rgw_admin 能力门控并使用桶资源锁。
+  前置检查要求组存在且状态与用户看到的 expected_status 一致；写后比较完整策略，
+  除目标状态外的数据流、管道、其他组必须保持一致，JSON 数字使用精确值避免大整数误判。
+  前端不预选组或状态，校验目标来自当前桶，并确认 enabled/allowed/forbidden 的复制影响；
+  不创建组、数据流或管道，不修改 Zonegroup 或提交 period。外部并发仍可能发生，
+  写入/核验不确定均不自动重试或回滚；整体启用复制的前置拓扑流程仍待补齐。
+  回归覆盖租户参数、精确组 ID、陈旧状态、缺失组、各阶段失败、额外策略变更、
+  高风险队列、不依赖 S3 的路由及前端动作绑定。make test-backend（含 OpenAPI 同步检查）、
+  make test-frontend（含 TypeScript/Vite 构建）通过；无真实集群或浏览器视觉验证。
+
 - 2026-10-04：新增删除全部 S3 桶复制规则的操作。依据
   RGWDeleteBucketReplication_ObjStore_S3::update_sync_policy，仅移除
   s3-bucket-replication:enabled/disabled 两个专用组，其他同步策略不受此接口删除。

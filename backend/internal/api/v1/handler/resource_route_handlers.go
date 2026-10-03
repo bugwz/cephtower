@@ -661,6 +661,10 @@ func (h *Handler) UpdateRGWBucketACL(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_bucket", "rgw_bucket.acl", "high")(w, r)
 }
 
+func (h *Handler) UpdateRGWBucketSyncGroup(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_bucket", "rgw_bucket.sync_group", "high")(w, r)
+}
+
 func (h *Handler) DeleteRGWBucket(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_bucket", "rgw_bucket.delete", "high")(w, r)
 }
