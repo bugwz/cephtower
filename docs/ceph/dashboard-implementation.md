@@ -5,6 +5,29 @@
 
 ## 如何追踪调用链
 
+### 已核实的角色托管策略命令缺口
+
+角色托管策略展示已接入，但关联/解除仍未实现，不能将命令帮助中列出的操作直接视为
+本参考版本可用的执行链路。本地参考源码存在以下不一致（静态分析，未做集群复现）：
+
+1. `src/rgw/radosgw-admin/radosgw-admin.cc` 的 `ROLE_POLICY_ATTACH`、
+   `ROLE_POLICY_DETACH`、`ROLE_POLICY_LIST_ATTACHED` 分支均调用
+   `driver->get_role(role_name, tenant, account_id)`，随后调用 `load_by_id`。
+2. `src/rgw/driver/rados/rgw_sal_rados.cc` 的三参数名称构造路径传给
+   `RadosRole`，并经 `rgw_sal_rados.h` 转入 `RGWRole(name, tenant, account_id, ...)`。
+3. `src/rgw/rgw_role.cc` 的该构造函数设置 `info.name` 和 `info.account_id`，
+   不设置 `info.id`；另一个单参数 ID 构造函数才设置 `info.id`。
+4. `RadosRole::load_by_id` 使用 `info.id` 调用 `rgwrados::role::read_by_id`，
+   因此上述分支没有从名称解析出 ID。传入 RoleId 作为 `--role-name` 也不能修复这个构造路径。
+
+据此，暂不增加调用上述命令的写操作按钮，亦不修改只读参考源码或直接写 RGW 元数据绕过
+原生接口。现有角色列表展示使用 `role list` 的 `ManagedPermissionPolicies`，不依赖这三个
+分支。后续需要核实目标 Ceph 版本是否修复此问题，或单独实现经认证的 IAM
+`AttachRolePolicy` / `DetachRolePolicy` 调用（参考 `src/rgw/rgw_rest_iam.cc`）；不能以
+成功返回的模拟执行器测试代替原生链路证据。此缺口仍属于整体迁移的未完成项。
+
+### 增量实现与验证记录
+
 用户托管策略补充 Service.Execute 层离线测试：验证写命令及只读回查的顺序、目标 UID、
 Mutating 标记、写失败立即停止，以及回读失败/不匹配/无效 JSON 时返回不可自动重试的
 post_check_failed。关联和解除成功路径均覆盖；这些替身执行器测试不代表真实集群验证。
