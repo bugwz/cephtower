@@ -3371,9 +3371,9 @@ func rbdMirrorScheduleReadbackMatches(request Request, data []byte) bool {
 		}
 	}
 	var schedules []struct {
-		Pool      string `json:"pool"`
-		Namespace string `json:"namespace"`
-		Image     string `json:"image"`
+		Pool      *string `json:"pool"`
+		Namespace *string `json:"namespace"`
+		Image     *string `json:"image"`
 		Items     []struct {
 			Interval  string `json:"interval"`
 			StartTime string `json:"start_time"`
@@ -3386,10 +3386,28 @@ func rbdMirrorScheduleReadbackMatches(request Request, data []byte) bool {
 		Interval  string `json:"interval"`
 		StartTime string `json:"start_time"`
 	}
+	seenScopes := make(map[[3]string]bool)
 	for _, schedule := range schedules {
-		if schedule.Pool == pool && schedule.Namespace == namespace && schedule.Image == image {
+		if schedule.Pool == nil || *schedule.Pool == "" || schedule.Namespace == nil || schedule.Image == nil || *schedule.Image == "" || schedule.Items == nil {
+			return false
+		}
+		scope := [3]string{*schedule.Pool, *schedule.Namespace, *schedule.Image}
+		if seenScopes[scope] {
+			return false
+		}
+		seenScopes[scope] = true
+		for _, item := range schedule.Items {
+			if rbdMirrorScheduleIntervalMinutes(item.Interval) == nil {
+				return false
+			}
+			if item.StartTime != "" {
+				if _, err := normalizeRBDMirrorScheduleStartTime(item.StartTime); err != nil {
+					return false
+				}
+			}
+		}
+		if scope == [3]string{pool, namespace, image} {
 			exactItems = schedule.Items
-			break
 		}
 	}
 	action := optional(request.Parameters, "action")

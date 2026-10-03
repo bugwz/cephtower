@@ -1035,6 +1035,32 @@ func TestRBDMirrorScheduleCanonicalIntervalReadback(t *testing.T) {
 	}
 }
 
+func TestRBDMirrorScheduleRejectsIncompleteReadback(t *testing.T) {
+	req := Request{Action: "rbd_mirroring.schedule", Parameters: map[string]any{"pool": "images", "action": "mirror-schedule-remove"}}
+	for _, data := range []string{
+		`[null]`, `[{}]`,
+		`[{"pool":"images","namespace":"-","image":"-"}]`,
+		`[{"pool":"images","namespace":"-","image":"-","items":null}]`,
+		`[{"pool":"images","image":"-","items":[]}]`,
+		`[{"pool":"images","namespace":"-","items":[]}]`,
+		`[{"pool":"images","namespace":"-","image":"-","items":[]},{"pool":"images","namespace":"-","image":"-","items":[{"interval":"1h"}]}]`,
+		`[{"pool":"other","namespace":"-","image":"-","items":[{}]}]`,
+		`[{"pool":"other","namespace":"-","image":"-","items":[{"interval":"1h","start_time":"bad"}]}]`,
+	} {
+		for _, interval := range []string{"", "1h"} {
+			req.Parameters["interval"] = interval
+			if rbdMirrorScheduleReadbackMatches(req, []byte(data)) {
+				t.Fatalf("accepted incomplete removal evidence: %s", data)
+			}
+		}
+	}
+	for _, data := range []string{`[]`, `[{"pool":"images","namespace":"-","image":"-","items":[]}]`} {
+		if !rbdMirrorScheduleReadbackMatches(req, []byte(data)) {
+			t.Fatalf("rejected complete empty evidence: %s", data)
+		}
+	}
+}
+
 func TestRBDMirrorSnapshotScheduleCommands(t *testing.T) {
 	spec := "pool/team/image"
 	key := "rbd/image/" + base64.RawURLEncoding.EncodeToString([]byte(spec)) + "/action"
