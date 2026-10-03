@@ -15,6 +15,7 @@ import { RgwRateLimit } from './RgwRateLimit'
 import { RgwPermissions } from './RgwPermissions'
 import { rgwBucketLimit } from './rgwBucketLimit'
 import { rgwAccountLimit } from './rgwAccountLimit'
+import { rgwUserSuspension, rgwUserBooleanFlag } from './rgwUserFlags'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -184,6 +185,9 @@ const definitions: Record<
       { key: 'display_name', title: '显示名' },
       { key: 'email', title: '邮箱' },
       { key: 'max_buckets', title: '最大 Bucket 数', render: rgwBucketLimit },
+      { key: 'suspended', title: '用户暂停状态', render: rgwUserSuspension },
+      { key: 'system', title: '系统用户', render: rgwUserBooleanFlag },
+      { key: 'admin', title: '管理员标志', render: rgwUserBooleanFlag },
       { key: 'status', title: '状态' },
       { key: 'caps', title: '管理权限', ellipsis: false, render: (value) => <RgwPermissions value={value} /> },
       { key: 'subusers', title: '子用户', ellipsis: false, render: (value) => <RgwPermissions value={value} subusers /> },

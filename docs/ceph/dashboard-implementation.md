@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+RGW 用户列表单独展示 suspended、system 和 admin，不以库存状态代替用户暂停状态。
+原生 driver/rados/rgw_user.cc 将 uint8 suspended 输出为整数（零未暂停，非零暂停），
+system/admin 输出为布尔值；页面严格按此类型展示，缺失与错误类型显示未知。复用
+user info 的库存字段，不新增命令；离线边界测试通过，未进行真实集群或浏览器验证。
+
 账户 IAM 用户、角色、用户组和访问密钥上限按 rgw_rest_iam_user.cc、rgw_rest_role.cc
 及 rgw_rest_iam_group.cc 展示：负数无限制，零禁止新增，与 Bucket 上限规则不同。
 max_access_keys 是每用户访问密钥数而非账户合计，列表明确其范围。复用 account get
