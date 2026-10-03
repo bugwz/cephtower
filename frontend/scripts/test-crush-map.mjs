@@ -137,6 +137,16 @@ for (const scalar of ['jerasure', 'isa', 'shec']) {
 }
 assert.ok(poolSource.includes("technique: clayTechniqueForScalar(value, erasureCodeProfileForm.getFieldValue('technique'))"))
 console.log('CLAY scalar plugin technique options, transitions and form validation checks passed')
+const lrcRuleNode = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'lrcGroupingRule')
+const lrcRuleCode = ts.transpileModule(lrcRuleNode.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const lrcRule = new Function(`${lrcRuleCode}; return lrcGroupingRule`)()
+const validateLRC = (k, m, l, plugin = 'lrc') => lrcRule({ getFieldValue: (name) => ({ k, m, l, plugin })[name] }).validator()
+for (const values of [[4, 2, 3], [4, 2, 6], [8, 4, 3], [6, 3, 3]]) await validateLRC(...values)
+for (const values of [[4, 2, 4], [4, 2, 2], [4, 2, 7], [4, 2, 0], [4, 2, undefined], [4, 2, 1.5], [4, 2, '3'], [1, 2, 3], [4, 0, 4], [NaN, 2, 3], [Number.MAX_SAFE_INTEGER, 2, 3]]) await assert.rejects(validateLRC(...values))
+await validateLRC(4, 2, undefined, 'isa')
+assert.equal((poolSource.match(/ecChunkRule\(erasureCodeTopology\),\s+lrcGroupingRule/g) ?? []).length, 2)
+assert.ok(poolSource.includes("dependencies={['k', 'm', 'plugin']} rules={[{ required: true, min: 1, type: 'number' }, lrcGroupingRule]}"))
+console.log('LRC native grouping divisibility and plugin isolation checks passed')
 const adjustmentFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolPGAdjustment')
 const adjustmentCode = ts.transpileModule(adjustmentFn.getText(poolTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const adjustment = new Function(`${adjustmentCode}; return poolPGAdjustment`)()

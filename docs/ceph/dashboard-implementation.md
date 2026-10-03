@@ -5,6 +5,12 @@
 
 ## 如何追踪调用链
 
+LRC 创建表单按参考 lrcDataValidation/lrcLocalityValidation 及原生
+ErasureCodeLrc 的 k/m/l 分组逻辑校验整除关系，k、m、l 修改时联动验证；无效整数
+及无法分组的组合不会进入表单提交。l 说明改为不含额外局部校验块的分组大小。
+沿用 profile set 写链路，其他插件不套用 LRC 约束。离线测试覆盖合法分组、两类
+整除失败、缺失/非整数输入和插件隔离；未进行真实集群或浏览器验证。
+
 纠删码 CLAY 创建表单的编码技术按参考 `setClayDefaultsForScalar` 和原生
 `ErasureCodeClay::parse` 支持范围筛选。CLAY/Jerasure 不再提供 liberation、blaum_roth；
 独立 Jerasure 仍保留这些技术。切换 scalar_mds 时保留兼容选择，否则使用该插件首个

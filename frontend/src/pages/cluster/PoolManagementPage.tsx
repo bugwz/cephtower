@@ -896,11 +896,12 @@ export function PoolManagementPage() {
             <Form.Item
               name="k"
               label={<HelpLabel label="数据块数 (k)" title="每个对象被拆分的数据块数量。" />}
-              dependencies={['m', 'crush_failure_domain', 'crush_num_failure_domains', 'crush_osds_per_failure_domain', 'crush_root', 'crush_device_class']}
+              dependencies={['m', 'l', 'plugin', 'crush_failure_domain', 'crush_num_failure_domains', 'crush_osds_per_failure_domain', 'crush_root', 'crush_device_class']}
               rules={[
                 { required: true, message: '请输入数据块数' },
                 { type: 'number', min: 2, message: '数据块数必须大于或等于 2' },
-                ecChunkRule(erasureCodeTopology)
+                ecChunkRule(erasureCodeTopology),
+                lrcGroupingRule
               ]}
             >
               <InputNumber min={2} precision={0} className="full-width-control" />
@@ -908,11 +909,12 @@ export function PoolManagementPage() {
             <Form.Item
               name="m"
               label={<HelpLabel label="编码块数 (m)" title="为每个对象计算并存储在不同 OSD 上的编码块数量，也表示可容忍同时故障的 OSD 数。" />}
-              dependencies={['k', 'crush_failure_domain', 'crush_num_failure_domains', 'crush_osds_per_failure_domain', 'crush_root', 'crush_device_class']}
+              dependencies={['k', 'l', 'plugin', 'crush_failure_domain', 'crush_num_failure_domains', 'crush_osds_per_failure_domain', 'crush_root', 'crush_device_class']}
               rules={[
                 { required: true, message: '请输入编码块数' },
                 { type: 'number', min: 1, message: '编码块数必须大于或等于 1' },
-                ecChunkRule(erasureCodeTopology)
+                ecChunkRule(erasureCodeTopology),
+                lrcGroupingRule
               ]}
             >
               <InputNumber min={1} precision={0} className="full-width-control" />
@@ -966,7 +968,7 @@ export function PoolManagementPage() {
             ) : null}
             {erasureCodePlugin === 'lrc' ? (
               <>
-                <Form.Item name="l" label={<HelpLabel label="局部校验块数 (l)" title="LRC 本地恢复组使用的局部校验块数量。" />} rules={[{ required: true, min: 1, type: 'number' }]}>
+                <Form.Item name="l" label={<HelpLabel label="局部分组大小 (l)" title="每组包含的 k+m 分片数（不含额外局部校验块）。k+m 必须能被 l 整除，k 和 m 必须能被分组数 (k+m)/l 整除。" />} dependencies={['k', 'm', 'plugin']} rules={[{ required: true, min: 1, type: 'number' }, lrcGroupingRule]}>
                   <InputNumber min={1} precision={0} className="full-width-control" />
                 </Form.Item>
                 <Form.Item name="crush_locality" label={<HelpLabel label="CRUSH 局部性" title="LRC 局部恢复组使用的 CRUSH 故障域。" />}>
@@ -1392,6 +1394,25 @@ const ecOSDsPerFailureDomainRule = ({ getFieldValue }: { getFieldValue: (name: k
     return Promise.resolve()
   }
 })
+
+function lrcGroupingRule({ getFieldValue }: { getFieldValue: (name: keyof ErasureCodeProfileFormValues) => unknown }) {
+  return {
+    validator() {
+      if (getFieldValue('plugin') !== 'lrc') return Promise.resolve()
+      const k = getFieldValue('k')
+      const m = getFieldValue('m')
+      const l = getFieldValue('l')
+      if (typeof k !== 'number' || typeof m !== 'number' || typeof l !== 'number' || ![k, m, l, k + m].every(Number.isSafeInteger) || k < 2 || m < 1 || l < 1) {
+        return Promise.reject(new Error('LRC 的 k、m、l 必须为有效整数，且 k≥2、m≥1、l≥1'))
+      }
+      const groups = (k + m) / l
+      if ((k + m) % l !== 0 || k % groups !== 0 || m % groups !== 0) {
+        return Promise.reject(new Error('LRC 要求 k+m 能被 l 整除，且 k、m 均能被分组数 (k+m)/l 整除'))
+      }
+      return Promise.resolve()
+    }
+  }
+}
 
 const shecDurabilityRule = ({ getFieldValue }: { getFieldValue: (name: keyof ErasureCodeProfileFormValues) => unknown }) => ({
   validator(_: unknown, value: unknown) {
