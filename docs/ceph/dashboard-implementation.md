@@ -5,6 +5,12 @@
 
 ## 如何追踪调用链
 
+RGW 用户托管策略新增关联/解除入口，POST /rgw/user/policy 经请求契约、写操作权限及
+审计链路执行 user policy attach/detach --uid <uid> --policy-arn <arn>，随后读取
+user policy list attached。页面限定已知账户下非 root 用户，解除时选择已采集 ARN，
+确认框展示完整目标并提醒权限变更；后端限制动作及参数格式，原生命令验证策略是否支持。
+生成 OpenAPI 契约并补充离线命令/表单测试，尚未进行浏览器或真实集群验证。
+
 RGW 账户下非 root 用户补充直接关联的托管策略 ARN 展示。对照 Dashboard RgwUser._get
 的账户/类型条件，执行 radosgw-admin user policy list attached --uid <uid> --format json；
 原生 show_policy_arns 输出字符串数组，成功结果存入 managed_user_policies 并经用户库存

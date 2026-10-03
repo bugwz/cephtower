@@ -85,7 +85,7 @@ func Supports(action string) bool {
 		"cephfs_snapshot.create", "cephfs_snapshot.delete", "cephfs_snapshot.clone", "snapshot_schedule.create", "snapshot_schedule.action", "snapshot_schedule.retention",
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota", "cephfs_entry_snapshot.create", "cephfs_entry_snapshot.delete",
 		"cephfs_entry.create", "cephfs_entry.delete", "cephfs_entry.rename",
-		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_bucket.quota",
+		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.policy", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_bucket.quota",
 		"rgw_account.create", "rgw_account.update", "rgw_account.quota", "rgw_account.delete", "rgw_role.create", "rgw_role.update", "rgw_role.delete", "rgw_role.policy", "rgw_key.create", "rgw_key.delete",
 		"rgw_realm.create", "rgw_realm.update", "rgw_zonegroup.create", "rgw_zonegroup.update", "rgw_zone.create", "rgw_zone.update", "rgw_period.commit",
 		"nfs_cluster.create", "nfs_cluster.delete", "nfs_export.create", "nfs_export.update", "nfs_export.delete",
@@ -314,6 +314,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "rgw_user.policy" && (err != nil || !rgwUserPolicyMatches(checked.Stdout, request.Parameters)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "managed policy command was accepted but the requested association could not be verified; inspect user policies before retrying", Retryable: false}
+		}
 		if request.Action == "daemon.action" && (err != nil || !daemonActionTargetVisible(checked.Stdout, pathValue(resourceTail(request.ResourceKey), "daemon"))) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "daemon action was scheduled but the target could not be verified in inventory; inspect daemon state before retrying", Retryable: false}
 		}
@@ -1955,6 +1958,20 @@ func build(request Request, p map[string]any) (command, error) {
 		result := rgw(args, nil)
 		result.followups = []command{rgw(append([]string{"ratelimit", verb}, target...), append([]string{"ratelimit", "get"}, target...))}
 		return result, nil
+	case "rgw_user.policy":
+		uid, _ := p["uid"].(string)
+		if !regexp.MustCompile(`^[A-Za-z0-9_.:@$-]+$`).MatchString(uid) || strings.HasPrefix(uid, "-") {
+			return command{}, invalid("uid is invalid")
+		}
+		verb, err := enum(p, "action", "attach", "detach")
+		if err != nil {
+			return command{}, err
+		}
+		arn, _ := p["policy_arn"].(string)
+		if !regexp.MustCompile(`^arn:[a-z0-9-]+:iam::[A-Za-z0-9-]+:policy/[A-Za-z0-9+=,.@_/-]+$`).MatchString(arn) {
+			return command{}, invalid("policy_arn must be a managed IAM policy ARN")
+		}
+		return rgw([]string{"user", "policy", verb, "--uid", uid, "--policy-arn", arn}, []string{"user", "policy", "list", "attached", "--uid", uid}), nil
 	case "rgw_user.caps":
 		uid := rawText(p, "uid")
 		if !regexp.MustCompile(`^[A-Za-z0-9_.:@$-]+$`).MatchString(uid) || strings.HasPrefix(uid, "-") {

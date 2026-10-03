@@ -12,6 +12,7 @@ import { ServiceDaemons } from '../cluster/ServiceDaemons'
 import { RgwQuota } from './RgwQuota'
 import { RgwStorage } from './RgwStorage'
 import { rgwStorageScope } from './rgwStorageDetails'
+import { rgwUserPolicyBlocked, rgwUserPolicyInput, rgwUserPolicyOptions } from './rgwUserPolicy'
 import { RgwRateLimit } from './RgwRateLimit'
 import { RgwPermissions } from './RgwPermissions'
 import { rgwBucketLimit, rgwBucketLimitInput, rgwBucketLimitPatch } from './rgwBucketLimit'
@@ -171,6 +172,20 @@ const definitions: Record<
         ],
         initialValues: (row) => rgwRateLimitInitial(row?.rate_limit),
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwRateLimitInput(values) })
+      },
+      { title: '管理用户托管策略', path: '/rgw/user/policy', method: 'POST', successMessage: '托管策略操作执行成功',
+        disabledWhen: rgwUserPolicyBlocked,
+        initialValues: { action: 'attach' },
+        fields: [
+          { name: 'action', label: '操作', type: 'select', required: true, options: [{ label: '关联策略', value: 'attach' }, { label: '解除关联', value: 'detach' }] },
+          { name: 'policy_arn', label: '托管策略 ARN（由 Ceph 验证是否支持）', required: true, visibleWhen: (values) => values.action === 'attach' },
+          { name: 'existing_policy', label: '已关联策略', type: 'select', required: true, visibleWhen: (values) => values.action === 'detach', optionsDependencies: ['action'], optionsLoader: async (_clusterId, row) => rgwUserPolicyOptions(row) }
+        ],
+        confirmation: (values, row) => {
+          const policy = rgwUserPolicyInput(values, row)
+          return `确认对用户 ${JSON.stringify(userId(row))} ${policy.action === 'attach' ? '关联' : '解除关联'}策略 ${JSON.stringify(policy.policy_arn)}？该操作会改变用户权限，可能导致权限扩大或现有访问失败。`
+        },
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserPolicyInput(values, row) })
       },
       { title: '管理用户权限（caps）', path: '/rgw/user/caps', method: 'POST', successMessage: '用户管理权限操作执行成功',
         initialValues: { action: 'add', permission: 'read' },

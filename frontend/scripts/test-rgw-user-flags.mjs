@@ -43,3 +43,21 @@ assert.equal(identity.rgwIdentityText('2026-10-03T12:34:56.123456789Z', '未提�
 assert.ok(components.includes('<Identifiers value={row.managed_user_policies} />'))
 assert.ok(components.includes("row.account_id === '' || row.type === 'root' ? '不适用'"))
 assert.deepEqual(identity.rgwIdentityList(['arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess']), ['arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'])
+const policy = {}
+new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserPolicy.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(policy, () => identity)
+const arn = 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
+const accountUser = { account_id: 'RGW123', type: 'rgw', managed_user_policies: [arn] }
+assert.deepEqual(policy.rgwUserPolicyOptions(accountUser), [{ label: arn, value: arn }])
+assert.deepEqual(policy.rgwUserPolicyInput({ action: 'detach', existing_policy: arn, policy_arn: 'stale' }, accountUser), { action: 'detach', policy_arn: arn })
+assert.deepEqual(policy.rgwUserPolicyInput({ action: 'attach', policy_arn: arn }, { ...accountUser, managed_user_policies: [] }), { action: 'attach', policy_arn: arn })
+assert.throws(() => policy.rgwUserPolicyInput({ action: 'attach', policy_arn: arn }, accountUser))
+assert.throws(() => policy.rgwUserPolicyInput({ action: 'detach', existing_policy: arn }, { ...accountUser, managed_user_policies: undefined }))
+assert.throws(() => policy.rgwUserPolicyInput({ action: 'detach', existing_policy: arn }, { ...accountUser, managed_user_policies: [] }))
+for (const row of [undefined, {}, { account_id: '', type: 'rgw' }, { account_id: 'RGW123', type: 'root' }]) {
+  assert.ok(policy.rgwUserPolicyBlocked(row))
+  assert.throws(() => policy.rgwUserPolicyInput({ action: 'attach', policy_arn: arn }, row))
+}
+for (const value of ['', '--policy', arn + '\n', arn + ';other', null]) assert.throws(() => policy.rgwUserPolicyInput({ action: 'attach', policy_arn: value }, accountUser))
+assert.ok(pages.includes("path: '/rgw/user/policy'"))
+assert.ok(pages.includes('disabledWhen: rgwUserPolicyBlocked'))
+assert.ok(pages.includes('...rgwUserPolicyInput(values, row)'))
