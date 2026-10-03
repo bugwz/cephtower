@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：补齐数据流创建的 Zone 映射失败服务级回归。之前主要在纯映射函数
+  层测试无效数据，本轮通过完整 Execute 链路验证 11 种故障 × 两类流 × 两类租户：
+  命令失败、损坏/缺失/空数据、未知请求 ID、重复 ID/名称、缺失名称、类型错误、
+  尾随 JSON 均返回不可自动重试的 pre_check_failed，且没有任何写命令。
+  make test-backend（含 OpenAPI 同步检查）通过；本轮无运行时或前端变更。
+
 - 2026-10-04：补齐桶本地对称/定向数据流创建。依据参考同步流表单、
   create_sync_flow 和原生 SYNC_GROUP_FLOW_CREATE，新增高风险
   POST /rgw/bucket/sync/flow → 队列 → sync policy get / sync group flow create /

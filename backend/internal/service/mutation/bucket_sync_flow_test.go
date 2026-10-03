@@ -15,6 +15,8 @@ import (
 type syncFlowExecutor struct {
 	*syncGroupExecutor
 	zoneCalls int
+	zoneBody  *string
+	zoneErr   error
 }
 
 func (e *syncFlowExecutor) Run(ctx context.Context, access executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
@@ -23,9 +25,61 @@ func (e *syncFlowExecutor) Run(ctx context.Context, access executor.ClusterAcces
 		if spec.Mutating || spec.Binary != executor.BinaryRGWAdmin || !reflect.DeepEqual(spec.Args, []string{"zonegroup", "get", "--format", "json"}) {
 			return executor.CommandResult{}, errors.New("wrong zone lookup")
 		}
+		if e.zoneErr != nil {
+			return executor.CommandResult{}, e.zoneErr
+		}
+		if e.zoneBody != nil {
+			return executor.CommandResult{Stdout: []byte(*e.zoneBody)}, nil
+		}
 		return executor.CommandResult{Stdout: []byte(`{"zones":[{"id":"a","name":"Zeta"},{"id":"b","name":"Alpha"}]}`)}, nil
 	}
 	return e.syncGroupExecutor.Run(ctx, access, spec)
+}
+
+func TestBucketSyncFlowMappingFailuresNeverWrite(t *testing.T) {
+	group := `{"id":"g","status":"enabled","data_flow":{},"pipes":[]}`
+	for _, tc := range []struct {
+		name, body string
+		err        error
+	}{
+		{"command unavailable", "", errors.New("zonegroup unavailable")},
+		{"malformed", "broken", nil},
+		{"missing zones", `{}`, nil},
+		{"null zones", `{"zones":null}`, nil},
+		{"empty zones", `{"zones":[]}`, nil},
+		{"unknown requested ID", `{"zones":[{"id":"a","name":"A"}]}`, nil},
+		{"duplicate ID", `{"zones":[{"id":"a","name":"A"},{"id":"a","name":"B"},{"id":"b","name":"C"}]}`, nil},
+		{"duplicate name", `{"zones":[{"id":"a","name":"A"},{"id":"b","name":"A"}]}`, nil},
+		{"missing name", `{"zones":[{"id":"a"},{"id":"b","name":"B"}]}`, nil},
+		{"wrong field type", `{"zones":[{"id":4,"name":"A"},{"id":"b","name":"B"}]}`, nil},
+		{"trailing document", `{"zones":[{"id":"a","name":"A"},{"id":"b","name":"B"}]}{}`, nil},
+	} {
+		for _, kind := range []string{"symmetrical", "directional"} {
+			for _, tenant := range []string{"", "team"} {
+				t.Run(tc.name+"/"+kind+"/"+tenant, func(t *testing.T) {
+					service, _, clusterID := newCephUserService(t)
+					runner := &syncFlowExecutor{syncGroupExecutor: &syncGroupExecutor{before: `{"groups":[` + group + `]}`}, zoneBody: &tc.body, zoneErr: tc.err}
+					service.executor = runner
+					p := map[string]any{"bucket_id": base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00photos")), "group_id": "g", "expected_group": group, "flow_type": kind}
+					if kind == "symmetrical" {
+						p["flow_id"] = "f"
+						p["zones"] = []any{"a", "b"}
+					} else {
+						p["source_zone"] = "a"
+						p["dest_zone"] = "b"
+					}
+					_, err := service.Execute(context.Background(), Request{ClusterID: clusterID, Action: "rgw_bucket.sync_flow_create", Parameters: p})
+					var actionError *cephdomain.ActionError
+					if !errors.As(err, &actionError) || actionError.Code != "pre_check_failed" || actionError.Retryable {
+						t.Fatalf("unexpected error: %v", err)
+					}
+					if runner.zoneCalls != 1 || len(runner.calls) != 1 || runner.calls[0].Mutating {
+						t.Fatalf("unexpected execution: zones=%d commands=%+v", runner.zoneCalls, runner.calls)
+					}
+				})
+			}
+		}
+	}
 }
 
 func TestBucketSyncFlowCreation(t *testing.T) {
