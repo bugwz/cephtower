@@ -1719,6 +1719,30 @@ func TestRGWAccountDeleteCommand(t *testing.T) {
 	}
 }
 
+func TestRGWAccountCreateText(t *testing.T) {
+	for _, field := range []string{"account_name", "email", "tenant"} {
+		for _, value := range []any{nil, true, 123, map[string]any{}, "  ", "bad\ntext", "bad\rtext", "bad\x00text", strings.Repeat("x", (32<<10)+1)} {
+			if _, err := build(Request{Action: "rgw_account.create"}, map[string]any{"account_id": "RGW123", field: value, "max_users": 0}); err == nil {
+				t.Fatalf("silently accepted invalid %s = %#v", field, value)
+			}
+		}
+		for _, value := range []string{"", "value", "  preserved  ", "--option=value"} {
+			cmd, err := build(Request{Action: "rgw_account.create"}, map[string]any{"account_id": "RGW123", field: value})
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := []string{"account", "create", "--account-id", "RGW123"}
+			if value != "" {
+				want = append(want, "--"+strings.ReplaceAll(field, "_", "-")+"="+value)
+			}
+			want = append(want, "--format", "json")
+			if !reflect.DeepEqual(cmd.args, want) {
+				t.Fatalf("args=%q want=%q", cmd.args, want)
+			}
+		}
+	}
+}
+
 func TestRGWAccountCreateLimits(t *testing.T) {
 	for _, field := range []string{"max_users", "max_roles", "max_groups", "max_buckets", "max_access_keys"} {
 		for _, value := range []any{nil, "", true, false, json.Number("-2"), json.Number("0.5"), json.Number("2147483648")} {

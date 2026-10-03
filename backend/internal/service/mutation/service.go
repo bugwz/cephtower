@@ -2097,9 +2097,15 @@ func build(request Request, p map[string]any) (command, error) {
 				args = append(args, "--"+strings.ReplaceAll(field, "_", "-"), strconv.FormatInt(value, 10))
 			}
 		}
-		for field, flag := range map[string]string{"account_name": "--account-name", "email": "--email", "tenant": "--tenant"} {
-			if value := rawText(p, field); value != "" {
-				args = append(args, flag, value)
+		for _, field := range []string{"account_name", "email", "tenant"} {
+			if raw, exists := p[field]; exists {
+				value, ok := raw.(string)
+				if !ok || len(value) > 32<<10 || strings.ContainsAny(value, "\x00\r\n") || (value != "" && strings.TrimSpace(value) == "") {
+					return command{}, invalid(field + " must be single-line text")
+				}
+				if value != "" {
+					args = append(args, "--"+strings.ReplaceAll(field, "_", "-")+"="+value)
+				}
 			}
 		}
 		return rgw(args, []string{"account", "get", "--account-id", accountID}), nil
