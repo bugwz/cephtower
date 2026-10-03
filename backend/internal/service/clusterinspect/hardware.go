@@ -59,7 +59,15 @@ func (s *Service) Hardware(ctx context.Context, clusterID uint64, host, category
 					}
 				}
 				identity, _ := json.Marshal([]string{system, component})
-				items = append(items, map[string]any{"id": string(identity), "system": system, "component": component, "health": health, "state": state, "details": security.Redact(string(raw))})
+				redacted, err := security.RedactJSON(raw)
+				if err != nil {
+					return bad()
+				}
+				encoded, err := json.MarshalIndent(redacted, "", "  ")
+				if err != nil {
+					return bad()
+				}
+				items = append(items, map[string]any{"id": string(identity), "system": system, "component": component, "health": health, "state": state, "details": string(encoded)})
 			}
 		}
 	}

@@ -54,3 +54,25 @@ func TestHardwareNativeCategories(t *testing.T) {
 		t.Fatal("command error hidden")
 	}
 }
+
+func TestHardwareDetailsRedactStructuredSecretsWithoutRounding(t *testing.T) {
+	s, runner, id := testInspection(t)
+	runner.output = `{"node1":{"sys":{"part":{"capacity_bytes":18446744073709551615,"status":{"health":"OK"},"vendor":{"password":"fixture-password","items":[{"access_key":"fixture-access"}],"client_key":{"nested":"fixture-nested"},"to\u006ben":"fixture-escaped"}}}}}`
+	result, err := s.Hardware(context.Background(), id, "node1", "storage")
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, secret := range []string{"fixture-password", "fixture-access", "fixture-nested", "fixture-escaped"} {
+		if strings.Contains(string(raw), secret) {
+			t.Fatal("hardware details leaked a structured credential")
+		}
+	}
+	details := result["items"].([]map[string]any)[0]["details"].(string)
+	if !json.Valid([]byte(details)) || !strings.Contains(details, "18446744073709551615") || !strings.Contains(details, "[REDACTED]") {
+		t.Fatalf("invalid or rounded redacted details: %s", details)
+	}
+}
