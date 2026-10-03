@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+RBD 回收站的 rbd trash ls --long 原生 status/source 在采集时改名为
+deferment_status/trash_source，避免被库存公共 status/source 覆盖。前端依据原生
+Trash.cc 的 protected until / expired at 前缀展示采集时延期状态和截止时间原值，
+不把 ctime 文本按浏览器时区解析，也不将到期等同于删除完成；未知格式保留原文。
+
 RBD 快照子镜像采集使用 rbd children <image@snapshot> --all --format json，
 按原生 Children.cc 包含回收站子镜像及 id/trash，避免默认命令隐藏依赖。
 前端子镜像表显示池、命名空间、名称、ID 和回收站状态；空列表与无效响应区分，

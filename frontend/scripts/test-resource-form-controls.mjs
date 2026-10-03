@@ -34,6 +34,18 @@ assert.deepEqual(protection(false), { label: '未保护', color: 'blue' })
 for (const value of [undefined, null, 0, 1, 'false', 'true', {}, []]) assert.deepEqual(protection(value), { label: '保护状态未知', color: 'default' })
 console.log('Snapshot protection tags distinguish explicit booleans from unknown values')
 
+const trashSource = readFileSync(new URL('../src/pages/block/RbdTrashStatus.tsx', import.meta.url), 'utf8')
+const trashTree = ts.createSourceFile('trash.tsx', trashSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const trashNode = trashTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'rbdTrashStatus')
+const trashCode = ts.transpileModule(trashNode.getText(trashTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const trashStatus = new Function(`${trashCode}; return rbdTrashStatus`)()
+const deadline = 'Sat Oct  3 12:00:00 2026'
+assert.deepEqual(trashStatus(`protected until ${deadline}`), { label: '延期保护中（采集时）', color: 'blue', deadline })
+assert.deepEqual(trashStatus(`expired at ${deadline}`), { label: '已到期（采集时）', color: 'orange', deadline })
+for (const value of [null, undefined, 0, '']) assert.equal(trashStatus(value).label, '延期状态未知')
+for (const value of ['expired at ', 'protected until ', 'unexpected']) assert.deepEqual(trashStatus(value), { label: '无法识别的延期状态', color: 'default', deadline: value })
+console.log('Trash deferment display preserves native times and collection-time state')
+
 const parentSource = readFileSync(new URL('../src/pages/block/RbdParent.tsx', import.meta.url), 'utf8')
 const parentTree = ts.createSourceFile('parent.tsx', parentSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const parentNode = parentTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'rbdParentDetails')

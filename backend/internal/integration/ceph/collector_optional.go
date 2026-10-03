@@ -120,6 +120,10 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 					item["pool"] = pool.PoolName
 					item["namespace"] = namespace
 					item["image_id"] = id
+					item["deferment_status"] = item["status"]
+					item["trash_source"] = item["source"]
+					delete(item, "status")
+					delete(item, "source")
 					rows = append(rows, observation("rbd_trash", opaquePair(scope, id), textField(item, "name"), "rbd_cli", item, now))
 				}
 			}

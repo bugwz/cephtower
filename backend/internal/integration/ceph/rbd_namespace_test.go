@@ -21,7 +21,7 @@ func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
 		"collect.rbd_image_usage":       []byte(`{"images":[{"name":"image","snapshot":"snap","used_size":256},{"name":"image","used_size":512}]}`),
 		"collect.rbd_snapshot":          []byte(`[{"name":"snap","id":1,"size":1024,"protected":"true","timestamp":"Tue Sep 23 02:03:04 2026"}]`),
 		"collect.rbd_snapshot_children": []byte(`[{"pool":"child-pool","pool_namespace":"apps","image":"child","id":"child-id","trash":true}]`),
-		"collect.rbd_trash":             []byte(`[{"name":"image","id":"abc123"}]`),
+		"collect.rbd_trash":             []byte(`[{"name":"image","id":"abc123","source":"USER","status":"protected until Sat Oct  3 12:00:00 2026"}]`),
 	}}
 	var calls []executor.CommandSpec
 	provider := NativeProvider{Executor: recordingExecutor{base: base, calls: &calls}}
@@ -48,6 +48,9 @@ func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
 			t.Fatalf("unexpected namespace %s", namespace)
 		}
 		if row.Kind == "rbd_trash" {
+			if payload["trash_source"] != "USER" || payload["deferment_status"] != "protected until Sat Oct  3 12:00:00 2026" || payload["status"] != nil || payload["source"] != nil {
+				t.Fatalf("native trash state conflicts with inventory metadata: %+v", payload)
+			}
 			if payload["pool"] != "pool" || payload["image_id"] != "abc123" {
 				t.Fatalf("trash identity lost: %+v", payload)
 			}

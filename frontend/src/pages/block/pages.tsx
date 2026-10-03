@@ -6,6 +6,7 @@ import { RbdRuntimeStatus } from './RbdRuntimeStatus'
 import { RbdConfiguration } from './RbdConfiguration'
 import { RbdParent } from './RbdParent'
 import { RbdSnapshotProtection } from './RbdSnapshotProtection'
+import { RbdTrashStatus } from './RbdTrashStatus'
 import { RbdChildren, rbdSnapshotDeleteReason } from './RbdChildren'
 import { rbdUsageText } from './rbdUsage'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
@@ -425,8 +426,8 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'id', title: 'ID' },
       { key: 'name', title: '名称' },
       { key: 'deleted_at', title: '删除时间' },
-      { key: 'status', title: '过期状态' },
-      { key: 'source', title: '来源' },
+      { key: 'deferment_status', title: '延期删除状态 / 截止时间', ellipsis: false, render: (value) => <RbdTrashStatus value={value} /> },
+      { key: 'trash_source', title: '回收站来源' },
       { key: 'parent', title: '父镜像' },
       { key: 'resource_version', title: '版本' }
     ]
