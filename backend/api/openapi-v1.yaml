@@ -718,6 +718,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -1465,6 +1467,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -3507,6 +3511,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -4254,6 +4260,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -5829,6 +5837,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -6703,6 +6713,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -7451,6 +7463,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -8885,6 +8899,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -9726,6 +9742,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -10473,6 +10491,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -11466,6 +11486,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -12709,6 +12731,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -13457,6 +13481,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -14205,6 +14231,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -15590,6 +15618,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -16483,6 +16513,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -17326,6 +17358,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -18073,6 +18107,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -19476,6 +19512,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -20223,6 +20261,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -20987,6 +21027,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -21828,6 +21870,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -22575,6 +22619,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -23323,6 +23369,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -24383,6 +24431,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -25321,6 +25371,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -26162,6 +26214,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -26909,6 +26963,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -27789,6 +27845,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -28537,6 +28595,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -29965,6 +30025,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -30998,6 +31060,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -31839,6 +31903,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -32682,6 +32748,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -33523,6 +33591,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -34270,6 +34340,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -35208,6 +35280,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -36049,6 +36123,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -36796,6 +36872,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -37639,6 +37717,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -38386,6 +38466,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -39229,6 +39311,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -39976,6 +40060,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -40819,6 +40905,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -41660,6 +41748,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -42407,6 +42497,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -43418,6 +43510,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -44260,6 +44354,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -45008,6 +45104,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -45756,6 +45854,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -46598,6 +46698,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -47380,6 +47482,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -48413,6 +48517,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -49254,6 +49360,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -50001,6 +50109,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -50844,6 +50954,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -51592,6 +51704,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -52340,6 +52454,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -53088,6 +53204,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -53931,6 +54049,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -54772,6 +54892,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -55519,6 +55641,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -56384,6 +56508,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -57131,6 +57257,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -57878,6 +58006,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -59012,6 +59142,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -59874,6 +60006,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -60784,6 +60918,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -61531,6 +61667,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -62478,6 +62616,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -63320,6 +63460,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -64068,6 +64210,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -64927,6 +65071,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -65674,6 +65820,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -66421,6 +66569,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -67169,6 +67319,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -68012,6 +68164,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -68853,6 +69007,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -69600,6 +69756,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -70449,6 +70607,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -71197,6 +71357,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -71945,6 +72107,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -72788,6 +72952,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -73536,6 +73702,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -74283,6 +74451,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -75126,6 +75296,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -75873,6 +76045,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -76620,6 +76794,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -77368,6 +77544,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -78306,6 +78484,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -79147,6 +79327,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -79894,6 +80076,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -80642,6 +80826,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -81390,6 +81576,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -82137,6 +82325,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -82885,6 +83075,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -83633,6 +83825,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -84381,6 +84575,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -85224,6 +85420,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -85971,6 +86169,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -86719,6 +86919,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -87466,6 +87668,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -88544,6 +88748,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -89778,6 +89984,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -90619,6 +90827,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -91366,6 +91576,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -92209,6 +92421,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -92956,6 +93170,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -93703,6 +93919,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -94546,6 +94764,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -95387,6 +95607,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -96134,6 +96356,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -96977,6 +97201,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -97724,6 +97950,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:
@@ -98471,6 +98699,8 @@ paths:
                   type: integer
                 placement:
                   description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
                 plugin:
                   type: string
                 policy:

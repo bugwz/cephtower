@@ -249,7 +249,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 		}}
 	}
 	add([]string{"rgw_user.create"}, true, map[string]JSONField{"uid": stringField(true), "display_name": stringField(true), "max_buckets": integerField(false), "email": stringField(false)})
-	add([]string{"rgw_user.update"}, true, map[string]JSONField{"display_name": stringField(false), "email": stringField(false), "max_buckets": integerField(false), "suspended": boolField(false), "system": boolField(false), "default_placement": stringField(false), "default_storage_class": stringField(false)})
+	add([]string{"rgw_user.update"}, true, map[string]JSONField{"display_name": stringField(false), "email": stringField(false), "max_buckets": integerField(false), "suspended": boolField(false), "system": boolField(false), "default_placement": stringField(false), "default_storage_class": stringField(false), "placement_tags_csv": stringField(false)})
 	add([]string{"rgw_user.ratelimit"}, true, map[string]JSONField{"uid": stringField(true), "enabled": boolField(true), "max_read_ops": integerField(true), "max_write_ops": integerField(true), "max_read_bytes": integerField(true), "max_write_bytes": integerField(true)})
 	add([]string{"rgw_bucket.quota"}, true, map[string]JSONField{"bucket_id": stringField(true), "enabled": boolField(true), "max_size": integerField(true), "max_objects": integerField(true)})
 	add([]string{"rgw_bucket.ratelimit"}, true, map[string]JSONField{"bucket_id": stringField(true), "enabled": boolField(true), "max_read_ops": integerField(true), "max_write_ops": integerField(true), "max_read_bytes": integerField(true), "max_write_bytes": integerField(true)})

@@ -28,6 +28,10 @@ for (const storage of [undefined, null, '', 'STANDARD', 'ARCHIVE']) assert.deepE
 for (const value of [undefined, null, '', false, 1, ' ', 'bad\nname']) assert.throws(() => placementForm.rgwUserPlacementInput({ default_placement: value }))
 for (const value of [false, 1, ' ', 'bad\nclass']) assert.throws(() => placementForm.rgwUserPlacementInput({ default_placement: 'custom', default_storage_class: value }))
 assert.ok(pages.includes('...rgwUserPlacementInput(values)'))
+for (const tags of ['fast', 'fast,archive', 'space tag, raw ', '--option=value']) assert.deepEqual(placementForm.rgwUserPlacementTagsInput({ placement_tags_csv: tags }), { placement_tags_csv: tags })
+for (const tags of [undefined, null, false, [], '', ' ', ',', 'a,', ',a', 'a,,b', 'a, ,b', 'a\nb', 'a\0b']) assert.throws(() => placementForm.rgwUserPlacementTagsInput({ placement_tags_csv: tags }))
+assert.ok(pages.includes('...rgwUserPlacementTagsInput(values)'))
+assert.ok(pages.includes('JSON.stringify(rgwUserPlacementTagsInput(values).placement_tags_csv)'))
 assert.ok(pages.includes('detailContent: (row) => <RgwUserDetails row={row} />'))
 const userDetailsExports = {}
 new Function('exports', 'require', ts.transpileModule(userDetailsSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(userDetailsExports, (name) => {

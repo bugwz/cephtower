@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+用户放置标签支持非空列表整体替换：表单 `placement_tags_csv` 经用户 PATCH API 映射为 `user modify --tags=...`，再 `user info` 回读。参考 `radosgw-admin.cc` 6835 附近仅在解析列表非空时调用 `set_placement_tags`，以及 `driver/rados/rgw_user.cc` 2149 附近整体赋值；`--tags-add/--tags-rm` 不是用户操作，因此不提供追加或清空。输入拒绝空项与控制字符，保留标签中的空格；确认提示明确整体替换及放置目标权限影响。离线测试覆盖命令、回读与表单校验，未做真实集群验证。
+
 用户默认放置配置新增显式设置操作：PATCH 用户 API 将规则和存储类一起映射为 `user modify --placement-id=... --storage-class=...` 并 `user info` 回读。依据参考 `radosgw-admin.cc` 6824 附近和 `driver/rados/rgw_user.cc` 的修改分支，必须提供规则，空存储类采用原生默认类；原生命令校验配置有效性，不迁移既有 Bucket/对象。前后端拒绝规则缺失、非法文本及只修改存储类的请求；放置标签编辑尚未包含在此增量。未做真实集群验证。
 
 RGW 用户身份与归属、用户放置配置移到用户详情标签页，避免标签、托管策略 ARN、MFA 和用户组等嵌套内容挤入列表单元格。保留原有身份与放置组件以及 `user info` 等采集/API 字段，不新增默认值或请求；测试执行详情组件并验证完整行引用与缺失字段原样传递。未做浏览器视觉或真实集群验证。

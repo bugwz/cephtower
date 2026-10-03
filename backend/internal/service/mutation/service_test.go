@@ -1719,6 +1719,24 @@ func TestRGWAccountDeleteCommand(t *testing.T) {
 	}
 }
 
+func TestRGWUserPlacementTags(t *testing.T) {
+	request := Request{Action: "rgw_user.update", ResourceKey: "rgw/user/test"}
+	for _, tags := range []string{"archive", "fast,archive", "space tag, raw ", "--option=value"} {
+		cmd, err := build(request, map[string]any{"placement_tags_csv": tags})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(cmd.args, []string{"user", "modify", "--uid", "test", "--tags=" + tags, "--format", "json"}) || !reflect.DeepEqual(cmd.check, []string{"user", "info", "--uid", "test", "--format", "json"}) {
+			t.Fatalf("unexpected command: %#v", cmd)
+		}
+	}
+	for _, tags := range []any{nil, false, []string{"fast"}, "", " ", ",", "a,", ",a", "a,,b", "a, ,b", "a\nb", "a\x00b", strings.Repeat("a", (32<<10)+1)} {
+		if _, err := build(request, map[string]any{"placement_tags_csv": tags, "email": "valid@example.org"}); err == nil {
+			t.Fatalf("accepted invalid tags: %#v", tags)
+		}
+	}
+}
+
 func TestRGWUserDefaultPlacement(t *testing.T) {
 	request := Request{Action: "rgw_user.update", ResourceKey: "rgw/user/test"}
 	for _, storage := range []string{"", "STANDARD", "ARCHIVE"} {

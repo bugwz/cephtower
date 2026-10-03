@@ -33,7 +33,7 @@ import { RgwRoleTagsTable } from './RgwRoleTagsTable'
 import { RgwPolicyDocument, RgwRolePolicyDetails, RgwRoleManagedPolicies } from './RgwRolePolicyDetails'
 import { rgwPolicyChanged, rgwPolicyConfirmation, rgwPolicyDeleteOptions, rgwPolicyMutation } from './rgwRolePolicies'
 import { RgwUserDetails } from './RgwUserDetails'
-import { rgwUserPlacementInput } from './rgwUserPlacementForm'
+import { rgwUserPlacementInput, rgwUserPlacementTagsInput } from './rgwUserPlacementForm'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -182,6 +182,11 @@ const definitions: Record<
         ],
         confirmation: () => '将替换用户默认放置规则和存储类，不迁移已有 Bucket 或对象。请确认目标配置。',
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserPlacementInput(values) })
+      },
+      { title: '替换用户放置标签', path: '/rgw/user', method: 'PATCH', successMessage: '放置标签替换执行成功',
+        fields: [{ name: 'placement_tags_csv', label: '完整标签列表（逗号分隔，不支持清空；空格属于标签）', required: true }],
+        confirmation: (values) => `将整体替换用户放置标签，可能改变可使用的放置目标；这不是追加操作。新列表：${JSON.stringify(rgwUserPlacementTagsInput(values).placement_tags_csv)}`,
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserPlacementTagsInput(values) })
       },
       { title: '用户限流设置', path: '/rgw/user/ratelimit', method: 'PUT', successMessage: '用户限流设置执行成功',
         fields: [

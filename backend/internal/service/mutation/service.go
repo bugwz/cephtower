@@ -1841,6 +1841,18 @@ func build(request Request, p map[string]any) (command, error) {
 	case "rgw_user.update":
 		uid := last(tail)
 		args := []string{"user", "modify", "--uid", uid}
+		if raw, present := p["placement_tags_csv"]; present {
+			tags, ok := raw.(string)
+			if !ok || tags == "" || len(tags) > 32<<10 || strings.ContainsAny(tags, "\x00\r\n") {
+				return command{}, invalid("placement_tags_csv must be a nonempty comma-separated list")
+			}
+			for _, tag := range strings.Split(tags, ",") {
+				if strings.TrimSpace(tag) == "" {
+					return command{}, invalid("placement tags must not contain empty entries")
+				}
+			}
+			args = append(args, "--tags="+tags)
+		}
 		if _, present := p["default_placement"]; present {
 			placement, ok := p["default_placement"].(string)
 			if !ok || strings.TrimSpace(placement) == "" || strings.ContainsAny(placement, "\x00\r\n") || len(placement) > 32<<10 {
