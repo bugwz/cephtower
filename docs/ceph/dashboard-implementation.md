@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### Period 提交明确 Realm 范围及回读核验
+
+检查 Zonegroup 策略发布基础链路时发现原 Period 页面按钮仅传集群 ID，原生命令会选择默认 Realm。移除该入口，改为从 Realm 库存行提交，API 必须提供 `realm_id` 与 `expected_current_period`，不保留无范围调用。所有 realm get、period update --commit、period get 均指定 Realm ID；写前核对 Realm 身份及当前 period 快照，写后核对返回 period 的 Realm/ID/epoch、Realm 当前指向，以及完整 period 回读内容。沿用集群内 Period 提交锁，任何提交或核验失败均不自动重试/回滚。
+
+前端确认明确说明 update 会收集该 Realm 全部 Zonegroup 变更，而非只发布最近一项；提示备份、外部并发和部分生效风险。当前 period ID 快照不能检测同一 ID 的 epoch 更新或所有未发布变更，不声称具备事务/CAS 保护或远端同步确认。新增命令、错误路径、同 ID 新 epoch、API 拒绝无范围请求及实际表单绑定测试；运行全量后端/OpenAPI和前端测试构建，无真实集群验证。Zonegroup 策略写入仍未在此增量实现。
+
 #### Zonegroup 同步策略结构化展示
 
 参考 Dashboard 同步策略列表的 Zonegroup 归属以及 `RGWZoneGroup::dump` 中的 `sync_policy`，在 Zonegroups 页面增加组状态、对称/定向数据流、管道选择器与过滤/权限参数的结构化展示，保留原生 JSON。复用现有 `zonegroup list` → `zonegroup get --rgw-zonegroup <name> --format json` → Observation → 资源 API 链路，不额外读取默认组。明确显示 Zonegroup 范围及原生 Zone ID，不将桶本地提示套用于上层策略；空配置、缺失数据、未知状态分开处理，不推断已发布 period、最终有效策略或复制停止。

@@ -20904,13 +20904,13 @@ paths:
           schema:
             type: string
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
               type: object
               additionalProperties: false
-              required: [cluster_id]
+              required: [cluster_id, expected_current_period, realm_id]
               properties:
                 account_id:
                   type: string
@@ -20928,6 +20928,8 @@ paths:
                   type: string
                 endpoint_id:
                   type: integer
+                expected_current_period:
+                  type: string
                 export_id:
                   type: string
                 fs:
@@ -20959,6 +20961,8 @@ paths:
                 osd_id:
                   type: string
                 pool:
+                  type: string
+                realm_id:
                   type: string
                 service_id:
                   type: string

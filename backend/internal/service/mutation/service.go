@@ -125,6 +125,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if request.Action == "rgw_bucket.sync_pipe_update" {
 		return s.executeBucketSyncGroup(ctx, access, request, spec)
 	}
+	if request.Action == "rgw_period.commit" {
+		return s.executePeriodCommit(ctx, access, request, spec)
+	}
 	if request.Action == "rgw_bucket.sync_pipe_zones" {
 		return s.executeBucketSyncPipeZones(ctx, access, request, spec)
 	}
@@ -2771,7 +2774,11 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		return result, nil
 	case "rgw_period.commit":
-		return rgw([]string{"period", "update", "--commit"}, []string{"period", "get"}), nil
+		realm, current := syncGroupString(p, "realm_id"), syncGroupString(p, "expected_current_period")
+		if !syncFlowToken(realm) || !syncFlowToken(current) {
+			return command{}, invalid("realm_id and expected_current_period are required")
+		}
+		return rgw([]string{"period", "update", "--commit", "--realm-id", realm}, []string{"period", "get", "--realm-id", realm}), nil
 	case "nfs_cluster.create":
 		name, err := required(p, "name")
 		if err != nil {

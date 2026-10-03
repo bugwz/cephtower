@@ -1,11 +1,6 @@
 import type { ApiRecord } from '../../api/client'
-import { Alert, Button, Modal } from 'antd'
-import { ReloadOutlined } from '@ant-design/icons'
-import { mutateResource } from '../../api/resource'
-import { useFeatureRequirements } from '../../hooks/useFeatureRequirements'
-import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
-import { message } from '../../utils/appMessage'
+import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAction } from '../ResourceListPage'
 import { ServiceDaemons } from '../cluster/ServiceDaemons'
@@ -124,7 +119,17 @@ export function RgwZonesPage() {
 }
 
 export function RgwPeriodPage() {
-  return <PeriodCommitPanel />
+  return <ResourceListPage definition={{ ...definitions.multisite, title: 'RGW Period（按 Realm 提交）', createAction: undefined, updateAction: undefined, extraActions: [{
+    title: '提交 Realm Period', path: '/rgw/period/commit', method: 'POST',
+    successMessage: 'Realm 当前 period 已回读核验（不代表远端同步完成）',
+    disabledWhen: periodCommitBlocked, initialValues: periodCommitInitial, confirmation: periodCommitConfirmation,
+    fields: [
+      { name: 'realm_id', label: 'Realm ID（不可更改）', readOnly: true },
+      { name: 'expected_current_period', label: '采集时当前 Period（不可更改）', readOnly: true },
+      { name: 'confirm_commit', label: 'Realm 范围发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已核对全部待发布多站点变更，了解非事务及部分生效风险' }] }
+    ],
+    buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...periodCommitInput(values, row) })
+  }] }} />
 }
 
 export function ObjectStorageConfigPage() {
@@ -1182,63 +1187,6 @@ function userId(row?: Record<string, unknown>) {
 
 function bucketId(row?: Record<string, unknown>) {
   return String(row?.natural_key ?? row?.bucket_id ?? '').trim()
-}
-
-function PeriodCommitPanel() {
-  const { selectedClusterId } = useClusterContext()
-  const operationMutation = useMutationOperation()
-  const featureStatus = useFeatureRequirements(selectedClusterId, { requiredCapabilities: ['rgw_admin'] })
-  const blocked = featureStatus.loading || featureStatus.blocked || Boolean(featureStatus.error)
-
-  async function commitPeriod() {
-    if (!selectedClusterId || blocked) {
-      message.error('请先选择集群')
-      return
-    }
-    const parameters = {
-      cluster_id: selectedClusterId
-    }
-    Modal.confirm({
-      title: '提交 RGW Period',
-      content: '该操作为高风险操作，确认后将直接执行操作。',
-      okText: '提交',
-      okType: 'danger',
-      cancelText: '取消',
-      async onOk() {
-        await operationMutation.run(() => mutateResource('/rgw/period/commit', 'POST', parameters), false)
-        window.setTimeout(() => {
-          message.success('RGW Period commit 执行成功')
-        })
-      }
-    })
-  }
-
-  return (
-    <div className="page-embedded-list">
-      <div className="page-embedded-list-head">
-        <span className="page-embedded-list-title">RGW Period</span>
-        <div className="page-embedded-list-actions">
-          <Button type="primary" danger icon={<ReloadOutlined />} disabled={!selectedClusterId || blocked} onClick={commitPeriod}>提交 Period</Button>
-        </div>
-      </div>
-      <div className="page-embedded-list-body">
-        <FeatureRequirementAlert status={featureStatus} />
-      </div>
-    </div>
-  )
-}
-
-function FeatureRequirementAlert({ status }: { status: ReturnType<typeof useFeatureRequirements> }) {
-  if (status.loading) {
-    return <Alert type="info" showIcon message="正在校验当前集群的功能依赖" />
-  }
-  if (status.error) {
-    return <Alert type="warning" showIcon message="功能依赖检查失败" description={status.error} />
-  }
-  if (status.reasons.length) {
-    return <Alert type="warning" showIcon message="当前集群暂不可执行该页面的变更操作" description={status.reasons.join('; ')} />
-  }
-  return null
 }
 
 function text(value: unknown) {

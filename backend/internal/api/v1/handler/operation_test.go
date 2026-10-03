@@ -45,6 +45,18 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	if err := db.UpsertCapabilities(context.Background(), []store.CephClusterCapability{{ClusterID: cluster.ID, Name: "rgw_admin", Supported: true, ObservedAt: now, UpdatedAt: now}}); err != nil {
 		t.Fatal(err)
 	}
+	periodResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/period/commit", fmt.Sprintf(`{"cluster_id":%d,"realm_id":"realm-explicit","expected_current_period":"old"}`, cluster.ID), "scoped-period")
+	if periodResponse.Code != http.StatusAccepted {
+		t.Fatalf("period queue: %d %s", periodResponse.Code, periodResponse.Body.String())
+	}
+	periodOp, err := db.FindOperation(context.Background(), operationIDFromResponse(t, periodResponse))
+	if err != nil || periodOp.Action != "rgw_period.commit" || periodOp.Risk != "high" || periodOp.ResourceKey != "rgw/period/commit" {
+		t.Fatalf("period operation: %+v %v", periodOp, err)
+	}
+	unscoped := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/period/commit", fmt.Sprintf(`{"cluster_id":%d}`, cluster.ID), "unscoped-period")
+	if unscoped.Code != http.StatusBadRequest {
+		t.Fatalf("unscoped commit accepted: %d", unscoped.Code)
+	}
 	for _, tenant := range []string{"", "team"} {
 		id := base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00same-bucket"))
 		nativeMux := http.NewServeMux()
