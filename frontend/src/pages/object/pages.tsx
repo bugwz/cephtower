@@ -10,6 +10,7 @@ import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalLi
 import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAction } from '../ResourceListPage'
 import { ServiceDaemons } from '../cluster/ServiceDaemons'
 import { RgwQuota } from './RgwQuota'
+import { RgwStorage } from './RgwStorage'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -184,7 +185,7 @@ const definitions: Record<
       { key: 'user_quota', title: '用户总配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'bucket_quota', title: '默认 Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'stats_scope', title: '统计范围', render:(value)=>value === 'account' ? '所属账户' : '用户' },
-      { key: 'storage_stats', title: '容量与对象统计' },
+      { key: 'storage_stats', title: '容量与对象统计', ellipsis: false, render: (value) => <RgwStorage value={value} /> },
       { key: 'resource_version', title: '版本' }
     ]
   },
@@ -248,7 +249,7 @@ const definitions: Record<
       { key: 'tenant', title: 'Tenant' },
       { key: 'quota', title: '账户配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'bucket_quota', title: '默认 Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
-      { key: 'storage_stats', title: '容量与对象统计' },
+      { key: 'storage_stats', title: '容量与对象统计', ellipsis: false, render: (value) => <RgwStorage value={value} /> },
       { key: 'max_users', title: '用户上限' },
       { key: 'max_roles', title: '角色上限' },
       { key: 'max_groups', title: '用户组上限' },
@@ -403,7 +404,7 @@ const definitions: Record<
       { key: 'mfa_enabled', title: 'MFA' },
       { key: 'reshard_status', title: '重新分片状态' },
       { key: 'status', title: '状态' },
-      { key: 'usage', title: '使用量' },
+      { key: 'usage', title: '使用量', ellipsis: false, render: (value) => <RgwStorage value={value} categorized /> },
       { key: 'rate_limit', title: 'Bucket 限流' },
       { key: 'id', title: '原生 Bucket ID' },
       { key: 'creation_time', title: '创建时间' },

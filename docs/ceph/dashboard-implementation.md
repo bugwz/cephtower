@@ -5,6 +5,13 @@
 
 ## 如何追踪调用链
 
+RGW 用户、账户容量和 Bucket 分类用量改为结构化统计表，复用现有 user stats / account
+stats / bucket stats 采集链路和库存 API。字段口径以 RGWStorageStats::dump 为准：size
+是逻辑字节数，size_actual 是取整字节数，size_utilized 是压缩/加密后字节数，num_objects
+是对象数。分类原名保留，不将各分类相加或从 size_kb 推算 bytes；未返回和超出前端精确
+整数范围的值显式提示，不补零。空分类与统计不可用分开显示。离线测试覆盖上述边界，
+尚未进行真实集群和浏览器验证。
+
 RGW 用户、账户和 Bucket 配额以独立字段展示启用状态、容量（bytes）和对象数上限，
 对照参考 rgw-bucket-details 的 quota 展示。复用 user info / account get / bucket stats
 库存中的配额对象；负整数显示无限制，零保留为零，未启用时不将已存配置当作生效限制。
