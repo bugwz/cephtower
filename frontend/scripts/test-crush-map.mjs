@@ -157,6 +157,17 @@ for (const values of [[4, 2, 4], [4, 2, 2], [4, 2, undefined], [4, 2, 0], [4, 2,
 for (const field of ['k', 'm', 'l']) assert.ok(poolSource.includes(`Form.useWatch('${field}', erasureCodeProfileForm)`))
 assert.ok(poolSource.includes('LRC 分组预览（表单计算）'))
 console.log('LRC layout preview preserves native extra parity groups and rejects invalid input')
+const chunkRuleNode = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ecChunkRule')
+const chunkRuleCode = ts.transpileModule(chunkRuleNode.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const chunkRule = new Function('numberValue', 'textValue', 'lrcLayoutPreview', `${chunkRuleCode}; return ecChunkRule`)((v) => typeof v === 'number' ? v : undefined, (v, fallback) => v ?? fallback, lrcPreview)
+const validateChunks = (count, domain, plugin = 'lrc') => chunkRule({ [domain]: count })({ getFieldValue: (name) => ({ k: 4, m: 2, l: 3, plugin, crush_failure_domain: domain })[name] }).validator()
+await assert.rejects(validateChunks(7, 'osd'), /k\+m\+\(k\+m\)\/l/)
+await validateChunks(8, 'osd')
+await assert.rejects(validateChunks(8, 'host'))
+await validateChunks(9, 'host')
+await validateChunks(6, 'osd', 'isa')
+await validateChunks(7, 'host', 'isa')
+console.log('LRC ordinary placement counts include additional local parity chunks')
 const shecRuleNode = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'shecParameterRule')
 const shecRuleCode = ts.transpileModule(shecRuleNode.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const shecRule = new Function(`${shecRuleCode}; return shecParameterRule`)()

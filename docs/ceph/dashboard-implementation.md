@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+未指定 crush-locality 的 LRC 放置校验现在计入额外局部校验块，使用原生 mapping
+对应的 k+m+(k+m)/l 总分片数，而非只用 k+m；保留现有 host 额外预留一个故障域的
+表单策略。显式局部性使用两级规则，不以此总数推断其可放置性。本次离线测试覆盖普通
+OSD/host 数量边界和非 LRC 插件隔离，未做真实集群或浏览器验证。
+
 LRC 创建表单补齐参考界面的 locality groups/distribution factor 预览，并按原生
 ErasureCodeLrc 的 mapping 构造展示每组数据块、编码块、额外局部校验块和总分片数。
 预览随 k/m/l 更新，仅对合法分组计算，不发送命令，也不代表实际集群放置或容错保证。

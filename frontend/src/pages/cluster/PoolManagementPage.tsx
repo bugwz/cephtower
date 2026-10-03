@@ -900,7 +900,7 @@ export function PoolManagementPage() {
             <Form.Item
               name="k"
               label={<HelpLabel label="数据块数 (k)" title="每个对象被拆分的数据块数量。" />}
-              dependencies={['m', 'l', 'c', 'plugin', 'crush_failure_domain', 'crush_num_failure_domains', 'crush_osds_per_failure_domain', 'crush_root', 'crush_device_class']}
+              dependencies={['m', 'l', 'c', 'plugin', 'crush_locality', 'crush_failure_domain', 'crush_num_failure_domains', 'crush_osds_per_failure_domain', 'crush_root', 'crush_device_class']}
               rules={[
                 { required: true, message: '请输入数据块数' },
                 { type: 'number', min: 2, message: '数据块数必须大于或等于 2' },
@@ -914,7 +914,7 @@ export function PoolManagementPage() {
             <Form.Item
               name="m"
               label={<HelpLabel label="编码块数 (m)" title="为每个对象计算并存储在不同 OSD 上的编码块数量，也表示可容忍同时故障的 OSD 数。" />}
-              dependencies={['k', 'l', 'c', 'plugin', 'crush_failure_domain', 'crush_num_failure_domains', 'crush_osds_per_failure_domain', 'crush_root', 'crush_device_class']}
+              dependencies={['k', 'l', 'c', 'plugin', 'crush_locality', 'crush_failure_domain', 'crush_num_failure_domains', 'crush_osds_per_failure_domain', 'crush_root', 'crush_device_class']}
               rules={[
                 { required: true, message: '请输入编码块数' },
                 { type: 'number', min: 1, message: '编码块数必须大于或等于 1' },
@@ -1359,9 +1359,12 @@ function ecChunkRule(counts: Record<string, number>) {
         return Promise.resolve()
       }
       const available = counts[failureDomain] ?? 0
-      const chunks = k + m + (failureDomain === 'host' ? 1 : 0)
+      const layout = getFieldValue('plugin') === 'lrc' && !getFieldValue('crush_locality')
+        ? lrcLayoutPreview(k, m, getFieldValue('l')) : null
+      const chunks = (layout?.totalChunks ?? k + m) + (failureDomain === 'host' ? 1 : 0)
       if (available > 0 && chunks > available) {
-        const expression = failureDomain === 'host' ? 'k+m+1' : 'k+m'
+        const base = layout ? 'k+m+(k+m)/l' : 'k+m'
+        const expression = failureDomain === 'host' ? `${base}+1` : base
         return Promise.reject(new Error(`数据块 (${expression}) 已超过可用 ${failureDomain} 数量 ${available}`))
       }
       return Promise.resolve()
