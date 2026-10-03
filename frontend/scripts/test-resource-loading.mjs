@@ -4,6 +4,16 @@ import ts from 'typescript'
 
 const logsSource = readFileSync(new URL('../src/pages/monitoring/RuntimeLogsPage.tsx', import.meta.url), 'utf8')
 const logsTree = ts.createSourceFile('logs.tsx', logsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const logsPanelNode = logsTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'RuntimeLogsPanel')
+const logsPanelCode = ts.transpileModule(logsPanelNode.getText(logsTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
+for (const id of [undefined, 1, 2]) {
+  const panel = new Function('useClusterContext', 'RuntimeLogsContent', 'React', `${logsPanelCode}; return RuntimeLogsPanel`)(() => ({ selectedClusterId: id }), 'logs-content', { createElement: (component, props) => ({ component, props }) })
+  const result = panel({ compact: true })
+  assert.equal(result.props.key, id ?? 'none')
+  assert.equal(result.props.selectedClusterId, id)
+  assert.equal(result.props.compact, true)
+}
+assert.ok(logsSource.includes('return () => { abort.abort(); clearTimeout(timer) }'))
 const logFilterNode = logsTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'runtimeLogMatches')
 const logFilterCode = ts.transpileModule(logFilterNode.getText(logsTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const matchesLog = new Function(`${logFilterCode}; return runtimeLogMatches`)()

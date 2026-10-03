@@ -24,6 +24,10 @@ export function RuntimeLogsPage() {
 
 export function RuntimeLogsPanel({ compact = false }: { compact?: boolean }) {
   const { selectedClusterId } = useClusterContext()
+  return <RuntimeLogsContent key={selectedClusterId ?? 'none'} selectedClusterId={selectedClusterId} compact={compact} />
+}
+
+function RuntimeLogsContent({ compact, selectedClusterId }: { compact: boolean; selectedClusterId?: number }) {
   const [channel, setChannel] = useState('cluster')
   const [level, setLevel] = useState('debug')
   const [limit, setLimit] = useState(100)
