@@ -51,6 +51,18 @@ for (const [clusterId, osdId] of [[1, '0'], [1, '12'], [2, '12']]) {
 assert.equal(perfKeys.size, 3, 'cluster or OSD changes must reset the performance baseline')
 console.log('OSD performance navigation and snapshot scope checks passed')
 
+const gatewaySource = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
+const gatewayTree = ts.createSourceFile('gateway.tsx', gatewaySource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const gatewayNode = gatewayTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'GatewayManagementPage')
+const gatewayCode = ts.transpileModule(gatewayNode.getText(gatewayTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
+for (const clusterId of [undefined, 1, 2]) {
+  const render = new Function('React', 'useClusterContext', 'ResourceListPage', 'definitions', `${gatewayCode}; return GatewayManagementPage`)(
+    { createElement: (component, props) => ({ component, props }) }, () => ({ selectedClusterId: clusterId }), 'ResourceListPage', { gatewayManagement: {} })
+  assert.equal(render().props.key, clusterId ?? 'none')
+}
+assert.ok(gatewaySource.includes('<ServiceDaemons key={`${clusterId}:${row.name}`} clusterId={clusterId} name={row.name} />'))
+console.log('RGW gateway detail cluster isolation checks passed')
+
 const logsSource = readFileSync(new URL('../src/pages/monitoring/RuntimeLogsPage.tsx', import.meta.url), 'utf8')
 const logsTree = ts.createSourceFile('logs.tsx', logsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const logsPanelNode = logsTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'RuntimeLogsPanel')
@@ -93,6 +105,9 @@ assert.equal(formatDetail({ pending: false }), '{\n  "pending": false\n}')
 for (const key of ['memory_request', 'container_id', 'container_image_id', 'container_image_digests', 'ip', 'ports', 'systemd_unit', 'created', 'started', 'last_deployed', 'last_configured', 'pending_daemon_config']) assert.ok(serviceSource.includes(`['${key}',`))
 assert.ok(serviceSource.includes('<summary>展开运行详情</summary>'))
 const serviceFn = serviceTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ServiceDaemons')
+assert.ok(serviceSource.includes('perf?.clusterId === clusterId && perf.service === name'))
+assert.ok(serviceSource.includes('daemon: String(row.daemon_name)'))
+assert.ok(serviceSource.includes('key={`${visiblePerf.clusterId}:${visiblePerf.service}:${visiblePerf.daemon}`}'))
 const loaderDeclaration = serviceFn.body.statements.find((node) => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(serviceTree) === 'loader')
 const loaderArrow = loaderDeclaration.declarationList.declarations[0].initializer.arguments[0]
 const serviceLoaderCode = ts.transpileModule(`const load = ${loaderArrow.getText(serviceTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText

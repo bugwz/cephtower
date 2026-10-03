@@ -1,8 +1,9 @@
 import { Alert, Button, Descriptions, Space, Typography } from 'antd'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { DataTable } from '../../components/DataTable'
 import { useResource } from '../../hooks'
+import { DaemonPerf } from './DaemonPerf'
 
 const daemonDetailFields = [
   ['daemon_type', '守护进程类型'], ['daemon_id', '守护进程 ID'],
@@ -23,6 +24,8 @@ function daemonDetailText(value: unknown): string {
 }
 
 export function ServiceDaemons({ clusterId, name }: { clusterId: number; name: string }) {
+  const [perf, setPerf] = useState<{ clusterId: number; service: string; daemon: string } | null>(null)
+  const visiblePerf = perf?.clusterId === clusterId && perf.service === name ? perf : null
   const loader = useCallback(async () => {
     const result = await request<{ items: ApiRecord[]; service_name: string; observed_at: string }>('/service/daemons', jsonInit('GET', { cluster_id: clusterId, name }))
     if (result.service_name !== name || !Array.isArray(result.items)) throw new Error('守护进程响应与所选服务不匹配')
@@ -40,6 +43,9 @@ export function ServiceDaemons({ clusterId, name }: { clusterId: number; name: s
       { key: 'version', title: '版本' }, { key: 'cpu_percentage', title: 'CPU' }, { key: 'memory_usage', title: '内存用量（字节）' },
       { key: 'memory_limit', title: '内存限制（字节）' }, { key: 'container_image_name', title: '容器镜像' },
       { key: 'last_refresh', title: 'Ceph 最近刷新' }, { key: 'events', title: '事件' },
+      { key: 'performance', title: '性能', filterKey: false, render: (_, row) => <Button
+        disabled={typeof row.daemon_name !== 'string' || !/^(mon|mgr|mds|osd|rgw|rbd-mirror)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(row.daemon_name)}
+        onClick={() => setPerf({ clusterId, service: name, daemon: String(row.daemon_name) })}>性能计数器</Button> },
       { key: 'runtime_details', title: '运行详情', filterKey: false, ellipsis: false, render: (_, row) => <details>
         <summary>展开运行详情</summary>
         <Descriptions bordered size="small" column={1} style={{ minWidth: 360 }} items={daemonDetailFields.map(([key, label]) => ({
@@ -47,5 +53,9 @@ export function ServiceDaemons({ clusterId, name }: { clusterId: number; name: s
         }))} />
       </details> },
     ]} />
+    {visiblePerf && <Space direction="vertical" style={{ width: '100%' }}>
+      <Space><Typography.Title level={5}>{visiblePerf.daemon} 性能计数器</Typography.Title><Button onClick={() => setPerf(null)}>关闭性能详情</Button></Space>
+      <DaemonPerf key={`${visiblePerf.clusterId}:${visiblePerf.service}:${visiblePerf.daemon}`} clusterId={visiblePerf.clusterId} name={visiblePerf.daemon} />
+    </Space>}
   </Space>
 }

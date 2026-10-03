@@ -8,6 +8,7 @@ import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAction } from '../ResourceListPage'
+import { ServiceDaemons } from '../cluster/ServiceDaemons'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -34,7 +35,8 @@ export function BucketPolicyPage() {
 }
 
 export function GatewayManagementPage() {
-  return <ResourceListPage definition={definitions.gatewayManagement} />
+  const { selectedClusterId } = useClusterContext()
+  return <ResourceListPage key={selectedClusterId ?? 'none'} definition={definitions.gatewayManagement} />
 }
 
 export function MultisitePage() {
@@ -412,6 +414,8 @@ const definitions: Record<
     title: 'RGW 网关',
     path: '/services',
     body: { service_type: 'rgw' },
+    detailContent: (row, clusterId) => clusterId && typeof row.name === 'string'
+      ? <ServiceDaemons key={`${clusterId}:${row.name}`} clusterId={clusterId} name={row.name} /> : null,
     columns: [
       { key: 'name', title: '名称' },
       { key: 'service_name', title: '服务' },
