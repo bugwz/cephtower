@@ -69,7 +69,7 @@ func TestBucketRequestsPreserveFullInventoryIdentity(t *testing.T) {
 		id := base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00same-bucket"))
 		for _, tc := range []struct{ action, method, kind, document string }{
 			{"rgw_bucket_policy.update", "PUT", "policy", "{}"},
-			{"rgw_bucket_policy.update", "PUT", "cors", "<CORSConfiguration/>"},
+			{"rgw_bucket_policy.update", "PUT", "cors", "<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin></CORSRule></CORSConfiguration>"},
 			{"rgw_bucket_policy.update", "PUT", "lifecycle", "<LifecycleConfiguration/>"},
 			{"rgw_bucket_policy.update", "PUT", "encryption", "<ServerSideEncryptionConfiguration/>"},
 			{"rgw_bucket.update", "PUT", "versioning", ""},

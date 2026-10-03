@@ -30,7 +30,7 @@ func TestBucketConfigurationWritesUseExplicitDocument(t *testing.T) {
 		wantCode string
 		calls    int
 	}{
-		{"cors", "<CORSConfiguration/>", 200, "", 1}, {"policy", `{"Statement":[]}`, 200, "", 1}, {"cors", map[string]any{}, 200, "invalid_request", 0}, {"encryption", "{}", 200, "invalid_request", 0}, {"lifecycle", "<LifecycleConfiguration/>", 503, "s3_failed", 1},
+		{"cors", "<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin></CORSRule></CORSConfiguration>", 200, "", 1}, {"cors", "<CORSConfiguration/>", 200, "invalid_request", 0}, {"policy", `{"Statement":[]}`, 200, "", 1}, {"cors", map[string]any{}, 200, "invalid_request", 0}, {"encryption", "{}", 200, "invalid_request", 0}, {"lifecycle", "<LifecycleConfiguration/>", 503, "s3_failed", 1},
 	} {
 		calls := 0
 		service.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
