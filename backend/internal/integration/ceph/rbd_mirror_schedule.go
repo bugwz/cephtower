@@ -196,7 +196,7 @@ func rbdMirrorScheduleMatch(candidate rbdMirrorScheduleWire, image cephdomain.RB
 
 func validRBDMirrorScheduleItems(items []cephdomain.RBDMirrorSnapshotScheduleItem) bool {
 	for _, item := range items {
-		if strings.ContainsAny(item.Interval, "\x00\r\n") || !rbdMirrorCollectedIntervalPattern.MatchString(strings.TrimSpace(item.Interval)) || len(item.StartTime) > 64 || strings.ContainsAny(item.StartTime, "\x00\r\n") {
+		if !rbdMirrorCollectedIntervalPattern.MatchString(item.Interval) || len(item.StartTime) > 64 || strings.ContainsAny(item.StartTime, "\x00\r\n") {
 			return false
 		}
 	}

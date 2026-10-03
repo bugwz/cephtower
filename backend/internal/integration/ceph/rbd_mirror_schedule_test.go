@@ -17,6 +17,29 @@ type rbdMirrorScheduleExecutor struct {
 	fail           bool
 }
 
+func TestMirrorScheduleIntervalsPreserveNativeSyntax(t *testing.T) {
+	for _, interval := range []string{"1m", "12h", "2d", " 1h", "1h ", "\t1h", "1h\n", "1h\x00", "01h", "0m", "1.5h", "1H", ""} {
+		t.Run(fmt.Sprintf("%q", interval), func(t *testing.T) {
+			valid := interval == "1m" || interval == "12h" || interval == "2d"
+			items := []cephdomain.RBDMirrorSnapshotScheduleItem{{Interval: interval}}
+			if got := validRBDMirrorScheduleItems(items); got != valid {
+				t.Fatalf("item validation = %v, want %v", got, valid)
+			}
+			data, err := json.Marshal([]rbdMirrorScheduleWire{{Pool: "-", Namespace: "-", Image: "-", Items: items}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			parsed, err := ParseRBDMirrorSchedules(data)
+			if (err == nil) != valid {
+				t.Fatalf("recursive list validation: %s, %v", parsed, err)
+			}
+			if valid && string(parsed) != string(data) {
+				t.Fatalf("native interval changed: %s", parsed)
+			}
+		})
+	}
+}
+
 func (e *rbdMirrorScheduleExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.calls = append(e.calls, spec)
 	switch spec.ID {
