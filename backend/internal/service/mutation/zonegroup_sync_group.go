@@ -21,18 +21,26 @@ func zonegroupSyncGroupCommand(action string, p map[string]any, rgw func([]strin
 		return command{}, invalid("explicit realm_id is required, empty for standalone zonegroup")
 	}
 	status := syncGroupString(p, "status")
-	if status != "enabled" && status != "allowed" && status != "forbidden" {
+	deleting := action == "rgw_zonegroup.sync_group_delete"
+	if !deleting && status != "enabled" && status != "allowed" && status != "forbidden" {
 		return command{}, invalid("invalid sync group status")
 	}
 	verb, expectedKey := "modify", "expected_group"
 	if action == "rgw_zonegroup.sync_group_create" {
 		verb, expectedKey = "create", "expected_policy"
 	}
+	if deleting {
+		verb = "remove"
+	}
 	if syncGroupString(p, expectedKey) == "" {
 		return command{}, invalid(expectedKey + " is required")
 	}
 	target := []string{"--zonegroup-id", syncGroupString(p, "zonegroup_id")}
-	return rgw(append([]string{"sync", "group", verb, "--group-id", syncGroupString(p, "group_id"), "--status", status}, target...), append([]string{"zonegroup", "get"}, target...)), nil
+	args := []string{"sync", "group", verb, "--group-id", syncGroupString(p, "group_id")}
+	if !deleting {
+		args = append(args, "--status", status)
+	}
+	return rgw(append(args, target...), append([]string{"zonegroup", "get"}, target...)), nil
 }
 
 func (s *Service) executeZonegroupSyncGroup(ctx context.Context, access executor.ClusterAccess, request Request, spec command) (cephdomain.ActionResult, error) {
@@ -73,16 +81,23 @@ func (s *Service) executeZonegroupSyncGroup(ctx context.Context, access executor
 		if !valid || !expectedValid || len(expected) != 1 || group == nil || !reflect.DeepEqual(group, expected[id]) {
 			return fail("pre_check_failed", "sync group missing or changed; refresh before editing")
 		}
-		if group["status"] == syncGroupString(p, "status") {
+		deleting := request.Action == "rgw_zonegroup.sync_group_delete"
+		if !deleting && group["status"] == syncGroupString(p, "status") {
 			return fail("pre_check_failed", "sync group status unchanged")
 		}
 		// Update the original array, not the canonical index used for comparison.
+		remaining := []any{}
 		for _, raw := range policy["groups"].([]any) {
 			g := raw.(map[string]any)
 			if g["id"] == id {
+				if deleting {
+					continue
+				}
 				g["status"] = syncGroupString(p, "status")
 			}
+			remaining = append(remaining, raw)
 		}
+		policy["groups"] = remaining
 	}
 	current := ""
 	if realm != "" {

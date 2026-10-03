@@ -74,6 +74,14 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if err != nil || creation.Action != "rgw_zonegroup.sync_group_create" || creation.Risk != "high" || creation.ResourceKey != op.ResourceKey || creation.LockKey != op.LockKey {
 			t.Fatalf("wrong zonegroup creation: %+v %v", creation, err)
 		}
+		deleted := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/zonegroup/sync/group", fmt.Sprintf(`{"cluster_id":%d,"name":"east","zonegroup_id":"zg","realm_id":%q,"group_id":"g","expected_group":%q}`, cluster.ID, realm, `{"id":"g","status":"forbidden","data_flow":{},"pipes":[]}`), "zonegroup-sync-delete-"+realm)
+		if deleted.Code != http.StatusAccepted {
+			t.Fatalf("zonegroup delete queue: %d %s", deleted.Code, deleted.Body.String())
+		}
+		deletion, err := db.FindOperation(context.Background(), operationIDFromResponse(t, deleted))
+		if err != nil || deletion.Action != "rgw_zonegroup.sync_group_delete" || deletion.Risk != "high" || deletion.ResourceKey != op.ResourceKey || deletion.LockKey != op.LockKey {
+			t.Fatalf("wrong deletion: %+v %v", deletion, err)
+		}
 	}
 	for _, tenant := range []string{"", "team"} {
 		id := base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00same-bucket"))

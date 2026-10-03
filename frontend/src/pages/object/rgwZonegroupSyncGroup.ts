@@ -8,6 +8,18 @@ function snapshot(row?: Record<string, unknown>, allowEmpty = false) {
 }
 export function zonegroupSyncInitial(row?: Record<string, unknown>) { const { groups: _, ...identity } = snapshot(row); return { ...identity, group_id: undefined, status: undefined, confirm_change: undefined } }
 export function zonegroupSyncBlocked(row: Record<string, unknown>) { try { snapshot(row); return undefined } catch (error) { return (error as Error).message } }
+export function zonegroupSyncDeleteInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const { groups, ...identity } = snapshot(row)
+  if (values.name !== identity.name || values.zonegroup_id !== identity.zonegroup_id || values.realm_id !== identity.realm_id) throw new Error('Zonegroup 和 Realm 身份不可修改')
+  const group = groups.find(g => g.id === values.group_id)
+  if (!group) throw new Error('请输入准确的已有同步组 ID')
+  if (values.confirm_delete !== 'acknowledged') throw new Error('请确认删除整组及发布风险')
+  return { ...identity, group_id: group.id as string, expected_group: JSON.stringify(group) }
+}
+export function zonegroupSyncDeleteConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const p = zonegroupSyncDeleteInput(values,row)
+  return `确认删除 Zonegroup ${JSON.stringify(p.name)}（ID ${JSON.stringify(p.zonegroup_id)}）中的整个同步组 ${JSON.stringify(p.group_id)}？组内全部数据流和管道将移除，删除 forbidden 组可能解除复制限制；不删除已有对象副本，不保证全部复制停止。${p.realm_id ? `随后提交 Realm ${JSON.stringify(p.realm_id)} 的 Period，可能同时发布其他待提交变更。` : '无 Realm，不提交 Period。'}请备份完整策略并避免外部或其他页面并发；步骤非事务，失败可能部分生效，不自动回滚或重试。`
+}
 export function zonegroupSyncCreateInitial(row?: Record<string, unknown>) { const { groups: _, ...identity } = snapshot(row,true); return { ...identity, group_id: '', status: undefined, confirm_create: undefined } }
 export function zonegroupSyncCreateBlocked(row: Record<string, unknown>) { try { snapshot(row,true); return undefined } catch (error) { return (error as Error).message } }
 export function zonegroupSyncCreateInput(values: Record<string, unknown>, row?: Record<string, unknown>) {

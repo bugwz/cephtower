@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### Zonegroup 同步组删除与发布
+
+增加 `DELETE /api/v1/rgw/zonegroup/sync/group` 和 Zonegroup 行删除入口，对齐原生 `SYNC_GROUP_REMOVE` 的整组移除语义。执行 `sync group remove --group-id ... --zonegroup-id ... --format json` 前核验明确身份与完整组快照，拒绝缺失、重复或已变更的组；回读完整 Zonegroup，确保其他组和未知字段保持不变。有 Realm 时继续提交并核验 Period 中的目标策略，无 Realm 时仅修改本地配置。
+
+确认明确会移除组内全部流与管道，删除 forbidden 组可能解除复制限制；不会删除已有副本，也不保证全部复制停止。保留 Realm 全范围发布、并发覆盖及非事务部分生效警告，不自动回滚或重试。离线测试覆盖最后一组/保留其他组、两种 Realm 归属、快照冲突、写入/回读/发布故障、精确命令、前端绑定与高风险 API 资源锁。`make test-backend`（含 OpenAPI 一致性）和 `make test-frontend`（含生产构建）均通过；未进行真实集群或浏览器视觉验证。Zonegroup 流/管道写入仍待后续实现。
+
 #### Zonegroup 同步组创建与发布
 
 补齐 Dashboard 同步组创建入口：`POST /api/v1/rgw/zonegroup/sync/group` 接收明确 Zonegroup/Realm 身份、新组 ID、初始状态和完整策略快照。使用 `sync group create --zonegroup-id ... --group-id ... --status ...`，写前核验完整原策略并拒绝已有 ID，防止原生 create 的同名更新行为被当作创建。新组仅包含空数据流与空管道；按原生 map 的组 ID 顺序构造期望结果并核验整个 Zonegroup，保留其他组与未知字段。有 Realm 时复用已验证的 Period 发布及目标策略核验，无 Realm 不发布。

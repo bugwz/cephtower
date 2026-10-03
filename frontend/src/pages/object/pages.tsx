@@ -4,6 +4,7 @@ import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, perio
 import { RgwCurrentPeriod } from './RgwCurrentPeriod'
 import { zonegroupSyncInitial, zonegroupSyncBlocked, zonegroupSyncInput, zonegroupSyncConfirmation } from './rgwZonegroupSyncGroup'
 import { zonegroupSyncCreateInitial, zonegroupSyncCreateBlocked, zonegroupSyncCreateInput, zonegroupSyncCreateConfirmation } from './rgwZonegroupSyncGroup'
+import { zonegroupSyncDeleteInput, zonegroupSyncDeleteConfirmation } from './rgwZonegroupSyncGroup'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAction } from '../ResourceListPage'
 import { ServiceDaemons } from '../cluster/ServiceDaemons'
@@ -915,6 +916,18 @@ const definitions: Record<
         { name: 'confirm_create', label: '创建与发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，了解空组语义、Realm 发布范围及并发风险' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupSyncCreateInput(values,row) })
+    }, {
+      title: '删除 Zonegroup 同步组', path: '/rgw/zonegroup/sync/group', method: 'DELETE',
+      successMessage: 'Zonegroup 同步组删除与适用的 Period 发布已核验',
+      disabledWhen: zonegroupSyncBlocked, initialValues: zonegroupSyncInitial, confirmation: zonegroupSyncDeleteConfirmation,
+      fields: [
+        { name: 'name', label: 'Zonegroup 名称（不可更改）', readOnly: true },
+        { name: 'zonegroup_id', label: 'Zonegroup ID（不可更改）', readOnly: true },
+        { name: 'realm_id', label: 'Realm ID（不可更改）', readOnly: true },
+        { name: 'group_id', label: '要删除的完整同步组 ID', required: true },
+        { name: 'confirm_delete', label: '整组删除与发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份整组，了解移除全部流/管道及 Realm 发布风险' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupSyncDeleteInput(values,row) })
     }, {
       title: '修改 Zonegroup 同步组状态', path: '/rgw/zonegroup/sync/group', method: 'PATCH',
       successMessage: 'Zonegroup 策略与适用的 Period 发布已回读核验（不代表远端同步完成）',

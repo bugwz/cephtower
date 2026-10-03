@@ -4,8 +4,8 @@ import ts from 'typescript'
 const api={}
 new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwZonegroupSyncGroup.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
 const source=ts.createSourceFile('pages.tsx',readFileSync(new URL('../src/pages/object/pages.tsx',import.meta.url),'utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX)
-let action,createAction
-function visit(node){if(ts.isObjectLiteralExpression(node)){const title=node.properties.find(p=>ts.isPropertyAssignment(p)&&p.name.getText(source)==='title')?.initializer.text;if(['修改 Zonegroup 同步组状态','创建 Zonegroup 同步组'].includes(title)){const code=ts.transpileModule(`const action=${node.getText(source)}`,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;const found=new Function(...Object.keys(api),`${code};return action`)(...Object.values(api));if(title==='创建 Zonegroup 同步组')createAction=found;else action=found}}ts.forEachChild(node,visit)}visit(source)
+let action,createAction,deleteAction
+function visit(node){if(ts.isObjectLiteralExpression(node)){const title=node.properties.find(p=>ts.isPropertyAssignment(p)&&p.name.getText(source)==='title')?.initializer.text;if(['修改 Zonegroup 同步组状态','创建 Zonegroup 同步组','删除 Zonegroup 同步组'].includes(title)){const code=ts.transpileModule(`const action=${node.getText(source)}`,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;const found=new Function(...Object.keys(api),`${code};return action`)(...Object.values(api));if(title==='创建 Zonegroup 同步组')createAction=found;else if(title==='删除 Zonegroup 同步组')deleteAction=found;else action=found}}ts.forEachChild(node,visit)}visit(source)
 const group={id:' g ',status:'allowed',data_flow:{},pipes:[]}
 for(const realm of ['','realm']){
  const row={id:'zg',name:'east',realm_id:realm,sync_policy:{groups:[group]}}
@@ -18,6 +18,16 @@ for(const realm of ['','realm']){
 }
 assert.equal(action.path,'/rgw/zonegroup/sync/group')
 assert.equal(action.method,'PATCH')
+assert.equal(deleteAction.method,'DELETE')
+for(const realm of ['','realm']){
+ const row={id:'zg',name:'east',realm_id:realm,sync_policy:{groups:[group]}}
+ const values={...deleteAction.initialValues(row),group_id:group.id,confirm_delete:'acknowledged'}
+ assert.deepEqual(deleteAction.buildBody(values,7,row),{cluster_id:7,name:'east',zonegroup_id:'zg',realm_id:realm,group_id:group.id,expected_group:JSON.stringify(group)})
+ assert.match(deleteAction.confirmation(values,row),/全部数据流和管道.*forbidden.*不自动回滚或重试/)
+ for(const change of [{zonegroup_id:'other'},{group_id:'missing'},{realm_id:'wrong'},{confirm_delete:true}])assert.throws(()=>deleteAction.buildBody({...values,...change},7,row))
+ assert.ok(deleteAction.disabledWhen({...row,sync_policy:{groups:[]}}))
+ assert.ok(deleteAction.disabledWhen({...row,stale:true}))
+}
 assert.equal(createAction.method,'POST')
 for(const realm of ['','realm']){
  const row={id:'zg',name:'east',realm_id:realm,sync_policy:{groups:[]}}
