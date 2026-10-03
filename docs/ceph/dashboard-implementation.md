@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+角色托管策略改为逐项显示完整 ARN，允许长值换行，不再使用通用省略单元格。依据
+rgw_role.cc 中 ManagedPermissionPolicies 的字符串数组输出；原生无关联时省略字段，
+页面解释该缺失语义而不据此推断完整有效权限，并区分空数组与无效格式。复用 role list
+采集和库存 API；离线组件测试覆盖字段缺失、空数组、原生数组及错误对象格式。
+
 RGW 用户托管策略新增关联/解除入口，POST /rgw/user/policy 经请求契约、写操作权限及
 审计链路执行 user policy attach/detach --uid <uid> --policy-arn <arn>，随后读取
 user policy list attached。页面限定已知账户下非 root 用户，解除时选择已采集 ARN，

@@ -61,3 +61,15 @@ for (const value of ['', '--policy', arn + '\n', arn + ';other', null]) assert.t
 assert.ok(pages.includes("path: '/rgw/user/policy'"))
 assert.ok(pages.includes('disabledWhen: rgwUserPolicyBlocked'))
 assert.ok(pages.includes('...rgwUserPolicyInput(values, row)'))
+const roleViews = {}
+const jsx = (type, props) => ({ type, props })
+new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwRolePolicyDetails.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(roleViews, (name) => name === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : name === './rgwUserIdentity' ? identity : {})
+const managed = roleViews.RgwRoleManagedPolicies
+assert.ok(managed({ value: undefined }).props.children.includes('省略'))
+assert.equal(managed({ value: [] }).props.children, '托管策略列表为空')
+for (const value of [null, {}, [null], [''], [{ PolicyArn: arn }]]) assert.equal(managed({ value }).props.children, '托管策略格式无效')
+const renderedPolicies = managed({ value: [arn, 'arn:aws:iam::aws:policy/path/CustomPolicy'] })
+assert.equal(renderedPolicies.type, 'ul')
+assert.equal(renderedPolicies.props.style.overflowWrap, 'anywhere')
+assert.deepEqual(renderedPolicies.props.children.map(item => item.props.children), [arn, 'arn:aws:iam::aws:policy/path/CustomPolicy'])
+assert.ok(pages.includes("title: '直接关联的托管策略 ARN', ellipsis: false, render: (value) => <RgwRoleManagedPolicies value={value} />"))

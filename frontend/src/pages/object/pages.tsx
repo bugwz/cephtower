@@ -24,7 +24,7 @@ import { rgwRateLimitInitial, rgwRateLimitInput } from './rgwRateLimitForm'
 import { rgwQuotaInitial, rgwQuotaInput } from './rgwQuotaForm'
 import { rgwRoleInitial, rgwRolePatch } from './rgwRoleEdit'
 import { RgwRoleTagsTable } from './RgwRoleTagsTable'
-import { RgwPolicyDocument, RgwRolePolicyDetails } from './RgwRolePolicyDetails'
+import { RgwPolicyDocument, RgwRolePolicyDetails, RgwRoleManagedPolicies } from './RgwRolePolicyDetails'
 import { rgwPolicyChanged, rgwPolicyConfirmation, rgwPolicyDeleteOptions, rgwPolicyMutation } from './rgwRolePolicies'
 import { RgwUserIdentityDetails, RgwUserPlacementDetails } from './RgwUserIdentityDetails'
 
@@ -361,7 +361,7 @@ const definitions: Record<
       { key: 'Arn', title: 'ARN' },
       { key: 'AssumeRolePolicyDocument', title: '信任策略', ellipsis: false, render: (value) => <RgwPolicyDocument value={value} /> },
       { key: 'PermissionPolicies', title: '内联权限策略', ellipsis: false, render: (value) => <RgwRolePolicyDetails value={value} /> },
-      { key: 'ManagedPermissionPolicies', title: '托管权限策略' },
+      { key: 'ManagedPermissionPolicies', title: '直接关联的托管策略 ARN', ellipsis: false, render: (value) => <RgwRoleManagedPolicies value={value} /> },
       { key: 'Tags', title: '角色标签', ellipsis: false, render: (value) => <RgwRoleTagsTable value={value} /> },
       { key: 'MaxSessionDuration', title: '最大会话时长（秒）' },
       { key: 'CreateDate', title: '创建时间' },
