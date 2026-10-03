@@ -1282,6 +1282,9 @@ image, integer member state (0 attached, 1 incomplete), and snapshot ID/name/str
 state. Unknown states stay explicit, IDs stay strings, and absent/malformed lists do
 not masquerade as empty groups. This extends the project's existing native group UI;
 the bundled Dashboard revision has no separate RBD group frontend page.
+The collector validates native list structure, identities and state types before
+publishing either list. Null or malformed results mark group collection unavailable;
+explicit empty arrays remain valid and future well-typed state values are retained.
 
 Group snapshot remove/rename/rollback forms select from that group's collected list,
 while creation retains a separate name input. Rollback options require native

@@ -318,6 +318,49 @@ func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
 	}
 }
 
+func TestRBDGroupListAvailability(t *testing.T) {
+	for _, command := range []string{"collect.rbd_group_images", "collect.rbd_group_snapshots"} {
+		valid := `[{"pool":"pool","namespace":"","image":"image","state":7}]`
+		field := "images"
+		if command == "collect.rbd_group_snapshots" {
+			valid = `[{"id":"id","snapshot":"snap","state":"unknown (7)"}]`
+			field = "snapshots"
+		}
+		for _, output := range []string{`[]`, valid, `null`, `{}`, `[null]`, `[{}]`, `[{"pool":"pool","namespace":"","image":"image","state":1.5}]`, `[{"id":"id","snapshot":"snap","state":null}]`} {
+			t.Run(command+output, func(t *testing.T) {
+				provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+					"collect.rbd_namespace": []byte(`[]`), "collect.rbd_group": []byte(`["group"]`),
+					"collect.rbd_group_info":   []byte(`{"group_id":"id"}`),
+					"collect.rbd_group_images": []byte(`[]`), "collect.rbd_group_snapshots": []byte(`[]`),
+				}}}
+				exec := provider.Executor.(malformedExecutor)
+				exec.override[command] = []byte(output)
+				trace := &collectionTrace{unavailable: map[string]struct{}{}}
+				ctx := context.WithValue(context.Background(), collectionTraceKey{}, trace)
+				wantAvailable := output == `[]` || output == valid
+				found := false
+				for _, row := range provider.collectStorageOptional(ctx, ClusterAccess{}, []poolWire{{PoolName: "pool"}}, fsDumpWire{}, time.Now()) {
+					if row.Kind != "rbd_group" {
+						continue
+					}
+					found = true
+					_, exists := row.Payload.(map[string]any)[field]
+					if exists != wantAvailable {
+						t.Fatalf("unexpected payload: %+v", row.Payload)
+					}
+				}
+				if !found {
+					t.Fatal("group missing")
+				}
+				_, unavailable := trace.unavailable["rbd_group"]
+				if unavailable == wantAvailable {
+					t.Fatalf("availability mismatch: %+v", trace.unavailable)
+				}
+			})
+		}
+	}
+}
+
 func TestNamespaceGroupsIncludeMembersAndSnapshots(t *testing.T) {
 	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rbd_namespace":       []byte(`[{"name":"team"}]`),

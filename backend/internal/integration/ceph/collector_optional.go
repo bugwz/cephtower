@@ -163,10 +163,18 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 					}
 					var images, snapshots any
 					if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_group_images", []string{"group", "image", "list", spec, "--format", "json"}, &images) {
-						payload["images"] = images
+						if validRBDGroupRows(images, false) {
+							payload["images"] = images
+						} else {
+							markCollectionUnavailable(ctx, "collect.rbd_group_images")
+						}
 					}
 					if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_group_snapshots", []string{"group", "snap", "list", spec, "--format", "json"}, &snapshots) {
-						payload["snapshots"] = snapshots
+						if validRBDGroupRows(snapshots, true) {
+							payload["snapshots"] = snapshots
+						} else {
+							markCollectionUnavailable(ctx, "collect.rbd_group_snapshots")
+						}
 					}
 					rows = append(rows, observation("rbd_group", spec, name, "rbd_cli", payload, now))
 				}
@@ -750,6 +758,39 @@ func (p *NativeProvider) enrichRBDImage(ctx context.Context, access ClusterAcces
 			}
 		}
 	}
+}
+
+func validRBDGroupRows(value any, snapshots bool) bool {
+	rows, ok := value.([]any)
+	if !ok || rows == nil {
+		return false
+	}
+	for _, item := range rows {
+		row, ok := item.(map[string]any)
+		if !ok {
+			return false
+		}
+		fields := []string{"pool", "namespace", "image"}
+		if snapshots {
+			fields = []string{"id", "snapshot", "state"}
+		}
+		for _, field := range fields {
+			text, ok := row[field].(string)
+			if !ok || (text == "" && field != "namespace") {
+				return false
+			}
+		}
+		if !snapshots {
+			state, ok := row["state"].(json.Number)
+			if !ok {
+				return false
+			}
+			if _, err := strconv.ParseInt(state.String(), 10, 32); err != nil {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func rbdImageFeatures(value any) []string {
