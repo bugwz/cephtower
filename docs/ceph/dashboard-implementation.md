@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+Role 信任策略与内联策略支持展开原文查看，内联策略按 PolicyName 分项展示，复用
+role get/list 返回的 AssumeRolePolicyDocument 和 PermissionPolicies。按 rgw_role.cc
+原生字符串保留文档，不经 JSON.parse/stringify 改写大整数或重复键，不执行 HTML。
+空列表与缺失/格式异常区分；离线测试验证文档原值和结构，未进行浏览器或集群验证。
+
 Role 列表补充原生 RoleId 与 Tags 明细表，数据复用 role get/list 的现有库存链路。
 字段依据 rgw_role.cc 的 RGWRoleInfo::dump：Tags 为 Key/Value 数组，原生命令会省略
 空标签集合。页面区分未返回/格式无效与显式空列表，保留空字符串值，不把未返回直接

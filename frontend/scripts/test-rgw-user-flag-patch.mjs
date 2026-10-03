@@ -32,3 +32,11 @@ assert.deepEqual(tags.rgwRoleTags([]), [])
 for (const value of [null, undefined, {}, [null], [[]], [{ Key: 'env' }], [{ Key: 1, Value: 'test' }]]) assert.equal(tags.rgwRoleTags(value), undefined)
 assert.ok(pages.includes('<RgwRoleTagsTable value={value} />'))
 assert.ok(pages.includes("key: 'RoleId'"))
+const policies = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwRolePolicies.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(policies)
+const document = '{"Condition":{"count":9007199254740993},"Statement":[]}'
+assert.deepEqual(policies.rgwRolePolicies([{ PolicyName: 'native', PolicyValue: document }]), [{ id: 0, name: 'native', document }])
+assert.deepEqual(policies.rgwRolePolicies([]), [])
+for (const value of [null, undefined, {}, [null], [{ PolicyName: '', PolicyValue: '{}' }], [{ PolicyName: 'x', PolicyValue: {} }]]) assert.equal(policies.rgwRolePolicies(value), undefined)
+assert.ok(pages.includes('<RgwRolePolicyDetails value={value} />'))
+assert.ok(pages.includes('<RgwPolicyDocument value={value} />'))
