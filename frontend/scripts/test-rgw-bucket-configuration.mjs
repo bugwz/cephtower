@@ -6,6 +6,7 @@ import './test-rgw-bucket-tag-form.mjs'
 import './test-rgw-bucket-lifecycle.mjs'
 import './test-rgw-bucket-lifecycle-form.mjs'
 const helpers = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketObjectLockSummary.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketLifecycleForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketCorsForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 const cors = {}
@@ -148,8 +149,20 @@ assert.equal(tagAction.method, 'PATCH')
 assert.ok(tagAction.confirmation(tagValues, tagRow).includes('整体替换'))
 assert.equal(typeof tagAction.fields.find(field => field.name === 'tag_set').renderControl, 'function')
 assert.equal(definition.buildQuery({ kind: 'cors' }).toString(), 'kind=cors')
-assert.deepEqual(definition.filterFields.find(field => field.name === 'kind').options, helpers.rgwBucketConfigurationOptions)
-assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'encryption', 'cors_rules', 'lifecycle_rules', 'content_type', 'document'])
+assert.deepEqual(definition.filterFields.find(field => field.name === 'kind').options, helpers.rgwBucketConfigurationReadOptions)
+assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'encryption', 'object_lock', 'cors_rules', 'lifecycle_rules', 'content_type', 'document'])
+const lockSummary = definition.columns.find(column => column.key === 'object_lock').render
+assert.match(lockSummary(null, { kind: 'object-lock', configured: false }), /未启用/)
+assert.match(lockSummary({ enabled: true, default_retention: null }, { kind: 'object-lock', configured: true }), /未设置默认保留期/)
+for (const mode of ['GOVERNANCE', 'COMPLIANCE', 'FUTURE']) assert.ok(lockSummary({ enabled: true, default_retention: { mode, days: '30', years: null } }, { kind: 'object-lock', configured: true }).includes(mode))
+assert.match(lockSummary({ enabled: true, default_retention: { mode: 'COMPLIANCE', days: null, years: '2' } }, { kind: 'object-lock', configured: true }), /2 年/)
+assert.match(lockSummary({ enabled: true, default_retention: { mode: 'COMPLIANCE', days: '0', years: null } }, { kind: 'object-lock', configured: true }), /无效期限/)
+assert.match(lockSummary(undefined, { kind: 'object-lock', configured: true }), /不可用/)
+assert.equal(lockSummary(null, { kind: 'policy' }), '—')
+const readonlyLock = { bucket_id: 'AGJ1Y2tldA', kind: 'object-lock', configured: true, document: '<ObjectLockConfiguration/>' }
+assert.ok(helpers.rgwBucketConfigurationEditBlocked(readonlyLock))
+assert.ok(helpers.rgwBucketConfigurationDeleteBlocked(readonlyLock))
+assert.throws(() => helpers.rgwBucketConfigurationInput(readonlyLock))
 const encryption = definition.columns.find(column => column.key === 'encryption').render
 assert.equal(encryption(null, { kind: 'policy' }), '—')
 assert.match(encryption(null, { kind: 'encryption', configured: false }), /未设置/)

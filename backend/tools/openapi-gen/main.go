@@ -259,7 +259,7 @@ func routeParameters(route router.Route) []parameterSpec {
 		result = append(result, parameterSpec{Name: "metric_id", In: "query", Type: "string", Required: true}, parameterSpec{Name: "start", In: "query", Type: "string", Format: "date-time", Required: true}, parameterSpec{Name: "end", In: "query", Type: "string", Format: "date-time", Required: true}, parameterSpec{Name: "step", In: "query", Type: "string", Required: true})
 	case "/rgw/bucket/policy":
 		if route.Method == "GET" {
-			result = append(result, parameterSpec{Name: "kind", In: "query", Type: "string", Enum: []string{"policy", "cors", "lifecycle", "encryption", "versioning", "tagging"}})
+			result = append(result, parameterSpec{Name: "kind", In: "query", Type: "string", Enum: []string{"policy", "cors", "lifecycle", "encryption", "versioning", "tagging", "object-lock"}})
 		}
 	}
 	return result
@@ -984,10 +984,26 @@ const components = `components:
       required: [bucket_id, kind, configured, document, content_type]
       properties:
         bucket_id: {type: string}
-        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning, tagging]}
+        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning, tagging, object-lock]}
         configured: {type: boolean}
         document: {type: string, nullable: true}
         content_type: {type: string, nullable: true}
+        object_lock:
+          type: object
+          nullable: true
+          additionalProperties: false
+          required: [enabled, default_retention]
+          properties:
+            enabled: {type: boolean}
+            default_retention:
+              type: object
+              nullable: true
+              additionalProperties: false
+              required: [mode, days, years]
+              properties:
+                mode: {type: string}
+                days: {type: string, nullable: true}
+                years: {type: string, nullable: true}
         lifecycle_rules:
           type: array
           items:

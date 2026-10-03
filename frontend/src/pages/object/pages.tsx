@@ -51,6 +51,8 @@ import { rgwBucketEncryptionSummary } from './rgwBucketEncryptionSummary'
 import { RgwBucketCorsRules } from './RgwBucketCorsRules'
 import { RgwBucketLifecycleRules } from './RgwBucketLifecycleRules'
 import { rgwLifecycleProgress } from './rgwLifecycleProgress'
+import { rgwBucketConfigurationReadOptions } from './rgwBucketConfiguration'
+import { rgwBucketObjectLockSummary } from './rgwBucketObjectLockSummary'
 import { RgwBucketLifecycleEditor } from './RgwBucketLifecycleEditor'
 import { lifecycleFormInitial, lifecycleFormBlocked, lifecycleFormInput, lifecycleFormConfirmation } from './rgwBucketLifecycleForm'
 import { RgwBucketCorsEditor } from './RgwBucketCorsEditor'
@@ -859,7 +861,7 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
     buildQuery: (body) => new URLSearchParams({ kind: String(body.kind ?? 'policy') }),
     filterFields: [
       { name: 'bucket_id', label: 'Bucket ID', required: true },
-      { name: 'kind', label: '配置类型', type: 'select', required: true, options: rgwBucketConfigurationOptions }
+      { name: 'kind', label: '配置类型', type: 'select', required: true, options: rgwBucketConfigurationReadOptions }
     ],
     createAction: {
       title: '更新 Bucket 配置文档',
@@ -976,6 +978,7 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       { key: 'configured', title: '配置状态', render: (value) => value === true ? '已配置' : value === false ? '未配置' : '状态不可用' },
       { key: 'tags', title: '标签条目', ellipsis: false, render: (value, row) => row.kind === 'tagging' ? <RgwBucketTagEntries value={value} /> : '—' },
       { key: 'encryption', title: '默认加密', ellipsis: false, render: rgwBucketEncryptionSummary },
+      { key: 'object_lock', title: '对象锁默认保留（只读）', ellipsis: false, render: rgwBucketObjectLockSummary },
       { key: 'cors_rules', title: 'CORS 规则', ellipsis: false, render: (value, row) => row.kind === 'cors' ? <RgwBucketCorsRules value={value} configured={row.configured} /> : '—' },
       { key: 'lifecycle_rules', title: '生命周期规则', ellipsis: false, render: (value, row) => row.kind === 'lifecycle' ? <RgwBucketLifecycleRules value={value} configured={row.configured} /> : '—' },
       { key: 'content_type', title: '响应类型' },

@@ -85,7 +85,7 @@ func errorCode(data []byte) string {
 }
 
 func IsConfigurationMissing(kind string, err error) bool {
-	codes := map[string]string{"policy": "NoSuchBucketPolicy", "cors": "NoSuchCORSConfiguration", "lifecycle": "NoSuchLifecycleConfiguration", "encryption": "ServerSideEncryptionConfigurationNotFoundError", "tagging": "NoSuchTagSet"}
+	codes := map[string]string{"policy": "NoSuchBucketPolicy", "cors": "NoSuchCORSConfiguration", "lifecycle": "NoSuchLifecycleConfiguration", "encryption": "ServerSideEncryptionConfigurationNotFoundError", "tagging": "NoSuchTagSet", "object-lock": "ObjectLockConfigurationNotFoundError"}
 	var response *ResponseError
 	return codes[kind] != "" && errors.As(err, &response) && response.StatusCode == http.StatusNotFound && response.Code == codes[kind]
 }

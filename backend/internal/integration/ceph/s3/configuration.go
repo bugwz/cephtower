@@ -23,6 +23,30 @@ func ValidateBucketConfiguration(kind string, body []byte) error {
 	if root == "" {
 		return fmt.Errorf("unsupported S3 bucket configuration %q", kind)
 	}
+	if err := validateConfigurationXML(body, root); err != nil {
+		return err
+	}
+	if kind == "tagging" {
+		_, err := parseBucketTags(body)
+		return err
+	}
+	if kind == "cors" {
+		return validateBucketCORS(body)
+	}
+	if kind == "lifecycle" {
+		return validateBucketLifecycle(body)
+	}
+	if kind == "encryption" {
+		_, err := parseBucketEncryption(body)
+		return err
+	}
+	return nil
+}
+
+func validateConfigurationXML(body []byte, root string) error {
+	if len(body) == 0 || len(body) > 4<<20 {
+		return fmt.Errorf("bucket configuration must be between 1 byte and 4 MiB")
+	}
 	decoder := xml.NewDecoder(bytes.NewReader(body))
 	depth, roots := 0, 0
 	for {
@@ -58,20 +82,6 @@ func ValidateBucketConfiguration(kind string, body []byte) error {
 	}
 	if roots != 1 || depth != 0 {
 		return fmt.Errorf("bucket configuration XML root is required")
-	}
-	if kind == "tagging" {
-		_, err := parseBucketTags(body)
-		return err
-	}
-	if kind == "cors" {
-		return validateBucketCORS(body)
-	}
-	if kind == "lifecycle" {
-		return validateBucketLifecycle(body)
-	}
-	if kind == "encryption" {
-		_, err := parseBucketEncryption(body)
-		return err
 	}
 	return nil
 }
