@@ -7,6 +7,16 @@ import { Page } from '../../components/Page'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 import { useClusterContext } from '../../state/ClusterContext'
 
+function runtimeLogMatches(row: ApiRecord, search: string, start: string, end: string): boolean {
+  const text = [row.message, row.name, row.stamp, row.channel, row.priority].map((value) => String(value ?? '')).join(' ').toLowerCase()
+  if (!text.includes(search.toLowerCase())) return false
+  if (!start && !end) return true
+  const stamp = Date.parse(String(row.stamp ?? ''))
+  const lower = start ? Date.parse(start) : -Infinity
+  const upper = end ? Date.parse(end) : Infinity
+  return Number.isFinite(stamp) && !Number.isNaN(lower) && !Number.isNaN(upper) && stamp >= lower && stamp <= upper
+}
+
 export function RuntimeLogsPage() {
   return <RuntimeLogsPanel />
 }
@@ -23,6 +33,8 @@ export function RuntimeLogsPanel({ compact = false }: { compact?: boolean }) {
   const [rows, setRows] = useState<ApiRecord[]>([])
   const [observed, setObserved] = useState<string>()
   const [search, setSearch] = useState('')
+  const [start, setStart] = useState('')
+  const [end, setEnd] = useState('')
   useEffect(() => {
     const abort = new AbortController()
     let timer: ReturnType<typeof setTimeout> | undefined
@@ -47,7 +59,8 @@ export function RuntimeLogsPanel({ compact = false }: { compact?: boolean }) {
     void read()
     return () => { abort.abort(); clearTimeout(timer) }
   }, [selectedClusterId, channel, level, limit, auto, revision])
-  const filtered = rows.filter((row) => `${row.message} ${row.name} ${row.stamp}`.toLowerCase().includes(search.toLowerCase()))
+  const invalidRange = Boolean(start && end && Date.parse(start) > Date.parse(end))
+  const filtered = rows.filter((row) => runtimeLogMatches(row, search, start, end))
   function download() {
     const content = filtered.map((row) => `${row.stamp} [${row.channel}] ${row.priority} ${row.name}: ${row.message}`).join('\n')
     const url = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }))
@@ -68,8 +81,13 @@ export function RuntimeLogsPanel({ compact = false }: { compact?: boolean }) {
           <Switch checked={auto} onChange={setAuto} checkedChildren="自动刷新" unCheckedChildren="已暂停" />
           <Button icon={<ReloadOutlined />} loading={loading} disabled={!selectedClusterId} onClick={() => setRevision((n) => n + 1)}>刷新</Button>
           {!compact && <><Button icon={<DownloadOutlined />} disabled={!filtered.length} onClick={download}>下载当前结果</Button>
-          <Input.Search allowClear placeholder="搜索消息、来源或时间" value={search} onChange={(event) => setSearch(event.target.value)} /></>}
+          <Input.Search allowClear placeholder="搜索消息、来源、时间、频道或级别" value={search} onChange={(event) => setSearch(event.target.value)} />
+          <label>起始时间<Input type="datetime-local" step={1} aria-label="日志起始时间" value={start} onChange={(event) => setStart(event.target.value)} /></label>
+          <label>结束时间<Input type="datetime-local" step={1} aria-label="日志结束时间" value={end} onChange={(event) => setEnd(event.target.value)} /></label>
+          <Button disabled={!start && !end && !search} onClick={() => { setStart(''); setEnd(''); setSearch('') }}>清除筛选</Button>
+          <Typography.Text type="secondary">时间按浏览器本地时区输入，仅筛选已读取的最近日志；下载结果使用相同筛选。</Typography.Text></>}
         </Space>
+        {invalidRange && <Alert type="warning" message="起始时间不能晚于结束时间" />}
         <ResourceMetaBar observedAt={observed} />
         {error && observed && <Alert type="warning" message="刷新失败，以下为上次成功获取的日志。" />}
         <AppTable<ApiRecord> size="small" loading={loading && !rows.length} dataSource={filtered}

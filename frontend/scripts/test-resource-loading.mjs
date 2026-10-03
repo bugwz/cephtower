@@ -2,6 +2,23 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 
+const logsSource = readFileSync(new URL('../src/pages/monitoring/RuntimeLogsPage.tsx', import.meta.url), 'utf8')
+const logsTree = ts.createSourceFile('logs.tsx', logsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const logFilterNode = logsTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'runtimeLogMatches')
+const logFilterCode = ts.transpileModule(logFilterNode.getText(logsTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const matchesLog = new Function(`${logFilterCode}; return runtimeLogMatches`)()
+const log = { stamp: '2026-10-03T08:00:00Z', message: 'healthy', channel: 'audit', priority: '[INF]' }
+assert.equal(matchesLog(log, 'AUDIT', '', ''), true)
+assert.equal(matchesLog(log, 'missing', '', ''), false)
+assert.equal(matchesLog(log, '', '2026-10-03T16:00:00+08:00', '2026-10-03T08:00:00Z'), true)
+assert.equal(matchesLog(log, '', '2026-10-03T08:00:01Z', ''), false)
+assert.equal(matchesLog(log, '', '', '2026-10-03T07:59:59Z'), false)
+assert.equal(matchesLog(log, '', '2026-10-04T00:00:00Z', '2026-10-02T00:00:00Z'), false)
+assert.equal(matchesLog({ stamp: 'unknown' }, '', '2026-10-03T00:00:00Z', ''), false)
+assert.equal(matchesLog({ stamp: 'unknown' }, '', '', ''), true)
+assert.ok(logsSource.includes('const content = filtered.map'))
+console.log('Runtime log time bounds and filtered download checks passed')
+
 const serviceSource = readFileSync(new URL('../src/pages/cluster/ServiceDaemons.tsx', import.meta.url), 'utf8')
 const serviceTree = ts.createSourceFile('service.tsx', serviceSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const detailFormatter = serviceTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'daemonDetailText')
