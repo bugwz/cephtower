@@ -11,6 +11,7 @@ import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
 import { PoolIOHistory } from './PoolIOHistory'
+import { PoolPGDistribution } from './PoolPGDistribution'
 import { poolPGStatus, poolCapacity, poolObjectCount, poolUsage, poolDataProtection, poolKind, poolIORate, poolPGAdjustment } from './PoolManagementPage'
 
 const { Text } = Typography
@@ -121,6 +122,7 @@ export function PoolDetailPage() {
         </Card>
 
         {selectedClusterId && !loading && !error && data?.history_scope === `${selectedClusterId}/${decodedName}` && typeof data.id === 'number' && Number.isSafeInteger(data.id) && data.id >= 0 && <PoolIOHistory key={`${selectedClusterId}/${data.id}`} clusterId={selectedClusterId} poolId={data.id} />}
+        <PoolPGDistribution key={`${selectedClusterId}/${decodedName}`} value={data?.pg_status} />
         <Card className="page-surface-card" title="自动伸缩建议">
           <Text type="secondary">来源：ceph osd pool autoscale-status。以下为采集时的建议与计算依据，不代表已执行调整。</Text>
           {renderAutoscaleStatus(data?.autoscale_status)}

@@ -26,3 +26,11 @@ export function pgSummary(value: unknown) {
     return { ...category, count: counts[category.key] }
   }) }
 }
+
+export function poolPGDistribution(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  const rows = Object.entries(value).map(([name, count]) => ({ name, count }))
+  const summary = pgSummary(rows)
+  if (!summary) return null
+  return { ...summary, rows: rows.map((row) => ({ ...row, count: row.count as number, category: pgCategory(row.name) })) }
+}

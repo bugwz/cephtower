@@ -24,6 +24,16 @@ for (const value of [null, undefined, {}, [null], [{ name: 'active' }], [{ name:
 for (const count of [null, undefined, '1', -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) assert.equal(summarizePG([{ name: 'active', count }]), null)
 assert.equal(summarizePG([{ name: 'active', count: Number.MAX_SAFE_INTEGER }, { name: 'clean', count: 1 }]), null)
 console.log('PG category totals distinguish valid zero counts from invalid or missing statistics')
+const poolDistribution = pgCategoryExports.poolPGDistribution
+const poolPG = poolDistribution({ 'active+clean': 4, 'active+scrubbing': 1, undersized: 2, new_state: 3 })
+assert.equal(poolPG.total, 10)
+assert.deepEqual(poolPG.rows.map((row) => row.category.key), ['clean', 'working', 'warning', 'unknown'])
+assert.equal(poolDistribution({}).total, 0)
+assert.equal(poolDistribution({ 'active+clean': 0 }).total, 0)
+for (const value of [null, [], false, 'active+clean', { 'active+clean': null }, { 'active+clean': '3' }, { '': 1 }, { active: -1 }, { active: Number.MAX_SAFE_INTEGER, clean: 1 }]) assert.equal(poolDistribution(value), null)
+const poolPGDetailSource = readFileSync(new URL('../src/pages/cluster/PoolDetailPage.tsx', import.meta.url), 'utf8')
+assert.ok(poolPGDetailSource.includes('PoolPGDistribution key={`${selectedClusterId}/${decodedName}`} value={data?.pg_status}'))
+console.log('Pool PG distribution uses scoped raw counts and keeps unavailable data distinct')
 
 const hostDetailSource = readFileSync(new URL('../src/pages/cluster/HostDetailPage.tsx', import.meta.url), 'utf8')
 const hostDetailTree = ts.createSourceFile('host.tsx', hostDetailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
