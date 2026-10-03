@@ -119,3 +119,26 @@ assert.equal(cacheRows.find((row) => row.key === 'hits_full').children, '1844674
 assert.equal(cacheRows.length, 20)
 assert.equal(runtimeExports.runtimeDetails({ source_pool_namespace: '' }, runtimeExports.migrationFields).find((row) => row.key === 'source_pool_namespace').children, '默认命名空间')
 console.log('RBD runtime status field checks passed')
+
+const configExports = {}
+const configCode = ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdConfigurationRows.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+new Function('exports', configCode)(configExports)
+const configRows = configExports.rbdConfigurationRows([
+  { name: 'rbd_qos_iops_limit', value: '18446744073709551615', source: 'image' },
+  { name: 'rbd_cache', value: false, source: 'pool' },
+  { name: 'rbd_zero', value: 0, source: 'config' },
+  { name: 'rbd_empty', value: '', source: 'unknown (9)' },
+  { name: 'rbd_missing' }
+])
+assert.equal(configRows[0].value, '18446744073709551615')
+assert.equal(configRows[1].value, 'false')
+assert.equal(configRows[2].value, '0')
+assert.equal(configRows[3].value, '（空字符串）')
+assert.deepEqual(configRows.map((row) => row.sourceLabel), ['镜像级覆盖', '池级覆盖', '客户端配置', '未知来源：unknown (9)', '来源未返回'])
+assert.equal(configExports.filterRbdConfiguration(configRows, ' IOPS ', 'image').length, 1)
+assert.equal(configExports.filterRbdConfiguration(configRows, 'IOPS', 'pool').length, 0)
+assert.equal(configExports.filterRbdConfiguration(configRows, '', '').length, 5)
+assert.deepEqual(configExports.rbdConfigurationRows([]), [])
+for (const value of [null, {}, [null], [{}], [{ name: '' }]]) assert.equal(configExports.rbdConfigurationRows(value), undefined)
+assert.equal(configExports.rbdConfigurationRows([{ name: 'x', value: 9007199254740992, source: 'constructor' }])[0].value, '未返回或值无效')
+console.log('RBD configuration values and source filters passed')

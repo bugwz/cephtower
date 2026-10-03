@@ -3,6 +3,7 @@ import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalLi
 import { PoolPage } from './PoolPage'
 import { ImageMirrorSchedule, MirrorSchedules } from './MirrorSchedules'
 import { RbdRuntimeStatus } from './RbdRuntimeStatus'
+import { RbdConfiguration } from './RbdConfiguration'
 
 export function BlockPoolsPage() {
   return <PoolPage />
@@ -222,7 +223,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'parent', title: '父镜像' },
       { key: 'details', title: '镜像详情' },
       { key: 'runtime_status', title: '连接客户端 / 迁移 / 缓存状态', render: (value, row) => <RbdRuntimeStatus key={String(row.cluster_id ?? '') + ':' + imageSpec(row)} value={value} name={imageSpec(row)} /> },
-      { key: 'configuration', title: '生效配置及来源' },
+      { key: 'configuration', title: '生效配置及来源', render: (value, row) => <RbdConfiguration key={String(row.cluster_id ?? '') + ':' + imageSpec(row)} value={value} name={imageSpec(row)} /> },
       { key: 'mirror_mode', title: '同步模式' },
       { key: 'mirror_state', title: '同步状态' },
       { key: 'primary', title: '同步角色', render:(value)=>value === true ? '主镜像' : value === false ? '从镜像' : '—' },
