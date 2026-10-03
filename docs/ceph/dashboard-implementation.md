@@ -1258,6 +1258,8 @@ which could collapse multiple paths and schedules into one resource key.
   row supplies current-image usage, while summing snapshot and head rows supplies
   total usage including snapshots, matching the two values shown by Dashboard.
   Images without `fast-diff` omit usage rather than triggering an expensive scan.
+  Image `used_bytes` and `total_used_bytes` are decimal strings across JSON and UI
+  to preserve the full native uint64 range; overflowing aggregate totals are rejected.
 - Fixture coverage verifies the exact usage command, snapshot aggregation, 64-bit
   capacity fields, features, parent snapshot, and layout retention. Collection adds
   one usage request only for eligible images; large-cluster performance is unverified.

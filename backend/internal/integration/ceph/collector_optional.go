@@ -776,6 +776,9 @@ func applyRBDImageUsage(image *cephdomain.RBDImage, usage map[string]any) bool {
 		if !ok {
 			continue
 		}
+		if used > ^uint64(0)-total {
+			return false
+		}
 		total += used
 		found = true
 		if snapshot := textField(row, "snapshot"); snapshot != "" {

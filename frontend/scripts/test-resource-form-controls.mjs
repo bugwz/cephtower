@@ -92,11 +92,10 @@ const usageExports = {}
 const usageCode = ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdUsage.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
 new Function('exports', usageCode)(usageExports)
 const usageText = usageExports.rbdUsageText
-assert.equal(usageText(0, ['fast-diff']), '0')
-assert.equal(usageText(4096, ['layering', 'fast-diff']), '4096')
+for (const value of ['0', '4096', '9007199254740993', '18446744073709551615']) assert.equal(usageText(value, ['layering', 'fast-diff']), value)
 assert.equal(usageText(4096, ['layering']), '不可用：未启用 fast-diff')
 for (const features of [null, undefined, 'fast-diff', [null]]) assert.equal(usageText(0, features), '特性信息不可用，无法确认用量采集条件')
-for (const value of [undefined, null, -1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, '123']) assert.equal(usageText(value, ['fast-diff']), '用量未返回或无效，请重新采集')
+for (const value of [undefined, null, 0, 4096, -1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, '', '01', '-1', '+1', '1.5', ' 1', '1 ', '1e3', '18446744073709551616']) assert.equal(usageText(value, ['fast-diff']), '用量未返回或无效，请重新采集')
 console.log('RBD usage distinguishes missing fast-diff, unavailable statistics and valid zero')
 
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')

@@ -111,8 +111,8 @@ type RBDImage struct {
 	Pool           string                     `json:"pool"`
 	Name           string                     `json:"name"`
 	SizeBytes      *uint64                    `json:"size_bytes"`
-	UsedBytes      *uint64                    `json:"used_bytes,omitempty"`
-	TotalUsedBytes *uint64                    `json:"total_used_bytes,omitempty"`
+	UsedBytes      *uint64                    `json:"used_bytes,omitempty,string"`
+	TotalUsedBytes *uint64                    `json:"total_used_bytes,omitempty,string"`
 	ObjectCount    *uint64                    `json:"object_count,omitempty"`
 	ObjectSize     *uint64                    `json:"object_size_bytes,omitempty"`
 	StripeUnit     *uint64                    `json:"stripe_unit_bytes,omitempty"`

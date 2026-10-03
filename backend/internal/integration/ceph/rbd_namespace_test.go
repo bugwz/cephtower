@@ -13,6 +13,54 @@ import (
 	"time"
 )
 
+func TestRBDUsageJSONPreservesUint64(t *testing.T) {
+	for _, value := range []string{"0", "9007199254740993", "18446744073709551615"} {
+		t.Run(value, func(t *testing.T) {
+			var usage map[string]any
+			decoder := json.NewDecoder(strings.NewReader(`{"images":[{"used_size":` + value + `}]}`))
+			decoder.UseNumber()
+			if err := decoder.Decode(&usage); err != nil {
+				t.Fatal(err)
+			}
+			var image cephdomain.RBDImage
+			if !applyRBDImageUsage(&image, usage) {
+				t.Fatal("valid native usage rejected")
+			}
+			encoded, err := json.Marshal(image)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var payload map[string]any
+			if err := json.Unmarshal(encoded, &payload); err != nil {
+				t.Fatal(err)
+			}
+			if payload["used_bytes"] != value || payload["total_used_bytes"] != value {
+				t.Fatalf("usage must remain exact decimal strings: %s", encoded)
+			}
+		})
+	}
+	var image cephdomain.RBDImage
+	if applyRBDImageUsage(&image, map[string]any{"images": []any{
+		map[string]any{"used_size": json.Number("18446744073709551615")},
+		map[string]any{"snapshot": "snap", "used_size": json.Number("1")},
+	}}) {
+		t.Fatal("overflowing total accepted")
+	}
+	encoded, err := json.Marshal(image)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload map[string]any
+	if err := json.Unmarshal(encoded, &payload); err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{"used_bytes", "total_used_bytes"} {
+		if _, ok := payload[key]; ok {
+			t.Fatalf("unavailable usage must be omitted: %s", encoded)
+		}
+	}
+}
+
 func TestNamespaceSnapshotsAndTrashKeepDistinctIdentity(t *testing.T) {
 	base := malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rbd_namespace":         []byte(`[{"name":"team"}]`),
