@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	pathpkg "path"
 	"regexp"
 	"strconv"
@@ -3334,6 +3335,25 @@ func isRBDMirrorScheduleMutation(parameters map[string]any) bool {
 	return action == "mirror-schedule-add" || action == "mirror-schedule-remove"
 }
 
+// Ceph serializes intervals using days or hours whenever evenly divisible.
+// Compare minutes without machine-integer overflow instead of serialized units.
+func rbdMirrorScheduleIntervalMinutes(value string) *big.Int {
+	if !rbdMirrorScheduleIntervalPattern.MatchString(value) {
+		return nil
+	}
+	minutes, ok := new(big.Int).SetString(value[:len(value)-1], 10)
+	if !ok {
+		return nil
+	}
+	switch value[len(value)-1] {
+	case 'h':
+		minutes.Mul(minutes, big.NewInt(60))
+	case 'd':
+		minutes.Mul(minutes, big.NewInt(1440))
+	}
+	return minutes
+}
+
 func rbdMirrorScheduleReadbackMatches(request Request, data []byte) bool {
 	var err error
 	pool, namespace, image := "", "", ""
@@ -3384,8 +3404,16 @@ func rbdMirrorScheduleReadbackMatches(request Request, data []byte) bool {
 	if action == "mirror-schedule-remove" && interval == "" {
 		return len(exactItems) == 0
 	}
+	intervalMinutes := rbdMirrorScheduleIntervalMinutes(interval)
+	if intervalMinutes == nil {
+		return false
+	}
 	found := false
 	for _, item := range exactItems {
+		itemMinutes := rbdMirrorScheduleIntervalMinutes(item.Interval)
+		if itemMinutes == nil {
+			return false
+		}
 		itemStart := strings.TrimSpace(item.StartTime)
 		if itemStart != "" {
 			itemStart, err = normalizeRBDMirrorScheduleStartTime(itemStart)
@@ -3393,7 +3421,7 @@ func rbdMirrorScheduleReadbackMatches(request Request, data []byte) bool {
 				return false
 			}
 		}
-		if item.Interval == interval && itemStart == startTime {
+		if itemMinutes.Cmp(intervalMinutes) == 0 && itemStart == startTime {
 			found = true
 			break
 		}

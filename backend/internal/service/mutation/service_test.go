@@ -2,6 +2,7 @@ package mutation
 
 import (
 	"encoding/base64"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -1003,6 +1004,33 @@ func TestRBDMirrorPoolScheduleCommandsAndReadback(t *testing.T) {
 	} {
 		if _, err := build(Request{Action: "rbd_mirroring.schedule"}, p); err == nil {
 			t.Fatalf("accepted %#v", p)
+		}
+	}
+}
+
+func TestRBDMirrorScheduleCanonicalIntervalReadback(t *testing.T) {
+	for _, scope := range []string{"rbd_mirroring.schedule", "rbd_image.action"} {
+		for _, pair := range [][2]string{{"60m", "1h"}, {"24h", "1d"}, {"2880m", "2d"}, {"120m", "2h"}, {"18446744073709551616h", "1106804644422573096960m"}} {
+			for _, verb := range []string{"mirror-schedule-add", "mirror-schedule-remove"} {
+				req := Request{Action: scope, ResourceKey: "rbd/image/" + base64.RawURLEncoding.EncodeToString([]byte("images/vm")) + "/action", Parameters: map[string]any{"pool": "images", "action": verb, "interval": pair[0]}}
+				namespace, image := "-", "-"
+				if scope == "rbd_image.action" {
+					namespace, image = "", "vm"
+				}
+				data := []byte(fmt.Sprintf(`[{"pool":"images","namespace":%q,"image":%q,"items":[{"interval":%q,"start_time":null}]}]`, namespace, image, pair[1]))
+				if got := rbdMirrorScheduleReadbackMatches(req, data); got != (verb == "mirror-schedule-add") {
+					t.Fatalf("%s %s %s -> %s: got %v", scope, verb, pair[0], pair[1], got)
+				}
+				req.Parameters["interval"] = "7m"
+				if got := rbdMirrorScheduleReadbackMatches(req, data); got != (verb == "mirror-schedule-remove") {
+					t.Fatal("different durations considered equal")
+				}
+			}
+		}
+	}
+	for _, value := range []string{"", "0m", "-1h", "1.5h", "1w", "oops"} {
+		if rbdMirrorScheduleIntervalMinutes(value) != nil {
+			t.Fatalf("accepted invalid duration %q", value)
 		}
 	}
 }
