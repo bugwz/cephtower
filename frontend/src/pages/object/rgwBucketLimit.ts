@@ -1,3 +1,8 @@
+export function rgwBucketLimitPatch(value: unknown, current: unknown) {
+  if (value === current) return {}
+  return rgwBucketLimitInput(value)
+}
+
 export function rgwBucketLimitInput(value: unknown) {
   if (value === undefined || value === null || value === '') return {}
   if (typeof value !== 'number' || !Number.isInteger(value) || value < -1 || value > 2147483647) {

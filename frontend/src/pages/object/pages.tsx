@@ -14,7 +14,7 @@ import { RgwStorage } from './RgwStorage'
 import { rgwStorageScope } from './rgwStorageDetails'
 import { RgwRateLimit } from './RgwRateLimit'
 import { RgwPermissions } from './RgwPermissions'
-import { rgwBucketLimit, rgwBucketLimitInput } from './rgwBucketLimit'
+import { rgwBucketLimit, rgwBucketLimitInput, rgwBucketLimitPatch } from './rgwBucketLimit'
 import { rgwAccountLimit, rgwAccountLimitPatch } from './rgwAccountLimit'
 import { rgwUserSuspension, rgwUserBooleanFlag } from './rgwUserFlags'
 import { rgwUserFlagPatch } from './rgwUserFlagPatch'
@@ -150,7 +150,7 @@ const definitions: Record<
         uid: userId(row),
         ...(values.display_name ? { display_name: String(values.display_name) } : {}),
         ...rgwUserEmailPatch(values),
-        ...rgwBucketLimitInput(values.max_buckets),
+        ...rgwBucketLimitPatch(values.max_buckets, row?.max_buckets),
         ...rgwUserFlagPatch(values)
       })
     },
