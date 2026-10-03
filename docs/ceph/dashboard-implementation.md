@@ -5,6 +5,14 @@
 
 ## 如何追踪调用链
 
+镜像同步页面新增独立待执行任务面板：GET /rbd/mirroring/schedule/status →
+rbd mirror snapshot schedule status --format json。依据参考 Dashboard services/rbd.py
+中的 snapshot_schedule_status / get_schedule_time_for_image 及原生
+MirrorSnapshotSchedule.cc 的 ScheduleStatus，显示镜像路径、计划时间原值及读取时间。
+不依赖库存，也不将配置列表当作运行状态；空列表、读取失败和历史快照分别展示。
+切换集群及本页操作成功后清除旧快照并重读；两块面板的失败互不影响。
+离线覆盖原生命令、API、空/异常响应和前端解析，尚未进行真实集群或浏览器验证。
+
 镜像同步页面的表单操作成功后自动重读独立调度列表，立即移除旧配置快照；通知在
 操作完成及集群代次校验后触发，不等待后续库存刷新。取消、失败或切换集群后的旧
 操作不会触发刷新；外部变更仍可手动重读。离线覆盖这些时序及库存刷新失败场景，

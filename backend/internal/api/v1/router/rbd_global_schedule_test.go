@@ -23,6 +23,9 @@ import (
 type globalScheduleRunner struct{}
 
 func (globalScheduleRunner) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
+	if spec.ID == "rbd.mirror.schedule.status" {
+		return executor.CommandResult{Stdout: []byte(`{"scheduled_images":[{"image":"images/vm","schedule_time":"2026-10-03 12:00:00"}]}`)}, nil
+	}
 	if spec.ID == "rbd_mirroring.global_schedule.post_check" || spec.ID == "rbd.mirror.schedules" {
 		return executor.CommandResult{Stdout: []byte(`[{"pool":"-","namespace":"-","image":"-","items":[{"interval":"1h","start_time":""}]}]`)}, nil
 	}
@@ -56,6 +59,16 @@ func TestGlobalMirrorScheduleAPI(t *testing.T) {
 	mux := http.NewServeMux()
 	Register(mux, handler.New(handler.Dependencies{Database: database, Clusters: clusters, Inspection: clusterinspect.New(clusters, globalScheduleRunner{}), Mutations: mutations, Operations: operations, AuthEnabled: func() bool { return false }}))
 	query, _ := json.Marshal(map[string]any{"cluster_id": cluster.ID})
+	status := httptest.NewRecorder()
+	mux.ServeHTTP(status, httptest.NewRequest("GET", "/api/v1/rbd/mirroring/schedule/status", strings.NewReader(string(query))))
+	if status.Code != http.StatusOK || status.Header().Get("Cache-Control") != "no-store" || !strings.Contains(status.Body.String(), `"scheduled_images":[{"image":"images/vm"`) {
+		t.Fatal(status.Code, status.Body.String())
+	}
+	invalid := httptest.NewRecorder()
+	mux.ServeHTTP(invalid, httptest.NewRequest("GET", "/api/v1/rbd/mirroring/schedule/status", strings.NewReader(`{"cluster_id":1,"pool":"images"}`)))
+	if invalid.Code != http.StatusBadRequest {
+		t.Fatal(invalid.Code, invalid.Body.String())
+	}
 	read := httptest.NewRecorder()
 	mux.ServeHTTP(read, httptest.NewRequest("GET", "/api/v1/rbd/mirroring/schedules", strings.NewReader(string(query))))
 	if read.Code != http.StatusOK || read.Header().Get("Cache-Control") != "no-store" || !strings.Contains(read.Body.String(), `"schedules":[{"pool":"-"`) {

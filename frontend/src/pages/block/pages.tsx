@@ -5,6 +5,7 @@ import { ImageMirrorSchedule, MirrorSchedules } from './MirrorSchedules'
 import { RbdRuntimeStatus } from './RbdRuntimeStatus'
 import { RbdConfiguration } from './RbdConfiguration'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
+import { LiveMirrorScheduleStatus } from './LiveMirrorScheduleStatus'
 import { useClusterContext } from '../../state/ClusterContext'
 import { useState } from 'react'
 
@@ -35,7 +36,7 @@ export function RbdGroupsPage() {
 export function ImageMirroringPage() {
   const { selectedClusterId } = useClusterContext()
   const [scheduleRevision, setScheduleRevision] = useState(0)
-  return <><ResourceListPage definition={resourceDefinitions.imageMirroring} onFormMutationSuccess={() => setScheduleRevision((value) => value + 1)} />{selectedClusterId && <LiveMirrorSchedules key={`${selectedClusterId}/${scheduleRevision}`} clusterId={selectedClusterId} />}</>
+  return <><ResourceListPage definition={resourceDefinitions.imageMirroring} onFormMutationSuccess={() => setScheduleRevision((value) => value + 1)} />{selectedClusterId && <><LiveMirrorSchedules key={`${selectedClusterId}/${scheduleRevision}`} clusterId={selectedClusterId} /><LiveMirrorScheduleStatus key={`status/${selectedClusterId}/${scheduleRevision}`} clusterId={selectedClusterId} /></>}</>
 }
 
 export function IscsiPage() {

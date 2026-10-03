@@ -106,6 +106,25 @@ assert.ok(blockSource.includes('<LiveMirrorSchedules key={`${selectedClusterId}/
 assert.ok(blockSource.includes('onFormMutationSuccess={() => setScheduleRevision((value) => value + 1)}'))
 assert.ok(liveSource.includes('下方为上次成功读取结果，不代表当前配置。'))
 console.log('Live mirror schedules preserve cluster scope, empty results and read failures')
+const statusSource = readFileSync(new URL('../src/pages/block/LiveMirrorScheduleStatus.tsx', import.meta.url), 'utf8')
+const statusTree = ts.createSourceFile('status.tsx', statusSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const statusRowsNode = statusTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'scheduledImageRows')
+const statusRowsCode = ts.transpileModule(statusRowsNode.getText(statusTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const statusRows = new Function(`${statusRowsCode}; return scheduledImageRows`)()
+assert.deepEqual(statusRows([]), [])
+const pending = { image: 'images/team/vm', schedule_time: '2026-10-03 12:00:00' }
+assert.deepEqual(statusRows([pending, pending]), [{ key: 0, ...pending }, { key: 1, ...pending }])
+for (const value of [null, {}, [null], [{}], [{ ...pending, image: ' ' }], [{ ...pending, schedule_time: null }]]) assert.equal(statusRows(value), undefined)
+const statusFn = statusTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'LiveMirrorScheduleStatus')
+const statusLoaderNode = statusFn.body.statements.find((node) => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(statusTree) === 'loader').declarationList.declarations[0].initializer.arguments[0]
+const statusLoaderCode = ts.transpileModule(`const loader = ${statusLoaderNode.getText(statusTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const loadStatus = (payload) => new Function('request', 'jsonInit', 'clusterId', 'scheduledImageRows', `${statusLoaderCode}; return loader()`)(async (path, init) => {
+  assert.equal(path, '/rbd/mirroring/schedule/status'); assert.deepEqual(init, { method: 'GET', body: { cluster_id: 9 } }); return payload
+}, (method, body) => ({ method, body }), 9, statusRows)
+assert.deepEqual(await loadStatus({ scheduled_images: [pending], observed_at: 'now' }), { rows: [{ key: 0, ...pending }], observedAt: 'now' })
+for (const payload of [{}, { scheduled_images: null, observed_at: 'now' }, { scheduled_images: [], observed_at: null }]) await assert.rejects(loadStatus(payload))
+assert.ok(blockSource.includes('key={`status/${selectedClusterId}/${scheduleRevision}`}'))
+console.log('Live pending mirror tasks preserve native times, repeated images and isolated scope')
 const resourceFn = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ResourceListPage')
 const submitNode = resourceFn.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submitForm')
 const submitCode = ts.transpileModule(submitNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
