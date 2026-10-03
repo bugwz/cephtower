@@ -38,7 +38,7 @@ type Daemon struct {
 	Version        *string `json:"version"`
 	ContainerImage *string `json:"container_image"`
 	CPUPercentage  *string `json:"cpu_percentage,omitempty"`
-	MemoryUsage    *uint64 `json:"memory_usage,omitempty"`
+	MemoryUsage    *uint64 `json:"memory_usage,omitempty,string"`
 	LastRefresh    *string `json:"last_refresh,omitempty"`
 }
 type DaemonRuntime struct {

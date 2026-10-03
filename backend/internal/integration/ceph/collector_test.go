@@ -276,6 +276,30 @@ func TestCollectTopologyPreservesExactDaemonLimitsAndRanks(t *testing.T) {
 	t.Fatal("daemon observation missing")
 }
 
+func TestDaemonMemoryUsageSerializesExactBytes(t *testing.T) {
+	for _, native := range []string{"0", "9007199254740993", "18446744073709551615"} {
+		var wire daemonWire
+		if err := json.Unmarshal([]byte(`{"memory_usage":`+native+`}`), &wire); err != nil {
+			t.Fatal(err)
+		}
+		payload := cephdomain.Daemon{MemoryUsage: wire.MemoryUsage}
+		encoded, err := json.Marshal(payload)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(string(encoded), `"memory_usage":"`+native+`"`) {
+			t.Fatalf("imprecise bytes: %s", encoded)
+		}
+		var restored cephdomain.Daemon
+		if err := json.Unmarshal(encoded, &restored); err != nil {
+			t.Fatal(err)
+		}
+		if restored.MemoryUsage == nil || *restored.MemoryUsage != *wire.MemoryUsage {
+			t.Fatal("byte count changed during round trip")
+		}
+	}
+}
+
 func TestDaemonRuntimeRejectsInvalidNumericShapes(t *testing.T) {
 	for _, payload := range []string{`{"memory_request":-1}`, `{"memory_limit":1.5}`, `{"rank":1.5}`, `{"rank_generation":true}`, `{"pending_daemon_config":"false"}`} {
 		var wire daemonWire
