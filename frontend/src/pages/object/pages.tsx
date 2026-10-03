@@ -53,6 +53,7 @@ import { RgwBucketLifecycleRules } from './RgwBucketLifecycleRules'
 import { rgwLifecycleProgress } from './rgwLifecycleProgress'
 import { rgwBucketSyncPolicy } from './rgwBucketSyncPolicy'
 import { bucketSyncGroupBlocked, bucketSyncGroupInitial, bucketSyncGroupInput, bucketSyncGroupConfirmation } from './rgwBucketSyncGroupForm'
+import { bucketSyncGroupCreateBlocked, bucketSyncGroupCreateInitial, bucketSyncGroupCreateInput, bucketSyncGroupCreateConfirmation } from './rgwBucketSyncGroupForm'
 import { rgwBucketConfigurationReadOptions } from './rgwBucketConfiguration'
 import { rgwBucketObjectLockSummary } from './rgwBucketObjectLockSummary'
 import { RgwBucketAcl } from './RgwBucketAcl'
@@ -604,6 +605,17 @@ const definitions: Record<
       })
     },
     extraActions: [{
+      title: '创建桶同步组', path: '/rgw/bucket/sync/group', method: 'POST',
+      successMessage: '桶本地同步组已创建并回读核验（尚无数据流和管道）',
+      disabledWhen: bucketSyncGroupCreateBlocked, initialValues: bucketSyncGroupCreateInitial, confirmation: bucketSyncGroupCreateConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'group_id', label: '新的同步组 ID（不可与已有组重复）', required: true },
+        { name: 'status', label: '初始状态', type: 'select', required: true, options: [{ value: 'enabled', label: 'enabled 启用' }, { value: 'allowed', label: 'allowed 允许但不启用' }, { value: 'forbidden', label: 'forbidden 禁止' }] },
+        { name: 'confirm_create', label: '创建范围确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '我确认仅创建桶本地空组，不会建立完整复制链路' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketSyncGroupCreateInput(values, row) })
+    }, {
       title: '修改桶同步组状态', path: '/rgw/bucket/sync/group', method: 'PATCH',
       successMessage: '桶同步组状态已回读核验（不代表同步完成）',
       disabledWhen: bucketSyncGroupBlocked, initialValues: bucketSyncGroupInitial, confirmation: bucketSyncGroupConfirmation,

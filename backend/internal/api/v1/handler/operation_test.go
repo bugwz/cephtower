@@ -57,6 +57,14 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if err != nil || nativeOperation.Action != "rgw_bucket.sync_group" || nativeOperation.Risk != "high" || nativeOperation.ResourceKey != "rgw/bucket/"+id {
 			t.Fatalf("wrong sync group operation: %+v %v", nativeOperation, err)
 		}
+		createResponse := sendOperationRequest(t, nativeMux, http.MethodPost, "/api/v1/rgw/bucket/sync/group", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"group_id":"new","status":"allowed"}`, cluster.ID, id), "sync-group-create-"+tenant)
+		if createResponse.Code != http.StatusAccepted {
+			t.Fatalf("sync group creation queue: %d %s", createResponse.Code, createResponse.Body.String())
+		}
+		createdGroup, err := db.FindOperation(context.Background(), operationIDFromResponse(t, createResponse))
+		if err != nil || createdGroup.Action != "rgw_bucket.sync_group_create" || createdGroup.Risk != "high" || createdGroup.ResourceKey != nativeOperation.ResourceKey || createdGroup.LockKey != nativeOperation.LockKey {
+			t.Fatalf("wrong sync group creation: %+v %v", createdGroup, err)
+		}
 		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/bucket", fmt.Sprintf(`{"cluster_id":%d,"name":"same-bucket","tenant":%q}`, cluster.ID, tenant), "bucket-create-"+tenant)
 		if response.Code != http.StatusAccepted {
 			t.Fatalf("bucket creation queue: %d %s", response.Code, response.Body.String())

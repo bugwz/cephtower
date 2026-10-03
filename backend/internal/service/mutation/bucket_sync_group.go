@@ -21,7 +21,7 @@ func syncGroupString(p map[string]any, key string) string {
 	return value
 }
 
-func bucketSyncGroupCommand(p map[string]any, rgw func([]string, []string) command) (command, error) {
+func bucketSyncGroupCommand(action string, p map[string]any, rgw func([]string, []string) command) (command, error) {
 	encoded := syncGroupString(p, "bucket_id")
 	raw, err := base64.RawURLEncoding.Strict().DecodeString(encoded)
 	pair := strings.Split(string(raw), "\x00")
@@ -41,11 +41,15 @@ func bucketSyncGroupCommand(p map[string]any, rgw func([]string, []string) comma
 	if status != "enabled" && status != "allowed" && status != "forbidden" {
 		return command{}, invalid("invalid sync group status")
 	}
-	if syncGroupString(p, "expected_status") == "" {
+	if action == "rgw_bucket.sync_group" && syncGroupString(p, "expected_status") == "" {
 		return command{}, invalid("expected_status is required")
 	}
 	target := []string{"--bucket", pair[1], "--tenant", pair[0]}
-	args := append([]string{"sync", "group", "modify", "--group-id", group, "--status", status}, target...)
+	verb := "modify"
+	if action == "rgw_bucket.sync_group_create" {
+		verb = "create"
+	}
+	args := append([]string{"sync", "group", verb, "--group-id", group, "--status", status}, target...)
 	return rgw(args, append([]string{"sync", "policy", "get"}, target...)), nil
 }
 
@@ -79,6 +83,8 @@ func bucketSyncPolicyDocument(body []byte) (map[string]any, map[string]map[strin
 		}
 		indexed[id] = group
 	}
+	// Group order is not semantic: native maps can insert new IDs before old IDs.
+	policy["groups"] = indexed
 	return policy, indexed, true
 }
 
@@ -94,8 +100,18 @@ func (s *Service) executeBucketSyncGroup(ctx context.Context, access executor.Cl
 		return fail("pre_check_failed", "bucket sync policy could not be read; no change submitted")
 	}
 	wanted, groups, ok := bucketSyncPolicyDocument(before.Stdout)
-	group := groups[syncGroupString(request.Parameters, "group_id")]
-	if !ok || group == nil || group["status"] != syncGroupString(request.Parameters, "expected_status") {
+	if !ok {
+		return fail("pre_check_failed", "bucket sync policy is invalid; no change submitted")
+	}
+	id := syncGroupString(request.Parameters, "group_id")
+	group := groups[id]
+	if request.Action == "rgw_bucket.sync_group_create" {
+		if group != nil {
+			return fail("pre_check_failed", "sync group already exists; creation must not overwrite it")
+		}
+		group = map[string]any{"id": id, "data_flow": map[string]any{}, "pipes": []any{}}
+		groups[id] = group
+	} else if group == nil || group["status"] != syncGroupString(request.Parameters, "expected_status") {
 		return fail("pre_check_failed", "sync group missing or status changed; refresh before retrying")
 	}
 	group["status"] = syncGroupString(request.Parameters, "status")

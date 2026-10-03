@@ -28,6 +28,19 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：补齐桶本地同步组创建。依据参考 Dashboard create_sync_policy_group
+  与原生 SYNC_GROUP_CREATE，实现 POST /rgw/bucket/sync/group → 高风险操作队列 →
+  sync policy get / sync group create / sync policy get，复用桶资源锁及 rgw_admin 能力门控。
+  原生 create 对已有 ID 实际具有覆盖行为，因此写前要求 ID 不存在；写后要求新组状态正确、
+  数据流和管道为空且其余完整策略不变。比较忽略组顺序，但保留精确 JSON 数字。
+  前端显式填写新 ID、选择初始状态并确认范围，支持已有策略为空的桶；禁止陈旧或不可用数据提交。
+  此功能仅创建桶本地空组，不建立复制链路、不修改 Zonegroup 或提交 period；
+  数据流和管道配置仍待补齐。原生命令没有 CAS，外部并发创建同名组仍可能被修改，
+  已在确认文案说明；写入或核验失败不自动重试、回滚。
+  回归覆盖全局及命名租户、重复 ID、空策略、组顺序、各阶段失败、意外管道及大整数变化、
+  高风险队列、无 S3 端点路由及前端表单绑定。make test-backend（含 OpenAPI 同步检查）、
+  make test-frontend（含 TypeScript/Vite 构建）通过；未进行真实集群或浏览器视觉验证。
+
 - 2026-10-04：补齐桶本地已有同步组的状态修改。依据参考 Dashboard
   update_sync_policy_group 与 radosgw-admin 的 SYNC_GROUP_MODIFY，实现高风险
   PATCH /rgw/bucket/sync/group → 操作队列 → sync policy get / sync group modify /

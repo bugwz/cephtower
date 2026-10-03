@@ -16,11 +16,15 @@ console.log('bucket local sync policy summary checks passed')
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketSyncGroupForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(api)
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-let action
+let action, createAction
 function visit(node) {
   if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '修改桶同步组状态')) {
     const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
     action = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
+  }
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '创建桶同步组')) {
+    const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+    createAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
   }
   ts.forEachChild(node, visit)
 }
@@ -42,3 +46,20 @@ for (const status of ['allowed', 'forbidden']) {
   for (const change of [{ bucket_id: 'other' }, { group_id: 'other' }, { status: 'enabled' }, { status: 'unknown' }, { confirm_change: true }]) assert.throws(() => action.buildBody({ ...values, ...change }, 7, row))
 }
 console.log('bucket sync group form and action binding checks passed')
+assert.ok(createAction)
+assert.equal(createAction.path, '/rgw/bucket/sync/group')
+assert.equal(createAction.method, 'POST')
+const emptyRow = { ...row, bucket_sync_policy: { groups: [] } }
+assert.equal(createAction.disabledWhen(emptyRow), undefined)
+assert.ok(createAction.disabledWhen({ ...row, bucket_sync_policy: null }))
+assert.ok(createAction.disabledWhen({ ...row, stale: true }))
+const creation = createAction.initialValues(emptyRow)
+assert.equal(creation.status, undefined)
+assert.equal(creation.confirm_create, undefined)
+for (const status of ['enabled', 'allowed', 'forbidden']) {
+  const values = { ...creation, group_id: ' 新组 ', status, confirm_create: 'acknowledged' }
+  assert.deepEqual(createAction.buildBody(values, 7, row), { cluster_id:7, bucket_id:row.natural_key, group_id:' 新组 ', status })
+  assert.match(createAction.confirmation(values, row), /空数据流和空管道.*不建立可工作的复制链路/)
+  for (const change of [{ group_id: group.id }, { group_id:'' }, { group_id:'-bad' }, { group_id:'a\nb' }, { group_id:'\ud800' }, { group_id:'中'.repeat(171) }, { bucket_id:'other' }, { status:'unknown' }, { confirm_create:true }]) assert.throws(() => createAction.buildBody({ ...values, ...change }, 7, row))
+}
+console.log('bucket sync group creation form checks passed')
