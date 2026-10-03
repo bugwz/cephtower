@@ -1,9 +1,33 @@
 package s3
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
+
+func TestBucketCORSNormalization(t *testing.T) {
+	one := `<CORSConfiguration><CORSRule><ID>x</ID><AllowedOrigin>b</AllowedOrigin><AllowedOrigin>a</AllowedOrigin><AllowedOrigin>a</AllowedOrigin><AllowedMethod>copy</AllowedMethod><AllowedMethod>get</AllowedMethod><AllowedMethod>GET</AllowedMethod><AllowedHeader>x</AllowedHeader><AllowedHeader>x</AllowedHeader><ExposeHeader>b</ExposeHeader><ExposeHeader>a</ExposeHeader><ExposeHeader>b</ExposeHeader><MaxAgeSeconds>4294967295</MaxAgeSeconds></CORSRule></CORSConfiguration>`
+	two := `<CORSConfiguration><CORSRule><ID>x</ID><AllowedOrigin>a</AllowedOrigin><AllowedOrigin>b</AllowedOrigin><AllowedMethod>GET</AllowedMethod><AllowedMethod>COPY</AllowedMethod><AllowedHeader>x</AllowedHeader><ExposeHeader>b</ExposeHeader><ExposeHeader>a</ExposeHeader><ExposeHeader>b</ExposeHeader></CORSRule></CORSConfiguration>`
+	a, err := BucketCORS([]byte(one))
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := BucketCORS([]byte(two))
+	if err != nil || !reflect.DeepEqual(a, b) {
+		t.Fatalf("normalization mismatch %+v %+v %v", a, b, err)
+	}
+	if !reflect.DeepEqual(a[0].ExposeHeaders, []string{"b", "a", "b"}) {
+		t.Fatal("exposed headers lost order or duplicates")
+	}
+	zero, _ := BucketCORS([]byte(strings.Replace(two, "</CORSRule>", "<MaxAgeSeconds>0</MaxAgeSeconds></CORSRule>", 1)))
+	if reflect.DeepEqual(a, zero) {
+		t.Fatal("zero collapsed to omitted")
+	}
+	if _, err := BucketCORS([]byte("<CORSConfiguration/>")); err == nil {
+		t.Fatal("empty configuration accepted")
+	}
+}
 
 func TestCORSMaxAgeNativeSemantics(t *testing.T) {
 	for text, want := range map[string]uint32{"": 0, "0": 0, "-0": 0, "+001": 1, " \t42": 42, "4294967294": 4294967294, "-18446744073709551615": 1} {

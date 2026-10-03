@@ -30,11 +30,17 @@ func TestBucketConfigurationWritesUseExplicitDocument(t *testing.T) {
 		wantCode string
 		calls    int
 	}{
-		{"cors", "<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin></CORSRule></CORSConfiguration>", 200, "", 1}, {"cors", "<CORSConfiguration/>", 200, "invalid_request", 0}, {"policy", `{"Statement":[]}`, 200, "", 1}, {"cors", map[string]any{}, 200, "invalid_request", 0}, {"encryption", "{}", 200, "invalid_request", 0}, {"lifecycle", "<LifecycleConfiguration/>", 503, "s3_failed", 1},
+		{"cors", "<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin></CORSRule></CORSConfiguration>", 200, "", 2}, {"cors", "<CORSConfiguration/>", 200, "invalid_request", 0}, {"policy", `{"Statement":[]}`, 200, "", 1}, {"cors", map[string]any{}, 200, "invalid_request", 0}, {"encryption", "{}", 200, "invalid_request", 0}, {"lifecycle", "<LifecycleConfiguration/>", 503, "s3_failed", 1},
 	} {
 		calls := 0
 		service.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
 			calls++
+			if tc.kind == "cors" && calls == 2 {
+				if r.Method != "GET" || r.URL.RawQuery != "cors=" {
+					t.Fatal("wrong CORS verification request")
+				}
+				return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(tc.document.(string)))}, nil
+			}
 			body, _ := io.ReadAll(r.Body)
 			if string(body) != tc.document || r.URL.Query().Has(tc.kind) == false {
 				t.Fatalf("wrong request %s %s", r.URL, body)

@@ -3,25 +3,85 @@ package s3
 import (
 	"encoding/xml"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 )
 
-func validateBucketCORS(body []byte) error {
-	var document struct {
-		Rules []struct {
-			IDs     []tagText  `xml:"ID"`
-			Origins []tagText  `xml:"AllowedOrigin"`
-			Methods []tagText  `xml:"AllowedMethod"`
-			Headers []tagText  `xml:"AllowedHeader"`
-			Exposed []tagText  `xml:"ExposeHeader"`
-			Ages    []tagText  `xml:"MaxAgeSeconds"`
-			Unknown []xml.Name `xml:",any"`
-			Text    string     `xml:",chardata"`
-		} `xml:"CORSRule"`
+type corsDocument struct {
+	Rules []struct {
+		IDs     []tagText  `xml:"ID"`
+		Origins []tagText  `xml:"AllowedOrigin"`
+		Methods []tagText  `xml:"AllowedMethod"`
+		Headers []tagText  `xml:"AllowedHeader"`
+		Exposed []tagText  `xml:"ExposeHeader"`
+		Ages    []tagText  `xml:"MaxAgeSeconds"`
 		Unknown []xml.Name `xml:",any"`
 		Text    string     `xml:",chardata"`
+	} `xml:"CORSRule"`
+	Unknown []xml.Name `xml:",any"`
+	Text    string     `xml:",chardata"`
+}
+
+type BucketCORSRule struct {
+	ID             string   `json:"id"`
+	AllowedOrigins []string `json:"allowed_origins"`
+	AllowedMethods []string `json:"allowed_methods"`
+	AllowedHeaders []string `json:"allowed_headers"`
+	ExposeHeaders  []string `json:"expose_headers"`
+	MaxAgeSeconds  *uint32  `json:"max_age_seconds"`
+}
+
+// BucketCORS follows RGW's list/set/bitmask semantics. Rule and exposed-header
+// order remains significant; origins and allowed headers are sorted sets.
+func BucketCORS(body []byte) ([]BucketCORSRule, error) {
+	if err := ValidateBucketConfiguration("cors", body); err != nil {
+		return nil, err
 	}
+	var document corsDocument
+	if err := xml.Unmarshal(body, &document); err != nil {
+		return nil, err
+	}
+	rules := make([]BucketCORSRule, 0, len(document.Rules))
+	set := func(fields []tagText) []string {
+		unique := map[string]bool{}
+		for _, field := range fields {
+			unique[field.Text] = true
+		}
+		values := make([]string, 0, len(unique))
+		for value := range unique {
+			values = append(values, value)
+		}
+		sort.Strings(values)
+		return values
+	}
+	for _, rule := range document.Rules {
+		parsed := BucketCORSRule{AllowedOrigins: set(rule.Origins), AllowedHeaders: set(rule.Headers), AllowedMethods: []string{}, ExposeHeaders: []string{}}
+		if len(rule.IDs) == 1 {
+			parsed.ID = rule.IDs[0].Text
+		}
+		if len(rule.Ages) == 1 {
+			parsed.MaxAgeSeconds, _ = corsMaxAge(rule.Ages[0].Text)
+		}
+		methods := map[string]bool{}
+		for _, method := range rule.Methods {
+			methods[strings.ToUpper(method.Text)] = true
+		}
+		for _, method := range []string{"GET", "PUT", "DELETE", "HEAD", "POST", "COPY"} {
+			if methods[method] {
+				parsed.AllowedMethods = append(parsed.AllowedMethods, method)
+			}
+		}
+		for _, header := range rule.Exposed {
+			parsed.ExposeHeaders = append(parsed.ExposeHeaders, header.Text)
+		}
+		rules = append(rules, parsed)
+	}
+	return rules, nil
+}
+
+func validateBucketCORS(body []byte) error {
+	var document corsDocument
 	invalid := fmt.Errorf("CORS requires rules with nonempty origins, supported methods, IDs up to 255 UTF-8 bytes and at most one wildcard per origin or allowed header")
 	if xml.Unmarshal(body, &document) != nil || len(document.Rules) == 0 || len(document.Unknown) != 0 || strings.TrimSpace(document.Text) != "" {
 		return invalid
