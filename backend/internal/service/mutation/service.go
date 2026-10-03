@@ -314,6 +314,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "rgw_user.update" && rgwUserPlacementRequested(request.Parameters) && (err != nil || !rgwUserPlacementMatches(checked.Stdout, request.Parameters)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user modification was accepted but placement settings could not be verified; inspect user info before retrying", Retryable: false}
+		}
 		if request.Action == "rgw_user.policy" && (err != nil || !rgwUserPolicyMatches(checked.Stdout, request.Parameters)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "managed policy command was accepted but the requested association could not be verified; inspect user policies before retrying", Retryable: false}
 		}

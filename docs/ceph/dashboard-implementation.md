@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+用户放置修改增加回读值核验：`user info` 必须返回所请求的默认规则、原始存储类及完整有序标签列表；缺失、null、格式错误、值不匹配或读取失败均返回不可自动重试的 `post_check_failed`，提示检查实际状态。执行器测试覆盖写入后回读及失败路径，写入失败不继续读取；测试使用离线执行器，并不代表真实集群验证。
+
 用户放置标签支持非空列表整体替换：表单 `placement_tags_csv` 经用户 PATCH API 映射为 `user modify --tags=...`，再 `user info` 回读。参考 `radosgw-admin.cc` 6835 附近仅在解析列表非空时调用 `set_placement_tags`，以及 `driver/rados/rgw_user.cc` 2149 附近整体赋值；`--tags-add/--tags-rm` 不是用户操作，因此不提供追加或清空。输入拒绝空项与控制字符，保留标签中的空格；确认提示明确整体替换及放置目标权限影响。离线测试覆盖命令、回读与表单校验，未做真实集群验证。
 
 用户默认放置配置新增显式设置操作：PATCH 用户 API 将规则和存储类一起映射为 `user modify --placement-id=... --storage-class=...` 并 `user info` 回读。依据参考 `radosgw-admin.cc` 6824 附近和 `driver/rados/rgw_user.cc` 的修改分支，必须提供规则，空存储类采用原生默认类；原生命令校验配置有效性，不迁移既有 Bucket/对象。前后端拒绝规则缺失、非法文本及只修改存储类的请求；放置标签编辑尚未包含在此增量。未做真实集群验证。
