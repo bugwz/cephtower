@@ -1719,6 +1719,24 @@ func TestRGWAccountDeleteCommand(t *testing.T) {
 	}
 }
 
+func TestRGWUserOperationMask(t *testing.T) {
+	request := Request{Action: "rgw_user.update", ResourceKey: "rgw/user/tenant$user"}
+	for _, mask := range []string{"read", "write", "delete", "read,write", "read,delete", "write,delete", "read,write,delete"} {
+		cmd, err := build(request, map[string]any{"op_mask": mask})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(cmd.args, []string{"user", "modify", "--uid", "tenant$user", "--op-mask=" + mask, "--format", "json"}) || !reflect.DeepEqual(cmd.check, []string{"user", "info", "--uid", "tenant$user", "--format", "json"}) {
+			t.Fatalf("unexpected command: %#v", cmd)
+		}
+	}
+	for _, value := range []any{nil, false, "", "*", "none", "read,read", "read\n", "read,unknown", []string{"read"}} {
+		if _, err := build(request, map[string]any{"op_mask": value, "email": "valid@example.org"}); err == nil {
+			t.Fatalf("accepted invalid mask: %#v", value)
+		}
+	}
+}
+
 func TestRGWUserPlacementTags(t *testing.T) {
 	request := Request{Action: "rgw_user.update", ResourceKey: "rgw/user/test"}
 	for _, tags := range []string{"archive", "fast,archive", "space tag, raw ", "--option=value"} {

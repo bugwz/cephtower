@@ -8,6 +8,7 @@ import (
 	"math/big"
 	pathpkg "path"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -1844,6 +1845,13 @@ func build(request Request, p map[string]any) (command, error) {
 	case "rgw_user.update":
 		uid := last(tail)
 		args := []string{"user", "modify", "--uid", uid}
+		if raw, present := p["op_mask"]; present {
+			mask, ok := raw.(string)
+			if !ok || !slices.Contains([]string{"read", "write", "delete", "read,write", "read,delete", "write,delete", "read,write,delete"}, mask) {
+				return command{}, invalid("op_mask must be an explicit nonempty read/write/delete combination")
+			}
+			args = append(args, "--op-mask="+mask)
+		}
 		if raw, present := p["placement_tags_csv"]; present {
 			tags, ok := raw.(string)
 			if !ok || tags == "" || len(tags) > 32<<10 || strings.ContainsAny(tags, "\x00\r\n") {

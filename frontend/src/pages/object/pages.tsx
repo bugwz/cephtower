@@ -33,6 +33,7 @@ import { RgwRoleTagsTable } from './RgwRoleTagsTable'
 import { RgwPolicyDocument, RgwRolePolicyDetails, RgwRoleManagedPolicies } from './RgwRolePolicyDetails'
 import { rgwPolicyChanged, rgwPolicyConfirmation, rgwPolicyDeleteOptions, rgwPolicyMutation } from './rgwRolePolicies'
 import { RgwUserDetails } from './RgwUserDetails'
+import { rgwUserOperationMaskInput, rgwUserOperationMaskOptions } from './rgwUserOperationMask'
 import { rgwUserPlacementInput, rgwUserPlacementTagsInput } from './rgwUserPlacementForm'
 
 export function RgwOverviewPage() {
@@ -175,6 +176,11 @@ const definitions: Record<
       initialValues: (row) => rgwQuotaInitial(row?.[scope === 'user' ? 'user_quota' : 'bucket_quota']),
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), scope, ...rgwQuotaInput(values) })
     })),
+      { title: '设置用户操作掩码', path: '/rgw/user', method: 'PATCH', successMessage: '操作掩码设置执行成功',
+        fields: [{ name: 'op_mask', label: '允许的操作类别（整体替换，非完整有效权限）', type: 'select', required: true, options: rgwUserOperationMaskOptions }],
+        confirmation: (values, row) => `将用户 ${JSON.stringify(userId(row))} 的操作掩码整体替换为 ${JSON.stringify(rgwUserOperationMaskInput(values).op_mask)}，可能限制现有访问。ACL 和策略仍独立生效。`,
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserOperationMaskInput(values) })
+      },
       { title: '设置用户默认放置', path: '/rgw/user', method: 'PATCH', successMessage: '默认放置设置执行成功',
         fields: [
           { name: 'default_placement', label: '默认放置规则（必须存在，不支持清空）', required: true },

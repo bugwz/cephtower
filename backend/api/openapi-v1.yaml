@@ -692,6 +692,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -1441,6 +1444,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -3485,6 +3491,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -4234,6 +4243,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -5811,6 +5823,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -6687,6 +6702,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -7437,6 +7455,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -8873,6 +8894,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -9716,6 +9740,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -10465,6 +10492,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -11460,6 +11490,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -12705,6 +12738,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -13455,6 +13491,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -14205,6 +14244,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -15592,6 +15634,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -16487,6 +16532,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -17332,6 +17380,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -18081,6 +18132,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -19486,6 +19540,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -20235,6 +20292,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -21001,6 +21061,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -21844,6 +21907,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -22593,6 +22659,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -23343,6 +23412,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -24405,6 +24477,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -25345,6 +25420,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -26188,6 +26266,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -26937,6 +27018,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -27819,6 +27903,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -28569,6 +28656,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -29999,6 +30089,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -31034,6 +31127,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -31877,6 +31973,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -32722,6 +32821,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -33565,6 +33667,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -34314,6 +34419,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -35254,6 +35362,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -36097,6 +36208,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -36846,6 +36960,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -37691,6 +37808,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -38440,6 +38560,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -39285,6 +39408,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -40034,6 +40160,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -40879,6 +41008,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -41722,6 +41854,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -42471,6 +42606,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -43484,6 +43622,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -44328,6 +44469,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -45078,6 +45222,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -45828,6 +45975,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -46672,6 +46822,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -47456,6 +47609,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -48491,6 +48647,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -49334,6 +49493,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -50083,6 +50245,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -50928,6 +51093,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -51678,6 +51846,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -52428,6 +52599,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -53178,6 +53352,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -54023,6 +54200,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -54866,6 +55046,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -55615,6 +55798,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -56482,6 +56668,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -57231,6 +57420,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -57980,6 +58172,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -59116,6 +59311,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -59980,6 +60178,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -60892,6 +61093,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -61641,6 +61845,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -62590,6 +62797,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -63434,6 +63644,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -64184,6 +64397,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -65045,6 +65261,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -65794,6 +66013,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -66543,6 +66765,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -67293,6 +67518,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -68138,6 +68366,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -68981,6 +69212,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -69730,6 +69964,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -70581,6 +70818,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -71331,6 +71571,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -72081,6 +72324,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -72926,6 +73172,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -73676,6 +73925,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -74425,6 +74677,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -75270,6 +75525,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -76019,6 +76277,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -76768,6 +77029,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -77518,6 +77782,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -78458,6 +78725,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -79301,6 +79571,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -80050,6 +80323,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -80800,6 +81076,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -81550,6 +81829,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -82299,6 +82581,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -83049,6 +83334,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -83799,6 +84087,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -84549,6 +84840,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -85394,6 +85688,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -86143,6 +86440,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -86893,6 +87193,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -87642,6 +87945,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -88722,6 +89028,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -89958,6 +90267,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -90801,6 +91113,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -91550,6 +91865,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -92395,6 +92713,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -93144,6 +93465,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -93893,6 +94217,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -94738,6 +95065,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -95581,6 +95911,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -96330,6 +96663,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -97175,6 +97511,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -97924,6 +98263,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
@@ -98673,6 +99015,9 @@ paths:
                   type: string
                 object_size:
                   type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
                 operation:
                   type: string
                   enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
