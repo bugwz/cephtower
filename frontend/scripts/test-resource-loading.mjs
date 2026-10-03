@@ -34,6 +34,18 @@ for (const value of [null, [], false, 'active+clean', { 'active+clean': null }, 
 const poolPGDetailSource = readFileSync(new URL('../src/pages/cluster/PoolDetailPage.tsx', import.meta.url), 'utf8')
 assert.ok(poolPGDetailSource.includes('PoolPGDistribution key={`${selectedClusterId}/${decodedName}`} value={data?.pg_status}'))
 console.log('Pool PG distribution uses scoped raw counts and keeps unavailable data distinct')
+const pgTagsSource = readFileSync(new URL('../src/pages/cluster/PoolPGStateTags.tsx', import.meta.url), 'utf8')
+const pgTagsTree = ts.createSourceFile('tags.tsx', pgTagsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const pgTagsNode = pgTagsTree.statements.find((node) => ts.isFunctionDeclaration(node))
+const pgTagsCode = ts.transpileModule(pgTagsNode.getText(pgTagsTree).replace('export function', 'function'), { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
+const renderPGTags = new Function('React', 'Space', 'Tag', 'Typography', 'poolPGDistribution', `${pgTagsCode}; return PoolPGStateTags`)({ createElement: (type, props, ...children) => ({ type, props, children }) }, 'Space', 'Tag', { Text: 'Text' }, poolDistribution)
+const renderedPGTags = renderPGTags({ value: { 'active+clean': 3, undersized: 2, new_state: 1 } }).children[0]
+assert.deepEqual(renderedPGTags.map((tag) => tag.props.color), ['success', 'warning', 'default'])
+assert.ok(renderedPGTags[0].children.join('').includes('active+clean × 3'))
+assert.ok(renderedPGTags[2].children.join('').includes('未知'))
+assert.equal(renderPGTags({ value: null }).children[0], 'PG 状态不可用')
+assert.equal(renderPGTags({ value: {} }).children[0], '未返回 PG（0）')
+console.log('Pool PG tags preserve raw states, counts and accessible category labels')
 
 const hostDetailSource = readFileSync(new URL('../src/pages/cluster/HostDetailPage.tsx', import.meta.url), 'utf8')
 const hostDetailTree = ts.createSourceFile('host.tsx', hostDetailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)

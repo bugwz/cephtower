@@ -3,6 +3,7 @@ import { Alert, Button, Card, Collapse, Descriptions, Divider, Form, Input, Inpu
 import { erasureProfileDetails } from './ErasureProfilesPanel'
 import { CrushRuleUsage, ErasureProfileUsage } from './ErasureProfileUsage'
 import { CrushRuleDetails } from './CrushRulesPanel'
+import { PoolPGStateTags } from './PoolPGStateTags'
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isRecord, jsonInit, request, numberValue, textValue, type ApiRecord } from '../../api/client'
@@ -540,7 +541,7 @@ export function PoolManagementPage() {
             { key: 'write_iops_display', title: '写入 IOPS（采集时）' },
             { key: 'data_protection_display', title: '数据保护', filterKey: 'type', render: (_, row) => <Tag color="default">{textValue(row.data_protection_display)}</Tag> },
             { key: 'applications_display', title: '应用标记', filterKey: 'applications', render: (_, row) => renderApplications(poolApplications(row)) },
-            { key: 'pg_status_display', title: 'PG 状态', filterKey: false },
+            { key: 'pg_status_display', title: 'PG 状态', filterKey: false, ellipsis: false, render: (_, row) => <PoolPGStateTags value={row.pg_status} /> },
             { key: 'pg_autoscale_display', title: 'PG 自动伸缩', filterKey: 'pg_autoscale_mode' },
             { key: 'pg_adjustment_display', title: 'PG 调整（采集时）', filterKey: false },
             { key: 'usage_display', title: '使用率', filterKey: false },

@@ -116,7 +116,7 @@ const pgDisplaysCode = ts.transpileModule(`const displays = { ${pgDisplayPropert
 const pgDisplays = new Function('row', 'poolPGStatus', 'pgAutoscale', `${pgDisplaysCode}; return displays`)({ pg_status: { 'active+clean': 3 } }, (value) => JSON.stringify(value), 'warn')
 assert.equal(pgDisplays.pg_status_display, '{"active+clean":3}')
 assert.equal(pgDisplays.pg_autoscale_display, 'warn')
-assert.ok(poolSource.includes("{ key: 'pg_status_display', title: 'PG 状态', filterKey: false }"))
+assert.ok(poolSource.includes("{ key: 'pg_status_display', title: 'PG 状态', filterKey: false, ellipsis: false, render: (_, row) => <PoolPGStateTags value={row.pg_status} /> }"))
 assert.ok(poolSource.includes("{ key: 'pg_autoscale_display', title: 'PG 自动伸缩', filterKey: 'pg_autoscale_mode' }"))
 console.log('Pool PG state display and autoscale filtering use separate columns')
 const techniqueFunctions = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['erasureCodeTechniqueOptions', 'clayTechniqueForScalar'].includes(node.name.text))

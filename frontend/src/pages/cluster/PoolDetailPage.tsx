@@ -12,6 +12,7 @@ import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
 import { PoolIOHistory } from './PoolIOHistory'
 import { PoolPGDistribution } from './PoolPGDistribution'
+import { PoolPGStateTags } from './PoolPGStateTags'
 import { poolPGStatus, poolCapacity, poolObjectCount, poolUsage, poolDataProtection, poolKind, poolIORate, poolPGAdjustment } from './PoolManagementPage'
 
 const { Text } = Typography
@@ -205,7 +206,7 @@ function renderOverview(data: ApiRecord, decodedName: string) {
       <Descriptions.Item label="Pool 类型">{textValue(data.type)}</Descriptions.Item>
       <Descriptions.Item label="数据保护">{textValue(data.data_protection_display)}</Descriptions.Item>
       <Descriptions.Item label="I/O 所需最小副本/分片数">{poolMinimumSize(data.min_size)}</Descriptions.Item>
-      <Descriptions.Item label="PG 状态">{textValue(data.pg_status_display)}</Descriptions.Item>
+      <Descriptions.Item label="PG 状态"><PoolPGStateTags value={data.pg_status} /></Descriptions.Item>
       <Descriptions.Item label="PG 调整（采集时）">{poolPGAdjustment(data)}</Descriptions.Item>
       <Descriptions.Item label="PG 自动伸缩">{textValue(data.pg_autoscale_mode)}</Descriptions.Item>
       <Descriptions.Item label="当前 PG 数量">{poolObjectCount(data.pg_num)}</Descriptions.Item>
