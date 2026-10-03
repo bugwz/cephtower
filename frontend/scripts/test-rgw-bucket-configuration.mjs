@@ -4,6 +4,18 @@ import ts from 'typescript'
 import './test-external-form-confirmation.mjs'
 import './test-rgw-bucket-tag-form.mjs'
 const helpers = {}
+const cors = {}
+new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwBucketCorsRules.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText)(cors, (name) => name === 'antd' ? { Table: 'Table' } : { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) })
+const corsRule = { id: '<rule>', allowed_origins: ['*'], allowed_methods: ['GET'], allowed_headers: [], expose_headers: ['b', 'a', 'b'], max_age_seconds: 0 }
+assert.deepEqual(cors.bucketCorsRows([corsRule])[0].expose_headers, ['b', 'a', 'b'])
+for (const value of [undefined, {}, [null], [{ ...corsRule, max_age_seconds: -1 }], [{ ...corsRule, allowed_origins: [1] }]]) assert.equal(cors.bucketCorsRows(value), undefined)
+assert.equal(cors.RgwBucketCorsRules({ value: [], configured: false }).props.children, '未配置 CORS')
+assert.equal(cors.RgwBucketCorsRules({ value: [], configured: true }).props.children, 'CORS 数据不可用')
+const corsTable = cors.RgwBucketCorsRules({ value: [corsRule], configured: true })
+const ageColumn = corsTable.props.columns.find(column => column.dataIndex === 'max_age_seconds')
+assert.equal(ageColumn.render(0), '0 秒')
+assert.equal(ageColumn.render(null), '未设置')
+assert.equal(corsTable.props.columns.find(column => column.dataIndex === 'id').render('<rule>'), '"<rule>"')
 const deletion = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketDelete.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(deletion)
 const deleteRow = { natural_key: 'dGVhbQBidWNrZXQ', name: 'bucket', tenant: 'team' }
@@ -86,7 +98,7 @@ assert.ok(tagAction.confirmation(tagValues, tagRow).includes('整体替换'))
 assert.equal(typeof tagAction.fields.find(field => field.name === 'tag_set').renderControl, 'function')
 assert.equal(definition.buildQuery({ kind: 'cors' }).toString(), 'kind=cors')
 assert.deepEqual(definition.filterFields.find(field => field.name === 'kind').options, helpers.rgwBucketConfigurationOptions)
-assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'encryption', 'content_type', 'document'])
+assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'encryption', 'cors_rules', 'content_type', 'document'])
 const encryption = definition.columns.find(column => column.key === 'encryption').render
 assert.equal(encryption(null, { kind: 'policy' }), '—')
 assert.match(encryption(null, { kind: 'encryption', configured: false }), /未设置/)

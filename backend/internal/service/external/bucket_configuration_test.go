@@ -64,6 +64,9 @@ func TestBucketConfigurationWritesUseExplicitDocument(t *testing.T) {
 	}
 	for _, kind := range []string{"policy", "cors", "lifecycle", "encryption"} {
 		body := "native-" + kind
+		if kind == "cors" {
+			body = "<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin></CORSRule></CORSConfiguration>"
+		}
 		if kind == "encryption" {
 			body = "<ServerSideEncryptionConfiguration/>"
 		}

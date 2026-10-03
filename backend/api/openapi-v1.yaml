@@ -103265,6 +103265,19 @@ components:
         configured: {type: boolean}
         document: {type: string, nullable: true}
         content_type: {type: string, nullable: true}
+        cors_rules:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, allowed_origins, allowed_methods, allowed_headers, expose_headers, max_age_seconds]
+            properties:
+              id: {type: string}
+              allowed_origins: {type: array, items: {type: string}}
+              allowed_methods: {type: array, items: {type: string}}
+              allowed_headers: {type: array, items: {type: string}}
+              expose_headers: {type: array, items: {type: string}}
+              max_age_seconds: {type: integer, minimum: 0, maximum: 4294967294, nullable: true}
         encryption:
           type: object
           nullable: true

@@ -2,12 +2,14 @@ package external
 
 import (
 	cephdomain "cephtower/backend/internal/domain/ceph"
+	"cephtower/backend/internal/integration/ceph/s3"
 	endpointservice "cephtower/backend/internal/service/endpoint"
 	"context"
 	"encoding/base64"
 	"errors"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -22,6 +24,43 @@ func TestBucketCORSWriteVerification(t *testing.T) {
 		t.Fatal(err)
 	}
 	sent := `<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin><AllowedMethod>get</AllowedMethod><ExposeHeader>a</ExposeHeader><ExposeHeader>b</ExposeHeader></CORSRule></CORSConfiguration>`
+	for _, tc := range []struct {
+		body              string
+		status            int
+		valid, configured bool
+	}{
+		{sent, 200, true, true}, {`<Error><Code>NoSuchCORSConfiguration</Code></Error>`, 404, true, false}, {`<CORSConfiguration/>`, 200, false, false}, {`<Error><Code>NoSuchBucket</Code></Error>`, 404, false, false},
+	} {
+		service.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+			if r.Method != "GET" || r.URL.Path != "/team:bucket" || r.URL.RawQuery != "cors=" {
+				t.Fatal("wrong read")
+			}
+			return &http.Response{StatusCode: tc.status, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(tc.body))}, nil
+		})
+		id := base64.RawURLEncoding.EncodeToString([]byte("team\x00bucket"))
+		result, err := service.readBucketPolicy(ctx, cluster.ID, id, url.Values{"kind": {"cors"}})
+		if !tc.valid {
+			if err == nil {
+				t.Fatal("invalid response accepted")
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		row := result.(map[string]any)
+		rules := row["cors_rules"].([]s3.BucketCORSRule)
+		if row["configured"] != tc.configured {
+			t.Fatal("wrong configured state")
+		}
+		if tc.configured {
+			if len(rules) != 1 || rules[0].AllowedMethods[0] != "GET" || row["document"] != sent {
+				t.Fatal("lost rule data")
+			}
+		} else if len(rules) != 0 || row["document"] != nil {
+			t.Fatal("missing configuration misrepresented")
+		}
+	}
 	for _, tc := range []struct {
 		body   string
 		status int

@@ -48,6 +48,7 @@ import { rgwUserCreateCredentials } from './rgwUserCreateCredentials'
 import { rgwUserCreateFlags } from './rgwUserCreateFlags'
 import { rgwBucketConfigurationOptions, rgwBucketConfigurationInput, rgwBucketConfigurationDeleteBlocked, rgwBucketConfigurationDeleteInput, rgwBucketConfigurationDeleteConfirmation, rgwBucketConfigurationEditBlocked, rgwBucketConfigurationEditInitial, rgwBucketConfigurationEditInput, rgwBucketConfigurationUpdateConfirmation } from './rgwBucketConfiguration'
 import { rgwBucketEncryptionSummary } from './rgwBucketEncryptionSummary'
+import { RgwBucketCorsRules } from './RgwBucketCorsRules'
 import { bucketDeleteInput, bucketDeleteBlocked, bucketDeleteConfirmation } from './rgwBucketDelete'
 import { bucketVersioningInitial, bucketVersioningInput, bucketVersioningConfirmation } from './rgwBucketVersioningForm'
 import { bucketEncryptionFormInitial, bucketEncryptionFormBlocked, bucketEncryptionFormInput, bucketEncryptionFormConfirmation } from './rgwBucketEncryptionForm'
@@ -942,6 +943,7 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       { key: 'configured', title: '配置状态', render: (value) => value === true ? '已配置' : value === false ? '未配置' : '状态不可用' },
       { key: 'tags', title: '标签条目', ellipsis: false, render: (value, row) => row.kind === 'tagging' ? <RgwBucketTagEntries value={value} /> : '—' },
       { key: 'encryption', title: '默认加密', ellipsis: false, render: rgwBucketEncryptionSummary },
+      { key: 'cors_rules', title: 'CORS 规则', ellipsis: false, render: (value, row) => row.kind === 'cors' ? <RgwBucketCorsRules value={value} configured={row.configured} /> : '—' },
       { key: 'content_type', title: '响应类型' },
       { key: 'document', title: '原始配置文档', ellipsis: false, render: (value, row) => <pre style={{ whiteSpace: 'pre-wrap', maxHeight: 240, overflow: 'auto' }}>{row.configured === false ? '未配置，无配置文档' : typeof value === 'string' ? value : '配置文档不可用'}</pre> }
     ]
