@@ -23,7 +23,11 @@ visit(source)
 assert.ok(definition)
 assert.equal(definition.buildQuery({ kind: 'cors' }).toString(), 'kind=cors')
 assert.deepEqual(definition.filterFields.find(field => field.name === 'kind').options, helpers.rgwBucketConfigurationOptions)
-assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'content_type', 'document'])
+assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'content_type', 'document'])
+const status = definition.columns.find(column => column.key === 'configured').render
+assert.equal(status(true), '已配置')
+assert.equal(status(false), '未配置')
+for (const value of [undefined, null, 0, 1, 'false']) assert.equal(status(value), '状态不可用')
 const input = { bucket_id: 'id', kind: 'cors', document: '<CORSConfiguration/>' }
 assert.deepEqual(definition.createAction.buildBody(input, 7), { cluster_id: 7, ...input })
 assert.equal(definition.createAction.method, 'PATCH')

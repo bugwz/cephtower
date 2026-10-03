@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+Bucket 配置读取区分“未配置”和“读取失败”。依据 `src/rgw/rgw_common.cc` 的原生错误映射，只有 HTTP 404 与当前配置类型对应的 NoSuchBucketPolicy、NoSuchCORSConfiguration、NoSuchLifecycleConfiguration、ServerSideEncryptionConfigurationNotFoundError 精确匹配时，API 返回 `configured: false` 和空文档；正常读取返回 `configured: true`。S3 适配器保留结构化状态和错误码，限制错误体大小，拒绝从损坏、重复 Code、多根、截断或超限 XML 推断缺省状态。Bucket 不存在、权限拒绝、其它类型错误和未知响应继续报错。前端展示已配置/未配置/状态不可用，不以空值猜测 false，也不为未配置状态伪造文档。适配器、服务读取链路及页面状态绑定测试通过，完整前后端与 OpenAPI 检查通过。未真实集群或浏览器视觉验证；本次没有增加配置删除操作。
+
 Bucket 配置文档入口还受通用 API 的 1 MiB JSON 请求体上限约束；前端按序列化后的文档和身份字段计算字节数，并预留 cluster_id 空间，而不是承诺可经 API 提交适配器边界允许的 4 MiB 原文。XML 声明允许保留，其它处理指令和 DTD 被拒绝。
 
 Bucket Policy/CORS/Lifecycle/Encryption 文档编辑修正实际 S3 协议格式。参考 `rgw_client.py::set_bucket_encryption` 和 `rgw_rest_s3.cc` 的 XML 解析：Policy 使用 JSON 对象，其余配置使用对应根节点的 XML；不再将这些配置统一 JSON 编码后发送。API 统一要求 `kind + document` 字符串，移除旧 policy/cors/lifecycle/encryption 字段入口；前端保留文档原文（包括 JSON 大整数），明确整体替换和 JSON/XML 格式。后端在发送前拒绝非对象 Policy、损坏 XML、错误/重复根节点、外部根文本及 DTD/处理指令，并限制 4 MiB；原生服务继续负责完整规则语义校验。S3 PUT 增加 Content-Type、Content-MD5 并保留签名；配置写请求失败不自动重试。读取界面补齐类型筛选到 URL query 的传递，列展示实际 `kind/document/content_type`，不再读取不存在的四个独立配置字段。原生读取仍需要配置 S3 endpoint 和凭据，本次不虚构 CLI 替代。HTTP 适配器、格式拒绝、API 新契约、读取作用域和页面绑定测试及完整前后端/OpenAPI 检查通过；OpenAPI 大幅删除来自共享请求字段展开中的旧字段移除。未真实集群或浏览器视觉验证；配置删除、结构化编辑及写后语义核验仍待后续补齐。

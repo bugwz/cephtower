@@ -110,8 +110,7 @@ func (c *Client) request(ctx context.Context, method, bucket string, query url.V
 	}
 	defer response.Body.Close()
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		message, _ := io.ReadAll(io.LimitReader(response.Body, 32<<10))
-		return nil, "", fmt.Errorf("S3 returned HTTP %d: %s", response.StatusCode, strings.TrimSpace(string(message)))
+		return nil, "", responseError(response.StatusCode, response.Body)
 	}
 	data, err := io.ReadAll(io.LimitReader(response.Body, (4<<20)+1))
 	if err != nil {

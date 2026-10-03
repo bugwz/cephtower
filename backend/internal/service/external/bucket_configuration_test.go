@@ -69,8 +69,30 @@ func TestBucketConfigurationWritesUseExplicitDocument(t *testing.T) {
 			t.Fatal(err)
 		}
 		row := result.(map[string]any)
-		if row["kind"] != kind || row["document"] != body || row["content_type"] != "application/xml" {
+		if row["configured"] != true || row["kind"] != kind || row["document"] != body || row["content_type"] != "application/xml" {
 			t.Fatalf("read document lost: %+v", row)
+		}
+	}
+	for kind, code := range map[string]string{"policy": "NoSuchBucketPolicy", "cors": "NoSuchCORSConfiguration", "lifecycle": "NoSuchLifecycleConfiguration", "encryption": "ServerSideEncryptionConfigurationNotFoundError"} {
+		for _, nativeCode := range []string{code, "NoSuchBucket", "AccessDenied"} {
+			service.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+				return &http.Response{StatusCode: 404, Header: http.Header{}, Body: io.NopCloser(strings.NewReader("<Error><Code>" + nativeCode + "</Code></Error>"))}, nil
+			})
+			key := base64.RawURLEncoding.EncodeToString([]byte("\x00bucket"))
+			result, err := service.readBucketPolicy(ctx, cluster.ID, key, url.Values{"kind": []string{kind}})
+			if nativeCode != code {
+				if err == nil {
+					t.Fatal("native failure hidden as unconfigured")
+				}
+				continue
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			row := result.(map[string]any)
+			if row["configured"] != false || row["document"] != nil || row["bucket_id"] != key || row["kind"] != kind {
+				t.Fatalf("wrong missing state: %+v", row)
+			}
 		}
 	}
 }

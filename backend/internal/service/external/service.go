@@ -299,10 +299,13 @@ func (s *Service) readBucketPolicy(ctx context.Context, clusterID uint64, key st
 		kind = "policy"
 	}
 	body, contentType, err := api.GetBucketConfiguration(ctx, bucket, kind)
+	if s3.IsConfigurationMissing(kind, err) {
+		return map[string]any{"bucket_id": key, "kind": kind, "configured": false, "document": nil, "content_type": nil}, nil
+	}
 	if err != nil {
 		return nil, failure("s3_failed", err.Error(), true)
 	}
-	return map[string]any{"bucket_id": key, "kind": kind, "document": string(body), "content_type": contentType}, nil
+	return map[string]any{"bucket_id": key, "kind": kind, "configured": true, "document": string(body), "content_type": contentType}, nil
 }
 
 func validateQuery(values url.Values, allowed map[string]bool) error {

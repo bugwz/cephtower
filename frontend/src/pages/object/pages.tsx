@@ -866,8 +866,9 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
     columns: [
       { key: 'bucket_id', title: 'Bucket ID' },
       { key: 'kind', title: '配置类型' },
+      { key: 'configured', title: '配置状态', render: (value) => value === true ? '已配置' : value === false ? '未配置' : '状态不可用' },
       { key: 'content_type', title: '响应类型' },
-      { key: 'document', title: '原始配置文档', ellipsis: false, render: (value) => <pre style={{ whiteSpace: 'pre-wrap', maxHeight: 240, overflow: 'auto' }}>{typeof value === 'string' ? value : '配置文档不可用'}</pre> }
+      { key: 'document', title: '原始配置文档', ellipsis: false, render: (value, row) => <pre style={{ whiteSpace: 'pre-wrap', maxHeight: 240, overflow: 'auto' }}>{row.configured === false ? '未配置，无配置文档' : typeof value === 'string' ? value : '配置文档不可用'}</pre> }
     ]
   }
 }
