@@ -210,7 +210,7 @@ func (h *Handler) GetDaemon(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) RunDaemonAction(w http.ResponseWriter, r *http.Request) {
-	h.MutateResource("daemon", "daemon.action", "low")(w, r)
+	h.MutateResource("daemon", "daemon.action", "high")(w, r)
 }
 
 func (h *Handler) GetUpgrade(w http.ResponseWriter, r *http.Request) {

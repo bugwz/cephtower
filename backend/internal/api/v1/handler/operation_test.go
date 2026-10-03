@@ -36,6 +36,16 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	h := handler.New(handler.Dependencies{Clusters: clusters, Operations: operations, Database: database, AuthEnabled: func() bool { return false }})
 	mux := http.NewServeMux()
 	router.Register(mux, h)
+	for _, action := range []string{"start", "stop", "restart", "redeploy", "reconfig", "rotate-key"} {
+		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/daemon/action", fmt.Sprintf(`{"cluster_id":%d,"name":"osd.1","action":%q}`, cluster.ID, action), "daemon-"+action)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("daemon action %s: %d %s", action, response.Code, response.Body.String())
+		}
+		row, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || row.Risk != "high" || row.Action != "daemon.action" || row.ResourceKey != "daemon/osd.1/action" || row.Status != store.OperationQueued {
+			t.Fatalf("incorrect daemon action risk or target: %+v %v", row, err)
+		}
+	}
 
 	queued := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/pool", fmt.Sprintf(`{"cluster_id":%d,"name":"data"}`, cluster.ID), "create-data")
 	if queued.Code != http.StatusAccepted {
