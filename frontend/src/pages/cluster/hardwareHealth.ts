@@ -10,6 +10,7 @@ export function hardwareAttributeColumns(category: string): FieldColumn[] {
     ['power', [['name', '电源名称'], ['model', '型号'], ['manufacturer', '制造商']]],
     ['fans', [['name', '风扇名称']]],
     ['firmwares', [['name', '固件名称'], ['version', '版本（原值）'], ['release_date', '发布日期（原值）']]],
+    ['criticals', [['category', '原生类别'], ['name', '组件名称 / 描述']]],
   ])
   return (fields.get(category) ?? []).map(([key, title]) => ({ key, title, render: (value) => typeof value === 'string' && value.trim() !== '' ? value : '未知（未返回）' }))
 }

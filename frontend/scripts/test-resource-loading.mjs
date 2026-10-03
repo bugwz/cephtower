@@ -236,6 +236,8 @@ const optionsCode = ts.transpileModule(`const options = ${hardwareOptions.getTex
 const hardwareOptionsForHost = new Function('host', `${optionsCode}; return options`)
 assert.equal(hardwareOptionsForHost('node1').some((option) => option.value === 'firmwares'), true)
 assert.equal(hardwareOptionsForHost('').some((option) => option.value === 'firmwares'), false)
+assert.equal(hardwareOptionsForHost('').some((option) => option.value === 'criticals'), true)
+assert.equal(hardwareOptionsForHost('node1').some((option) => option.value === 'criticals'), true)
 console.log('Firmware request and host-only selection checks passed')
 const healthSource = readFileSync(new URL('../src/pages/cluster/hardwareHealth.ts', import.meta.url), 'utf8')
 const healthCode = ts.transpileModule(healthSource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText
@@ -257,6 +259,7 @@ for (const [category, keys] of Object.entries({ memory: ['description'], storage
   }
 }
 assert.deepEqual(healthModule.hardwareAttributeColumns('constructor'), [])
+assert.deepEqual(healthModule.hardwareAttributeColumns('criticals').map((column) => column.key), ['category', 'name'])
 console.log('Native hardware attribute column checks passed')
 console.log('Hardware health counts and unknown-state classification checks passed')
 const summarySource = readFileSync(new URL('../src/pages/cluster/HostHardwareSummary.tsx', import.meta.url), 'utf8')

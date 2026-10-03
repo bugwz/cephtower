@@ -12,6 +12,7 @@ export function HostHardware({ clusterId, host }: { clusterId: number; host: str
     <Alert type="info" message="原生硬件健康（node-proxy）" description="按所选类别读取 ceph orch hardware status，需要集群部署并配置 node-proxy。无记录或缺少健康字段不代表硬件健康；原生详情按文本保留数值精度。" />
     <Select aria-label="硬件类别" value={category} onChange={setCategory} style={{ width: 220 }} options={[
       { value: 'summary', label: host ? '当前主机六类硬件汇总' : '已报告主机六类硬件汇总' },
+      { value: 'criticals', label: '非 OK 组件报告（原生）' },
       { value: 'memory', label: '内存' }, { value: 'storage', label: '存储' }, { value: 'processors', label: '处理器' },
       { value: 'network', label: '网络' }, { value: 'power', label: '电源' }, { value: 'fans', label: '风扇' },
       ...(host ? [{ value: 'firmwares', label: '固件清单（只读）' }] : []),
@@ -33,6 +34,7 @@ function HardwareCategory({ clusterId, host, category }: { clusterId: number; ho
   const rows = (data?.items ?? []).filter((row) => healthFilter === 'all' || hardwareHealthGroup(row.health) === healthFilter)
   return <Space direction="vertical" style={{ width: '100%' }}>
     <Button loading={loading} onClick={() => refresh()}>重新读取</Button>
+    {category === 'criticals' && <Alert type="info" message="来自 Ceph criticals 报告，可能包括 Warning 等非 OK 状态，并非只包含 Critical。未报告或健康字段缺失的组件可能不在其中；空报告不能证明所有硬件健康。" />}
     {category === 'firmwares' && <Alert type="info" message="固件版本与发布日期为 node-proxy 原始报告；不判断是否最新，不提供升级操作。固件不计入六类硬件健康汇总。" />}
     {error && <Alert type="error" message={error} description={data ? '下方为上次成功读取的结果，不代表当前状态。' : '未能读取硬件信息，请检查 node-proxy、编排器支持和 Ceph 权限。'} />}
     {data && <Typography.Text type="secondary">读取时间：{data.observed_at}；返回组件数：{data.items.length}</Typography.Text>}

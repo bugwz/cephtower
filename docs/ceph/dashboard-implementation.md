@@ -40,6 +40,12 @@ CephTower `/host/hardware` 支持 memory、storage、processors、network、powe
 不判断版本是否最新，不提供固件更新、指示灯或电源操作。离线命令、API 和加载隔离测试
 已覆盖，未进行真实 node-proxy 集群或浏览器视觉验证。
 
+硬件页增加单主机/集群范围的非 OK 组件报告，调用同一 API 的 `criticals` 类别，
+对应 `orch hardware status [--hostname <host>] --category criticals --format json`。
+按原生主机/系统/类别/组件四层身份展示并保留完整脱敏详情，避免同名组件跨类别覆盖。
+Ceph NodeProxyCache 按已报告的非 ok 健康值筛选，因此包含 Warning 等状态，不仅 Critical；
+界面不重复筛除、不把空结果等同于全群健康，也不将未报告主机计为健康。
+
 配置表单区分 no_mon_update（禁止 Monitor 配置库写入）与不可运行时更新（可能需重启）。
 匹配当前选项的 no_mon_update 元数据会禁用提交并在保存处理再次拦截；不添加 force
 绕过。缺失更新能力明确标注未知，旧选项的说明不用于当前选项。离线测试覆盖标志

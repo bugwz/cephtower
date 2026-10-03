@@ -16,6 +16,8 @@ func (s *Service) Hardware(ctx context.Context, clusterID uint64, host, category
 		return nil, invalid("invalid hardware host or cluster id")
 	}
 	switch category {
+	case "criticals":
+		return s.hardwareCriticals(ctx, clusterID, host)
 	case "firmwares":
 		if host == "" {
 			return nil, invalid("firmware inventory requires a host")
