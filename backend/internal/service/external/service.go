@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -299,12 +300,24 @@ func (s *Service) readBucketPolicy(ctx context.Context, clusterID uint64, key st
 	}
 	body, contentType, err := api.GetBucketConfiguration(ctx, bucket, kind)
 	if s3.IsConfigurationMissing(kind, err) {
-		return map[string]any{"bucket_id": key, "kind": kind, "configured": false, "document": nil, "content_type": nil}, nil
+		row := map[string]any{"bucket_id": key, "kind": kind, "configured": false, "document": nil, "content_type": nil}
+		if kind == "tagging" {
+			row["tags"] = []s3.BucketTag{}
+		}
+		return row, nil
 	}
 	if err != nil {
 		return nil, failure("s3_failed", err.Error(), true)
 	}
-	return map[string]any{"bucket_id": key, "kind": kind, "configured": true, "document": string(body), "content_type": contentType}, nil
+	row := map[string]any{"bucket_id": key, "kind": kind, "configured": true, "document": string(body), "content_type": contentType}
+	if kind == "tagging" {
+		tags, err := s3.BucketTags(body)
+		if err != nil {
+			return nil, failure("s3_failed", err.Error(), false)
+		}
+		row["tags"] = tags
+	}
+	return row, nil
 }
 
 func validateQuery(values url.Values, allowed map[string]bool) error {
@@ -392,6 +405,14 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 			return cephdomain.ActionResult{}, failure("invalid_request", err.Error(), false)
 		}
 		err = api.PutBucketConfiguration(ctx, bucket, kind, body)
+		if err == nil && kind == "tagging" {
+			actual, _, readErr := api.GetBucketConfiguration(ctx, bucket, kind)
+			wantedTags, _ := s3.BucketTags(body)
+			actualTags, parseErr := s3.BucketTags(actual)
+			if readErr != nil || parseErr != nil || !reflect.DeepEqual(wantedTags, actualTags) {
+				return cephdomain.ActionResult{}, failure("post_check_failed", "bucket tags were submitted but could not be verified; refresh before another change", false)
+			}
+		}
 	case "rgw_bucket_policy.delete":
 		kind, _ := parameters["kind"].(string)
 		if !s3.DeletableBucketConfiguration(kind) {

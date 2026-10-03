@@ -25,7 +25,7 @@ func TestBucketConfigurationDeletionVerifiesNativeAbsence(t *testing.T) {
 	if !Supports("rgw_bucket_policy.delete") {
 		t.Fatal("dispatcher cannot route deletion")
 	}
-	for kind, code := range map[string]string{"policy": "NoSuchBucketPolicy", "cors": "NoSuchCORSConfiguration", "lifecycle": "NoSuchLifecycleConfiguration", "encryption": "ServerSideEncryptionConfigurationNotFoundError"} {
+	for kind, code := range map[string]string{"policy": "NoSuchBucketPolicy", "cors": "NoSuchCORSConfiguration", "lifecycle": "NoSuchLifecycleConfiguration", "encryption": "ServerSideEncryptionConfigurationNotFoundError", "tagging": "NoSuchTagSet"} {
 		for _, tenant := range []string{"", "team"} {
 			for _, scenario := range []string{"success", "pre-denied", "pre-missing", "delete-failed", "delete-transport", "post-present", "post-denied", "post-wrong-code", "post-invalid", "post-transport"} {
 				t.Run(kind+"/"+tenant+"/"+scenario, func(t *testing.T) {
@@ -44,6 +44,9 @@ func TestBucketConfigurationDeletionVerifiesNativeAbsence(t *testing.T) {
 							t.Fatal("delete sent a document")
 						}
 						status, response := 200, "native configuration"
+						if kind == "tagging" {
+							response = "<Tagging><TagSet/></Tagging>"
+						}
 						if calls == 1 && scenario == "pre-denied" {
 							status = 403
 						}
@@ -64,6 +67,9 @@ func TestBucketConfigurationDeletionVerifiesNativeAbsence(t *testing.T) {
 							switch scenario {
 							case "post-present":
 								status, response = 200, "still configured"
+								if kind == "tagging" {
+									response = "<Tagging><TagSet/></Tagging>"
+								}
 							case "post-denied":
 								status = 403
 							case "post-wrong-code":

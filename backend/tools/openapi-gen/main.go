@@ -259,7 +259,7 @@ func routeParameters(route router.Route) []parameterSpec {
 		result = append(result, parameterSpec{Name: "metric_id", In: "query", Type: "string", Required: true}, parameterSpec{Name: "start", In: "query", Type: "string", Format: "date-time", Required: true}, parameterSpec{Name: "end", In: "query", Type: "string", Format: "date-time", Required: true}, parameterSpec{Name: "step", In: "query", Type: "string", Required: true})
 	case "/rgw/bucket/policy":
 		if route.Method == "GET" {
-			result = append(result, parameterSpec{Name: "kind", In: "query", Type: "string", Enum: []string{"policy", "cors", "lifecycle", "encryption", "versioning"}})
+			result = append(result, parameterSpec{Name: "kind", In: "query", Type: "string", Enum: []string{"policy", "cors", "lifecycle", "encryption", "versioning", "tagging"}})
 		}
 	}
 	return result
@@ -984,10 +984,19 @@ const components = `components:
       required: [bucket_id, kind, configured, document, content_type]
       properties:
         bucket_id: {type: string}
-        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning]}
+        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning, tagging]}
         configured: {type: boolean}
         document: {type: string, nullable: true}
         content_type: {type: string, nullable: true}
+        tags:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [key, value]
+            properties:
+              key: {type: string}
+              value: {type: string}
     MetricData:
       type: object
       additionalProperties: false

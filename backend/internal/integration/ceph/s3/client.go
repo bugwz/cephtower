@@ -69,15 +69,19 @@ func (c *Client) PutBucketConfiguration(ctx context.Context, bucket, kind string
 }
 
 func (c *Client) GetBucketConfiguration(ctx context.Context, bucket, kind string) ([]byte, string, error) {
-	allowed := map[string]bool{"policy": true, "cors": true, "lifecycle": true, "encryption": true, "versioning": true}
+	allowed := map[string]bool{"policy": true, "cors": true, "lifecycle": true, "encryption": true, "versioning": true, "tagging": true}
 	if !allowed[kind] {
 		return nil, "", fmt.Errorf("unsupported S3 bucket configuration %q", kind)
 	}
-	return c.request(ctx, http.MethodGet, bucket, url.Values{kind: []string{""}}, nil)
+	body, contentType, err := c.request(ctx, http.MethodGet, bucket, url.Values{kind: []string{""}}, nil)
+	if err == nil && kind == "tagging" {
+		err = ValidateBucketConfiguration(kind, body)
+	}
+	return body, contentType, err
 }
 
 func DeletableBucketConfiguration(kind string) bool {
-	return kind == "policy" || kind == "cors" || kind == "lifecycle" || kind == "encryption"
+	return kind == "policy" || kind == "cors" || kind == "lifecycle" || kind == "encryption" || kind == "tagging"
 }
 
 func (c *Client) DeleteBucketConfiguration(ctx context.Context, bucket, kind string) error {

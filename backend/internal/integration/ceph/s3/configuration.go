@@ -19,7 +19,7 @@ func ValidateBucketConfiguration(kind string, body []byte) error {
 		}
 		return nil
 	}
-	root := map[string]string{"cors": "CORSConfiguration", "lifecycle": "LifecycleConfiguration", "encryption": "ServerSideEncryptionConfiguration", "versioning": "VersioningConfiguration"}[kind]
+	root := map[string]string{"cors": "CORSConfiguration", "lifecycle": "LifecycleConfiguration", "encryption": "ServerSideEncryptionConfiguration", "versioning": "VersioningConfiguration", "tagging": "Tagging"}[kind]
 	if root == "" {
 		return fmt.Errorf("unsupported S3 bucket configuration %q", kind)
 	}
@@ -58,6 +58,10 @@ func ValidateBucketConfiguration(kind string, body []byte) error {
 	}
 	if roots != 1 || depth != 0 {
 		return fmt.Errorf("bucket configuration XML root is required")
+	}
+	if kind == "tagging" {
+		_, err := parseBucketTags(body)
+		return err
 	}
 	return nil
 }

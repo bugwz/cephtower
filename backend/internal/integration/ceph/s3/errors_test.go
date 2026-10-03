@@ -7,7 +7,7 @@ import (
 )
 
 func TestConfigurationMissingRequiresCompleteNativeError(t *testing.T) {
-	for kind, code := range map[string]string{"policy": "NoSuchBucketPolicy", "cors": "NoSuchCORSConfiguration", "lifecycle": "NoSuchLifecycleConfiguration", "encryption": "ServerSideEncryptionConfigurationNotFoundError"} {
+	for kind, code := range map[string]string{"policy": "NoSuchBucketPolicy", "cors": "NoSuchCORSConfiguration", "lifecycle": "NoSuchLifecycleConfiguration", "encryption": "ServerSideEncryptionConfigurationNotFoundError", "tagging": "NoSuchTagSet"} {
 		body := "<Error><Code>" + code + "</Code><Message>missing</Message></Error>"
 		if !IsConfigurationMissing(kind, fmt.Errorf("wrapped: %w", responseError(404, strings.NewReader(body)))) {
 			t.Fatal(kind)
@@ -29,7 +29,7 @@ func TestConfigurationMissingRequiresCompleteNativeError(t *testing.T) {
 				t.Fatal(status)
 			}
 		}
-		for _, other := range []string{"unknown", "versioning", "policy", "cors", "lifecycle", "encryption"} {
+		for _, other := range []string{"unknown", "versioning", "policy", "cors", "lifecycle", "encryption", "tagging"} {
 			if other != kind && IsConfigurationMissing(other, responseError(404, strings.NewReader(body))) {
 				t.Fatal(other)
 			}

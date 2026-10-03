@@ -47,7 +47,7 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	}
 	for _, tenant := range []string{"", "team"} {
 		id := base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00same-bucket"))
-		for _, kind := range []string{"policy", "cors", "lifecycle", "encryption"} {
+		for _, kind := range []string{"policy", "cors", "lifecycle", "encryption", "tagging"} {
 			response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/bucket/policy", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"kind":%q,"document":"raw"}`, cluster.ID, id, kind), "bucket-config-"+tenant+"-"+kind)
 			if response.Code != http.StatusAccepted {
 				t.Fatalf("bucket configuration queue: %d %s", response.Code, response.Body.String())

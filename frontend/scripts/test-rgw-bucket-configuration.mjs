@@ -4,7 +4,7 @@ import ts from 'typescript'
 import './test-external-form-confirmation.mjs'
 const helpers = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketConfiguration.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
-for (const [kind, document] of [['policy', '{"Statement":[],"large":9007199254740993}'], ['cors', '<CORSConfiguration/>'], ['lifecycle', '<LifecycleConfiguration/>'], ['encryption', '<ServerSideEncryptionConfiguration/>']]) {
+for (const [kind, document] of [['policy', '{"Statement":[],"large":9007199254740993}'], ['cors', '<CORSConfiguration/>'], ['lifecycle', '<LifecycleConfiguration/>'], ['encryption', '<ServerSideEncryptionConfiguration/>'], ['tagging', '<Tagging><TagSet/></Tagging>']]) {
   const input = { bucket_id: 'AGJ1Y2tldA', kind, document }
   assert.deepEqual(helpers.rgwBucketConfigurationInput(input), input)
 }
@@ -24,7 +24,7 @@ visit(source)
 assert.ok(definition)
 assert.equal(definition.buildQuery({ kind: 'cors' }).toString(), 'kind=cors')
 assert.deepEqual(definition.filterFields.find(field => field.name === 'kind').options, helpers.rgwBucketConfigurationOptions)
-assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'content_type', 'document'])
+assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'content_type', 'document'])
 const status = definition.columns.find(column => column.key === 'configured').render
 assert.equal(status(true), '已配置')
 assert.equal(status(false), '未配置')
@@ -35,7 +35,7 @@ assert.equal(definition.createAction.method, 'PATCH')
 assert.equal(definition.createAction.path, '/rgw/bucket/policy')
 assert.equal(definition.updateAction.path, '/rgw/bucket/policy')
 assert.equal(definition.updateAction.method, 'PATCH')
-for (const kind of ['policy', 'cors', 'lifecycle', 'encryption']) {
+for (const kind of ['policy', 'cors', 'lifecycle', 'encryption', 'tagging']) {
   const document = kind === 'policy' ? '{ "Statement":[], "large":9007199254740993 }\n' : '<NativeXML>原文\n  保留格式</NativeXML>'
   const row = { bucket_id: 'AGJ1Y2tldA', kind, configured: true, document }
   assert.equal(definition.updateAction.disabledWhen(row), undefined)
@@ -62,7 +62,7 @@ for (const name of ['bucket_id', 'kind']) assert.equal(definition.updateAction.f
 assert.equal(definition.deleteAction.path, '/rgw/bucket/policy')
 assert.equal(definition.deleteAction.action, 'rgw_bucket_policy.delete')
 assert.equal(definition.deleteAction.risk, 'high')
-for (const kind of ['policy', 'cors', 'lifecycle', 'encryption']) {
+for (const kind of ['policy', 'cors', 'lifecycle', 'encryption', 'tagging']) {
   const row = { bucket_id: 'dGVhbQBiaWc', kind, configured: true, document: 'private-document' }
   assert.equal(definition.deleteAction.disabledWhen(row), undefined)
   assert.deepEqual(definition.deleteAction.buildBody(row, 7), { cluster_id: 7, bucket_id: row.bucket_id, kind })
@@ -82,3 +82,17 @@ assert.ok(externalPage.includes('Boolean(definition.deleteAction.disabledWhen?.(
 assert.equal((externalPage.match(/content: action\.confirmation\?\.\(row\)/g) ?? []).length, 2)
 assert.ok(readFileSync(new URL('../src/pages/ExternalListPage.tsx', import.meta.url), 'utf8').includes('definition.buildQuery?.(queryBody)'))
 console.log('Bucket configuration preserves raw JSON/XML and query-scoped reads')
+
+const tagSource = readFileSync(new URL('../src/pages/object/RgwBucketTagEntries.tsx', import.meta.url), 'utf8')
+const tagTree = ts.createSourceFile('tags.tsx', tagSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const tagNode = tagTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'rgwBucketTagEntries')
+const tagCode = ts.transpileModule(tagNode.getText(tagTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const entries = new Function(`${tagCode}; return rgwBucketTagEntries`)()
+const tags = [{ key: '重复', value: '' }, { key: '重复', value: '<script>文本</script>' }, { key: ' 空白 ', value: ' 值 ' }]
+assert.deepEqual(entries(tags), tags.map((tag, index) => ({ ...tag, index })))
+assert.deepEqual(entries([]), [])
+for (const value of [undefined, null, {}, [null], [{ key: 'a' }], [{ key: 'a', value: 1 }]]) assert.equal(entries(value), undefined)
+assert.ok(tagSource.includes('rowKey="index"'))
+assert.ok(!tagSource.includes('dangerouslySetInnerHTML'))
+assert.ok(definition.filterFields.find(field => field.name === 'kind').options.some(option => option.value === 'tagging'))
+console.log('Bucket tag entries preserve duplicates, empty values and Unicode without HTML execution')
