@@ -20,3 +20,11 @@ export function RgwUserIdentityDetails({ row }: { row: ApiRecord }) {
     { key: 'groups', label: '用户组 ID', children: <Identifiers value={row.group_ids} /> }
   ]} />
 }
+
+export function RgwUserPlacementDetails({ row }: { row: ApiRecord }) {
+  return <Descriptions size="small" column={1} items={[
+    { key: 'placement', label: '默认放置规则', children: rgwIdentityText(row.default_placement, '未显式设置') },
+    { key: 'storage', label: '默认存储类', children: rgwIdentityText(row.default_storage_class, '未显式设置') },
+    { key: 'tags', label: '放置标签', children: <Identifiers value={row.placement_tags} /> }
+  ]} />
+}

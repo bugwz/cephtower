@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+用户放置配置补充 default_placement、default_storage_class 与 placement_tags，依据
+driver/rados/rgw_user.cc 的 user info 输出，复用现有采集/API。空字符串表示未显式设置，
+不推断最终继承的放置目标或存储类；缺失值明确标记不可用，标签逐项保留原值。
+离线测试覆盖空配置、自定义类和标签绑定，未进行真实集群或浏览器验证。
+
 RGW 用户身份明细补充租户、账户 ID、类型、路径、操作掩码、MFA 标识和用户组 ID，
 复用 user info 的原生字段（driver/rados/rgw_user.cc）。空租户与缺失租户区分，未知
 类型保留原文；标识逐项展示而非拼接，空集合与未返回区分。不读取或展示 MFA 密钥，
