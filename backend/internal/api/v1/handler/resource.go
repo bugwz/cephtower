@@ -750,6 +750,11 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 	case "rgw_role":
 		return segments("rgw", "role", pathValue("account_id"), pathValue("name"))
 	case "rgw_bucket":
+		if action == "rgw_bucket.create" {
+			tenant, _ := body["tenant"].(string)
+			name, _ := body["name"].(string)
+			return segments("rgw", "bucket", base64.RawURLEncoding.EncodeToString([]byte(tenant+"\x00"+name)))
+		}
 		return segments("rgw", "bucket", pathValue("bucket_id", "name"))
 	case "rgw_bucket_policy":
 		return segments("rgw", "bucket", pathValue("bucket_id"), "policy")

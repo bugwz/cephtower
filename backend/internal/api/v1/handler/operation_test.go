@@ -47,6 +47,22 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	}
 	for _, tenant := range []string{"", "team"} {
 		id := base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00same-bucket"))
+		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/bucket", fmt.Sprintf(`{"cluster_id":%d,"name":"same-bucket","tenant":%q}`, cluster.ID, tenant), "bucket-create-"+tenant)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("bucket creation queue: %d %s", response.Code, response.Body.String())
+		}
+		row, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || row.Action != "rgw_bucket.create" || row.ResourceKey != "rgw/bucket/"+id {
+			t.Fatalf("incorrect creation identity: %+v %v", row, err)
+		}
+		response = sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/bucket", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"versioning":"enabled"}`, cluster.ID, id), "bucket-update-"+tenant)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("bucket update queue: %d %s", response.Code, response.Body.String())
+		}
+		updated, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || updated.ResourceKey != row.ResourceKey {
+			t.Fatalf("creation and update identities differ: %+v %v", updated, err)
+		}
 		for _, kind := range []string{"policy", "cors", "lifecycle", "encryption", "tagging"} {
 			response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/bucket/policy", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"kind":%q,"document":"raw"}`, cluster.ID, id, kind), "bucket-config-"+tenant+"-"+kind)
 			if response.Code != http.StatusAccepted {
