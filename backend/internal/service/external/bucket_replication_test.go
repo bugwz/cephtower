@@ -74,6 +74,110 @@ func TestBucketReplicationRead(t *testing.T) {
 	}
 }
 
+func TestDashboardBucketReplicationWrite(t *testing.T) {
+	service, endpoints, cluster := externalTestService(t)
+	ctx := context.Background()
+	if _, err := endpoints.CreateEndpoint(ctx, cluster.ID, endpointservice.EndpointInput{Kind: "s3", URL: "https://s3.example.test"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := endpoints.PutCredential(ctx, cluster.ID, endpointservice.CredentialInput{Kind: "s3", Value: map[string]any{"access_key": "access", "secret_key": "secret"}}); err != nil {
+		t.Fatal(err)
+	}
+	before := `<ReplicationConfiguration><Role/><Rule><ID>old</ID><Status>Disabled</Status><Destination><Bucket>old</Bucket></Destination></Rule></ReplicationConfiguration>`
+	for _, tenant := range []string{"", "team"} {
+		for _, scenario := range []string{"success", "missing", "stale", "invalid", "pre denied", "identity denied", "wrong tenant", "put failed", "put uncertain", "post denied", "post mismatch"} {
+			t.Run(tenant+"/"+scenario, func(t *testing.T) {
+				calls := 0
+				service.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+					calls++
+					method, path, query := "GET", "/"+tenant+":bucket", "replication="
+					body, status := before, 200
+					switch calls {
+					case 1:
+						if scenario == "missing" {
+							body, status = `<Error><Code>ReplicationConfigurationNotFoundError</Code></Error>`, 404
+						}
+						if scenario == "invalid" {
+							body = "invalid"
+						}
+						if scenario == "pre denied" {
+							status = 403
+						}
+					case 2:
+						path, query = "/", ""
+						uid := "user"
+						if tenant != "" {
+							uid = tenant + "$user"
+						}
+						if scenario == "wrong tenant" {
+							uid = "other$user"
+						}
+						body = `<ListAllMyBucketsResult><Owner><ID>` + uid + `</ID></Owner><Buckets/></ListAllMyBucketsResult>`
+						if scenario == "identity denied" {
+							status = 403
+						}
+					case 3:
+						method, body = "PUT", ""
+						if scenario == "put failed" {
+							status = 503
+						}
+						if scenario == "put uncertain" {
+							return nil, errors.New("connection lost")
+						}
+					case 4:
+						body = `<ReplicationConfiguration><Role/><Rule><ID>dashboard_admin_pipe</ID><Status>Enabled</Status><Priority>0</Priority><Destination><Bucket>arn:aws:s3::` + tenant + `:bucket</Bucket></Destination></Rule></ReplicationConfiguration>`
+						if scenario == "post denied" {
+							status = 403
+						}
+						if scenario == "post mismatch" {
+							body = before
+						}
+					default:
+						t.Fatal("unexpected retry")
+					}
+					if r.Method != method || r.URL.Path != path || r.URL.RawQuery != query || r.Header.Get("Authorization") == "" {
+						t.Fatal("wrong signed scope or order")
+					}
+					return &http.Response{StatusCode: status, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(body))}, nil
+				})
+				expected := before
+				if scenario == "missing" {
+					expected = ""
+				}
+				if scenario == "stale" {
+					expected += " "
+				}
+				id := base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00bucket"))
+				_, err := service.Execute(ctx, Request{ClusterID: cluster.ID, Action: "rgw_bucket.replication_enable", ResourceKey: "rgw/bucket/" + id, Parameters: map[string]any{"expected_document": expected}})
+				want, code := 4, ""
+				switch scenario {
+				case "stale", "invalid", "pre denied":
+					want, code = 1, "pre_check_failed"
+				case "identity denied", "wrong tenant":
+					want, code = 2, "s3_failed"
+				case "put failed", "put uncertain":
+					want, code = 3, "s3_failed"
+				case "post denied", "post mismatch":
+					code = "post_check_failed"
+				}
+				if calls != want {
+					t.Fatalf("calls=%d want=%d err=%v", calls, want, err)
+				}
+				if code == "" {
+					if err != nil {
+						t.Fatal(err)
+					}
+					return
+				}
+				var actionError *cephdomain.ActionError
+				if !errors.As(err, &actionError) || actionError.Code != code || actionError.Retryable {
+					t.Fatalf("wrong failure %v", err)
+				}
+			})
+		}
+	}
+}
+
 func TestBucketReplicationDeletionVerifiesEmptyRules(t *testing.T) {
 	service, endpoints, cluster := externalTestService(t)
 	ctx := context.Background()

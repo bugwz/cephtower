@@ -54,7 +54,7 @@ type httpCredential struct {
 func Supports(action string) bool {
 	switch action {
 	case "silence.create", "silence.delete",
-		"rgw_bucket.create", "rgw_bucket.update", "rgw_bucket.delete", "rgw_bucket.acl", "rgw_bucket_policy.update", "rgw_bucket_policy.delete",
+		"rgw_bucket.create", "rgw_bucket.update", "rgw_bucket.delete", "rgw_bucket.acl", "rgw_bucket.replication_enable", "rgw_bucket_policy.update", "rgw_bucket_policy.delete",
 		"iscsi_target.create", "iscsi_target.update", "iscsi_target.delete",
 		"nvmeof_subsystem.create", "nvmeof_subsystem.update", "nvmeof_subsystem.delete",
 		"nvmeof_namespace.create", "nvmeof_namespace.update", "nvmeof_namespace.delete",
@@ -457,6 +457,26 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 		}
 	case "rgw_bucket.delete":
 		err = api.DeleteBucket(ctx, bucket)
+	case "rgw_bucket.replication_enable":
+		expected, ok := parameters["expected_document"].(string)
+		if !ok {
+			return cephdomain.ActionResult{}, failure("invalid_request", "replication snapshot required", false)
+		}
+		before, _, readErr := api.GetBucketConfiguration(ctx, bucket, "replication")
+		if readErr != nil {
+			if !s3.IsConfigurationMissing("replication", readErr) || expected != "" {
+				return cephdomain.ActionResult{}, failure("pre_check_failed", "replication snapshot unavailable or changed; no write submitted", false)
+			}
+		} else if _, parseErr := s3.BucketReplication(before); parseErr != nil || string(before) != expected {
+			return cephdomain.ActionResult{}, failure("pre_check_failed", "replication snapshot changed or invalid; no write submitted", false)
+		}
+		if err := api.PutDashboardBucketReplication(ctx, bucket); err != nil {
+			return cephdomain.ActionResult{}, failure("s3_failed", "replication preparation failed; verify current rules before retrying: "+err.Error(), false)
+		}
+		after, _, readErr := api.GetBucketConfiguration(ctx, bucket, "replication")
+		if readErr != nil || !s3.DashboardBucketReplicationMatches(after, bucket) {
+			return cephdomain.ActionResult{}, failure("post_check_failed", "replication rule was submitted but could not be verified; no automatic rollback or retry", false)
+		}
 	case "rgw_bucket.acl":
 		canned, _ := parameters["acl"].(string)
 		if !s3.ValidBucketCannedACL(canned) {

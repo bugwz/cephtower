@@ -11,7 +11,7 @@ import (
 // Match the resource key emitted by the API, never infer identity from its tail.
 func bucketResourceID(action, key string) (string, error) {
 	parts := strings.Split(key, "/")
-	valid := len(parts) == 3 && (action == "rgw_bucket.update" || action == "rgw_bucket.delete" || action == "rgw_bucket.acl")
+	valid := len(parts) == 3 && (action == "rgw_bucket.update" || action == "rgw_bucket.delete" || action == "rgw_bucket.acl" || action == "rgw_bucket.replication_enable")
 	if action == "rgw_bucket_policy.update" || action == "rgw_bucket_policy.delete" {
 		valid = len(parts) == 4 && parts[3] == "policy"
 	}

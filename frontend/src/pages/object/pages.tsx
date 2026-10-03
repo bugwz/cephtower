@@ -1,4 +1,5 @@
 import type { ApiRecord } from '../../api/client'
+import { bucketReplicationFormBlocked, bucketReplicationFormInitial, bucketReplicationFormInput, bucketReplicationFormConfirmation } from './rgwBucketReplicationForm'
 import { useClusterContext } from '../../state/ClusterContext'
 import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
 import { RgwCurrentPeriod } from './RgwCurrentPeriod'
@@ -1254,6 +1255,17 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...rgwBucketConfigurationDeleteInput(row) })
     },
     extraActions: [{
+      title: '设置 Dashboard 桶复制规则', buttonLabel: '设置同名桶复制',
+      path: '/rgw/bucket/replication', method: 'POST',
+      successMessage: 'S3 复制规则已回读核验（不代表复制运行或完成）',
+      visibleWhen: (row) => row.kind === 'replication',
+      disabledWhen: bucketReplicationFormBlocked, initialValues: bucketReplicationFormInitial, confirmation: bucketReplicationFormConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'confirm_replication', label: '上层策略与覆盖确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已准备上层策略并备份规则，确认以全部 Zone 的同名桶规则替换全部 S3 复制规则' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketReplicationFormInput(values, row) })
+    }, {
       title: '修改对象锁默认保留', buttonLabel: '修改默认保留',
       path: '/rgw/bucket/policy', method: 'PATCH',
       successMessage: '对象锁默认保留配置已回读核验',

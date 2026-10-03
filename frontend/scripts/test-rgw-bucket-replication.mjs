@@ -23,3 +23,36 @@ assert.equal(typeof table.props.columns[0].render('<script>'), 'string')
 const empty = api.RgwBucketReplication({ value: { role: '', rules: [] }, configured: true })
 assert.match(empty.props.children[2].props.locale.emptyText, /无 S3 复制规则.*不推断/)
 console.log('bucket replication presentation tests passed')
+
+const form = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketReplicationForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(form)
+const row = { bucket_id: 'AGJ1Y2tldA', kind: 'replication', configured: true, document: '<ReplicationConfiguration><Role/></ReplicationConfiguration>' }
+const values = { ...form.bucketReplicationFormInitial(row), confirm_replication: 'acknowledged' }
+assert.deepEqual(form.bucketReplicationFormInput(values, row), { bucket_id: row.bucket_id, expected_document: row.document })
+assert.equal(form.bucketReplicationFormInput(values, { ...row, configured: false, document: null }).expected_document, '')
+assert.throws(() => form.bucketReplicationFormInput({ ...values, bucket_id: 'other' }, row), /不可更改/)
+assert.throws(() => form.bucketReplicationFormInput({ ...values, confirm_replication: undefined }, row), /确认/)
+for (const invalid of [{ ...row, kind: 'acl' }, { ...row, bucket_id: '' }, { ...row, configured: undefined }, { ...row, document: null }, { ...row, configured: false }]) assert.equal(typeof form.bucketReplicationFormBlocked(invalid), 'string')
+assert.throws(() => form.bucketReplicationFormInput(values, { ...row, document: 'x'.repeat(1024 * 1024) }), /上限/)
+const confirmation = form.bucketReplicationFormConfirmation(values, row)
+for (const text of ['全部 S3', '上层', '不证明', '租户', 'ListBuckets', '原子锁', '回滚']) assert.ok(confirmation.includes(text))
+const page = ts.createSourceFile('pages.tsx', readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+let action
+function visit(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(page) === 'title' && ts.isStringLiteral(p.initializer) && p.initializer.text === '设置 Dashboard 桶复制规则')) {
+    const source = ts.transpileModule(`const action = ${node.getText(page)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+    action = new Function(...Object.keys(form), `${source}; return action`)(...Object.values(form))
+  }
+  ts.forEachChild(node, visit)
+}
+visit(page)
+assert.equal(action.path, '/rgw/bucket/replication')
+assert.equal(action.method, 'POST')
+assert.equal(action.visibleWhen(row), true)
+assert.equal(action.visibleWhen({ kind: 'acl' }), false)
+assert.equal(action.disabledWhen, form.bucketReplicationFormBlocked)
+assert.equal(action.initialValues, form.bucketReplicationFormInitial)
+assert.equal(action.confirmation, form.bucketReplicationFormConfirmation)
+assert.deepEqual(action.buildBody(values, 42, row), { cluster_id: 42, bucket_id: row.bucket_id, expected_document: row.document })
+assert.equal(action.fields.find(f => f.name === 'bucket_id').readOnly, true)
+console.log('bucket replication write form, snapshot and action checks passed')

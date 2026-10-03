@@ -100,6 +100,11 @@ func (c *Client) requestWithHeaders(ctx context.Context, method, bucket string, 
 	if bucket == "" || strings.ContainsAny(bucket, "/\x00") {
 		return nil, "", fmt.Errorf("invalid S3 bucket name")
 	}
+	return c.requestTarget(ctx, method, bucket, query, body, headers)
+}
+
+// Only service-level operations may call this with an empty bucket.
+func (c *Client) requestTarget(ctx context.Context, method, bucket string, query url.Values, body []byte, headers http.Header) ([]byte, string, error) {
 	target := *c.base
 	target.Path = strings.TrimSuffix(c.base.Path, "/") + "/" + bucket
 	target.RawQuery = canonicalQuery(query)

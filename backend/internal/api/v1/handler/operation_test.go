@@ -281,6 +281,14 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if err != nil || aclOperation.Action != "rgw_bucket.acl" || aclOperation.Risk != "high" || aclOperation.ResourceKey != row.ResourceKey || aclOperation.LockKey != updated.LockKey {
 			t.Fatalf("incorrect ACL operation: %+v %v", aclOperation, err)
 		}
+		response = sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/bucket/replication", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"expected_document":""}`, cluster.ID, id), "bucket-replication-"+tenant)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("replication queue: %d %s", response.Code, response.Body.String())
+		}
+		replicationOperation, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || replicationOperation.Action != "rgw_bucket.replication_enable" || replicationOperation.Risk != "high" || replicationOperation.ResourceKey != row.ResourceKey || replicationOperation.LockKey != updated.LockKey {
+			t.Fatalf("incorrect replication operation: %+v %v", replicationOperation, err)
+		}
 		for _, kind := range []string{"policy", "cors", "lifecycle", "encryption", "tagging"} {
 			response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/bucket/policy", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"kind":%q,"document":"raw"}`, cluster.ID, id, kind), "bucket-config-"+tenant+"-"+kind)
 			if response.Code != http.StatusAccepted {

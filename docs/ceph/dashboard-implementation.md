@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **Dashboard 桶级 S3 复制规则写入**：新增 `POST /rgw/bucket/replication` 和复制配置页“设置同名桶复制”入口，对照 `rgw_client.py::set_bucket_replication` 写入固定 `dashboard_admin_pipe`、Enabled、优先级 0、全部对象/Zone、同名目标桶的规则。使用已有签名 S3 链路，不伪造 `radosgw-admin` 的 S3 配置接口；整体替换 S3 管理的复制规则，保留其他本地同步组。
+  - 原生 `rgw_rest_s3.cc::ReplicationConfiguration::Rule::to_sync_policy_pipe` 从认证身份推导目标租户，忽略目标 ARN 的 account 字段；因此写前使用签名 ListBuckets 的 Owner UID 校验凭据租户与目标桶一致，并拒绝 Session Token。Account/IAM 所有者不受该 Ceph 实现支持，仍由原生拒绝。需要额外的 ListBuckets 权限，读取超限或身份无法确认时不写入。
+  - 写前比较用户所见完整原文快照，处理原生空规则及明确未配置响应；写后校验固定规则、优先级、状态及带租户 ARN，同时考虑原生 Role 丢弃、空 Filter 省略的归一化行为。失败不自动重试或回滚；快照校验不是原子 CAS，仍需避免外部并发写入。
+  - 上层 Zonegroup 策略准备/发布与桶规则写入是两个明确操作，界面要求先准备上层策略；本接口不证明上层许可、同步运行或数据完成。补充租户隔离、快照变化、身份/写入/回读故障、严格回读、API 高风险锁和前端表单绑定测试。没有真实 Ceph 集群验证。
+
 #### 桶复制上层策略准备
 
 核对 controllers/rgw.py::_set_replication 后，确认 Dashboard 的启用流程不只是 S3 PUT：缺少管理组时先创建 allowed 组、全当前 Zone 对称流及通配管道，并发布 Period。新增 POST /api/v1/rgw/zonegroup/replication/prepare 和显式 Zonegroup 行入口，实现此上层准备阶段。固定使用参考中的 dashboard_admin_group、dashboard_admin_flow、dashboard_admin_pipe，组状态 allowed、管道 system 模式；不调用默认 Zonegroup，必须有明确 Realm 和有效当前 Zone 成员。
