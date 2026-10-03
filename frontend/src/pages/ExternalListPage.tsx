@@ -1,7 +1,7 @@
 import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { readExternalList } from '../api/external'
 import { mutateResource } from '../api/resource'
 import type { ApiRecord } from '../api/client'
@@ -36,6 +36,12 @@ export interface ExternalListPageDefinition extends FeatureRequirements {
 
 export function ExternalListPage({ definition, embedded = false }: { definition: ExternalListPageDefinition; embedded?: boolean }) {
   const { selectedClusterId } = useClusterContext()
+  const currentClusterId = useRef(selectedClusterId)
+  const clusterGeneration = useRef(0)
+  if (currentClusterId.current !== selectedClusterId) clusterGeneration.current += 1
+  currentClusterId.current = selectedClusterId
+  useEffect(() => () => { clusterGeneration.current += 1 }, [])
+  const [formClusterId, setFormClusterId] = useState<number | undefined>()
   const [refreshing, setRefreshing] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [activeAction, setActiveAction] = useState<ResourceFormAction | null>(null)
@@ -61,6 +67,15 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
   const featureStatus = useFeatureRequirements(selectedClusterId, definition)
   const mutationBlocked = featureStatus.loading || featureStatus.blocked || Boolean(featureStatus.error)
 
+  useEffect(() => {
+    form.resetFields()
+    setFormOpen(false)
+    setActiveAction(null)
+    setActiveRow(undefined)
+    setDetailRow(null)
+    setFormClusterId(undefined)
+  }, [form, selectedClusterId])
+
   async function reload() {
     setRefreshing(true)
     try {
@@ -75,7 +90,13 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
       message.warning('当前集群未满足该功能的操作依赖')
       return
     }
+    const blocked = row ? action.disabledWhen?.(row) : undefined
+    if (blocked) {
+      message.warning(blocked)
+      return
+    }
     setActiveAction(action)
+    setFormClusterId(selectedClusterId)
     setActiveRow(row)
     form.resetFields()
     const initialValues = typeof action.initialValues === 'function' ? action.initialValues(row) : action.initialValues
@@ -84,17 +105,41 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
   }
 
   async function submitForm(values: MutationFormValues) {
-    if (!selectedClusterId || !activeAction || submitting || mutationBlocked) {
+    if (!selectedClusterId || formClusterId !== selectedClusterId || !activeAction || submitting || mutationBlocked) {
       return
     }
     const action = activeAction
+    const generation = clusterGeneration.current
+    const blocked = activeRow ? action.disabledWhen?.(activeRow) : undefined
+    if (blocked) {
+      message.warning(blocked)
+      return
+    }
     setSubmitting(true)
     try {
+      let parameters: ApiRecord
+      let confirmation: string | undefined
+      try {
+        parameters = action.buildBody(values, selectedClusterId, activeRow)
+        confirmation = action.confirmation?.(values, activeRow)
+      } catch (error) {
+        message.error(error instanceof Error ? error.message : '表单参数无效')
+        return
+      }
+      if (confirmation) {
+        const approved = await new Promise<boolean>((resolve) => {
+          Modal.confirm({ title: action.title, content: confirmation, okText: '确认执行', okType: 'danger', cancelText: '取消', onOk: () => resolve(true), onCancel: () => resolve(false), afterClose: () => resolve(false) })
+        })
+        if (!approved) return
+      }
+      if (currentClusterId.current !== formClusterId || clusterGeneration.current !== generation) return
       await operationMutation.run(() => mutateResource(
         action.path,
         action.method,
-        action.buildBody(values, selectedClusterId, activeRow)
+        parameters
       ), false)
+      if (currentClusterId.current !== formClusterId || clusterGeneration.current !== generation) return
+      form.resetFields()
       setFormOpen(false)
       message.success(action.successMessage)
       void refresh({ showLoading: false })
@@ -119,6 +164,8 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
       return
     }
     const parameters = action.buildBody(row, selectedClusterId)
+    const generation = clusterGeneration.current
+    const isCurrentScope = () => currentClusterId.current === selectedClusterId && clusterGeneration.current === generation
     if (action.risk && action.risk !== 'high') {
       Modal.confirm({
         title: `${action.title} ${resourceKey}`,
@@ -127,8 +174,10 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
         okType: action.risk === 'medium' ? 'danger' : 'primary',
         cancelText: '取消',
         async onOk() {
+          if (!isCurrentScope()) return
           await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters), false)
           window.setTimeout(() => {
+            if (!isCurrentScope()) return
             message.success(action.successMessage)
             void refresh({ showLoading: false })
           })
@@ -143,8 +192,10 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
+        if (!isCurrentScope()) return
         await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters), false)
         window.setTimeout(() => {
+          if (!isCurrentScope()) return
           message.success(action.successMessage)
           void refresh({ showLoading: false })
         })
@@ -239,14 +290,18 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
       <DraggableModal
         title={activeAction?.title ?? ''}
         open={formOpen}
-        onCancel={() => setFormOpen(false)}
+        onCancel={() => { if (!submitting) setFormOpen(false) }}
+        cancelButtonProps={{ disabled: submitting }}
+        closable={!submitting}
+        maskClosable={!submitting}
+        keyboard={!submitting}
         onOk={() => form.submit()}
         okText="提交"
         confirmLoading={submitting}
-        okButtonProps={{ icon: <SaveOutlined />, disabled: mutationBlocked }}
+        okButtonProps={{ icon: <SaveOutlined />, disabled: mutationBlocked || formClusterId !== selectedClusterId }}
         destroyOnClose
       >
-        <Form form={form} layout="vertical" onFinish={submitForm}>
+        <Form form={form} layout="vertical" onFinish={submitForm} disabled={submitting}>
           {activeAction?.fields.map((field) => (
             <Form.Item
               key={field.name}
@@ -311,7 +366,7 @@ function buildColumns(
       <TableActions>
         <TableAction onClick={() => openDetail(row)}>详情</TableAction>
         {definition.updateAction ? (
-          <TableAction disabled={mutationBlocked} onClick={() => openForm(definition.updateAction!, row)}>编辑</TableAction>
+          <TableAction disabled={mutationBlocked || Boolean(definition.updateAction.disabledWhen?.(row))} onClick={() => openForm(definition.updateAction!, row)}>编辑</TableAction>
         ) : null}
         {definition.deleteAction ? (
           <TableAction danger disabled={mutationBlocked || Boolean(definition.deleteAction.disabledWhen?.(row))} onClick={() => deleteRow(row)}>删除</TableAction>
@@ -342,18 +397,18 @@ function hasFeatureRequirementAlert(status: ReturnType<typeof useFeatureRequirem
 
 function renderFormControl(field: MutationFormField) {
   if (field.type === 'number') {
-    return <InputNumber min={field.min} max={field.max} className="full-width-control" />
+    return <InputNumber min={field.min} max={field.max} className="full-width-control" readOnly={field.readOnly} />
   }
   if (field.type === 'boolean') {
-    return <Switch />
+    return <Switch disabled={field.readOnly} />
   }
   if (field.type === 'select') {
-    return <Select options={field.options ?? []} />
+    return <Select options={field.options ?? []} disabled={field.readOnly} />
   }
   if (field.type === 'textarea') {
-    return <Input.TextArea rows={5} spellCheck={false} placeholder={field.placeholder} />
+    return <Input.TextArea rows={5} spellCheck={false} placeholder={field.placeholder} readOnly={field.readOnly} />
   }
-  return <Input placeholder={field.placeholder} />
+  return <Input placeholder={field.placeholder} readOnly={field.readOnly} />
 }
 
 function renderValue(value: unknown) {

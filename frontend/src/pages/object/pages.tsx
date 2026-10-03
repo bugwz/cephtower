@@ -43,7 +43,7 @@ import { RgwGeneratedCredentialInput } from './RgwGeneratedCredentialInput'
 import { rgwCapabilityOptions, rgwCapabilityInput } from './rgwUserCapsForm'
 import { rgwUserCreateCredentials } from './rgwUserCreateCredentials'
 import { rgwUserCreateFlags } from './rgwUserCreateFlags'
-import { rgwBucketConfigurationOptions, rgwBucketConfigurationInput, rgwBucketConfigurationDeleteBlocked, rgwBucketConfigurationDeleteInput, rgwBucketConfigurationDeleteConfirmation } from './rgwBucketConfiguration'
+import { rgwBucketConfigurationOptions, rgwBucketConfigurationInput, rgwBucketConfigurationDeleteBlocked, rgwBucketConfigurationDeleteInput, rgwBucketConfigurationDeleteConfirmation, rgwBucketConfigurationEditBlocked, rgwBucketConfigurationEditInitial, rgwBucketConfigurationEditInput, rgwBucketConfigurationUpdateConfirmation } from './rgwBucketConfiguration'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
@@ -849,6 +849,7 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       path: '/rgw/bucket/policy',
       method: 'PATCH',
       successMessage: 'Bucket 配置文档提交成功',
+      confirmation: rgwBucketConfigurationUpdateConfirmation,
       fields: [
         { name: 'bucket_id', label: 'Bucket ID', required: true },
         {
@@ -862,6 +863,21 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       ],
       initialValues: { kind: 'policy' },
       buildBody: (values, clusterId) => ({ cluster_id: clusterId, ...rgwBucketConfigurationInput(values) })
+    },
+    updateAction: {
+      title: '编辑当前 Bucket 配置文档',
+      path: '/rgw/bucket/policy',
+      method: 'PATCH',
+      successMessage: 'Bucket 配置文档提交成功',
+      disabledWhen: rgwBucketConfigurationEditBlocked,
+      initialValues: rgwBucketConfigurationEditInitial,
+      confirmation: rgwBucketConfigurationUpdateConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'kind', label: '配置类型（不可更改）', readOnly: true },
+        { name: 'document', label: '完整配置文档（Policy 为 JSON，其它为 XML；提交将替换该配置）', type: 'textarea', required: true }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...rgwBucketConfigurationEditInput(values, row) })
     },
     deleteAction: {
       title: '删除 Bucket 配置',
