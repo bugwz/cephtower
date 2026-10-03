@@ -33,6 +33,7 @@ import { rgwPolicyChanged, rgwPolicyConfirmation, rgwPolicyDeleteOptions, rgwPol
 import { RgwUserDetails } from './RgwUserDetails'
 import { rgwUserOperationMaskInput, rgwUserOperationMaskOptions } from './rgwUserOperationMask'
 import { rgwUserAccountRootBlocked, rgwUserAccountRootInput } from './rgwUserAccountRoot'
+import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { rgwUserPlacementInput, rgwUserPlacementTagsInput } from './rgwUserPlacementForm'
 
 export function RgwOverviewPage() {
@@ -175,6 +176,18 @@ const definitions: Record<
       initialValues: (row) => rgwQuotaInitial(row?.[scope === 'user' ? 'user_quota' : 'bucket_quota']),
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), scope, ...rgwQuotaInput(values) })
     })),
+      { title: '迁入账户（不可逆）', path: '/rgw/user', method: 'PATCH', successMessage: '迁入命令完成且用户账户归属已确认，请检查 Bucket 归属及访问策略',
+        disabledWhen: rgwUserAccountMigrationBlocked,
+        fields: [
+          { name: 'target_account_id', label: '目标账户 ID（必须与用户租户一致）', required: true },
+          { name: 'migration_confirm_uid', label: '输入完整用户 UID，确认转移用户及其 Bucket 归属，且不能迁出账户', required: true }
+        ],
+        confirmation: (values, row) => {
+          const input = rgwUserAccountMigrationInput(values, row)
+          return `不可逆：将用户 ${JSON.stringify(userId(row))} 及其 Bucket 迁入账户 ${JSON.stringify(input.target_account_id)}。访问权限与配额语义将改变，不会自动授予根用户或托管策略。失败可能留下部分 Bucket 已迁移，必须人工检查，不能直接重试。确认继续？`
+        },
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserAccountMigrationInput(values, row) })
+      },
       { title: '设置账户根用户', path: '/rgw/user', method: 'PATCH', successMessage: '账户根用户状态设置执行成功',
         disabledWhen: rgwUserAccountRootBlocked,
         fields: [{ name: 'account_root', label: '账户根用户状态（显著改变账户访问权限）', type: 'select', required: true, options: [{ label: '设为账户根用户', value: 'enable' }, { label: '改为普通 RGW 用户', value: 'disable' }] }],

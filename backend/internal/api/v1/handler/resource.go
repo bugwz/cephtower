@@ -213,6 +213,9 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 		if _, changesRoot := body["account_root"]; action == "rgw_user.update" && changesRoot {
 			requestRisk = "high"
 		}
+		if _, migratesAccount := body["target_account_id"]; action == "rgw_user.update" && migratesAccount {
+			requestRisk = "high"
+		}
 		var generation *uint64
 		if value := r.Header.Get("If-Match"); value != "" {
 			parsed, err := strconv.ParseUint(value, 10, 64)

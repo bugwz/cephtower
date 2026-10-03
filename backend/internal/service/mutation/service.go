@@ -119,6 +119,25 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		return cephdomain.ActionResult{}, err
 	}
 	var upgradeTarget map[string]any
+	if rgwUserAccountMigrationRequested(request) {
+		uid := last(resourceTail(request.ResourceKey))
+		user, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".migration_user", Binary: executor.BinaryRGWAdmin, Args: []string{"user", "info", "--uid", uid, "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if readErr != nil {
+			return cephdomain.ActionResult{}, normalize(readErr)
+		}
+		tenant, valid := rgwMigrationUserTenant(user.Stdout, uid)
+		if !valid {
+			return cephdomain.ActionResult{}, invalid("migration requires a verified unassigned RGW user with an IAM-compatible display name; no changes were made")
+		}
+		accountID := rawText(request.Parameters, "target_account_id")
+		account, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".migration_account", Binary: executor.BinaryRGWAdmin, Args: []string{"account", "get", "--account-id", accountID, "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if readErr != nil {
+			return cephdomain.ActionResult{}, normalize(readErr)
+		}
+		if !rgwMigrationAccountMatches(account.Stdout, accountID, tenant) {
+			return cephdomain.ActionResult{}, invalid("target account identity or matching tenant could not be verified; no changes were made")
+		}
+	}
 	if _, present := request.Parameters["account_root"]; request.Action == "rgw_user.update" && present {
 		uid := last(resourceTail(request.ResourceKey))
 		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: executor.BinaryRGWAdmin, Args: []string{"user", "info", "--uid", uid, "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
@@ -275,6 +294,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: request.Action != "osd_deployment.preview", SensitiveArgs: spec.sensitive})
 	if err != nil {
+		if rgwUserAccountMigrationRequested(request) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "account migration failed and bucket ownership may have partially changed; inspect user and bucket ownership before any manual retry", Retryable: false}
+		}
 		if isSMBAuthWrite(request.Action) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "SMB credential write failed"}
 		}
@@ -325,6 +347,12 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if rgwUserAccountMigrationRequested(request) {
+			root := false
+			if err != nil || !rgwUserAccountRootMatches(checked.Stdout, last(resourceTail(request.ResourceKey)), rawText(request.Parameters, "target_account_id"), &root) {
+				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "account migration was accepted but user membership could not be verified; inspect user and bucket ownership before any manual retry", Retryable: false}
+			}
+		}
 		if root, present := request.Parameters["account_root"].(bool); request.Action == "rgw_user.update" && present {
 			if err != nil || !rgwUserAccountRootMatches(checked.Stdout, last(resourceTail(request.ResourceKey)), rawText(request.Parameters, "expected_account_id"), &root) {
 				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user modification was accepted but account root status could not be verified; inspect user info before retrying", Retryable: false}
@@ -1866,6 +1894,23 @@ func build(request Request, p map[string]any) (command, error) {
 	case "rgw_user.update":
 		uid := last(tail)
 		args := []string{"user", "modify", "--uid", uid}
+		if raw, present := p["target_account_id"]; present {
+			account, ok := raw.(string)
+			confirmation, confirmed := p["migration_confirm_uid"].(string)
+			if !ok || !regexp.MustCompile(`^RGW[0-9]{17}$`).MatchString(account) || !confirmed || confirmation != uid || uid == "" {
+				return command{}, invalid("account migration requires a valid target account and exact UID confirmation")
+			}
+			for field := range p {
+				switch field {
+				case "cluster_id", "uid", "target_account_id", "migration_confirm_uid":
+				default:
+					return command{}, invalid("account migration cannot be combined with other user edits")
+				}
+			}
+			return rgw(append(args, "--account-id="+account), []string{"user", "info", "--uid", uid}), nil
+		} else if _, present := p["migration_confirm_uid"]; present {
+			return command{}, invalid("migration_confirm_uid requires target_account_id")
+		}
 		if raw, present := p["account_root"]; present {
 			root, ok := raw.(bool)
 			account, accountOK := p["expected_account_id"].(string)

@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+未关联账户的 RGW 用户增加不可逆迁入账户入口，经 PATCH 用户 API 以独立参数映射 `user modify --account-id`，不能与其他资料修改合并。对应参考用户表单的 `account_id`；原生依据 `driver/rados/rgw_user.cc` 的账户校验、`adopt_user_buckets` 与 IAM 名称校验。执行前确认完整 UID、未关联、rgw 类型、合法 IAM 显示名，以及 `account get` 的 ID/租户；要求手动输入完整 UID，服务端记录高风险。命令错误、归属回读错误及后续库存刷新错误均不自动重试，提示可能存在部分 Bucket 迁移。成功仅确认原生命令完成和用户账户归属，不宣称逐 Bucket 独立验证；随后刷新用户、账户、Bucket 库存。前后端测试覆盖确认、预检拒绝、部分失败风险与刷新范围；未实机验证。
+
 账户根用户升权与降权在 API 中均按 `high` 风险入队并标注审计，普通用户资料修改继续使用 `medium`。风险按单次请求计算，不能污染其他请求；接口回归测试验证双向切换、前后普通修改及操作响应风险。此风险标记不是额外审批机制，操作仍依赖现有鉴权、前端确认与执行校验。
 
 已关联账户用户增加账户根用户切换，对应参考 `rgw-user-form.component.ts` 的 `account_root_user`，映射为 `user modify --account-root=true/false`。依据 `radosgw-admin.cc` 的二值参数解析及 `driver/rados/rgw_user.cc` 根用户分支，执行前读取完整 UID、预期账户 ID 和 rgw/root 类型，执行后再次核对类型与归属，失败不自动重试写入。前端显式选择并确认提升/降权影响，不提交 `--account-id`，因此此入口不执行不可逆的账户迁移；账户迁移仍需独立补齐。测试覆盖双向切换、预检拒绝、命令失败和回读失败，未做真实集群验证。

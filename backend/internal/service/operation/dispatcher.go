@@ -73,13 +73,20 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		return result, nil
 	}
 	var refreshed bool
-	if request.Action == "filesystem.rename" {
+	_, migration := request.Parameters["target_account_id"]
+	if request.Action == "rgw_user.update" && migration {
+		_, err = d.reconciler.RefreshKinds(ctx, request.ClusterID, []string{"rgw_user", "rgw_account", "rgw_bucket"})
+		refreshed = err == nil
+	} else if request.Action == "filesystem.rename" {
 		_, err = d.reconciler.RefreshKinds(ctx, request.ClusterID, []string{"filesystem", "pool"})
 		refreshed = err == nil
 	} else {
 		refreshed, err = d.reconciler.RefreshKindIfSupported(ctx, request.ClusterID, request.ResourceKind)
 	}
 	if err != nil {
+		if request.Action == "rgw_user.update" && migration {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "account migration was verified but inventory refresh failed; refresh user, account and bucket inventory without repeating migration", Retryable: false}
+		}
 		if request.Action == "rbd_mirroring.global_schedule" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "global schedule was verified but inventory refresh failed; refresh inventory before another change", Retryable: false}
 		}

@@ -655,6 +655,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -878,6 +880,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -1411,6 +1415,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -1634,6 +1640,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -3462,6 +3470,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -3685,6 +3695,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -4218,6 +4230,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -4441,6 +4455,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -5802,6 +5818,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -6025,6 +6043,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -6685,6 +6705,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -6908,6 +6930,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -7442,6 +7466,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -7665,6 +7691,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -8885,6 +8913,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -9108,6 +9138,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -9735,6 +9767,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -9958,6 +9992,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -10491,6 +10527,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -10714,6 +10752,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -11493,6 +11533,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -11716,6 +11758,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -12745,6 +12789,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -12968,6 +13014,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -13502,6 +13550,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -13725,6 +13775,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -14259,6 +14311,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -14482,6 +14536,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -15653,6 +15709,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -15876,6 +15934,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -16555,6 +16615,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -16778,6 +16840,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -17407,6 +17471,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -17630,6 +17696,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -18163,6 +18231,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -18386,6 +18456,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -19575,6 +19647,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -19798,6 +19872,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -20331,6 +20407,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -20554,6 +20632,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -21104,6 +21184,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -21327,6 +21409,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -21954,6 +22038,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -22177,6 +22263,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -22710,6 +22798,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -22933,6 +23023,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -23467,6 +23559,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -23690,6 +23784,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -24536,6 +24632,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -24759,6 +24857,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -25483,6 +25583,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -25706,6 +25808,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -26333,6 +26437,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -26556,6 +26662,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -27089,6 +27197,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -27312,6 +27422,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -27978,6 +28090,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -28201,6 +28315,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -28735,6 +28851,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -28958,6 +29076,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -30172,6 +30292,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -30395,6 +30517,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -31214,6 +31338,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -31437,6 +31563,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -32064,6 +32192,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -32287,6 +32417,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -32916,6 +33048,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -33139,6 +33273,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -33766,6 +33902,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -33989,6 +34127,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -34522,6 +34662,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -34745,6 +34887,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -35469,6 +35613,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -35692,6 +35838,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -36319,6 +36467,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -36542,6 +36692,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -37075,6 +37227,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -37298,6 +37452,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -37927,6 +38083,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -38150,6 +38308,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -38683,6 +38843,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -38906,6 +39068,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -39535,6 +39699,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -39758,6 +39924,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -40291,6 +40459,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -40514,6 +40684,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -41143,6 +41315,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -41366,6 +41540,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -41993,6 +42169,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -42216,6 +42394,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -42749,6 +42929,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -42972,6 +43154,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -43769,6 +43953,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -43992,6 +44178,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -44620,6 +44808,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -44843,6 +45033,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -45377,6 +45569,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -45600,6 +45794,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -46134,6 +46330,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -46357,6 +46555,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -46985,6 +47185,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -47208,6 +47410,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -47776,6 +47980,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -47999,6 +48205,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -48818,6 +49026,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -49041,6 +49251,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -49668,6 +49880,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -49891,6 +50105,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -50424,6 +50640,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -50647,6 +50865,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -51276,6 +51496,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -51499,6 +51721,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -52033,6 +52257,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -52256,6 +52482,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -52790,6 +53018,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -53013,6 +53243,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -53547,6 +53779,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -53770,6 +54004,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -54399,6 +54635,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -54622,6 +54860,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -55249,6 +55489,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -55472,6 +55714,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -56005,6 +56249,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -56228,6 +56474,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -56879,6 +57127,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -57102,6 +57352,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -57635,6 +57887,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -57858,6 +58112,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -58391,6 +58647,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -58614,6 +58872,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -59534,6 +59794,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -59757,6 +60019,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -60405,6 +60669,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -60628,6 +60894,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -61324,6 +61592,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -61547,6 +61817,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -62080,6 +62352,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -62303,6 +62577,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -63036,6 +63312,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -63259,6 +63537,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -63887,6 +64167,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -64110,6 +64392,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -64644,6 +64928,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -64867,6 +65153,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -65512,6 +65800,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -65735,6 +66025,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -66268,6 +66560,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -66491,6 +66785,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -67024,6 +67320,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -67247,6 +67545,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -67781,6 +68081,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -68004,6 +68306,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -68633,6 +68937,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -68856,6 +69162,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -69483,6 +69791,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -69706,6 +70016,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -70239,6 +70551,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -70462,6 +70776,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -71097,6 +71413,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -71320,6 +71638,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -71854,6 +72174,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -72077,6 +72399,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -72611,6 +72935,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -72834,6 +73160,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -73463,6 +73791,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -73686,6 +74016,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -74220,6 +74552,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -74443,6 +74777,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -74976,6 +75312,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -75199,6 +75537,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -75828,6 +76168,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -76051,6 +76393,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -76584,6 +76928,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -76807,6 +77153,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -77340,6 +77688,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -77563,6 +77913,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -78097,6 +78449,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -78320,6 +78674,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -79044,6 +79400,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -79267,6 +79625,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -79894,6 +80254,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -80117,6 +80479,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -80650,6 +81014,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -80873,6 +81239,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -81407,6 +81775,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -81630,6 +82000,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -82164,6 +82536,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -82387,6 +82761,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -82920,6 +83296,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -83143,6 +83521,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -83677,6 +84057,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -83900,6 +84282,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -84434,6 +84818,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -84657,6 +85043,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -85191,6 +85579,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -85414,6 +85804,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -86043,6 +86435,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -86266,6 +86660,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -86799,6 +87195,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -87022,6 +87420,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -87556,6 +87956,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -87779,6 +88181,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -88312,6 +88716,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -88535,6 +88941,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -89399,6 +89807,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -89622,6 +90032,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -90642,6 +91054,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -90865,6 +91279,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -91492,6 +91908,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -91715,6 +92133,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -92248,6 +92668,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -92471,6 +92893,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -93100,6 +93524,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -93323,6 +93749,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -93856,6 +94284,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -94079,6 +94509,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -94612,6 +95044,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -94835,6 +95269,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -95464,6 +95900,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -95687,6 +96125,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -96314,6 +96754,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -96537,6 +96979,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -97070,6 +97514,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -97293,6 +97739,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -97922,6 +98370,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -98145,6 +98595,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -98678,6 +99130,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -98901,6 +99355,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:
@@ -99434,6 +99890,8 @@ paths:
                   type: integer
                 metadata_pool:
                   type: string
+                migration_confirm_uid:
+                  type: string
                 mode:
                   type: string
                 model_number:
@@ -99657,6 +100115,8 @@ paths:
                   type: boolean
                 system:
                   type: boolean
+                target_account_id:
+                  type: string
                 technique:
                   type: string
                 tenant:

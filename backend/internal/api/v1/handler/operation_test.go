@@ -43,6 +43,7 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		{`"email":"before@example.test"`, "medium"},
 		{`"account_root":true,"expected_account_id":"RGW12345678901234567"`, "high"},
 		{`"account_root":false,"expected_account_id":"RGW12345678901234567"`, "high"},
+		{`"target_account_id":"RGW12345678901234567","migration_confirm_uid":"tenant$user"`, "high"},
 		{`"email":"after@example.test"`, "medium"},
 	} {
 		response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/user", fmt.Sprintf(`{"cluster_id":%d,"uid":"tenant$user",%s}`, cluster.ID, tc.fields), fmt.Sprintf("user-risk-%d", index))
