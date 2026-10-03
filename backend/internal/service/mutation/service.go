@@ -86,7 +86,7 @@ func Supports(action string) bool {
 		"cephfs_snapshot.create", "cephfs_snapshot.delete", "cephfs_snapshot.clone", "snapshot_schedule.create", "snapshot_schedule.action", "snapshot_schedule.retention",
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota", "cephfs_entry_snapshot.create", "cephfs_entry_snapshot.delete",
 		"cephfs_entry.create", "cephfs_entry.delete", "cephfs_entry.rename",
-		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.policy", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_bucket.quota",
+		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.subuser", "rgw_user.policy", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_bucket.quota",
 		"rgw_account.create", "rgw_account.update", "rgw_account.quota", "rgw_account.delete", "rgw_role.create", "rgw_role.update", "rgw_role.delete", "rgw_role.policy", "rgw_key.create", "rgw_key.delete",
 		"rgw_realm.create", "rgw_realm.update", "rgw_zonegroup.create", "rgw_zonegroup.update", "rgw_zone.create", "rgw_zone.update", "rgw_period.commit",
 		"nfs_cluster.create", "nfs_cluster.delete", "nfs_export.create", "nfs_export.update", "nfs_export.delete",
@@ -119,6 +119,15 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		return cephdomain.ActionResult{}, err
 	}
 	var upgradeTarget map[string]any
+	if request.Action == "rgw_user.subuser" {
+		checked, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if readErr != nil {
+			return cephdomain.ActionResult{}, normalize(readErr)
+		}
+		if !rgwSubuserMatches(checked.Stdout, request.Parameters, true) {
+			return cephdomain.ActionResult{}, invalid("subuser identity or existence could not be verified; no changes were made")
+		}
+	}
 	if rgwUserAccountMigrationRequested(request) {
 		uid := last(resourceTail(request.ResourceKey))
 		user, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".migration_user", Binary: executor.BinaryRGWAdmin, Args: []string{"user", "info", "--uid", uid, "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
@@ -294,6 +303,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: request.Action != "osd_deployment.preview", SensitiveArgs: spec.sensitive})
 	if err != nil {
+		if request.Action == "rgw_user.subuser" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "subuser command failed; inspect subuser and key state before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_user.create" && rawText(request.Parameters, "account_id") != "" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "account user creation failed; inspect user existence and credentials before any manual retry", Retryable: false}
 		}
@@ -350,6 +362,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "rgw_user.subuser" && (err != nil || !rgwSubuserMatches(checked.Stdout, request.Parameters, false)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "subuser command was accepted but subuser or key state could not be verified; inspect user info before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_user.create" && rawText(request.Parameters, "account_id") != "" {
 			root, _ := request.Parameters["account_root"].(bool)
 			if err != nil || !rgwUserAccountRootMatches(checked.Stdout, rawText(request.Parameters, "uid"), rawText(request.Parameters, "account_id"), &root) {
@@ -2104,6 +2119,8 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("policy_arn must be a managed IAM policy ARN")
 		}
 		return rgw([]string{"user", "policy", verb, "--uid", uid, "--policy-arn", arn}, []string{"user", "policy", "list", "attached", "--uid", uid}), nil
+	case "rgw_user.subuser":
+		return buildRGWSubuser(p, rgw)
 	case "rgw_user.caps":
 		uid := rawText(p, "uid")
 		if !regexp.MustCompile(`^[A-Za-z0-9_.:@$-]+$`).MatchString(uid) || strings.HasPrefix(uid, "-") {

@@ -58,6 +58,20 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 			t.Fatalf("response risk differs: %s", response.Body.String())
 		}
 	}
+	for _, action := range []string{"modify", "rm"} {
+		fields := ""
+		if action == "modify" {
+			fields = `,"subuser_permission":"read"`
+		}
+		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/user/subuser", fmt.Sprintf(`{"cluster_id":%d,"uid":"tenant$user","subuser":"swift","confirm_subuser":"tenant$user:swift","action":%q%s}`, cluster.ID, action, fields), "subuser-"+action)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("subuser mutation: %d %s", response.Code, response.Body.String())
+		}
+		row, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || row.Risk != "high" || row.Action != "rgw_user.subuser" || row.ResourceKey != "rgw/user/tenant$user" {
+			t.Fatalf("wrong subuser operation: %+v %v", row, err)
+		}
+	}
 	for _, root := range []bool{false, true} {
 		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/user", fmt.Sprintf(`{"cluster_id":%d,"uid":"new-user","display_name":"valid-name","account_id":"RGW12345678901234567","account_root":%t}`, cluster.ID, root), fmt.Sprintf("create-account-user-%t", root))
 		if response.Code != http.StatusAccepted {

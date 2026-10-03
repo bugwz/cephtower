@@ -90,6 +90,9 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		if request.Action == "rgw_user.create" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "user creation completed but inventory refresh failed; refresh user and account inventory without repeating creation", Retryable: false}
 		}
+		if request.Action == "rgw_user.subuser" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "subuser change was verified but inventory refresh failed; refresh user inventory without repeating the change", Retryable: false}
+		}
 		if request.Action == "rgw_user.update" && migration {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "account migration was verified but inventory refresh failed; refresh user, account and bucket inventory without repeating migration", Retryable: false}
 		}

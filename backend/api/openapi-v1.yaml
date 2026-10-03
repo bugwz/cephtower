@@ -367,6 +367,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -868,6 +870,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -1127,6 +1134,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -1628,6 +1637,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -3182,6 +3196,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -3683,6 +3699,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -3942,6 +3963,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -4443,6 +4466,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -5530,6 +5558,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -6031,6 +6061,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -6417,6 +6452,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -6918,6 +6955,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -7178,6 +7220,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -7679,6 +7723,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -8625,6 +8674,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -9126,6 +9177,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -9479,6 +9535,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -9980,6 +10038,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -10239,6 +10302,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -10740,6 +10805,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -11245,6 +11315,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -11746,6 +11818,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -12501,6 +12578,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -13002,6 +13081,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -13262,6 +13346,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -13763,6 +13849,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -14023,6 +14114,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -14524,6 +14617,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -15421,6 +15519,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -15922,6 +16022,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -16327,6 +16432,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -16828,6 +16935,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -17183,6 +17295,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -17684,6 +17798,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -17943,6 +18062,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -18444,6 +18565,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -19359,6 +19485,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -19860,6 +19988,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -20119,6 +20252,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -20620,6 +20755,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -20896,6 +21036,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -21397,6 +21539,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -21750,6 +21897,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -22251,6 +22400,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -22510,6 +22664,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -23011,6 +23167,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -23271,6 +23432,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -23772,6 +23935,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -24344,6 +24512,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -24845,6 +25015,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -25295,6 +25470,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -25796,6 +25973,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -26149,6 +26331,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -26650,6 +26834,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -26909,6 +27098,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -27410,6 +27601,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -27802,6 +27998,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -28303,6 +28501,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -28563,6 +28766,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -29064,6 +29269,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -30004,6 +30214,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -30505,6 +30717,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -31050,6 +31267,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -31551,6 +31770,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -31904,6 +32128,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -32405,6 +32631,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -32760,6 +32991,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -33261,6 +33494,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -33614,6 +33852,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -34115,6 +34355,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -34374,6 +34619,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -34875,6 +35122,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -35325,6 +35577,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -35826,6 +36080,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -36179,6 +36438,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -36680,6 +36941,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -36939,6 +37205,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -37440,6 +37708,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -37795,6 +38068,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -38296,6 +38571,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -38555,6 +38835,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -39056,6 +39338,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -39411,6 +39698,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -39912,6 +40201,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -40171,6 +40465,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -40672,6 +40968,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -41027,6 +41328,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -41528,6 +41831,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -41881,6 +42189,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -42382,6 +42692,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -42641,6 +42956,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -43142,6 +43459,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -43665,6 +43987,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -44166,6 +44490,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -44520,6 +44849,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -45021,6 +45352,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -45281,6 +45617,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -45782,6 +46120,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -46042,6 +46385,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -46543,6 +46888,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -46897,6 +47247,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -47398,6 +47750,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -47692,6 +48049,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -48193,6 +48552,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -48738,6 +49102,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -49239,6 +49605,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -49592,6 +49963,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -50093,6 +50466,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -50352,6 +50730,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -50853,6 +51233,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -51208,6 +51593,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -51709,6 +52096,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -51969,6 +52361,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -52470,6 +52864,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -52730,6 +53129,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -53231,6 +53632,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -53491,6 +53897,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -53992,6 +54400,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -54347,6 +54760,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -54848,6 +55263,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -55201,6 +55621,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -55702,6 +56124,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -55961,6 +56388,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -56462,6 +56891,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -56839,6 +57273,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -57340,6 +57776,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -57599,6 +58040,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -58100,6 +58543,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -58359,6 +58807,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -58860,6 +59310,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -59506,6 +59961,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -60007,6 +60464,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -60381,6 +60843,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -60882,6 +61346,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -61304,6 +61773,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -61805,6 +62276,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -62064,6 +62540,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -62565,6 +63043,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -63024,6 +63507,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -63525,6 +64010,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -63879,6 +64369,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -64380,6 +64872,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -64640,6 +65137,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -65141,6 +65640,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -65512,6 +66016,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -66013,6 +66519,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -66272,6 +66783,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -66773,6 +67286,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -67032,6 +67550,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -67533,6 +68053,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -67793,6 +68318,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -68294,6 +68821,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -68649,6 +69181,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -69150,6 +69684,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -69503,6 +70042,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -70004,6 +70545,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -70263,6 +70809,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -70764,6 +71312,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -71125,6 +71678,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -71626,6 +72181,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -71886,6 +72446,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -72387,6 +72949,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -72647,6 +73214,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -73148,6 +73717,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -73503,6 +74077,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -74004,6 +74580,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -74264,6 +74845,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -74765,6 +75348,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -75024,6 +75612,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -75525,6 +76115,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -75880,6 +76475,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -76381,6 +76978,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -76640,6 +77242,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -77141,6 +77745,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -77400,6 +78009,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -77901,6 +78512,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -78161,6 +78777,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -78662,6 +79280,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -79112,6 +79735,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -79613,6 +80238,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -79966,6 +80596,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -80467,6 +81099,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -80726,6 +81363,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -81227,6 +81866,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -81487,6 +82131,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -81988,6 +82634,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -82248,6 +82899,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -82749,6 +83402,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -83008,6 +83666,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -83509,6 +84169,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -83769,6 +84434,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -84270,6 +84937,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -84530,6 +85202,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -85031,6 +85705,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -85291,6 +85970,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -85792,6 +86473,779 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
+                subvol:
+                  type: string
+                subvolume:
+                  type: string
+                suspended:
+                  type: boolean
+                sync_from:
+                  type: string
+                sync_from_all:
+                  type: boolean
+                system:
+                  type: boolean
+                target_account_id:
+                  type: string
+                technique:
+                  type: string
+                tenant:
+                  type: string
+                tier_type:
+                  type: string
+                  enum: ["", "archive"]
+                traddr:
+                  type: string
+                transports:
+                  type: array
+                  items:
+                    type: string
+                trsvcid:
+                  type: integer
+                ttl:
+                  type: string
+                type:
+                  type: string
+                uid:
+                  description: action-specific JSON value
+                unmanaged:
+                  type: boolean
+                user_group_ref:
+                  type: array
+                  items:
+                    type: string
+                username:
+                  type: string
+                users:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [name, password]
+                    properties:
+                      name:
+                        type: string
+                      password:
+                        type: string
+                        writeOnly: true
+                uuid:
+                  type: string
+                value:
+                  description: action-specific JSON value
+                verify_host_name:
+                  type: boolean
+                version:
+                  type: string
+                versioning:
+                  type: string
+                  enum: ["enabled", "suspended"]
+                virtual_ip:
+                  type: string
+                weight:
+                  type: number
+                who:
+                  type: string
+                zap:
+                  type: boolean
+                zonegroup:
+                  type: string
+      responses:
+        '202':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /rgw/user/subuser:
+    post:
+      operationId: post_rgw_user_subuser
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id]
+              properties:
+                access_key:
+                  type: string
+                  writeOnly: true
+                access_type:
+                  type: string
+                  enum: ["NONE", "RO", "RW"]
+                account_id:
+                  type: string
+                account_name:
+                  type: string
+                account_root:
+                  type: boolean
+                action:
+                  type: string
+                  enum: ["pause", "resume", "start", "stop"]
+                add_zones:
+                  type: array
+                  items:
+                    type: string
+                address:
+                  type: string
+                adrfam:
+                  type: integer
+                allow_shrink:
+                  type: boolean
+                application:
+                  type: string
+                applications:
+                  type: array
+                  items:
+                    type: string
+                assume_role_policy:
+                  type: string
+                auth_mode:
+                  type: string
+                  enum: ["active-directory", "user"]
+                binding_id:
+                  type: integer
+                block_size:
+                  type: integer
+                browseable:
+                  type: boolean
+                bucket_id:
+                  type: string
+                c:
+                  type: integer
+                caps:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    mds:
+                      type: string
+                    mgr:
+                      type: string
+                    mon:
+                      type: string
+                    osd:
+                      type: string
+                case_sensitive:
+                  type: boolean
+                channel:
+                  type: string
+                  enum: ["basic", "crash", "device", "ident", "perf"]
+                client_id:
+                  type: string
+                client_rules:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [addresses]
+                    properties:
+                      access_type:
+                        type: string
+                        enum: ["", "NONE", "RO", "RW"]
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+                      squash:
+                        type: string
+                clients:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [iqn]
+                    properties:
+                      iqn:
+                        type: string
+                      luns:
+                        type: array
+                        items:
+                          type: string
+                cluster:
+                  type: string
+                cluster_id:
+                  type: integer
+                clustering:
+                  type: string
+                  enum: ["always", "default", "never"]
+                cmount_path:
+                  type: string
+                code:
+                  type: string
+                comment:
+                  type: string
+                compression_algorithm:
+                  type: string
+                  enum: ["lz4", "snappy", "zlib", "zstd"]
+                compression_max_blob_size:
+                  type: integer
+                compression_min_blob_size:
+                  type: integer
+                compression_mode:
+                  type: string
+                  enum: ["aggressive", "force", "none", "passive"]
+                compression_required_ratio:
+                  type: number
+                config_name:
+                  type: string
+                config_value:
+                  type: string
+                configuration:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    rbd_qos_bps_burst:
+                      type: integer
+                    rbd_qos_bps_limit:
+                      type: integer
+                    rbd_qos_iops_burst:
+                      type: integer
+                    rbd_qos_iops_limit:
+                      type: integer
+                    rbd_qos_read_bps_burst:
+                      type: integer
+                    rbd_qos_read_bps_limit:
+                      type: integer
+                    rbd_qos_read_iops_burst:
+                      type: integer
+                    rbd_qos_read_iops_limit:
+                      type: integer
+                    rbd_qos_write_bps_burst:
+                      type: integer
+                    rbd_qos_write_bps_limit:
+                      type: integer
+                    rbd_qos_write_iops_burst:
+                      type: integer
+                    rbd_qos_write_iops_limit:
+                      type: integer
+                confirm_subuser:
+                  type: string
+                cors:
+                  description: action-specific JSON value
+                count:
+                  type: integer
+                create_image:
+                  type: boolean
+                createdBy:
+                  type: string
+                crush-device-class:
+                  type: string
+                crush-failure-domain:
+                  type: string
+                crush-locality:
+                  type: string
+                crush-num-failure-domains:
+                  type: integer
+                crush-osds-per-failure-domain:
+                  type: integer
+                crush-root:
+                  type: string
+                crush_rule:
+                  type: string
+                custom_dns:
+                  type: array
+                  items:
+                    type: string
+                d:
+                  type: integer
+                data_devices:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    all:
+                      type: boolean
+                    model:
+                      type: string
+                    paths:
+                      type: array
+                      items:
+                        type: string
+                    rotational:
+                      type: boolean
+                    size:
+                      type: string
+                    vendor:
+                      type: string
+                data_pool:
+                  type: string
+                default:
+                  type: boolean
+                default_placement:
+                  type: string
+                default_storage_class:
+                  type: string
+                description:
+                  type: string
+                destination:
+                  type: string
+                device:
+                  type: string
+                device_class:
+                  type: string
+                device_id:
+                  type: string
+                dhchap_key:
+                  type: string
+                direction:
+                  type: string
+                  enum: ["rx-only", "rx-tx"]
+                directory:
+                  type: string
+                disable_auto_resize:
+                  type: boolean
+                disks:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [image, pool]
+                    properties:
+                      backstore:
+                        type: string
+                      image:
+                        type: string
+                      pool:
+                        type: string
+                display_name:
+                  type: string
+                document:
+                  description: action-specific JSON value
+                domain_join_ref:
+                  type: array
+                  items:
+                    type: string
+                domain_realm:
+                  type: string
+                email:
+                  type: string
+                enable_ha:
+                  type: boolean
+                enabled:
+                  type: boolean
+                encryption:
+                  description: action-specific JSON value
+                endpoint_id:
+                  type: integer
+                endpoints:
+                  type: string
+                endsAt:
+                  type: string
+                entity:
+                  type: string
+                erasure_code_profile:
+                  type: string
+                expected_account_id:
+                  type: string
+                expired_before:
+                  type: string
+                expires_at:
+                  type: string
+                export_id:
+                  type: string
+                failure_domain:
+                  type: string
+                feature:
+                  type: string
+                  enum: ["deep-flatten", "exclusive-lock", "fast-diff", "journaling", "object-map"]
+                feature_action:
+                  type: string
+                  enum: ["disable", "enable"]
+                features:
+                  type: string
+                field:
+                  type: string
+                  enum: ["client", "direction", "mon-host", "site-name"]
+                filesystem:
+                  type: string
+                flag:
+                  type: string
+                flags:
+                  type: array
+                  items:
+                    type: string
+                    enum: ["allow_ec_overwrites"]
+                force:
+                  type: boolean
+                fs:
+                  type: string
+                fsal_type:
+                  type: string
+                  enum: ["CEPH", "RGW"]
+                gid:
+                  type: integer
+                group:
+                  type: string
+                group_spec:
+                  type: string
+                groups:
+                  type: array
+                  items:
+                    type: string
+                host:
+                  type: string
+                host_name:
+                  type: string
+                host_nqn:
+                  type: string
+                host_pattern:
+                  type: string
+                hostname:
+                  type: string
+                id:
+                  type: string
+                image:
+                  type: string
+                image_id:
+                  type: string
+                image_spec:
+                  type: string
+                ingress:
+                  type: boolean
+                ingress_mode:
+                  type: string
+                  enum: ["default", "haproxy-protocol", "haproxy-standard", "keepalive-only"]
+                iqn:
+                  type: string
+                k:
+                  type: integer
+                keyring:
+                  type: string
+                  writeOnly: true
+                kind:
+                  type: string
+                  enum: ["cors", "encryption", "lifecycle", "policy"]
+                l:
+                  type: integer
+                labels:
+                  type: array
+                  items:
+                    type: string
+                labels_add:
+                  type: array
+                  items:
+                    type: string
+                labels_remove:
+                  type: array
+                  items:
+                    type: string
+                license:
+                  type: string
+                  enum: ["sharing-1-0"]
+                lifecycle:
+                  description: action-specific JSON value
+                light:
+                  type: string
+                  enum: ["fault", "ident"]
+                linked_to_cluster:
+                  type: string
+                listener_id:
+                  type: string
+                login_control:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [access, category, name]
+                    properties:
+                      access:
+                        type: string
+                        enum: ["admin", "none", "read", "read-write"]
+                      category:
+                        type: string
+                        enum: ["group", "user"]
+                      name:
+                        type: string
+                m:
+                  type: integer
+                maintenance:
+                  type: boolean
+                master:
+                  type: boolean
+                matchers:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [isEqual, isRegex, name, value]
+                    properties:
+                      isEqual:
+                        type: boolean
+                      isRegex:
+                        type: boolean
+                      name:
+                        type: string
+                      value:
+                        type: string
+                max_access_keys:
+                  type: integer
+                max_buckets:
+                  type: integer
+                max_connections:
+                  type: integer
+                max_groups:
+                  type: integer
+                max_mds:
+                  type: integer
+                max_namespaces:
+                  type: integer
+                max_objects:
+                  type: integer
+                max_read_bytes:
+                  type: integer
+                max_read_ops:
+                  type: integer
+                max_roles:
+                  type: integer
+                max_session_duration:
+                  type: integer
+                max_size:
+                  type: integer
+                max_users:
+                  type: integer
+                max_write_bytes:
+                  type: integer
+                max_write_ops:
+                  type: integer
+                metadata_pool:
+                  type: string
+                migration_confirm_uid:
+                  type: string
+                mode:
+                  type: string
+                model_number:
+                  type: string
+                modules:
+                  type: array
+                  items:
+                    type: string
+                name:
+                  type: string
+                names:
+                  type: array
+                  items:
+                    type: string
+                namespace:
+                  type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
+                new_name:
+                  type: string
+                new_size:
+                  type: integer
+                nfs_placement:
+                  type: string
+                nfs_port:
+                  type: integer
+                no_auto_visible:
+                  type: boolean
+                no_group_append:
+                  type: boolean
+                normalization:
+                  type: string
+                  enum: ["nfc", "nfd", "nfkc", "nfkd"]
+                nqn:
+                  type: string
+                nsid:
+                  type: string
+                object_size:
+                  type: integer
+                op_mask:
+                  type: string
+                  enum: ["delete", "read", "read,delete", "read,write", "read,write,delete", "write", "write,delete"]
+                operation:
+                  type: string
+                  enum: ["application", "quota", "rbd_configuration", "rbd_mirroring", "rename"]
+                osd_id:
+                  type: string
+                osd_ids:
+                  type: array
+                  items:
+                    type: string
+                packetsize:
+                  type: integer
+                password:
+                  type: string
+                  writeOnly: true
+                path:
+                  type: string
+                permission:
+                  type: string
+                  enum: ["*", "read", "read,write", "write"]
+                pg_autoscale_mode:
+                  type: string
+                  enum: ["off", "on", "warn"]
+                pg_num:
+                  type: integer
+                placement:
+                  description: action-specific JSON value
+                placement_tags_csv:
+                  type: string
+                plugin:
+                  type: string
+                policy:
+                  description: action-specific JSON value
+                policy_arn:
+                  type: string
+                policy_document:
+                  type: string
+                policy_name:
+                  type: string
+                pool:
+                  type: string
+                pool_type:
+                  type: string
+                  enum: ["erasure", "replicated"]
+                portals:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [host, ip]
+                    properties:
+                      host:
+                        type: string
+                      ip:
+                        type: string
+                protocols:
+                  type: array
+                  items:
+                    type: integer
+                pseudo:
+                  type: string
+                psk:
+                  type: string
+                quota_max_bytes:
+                  type: integer
+                quota_max_objects:
+                  type: integer
+                quota_unit:
+                  type: string
+                  enum: ["B", "GiB", "KiB", "MiB", "PiB", "TiB"]
+                rbd_image_name:
+                  type: string
+                rbd_mirroring:
+                  type: string
+                  enum: ["disabled", "pool"]
+                rbd_pool_name:
+                  type: string
+                read_only:
+                  type: boolean
+                readonly:
+                  type: boolean
+                realm:
+                  type: string
+                realm_id:
+                  type: string
+                remote_client:
+                  type: string
+                remote_cluster:
+                  type: string
+                remove_zones:
+                  type: array
+                  items:
+                    type: string
+                restrict_access:
+                  type: boolean
+                retention:
+                  type: string
+                rgw_bucket_tenant:
+                  type: string
+                rgw_user_id:
+                  type: string
+                root:
+                  type: string
+                scalar_mds:
+                  type: string
+                schedule:
+                  type: string
+                scope:
+                  type: string
+                  enum: ["bucket", "user"]
+                sec_label_xattr:
+                  type: string
+                secret_key:
+                  type: string
+                  writeOnly: true
+                sectype:
+                  type: array
+                  items:
+                    type: string
+                secure:
+                  type: boolean
+                security_label:
+                  type: boolean
+                serial_number:
+                  type: string
+                service_id:
+                  type: string
+                service_type:
+                  type: string
+                  enum: ["alertmanager", "crash", "grafana", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "rgw", "smb"]
+                share_id:
+                  type: string
+                share_name:
+                  type: string
+                silence_id:
+                  type: string
+                size:
+                  description: action-specific JSON value
+                smb_hosts:
+                  type: array
+                  items:
+                    type: string
+                smb_label:
+                  type: string
+                smb_public_addresses:
+                  type: array
+                  items:
+                    type: string
+                snap:
+                  type: string
+                squash:
+                  type: string
+                  enum: ["all_squash", "no_root_squash", "root_id_squash", "root_squash"]
+                start:
+                  type: string
+                startsAt:
+                  type: string
+                state:
+                  type: string
+                  enum: ["off", "on"]
+                sticky:
+                  type: boolean
+                stripe_count:
+                  type: integer
+                stripe_unit:
+                  type: integer
+                subsystem_nqn:
+                  type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -86147,6 +87601,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -86648,6 +88104,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -86907,6 +88368,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -87408,6 +88871,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -87668,6 +89136,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -88169,6 +89639,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -88428,6 +89903,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -88929,6 +90406,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -89519,6 +91001,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -90020,6 +91504,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -90766,6 +92255,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -91267,6 +92758,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -91620,6 +93116,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -92121,6 +93619,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -92380,6 +93883,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -92881,6 +94386,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -93236,6 +94746,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -93737,6 +95249,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -93996,6 +95513,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -94497,6 +96016,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -94756,6 +96280,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -95257,6 +96783,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -95612,6 +97143,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -96113,6 +97646,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -96466,6 +98004,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -96967,6 +98507,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -97226,6 +98771,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -97727,6 +99274,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -98082,6 +99634,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -98583,6 +100137,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -98842,6 +100401,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -99343,6 +100904,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:
@@ -99602,6 +101168,8 @@ paths:
                       type: integer
                     rbd_qos_write_iops_limit:
                       type: integer
+                confirm_subuser:
+                  type: string
                 cors:
                   description: action-specific JSON value
                 count:
@@ -100103,6 +101671,11 @@ paths:
                   type: integer
                 subsystem_nqn:
                   type: string
+                subuser:
+                  type: string
+                subuser_permission:
+                  type: string
+                  enum: ["full", "none", "read", "readwrite", "write"]
                 subvol:
                   type: string
                 subvolume:

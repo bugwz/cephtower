@@ -136,6 +136,28 @@ func TestRGWAccountMigrationRefreshesAffectedResources(t *testing.T) {
 	}
 }
 
+func TestRGWSubuserRefreshDoesNotRepeatMutation(t *testing.T) {
+	for _, fail := range []bool{false, true} {
+		mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{}}}
+		reconciler := &reconcileExecutorFake{refreshResult: true}
+		if fail {
+			reconciler.err = errors.New("refresh failed")
+		}
+		_, err := NewActionDispatcher(mutations, nil, reconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_user.subuser", ResourceKind: "rgw_user"})
+		if reconciler.kind != "rgw_user" || len(reconciler.kinds) != 0 {
+			t.Fatalf("unexpected refresh: %+v", reconciler)
+		}
+		if fail {
+			var actionErr *cephdomain.ActionError
+			if !errors.As(err, &actionErr) || actionErr.Code != "post_reconcile_failed" || actionErr.Retryable {
+				t.Fatal(err)
+			}
+		} else if err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestRGWUserCreationRefreshDoesNotRetryCreation(t *testing.T) {
 	for _, params := range []map[string]any{nil, {"account_id": "RGW12345678901234567", "account_root": false}, {"account_id": "RGW12345678901234567", "account_root": true}} {
 		for _, fail := range []bool{false, true} {

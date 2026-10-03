@@ -228,6 +228,29 @@ func TestRGWUserMutationIdentity(t *testing.T) {
 	}
 }
 
+func TestRGWSubuserContract(t *testing.T) {
+	valid := func() map[string]any {
+		return map[string]any{"cluster_id": float64(1), "uid": "tenant$user", "action": "modify", "subuser": "swift", "confirm_subuser": "tenant$user:swift", "subuser_permission": "read"}
+	}
+	if err := ValidateMutationRequest("rgw_user.subuser", valid()); err != nil {
+		t.Fatal(err)
+	}
+	for _, field := range []string{"uid", "action", "subuser", "confirm_subuser"} {
+		p := valid()
+		delete(p, field)
+		if err := ValidateMutationRequest("rgw_user.subuser", p); err == nil {
+			t.Fatalf("accepted missing %s", field)
+		}
+	}
+	for field, value := range map[string]any{"uid": "other/user", "action": "create", "subuser_permission": "full-control", "secret_key": "must-not-accept"} {
+		p := valid()
+		p[field] = value
+		if err := ValidateMutationRequest("rgw_user.subuser", p); err == nil {
+			t.Fatalf("accepted invalid %s", field)
+		}
+	}
+}
+
 func TestHealthMuteContract(t *testing.T) {
 	if err := ValidateMutationRequest("health.mute", map[string]any{"cluster_id": float64(1), "code": "OSD_DOWN", "ttl": "1h", "sticky": true}); err != nil {
 		t.Fatal(err)

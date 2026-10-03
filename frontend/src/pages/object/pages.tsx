@@ -33,6 +33,7 @@ import { rgwPolicyChanged, rgwPolicyConfirmation, rgwPolicyDeleteOptions, rgwPol
 import { RgwUserDetails } from './RgwUserDetails'
 import { rgwUserOperationMaskInput, rgwUserOperationMaskOptions } from './rgwUserOperationMask'
 import { rgwUserAccountRootBlocked, rgwUserAccountRootInput } from './rgwUserAccountRoot'
+import { rgwSubuserOptions, rgwSubuserInput, rgwSubuserPermissionOptions } from './rgwUserSubuser'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
@@ -251,6 +252,21 @@ const definitions: Record<
           return `确认对用户 ${JSON.stringify(userId(row))} ${policy.action === 'attach' ? '关联' : '解除关联'}策略 ${JSON.stringify(policy.policy_arn)}？该操作会改变用户权限，可能导致权限扩大或现有访问失败。`
         },
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserPolicyInput(values, row) })
+      },
+      { title: '管理已有子用户', path: '/rgw/user/subuser', method: 'POST', successMessage: '子用户变更已执行并回读验证',
+        disabledWhen: (row) => rgwSubuserOptions(row).length ? undefined : '没有可操作的子用户，请先刷新用户库存',
+        changedValues: (changed) => Object.prototype.hasOwnProperty.call(changed, 'subuser') || Object.prototype.hasOwnProperty.call(changed, 'action') ? { confirm_subuser: undefined, subuser_permission: undefined } : {},
+        fields: [
+          { name: 'action', label: '操作', type: 'select', required: true, options: [{ label: '修改权限', value: 'modify' }, { label: '删除子用户及其全部关联密钥', value: 'rm' }] },
+          { name: 'subuser', label: '已有子用户', type: 'select', required: true, optionsLoader: async (_clusterId, row) => rgwSubuserOptions(row) },
+          { name: 'subuser_permission', label: '子用户权限（整体替换）', type: 'select', required: true, visibleWhen: values => values.action === 'modify', options: rgwSubuserPermissionOptions },
+          { name: 'confirm_subuser', label: '输入完整子用户 ID 确认（包含 UID 和冒号）', required: true }
+        ],
+        confirmation: (values, row) => {
+          const input = rgwSubuserInput(values, row)
+          return input.action === 'rm' ? `删除子用户 ${JSON.stringify(input.confirm_subuser)} 及其全部 S3、Swift 关联密钥？现有客户端将无法继续使用这些凭据，此操作不可恢复。` : `将子用户 ${JSON.stringify(input.confirm_subuser)} 的权限整体替换为 ${JSON.stringify(input.subuser_permission)}？这会改变访问权限，不会生成或轮换密钥。`
+        },
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwSubuserInput(values, row) })
       },
       { title: '管理用户权限（caps）', path: '/rgw/user/caps', method: 'POST', successMessage: '用户管理权限操作执行成功',
         initialValues: { action: 'add', permission: 'read' },

@@ -1001,6 +1001,10 @@ func (h *Handler) MutateRGWUserCaps(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_user", "rgw_user.caps", "medium")(w, r)
 }
 
+func (h *Handler) MutateRGWUserSubuser(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_user", "rgw_user.subuser", "high")(w, r)
+}
+
 func (h *Handler) MutateRGWUserPolicy(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_user", "rgw_user.policy", "high")(w, r)
 }

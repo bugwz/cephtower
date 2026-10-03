@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+已有 RGW 子用户增加权限修改与删除入口，通过 `POST /rgw/user/subuser` 高风险操作映射 `radosgw-admin subuser modify/rm`。权限提供无权限、读、写、读写、完全控制；`none` 映射显式 `--access=`，回读 `<none>`，依据 `common/ceph_argparse.cc`、`rgw_common.cc` 及 CLI 的 `set_perm` 分支。子用户从当前 UID 的库存中选择，要求输入完整 ID 确认；传给原生命令的仅为本地子用户名，拒绝冒号以避免 `RGWUserAdminOpState::set_subuser` 重定向用户。执行前实时核验完整 UID 和子用户存在，执行后核验权限或子用户及 S3/Swift 密钥关联均已移除。删除清除全部关联密钥的行为来自 `RGWSubUserPool::execute_remove`，前端明确提示不可恢复；修改不生成或轮换密钥。写入、回读及库存刷新失败不自动重试。API 入队、权限映射、参数拒绝、执行链、关联密钥残留、表单确认和刷新测试已覆盖，`make test-backend`（含 OpenAPI 校验）与 `make test-frontend` 通过；未实机或浏览器视觉验证。创建子用户与安全密钥发放仍未实现，此项不是子用户全功能完成声明。
+
 创建账户用户成功后同步刷新 `rgw_user` 与 `rgw_account`，独立用户只刷新用户库存。所有 RGW 用户创建后的库存刷新错误标记为不可自动重试，避免刷新故障导致重复执行创建命令；提示改为读取库存。源码 `user_add_helper` 明确拒绝已存在 UID，因此不增加无必要的创建前存在性查询。调度测试覆盖独立用户、账户普通/根用户、成功/刷新失败和创建失败不刷新。
 
 创建 RGW 用户支持直接关联账户及显式选择普通/根用户，对齐参考创建表单。映射 `user create --account-id --account-root`，校验 IAM 显示名和账户 ID，并以 `user info` 核验完整 UID、账户及类型；账户根用户创建按高风险入队。原生依据 `driver/rados/rgw_user.cc` 创建分支：账户和租户校验先于保存，UID 租户格式依据 `rgw_user_types.h`。前端从同租户账户库存选择，修改 UID/归属方式清空旧选择，明确提示权限影响及不能迁出。失败与回读不确定不自动重试；测试覆盖账户两种类型、租户/命名空间 UID、非法参数、失败以及表单联动，未实机验证。
