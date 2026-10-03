@@ -48,3 +48,23 @@ assert.equal(intervalField.visibleWhen(addValues), true)
 assert.equal(intervalField.visibleWhen(removeValues), false)
 assert.equal(schedule.fields.find((field) => field.name === 'start_time').visibleWhen(removeValues), false)
 console.log('Pool mirror schedule form scope checks passed')
+
+const mirrorExports = {}
+const mirrorCode = ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdMirrorScheduleRows.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+new Function('exports', mirrorCode)(mirrorExports)
+const mirrorRows = mirrorExports.mirrorScheduleRows
+const items = [{ interval: '1h', start_time: '01:00:00+08:00' }, { interval: '1d', start_time: '' }]
+const rows = mirrorRows([
+  { pool: '-', namespace: '-', image: '-', items },
+  { pool: 'images', namespace: '-', image: '-', items },
+  { pool: 'images', namespace: 'team', image: '-', items },
+  { pool: 'images', namespace: '', image: 'vm', items }
+])
+assert.deepEqual(rows.filter((_, index) => index % 2 === 0).map((row) => row.scope), ['集群', '池', '命名空间', '镜像'])
+assert.equal(rows[6].target, 'images / 默认命名空间 / vm')
+assert.equal(rows[0].startTime, '01:00:00+08:00')
+assert.equal(rows[1].startTime, '未指定')
+assert.equal(new Set(rows.map((row) => row.key)).size, 8)
+assert.deepEqual(mirrorRows([]), [])
+for (const value of [null, {}, [null], [{}], [{ pool: 'images', namespace: '-', image: '-', items: null }], [{ pool: '-', namespace: 'team', image: '-', items }], [{ pool: 'images', namespace: '-', image: '-', items: [{}] }]]) assert.equal(mirrorRows(value), undefined)
+console.log('Mirror schedule scope display checks passed')

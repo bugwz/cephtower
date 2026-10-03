@@ -1,6 +1,7 @@
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { PoolPage } from './PoolPage'
+import { MirrorSchedules } from './MirrorSchedules'
 
 export function BlockPoolsPage() {
   return <PoolPage />
@@ -522,7 +523,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'site_name', title: '本站点名称' },
       { key: 'mirror_uuid', title: '同步 UUID' },
       { key: 'snapshot_schedules_status', title: '调度读取状态', render: (value) => value === 'available' ? '已读取' : '不可用或尚未采集' },
-      { key: 'snapshot_schedules', title: '镜像快照调度（含集群级；“-”为原生范围占位符）', ellipsis: false },
+      { key: 'snapshot_schedules', title: '镜像快照调度', ellipsis: false, render: (value, row) => <MirrorSchedules value={value} status={row.snapshot_schedules_status} /> },
       { key: 'remote_namespace', title: '远端命名空间' },
       { key: 'peers', title: 'Peers' },
       { key: 'daemons', title: '同步守护进程' },
