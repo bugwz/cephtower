@@ -8,6 +8,32 @@ function snapshot(row?: Record<string, unknown>, allowEmpty = false) {
 }
 export function zonegroupSyncInitial(row?: Record<string, unknown>) { const { groups: _, ...identity } = snapshot(row); return { ...identity, group_id: undefined, status: undefined, confirm_change: undefined } }
 export function zonegroupSyncBlocked(row: Record<string, unknown>) { try { snapshot(row); return undefined } catch (error) { return (error as Error).message } }
+export function zonegroupFlowDeleteInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const { groups, ...identity } = snapshot(row)
+  if (values.name !== identity.name || values.zonegroup_id !== identity.zonegroup_id || values.realm_id !== identity.realm_id) throw new Error('Zonegroup 和 Realm 身份不可修改')
+  const group = groups.find(g => g.id === values.group_id)
+  if (!group) throw new Error('请输入准确的已有同步组 ID')
+  if (values.confirm_flow_delete !== 'acknowledged') throw new Error('请确认删除与发布风险')
+  const kind = values.flow_type
+  if (kind !== 'symmetrical' && kind !== 'directional') throw new Error('请选择数据流类型')
+  const entries = (group.data_flow as Record<string, unknown>)[kind]
+  if (!Array.isArray(entries) || entries.some(e => !record(e))) throw new Error('已有数据流不可用')
+  if (values.zones) throw new Error('整流删除不接受 Zone 成员列表')
+  const base = { ...identity, group_id: group.id as string, expected_group: JSON.stringify(group), flow_type: kind }
+  if (kind === 'symmetrical') {
+    if (!token(values.flow_id) || entries.filter(e => e.id === values.flow_id).length !== 1) throw new Error('对称流不存在或有歧义')
+    if (values.source_zone || values.dest_zone) throw new Error('对称流不接受定向字段')
+    return { ...base, flow_id: values.flow_id }
+  }
+  const validZone = (v: unknown): v is string => token(v) && !/[,;=*\s]/u.test(v)
+  if (values.flow_id || !validZone(values.source_zone) || !validZone(values.dest_zone) || values.source_zone === values.dest_zone || entries.filter(e => e.source_zone === values.source_zone && e.dest_zone === values.dest_zone).length !== 1) throw new Error('请输入策略内唯一的源/目标 Zone ID 对，不填写流 ID')
+  return { ...base, source_zone: values.source_zone, dest_zone: values.dest_zone }
+}
+export function zonegroupFlowDeleteConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const p = zonegroupFlowDeleteInput(values,row)
+  const target = 'flow_id' in p ? `整条对称流 ${JSON.stringify(p.flow_id)}（全部成员）` : `定向流 ${JSON.stringify(p.source_zone)} → ${JSON.stringify(p.dest_zone)}`
+  return `确认删除 Zonegroup ${JSON.stringify(p.name)}（${p.zonegroup_id}）中同步组 ${JSON.stringify(p.group_id)} 的${target}？保留组状态和管道，不删除对象副本，不保证其他策略的复制停止。${p.realm_id ? `随后提交 Realm ${JSON.stringify(p.realm_id)} 的 Period，可能发布其他待提交变更。` : '无 Realm，不提交 Period。'}请备份并避免外部或其他页面并发；非事务，失败可能部分生效，不自动回滚或重试。`
+}
 export function zonegroupFlowCreateInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const { groups, ...identity } = snapshot(row)
   if (values.name !== identity.name || values.zonegroup_id !== identity.zonegroup_id || values.realm_id !== identity.realm_id) throw new Error('Zonegroup 和 Realm 身份不可修改')

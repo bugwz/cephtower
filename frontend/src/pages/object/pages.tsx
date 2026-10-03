@@ -6,6 +6,7 @@ import { zonegroupSyncInitial, zonegroupSyncBlocked, zonegroupSyncInput, zonegro
 import { zonegroupSyncCreateInitial, zonegroupSyncCreateBlocked, zonegroupSyncCreateInput, zonegroupSyncCreateConfirmation } from './rgwZonegroupSyncGroup'
 import { zonegroupSyncDeleteInput, zonegroupSyncDeleteConfirmation } from './rgwZonegroupSyncGroup'
 import { zonegroupFlowCreateInput, zonegroupFlowCreateConfirmation } from './rgwZonegroupSyncGroup'
+import { zonegroupFlowDeleteInput, zonegroupFlowDeleteConfirmation } from './rgwZonegroupSyncGroup'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAction } from '../ResourceListPage'
 import { ServiceDaemons } from '../cluster/ServiceDaemons'
@@ -934,6 +935,22 @@ const definitions: Record<
         { name: 'confirm_flow', label: '创建与发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份并了解复制路径、Realm 发布与并发风险' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupFlowCreateInput(values,row) })
+    }, {
+      title: '删除 Zonegroup 同步流', path: '/rgw/zonegroup/sync/flow', method: 'DELETE',
+      successMessage: 'Zonegroup 同步流删除与适用的 Period 发布已核验',
+      disabledWhen: zonegroupSyncBlocked, initialValues: zonegroupSyncInitial, confirmation: zonegroupFlowDeleteConfirmation,
+      fields: [
+        { name: 'name', label: 'Zonegroup 名称（不可更改）', readOnly: true },
+        { name: 'zonegroup_id', label: 'Zonegroup ID（不可更改）', readOnly: true },
+        { name: 'realm_id', label: 'Realm ID（不可更改）', readOnly: true },
+        { name: 'group_id', label: '已有同步组 ID', required: true },
+        { name: 'flow_type', label: '流类型', type: 'select', required: true, options: [{ value: 'symmetrical', label: '整条对称流' }, { value: 'directional', label: '定向流' }] },
+        { name: 'flow_id', label: '已有流 ID（仅对称，删除全部成员）' },
+        { name: 'source_zone', label: '策略中的源 Zone ID（仅定向）' },
+        { name: 'dest_zone', label: '策略中的目标 Zone ID（仅定向）' },
+        { name: 'confirm_flow_delete', label: '删除与发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份并了解整流删除、Realm 发布与并发风险' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupFlowDeleteInput(values,row) })
     }, {
       title: '删除 Zonegroup 同步组', path: '/rgw/zonegroup/sync/group', method: 'DELETE',
       successMessage: 'Zonegroup 同步组删除与适用的 Period 发布已核验',

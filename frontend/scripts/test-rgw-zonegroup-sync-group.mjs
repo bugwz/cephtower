@@ -4,8 +4,8 @@ import ts from 'typescript'
 const api={}
 new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwZonegroupSyncGroup.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
 const source=ts.createSourceFile('pages.tsx',readFileSync(new URL('../src/pages/object/pages.tsx',import.meta.url),'utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX)
-let action,createAction,deleteAction,flowAction
-function visit(node){if(ts.isObjectLiteralExpression(node)){const title=node.properties.find(p=>ts.isPropertyAssignment(p)&&p.name.getText(source)==='title')?.initializer.text;if(['修改 Zonegroup 同步组状态','创建 Zonegroup 同步组','删除 Zonegroup 同步组','创建 Zonegroup 同步流'].includes(title)){const code=ts.transpileModule(`const action=${node.getText(source)}`,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;const found=new Function(...Object.keys(api),`${code};return action`)(...Object.values(api));if(title==='创建 Zonegroup 同步组')createAction=found;else if(title==='删除 Zonegroup 同步组')deleteAction=found;else if(title==='创建 Zonegroup 同步流')flowAction=found;else action=found}}ts.forEachChild(node,visit)}visit(source)
+let action,createAction,deleteAction,flowAction,flowDeleteAction
+function visit(node){if(ts.isObjectLiteralExpression(node)){const title=node.properties.find(p=>ts.isPropertyAssignment(p)&&p.name.getText(source)==='title')?.initializer.text;if(['修改 Zonegroup 同步组状态','创建 Zonegroup 同步组','删除 Zonegroup 同步组','创建 Zonegroup 同步流','删除 Zonegroup 同步流'].includes(title)){const code=ts.transpileModule(`const action=${node.getText(source)}`,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;const found=new Function(...Object.keys(api),`${code};return action`)(...Object.values(api));if(title==='创建 Zonegroup 同步组')createAction=found;else if(title==='删除 Zonegroup 同步组')deleteAction=found;else if(title==='创建 Zonegroup 同步流')flowAction=found;else if(title==='删除 Zonegroup 同步流')flowDeleteAction=found;else action=found}}ts.forEachChild(node,visit)}visit(source)
 const group={id:' g ',status:'allowed',data_flow:{},pipes:[]}
 for(const realm of ['','realm']){
  const row={id:'zg',name:'east',realm_id:realm,sync_policy:{groups:[group]}}
@@ -58,3 +58,21 @@ for(const realm of ['','realm']){
  for(const fields of [{flow_type:'symmetrical',flow_id:'f',zones:'a,a'},{flow_type:'symmetrical',flow_id:'f',zones:'missing'},{flow_type:'directional',source_zone:'a',dest_zone:'a'},{flow_type:'directional',flow_id:'f',source_zone:'a',dest_zone:'b'}])assert.throws(()=>flowAction.buildBody({...base,...fields},7,row))
 }
 console.log('zonegroup sync flow creation form and route checks passed')
+assert.equal(flowDeleteAction.path,'/rgw/zonegroup/sync/flow')
+assert.equal(flowDeleteAction.method,'DELETE')
+for(const realm of ['','realm']){
+ const g={...group,data_flow:{symmetrical:[{id:'f',zones:['orphan']}],directional:[{source_zone:'orphan',dest_zone:'z'}]}}
+ const row={id:'zg',name:'east',realm_id:realm,zones:[],sync_policy:{groups:[g]}}
+ const base={...flowDeleteAction.initialValues(row),group_id:g.id,confirm_flow_delete:'acknowledged'}
+ for(const fields of [{flow_type:'symmetrical',flow_id:'f'},{flow_type:'directional',source_zone:'orphan',dest_zone:'z'}]){
+  const values={...base,...fields}
+  const body=flowDeleteAction.buildBody(values,7,row)
+  assert.deepEqual(body,{cluster_id:7,name:'east',zonegroup_id:'zg',realm_id:realm,group_id:g.id,expected_group:JSON.stringify(g),...fields})
+  assert.match(flowDeleteAction.confirmation(values,row),/保留组状态和管道.*不删除对象副本.*非事务.*不自动回滚或重试/)
+  for(const change of [{confirm_flow_delete:true},{realm_id:'wrong'},{group_id:'missing'},{zones:'z'},{flow_type:'unknown'}])assert.throws(()=>flowDeleteAction.buildBody({...values,...change},7,row))
+  const duplicate={...g,data_flow:{...g.data_flow,[fields.flow_type]:[...g.data_flow[fields.flow_type],...g.data_flow[fields.flow_type]]}}
+  assert.throws(()=>flowDeleteAction.buildBody(values,7,{...row,sync_policy:{groups:[duplicate]}}))
+ }
+ for(const fields of [{flow_type:'symmetrical',flow_id:'missing'},{flow_type:'symmetrical',flow_id:'f',source_zone:'z'},{flow_type:'directional',source_zone:'z',dest_zone:'orphan'},{flow_type:'directional',source_zone:'orphan',dest_zone:'z',flow_id:'f'}])assert.throws(()=>flowDeleteAction.buildBody({...base,...fields},7,row))
+}
+console.log('zonegroup sync flow deletion form and route checks passed')
