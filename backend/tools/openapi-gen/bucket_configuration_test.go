@@ -47,3 +47,27 @@ func TestBucketACLIsReadOnlyInContract(t *testing.T) {
 		}
 	}
 }
+
+func TestBucketReplicationReadContract(t *testing.T) {
+	found := false
+	for _, parameter := range routeParameters(router.Route{Method: "GET", Path: "/rgw/bucket/policy"}) {
+		if parameter.Name == "kind" {
+			for _, value := range parameter.Enum {
+				if value == "replication" {
+					found = true
+				}
+			}
+		}
+	}
+	if !found {
+		t.Fatal("replication query missing")
+	}
+	for _, method := range []string{"PATCH", "DELETE"} {
+		schema, _ := requestSchema(router.Route{Method: method, Path: "/rgw/bucket/policy"})
+		for _, value := range schema.Fields["kind"].Enum {
+			if value == "replication" {
+				t.Fatal("read-only replication writable")
+			}
+		}
+	}
+}

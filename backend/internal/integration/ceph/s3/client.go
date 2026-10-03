@@ -69,7 +69,7 @@ func (c *Client) PutBucketConfiguration(ctx context.Context, bucket, kind string
 }
 
 func (c *Client) GetBucketConfiguration(ctx context.Context, bucket, kind string) ([]byte, string, error) {
-	allowed := map[string]bool{"policy": true, "cors": true, "lifecycle": true, "encryption": true, "versioning": true, "tagging": true, "object-lock": true, "acl": true}
+	allowed := map[string]bool{"policy": true, "cors": true, "lifecycle": true, "encryption": true, "versioning": true, "tagging": true, "object-lock": true, "acl": true, "replication": true}
 	if !allowed[kind] {
 		return nil, "", fmt.Errorf("unsupported S3 bucket configuration %q", kind)
 	}

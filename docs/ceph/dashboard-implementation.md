@@ -28,6 +28,20 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：新增 S3 桶复制配置读取与展示。依据 Dashboard 的
+  rgw_client.get_bucket_replication、controllers/rgw.py/_get_replication，
+  及 rgw_rest_s3.cc/ReplicationConfiguration 与 GET 响应实现，通过签名
+  GET ?replication 读取显式租户桶，沿桶配置 API 返回完整 XML 和规则摘要
+  （Role、ID、Status、原生字符串 Priority、Destination/Bucket）。
+  完整 Filter、Source/Destination Zone、StorageClass、删除标记设置等保留在原始文档；
+  不把摘要当作完整规则模型。区分成功空规则、准确的配置不存在错误、权限失败和损坏响应，
+  保留未知状态及原生空目标，不推断同步进度或多站点状态。
+  参考 Dashboard 还查询独立 sync policy；该状态及复制修改链路尚待补齐，
+  当前新增入口明确只读，不开放原始复制 XML 写入或删除。
+  回归覆盖多规则、空响应、未知状态、异常 XML、原文保留、全局/指定租户作用域、
+  只读 API 契约和前端展示。make test-backend（含 OpenAPI 同步检查）、
+  make test-frontend（含 TypeScript/Vite 构建）通过；无真实集群或浏览器视觉验证。
+
 - 2026-10-04：补齐参考桶表单的四种 ACL 预设修改（private、public-read、
   public-read-write、authenticated-read）。依据 rgw-bucket-form 的 permissionToCannedAcl、
   rgw_client.set_acl、rgw_acl_s3.cc/create_canned 及 RGWPutACLs 的所有者保持语义，

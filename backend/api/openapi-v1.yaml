@@ -19301,7 +19301,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: ["policy", "cors", "lifecycle", "encryption", "versioning", "tagging", "object-lock", "acl"]
+            enum: ["policy", "cors", "lifecycle", "encryption", "versioning", "tagging", "object-lock", "acl", "replication"]
       requestBody:
         required: true
         content:
@@ -26085,10 +26085,28 @@ components:
       required: [bucket_id, kind, configured, document, content_type]
       properties:
         bucket_id: {type: string}
-        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning, tagging, object-lock, acl]}
+        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning, tagging, object-lock, acl, replication]}
         configured: {type: boolean}
         document: {type: string, nullable: true}
         content_type: {type: string, nullable: true}
+        replication:
+          type: object
+          nullable: true
+          additionalProperties: false
+          required: [role, rules]
+          properties:
+            role: {type: string}
+            rules:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [id, status, priority, destination_bucket]
+                properties:
+                  id: {type: string}
+                  status: {type: string}
+                  priority: {type: string, nullable: true}
+                  destination_bucket: {type: string}
         acl:
           type: object
           additionalProperties: false

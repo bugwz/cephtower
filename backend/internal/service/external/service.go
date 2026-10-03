@@ -302,6 +302,9 @@ func (s *Service) readBucketPolicy(ctx context.Context, clusterID uint64, key st
 	body, contentType, err := api.GetBucketConfiguration(ctx, bucket, kind)
 	if s3.IsConfigurationMissing(kind, err) {
 		row := map[string]any{"bucket_id": key, "kind": kind, "configured": false, "document": nil, "content_type": nil}
+		if kind == "replication" {
+			row["replication"] = nil
+		}
 		if kind == "object-lock" {
 			row["object_lock"] = nil
 		}
@@ -323,6 +326,13 @@ func (s *Service) readBucketPolicy(ctx context.Context, clusterID uint64, key st
 		return nil, failure("s3_failed", err.Error(), true)
 	}
 	row := map[string]any{"bucket_id": key, "kind": kind, "configured": true, "document": string(body), "content_type": contentType}
+	if kind == "replication" {
+		configuration, err := s3.BucketReplication(body)
+		if err != nil {
+			return nil, failure("s3_failed", err.Error(), false)
+		}
+		row["replication"] = configuration
+	}
 	if kind == "acl" {
 		configuration, err := s3.BucketACL(body)
 		if err != nil {

@@ -259,7 +259,7 @@ func routeParameters(route router.Route) []parameterSpec {
 		result = append(result, parameterSpec{Name: "metric_id", In: "query", Type: "string", Required: true}, parameterSpec{Name: "start", In: "query", Type: "string", Format: "date-time", Required: true}, parameterSpec{Name: "end", In: "query", Type: "string", Format: "date-time", Required: true}, parameterSpec{Name: "step", In: "query", Type: "string", Required: true})
 	case "/rgw/bucket/policy":
 		if route.Method == "GET" {
-			result = append(result, parameterSpec{Name: "kind", In: "query", Type: "string", Enum: []string{"policy", "cors", "lifecycle", "encryption", "versioning", "tagging", "object-lock", "acl"}})
+			result = append(result, parameterSpec{Name: "kind", In: "query", Type: "string", Enum: []string{"policy", "cors", "lifecycle", "encryption", "versioning", "tagging", "object-lock", "acl", "replication"}})
 		}
 	}
 	return result
@@ -893,10 +893,28 @@ const components = `components:
       required: [bucket_id, kind, configured, document, content_type]
       properties:
         bucket_id: {type: string}
-        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning, tagging, object-lock, acl]}
+        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning, tagging, object-lock, acl, replication]}
         configured: {type: boolean}
         document: {type: string, nullable: true}
         content_type: {type: string, nullable: true}
+        replication:
+          type: object
+          nullable: true
+          additionalProperties: false
+          required: [role, rules]
+          properties:
+            role: {type: string}
+            rules:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [id, status, priority, destination_bucket]
+                properties:
+                  id: {type: string}
+                  status: {type: string}
+                  priority: {type: string, nullable: true}
+                  destination_bucket: {type: string}
         acl:
           type: object
           additionalProperties: false
