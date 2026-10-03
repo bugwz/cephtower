@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,6 +17,7 @@ func TestBucketSyncPolicyCollection(t *testing.T) {
 			name, payload string
 			valid         bool
 		}{
+			{"pipe details", `{"groups":[{"id":"g","status":"enabled","data_flow":{},"pipes":[{"id":"p","source":{"bucket":"team/photos:marker","zones":["*"]},"dest":{"bucket":"*","zones":["Zone B"]},"params":{"source":{"filter":{"prefix":"","tags":[{"key":"<key>","value":""}]}},"dest":{"acl_translation":{"owner":"team$user"},"storage_class":"COLD"},"priority":0,"mode":"user","user":"team$user","future":{"enabled":true}}}]}]}`, true},
 			{"both flow types", `{"groups":[{"id":"g","status":"enabled","data_flow":{"symmetrical":[{"id":"双向","zones":[" a ","<b>"]}],"directional":[{"source_zone":"b","dest_zone":"c"}],"future":{"option":true}},"pipes":[]}]}`, true},
 			{"enabled", `{"groups":[{"id":"g","status":"enabled","data_flow":{"directional":[{"source_zone":"a","dest_zone":"b"}]},"pipes":[{"id":"p"}]}]}`, true},
 			{"allowed", `{"groups":[{"id":"g","status":"allowed","data_flow":{},"pipes":[]}]}`, true},
@@ -56,7 +58,9 @@ func TestBucketSyncPolicyCollection(t *testing.T) {
 					}
 					if tc.valid {
 						var original map[string]any
-						if err := json.Unmarshal([]byte(tc.payload), &original); err != nil || !reflect.DeepEqual(value, original) {
+						decoder := json.NewDecoder(strings.NewReader(tc.payload))
+						decoder.UseNumber()
+						if err := decoder.Decode(&original); err != nil || !reflect.DeepEqual(value, original) {
 							t.Fatalf("native policy fields changed: %#v", value)
 						}
 						policy, ok := rgwBucketSyncPolicy(value)

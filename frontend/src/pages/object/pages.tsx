@@ -53,6 +53,7 @@ import { RgwBucketLifecycleRules } from './RgwBucketLifecycleRules'
 import { rgwLifecycleProgress } from './rgwLifecycleProgress'
 import { rgwBucketSyncPolicy } from './rgwBucketSyncPolicy'
 import { RgwBucketSyncFlows } from './RgwBucketSyncFlows'
+import { RgwBucketSyncPipes } from './RgwBucketSyncPipes'
 import { bucketSyncGroupBlocked, bucketSyncGroupInitial, bucketSyncGroupInput, bucketSyncGroupConfirmation } from './rgwBucketSyncGroupForm'
 import { bucketSyncGroupCreateBlocked, bucketSyncGroupCreateInitial, bucketSyncGroupCreateInput, bucketSyncGroupCreateConfirmation } from './rgwBucketSyncGroupForm'
 import { bucketSyncGroupDeleteInput, bucketSyncGroupDeleteConfirmation } from './rgwBucketSyncGroupForm'
@@ -710,7 +711,7 @@ const definitions: Record<
       { key: 'mfa_enabled', title: 'MFA Delete', render: rgwBucketBooleanState },
       { key: 'reshard_status', title: '重新分片状态（采集时）', ellipsis: false, render: rgwBucketReshardState },
       { key: 'lifecycle_progress', title: '生命周期处理进度（采集时）', ellipsis: false, render: rgwLifecycleProgress },
-      { key: 'bucket_sync_policy', title: '桶本地同步策略（采集时）', ellipsis: false, render: (value) => <div>{rgwBucketSyncPolicy(value)}<details><summary>查看数据流</summary><RgwBucketSyncFlows value={value} /></details>{value != null && <details><summary>查看原生策略（数据流与管道）</summary><pre>{JSON.stringify(value, null, 2)}</pre></details>}</div> },
+      { key: 'bucket_sync_policy', title: '桶本地同步策略（采集时）', ellipsis: false, render: (value) => <div>{rgwBucketSyncPolicy(value)}<details><summary>查看数据流</summary><RgwBucketSyncFlows value={value} /></details><details><summary>查看同步管道</summary><RgwBucketSyncPipes value={value} /></details>{value != null && <details><summary>查看原生策略（数据流与管道）</summary><pre>{JSON.stringify(value, null, 2)}</pre></details>}</div> },
       { key: 'status', title: '状态' },
       { key: 'usage', title: '使用量', ellipsis: false, render: (value) => <RgwStorage value={value} categorized /> },
       { key: 'rate_limit', title: 'Bucket 限流（每 RGW）', ellipsis: false, render: (value) => <RgwRateLimit value={value} /> },

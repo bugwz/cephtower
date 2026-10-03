@@ -28,6 +28,18 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：补齐桶本地同步管道结构化展示。对照参考同步策略详情页的管道列，
+  并追溯 rgw_sync_bucket_pipes、rgw_sync_bucket_entities 与 rgw_sync_pipe_params
+  序列化，通过已有 sync policy get → bucket_sync_policy 采集/API 链路按组显示管道
+  ID、源/目标桶键、源/目标 Zone；明确区分缺失 Zone、空列表和显式 * 通配选择。
+  参数详情展示模式、用户、优先级、源前缀/标签、目标 ACL 转换与存储类，同时保留
+  完整参数及原生策略，未知模式或不安全整数不伪装成已知值，不推断实际权限/复制状态。
+  增加管道完整字段采集保留回归（期望解码使用精确 JSON 数字），以及前端字段、
+  通配/缺失/异常、特殊字符、未知扩展、分页与页面绑定测试。本轮仅补齐展示，
+  管道创建/修改/删除仍待实现。
+  make test-backend（含 OpenAPI 同步检查）与 make test-frontend（含 TypeScript/Vite
+  构建）通过；无真实集群或浏览器视觉验证。
+
 - 2026-10-04：补齐桶本地数据流删除。根据 Dashboard remove_sync_flow、
   SYNC_GROUP_FLOW_REMOVE 及 rgw_sync_data_flow_group 的删除实现，接入高风险
   DELETE /rgw/bucket/sync/flow → 队列 → 原生 sync group flow remove。
