@@ -30,6 +30,7 @@ func validateBucketLifecycle(body []byte) error {
 	if xml.Unmarshal(body, &document) != nil || len(document.Rules) == 0 || len(document.Unknown) > 0 || strings.TrimSpace(document.Text) != "" {
 		return invalid
 	}
+	ids := map[string]bool{}
 	for _, rule := range document.Rules {
 		if strings.TrimSpace(rule.Text) != "" {
 			return invalid
@@ -37,6 +38,7 @@ func validateBucketLifecycle(body []byte) error {
 		counts := map[string]int{}
 		actions := 0
 		usingDays, usingDate := false, false
+		hasTags, deleteMarker := false, false
 		classes := map[string]map[string]bool{"Transition": {}, "NoncurrentVersionTransition": {}}
 		for _, field := range rule.Fields {
 			name := field.XMLName.Local
@@ -52,12 +54,25 @@ func validateBucketLifecycle(body []byte) error {
 				if name == "ID" && len(field.Text) > 255 {
 					return fmt.Errorf("lifecycle rule ID exceeds 255 UTF-8 bytes")
 				}
+				if name == "ID" && field.Text != "" {
+					if ids[field.Text] {
+						return fmt.Errorf("lifecycle rule IDs must be unique")
+					}
+					ids[field.Text] = true
+				}
 			case "Filter":
 				if strings.TrimSpace(field.Text) != "" {
 					return invalid
 				}
 				if err := validateLifecycleFilter(field); err != nil {
 					return err
+				}
+				conditions := field.Children
+				if len(conditions) == 1 && conditions[0].XMLName.Local == "And" {
+					conditions = conditions[0].Children
+				}
+				for _, condition := range conditions {
+					hasTags = hasTags || condition.XMLName.Local == "Tag"
 				}
 			case "Expiration", "NoncurrentVersionExpiration", "AbortIncompleteMultipartUpload", "Transition", "NoncurrentVersionTransition":
 				if strings.TrimSpace(field.Text) != "" || len(field.Children) == 0 {
@@ -69,6 +84,7 @@ func validateBucketLifecycle(body []byte) error {
 				effective := false
 				for _, child := range field.Children {
 					key := child.XMLName.Local
+					deleteMarker = deleteMarker || (key == "ExpiredObjectDeleteMarker" && child.Text == "true")
 					if name == "Expiration" || name == "Transition" {
 						usingDays = usingDays || key == "Days"
 						usingDate = usingDate || key == "Date"
@@ -96,6 +112,9 @@ func validateBucketLifecycle(body []byte) error {
 		}
 		if usingDays && usingDate {
 			return fmt.Errorf("lifecycle current-version expiration and transitions cannot mix Days and Date")
+		}
+		if hasTags && (deleteMarker || counts["AbortIncompleteMultipartUpload"] > 0) {
+			return fmt.Errorf("lifecycle tag filters cannot combine with expired delete markers or incomplete multipart upload expiration")
 		}
 	}
 	return nil

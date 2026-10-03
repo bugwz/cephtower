@@ -5,6 +5,38 @@ import (
 	"testing"
 )
 
+func TestLifecycleRuleSetConstraints(t *testing.T) {
+	wrap := func(rules string) []byte {
+		return []byte("<LifecycleConfiguration>" + rules + "</LifecycleConfiguration>")
+	}
+	rule := func(id, conditions, actions string) string {
+		return "<Rule><ID>" + id + "</ID><Status>Disabled</Status><Filter>" + conditions + "</Filter>" + actions + "</Rule>"
+	}
+	expiration := "<Expiration><Days>30</Days></Expiration>"
+	marker := "<Expiration><ExpiredObjectDeleteMarker>true</ExpiredObjectDeleteMarker></Expiration>"
+	mp := "<AbortIncompleteMultipartUpload><DaysAfterInitiation>1</DaysAfterInitiation></AbortIncompleteMultipartUpload>"
+	for _, tc := range []struct {
+		name, rules string
+		valid       bool
+	}{
+		{"duplicate IDs", rule("same", "", expiration) + rule("same", "<Prefix>x</Prefix>", expiration), false},
+		{"anonymous IDs", rule("", "", expiration) + rule("", "", expiration), true},
+		{"case-sensitive IDs", rule("a", "", expiration) + rule("A", "", expiration), true},
+		{"tags with abort", rule("a", "<Tag/>", mp), false},
+		{"and tags with marker", rule("a", "<And><Tag><Key>key</Key></Tag></And>", marker), false},
+		{"tags with expiration", rule("a", "<Tag/>", expiration), true},
+		{"false marker with tags", rule("a", "<Tag/>", strings.Replace(marker, "true", "false", 1)+"<Transition><Days>0</Days><StorageClass>COLD</StorageClass></Transition>"), true},
+		{"no tags with abort and marker", rule("a", "<Prefix>x</Prefix>", mp+marker), true},
+		{"tags do not leak between rules", rule("a", "<Tag/>", expiration) + rule("b", "", mp), true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := ValidateBucketConfiguration("lifecycle", wrap(tc.rules)); (err == nil) != tc.valid {
+				t.Fatalf("valid=%v err=%v", tc.valid, err)
+			}
+		})
+	}
+}
+
 func TestLifecycleRuleActionConflicts(t *testing.T) {
 	transition := func(kind, timing, class string) string {
 		return "<" + kind + ">" + timing + "<StorageClass>" + class + "</StorageClass></" + kind + ">"
