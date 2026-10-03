@@ -48,6 +48,7 @@ import { rgwUserCreateCredentials } from './rgwUserCreateCredentials'
 import { rgwUserCreateFlags } from './rgwUserCreateFlags'
 import { rgwBucketConfigurationOptions, rgwBucketConfigurationInput, rgwBucketConfigurationDeleteBlocked, rgwBucketConfigurationDeleteInput, rgwBucketConfigurationDeleteConfirmation, rgwBucketConfigurationEditBlocked, rgwBucketConfigurationEditInitial, rgwBucketConfigurationEditInput, rgwBucketConfigurationUpdateConfirmation } from './rgwBucketConfiguration'
 import { rgwBucketEncryptionSummary } from './rgwBucketEncryptionSummary'
+import { bucketVersioningInitial, bucketVersioningInput, bucketVersioningConfirmation } from './rgwBucketVersioningForm'
 import { bucketEncryptionFormInitial, bucketEncryptionFormBlocked, bucketEncryptionFormInput, bucketEncryptionFormConfirmation } from './rgwBucketEncryptionForm'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
@@ -562,10 +563,11 @@ const definitions: Record<
       buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? '') })
     },
     updateAction: {
-      title: '更新 Bucket',
+      title: '更新 Bucket 版本控制',
       path: '/rgw/bucket',
       method: 'PATCH',
-      successMessage: 'Bucket 更新执行成功',
+      successMessage: 'Bucket 版本控制更新成功并已回读核验',
+      confirmation: (values, row) => bucketVersioningConfirmation(values, bucketId(row)),
       fields: [
         {
           name: 'versioning',
@@ -578,11 +580,10 @@ const definitions: Record<
           ]
         }
       ],
-      initialValues: (row) => ({ versioning: row?.versioning === 'suspended' ? 'suspended' : 'enabled' }),
+      initialValues: bucketVersioningInitial,
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
-        bucket_id: bucketId(row),
-        versioning: String(values.versioning ?? 'enabled')
+        ...bucketVersioningInput(values, bucketId(row))
       })
     },
     extraActions: [{ title: 'Bucket 配额设置', path: '/rgw/bucket/quota', method: 'PUT', successMessage: 'Bucket 配额设置执行成功',

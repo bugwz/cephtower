@@ -4,6 +4,17 @@ import ts from 'typescript'
 import './test-external-form-confirmation.mjs'
 import './test-rgw-bucket-tag-form.mjs'
 const helpers = {}
+const versioning = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketVersioningForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(versioning)
+for (const value of [undefined, 'off', 'future', '', null]) assert.equal(versioning.bucketVersioningInitial({ versioning: value }).versioning, undefined)
+for (const value of ['enabled', 'suspended']) {
+  const values = versioning.bucketVersioningInitial({ versioning: value })
+  assert.deepEqual(versioning.bucketVersioningInput(values, 'AGJ1Y2tldA'), { bucket_id: 'AGJ1Y2tldA', versioning: value })
+  assert.match(versioning.bucketVersioningConfirmation(values, 'AGJ1Y2tldA'), /AGJ1Y2tldA.*MFA.*回读核验/)
+}
+for (const value of [undefined, null, 'off', true, 'Enabled']) assert.throws(() => versioning.bucketVersioningInput({ versioning: value }, 'AGJ1Y2tldA'))
+assert.throws(() => versioning.bucketVersioningInput({ versioning: 'enabled' }, ''))
+assert.match(versioning.bucketVersioningConfirmation({ versioning: 'suspended' }, 'AGJ1Y2tldA'), /可能覆盖 null 版本/)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketEncryptionForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketEncryptionSummary.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketConfiguration.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
