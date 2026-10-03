@@ -43,3 +43,40 @@ visit(page)
 assert.equal(column.render([], row).type, api.RgwBucketNotifications)
 assert.equal(column.render([], { kind: 'policy' }), '—')
 console.log('bucket notification presentation and read-only bindings passed')
+
+const form = {}
+new Function('exports', compile('../src/pages/object/rgwBucketNotificationDelete.ts'))(form)
+const populated = { ...row, notifications: [rule], document: '<NotificationConfiguration><TopicConfiguration/></NotificationConfiguration>' }
+const values = { ...form.bucketNotificationDeleteInitial(populated), mode: 'single', notification_id: rule.id, confirm_notification: 'acknowledged' }
+assert.equal(form.bucketNotificationDeleteInitial(populated).mode, undefined)
+assert.equal(form.bucketNotificationDeleteInitial(populated).confirm_notification, undefined)
+assert.deepEqual(form.bucketNotificationDeleteInput(values, populated), { bucket_id: row.bucket_id, mode: 'single', notification_id: rule.id, expected_document: populated.document })
+assert.equal(form.bucketNotificationDeleteInput({ ...values, mode: 'all', notification_id: '' }, populated).mode, 'all')
+assert.ok(form.bucketNotificationDeleteBlocked(row))
+for (const patch of [{ configured: false }, { kind: 'policy' }, { bucket_id: '' }, { document: null }, { notifications: null }, { notifications: [null] }]) assert.ok(form.bucketNotificationDeleteBlocked({ ...populated, ...patch }))
+for (const patch of [{ bucket_id: 'other' }, { mode: undefined }, { notification_id: '' }, { notification_id: 'absent' }, { mode: 'all' }, { confirm_notification: undefined }]) assert.throws(() => form.bucketNotificationDeleteInput({ ...values, ...patch }, populated))
+assert.throws(() => form.bucketNotificationDeleteInput(values, { ...populated, notifications: [rule, rule] }), /重复/)
+assert.throws(() => form.bucketNotificationDeleteInput(values, { ...populated, document: 'x'.repeat(1024 * 1024) }), /上限/)
+const exact = ' a&+%/中 '
+assert.equal(form.bucketNotificationDeleteInput({ ...values, notification_id: exact }, { ...populated, notifications: [{ ...rule, id: exact }] }).notification_id, exact)
+for (const text of ['指定通知', '不删除 Bucket', '独立 Topic', '排队消息', '映射', '原子锁', '回滚', '重试']) assert.ok(form.bucketNotificationDeleteConfirmation(values, populated).includes(text))
+assert.match(form.bucketNotificationDeleteConfirmation({ ...values, mode: 'all', notification_id: '' }, populated), /全部通知规则/)
+let action
+function findAction(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(page) === 'title' && ts.isStringLiteral(p.initializer) && p.initializer.text === '删除 Bucket 通知规则')) {
+    const code = ts.transpileModule(`const action = ${node.getText(page)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+    action = new Function(...Object.keys(form), `${code}; return action`)(...Object.values(form))
+  }
+  ts.forEachChild(node, findAction)
+}
+findAction(page)
+assert.equal(action.path, '/rgw/bucket/notification')
+assert.equal(action.method, 'DELETE')
+assert.equal(action.visibleWhen(populated), true)
+assert.equal(action.visibleWhen({ kind: 'policy' }), false)
+assert.equal(action.disabledWhen, form.bucketNotificationDeleteBlocked)
+assert.equal(action.initialValues, form.bucketNotificationDeleteInitial)
+assert.equal(action.confirmation, form.bucketNotificationDeleteConfirmation)
+assert.equal(action.fields.find(field => field.name === 'bucket_id').readOnly, true)
+assert.deepEqual(action.buildBody(values, 42, populated), { cluster_id: 42, ...form.bucketNotificationDeleteInput(values, populated) })
+console.log('bucket notification deletion forms, snapshot and action bindings passed')

@@ -10,7 +10,7 @@ export function RgwBucketNotifications({ value, configured }: { value: unknown; 
   const rules = bucketNotificationData(value)
   if (configured !== true || !rules) return <span>通知配置不可用，不能判断是否存在规则</span>
   return <div>
-    <p>原生事件通知配置（只读）。事件及过滤条件按原值展示，不推断默认值、过滤组合语义、Topic 是否存在或投递是否成功。</p>
+    <p>原生事件通知配置。事件及过滤条件按原值展示，不推断默认值、过滤组合语义、Topic 是否存在或投递是否成功。</p>
     <Table size="small" rowKey="index" dataSource={rules.map((rule, index) => ({ ...rule, index }))} pagination={rules.length > 5 ? { pageSize: 5 } : false} scroll={{ x: 650 }} locale={{ emptyText: '原生响应无事件通知规则' }} columns={[
       { title: '通知 ID', dataIndex: 'id', render: (value: string) => JSON.stringify(value) },
       { title: '目标 Topic ARN', dataIndex: 'topic', render: (value: string) => JSON.stringify(value) },

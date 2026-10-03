@@ -70,6 +70,22 @@ func TestBucketNotificationsReadContract(t *testing.T) {
 	}
 }
 
+func TestBucketNotificationDeletionContract(t *testing.T) {
+	got, ok := requestSchema(router.Route{Method: "DELETE", Path: "/rgw/bucket/notification"})
+	want, _ := handler.MutationRequestContract("rgw_bucket.notification_delete")
+	if !ok || !reflect.DeepEqual(got, want) {
+		t.Fatal("notification deletion contract mismatch")
+	}
+	for _, key := range []string{"cluster_id", "bucket_id", "mode", "notification_id", "expected_document"} {
+		if !got.Fields[key].Required {
+			t.Fatal("required field missing: " + key)
+		}
+	}
+	if !reflect.DeepEqual(got.Fields["mode"].Enum, []string{"single", "all"}) {
+		t.Fatal("deletion scope enum mismatch")
+	}
+}
+
 func TestBucketReplicationReadContract(t *testing.T) {
 	found := false
 	for _, parameter := range routeParameters(router.Route{Method: "GET", Path: "/rgw/bucket/policy"}) {

@@ -367,6 +367,16 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if err != nil || replicationOperation.Action != "rgw_bucket.replication_enable" || replicationOperation.Risk != "high" || replicationOperation.ResourceKey != row.ResourceKey || replicationOperation.LockKey != updated.LockKey {
 			t.Fatalf("incorrect replication operation: %+v %v", replicationOperation, err)
 		}
+		for _, mode := range []string{"single", "all"} {
+			response = sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/bucket/notification", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"mode":%q,"notification_id":"","expected_document":"<NotificationConfiguration/>"}`, cluster.ID, id, mode), "bucket-notification-"+tenant+"-"+mode)
+			if response.Code != http.StatusAccepted {
+				t.Fatalf("notification queue: %d %s", response.Code, response.Body.String())
+			}
+			notificationOperation, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+			if err != nil || notificationOperation.Action != "rgw_bucket.notification_delete" || notificationOperation.Risk != "high" || notificationOperation.ResourceKey != row.ResourceKey || notificationOperation.LockKey != updated.LockKey {
+				t.Fatalf("incorrect notification operation: %+v %v", notificationOperation, err)
+			}
+		}
 		for _, kind := range []string{"policy", "cors", "lifecycle", "encryption", "tagging"} {
 			response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/bucket/policy", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"kind":%q,"document":"raw"}`, cluster.ID, id, kind), "bucket-config-"+tenant+"-"+kind)
 			if response.Code != http.StatusAccepted {

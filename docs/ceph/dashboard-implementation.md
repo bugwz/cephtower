@@ -28,6 +28,10 @@
 
 ### 增量实现与验证记录
 
+- **RGW Bucket 通知规则删除**：新增 `DELETE /rgw/bucket/notification` 高风险队列操作及配置页删除表单，区分指定唯一 ID 和全部删除；显式确认、完整 XML 快照、集群端点检查和 Bucket 级操作锁贯穿原生 S3 删除链路。单条删除精确保留 ID 空格及特殊字符，不把空 ID 降级为全部删除；指定 ID 缺失或重复时拒绝写入，全部删除必须显式选择且 ID 为空。
+  - 对照 `RGWPSDeleteNotifOp`、`find_unique_topic` 和 `remove_notification_v2`：删除前再次读取并匹配完整快照，删除后读取全部通知，比较剩余规则及事件/过滤条件；404/无权限/损坏响应不视为成功，删除失败或回读不一致不自动重试/回滚。原生映射更新可能静默失败，前端明确不保证 Topic/Bucket 映射清理或已排队投递停止，不删除 Bucket、对象或独立 Topic。
+  - 特殊 ID 回归揭示已有 S3 查询签名把空格保留为 `+`；按 `rgw_auth_s3.cc::get_v4_canonical_qs` 修正为 `%20` 并对编码后的键值排序。签名修复独立提交；通知功能补充两种删除范围、租户、歧义 ID、最后一条规则、各阶段故障、其他规则改变、API 风险/锁及前端绑定测试。`make test-backend`（含 OpenAPI 一致性）及 `make test-frontend`（含生产构建）通过。无真实集群或浏览器视觉验证；通知创建与编辑仍待实现。
+
 - **RGW Bucket 事件通知读取与展示**：对照参考 `rgw-notification-form`、`notification-configuration.model.ts`、`RGWPSListNotifsOp`、`rgw_pubsub_s3_notification::dump_xml` 和 `rgw_s3_filter.cc`，通过现有集群 S3 端点和 SigV4 请求 `GET /<tenant>:<bucket>?notification=`，由 `GET /rgw/bucket/policy?kind=notification` 返回完整 XML 与结构化 `notifications`。无需部署 Dashboard 服务或读取含投递凭据的 Topic 元数据。
   - Bucket 配置页新增事件通知选项及规则表，展示 ID、目标 Topic ARN、原生事件列表和 S3Key/S3Metadata/S3Tags 过滤名称与值。保留重复 ID、未知事件、未知过滤名称、顺序、空值与空格；不执行正则、不推断默认事件、过滤组合语义、Topic 存在性或消息投递结果。
   - 成功空配置返回非 null 空数组并显示无规则；404、权限失败、服务失败和畸形/歧义 XML 不冒充空配置。完整文档保留，结构化解析拒绝未知容器、重复单值字段、缺失身份字段和嵌套标量。补充签名路径、租户范围、服务读取、OpenAPI 只读边界和前端实际列绑定回归。

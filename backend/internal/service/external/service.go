@@ -59,7 +59,7 @@ func Supports(action string) bool {
 	switch action {
 	case "silence.create", "silence.delete",
 		"rgw_topic.policy", "rgw_topic.attribute", "rgw_topic.endpoint", "rgw_topic.option", "rgw_topic.create",
-		"rgw_bucket.create", "rgw_bucket.update", "rgw_bucket.delete", "rgw_bucket.acl", "rgw_bucket.replication_enable", "rgw_bucket_policy.update", "rgw_bucket_policy.delete",
+		"rgw_bucket.create", "rgw_bucket.update", "rgw_bucket.delete", "rgw_bucket.acl", "rgw_bucket.replication_enable", "rgw_bucket.notification_delete", "rgw_bucket_policy.update", "rgw_bucket_policy.delete",
 		"iscsi_target.create", "iscsi_target.update", "iscsi_target.delete",
 		"nvmeof_subsystem.create", "nvmeof_subsystem.update", "nvmeof_subsystem.delete",
 		"nvmeof_namespace.create", "nvmeof_namespace.update", "nvmeof_namespace.delete",
@@ -466,6 +466,8 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 		}
 	}
 	switch request.Action {
+	case "rgw_bucket.notification_delete":
+		return deleteBucketNotification(ctx, api, bucket, parameters)
 	case "rgw_bucket.create":
 		err = api.CreateBucket(ctx, bucket)
 		if err == nil {

@@ -84,6 +84,7 @@ import { rgwBucketObjectLockSummary } from './rgwBucketObjectLockSummary'
 import { RgwBucketAcl } from './RgwBucketAcl'
 import { RgwBucketReplication } from './RgwBucketReplication'
 import { RgwBucketNotifications } from './RgwBucketNotifications'
+import { bucketNotificationDeleteBlocked, bucketNotificationDeleteInitial, bucketNotificationDeleteInput, bucketNotificationDeleteConfirmation } from './rgwBucketNotificationDelete'
 import { bucketAclOptions, bucketAclFormBlocked, bucketAclFormInitial, bucketAclFormInput, bucketAclFormConfirmation } from './rgwBucketAclForm'
 import { objectLockFormInitial, objectLockFormBlocked, objectLockFormInput, objectLockFormConfirmation } from './rgwBucketObjectLockForm'
 import { RgwBucketLifecycleEditor } from './RgwBucketLifecycleEditor'
@@ -1356,6 +1357,19 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...rgwBucketConfigurationDeleteInput(row) })
     },
     extraActions: [{
+      title: '删除 Bucket 通知规则', buttonLabel: '删除通知',
+      path: '/rgw/bucket/notification', method: 'DELETE',
+      successMessage: '通知删除已回读核验（不代表队列或 Topic 映射已清理）',
+      visibleWhen: (row) => row.kind === 'notification',
+      disabledWhen: bucketNotificationDeleteBlocked, initialValues: bucketNotificationDeleteInitial, confirmation: bucketNotificationDeleteConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'mode', label: '删除范围', type: 'select', required: true, options: [{ value: 'single', label: '指定唯一通知 ID' }, { value: 'all', label: '全部通知规则' }] },
+        { name: 'notification_id', label: '通知 ID（精确匹配；全部删除时必须留空）' },
+        { name: 'confirm_notification', label: '停止通知确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份配置，确认删除规则且没有自动撤销' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketNotificationDeleteInput(values, row) })
+    }, {
       title: '设置 Dashboard 桶复制规则', buttonLabel: '设置同名桶复制',
       path: '/rgw/bucket/replication', method: 'POST',
       successMessage: 'S3 复制规则已回读核验（不代表复制运行或完成）',
