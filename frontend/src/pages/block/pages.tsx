@@ -5,7 +5,7 @@ import { ImageMirrorSchedule, MirrorSchedules } from './MirrorSchedules'
 import { RbdRuntimeStatus } from './RbdRuntimeStatus'
 import { RbdConfiguration } from './RbdConfiguration'
 import { RbdParent } from './RbdParent'
-import { RbdChildren } from './RbdChildren'
+import { RbdChildren, rbdSnapshotDeleteReason } from './RbdChildren'
 import { rbdUsageText } from './rbdUsage'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
 import { LiveMirrorScheduleStatus } from './LiveMirrorScheduleStatus'
@@ -306,7 +306,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       successMessage: 'RBD 快照删除执行成功',
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, image_spec: imageSpec(row), snap: snapshotName(row) }),
       resourceKey: (row) => `rbd/image/${imageSpec(row)}/snapshot/${snapshotName(row)}`,
-      disabledWhen: (row) => row.is_protected === true ? '请先取消快照保护后再删除' : Array.isArray(row.children) && row.children.length > 0 ? '快照仍有子镜像，请先扁平化或删除子镜像' : undefined
+      disabledWhen: rbdSnapshotDeleteReason
     },
     columns: [
       { key: 'name', title: '快照' },

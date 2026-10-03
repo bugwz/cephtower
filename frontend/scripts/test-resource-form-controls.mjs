@@ -50,6 +50,14 @@ assert.equal(childRows([{ pool: '', pool_namespace: 'team', image: '', id: 'orph
 assert.equal(childRows([{ pool: 'p', pool_namespace: 'team', image: 'i' }])[0].trash, '未返回')
 for (const value of [null, {}, [null], [{}], [{ pool: 'p', image: 'i' }]]) assert.equal(childRows(value), undefined)
 console.log('RBD child dependencies retain namespace, trash membership and unresolved names')
+const deleteReasonNode = childTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'rbdSnapshotDeleteReason')
+const deleteReasonCode = ts.transpileModule(deleteReasonNode.getText(childTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const snapshotDeleteReason = new Function(`${deleteReasonCode}; return rbdSnapshotDeleteReason`)()
+assert.equal(snapshotDeleteReason({ is_protected: false, children: [] }), undefined)
+assert.match(snapshotDeleteReason({ is_protected: true, children: [] }), /取消快照保护/)
+for (const is_protected of [undefined, null, 'false', 0]) assert.match(snapshotDeleteReason({ is_protected, children: [] }), /保护状态未知/)
+for (const children of [undefined, null, {}, '']) assert.match(snapshotDeleteReason({ is_protected: false, children }), /依赖信息不可用/)
+for (const children of [[{ trash: true }], [{}], [null]]) assert.match(snapshotDeleteReason({ is_protected: false, children }), /仍有子镜像/)
 
 const usageExports = {}
 const usageCode = ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdUsage.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
@@ -63,6 +71,7 @@ for (const value of [undefined, null, -1, 0.5, NaN, Infinity, Number.MAX_SAFE_IN
 console.log('RBD usage distinguishes missing fast-diff, unavailable statistics and valid zero')
 
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')
+assert.ok(blockSource.includes('disabledWhen: rbdSnapshotDeleteReason'))
 const blockTree = ts.createSourceFile('pages.tsx', blockSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 let scheduleNode
 function findSchedule(node) {

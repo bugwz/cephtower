@@ -1,5 +1,13 @@
 import { Table, Typography } from 'antd'
 
+export function rbdSnapshotDeleteReason(row: Record<string, unknown>): string | undefined {
+  if (row.is_protected === true) return '请先取消快照保护后再删除'
+  if (row.is_protected !== false) return '快照保护状态未知，请重新采集'
+  if (!Array.isArray(row.children)) return '子镜像依赖信息不可用，请重新采集'
+  if (row.children.length > 0) return '快照仍有子镜像（可能位于回收站），请先处理依赖'
+  return undefined
+}
+
 export function rbdChildRows(value: unknown) {
   if (!Array.isArray(value)) return undefined
   const rows: { key: number; pool: string; namespace: string; image: string; id: string; trash: string }[] = []
