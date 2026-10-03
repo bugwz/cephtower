@@ -571,6 +571,16 @@ func build(request Request, p map[string]any) (command, error) {
 			}
 			serviceID = expectedID
 		}
+		requiresID := serviceType == "mds" || serviceType == "rgw" || serviceType == "nfs" || serviceType == "smb"
+		if requiresID && serviceID == "" {
+			return command{}, invalid("this service type requires a service id")
+		}
+		if !requiresID && serviceID != "" {
+			return command{}, invalid("this service type must not have a service id")
+		}
+		if serviceID != "" && !regexp.MustCompile(`^[a-zA-Z0-9_.-]+$`).MatchString(serviceID) {
+			return command{}, invalid("service id may contain only letters, digits, underscores, dots, and hyphens")
+		}
 		spec := map[string]any{"service_type": serviceType}
 		if raw, exists := p["networks"]; exists {
 			encoded, err := json.Marshal(raw)

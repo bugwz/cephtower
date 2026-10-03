@@ -73,6 +73,8 @@ function ServicePageContent() {
   }, [daemonTableFilters.filters, selectedClusterId, serviceTableFilters.filters])
   const { data, loading, error, refresh } = useResource(loader)
   const [form] = Form.useForm<ServiceFormValues>()
+  const selectedServiceType = Form.useWatch('service_type', form)
+  const requiresServiceID = ['mds', 'rgw', 'nfs', 'smb'].includes(selectedServiceType)
   const [formOpen, setFormOpen] = useState(false)
   const [detail, setDetail] = useState<{ clusterId: number; name: string } | null>(null)
   const visibleDetail = detail?.clusterId === selectedClusterId ? detail : null
@@ -344,10 +346,10 @@ function ServicePageContent() {
       >
         <Form form={form} layout="vertical" onFinish={submitService}>
           <Form.Item name="service_type" label="服务类型" rules={[{ required: true, message: '请选择服务类型' }]}>
-            <Select disabled={Boolean(editingService)} options={serviceTypeOptions} />
+            <Select disabled={Boolean(editingService)} options={serviceTypeOptions} onChange={() => form.setFieldValue('service_id', undefined)} />
           </Form.Item>
-          <Form.Item name="service_id" label="Service ID">
-            <Input disabled={Boolean(editingService)} />
+          <Form.Item name="service_id" label="Service ID" rules={[{ required: requiresServiceID, message: '此服务类型必须填写 Service ID' }, { pattern: /^[a-zA-Z0-9_.-]+$/, message: '仅允许字母、数字、下划线、点和连字符' }]} extra={requiresServiceID ? '填写服务 ID，不包含服务类型前缀。' : '此服务类型不使用 Service ID。'}>
+            <Input disabled={Boolean(editingService) || !requiresServiceID} />
           </Form.Item>
           <Form.Item name="unmanaged" label="非托管" valuePropName="checked" extra="启用后 Ceph 编排器停止自动部署和移除该服务的守护进程；关闭后恢复自动管理，并可能按放置策略调整守护进程。">
             <Switch />
