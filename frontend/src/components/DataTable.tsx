@@ -9,6 +9,7 @@ export interface FieldColumn {
   key: string
   title: string
   filterKey?: string | false
+  ellipsis?: boolean
   render?: (value: unknown, row: ApiRecord) => React.ReactNode
 }
 
@@ -40,7 +41,7 @@ export function DataTable({
       title: column.title,
       dataIndex: column.key,
       key: filterField,
-      ellipsis: true,
+      ellipsis: column.ellipsis ?? true,
       ...(filterable
         ? {
             filterMultiple: true,

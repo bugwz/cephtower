@@ -4,6 +4,13 @@ import ts from 'typescript'
 
 const serviceSource = readFileSync(new URL('../src/pages/cluster/ServiceDaemons.tsx', import.meta.url), 'utf8')
 const serviceTree = ts.createSourceFile('service.tsx', serviceSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const detailFormatter = serviceTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'daemonDetailText')
+const detailCode = ts.transpileModule(detailFormatter.getText(serviceTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const formatDetail = new Function(`${detailCode}; return daemonDetailText`)()
+for (const [value, expected] of [[null, '未返回'], [undefined, '未返回'], [false, '否'], [true, '是'], [0, '0'], ['18446744073709551615', '18446744073709551615']]) assert.equal(formatDetail(value), expected)
+assert.equal(formatDetail({ pending: false }), '{\n  "pending": false\n}')
+for (const key of ['memory_request', 'container_id', 'container_image_id', 'container_image_digests', 'ip', 'ports', 'systemd_unit', 'created', 'started', 'last_deployed', 'last_configured', 'pending_daemon_config']) assert.ok(serviceSource.includes(`['${key}',`))
+assert.ok(serviceSource.includes('<summary>展开运行详情</summary>'))
 const serviceFn = serviceTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ServiceDaemons')
 const loaderDeclaration = serviceFn.body.statements.find((node) => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(serviceTree) === 'loader')
 const loaderArrow = loaderDeclaration.declarationList.declarations[0].initializer.arguments[0]

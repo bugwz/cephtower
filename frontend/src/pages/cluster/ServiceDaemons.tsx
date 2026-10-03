@@ -1,8 +1,26 @@
-import { Alert, Button, Space, Typography } from 'antd'
+import { Alert, Button, Descriptions, Space, Typography } from 'antd'
 import { useCallback } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { DataTable } from '../../components/DataTable'
 import { useResource } from '../../hooks'
+
+const daemonDetailFields = [
+  ['daemon_type', '守护进程类型'], ['daemon_id', '守护进程 ID'],
+  ['container_id', '容器 ID'], ['container_image_id', '镜像 ID'],
+  ['container_image_digests', '镜像摘要'], ['memory_request', '内存请求（字节）'],
+  ['ip', 'IP 地址'], ['ports', '监听端口'], ['systemd_unit', 'Systemd 单元'],
+  ['is_active', '活跃实例'], ['osdspec_affinity', 'OSD 规格关联'],
+  ['created', '创建时间'], ['started', '启动时间'],
+  ['last_deployed', '最近部署'], ['last_configured', '最近配置'],
+  ['pending_daemon_config', '待应用配置'], ['events', '事件'],
+] as const
+
+function daemonDetailText(value: unknown): string {
+  if (value === undefined || value === null) return '未返回'
+  if (typeof value === 'boolean') return value ? '是' : '否'
+  if (typeof value === 'object') return JSON.stringify(value, null, 2)
+  return String(value)
+}
 
 export function ServiceDaemons({ clusterId, name }: { clusterId: number; name: string }) {
   const loader = useCallback(async () => {
@@ -22,6 +40,12 @@ export function ServiceDaemons({ clusterId, name }: { clusterId: number; name: s
       { key: 'version', title: '版本' }, { key: 'cpu_percentage', title: 'CPU' }, { key: 'memory_usage', title: '内存用量（字节）' },
       { key: 'memory_limit', title: '内存限制（字节）' }, { key: 'container_image_name', title: '容器镜像' },
       { key: 'last_refresh', title: 'Ceph 最近刷新' }, { key: 'events', title: '事件' },
+      { key: 'runtime_details', title: '运行详情', filterKey: false, ellipsis: false, render: (_, row) => <details>
+        <summary>展开运行详情</summary>
+        <Descriptions bordered size="small" column={1} style={{ minWidth: 360 }} items={daemonDetailFields.map(([key, label]) => ({
+          key, label, children: <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{daemonDetailText(row[key])}</div>
+        }))} />
+      </details> },
     ]} />
   </Space>
 }
