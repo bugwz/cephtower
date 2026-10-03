@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **角色托管策略 IAM 协议层**：核实 `rgw_rest_iam.cc` 操作注册、`rgw_rest_role.cc::load_role` 的 `load_by_name` 路径及 Attach/Detach/ListAttached 的 Account 限制，新增内部 GetRole、ListAttachedRolePolicies、AttachRolePolicy、DetachRolePolicy 原生请求方法。通过已配置 RGW HTTPS 端点发送表单 POST、Version=2010-05-08、SigV4 `iam` 签名域，沿用会话凭据和禁止重定向策略；原生错误不回显响应内容。
+  - 角色读取要求完整字段及准确名称；列表区分空集合与损坏/重复/部分结果，参考版本返回完整列表、不支持此方法的分页，本实现遇到分页字段明确拒绝而非误当完整。写入只接受相应响应根及 RequestId 元数据，不把空响应、其他操作结果或嵌套错误当成功。
+  - 这是后续迁移的内部协议基础，尚未注册 API 或提供按钮，现有角色 CLI 行为未改动。后续必须接通 Account 凭据归属、准确 RoleId/Arn 和托管策略完整快照的前后核验、高风险队列及前端确认；不得把角色名称当作跨 Account 唯一身份。此项及整体迁移仍未完成，无真实集群验证。
+  - `make test-backend`（含 OpenAPI 一致性）和补充 IAM 定向回归通过；覆盖四种原生操作、签名/表单、HTTP/重定向拒绝、错误脱敏、缺失/重复结果、空列表及写响应歧义。本次无前端修改，未重跑前端构建。
+
 - **RGW Topic 创建协议参数结构化编辑器**：替换创建表单的手写 JSON 文本框，参照参考 Topic 表单，提供 11 项非凭据投递参数的显式启用控件、枚举选择或文本输入。覆盖 verify-ssl、use-ssl、cloudevents、ca-location、amqp-version、amqp-exchange、amqp-ack-level、http-ack-level、kafka-ack-level、mechanism 和 kafka-brokers；不勾选不发送，不推断默认值，不在协议切换时静默丢弃配置。
   - 通过已有 options 对象和 SNS CreateTopic 链路写入，不新增后端旁路。前端按现有原生安全写入约束校验所有值，只有 CA 路径和 Exchange 允许显式空值；未知或凭据字段不能通过编辑器，损坏草稿显示错误而非清空。控件禁用与事件处理均阻止等待提交期间修改。
   - 补充实际页面绑定、11 项参数保留、false/空值/缺失区分、枚举与字符校验、字段移除和禁用事件回归；真实集群及浏览器视觉验证仍未进行。
