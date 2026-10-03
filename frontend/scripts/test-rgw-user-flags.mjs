@@ -13,3 +13,12 @@ const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.
 assert.equal(pages.match(/render: rgwUserSuspension/g).length, 1)
 assert.equal(pages.match(/render: rgwUserBooleanFlag/g).length, 2)
 console.log('RGW user flags preserve native integer and boolean representations')
+const identity = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserIdentity.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(identity)
+assert.equal(identity.rgwIdentityText('', '默认租户'), '默认租户')
+assert.equal(identity.rgwIdentityText('future-type', '空'), 'future-type')
+for (const value of [null, undefined, 0, false, []]) assert.equal(identity.rgwIdentityText(value, '空'), '未返回或格式无效')
+assert.deepEqual(identity.rgwIdentityList([]), [])
+assert.deepEqual(identity.rgwIdentityList(['mfa:one', 'group,id']), ['mfa:one', 'group,id'])
+for (const value of [null, undefined, {}, [null], [''], [1]]) assert.equal(identity.rgwIdentityList(value), undefined)
+assert.ok(pages.includes('<RgwUserIdentityDetails row={row} />'))

@@ -24,6 +24,7 @@ import { rgwRoleInitial, rgwRolePatch } from './rgwRoleEdit'
 import { RgwRoleTagsTable } from './RgwRoleTagsTable'
 import { RgwPolicyDocument, RgwRolePolicyDetails } from './RgwRolePolicyDetails'
 import { rgwPolicyChanged, rgwPolicyConfirmation, rgwPolicyDeleteOptions, rgwPolicyMutation } from './rgwRolePolicies'
+import { RgwUserIdentityDetails } from './RgwUserIdentityDetails'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -191,6 +192,7 @@ const definitions: Record<
     },
     columns: [
       { key: 'uid', title: 'UID' },
+      { key: 'user_identity', title: '身份与归属', ellipsis: false, render: (_value, row) => <RgwUserIdentityDetails row={row} /> },
       { key: 'display_name', title: '显示名' },
       { key: 'email', title: '邮箱' },
       { key: 'max_buckets', title: '最大 Bucket 数', render: rgwBucketLimit },

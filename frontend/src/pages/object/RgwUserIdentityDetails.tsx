@@ -1,0 +1,22 @@
+import { Descriptions } from 'antd'
+import type { ApiRecord } from '../../api/client'
+import { rgwIdentityList, rgwIdentityText } from './rgwUserIdentity'
+
+function Identifiers({ value }: { value: unknown }) {
+  const ids = rgwIdentityList(value)
+  if (!ids) return <span>未返回或格式无效</span>
+  if (ids.length === 0) return <span>未配置</span>
+  return <ul style={{ margin: 0, paddingLeft: 18 }}>{ids.map((id, index) => <li key={index}>{id}</li>)}</ul>
+}
+
+export function RgwUserIdentityDetails({ row }: { row: ApiRecord }) {
+  return <Descriptions size="small" column={1} items={[
+    { key: 'tenant', label: '租户', children: rgwIdentityText(row.tenant, '默认租户') },
+    { key: 'account', label: '账户 ID', children: rgwIdentityText(row.account_id, '未关联账户') },
+    { key: 'type', label: '用户类型（命令原值）', children: rgwIdentityText(row.type, '空类型') },
+    { key: 'path', label: '用户路径', children: rgwIdentityText(row.path, '空路径') },
+    { key: 'mask', label: '操作掩码（命令原值）', children: rgwIdentityText(row.op_mask, '空操作掩码') },
+    { key: 'mfa', label: 'MFA 标识', children: <Identifiers value={row.mfa_ids} /> },
+    { key: 'groups', label: '用户组 ID', children: <Identifiers value={row.group_ids} /> }
+  ]} />
+}
