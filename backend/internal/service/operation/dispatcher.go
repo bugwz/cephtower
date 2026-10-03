@@ -80,6 +80,9 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		refreshed, err = d.reconciler.RefreshKindIfSupported(ctx, request.ClusterID, request.ResourceKind)
 	}
 	if err != nil {
+		if request.Action == "rbd_mirroring.global_schedule" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "global schedule was verified but inventory refresh failed; refresh inventory before another change", Retryable: false}
+		}
 		return cephdomain.ActionResult{}, &cephdomain.ActionError{
 			Code: "post_reconcile_failed", Message: "command succeeded but the cached state could not be refreshed", Retryable: true,
 		}

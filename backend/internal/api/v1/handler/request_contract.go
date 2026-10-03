@@ -185,6 +185,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"rbd_mirroring.peer"}, true, map[string]JSONField{"pool": stringField(true), "action": stringField(true, "add", "remove", "set"), "field": stringField(false, "site-name", "client", "mon-host", "direction"), "value": stringField(false), "uuid": stringField(false), "remote_cluster": stringField(false), "remote_client": stringField(false), "direction": stringField(false, "rx-only", "rx-tx")})
 	add([]string{"rbd_mirroring.update"}, true, map[string]JSONField{"pool": stringField(true), "mode": stringField(true, "disabled", "image", "pool")})
 	add([]string{"rbd_mirroring.schedule"}, true, map[string]JSONField{"pool": stringField(true), "action": stringField(true, "mirror-schedule-add", "mirror-schedule-remove"), "interval": stringField(false), "start_time": stringField(false)})
+	contracts["rbd_mirroring.global_schedule"] = RequestContract{Required: true, Fields: map[string]JSONField{"cluster_id": integerField(true), "action": stringField(true, "mirror-schedule-add", "mirror-schedule-remove"), "interval": stringField(false), "start_time": stringField(false)}}
 	add([]string{"rbd_namespace.schedule"}, true, map[string]JSONField{"pool": stringField(true), "namespace": stringField(true), "action": stringField(true, "mirror-schedule-add", "mirror-schedule-remove"), "interval": stringField(false), "start_time": stringField(false)})
 	add([]string{"filesystem.create"}, true, map[string]JSONField{
 		"name":          stringField(true),

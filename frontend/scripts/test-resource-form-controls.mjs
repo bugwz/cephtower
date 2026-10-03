@@ -48,6 +48,24 @@ assert.equal(intervalField.visibleWhen(addValues), true)
 assert.equal(intervalField.visibleWhen(removeValues), false)
 assert.equal(schedule.fields.find((field) => field.name === 'start_time').visibleWhen(removeValues), false)
 console.log('Pool mirror schedule form scope checks passed')
+let globalScheduleNode
+function findGlobalSchedule(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some((property) => ts.isPropertyAssignment(property) && property.name.getText(blockTree) === 'path' && property.initializer.getText(blockTree) === "'/rbd/mirroring/global/schedule'")) globalScheduleNode = node
+  ts.forEachChild(node, findGlobalSchedule)
+}
+findGlobalSchedule(blockTree)
+const globalScheduleCode = ts.transpileModule(`const action = ${globalScheduleNode.getText(blockTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const globalSchedule = new Function(`${globalScheduleCode}; return action`)()
+assert.deepEqual(globalSchedule.buildBody(addValues, 7, poolRow), { cluster_id: 7, action: 'mirror-schedule-add', interval: '12h', start_time: '01:00' })
+assert.deepEqual(globalSchedule.buildBody(removeValues, 7, poolRow), { cluster_id: 7, action: 'mirror-schedule-remove' })
+assert.deepEqual(globalSchedule.buildBody({ ...removeValues, remove_interval: '1d' }, 7), { cluster_id: 7, action: 'mirror-schedule-remove', interval: '1d', start_time: '01:00' })
+assert.match(globalSchedule.confirmation(addValues), /集群全局/)
+assert.match(globalSchedule.confirmation(removeValues), /全部全局/)
+assert.equal(globalSchedule.fields.find((field) => field.name === 'start_time').visibleWhen(removeValues), false)
+assert.ok(source.includes('definition.toolbarActions?.map'))
+assert.ok(source.includes('onClick={() => openForm(action)}'))
+assert.ok(source.includes('currentClusterId.current !== formClusterId || clusterGeneration.current !== generation'))
+console.log('Global schedule toolbar action preserves cluster scope and explicit confirmation')
 
 const mirrorExports = {}
 const mirrorCode = ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdMirrorScheduleRows.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText

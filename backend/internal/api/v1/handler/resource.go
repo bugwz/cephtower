@@ -299,6 +299,11 @@ func resourceLookupKey(kind, resourceKey string) string {
 		return encoded
 	case "rbd_image":
 		return after("image")
+	case "rbd_mirroring":
+		if resourceKey == "global/snapshot-schedule" {
+			return resourceKey
+		}
+		return lastResource()
 	case "rbd_snapshot":
 		return after("image") + "@" + after("snapshot")
 	case "rbd_namespace":
@@ -609,6 +614,9 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 		}
 		return "osd-deployment"
 	case "rbd_mirroring":
+		if action == "rbd_mirroring.global_schedule" {
+			return "global/snapshot-schedule"
+		}
 		return pathValue("pool")
 	case "mon":
 		return "monitor/action"

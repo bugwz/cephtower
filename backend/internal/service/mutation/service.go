@@ -78,7 +78,7 @@ func Supports(action string) bool {
 		"rbd_image.create", "rbd_image.update", "rbd_image.delete", "rbd_image.action",
 		"rbd_snapshot.create", "rbd_snapshot.update", "rbd_snapshot.delete", "rbd_snapshot.action",
 		"rbd_namespace.create", "rbd_namespace.delete", "rbd_namespace.schedule", "rbd_trash.restore", "rbd_trash.delete",
-		"rbd_trash.purge", "rbd_group.create", "rbd_group.action", "rbd_group.member", "rbd_group.snapshot", "rbd_mirroring.update", "rbd_mirroring.peer", "rbd_mirroring.schedule",
+		"rbd_trash.purge", "rbd_group.create", "rbd_group.action", "rbd_group.member", "rbd_group.snapshot", "rbd_mirroring.update", "rbd_mirroring.peer", "rbd_mirroring.schedule", "rbd_mirroring.global_schedule",
 		"filesystem.create", "filesystem.update", "filesystem.delete", "filesystem.rename",
 		"subvolume_group.create", "subvolume_group.update", "subvolume_group.delete",
 		"subvolume.create", "subvolume.update", "subvolume.delete", "subvolume.clone_cancel", "subvolume.snapshot_visibility",
@@ -358,6 +358,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		if request.Action == "erasure_code_profile.delete" && (err != nil || !nameAbsent(last(resourceTail(request.ResourceKey)), checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "erasure code profile removal was accepted but absence could not be verified; inspect the profile before retrying", Retryable: false}
+		}
+		if request.Action == "rbd_mirroring.global_schedule" && (err != nil || !rbdMirrorScheduleReadbackMatches(request, checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "global schedule command was accepted but its exact scope could not be verified; inspect schedules before retrying", Retryable: false}
 		}
 		if err != nil || ((request.Action == "cephfs_entry.create" || request.Action == "cephfs_entry.delete") && !cephFSDirectoryMutationMatches(request.Action, request.Parameters, checked.Stdout)) || (request.Action == "cephfs_entry.quota" && !cephFSEntryQuotaMatches(request.Parameters, checked.Stdout)) || (isCephFSEntrySnapshotMutation(request.Action) && !cephFSEntrySnapshotMatches(request.Action, request.Parameters, checked.Stdout)) || (request.Action == "rgw_bucket.quota" && !bucketQuotaMatches(request.Parameters, checked.Stdout)) || ((request.Action == "rgw_zone.update" || request.Action == "rgw_zone.create") && !zoneReadbackMatches(request.Parameters, checked.Stdout)) || (isRBDMirrorScheduleMutation(request.Parameters) && !rbdMirrorScheduleReadbackMatches(request, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "command was accepted but the expected state could not be verified", Retryable: true}
@@ -1011,11 +1014,20 @@ func build(request Request, p map[string]any) (command, error) {
 		pool := pathValue(tail, "namespace")
 		namespace := last(tail)
 		return rbd([]string{"namespace", "remove", pool + "/" + namespace}, []string{"namespace", "list", pool}), nil
-	case "rbd_image.action", "rbd_mirroring.schedule", "rbd_namespace.schedule":
+	case "rbd_image.action", "rbd_mirroring.schedule", "rbd_namespace.schedule", "rbd_mirroring.global_schedule":
 		var spec string
 		var scheduleNamespace string
 		var err error
-		if action == "rbd_mirroring.schedule" || action == "rbd_namespace.schedule" {
+		if action == "rbd_mirroring.global_schedule" {
+			if !isRBDMirrorScheduleMutation(p) {
+				return command{}, invalid("unsupported global schedule action")
+			}
+			for _, key := range []string{"pool", "namespace", "image", "image_spec"} {
+				if _, present := p[key]; present {
+					return command{}, invalid("global schedule cannot specify a resource scope")
+				}
+			}
+		} else if action == "rbd_mirroring.schedule" || action == "rbd_namespace.schedule" {
 			spec, err = required(p, "pool")
 			if err == nil && (!identifier.MatchString(spec) || strings.ContainsAny(spec, "/@")) {
 				err = invalid("invalid pool name")
@@ -1113,7 +1125,10 @@ func build(request Request, p map[string]any) (command, error) {
 			if action == "rbd_mirroring.schedule" || action == "rbd_namespace.schedule" {
 				scope = "--pool=" + spec
 			}
-			args := []string{"mirror", "snapshot", "schedule", strings.TrimPrefix(verb, "mirror-schedule-"), scope}
+			args := []string{"mirror", "snapshot", "schedule", strings.TrimPrefix(verb, "mirror-schedule-")}
+			if action != "rbd_mirroring.global_schedule" {
+				args = append(args, scope)
+			}
 			if action == "rbd_namespace.schedule" {
 				args = append(args, "--namespace="+scheduleNamespace)
 			}
@@ -3373,7 +3388,9 @@ func rbdMirrorScheduleIntervalMinutes(value string) *big.Int {
 func rbdMirrorScheduleReadbackMatches(request Request, data []byte) bool {
 	var err error
 	pool, namespace, image := "", "", ""
-	if request.Action == "rbd_mirroring.schedule" || request.Action == "rbd_namespace.schedule" {
+	if request.Action == "rbd_mirroring.global_schedule" {
+		pool, namespace, image = "-", "-", "-"
+	} else if request.Action == "rbd_mirroring.schedule" || request.Action == "rbd_namespace.schedule" {
 		pool, namespace, image = optional(request.Parameters, "pool"), "-", "-"
 		if request.Action == "rbd_namespace.schedule" {
 			namespace = optional(request.Parameters, "namespace")

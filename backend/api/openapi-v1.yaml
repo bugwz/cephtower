@@ -58914,6 +58914,48 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /rbd/mirroring/global/schedule:
+    post:
+      operationId: post_rbd_mirroring_global_schedule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [action, cluster_id]
+              properties:
+                action:
+                  type: string
+                  enum: ["mirror-schedule-add", "mirror-schedule-remove"]
+                cluster_id:
+                  type: integer
+                interval:
+                  type: string
+                start_time:
+                  type: string
+      responses:
+        '202':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /rbd/mirroring/peer:
     post:
       operationId: post_rbd_mirroring_peer

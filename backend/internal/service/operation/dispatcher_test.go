@@ -82,6 +82,16 @@ func TestActionDispatcherFailsWhenPostReconcileFails(t *testing.T) {
 	}
 }
 
+func TestGlobalScheduleDoesNotRetryAfterInventoryFailure(t *testing.T) {
+	reconciler := &reconcileExecutorFake{refreshResult: true, err: errors.New("offline")}
+	dispatcher := NewActionDispatcher(&mutationExecutorFake{}, nil, reconciler)
+	_, err := dispatcher.Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rbd_mirroring.global_schedule", ResourceKind: "rbd_mirroring"})
+	var failure *cephdomain.ActionError
+	if !errors.As(err, &failure) || failure.Code != "post_reconcile_failed" || failure.Retryable || reconciler.kind != "rbd_mirroring" {
+		t.Fatal(err, reconciler)
+	}
+}
+
 func TestFilesystemRenameRefreshesAffectedStorage(t *testing.T) {
 	for _, fail := range []bool{false, true} {
 		mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{"native_output": "renamed"}}}

@@ -5,6 +5,14 @@
 
 ## 如何追踪调用链
 
+RBD 镜像同步页面新增独立的全局快照调度工具栏入口，支持添加、移除指定间隔/起始
+时间以及移除全部全局调度。POST /rbd/mirroring/global/schedule 使用高风险操作队列，
+禁止 pool/namespace/image 参数，按原生 Schedule.cc 的空 level_spec 执行不带范围
+选项的 rbd mirror snapshot schedule add/remove。回读 recursive list 只核验
+(-,-,-) 全局范围；核验失败不自动重试。全局锁与池名分离，前端复用集群切换隔离和
+二次影响确认。全局配置仍在现有池级调度表中展示，尚无独立实时全局列表面板。
+离线命令、执行、API、表单和契约测试覆盖，未进行真实集群或浏览器验证。
+
 RBD 快照镜像调度采集严格校验原生范围字段：pool / namespace / image 必须显式
 返回，默认命名空间的空字符串与缺失不同；集群/池通配层级必须一致，同一范围不能
 重复。异常结果不再标记 available 或用于镜像继承计算，前端同样拒绝重复范围。

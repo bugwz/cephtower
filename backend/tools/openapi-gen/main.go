@@ -416,6 +416,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		return handler.MutationRequestContract("rbd_image.action")
 	case "POST /rbd/mirroring/schedule":
 		return handler.MutationRequestContract("rbd_mirroring.schedule")
+	case "POST /rbd/mirroring/global/schedule":
+		return handler.MutationRequestContract("rbd_mirroring.global_schedule")
 	case "POST /rbd/namespace/schedule":
 		return handler.MutationRequestContract("rbd_namespace.schedule")
 	case "POST /rbd/image/snapshot/action":
@@ -512,7 +514,7 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 func mutationFieldUnion() map[string]handler.JSONField {
 	fields := map[string]handler.JSONField{}
 	for _, action := range handler.MutationContractActions() {
-		if action == "rbd_mirroring.schedule" || action == "rbd_namespace.schedule" {
+		if action == "rbd_mirroring.schedule" || action == "rbd_namespace.schedule" || action == "rbd_mirroring.global_schedule" {
 			continue
 		}
 		if action == "filesystem.rename" || action == "subvolume.snapshot_visibility" || action == "subvolume_group.update" {

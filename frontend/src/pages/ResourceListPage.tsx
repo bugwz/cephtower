@@ -79,6 +79,7 @@ export interface ResourceListPageDefinition extends FeatureRequirements {
   body?: ApiRecord
   rowKeyCandidates?: string[]
   createAction?: ResourceFormAction
+  toolbarActions?: ResourceFormAction[]
   updateAction?: ResourceFormAction
   extraActions?: ResourceFormAction[]
   deleteAction?: ResourceDeleteAction
@@ -348,6 +349,7 @@ export function ResourceListPage({ definition, embedded = false }: { definition:
           {definition.createAction.buttonLabel ?? '新建'}
         </Button>
       ) : null}
+      {definition.toolbarActions?.map((action) => <Button key={action.path} disabled={!selectedClusterId || mutationBlocked} onClick={() => openForm(action)}>{action.buttonLabel ?? action.title}</Button>)}
     </Space>
   )
   const featureRequirementAlert = <FeatureRequirementAlert status={featureStatus} />
