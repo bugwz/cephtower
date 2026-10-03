@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **RGW Topic 创建协议参数结构化编辑器**：替换创建表单的手写 JSON 文本框，参照参考 Topic 表单，提供 11 项非凭据投递参数的显式启用控件、枚举选择或文本输入。覆盖 verify-ssl、use-ssl、cloudevents、ca-location、amqp-version、amqp-exchange、amqp-ack-level、http-ack-level、kafka-ack-level、mechanism 和 kafka-brokers；不勾选不发送，不推断默认值，不在协议切换时静默丢弃配置。
+  - 通过已有 options 对象和 SNS CreateTopic 链路写入，不新增后端旁路。前端按现有原生安全写入约束校验所有值，只有 CA 路径和 Exchange 允许显式空值；未知或凭据字段不能通过编辑器，损坏草稿显示错误而非清空。控件禁用与事件处理均阻止等待提交期间修改。
+  - 补充实际页面绑定、11 项参数保留、false/空值/缺失区分、枚举与字符校验、字段移除和禁用事件回归；真实集群及浏览器视觉验证仍未进行。
+  - `make test-frontend`（含类型检查与生产构建）及后端 S3 参数/Topic 服务定向回归通过。本次后端实现未改动；结构化控件沿用已验证的创建参数契约。
+
 - **RGW Topic 凭据参数状态展示**：原生 `radosgw-admin metadata get topic:<scope:name>` 采集在内存中解析 EndpointArgs，经现有 Topics API 提供固定字段名与状态枚举；详情分别展示用户名和密码的未设置、显式空值、已设置、重复歧义或不可用状态，秘密值不入库、不返回。按 `RGWHTTPArgs::parse` 先逐段解码再拆分名称和值，不把编码后的分隔符误认成新增参数；损坏输入整体显示不可用。
   - 此状态不包含 URL 内凭据，不推断认证效果；原生 `stored_secret` 原样保留，明确提示 false 不证明不存在秘密，替换 URL 不会清除 EndpointArgs。状态 DTO 使用字段/状态数组，不对通用秘密脱敏规则增加豁免。覆盖原生解析、编码键、空值、重复字段、秘密不持久化、采集到 API 链路和前端实际展示回归。
   - 最终 `make test-backend`（含 OpenAPI 一致性）、`make test-frontend`（含生产构建）通过。初次后端运行还出现临时数据库目录清理失败，后续全量运行未复现；API 状态被通用脱敏处理的问题已通过 DTO 调整修复并验证。无真实集群或浏览器视觉验证。

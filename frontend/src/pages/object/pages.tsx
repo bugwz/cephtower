@@ -6,6 +6,7 @@ import { topicAttributeOptions, topicAttributeBlocked, topicAttributeInitial, to
 import { topicEndpointBlocked, topicEndpointInitial, topicEndpointInput, topicEndpointConfirmation } from './rgwTopicEndpoint'
 import { topicWritableOptions, topicOptionBlocked, topicOptionInitial, topicOptionInput, topicOptionConfirmation } from './rgwTopicOption'
 import { topicCreateInput, topicCreateConfirmation } from './rgwTopicCreate'
+import { RgwTopicOptionsEditor } from './RgwTopicOptionsEditor'
 import { bucketReplicationFormBlocked, bucketReplicationFormInitial, bucketReplicationFormInput, bucketReplicationFormConfirmation } from './rgwBucketReplicationForm'
 import { useClusterContext } from '../../state/ClusterContext'
 import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
@@ -555,7 +556,7 @@ const definitions: Record<
         {name:'persistent',label:'持久化',type:'select',required:true,options:[{value:'true',label:'开启'},{value:'false',label:'关闭'}]},
         {name:'time_to_live',label:'TTL 秒数（0 无限，None 全局默认）',required:true},{name:'max_retries',label:'最大重试（0 无限，None 全局默认）',required:true},{name:'retry_sleep_duration',label:'重试间隔秒数（0 无延迟，None 全局默认）',required:true},
         {name:'opaque_data',label:'Opaque Data（加入通知正文）',type:'textarea'},{name:'policy',label:'完整 Policy JSON（可为空）',type:'textarea'},
-        {name:'options',label:'非凭据投递参数 JSON（verify-ssl、use-ssl、cloudevents、ca-location、amqp-version、amqp-exchange、amqp-ack-level、http-ack-level、kafka-ack-level、mechanism、kafka-brokers；值均为字符串）',type:'textarea',required:true},
+        {name:'options',label:'非凭据投递参数',required:true,renderControl:disabled=><RgwTopicOptionsEditor disabled={disabled} />},
         {name:'confirm_create',label:'影响确认',type:'select',required:true,options:[{value:'acknowledged',label:'已核对凭据、范围和端点，理解队列、权限及并发风险'}]}
       ],
       buildBody:(values,clusterId)=>({cluster_id:clusterId,...topicCreateInput(values)})

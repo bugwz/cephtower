@@ -17,6 +17,21 @@ export function topicPushEndpointFromFields(values: Record<string, unknown>) {
   return `${protocol}://${user ? `${user}:${password}@` : ''}${host}${port ? `:${port}` : ''}${path}`
 }
 
+function validTopicOption(name: string, value: string) {
+  switch (name) {
+    case 'verify-ssl': case 'use-ssl': case 'cloudevents': return /^(true|false)$/i.test(value)
+    case 'ca-location': return value === '' || value.length <= 4096 && /^[A-Za-z0-9_./ -]+$/.test(value)
+    case 'amqp-version': return ['0-9-1','1-0'].includes(value)
+    case 'amqp-exchange': return /^[A-Za-z0-9_.-]{0,256}$/.test(value)
+    case 'amqp-ack-level': return ['none','broker','routable'].includes(value)
+    case 'kafka-ack-level': return ['none','broker'].includes(value)
+    case 'http-ack-level': return ['any','non-error'].includes(value) || /^[1-5][0-9]{2}$/.test(value)
+    case 'mechanism': return ['PLAIN','SCRAM-SHA-256','SCRAM-SHA-512','GSSAPI','OAUTHBEARER'].includes(value)
+    case 'kafka-brokers': return value.length <= 4096 && /^[A-Za-z0-9.-]+(:[0-9]+)?(,[A-Za-z0-9.-]+(:[0-9]+)?)*$/.test(value)
+    default: return false
+  }
+}
+
 export function topicCreateInput(values: Record<string,unknown>) {
   const name=typeof values.name==='string' ? values.name : ''
   const scope=typeof values.scope==='string' ? values.scope : ''
@@ -43,8 +58,7 @@ export function topicCreateInput(values: Record<string,unknown>) {
   if (policy) {let parsed;try {parsed=JSON.parse(policy)} catch {throw new Error('Policy 必须是 JSON 对象')};if (!parsed||typeof parsed!=='object'||Array.isArray(parsed)) throw new Error('Policy 必须是 JSON 对象')}
   let options:unknown
   try {options=JSON.parse(String(values.options ?? '{}'))} catch {throw new Error('投递参数必须是 JSON 对象')}
-  const allowed=['verify-ssl','use-ssl','cloudevents','ca-location','amqp-version','amqp-exchange','amqp-ack-level','http-ack-level','kafka-ack-level','mechanism','kafka-brokers']
-  if (!options||typeof options!=='object'||Array.isArray(options)||Object.entries(options).some(([k,v])=>!allowed.includes(k)||typeof v!=='string')) throw new Error('投递参数仅接受已支持的非凭据字符串字段；值由后端再次校验')
+  if (!options||typeof options!=='object'||Array.isArray(options)||Object.entries(options).some(([k,v])=>typeof v!=='string'||!validTopicOption(k,v))) throw new Error('请为已勾选的投递参数填写合法值；仅 CA 路径和 Exchange 允许空值，取消勾选可不发送参数')
   const topic_id=btoa(Array.from(new TextEncoder().encode(`${scope}:${name}`),byte=>String.fromCharCode(byte)).join('')).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')
   const body={topic_id,topic_arn:`arn:aws:sns:${zonegroup}:${scope}:${name}`,owner_uid,endpoint_secret,persistent:values.persistent==='true',opaque_data:typeof values.opaque_data==='string'?values.opaque_data:'',policy,...numeric,options}
   if (new TextEncoder().encode(JSON.stringify(body)).length>1024*1024-128) throw new Error('创建请求超过大小限制')

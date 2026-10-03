@@ -9,6 +9,42 @@ new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src
 new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicEndpoint.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api,()=>api)
 new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicDelete.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
 const jsx = (type, props) => ({ type, props })
+api.React = {createElement:jsx}
+new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwTopicOptionsEditor.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText)(api,name=>name==='antd'?{Alert:'Alert',Checkbox:'Checkbox',Input:'Input',Select:'Select',Space:'Space'}:{jsx,jsxs:jsx})
+{
+  assert.equal(api.topicCreateOptionFields.length,11)
+  const raw = '{"verify-ssl":"false","ca-location":"","amqp-exchange":"events"}'
+  let changed
+  const editor = api.RgwTopicOptionsEditor({value:raw,onChange:value=>{changed=value}})
+  const rows = editor.props.children[1]
+  assert.equal(rows.length,11)
+  const verify = rows[0].props.children
+  assert.equal(verify[0].props.checked,true)
+  assert.equal(verify[1].props.value,'false')
+  verify[1].props.onChange('true')
+  assert.deepEqual(JSON.parse(changed),{'verify-ssl':'true','ca-location':'','amqp-exchange':'events'})
+  verify[0].props.onChange({target:{checked:false}})
+  assert.deepEqual(JSON.parse(changed),{'ca-location':'','amqp-exchange':'events'})
+  const tls = rows[1].props.children
+  assert.equal(tls[0].props.checked,false)
+  tls[0].props.onChange({target:{checked:true}})
+  assert.equal(JSON.parse(changed)['use-ssl'],'')
+  rows[3].props.children[1].props.onChange({target:{value:'/etc/ceph/ca.pem'}})
+  assert.equal(JSON.parse(changed)['ca-location'],'/etc/ceph/ca.pem')
+  changed = undefined
+  const disabled = api.RgwTopicOptionsEditor({value:raw,disabled:true,onChange:value=>{changed=value}})
+  for (const row of disabled.props.children[1]) {
+    const controls = row.props.children
+    assert.equal(controls[0].props.disabled,true)
+    controls[0].props.onChange({target:{checked:true}})
+    if (controls[1]) {
+      assert.equal(controls[1].props.disabled,true)
+      controls[1].props.onChange(controls[1].type==='Select'?'true':{target:{value:'changed'}})
+    }
+  }
+  assert.equal(changed,undefined)
+  for (const value of ['[]','null','{','{"password":"secret"}','{"verify-ssl":false}']) assert.equal(api.RgwTopicOptionsEditor({value}).type,'Alert')
+}
 new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwTopicDetails.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText)(api,()=>({jsx,jsxs:jsx}))
 assert.equal(api.topicText('18446744073709551615'),'18446744073709551615')
 assert.equal(api.topicText('0'),'0')
@@ -64,6 +100,8 @@ for (const key of ['name','owner','scope','arn','push_endpoint','persistent','ti
 assert.equal(definition.columns.find(column=>column.key==='scope').render(''),'全局租户')
 assert.equal(definition.columns.find(column=>column.key==='scope').render(undefined),'未返回或不可用')
 assert.equal(definition.createAction.path,'/rgw/topic')
+assert.equal(definition.createAction.fields.find(field=>field.name==='options').renderControl(true).type,api.RgwTopicOptionsEditor)
+assert.equal(definition.createAction.fields.find(field=>field.name==='options').renderControl(true).props.disabled,true)
 {
   const action = definition.createAction
   const values = {...action.initialValues, name:'events',scope:'team',zonegroup:'zone',owner_uid:'team$user',endpoint_mode:'fields',push_host:'broker.example.test',push_port:'5671',push_path:'/vhost',push_user_secret:'delivery-user',push_password_secret:'delivery-password',persistent:'true',confirm_create:'acknowledged'}
@@ -97,6 +135,9 @@ for (const scope of ['', 'team', 'RGW12345678901234567']) {
   assert.equal(body.topic_id,Buffer.from(`${scope}:events`).toString('base64url'))
   assert.equal(body.topic_arn,`arn:aws:sns:zone:${scope}:events`)
   assert.equal(body.endpoint_secret,values.endpoint_secret)
+  const allOptions = {'verify-ssl':'false','use-ssl':'true',cloudevents:'false','ca-location':'','amqp-version':'0-9-1','amqp-exchange':'','amqp-ack-level':'routable','http-ack-level':'202','kafka-ack-level':'broker',mechanism:'SCRAM-SHA-256','kafka-brokers':'a:9092,b:9093'}
+  assert.deepEqual(action.buildBody({...values,options:JSON.stringify(allOptions)},42).options,allOptions)
+  for (const [key,value] of [['verify-ssl',''],['use-ssl','1'],['cloudevents','yes'],['ca-location','path&password=secret'],['amqp-version','2'],['amqp-exchange','<bad>'],['amqp-ack-level','wrong'],['http-ack-level','600'],['http-ack-level','0200'],['kafka-ack-level','routable'],['mechanism',''],['kafka-brokers','user:password@broker']]) assert.throws(()=>action.buildBody({...values,options:JSON.stringify({[key]:value})},42))
   assert.equal(body.persistent,true)
   assert.equal(body.time_to_live,'None')
   assert.deepEqual(body.options,{'verify-ssl':'true'})
