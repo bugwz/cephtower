@@ -2,7 +2,7 @@ import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button, Card, Form, Input, Modal, Select, Space, Tabs } from 'antd'
 import { useCallback, useState } from 'react'
 import { textValue, type ApiRecord } from '../../api/client'
-import { listResource, mutateResource, refreshResource } from '../../api/resource'
+import { listAllResources, mutateResource, refreshResource } from '../../api/resource'
 import { DataTable } from '../../components/DataTable'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
@@ -12,6 +12,7 @@ import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
+import { ServiceDaemons } from './ServiceDaemons'
 
 interface ServiceFormValues {
   service_type: string
@@ -37,12 +38,12 @@ export function ServicePage() {
   const { selectedClusterId } = useClusterContext()
   const serviceTableFilters = useResourceTableFilters({
     path: '/services',
-    fields: ['service_name', 'service_type', 'status', 'running', 'size'],
+    fields: ['name', 'type', 'status', 'running', 'size'],
     clusterId: selectedClusterId
   })
   const daemonTableFilters = useResourceTableFilters({
     path: '/daemons',
-    fields: ['daemon_name', 'daemon_type', 'hostname', 'status_desc', 'version', 'container_image_name'],
+    fields: ['name', 'type', 'hostname', 'status', 'version', 'container_image'],
     clusterId: selectedClusterId
   })
   const loader = useCallback(async () => {
@@ -50,14 +51,16 @@ export function ServicePage() {
       return { services: [], daemons: [] }
     }
     const [services, daemons] = await Promise.all([
-      listResource('/services', selectedClusterId, { filters: serviceTableFilters.filters }).then((payload) => payload.items),
-      listResource('/daemons', selectedClusterId, { filters: daemonTableFilters.filters }).then((payload) => payload.items)
+      listAllResources('/services', selectedClusterId, { filters: serviceTableFilters.filters }).then((payload) => payload.items),
+      listAllResources('/daemons', selectedClusterId, { filters: daemonTableFilters.filters }).then((payload) => payload.items)
     ])
     return { services, daemons }
   }, [daemonTableFilters.filters, selectedClusterId, serviceTableFilters.filters])
   const { data, loading, error, refresh } = useResource(loader)
   const [form] = Form.useForm<ServiceFormValues>()
   const [formOpen, setFormOpen] = useState(false)
+  const [detail, setDetail] = useState<{ clusterId: number; name: string } | null>(null)
+  const visibleDetail = detail?.clusterId === selectedClusterId ? detail : null
   const [editingService, setEditingService] = useState<ApiRecord | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [refreshingServices, setRefreshingServices] = useState(false)
@@ -186,8 +189,8 @@ export function ServicePage() {
                   onFilterChange={serviceTableFilters.handleFilterChange}
                   rowKeyCandidates={['service_name', 'service_id', 'name']}
                   columns={[
-                    { key: 'service_name', title: '服务名' },
-                    { key: 'service_type', title: '类型' },
+                    { key: 'name', title: '服务名' },
+                    { key: 'type', title: '类型' },
                     { key: 'placement', title: '放置策略' },
                     { key: 'status', title: '状态' },
                     { key: 'running', title: '运行数' },
@@ -198,6 +201,7 @@ export function ServicePage() {
                       filterKey: false,
                       render: (_, row) => (
                         <TableActions>
+                          <TableAction disabled={!selectedClusterId || !serviceName(row)} onClick={() => { if (selectedClusterId) setDetail({ clusterId: selectedClusterId, name: serviceName(row) }) }}>守护进程</TableAction>
                           <TableAction onClick={() => openEdit(row)}>编辑</TableAction>
                           <TableAction danger onClick={() => deleteService(row)}>删除</TableAction>
                         </TableActions>
@@ -220,12 +224,12 @@ export function ServicePage() {
                   onFilterChange={daemonTableFilters.handleFilterChange}
                   rowKeyCandidates={['daemon_name', 'name', 'hostname']}
                   columns={[
-                    { key: 'daemon_name', title: 'Daemon' },
-                    { key: 'daemon_type', title: '类型' },
+                    { key: 'name', title: 'Daemon' },
+                    { key: 'type', title: '类型' },
                     { key: 'hostname', title: '主机' },
-                    { key: 'status_desc', title: '状态' },
+                    { key: 'status', title: '状态' },
                     { key: 'version', title: '版本' },
-                    { key: 'container_image_name', title: '镜像' }
+                    { key: 'container_image', title: '镜像' }
                   ]}
                 />
                 </div>
@@ -234,6 +238,9 @@ export function ServicePage() {
           ]}
         />
       </Card>
+      <Modal title={`服务 ${visibleDetail?.name ?? ''} 的守护进程`} open={Boolean(visibleDetail)} onCancel={() => setDetail(null)} footer={null} width="95vw" destroyOnClose>
+        {visibleDetail && <ServiceDaemons key={`${visibleDetail.clusterId}:${visibleDetail.name}`} clusterId={visibleDetail.clusterId} name={visibleDetail.name} />}
+      </Modal>
       <DraggableModal
         title={editingService ? '编辑服务' : '新增服务'}
         open={formOpen}

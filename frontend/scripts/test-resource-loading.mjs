@@ -2,6 +2,26 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 
+const serviceSource = readFileSync(new URL('../src/pages/cluster/ServiceDaemons.tsx', import.meta.url), 'utf8')
+const serviceTree = ts.createSourceFile('service.tsx', serviceSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const serviceFn = serviceTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ServiceDaemons')
+const loaderDeclaration = serviceFn.body.statements.find((node) => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(serviceTree) === 'loader')
+const loaderArrow = loaderDeclaration.declarationList.declarations[0].initializer.arguments[0]
+const serviceLoaderCode = ts.transpileModule(`const load = ${loaderArrow.getText(serviceTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const response of [{ service_name: 'rgw.a', items: [] }, { service_name: 'rgw.b', items: [] }, { service_name: 'rgw.a', items: null }]) {
+  const requests = []
+  const load = new Function('request', 'jsonInit', 'clusterId', 'name', `${serviceLoaderCode}; return load`)(async (...args) => { requests.push(args); return response }, (method, body) => ({ method, body }), 9, 'rgw.a')
+  if (response.service_name === 'rgw.a' && Array.isArray(response.items)) assert.equal(await load(), response)
+  else await assert.rejects(load())
+  assert.deepEqual(requests, [['/service/daemons', { method: 'GET', body: { cluster_id: 9, name: 'rgw.a' } }]])
+}
+const servicePage = readFileSync(new URL('../src/pages/cluster/ServicePage.tsx', import.meta.url), 'utf8')
+assert.ok(servicePage.includes('detail?.clusterId === selectedClusterId'))
+assert.ok(servicePage.includes('listAllResources(\'/services\''))
+assert.ok(servicePage.includes('key={`${visibleDetail.clusterId}:${visibleDetail.name}`}'))
+assert.ok(readFileSync(new URL('../src/pages/index.ts', import.meta.url), 'utf8').includes('serviceManagement: ServicePage'))
+console.log('Service daemon request and navigation checks passed')
+
 const source = readFileSync(new URL('../src/hooks.ts', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('hooks.ts', source, ts.ScriptTarget.Latest, true)
 const fn = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'useResource')

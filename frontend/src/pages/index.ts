@@ -3,6 +3,7 @@ import type { PageKey } from '../navigation'
 import { ConfigurationPage } from './cluster/ConfigurationPage'
 import { UpgradePage } from './cluster/UpgradePage'
 import { TelemetryPage } from './cluster/TelemetryPage'
+import { ServicePage } from './cluster/ServicePage'
 import { CrushMapPage } from './cluster/CrushMapPage'
 import { CephUsersPage } from './cluster/CephUsersPage'
 import { AuditPage } from './audit/AuditPage'
@@ -96,6 +97,7 @@ export const pageComponents: Record<PageKey, ComponentType> = {
   clusterConfiguration: ConfigurationPage,
   clusterUpgrade: UpgradePage,
   telemetry: TelemetryPage,
+  serviceManagement: ServicePage,
   crushMap: CrushMapPage,
   clusterManagement: ClusterPage,
   poolManagement: PoolManagementPage,

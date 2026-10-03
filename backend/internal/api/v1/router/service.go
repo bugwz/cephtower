@@ -5,6 +5,7 @@ import "cephtower/backend/internal/api/v1/handler"
 func serviceRoutes(h *handler.Handler) []Route {
 	return []Route{
 		{"GET", "/services", h.ListServices},
+		{"GET", "/service/daemons", h.GetServiceDaemons},
 		{"POST", "/service", h.CreateService},
 		{"GET", "/service", h.GetService},
 		{"PATCH", "/service", h.UpdateService},
