@@ -178,7 +178,7 @@ const arn = 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
 const accountUser = { account_id: 'RGW123', type: 'rgw', managed_user_policies: [arn] }
 assert.deepEqual(policy.rgwUserPolicyOptions(accountUser), [{ label: arn, value: arn }])
 assert.deepEqual(policy.rgwUserPolicyInput({ action: 'detach', existing_policy: arn, policy_arn: 'stale' }, accountUser), { action: 'detach', policy_arn: arn })
-assert.deepEqual(policy.rgwUserPolicyInput({ action: 'attach', policy_arn: arn }, { ...accountUser, managed_user_policies: [] }), { action: 'attach', policy_arn: arn })
+assert.deepEqual(policy.rgwUserPolicyInput({ action: 'attach', policy_source: 'custom', policy_arn: arn }, { ...accountUser, managed_user_policies: [] }), { action: 'attach', policy_arn: arn })
 assert.throws(() => policy.rgwUserPolicyInput({ action: 'attach', policy_arn: arn }, accountUser))
 assert.throws(() => policy.rgwUserPolicyInput({ action: 'detach', existing_policy: arn }, { ...accountUser, managed_user_policies: undefined }))
 assert.throws(() => policy.rgwUserPolicyInput({ action: 'detach', existing_policy: arn }, { ...accountUser, managed_user_policies: [] }))
@@ -186,10 +186,37 @@ for (const row of [undefined, {}, { account_id: '', type: 'rgw' }, { account_id:
   assert.ok(policy.rgwUserPolicyBlocked(row))
   assert.throws(() => policy.rgwUserPolicyInput({ action: 'attach', policy_arn: arn }, row))
 }
-for (const value of ['', '--policy', arn + '\n', arn + ';other', null]) assert.throws(() => policy.rgwUserPolicyInput({ action: 'attach', policy_arn: value }, accountUser))
+for (const value of ['', '--policy', arn + '\n', arn + ';other', null]) assert.throws(() => policy.rgwUserPolicyInput({ action: 'attach', policy_source: 'custom', policy_arn: value }, accountUser))
+assert.equal(policy.rgwUserPolicyAttachOptions(accountUser).length,1)
+assert.equal(policy.rgwUserPolicyAttachOptions({...accountUser,managed_user_policies:[]}).length,2)
+const referenceValues={action:'attach',policy_source:'reference',reference_policy:arn,policy_arn:'stale'}
+assert.deepEqual(policy.rgwUserPolicyInput(referenceValues,{...accountUser,managed_user_policies:[]}),{action:'attach',policy_arn:arn})
+assert.throws(()=>policy.rgwUserPolicyInput(referenceValues,accountUser))
+assert.throws(()=>policy.rgwUserPolicyInput({...referenceValues,reference_policy:'arn:aws:iam::aws:policy/Other'},accountUser))
+assert.throws(()=>policy.rgwUserPolicyInput({...referenceValues,policy_source:'unknown'},accountUser))
 assert.ok(pages.includes("path: '/rgw/user/policy'"))
 assert.ok(pages.includes('disabledWhen: rgwUserPolicyBlocked'))
 assert.ok(pages.includes('...rgwUserPolicyInput(values, row)'))
+const policySource=ts.createSourceFile('pages.tsx',pages,ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX)
+let policyAction
+function findPolicyAction(node) {
+  if (ts.isObjectLiteralExpression(node)&&node.properties.some(p=>ts.isPropertyAssignment(p)&&p.name.getText(policySource)==='path'&&ts.isStringLiteral(p.initializer)&&p.initializer.text==='/rgw/user/policy')) {
+    const code=ts.transpileModule(`const action=${node.getText(policySource)}`,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText
+    policyAction=new Function(...Object.keys(policy),'userId',`${code};return action`)(...Object.values(policy),row=>row.user_id)
+  }
+  ts.forEachChild(node,findPolicyAction)
+}
+findPolicyAction(policySource)
+assert.equal(policyAction.initialValues.policy_source,'reference')
+const referenceField=policyAction.fields.find(field=>field.name==='reference_policy')
+assert.deepEqual(referenceField.optionsDependencies,['action','policy_source'])
+assert.equal((await referenceField.optionsLoader(1,accountUser)).length,1)
+for (const action of ['attach','detach']) for (const policy_source of ['reference','custom']) {
+  const state={action,policy_source}
+  assert.equal(referenceField.visibleWhen(state),action==='attach'&&policy_source==='reference')
+  assert.equal(policyAction.fields.find(field=>field.name==='policy_arn').visibleWhen(state),action==='attach'&&policy_source==='custom')
+}
+assert.deepEqual(policyAction.buildBody(referenceValues,42,{...accountUser,user_id:'tenant$user',managed_user_policies:[]}),{cluster_id:42,uid:'tenant$user',action:'attach',policy_arn:arn})
 const roleViews = {}
 const jsx = (type, props) => ({ type, props })
 new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwRolePolicyDetails.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(roleViews, (name) => name === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : name === './rgwUserIdentity' ? identity : {})

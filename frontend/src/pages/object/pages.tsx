@@ -37,7 +37,7 @@ import { bucketTagFormBlocked, bucketTagFormInitial, bucketTagFormInput, bucketT
 import { RgwAccountDetails } from './RgwAccountDetails'
 import { rgwBucketIndexCount, rgwBucketIndexText } from './rgwBucketIndex'
 import { rgwBucketVersioning, rgwBucketBooleanState, rgwBucketReshardState } from './rgwBucketState'
-import { rgwUserPolicyBlocked, rgwUserPolicyInput, rgwUserPolicyOptions } from './rgwUserPolicy'
+import { rgwUserPolicyBlocked, rgwUserPolicyInput, rgwUserPolicyOptions, rgwUserPolicyAttachOptions } from './rgwUserPolicy'
 import { RgwRateLimit } from './RgwRateLimit'
 import { rgwBucketLimit, rgwBucketLimitInput, rgwBucketLimitPatch } from './rgwBucketLimit'
 import { rgwAccountLimit, rgwAccountLimitPatch } from './rgwAccountLimit'
@@ -336,10 +336,12 @@ const definitions: Record<
       },
       { title: '管理用户托管策略', path: '/rgw/user/policy', method: 'POST', successMessage: '托管策略操作执行成功',
         disabledWhen: rgwUserPolicyBlocked,
-        initialValues: { action: 'attach' },
+        initialValues: { action: 'attach', policy_source: 'reference' },
         fields: [
           { name: 'action', label: '操作', type: 'select', required: true, options: [{ label: '关联策略', value: 'attach' }, { label: '解除关联', value: 'detach' }] },
-          { name: 'policy_arn', label: '托管策略 ARN（由 Ceph 验证是否支持）', required: true, visibleWhen: (values) => values.action === 'attach' },
+          { name: 'policy_source', label: '策略来源（参考列表不代表目标版本支持）', type: 'select', required: true, visibleWhen: values => values.action === 'attach', options: [{label:'参考 Dashboard S3 策略',value:'reference'},{label:'手填目标版本支持的 ARN',value:'custom'}] },
+          { name: 'reference_policy', label: '未关联的参考策略', type: 'select', required: true, visibleWhen: values => values.action === 'attach' && values.policy_source === 'reference', optionsDependencies: ['action','policy_source'], optionsLoader: async (_clusterId,row) => rgwUserPolicyAttachOptions(row) },
+          { name: 'policy_arn', label: '托管策略 ARN（由 Ceph 验证是否支持）', required: true, visibleWhen: (values) => values.action === 'attach' && values.policy_source === 'custom' },
           { name: 'existing_policy', label: '已关联策略', type: 'select', required: true, visibleWhen: (values) => values.action === 'detach', optionsDependencies: ['action'], optionsLoader: async (_clusterId, row) => rgwUserPolicyOptions(row) }
         ],
         confirmation: (values, row) => {
