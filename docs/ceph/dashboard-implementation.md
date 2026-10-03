@@ -28,6 +28,22 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：补齐桶本地基本同步管道创建。对照参考 create_sync_pipe、
+  SYNC_GROUP_PIPE_CREATE、bucket_key/set_bucket 及参数序列化，接入高风险
+  POST /rgw/bucket/sync/pipe → 队列 → 策略/Zonegroup 读取 → 原生创建 → 完整策略核验。
+  支持显式源/目标 Zone ID 数组或独立 ["*"]、租户/桶名/实例选择器及 system/user 模式，
+  user 模式要求 UID；桶名必须显式填写，空租户或 * 不限定租户，空实例或 * 不限定实例。
+  普通 Zone ID 必须可映射为原生回读名称，集合仍按 ID 排序；不接受混合通配、
+  重复 Zone、列表分隔符或桶字段分隔符。桶作用域及租户始终显式传参，不依赖 S3。
+  写前要求完整组快照匹配且管道 ID 不存在，避免原生 create 的合并/修改语义；
+  写后要求新管道及原生默认参数完全匹配，其他管道、数据流、状态及组不变。
+  默认优先级 0、无前缀/标签过滤、无目标 ACL/存储类覆盖均在确认文案中说明。
+  不修改 Zonegroup/period，不保证有效复制或用户权限；外部并发仍需避免，不自动重试/回滚。
+  回归覆盖两种模式、两类租户、空/已有管道、映射和写读失败、未知 Zone、通配及
+  错误参数、完整策略变化、高风险队列锁与前端绑定。make test-backend（含 OpenAPI）
+  及 make test-frontend（含 TypeScript/Vite 构建）通过；无真实集群或浏览器视觉验证。
+  管道编辑、高级参数写入及数据流编辑仍待补齐。
+
 - 2026-10-04：补齐桶本地同步管道删除。追溯参考详情页 removeSyncPipe、
   Dashboard remove_sync_pipe 与原生 SYNC_GROUP_PIPE_REMOVE，接入高风险
   DELETE /rgw/bucket/sync/pipe → 队列 → sync policy get / sync group pipe remove /

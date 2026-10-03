@@ -38,8 +38,14 @@ func bucketSyncGroupCommand(action string, p map[string]any, rgw func([]string, 
 		return command{}, invalid("invalid group_id")
 	}
 	status := syncGroupString(p, "status")
-	if action == "rgw_bucket.sync_pipe_delete" {
-		args, err := bucketSyncPipeDeleteArgs(p)
+	if action == "rgw_bucket.sync_pipe_delete" || action == "rgw_bucket.sync_pipe_create" {
+		var args []string
+		var err error
+		if action == "rgw_bucket.sync_pipe_create" {
+			args, err = bucketSyncPipeCreateArgs(p)
+		} else {
+			args, err = bucketSyncPipeDeleteArgs(p)
+		}
 		if err != nil {
 			return command{}, err
 		}
@@ -139,7 +145,7 @@ func (s *Service) executeBucketSyncGroup(ctx context.Context, access executor.Cl
 		}
 		group = map[string]any{"id": id, "data_flow": map[string]any{}, "pipes": []any{}}
 		groups[id] = group
-	} else if request.Action == "rgw_bucket.sync_group_delete" || request.Action == "rgw_bucket.sync_flow_create" || request.Action == "rgw_bucket.sync_flow_delete" || request.Action == "rgw_bucket.sync_pipe_delete" {
+	} else if request.Action == "rgw_bucket.sync_group_delete" || request.Action == "rgw_bucket.sync_flow_create" || request.Action == "rgw_bucket.sync_flow_delete" || request.Action == "rgw_bucket.sync_pipe_delete" || request.Action == "rgw_bucket.sync_pipe_create" {
 		_, expected, valid := bucketSyncPolicyDocument([]byte(`{"groups":[` + syncGroupString(request.Parameters, "expected_group") + `]}`))
 		if !valid || len(expected) != 1 || group == nil || !reflect.DeepEqual(group, expected[id]) {
 			return fail("pre_check_failed", "sync group missing or changed; refresh before changing it")
@@ -159,15 +165,19 @@ func (s *Service) executeBucketSyncGroup(ctx context.Context, access executor.Cl
 			if err != nil {
 				return fail("pre_check_failed", "zonegroup could not be read; no change submitted")
 			}
-			resolved, err := resolveBucketSyncFlow(request.Parameters, zones.Stdout)
-			if err != nil {
-				return fail("pre_check_failed", err.Error())
-			}
 			var changeErr error
-			if request.Action == "rgw_bucket.sync_flow_delete" {
-				changeErr = removeBucketSyncFlow(group, resolved)
+			if request.Action == "rgw_bucket.sync_pipe_create" {
+				changeErr = addBucketSyncPipe(group, request.Parameters, zones.Stdout)
 			} else {
-				changeErr = addBucketSyncFlow(group, resolved)
+				resolved, err := resolveBucketSyncFlow(request.Parameters, zones.Stdout)
+				if err != nil {
+					return fail("pre_check_failed", err.Error())
+				}
+				if request.Action == "rgw_bucket.sync_flow_delete" {
+					changeErr = removeBucketSyncFlow(group, resolved)
+				} else {
+					changeErr = addBucketSyncFlow(group, resolved)
+				}
 			}
 			if changeErr != nil {
 				return fail("pre_check_failed", changeErr.Error())

@@ -18,8 +18,12 @@ console.log('bucket local sync policy summary checks passed')
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketSyncGroupForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(api)
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-let action, createAction, deleteAction, flowAction, deleteFlowAction, deletePipeAction
+let action, createAction, deleteAction, flowAction, deleteFlowAction, deletePipeAction, createPipeAction
 function visit(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '创建桶同步管道')) {
+    const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+    createPipeAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
+  }
   if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '删除桶同步管道')) {
     const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
     deletePipeAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
@@ -140,3 +144,14 @@ assert.ok(deletePipeAction.disabledWhen({ ...pipeRow, stale: true }))
 for (const change of [{ bucket_id: 'other' }, { group_id: 'other' }, { pipe_id: 'missing' }, { confirm_pipe_delete: true }]) assert.throws(() => deletePipeAction.buildBody({ ...pipeValues, ...change }, 7, pipeRow))
 for (const pipes of [[], null, [null], [selectedPipe, selectedPipe]]) assert.throws(() => deletePipeAction.buildBody(pipeValues, 7, { ...pipeRow, bucket_sync_policy: { groups: [{ ...group, pipes }] } }))
 console.log('bucket sync pipe deletion form and binding checks passed')
+assert.equal(createPipeAction.method, 'POST')
+assert.equal(createPipeAction.path, '/rgw/bucket/sync/pipe')
+assert.ok(createPipeAction.disabledWhen({ ...row, stale: true }))
+const pipeCreate = { ...createPipeAction.initialValues(row), group_id: group.id, pipe_id: ' new ', source_zones_json: '["b","a"]', dest_zones_json: '["*"]', source_tenant: 'team', source_bucket: 'photos', source_bucket_id: 'marker', dest_bucket: '*', mode: 'system', confirm_pipe_create: 'acknowledged' }
+assert.deepEqual(createPipeAction.buildBody(pipeCreate, 7, row), { cluster_id: 7, bucket_id: row.natural_key, group_id: group.id, pipe_id: ' new ', expected_group: JSON.stringify(group), source_zones: ['b','a'], dest_zones: ['*'], source_tenant: 'team', source_bucket: 'photos', source_bucket_id: 'marker', dest_tenant: '', dest_bucket: '*', dest_bucket_id: '*', mode: 'system' })
+assert.match(createPipeAction.confirmation(pipeCreate, row), /空租户不限定租户.*优先级 0.*不自动回滚/)
+assert.equal(createPipeAction.buildBody({ ...pipeCreate, mode: 'user', user: 'team$u' }, 7, row).user, 'team$u')
+assert.equal(createPipeAction.initialValues(row).mode, undefined)
+for (const change of [{ bucket_id: 'other' }, { group_id: 'other' }, { pipe_id: '-bad' }, { source_zones_json: '["*","a"]' }, { source_zones_json: '["a","a"]' }, { dest_zones_json: '["a;b"]' }, { dest_zones_json: '["a=b"]' }, { dest_zones_json: '[]' }, { source_bucket: '' }, { source_bucket: 'team/photos' }, { source_bucket: 'pho*' }, { source_tenant: 'a/b' }, { source_bucket_id: 'a:b' }, { mode: 'unknown' }, { mode: 'user' }, { user: 'u' }, { mode: 'user', user: '$u' }, { confirm_pipe_create: true }]) assert.throws(() => createPipeAction.buildBody({ ...pipeCreate, ...change }, 7, row))
+assert.throws(() => createPipeAction.buildBody({ ...pipeCreate, pipe_id: selectedPipe.id }, 7, pipeRow))
+console.log('bucket sync pipe creation form and binding checks passed')

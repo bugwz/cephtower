@@ -101,6 +101,14 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if partialPipe.Code != http.StatusBadRequest {
 			t.Fatalf("partial pipe deletion accepted: %d %s", partialPipe.Code, partialPipe.Body.String())
 		}
+		pipeCreateResponse := sendOperationRequest(t, nativeMux, http.MethodPost, "/api/v1/rgw/bucket/sync/pipe", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"group_id":"g","pipe_id":"new","expected_group":%q,"source_zones":["*"],"dest_zones":["*"],"source_bucket":"*","dest_bucket":"*","mode":"system"}`, cluster.ID, id, `{"id":"g","status":"allowed","data_flow":{},"pipes":[]}`), "sync-pipe-create-"+tenant)
+		if pipeCreateResponse.Code != http.StatusAccepted {
+			t.Fatalf("pipe creation queue: %d %s", pipeCreateResponse.Code, pipeCreateResponse.Body.String())
+		}
+		pipeCreated, err := db.FindOperation(context.Background(), operationIDFromResponse(t, pipeCreateResponse))
+		if err != nil || pipeCreated.Action != "rgw_bucket.sync_pipe_create" || pipeCreated.Risk != "high" || pipeCreated.ResourceKey != nativeOperation.ResourceKey || pipeCreated.LockKey != nativeOperation.LockKey {
+			t.Fatalf("wrong pipe creation: %+v %v", pipeCreated, err)
+		}
 		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/bucket", fmt.Sprintf(`{"cluster_id":%d,"name":"same-bucket","tenant":%q}`, cluster.ID, tenant), "bucket-create-"+tenant)
 		if response.Code != http.StatusAccepted {
 			t.Fatalf("bucket creation queue: %d %s", response.Code, response.Body.String())

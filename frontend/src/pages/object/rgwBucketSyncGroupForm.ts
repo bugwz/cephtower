@@ -121,6 +121,45 @@ export function bucketSyncPipeDeleteConfirmation(values: Record<string, unknown>
   return `确认删除 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中的整个管道 ${JSON.stringify(input.pipe_id)}？源选择：${JSON.stringify(pipe.source)}；目标选择：${JSON.stringify(pipe.dest)}。该管道全部选择器、过滤和权限参数将被移除；保留组状态、数据流及其他管道，不删除已有对象副本，不保证所有复制停止。不修改 Zonegroup 或提交 period。请备份策略并避免外部并发，核验失败不代表未生效，不自动回滚。`
 }
 
+export function bucketSyncPipeCreateInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const group = groups(row).find(group => group.id === values.group_id)
+  if (values.bucket_id !== row!.natural_key) throw new Error('Bucket ID 不可更改')
+  if (!group) throw new Error('请输入当前策略中准确的同步组 ID')
+  const token = (v: unknown): v is string => typeof v === 'string' && !!v && !v.startsWith('-') && new TextEncoder().encode(v).length <= 512 && !/\p{Cc}/u.test(v) && ![...v].some(c => { const n = c.codePointAt(0)!; return n >= 0xd800 && n <= 0xdfff })
+  if (!token(values.pipe_id)) throw new Error('请输入合法的新管道 ID')
+  const pipes = (group as unknown as { pipes: unknown }).pipes
+  if (!Array.isArray(pipes) || pipes.some(pipe => !pipe || typeof pipe !== 'object' || typeof pipe.id !== 'string')) throw new Error('管道数据不可用')
+  if (pipes.some(pipe => pipe.id === values.pipe_id)) throw new Error('管道 ID 已存在，创建不会修改已有管道')
+  if (values.mode !== 'system' && values.mode !== 'user') throw new Error('请选择 system 或 user 模式')
+  const user = values.user === undefined ? '' : values.user
+  if (values.mode === 'system' && user !== '') throw new Error('system 模式请清空用户')
+  if (values.mode === 'user') {
+    if (!token(user) || /\s/u.test(user)) throw new Error('请输入完整用户 UID')
+    const parts = user.split('$')
+    if (!(parts.length === 1 || (parts.length === 2 && parts.every(Boolean)) || (parts.length === 3 && parts[1] && parts[2]))) throw new Error('用户 UID 格式无效')
+  }
+  const result: Record<string, unknown> = { bucket_id: row!.natural_key, group_id: group.id, pipe_id: values.pipe_id, expected_group: JSON.stringify(group), mode: values.mode }
+  if (values.mode === 'user') result.user = user
+  for (const side of ['source', 'dest']) {
+    let zones: unknown
+    try { zones = JSON.parse(String(values[side + '_zones_json'])) } catch { throw new Error('Zone ID 必须为 JSON 数组') }
+    if (!Array.isArray(zones) || !zones.length || zones.some(id => !token(id) || /[\s,;=]/u.test(id) || (id.includes('*') && (id !== '*' || zones.length !== 1))) || new Set(zones).size !== zones.length) throw new Error('Zone ID 列表不合法；通配符仅允许单独 ["*"]')
+    result[side + '_zones'] = zones
+    for (const suffix of ['tenant', 'bucket', 'bucket_id']) {
+      const key = side + '_' + suffix
+      const v = values[key] === undefined || values[key] === '' ? (suffix === 'bucket_id' ? '*' : '') : values[key]
+      if ((v !== '' && (!token(v) || /[\s/:\\]/u.test(v) || (v.includes('*') && v !== '*'))) || (suffix === 'bucket' && !v)) throw new Error('请明确填写桶选择器；各字段不可含分隔符，* 必须独立使用')
+      result[key] = v
+    }
+  }
+  if (values.confirm_pipe_create !== 'acknowledged') throw new Error('请确认管道的匹配范围及复制影响')
+  return result
+}
+export function bucketSyncPipeCreateConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const p = bucketSyncPipeCreateInput(values, row)
+  return `确认在 Bucket ID ${p.bucket_id} 的组 ${JSON.stringify(p.group_id)} 创建管道 ${JSON.stringify(p.pipe_id)}？源：Zone IDs ${JSON.stringify(p.source_zones)}，租户/桶/实例 ${JSON.stringify([p.source_tenant,p.source_bucket,p.source_bucket_id])}；目标：${JSON.stringify(p.dest_zones)}，${JSON.stringify([p.dest_tenant,p.dest_bucket,p.dest_bucket_id])}。模式 ${p.mode}，用户 ${JSON.stringify(p.user)}。* 为通配；空租户不限定租户，不代表仅全局租户。新管道优先级 0、无前缀/标签过滤或目标 ACL/存储类覆盖，可能影响复制范围；不代表有效链路或同步完成。不修改组状态、数据流或 Zonegroup/period。请备份策略并避免外部并发，核验失败不代表未生效，不自动回滚。`
+}
+
 export function bucketSyncGroupCreateBlocked(row: Record<string, unknown>) {
   try { groups(row, true); return undefined } catch (error) { return (error as Error).message }
 }
