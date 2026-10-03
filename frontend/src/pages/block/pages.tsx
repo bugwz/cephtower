@@ -5,6 +5,7 @@ import { ImageMirrorSchedule, MirrorSchedules } from './MirrorSchedules'
 import { RbdRuntimeStatus } from './RbdRuntimeStatus'
 import { RbdConfiguration } from './RbdConfiguration'
 import { RbdParent } from './RbdParent'
+import { RbdSnapshotProtection } from './RbdSnapshotProtection'
 import { RbdChildren, rbdSnapshotDeleteReason } from './RbdChildren'
 import { rbdUsageText } from './rbdUsage'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
@@ -315,7 +316,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'namespace', title: '命名空间' },
       { key: 'size', title: '容量' },
       { key: 'used_bytes', title: '占用（bytes）' },
-      { key: 'protected', title: '保护' },
+      { key: 'is_protected', title: '保护状态', render: (value) => <RbdSnapshotProtection value={value} /> },
       { key: 'timestamp', title: '时间' },
       { key: 'children', title: '子镜像（含回收站）', ellipsis: false, render: (value) => <RbdChildren value={value} /> },
       { key: 'resource_version', title: '版本' }

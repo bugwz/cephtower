@@ -24,6 +24,16 @@ for (const multiple of [false, true]) {
 }
 console.log('Resource form select clearing checks passed')
 
+const protectionSource = readFileSync(new URL('../src/pages/block/RbdSnapshotProtection.tsx', import.meta.url), 'utf8')
+const protectionTree = ts.createSourceFile('protection.tsx', protectionSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const protectionNode = protectionTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'snapshotProtection')
+const protectionCode = ts.transpileModule(protectionNode.getText(protectionTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const protection = new Function(`${protectionCode}; return snapshotProtection`)()
+assert.deepEqual(protection(true), { label: '已保护', color: 'green' })
+assert.deepEqual(protection(false), { label: '未保护', color: 'blue' })
+for (const value of [undefined, null, 0, 1, 'false', 'true', {}, []]) assert.deepEqual(protection(value), { label: '保护状态未知', color: 'default' })
+console.log('Snapshot protection tags distinguish explicit booleans from unknown values')
+
 const parentSource = readFileSync(new URL('../src/pages/block/RbdParent.tsx', import.meta.url), 'utf8')
 const parentTree = ts.createSourceFile('parent.tsx', parentSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const parentNode = parentTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'rbdParentDetails')
