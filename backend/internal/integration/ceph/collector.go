@@ -362,6 +362,10 @@ type hostFacts struct {
 
 type daemonWire struct {
 	cephdomain.DaemonRuntime
+	MemoryRequest      *uint64 `json:"memory_request"`
+	MemoryLimit        *uint64 `json:"memory_limit"`
+	Rank               *int64  `json:"rank"`
+	RankGeneration     *int64  `json:"rank_generation"`
 	DaemonName         string  `json:"daemon_name"`
 	DaemonType         string  `json:"daemon_type"`
 	Hostname           *string `json:"hostname"`
@@ -512,6 +516,18 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 			CPUPercentage:  wire.CPUPercentage,
 			MemoryUsage:    wire.MemoryUsage,
 			LastRefresh:    wire.LastRefresh,
+		}
+		for target, native := range map[**string]*uint64{&payload.MemoryRequest: wire.MemoryRequest, &payload.MemoryLimit: wire.MemoryLimit} {
+			if native != nil {
+				text := strconv.FormatUint(*native, 10)
+				*target = &text
+			}
+		}
+		for target, native := range map[**string]*int64{&payload.Rank: wire.Rank, &payload.RankGeneration: wire.RankGeneration} {
+			if native != nil {
+				text := strconv.FormatInt(*native, 10)
+				*target = &text
+			}
 		}
 		rows = append(rows, Observation{Kind: "daemon", NaturalKey: wire.DaemonName, Name: wire.DaemonName, Status: value(wire.StatusDesc), Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}

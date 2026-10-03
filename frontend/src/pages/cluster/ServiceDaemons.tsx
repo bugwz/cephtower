@@ -9,6 +9,7 @@ const daemonDetailFields = [
   ['daemon_type', '守护进程类型'], ['daemon_id', '守护进程 ID'],
   ['container_id', '容器 ID'], ['container_image_id', '镜像 ID'],
   ['container_image_digests', '镜像摘要'], ['memory_request', '内存请求（字节）'],
+  ['memory_limit', '内存限制（字节）'],
   ['ip', 'IP 地址'], ['ports', '监听端口'], ['systemd_unit', 'Systemd 单元'],
   ['is_active', '活跃实例'], ['osdspec_affinity', 'OSD 规格关联'],
   ['rank', '原生 Rank'], ['rank_generation', 'Rank 代次'],

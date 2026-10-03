@@ -42,6 +42,11 @@ type Daemon struct {
 	LastRefresh    *string `json:"last_refresh,omitempty"`
 }
 type DaemonRuntime struct {
+	MemoryRequest         *string  `json:"memory_request,omitempty"`
+	MemoryLimit           *string  `json:"memory_limit,omitempty"`
+	Rank                  *string  `json:"rank,omitempty"`
+	RankGeneration        *string  `json:"rank_generation,omitempty"`
+	PendingDaemonConfig   *bool    `json:"pending_daemon_config,omitempty"`
 	DaemonID              *string  `json:"daemon_id,omitempty"`
 	ContainerID           *string  `json:"container_id,omitempty"`
 	ContainerImageID      *string  `json:"container_image_id,omitempty"`

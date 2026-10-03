@@ -250,6 +250,41 @@ func TestCollectParsesCeph2022Fixtures(t *testing.T) {
 	}
 }
 
+func TestCollectTopologyPreservesExactDaemonLimitsAndRanks(t *testing.T) {
+	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+		"collect.daemon": []byte(`[{"daemon_name":"mds.a","daemon_type":"mds","memory_request":0,"memory_limit":18446744073709551615,"rank":-1,"rank_generation":9007199254740993,"pending_daemon_config":false}]`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "topology")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range rows {
+		if row.Kind != "daemon" {
+			continue
+		}
+		data, err := json.Marshal(row.Payload)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, expected := range []string{`"memory_request":"0"`, `"memory_limit":"18446744073709551615"`, `"rank":"-1"`, `"rank_generation":"9007199254740993"`, `"pending_daemon_config":false`} {
+			if !strings.Contains(string(data), expected) {
+				t.Fatalf("missing %s in %s", expected, data)
+			}
+		}
+		return
+	}
+	t.Fatal("daemon observation missing")
+}
+
+func TestDaemonRuntimeRejectsInvalidNumericShapes(t *testing.T) {
+	for _, payload := range []string{`{"memory_request":-1}`, `{"memory_limit":1.5}`, `{"rank":1.5}`, `{"rank_generation":true}`, `{"pending_daemon_config":"false"}`} {
+		var wire daemonWire
+		if err := json.Unmarshal([]byte(payload), &wire); err == nil {
+			t.Fatalf("accepted %s", payload)
+		}
+	}
+}
+
 func TestCollectTopologyPreservesDaemonRuntimeDetails(t *testing.T) {
 	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.daemon": []byte(`[{"daemon_name":"osd.0","daemon_type":"osd","daemon_id":"0","container_id":"abc","container_image_id":"sha256:def","container_image_digests":["sha256:ghi"],"ip":"192.0.2.1","ports":[6800],"systemd_unit":"ceph-osd@0","is_active":false,"osdspec_affinity":"data","created":"2026-10-03T01:00:00Z","started":"2026-10-03T02:00:00Z","last_deployed":"2026-10-03T03:00:00Z","last_configured":"2026-10-03T04:00:00Z","events":["deployment scheduled"]}]`),
