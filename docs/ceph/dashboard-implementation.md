@@ -28,6 +28,19 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：补齐参考桶表单的四种 ACL 预设修改（private、public-read、
+  public-read-write、authenticated-read）。依据 rgw-bucket-form 的 permissionToCannedAcl、
+  rgw_client.set_acl、rgw_acl_s3.cc/create_canned 及 RGWPutACLs 的所有者保持语义，
+  新增高风险 PATCH /rgw/bucket/acl → 操作队列 → S3 GET/PUT/GET 链路。
+  x-amz-acl 纳入 SigV4 签名；先读取所有者，再整体替换并核验所有者与完整授权集合，
+  允许原生分开的 READ/WRITE 授权及等价权限集合，拒绝额外受权者或未知权限。
+  前端不从自定义 ACL 推断预设、不预选值，要求覆盖风险确认，说明 private 不等于最终私有、
+  公开访问风险及外部并发覆盖；写入不确定或回读不符均不自动重试/回滚。
+  测试覆盖四种预设、签名、租户身份、队列高风险及锁、前置失败、写入失败、
+  回读权限/所有者变化和表单校验。make test-backend（含 OpenAPI 同步检查）、
+  make test-frontend（含 TypeScript/Vite 构建）通过。原始 XML 写入及 ACL 删除仍不开放，
+  尚无真实集群或浏览器视觉验证。
+
 - 2026-10-04：补齐桶 ACL 读取与展示。依据参考 Dashboard 的 rgw_client.py/get_acl、
   rgw-bucket-details 及原生 rgw_acl_s3.cc，通过签名 S3 GET ?acl（非 Dashboard HTTP）
   读取显式租户桶，沿现有桶配置 API 返回原文、所有者、受权者身份与权限数组。

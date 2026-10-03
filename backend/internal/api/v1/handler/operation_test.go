@@ -63,6 +63,14 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if err != nil || updated.ResourceKey != row.ResourceKey {
 			t.Fatalf("creation and update identities differ: %+v %v", updated, err)
 		}
+		response = sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/bucket/acl", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"acl":"private"}`, cluster.ID, id), "bucket-acl-"+tenant)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("ACL queue: %d %s", response.Code, response.Body.String())
+		}
+		aclOperation, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || aclOperation.Action != "rgw_bucket.acl" || aclOperation.Risk != "high" || aclOperation.ResourceKey != row.ResourceKey || aclOperation.LockKey != updated.LockKey {
+			t.Fatalf("incorrect ACL operation: %+v %v", aclOperation, err)
+		}
 		for _, kind := range []string{"policy", "cors", "lifecycle", "encryption", "tagging"} {
 			response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/bucket/policy", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"kind":%q,"document":"raw"}`, cluster.ID, id, kind), "bucket-config-"+tenant+"-"+kind)
 			if response.Code != http.StatusAccepted {

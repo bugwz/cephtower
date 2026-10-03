@@ -54,6 +54,7 @@ import { rgwLifecycleProgress } from './rgwLifecycleProgress'
 import { rgwBucketConfigurationReadOptions } from './rgwBucketConfiguration'
 import { rgwBucketObjectLockSummary } from './rgwBucketObjectLockSummary'
 import { RgwBucketAcl } from './RgwBucketAcl'
+import { bucketAclOptions, bucketAclFormBlocked, bucketAclFormInitial, bucketAclFormInput, bucketAclFormConfirmation } from './rgwBucketAclForm'
 import { objectLockFormInitial, objectLockFormBlocked, objectLockFormInput, objectLockFormConfirmation } from './rgwBucketObjectLockForm'
 import { RgwBucketLifecycleEditor } from './RgwBucketLifecycleEditor'
 import { lifecycleFormInitial, lifecycleFormBlocked, lifecycleFormInput, lifecycleFormConfirmation } from './rgwBucketLifecycleForm'
@@ -929,6 +930,18 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
         { name: 'confirm_lock', label: '不可逆影响确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '我确认对象锁无法关闭，保留策略可能阻止对象删除' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...objectLockFormInput(values, row) })
+    }, {
+      title: '替换 Bucket ACL', buttonLabel: '修改 ACL 预设',
+      path: '/rgw/bucket/acl', method: 'PATCH',
+      successMessage: 'Bucket ACL 已提交并回读核验',
+      visibleWhen: (row) => row.kind === 'acl',
+      disabledWhen: bucketAclFormBlocked, initialValues: bucketAclFormInitial, confirmation: bucketAclFormConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'acl', label: '完整 ACL 预设（覆盖现有授权）', type: 'select', required: true, options: bucketAclOptions },
+        { name: 'confirm_replace', label: '访问权限风险确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '我确认覆盖所有现有 ACL 授权，并理解所选预设的公开访问风险' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketAclFormInput(values, row) })
     }, {
       title: '编辑生命周期规则',
       buttonLabel: '编辑生命周期',

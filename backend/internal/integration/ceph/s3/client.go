@@ -93,6 +93,10 @@ func (c *Client) DeleteBucketConfiguration(ctx context.Context, bucket, kind str
 }
 
 func (c *Client) request(ctx context.Context, method, bucket string, query url.Values, body []byte) ([]byte, string, error) {
+	return c.requestWithHeaders(ctx, method, bucket, query, body, nil)
+}
+
+func (c *Client) requestWithHeaders(ctx context.Context, method, bucket string, query url.Values, body []byte, headers http.Header) ([]byte, string, error) {
 	if bucket == "" || strings.ContainsAny(bucket, "/\x00") {
 		return nil, "", fmt.Errorf("invalid S3 bucket name")
 	}
@@ -104,6 +108,11 @@ func (c *Client) request(ctx context.Context, method, bucket string, query url.V
 		return nil, "", err
 	}
 	now := c.now().UTC()
+	for name, values := range headers {
+		for _, value := range values {
+			req.Header.Add(name, value)
+		}
+	}
 	payloadHash := sha256Hex(body)
 	req.Header.Set("X-Amz-Date", now.Format("20060102T150405Z"))
 	req.Header.Set("X-Amz-Content-Sha256", payloadHash)
@@ -140,6 +149,9 @@ func (c *Client) request(ctx context.Context, method, bucket string, query url.V
 
 func (c *Client) sign(req *http.Request, now time.Time, payloadHash string) {
 	headerNames := []string{"host", "x-amz-content-sha256", "x-amz-date"}
+	if req.Header.Get("X-Amz-Acl") != "" {
+		headerNames = append(headerNames, "x-amz-acl")
+	}
 	if c.credentials.SessionToken != "" {
 		headerNames = append(headerNames, "x-amz-security-token")
 	}

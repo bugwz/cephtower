@@ -323,6 +323,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"silence.create"}, true, map[string]JSONField{"matchers": objectArrayField(true, matcher), "startsAt": stringField(true), "endsAt": stringField(true), "createdBy": stringField(true), "comment": stringField(true)})
 	add([]string{"rgw_bucket.create"}, true, map[string]JSONField{"name": stringField(true), "tenant": stringField(false)})
 	add([]string{"rgw_bucket.update"}, true, map[string]JSONField{"versioning": stringField(true, "enabled", "suspended")})
+	add([]string{"rgw_bucket.acl"}, true, map[string]JSONField{"bucket_id": stringField(true), "acl": stringField(true, "private", "public-read", "public-read-write", "authenticated-read")})
 	add([]string{"rgw_bucket_policy.update"}, true, map[string]JSONField{"kind": stringField(true, "policy", "cors", "lifecycle", "encryption", "tagging", "object-lock"), "document": stringField(true)})
 	add([]string{"rgw_bucket_policy.delete"}, true, map[string]JSONField{"kind": stringField(true, "policy", "cors", "lifecycle", "encryption", "tagging"), "bucket_id": stringField(true)})
 	portal := objectArrayField(false, map[string]JSONField{"host": stringField(true), "ip": stringField(true)})

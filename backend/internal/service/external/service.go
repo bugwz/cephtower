@@ -54,7 +54,7 @@ type httpCredential struct {
 func Supports(action string) bool {
 	switch action {
 	case "silence.create", "silence.delete",
-		"rgw_bucket.create", "rgw_bucket.update", "rgw_bucket.delete", "rgw_bucket_policy.update", "rgw_bucket_policy.delete",
+		"rgw_bucket.create", "rgw_bucket.update", "rgw_bucket.delete", "rgw_bucket.acl", "rgw_bucket_policy.update", "rgw_bucket_policy.delete",
 		"iscsi_target.create", "iscsi_target.update", "iscsi_target.delete",
 		"nvmeof_subsystem.create", "nvmeof_subsystem.update", "nvmeof_subsystem.delete",
 		"nvmeof_namespace.create", "nvmeof_namespace.update", "nvmeof_namespace.delete",
@@ -447,6 +447,24 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 		}
 	case "rgw_bucket.delete":
 		err = api.DeleteBucket(ctx, bucket)
+	case "rgw_bucket.acl":
+		canned, _ := parameters["acl"].(string)
+		if !s3.ValidBucketCannedACL(canned) {
+			return cephdomain.ActionResult{}, failure("invalid_request", "invalid bucket canned ACL", false)
+		}
+		before, _, readErr := api.GetBucketConfiguration(ctx, bucket, "acl")
+		current, parseErr := s3.BucketACL(before)
+		if readErr != nil || parseErr != nil {
+			return cephdomain.ActionResult{}, failure("pre_check_failed", "current bucket ACL could not be read; no change submitted", false)
+		}
+		if err = api.PutBucketCannedACL(ctx, bucket, canned); err != nil {
+			return cephdomain.ActionResult{}, failure("s3_failed", "ACL write outcome is uncertain; refresh before retrying: "+err.Error(), false)
+		}
+		after, _, readErr := api.GetBucketConfiguration(ctx, bucket, "acl")
+		actual, parseErr := s3.BucketACL(after)
+		if readErr != nil || parseErr != nil || !s3.BucketCannedACLMatches(current.Owner.ID, canned, actual) {
+			return cephdomain.ActionResult{}, failure("post_check_failed", "bucket ACL was submitted but could not be verified; refresh before another change", false)
+		}
 	case "rgw_bucket.update":
 		versioning, _ := parameters["versioning"].(string)
 		status := map[string]string{"enabled": "Enabled", "suspended": "Suspended"}[strings.ToLower(versioning)]

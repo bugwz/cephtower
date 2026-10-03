@@ -34,6 +34,7 @@ func rgwRoutes(h *handler.Handler) []Route {
 		{"POST", "/rgw/bucket", h.CreateRGWBucket},
 		{"GET", "/rgw/bucket", h.GetRGWBucket},
 		{"PATCH", "/rgw/bucket", h.UpdateRGWBucket},
+		{"PATCH", "/rgw/bucket/acl", h.UpdateRGWBucketACL},
 		{"DELETE", "/rgw/bucket", h.DeleteRGWBucket},
 		{"GET", "/rgw/bucket/policy", h.GetRGWBucketPolicy},
 		{"PATCH", "/rgw/bucket/policy", h.UpdateRGWBucketPolicy},

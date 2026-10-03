@@ -5,7 +5,7 @@ export const rgwBucketConfigurationOptions = [
   { label: 'Encryption（XML）', value: 'encryption' },
   { label: 'Tags 标签（XML，最多 50 条）', value: 'tagging' }
 ]
-export const rgwBucketConfigurationReadOptions = [...rgwBucketConfigurationOptions, { label: 'Object Lock 默认保留', value: 'object-lock' }, { label: 'ACL 访问控制列表（只读）', value: 'acl' }]
+export const rgwBucketConfigurationReadOptions = [...rgwBucketConfigurationOptions, { label: 'Object Lock 默认保留', value: 'object-lock' }, { label: 'ACL 访问控制列表', value: 'acl' }]
 
 export function rgwBucketConfigurationDeleteBlocked(row: Record<string, unknown>) {
   if (row.configured !== true) return '只有已确认存在的配置可以删除，请先刷新'

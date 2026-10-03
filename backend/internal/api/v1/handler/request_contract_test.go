@@ -41,6 +41,23 @@ func TestBucketConfigurationDeleteContract(t *testing.T) {
 	}
 }
 
+func TestBucketCannedACLContract(t *testing.T) {
+	for _, value := range []string{"private", "public-read", "public-read-write", "authenticated-read"} {
+		if err := ValidateMutationRequest("rgw_bucket.acl", map[string]any{"cluster_id": float64(1), "bucket_id": "AGJ1Y2tldA", "acl": value}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, fields := range []map[string]any{
+		{"acl": "private"}, {"bucket_id": "AGJ1Y2tldA"}, {"bucket_id": "AGJ1Y2tldA", "acl": "unknown"},
+		{"bucket_id": "AGJ1Y2tldA", "acl": true}, {"bucket_id": "AGJ1Y2tldA", "acl": "private", "document": "<xml/>"},
+	} {
+		fields["cluster_id"] = float64(1)
+		if err := ValidateMutationRequest("rgw_bucket.acl", fields); err == nil {
+			t.Fatalf("invalid ACL request accepted: %#v", fields)
+		}
+	}
+}
+
 func TestMutationContractsRejectUnknownAndWrongType(t *testing.T) {
 	if err := ValidateMutationRequest("host.create", map[string]any{"hostname": "node-1", "password": "secret"}); err == nil {
 		t.Fatal("unknown field was accepted")

@@ -7,6 +7,7 @@ import './test-rgw-bucket-lifecycle.mjs'
 import './test-rgw-bucket-lifecycle-form.mjs'
 import './test-rgw-bucket-acl.mjs'
 const helpers = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketAclForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketObjectLockForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketObjectLockSummary.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketLifecycleForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
@@ -68,6 +69,25 @@ function visit(node) {
 }
 visit(source)
 assert.ok(definition)
+const aclAction = definition.extraActions.find(action => action.title === '替换 Bucket ACL')
+const aclRow = { bucket_id: 'AGJ1Y2tldA', kind: 'acl', configured: true, acl: { owner: { id: 'owner' }, grants: [] } }
+const aclInitial = aclAction.initialValues(aclRow)
+assert.equal(aclInitial.acl, undefined)
+assert.equal(aclInitial.confirm_replace, undefined)
+assert.equal(aclAction.path, '/rgw/bucket/acl')
+assert.equal(aclAction.method, 'PATCH')
+assert.ok(aclAction.visibleWhen(aclRow))
+assert.ok(!aclAction.visibleWhen({ kind: 'policy' }))
+assert.ok(aclAction.disabledWhen({ ...aclRow, configured: false }))
+assert.ok(aclAction.disabledWhen({ ...aclRow, acl: {} }))
+assert.throws(() => aclAction.buildBody(aclInitial, 7, aclRow))
+for (const acl of ['private', 'public-read', 'public-read-write', 'authenticated-read']) {
+  const values = { ...aclInitial, acl, confirm_replace: 'acknowledged' }
+  assert.deepEqual(aclAction.buildBody(values, 7, aclRow), { cluster_id: 7, bucket_id: aclRow.bucket_id, acl })
+  assert.match(aclAction.confirmation(values, aclRow), /AGJ1Y2tldA.*现有自定义授权将被移除/)
+  assert.match(aclAction.confirmation(values, aclRow), /private 也不保证最终私有/)
+  for (const change of [{ bucket_id: 'other' }, { acl: 'future' }, { acl: '' }, { confirm_replace: true }]) assert.throws(() => aclAction.buildBody({ ...values, ...change }, 7, aclRow))
+}
 const objectLockAction = definition.extraActions.find(action => action.title === '修改对象锁默认保留')
 const objectLockRow = { bucket_id: 'AGJ1Y2tldA', kind: 'object-lock', configured: false, object_lock: null }
 assert.ok(objectLockAction.visibleWhen(objectLockRow))
