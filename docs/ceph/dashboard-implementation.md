@@ -5,6 +5,14 @@
 
 ## 如何追踪调用链
 
+主机 SMART 详情沿用 `device ls-by-host` → `device query-daemon-health-metrics` →
+`/host/smart` 链路，设备行可展开查看 ATA 属性表、SCSI 错误计数、NVMe 健康日志及
+其他原生字段。后端精确解码数值并结构化脱敏，将 SMART 数值字段转为文本，避免大
+计数经 JavaScript 数值类型失真；布尔健康结果保留原类型。通电时长展示不再强制
+转换大整数为浮点数。设备级错误也保留原生详情，查询失败不伪装为成功空数据。
+当前为完整原生数据展开查看，尚不是参考 Dashboard 的协议专用属性表格布局；离线
+测试覆盖嵌套计数、零值及脱敏，未进行真实设备或浏览器视觉验证。
+
 主机详情新增按类别读取的硬件健康页签：参考 Dashboard `services/hardware.py`
 通过 `hardware.common` 获取组件数据，对应原生 `orch hardware status --hostname
 <host> --category <category> --format json`（orchestrator/module.py `_common_table`）。

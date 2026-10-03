@@ -514,7 +514,8 @@ function HostDeviceHealthPanel({ devices }: { devices: ApiRecord[] }) {
         { key: 'temperature_display', title: '温度' },
         { key: 'power_on_hours_display', title: '通电时间' },
         { key: 'wear_level_display', title: '已使用寿命（percentage_used）' },
-        { key: 'ssd_life_left_display', title: 'ssd_life_left（原始值）' }
+        { key: 'ssd_life_left_display', title: 'ssd_life_left（原始值）' },
+        { key: 'smart_details', title: '原生 SMART 详情', ellipsis: false, filterKey: false, render: (value) => <details><summary>展开 ATA / SCSI / NVMe 原生数据</summary><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{String(value ?? '未返回')}</pre></details> }
       ]}
     />
   )
@@ -584,6 +585,7 @@ function normalizeSMARTData(value: ApiRecord): ApiRecord[] {
         device_id: deviceID, name_display: deviceID, health_display: 'unavailable',
         error_display: typeof error === 'string' && error.trim() ? error : '设备 SMART 读取失败，未返回有效错误说明',
         smartctl_error_code: isRecord(raw) ? raw.smartctl_error_code : undefined,
+        smart_details: JSON.stringify(raw, null, 2),
       }]
     }
     const smartStatus = isRecord(raw.smart_status) ? raw.smart_status : {}
@@ -594,12 +596,13 @@ function normalizeSMARTData(value: ApiRecord): ApiRecord[] {
     const passed = smartStatus.passed
     return [{
       ...raw,
+      smart_details: JSON.stringify(raw, null, 2),
       device_id: deviceID,
       name_display: textValue(device.name ?? raw.dev ?? deviceID, deviceID),
       serial_display: textValue(raw.serial_number ?? raw.serial ?? deviceID, ''),
       health_display: typeof passed === 'boolean' ? (passed ? 'good' : 'bad') : textValue(raw.health ?? raw.state, 'unknown'),
       temperature_display: formatTemperature(numberValue(temperature.current ?? raw.temperature ?? nvmeHealth.temperature)),
-      power_on_hours_display: formatHours(numberValue(powerOnTime.hours ?? raw.power_on_hours ?? nvmeHealth.power_on_hours)),
+      power_on_hours_display: formatHours(powerOnTime.hours ?? raw.power_on_hours ?? nvmeHealth.power_on_hours),
       wear_level_display: formatWear(numberValue(raw.percentage_used ?? nvmeHealth.percentage_used)),
       ssd_life_left_display: raw.ssd_life_left == null ? '-' : String(raw.ssd_life_left)
     }]
@@ -651,8 +654,9 @@ function formatTemperature(value?: number) {
   return value === undefined ? '-' : `${value} °C`
 }
 
-function formatHours(value?: number) {
-  return value === undefined ? '-' : `${value.toLocaleString()} 小时`
+function formatHours(value: unknown) {
+  if (typeof value === 'string' && /^\d+(\.\d+)?$/.test(value)) return `${value} 小时`
+  return typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= Number.MAX_SAFE_INTEGER ? `${value.toLocaleString()} 小时` : '-'
 }
 
 function formatWear(value?: number) {

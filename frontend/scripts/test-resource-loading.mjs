@@ -52,6 +52,18 @@ assert.equal(smartWearRows[1].ssd_life_left_display, '80')
 assert.equal(smartWearRows[2].wear_level_display, 120)
 assert.equal(smartWearRows[2].power_on_hours_display, 0)
 console.log('SMART used-life and remaining-life fields are kept distinct')
+const detailedSmart = normalizeSmart({ disk: { nvme_smart_health_information_log: { data_units_written: '18446744073709551615' }, ata_smart_attributes: { table: [{ raw: { value: '9007199254740993' } }] }, scsi_error_counter_log: { read: { total_uncorrected_errors: '0' } } } })[0]
+assert.ok(detailedSmart.smart_details.includes('18446744073709551615'))
+assert.ok(detailedSmart.smart_details.includes('9007199254740993'))
+assert.ok(detailedSmart.smart_details.includes('scsi_error_counter_log'))
+assert.ok(smartRows[1].smart_details.includes('unsupported device'))
+const hoursNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'formatHours')
+const hoursCode = ts.transpileModule(hoursNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const smartHours = new Function(`${hoursCode}; return formatHours`)()
+assert.equal(smartHours('18446744073709551615'), '18446744073709551615 小时')
+assert.equal(smartHours('0'), '0 小时')
+for (const value of [undefined, null, '', 'not-hours', Number.MAX_SAFE_INTEGER + 1]) assert.equal(smartHours(value), '-')
+console.log('SMART native detail and exact power-on hour display checks passed')
 
 const hardwareSource = readFileSync(new URL('../src/pages/cluster/HostHardware.tsx', import.meta.url), 'utf8')
 const hardwareTree = ts.createSourceFile('hardware.tsx', hardwareSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)

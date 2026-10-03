@@ -2,8 +2,10 @@ package hostdetail
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -101,6 +103,29 @@ func TestSMARTQueriesAssociatedDaemon(t *testing.T) {
 	want := []string{"device", "query-daemon-health-metrics", "osd.1", "--format", "json"}
 	if !reflect.DeepEqual(runner.args[1], want) {
 		t.Fatalf("args = %#v, want %#v", runner.args[1], want)
+	}
+}
+
+func TestSMARTPreservesDetailedCountersAndRedactsSecrets(t *testing.T) {
+	service, _, id := testService(t,
+		[]byte(`[{"devid":"disk-1","daemons":["osd.1"]}]`),
+		[]byte(`{"disk-1":{"smart_status":{"passed":true},"ata_smart_attributes":{"table":[{"id":9,"raw":{"value":9007199254740993}}]},"scsi_error_counter_log":{"read":{"total_uncorrected_errors":18446744073709551615}},"nvme_smart_health_information_log":{"percentage_used":0,"data_units_written":18446744073709551615},"vendor":{"password":"fixture-secret"}}}`),
+	)
+	result, err := service.SMART(context.Background(), id, "node-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, expected := range []string{`"value":"9007199254740993"`, `"total_uncorrected_errors":"18446744073709551615"`, `"percentage_used":"0"`, `"passed":true`, `[REDACTED]`} {
+		if !strings.Contains(string(raw), expected) {
+			t.Fatalf("missing %s in %s", expected, raw)
+		}
+	}
+	if strings.Contains(string(raw), "fixture-secret") {
+		t.Fatal("SMART detail leaked credentials")
 	}
 }
 
