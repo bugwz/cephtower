@@ -28,6 +28,20 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：补齐桶本地同步管道删除。追溯参考详情页 removeSyncPipe、
+  Dashboard remove_sync_pipe 与原生 SYNC_GROUP_PIPE_REMOVE，接入高风险
+  DELETE /rgw/bucket/sync/pipe → 队列 → sync policy get / sync group pipe remove /
+  sync policy get。接口仅接受完整管道 ID 和组快照，不接受源/目标选择器，
+  避免触发原生命令的局部修改语义；桶和租户始终显式传入，不依赖 S3 端点。
+  写前核对完整组且目标管道唯一存在；写后要求仅目标管道消失，最后一管道删除后
+  保留空 pipes 数组，其他管道、流、组状态及其他组必须不变。前端确认显示源/目标
+  选择范围，明确删除全部选择器和参数、不删除对象副本、不保证所有复制停止。
+  不修改 Zonegroup/period；外部并发仍需避免，失败不自动重试或回滚。
+  回归覆盖租户参数、最后一管道、缺失/重复/损坏管道、陈旧及大整数快照、读写失败、
+  意外策略变化、队列锁、局部选择器拒绝和前端绑定。管道创建/编辑仍待补齐。
+  make test-backend（含 OpenAPI 同步检查）及 make test-frontend（含 TypeScript/Vite
+  构建）通过；尚无真实集群或浏览器视觉验证。
+
 - 2026-10-04：补齐桶本地同步管道结构化展示。对照参考同步策略详情页的管道列，
   并追溯 rgw_sync_bucket_pipes、rgw_sync_bucket_entities 与 rgw_sync_pipe_params
   序列化，通过已有 sync policy get → bucket_sync_policy 采集/API 链路按组显示管道

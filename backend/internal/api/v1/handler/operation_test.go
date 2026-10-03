@@ -89,6 +89,18 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if err != nil || flowDelete.Action != "rgw_bucket.sync_flow_delete" || flowDelete.Risk != "high" || flowDelete.ResourceKey != nativeOperation.ResourceKey || flowDelete.LockKey != nativeOperation.LockKey {
 			t.Fatalf("wrong sync flow deletion: %+v %v", flowDelete, err)
 		}
+		pipeResponse := sendOperationRequest(t, nativeMux, http.MethodDelete, "/api/v1/rgw/bucket/sync/pipe", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"group_id":"g","pipe_id":"p","expected_group":%q}`, cluster.ID, id, `{"id":"g","status":"allowed","data_flow":{},"pipes":[{"id":"p"}]}`), "sync-pipe-delete-"+tenant)
+		if pipeResponse.Code != http.StatusAccepted {
+			t.Fatalf("pipe deletion queue: %d %s", pipeResponse.Code, pipeResponse.Body.String())
+		}
+		pipeOperation, err := db.FindOperation(context.Background(), operationIDFromResponse(t, pipeResponse))
+		if err != nil || pipeOperation.Action != "rgw_bucket.sync_pipe_delete" || pipeOperation.Risk != "high" || pipeOperation.ResourceKey != nativeOperation.ResourceKey || pipeOperation.LockKey != nativeOperation.LockKey {
+			t.Fatalf("wrong pipe operation: %+v %v", pipeOperation, err)
+		}
+		partialPipe := sendOperationRequest(t, nativeMux, http.MethodDelete, "/api/v1/rgw/bucket/sync/pipe", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"group_id":"g","pipe_id":"p","expected_group":"{}","source_zones":["a"]}`, cluster.ID, id), "sync-pipe-partial-"+tenant)
+		if partialPipe.Code != http.StatusBadRequest {
+			t.Fatalf("partial pipe deletion accepted: %d %s", partialPipe.Code, partialPipe.Body.String())
+		}
 		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/bucket", fmt.Sprintf(`{"cluster_id":%d,"name":"same-bucket","tenant":%q}`, cluster.ID, tenant), "bucket-create-"+tenant)
 		if response.Code != http.StatusAccepted {
 			t.Fatalf("bucket creation queue: %d %s", response.Code, response.Body.String())

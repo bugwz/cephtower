@@ -3,6 +3,7 @@ package main
 // mutationRouteActions mirrors the action selected by each runtime route handler.
 // TestMutationRouteActionsMatchHandlers guards this mapping against route drift.
 var mutationRouteActions = map[string]string{
+	"DELETE /rgw/bucket/sync/pipe":                  "rgw_bucket.sync_pipe_delete",
 	"DELETE /rgw/bucket/sync/flow":                  "rgw_bucket.sync_flow_delete",
 	"POST /rgw/bucket/sync/flow":                    "rgw_bucket.sync_flow_create",
 	"DELETE /rgw/bucket/sync/group":                 "rgw_bucket.sync_group_delete",

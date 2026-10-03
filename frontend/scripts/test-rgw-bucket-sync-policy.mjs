@@ -18,8 +18,12 @@ console.log('bucket local sync policy summary checks passed')
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketSyncGroupForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(api)
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-let action, createAction, deleteAction, flowAction, deleteFlowAction
+let action, createAction, deleteAction, flowAction, deleteFlowAction, deletePipeAction
 function visit(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '删除桶同步管道')) {
+    const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+    deletePipeAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
+  }
   if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '删除桶数据流')) {
     const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
     deleteFlowAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
@@ -124,3 +128,15 @@ assert.equal(deleteFlowAction.buildBody(deleteDir, 7, existingRow).source_zone, 
 for (const change of [{ flow_id: 'missing' }, { source_zone: 'a' }]) assert.throws(() => deleteFlowAction.buildBody({ ...deleteSym, ...change }, 7, existingRow))
 for (const change of [{ source_zone: 'dest-id' }, { dest_zone: '*' }, { source_zone: 'a;b' }, { flow_id: 'f' }]) assert.throws(() => deleteFlowAction.buildBody({ ...deleteDir, ...change }, 7, existingRow))
 console.log('bucket sync flow deletion form and binding checks passed')
+assert.equal(deletePipeAction.path, '/rgw/bucket/sync/pipe')
+assert.equal(deletePipeAction.method, 'DELETE')
+const selectedPipe = { id: ' 管道 ', source: { bucket: '*', zones: ['*'] }, dest: { bucket: 'team/photos:marker', zones: ['Zone B'] }, params: { mode: 'user' } }
+const pipeGroup = { ...group, pipes: [selectedPipe] }
+const pipeRow = { ...row, bucket_sync_policy: { groups: [pipeGroup] } }
+const pipeValues = { ...deletePipeAction.initialValues(pipeRow), group_id: group.id, pipe_id: selectedPipe.id, confirm_pipe_delete: 'acknowledged' }
+assert.deepEqual(deletePipeAction.buildBody(pipeValues, 7, pipeRow), { cluster_id: 7, bucket_id: row.natural_key, group_id: group.id, pipe_id: selectedPipe.id, expected_group: JSON.stringify(pipeGroup) })
+assert.match(deletePipeAction.confirmation(pipeValues, pipeRow), /team\/photos:marker.*保留组状态、数据流及其他管道.*不自动回滚/)
+assert.ok(deletePipeAction.disabledWhen({ ...pipeRow, stale: true }))
+for (const change of [{ bucket_id: 'other' }, { group_id: 'other' }, { pipe_id: 'missing' }, { confirm_pipe_delete: true }]) assert.throws(() => deletePipeAction.buildBody({ ...pipeValues, ...change }, 7, pipeRow))
+for (const pipes of [[], null, [null], [selectedPipe, selectedPipe]]) assert.throws(() => deletePipeAction.buildBody(pipeValues, 7, { ...pipeRow, bucket_sync_policy: { groups: [{ ...group, pipes }] } }))
+console.log('bucket sync pipe deletion form and binding checks passed')

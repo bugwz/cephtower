@@ -104,6 +104,23 @@ export function bucketSyncFlowDeleteConfirmation(values: Record<string, unknown>
   return `确认从 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 删除${target}？只移除此数据流，保留组状态、其他流和管道，不删除已有对象副本；不保证所有复制停止。不修改 Zonegroup 或提交 period。请备份策略并避免外部并发修改，核验失败不代表未生效，不自动回滚。`
 }
 
+export function bucketSyncPipeDeleteInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const group = groups(row).find(group => group.id === values.group_id)
+  if (values.bucket_id !== row!.natural_key) throw new Error('Bucket ID 不可更改')
+  if (!group) throw new Error('请输入当前策略中准确的同步组 ID')
+  const pipes = (group as unknown as { pipes: unknown }).pipes
+  if (!Array.isArray(pipes) || pipes.some(pipe => !pipe || typeof pipe !== 'object' || typeof pipe.id !== 'string')) throw new Error('管道数据不可用')
+  if (typeof values.pipe_id !== 'string' || !values.pipe_id || pipes.filter(pipe => pipe.id === values.pipe_id).length !== 1) throw new Error('请输入唯一存在的完整管道 ID')
+  if (values.confirm_pipe_delete !== 'acknowledged') throw new Error('请确认删除整个管道及其全部选择器和参数')
+  return { bucket_id: row!.natural_key as string, group_id: group.id, pipe_id: values.pipe_id, expected_group: JSON.stringify(group) }
+}
+export function bucketSyncPipeDeleteConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const input = bucketSyncPipeDeleteInput(values, row)
+  const group = JSON.parse(input.expected_group)
+  const pipe = group.pipes.find((pipe: { id: string }) => pipe.id === input.pipe_id)
+  return `确认删除 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中的整个管道 ${JSON.stringify(input.pipe_id)}？源选择：${JSON.stringify(pipe.source)}；目标选择：${JSON.stringify(pipe.dest)}。该管道全部选择器、过滤和权限参数将被移除；保留组状态、数据流及其他管道，不删除已有对象副本，不保证所有复制停止。不修改 Zonegroup 或提交 period。请备份策略并避免外部并发，核验失败不代表未生效，不自动回滚。`
+}
+
 export function bucketSyncGroupCreateBlocked(row: Record<string, unknown>) {
   try { groups(row, true); return undefined } catch (error) { return (error as Error).message }
 }

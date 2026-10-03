@@ -40,6 +40,7 @@ func rgwRoutes(h *handler.Handler) []Route {
 		{"DELETE", "/rgw/bucket/sync/group", h.DeleteRGWBucketSyncGroup},
 		{"POST", "/rgw/bucket/sync/flow", h.CreateRGWBucketSyncFlow},
 		{"DELETE", "/rgw/bucket/sync/flow", h.DeleteRGWBucketSyncFlow},
+		{"DELETE", "/rgw/bucket/sync/pipe", h.DeleteRGWBucketSyncPipe},
 		{"DELETE", "/rgw/bucket", h.DeleteRGWBucket},
 		{"GET", "/rgw/bucket/policy", h.GetRGWBucketPolicy},
 		{"PATCH", "/rgw/bucket/policy", h.UpdateRGWBucketPolicy},
