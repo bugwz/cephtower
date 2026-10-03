@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+Account 配额和用量展示移至详情标签页：账户总配额、默认 Bucket 配额、账户容量与对象统计分别展示，列表保留身份及五类资源上限。对照参考 `rgw-user-accounts-details`，复用 `account get` 和 `account stats` 的既有采集/API 字段以及配额、用量组件，不重复请求或补造默认数据。测试覆盖标签结构、字段绑定、缺失数据原样传递及账户统计模式；未做浏览器视觉或真实集群验证。
+
 Account 创建的可选名称、邮箱和 Tenant 文本不再经 `rawText` 静默裁剪或丢弃。非法类型、超长、纯空白和 NUL/CR/LF 在命令构造前拒绝；空字符串按原生可选字段语义省略，合法非空文本通过单个等号形式参数原样传递。测试覆盖三个字段，确保非法文本不会与合法资源上限一起触发创建；未做真实集群验证。
 
 Account 创建补齐用户、角色、组、Bucket 和每用户访问密钥五类上限：参考 Dashboard 的 `rgw-user-accounts-form` 与 `rgw_iam.py`，通过创建 API 传到 `radosgw-admin account create --max-*`，随后 `account get` 回读。原生 `src/rgw/rgw_account.cc` 的创建分支按可选值设置上限，留空因此不发送参数、使用原生默认值；显式零和负一不会被丢弃。表单与命令构造测试覆盖五字段的省略、边界及非法输入；未做真实集群验证。

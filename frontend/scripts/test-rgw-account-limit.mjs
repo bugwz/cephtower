@@ -80,3 +80,27 @@ new Function('exports', ts.transpileModule('export ' + initializer.getText(sourc
 for (const value of [null, undefined, '', '0', false, 0.5, 2147483648]) assert.equal(initialExports.numberOrUndefined(value), undefined)
 for (const value of [-1, 0, 2147483647]) assert.equal(initialExports.numberOrUndefined(value), value)
 console.log('RGW IAM limits preserve zero creation bans and negative unlimited values')
+const detailsSource = readFileSync(new URL('../src/pages/object/RgwAccountDetails.tsx', import.meta.url), 'utf8')
+const detailsExports = {}
+const jsx = (type, props) => ({ type, props })
+new Function('exports', 'require', ts.transpileModule(detailsSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(detailsExports, (name) => {
+  if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx }
+  if (name === 'antd') return { Tabs: 'Tabs' }
+  if (name === './RgwQuota') return { RgwQuota: 'Quota' }
+  if (name === './RgwStorage') return { RgwStorage: 'Storage' }
+  throw new Error(`unexpected import ${name}`)
+})
+assert.ok(pages.includes('detailContent: (row) => <RgwAccountDetails row={row} />'))
+for (const row of [{}, { quota: { enabled: false }, bucket_quota: { enabled: true }, storage_stats: { stats: { num_objects: 0 } } }]) {
+  const view = detailsExports.RgwAccountDetails({ row })
+  assert.equal(view.type, 'Tabs')
+  const items = view.props.items
+  assert.deepEqual(items.map(item => item.key), ['quota', 'bucket-quota', 'usage'])
+  assert.equal(items[0].children.type, 'Quota')
+  assert.equal(items[0].children.props.value, row.quota)
+  assert.equal(items[1].children.type, 'Quota')
+  assert.equal(items[1].children.props.value, row.bucket_quota)
+  assert.equal(items[2].children.type, 'Storage')
+  assert.equal(items[2].children.props.value, row.storage_stats)
+  assert.equal(items[2].children.props.account, true)
+}

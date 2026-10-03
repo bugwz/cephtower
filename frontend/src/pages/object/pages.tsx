@@ -15,6 +15,7 @@ import { rgwStorageScope } from './rgwStorageDetails'
 import { rgwUserDisplayNamePatch } from './rgwUserDisplayName'
 import { rgwAccountTextPatch } from './rgwAccountEdit'
 import { RgwBucketDetails } from './RgwBucketDetails'
+import { RgwAccountDetails } from './RgwAccountDetails'
 import { rgwBucketIndexCount, rgwBucketIndexText } from './rgwBucketIndex'
 import { rgwBucketVersioning, rgwBucketBooleanState, rgwBucketReshardState } from './rgwBucketState'
 import { rgwUserPolicyBlocked, rgwUserPolicyInput, rgwUserPolicyOptions } from './rgwUserPolicy'
@@ -237,6 +238,7 @@ const definitions: Record<
   rgwAccounts: {
     title: 'RGW Accounts',
     path: '/rgw/accounts',
+    detailContent: (row) => <RgwAccountDetails row={row} />,
     requiredCapabilities: ['rgw_admin'],
     createAction: {
       title: '新建 RGW Account',
@@ -295,9 +297,6 @@ const definitions: Record<
       { key: 'account_name', title: '名称' },
       { key: 'email', title: '邮箱' },
       { key: 'tenant', title: 'Tenant' },
-      { key: 'quota', title: '账户配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
-      { key: 'bucket_quota', title: '默认 Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
-      { key: 'storage_stats', title: '容量与对象统计', ellipsis: false, render: (value) => <RgwStorage value={value} account /> },
       { key: 'max_users', title: '用户上限', render: rgwAccountLimit },
       { key: 'max_roles', title: '角色上限', render: rgwAccountLimit },
       { key: 'max_groups', title: '用户组上限', render: rgwAccountLimit },
