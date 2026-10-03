@@ -23,7 +23,7 @@ func buildRGWS3Key(action string, p map[string]any, rgw func([]string, []string)
 			return command{}, invalid("subuser must be a local subuser name")
 		}
 		owner += ":" + name
-		if !remove {
+		if action == "rgw_key.create" {
 			args = append(args, "--subuser="+name)
 		}
 	}
@@ -91,7 +91,11 @@ func rgwS3KeyMatches(action string, raw []byte, p map[string]any, before bool) b
 			return false
 		}
 		if key.Access == keyID {
-			if remove {
+			if action == "rgw_key.update" {
+				if key.User != owner || key.Active == nil || key.Secret == "" || (before && key.Secret == secret) || (!before && key.Secret != secret) {
+					return false
+				}
+			} else if remove {
 				if !before || key.User != owner {
 					return false
 				}
@@ -104,5 +108,25 @@ func rgwS3KeyMatches(action string, raw []byte, p map[string]any, before bool) b
 	if remove {
 		return !before || count == 1
 	}
+	if action == "rgw_key.update" {
+		return count == 1
+	}
 	return before || count == 1
+}
+
+// Used only after identity and unique-key validation by rgwS3KeyMatches.
+func rgwS3KeyActive(raw []byte, p map[string]any) *bool {
+	var info struct {
+		Keys []rgwSubuserKey `json:"keys"`
+	}
+	if json.Unmarshal(raw, &info) != nil {
+		return nil
+	}
+	keyID, _ := p["access_key"].(string)
+	for _, key := range info.Keys {
+		if key.Access == keyID {
+			return key.Active
+		}
+	}
+	return nil
 }

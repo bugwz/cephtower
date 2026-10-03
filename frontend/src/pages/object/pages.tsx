@@ -38,6 +38,7 @@ import { rgwSubuserCreateInput } from './rgwSubuserCreate'
 import { rgwSwiftRotationOptions, rgwSwiftRotationInput } from './rgwSwiftKeyRotation'
 import { rgwS3KeyOwnerOptions, rgwS3KeyCreateInput } from './rgwS3KeyCreate'
 import { rgwS3KeyDeleteOptions, rgwS3KeyDeleteInput } from './rgwS3KeyDelete'
+import { rgwS3KeyRotateInput } from './rgwS3KeyRotate'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
@@ -268,6 +269,19 @@ const definitions: Record<
         ],
         confirmation: (values, row) => `为 ${JSON.stringify(rgwS3KeyCreateInput(values, row).confirm_owner)} 创建已激活的 S3 访问密钥？该凭据将具有目标用户的现有权限；本系统不提供密钥查询，请确认已安全保存。`,
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwS3KeyCreateInput(values, row) })
+      },
+      { title: '轮换 S3 访问密钥', path: '/rgw/user/key', method: 'PATCH', successMessage: 'S3 Secret Key 已轮换并核验原激活状态；请更新客户端凭据',
+        disabledWhen: row => rgwS3KeyDeleteOptions(row).length ? undefined : '没有已采集的 S3 密钥，请先刷新库存',
+        changedValues: changed => Object.keys(changed).some(key => ['owner', 'access_key', 'secret_key'].includes(key)) ? { credentials_saved: undefined, confirm_owner: undefined } : {},
+        fields: [
+          { name: 'owner', label: '已有密钥所属用户', type: 'select', required: true, optionsLoader: async (_clusterId, row) => rgwS3KeyDeleteOptions(row) },
+          { name: 'access_key', label: '原 Access Key（保持不变，请从安全保存位置提供）', type: 'password', required: true },
+          { name: 'secret_key', label: '不同于旧值的新 Secret Key（预先保存，提交后不回显）', type: 'password', required: true },
+          { name: 'credentials_saved', label: '确认保存新凭据并准备更新客户端', type: 'select', required: true, options: [{ label: '已安全保存并准备切换客户端', value: 'saved' }] },
+          { name: 'confirm_owner', label: '输入完整凭据所属用户 ID 确认', required: true }
+        ],
+        confirmation: (values, row) => `轮换 ${JSON.stringify(rgwS3KeyRotateInput(values, row).confirm_owner)} 的指定 S3 Secret Key？旧 Secret Key 将失效，客户端需更新；Access Key、权限、密钥归属及原激活状态保持不变，新密钥不提供后续查询。`,
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwS3KeyRotateInput(values, row) })
       },
       { title: '删除 S3 访问密钥', path: '/rgw/user/key', method: 'DELETE', successMessage: '指定 S3 密钥已删除并回读确认；请检查受影响的客户端',
         disabledWhen: row => rgwS3KeyDeleteOptions(row).length ? undefined : '没有已采集的 S3 密钥，请先刷新库存',

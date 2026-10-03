@@ -87,7 +87,7 @@ func Supports(action string) bool {
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota", "cephfs_entry_snapshot.create", "cephfs_entry_snapshot.delete",
 		"cephfs_entry.create", "cephfs_entry.delete", "cephfs_entry.rename",
 		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.subuser", "rgw_user.policy", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_bucket.quota",
-		"rgw_account.create", "rgw_account.update", "rgw_account.quota", "rgw_account.delete", "rgw_role.create", "rgw_role.update", "rgw_role.delete", "rgw_role.policy", "rgw_key.create", "rgw_key.delete",
+		"rgw_account.create", "rgw_account.update", "rgw_account.quota", "rgw_account.delete", "rgw_role.create", "rgw_role.update", "rgw_role.delete", "rgw_role.policy", "rgw_key.create", "rgw_key.update", "rgw_key.delete",
 		"rgw_realm.create", "rgw_realm.update", "rgw_zonegroup.create", "rgw_zonegroup.update", "rgw_zone.create", "rgw_zone.update", "rgw_period.commit",
 		"nfs_cluster.create", "nfs_cluster.delete", "nfs_export.create", "nfs_export.update", "nfs_export.delete",
 		"smb_cluster.create", "smb_cluster.update", "smb_cluster.delete",
@@ -119,13 +119,17 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		return cephdomain.ActionResult{}, err
 	}
 	var upgradeTarget map[string]any
-	if request.Action == "rgw_key.create" || request.Action == "rgw_key.delete" {
+	var s3KeyActive *bool
+	if request.Action == "rgw_key.create" || request.Action == "rgw_key.update" || request.Action == "rgw_key.delete" {
 		checked, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 		if readErr != nil {
 			return cephdomain.ActionResult{}, normalize(readErr)
 		}
 		if !rgwS3KeyMatches(request.Action, checked.Stdout, request.Parameters, true) {
 			return cephdomain.ActionResult{}, invalid("credential owner or expected access key presence/absence could not be verified; no changes were made")
+		}
+		if request.Action == "rgw_key.update" {
+			s3KeyActive = rgwS3KeyActive(checked.Stdout, request.Parameters)
 		}
 	}
 	if request.Action == "rgw_user.subuser" {
@@ -312,7 +316,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: request.Action != "osd_deployment.preview", SensitiveArgs: spec.sensitive})
 	if err != nil {
-		if request.Action == "rgw_user.subuser" || request.Action == "rgw_key.create" || request.Action == "rgw_key.delete" {
+		if request.Action == "rgw_user.subuser" || request.Action == "rgw_key.create" || request.Action == "rgw_key.update" || request.Action == "rgw_key.delete" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "user credential command failed; inspect user, subuser and key state before any manual retry", Retryable: false}
 		}
 		if request.Action == "rgw_user.create" && rawText(request.Parameters, "account_id") != "" {
@@ -371,8 +375,14 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
-		if (request.Action == "rgw_key.create" || request.Action == "rgw_key.delete") && (err != nil || !rgwS3KeyMatches(request.Action, checked.Stdout, request.Parameters, false)) {
+		if (request.Action == "rgw_key.create" || request.Action == "rgw_key.update" || request.Action == "rgw_key.delete") && (err != nil || !rgwS3KeyMatches(request.Action, checked.Stdout, request.Parameters, false)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "S3 key command was accepted but credential state could not be verified; inspect user info before any manual retry", Retryable: false}
+		}
+		if request.Action == "rgw_key.update" {
+			active := rgwS3KeyActive(checked.Stdout, request.Parameters)
+			if active == nil || s3KeyActive == nil || *active != *s3KeyActive {
+				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "S3 credential was rotated but its activation state changed; inspect key state before any manual retry", Retryable: false}
+			}
 		}
 		if request.Action == "rgw_user.subuser" && (err != nil || !rgwSubuserMatches(checked.Stdout, request.Parameters, false)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "subuser command was accepted but subuser or key state could not be verified; inspect user info before any manual retry", Retryable: false}
@@ -2354,7 +2364,7 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		args = append(args, "--assume-role-policy-doc", policy)
 		return rgw(args, []string{"role", "get", "--role-name", name}), nil
-	case "rgw_key.create", "rgw_key.delete":
+	case "rgw_key.create", "rgw_key.update", "rgw_key.delete":
 		return buildRGWS3Key(action, p, rgw)
 	case "rgw_zone.update":
 		name, err := required(p, "name")

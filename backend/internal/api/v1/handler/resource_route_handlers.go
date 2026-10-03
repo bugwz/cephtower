@@ -621,6 +621,10 @@ func (h *Handler) DeleteRGWUserKey(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_key", "rgw_key.delete", "high")(w, r)
 }
 
+func (h *Handler) UpdateRGWUserKey(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_key", "rgw_key.update", "high")(w, r)
+}
+
 func (h *Handler) ListRGWAccounts(w http.ResponseWriter, r *http.Request) {
 	h.ReadResource("rgw_account", false)(w, r)
 }

@@ -204,14 +204,14 @@ func TestRGWAccountCreateLimitContract(t *testing.T) {
 }
 
 func TestRGWUserMutationIdentity(t *testing.T) {
-	for _, action := range []string{"rgw_user.update", "rgw_user.delete", "rgw_key.create", "rgw_key.delete"} {
+	for _, action := range []string{"rgw_user.update", "rgw_user.delete", "rgw_key.create", "rgw_key.update", "rgw_key.delete"} {
 		body := func(uid any) map[string]any {
 			value := map[string]any{"cluster_id": float64(1), "uid": uid}
-			if action == "rgw_key.create" || action == "rgw_key.delete" {
+			if action == "rgw_key.create" || action == "rgw_key.update" || action == "rgw_key.delete" {
 				value["access_key"] = "test-access"
 				value["confirm_owner"] = uid
 			}
-			if action == "rgw_key.create" {
+			if action == "rgw_key.create" || action == "rgw_key.update" {
 				value["secret_key"] = "test-secret"
 			}
 			return value

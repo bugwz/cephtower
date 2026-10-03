@@ -100,6 +100,14 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if err != nil || row.Risk != "high" || row.Action != "rgw_key.delete" || row.ResourceKey != "rgw/user/tenant$user/key" {
 			t.Fatalf("wrong key deletion: %+v %v", row, err)
 		}
+		response = sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/user/key", fmt.Sprintf(`{"cluster_id":%d,"uid":"tenant$user","confirm_owner":%q,"access_key":"ACCESS123","secret_key":"RotatedSecret"%s}`, cluster.ID, owner, fields), "s3-key-rotate-"+sub)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("S3 key rotation: %d %s", response.Code, response.Body.String())
+		}
+		row, err = db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || row.Risk != "high" || row.Action != "rgw_key.update" || row.ResourceKey != "rgw/user/tenant$user/key" {
+			t.Fatalf("wrong key rotation: %+v %v", row, err)
+		}
 	}
 	for _, root := range []bool{false, true} {
 		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/user", fmt.Sprintf(`{"cluster_id":%d,"uid":"new-user","display_name":"valid-name","account_id":"RGW12345678901234567","account_root":%t}`, cluster.ID, root), fmt.Sprintf("create-account-user-%t", root))

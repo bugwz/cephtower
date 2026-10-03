@@ -137,7 +137,7 @@ func TestRGWAccountMigrationRefreshesAffectedResources(t *testing.T) {
 }
 
 func TestRGWSubuserRefreshDoesNotRepeatMutation(t *testing.T) {
-	for _, action := range []string{"rgw_user.subuser", "rgw_key.create", "rgw_key.delete"} {
+	for _, action := range []string{"rgw_user.subuser", "rgw_key.create", "rgw_key.update", "rgw_key.delete"} {
 		for _, fail := range []bool{false, true} {
 			mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{}}}
 			reconciler := &reconcileExecutorFake{refreshResult: true}
@@ -145,7 +145,7 @@ func TestRGWSubuserRefreshDoesNotRepeatMutation(t *testing.T) {
 				reconciler.err = errors.New("refresh failed")
 			}
 			kind := "rgw_user"
-			if action == "rgw_key.create" || action == "rgw_key.delete" {
+			if action == "rgw_key.create" || action == "rgw_key.update" || action == "rgw_key.delete" {
 				kind = "rgw_key"
 			}
 			_, err := NewActionDispatcher(mutations, nil, reconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: action, ResourceKind: kind})
