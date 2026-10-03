@@ -680,6 +680,13 @@ func (p *NativeProvider) enrichRBDImage(ctx context.Context, access ClusterAcces
 					}
 				}
 			}
+			if cache, ok := status["persistent_cache"].(map[string]any); ok {
+				for field, value := range cache {
+					if number, ok := value.(json.Number); ok {
+						cache[field] = number.String()
+					}
+				}
+			}
 			image.RuntimeStatus = status
 		}
 	}

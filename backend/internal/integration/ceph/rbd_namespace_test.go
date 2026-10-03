@@ -174,7 +174,7 @@ func TestMalformedMirroringInfoDoesNotBecomeEmptyPoolState(t *testing.T) {
 func TestRBDImageInfoEnrichment(t *testing.T) {
 	base := malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rbd_image_config": []byte(`[{"name":"rbd_qos_iops_limit","value":"1000","source":"image"}]`),
-		"collect.rbd_image_status": []byte(`{"watchers":[{"address":"10.0.0.1:0/1","client":9007199254740993,"cookie":18446744073709551615}],"migration":{"state":"executed"},"persistent_cache":{"clean":true}}`),
+		"collect.rbd_image_status": []byte(`{"watchers":[{"address":"10.0.0.1:0/1","client":9007199254740993,"cookie":18446744073709551615}],"migration":{"state":"executed"},"persistent_cache":{"clean":true,"cached_bytes":18446744073709551615,"dirty_bytes":0,"hits_full_percent":-1}}`),
 		"collect.rbd_image_info":   []byte(`{"name":"image","size":1073741824,"objects":256,"object_size":4194304,"order":22,"stripe_unit":4096,"stripe_count":2,"create_timestamp":"2026-09-23T02:03:04Z","data_pool":"rbd-data","block_name_prefix":"rbd_data.1","features":["layering","exclusive-lock","fast-diff"],"parent":{"pool":"parent-pool","image":"parent","snapshot":"base"},"mirroring":{"mode":"snapshot","state":"enabled","global_id":"global-1","primary":false}}`),
 		"collect.rbd_image_usage":  []byte(`{"images":[{"name":"image","snapshot":"base","provisioned_size":1073741824,"used_size":1048576},{"name":"image","provisioned_size":1073741824,"used_size":2097152}]}`),
 	}}
@@ -183,6 +183,10 @@ func TestRBDImageInfoEnrichment(t *testing.T) {
 	payload := cephdomain.RBDImage{ImagePath: "pool/ns/image"}
 	provider.enrichRBDImage(context.Background(), ClusterAccess{}, payload.ImagePath, &payload)
 	watchers := objectList(payload.RuntimeStatus["watchers"])
+	cache := payload.RuntimeStatus["persistent_cache"].(map[string]any)
+	if cache["cached_bytes"] != "18446744073709551615" || cache["dirty_bytes"] != "0" || cache["hits_full_percent"] != "-1" || cache["clean"] != true {
+		t.Fatalf("cache metrics lost precision or boolean type: %#v", cache)
+	}
 	if len(watchers) != 1 || watchers[0]["client"] != "9007199254740993" || watchers[0]["cookie"] != "18446744073709551615" {
 		t.Fatalf("watcher identifiers lost precision: %v", watchers)
 	}

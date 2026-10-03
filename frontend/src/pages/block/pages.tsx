@@ -2,6 +2,7 @@ import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceLi
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { PoolPage } from './PoolPage'
 import { ImageMirrorSchedule, MirrorSchedules } from './MirrorSchedules'
+import { RbdRuntimeStatus } from './RbdRuntimeStatus'
 
 export function BlockPoolsPage() {
   return <PoolPage />
@@ -220,7 +221,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'stripe_count', title: '条带数量' },
       { key: 'parent', title: '父镜像' },
       { key: 'details', title: '镜像详情' },
-      { key: 'runtime_status', title: '连接客户端 / 迁移 / 缓存状态' },
+      { key: 'runtime_status', title: '连接客户端 / 迁移 / 缓存状态', render: (value, row) => <RbdRuntimeStatus key={String(row.cluster_id ?? '') + ':' + imageSpec(row)} value={value} name={imageSpec(row)} /> },
       { key: 'configuration', title: '生效配置及来源' },
       { key: 'mirror_mode', title: '同步模式' },
       { key: 'mirror_state', title: '同步状态' },
