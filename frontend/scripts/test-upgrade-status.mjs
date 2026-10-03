@@ -11,7 +11,7 @@ const controlCode = ts.transpileModule(controlNode.getText(tree), { compilerOpti
 for (const phase of ['active', 'before', 'during']) {
   const active = { current: phase !== 'before' }
   const writes = []; const ui = []
-  const env = { active, pending: { action: 'pause', clusterId: 3 }, selectedClusterId: 3,
+  const env = { active, needsCollection: false, pending: { action: 'pause', clusterId: 3 }, selectedClusterId: 3,
     record: { data: {}, stale: false, resource_version: 7 }, operation: { loading: false, run: (fn) => fn() },
     upgradeControlAllowed: () => true, controlLabels: { pause: '暂停升级' },
     mutateResource: async (...args) => { writes.push(args); if (phase === 'during') active.current = false },
@@ -24,6 +24,22 @@ for (const phase of ['active', 'before', 'during']) {
   if (writes.length) assert.deepEqual(writes[0][2], { cluster_id: 3, action: 'pause' })
 }
 const functions = tree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['upgradeStatusFields', 'upgradeControlAllowed'].includes(node.name.text))
+for (const stage of ['mutation', 'collection']) {
+  let locked = false; let pending = true; let error = ''; let writes = 0
+  const env = { active: { current: true }, needsCollection: false, pending: { action: 'pause', clusterId: 3 }, selectedClusterId: 3,
+    record: { data: {}, stale: false, resource_version: 7 }, operation: { loading: false, run: (fn) => fn() },
+    upgradeControlAllowed: () => true, mutateResource: async () => { writes++; if (stage === 'mutation') throw new Error('uncertain') },
+    refreshResource: async () => { throw new Error('uncertain') }, setNeedsCollection: (value) => { locked = value },
+    setPending: (value) => { pending = value }, setError: (value) => { error = value } }
+  const invoke = () => new Function(...Object.keys(env), `${controlCode}; return control`)(...Object.values(env))()
+  await invoke()
+  assert.equal(locked, true); assert.equal(pending, null); assert.equal(error, 'uncertain')
+  env.needsCollection = true
+  await invoke()
+  assert.equal(writes, 1)
+}
+assert.ok(source.includes('disabled={needsCollection || loading || operation.loading}'))
+assert.ok(source.includes('setNeedsCollection(false)'))
 const code = ts.transpileModule(functions.map((fn) => fn.getText(tree)).join('\n'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
 const exports = {}
 new Function('exports', code)(exports)
