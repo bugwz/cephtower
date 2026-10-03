@@ -209,10 +209,10 @@ func TestRGWUserMutationIdentity(t *testing.T) {
 			value := map[string]any{"cluster_id": float64(1), "uid": uid}
 			if action == "rgw_key.create" || action == "rgw_key.delete" {
 				value["access_key"] = "test-access"
+				value["confirm_owner"] = uid
 			}
 			if action == "rgw_key.create" {
 				value["secret_key"] = "test-secret"
-				value["confirm_owner"] = uid
 			}
 			return value
 		}

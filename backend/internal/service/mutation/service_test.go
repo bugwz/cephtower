@@ -81,7 +81,7 @@ func TestEveryNativeActionBuildsRegisteredCommand(t *testing.T) {
 		{"rgw_role.delete", "rgw/role/reader", map[string]any{"name": "reader"}},
 		{"rgw_role.create", "rgw/role", map[string]any{"name": "reader", "path": "/", "assume_role_policy": `{"Version":"2012-10-17","Statement":[]}`}},
 		{"rgw_key.create", "rgw/user/user1/key", map[string]any{"uid": "user1", "confirm_owner": "user1", "access_key": "ACCESS123", "secret_key": "SECRET123"}},
-		{"rgw_key.delete", "rgw/user/user1/key", map[string]any{"access_key": "ACCESS123"}},
+		{"rgw_key.delete", "rgw/user/user1/key", map[string]any{"uid": "user1", "confirm_owner": "user1", "access_key": "ACCESS123"}},
 		{"rgw_realm.create", "rgw/realm", map[string]any{"name": "realm1"}}, {"rgw_zonegroup.create", "rgw/zonegroup", map[string]any{"name": "zg1"}}, {"rgw_zone.create", "rgw/zone", map[string]any{"name": "zone1"}}, {"rgw_period.commit", "rgw/period/commit", nil},
 		{"nfs_cluster.create", "nfs/cluster", map[string]any{"name": "nfs1"}}, {"nfs_cluster.delete", "nfs/cluster/nfs1", nil},
 		{"nfs_export.create", "nfs/export", map[string]any{"cluster": "nfs1", "pseudo": "/export", "path": "/data", "filesystem": "cephfs"}},

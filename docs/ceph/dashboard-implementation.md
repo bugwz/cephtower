@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+S3 密钥删除增加前端入口，增强既有 `DELETE /rgw/user/key` 的完整归属确认与可选子用户范围，映射 `key rm --uid --key-type=s3 --access-key`。依据参考 `controllers/rgw.py::delete_key` 和 `RGWAccessKeyPool::execute_remove`，仅移除指定 S3 Key，不删除用户或子用户。库存中的 Access Key 已脱敏，表单要求提供原 Key，并从已有 Key 元数据选择所属用户；确认文字不包含 Key，明确提醒客户端访问失效。后端预检完整 UID、子用户存在及唯一 Key 的精确归属，执行后要求 Key 已不存在且用户信息有效，不能把缺失列表当作删除成功；允许删除停用 Key。敏感参数保护、高风险入队、用户库存刷新及不确定结果禁止自动重试均已接入。用户/子用户、归属错误、重复或缺失 Key、读写失败、残留 Key、API 和前端绑定测试通过，完整前后端及 OpenAPI 校验通过；生成器输出未变化。未实机或浏览器视觉验证，S3 轮换和自动生成/安全发放等缺口仍待补齐。
+
 S3 访问密钥新增前端创建入口，支持当前用户本身及其已有子用户，对齐参考 `controllers/rgw.py::create_key` 的显式凭据模式。增强既有 `POST /rgw/user/key`：要求完整归属确认，按高风险入队，命令映射 `key create --uid --key-type=s3 [--subuser] --access-key --secret-key`。依据 `RGWAccessKeyPool::execute_add/modify_key`，相同 Access Key 原生会走更新分支，因此先 `user info` 核验完整 UID、子用户存在和 Key 不存在，再回读核对目标归属、凭据与激活状态；系统范围 Key 重复由原生 `generate_key` 检查。这不是与外部管理工具之间的原子创建保证，跨进程并发变更仍需实际集群验证。凭据预先保存、输入框隐藏、确认文字不包含密钥，后台加密参数并标记敏感参数；创建后的采集改为刷新 `rgw_user` 而非不存在的独立 Key 库存，写入/回读/刷新失败不自动重试。用户与子用户两条链路、既有 Key 拒绝、归属错误、敏感参数、API 高风险及表单测试通过，完整前后端检查与 OpenAPI 校验通过；尚未实机或浏览器视觉验证。S3 删除/轮换前端、自动生成与一次性安全发放仍需继续补齐。
 
 已有 Swift 子用户密钥增加显式凭据轮换入口，复用高风险 `POST /rgw/user/subuser` 的 `rotate-swift-key` 操作，映射 `key create --subuser --key-type=swift --secret-key --key-active`。依据参考用户表单子用户更新、`RGWAccessKeyPool::execute_add/modify_key` 和 CLI `KEY_CREATE`：已有 Swift key 会被替换，原生实现重新构造密钥对象，因此必须显式保留激活状态，避免停用密钥被意外启用。前端从同 UID 子用户与 Swift 密钥关联中选择，拒绝重复或未知状态；确认旧凭据失效、新凭据已保存及客户端切换。后端预检实际 UID、子用户、唯一 Swift key、预期激活状态以及新旧密钥不同，回读核验新密钥与保留状态，不传权限或 S3 密钥参数；敏感参数加密落库、命令参数脱敏，写入/回读/库存失败不自动重试。测试覆盖两种激活状态、状态漂移、重复项、旧密钥提交、读写失败、表单绑定及 API 高风险入队；完整前后端检查和 OpenAPI 校验通过。未真实集群或浏览器视觉验证；S3 密钥管理、自动生成及一次性安全发放仍不因此宣称完成。

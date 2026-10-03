@@ -102,7 +102,7 @@ func TestRGWS3KeyCreateValidation(t *testing.T) {
 	}
 	p := map[string]any{"uid": "user", "subuser": "sub", "confirm_owner": "user:sub", "access_key": "ACCESS", "secret_key": "secret"}
 	for _, raw := range []string{`{}`, `null`, `{"full_user_id":"user","keys":[]}`, `{"full_user_id":"user","subusers":[{"id":"user:sub"},{"id":"user:sub"}],"keys":[]}`, `{"full_user_id":"user","subusers":[{"id":"user:sub"}],"keys":[{"user":"user:other","access_key":"ACCESS"}]}`} {
-		if rgwS3KeyCreationMatches([]byte(raw), p, true) {
+		if rgwS3KeyMatches("rgw_key.create", []byte(raw), p, true) {
 			t.Fatalf("accepted uncertain absence or owner: %s", raw)
 		}
 	}

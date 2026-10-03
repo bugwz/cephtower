@@ -6,20 +6,26 @@ import (
 	"strings"
 )
 
-func buildRGWS3KeyCreate(p map[string]any, rgw func([]string, []string) command) (command, error) {
+func buildRGWS3Key(action string, p map[string]any, rgw func([]string, []string) command) (command, error) {
+	remove := action == "rgw_key.delete"
 	uid, _ := p["uid"].(string)
 	if !regexp.MustCompile(`^[A-Za-z0-9_.:@$-]+$`).MatchString(uid) || strings.HasPrefix(uid, "-") {
 		return command{}, invalid("uid is invalid")
 	}
 	owner := uid
 	args := []string{"key", "create", "--uid", uid, "--key-type=s3"}
+	if remove {
+		args[1] = "rm"
+	}
 	if value, present := p["subuser"]; present {
 		name, ok := value.(string)
 		if !ok || !rgwSubuserName.MatchString(name) || strings.HasPrefix(name, "-") {
 			return command{}, invalid("subuser must be a local subuser name")
 		}
 		owner += ":" + name
-		args = append(args, "--subuser="+name)
+		if !remove {
+			args = append(args, "--subuser="+name)
+		}
 	}
 	if confirmed, _ := p["confirm_owner"].(string); confirmed != owner {
 		return command{}, invalid("confirm_owner must match the full credential owner")
@@ -27,6 +33,15 @@ func buildRGWS3KeyCreate(p map[string]any, rgw func([]string, []string) command)
 	key, ok := p["access_key"].(string)
 	if !ok || !regexp.MustCompile(`^[A-Za-z0-9]{1,128}$`).MatchString(key) {
 		return command{}, invalid("access_key must contain 1 to 128 alphanumeric characters")
+	}
+	if remove {
+		if _, present := p["secret_key"]; present {
+			return command{}, invalid("secret_key is not accepted for deletion")
+		}
+		args = append(args, "--access-key="+key)
+		cmd := rgw(args, []string{"user", "info", "--uid", uid})
+		cmd.sensitive = map[int]struct{}{len(args) - 1: {}}
+		return cmd, nil
 	}
 	secret, err := rgwSubuserSecret(p)
 	if err != nil {
@@ -38,7 +53,8 @@ func buildRGWS3KeyCreate(p map[string]any, rgw func([]string, []string) command)
 	return cmd, nil
 }
 
-func rgwS3KeyCreationMatches(raw []byte, p map[string]any, before bool) bool {
+func rgwS3KeyMatches(action string, raw []byte, p map[string]any, before bool) bool {
+	remove := action == "rgw_key.delete"
 	var info struct {
 		UID      string `json:"full_user_id"`
 		Subusers []struct {
@@ -75,11 +91,18 @@ func rgwS3KeyCreationMatches(raw []byte, p map[string]any, before bool) bool {
 			return false
 		}
 		if key.Access == keyID {
-			if before || key.User != owner || key.Secret != secret || key.Active == nil || !*key.Active {
+			if remove {
+				if !before || key.User != owner {
+					return false
+				}
+			} else if before || key.User != owner || key.Secret != secret || key.Active == nil || !*key.Active {
 				return false
 			}
 			count++
 		}
+	}
+	if remove {
+		return !before || count == 1
 	}
 	return before || count == 1
 }

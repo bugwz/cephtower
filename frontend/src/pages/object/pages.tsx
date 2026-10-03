@@ -37,6 +37,7 @@ import { rgwSubuserOptions, rgwSubuserInput, rgwSubuserPermissionOptions } from 
 import { rgwSubuserCreateInput } from './rgwSubuserCreate'
 import { rgwSwiftRotationOptions, rgwSwiftRotationInput } from './rgwSwiftKeyRotation'
 import { rgwS3KeyOwnerOptions, rgwS3KeyCreateInput } from './rgwS3KeyCreate'
+import { rgwS3KeyDeleteOptions, rgwS3KeyDeleteInput } from './rgwS3KeyDelete'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
@@ -267,6 +268,17 @@ const definitions: Record<
         ],
         confirmation: (values, row) => `为 ${JSON.stringify(rgwS3KeyCreateInput(values, row).confirm_owner)} 创建已激活的 S3 访问密钥？该凭据将具有目标用户的现有权限；本系统不提供密钥查询，请确认已安全保存。`,
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwS3KeyCreateInput(values, row) })
+      },
+      { title: '删除 S3 访问密钥', path: '/rgw/user/key', method: 'DELETE', successMessage: '指定 S3 密钥已删除并回读确认；请检查受影响的客户端',
+        disabledWhen: row => rgwS3KeyDeleteOptions(row).length ? undefined : '没有已采集的 S3 密钥，请先刷新库存',
+        changedValues: changed => Object.keys(changed).some(key => ['owner', 'access_key'].includes(key)) ? { confirm_owner: undefined } : {},
+        fields: [
+          { name: 'owner', label: '待删除密钥所属用户', type: 'select', required: true, optionsLoader: async (_clusterId, row) => rgwS3KeyDeleteOptions(row) },
+          { name: 'access_key', label: '待删除的原 Access Key（库存已脱敏，请从安全保存位置提供）', type: 'password', required: true },
+          { name: 'confirm_owner', label: '输入完整凭据所属用户 ID 确认', required: true }
+        ],
+        confirmation: (values, row) => `删除 ${JSON.stringify(rgwS3KeyDeleteInput(values, row).confirm_owner)} 的指定 S3 Access Key？使用该凭据的客户端将无法继续访问，操作不可恢复；不会删除用户、子用户或其他密钥。`,
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwS3KeyDeleteInput(values, row) })
       },
       { title: '创建子用户', path: '/rgw/user/subuser', method: 'POST', successMessage: '子用户、权限及凭据已创建并回读验证；密钥不会显示在库存中',
         changedValues: (changed) => Object.keys(changed).some(key => ['subuser', 'key_type', 'access_key', 'secret_key'].includes(key)) ? { credentials_saved: undefined, confirm_subuser: undefined } : {},
