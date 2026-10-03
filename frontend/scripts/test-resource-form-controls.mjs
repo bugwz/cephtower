@@ -107,6 +107,18 @@ for (const children of [undefined, null, {}, '']) assert.match(snapshotDeleteRea
 for (const children of [[{ trash: true }], [{}], [null]]) assert.match(snapshotDeleteReason({ is_protected: false, children }), /仍有子镜像/)
 
 const usageExports = {}
+const groupFormExports = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdGroupSnapshotForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(groupFormExports)
+const groupSnapshotRow = { snapshots: [{ snapshot: ' ready ', state: 'complete' }, { snapshot: 'partial', state: 'incomplete' }, { snapshot: 'unknown' }] }
+assert.deepEqual(groupFormExports.groupSnapshotOptions(groupSnapshotRow, 'rollback'), [{ label: ' ready ', value: ' ready ' }])
+assert.equal(groupFormExports.groupSnapshotOptions(groupSnapshotRow, 'remove').length, 3)
+assert.deepEqual(groupFormExports.groupSnapshotOptions(undefined, 'create'), [])
+assert.equal(groupFormExports.groupSnapshotName({ action: 'create', name: 'new', existing_name: 'stale' }), 'new')
+assert.equal(groupFormExports.groupSnapshotName({ action: 'rollback', existing_name: ' ready ', name: 'stale' }, groupSnapshotRow), ' ready ')
+assert.equal(groupFormExports.groupSnapshotName({ action: 'rename', existing_name: 'partial' }, groupSnapshotRow), 'partial')
+for (const existing_name of ['partial', 'unknown', 'foreign', undefined]) assert.throws(() => groupFormExports.groupSnapshotName({ action: 'rollback', existing_name }, groupSnapshotRow), /请选择/)
+for (const snapshots of [null, undefined, {}, [null], [{}], [{ snapshot: 'x' }, { snapshot: 'x' }]]) assert.throws(() => groupFormExports.groupSnapshotOptions({ snapshots }, 'remove'), /组快照信息/)
+assert.deepEqual(groupFormExports.groupSnapshotOptions({ snapshots: [] }, 'remove'), [])
 const groupDetailsSource = readFileSync(new URL('../src/pages/block/RbdGroupDetails.tsx', import.meta.url), 'utf8')
 const groupDetailsTree = ts.createSourceFile('groups.tsx', groupDetailsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 function groupHelper(name) {
@@ -172,6 +184,8 @@ for (const value of [undefined, null, 0, 4096, -1, 0.5, NaN, Infinity, Number.MA
 console.log('RBD usage distinguishes missing fast-diff, unavailable statistics and valid zero')
 
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')
+assert.ok(blockSource.includes('optionsLoader:async(_clusterId,row,values)=>groupSnapshotOptions(row,values?.action)'))
+assert.ok(blockSource.includes('name:groupSnapshotName(values,row)'))
 assert.ok(blockSource.includes('<RbdGroupMembers value={value} />'))
 assert.ok(blockSource.includes('<RbdGroupSnapshots value={value} />'))
 assert.ok(blockSource.includes('disabledWhen: rbdImageDeleteReason'))

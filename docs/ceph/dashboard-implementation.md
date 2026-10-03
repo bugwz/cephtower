@@ -1283,6 +1283,12 @@ state. Unknown states stay explicit, IDs stay strings, and absent/malformed list
 not masquerade as empty groups. This extends the project's existing native group UI;
 the bundled Dashboard revision has no separate RBD group frontend page.
 
+Group snapshot remove/rename/rollback forms select from that group's collected list,
+while creation retains a separate name input. Rollback options require native
+`complete` state, matching `librbd/api/Group.cc`; request construction repeats the
+scope/state check. Invalid or duplicate snapshot identities cannot produce options.
+These inventory checks do not replace the command's live validation.
+
 Shared resource forms re-evaluate row action guards before showing confirmation and
 again after confirmation, before issuing any mutation. RBD restore and other guarded
 forms therefore enforce the same predicate at open and submit time; this is a check

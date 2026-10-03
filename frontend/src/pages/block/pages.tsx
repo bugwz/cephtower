@@ -15,6 +15,7 @@ import { rbdMirrorRoleReason } from './rbdMirrorRole'
 import { rbdImageDeleteReason } from './rbdImageDelete'
 import { rbdTrashMoveReason } from './rbdTrashMove'
 import { RbdGroupMembers, RbdGroupSnapshots } from './RbdGroupDetails'
+import { groupSnapshotName, groupSnapshotOptions } from './rbdGroupSnapshotForm'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
 import { LiveMirrorScheduleStatus } from './LiveMirrorScheduleStatus'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -497,10 +498,13 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       buildBody:(values,clusterId,row) => ({cluster_id:clusterId,group_spec:String(row?.group_spec ?? row?.natural_key),image:String(values.image ?? ''),action:String(values.action)})
     },{
       title:'镜像组快照操作',buttonLabel:'组快照',path:'/rbd/group/snapshot',method:'POST',successMessage:'镜像组快照操作已完成',
-      fields:[{name:'action',label:'操作',type:'select',required:true,options:[{label:'创建',value:'create'},{label:'删除',value:'remove'},{label:'回滚',value:'rollback'},{label:'重命名',value:'rename'}]},{name:'name',label:'快照名称',required:true},{name:'new_name',label:'新快照名',required:true,visibleWhen:(values)=>values.action==='rename'}],
+      fields:[{name:'action',label:'操作',type:'select',required:true,options:[{label:'创建',value:'create'},{label:'删除',value:'remove'},{label:'回滚',value:'rollback'},{label:'重命名',value:'rename'}]},
+        {name:'name',label:'快照名称',required:true,visibleWhen:(values)=>values.action==='create'},
+        {name:'existing_name',label:'已有组快照（回滚仅限已完成）',type:'select',required:true,visibleWhen:(values)=>['remove','rename','rollback'].includes(String(values.action)),optionsDependencies:['action'],optionsLoader:async(_clusterId,row,values)=>groupSnapshotOptions(row,values?.action)},
+        {name:'new_name',label:'新快照名',required:true,visibleWhen:(values)=>values.action==='rename'}],
       initialValues:{action:'create'},
-      confirmation:(values,row) => values.action === 'rollback' ? `将组 ${String(row?.group_spec)} 回滚到 ${String(values.name)}，组内镜像在此快照后的修改将丢失。请确认相关应用已停止写入。` : values.action === 'remove' ? `删除组 ${String(row?.group_spec)} 的快照 ${String(values.name)}？` : undefined,
-      buildBody:(values,clusterId,row) => ({cluster_id:clusterId,group_spec:String(row?.group_spec ?? row?.natural_key),name:String(values.name ?? ''),action:String(values.action),...(values.action==='rename'?{new_name:String(values.new_name ?? '')}:{})})
+      confirmation:(values,row) => values.action === 'rollback' ? `将组 ${String(row?.group_spec)} 回滚到 ${groupSnapshotName(values,row)}，组内镜像在此快照后的修改将丢失。请确认相关应用已停止写入。` : values.action === 'remove' ? `删除组 ${String(row?.group_spec)} 的快照 ${groupSnapshotName(values,row)}？` : undefined,
+      buildBody:(values,clusterId,row) => ({cluster_id:clusterId,group_spec:String(row?.group_spec ?? row?.natural_key),name:groupSnapshotName(values,row),action:String(values.action),...(values.action==='rename'?{new_name:String(values.new_name ?? '')}:{})})
     }],
     columns: [
       { key: 'pool', title: 'Pool' },
