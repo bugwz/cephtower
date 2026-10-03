@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### Zonegroup 管道桶选择器与权限模式编辑
+
+新增 PATCH /api/v1/rgw/zonegroup/sync/pipe 和对应表单，使用原生 sync group pipe modify 更新完整源/目标租户、桶、实例选择器以及 system/user 模式和 UID。请求不接受 Zone 成员或高级参数；校验唯一已有管道和完整组快照，回读完整 Zonegroup，保留组状态、流、管道 Zone 成员、过滤器、优先级、目标 ACL/存储类及其他参数。system 模式按原生语义保留已存储 UID，不删除用户或凭据；未改变配置拒绝写入。
+
+有 Realm 时提交并核验发布后的策略；界面明确空租户不限租户、system 保留 UID、范围/权限变化及非事务并发风险。离线测试覆盖两种目标模式和 Realm 归属、孤立 Zone 保留、大整数与高级参数不变、同名歧义/缺失/过期/未改变拒绝、各阶段失败、命令不携带 Zone 标志、API 字段限制和前端绑定。无真实集群或浏览器视觉验证；Zonegroup 管道 Zone 成员编辑仍待补齐。
+
 #### Zonegroup 同步管道删除
 
 新增 DELETE /api/v1/rgw/zonegroup/sync/pipe 与整管道删除入口，对齐原生 SYNC_GROUP_PIPE_REMOVE 在不携带源/目标选择器时的删除语义。API 拒绝选择器字段，命令仅带明确 Zonegroup ID、组 ID 和管道 ID。删除前校验完整组快照和唯一管道，删除后检查完整配置，保留组状态、流、其他管道及未知参数；允许清理含孤立 Zone ID 的管道，不依赖当前成员映射。

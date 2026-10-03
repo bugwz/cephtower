@@ -6,8 +6,8 @@ const pipeFields={}
 new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketSyncGroupForm.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(pipeFields)
 new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwZonegroupSyncGroup.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api,()=>pipeFields)
 const source=ts.createSourceFile('pages.tsx',readFileSync(new URL('../src/pages/object/pages.tsx',import.meta.url),'utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX)
-let action,createAction,deleteAction,flowAction,flowDeleteAction,flowUpdateAction,pipeAction,pipeDeleteAction
-function visit(node){if(ts.isObjectLiteralExpression(node)){const title=node.properties.find(p=>ts.isPropertyAssignment(p)&&p.name.getText(source)==='title')?.initializer.text;if(['修改 Zonegroup 同步组状态','创建 Zonegroup 同步组','删除 Zonegroup 同步组','创建 Zonegroup 同步流','删除 Zonegroup 同步流','修改 Zonegroup 对称流成员','创建 Zonegroup 同步管道','删除 Zonegroup 同步管道'].includes(title)){const code=ts.transpileModule(`const action=${node.getText(source)}`,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;const found=new Function(...Object.keys(api),`${code};return action`)(...Object.values(api));if(title==='创建 Zonegroup 同步组')createAction=found;else if(title==='删除 Zonegroup 同步组')deleteAction=found;else if(title==='创建 Zonegroup 同步流')flowAction=found;else if(title==='删除 Zonegroup 同步流')flowDeleteAction=found;else if(title==='修改 Zonegroup 对称流成员')flowUpdateAction=found;else if(title==='创建 Zonegroup 同步管道')pipeAction=found;else if(title==='删除 Zonegroup 同步管道')pipeDeleteAction=found;else action=found}}ts.forEachChild(node,visit)}visit(source)
+let action,createAction,deleteAction,flowAction,flowDeleteAction,flowUpdateAction,pipeAction,pipeDeleteAction,pipeUpdateAction
+function visit(node){if(ts.isObjectLiteralExpression(node)){const title=node.properties.find(p=>ts.isPropertyAssignment(p)&&p.name.getText(source)==='title')?.initializer.text;if(['修改 Zonegroup 同步组状态','创建 Zonegroup 同步组','删除 Zonegroup 同步组','创建 Zonegroup 同步流','删除 Zonegroup 同步流','修改 Zonegroup 对称流成员','创建 Zonegroup 同步管道','删除 Zonegroup 同步管道','编辑 Zonegroup 管道选择器与身份'].includes(title)){const code=ts.transpileModule(`const action=${node.getText(source)}`,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;const found=new Function(...Object.keys(api),`${code};return action`)(...Object.values(api));if(title==='创建 Zonegroup 同步组')createAction=found;else if(title==='删除 Zonegroup 同步组')deleteAction=found;else if(title==='创建 Zonegroup 同步流')flowAction=found;else if(title==='删除 Zonegroup 同步流')flowDeleteAction=found;else if(title==='修改 Zonegroup 对称流成员')flowUpdateAction=found;else if(title==='创建 Zonegroup 同步管道')pipeAction=found;else if(title==='删除 Zonegroup 同步管道')pipeDeleteAction=found;else if(title==='编辑 Zonegroup 管道选择器与身份')pipeUpdateAction=found;else action=found}}ts.forEachChild(node,visit)}visit(source)
 const group={id:' g ',status:'allowed',data_flow:{},pipes:[]}
 for(const realm of ['','realm']){
  const row={id:'zg',name:'east',realm_id:realm,sync_policy:{groups:[group]}}
@@ -125,3 +125,18 @@ for(const realm of ['','realm']){
  assert.equal(pipeDeleteAction.buildBody({...values,source_zones:['*']},7,row).source_zones,undefined)
 }
 console.log('zonegroup pipe deletion form and binding checks passed')
+assert.equal(pipeUpdateAction.path,'/rgw/zonegroup/sync/pipe')
+assert.equal(pipeUpdateAction.method,'PATCH')
+for(const realm of ['','realm']){
+ const pipe={id:'p',source:{zones:['orphan'],bucket:'team/photos'},params:{mode:'user',user:'team$u'}}
+ const g={...group,pipes:[pipe]}
+ const row={id:'zg',name:'east',realm_id:realm,zones:[],sync_policy:{groups:[g]}}
+ const values={...pipeUpdateAction.initialValues(row),group_id:g.id,pipe_id:'p',source_bucket:'*',dest_bucket:'archive',mode:'system',confirm_pipe_update:'acknowledged'}
+ assert.deepEqual(pipeUpdateAction.buildBody(values,7,row),{cluster_id:7,name:'east',zonegroup_id:'zg',realm_id:realm,group_id:g.id,pipe_id:'p',source_tenant:'',source_bucket:'*',source_bucket_id:'*',dest_tenant:'',dest_bucket:'archive',dest_bucket_id:'*',mode:'system',expected_group:JSON.stringify(g)})
+ assert.equal(pipeUpdateAction.buildBody({...values,mode:'user',user:'new$u'},7,row).user,'new$u')
+ assert.match(pipeUpdateAction.confirmation(values,row),/保留已存储 UID.*保留 Zone 成员、过滤器.*非事务.*不自动回滚或重试/)
+ for(const change of [{pipe_id:'missing'},{group_id:'missing'},{realm_id:'wrong'},{confirm_pipe_update:true},{mode:'user'},{user:'u'},{source_bucket:'a/b'}])assert.throws(()=>pipeUpdateAction.buildBody({...values,...change},7,row))
+ assert.equal(pipeUpdateAction.buildBody({...values,source_zones_json:'["*"]'},7,row).source_zones,undefined)
+ assert.equal(row.sync_policy.groups[0].pipes.length,1)
+}
+console.log('zonegroup pipe selector and identity form checks passed')

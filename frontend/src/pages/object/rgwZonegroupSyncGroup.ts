@@ -9,6 +9,20 @@ function snapshot(row?: Record<string, unknown>, allowEmpty = false) {
 }
 export function zonegroupSyncInitial(row?: Record<string, unknown>) { const { groups: _, ...identity } = snapshot(row); return { ...identity, group_id: undefined, status: undefined, confirm_change: undefined } }
 export function zonegroupSyncBlocked(row: Record<string, unknown>) { try { snapshot(row); return undefined } catch (error) { return (error as Error).message } }
+export function zonegroupPipeUpdateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {
+  const selected = zonegroupPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
+  const group = JSON.parse(selected.expected_group)
+  group.pipes = group.pipes.filter((p: { id: string }) => p.id !== selected.pipe_id)
+  const input = syncPipeCreateFields({ ...values, source_zones_json: '["*"]', dest_zones_json: '["*"]', confirm_pipe_create: 'acknowledged' }, group)
+  if (values.confirm_pipe_update !== 'acknowledged') throw new Error('请确认选择器、权限及发布影响')
+  delete input.source_zones
+  delete input.dest_zones
+  return { ...input, ...selected }
+}
+export function zonegroupPipeUpdateConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const p = zonegroupPipeUpdateInput(values,row)
+  return `确认修改 Zonegroup ${JSON.stringify(p.name)}（${p.zonegroup_id}）中同步组 ${JSON.stringify(p.group_id)} 的管道 ${JSON.stringify(p.pipe_id)}？源租户/桶/实例 ${JSON.stringify([p.source_tenant,p.source_bucket,p.source_bucket_id])}；目标 ${JSON.stringify([p.dest_tenant,p.dest_bucket,p.dest_bucket_id])}；模式 ${p.mode}，用户 ${JSON.stringify(p.user)}。* 为通配，空租户不限租户；system 模式保留已存储 UID，不删除用户或凭据。保留 Zone 成员、过滤器、优先级、目标 ACL 和存储类。${p.realm_id ? `随后提交 Realm ${JSON.stringify(p.realm_id)} 的 Period，可能发布其他待提交变更。` : '无 Realm，不提交 Period。'}可能改变复制范围或权限，请备份并避免外部或其他页面并发；非事务，失败可能部分生效，不自动回滚或重试；成功不代表远端复制完成。`
+}
 export function zonegroupPipeDeleteInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const { groups, ...identity } = snapshot(row)
   if (values.name !== identity.name || values.zonegroup_id !== identity.zonegroup_id || values.realm_id !== identity.realm_id) throw new Error('Zonegroup 和 Realm 身份不可修改')

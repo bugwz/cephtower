@@ -10,6 +10,7 @@ import { zonegroupFlowDeleteInput, zonegroupFlowDeleteConfirmation } from './rgw
 import { zonegroupFlowUpdateInput, zonegroupFlowUpdateConfirmation } from './rgwZonegroupSyncGroup'
 import { zonegroupPipeCreateInput, zonegroupPipeCreateConfirmation } from './rgwZonegroupSyncGroup'
 import { zonegroupPipeDeleteInput, zonegroupPipeDeleteConfirmation } from './rgwZonegroupSyncGroup'
+import { zonegroupPipeUpdateInput, zonegroupPipeUpdateConfirmation } from './rgwZonegroupSyncGroup'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAction } from '../ResourceListPage'
 import { ServiceDaemons } from '../cluster/ServiceDaemons'
@@ -1004,6 +1005,27 @@ const definitions: Record<
         { name: 'confirm_pipe_delete', label: '删除及发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，确认删除整个管道，了解 Realm 发布和部分生效风险' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupPipeDeleteInput(values,row) })
+    }, {
+      title: '编辑 Zonegroup 管道选择器与身份', path: '/rgw/zonegroup/sync/pipe', method: 'PATCH',
+      successMessage: 'Zonegroup 管道配置与适用的 Period 发布已核验',
+      disabledWhen: zonegroupSyncBlocked, initialValues: zonegroupSyncInitial, confirmation: zonegroupPipeUpdateConfirmation,
+      fields: [
+        { name: 'name', label: 'Zonegroup 名称（不可更改）', readOnly: true },
+        { name: 'zonegroup_id', label: 'Zonegroup ID（不可更改）', readOnly: true },
+        { name: 'realm_id', label: 'Realm ID（不可更改）', readOnly: true },
+        { name: 'group_id', label: '已有同步组 ID', required: true },
+        { name: 'pipe_id', label: '已有管道 ID', required: true },
+        { name: 'source_tenant', label: '完整源租户（空或 * 不限租户）' },
+        { name: 'source_bucket', label: '完整源桶名（* 为通配）', required: true },
+        { name: 'source_bucket_id', label: '完整源实例 ID（空或 * 不限实例）' },
+        { name: 'dest_tenant', label: '完整目标租户（空或 * 不限租户）' },
+        { name: 'dest_bucket', label: '完整目标桶名（* 为通配）', required: true },
+        { name: 'dest_bucket_id', label: '完整目标实例 ID（空或 * 不限实例）' },
+        { name: 'mode', label: '目标权限模式', type: 'select', required: true, options: [{ value: 'system', label: 'system（保留存储的 UID）' }, { value: 'user', label: 'user 指定用户模式' }] },
+        { name: 'user', label: '完整 UID（user 必填，system 留空）' },
+        { name: 'confirm_pipe_update', label: '配置与发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，确认完整选择器与权限模式，了解 Realm 发布及并发风险' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupPipeUpdateInput(values,row) })
     }, {
       title: '删除 Zonegroup 同步组', path: '/rgw/zonegroup/sync/group', method: 'DELETE',
       successMessage: 'Zonegroup 同步组删除与适用的 Period 发布已核验',

@@ -85,6 +85,19 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 			t.Fatalf("pipe: %d %s", pipe.Code, pipe.Body.String())
 		}
 		pipeOperation, pipeErr := db.FindOperation(context.Background(), operationIDFromResponse(t, pipe))
+		pipeUpdateBody := fmt.Sprintf(`{"cluster_id":%d,"name":"east","zonegroup_id":"zg","realm_id":%q,"group_id":"g","expected_group":%q,"pipe_id":"p","source_bucket":"*","dest_bucket":"photos","mode":"system"}`, cluster.ID, realm, `{"id":"g","status":"allowed","data_flow":{},"pipes":[{"id":"p"}]}`)
+		pipeUpdate := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/sync/pipe", pipeUpdateBody, "zonegroup-pipe-update-"+realm)
+		if pipeUpdate.Code != http.StatusAccepted {
+			t.Fatalf("pipe update: %d %s", pipeUpdate.Code, pipeUpdate.Body.String())
+		}
+		pipeUpdated, updatePipeErr := db.FindOperation(context.Background(), operationIDFromResponse(t, pipeUpdate))
+		if updatePipeErr != nil || pipeUpdated.Action != "rgw_zonegroup.sync_pipe_update" || pipeUpdated.Risk != "high" || pipeUpdated.ResourceKey != op.ResourceKey || pipeUpdated.LockKey != op.LockKey {
+			t.Fatalf("pipe update: %+v %v", pipeUpdated, updatePipeErr)
+		}
+		rejectedUpdate := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/sync/pipe", strings.TrimSuffix(pipeUpdateBody, "}")+`,"source_zones":["*"]}`, "zonegroup-pipe-update-zones-"+realm)
+		if rejectedUpdate.Code != http.StatusBadRequest {
+			t.Fatalf("zone fields accepted: %d", rejectedUpdate.Code)
+		}
 		pipeDeleteBody := fmt.Sprintf(`{"cluster_id":%d,"name":"east","zonegroup_id":"zg","realm_id":%q,"group_id":"g","expected_group":%q,"pipe_id":"p"}`, cluster.ID, realm, `{"id":"g","status":"allowed","data_flow":{},"pipes":[{"id":"p"}]}`)
 		pipeDelete := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/zonegroup/sync/pipe", pipeDeleteBody, "zonegroup-pipe-delete-"+realm)
 		if pipeDelete.Code != http.StatusAccepted {
