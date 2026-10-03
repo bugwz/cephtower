@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+Bucket 状态按 bucket stats 原生输出展示 enabled/suspended/off，暂停与未启用不合并，
+未知字符串保留原文。对象锁与 MFA Delete 严格读取布尔值，缺失或类型错误不当作关闭；
+mfa_enabled 对应 RGWBucketInfo 的 BUCKET_MFA_ENABLED 版本标记，对象锁启用标记不代表
+保留模式或期限。复用采集/API，离线测试覆盖已知、未来、缺失及错误类型，未做集群验证。
+
 Bucket 索引详情补齐参考界面的 index_type，并展示 bucket stats 中的 index_generation、
 num_shards、ver、master_ver、marker、max_marker。依据 driver/rados/rgw_bucket.cc，
 分片数、版本及最大标记只在本地 Zonegroup 且为普通索引时输出；页面说明该条件，不将

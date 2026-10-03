@@ -13,6 +13,7 @@ import { RgwQuota } from './RgwQuota'
 import { RgwStorage } from './RgwStorage'
 import { rgwStorageScope } from './rgwStorageDetails'
 import { RgwBucketIndexDetails } from './RgwBucketIndexDetails'
+import { rgwBucketVersioning, rgwBucketBooleanState } from './rgwBucketState'
 import { rgwUserPolicyBlocked, rgwUserPolicyInput, rgwUserPolicyOptions } from './rgwUserPolicy'
 import { RgwRateLimit } from './RgwRateLimit'
 import { RgwPermissions } from './RgwPermissions'
@@ -438,13 +439,13 @@ const definitions: Record<
       { key: 'name', title: 'Bucket' },
       { key: 'tenant', title: '租户' },
       { key: 'owner', title: 'Owner' },
-      { key: 'versioning', title: '版本控制' },
+      { key: 'versioning', title: '版本控制', ellipsis: false, render: rgwBucketVersioning },
       { key: 'bucket_index', title: '索引详情', ellipsis: false, render: (_value, row) => <RgwBucketIndexDetails row={row} /> },
       { key: 'placement_rule', title: '放置规则' },
       { key: 'zonegroup', title: 'Zonegroup' },
       { key: 'bucket_quota', title: 'Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
-      { key: 'object_lock_enabled', title: '对象锁' },
-      { key: 'mfa_enabled', title: 'MFA' },
+      { key: 'object_lock_enabled', title: '对象锁启用标记（非保留策略）', render: rgwBucketBooleanState },
+      { key: 'mfa_enabled', title: 'MFA Delete', render: rgwBucketBooleanState },
       { key: 'reshard_status', title: '重新分片状态' },
       { key: 'status', title: '状态' },
       { key: 'usage', title: '使用量', ellipsis: false, render: (value) => <RgwStorage value={value} categorized /> },
