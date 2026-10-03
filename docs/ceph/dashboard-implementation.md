@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+Bucket 显式存储池详情展示 explicit_placement 的 data_pool、data_extra_pool 和 index_pool。
+依据 rgw_data_placement_target::dump 与 rgw_pool 的 JSON 编码，保留命令返回的池字符串，
+不拆分池/命名空间，不以放置规则名称猜测实际池。空字符串表示未显式指定，与缺失/无效
+字段区分；不声称这就是经放置规则解析后的有效目标。复用 bucket stats 采集/API，新增
+离线格式与部分字段测试，未进行浏览器或真实集群验证。
+
 Bucket 状态按 bucket stats 原生输出展示 enabled/suspended/off，暂停与未启用不合并，
 未知字符串保留原文。对象锁与 MFA Delete 严格读取布尔值，缺失或类型错误不当作关闭；
 mfa_enabled 对应 RGWBucketInfo 的 BUCKET_MFA_ENABLED 版本标记，对象锁启用标记不代表

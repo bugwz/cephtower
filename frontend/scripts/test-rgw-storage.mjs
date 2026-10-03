@@ -25,6 +25,14 @@ assert.equal(pages.match(/<RgwStorage value=\{value\} account \/>/g).length, 1)
 assert.equal(pages.match(/<RgwStorage value=\{value\} categorized \/>/g).length, 1)
 console.log('RGW storage statistics preserve category, units, zero and unavailable values')
 const times = exports.rgwStorageTimes
+const placement = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketPlacement.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(placement)
+assert.deepEqual(placement.rgwBucketPlacement({ data_pool: 'zone.data:ns', data_extra_pool: '', index_pool: 'zone.index' }), { data: 'zone.data:ns', extra: '未显式指定', index: 'zone.index' })
+assert.deepEqual(placement.rgwBucketPlacement({ data_pool: '', data_extra_pool: '', index_pool: '' }), { data: '未显式指定', extra: '未显式指定', index: '未显式指定' })
+for (const value of [undefined, null, [], '', {}, { data_pool: 0, data_extra_pool: false, index_pool: {} }]) assert.deepEqual(placement.rgwBucketPlacement(value), { data: '未返回或格式无效', extra: '未返回或格式无效', index: '未返回或格式无效' })
+assert.equal(placement.rgwBucketPlacement({ data_pool: 'one' }).data, 'one')
+assert.equal(placement.rgwBucketPlacement({ data_pool: 'one' }).index, '未返回或格式无效')
+assert.ok(pages.includes('<RgwBucketPlacementDetails value={value} />'))
 const state = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketState.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(state)
 assert.equal(state.rgwBucketVersioning('enabled'), '已启用（enabled）')

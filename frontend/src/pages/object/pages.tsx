@@ -13,6 +13,7 @@ import { RgwQuota } from './RgwQuota'
 import { RgwStorage } from './RgwStorage'
 import { rgwStorageScope } from './rgwStorageDetails'
 import { RgwBucketIndexDetails } from './RgwBucketIndexDetails'
+import { RgwBucketPlacementDetails } from './RgwBucketPlacementDetails'
 import { rgwBucketVersioning, rgwBucketBooleanState } from './rgwBucketState'
 import { rgwUserPolicyBlocked, rgwUserPolicyInput, rgwUserPolicyOptions } from './rgwUserPolicy'
 import { RgwRateLimit } from './RgwRateLimit'
@@ -442,6 +443,7 @@ const definitions: Record<
       { key: 'versioning', title: '版本控制', ellipsis: false, render: rgwBucketVersioning },
       { key: 'bucket_index', title: '索引详情', ellipsis: false, render: (_value, row) => <RgwBucketIndexDetails row={row} /> },
       { key: 'placement_rule', title: '放置规则' },
+      { key: 'explicit_placement', title: '显式存储池', ellipsis: false, render: (value) => <RgwBucketPlacementDetails value={value} /> },
       { key: 'zonegroup', title: 'Zonegroup' },
       { key: 'bucket_quota', title: 'Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'object_lock_enabled', title: '对象锁启用标记（非保留策略）', render: rgwBucketBooleanState },
