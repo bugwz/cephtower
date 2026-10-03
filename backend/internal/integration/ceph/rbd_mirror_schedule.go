@@ -127,12 +127,19 @@ func (p *NativeProvider) attachRBDMirrorSnapshotSchedules(ctx context.Context, a
 	}
 
 	nextRuns := map[string]string{}
+	statusAvailable := false
 	var status rbdMirrorScheduleStatusWire
 	if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_mirror_schedule_status", []string{
 		"mirror", "snapshot", "schedule", "status", "--format", "json",
 	}, &status) {
+		statusAvailable = status.ScheduledImages != nil
 		for _, item := range status.ScheduledImages {
 			if strings.TrimSpace(item.Image) == "" || strings.TrimSpace(item.ScheduleTime) == "" {
+				statusAvailable = false
+			}
+		}
+		for _, item := range status.ScheduledImages {
+			if !statusAvailable {
 				continue
 			}
 			// Native status is ordered by execution time; Dashboard also uses
@@ -152,6 +159,10 @@ func (p *NativeProvider) attachRBDMirrorSnapshotSchedules(ctx context.Context, a
 			continue
 		}
 		if schedule := rbdMirrorScheduleForImage(schedules, image); schedule != nil {
+			schedule.Status = "unavailable"
+			if statusAvailable {
+				schedule.Status = "available"
+			}
 			schedule.NextRun = nextRuns[image.ImagePath]
 			image.ScheduleInfo = schedule
 			rows[index].Payload = image

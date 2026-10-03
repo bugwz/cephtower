@@ -151,7 +151,7 @@ console.log('Successful current-cluster mutations invalidate live schedules befo
 
 const imageScheduleDetails = mirrorExports.imageMirrorScheduleDetails
 for (const [origin, label] of [['cluster', '继承集群'], ['pool', '继承池'], ['namespace', '继承命名空间'], ['', '镜像专属']]) {
-  const details = imageScheduleDetails({ name: origin === 'cluster' ? '' : 'images/team/vm', inherited_from: origin, schedule_time: '2026-10-03 12:30:00', schedule_interval: items })
+  const details = imageScheduleDetails({ name: origin === 'cluster' ? '' : 'images/team/vm', inherited_from: origin, schedule_status: 'available', schedule_time: '2026-10-03 12:30:00', schedule_interval: items })
   assert.equal(details.origin, label)
   assert.equal(details.target, origin === 'cluster' ? '集群' : 'images/team/vm')
   assert.equal(details.nextRun, '2026-10-03 12:30:00')
@@ -159,7 +159,9 @@ for (const [origin, label] of [['cluster', '继承集群'], ['pool', '继承池'
   assert.equal(details.intervals[1].startTime, '未指定')
 }
 assert.equal(imageScheduleDetails({ name: 'images/vm', schedule_interval: items }).origin, '镜像专属')
-assert.equal(imageScheduleDetails({ name: 'images/vm', schedule_interval: items }).nextRun, '未返回下次运行时间')
+assert.equal(imageScheduleDetails({ name: 'images/vm', schedule_interval: items }).nextRun, '运行状态不可用或尚未采集')
+assert.equal(imageScheduleDetails({ name: 'images/vm', schedule_interval: items, schedule_status: 'available' }).nextRun, '本次采集未返回此镜像的待执行任务')
+assert.equal(imageScheduleDetails({ name: 'images/vm', schedule_interval: items, schedule_status: 'unavailable', schedule_time: 'old' }).nextRun, '运行状态不可用或尚未采集')
 for (const value of [null, [], {}, { name: 'images/vm', schedule_interval: [] }, { name: 'images/vm', inherited_from: 'constructor', schedule_interval: items }, { name: 'images/vm', schedule_interval: [{}] }, { name: 'images/vm', schedule_time: 123, schedule_interval: items }]) assert.equal(imageScheduleDetails(value), undefined)
 console.log('Image mirror schedule inheritance display checks passed')
 

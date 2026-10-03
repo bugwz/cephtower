@@ -118,6 +118,22 @@ func TestMirrorNextRunUsesFirstExactImageMatch(t *testing.T) {
 	}
 }
 
+func TestMirrorStatusAvailability(t *testing.T) {
+	for _, output := range []string{`{"scheduled_images":[]}`, `null`, `{}`, `{"scheduled_images":null}`, `{"scheduled_images":[{"image":"images/team/vm-1","schedule_time":"time"},{}]}`, `invalid`} {
+		provider := NativeProvider{Executor: &rbdMirrorScheduleExecutor{statusOutput: &output}}
+		rows := []Observation{{Kind: "rbd_image", Payload: cephdomain.RBDImage{ImagePath: "images/team/vm-1", Pool: "images", Namespace: "team", Name: "vm-1"}}}
+		provider.attachRBDMirrorSnapshotSchedules(context.Background(), ClusterAccess{}, rows)
+		image := rows[0].Payload.(cephdomain.RBDImage)
+		want := "unavailable"
+		if output == `{"scheduled_images":[]}` {
+			want = "available"
+		}
+		if image.ScheduleInfo == nil || image.ScheduleInfo.Status != want || image.ScheduleInfo.NextRun != "" {
+			t.Fatalf("%s: %+v", output, image.ScheduleInfo)
+		}
+	}
+}
+
 func TestMirrorPoolSchedulesIncludeClusterAndExcludeOtherPools(t *testing.T) {
 	runner := &rbdMirrorScheduleExecutor{}
 	provider := NativeProvider{Executor: runner}

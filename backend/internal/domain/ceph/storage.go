@@ -126,6 +126,7 @@ type RBDMirrorSnapshotSchedule struct {
 	Name          string                          `json:"name"`
 	InheritedFrom string                          `json:"inherited_from,omitempty"`
 	NextRun       string                          `json:"schedule_time,omitempty"`
+	Status        string                          `json:"schedule_status"`
 	Intervals     []RBDMirrorSnapshotScheduleItem `json:"schedule_interval"`
 }
 

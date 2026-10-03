@@ -19,7 +19,10 @@ export function imageMirrorScheduleDetails(value: unknown) {
     if (!item || typeof item !== 'object' || typeof item.interval !== 'string' || !/^[1-9][0-9]*[mhd]$/.test(item.interval) || (item.start_time != null && typeof item.start_time !== 'string')) return undefined
     intervals.push({ key: String(index), interval: item.interval, startTime: item.start_time || '未指定' })
   }
-  return { origin: origins.get(origin)!, target: origin === 'cluster' ? '集群' : info.name || '未返回', nextRun: info.schedule_time || '未返回下次运行时间', intervals }
+  const nextRun = info.schedule_status === 'available'
+    ? info.schedule_time || '本次采集未返回此镜像的待执行任务'
+    : '运行状态不可用或尚未采集'
+  return { origin: origins.get(origin)!, target: origin === 'cluster' ? '集群' : info.name || '未返回', nextRun, intervals }
 }
 
 export function mirrorScheduleRows(value: unknown): MirrorScheduleRow[] | undefined {
