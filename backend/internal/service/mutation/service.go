@@ -1838,10 +1838,15 @@ func build(request Request, p map[string]any) (command, error) {
 	case "rgw_user.update":
 		uid := last(tail)
 		args := []string{"user", "modify", "--uid", uid}
-		for field, flag := range map[string]string{"display_name": "--display-name", "max_buckets": "--max-buckets"} {
-			if value := rawText(p, field); value != "" {
-				args = append(args, flag, value)
+		if value := rawText(p, "display_name"); value != "" {
+			args = append(args, "--display-name", value)
+		}
+		if _, exists := p["max_buckets"]; exists {
+			limit, err := strconv.ParseInt(optional(p, "max_buckets"), 10, 32)
+			if err != nil || limit < -1 {
+				return command{}, invalid("max_buckets must be -1 or a nonnegative int32 integer")
 			}
+			args = append(args, "--max-buckets", strconv.FormatInt(limit, 10))
 		}
 		if email, ok := p["email"].(string); ok {
 			if strings.ContainsAny(email, "\x00\r\n") {

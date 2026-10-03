@@ -2,8 +2,11 @@ package mutation
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -1490,6 +1493,32 @@ func TestRGWUserSuspensionUsesNativeSubcommand(t *testing.T) {
 				t.Fatalf("args=%v", cmd.args)
 			}
 		}
+	}
+}
+
+func TestRGWUserUpdateBucketLimitBounds(t *testing.T) {
+	request := Request{Action: "rgw_user.update", ResourceKey: "rgw/user/user-a"}
+	for _, value := range []any{nil, "", true, json.Number("-2"), 0.5, json.Number("2147483648"), json.Number("9223372036854775807")} {
+		if _, err := build(request, map[string]any{"max_buckets": value, "suspended": true}); err == nil {
+			t.Fatalf("accepted invalid limit %v", value)
+		}
+	}
+	for _, value := range []int64{-1, 0, 1, 2147483647} {
+		cmd, err := build(request, map[string]any{"max_buckets": json.Number(strconv.FormatInt(value, 10))})
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := []string{"user", "modify", "--uid", "user-a", "--max-buckets", strconv.FormatInt(value, 10), "--format", "json"}
+		if !reflect.DeepEqual(cmd.args, want) {
+			t.Fatalf("args=%v want=%v", cmd.args, want)
+		}
+	}
+	cmd, err := build(request, map[string]any{"display_name": "Updated"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if slices.Contains(cmd.args, "--max-buckets") {
+		t.Fatalf("omitted limit was written: %v", cmd.args)
 	}
 }
 
