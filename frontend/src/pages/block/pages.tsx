@@ -5,6 +5,7 @@ import { ImageMirrorSchedule, MirrorSchedules } from './MirrorSchedules'
 import { RbdRuntimeStatus } from './RbdRuntimeStatus'
 import { RbdConfiguration } from './RbdConfiguration'
 import { RbdParent } from './RbdParent'
+import { rbdUsageText } from './rbdUsage'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
 import { LiveMirrorScheduleStatus } from './LiveMirrorScheduleStatus'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -215,8 +216,8 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'pool', title: 'Pool' },
       { key: 'namespace', title: '命名空间' },
       { key: 'size_bytes', title: '容量（bytes）' },
-      { key: 'used_bytes', title: '当前占用（bytes）' },
-      { key: 'total_used_bytes', title: '含快照总占用（bytes）' },
+      { key: 'used_bytes', title: '当前占用（bytes）', render: (value, row) => rbdUsageText(value, row.features) },
+      { key: 'total_used_bytes', title: '含快照总占用（bytes）', render: (value, row) => rbdUsageText(value, row.features) },
       { key: 'object_count', title: '对象数' },
       { key: 'object_size_bytes', title: '对象大小（bytes）' },
       { key: 'created_at', title: '创建时间' },

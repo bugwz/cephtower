@@ -39,6 +39,17 @@ assert.equal(parentDetails({ ...parent, image: ' base ' }).path, 'images/team/ b
 for (const value of [null, [], {}, { ...parent, snapshot: null }, { ...parent, pool_namespace: undefined }, { ...parent, pool_namespace: 1 }]) assert.equal(parentDetails(value), undefined)
 console.log('Native RBD parent paths preserve namespace and explicit trash state')
 
+const usageExports = {}
+const usageCode = ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdUsage.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+new Function('exports', usageCode)(usageExports)
+const usageText = usageExports.rbdUsageText
+assert.equal(usageText(0, ['fast-diff']), '0')
+assert.equal(usageText(4096, ['layering', 'fast-diff']), '4096')
+assert.equal(usageText(4096, ['layering']), '不可用：未启用 fast-diff')
+for (const features of [null, undefined, 'fast-diff', [null]]) assert.equal(usageText(0, features), '特性信息不可用，无法确认用量采集条件')
+for (const value of [undefined, null, -1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, '123']) assert.equal(usageText(value, ['fast-diff']), '用量未返回或无效，请重新采集')
+console.log('RBD usage distinguishes missing fast-diff, unavailable statistics and valid zero')
+
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')
 const blockTree = ts.createSourceFile('pages.tsx', blockSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 let scheduleNode
