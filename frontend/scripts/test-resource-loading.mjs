@@ -33,6 +33,27 @@ assert.ok(hostDetailTree.text.includes('HostDaemonTable key={`${clusterId}:${hos
 assert.ok(hostDaemonTable.includes('row.daemon_display === perfName'))
 assert.ok(hostDaemonTable.includes('DaemonPerf key={`${clusterId}:${visibleName}`}'))
 console.log('Host daemon performance entry point is restricted and scope keyed')
+const daemonStateHelpers = {}
+for (const name of ['nativeDaemonStatus', 'daemonStatusColor', 'daemonStatusText']) {
+  const node = hostDetailTree.statements.find((item) => ts.isFunctionDeclaration(item) && item.name.text === name)
+  const code = ts.transpileModule(node.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+  daemonStateHelpers[name] = new Function(`${code}; return ${name}`)()
+}
+for (const [code, state] of [[-2, 'unknown'], [-1, 'error'], [0, 'stopped'], [1, 'running'], [2, 'starting']]) {
+  assert.equal(daemonStateHelpers.nativeDaemonStatus({ status: code }), state)
+  assert.equal(daemonStateHelpers.nativeDaemonStatus({ status: String(code) }), state)
+}
+assert.equal(daemonStateHelpers.nativeDaemonStatus({ status: 0, status_desc: 'running' }), 'stopped')
+assert.equal(daemonStateHelpers.nativeDaemonStatus({ status: null, status_desc: 'starting' }), 'starting')
+assert.equal(daemonStateHelpers.nativeDaemonStatus({ status: 99 }), 'unknown')
+assert.equal(daemonStateHelpers.nativeDaemonStatus({}), 'unknown')
+for (const state of ['not running', 'not ok', 'broken']) {
+  assert.equal(daemonStateHelpers.daemonStatusColor(state), 'default')
+  assert.equal(daemonStateHelpers.daemonStatusText(state), state)
+}
+assert.equal(daemonStateHelpers.daemonStatusColor('running'), 'success')
+assert.equal(daemonStateHelpers.daemonStatusText('stopped'), '已停止')
+console.log('Native daemon status codes and unrecognized descriptions remain distinct')
 const deviceInfoTable = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HostDeviceInfoTable')
 assert.ok(deviceInfoTable.getText(hostDetailTree).includes("key: 'life_expectancy_stamp'"))
 const timeSource = readFileSync(new URL('../src/utils/time.ts', import.meta.url), 'utf8')

@@ -386,6 +386,7 @@ function HostDaemonTable({ daemons, clusterId }: { daemons: ApiRecord[]; cluster
         { key: 'daemon_display', title: '名称' },
         { key: 'type_display', title: '类型' },
         { key: 'status_display', title: '状态', render: (value) => renderDaemonStatus(value) },
+        { key: 'status_desc', title: '原生状态说明', ellipsis: false },
         { key: 'last_refresh_display', title: '最近刷新' },
         { key: 'version_display', title: '版本' },
         { key: 'cpu_usage_display', title: 'CPU 使用率' },
@@ -806,7 +807,7 @@ function normalizeDaemonRow(row: ApiRecord): ApiRecord {
     ...row,
     daemon_display: textValue(row.name ?? row.daemon_name, ''),
     type_display: textValue(row.type ?? row.daemon_type ?? row.service_type, ''),
-    status_display: textValue(row.status ?? row.status_desc, ''),
+    status_display: nativeDaemonStatus(row),
     last_refresh_display: formatDateTime(row.last_refresh),
     version_display: textValue(row.version, ''),
     cpu_usage_display: cpuUsage === undefined ? '-' : `${cpuUsage.toFixed(1)}%`,
@@ -814,6 +815,13 @@ function normalizeDaemonRow(row: ApiRecord): ApiRecord {
     image_display: shortImageName(image),
     image_full: image
   }
+}
+
+function nativeDaemonStatus(row: ApiRecord): string {
+  const codes: Record<string, string> = { '-2': 'unknown', '-1': 'error', '0': 'stopped', '1': 'running', '2': 'starting' }
+  if (typeof row.status === 'number') return codes[String(row.status)] ?? 'unknown'
+  if (typeof row.status === 'string' && row.status.trim()) return codes[row.status] ?? row.status
+  return typeof row.status_desc === 'string' && row.status_desc.trim() ? row.status_desc : 'unknown'
 }
 
 function percentageValue(value: unknown) {
@@ -857,13 +865,13 @@ function renderDaemonStatus(value: unknown) {
 
 function daemonStatusColor(status: string) {
   const normalized = status.toLowerCase()
-  if (normalized.includes('running') || normalized.includes('ok')) {
+  if (normalized === 'running' || normalized === 'ok') {
     return 'success'
   }
-  if (normalized.includes('error') || normalized.includes('failed') || normalized.includes('stopped')) {
+  if (['error', 'failed', 'stopped'].includes(normalized)) {
     return 'error'
   }
-  if (normalized.includes('starting') || normalized.includes('pending')) {
+  if (normalized === 'starting' || normalized === 'pending') {
     return 'processing'
   }
   return 'default'
@@ -871,22 +879,22 @@ function daemonStatusColor(status: string) {
 
 function daemonStatusText(status: string) {
   const normalized = status.toLowerCase()
-  if (normalized.includes('running') || normalized.includes('ok')) {
+  if (normalized === 'running' || normalized === 'ok') {
     return '运行中'
   }
-  if (normalized.includes('starting') || normalized.includes('pending')) {
+  if (normalized === 'starting' || normalized === 'pending') {
     return '启动中'
   }
-  if (normalized.includes('stopping')) {
+  if (normalized === 'stopping') {
     return '停止中'
   }
-  if (normalized.includes('stopped')) {
+  if (normalized === 'stopped') {
     return '已停止'
   }
-  if (normalized.includes('error') || normalized.includes('failed')) {
+  if (normalized === 'error' || normalized === 'failed') {
     return '异常'
   }
-  return status
+  return normalized === 'unknown' ? '未知' : status
 }
 
 function renderImageInfo(value: unknown, row: ApiRecord) {
