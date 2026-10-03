@@ -1,3 +1,11 @@
+// Reference rgw_iam_managed_policy.cc, not a runtime capability declaration.
+const referencePolicies = ['AmazonS3ReadOnlyAccess','AmazonS3FullAccess','AmazonSNSReadOnlyAccess','AmazonSNSFullAccess','IAMReadOnlyAccess','IAMFullAccess'].map(name => ({label:name,value:`arn:aws:iam::aws:policy/${name}`}))
+export function roleManagedPolicyOptions(row?: Record<string, unknown>, mode?: unknown) {
+  const current = rolePolicyIdentity(row).expected_policies
+  if (mode === 'detach') return current.map(value => ({label:value,value}))
+  if (mode === 'attach') return referencePolicies.filter(option => !current.includes(option.value))
+  return []
+}
 function rolePolicyIdentity(row?: Record<string, unknown>) {
   if (!row || row.stale === true || typeof row.AccountId !== 'string' || !/^RGW[0-9]{17}$/.test(row.AccountId) || typeof row.RoleName !== 'string' || !/^[A-Za-z0-9_+=,.@-]{1,64}$/.test(row.RoleName) || typeof row.RoleId !== 'string' || !row.RoleId || typeof row.Arn !== 'string' || !row.Arn.startsWith(`arn:aws:iam::${row.AccountId}:role/`) || !row.Arn.endsWith(`/${row.RoleName}`)) throw new Error('仅支持身份完整且未过期的 Account 角色')
   // Native role dump omits this field when its set is empty. IAM rechecks the
@@ -11,16 +19,18 @@ export function roleManagedPolicyBlocked(row: Record<string, unknown>) {
 }
 export function roleManagedPolicyInitial(row?: Record<string, unknown>) {
   const identity = rolePolicyIdentity(row)
-  return {account_id:identity.account_id,name:identity.name}
+  return {account_id:identity.account_id,name:identity.name,policy_source:'reference'}
 }
 export function roleManagedPolicyInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const identity = rolePolicyIdentity(row)
   if (values.account_id !== identity.account_id || values.name !== identity.name) throw new Error('不可更改角色身份')
   if (values.mode !== 'attach' && values.mode !== 'detach') throw new Error('请选择关联或解除')
   if (typeof values.owner_uid !== 'string' || !/^[A-Za-z0-9_.$@-]{1,512}$/.test(values.owner_uid)) throw new Error('请填写已配置 S3 永久密钥所属完整 UID')
-  const policy = values.policy_arn
+  if (values.mode === 'attach' && values.policy_source !== 'reference' && values.policy_source !== 'custom') throw new Error('请选择策略来源')
+  const policy = values.mode === 'attach' && values.policy_source === 'custom' ? values.custom_policy_arn : values.policy_arn
   if (typeof policy !== 'string' || !policy.startsWith('arn:aws:iam::aws:policy/') || policy.length > 2048 || /\s/.test(policy) || policy === 'arn:aws:iam::aws:policy/') throw new Error('请填写 Ceph 支持的完整托管策略 ARN')
   const present = identity.expected_policies.includes(policy)
+  if (values.mode === 'attach' && values.policy_source === 'reference' && !referencePolicies.some(option => option.value === policy)) throw new Error('请选择参考版本内置策略或切换手填 ARN')
   if ((values.mode === 'attach' && present) || (values.mode === 'detach' && !present)) throw new Error('所选操作不会改变当前托管策略集合')
   if (values.confirm_managed_policy !== 'acknowledged') throw new Error('请确认角色权限变更影响')
   return {...identity,owner_uid:values.owner_uid,mode:values.mode,policy_arn:policy}

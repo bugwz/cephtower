@@ -29,6 +29,9 @@
 
 ### 增量实现与验证记录
 
+- **角色托管策略选择器**：参考 Dashboard `rgw/utils/constants.ts` 的策略下拉方式和原生 `rgw_iam_managed_policy.cc::get_managed_policy`，提供 S3、SNS、IAM 的 FullAccess/ReadOnlyAccess 六项参考策略，过滤当前已关联项。明确静态参考列表不是运行时能力发现；允许手填目标版本支持的 ARN，由原生 IAM 最终判定。解除只从当前快照选择，保留参考列表之外的已有策略。切换操作/来源清空依赖选择，提交忽略隐藏字段；保留后端身份与完整集合前后核验。新增实际表单选项、来源切换、未知策略解除和隐藏值隔离测试；无真实集群或浏览器视觉验证。
+  - `make test-frontend` 全量回归、类型检查及生产构建通过；本次未修改后端，未重复执行后端测试。
+
 - **Account 角色托管策略关联/解除完整链路**：新增高风险 `PATCH /rgw/role/managed/policy`，接入操作队列、已有角色锁和列表表单。通过只读用户信息核验永久 S3 Key 属于所填完整 UID、处于 active 且未停用，scope/owner 必须均等于目标 Account；不支持临时会话、子用户密钥或非 Account 角色，不把同名角色视为相同身份。
   - IAM GetRole 核验准确 RoleId/Arn，ListAttachedRolePolicies 比较完整策略集合，再 Attach/Detach；写后重新读取完整角色字段与策略集合，只允许所选策略变化。所有失败均不自动重试/回滚；使用 HTTPS、不通过有问题的 role policy attach/detach CLI。共享原生凭据归属核验器，不向命令参数或 API 返回密钥。
   - 前端绑定原行 Account/名称/RoleId/Arn，拒绝过期、身份不完整、重复策略和无变化操作，明确权限变化及外部并发删除/重建角色竞态。参考 `RGWRoleInfo::dump` 在无关联时省略 ManagedPermissionPolicies，表单可据此提交空快照，但必须通过实时 IAM 空列表核验；这不证明完整有效权限。关联策略由目标 Ceph 内置策略支持情况与 IAM 权限最终判定，不修改内联或信任策略。

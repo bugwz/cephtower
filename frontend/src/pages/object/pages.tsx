@@ -7,7 +7,7 @@ import { topicEndpointBlocked, topicEndpointInitial, topicEndpointInput, topicEn
 import { topicWritableOptions, topicOptionBlocked, topicOptionInitial, topicOptionInput, topicOptionConfirmation } from './rgwTopicOption'
 import { topicCreateInput, topicCreateConfirmation } from './rgwTopicCreate'
 import { RgwTopicOptionsEditor } from './RgwTopicOptionsEditor'
-import { roleManagedPolicyBlocked, roleManagedPolicyInitial, roleManagedPolicyInput, roleManagedPolicyConfirmation } from './rgwRoleManagedPolicy'
+import { roleManagedPolicyBlocked, roleManagedPolicyInitial, roleManagedPolicyInput, roleManagedPolicyConfirmation, roleManagedPolicyOptions } from './rgwRoleManagedPolicy'
 import { bucketReplicationFormBlocked, bucketReplicationFormInitial, bucketReplicationFormInput, bucketReplicationFormConfirmation } from './rgwBucketReplicationForm'
 import { useClusterContext } from '../../state/ClusterContext'
 import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
@@ -693,7 +693,9 @@ const definitions: Record<
         {name:'account_id',label:'Account ID（不可更改）',readOnly:true},{name:'name',label:'角色名称（不可更改）',readOnly:true},
         {name:'owner_uid',label:'已配置 S3 永久密钥所属完整 UID（后端核验 Account）',required:true},
         {name:'mode',label:'操作',type:'select',required:true,options:[{value:'attach',label:'关联托管策略'},{value:'detach',label:'解除托管策略'}]},
-        {name:'policy_arn',label:'完整托管策略 ARN（解除必须属于当前列表）',required:true},
+        {name:'policy_source',label:'策略来源（参考列表不代表目标版本支持）',type:'select',required:true,visibleWhen:values=>values.mode === 'attach',options:[{value:'reference',label:'参考版本内置策略'},{value:'custom',label:'手填目标版本支持的 ARN'}]},
+        {name:'policy_arn',label:'托管策略（解除仅显示当前已关联项）',type:'select',required:true,visibleWhen:values=>values.mode === 'detach' || (values.mode === 'attach' && values.policy_source === 'reference'),optionsDependencies:['mode','policy_source'],optionsLoader:async (_clusterId,row,values)=>roleManagedPolicyOptions(row,values?.mode)},
+        {name:'custom_policy_arn',label:'完整托管策略 ARN（由目标 Ceph 判定支持）',required:true,visibleWhen:values=>values.mode === 'attach' && values.policy_source === 'custom'},
         {name:'confirm_managed_policy',label:'影响确认',type:'select',required:true,options:[{value:'acknowledged',label:'已确认准确角色、权限变化和非原子操作风险'}]}
       ],
       buildBody:(values,clusterId,row)=>({cluster_id:clusterId,...roleManagedPolicyInput(values,row)})
