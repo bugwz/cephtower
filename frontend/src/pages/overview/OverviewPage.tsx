@@ -22,7 +22,7 @@ import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
-import { pgCategory } from './pgCategory'
+import { pgCategory, pgSummary } from './pgCategory'
 import { message } from '../../utils/appMessage'
 
 const { Text } = Typography
@@ -109,7 +109,7 @@ export function OverviewPage() {
 
   const pgStates = useMemo(() => Array.isArray(data?.overview.placement_groups)
     ? (data.overview.placement_groups as ApiRecord[]) : [], [data?.overview.placement_groups])
-  const totalPGs = pgStates.reduce((sum, row) => sum + (numberValue(row.count) ?? 0), 0)
+  const pgTotals = useMemo(() => pgSummary(data?.overview.placement_groups), [data?.overview.placement_groups])
 
   return (
     <Page title="总览" loading={loading} error={error}>
@@ -148,12 +148,16 @@ export function OverviewPage() {
 
         <div className="content-grid">
           <Card title="Placement Groups">
-            <Text type="secondary">PG 总数：{data?.overview.placement_groups ? totalPGs : '—'}</Text>
+            <Space wrap>
+              <Text type="secondary">PG 总数：{pgTotals?.total ?? '—'}</Text>
+              {pgTotals?.categories.map((category) => <Tag key={category.key} color={category.color}>{category.label}：{category.count}</Tag>)}
+            </Space>
+            {!pgTotals && <Alert type="warning" message="PG 分类统计不可用：数据缺失或计数无效，不代表没有 PG。" />}
             <AppTable<ApiRecord> size="small" rowKey="name" dataSource={pgStates} pagination={false} columns={[
               { title: '状态', dataIndex: 'name', render: (value) => <Tag>{String(value)}</Tag> },
               { key: 'category', title: '分类', dataIndex: 'name', filters: [{ text: '正常', value: 'clean' }, { text: '处理中', value: 'working' }, { text: '告警', value: 'warning' }, { text: '未知', value: 'unknown' }], onFilter: (value, row) => pgCategory(row.name).key === value, render: (value) => { const category = pgCategory(value); return <Tag color={category.color}>{category.label}</Tag> } },
               { title: '数量', dataIndex: 'count' },
-              { title: '占比', render: (_, row) => <Progress percent={totalPGs ? Math.round((numberValue(row.count) ?? 0) / totalPGs * 1000) / 10 : 0} /> }
+              { title: '占比', render: (_, row) => pgTotals ? <Progress percent={pgTotals.total ? Math.round(Number(row.count) / pgTotals.total * 1000) / 10 : 0} /> : <Text type="secondary">—</Text> }
             ]} />
           </Card>
           <Card title="对象健康">

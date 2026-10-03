@@ -14,6 +14,16 @@ for (const state of ['backfill_toofull', 'backfill_unfound', 'down', 'incomplete
 for (const value of [null, undefined, '', ' ', 0, {}, 'active+new_state', 'clean+scrubbing+new_state', 'active1', 'constructor', 'ACTIVE']) assert.equal(classifyPG(value).key, 'unknown')
 assert.equal(classifyPG(' active + clean + active ').key, 'clean')
 console.log('Native PG categories preserve warning precedence and unknown compound states')
+const summarizePG = pgCategoryExports.pgSummary
+const pgSummaryResult = summarizePG([{ name: 'active+clean', count: 5 }, { name: 'active+scrubbing', count: 2 }, { name: 'active+degraded', count: 1 }, { name: 'undersized+new_state', count: 3 }, { name: 'active+new_state', count: 4 }])
+assert.equal(pgSummaryResult.total, 15)
+assert.deepEqual(pgSummaryResult.categories.map(({ key, count }) => ({ key, count })), [{ key: 'clean', count: 5 }, { key: 'working', count: 3 }, { key: 'warning', count: 3 }, { key: 'unknown', count: 4 }])
+assert.equal(summarizePG([]).total, 0)
+assert.equal(summarizePG([{ name: 'active+clean', count: 0 }]).total, 0)
+for (const value of [null, undefined, {}, [null], [{ name: 'active' }], [{ name: '', count: 1 }], [{ name: 'active', count: 1 }, { name: 'active', count: 2 }]]) assert.equal(summarizePG(value), null)
+for (const count of [null, undefined, '1', -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) assert.equal(summarizePG([{ name: 'active', count }]), null)
+assert.equal(summarizePG([{ name: 'active', count: Number.MAX_SAFE_INTEGER }, { name: 'clean', count: 1 }]), null)
+console.log('PG category totals distinguish valid zero counts from invalid or missing statistics')
 
 const hostDetailSource = readFileSync(new URL('../src/pages/cluster/HostDetailPage.tsx', import.meta.url), 'utf8')
 const hostDetailTree = ts.createSourceFile('host.tsx', hostDetailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)

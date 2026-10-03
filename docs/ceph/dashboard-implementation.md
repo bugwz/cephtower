@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+总览补齐 PgSummaryPipe 对应的四类 PG 数量汇总，按原始复合状态分组相加，并保留
+明细筛选；比例仍以全部 PG 为分母。缺失、重复状态、负数、非整数或溢出的计数使
+汇总及比例显示不可用，不补零；有效空数组和显式零值保持零。沿用已有 status 采集
+及 overview API，离线覆盖混合分类和异常计数，未进行浏览器或实机验证。
+
 总览 PG 状态表补齐参考 PgCategory/PgCategoryService 的正常、处理中、告警、未知
 分类及筛选，沿用 ceph status → overview placement_groups 链路并保留原始复合状态。
 告警优先；含未知状态且无已知告警时归未知，不以 active/clean 子串判断健康。

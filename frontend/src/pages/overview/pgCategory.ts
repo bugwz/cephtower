@@ -9,3 +9,20 @@ export function pgCategory(value: unknown) {
   if (states.some((state) => working.has(state))) return { key: 'working', label: '处理中', color: 'processing' }
   return { key: 'clean', label: '正常', color: 'success' }
 }
+
+export function pgSummary(value: unknown) {
+  if (!Array.isArray(value)) return null
+  const counts: Record<string, number> = { clean: 0, working: 0, warning: 0, unknown: 0 }
+  const seen = new Set<string>()
+  let total = 0
+  for (const row of value) {
+    if (!row || typeof row !== 'object' || typeof row.name !== 'string' || !row.name.trim() || seen.has(row.name) || !Number.isSafeInteger(row.count) || row.count < 0 || !Number.isSafeInteger(total + row.count)) return null
+    seen.add(row.name)
+    total += row.count
+    counts[pgCategory(row.name).key] += row.count
+  }
+  return { total, categories: ['active+clean', 'scrubbing', 'inconsistent', 'unknown'].map((state) => {
+    const category = pgCategory(state)
+    return { ...category, count: counts[category.key] }
+  }) }
+}
