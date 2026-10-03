@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### Zonegroup 对称与定向数据流创建
+
+对齐 Dashboard 的 create_sync_flow 与原生 SYNC_GROUP_FLOW_CREATE，新增 POST /api/v1/rgw/zonegroup/sync/flow 和 Zonegroup 行创建表单。对称流使用流 ID 和排序后的 Zone ID 集合，定向流按源/目标 ID 对识别；后者的原生必填 flow-id 仅为命令占位，不伪装成存储字段。创建拒绝已有流，避免原生同名扩展语义被当作新建；核验完整组快照、Zonegroup/Realm 身份和 Zone 成员关系，使用 zonegroup get 的原始 ID 构造期望结果而非桶策略的名称格式。
+
+写后核验完整 Zonegroup，保留组状态、管道及大整数参数；有 Realm 时提交并核验 Period，无 Realm 时不发布。前端提示匹配管道复制路径变化、Realm 全范围发布、非事务及并发风险。离线测试覆盖两种流、两种 Realm 归属、已有流、过期快照、未知/重复 Zone、写入/回读/发布失败、命令参数、前端绑定和 API 高风险资源锁。未进行真实集群或浏览器视觉验证；流成员修改、删除与 Zonegroup 管道操作仍未补齐。
+
 #### Zonegroup 同步组删除与发布
 
 增加 `DELETE /api/v1/rgw/zonegroup/sync/group` 和 Zonegroup 行删除入口，对齐原生 `SYNC_GROUP_REMOVE` 的整组移除语义。执行 `sync group remove --group-id ... --zonegroup-id ... --format json` 前核验明确身份与完整组快照，拒绝缺失、重复或已变更的组；回读完整 Zonegroup，确保其他组和未知字段保持不变。有 Realm 时继续提交并核验 Period 中的目标策略，无 Realm 时仅修改本地配置。

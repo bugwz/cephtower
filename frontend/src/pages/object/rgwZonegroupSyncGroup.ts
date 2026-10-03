@@ -8,6 +8,36 @@ function snapshot(row?: Record<string, unknown>, allowEmpty = false) {
 }
 export function zonegroupSyncInitial(row?: Record<string, unknown>) { const { groups: _, ...identity } = snapshot(row); return { ...identity, group_id: undefined, status: undefined, confirm_change: undefined } }
 export function zonegroupSyncBlocked(row: Record<string, unknown>) { try { snapshot(row); return undefined } catch (error) { return (error as Error).message } }
+export function zonegroupFlowCreateInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const { groups, ...identity } = snapshot(row)
+  if (values.name !== identity.name || values.zonegroup_id !== identity.zonegroup_id || values.realm_id !== identity.realm_id) throw new Error('Zonegroup 和 Realm 身份不可修改')
+  const group = groups.find(g => g.id === values.group_id)
+  if (!group) throw new Error('请输入准确的已有同步组 ID')
+  if (values.confirm_flow !== 'acknowledged') throw new Error('请确认数据流创建与发布风险')
+  const available = row?.zones
+  if (!Array.isArray(available) || !available.length || available.some(z => !record(z) || !token(z.id) || !token(z.name)) || new Set(available.map(z => z.id)).size !== available.length || new Set(available.map(z => z.name)).size !== available.length) throw new Error('Zone 列表不可用或有歧义')
+  const validZone = (v: unknown): v is string => token(v) && !/[,;=*\s]/u.test(v) && available.some(z => z.id === v)
+  const kind = values.flow_type
+  if (kind !== 'symmetrical' && kind !== 'directional') throw new Error('请选择数据流类型')
+  const data = group.data_flow as Record<string, unknown>
+  const existing = data[kind] === undefined ? [] : data[kind]
+  if (!Array.isArray(existing) || existing.some(e => !record(e))) throw new Error('已有数据流不可用')
+  const base = { ...identity, group_id: group.id as string, expected_group: JSON.stringify(group), flow_type: kind }
+  if (kind === 'symmetrical') {
+    if (!token(values.flow_id) || existing.some(e => e.id === values.flow_id)) throw new Error('请输入不存在的对称流 ID')
+    if (values.source_zone || values.dest_zone) throw new Error('对称流不接受定向字段')
+    const zones = String(values.zones ?? '').split(',').map(z => z.trim())
+    if (!zones.every(validZone) || new Set(zones).size !== zones.length) throw new Error('请填写当前 Zonegroup 内不重复的 Zone ID，逗号分隔')
+    return { ...base, flow_id: values.flow_id, zones }
+  }
+  if (values.flow_id || values.zones) throw new Error('定向流不接受流 ID 或对称 Zone 列表')
+  if (!validZone(values.source_zone) || !validZone(values.dest_zone) || values.source_zone === values.dest_zone || existing.some(e => e.source_zone === values.source_zone && e.dest_zone === values.dest_zone)) throw new Error('请选择不同且尚未配置的源、目标 Zone ID')
+  return { ...base, source_zone: values.source_zone, dest_zone: values.dest_zone }
+}
+export function zonegroupFlowCreateConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const p = zonegroupFlowCreateInput(values,row)
+  return `确认在 Zonegroup ${JSON.stringify(p.name)}（${p.zonegroup_id}）的同步组 ${JSON.stringify(p.group_id)} 创建 ${p.flow_type} 数据流？可能改变匹配管道的复制路径，不更改组状态或管道。${p.realm_id ? `随后提交 Realm ${JSON.stringify(p.realm_id)} 的 Period，可能发布其他待提交变更。` : '无 Realm，不提交 Period。'}请备份并避免外部或其他页面并发；非事务，失败可能部分生效，不自动回滚或重试；成功不代表远端复制完成。`
+}
 export function zonegroupSyncDeleteInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const { groups, ...identity } = snapshot(row)
   if (values.name !== identity.name || values.zonegroup_id !== identity.zonegroup_id || values.realm_id !== identity.realm_id) throw new Error('Zonegroup 和 Realm 身份不可修改')

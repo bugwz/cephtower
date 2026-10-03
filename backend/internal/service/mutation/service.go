@@ -66,7 +66,7 @@ type command struct {
 
 func Supports(action string) bool {
 	switch action {
-	case "rgw_zonegroup.sync_group", "rgw_zonegroup.sync_group_create", "rgw_zonegroup.sync_group_delete":
+	case "rgw_zonegroup.sync_group", "rgw_zonegroup.sync_group_create", "rgw_zonegroup.sync_group_delete", "rgw_zonegroup.sync_flow_create":
 		return true
 	case "rgw_bucket.sync_pipe_update", "rgw_bucket.sync_pipe_zones":
 		return true
@@ -130,7 +130,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if request.Action == "rgw_period.commit" {
 		return s.executePeriodCommit(ctx, access, request, spec)
 	}
-	if request.Action == "rgw_zonegroup.sync_group" || request.Action == "rgw_zonegroup.sync_group_create" || request.Action == "rgw_zonegroup.sync_group_delete" {
+	if request.Action == "rgw_zonegroup.sync_group" || request.Action == "rgw_zonegroup.sync_group_create" || request.Action == "rgw_zonegroup.sync_group_delete" || request.Action == "rgw_zonegroup.sync_flow_create" {
 		return s.executeZonegroupSyncGroup(ctx, access, request, spec)
 	}
 	if request.Action == "rgw_bucket.sync_pipe_zones" {
@@ -2784,7 +2784,7 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("realm_id and expected_current_period are required")
 		}
 		return rgw([]string{"period", "update", "--commit", "--realm-id", realm}, []string{"period", "get", "--realm-id", realm}), nil
-	case "rgw_zonegroup.sync_group", "rgw_zonegroup.sync_group_create", "rgw_zonegroup.sync_group_delete":
+	case "rgw_zonegroup.sync_group", "rgw_zonegroup.sync_group_create", "rgw_zonegroup.sync_group_delete", "rgw_zonegroup.sync_flow_create":
 		return zonegroupSyncGroupCommand(action, p, rgw)
 	case "nfs_cluster.create":
 		name, err := required(p, "name")

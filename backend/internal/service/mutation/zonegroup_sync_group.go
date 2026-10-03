@@ -21,6 +21,13 @@ func zonegroupSyncGroupCommand(action string, p map[string]any, rgw func([]strin
 		return command{}, invalid("explicit realm_id is required, empty for standalone zonegroup")
 	}
 	status := syncGroupString(p, "status")
+	if action == "rgw_zonegroup.sync_flow_create" {
+		args, err := bucketSyncFlowArgs(p)
+		if err != nil {
+			return command{}, err
+		}
+		return rgw(append(args, "--zonegroup-id", syncGroupString(p, "zonegroup_id")), []string{"zonegroup", "get", "--zonegroup-id", syncGroupString(p, "zonegroup_id")}), nil
+	}
 	deleting := action == "rgw_zonegroup.sync_group_delete"
 	if !deleting && status != "enabled" && status != "allowed" && status != "forbidden" {
 		return command{}, invalid("invalid sync group status")
@@ -82,7 +89,14 @@ func (s *Service) executeZonegroupSyncGroup(ctx context.Context, access executor
 			return fail("pre_check_failed", "sync group missing or changed; refresh before editing")
 		}
 		deleting := request.Action == "rgw_zonegroup.sync_group_delete"
-		if !deleting && group["status"] == syncGroupString(p, "status") {
+		flow := request.Action == "rgw_zonegroup.sync_flow_create"
+		if flow {
+			// Validate membership, but keep native IDs: zonegroup get is not name-formatted.
+			if _, err := resolveBucketSyncFlow(p, before.Stdout); err != nil {
+				return fail("pre_check_failed", err.Error())
+			}
+		}
+		if !deleting && !flow && group["status"] == syncGroupString(p, "status") {
 			return fail("pre_check_failed", "sync group status unchanged")
 		}
 		// Update the original array, not the canonical index used for comparison.
@@ -90,6 +104,22 @@ func (s *Service) executeZonegroupSyncGroup(ctx context.Context, access executor
 		for _, raw := range policy["groups"].([]any) {
 			g := raw.(map[string]any)
 			if g["id"] == id {
+				if flow {
+					params := map[string]any{}
+					for key, value := range p {
+						params[key] = value
+					}
+					if syncGroupString(p, "flow_type") == "symmetrical" {
+						zones := append([]any{}, p["zones"].([]any)...)
+						sort.Slice(zones, func(i, j int) bool { return zones[i].(string) < zones[j].(string) })
+						params["zones"] = zones
+					}
+					if err := addBucketSyncFlow(g, params); err != nil {
+						return fail("pre_check_failed", err.Error())
+					}
+					remaining = append(remaining, raw)
+					continue
+				}
 				if deleting {
 					continue
 				}
