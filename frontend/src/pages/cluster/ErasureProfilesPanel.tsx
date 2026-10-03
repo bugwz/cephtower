@@ -28,7 +28,9 @@ export function erasureProfileDetails(row: ApiRecord) {
     ['packetsize', 'Jerasure 包大小'], ['crush-root', 'CRUSH 根节点'],
     ['crush-failure-domain', '故障域'], ['crush-locality', '局部性域'],
     ['crush-num-failure-domains', '故障域数量'], ['crush-osds-per-failure-domain', '每故障域 OSD 数'],
-    ['crush-device-class', '设备类别'], ['directory', '配置中的目录参数']
+    ['crush-device-class', '设备类别'], ['directory', '配置中的目录参数'],
+    ['mapping', 'LRC 原生分片映射'], ['layers', 'LRC 原生编码层'],
+    ['crush-steps', 'LRC 原生放置步骤']
   ]
   return fields.map(([key, label]) => ({ key, label: `${label} (${key})`, children: row[key] == null ? '未提供' : typeof row[key] === 'object' ? JSON.stringify(row[key]) : String(row[key]) }))
 }

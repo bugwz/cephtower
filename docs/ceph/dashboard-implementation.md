@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+纠删码详情补齐 LRC 的 mapping、layers、crush-steps，CRUSH 页面与建池表单的
+配置详情共用展示。原生 ErasureCodeLrc::parse_kml 支持无 k/m/l 的高级配置；详情不
+从缺失参数推导这些字段，保留原生字符串及空值。沿用 ceph osd erasure-code-profile
+get 的完整字段采集与库存 API，离线测试覆盖采集保真和展示，未进行实机验证。
+
 EC 创建表单新增活动 MGR 运行配置只读面板。参考 erasure_code_profile.py 的 info()
 读取 osd_erasure_code_plugins / erasure_code_dir；本项目通过 ceph mgr dump 获取目标，
 再执行 ceph config show-with-defaults mgr.<active_name> --format json，按原生

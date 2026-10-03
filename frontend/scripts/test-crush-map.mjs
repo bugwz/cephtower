@@ -77,6 +77,15 @@ for (const key of ['plugin', 'k', 'm', 'technique', 'l', 'c', 'd', 'scalar_mds',
 assert.equal(profileDetails.find((item) => item.key === 'l').children, '0')
 assert.equal(profileDetails.find((item) => item.key === 'crush-num-failure-domains').children, '0')
 assert.equal(profileDetails.find((item) => item.key === 'plugin').children, '未提供')
+const advancedProfile = { plugin: 'lrc', mapping: 'DD__DD__', layers: '[ [ "DDc_DDc_", "" ], [ "DDDc____", "" ], [ "____DDDc", "" ] ]', 'crush-steps': '[ [ "choose", "rack", 2 ], [ "chooseleaf", "host", 4 ] ]' }
+const advancedDetails = profileExports.erasureProfileDetails(advancedProfile)
+for (const field of ['mapping', 'layers', 'crush-steps']) {
+  assert.equal(advancedDetails.find((item) => item.key === field).children, advancedProfile[field], 'native spelling and whitespace must survive')
+  assert.equal(profileDetails.find((item) => item.key === field).children, '未提供', 'must not invent derived profile fields')
+  assert.equal(profileExports.erasureProfileDetails({ [field]: '' }).find((item) => item.key === field).children, '', 'explicit empty value is distinct from missing')
+}
+assert.equal(advancedDetails.find((item) => item.key === 'k').children, '未提供', 'advanced profiles need not supply k/m/l')
+console.log('Advanced LRC profile details preserve native mapping, layers and placement strings')
 
 const poolSource = readFileSync(new URL('../src/pages/cluster/PoolManagementPage.tsx', import.meta.url), 'utf8')
 assert.ok(poolSource.includes("listAllResources('/pools', selectedClusterId, { filters: poolTableFilters.filters })"), 'pool table must consume all filtered inventory pages')

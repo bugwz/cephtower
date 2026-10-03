@@ -2,7 +2,9 @@ package ceph
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -20,6 +22,23 @@ func (e erasureProfileExecutor) Run(_ context.Context, _ executor.ClusterAccess,
 		return executor.CommandResult{}, fmt.Errorf("read failed")
 	}
 	return executor.CommandResult{Stdout: []byte(data)}, nil
+}
+
+func TestErasureProfilePreservesAdvancedLRCFields(t *testing.T) {
+	details := map[string]string{
+		"plugin": "lrc", "mapping": "DD__DD__",
+		"layers":      `[ [ "DDc_DDc_", "" ], [ "DDDc____", "" ], [ "____DDDc", "" ] ]`,
+		"crush-steps": `[ [ "choose", "rack", 2 ], [ "chooseleaf", "host", 4 ] ]`,
+	}
+	encoded, err := json.Marshal(details)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := NativeProvider{Executor: erasureProfileExecutor{`["advanced"]`, string(encoded)}}
+	rows := p.collectErasureProfiles(context.Background(), ClusterAccess{}, time.Now())
+	if len(rows) != 1 || rows[0].NaturalKey != "advanced" || !reflect.DeepEqual(rows[0].Payload, details) {
+		t.Fatalf("native advanced fields were altered: %+v", rows)
+	}
 }
 
 func TestErasureProfileCollectionCompleteness(t *testing.T) {
