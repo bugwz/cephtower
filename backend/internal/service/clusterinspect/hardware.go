@@ -12,7 +12,7 @@ import (
 )
 
 func (s *Service) Hardware(ctx context.Context, clusterID uint64, host, category string) (map[string]any, error) {
-	if clusterID == 0 || !regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_.-]{0,255}$`).MatchString(host) {
+	if clusterID == 0 || (host != "" && !regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_.-]{0,255}$`).MatchString(host)) {
 		return nil, invalid("invalid hardware host or cluster id")
 	}
 	switch category {
@@ -21,7 +21,12 @@ func (s *Service) Hardware(ctx context.Context, clusterID uint64, host, category
 		return nil, invalid("invalid hardware category")
 	}
 	var report map[string]map[string]map[string]json.RawMessage
-	if err := s.read(ctx, clusterID, "host.hardware", []string{"orch", "hardware", "status", "--hostname", host, "--category", category, "--format", "json"}, &report); err != nil {
+	args := []string{"orch", "hardware", "status"}
+	if host != "" {
+		args = append(args, "--hostname", host)
+	}
+	args = append(args, "--category", category, "--format", "json")
+	if err := s.read(ctx, clusterID, "host.hardware", args, &report); err != nil {
 		return nil, err
 	}
 	bad := func() (map[string]any, error) {
@@ -32,7 +37,7 @@ func (s *Service) Hardware(ctx context.Context, clusterID uint64, host, category
 	}
 	items := make([]map[string]any, 0)
 	for hostname, systems := range report {
-		if hostname != host || systems == nil {
+		if hostname == "" || (host != "" && hostname != host) || systems == nil {
 			return bad()
 		}
 		for system, components := range systems {
@@ -58,7 +63,7 @@ func (s *Service) Hardware(ctx context.Context, clusterID uint64, host, category
 						state = security.Redact(*details.Status.State)
 					}
 				}
-				identity, _ := json.Marshal([]string{system, component})
+				identity, _ := json.Marshal([]string{hostname, system, component})
 				redacted, err := security.RedactJSON(raw)
 				if err != nil {
 					return bad()
@@ -67,7 +72,7 @@ func (s *Service) Hardware(ctx context.Context, clusterID uint64, host, category
 				if err != nil {
 					return bad()
 				}
-				items = append(items, map[string]any{"id": string(identity), "system": system, "component": component, "health": health, "state": state, "details": string(encoded)})
+				items = append(items, map[string]any{"id": string(identity), "host": hostname, "system": system, "component": component, "health": health, "state": state, "details": string(encoded)})
 			}
 		}
 	}

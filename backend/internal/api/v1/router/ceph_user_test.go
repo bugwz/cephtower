@@ -160,6 +160,10 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 	}
 	perfResult := send("GET", "/daemon/perf", map[string]any{"name": "osd.1"})
 	hardwareResult := send("GET", "/host/hardware", map[string]any{"host": "node1", "category": "memory"})
+	clusterHardware := send("GET", "/host/hardware", map[string]any{"category": "memory"})
+	if clusterHardware.Header().Get("Cache-Control") != "no-store" || !strings.Contains(clusterHardware.Body.String(), `"host":""`) || !strings.Contains(clusterHardware.Body.String(), `"host":"node1"`) {
+		t.Fatalf("cluster hardware response lost scope or component host: %s", clusterHardware.Body.String())
+	}
 	if hardwareResult.Header().Get("Cache-Control") != "no-store" || !strings.Contains(hardwareResult.Body.String(), `"health":"OK"`) || !strings.Contains(hardwareResult.Body.String(), `"host":"node1"`) {
 		t.Fatalf("hardware response is incomplete: %s", hardwareResult.Body.String())
 	}

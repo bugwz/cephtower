@@ -76,3 +76,25 @@ func TestHardwareDetailsRedactStructuredSecretsWithoutRounding(t *testing.T) {
 		t.Fatalf("invalid or rounded redacted details: %s", details)
 	}
 }
+
+func TestHardwareClusterScopePreservesHostIdentity(t *testing.T) {
+	s, runner, id := testInspection(t)
+	runner.output = `{"node2":{"sys":{"part":{"status":{"health":"Warning"}}}},"node1":{"sys":{"part":{"status":{"health":"OK"}}}}}`
+	result, err := s.Hardware(context.Background(), id, "", "memory")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows := result["items"].([]map[string]any)
+	if len(rows) != 2 || rows[0]["host"] != "node1" || rows[1]["host"] != "node2" || rows[0]["id"] == rows[1]["id"] || result["host"] != "" {
+		t.Fatalf("%+v", result)
+	}
+	if !reflect.DeepEqual(runner.specs[0].Args, []string{"orch", "hardware", "status", "--category", "memory", "--format", "json"}) || runner.specs[0].Mutating {
+		t.Fatalf("%+v", runner.specs)
+	}
+	if _, err := s.Hardware(context.Background(), id, "node1", "memory"); err == nil {
+		t.Fatal("scoped query accepted another host")
+	}
+	if _, err := s.Hardware(context.Background(), 0, "", "memory"); err == nil {
+		t.Fatal("missing cluster accepted")
+	}
+}

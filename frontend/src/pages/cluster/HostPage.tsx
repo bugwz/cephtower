@@ -1,6 +1,7 @@
 import { InfoCircleOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Button, Card, Checkbox, Collapse, Form, Input, InputNumber, Select, Space, Tag, Tooltip } from 'antd'
-import { useCallback, useMemo, useState } from 'react'
+import { Alert, Button, Card, Checkbox, Collapse, Form, Input, InputNumber, Modal, Select, Space, Tag, Tooltip } from 'antd'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { HostHardware } from './HostHardware'
 import { useNavigate } from 'react-router-dom'
 import { isRecord, numberValue, textValue, type ApiRecord } from '../../api/client'
 import { getHostSSH, listDaemons, listResource, mutateResource, refreshResource, saveHostSSH, type HostSSHPayload } from '../../api/resource'
@@ -39,6 +40,8 @@ const hostLabelOptions = predefinedHostLabels.map((label) => ({ label, value: la
 export function HostPage() {
   const navigate = useNavigate()
   const { selectedClusterId } = useClusterContext()
+  const [hardwareCluster, setHardwareCluster] = useState<number | null>(null)
+  useEffect(() => setHardwareCluster(null), [selectedClusterId])
   const hostTableFilters = useResourceTableFilters({
     path: '/hosts',
     fields: ['hostname', 'address', 'system', 'kernel_release', 'status'],
@@ -235,6 +238,7 @@ export function HostPage() {
         extra={
           <Space>
             <Button icon={<ReloadOutlined />} loading={refreshingHosts} onClick={refreshHostData}>刷新</Button>
+            <Button disabled={!selectedClusterId} onClick={() => { if (selectedClusterId) setHardwareCluster(selectedClusterId) }}>集群硬件报告</Button>
             <Button type="primary" icon={<PlusOutlined />} disabled={!selectedClusterId} onClick={openCreate}>新增主机</Button>
           </Space>
         }
@@ -273,6 +277,10 @@ export function HostPage() {
           ]}
         />
       </Card>
+      <Modal title="集群硬件报告" open={hardwareCluster !== null && hardwareCluster === selectedClusterId} onCancel={() => setHardwareCluster(null)} footer={null} width="95vw" destroyOnClose>
+        <Alert type="warning" message="只包含 node-proxy 已报告的主机，未报告的主机健康未知" />
+        {hardwareCluster !== null && hardwareCluster === selectedClusterId && <HostHardware key={hardwareCluster} clusterId={hardwareCluster} host="" />}
+      </Modal>
       <DraggableModal
         width={680}
         title="新增主机"

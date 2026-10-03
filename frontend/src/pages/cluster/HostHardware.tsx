@@ -11,7 +11,7 @@ export function HostHardware({ clusterId, host }: { clusterId: number; host: str
   return <Space direction="vertical" style={{ width: '100%' }}>
     <Alert type="info" message="原生硬件健康（node-proxy）" description="按所选类别读取 ceph orch hardware status，需要集群部署并配置 node-proxy。无记录或缺少健康字段不代表硬件健康；原生详情按文本保留数值精度。" />
     <Select aria-label="硬件类别" value={category} onChange={setCategory} style={{ width: 220 }} options={[
-      { value: 'summary', label: '当前主机全部类别汇总' },
+      { value: 'summary', label: host ? '当前主机全部类别汇总' : '已报告主机全部类别汇总' },
       { value: 'memory', label: '内存' }, { value: 'storage', label: '存储' }, { value: 'processors', label: '处理器' },
       { value: 'network', label: '网络' }, { value: 'power', label: '电源' }, { value: 'fans', label: '风扇' },
     ]} />
@@ -39,8 +39,9 @@ function HardwareCategory({ clusterId, host, category }: { clusterId: number; ho
       { value: 'all', label: '全部已返回组件' }, { value: 'ok', label: 'OK' },
       { value: 'other', label: '其他已报告状态（非 OK）' }, { value: 'unknown', label: '未报告健康状态' },
     ]} />
-    {!loading && !error && data?.items.length === 0 && <Alert type="warning" message="此主机未返回该类别的硬件组件，不能据此判断健康" />}
+    {!loading && !error && data?.items.length === 0 && <Alert type="warning" message="当前查询范围未返回该类别的硬件组件，不能据此判断健康" />}
     <DataTable data={rows} rowKeyCandidates={['id']} columns={[
+      { key: 'host', title: '报告主机' },
       { key: 'system', title: '系统 / 机箱' }, { key: 'component', title: '组件' },
       { key: 'health', title: '原生健康状态', render: (value) => hardwareHealthGroup(value) === 'unknown' ? '未知（未返回）' : String(value) },
       { key: 'state', title: '原生运行状态', render: (value) => value == null ? '未知（未返回）' : String(value) },

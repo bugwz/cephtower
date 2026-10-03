@@ -23483,7 +23483,7 @@ paths:
             schema:
               type: object
               additionalProperties: false
-              required: [category, cluster_id, host]
+              required: [category, cluster_id]
               properties:
                 category:
                   type: string

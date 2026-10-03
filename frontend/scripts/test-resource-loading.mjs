@@ -36,7 +36,7 @@ const summaryLoad = new Function('request', 'jsonInit', 'hardwareHealthCounts', 
   summaryCalls.push(init.body)
   const { host, category } = init.body
   if (category === 'power') throw new Error('node-proxy unavailable')
-  return { host: category === 'fans' ? 'wrong-host' : host, category, items: category === 'storage' ? [] : [{ health: 'OK' }, {}], observed_at: '2026-10-03T00:00:00Z' }
+  return { host: category === 'fans' ? 'wrong-host' : host, category, items: category === 'storage' ? [] : [{ host: 'node1', health: 'OK' }, { host: host || 'node2' }], observed_at: '2026-10-03T00:00:00Z' }
 }, (method, body) => ({ method, body }), healthModule.hardwareHealthCounts)
 const summaryRows = await summaryLoad(8, 'node1')
 assert.equal(summaryCalls.length, 6)
@@ -45,6 +45,12 @@ assert.equal(summaryRows[0].ok, 1)
 assert.equal(summaryRows[0].unknown, 1)
 assert.equal(summaryRows[1].total, 0)
 for (const row of summaryRows.slice(4)) { assert.equal(row.total, null); assert.ok(row.error) }
+assert.equal(summaryRows[0].reported_hosts, 1)
+const clusterSummaryRows = await summaryLoad(9, '')
+assert.equal(clusterSummaryRows[0].reported_hosts, 2)
+assert.equal(clusterSummaryRows[1].reported_hosts, 0)
+assert.equal(clusterSummaryRows[4].reported_hosts, null)
+assert.ok(summaryCalls.slice(6).every((call) => call.cluster_id === 9 && call.host === ''))
 console.log('Hardware summary partial failures and exact request scope checks passed')
 
 const perfSource = readFileSync(new URL('../src/pages/cluster/DaemonPerf.tsx', import.meta.url), 'utf8')
