@@ -19,6 +19,10 @@ func ValidateBucketConfiguration(kind string, body []byte) error {
 		}
 		return nil
 	}
+	if kind == "object-lock" {
+		_, err := ValidatedBucketObjectLock(body)
+		return err
+	}
 	root := map[string]string{"cors": "CORSConfiguration", "lifecycle": "LifecycleConfiguration", "encryption": "ServerSideEncryptionConfiguration", "versioning": "VersioningConfiguration", "tagging": "Tagging"}[kind]
 	if root == "" {
 		return fmt.Errorf("unsupported S3 bucket configuration %q", kind)

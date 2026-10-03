@@ -463,7 +463,30 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 		if err := s3.ValidateBucketConfiguration(kind, body); err != nil {
 			return cephdomain.ActionResult{}, failure("invalid_request", err.Error(), false)
 		}
+		if kind == "object-lock" {
+			current, _, readErr := api.GetBucketConfiguration(ctx, bucket, kind)
+			if s3.IsConfigurationMissing(kind, readErr) {
+				versioning, _, versionErr := api.GetBucketConfiguration(ctx, bucket, "versioning")
+				status, parseErr := s3.BucketVersioningStatus(versioning)
+				if versionErr != nil || parseErr != nil || status != "Enabled" {
+					return cephdomain.ActionResult{}, failure("pre_check_failed", "enabling object lock requires confirmed Enabled bucket versioning", false)
+				}
+			} else {
+				_, parseErr := s3.BucketObjectLock(current)
+				if readErr != nil || parseErr != nil {
+					return cephdomain.ActionResult{}, failure("pre_check_failed", "cannot confirm current object lock configuration", false)
+				}
+			}
+		}
 		err = api.PutBucketConfiguration(ctx, bucket, kind, body)
+		if err == nil && kind == "object-lock" {
+			actual, _, readErr := api.GetBucketConfiguration(ctx, bucket, kind)
+			wantedConfiguration, _ := s3.ValidatedBucketObjectLock(body)
+			actualConfiguration, parseErr := s3.ValidatedBucketObjectLock(actual)
+			if readErr != nil || parseErr != nil || !reflect.DeepEqual(wantedConfiguration, actualConfiguration) {
+				return cephdomain.ActionResult{}, failure("post_check_failed", "object lock was submitted but could not be verified; refresh before another change", false)
+			}
+		}
 		if err == nil && kind == "policy" {
 			actual, _, readErr := api.GetBucketConfiguration(ctx, bucket, kind)
 			// RGW stores Policy.text verbatim. Do not round numbers or collapse

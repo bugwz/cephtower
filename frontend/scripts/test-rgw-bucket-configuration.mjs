@@ -6,6 +6,7 @@ import './test-rgw-bucket-tag-form.mjs'
 import './test-rgw-bucket-lifecycle.mjs'
 import './test-rgw-bucket-lifecycle-form.mjs'
 const helpers = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketObjectLockForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketObjectLockSummary.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketLifecycleForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketCorsForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
@@ -66,6 +67,18 @@ function visit(node) {
 }
 visit(source)
 assert.ok(definition)
+const objectLockAction = definition.extraActions.find(action => action.title === '修改对象锁默认保留')
+const objectLockRow = { bucket_id: 'AGJ1Y2tldA', kind: 'object-lock', configured: false, object_lock: null }
+assert.ok(objectLockAction.visibleWhen(objectLockRow))
+assert.equal(objectLockAction.disabledWhen(objectLockRow), undefined)
+const objectLockValues = { ...objectLockAction.initialValues(objectLockRow), retention_action: 'set', mode: 'GOVERNANCE', period: '030', unit: 'Days', confirm_lock: 'acknowledged' }
+assert.equal(objectLockAction.initialValues(objectLockRow).confirm_lock, undefined)
+assert.equal(objectLockAction.initialValues(objectLockRow).retention_action, undefined)
+assert.match(objectLockAction.buildBody(objectLockValues, 7, objectLockRow).document, /<Days>30<\/Days>/)
+assert.match(objectLockAction.confirmation(objectLockValues, objectLockRow), /无法关闭.*不会解除已有对象.*Legal Hold/)
+assert.ok(!objectLockAction.buildBody({ ...objectLockValues, retention_action: 'clear' }, 7, objectLockRow).document.includes('<Rule>'))
+for (const patch of [{ period: '0' }, { period: '2147483648' }, { period: '1x' }, { unit: 'days' }, { mode: 'future' }, { confirm_lock: undefined }, { bucket_id: 'other' }, { kind: 'policy' }]) assert.throws(() => objectLockAction.buildBody({ ...objectLockValues, ...patch }, 7, objectLockRow))
+assert.equal(helpers.objectLockFormInitial({ ...objectLockRow, configured: true, object_lock: { enabled: true, default_retention: { mode: 'COMPLIANCE', days: null, years: '2' } } }).unit, 'Years')
 const lifecycleAction = definition.extraActions.find(action => action.title === '编辑生命周期规则')
 const lifecycleRow = { bucket_id: 'AGJ1Y2tldA', kind: 'lifecycle', configured: false, lifecycle_rules: [] }
 assert.ok(lifecycleAction.visibleWhen(lifecycleRow))

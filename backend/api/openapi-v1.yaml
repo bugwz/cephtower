@@ -565,7 +565,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -1331,7 +1331,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -3392,7 +3392,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -4158,7 +4158,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -5752,7 +5752,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -6645,7 +6645,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -7412,7 +7412,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -8865,7 +8865,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -9725,7 +9725,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -10491,7 +10491,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -11503,7 +11503,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -12765,7 +12765,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -13532,7 +13532,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -14299,7 +14299,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -15703,7 +15703,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -16615,7 +16615,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -17477,7 +17477,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -18243,7 +18243,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -19665,7 +19665,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -20431,7 +20431,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -21214,7 +21214,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -22074,7 +22074,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -22840,7 +22840,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -23607,7 +23607,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -24686,7 +24686,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -25643,7 +25643,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -26503,7 +26503,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -27269,7 +27269,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -28168,7 +28168,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -28935,7 +28935,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -30382,7 +30382,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -31434,7 +31434,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -32294,7 +32294,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -33156,7 +33156,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -34016,7 +34016,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -34782,7 +34782,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -35739,7 +35739,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -36599,7 +36599,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -37365,7 +37365,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -38227,7 +38227,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -38993,7 +38993,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -39855,7 +39855,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -40621,7 +40621,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -41483,7 +41483,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -42343,7 +42343,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -43109,7 +43109,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -44139,7 +44139,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -45000,7 +45000,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -45767,7 +45767,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -46534,7 +46534,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -47395,7 +47395,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -48196,7 +48196,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -49248,7 +49248,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -50108,7 +50108,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -50874,7 +50874,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -51736,7 +51736,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -52503,7 +52503,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -53270,7 +53270,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -54037,7 +54037,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -54899,7 +54899,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -55759,7 +55759,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -56525,7 +56525,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -57409,7 +57409,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -58175,7 +58175,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -58941,7 +58941,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -60094,7 +60094,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -60975,7 +60975,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -61904,7 +61904,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -62670,7 +62670,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -63636,7 +63636,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -64497,7 +64497,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -65264,7 +65264,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -66142,7 +66142,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -66908,7 +66908,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -67674,7 +67674,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -68441,7 +68441,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -69303,7 +69303,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -70163,7 +70163,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -70929,7 +70929,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -71896,7 +71896,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -72663,7 +72663,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -73430,7 +73430,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -74292,7 +74292,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -75059,7 +75059,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -75825,7 +75825,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -76687,7 +76687,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -77453,7 +77453,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -78219,7 +78219,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -78986,7 +78986,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -79943,7 +79943,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -80803,7 +80803,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -81569,7 +81569,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -82336,7 +82336,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -83103,7 +83103,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -83869,7 +83869,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -84635,7 +84635,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -85402,7 +85402,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -86169,7 +86169,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -86936,7 +86936,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -87703,7 +87703,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -88565,7 +88565,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -89331,7 +89331,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -90098,7 +90098,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -90864,7 +90864,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -91961,7 +91961,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -93214,7 +93214,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -94074,7 +94074,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -94840,7 +94840,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -95702,7 +95702,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -96468,7 +96468,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -97234,7 +97234,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -98096,7 +98096,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -98956,7 +98956,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -99722,7 +99722,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -100584,7 +100584,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -101350,7 +101350,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:
@@ -102116,7 +102116,7 @@ paths:
                   writeOnly: true
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "object-lock", "policy", "tagging"]
                 l:
                   type: integer
                 labels:

@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+对象锁默认保留增加专用修改表单与原生写入：对照 `RGWPutBucketObjectLock`，支持 GOVERNANCE/COMPLIANCE、正整数天/年和省略 Rule 清除默认保留期，始终保留 ObjectLockEnabled=Enabled，不实现关闭对象锁或 DELETE。写前 GET 确认现有状态；仅精确配置不存在时再 GET versioning，确认 Enabled 才允许首次启用，其他错误阻止 PUT。写后 GET 按原生 int 规范化期限并比较配置，核验失败不可自动重试。表单锁定身份，操作及不可逆影响确认不预选，提醒默认策略不解除既有对象保留/Legal Hold；通用原始编辑仍不开放此类型，使用专用表单。测试覆盖设置/清除、首次启用、Suspended 阻断、读取/写入/核验失败、整数边界及表单身份/确认校验；完整前后端测试、类型检查、构建及 OpenAPI 校验通过。无真实集群或浏览器视觉验证；首次启用既有 Bucket 的能力依赖目标 Ceph 版本，原生错误直接反馈，不作旧版本绕过。
+
 Bucket 对象锁默认保留增加只读链路：对照参考 `RgwClient.get_bucket_locking` 与原生 ObjectLockConfiguration，通过租户范围的签名 S3 `GET ?object-lock` 返回 enabled/default_retention（mode、days、years）及原始 XML。仅精确 404 ObjectLockConfigurationNotFoundError 解释为未启用；已启用但无 Rule 单独展示，权限拒绝、NoSuchBucket、损坏 XML 不会伪装成关闭。前端配置类型增加只读选项，展示治理/合规/未知模式、天或年及无效期限，明确默认策略不代表已有对象的独立保留或 Legal Hold。通用编辑/删除及后端写入类型保持禁止 object-lock，写入能力待另行实现；提取共用 XML 外层检查但不改变现有类型约束。测试覆盖解析、完整租户签名请求、缺失/错误响应、展示状态与只读保护；完整前后端测试、类型检查、构建和 OpenAPI 校验通过。无真实集群或浏览器视觉验证，ACL、复制配置及对象锁写入仍需继续。
 
 Bucket Policy 写入增加同租户/同 Bucket 的原文回读核验。参考 `RGWPutBucketPolicy::execute` 保存 `Policy.text`、`RGWGetBucketPolicy::execute` 返回原始属性的行为，逐字节比较提交和 GET 内容，不反序列化为浮点数、不重排 JSON，也不折叠重复键。格式变化同样报告原文未核实；写后读取拒绝、缺失、网络失败或内容不一致返回不可重试 post_check_failed，提醒刷新并检查权限，写入失败不额外 GET。测试覆盖精确原文、超过 JS 安全整数的相邻值、Allow/Deny 变化、格式变化、损坏/空响应、失去读取权限和失败路径；完整后端测试及 OpenAPI 校验通过。本次无前端修改，未重跑前端测试，无真实集群验证；此核验不模拟 IAM 授权结果，也不保证后续无并发修改。

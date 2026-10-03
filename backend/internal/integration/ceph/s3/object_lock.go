@@ -3,6 +3,7 @@ package s3
 import (
 	"encoding/xml"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -16,7 +17,7 @@ type BucketDefaultRetention struct {
 	Years *string `json:"years"`
 }
 
-// Read only: exposing this configuration does not enable its write/delete paths.
+// Preserve native values on reads; writes additionally validate retention semantics.
 func BucketObjectLock(body []byte) (BucketObjectLockConfiguration, error) {
 	result := BucketObjectLockConfiguration{}
 	if err := validateConfigurationXML(body, "ObjectLockConfiguration"); err != nil {
@@ -81,4 +82,30 @@ func BucketObjectLock(body []byte) (BucketObjectLockConfiguration, error) {
 		return result, invalid
 	}
 	return result, nil
+}
+
+func ValidatedBucketObjectLock(body []byte) (BucketObjectLockConfiguration, error) {
+	configuration, err := BucketObjectLock(body)
+	if err != nil || configuration.DefaultRetention == nil {
+		return configuration, err
+	}
+	retention := configuration.DefaultRetention
+	if retention.Mode != "GOVERNANCE" && retention.Mode != "COMPLIANCE" {
+		return configuration, fmt.Errorf("object lock mode must be GOVERNANCE or COMPLIANCE")
+	}
+	period := retention.Days
+	if period == nil {
+		period = retention.Years
+	}
+	for _, digit := range *period {
+		if digit < '0' || digit > '9' {
+			return configuration, fmt.Errorf("object lock period must contain decimal digits only")
+		}
+	}
+	number, err := strconv.ParseUint(*period, 10, 31)
+	if err != nil || number == 0 {
+		return configuration, fmt.Errorf("object lock period must be between 1 and 2147483647")
+	}
+	*period = strconv.FormatUint(number, 10)
+	return configuration, nil
 }

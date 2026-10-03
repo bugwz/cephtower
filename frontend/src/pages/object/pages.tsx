@@ -53,6 +53,7 @@ import { RgwBucketLifecycleRules } from './RgwBucketLifecycleRules'
 import { rgwLifecycleProgress } from './rgwLifecycleProgress'
 import { rgwBucketConfigurationReadOptions } from './rgwBucketConfiguration'
 import { rgwBucketObjectLockSummary } from './rgwBucketObjectLockSummary'
+import { objectLockFormInitial, objectLockFormBlocked, objectLockFormInput, objectLockFormConfirmation } from './rgwBucketObjectLockForm'
 import { RgwBucketLifecycleEditor } from './RgwBucketLifecycleEditor'
 import { lifecycleFormInitial, lifecycleFormBlocked, lifecycleFormInput, lifecycleFormConfirmation } from './rgwBucketLifecycleForm'
 import { RgwBucketCorsEditor } from './RgwBucketCorsEditor'
@@ -912,6 +913,22 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...rgwBucketConfigurationDeleteInput(row) })
     },
     extraActions: [{
+      title: '修改对象锁默认保留', buttonLabel: '修改默认保留',
+      path: '/rgw/bucket/policy', method: 'PATCH',
+      successMessage: '对象锁默认保留配置已回读核验',
+      visibleWhen: (row) => row.kind === 'object-lock',
+      disabledWhen: objectLockFormBlocked, initialValues: objectLockFormInitial, confirmation: objectLockFormConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'kind', label: '配置类型（不可更改）', readOnly: true },
+        { name: 'retention_action', label: '默认保留策略操作', type: 'select', required: true, options: [{ value: 'set', label: '设置默认保留期' }, { value: 'clear', label: '清除默认保留期（不关闭对象锁）' }] },
+        { name: 'mode', label: '模式（仅设置操作使用）', type: 'select', options: [{ value: 'GOVERNANCE', label: 'GOVERNANCE 治理模式' }, { value: 'COMPLIANCE', label: 'COMPLIANCE 合规模式' }] },
+        { name: 'unit', label: '单位（仅设置操作使用）', type: 'select', options: [{ value: 'Days', label: '天' }, { value: 'Years', label: '年' }] },
+        { name: 'period', label: '正整数保留期（仅设置操作使用）' },
+        { name: 'confirm_lock', label: '不可逆影响确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '我确认对象锁无法关闭，保留策略可能阻止对象删除' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...objectLockFormInput(values, row) })
+    }, {
       title: '编辑生命周期规则',
       buttonLabel: '编辑生命周期',
       path: '/rgw/bucket/policy', method: 'PATCH',
@@ -978,7 +995,7 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       { key: 'configured', title: '配置状态', render: (value) => value === true ? '已配置' : value === false ? '未配置' : '状态不可用' },
       { key: 'tags', title: '标签条目', ellipsis: false, render: (value, row) => row.kind === 'tagging' ? <RgwBucketTagEntries value={value} /> : '—' },
       { key: 'encryption', title: '默认加密', ellipsis: false, render: rgwBucketEncryptionSummary },
-      { key: 'object_lock', title: '对象锁默认保留（只读）', ellipsis: false, render: rgwBucketObjectLockSummary },
+      { key: 'object_lock', title: '对象锁默认保留', ellipsis: false, render: rgwBucketObjectLockSummary },
       { key: 'cors_rules', title: 'CORS 规则', ellipsis: false, render: (value, row) => row.kind === 'cors' ? <RgwBucketCorsRules value={value} configured={row.configured} /> : '—' },
       { key: 'lifecycle_rules', title: '生命周期规则', ellipsis: false, render: (value, row) => row.kind === 'lifecycle' ? <RgwBucketLifecycleRules value={value} configured={row.configured} /> : '—' },
       { key: 'content_type', title: '响应类型' },

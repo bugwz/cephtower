@@ -39,7 +39,32 @@ func TestBucketObjectLock(t *testing.T) {
 		}
 	}
 	if ValidateBucketConfiguration("object-lock", []byte(`<ObjectLockConfiguration/>`)) == nil || DeletableBucketConfiguration("object-lock") {
-		t.Fatal("read-only configuration became writable")
+		t.Fatal("invalid configuration or unsupported delete accepted")
+	}
+}
+
+func TestObjectLockWriteValidation(t *testing.T) {
+	for _, period := range []string{"0", "-1", "2147483648", "", "1x", " 1", "1.5"} {
+		body := []byte(`<ObjectLockConfiguration><ObjectLockEnabled>Enabled</ObjectLockEnabled><Rule><DefaultRetention><Mode>GOVERNANCE</Mode><Days>` + period + `</Days></DefaultRetention></Rule></ObjectLockConfiguration>`)
+		if ValidateBucketConfiguration("object-lock", body) == nil {
+			t.Fatalf("accepted %q", period)
+		}
+	}
+	for _, mode := range []string{"GOVERNANCE", "COMPLIANCE", "future"} {
+		body := []byte(`<ObjectLockConfiguration><ObjectLockEnabled>Enabled</ObjectLockEnabled><Rule><DefaultRetention><Mode>` + mode + `</Mode><Years>002</Years></DefaultRetention></Rule></ObjectLockConfiguration>`)
+		configuration, err := ValidatedBucketObjectLock(body)
+		if mode == "future" {
+			if err == nil {
+				t.Fatal("unknown write mode accepted")
+			}
+			continue
+		}
+		if err != nil || *configuration.DefaultRetention.Years != "2" {
+			t.Fatalf("native integer normalization failed: %v", err)
+		}
+	}
+	if err := ValidateBucketConfiguration("object-lock", []byte(`<ObjectLockConfiguration><ObjectLockEnabled>Enabled</ObjectLockEnabled></ObjectLockConfiguration>`)); err != nil {
+		t.Fatal(err)
 	}
 }
 
