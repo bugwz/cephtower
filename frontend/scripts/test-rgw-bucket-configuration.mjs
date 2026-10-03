@@ -4,6 +4,18 @@ import ts from 'typescript'
 import './test-external-form-confirmation.mjs'
 import './test-rgw-bucket-tag-form.mjs'
 const helpers = {}
+const deletion = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketDelete.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(deletion)
+const deleteRow = { natural_key: 'dGVhbQBidWNrZXQ', name: 'bucket', tenant: 'team' }
+assert.deepEqual(deletion.bucketDeleteInput(deleteRow), { bucket_id: deleteRow.natural_key })
+assert.equal(deletion.bucketDeleteBlocked(deleteRow), undefined)
+assert.match(deletion.bucketDeleteConfirmation(deleteRow), /team.*dGVhbQBidWNrZXQ.*不会清空对象、历史版本或删除标记/)
+assert.match(deletion.bucketDeleteConfirmation({ ...deleteRow, tenant: '' }), /全局租户/)
+for (const id of ['', ' id ', 12, null, 'a/b', 'a:b']) {
+  assert.ok(deletion.bucketDeleteBlocked({ natural_key: id }))
+  assert.throws(() => deletion.bucketDeleteInput({ natural_key: id }))
+}
+assert.deepEqual(deletion.bucketDeleteInput({ bucket_id: 'AGJ1Y2tldA' }), { bucket_id: 'AGJ1Y2tldA' })
 const versioning = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketVersioningForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(versioning)
 for (const value of [undefined, 'off', 'future', '', null]) assert.equal(versioning.bucketVersioningInitial({ versioning: value }).versioning, undefined)

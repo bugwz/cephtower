@@ -48,6 +48,7 @@ import { rgwUserCreateCredentials } from './rgwUserCreateCredentials'
 import { rgwUserCreateFlags } from './rgwUserCreateFlags'
 import { rgwBucketConfigurationOptions, rgwBucketConfigurationInput, rgwBucketConfigurationDeleteBlocked, rgwBucketConfigurationDeleteInput, rgwBucketConfigurationDeleteConfirmation, rgwBucketConfigurationEditBlocked, rgwBucketConfigurationEditInitial, rgwBucketConfigurationEditInput, rgwBucketConfigurationUpdateConfirmation } from './rgwBucketConfiguration'
 import { rgwBucketEncryptionSummary } from './rgwBucketEncryptionSummary'
+import { bucketDeleteInput, bucketDeleteBlocked, bucketDeleteConfirmation } from './rgwBucketDelete'
 import { bucketVersioningInitial, bucketVersioningInput, bucketVersioningConfirmation } from './rgwBucketVersioningForm'
 import { bucketEncryptionFormInitial, bucketEncryptionFormBlocked, bucketEncryptionFormInput, bucketEncryptionFormConfirmation } from './rgwBucketEncryptionForm'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
@@ -609,8 +610,10 @@ const definitions: Record<
       action: 'rgw_bucket.delete',
       resourceKind: 'rgw_bucket',
       successMessage: 'Bucket 删除执行成功',
-      buildBody: (row, clusterId) => ({ cluster_id: clusterId, bucket_id: bucketId(row) }),
-      resourceKey: (row) => `rgw/bucket/${bucketId(row)}`
+      disabledWhen: bucketDeleteBlocked,
+      confirmation: bucketDeleteConfirmation,
+      buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...bucketDeleteInput(row) }),
+      resourceKey: (row) => `rgw/bucket/${bucketDeleteInput(row).bucket_id}`
     },
     columns: [
       { key: 'name', title: 'Bucket' },
