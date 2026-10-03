@@ -14,11 +14,15 @@ console.log('RGW rate limits distinguish disabled, unlimited and unavailable sta
 const form = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwRateLimitForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(form)
 const values = { max_read_ops: 0, max_write_ops: 1, max_read_bytes: 1024, max_write_bytes: Number.MAX_SAFE_INTEGER }
-assert.deepEqual(form.rgwRateLimitInput(values), values)
-assert.deepEqual(form.rgwRateLimitInitial({ ...values, enabled: true }), { ...values, enabled: true })
+assert.deepEqual(form.rgwRateLimitInput({ ...values, enabled: 'enable' }), { ...values, enabled: true })
+assert.deepEqual(form.rgwRateLimitInput({ ...values, enabled: 'disable' }), { ...values, enabled: false })
+assert.deepEqual(form.rgwRateLimitInitial({ ...values, enabled: true }), { ...values, enabled: 'enable' })
+assert.equal(form.rgwRateLimitInitial({ enabled: false }).enabled, 'disable')
+for (const enabled of [undefined, null, 0, 1, true, false, 'true', 'false', '']) assert.throws(() => form.rgwRateLimitInput({ ...values, enabled }))
+for (const enabled of [undefined, null, 0, 1, 'true', 'false']) assert.equal(form.rgwRateLimitInitial({ enabled }).enabled, undefined)
 for (const value of [undefined, null, '', '0', false, -1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
   for (const key of Object.keys(values)) {
-    assert.throws(() => form.rgwRateLimitInput({ ...values, [key]: value }))
+    assert.throws(() => form.rgwRateLimitInput({ ...values, enabled: 'enable', [key]: value }))
     assert.equal(form.rgwRateLimitInitial({ ...values, [key]: value })[key], undefined)
   }
 }

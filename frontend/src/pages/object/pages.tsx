@@ -159,11 +159,11 @@ const definitions: Record<
     })),
       { title: '用户限流设置', path: '/rgw/user/ratelimit', method: 'PUT', successMessage: '用户限流设置执行成功',
         fields: [
-          { name: 'enabled', label: '启用限流', type: 'boolean' },
+          { name: 'enabled', label: '限流状态', type: 'select', required: true, options: [{ label: '启用', value: 'enable' }, { label: '关闭', value: 'disable' }] },
           ...['max_read_ops', 'max_write_ops', 'max_read_bytes', 'max_write_bytes'].map((name,index) => ({ name, label: ['读请求数', '写请求数', '读取字节数', '写入字节数'][index] + '（每 RGW 每分钟；0 为无限制）', type: 'number' as const, min: 0, max: Number.MAX_SAFE_INTEGER, required: true }))
         ],
         initialValues: (row) => rgwRateLimitInitial(row?.rate_limit),
-        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), enabled: Boolean(values.enabled), ...rgwRateLimitInput(values) })
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwRateLimitInput(values) })
       },
       { title: '管理用户权限（caps）', path: '/rgw/user/caps', method: 'POST', successMessage: '用户管理权限操作执行成功',
         initialValues: { action: 'add', permission: 'read' },
@@ -390,11 +390,11 @@ const definitions: Record<
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, bucket_id: bucketId(row), enabled: Boolean(values.enabled), max_size: Number(values.max_size), max_objects: Number(values.max_objects) })
     }, { title: 'Bucket 限流设置', path: '/rgw/bucket/ratelimit', method: 'PUT', successMessage: 'Bucket 限流设置执行成功',
         fields: [
-          { name: 'enabled', label: '启用限流', type: 'boolean' },
+          { name: 'enabled', label: '限流状态', type: 'select', required: true, options: [{ label: '启用', value: 'enable' }, { label: '关闭', value: 'disable' }] },
           ...['max_read_ops', 'max_write_ops', 'max_read_bytes', 'max_write_bytes'].map((name,index) => ({ name, label: ['读请求数', '写请求数', '读取字节数', '写入字节数'][index] + '（每 RGW 每分钟；0 为无限制）', type: 'number' as const, min: 0, max: Number.MAX_SAFE_INTEGER, required: true }))
         ],
         initialValues: (row) => rgwRateLimitInitial(row?.rate_limit),
-        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, bucket_id: bucketId(row), enabled: Boolean(values.enabled), ...rgwRateLimitInput(values) })
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, bucket_id: bucketId(row), ...rgwRateLimitInput(values) })
       }],
     deleteAction: {
       title: '删除 Bucket',
