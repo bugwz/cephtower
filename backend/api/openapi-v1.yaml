@@ -557,6 +557,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -1324,6 +1327,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -3386,6 +3392,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -4153,6 +4162,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -5748,6 +5760,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -6642,6 +6657,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -7410,6 +7428,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -8864,6 +8885,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -9725,6 +9749,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -10492,6 +10519,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -11505,6 +11535,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -12768,6 +12801,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -13536,6 +13572,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -14304,6 +14343,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -15709,6 +15751,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -16622,6 +16667,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -17485,6 +17533,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -18252,6 +18303,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -19675,6 +19729,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -20442,6 +20499,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -21226,6 +21286,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -22087,6 +22150,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -22854,6 +22920,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -23622,6 +23691,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -24702,6 +24774,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -25660,6 +25735,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -26521,6 +26599,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -27288,6 +27369,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -28188,6 +28272,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -28956,6 +29043,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -30404,6 +30494,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -31457,6 +31550,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -32318,6 +32414,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -33181,6 +33280,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -34042,6 +34144,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -34809,6 +34914,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -35767,6 +35875,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -36628,6 +36739,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -37395,6 +37509,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -38258,6 +38375,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -39025,6 +39145,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -39888,6 +40011,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -40655,6 +40781,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -41518,6 +41647,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -42379,6 +42511,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -43146,6 +43281,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -44177,6 +44315,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -45039,6 +45180,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -45807,6 +45951,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -46575,6 +46722,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -47437,6 +47587,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -48239,6 +48392,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -49292,6 +49448,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -50153,6 +50312,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -50920,6 +51082,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -51783,6 +51948,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -52551,6 +52719,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -53319,6 +53490,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -54087,6 +54261,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -54950,6 +55127,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -55811,6 +55991,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -56578,6 +56761,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -57463,6 +57649,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -58230,6 +58419,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -58997,6 +59189,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -60151,6 +60346,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -61033,6 +61231,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -61963,6 +62164,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -62730,6 +62934,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -63697,6 +63904,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -64559,6 +64769,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -65327,6 +65540,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -66206,6 +66422,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -66973,6 +67192,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -67740,6 +67962,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -68508,6 +68733,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -69371,6 +69599,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -70232,6 +70463,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -70999,6 +71233,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -71868,6 +72105,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -72636,6 +72876,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -73404,6 +73647,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -74267,6 +74513,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -75035,6 +75284,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -75802,6 +76054,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -76665,6 +76920,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -77432,6 +77690,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -78199,6 +78460,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -78967,6 +79231,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -79925,6 +80192,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -80786,6 +81056,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -81553,6 +81826,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -82321,6 +82597,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -83089,6 +83368,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -83856,6 +84138,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -84624,6 +84909,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -85392,6 +85680,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -86160,6 +86451,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -86928,6 +87222,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -87791,6 +88088,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -88558,6 +88858,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -89326,6 +89629,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -90093,6 +90399,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -91191,6 +91500,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -92445,6 +92757,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -93306,6 +93621,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -94073,6 +94391,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -94936,6 +95257,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -95703,6 +96027,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -96470,6 +96797,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -97333,6 +97663,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -98194,6 +98527,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -98961,6 +99297,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -99824,6 +100163,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -100591,6 +100933,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true
@@ -101358,6 +101703,9 @@ paths:
                   type: string
                 k:
                   type: integer
+                key_type:
+                  type: string
+                  enum: ["s3", "swift"]
                 keyring:
                   type: string
                   writeOnly: true

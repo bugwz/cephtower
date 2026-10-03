@@ -8,6 +8,7 @@ import './test-rgw-user-account-migration.mjs'
 import './test-rgw-migration-account-options.mjs'
 import './test-rgw-user-create-account.mjs'
 import './test-rgw-user-subuser.mjs'
+import './test-rgw-subuser-create.mjs'
 const exports = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserFlags.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
 assert.equal(exports.rgwUserSuspension(0), '未暂停')

@@ -34,6 +34,7 @@ import { RgwUserDetails } from './RgwUserDetails'
 import { rgwUserOperationMaskInput, rgwUserOperationMaskOptions } from './rgwUserOperationMask'
 import { rgwUserAccountRootBlocked, rgwUserAccountRootInput } from './rgwUserAccountRoot'
 import { rgwSubuserOptions, rgwSubuserInput, rgwSubuserPermissionOptions } from './rgwUserSubuser'
+import { rgwSubuserCreateInput } from './rgwSubuserCreate'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
@@ -252,6 +253,23 @@ const definitions: Record<
           return `确认对用户 ${JSON.stringify(userId(row))} ${policy.action === 'attach' ? '关联' : '解除关联'}策略 ${JSON.stringify(policy.policy_arn)}？该操作会改变用户权限，可能导致权限扩大或现有访问失败。`
         },
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserPolicyInput(values, row) })
+      },
+      { title: '创建子用户', path: '/rgw/user/subuser', method: 'POST', successMessage: '子用户、权限及凭据已创建并回读验证；密钥不会显示在库存中',
+        changedValues: (changed) => Object.keys(changed).some(key => ['subuser', 'key_type', 'access_key', 'secret_key'].includes(key)) ? { credentials_saved: undefined, confirm_subuser: undefined } : {},
+        fields: [
+          { name: 'subuser', label: '本地子用户名（不含 UID 或冒号）', required: true },
+          { name: 'subuser_permission', label: '子用户权限', type: 'select', required: true, options: rgwSubuserPermissionOptions },
+          { name: 'key_type', label: '密钥类型', type: 'select', required: true, options: [{ label: 'S3', value: 's3' }, { label: 'Swift', value: 'swift' }] },
+          { name: 'access_key', label: '预先保存的 S3 Access Key', type: 'password', required: true, visibleWhen: values => values.key_type === 's3' },
+          { name: 'secret_key', label: '预先保存的高强度 Secret Key（提交后不回显）', type: 'password', required: true },
+          { name: 'credentials_saved', label: '凭据保存确认', type: 'select', required: true, options: [{ label: '已将本次凭据保存在安全位置', value: 'saved' }] },
+          { name: 'confirm_subuser', label: '输入完整子用户 ID 确认（UID:子用户名）', required: true }
+        ],
+        confirmation: (values, row) => {
+          const input = rgwSubuserCreateInput(values, row)
+          return `为 ${JSON.stringify(input.confirm_subuser)} 创建 ${input.key_type} 凭据，授予 ${JSON.stringify(input.subuser_permission)} 权限？请确认已安全保存密钥，本系统不会提供密钥查询。`
+        },
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwSubuserCreateInput(values, row) })
       },
       { title: '管理已有子用户', path: '/rgw/user/subuser', method: 'POST', successMessage: '子用户变更已执行并回读验证',
         disabledWhen: (row) => rgwSubuserOptions(row).length ? undefined : '没有可操作的子用户，请先刷新用户库存',

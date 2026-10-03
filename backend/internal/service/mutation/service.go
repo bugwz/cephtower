@@ -125,7 +125,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			return cephdomain.ActionResult{}, normalize(readErr)
 		}
 		if !rgwSubuserMatches(checked.Stdout, request.Parameters, true) {
-			return cephdomain.ActionResult{}, invalid("subuser identity or existence could not be verified; no changes were made")
+			return cephdomain.ActionResult{}, invalid("subuser identity or expected presence/absence could not be verified; no changes were made")
 		}
 	}
 	if rgwUserAccountMigrationRequested(request) {

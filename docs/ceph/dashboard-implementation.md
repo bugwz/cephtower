@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+RGW 子用户创建支持 S3/Swift 及显式提供凭据，对齐参考 `controllers/rgw.py::create_subuser` 的手动密钥模式。复用 `POST /rgw/user/subuser`，映射 `subuser create --key-type --access --secret-key`，S3 另传 `--access-key`；依据 `rgw_user.h` 的密钥操作标记及 `RGWSubUserPool::add/execute_add`。前端要求预先安全保存凭据、完整子用户 ID 确认，密码字段不进入确认文字；Swift 不提交残留的 S3 Access Key。执行前检查完整 UID、子用户与关联密钥均不存在，执行后检查权限、密钥所属子用户、内容及激活状态。参数随既有任务加密落库，敏感命令参数标记脱敏，操作结果不包含原生用户信息，失败沿用不可自动重试策略。API 入队、两种协议五种权限、异常回读、预检、敏感参数与前端绑定测试及完整前后端检查通过；OpenAPI 已再生成。仍未实机或浏览器视觉验证；服务端自动生成及一次性安全发放密钥、已有子用户密钥轮换尚未完成，不能将本次手动凭据创建视为完整密钥管理覆盖。
+
 已有 RGW 子用户增加权限修改与删除入口，通过 `POST /rgw/user/subuser` 高风险操作映射 `radosgw-admin subuser modify/rm`。权限提供无权限、读、写、读写、完全控制；`none` 映射显式 `--access=`，回读 `<none>`，依据 `common/ceph_argparse.cc`、`rgw_common.cc` 及 CLI 的 `set_perm` 分支。子用户从当前 UID 的库存中选择，要求输入完整 ID 确认；传给原生命令的仅为本地子用户名，拒绝冒号以避免 `RGWUserAdminOpState::set_subuser` 重定向用户。执行前实时核验完整 UID 和子用户存在，执行后核验权限或子用户及 S3/Swift 密钥关联均已移除。删除清除全部关联密钥的行为来自 `RGWSubUserPool::execute_remove`，前端明确提示不可恢复；修改不生成或轮换密钥。写入、回读及库存刷新失败不自动重试。API 入队、权限映射、参数拒绝、执行链、关联密钥残留、表单确认和刷新测试已覆盖，`make test-backend`（含 OpenAPI 校验）与 `make test-frontend` 通过；未实机或浏览器视觉验证。创建子用户与安全密钥发放仍未实现，此项不是子用户全功能完成声明。
 
 创建账户用户成功后同步刷新 `rgw_user` 与 `rgw_account`，独立用户只刷新用户库存。所有 RGW 用户创建后的库存刷新错误标记为不可自动重试，避免刷新故障导致重复执行创建命令；提示改为读取库存。源码 `user_add_helper` 明确拒绝已存在 UID，因此不增加无必要的创建前存在性查询。调度测试覆盖独立用户、账户普通/根用户、成功/刷新失败和创建失败不刷新。

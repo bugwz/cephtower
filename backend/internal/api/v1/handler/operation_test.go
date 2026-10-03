@@ -86,6 +86,23 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 			t.Fatalf("wrong creation risk: %+v %v", row, err)
 		}
 	}
+	for _, kind := range []string{"s3", "swift"} {
+		fields := ""
+		if kind == "s3" {
+			fields = `,"access_key":"ACCESS123"`
+		}
+		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/user/subuser", fmt.Sprintf(`{"cluster_id":%d,"uid":"tenant$user","subuser":"new","confirm_subuser":"tenant$user:new","action":"create","subuser_permission":"read","key_type":%q,"secret_key":"PrivateTestSecret"%s}`, cluster.ID, kind, fields), "subuser-create-"+kind)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("subuser create: %d %s", response.Code, response.Body.String())
+		}
+		row, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || row.Risk != "high" || row.Action != "rgw_user.subuser" || row.ResourceKey != "rgw/user/tenant$user" {
+			t.Fatalf("wrong creation operation: %+v %v", row, err)
+		}
+		if strings.Contains(row.ParametersCiphertext, "PrivateTestSecret") || strings.Contains(response.Body.String(), "PrivateTestSecret") || strings.Contains(response.Body.String(), "ACCESS123") {
+			t.Fatal("creation credential exposed")
+		}
+	}
 	for _, action := range []string{"start", "stop", "restart", "redeploy", "reconfig", "rotate-key"} {
 		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/daemon/action", fmt.Sprintf(`{"cluster_id":%d,"name":"osd.1","action":%q}`, cluster.ID, action), "daemon-"+action)
 		if response.Code != http.StatusAccepted {

@@ -242,7 +242,7 @@ func TestRGWSubuserContract(t *testing.T) {
 			t.Fatalf("accepted missing %s", field)
 		}
 	}
-	for field, value := range map[string]any{"uid": "other/user", "action": "create", "subuser_permission": "full-control", "secret_key": "must-not-accept"} {
+	for field, value := range map[string]any{"uid": "other/user", "action": "delete", "subuser_permission": "full-control", "generate_secret": true} {
 		p := valid()
 		p[field] = value
 		if err := ValidateMutationRequest("rgw_user.subuser", p); err == nil {
