@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strings"
 )
 
 // JSONField describes the stable JSON shape accepted by a mutation action.
@@ -395,7 +396,16 @@ func ValidateMutationRequest(action string, value map[string]any) error {
 	if !ok {
 		return fmt.Errorf("request contract for action %q is not registered", action)
 	}
-	return validateObject("request", value, contract.Fields)
+	if err := validateObject("request", value, contract.Fields); err != nil {
+		return err
+	}
+	if strings.HasPrefix(action, "rgw_user.") || strings.HasPrefix(action, "rgw_key.") {
+		uid, ok := value["uid"].(string)
+		if !ok || uid == "" || uid != strings.TrimSpace(uid) || strings.HasPrefix(uid, "-") || strings.ContainsAny(uid, "/\x00\r\n") {
+			return fmt.Errorf("request.uid must be an exact nonempty user id without surrounding whitespace, slash, control characters, or a leading dash")
+		}
+	}
+	return nil
 }
 
 func validateObject(path string, value map[string]any, fields map[string]JSONField) error {

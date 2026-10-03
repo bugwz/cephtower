@@ -203,6 +203,31 @@ func TestRGWAccountCreateLimitContract(t *testing.T) {
 	}
 }
 
+func TestRGWUserMutationIdentity(t *testing.T) {
+	for _, action := range []string{"rgw_user.update", "rgw_user.delete", "rgw_key.create", "rgw_key.delete"} {
+		body := func(uid any) map[string]any {
+			value := map[string]any{"cluster_id": float64(1), "uid": uid}
+			if action == "rgw_key.create" || action == "rgw_key.delete" {
+				value["access_key"] = "test-access"
+			}
+			if action == "rgw_key.create" {
+				value["secret_key"] = "test-secret"
+			}
+			return value
+		}
+		for _, uid := range []string{"user", "tenant$user", "tenant$namespace$user", "$namespace$user"} {
+			if err := ValidateMutationRequest(action, body(uid)); err != nil {
+				t.Fatalf("%s rejected %q: %v", action, uid, err)
+			}
+		}
+		for _, uid := range []any{nil, false, "", " user", "user ", "tenant/user", "user/", "-user", "a\nb", "a\x00b"} {
+			if err := ValidateMutationRequest(action, body(uid)); err == nil {
+				t.Fatalf("%s accepted unsafe identity %#v", action, uid)
+			}
+		}
+	}
+}
+
 func TestHealthMuteContract(t *testing.T) {
 	if err := ValidateMutationRequest("health.mute", map[string]any{"cluster_id": float64(1), "code": "OSD_DOWN", "ttl": "1h", "sticky": true}); err != nil {
 		t.Fatal(err)

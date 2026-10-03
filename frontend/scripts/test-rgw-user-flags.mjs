@@ -37,7 +37,8 @@ const userIDFunction = placementSource.statements.find(node => ts.isFunctionDecl
 assert.ok(userIDFunction)
 const userIDExports = {}
 new Function('exports', ts.transpileModule('export ' + userIDFunction.getText(placementSource), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(userIDExports)
-for (const uid of ['user', 'tenant$user', 'tenant$namespace$user', '$namespace$user', ' raw ']) assert.equal(userIDExports.userId({ uid, user_id: 'wrong', natural_key: 'wrong' }), uid)
+for (const uid of ['user', 'tenant$user', 'tenant$namespace$user', '$namespace$user']) assert.equal(userIDExports.userId({ uid, user_id: 'wrong', natural_key: 'wrong' }), uid)
+for (const uid of [' raw ', 'tenant/user', '-user']) assert.throws(() => userIDExports.userId({ uid }), /完整 UID/)
 for (const row of [undefined, {}, { user_id: 'local', tenant: 'tenant' }, { natural_key: 'tenant$user' }, { full_user_id: 'tenant$user' }, { name: 'user' }, ...[null, false, 1, '', ' ', 'bad\nuid', 'bad\0uid'].map(uid => ({ uid, user_id: 'local' }))]) assert.throws(() => userIDExports.userId(row), /完整 UID/)
 const placementActions = new Map()
 function findPlacementActions(node) {
