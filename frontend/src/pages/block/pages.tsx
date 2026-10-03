@@ -13,6 +13,7 @@ import { rbdUsageText } from './rbdUsage'
 import { rbdSnapshotLimitText } from './rbdSnapshotLimit'
 import { rbdMirrorRoleReason } from './rbdMirrorRole'
 import { rbdImageDeleteReason } from './rbdImageDelete'
+import { rbdTrashMoveReason } from './rbdTrashMove'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
 import { LiveMirrorScheduleStatus } from './LiveMirrorScheduleStatus'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -149,18 +150,26 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
         return { cluster_id: clusterId, image_spec: imageSpec(row), action: 'flatten' }
       }
     }, {
+      title: '移入回收站', buttonLabel: '移入回收站', path: '/rbd/image/action', method: 'POST',
+      successMessage: '镜像已移入回收站', disabledWhen: rbdTrashMoveReason,
+      confirmation: (_values, row) => `将 ${String(row?.image_path ?? imageSpec(row))} 移入回收站，镜像将从当前列表移除。`,
+      fields: [{ name: 'expires_at', label: '回收站到期时间（可选，含时区）', placeholder: '2026-12-31T23:59:59+08:00' }],
+      buildBody: (values, clusterId, row) => {
+        const reason = rbdTrashMoveReason(row ?? {})
+        if (reason) throw new Error(reason)
+        return { cluster_id: clusterId, image_spec: imageSpec(row), action: 'move-to-trash', ...(values.expires_at ? { expires_at: String(values.expires_at) } : {}) }
+      }
+    }, {
       title: 'RBD 镜像操作', buttonLabel: '更多操作', path: '/rbd/image/action', method: 'POST',
       successMessage: 'RBD 镜像操作执行成功',
-      confirmation: (values,row) => values.action === 'move-to-trash' ? `将 ${imageSpec(row)} 移入回收站，镜像将从当前列表移除。` : undefined,
       fields: [
         { name:'action',label:'操作',type:'select',required:true,options:[
           {label:'回收零填充空间',value:'sparsify'},
-          {label:'重命名镜像',value:'rename'}, {label:'复制镜像',value:'copy'}, {label:'深度复制（包含快照）',value:'deep-copy'}, {label:'移入回收站',value:'move-to-trash'}
+          {label:'重命名镜像',value:'rename'}, {label:'复制镜像',value:'copy'}, {label:'深度复制（包含快照）',value:'deep-copy'}
         ] },
-        {name:'destination',required:true,visibleWhen:(values)=>['copy','deep-copy','rename'].includes(String(values.action)),label:'目标（复制填完整路径，重命名只填新名称）',placeholder:'pool/namespace/image'},
-        {name:'expires_at',visibleWhen:(values)=>values.action==='move-to-trash',label:'回收站到期时间（移入时可选，含时区）',placeholder:'2026-12-31T23:59:59+08:00'}
+        {name:'destination',required:true,visibleWhen:(values)=>['copy','deep-copy','rename'].includes(String(values.action)),label:'目标（复制填完整路径，重命名只填新名称）',placeholder:'pool/namespace/image'}
       ],
-      buildBody:(values,clusterId,row) => ({cluster_id:clusterId,image_spec:imageSpec(row),action:String(values.action),...(['copy','deep-copy','rename'].includes(String(values.action)) ? {destination:String(values.destination ?? '')} : {}),...(values.action==='move-to-trash' && values.expires_at ? {expires_at:String(values.expires_at)} : {})})
+      buildBody:(values,clusterId,row) => ({cluster_id:clusterId,image_spec:imageSpec(row),action:String(values.action),...(['copy','deep-copy','rename'].includes(String(values.action)) ? {destination:String(values.destination ?? '')} : {})})
     }, {
       title:'创建镜像快照',buttonLabel:'创建快照',path:'/rbd/image/snapshot',method:'POST',successMessage:'镜像快照已创建',
       fields:[{name:'name',label:'快照名称',required:true}],

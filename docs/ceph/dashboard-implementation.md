@@ -1276,6 +1276,11 @@ which could collapse multiple paths and schedules into one resource key.
 
 ### RBD feature mutation
 
+Moving an image to trash is a dedicated confirmed action requiring collected format 2.
+Format 1 is unsupported by `librbd/api/Trash.cc`, matching Dashboard's move guard;
+unknown format requires a refresh. The request builder repeats this check and retains
+the optional timezone-qualified expiry through the existing trash-move command path.
+
 Image deletion uses `has_snapshot_children`, aggregated from the existing user
 snapshot and `children --all` reads. True includes trash children; false requires
 every snapshot dependency read to succeed (or an explicit empty snapshot list).

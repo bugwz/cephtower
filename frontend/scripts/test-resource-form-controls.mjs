@@ -107,6 +107,12 @@ for (const children of [undefined, null, {}, '']) assert.match(snapshotDeleteRea
 for (const children of [[{ trash: true }], [{}], [null]]) assert.match(snapshotDeleteReason({ is_protected: false, children }), /仍有子镜像/)
 
 const usageExports = {}
+const trashMoveExports = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdTrashMove.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(trashMoveExports)
+const trashMoveReason = trashMoveExports.rbdTrashMoveReason
+assert.equal(trashMoveReason({ format: 2 }), undefined)
+assert.match(trashMoveReason({ format: 1 }), /不支持/)
+for (const format of [undefined, null, 0, 3, '2', true]) assert.match(trashMoveReason({ format }), /格式未知/)
 const imageDeleteExports = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdImageDelete.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(imageDeleteExports)
 const imageDeleteReason = imageDeleteExports.rbdImageDeleteReason
@@ -176,6 +182,23 @@ assert.deepEqual(buildRole({ action: 'mirror-promote', force: true }, 'cluster',
 assert.deepEqual(buildRole({ action: 'mirror-resync', force: true }, 'cluster', secondaryImage), { cluster_id: 'cluster', image_spec: 'encoded-image', action: 'mirror-resync' })
 assert.throws(() => buildRole({ action: 'mirror-resync' }, 'cluster', { ...secondaryImage, primary: true }), /不能/)
 assert.throws(() => buildRole({ action: 'mirror-promote', force: true }, 'cluster', { ...secondaryImage, primary: undefined }), /角色未知/)
+let trashMoveActionNode
+function findTrashMoveAction(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some((property) => ts.isPropertyAssignment(property) && property.name.getText(flattenPageTree) === 'buttonLabel' && property.initializer.getText(flattenPageTree) === "'移入回收站'")) trashMoveActionNode = node
+  ts.forEachChild(node, findTrashMoveAction)
+}
+findTrashMoveAction(flattenPageTree)
+assert.ok(trashMoveActionNode)
+const trashMoveBodyNode = trashMoveActionNode.properties.find((property) => property.name?.getText(flattenPageTree) === 'buildBody').initializer
+const trashMoveBodyCode = ts.transpileModule(`const build = ${trashMoveBodyNode.getText(flattenPageTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const buildTrashMove = new Function('rbdTrashMoveReason', 'imageSpec', `${trashMoveBodyCode}; return build`)(trashMoveReason, (row) => row.image_spec)
+const movableImage = { image_spec: 'encoded-image', format: 2 }
+assert.deepEqual(buildTrashMove({}, 'cluster', movableImage), { cluster_id: 'cluster', image_spec: 'encoded-image', action: 'move-to-trash' })
+assert.equal(buildTrashMove({ expires_at: '2026-12-31T23:59:59+08:00' }, 'cluster', movableImage).expires_at, '2026-12-31T23:59:59+08:00')
+assert.throws(() => buildTrashMove({}, 'cluster', { ...movableImage, format: 1 }), /不支持/)
+assert.throws(() => buildTrashMove({}, 'cluster', { ...movableImage, format: null }), /格式未知/)
+assert.ok(blockSource.includes('disabledWhen: rbdTrashMoveReason'))
+assert.ok(!blockSource.includes("value:'move-to-trash'"))
 assert.ok(blockSource.includes("key: 'snapshot_limit', title: '快照数量上限', render: (value) => rbdSnapshotLimitText(value)"))
 assert.ok(blockSource.includes('<RbdImageFlags details={row.details} />'))
 assert.ok(blockSource.includes("key: 'used_bytes', title: '占用（bytes）', render: (value, row) => rbdUsageText(value, row.image_features)"))
