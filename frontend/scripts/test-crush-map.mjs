@@ -183,6 +183,20 @@ assert.equal((poolSource.match(/crush_locality: undefined/g) ?? []).length, 2, '
 for (const field of ['crush_locality', 'crush_failure_domain']) assert.ok(poolSource.includes(`Form.useWatch('${field}', erasureCodeProfileForm)`))
 assert.ok(poolSource.includes('description={lrcPlacementPreview(erasureCodeK, erasureCodeM, erasureCodeL, erasureCodeLocality, erasureCodeFailureDomain)}'))
 console.log('LRC placement preview follows native optional locality steps without implicit defaults')
+const ecInfoSource = readFileSync(new URL('../src/pages/cluster/ErasureCodeInfo.tsx', import.meta.url), 'utf8')
+const ecInfoTree = ts.createSourceFile('ErasureCodeInfo.tsx', ecInfoSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const ecInfoFn = ecInfoTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ErasureCodeInfo')
+const ecLoader = ecInfoFn.body.statements.find((node) => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(ecInfoTree) === 'loader').declarationList.declarations[0].initializer.arguments[0]
+const ecLoaderCode = ts.transpileModule(`const loader = ${ecLoader.getText(ecInfoTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const ecValid = { manager: 'mgr.a', plugins: ['isa', 'lrc', 'custom'], directory: '/usr/lib/ceph', observed_at: '2026-10-03T00:00:00Z' }
+const loadEC = (result) => new Function('request', 'jsonInit', 'clusterId', `${ecLoaderCode}; return loader`)(async (path, init) => {
+  assert.equal(path, '/erasure/code/info'); assert.deepEqual(init, { method: 'GET', body: { cluster_id: 42 } }); return result
+}, (method, body) => ({ method, body }), 42)()
+assert.deepEqual(await loadEC(ecValid), ecValid)
+for (const invalid of [null, {}, { ...ecValid, manager: 'osd.1' }, { ...ecValid, plugins: [] }, { ...ecValid, plugins: [1] }, { ...ecValid, directory: '' }]) await assert.rejects(loadEC(invalid))
+assert.ok(poolSource.includes('erasureCodeProfileFormOpen && selectedClusterId && <ErasureCodeInfo key={selectedClusterId}'))
+assert.ok(ecInfoSource.includes('下方保留上次读取结果，不代表当前状态。'))
+console.log('EC runtime configuration request scope, response validation and modal lifetime checks passed')
 const chunkRuleNode = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ecChunkRule')
 const chunkRuleCode = ts.transpileModule(chunkRuleNode.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const chunkRule = new Function('numberValue', 'textValue', 'lrcLayoutPreview', `${chunkRuleCode}; return ecChunkRule`)((v) => typeof v === 'number' ? v : undefined, (v, fallback) => v ?? fallback, lrcPreview)

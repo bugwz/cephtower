@@ -5,6 +5,14 @@
 
 ## 如何追踪调用链
 
+EC 创建表单新增活动 MGR 运行配置只读面板。参考 erasure_code_profile.py 的 info()
+读取 osd_erasure_code_plugins / erasure_code_dir；本项目通过 ceph mgr dump 获取目标，
+再执行 ceph config show-with-defaults mgr.<active_name> --format json，按原生
+DaemonServer.cc 的数组结构提取这两个字段，经 GET /erasure/code/info 返回。不会返回
+其他配置或把 SHEC / CLAY 添加到原始配置列表，也不将此列表声称为 OSD 已安装插件。
+仅打开表单时加载，支持重读、错误和历史结果提示；不自动修改用户表单值。离线测试
+覆盖命令参数、无效/缺失/重复字段、API 和前端加载；未进行真实集群或浏览器验证。
+
 LRC Profile 表单不再自动将局部性设为故障域；与参考表单的空初值、原生
 ErasureCodeLrc::parse_kml 的可选 crush-locality 一致。新增原生步骤预览：有局部性时
 choose 局部性 (k+m)/l → chooseleaf 故障域 l+1；留空时 chooseleaf 故障域 0，

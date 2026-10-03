@@ -4,6 +4,7 @@ import { erasureProfileDetails } from './ErasureProfilesPanel'
 import { CrushRuleUsage, ErasureProfileUsage } from './ErasureProfileUsage'
 import { CrushRuleDetails } from './CrushRulesPanel'
 import { PoolPGStateTags } from './PoolPGStateTags'
+import { ErasureCodeInfo } from './ErasureCodeInfo'
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isRecord, jsonInit, request, numberValue, textValue, type ApiRecord } from '../../api/client'
@@ -878,6 +879,7 @@ export function PoolManagementPage() {
         maskClosable={false}
       >
         <Form form={erasureCodeProfileForm} className="cluster-form pool-management-form" layout="vertical" onFinish={submitErasureCodeProfile}>
+          {erasureCodeProfileFormOpen && selectedClusterId && <ErasureCodeInfo key={selectedClusterId} clusterId={selectedClusterId} />}
           <div className="pool-form-section">
             <Form.Item
               name="name"

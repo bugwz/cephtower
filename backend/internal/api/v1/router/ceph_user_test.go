@@ -31,6 +31,10 @@ type authRouteExecutor struct{ specs []executor.CommandSpec }
 func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.specs = append(e.specs, spec)
 	switch spec.ID {
+	case "erasure_code.manager":
+		return executor.CommandResult{Stdout: []byte(`{"active_name":"node.a"}`)}, nil
+	case "erasure_code.configuration":
+		return executor.CommandResult{Stdout: []byte(`[{"name":"osd_erasure_code_plugins","value":"isa lrc"},{"name":"erasure_code_dir","value":"/usr/lib/ceph/erasure-code"}]`)}, nil
 	case "host.hardware":
 		return executor.CommandResult{Stdout: []byte(`{"node1":{"sys":{"dimm1":{"status":{"health":"OK"}}}}}`)}, nil
 	case "daemon.perf.schema":
@@ -159,6 +163,10 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 		return rec
 	}
 	perfResult := send("GET", "/daemon/perf", map[string]any{"name": "osd.1"})
+	ecInfo := send("GET", "/erasure/code/info", map[string]any{})
+	if ecInfo.Header().Get("Cache-Control") != "no-store" || !strings.Contains(ecInfo.Body.String(), `"manager":"mgr.node.a"`) || !strings.Contains(ecInfo.Body.String(), `"plugins":["isa","lrc"]`) {
+		t.Fatalf("erasure code configuration response incomplete: %s", ecInfo.Body.String())
+	}
 	hardwareResult := send("GET", "/host/hardware", map[string]any{"host": "node1", "category": "memory"})
 	clusterHardware := send("GET", "/host/hardware", map[string]any{"category": "memory"})
 	if clusterHardware.Header().Get("Cache-Control") != "no-store" || !strings.Contains(clusterHardware.Body.String(), `"host":""`) || !strings.Contains(clusterHardware.Body.String(), `"host":"node1"`) {
