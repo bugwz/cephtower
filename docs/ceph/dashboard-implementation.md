@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+用户详情新增 S3/Swift 密钥元数据分页，对应参考用户详情的 Keys 表。数据取自既有 `user info` 的 `keys` / `swift_keys`，字段依据 `driver/rados/rgw_user.cc` 的 `dump_access_keys_info` / `dump_swift_keys_info`：所属用户与布尔 `active`。两类列表独立区分空列表和未知数据，状态不推断用户最终权限。遵循既有入库脱敏策略，不展示/恢复 access key 或 secret key；表格仅传递白名单元数据。前端覆盖协议绑定、未知状态及敏感字段隔离，未进行真实集群或浏览器视觉验证。
+
 用户详情增加关联账户分页，参考 `rgw-user-list.component.ts` 按 `account_id` 关联账户列表以及用户详情的 Account Details 区域。复用 `/rgw/accounts` 全分页库存，其后端来自 `account list` / `account get --account-id`；显示账户名称、租户、邮箱和采集时间，不混淆资源显示名与原生账户名称。按集群及账户 ID 隔离组件和请求，重复 ID 拒绝关联，区分未关联、未知 ID、库存缺失、过期与读取失败。前端测试覆盖关联、隔离键、字段及错误状态；未进行真实集群或浏览器视觉验证。
 
 用户详情对齐参考 `rgw-user-details.component.html` 的管理权限、子用户、用户总配额、默认 Bucket 配额及限流分区，新增对应详情分页，并将已有容量统计与统计范围提示放在同一分页；移除用户列表中的嵌套明细表格，保留原有变更入口。数据沿用 `user info`、`user stats`、`ratelimit get --ratelimit-scope user` 采集链路，不新增重复请求。组件测试验证完整与缺失库存的字段传递，原有格式测试继续覆盖未知值、零值和禁用状态；未进行浏览器视觉或真实集群验证。

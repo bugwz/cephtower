@@ -23,6 +23,38 @@ func TestRedactCommonSecretForms(t *testing.T) {
 	}
 }
 
+func TestRGWUserKeyMetadataRedaction(t *testing.T) {
+	redacted, err := RedactJSON(map[string]any{
+		"keys":       []any{map[string]any{"user": "tenant$user:sub", "active": false, "access_key": "private-access", "secret_key": "private-secret"}},
+		"swift_keys": []any{map[string]any{"user": "tenant$user:swift", "active": true, "secret_key": "private-swift"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := json.Marshal(redacted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(encoded, []byte("private-")) {
+		t.Fatal("key material survived redaction")
+	}
+	data := redacted.(map[string]any)
+	for _, tc := range []struct {
+		field, user string
+		active      bool
+	}{
+		{"keys", "tenant$user:sub", false}, {"swift_keys", "tenant$user:swift", true},
+	} {
+		entry := data[tc.field].([]any)[0].(map[string]any)
+		if entry["user"] != tc.user || entry["active"] != tc.active || entry["secret_key"] != "[REDACTED]" {
+			t.Fatalf("lost metadata or redaction: %v", entry)
+		}
+		if tc.field == "keys" && entry["access_key"] != "[REDACTED]" {
+			t.Fatal("access key was not redacted")
+		}
+	}
+}
+
 func TestProtectJSONEncryptsAndRestoresNestedSecrets(t *testing.T) {
 	key := "0123456789abcdefghijklmnopqrstuv"
 	input := map[string]any{

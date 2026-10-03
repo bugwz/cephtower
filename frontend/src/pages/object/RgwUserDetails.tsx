@@ -7,6 +7,7 @@ import { RgwRateLimit } from './RgwRateLimit'
 import { RgwStorage } from './RgwStorage'
 import { rgwStorageScope } from './rgwStorageDetails'
 import { RgwUserAccountDetails } from './RgwUserAccountDetails'
+import { RgwUserKeys } from './RgwUserKeys'
 
 export function RgwUserDetails({ row, clusterId }: { row: ApiRecord; clusterId?: number }) {
   return <Tabs items={[
@@ -21,6 +22,7 @@ export function RgwUserDetails({ row, clusterId }: { row: ApiRecord; clusterId?:
       <p>{rgwStorageScope(row.stats_scope, row.account_id)}</p>
       <RgwStorage value={row.storage_stats} />
     </> },
-    { key: 'account', label: '关联账户', children: <RgwUserAccountDetails clusterId={clusterId} accountId={row.account_id} /> }
+    { key: 'account', label: '关联账户', children: <RgwUserAccountDetails clusterId={clusterId} accountId={row.account_id} /> },
+    { key: 'keys', label: '密钥元数据', children: <RgwUserKeys row={row} /> }
   ]} />
 }

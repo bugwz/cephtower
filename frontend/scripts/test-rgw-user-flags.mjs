@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 import './test-rgw-user-account.mjs'
+import './test-rgw-user-keys.mjs'
 const exports = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserFlags.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
 assert.equal(exports.rgwUserSuspension(0), '未暂停')
@@ -88,6 +89,7 @@ new Function('exports', 'require', ts.transpileModule(userDetailsSource, { compi
   if (name === 'antd') return { Tabs: 'Tabs' }
   if (name === './RgwUserIdentityDetails') return { RgwUserIdentityDetails: 'Identity', RgwUserPlacementDetails: 'Placement' }
   if (name === './RgwUserAccountDetails') return { RgwUserAccountDetails: 'Account' }
+  if (name === './RgwUserKeys') return { RgwUserKeys: 'Keys' }
   if (name === './RgwPermissions') return { RgwPermissions: 'Permissions' }
   if (name === './RgwQuota') return { RgwQuota: 'Quota' }
   if (name === './RgwRateLimit') return { RgwRateLimit: 'RateLimit' }
@@ -98,7 +100,7 @@ new Function('exports', 'require', ts.transpileModule(userDetailsSource, { compi
 for (const row of [{}, { uid: 'tenant$user', account_id: 'RGW123', stats_scope: 'account', tags: [], placement_tags: ['archive'], caps: [], subusers: [], user_quota: { enabled: false }, bucket_quota: { enabled: true, max_size: 0 }, rate_limit: { enabled: false }, storage_stats: { stats: { num_objects: 0 } } }]) {
   const view = userDetailsExports.RgwUserDetails({ row, clusterId: 42 })
   assert.equal(view.type, 'Tabs')
-  assert.deepEqual(view.props.items.map(item => item.key), ['identity', 'placement', 'caps', 'subusers', 'quota', 'bucket-quota', 'rate-limit', 'usage', 'account'])
+  assert.deepEqual(view.props.items.map(item => item.key), ['identity', 'placement', 'caps', 'subusers', 'quota', 'bucket-quota', 'rate-limit', 'usage', 'account', 'keys'])
   assert.equal(view.props.items[0].children.type, 'Identity')
   assert.equal(view.props.items[1].children.type, 'Placement')
   for (const item of view.props.items.slice(0, 2)) assert.equal(item.children.props.row, row)
@@ -113,6 +115,8 @@ for (const row of [{}, { uid: 'tenant$user', account_id: 'RGW123', stats_scope: 
   assert.equal(usage[1].props.value, row.storage_stats)
   assert.equal(view.props.items[8].children.type, 'Account')
   assert.deepEqual(view.props.items[8].children.props, { clusterId: 42, accountId: row.account_id })
+  assert.equal(view.props.items[9].children.type, 'Keys')
+  assert.equal(view.props.items[9].children.props.row, row)
 }
 const components = readFileSync(new URL('../src/pages/object/RgwUserIdentityDetails.tsx', import.meta.url), 'utf8')
 const identityView = {}
