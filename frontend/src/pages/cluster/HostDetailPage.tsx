@@ -9,6 +9,7 @@ import type { ResourceDTO } from '../../api/types'
 import { DataTable } from '../../components/DataTable'
 import { HostHardware } from './HostHardware'
 import { SMARTDetails } from './SMARTDetails'
+import { DaemonPerf } from './DaemonPerf'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
@@ -317,7 +318,7 @@ function HostDetailTabs({
           {
             key: 'daemons',
             label: '守护进程',
-            children: <HostDaemonTable daemons={daemons} />
+            children: <HostDaemonTable key={`${clusterId}:${hostname}`} clusterId={clusterId} daemons={daemons} />
           },
           {
             key: 'performance',
@@ -373,8 +374,11 @@ function HostPhysicalDiskTable({ devices }: { devices: ApiRecord[] }) {
   )
 }
 
-function HostDaemonTable({ daemons }: { daemons: ApiRecord[] }) {
+function HostDaemonTable({ daemons, clusterId }: { daemons: ApiRecord[]; clusterId?: number }) {
+  const [perfName, setPerfName] = useState<string | null>(null)
+  const visibleName = perfName && daemons.some((row) => row.daemon_display === perfName) ? perfName : null
   return (
+    <Space direction="vertical" style={{ width: '100%' }}>
     <DataTable
       data={daemons}
       rowKeyCandidates={['name', 'daemon_name', 'daemon_display']}
@@ -386,10 +390,22 @@ function HostDaemonTable({ daemons }: { daemons: ApiRecord[] }) {
         { key: 'version_display', title: '版本' },
         { key: 'cpu_usage_display', title: 'CPU 使用率' },
         { key: 'memory_usage_display', title: '内存使用量' },
-        { key: 'image_display', title: '镜像', render: (value, row) => renderImageInfo(value, row) }
+        { key: 'image_display', title: '镜像', render: (value, row) => renderImageInfo(value, row) },
+        { key: 'performance', title: '性能', filterKey: false, render: (_, row) => <Button
+          disabled={!clusterId || !hostDaemonSupportsPerf(row.daemon_display)}
+          onClick={() => setPerfName(String(row.daemon_display))}>性能计数器</Button> }
       ]}
     />
+    {clusterId && visibleName && <Space direction="vertical" style={{ width: '100%' }}>
+      <Space><Text strong>{visibleName} 性能计数器</Text><Button onClick={() => setPerfName(null)}>关闭性能详情</Button></Space>
+      <DaemonPerf key={`${clusterId}:${visibleName}`} clusterId={clusterId} name={visibleName} />
+    </Space>}
+    </Space>
   )
+}
+
+function hostDaemonSupportsPerf(name: unknown): name is string {
+  return typeof name === 'string' && /^(mon|mgr|mds|osd|rgw|rbd-mirror)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(name)
 }
 
 const hostPerformanceMetrics = [
