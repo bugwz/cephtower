@@ -2,6 +2,27 @@ package s3
 
 import "testing"
 
+func TestLifecycleObjectSizeBounds(t *testing.T) {
+	wrap := func(bounds string) []byte {
+		return []byte("<LifecycleConfiguration><Rule><Status>Enabled</Status><Filter>" + bounds + "</Filter><Expiration><Days>30</Days></Expiration></Rule></LifecycleConfiguration>")
+	}
+	for _, bounds := range []string{"<ObjectSizeGreaterThan/>", "<ObjectSizeLessThan>18446744073709551615</ObjectSizeLessThan>", "<ObjectSizeGreaterThan>9007199254740992</ObjectSizeGreaterThan><ObjectSizeLessThan>9007199254740993</ObjectSizeLessThan>", "<ObjectSizeGreaterThan>0</ObjectSizeGreaterThan><ObjectSizeLessThan>100</ObjectSizeLessThan>"} {
+		if err := ValidateBucketConfiguration("lifecycle", wrap(bounds)); err != nil {
+			t.Fatalf("%s: %v", bounds, err)
+		}
+	}
+	for _, value := range []string{"18446744073709551616", "-1", "1x", " 1", "1.2", "1e3", "+1"} {
+		if err := ValidateBucketConfiguration("lifecycle", wrap("<ObjectSizeLessThan>"+value+"</ObjectSizeLessThan>")); err == nil {
+			t.Fatalf("accepted %q", value)
+		}
+	}
+	for _, pair := range [][2]string{{"10", "10"}, {"20", "10"}, {"9", "100"}, {"100", "9"}} {
+		if err := ValidateBucketConfiguration("lifecycle", wrap("<ObjectSizeGreaterThan>"+pair[0]+"</ObjectSizeGreaterThan><ObjectSizeLessThan>"+pair[1]+"</ObjectSizeLessThan>")); err == nil {
+			t.Fatalf("accepted invalid or native-rejected bounds %v", pair)
+		}
+	}
+}
+
 func TestLifecycleFilterStructure(t *testing.T) {
 	wrap := func(filter string) []byte {
 		return []byte("<LifecycleConfiguration><Rule><Status>Enabled</Status><Filter>" + filter + "</Filter><Expiration><Days>30</Days></Expiration></Rule></LifecycleConfiguration>")

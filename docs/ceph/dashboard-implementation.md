@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+生命周期对象大小条件增加精确 uint64 校验，非空值要求无符号十进制字节数，拒绝溢出、负值、尾随垃圾及非整数，空字符串仍按原生未设置处理；上下界用整数比较避免大数精度丢失。审计发现参考 `LCFilter` 的 size_gt/size_lt 是 string，`LCFilter_S3::decode_xml` 使用字符串比较：数值合法但文本顺序不被该版本接受时明确报错，不静默填零或改写输入。测试覆盖 uint64 边界、超过 JS 安全整数的相邻值、错误范围及原生文本比较差异；完整后端测试和 OpenAPI 校验通过。目标 Ceph 版本若修复该原生限制，需据实际能力更新校验；无真实集群验证。本次无前端修改，未重跑前端测试，生命周期界面与其余语义仍待完成。
+
 生命周期 Filter 增加结构校验，依据 `LCFilter_S3::decode_xml` 选择单层 And 或直接条件的行为，保留空过滤器、Prefix/Tag 直接组合、多 Tag、对象大小条件和 ArchiveZone 扩展。拒绝 And 与外部条件混用（原生会忽略外部字段）、重复标量、未知节点、标量嵌套及 Tag 的重复 Key/Value；ArchiveZone 非空文本被拒绝，避免误把 false 当作关闭。测试覆盖上述合法结构与错误路径，完整后端测试及 OpenAPI 校验通过。对象大小的数值语义与上下界关系、标签具体语义及跨规则约束仍需后续补齐；本次无前端修改，未重跑前端测试，无真实集群验证。
 
 生命周期五类动作新增内部字段结构校验，依据 `rgw_lc_s3.cc` 的 Expiration/Transition/Noncurrent/Multipart 解码逻辑：过期的 Days/Date/ExpiredObjectDeleteMarker 三选一，转换 Days/Date 二选一且需 StorageClass，非当前版本动作需 NoncurrentDays，终止分段上传需 DaysAfterInitiation。拒绝未知、重复及非标量子字段，支持 NewerNoncurrentVersions 和自定义存储类别名称。测试覆盖合法变体、必填缺失、互斥冲突与非法嵌套；完整后端测试及 OpenAPI 校验通过。本次无前端修改，未重跑前端测试，无真实集群验证。数值/日期、过滤器和跨规则约束仍待完善，尚未增加结构化生命周期界面或写后核验。

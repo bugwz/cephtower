@@ -3,6 +3,7 @@ package s3
 import (
 	"encoding/xml"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -86,6 +87,7 @@ func validateLifecycleFilter(filter lifecycleField) error {
 		}
 	}
 	counts := map[string]int{}
+	sizes := map[string]string{}
 	for _, child := range children {
 		name := child.XMLName.Local
 		counts[name]++
@@ -96,6 +98,19 @@ func validateLifecycleFilter(filter lifecycleField) error {
 			}
 			if name == "ArchiveZone" && strings.TrimSpace(child.Text) != "" {
 				return invalid
+			}
+			if name == "ObjectSizeGreaterThan" || name == "ObjectSizeLessThan" {
+				if child.Text != "" {
+					for _, digit := range child.Text {
+						if digit < '0' || digit > '9' {
+							return fmt.Errorf("lifecycle object sizes must be unsigned decimal byte counts")
+						}
+					}
+					if _, err := strconv.ParseUint(child.Text, 10, 64); err != nil {
+						return fmt.Errorf("lifecycle object size exceeds uint64 range")
+					}
+					sizes[name] = child.Text
+				}
 			}
 		case "Tag":
 			if strings.TrimSpace(child.Text) != "" {
@@ -111,6 +126,20 @@ func validateLifecycleFilter(filter lifecycleField) error {
 			}
 		default:
 			return invalid
+		}
+	}
+	greater, less := sizes["ObjectSizeGreaterThan"], sizes["ObjectSizeLessThan"]
+	if greater != "" && less != "" {
+		minimum, _ := strconv.ParseUint(greater, 10, 64)
+		maximum, _ := strconv.ParseUint(less, 10, 64)
+		if maximum <= minimum {
+			return fmt.Errorf("lifecycle maximum object size must exceed the minimum")
+		}
+		// The bundled RGW compares its stored string members in decode_xml.
+		// Preserve the submitted text and report that limitation, never silently
+		// pad/rewrite bounds to bypass native validation.
+		if less <= greater {
+			return fmt.Errorf("reference RGW rejects these object size bounds by textual comparison; verify target Ceph support before submitting this range")
 		}
 	}
 	return nil
