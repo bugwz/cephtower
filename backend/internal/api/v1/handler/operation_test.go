@@ -80,6 +80,14 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 			t.Fatalf("flow: %d %s", flow.Code, flow.Body.String())
 		}
 		flowOperation, err := db.FindOperation(context.Background(), operationIDFromResponse(t, flow))
+		flowUpdate := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/sync/flow", fmt.Sprintf(`{"cluster_id":%d,"name":"east","zonegroup_id":"zg","realm_id":%q,"group_id":"g","expected_group":%q,"flow_id":"f","zones":["z"]}`, cluster.ID, realm, `{"id":"g","status":"allowed","data_flow":{"symmetrical":[{"id":"f","zones":["old"]}]},"pipes":[]}`), "zonegroup-flow-update-"+realm)
+		if flowUpdate.Code != http.StatusAccepted {
+			t.Fatalf("flow update: %d %s", flowUpdate.Code, flowUpdate.Body.String())
+		}
+		updatedFlow, updateErr := db.FindOperation(context.Background(), operationIDFromResponse(t, flowUpdate))
+		if updateErr != nil || updatedFlow.Action != "rgw_zonegroup.sync_flow_update" || updatedFlow.Risk != "high" || updatedFlow.ResourceKey != op.ResourceKey || updatedFlow.LockKey != op.LockKey {
+			t.Fatalf("flow update: %+v %v", updatedFlow, updateErr)
+		}
 		flowDelete := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/zonegroup/sync/flow", fmt.Sprintf(`{"cluster_id":%d,"name":"east","zonegroup_id":"zg","realm_id":%q,"group_id":"g","expected_group":%q,"flow_type":"symmetrical","flow_id":"f"}`, cluster.ID, realm, `{"id":"g","status":"allowed","data_flow":{"symmetrical":[{"id":"f","zones":["z"]}]},"pipes":[]}`), "zonegroup-flow-delete-"+realm)
 		if flowDelete.Code != http.StatusAccepted {
 			t.Fatalf("flow delete: %d %s", flowDelete.Code, flowDelete.Body.String())

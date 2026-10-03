@@ -4,8 +4,8 @@ import ts from 'typescript'
 const api={}
 new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwZonegroupSyncGroup.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
 const source=ts.createSourceFile('pages.tsx',readFileSync(new URL('../src/pages/object/pages.tsx',import.meta.url),'utf8'),ts.ScriptTarget.Latest,true,ts.ScriptKind.TSX)
-let action,createAction,deleteAction,flowAction,flowDeleteAction
-function visit(node){if(ts.isObjectLiteralExpression(node)){const title=node.properties.find(p=>ts.isPropertyAssignment(p)&&p.name.getText(source)==='title')?.initializer.text;if(['修改 Zonegroup 同步组状态','创建 Zonegroup 同步组','删除 Zonegroup 同步组','创建 Zonegroup 同步流','删除 Zonegroup 同步流'].includes(title)){const code=ts.transpileModule(`const action=${node.getText(source)}`,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;const found=new Function(...Object.keys(api),`${code};return action`)(...Object.values(api));if(title==='创建 Zonegroup 同步组')createAction=found;else if(title==='删除 Zonegroup 同步组')deleteAction=found;else if(title==='创建 Zonegroup 同步流')flowAction=found;else if(title==='删除 Zonegroup 同步流')flowDeleteAction=found;else action=found}}ts.forEachChild(node,visit)}visit(source)
+let action,createAction,deleteAction,flowAction,flowDeleteAction,flowUpdateAction
+function visit(node){if(ts.isObjectLiteralExpression(node)){const title=node.properties.find(p=>ts.isPropertyAssignment(p)&&p.name.getText(source)==='title')?.initializer.text;if(['修改 Zonegroup 同步组状态','创建 Zonegroup 同步组','删除 Zonegroup 同步组','创建 Zonegroup 同步流','删除 Zonegroup 同步流','修改 Zonegroup 对称流成员'].includes(title)){const code=ts.transpileModule(`const action=${node.getText(source)}`,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;const found=new Function(...Object.keys(api),`${code};return action`)(...Object.values(api));if(title==='创建 Zonegroup 同步组')createAction=found;else if(title==='删除 Zonegroup 同步组')deleteAction=found;else if(title==='创建 Zonegroup 同步流')flowAction=found;else if(title==='删除 Zonegroup 同步流')flowDeleteAction=found;else if(title==='修改 Zonegroup 对称流成员')flowUpdateAction=found;else action=found}}ts.forEachChild(node,visit)}visit(source)
 const group={id:' g ',status:'allowed',data_flow:{},pipes:[]}
 for(const realm of ['','realm']){
  const row={id:'zg',name:'east',realm_id:realm,sync_policy:{groups:[group]}}
@@ -76,3 +76,18 @@ for(const realm of ['','realm']){
  for(const fields of [{flow_type:'symmetrical',flow_id:'missing'},{flow_type:'symmetrical',flow_id:'f',source_zone:'z'},{flow_type:'directional',source_zone:'z',dest_zone:'orphan'},{flow_type:'directional',source_zone:'orphan',dest_zone:'z',flow_id:'f'}])assert.throws(()=>flowDeleteAction.buildBody({...base,...fields},7,row))
 }
 console.log('zonegroup sync flow deletion form and route checks passed')
+assert.equal(flowUpdateAction.method,'PATCH')
+assert.equal(flowUpdateAction.path,'/rgw/zonegroup/sync/flow')
+for(const realm of ['','realm']){
+ const g={...group,data_flow:{symmetrical:[{id:'f',zones:['orphan']}]}}
+ const row={id:'zg',name:'east',realm_id:realm,zones:[{id:'a',name:'west'},{id:'b',name:'east'}],sync_policy:{groups:[g]}}
+ const values={...flowUpdateAction.initialValues(row),group_id:g.id,flow_id:'f',zones:'b,a',confirm_flow_update:'acknowledged'}
+ assert.deepEqual(flowUpdateAction.buildBody(values,7,row),{cluster_id:7,name:'east',zonegroup_id:'zg',realm_id:realm,group_id:g.id,flow_id:'f',zones:['b','a'],expected_group:JSON.stringify(g)})
+ assert.match(flowUpdateAction.confirmation(values,row),/先添加后移除.*中间成员集合可能扩大.*非事务.*不自动回滚或重试/)
+ for(const change of [{confirm_flow_update:true},{realm_id:'wrong'},{group_id:'missing'},{flow_id:'missing'},{zones:''},{zones:'a,a'},{zones:'unknown'},{zones:'*'}])assert.throws(()=>flowUpdateAction.buildBody({...values,...change},7,row))
+ for(const zones of [[],['a','a'],['bad id']])assert.throws(()=>flowUpdateAction.buildBody(values,7,{...row,sync_policy:{groups:[{...g,data_flow:{symmetrical:[{id:'f',zones}]}}]}}))
+ const current={...g,data_flow:{symmetrical:[{id:'f',zones:['a','b']}]}}
+ assert.throws(()=>flowUpdateAction.buildBody(values,7,{...row,sync_policy:{groups:[current]}}))
+ assert.throws(()=>flowUpdateAction.buildBody(values,7,{...row,stale:true}))
+}
+console.log('zonegroup symmetrical flow membership form checks passed')

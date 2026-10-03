@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### Zonegroup 对称流成员修改
+
+新增 PATCH /api/v1/rgw/zonegroup/sync/flow 与对称流成员表单。按参考 create_sync_flow 的先添加后移除顺序计算 Zone ID 差集，分别调用 sync group flow create/remove，并在每一步回读完整 Zonegroup 配置；最终策略通过后才提交和核验对应 Realm 的 Period。复用明确身份、完整组快照和失败不重试规则，成员列表必须非空且属于当前 Zonegroup；允许移除旧的孤立 ID，不依赖桶策略的名称格式。未改变、缺失或歧义流、无效旧集合及不可用 Zone 列表均在写前拒绝。
+
+前端说明中间成员集合可能扩大、Realm 发布可能包含其他待变更配置，以及非事务、部分生效和不自动回滚风险；删除整条流使用独立删除入口。测试覆盖仅添加、仅移除、替换（含孤立 ID）、有/无 Realm、各阶段停止、完整策略及大整数参数保留、API 高风险资源锁和实际前端操作绑定。无真实集群或浏览器视觉验证；Zonegroup 管道操作仍待补齐。
+
 #### Zonegroup 数据流删除
 
 新增 DELETE /api/v1/rgw/zonegroup/sync/flow 和前端整流删除入口。原生 SYNC_GROUP_FLOW_REMOVE 对称分支不传 Zone 列表时删除整条流；定向分支按源/目标 Zone ID 对删除，flow-id 仅为命令必填占位。空流类型按 rgw_sync_data_flow_group::dump 省略字段，不伪造空数组。通过完整组快照、唯一流匹配、明确 Zonegroup/Realm 身份及完整配置回读限制删除范围；不依赖名称映射，允许删除策略内已不属于当前 Zonegroup 的孤立 Zone ID。
