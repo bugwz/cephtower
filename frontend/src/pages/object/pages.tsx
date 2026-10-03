@@ -12,6 +12,7 @@ import { ServiceDaemons } from '../cluster/ServiceDaemons'
 import { RgwQuota } from './RgwQuota'
 import { RgwStorage } from './RgwStorage'
 import { RgwRateLimit } from './RgwRateLimit'
+import { RgwPermissions } from './RgwPermissions'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -181,7 +182,8 @@ const definitions: Record<
       { key: 'display_name', title: '显示名' },
       { key: 'email', title: '邮箱' },
       { key: 'status', title: '状态' },
-      { key: 'caps', title: 'Caps' },
+      { key: 'caps', title: '管理权限', ellipsis: false, render: (value) => <RgwPermissions value={value} /> },
+      { key: 'subusers', title: '子用户', ellipsis: false, render: (value) => <RgwPermissions value={value} subusers /> },
       { key: 'rate_limit', title: '用户限流（每 RGW）', ellipsis: false, render: (value) => <RgwRateLimit value={value} /> },
       { key: 'user_quota', title: '用户总配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'bucket_quota', title: '默认 Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },

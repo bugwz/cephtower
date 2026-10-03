@@ -5,6 +5,12 @@
 
 ## 如何追踪调用链
 
+RGW 用户管理权限与子用户以明细表展示，对照参考 rgw-user-details 的 caps 与 subusers。
+复用 user info --uid 的原始采集字段，通过库存 API 提供 type/perm 和 id/permissions。
+不将管理权限误当作 S3 对象访问权限；权限字符串和子用户完整 ID 保留命令原值。
+空列表显示未配置，缺失或畸形结果显示不可用，不据此判断用户无权限。离线测试覆盖
+未知权限类型、原始权限字符串、空列表与畸形响应，未进行真实集群或浏览器验证。
+
 RGW 用户和 Bucket 限流按参考 rgw-rate-limit-details 展示启用状态及四项限制，复用
 ratelimit get --ratelimit-scope user/bucket 的采集结果。对应 rgw_ratelimit.h 的原生
 判断，非正整数表示无限制；禁用不展示配置为生效限制，未知不当作禁用。显示每 RGW、
