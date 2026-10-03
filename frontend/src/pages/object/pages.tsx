@@ -17,6 +17,7 @@ import { rgwBucketLimit, rgwBucketLimitInput } from './rgwBucketLimit'
 import { rgwAccountLimit } from './rgwAccountLimit'
 import { rgwUserSuspension, rgwUserBooleanFlag } from './rgwUserFlags'
 import { rgwUserFlagPatch } from './rgwUserFlagPatch'
+import { rgwUserEmailPatch } from './rgwUserEmailPatch'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -122,13 +123,15 @@ const definitions: Record<
       successMessage: 'RGW 用户更新执行成功',
       fields: [
         { name: 'display_name', label: '显示名' },
-        { name: 'email', label: '邮箱' },
+        { name: 'email_action', label: '邮箱操作', type: 'select', options: [{ label: '保持不变', value: 'keep' }, { label: '设置邮箱', value: 'set' }, { label: '清空邮箱', value: 'clear' }] },
+        { name: 'email', label: '邮箱', required: true, visibleWhen: (values) => values.email_action === 'set' },
         { name: 'max_buckets', label: '最大 Bucket 数（留空不修改，-1 禁止创建，0 无限制）', type: 'number', min: -1, max: 2147483647 },
         { name: 'suspended', label: '暂停用户', type: 'select', options: [{ label: '保持不变', value: 'keep' }, { label: '暂停', value: 'enable' }, { label: '解除暂停', value: 'disable' }] },
         { name: 'system', label: '系统用户', type: 'select', options: [{ label: '保持不变', value: 'keep' }, { label: '启用', value: 'enable' }, { label: '关闭', value: 'disable' }] }
       ],
       initialValues: (row) => ({
         display_name: text(row?.display_name),
+        email_action: 'keep',
         email: text(row?.email),
         max_buckets: numberOrUndefined(row?.max_buckets),
         suspended: 'keep',
@@ -138,7 +141,7 @@ const definitions: Record<
         cluster_id: clusterId,
         uid: userId(row),
         ...(values.display_name ? { display_name: String(values.display_name) } : {}),
-        email: String(values.email ?? ''),
+        ...rgwUserEmailPatch(values),
         ...rgwBucketLimitInput(values.max_buckets),
         ...rgwUserFlagPatch(values)
       })
