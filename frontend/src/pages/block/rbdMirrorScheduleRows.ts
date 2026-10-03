@@ -25,10 +25,14 @@ export function imageMirrorScheduleDetails(value: unknown) {
 export function mirrorScheduleRows(value: unknown): MirrorScheduleRow[] | undefined {
   if (!Array.isArray(value)) return undefined
   const rows: MirrorScheduleRow[] = []
+  const seenScopes = new Set<string>()
   for (const [index, entry] of value.entries()) {
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return undefined
     const { pool, namespace, image, items } = entry
     if (typeof pool !== 'string' || !pool || typeof namespace !== 'string' || typeof image !== 'string' || !image || !Array.isArray(items)) return undefined
+    const identity = JSON.stringify([pool, namespace, image])
+    if (seenScopes.has(identity)) return undefined
+    seenScopes.add(identity)
     let scope: string
     let target: string
     if (pool === '-' && namespace === '-' && image === '-') {

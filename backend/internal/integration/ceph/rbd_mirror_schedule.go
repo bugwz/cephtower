@@ -2,6 +2,8 @@ package ceph
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -16,6 +18,26 @@ type rbdMirrorScheduleWire struct {
 	Namespace string                                     `json:"namespace"`
 	Image     string                                     `json:"image"`
 	Items     []cephdomain.RBDMirrorSnapshotScheduleItem `json:"items"`
+}
+
+func (s *rbdMirrorScheduleWire) UnmarshalJSON(data []byte) error {
+	var wire struct {
+		Pool      *string                                    `json:"pool"`
+		Namespace *string                                    `json:"namespace"`
+		Image     *string                                    `json:"image"`
+		Items     []cephdomain.RBDMirrorSnapshotScheduleItem `json:"items"`
+	}
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	if wire.Pool == nil || *wire.Pool == "" || wire.Namespace == nil || wire.Image == nil || *wire.Image == "" || wire.Items == nil {
+		return fmt.Errorf("incomplete mirror schedule scope")
+	}
+	if (*wire.Pool == "-" && (*wire.Namespace != "-" || *wire.Image != "-")) || (*wire.Namespace == "-" && *wire.Image != "-") {
+		return fmt.Errorf("invalid mirror schedule scope hierarchy")
+	}
+	*s = rbdMirrorScheduleWire{Pool: *wire.Pool, Namespace: *wire.Namespace, Image: *wire.Image, Items: wire.Items}
+	return nil
 }
 
 type rbdMirrorScheduleStatusWire struct {
@@ -46,10 +68,16 @@ func (p *NativeProvider) attachRBDMirrorSnapshotSchedules(ctx context.Context, a
 	}, &schedules) || schedules == nil {
 		return
 	}
+	seenScopes := map[[3]string]bool{}
 	for _, schedule := range schedules {
 		if schedule.Pool == "" || !validRBDMirrorScheduleItems(schedule.Items) || schedule.Items == nil {
 			return
 		}
+		scope := [3]string{schedule.Pool, schedule.Namespace, schedule.Image}
+		if seenScopes[scope] {
+			return
+		}
+		seenScopes[scope] = true
 	}
 	for _, row := range rows {
 		if row.Kind != "rbd_mirroring" && row.Kind != "rbd_namespace" {
@@ -122,9 +150,9 @@ func rbdMirrorScheduleForImage(schedules []rbdMirrorScheduleWire, image cephdoma
 }
 
 func rbdMirrorScheduleMatch(candidate rbdMirrorScheduleWire, image cephdomain.RBDImage) (int, string, string) {
-	pool := strings.TrimSpace(candidate.Pool)
-	namespace := strings.TrimSpace(candidate.Namespace)
-	name := strings.TrimSpace(candidate.Image)
+	pool := candidate.Pool
+	namespace := candidate.Namespace
+	name := candidate.Image
 	if pool == "-" && namespace == "-" && name == "-" {
 		return 1, "", "cluster"
 	}

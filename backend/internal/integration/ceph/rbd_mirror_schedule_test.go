@@ -2,6 +2,7 @@ package ceph
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"testing"
@@ -126,6 +127,39 @@ func TestMirrorPoolSchedulesDistinguishEmptyAndUnavailable(t *testing.T) {
 			} else if payload["snapshot_schedules_status"] != "unavailable" || payload["snapshot_schedules"] != nil {
 				t.Fatal(payload)
 			}
+		}
+	}
+}
+
+func TestMirrorScheduleScopeValidation(t *testing.T) {
+	for _, output := range []string{
+		`[{"pool":"images","image":"vm","items":[{"interval":"1h"}]}]`,
+		`[{"pool":"images","namespace":null,"image":"vm","items":[{"interval":"1h"}]}]`,
+		`[{"pool":"images","namespace":"","items":[]}]`,
+		`[{"pool":"-","namespace":"team","image":"-","items":[]}]`,
+		`[{"pool":"images","namespace":"-","image":"vm","items":[]}]`,
+		`[{"pool":"-","namespace":"-","image":"-","items":[]},{"pool":"-","namespace":"-","image":"-","items":[]}]`,
+	} {
+		runner := &rbdMirrorScheduleExecutor{scheduleOutput: &output}
+		provider := NativeProvider{Executor: runner}
+		payload := map[string]any{}
+		rows := []Observation{{Kind: "rbd_mirroring", NaturalKey: "images", Payload: payload}, {Kind: "rbd_image", Payload: cephdomain.RBDImage{Pool: "images", Name: "vm"}}}
+		provider.attachRBDMirrorSnapshotSchedules(context.Background(), ClusterAccess{}, rows)
+		if payload["snapshot_schedules_status"] != "unavailable" || rows[1].Payload.(cephdomain.RBDImage).ScheduleInfo != nil || len(runner.calls) != 1 {
+			t.Fatalf("accepted invalid scope %s: %+v", output, rows)
+		}
+	}
+	for _, scope := range [][3]string{{"-", "-", "-"}, {"images", "-", "-"}, {"images", "team", "-"}, {"images", "", "vm"}} {
+		data, _ := json.Marshal(map[string]any{"pool": scope[0], "namespace": scope[1], "image": scope[2], "items": []any{}})
+		var wire rbdMirrorScheduleWire
+		if err := json.Unmarshal(data, &wire); err != nil {
+			t.Fatal(scope, err)
+		}
+	}
+	image := cephdomain.RBDImage{Pool: "images", Namespace: "team", Name: "vm"}
+	for _, scope := range [][3]string{{" images", "team", "vm"}, {"images", " team", "vm"}, {"images", "team", "vm "}} {
+		if score, _, _ := rbdMirrorScheduleMatch(rbdMirrorScheduleWire{Pool: scope[0], Namespace: scope[1], Image: scope[2]}, image); score != 0 {
+			t.Fatal("scope whitespace changed identity", scope)
 		}
 	}
 }

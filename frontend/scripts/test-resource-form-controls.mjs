@@ -66,6 +66,10 @@ assert.equal(rows[0].startTime, '01:00:00+08:00')
 assert.equal(rows[1].startTime, '未指定')
 assert.equal(new Set(rows.map((row) => row.key)).size, 8)
 assert.deepEqual(mirrorRows([]), [])
+const duplicateScope = { pool: '-', namespace: '-', image: '-', items }
+assert.equal(mirrorRows([duplicateScope, { ...duplicateScope, items: [] }]), undefined)
+assert.equal(mirrorRows([{ pool: 'images', image: 'vm', items }]), undefined)
+assert.equal(mirrorRows([{ pool: 'images', namespace: '-', image: 'vm', items }]), undefined)
 for (const value of [null, {}, [null], [{}], [{ pool: 'images', namespace: '-', image: '-', items: null }], [{ pool: '-', namespace: 'team', image: '-', items }], [{ pool: 'images', namespace: '-', image: '-', items: [{}] }]]) assert.equal(mirrorRows(value), undefined)
 console.log('Mirror schedule scope display checks passed')
 
