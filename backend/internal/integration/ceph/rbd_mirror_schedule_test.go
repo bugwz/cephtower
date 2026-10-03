@@ -11,13 +11,21 @@ import (
 )
 
 type rbdMirrorScheduleExecutor struct {
-	calls []executor.CommandSpec
+	calls          []executor.CommandSpec
+	scheduleOutput *string
+	fail           bool
 }
 
 func (e *rbdMirrorScheduleExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.calls = append(e.calls, spec)
 	switch spec.ID {
 	case "collect.rbd_mirror_schedule":
+		if e.fail {
+			return executor.CommandResult{}, fmt.Errorf("schedule query failed")
+		}
+		if e.scheduleOutput != nil {
+			return executor.CommandResult{Stdout: []byte(*e.scheduleOutput)}, nil
+		}
 		return executor.CommandResult{Stdout: []byte(`[
           {"pool":"-","namespace":"-","image":"-","items":[{"interval":"1d","start_time":"00:15:00"}]},
           {"pool":"images","namespace":"-","image":"-","items":[{"interval":"12h","start_time":""}]},
@@ -55,6 +63,47 @@ func TestAttachRBDMirrorSnapshotSchedulesUsesMostSpecificSchedule(t *testing.T) 
 	for index, args := range want {
 		if runner.calls[index].Binary != executor.BinaryRBD || !reflect.DeepEqual(runner.calls[index].Args, args) || runner.calls[index].Mutating {
 			t.Fatalf("command %d=%+v", index, runner.calls[index])
+		}
+	}
+}
+
+func TestMirrorPoolSchedulesIncludeClusterAndExcludeOtherPools(t *testing.T) {
+	runner := &rbdMirrorScheduleExecutor{}
+	provider := NativeProvider{Executor: runner}
+	rows := []Observation{
+		{Kind: "rbd_mirroring", NaturalKey: "images", Payload: map[string]any{}},
+		{Kind: "rbd_mirroring", NaturalKey: "archive", Payload: map[string]any{}},
+	}
+	provider.attachRBDMirrorSnapshotSchedules(context.Background(), ClusterAccess{}, rows)
+	for index, count := range []int{4, 1} {
+		payload := rows[index].Payload.(map[string]any)
+		if payload["snapshot_schedules_status"] != "available" {
+			t.Fatal(payload)
+		}
+		schedules := payload["snapshot_schedules"].([]rbdMirrorScheduleWire)
+		if len(schedules) != count || schedules[0].Pool != "-" {
+			t.Fatal(schedules)
+		}
+	}
+	if len(runner.calls) != 2 {
+		t.Fatalf("empty pools skipped schedule query: %v", runner.calls)
+	}
+}
+
+func TestMirrorPoolSchedulesDistinguishEmptyAndUnavailable(t *testing.T) {
+	for _, output := range []string{`[]`, `null`, `{}`, `[{"pool":"images","items":null}]`, `[{"pool":"images","items":[{"interval":"0m"}]}]`} {
+		for _, fail := range []bool{false, true} {
+			runner := &rbdMirrorScheduleExecutor{scheduleOutput: &output, fail: fail}
+			provider := NativeProvider{Executor: runner}
+			payload := map[string]any{}
+			provider.attachRBDMirrorSnapshotSchedules(context.Background(), ClusterAccess{}, []Observation{{Kind: "rbd_mirroring", NaturalKey: "images", Payload: payload}})
+			if output == `[]` && !fail {
+				if payload["snapshot_schedules_status"] != "available" || len(payload["snapshot_schedules"].([]rbdMirrorScheduleWire)) != 0 {
+					t.Fatal(payload)
+				}
+			} else if payload["snapshot_schedules_status"] != "unavailable" || payload["snapshot_schedules"] != nil {
+				t.Fatal(payload)
+			}
 		}
 	}
 }
