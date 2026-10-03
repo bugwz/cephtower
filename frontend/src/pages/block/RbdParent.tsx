@@ -13,6 +13,10 @@ export function rbdParentDetails(value: unknown) {
   }
 }
 
+export function rbdFlattenReason(row: Record<string, unknown>): string | undefined {
+  return rbdParentDetails(row.parent) ? undefined : '未采集到完整父快照依赖，无法执行扁平化；请先刷新镜像信息'
+}
+
 export function RbdParent({ value }: { value: unknown }) {
   const details = rbdParentDetails(value)
   if (!details) return <Typography.Text type="secondary">未返回完整父镜像信息</Typography.Text>

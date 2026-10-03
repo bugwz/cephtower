@@ -79,6 +79,12 @@ assert.equal(parentDetails({ ...parent, trash: 'false' }).trash, '未返回')
 assert.equal(parentDetails({ ...parent, image: ' base ' }).path, 'images/team/ base @v1')
 for (const value of [null, [], {}, { ...parent, snapshot: null }, { ...parent, pool_namespace: undefined }, { ...parent, pool_namespace: 1 }]) assert.equal(parentDetails(value), undefined)
 console.log('Native RBD parent paths preserve namespace and explicit trash state')
+const flattenNode = parentTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'rbdFlattenReason')
+const flattenCode = ts.transpileModule(flattenNode.getText(parentTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const flattenReason = new Function('rbdParentDetails', `${flattenCode}; return rbdFlattenReason`)(parentDetails)
+assert.equal(flattenReason({ parent }), undefined)
+assert.equal(flattenReason({ parent: { ...parent, pool_namespace: '', trash: true } }), undefined)
+for (const value of [undefined, null, {}, [], { ...parent, snapshot: null }]) assert.match(flattenReason({ parent: value }), /父快照依赖/)
 
 const childSource = readFileSync(new URL('../src/pages/block/RbdChildren.tsx', import.meta.url), 'utf8')
 const childTree = ts.createSourceFile('children.tsx', childSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
@@ -115,6 +121,22 @@ for (const value of [undefined, null, 0, 4096, -1, 0.5, NaN, Infinity, Number.MA
 console.log('RBD usage distinguishes missing fast-diff, unavailable statistics and valid zero')
 
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')
+assert.ok(blockSource.includes('disabledWhen: rbdFlattenReason'))
+assert.ok(blockSource.includes('const reason = rbdFlattenReason(row ?? {})'))
+assert.ok(!blockSource.includes("value:'flatten'"))
+const flattenPageTree = ts.createSourceFile('pages.tsx', blockSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+let flattenActionNode
+function findFlattenAction(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some((property) => ts.isPropertyAssignment(property) && property.name.getText(flattenPageTree) === 'buttonLabel' && property.initializer.getText(flattenPageTree) === "'扁平化'")) flattenActionNode = node
+  ts.forEachChild(node, findFlattenAction)
+}
+findFlattenAction(flattenPageTree)
+assert.ok(flattenActionNode)
+const flattenBodyNode = flattenActionNode.properties.find((property) => property.name?.getText(flattenPageTree) === 'buildBody').initializer
+const flattenBodyCode = ts.transpileModule(`const build = ${flattenBodyNode.getText(flattenPageTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const buildFlatten = new Function('rbdFlattenReason', 'imageSpec', `${flattenBodyCode}; return build`)(flattenReason, (row) => row.image_spec)
+assert.deepEqual(buildFlatten({}, 'cluster', { image_spec: 'encoded-image', parent }), { cluster_id: 'cluster', image_spec: 'encoded-image', action: 'flatten' })
+assert.throws(() => buildFlatten({}, 'cluster', { image_spec: 'encoded-image' }), /父快照依赖/)
 assert.ok(blockSource.includes("key: 'snapshot_limit', title: '快照数量上限', render: (value) => rbdSnapshotLimitText(value)"))
 assert.ok(blockSource.includes('<RbdImageFlags details={row.details} />'))
 assert.ok(blockSource.includes("key: 'used_bytes', title: '占用（bytes）', render: (value, row) => rbdUsageText(value, row.image_features)"))

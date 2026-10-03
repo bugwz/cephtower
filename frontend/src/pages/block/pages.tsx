@@ -4,7 +4,7 @@ import { PoolPage } from './PoolPage'
 import { ImageMirrorSchedule, MirrorSchedules } from './MirrorSchedules'
 import { RbdRuntimeStatus } from './RbdRuntimeStatus'
 import { RbdConfiguration } from './RbdConfiguration'
-import { RbdParent } from './RbdParent'
+import { RbdParent, rbdFlattenReason } from './RbdParent'
 import { RbdImageFlags } from './RbdImageFlags'
 import { RbdSnapshotProtection } from './RbdSnapshotProtection'
 import { RbdTrashStatus, rbdTrashRestoreReason } from './RbdTrashStatus'
@@ -137,18 +137,27 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       })
     },
     extraActions: [{
+      title: '扁平化克隆镜像', buttonLabel: '扁平化', path: '/rbd/image/action', method: 'POST',
+      successMessage: '克隆镜像扁平化执行成功', fields: [],
+      disabledWhen: rbdFlattenReason,
+      confirmation: (_values, row) => `将 ${imageSpec(row)} 的父镜像数据复制到当前镜像并解除父镜像依赖，可能增加空间占用并耗时较长。`,
+      buildBody: (_values, clusterId, row) => {
+        const reason = rbdFlattenReason(row ?? {})
+        if (reason) throw new Error(reason)
+        return { cluster_id: clusterId, image_spec: imageSpec(row), action: 'flatten' }
+      }
+    }, {
       title: 'RBD 镜像操作', buttonLabel: '更多操作', path: '/rbd/image/action', method: 'POST',
       successMessage: 'RBD 镜像操作执行成功',
       confirmation: (values,row) => values.action === 'move-to-trash' ? `将 ${imageSpec(row)} 移入回收站，镜像将从当前列表移除。` : undefined,
       fields: [
         { name:'action',label:'操作',type:'select',required:true,options:[
-          {label:'扁平化克隆镜像',value:'flatten'}, {label:'回收零填充空间',value:'sparsify'},
+          {label:'回收零填充空间',value:'sparsify'},
           {label:'重命名镜像',value:'rename'}, {label:'复制镜像',value:'copy'}, {label:'深度复制（包含快照）',value:'deep-copy'}, {label:'移入回收站',value:'move-to-trash'}
         ] },
         {name:'destination',required:true,visibleWhen:(values)=>['copy','deep-copy','rename'].includes(String(values.action)),label:'目标（复制填完整路径，重命名只填新名称）',placeholder:'pool/namespace/image'},
         {name:'expires_at',visibleWhen:(values)=>values.action==='move-to-trash',label:'回收站到期时间（移入时可选，含时区）',placeholder:'2026-12-31T23:59:59+08:00'}
       ],
-      initialValues:{action:'flatten'},
       buildBody:(values,clusterId,row) => ({cluster_id:clusterId,image_spec:imageSpec(row),action:String(values.action),...(['copy','deep-copy','rename'].includes(String(values.action)) ? {destination:String(values.destination ?? '')} : {}),...(values.action==='move-to-trash' && values.expires_at ? {expires_at:String(values.expires_at)} : {})})
     }, {
       title:'创建镜像快照',buttonLabel:'创建快照',path:'/rbd/image/snapshot',method:'POST',successMessage:'镜像快照已创建',

@@ -1276,6 +1276,12 @@ which could collapse multiple paths and schedules into one resource key.
 
 ### RBD feature mutation
 
+The image flatten operation is a dedicated action, following Dashboard's parent
+dependency guard. Complete collected parent identity is required both when opening
+and building the request; users confirm the dependency removal and possible space
+growth. It reuses the existing native `rbd flatten` mutation and refresh path. Native
+Ceph remains authoritative if the parent changes after collection.
+
 - Image forms enable/disable exclusive-lock, object-map, fast-diff and journaling;
   deep-flatten is disable-only, matching Dashboard RbdService allowed feature sets.
 - Native commands use `rbd feature enable/disable <spec> <feature>` from Feature.cc,
