@@ -23,6 +23,23 @@ assert.equal(pages.match(/render: rgwAccountLimit/g).length, 4)
 assert.ok(pages.includes("title: '每用户访问密钥上限'"))
 assert.ok(pages.includes('...rgwAccountLimitPatch(values, row)'))
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+let fieldsExpression
+function visit(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(property => ts.isPropertyAssignment(property) && property.name.getText(source) === 'title' && property.initializer.getText(source) === "'编辑 RGW Account'")) {
+    fieldsExpression = node.properties.find(property => ts.isPropertyAssignment(property) && property.name.getText(source) === 'fields').initializer.getText(source)
+  }
+  ts.forEachChild(node, visit)
+}
+visit(source)
+assert.ok(fieldsExpression)
+const fieldExports = {}
+new Function('exports', ts.transpileModule('export const fields = ' + fieldsExpression, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(fieldExports)
+for (const name of ['max_users', 'max_roles', 'max_groups', 'max_buckets', 'max_access_keys']) {
+  const field = fieldExports.fields.find(field => field.name === name)
+  assert.equal(field.type, 'number')
+  assert.equal(field.min, -1)
+  assert.equal(field.max, 2147483647)
+}
 const initializer = source.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'numberOrUndefined')
 const initialExports = {}
 new Function('exports', ts.transpileModule('export ' + initializer.getText(source), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(initialExports)

@@ -1720,6 +1720,23 @@ func TestRGWAccountDeleteCommand(t *testing.T) {
 }
 
 func TestRGWAccountUpdateLimits(t *testing.T) {
+	for _, field := range []string{"max_users", "max_roles", "max_groups", "max_buckets", "max_access_keys"} {
+		for _, value := range []any{nil, "", true, false, json.Number("-2"), 0.5, json.Number("2147483648")} {
+			if _, err := build(Request{Action: "rgw_account.update"}, map[string]any{"account_id": "RGW123", "email": "changed@example.org", field: value}); err == nil {
+				t.Fatalf("accepted %s = %#v alongside valid email change", field, value)
+			}
+		}
+		for _, value := range []int64{-1, 0, 1, 2147483647} {
+			cmd, err := build(Request{Action: "rgw_account.update"}, map[string]any{"account_id": "RGW123", field: json.Number(strconv.FormatInt(value, 10))})
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := []string{"account", "modify", "--account-id", "RGW123", "--" + strings.ReplaceAll(field, "_", "-"), strconv.FormatInt(value, 10), "--format", "json"}
+			if !reflect.DeepEqual(cmd.args, want) {
+				t.Fatalf("args=%v want=%v", cmd.args, want)
+			}
+		}
+	}
 	cmd, err := build(Request{Action: "rgw_account.update"}, map[string]any{"account_id": "RGW123", "email": "a@example.org", "max_users": float64(-1), "max_buckets": float64(0)})
 	if err != nil {
 		t.Fatal(err)
