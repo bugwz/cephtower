@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 import './test-rgw-user-account.mjs'
 import './test-rgw-user-keys.mjs'
+import './test-rgw-user-account-root.mjs'
 const exports = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserFlags.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
 assert.equal(exports.rgwUserSuspension(0), '未暂停')

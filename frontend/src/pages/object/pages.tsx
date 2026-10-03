@@ -32,6 +32,7 @@ import { RgwPolicyDocument, RgwRolePolicyDetails, RgwRoleManagedPolicies } from 
 import { rgwPolicyChanged, rgwPolicyConfirmation, rgwPolicyDeleteOptions, rgwPolicyMutation } from './rgwRolePolicies'
 import { RgwUserDetails } from './RgwUserDetails'
 import { rgwUserOperationMaskInput, rgwUserOperationMaskOptions } from './rgwUserOperationMask'
+import { rgwUserAccountRootBlocked, rgwUserAccountRootInput } from './rgwUserAccountRoot'
 import { rgwUserPlacementInput, rgwUserPlacementTagsInput } from './rgwUserPlacementForm'
 
 export function RgwOverviewPage() {
@@ -174,6 +175,15 @@ const definitions: Record<
       initialValues: (row) => rgwQuotaInitial(row?.[scope === 'user' ? 'user_quota' : 'bucket_quota']),
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), scope, ...rgwQuotaInput(values) })
     })),
+      { title: '设置账户根用户', path: '/rgw/user', method: 'PATCH', successMessage: '账户根用户状态设置执行成功',
+        disabledWhen: rgwUserAccountRootBlocked,
+        fields: [{ name: 'account_root', label: '账户根用户状态（显著改变账户访问权限）', type: 'select', required: true, options: [{ label: '设为账户根用户', value: 'enable' }, { label: '改为普通 RGW 用户', value: 'disable' }] }],
+        confirmation: (values, row) => {
+          const input = rgwUserAccountRootInput(values, row)
+          return `将用户 ${JSON.stringify(userId(row))} 在账户 ${JSON.stringify(input.expected_account_id)} 中${input.account_root ? '提升为根用户，授予账户级根用户权限' : '降为普通 RGW 用户，访问将依赖其策略授权，可能失去现有访问权限'}。此操作不会迁移账户或修改关联策略。`
+        },
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserAccountRootInput(values, row) })
+      },
       { title: '设置用户操作掩码', path: '/rgw/user', method: 'PATCH', successMessage: '操作掩码设置执行成功',
         fields: [{ name: 'op_mask', label: '允许的操作类别（整体替换，非完整有效权限）', type: 'select', required: true, options: rgwUserOperationMaskOptions }],
         confirmation: (values, row) => `将用户 ${JSON.stringify(userId(row))} 的操作掩码整体替换为 ${JSON.stringify(rgwUserOperationMaskInput(values).op_mask)}，可能限制现有访问。ACL 和策略仍独立生效。`,

@@ -226,6 +226,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -478,6 +480,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -978,6 +982,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -1230,6 +1236,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -3025,6 +3033,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -3277,6 +3287,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -3777,6 +3789,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -4029,6 +4043,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -5357,6 +5373,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -5609,6 +5627,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -6236,6 +6256,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -6488,6 +6510,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -6989,6 +7013,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -7241,6 +7267,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -8428,6 +8456,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -8680,6 +8710,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -9274,6 +9306,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -9526,6 +9560,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -10026,6 +10062,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -10278,6 +10316,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -11024,6 +11064,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -11276,6 +11318,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -12272,6 +12316,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -12524,6 +12570,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -13025,6 +13073,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -13277,6 +13327,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -13778,6 +13830,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -14030,6 +14084,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -15168,6 +15224,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -15420,6 +15478,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -16066,6 +16126,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -16318,6 +16380,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -16914,6 +16978,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -17166,6 +17232,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -17666,6 +17734,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -17918,6 +17988,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -19074,6 +19146,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -19326,6 +19400,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -19826,6 +19902,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -20078,6 +20156,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -20595,6 +20675,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -20847,6 +20929,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -21441,6 +21525,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -21693,6 +21779,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -22193,6 +22281,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -22445,6 +22535,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -22946,6 +23038,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -23198,6 +23292,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -24011,6 +24107,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -24263,6 +24361,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -24954,6 +25054,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -25206,6 +25308,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -25800,6 +25904,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -26052,6 +26158,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -26552,6 +26660,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -26804,6 +26914,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -27437,6 +27549,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -27689,6 +27803,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -28190,6 +28306,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -28442,6 +28560,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -29623,6 +29743,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -29875,6 +29997,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -30661,6 +30785,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -30913,6 +31039,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -31507,6 +31635,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -31759,6 +31889,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -32355,6 +32487,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -32607,6 +32741,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -33201,6 +33337,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -33453,6 +33591,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -33953,6 +34093,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -34205,6 +34347,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -34896,6 +35040,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -35148,6 +35294,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -35742,6 +35890,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -35994,6 +36144,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -36494,6 +36646,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -36746,6 +36900,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -37342,6 +37498,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -37594,6 +37752,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -38094,6 +38254,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -38346,6 +38508,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -38942,6 +39106,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -39194,6 +39360,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -39694,6 +39862,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -39946,6 +40116,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -40542,6 +40714,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -40794,6 +40968,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -41388,6 +41564,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -41640,6 +41818,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -42140,6 +42320,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -42392,6 +42574,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -43156,6 +43340,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -43408,6 +43594,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -44003,6 +44191,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -44255,6 +44445,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -44756,6 +44948,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -45008,6 +45202,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -45509,6 +45705,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -45761,6 +45959,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -46356,6 +46556,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -46608,6 +46810,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -47143,6 +47347,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -47395,6 +47601,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -48181,6 +48389,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -48433,6 +48643,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -49027,6 +49239,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -49279,6 +49493,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -49779,6 +49995,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -50031,6 +50249,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -50627,6 +50847,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -50879,6 +51101,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -51380,6 +51604,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -51632,6 +51858,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -52133,6 +52361,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -52385,6 +52615,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -52886,6 +53118,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -53138,6 +53372,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -53734,6 +53970,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -53986,6 +54224,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -54580,6 +54820,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -54832,6 +55074,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -55332,6 +55576,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -55584,6 +55830,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -56202,6 +56450,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -56454,6 +56704,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -56954,6 +57206,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -57206,6 +57460,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -57706,6 +57962,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -57958,6 +58216,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -58845,6 +59105,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -59097,6 +59359,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -59712,6 +59976,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -59964,6 +60230,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -60627,6 +60895,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -60879,6 +61149,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -61379,6 +61651,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -61631,6 +61905,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -62331,6 +62607,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -62583,6 +62861,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -63178,6 +63458,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -63430,6 +63712,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -63931,6 +64215,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -64183,6 +64469,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -64795,6 +65083,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -65047,6 +65337,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -65547,6 +65839,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -65799,6 +66093,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -66299,6 +66595,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -66551,6 +66849,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -67052,6 +67352,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -67304,6 +67606,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -67900,6 +68204,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -68152,6 +68458,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -68746,6 +69054,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -68998,6 +69308,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -69498,6 +69810,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -69750,6 +70064,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -70352,6 +70668,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -70604,6 +70922,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -71105,6 +71425,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -71357,6 +71679,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -71858,6 +72182,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -72110,6 +72436,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -72706,6 +73034,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -72958,6 +73288,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -73459,6 +73791,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -73711,6 +74045,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -74211,6 +74547,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -74463,6 +74801,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -75059,6 +75399,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -75311,6 +75653,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -75811,6 +76155,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -76063,6 +76409,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -76563,6 +76911,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -76815,6 +77165,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -77316,6 +77668,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -77568,6 +77922,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -78259,6 +78615,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -78511,6 +78869,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -79105,6 +79465,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -79357,6 +79719,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -79857,6 +80221,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -80109,6 +80475,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -80610,6 +80978,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -80862,6 +81232,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -81363,6 +81735,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -81615,6 +81989,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -82115,6 +82491,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -82367,6 +82745,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -82868,6 +83248,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -83120,6 +83502,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -83621,6 +84005,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -83873,6 +84259,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -84374,6 +84762,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -84626,6 +85016,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -85222,6 +85614,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -85474,6 +85868,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -85974,6 +86370,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -86226,6 +86624,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -86727,6 +87127,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -86979,6 +87381,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -87479,6 +87883,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -87731,6 +88137,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -88562,6 +88970,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -88814,6 +89224,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -89801,6 +90213,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -90053,6 +90467,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -90647,6 +91063,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -90899,6 +91317,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -91399,6 +91819,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -91651,6 +92073,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -92247,6 +92671,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -92499,6 +92925,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -92999,6 +93427,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -93251,6 +93681,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -93751,6 +94183,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -94003,6 +94437,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -94599,6 +95035,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -94851,6 +95289,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -95445,6 +95885,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -95697,6 +96139,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -96197,6 +96641,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -96449,6 +96895,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -97045,6 +97493,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -97297,6 +97747,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -97797,6 +98249,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -98049,6 +98503,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string
@@ -98549,6 +99005,8 @@ paths:
                   type: string
                 account_name:
                   type: string
+                account_root:
+                  type: boolean
                 action:
                   type: string
                   enum: ["pause", "resume", "start", "stop"]
@@ -98801,6 +99259,8 @@ paths:
                 entity:
                   type: string
                 erasure_code_profile:
+                  type: string
+                expected_account_id:
                   type: string
                 expired_before:
                   type: string

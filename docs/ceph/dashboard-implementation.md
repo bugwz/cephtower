@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+已关联账户用户增加账户根用户切换，对应参考 `rgw-user-form.component.ts` 的 `account_root_user`，映射为 `user modify --account-root=true/false`。依据 `radosgw-admin.cc` 的二值参数解析及 `driver/rados/rgw_user.cc` 根用户分支，执行前读取完整 UID、预期账户 ID 和 rgw/root 类型，执行后再次核对类型与归属，失败不自动重试写入。前端显式选择并确认提升/降权影响，不提交 `--account-id`，因此此入口不执行不可逆的账户迁移；账户迁移仍需独立补齐。测试覆盖双向切换、预检拒绝、命令失败和回读失败，未做真实集群验证。
+
 用户详情新增 S3/Swift 密钥元数据分页，对应参考用户详情的 Keys 表。数据取自既有 `user info` 的 `keys` / `swift_keys`，字段依据 `driver/rados/rgw_user.cc` 的 `dump_access_keys_info` / `dump_swift_keys_info`：所属用户与布尔 `active`。两类列表独立区分空列表和未知数据，状态不推断用户最终权限。遵循既有入库脱敏策略，不展示/恢复 access key 或 secret key；表格仅传递白名单元数据。前端覆盖协议绑定、未知状态及敏感字段隔离，未进行真实集群或浏览器视觉验证。
 
 用户详情增加关联账户分页，参考 `rgw-user-list.component.ts` 按 `account_id` 关联账户列表以及用户详情的 Account Details 区域。复用 `/rgw/accounts` 全分页库存，其后端来自 `account list` / `account get --account-id`；显示账户名称、租户、邮箱和采集时间，不混淆资源显示名与原生账户名称。按集群及账户 ID 隔离组件和请求，重复 ID 拒绝关联，区分未关联、未知 ID、库存缺失、过期与读取失败。前端测试覆盖关联、隔离键、字段及错误状态；未进行真实集群或浏览器视觉验证。

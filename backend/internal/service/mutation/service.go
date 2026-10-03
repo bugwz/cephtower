@@ -119,6 +119,16 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		return cephdomain.ActionResult{}, err
 	}
 	var upgradeTarget map[string]any
+	if _, present := request.Parameters["account_root"]; request.Action == "rgw_user.update" && present {
+		uid := last(resourceTail(request.ResourceKey))
+		checked, checkErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: executor.BinaryRGWAdmin, Args: []string{"user", "info", "--uid", uid, "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if checkErr != nil {
+			return cephdomain.ActionResult{}, normalize(checkErr)
+		}
+		if !rgwUserAccountRootMatches(checked.Stdout, uid, rawText(request.Parameters, "expected_account_id"), nil) {
+			return cephdomain.ActionResult{}, invalid("user account membership or user type could not be verified; root status was not changed")
+		}
+	}
 	if request.Action == "service.update" {
 		name := last(resourceTail(request.ResourceKey))
 		current, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: "service.update.pre_check", Binary: executor.BinaryCeph, Args: []string{"orch", "ls", "--service-name", name, "--export", "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
@@ -315,6 +325,11 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if root, present := request.Parameters["account_root"].(bool); request.Action == "rgw_user.update" && present {
+			if err != nil || !rgwUserAccountRootMatches(checked.Stdout, last(resourceTail(request.ResourceKey)), rawText(request.Parameters, "expected_account_id"), &root) {
+				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user modification was accepted but account root status could not be verified; inspect user info before retrying", Retryable: false}
+			}
+		}
 		if mask, present := request.Parameters["op_mask"]; request.Action == "rgw_user.update" && present {
 			expected, ok := mask.(string)
 			if err != nil || !ok || !rgwUserOperationMaskMatches(checked.Stdout, expected, last(resourceTail(request.ResourceKey))) {
@@ -1851,6 +1866,16 @@ func build(request Request, p map[string]any) (command, error) {
 	case "rgw_user.update":
 		uid := last(tail)
 		args := []string{"user", "modify", "--uid", uid}
+		if raw, present := p["account_root"]; present {
+			root, ok := raw.(bool)
+			account, accountOK := p["expected_account_id"].(string)
+			if !ok || !accountOK || !regexp.MustCompile(`^RGW[0-9]{17}$`).MatchString(account) {
+				return command{}, invalid("account_root requires a boolean and the exact expected account id")
+			}
+			args = append(args, "--account-root="+strconv.FormatBool(root))
+		} else if _, present := p["expected_account_id"]; present {
+			return command{}, invalid("expected_account_id requires account_root")
+		}
 		if raw, present := p["op_mask"]; present {
 			mask, ok := raw.(string)
 			if !ok || !slices.Contains([]string{"read", "write", "delete", "read,write", "read,delete", "write,delete", "read,write,delete"}, mask) {
