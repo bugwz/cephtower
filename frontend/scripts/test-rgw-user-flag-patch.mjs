@@ -25,3 +25,10 @@ assert.deepEqual(role.rgwRolePatch({ assume_role_policy: '', max_session_duratio
 for (const duration of [0, 3599, 43201, 3600.5, '3600']) assert.throws(() => role.rgwRolePatch({ max_session_duration: duration }, row))
 for (const policy of ['[]', 'null', 'invalid', '1']) assert.throws(() => role.rgwRolePatch({ assume_role_policy: policy }, row))
 assert.ok(pages.includes('...rgwRolePatch(values, row)'))
+const tags = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwRoleTags.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(tags)
+assert.deepEqual(tags.rgwRoleTags([{ Key: 'env', Value: 'test' }, { Key: 'empty', Value: '' }]), [{ id: 0, key: 'env', value: 'test' }, { id: 1, key: 'empty', value: '' }])
+assert.deepEqual(tags.rgwRoleTags([]), [])
+for (const value of [null, undefined, {}, [null], [[]], [{ Key: 'env' }], [{ Key: 1, Value: 'test' }]]) assert.equal(tags.rgwRoleTags(value), undefined)
+assert.ok(pages.includes('<RgwRoleTagsTable value={value} />'))
+assert.ok(pages.includes("key: 'RoleId'"))

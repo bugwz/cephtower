@@ -21,6 +21,7 @@ import { rgwUserEmailPatch } from './rgwUserEmailPatch'
 import { rgwRateLimitInitial, rgwRateLimitInput } from './rgwRateLimitForm'
 import { rgwQuotaInitial, rgwQuotaInput } from './rgwQuotaForm'
 import { rgwRoleInitial, rgwRolePatch } from './rgwRoleEdit'
+import { RgwRoleTagsTable } from './RgwRoleTagsTable'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -330,6 +331,7 @@ const definitions: Record<
     },
     columns: [
       { key: 'RoleName', title: 'Role' },
+      { key: 'RoleId', title: '原生 Role ID' },
       { key: 'AccountId', title: '账户 ID' },
       { key: 'Path', title: 'Path' },
       { key: 'Description', title: '描述' },
@@ -337,6 +339,7 @@ const definitions: Record<
       { key: 'AssumeRolePolicyDocument', title: '信任策略' },
       { key: 'PermissionPolicies', title: '内联权限策略' },
       { key: 'ManagedPermissionPolicies', title: '托管权限策略' },
+      { key: 'Tags', title: '角色标签', ellipsis: false, render: (value) => <RgwRoleTagsTable value={value} /> },
       { key: 'MaxSessionDuration', title: '最大会话时长（秒）' },
       { key: 'CreateDate', title: '创建时间' },
       { key: 'resource_version', title: '版本' }
