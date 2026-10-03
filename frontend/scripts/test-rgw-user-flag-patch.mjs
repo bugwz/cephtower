@@ -15,3 +15,13 @@ assert.ok(!pages.includes('suspended: Boolean(values.suspended)'))
 assert.ok(pages.includes("suspended: 'keep'"))
 assert.ok(pages.includes("system: 'keep'"))
 console.log('RGW user flag updates omit unchanged values and preserve explicit false')
+const role = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwRoleEdit.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(role)
+assert.deepEqual(role.rgwRoleInitial({}), { assume_role_policy: undefined, max_session_duration: undefined })
+const row = { AssumeRolePolicyDocument: '{}', MaxSessionDuration: 7200 }
+assert.throws(() => role.rgwRolePatch(role.rgwRoleInitial(row), row))
+assert.deepEqual(role.rgwRolePatch({ assume_role_policy: '{"Statement":[]}', max_session_duration: 7200 }, row), { assume_role_policy: '{"Statement":[]}' })
+assert.deepEqual(role.rgwRolePatch({ assume_role_policy: '', max_session_duration: 3600 }, row), { max_session_duration: 3600 })
+for (const duration of [0, 3599, 43201, 3600.5, '3600']) assert.throws(() => role.rgwRolePatch({ max_session_duration: duration }, row))
+for (const policy of ['[]', 'null', 'invalid', '1']) assert.throws(() => role.rgwRolePatch({ assume_role_policy: policy }, row))
+assert.ok(pages.includes('...rgwRolePatch(values, row)'))

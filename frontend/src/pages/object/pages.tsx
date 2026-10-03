@@ -20,6 +20,7 @@ import { rgwUserFlagPatch } from './rgwUserFlagPatch'
 import { rgwUserEmailPatch } from './rgwUserEmailPatch'
 import { rgwRateLimitInitial, rgwRateLimitInput } from './rgwRateLimitForm'
 import { rgwQuotaInitial, rgwQuotaInput } from './rgwQuotaForm'
+import { rgwRoleInitial, rgwRolePatch } from './rgwRoleEdit'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -304,11 +305,11 @@ const definitions: Record<
     updateAction: {
       title: '更新 RGW Role', path: '/rgw/role', method: 'PATCH', successMessage: 'RGW Role 更新执行成功',
       fields: [
-        { name: 'assume_role_policy', label: '信任策略（JSON）', type: 'textarea', required: true },
-        { name: 'max_session_duration', label: '最大会话时长（秒）', type: 'number', min: 3600, max: 43200, required: true }
+        { name: 'assume_role_policy', label: '信任策略（JSON，留空不修改）', type: 'textarea' },
+        { name: 'max_session_duration', label: '最大会话时长（秒，留空不修改）', type: 'number', min: 3600, max: 43200 }
       ],
-      initialValues: (row) => ({ assume_role_policy: typeof row?.AssumeRolePolicyDocument === 'string' ? row.AssumeRolePolicyDocument : JSON.stringify(row?.AssumeRolePolicyDocument ?? {}, null, 2), max_session_duration: Number(row?.MaxSessionDuration ?? 3600) }),
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...(row?.AccountId ? { account_id: String(row.AccountId) } : {}), name: String(row?.RoleName ?? row?.natural_key ?? ''), ...(String(values.assume_role_policy ?? '') !== (typeof row?.AssumeRolePolicyDocument === 'string' ? row.AssumeRolePolicyDocument : JSON.stringify(row?.AssumeRolePolicyDocument ?? {}, null, 2)) ? { assume_role_policy: String(values.assume_role_policy ?? '') } : {}), max_session_duration: Number(values.max_session_duration) })
+      initialValues: (row) => rgwRoleInitial(row),
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...(row?.AccountId ? { account_id: String(row.AccountId) } : {}), name: String(row?.RoleName ?? row?.natural_key ?? ''), ...rgwRolePatch(values, row) })
     },
     extraActions: [{
       title: '管理内联权限策略', path: '/rgw/role/policy', method: 'POST', successMessage: '角色权限策略操作执行成功',
