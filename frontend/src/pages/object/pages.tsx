@@ -9,6 +9,7 @@ import { message } from '../../utils/appMessage'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAction } from '../ResourceListPage'
 import { ServiceDaemons } from '../cluster/ServiceDaemons'
+import { RgwQuota } from './RgwQuota'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -180,8 +181,8 @@ const definitions: Record<
       { key: 'status', title: '状态' },
       { key: 'caps', title: 'Caps' },
       { key: 'rate_limit', title: '用户限流' },
-      { key: 'user_quota', title: '用户总配额' },
-      { key: 'bucket_quota', title: '默认 Bucket 配额' },
+      { key: 'user_quota', title: '用户总配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
+      { key: 'bucket_quota', title: '默认 Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'stats_scope', title: '统计范围', render:(value)=>value === 'account' ? '所属账户' : '用户' },
       { key: 'storage_stats', title: '容量与对象统计' },
       { key: 'resource_version', title: '版本' }
@@ -245,8 +246,8 @@ const definitions: Record<
       { key: 'account_name', title: '名称' },
       { key: 'email', title: '邮箱' },
       { key: 'tenant', title: 'Tenant' },
-      { key: 'quota', title: '账户配额' },
-      { key: 'bucket_quota', title: '默认 Bucket 配额' },
+      { key: 'quota', title: '账户配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
+      { key: 'bucket_quota', title: '默认 Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'storage_stats', title: '容量与对象统计' },
       { key: 'max_users', title: '用户上限' },
       { key: 'max_roles', title: '角色上限' },
@@ -397,7 +398,7 @@ const definitions: Record<
       { key: 'num_shards', title: '索引分片数' },
       { key: 'placement_rule', title: '放置规则' },
       { key: 'zonegroup', title: 'Zonegroup' },
-      { key: 'bucket_quota', title: 'Bucket 配额' },
+      { key: 'bucket_quota', title: 'Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'object_lock_enabled', title: '对象锁' },
       { key: 'mfa_enabled', title: 'MFA' },
       { key: 'reshard_status', title: '重新分片状态' },

@@ -5,6 +5,12 @@
 
 ## 如何追踪调用链
 
+RGW 用户、账户和 Bucket 配额以独立字段展示启用状态、容量（bytes）和对象数上限，
+对照参考 rgw-bucket-details 的 quota 展示。复用 user info / account get / bucket stats
+库存中的配额对象；负整数显示无限制，零保留为零，未启用时不将已存配置当作生效限制。
+缺失、无效或超过 JavaScript 精确整数范围的数值明确标记不可精确展示，未做单位猜测。
+前端离线测试覆盖状态与数值边界；未进行真实集群或浏览器验证。
+
 RBD 镜像创建时间来自 rbd info 的 create_timestamp，经 image_created_at 字段提供给
 前端。它与库存 created_at 分离，避免通用资源列表合并元数据时覆盖原生镜像时间；
 未返回原生时间时不以库存时间替代，前端保留命令原值。
