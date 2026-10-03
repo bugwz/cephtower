@@ -30,7 +30,7 @@ func TestBucketConfigurationWritesUseExplicitDocument(t *testing.T) {
 		wantCode string
 		calls    int
 	}{
-		{"cors", "<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin></CORSRule></CORSConfiguration>", 200, "", 2}, {"cors", "<CORSConfiguration/>", 200, "invalid_request", 0}, {"policy", `{"Statement":[]}`, 200, "", 1}, {"cors", map[string]any{}, 200, "invalid_request", 0}, {"encryption", "{}", 200, "invalid_request", 0}, {"lifecycle", "<LifecycleConfiguration/>", 200, "invalid_request", 0},
+		{"cors", "<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin></CORSRule></CORSConfiguration>", 200, "", 2}, {"cors", "<CORSConfiguration/>", 200, "invalid_request", 0}, {"policy", `{"Statement":[]}`, 200, "", 2}, {"cors", map[string]any{}, 200, "invalid_request", 0}, {"encryption", "{}", 200, "invalid_request", 0}, {"lifecycle", "<LifecycleConfiguration/>", 200, "invalid_request", 0},
 		{"lifecycle", "<LifecycleConfiguration><Rule><Status>Enabled</Status><Filter/><Expiration><Days>30</Days></Expiration></Rule></LifecycleConfiguration>", 503, "s3_failed", 1},
 		{"lifecycle", "<LifecycleConfiguration><Rule><Status>Disabled</Status><Filter><Tag/></Filter><AbortIncompleteMultipartUpload><DaysAfterInitiation>1</DaysAfterInitiation></AbortIncompleteMultipartUpload></Rule></LifecycleConfiguration>", 200, "invalid_request", 0},
 		{"lifecycle", "<LifecycleConfiguration>" + strings.Repeat("<Rule><ID>same</ID><Status>Enabled</Status><Filter/><Expiration><Days>30</Days></Expiration></Rule>", 2) + "</LifecycleConfiguration>", 200, "invalid_request", 0},
@@ -38,9 +38,9 @@ func TestBucketConfigurationWritesUseExplicitDocument(t *testing.T) {
 		calls := 0
 		service.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
 			calls++
-			if tc.kind == "cors" && calls == 2 {
-				if r.Method != "GET" || r.URL.RawQuery != "cors=" {
-					t.Fatal("wrong CORS verification request")
+			if (tc.kind == "cors" || tc.kind == "policy") && calls == 2 {
+				if r.Method != "GET" || r.URL.RawQuery != tc.kind+"=" {
+					t.Fatal("wrong configuration verification request")
 				}
 				return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(tc.document.(string)))}, nil
 			}

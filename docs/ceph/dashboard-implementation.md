@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+Bucket Policy 写入增加同租户/同 Bucket 的原文回读核验。参考 `RGWPutBucketPolicy::execute` 保存 `Policy.text`、`RGWGetBucketPolicy::execute` 返回原始属性的行为，逐字节比较提交和 GET 内容，不反序列化为浮点数、不重排 JSON，也不折叠重复键。格式变化同样报告原文未核实；写后读取拒绝、缺失、网络失败或内容不一致返回不可重试 post_check_failed，提醒刷新并检查权限，写入失败不额外 GET。测试覆盖精确原文、超过 JS 安全整数的相邻值、Allow/Deny 变化、格式变化、损坏/空响应、失去读取权限和失败路径；完整后端测试及 OpenAPI 校验通过。本次无前端修改，未重跑前端测试，无真实集群验证；此核验不模拟 IAM 授权结果，也不保证后续无并发修改。
+
 生命周期处理进度接入原生 `radosgw-admin lc list --format json`，每轮 RGW Bucket 采集一次，随 Bucket 资源 data 通过现有资源 API 提供。依据 `get_bucket_lc_key` 与 bucket stats.marker，按 tenant:name:marker 精确关联，避免参考界面的名称子串匹配导致同名租户、相似名称或旧 Bucket 实例串联。输出 found/entry，区分无记录与采集/解析不可用；未知原生状态保留，重复键、错误结构拒绝，缺少 marker 不伪装为空记录。前端展示四种处理阶段、原生状态及开始时间，未初始化不展示 epoch 时间，COMPLETE 明确不保证所有对象已过期/转换，不展示虚构百分比。测试覆盖命令参数、执行次数、租户/marker 隔离、无记录、错误响应及展示状态；完整前后端测试、类型检查、构建及 OpenAPI 校验通过。无真实集群或浏览器视觉验证；进度为采集快照，非实时流。
 
 生命周期后端补齐 `RGWLifecycleConfiguration::check_and_add_rule` 的集合约束：拒绝重复非空 ID，保留空 ID 自动生成和大小写敏感身份；同一规则有标签过滤时，不允许 true 删除标记或终止未完成上传，直接 Tag 与 And 内 Tag 同样处理，禁用规则也校验，其他规则的标签不影响当前规则。与专用编辑器保持一致，原始 XML/API 不再绕过这些预检。修正读取测试中标签与终止上传同规则的非法组合；新增规则集合与服务零网络调用测试，完整后端测试与 OpenAPI 校验通过。本次无前端修改，未重跑前端测试，无真实集群验证；整个 Dashboard 的覆盖审计与版本能力验证仍需继续。

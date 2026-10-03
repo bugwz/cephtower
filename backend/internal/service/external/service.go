@@ -1,6 +1,7 @@
 package external
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -453,6 +454,14 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 			return cephdomain.ActionResult{}, failure("invalid_request", err.Error(), false)
 		}
 		err = api.PutBucketConfiguration(ctx, bucket, kind, body)
+		if err == nil && kind == "policy" {
+			actual, _, readErr := api.GetBucketConfiguration(ctx, bucket, kind)
+			// RGW stores Policy.text verbatim. Do not round numbers or collapse
+			// duplicate JSON keys while checking the submitted permissions.
+			if readErr != nil || !bytes.Equal(body, actual) {
+				return cephdomain.ActionResult{}, failure("post_check_failed", "bucket policy was submitted but its original document could not be verified; refresh and check access before another change", false)
+			}
+		}
 		if err == nil && kind == "lifecycle" {
 			actual, _, readErr := api.GetBucketConfiguration(ctx, bucket, kind)
 			matches, parseErr := s3.BucketLifecycleMatches(body, actual)
