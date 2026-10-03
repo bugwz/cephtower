@@ -18,6 +18,12 @@ for (const value of [undefined,null,42,{}]) assert.equal(api.topicText(value),'�
 assert.equal(api.topicBoolean(false),'否')
 assert.equal(api.topicBoolean(true),'是')
 for (const value of [undefined,'false',0]) assert.equal(api.topicBoolean(value),'未返回或不可用')
+for (const key of ['username','password']) {
+  for (const [status,label] of [['unset','未显式设置'],['empty','显式空值（不等于删除参数）'],['set','已设置（值已隐藏）'],['duplicate','重复参数，存在歧义']]) assert.equal(api.topicCredentialPresence({endpoint_credentials:[{field:key,state:status}]},key),label)
+  for (const value of [undefined,null,[],{},'secret',{[key]:'secret'},{[key]:false},[{field:key,state:'secret'}],[{field:key,state:'set'},{field:key,state:'unset'}]]) assert.equal(api.topicCredentialPresence({endpoint_credentials:value},key),'未返回或不可用')
+}
+const credentialDetails = api.RgwTopicDetails({row:{stored_secret:false,endpoint_credentials:[{field:'username',state:'set'},{field:'password',state:'set'}]}})
+assert.match(credentialDetails.props.children[2].props.children.join(''),/已设置.*否不代表没有秘密.*替换 URL 不清除/)
 assert.match(api.topicEndpoint({push_endpoint:'https://host/path',endpoint_redacted:true}),/host\/path.*隐藏/)
 assert.match(api.topicEndpoint({push_endpoint:null,endpoint_redacted:true}),/不可用/)
 const details = api.RgwTopicDetails({row:{policy:'<script>bad</script>',opaqueData:'<tag>',max_retries:'18446744073709551615'}})

@@ -28,6 +28,10 @@
 
 ### 增量实现与验证记录
 
+- **RGW Topic 凭据参数状态展示**：原生 `radosgw-admin metadata get topic:<scope:name>` 采集在内存中解析 EndpointArgs，经现有 Topics API 提供固定字段名与状态枚举；详情分别展示用户名和密码的未设置、显式空值、已设置、重复歧义或不可用状态，秘密值不入库、不返回。按 `RGWHTTPArgs::parse` 先逐段解码再拆分名称和值，不把编码后的分隔符误认成新增参数；损坏输入整体显示不可用。
+  - 此状态不包含 URL 内凭据，不推断认证效果；原生 `stored_secret` 原样保留，明确提示 false 不证明不存在秘密，替换 URL 不会清除 EndpointArgs。状态 DTO 使用字段/状态数组，不对通用秘密脱敏规则增加豁免。覆盖原生解析、编码键、空值、重复字段、秘密不持久化、采集到 API 链路和前端实际展示回归。
+  - 最终 `make test-backend`（含 OpenAPI 一致性）、`make test-frontend`（含生产构建）通过。初次后端运行还出现临时数据库目录清理失败，后续全量运行未复现；API 状态被通用脱敏处理的问题已通过 DTO 调整修复并验证。无真实集群或浏览器视觉验证。
+
 - **RGW Topic 现有端点分项编辑**：端点修改表单新增协议、主机/IPv4、可选端口、路径/VHost、用户名和密码输入，复用创建表单的原始地址生成规则。生成值沿现有 `PATCH /rgw/topic/endpoint` → 加密队列 → SNS `SetTopicAttributes(push-endpoint)` → 完整属性回读链路执行，不新增 CLI 拼接或直接元数据写入。
   - 不从脱敏地址回填任何分项字段，必须明确填写完整目标；用户名与密码同时留空表示新 URL 不含旧凭据，不是保留旧凭据。确认仍提示 EndpointArgs 保留、可能覆盖 URL 凭据、队列与非原子快照风险。补充三种命名空间 × 五种协议的实际 action 绑定，以及不回填、脱敏、无变化、过期范围、凭据校验和隐藏草稿隔离回归。
   - 本轮核实独立 `user-name` / `password` 更新仍存在原生边界：`rgw_rest_pubsub.cc::RGWPSSetTopicAttributesOp::map_attributes` 对这两项只调用字符串替换并返回，不调用 `validate_and_update_endpoint_secret`；`topic_has_endpoint_secret` 却仅返回 `stored_secret`，GetTopic/GetTopicAttributes 的传输保护依赖它。因此不能把这两个原生参数直接包装成通用凭据按钮，尤其是初始秘密标记为 false 的 Topic；本功能更新的是完整 URL，不声称处理或清除 EndpointArgs 中的凭据。独立参数编辑继续列为未完成项，需进一步设计原生状态一致性链路。

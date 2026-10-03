@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"cephtower/backend/internal/integration/ceph/executor"
+	"cephtower/backend/internal/integration/ceph/s3"
 )
 
 type topicExecutor struct {
@@ -125,12 +126,25 @@ func TestTopicOptionAvailability(t *testing.T) {
 	}{
 		{nil, "unavailable"}, {42, "unavailable"}, {"", "parsed"}, {"verify-ssl=false&password=never-store", "parsed"}, {"password=%zz", "malformed"},
 	} {
-		payload, ok := rgwTopicPayload(map[string]any{"name": "events", "owner": "u", "arn": "a", "dest": map[string]any{"push_endpoint": "", "push_endpoint_args": tc.args}})
+		payload, ok := rgwTopicPayload(map[string]any{"name": "events", "owner": "u", "arn": "a", "dest": map[string]any{"push_endpoint": "", "push_endpoint_args": tc.args, "stored_secret": false}})
 		if !ok || payload["endpoint_options_status"] != tc.status {
 			t.Fatalf("wrong availability %v", payload)
 		}
 		if tc.status != "parsed" && payload["endpoint_options"] != nil {
 			t.Fatal("invented default options")
+		}
+		credentials, valid := payload["endpoint_credentials"].([]s3.TopicCredentialState)
+		if !valid || len(credentials) != 2 {
+			t.Fatal("credential presence missing")
+		}
+		if tc.status != "parsed" && (credentials[0].State != "unavailable" || credentials[1].State != "unavailable") {
+			t.Fatal("missing or malformed credentials reported as absent")
+		}
+		if tc.args == "verify-ssl=false&password=never-store" && (credentials[1].State != "set" || credentials[0].State != "unset") {
+			t.Fatal("credential presence changed")
+		}
+		if payload["stored_secret"] != false {
+			t.Fatal("native stored_secret marker was inferred from credentials")
 		}
 		body, _ := json.Marshal(payload)
 		if strings.Contains(string(body), "never-store") {

@@ -85,6 +85,10 @@ func TestRGWTopicsNativeToAPI(t *testing.T) {
 			t.Fatalf("%d %s", rec.Code, rec.Body.String())
 		}
 		data := response.Data.Items[0].Data
+		credentials, valid := data["endpoint_credentials"].([]any)
+		if !valid || len(credentials) != 2 || credentials[0].(map[string]any)["state"] != "unset" || credentials[1].(map[string]any)["state"] != "set" {
+			t.Fatal("safe credential presence did not reach API")
+		}
 		if data["endpoint_options_status"] != "parsed" {
 			t.Fatal("options did not reach API")
 		}

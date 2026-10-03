@@ -2,6 +2,18 @@ export function topicText(value: unknown) {
   return typeof value === 'string' ? value === '' ? '原生空值' : value : '未返回或不可用'
 }
 export function topicBoolean(value: unknown) { return value === true ? '是' : value === false ? '否' : '未返回或不可用' }
+export function topicCredentialPresence(row: Record<string, unknown>, key: 'username' | 'password') {
+  const fields = row.endpoint_credentials
+  const matches = Array.isArray(fields) ? fields.filter(item => item && typeof item === 'object' && item.field === key) : []
+  const status = matches.length === 1 ? matches[0].state : undefined
+  switch (status) {
+    case 'unset': return '未显式设置'
+    case 'empty': return '显式空值（不等于删除参数）'
+    case 'set': return '已设置（值已隐藏）'
+    case 'duplicate': return '重复参数，存在歧义'
+    default: return '未返回或不可用'
+  }
+}
 export function topicEndpoint(row: Record<string, unknown>) {
   return `${topicText(row.push_endpoint)}${row.endpoint_redacted === true ? '（凭据、查询参数或片段已隐藏；非法地址不展示）' : ''}`
 }
@@ -33,6 +45,7 @@ export function RgwTopicDetails({ row }: { row: Record<string, unknown> }) {
   return <div>
     <p>这是采集时的通知目标配置，不代表端点可达、消息已投递或桶通知规则已配置。敏感端点参数未入库，URL 用户凭据、查询参数和片段已隐藏。</p>
     <p>持久化：{topicBoolean(row.persistent)}；原生 stored_secret 标记：{topicBoolean(row.stored_secret)}（不展示秘密内容）</p>
+    <p>EndpointArgs 用户名：{topicCredentialPresence(row, 'username')}；密码：{topicCredentialPresence(row, 'password')}。仅表示参数是否存在，不含 URL 内凭据，不证明认证生效。原生 stored_secret 标记可能与参数不一致，否不代表没有秘密；替换 URL 不清除这些参数。</p>
     <dl>{fields.map(([key, title]) => <div key={key}><dt>{title}</dt><dd><pre style={{ whiteSpace: 'pre-wrap' }}>{topicText(row[key])}</pre></dd></div>)}</dl>
     <h4>投递协议参数</h4>
     <p>仅展示已识别且通过安全检查的非凭据字段；用户名、密码及未知参数始终隐藏。参数可能不适用于当前协议，配置存在不证明其生效。{row.endpoint_options_status !== 'parsed' ? '原生参数缺失或无法完整解析。' : ''}</p>
