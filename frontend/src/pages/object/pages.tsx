@@ -1,6 +1,7 @@
 import type { ApiRecord } from '../../api/client'
 import { RgwTopicDetails, topicText, topicBoolean, topicEndpoint } from './RgwTopicDetails'
 import { topicDeleteBlocked, topicDeleteInput, topicDeleteConfirmation } from './rgwTopicDelete'
+import { topicPolicyBlocked, topicPolicyInitial, topicPolicyInput, topicPolicyConfirmation } from './rgwTopicPolicy'
 import { bucketReplicationFormBlocked, bucketReplicationFormInitial, bucketReplicationFormInput, bucketReplicationFormConfirmation } from './rgwBucketReplicationForm'
 import { useClusterContext } from '../../state/ClusterContext'
 import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
@@ -528,6 +529,18 @@ const definitions: Record<
   rgwTopics: {
     title: 'RGW 通知目标（Topics）', path: '/rgw/topics', requiredCapabilities: ['rgw_admin'],
     rowKeyCandidates: ['natural_key'],
+    extraActions: [{
+      title: '修改 Topic Policy', buttonLabel: '修改 Policy', path: '/rgw/topic/policy', method: 'PATCH',
+      successMessage: 'Topic Policy 已回读核验',
+      disabledWhen: topicPolicyBlocked, initialValues: topicPolicyInitial, confirmation: topicPolicyConfirmation,
+      fields: [
+        { name: 'topic_id', label: 'Topic ID（不可更改）', readOnly: true },
+        { name: 'topic_arn', label: 'Topic ARN（不可更改）', readOnly: true },
+        { name: 'policy_mode', label: '操作', type: 'select', required: true, options: [{ value: 'set', label: '替换完整 Policy' }, { value: 'clear', label: '清除 Policy' }] },
+        { name: 'policy', label: '完整 Policy JSON（仅替换时使用）', type: 'textarea' }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...topicPolicyInput(values, row) })
+    }],
     deleteAction: {
       title: '删除 RGW 通知目标', path: '/rgw/topic', action: 'rgw_topic.delete', resourceKind: 'rgw_topic', risk: 'high',
       successMessage: 'Topic 删除命令成功，元数据不存在已核验；请检查桶通知引用',

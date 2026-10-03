@@ -105,6 +105,10 @@ func (c *Client) requestWithHeaders(ctx context.Context, method, bucket string, 
 
 // Only service-level operations may call this with an empty bucket.
 func (c *Client) requestTarget(ctx context.Context, method, bucket string, query url.Values, body []byte, headers http.Header) ([]byte, string, error) {
+	return c.requestSignedTarget(ctx, method, bucket, query, body, headers, "s3")
+}
+
+func (c *Client) requestSignedTarget(ctx context.Context, method, bucket string, query url.Values, body []byte, headers http.Header, service string) ([]byte, string, error) {
 	target := *c.base
 	target.Path = strings.TrimSuffix(c.base.Path, "/") + "/" + bucket
 	target.RawQuery = canonicalQuery(query)
@@ -126,14 +130,16 @@ func (c *Client) requestTarget(ctx context.Context, method, bucket string, query
 		if query.Has("policy") {
 			contentType = "application/json"
 		}
-		req.Header.Set("Content-Type", contentType)
+		if req.Header.Get("Content-Type") == "" {
+			req.Header.Set("Content-Type", contentType)
+		}
 		checksum := md5.Sum(body) // S3 transport integrity header, not a security hash.
 		req.Header.Set("Content-MD5", base64.StdEncoding.EncodeToString(checksum[:]))
 	}
 	if c.credentials.SessionToken != "" {
 		req.Header.Set("X-Amz-Security-Token", c.credentials.SessionToken)
 	}
-	c.sign(req, now, payloadHash)
+	c.signService(req, now, payloadHash, service)
 	response, err := c.http.Do(req)
 	if err != nil {
 		return nil, "", err
@@ -153,6 +159,10 @@ func (c *Client) requestTarget(ctx context.Context, method, bucket string, query
 }
 
 func (c *Client) sign(req *http.Request, now time.Time, payloadHash string) {
+	c.signService(req, now, payloadHash, "s3")
+}
+
+func (c *Client) signService(req *http.Request, now time.Time, payloadHash, service string) {
 	headerNames := []string{"host", "x-amz-content-sha256", "x-amz-date"}
 	if req.Header.Get("X-Amz-Acl") != "" {
 		headerNames = append(headerNames, "x-amz-acl")
@@ -172,11 +182,11 @@ func (c *Client) sign(req *http.Request, now time.Time, payloadHash string) {
 	signedHeaders := strings.Join(headerNames, ";")
 	canonicalRequest := strings.Join([]string{req.Method, req.URL.EscapedPath(), canonicalQuery(req.URL.Query()), canonicalHeaders.String(), signedHeaders, payloadHash}, "\n")
 	date := now.Format("20060102")
-	scope := date + "/" + c.credentials.Region + "/s3/aws4_request"
+	scope := date + "/" + c.credentials.Region + "/" + service + "/aws4_request"
 	stringToSign := "AWS4-HMAC-SHA256\n" + now.Format("20060102T150405Z") + "\n" + scope + "\n" + sha256Hex([]byte(canonicalRequest))
 	dateKey := hmacSHA256([]byte("AWS4"+c.credentials.SecretKey), date)
 	regionKey := hmacSHA256(dateKey, c.credentials.Region)
-	serviceKey := hmacSHA256(regionKey, "s3")
+	serviceKey := hmacSHA256(regionKey, service)
 	signingKey := hmacSHA256(serviceKey, "aws4_request")
 	signature := hex.EncodeToString(hmacSHA256(signingKey, stringToSign))
 	req.Header.Set("Authorization", "AWS4-HMAC-SHA256 Credential="+c.credentials.AccessKey+"/"+scope+", SignedHeaders="+signedHeaders+", Signature="+signature)

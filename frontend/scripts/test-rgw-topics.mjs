@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 const api = {}
+new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicPolicy.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
 new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicDelete.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
 const jsx = (type, props) => ({ type, props })
 new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwTopicDetails.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText)(api,()=>({jsx,jsxs:jsx}))
@@ -52,6 +53,19 @@ for (const scope of ['', 'team', 'RGW12345678901234567']) {
   for (const change of [{stale:true},{natural_key:'other'},{metadata_version:null},{metadata_key:'other:events'},{scope:undefined}]) assert.throws(()=>action.buildBody({...row,...change},42))
 }
 const navigation = readFileSync(new URL('../src/navigation.ts',import.meta.url),'utf8')
+for (const scope of ['', 'team', 'RGW12345678901234567']) {
+  const row = {scope,name:'events',metadata_key:`${scope}:events`,natural_key:Buffer.from(`${scope}:events`).toString('base64url'),arn:`arn:aws:sns:default:${scope}:events`,policy:'{"Statement":[]}'}
+  const action = definition.extraActions[0]
+  const values = {...action.initialValues(row),policy_mode:'set',policy:'{"Statement":[],"Id":"中文&+"}'}
+  assert.equal(action.path,'/rgw/topic/policy')
+  assert.equal(action.method,'PATCH')
+  assert.equal(action.disabledWhen(row),undefined)
+  assert.deepEqual(action.buildBody(values,42,row),{cluster_id:42,topic_id:row.natural_key,topic_arn:row.arn,expected_policy:row.policy,policy:values.policy})
+  assert.equal(action.buildBody({...values,policy_mode:'clear'},42,row).policy,'')
+  for (const change of [{policy_mode:undefined},{policy:'[]'},{policy:row.policy},{topic_id:'other'},{policy:'{"Id":"'+'x'.repeat(1024*1024)+'"}'}]) assert.throws(()=>action.buildBody({...values,...change},42,row))
+  for (const change of [{stale:true},{policy:null},{arn:'arn:aws:sns:default:other:events'},{natural_key:'other'}]) assert.throws(()=>action.buildBody(values,42,{...row,...change}))
+  for (const warning of ['HTTPS','回读权限','原子锁','回滚','清除不保证']) assert.ok(action.confirmation(values,row).includes(warning))
+}
 assert.match(navigation,/key: 'rgwTopics'.*path: '\/object\/topics'/)
 const refresh = readFileSync(new URL('../src/pages/ResourceListPage.tsx',import.meta.url),'utf8')
 assert.match(refresh,/'\/rgw\/topics': \['rgw_topic'\]/)

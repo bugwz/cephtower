@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **RGW Topic Policy 设置与清除**：新增 `PATCH /rgw/topic/policy` 高风险操作和 Topic 列表表单。根据 `rgw_rest_pubsub.cc::RGWPSSetTopicAttributesOp` 的原生属性更新路径，使用 HTTPS RGW 端点上的 SNS `GetTopicAttributes → SetTopicAttributes(Policy) → GetTopicAttributes`，不是直接修改元数据。复用已配置的 S3 端点、凭据及 TLS 设置，但使用 SNS SigV4 签名域；Policy 通过表单请求体传输，不放入 URL，也不自动启用明文秘密配置。
+  - 绑定规范编码的完整 Topic 元数据键与 ARN，提交前校验当前 Policy 快照，回读比较除 Policy 外的全部原生属性。端点及其秘密仅在后端内存参与比较，远端失败正文不回显；缺失、重复或损坏属性拒绝核验，失败不自动重试或回滚。沿用 Topic 删除相同的资源锁；此检查不是跨工具原子 CAS。
+  - 前端要求明确选择替换完整 JSON Policy 或清除，拒绝陈旧数据、错误身份、未变化和超限请求；确认说明权限立即变化、清除不保证私有、可能失去回读权限。提交完成后重新采集 Topic；不修改推送端点、队列或桶通知规则。
+  - 回归覆盖三种 scope、设置/清除、快照与身份不符、写失败、回读 Policy/端点差异、XML 歧义、HTTPS 限制、SNS 签名域、表单编码、API 高风险锁与字段约束及前端绑定。无真实集群或浏览器视觉验证。Topic 创建及其余属性编辑、桶通知规则仍未完成，整体迁移继续保留为进行中。
+
 - **RGW Topic 原生删除与队列影响确认**：新增 `DELETE /rgw/topic` 高风险操作和列表删除入口。参考 Dashboard 的 `RgwTopicmanagement.delete_topic` 仅执行 `metadata rm topic:<key>`；此处改用完整的原生 `topic rm --tenant <scope> --topic <name>`，依据 `RGWPubSub::remove_topic_v2` 清理持久化队列再删除 Topic，保留 CLI 的主 Zone 检查和迁移中拒绝行为。`RGWPubSub` 将 scope 作为租户或 Account 存储命名空间，因此全局空租户、命名租户和 Account 均使用明确 scope，不推断默认租户。
   - 采集保留原生元数据 `{tag, ver}` 的完整字符串版本，避免前端 JSON 数字精度损失。删除前核验完整元数据键、名称和版本，再用相同 scope 的 `topic get` 要求 v2 的 `subscribed_buckets` 字段，并比较未脱敏的完整原生配置（只在后端内存比较，不回传秘密）；旧格式或配置不一致不写入。删除后重新列举 Topic 元数据核验目标键不存在，不把读取失败当作不存在。
   - 前端明确持久化队列及未投递消息可能永久丢失、桶通知引用不会自动清理、主 Zone 要求、非事务并发和部分生效风险；操作不删除 Bucket 或对象。禁止陈旧库存/缺失版本/编码身份不一致提交，完成后刷新 Topic 库存；失败不自动重试或回滚。

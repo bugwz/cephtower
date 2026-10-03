@@ -72,6 +72,19 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if invalid.Code != http.StatusBadRequest {
 			t.Fatalf("unknown deletion field accepted %d", invalid.Code)
 		}
+		policyBody := fmt.Sprintf(`{"cluster_id":%d,"topic_id":%q,"topic_arn":%q,"expected_policy":"{}","policy":""}`, cluster.ID, id, "arn:aws:sns:default:"+scope+":events")
+		policyResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/topic/policy", policyBody, "topic-policy-"+scope)
+		if policyResponse.Code != http.StatusAccepted {
+			t.Fatalf("policy queue: %d %s", policyResponse.Code, policyResponse.Body.String())
+		}
+		policyOp, err := db.FindOperation(context.Background(), operationIDFromResponse(t, policyResponse))
+		if err != nil || policyOp.Action != "rgw_topic.policy" || policyOp.Risk != "high" || policyOp.ResourceKey != op.ResourceKey || policyOp.LockKey != op.LockKey {
+			t.Fatalf("wrong policy operation %+v %v", policyOp, err)
+		}
+		policyInvalid := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/topic/policy", strings.TrimSuffix(policyBody, "}")+`,"endpoint":"other"}`, "topic-policy-invalid-"+scope)
+		if policyInvalid.Code != http.StatusBadRequest {
+			t.Fatalf("unknown policy field accepted: %d", policyInvalid.Code)
+		}
 	}
 	for _, realm := range []string{"", "realm"} {
 		response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/sync/group", fmt.Sprintf(`{"cluster_id":%d,"name":"east","zonegroup_id":"zg","realm_id":%q,"group_id":"g","expected_group":%q,"status":"enabled"}`, cluster.ID, realm, `{"id":"g","status":"allowed","data_flow":{},"pipes":[]}`), "zonegroup-sync-"+realm)
