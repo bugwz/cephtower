@@ -16,6 +16,7 @@ import { RgwPermissions } from './RgwPermissions'
 import { rgwBucketLimit } from './rgwBucketLimit'
 import { rgwAccountLimit } from './rgwAccountLimit'
 import { rgwUserSuspension, rgwUserBooleanFlag } from './rgwUserFlags'
+import { rgwUserFlagPatch } from './rgwUserFlagPatch'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -123,15 +124,15 @@ const definitions: Record<
         { name: 'display_name', label: '显示名' },
         { name: 'email', label: '邮箱' },
         { name: 'max_buckets', label: '最大 Bucket 数（-1 禁止创建，0 无限制）', type: 'number', min: -1 },
-        { name: 'suspended', label: '暂停用户', type: 'boolean' },
-        { name: 'system', label: '系统用户', type: 'boolean' }
+        { name: 'suspended', label: '暂停用户', type: 'select', options: [{ label: '保持不变', value: 'keep' }, { label: '暂停', value: 'enable' }, { label: '解除暂停', value: 'disable' }] },
+        { name: 'system', label: '系统用户', type: 'select', options: [{ label: '保持不变', value: 'keep' }, { label: '启用', value: 'enable' }, { label: '关闭', value: 'disable' }] }
       ],
       initialValues: (row) => ({
         display_name: text(row?.display_name),
         email: text(row?.email),
         max_buckets: numberOrUndefined(row?.max_buckets),
-        suspended: row?.suspended === true || row?.suspended === 1,
-        system: row?.system === true
+        suspended: 'keep',
+        system: 'keep'
       }),
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
@@ -139,8 +140,7 @@ const definitions: Record<
         ...(values.display_name ? { display_name: String(values.display_name) } : {}),
         email: String(values.email ?? ''),
         ...(values.max_buckets !== undefined ? { max_buckets: Number(values.max_buckets) } : {}),
-        suspended: Boolean(values.suspended),
-        system: Boolean(values.system)
+        ...rgwUserFlagPatch(values)
       })
     },
     extraActions: [...(['user', 'bucket'] as const).map<ResourceFormAction>((scope) => ({
