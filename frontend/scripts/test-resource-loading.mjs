@@ -35,6 +35,43 @@ assert.ok(servicePage.includes('data?.serviceMeta?.stale && <Alert'))
 assert.ok(servicePage.includes('data?.daemonMeta?.stale && <Alert'))
 console.log('Service runtime metadata and stale inventory bindings passed')
 
+const serviceContent = servicePageTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ServicePageContent')
+const submitServiceNode = serviceContent.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submitService')
+const submitServiceCode = ts.transpileModule(submitServiceNode.getText(servicePageTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const scenario of ['ok', 'inactive', 'unmount', 'stale', 'error']) {
+  const calls = []
+  let resolve, reject
+  const env = {
+    active: { current: scenario !== 'inactive' }, running: { current: false }, selectedClusterId: 7, loading: false, error: '',
+    editingService: { name: 'rgw.a', resource_version: '9007199254740993', stale: scenario === 'stale' }, serviceWritable: (row) => !row.stale,
+    setSubmitting: () => {}, setFormOpen: () => calls.push('close'), parsePlacement: JSON.parse, serviceName: (row) => row.name,
+    message: { error: () => {}, success: () => calls.push('success') }, refreshAfterMutation: async () => calls.push('collect'),
+    mutateResource: (...args) => { calls.push(args); return new Promise((yes, no) => { resolve = yes; reject = no }) },
+  }
+  const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
+  const pending = submit({ service_type: 'rgw', service_id: 'a', placement_json: '{}' })
+  await submit({ service_type: 'rgw', service_id: 'a', placement_json: '{}' })
+  if (['inactive', 'stale'].includes(scenario)) { await pending; assert.deepEqual(calls, []); continue }
+  assert.deepEqual(calls[0], ['/service', 'PATCH', { cluster_id: 7, name: 'rgw.a', service_type: 'rgw', service_id: 'a', placement: {} }, { ifMatch: '9007199254740993' }])
+  assert.equal(calls.length, 1)
+  if (scenario === 'unmount') env.active.current = false
+  if (scenario === 'error') { reject(new Error('failure')); await assert.rejects(pending) } else { resolve(); await pending }
+  assert.equal(calls.includes('success'), scenario === 'ok')
+  assert.equal(calls.includes('collect'), scenario === 'ok')
+  assert.equal(env.running.current, false)
+}
+assert.ok(servicePage.includes("<ServicePageContent key={selectedClusterId ?? 'none'}"))
+assert.ok(servicePage.includes("if (!active.current) throw new Error('集群已切换，请重新确认删除')"))
+assert.ok(!servicePage.includes('window.setTimeout'))
+console.log('Service mutation cluster isolation and duplicate submission checks passed')
+
+const writableNode = servicePageTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'serviceWritable')
+const writableCode = ts.transpileModule(writableNode.getText(servicePageTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const writable = new Function('serviceName', `${writableCode}; return serviceWritable`)((row) => row.name)
+for (const version of [1, '1', '9007199254740993']) assert.equal(writable({ name: 'mgr', stale: false, resource_version: version }), true)
+for (const version of [0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, undefined, '', '0', '1e3']) assert.equal(writable({ name: 'mgr', stale: false, resource_version: version }), false)
+assert.equal(writable({ name: 'mgr', stale: true, resource_version: 1 }), false)
+
 const source = readFileSync(new URL('../src/hooks.ts', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('hooks.ts', source, ts.ScriptTarget.Latest, true)
 const fn = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'useResource')

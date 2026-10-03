@@ -1,6 +1,6 @@
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Form, Input, Modal, Select, Space, Tabs } from 'antd'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { textValue, type ApiRecord } from '../../api/client'
 import { listAllResources, mutateResource, refreshResource } from '../../api/resource'
 import { DataTable } from '../../components/DataTable'
@@ -8,7 +8,6 @@ import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
 import { TableAction, TableActions } from '../../components/TableActions'
 import { useResource } from '../../hooks'
-import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
@@ -37,6 +36,14 @@ const serviceTypeOptions = [
 
 export function ServicePage() {
   const { selectedClusterId } = useClusterContext()
+  return <ServicePageContent key={selectedClusterId ?? 'none'} />
+}
+
+function ServicePageContent() {
+  const { selectedClusterId } = useClusterContext()
+  const active = useRef(true)
+  const running = useRef(false)
+  useEffect(() => { active.current = true; return () => { active.current = false } }, [])
   const serviceTableFilters = useResourceTableFilters({
     path: '/services',
     fields: ['name', 'type', 'running', 'size'],
@@ -65,26 +72,33 @@ export function ServicePage() {
   const [editingService, setEditingService] = useState<ApiRecord | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [refreshingServices, setRefreshingServices] = useState(false)
-  const operationMutation = useMutationOperation()
+
+  async function refreshAfterMutation() {
+    if (!active.current || !selectedClusterId) return
+    try { await refreshResource({ clusterId: selectedClusterId, kinds: ['service', 'daemon'] }) }
+    catch { if (active.current) message.warning('修改已执行，但重新采集失败，请刷新核对，不要重复提交。') }
+    if (active.current) await refresh()
+  }
 
   async function refreshServiceData() {
-    if (refreshingServices) {
+    if (!active.current || running.current) {
       return
     }
     if (!selectedClusterId) {
       message.error('请先选择集群')
       return
     }
-    setRefreshingServices(true)
+    running.current = true; setRefreshingServices(true)
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['service', 'daemon'] }), '刷新成功')
-      await refresh()
+      await refreshResource({ clusterId: selectedClusterId, kinds: ['service', 'daemon'] })
+      if (active.current) { message.success('刷新成功'); await refresh() }
     } finally {
-      setRefreshingServices(false)
+      running.current = false; if (active.current) setRefreshingServices(false)
     }
   }
 
   function openCreate() {
+    if (!active.current || running.current || !selectedClusterId) return
     setEditingService(null)
     form.resetFields()
     form.setFieldsValue({ service_type: 'rgw', placement_json: '{}' })
@@ -92,6 +106,7 @@ export function ServicePage() {
   }
 
   function openEdit(row: ApiRecord) {
+    if (!active.current || running.current || loading || error || !serviceWritable(row)) return
     setEditingService(row)
     form.resetFields()
     form.setFieldsValue({
@@ -103,10 +118,10 @@ export function ServicePage() {
   }
 
   async function submitService(values: ServiceFormValues) {
-    if (!selectedClusterId || submitting) {
+    if (!active.current || running.current || !selectedClusterId || loading || error || (editingService && !serviceWritable(editingService))) {
       return
     }
-    setSubmitting(true)
+    running.current = true; setSubmitting(true)
     try {
       let placement: ApiRecord
       try {
@@ -123,16 +138,18 @@ export function ServicePage() {
         placement
       }
       const successMessage = editingService ? '服务更新执行成功' : '服务创建执行成功'
-      await operationMutation.run(() => mutateResource('/service', editingService ? 'PATCH' : 'POST', body, editingService ? { ifMatch: Number(editingService.resource_version ?? 0) } : undefined), false)
+      await mutateResource('/service', editingService ? 'PATCH' : 'POST', body, editingService ? { ifMatch: String(editingService.resource_version) } : undefined)
+      if (!active.current) return
       setFormOpen(false)
       message.success(successMessage)
-      void refresh({ showLoading: false })
+      await refreshAfterMutation()
     } finally {
-      setSubmitting(false)
+      running.current = false; if (active.current) setSubmitting(false)
     }
   }
 
   async function deleteService(row: ApiRecord) {
+    if (!active.current || running.current || loading || error || !serviceWritable(row)) return
     if (!selectedClusterId) {
       message.error('请先选择集群')
       return
@@ -142,7 +159,7 @@ export function ServicePage() {
       message.error('无法识别服务名')
       return
     }
-    const generation = Number(row.resource_version ?? 0)
+    const generation = String(row.resource_version)
     const parameters = { cluster_id: selectedClusterId, name }
     Modal.confirm({
       title: `删除服务 ${name}`,
@@ -151,11 +168,15 @@ export function ServicePage() {
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
-        await operationMutation.run(() => mutateResource('/service', 'DELETE', parameters, { ifMatch: generation }), false)
-        window.setTimeout(() => {
+        if (!active.current) throw new Error('集群已切换，请重新确认删除')
+        if (running.current) throw new Error('已有操作正在执行')
+        running.current = true; setSubmitting(true)
+        try {
+          await mutateResource('/service', 'DELETE', parameters, { ifMatch: generation })
+          if (!active.current) return
           message.success('服务删除执行成功')
-          void refresh({ showLoading: false })
-        })
+          await refreshAfterMutation()
+        } finally { running.current = false; if (active.current) setSubmitting(false) }
       }
     })
   }
@@ -208,8 +229,8 @@ export function ServicePage() {
                       render: (_, row) => (
                         <TableActions>
                           <TableAction disabled={!selectedClusterId || !serviceName(row)} onClick={() => { if (selectedClusterId) setDetail({ clusterId: selectedClusterId, name: serviceName(row) }) }}>守护进程</TableAction>
-                          <TableAction onClick={() => openEdit(row)}>编辑</TableAction>
-                          <TableAction danger onClick={() => deleteService(row)}>删除</TableAction>
+                          <TableAction disabled={loading || Boolean(error) || submitting || refreshingServices || !serviceWritable(row)} onClick={() => openEdit(row)}>编辑</TableAction>
+                          <TableAction danger disabled={loading || Boolean(error) || submitting || refreshingServices || !serviceWritable(row)} onClick={() => deleteService(row)}>删除</TableAction>
                         </TableActions>
                       )
                     }
@@ -252,7 +273,7 @@ export function ServicePage() {
       <DraggableModal
         title={editingService ? '编辑服务' : '新增服务'}
         open={formOpen}
-        onCancel={() => setFormOpen(false)}
+        onCancel={() => { if (!submitting) setFormOpen(false) }}
         onOk={() => form.submit()}
         okText="提交"
         confirmLoading={submitting}
@@ -276,6 +297,11 @@ export function ServicePage() {
 
 function serviceName(row: ApiRecord) {
   return textValue(row.service_name ?? row.name ?? row.service_id, '')
+}
+
+function serviceWritable(row: ApiRecord): boolean {
+  const version = row.resource_version
+  return row.stale === false && Boolean(serviceName(row)) && (typeof version === 'string' ? /^[1-9][0-9]*$/.test(version) : typeof version === 'number' && Number.isSafeInteger(version) && version > 0)
 }
 
 function serviceType(row: ApiRecord) {
