@@ -25,6 +25,13 @@ assert.equal(pages.match(/<RgwStorage value=\{value\} account \/>/g).length, 1)
 assert.equal(pages.match(/<RgwStorage value=\{value\} categorized \/>/g).length, 1)
 console.log('RGW storage statistics preserve category, units, zero and unavailable values')
 const times = exports.rgwStorageTimes
+const tags = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketTags.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(tags)
+assert.deepEqual(tags.rgwBucketTags({}), [])
+assert.deepEqual(tags.rgwBucketTags({ team: 'storage', empty: '' }), [{ key: 'team', value: 'storage' }, { key: 'empty', value: '' }])
+assert.deepEqual(tags.rgwBucketTags(JSON.parse('{"__proto__":"literal","constructor":"tag"}')), [{ key: '__proto__', value: 'literal' }, { key: 'constructor', value: 'tag' }])
+for (const value of [undefined, null, [], [{ Key: 'wrong', Value: 'shape' }], { key: null }, { key: 0 }]) assert.equal(tags.rgwBucketTags(value), undefined)
+assert.ok(pages.includes('<RgwBucketTagsTable value={value} />'))
 const placement = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketPlacement.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(placement)
 assert.deepEqual(placement.rgwBucketPlacement({ data_pool: 'zone.data:ns', data_extra_pool: '', index_pool: 'zone.index' }), { data: 'zone.data:ns', extra: '未显式指定', index: 'zone.index' })

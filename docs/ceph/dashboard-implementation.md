@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+Bucket 标签表读取 bucket stats 的 tagset 对象（RGWObjTags::dump），不混用用户 key/val
+数组或角色 Key/Value 数组格式。保留标签键和值及空字符串，空对象与缺失/无效数据分离；
+原生在无 RGW_ATTR_TAGS 或解码失败时可能省略 tagset，故不将缺失直接解释为空集合。
+复用采集及库存 API，离线测试覆盖对象格式和特殊键名，未进行浏览器或真实集群验证。
+
 Bucket 重新分片状态按 rgw_bucket_layout.cc 的 None / InLogrecord / InProgress 显示
 当前无分片阶段、日志记录阶段、分片进行中，并保留原值。列标题说明这是采集时状态，
 None 不推断为任务成功或未入队；未知枚举及缺失值单独显示。复用 bucket stats 原生
