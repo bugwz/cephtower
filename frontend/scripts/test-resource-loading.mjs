@@ -120,6 +120,7 @@ for (const [value, expected] of [[null, '未返回'], [undefined, '未返回'], 
 assert.equal(formatDetail({ pending: false }), '{\n  "pending": false\n}')
 for (const key of ['memory_request', 'container_id', 'container_image_id', 'container_image_digests', 'ip', 'ports', 'systemd_unit', 'created', 'started', 'last_deployed', 'last_configured', 'pending_daemon_config']) assert.ok(serviceSource.includes(`['${key}',`))
 assert.ok(serviceSource.includes('<summary>展开运行详情</summary>'))
+for (const key of ['rank', 'rank_generation']) assert.ok(serviceSource.includes(`['${key}',`))
 const serviceFn = serviceTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ServiceDaemons')
 assert.ok(serviceSource.includes('perf?.clusterId === clusterId && perf.service === name'))
 assert.ok(serviceSource.includes('daemon: String(row.daemon_name)'))

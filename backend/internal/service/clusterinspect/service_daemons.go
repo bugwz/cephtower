@@ -35,6 +35,16 @@ func (s *Service) ServiceDaemons(ctx context.Context, clusterID uint64, name str
 		if service, exists := row["service_name"]; exists && service != name {
 			return bad()
 		}
+		// Rank metadata is integer-valued and must not lose precision in JavaScript.
+		for _, key := range []string{"rank", "rank_generation"} {
+			if value, exists := row[key]; exists && value != nil {
+				number, ok := value.(json.Number)
+				if !ok || !regexp.MustCompile(`^-?(0|[1-9][0-9]*)$`).MatchString(number.String()) {
+					return bad()
+				}
+				row[key] = number.String()
+			}
+		}
 		// Keep exact byte counts when JavaScript receives the response.
 		for _, key := range []string{"memory_usage", "memory_request", "memory_limit"} {
 			if value, exists := row[key]; exists && value != nil {

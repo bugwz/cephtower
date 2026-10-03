@@ -11,6 +11,7 @@ const daemonDetailFields = [
   ['container_image_digests', '镜像摘要'], ['memory_request', '内存请求（字节）'],
   ['ip', 'IP 地址'], ['ports', '监听端口'], ['systemd_unit', 'Systemd 单元'],
   ['is_active', '活跃实例'], ['osdspec_affinity', 'OSD 规格关联'],
+  ['rank', '原生 Rank'], ['rank_generation', 'Rank 代次'],
   ['created', '创建时间'], ['started', '启动时间'],
   ['last_deployed', '最近部署'], ['last_configured', '最近配置'],
   ['pending_daemon_config', '待应用配置'], ['events', '事件'],
