@@ -33,7 +33,7 @@ export function HostDetailPage() {
   const decodedName = name
   const loader = useCallback(async () => {
     if (!selectedClusterId || !decodedName) {
-      return { host: null, daemons: [], devices: [], deviceInfo: [], smart: {} }
+      return { host: null, daemons: [], devices: [], deviceInfo: [], smart: {}, deviceInfoError: '', smartError: '' }
     }
     const [hostPayload, daemons, devices, deviceInfo, smart] = await Promise.all([
       getOptionalResource('/host', selectedClusterId, { host: decodedName }),
@@ -45,8 +45,8 @@ export function HostDetailPage() {
         const payload = await listResource('/devices', selectedClusterId)
         return payload.items.filter((device) => textValue(device.hostname ?? device.host, '') === decodedName)
       }),
-      getHostDeviceInfo(decodedName, selectedClusterId).catch(() => []),
-      getHostSMART(decodedName, selectedClusterId).catch(() => ({}))
+      getHostDeviceInfo(decodedName, selectedClusterId).then((value) => ({ value, error: '' })).catch((err) => ({ value: [] as ApiRecord[], error: err instanceof Error ? err.message : '设备信息读取失败' })),
+      getHostSMART(decodedName, selectedClusterId).then((value) => ({ value, error: '' })).catch((err) => ({ value: {} as ApiRecord, error: err instanceof Error ? err.message : 'SMART 信息读取失败' }))
     ])
     const hostRecord = hostPayload ? resourceToRecord(hostPayload.item) : { hostname: decodedName }
     const host = normalizeHostRow(hostRecord, daemons, devices)
@@ -57,8 +57,10 @@ export function HostDetailPage() {
         .filter((daemon) => textValue(daemon.hostname ?? daemon.host, '') === name)
         .map(normalizeDaemonRow),
       devices,
-      deviceInfo,
-      smart
+      deviceInfo: deviceInfo.value,
+      deviceInfoError: deviceInfo.error,
+      smart: smart.value,
+      smartError: smart.error
     }
   }, [decodedName, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
@@ -231,6 +233,8 @@ export function HostDetailPage() {
           devices={data?.devices ?? []}
           daemons={data?.daemons ?? []}
           smart={data?.smart ?? {}}
+          deviceInfoError={data?.deviceInfoError ?? ''}
+          smartError={data?.smartError ?? ''}
         />
       </Space>
 
@@ -268,7 +272,9 @@ function HostDetailTabs({
   deviceInfo,
   devices,
   daemons,
-  smart
+  smart,
+  deviceInfoError,
+  smartError
 }: {
   hostname: string
   address: string
@@ -277,6 +283,8 @@ function HostDetailTabs({
   devices: ApiRecord[]
   daemons: ApiRecord[]
   smart: ApiRecord
+  deviceInfoError: string
+  smartError: string
 }) {
   const deviceInfoRows = useMemo(() => deviceInfo.map(normalizeCephDeviceRow), [deviceInfo])
   const physicalDiskRows = useMemo(
@@ -287,6 +295,8 @@ function HostDetailTabs({
 
   return (
     <Card className="page-surface-card host-detail-tabs-card" styles={{ body: { paddingTop: 0 } }}>
+      {deviceInfoError && <Alert type="error" message={`设备信息读取失败：${deviceInfoError}`} description="物理磁盘仍可展示独立库存，但设备信息补充字段不完整；请刷新重试。" />}
+      {smartError && <Alert type="error" message={`SMART 读取失败：${smartError}`} description="当前无法判断设备健康，不代表没有设备或设备健康。请刷新重试。" />}
       <Tabs
         className="host-detail-tabs"
         defaultActiveKey="devices"
@@ -296,7 +306,7 @@ function HostDetailTabs({
           {
             key: 'devices',
             label: '设备信息',
-            children: <HostDeviceInfoTable devices={deviceInfoRows} />
+            children: deviceInfoError ? <Alert type="warning" message="设备信息不可用，不能根据空结果判断没有设备" /> : <HostDeviceInfoTable devices={deviceInfoRows} />
           },
           {
             key: 'physical-disks',
@@ -316,7 +326,7 @@ function HostDetailTabs({
           {
             key: 'health',
             label: '设备健康状态',
-            children: <HostDeviceHealthPanel devices={healthRows} />
+            children: smartError ? <Alert type="warning" message="SMART 信息不可用，健康状态未知" /> : <HostDeviceHealthPanel devices={healthRows} />
           }
         ]}
       />

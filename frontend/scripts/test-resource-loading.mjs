@@ -2,6 +2,28 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 
+const hostDetailSource = readFileSync(new URL('../src/pages/cluster/HostDetailPage.tsx', import.meta.url), 'utf8')
+const hostDetailTree = ts.createSourceFile('host.tsx', hostDetailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const hostDetailFn = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HostDetailPage')
+const hostLoader = hostDetailFn.body.statements.find((node) => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(hostDetailTree) === 'loader').declarationList.declarations[0].initializer.arguments[0]
+const hostLoaderCode = ts.transpileModule(`const load = ${hostLoader.getText(hostDetailTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const failed of ['none', 'device', 'smart', 'both']) {
+  const env = {
+    selectedClusterId: 3, decodedName: 'node1', getOptionalResource: async () => null, listDaemons: async () => [],
+    listHostDevices: async () => [{ name: 'disk1' }], listResource: async () => ({ items: [] }),
+    getHostDeviceInfo: async () => { if (['device', 'both'].includes(failed)) throw new Error('device unavailable'); return [] },
+    getHostSMART: async () => { if (['smart', 'both'].includes(failed)) throw new Error('smart unavailable'); return {} },
+    normalizeHostRow: (row) => row, textValue: (value) => value, resourceToRecord: (row) => row, normalizeDaemonRow: (row) => row,
+  }
+  const load = new Function(...Object.keys(env), `${hostLoaderCode}; return load`)(...Object.values(env))
+  const result = await load()
+  assert.equal(result.devices.length, 1)
+  assert.equal(result.deviceInfoError, ['device', 'both'].includes(failed) ? 'device unavailable' : '')
+  assert.equal(result.smartError, ['smart', 'both'].includes(failed) ? 'smart unavailable' : '')
+  assert.equal(result.host.hostname, 'node1')
+}
+console.log('Host diagnostic failures remain distinct from empty responses')
+
 const hardwareSource = readFileSync(new URL('../src/pages/cluster/HostHardware.tsx', import.meta.url), 'utf8')
 const hardwareTree = ts.createSourceFile('hardware.tsx', hardwareSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const hardwareFn = hardwareTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HardwareCategory')
