@@ -40,18 +40,20 @@ export function bucketSyncFlows(value: unknown): GroupFlows[] | undefined {
   return result
 }
 
-export function RgwBucketSyncFlows({ value }: { value: unknown }) {
+export function RgwBucketSyncFlows({ value, scope = 'bucket' }: { value: unknown; scope?: 'bucket' | 'zonegroup' }) {
+  const label = scope === 'zonegroup' ? 'Zonegroup' : '桶本地'
   const groups = bucketSyncFlows(value)
-  if (!groups) return <span>桶本地数据流不可用</span>
+  if (!groups) return <span>{label}数据流不可用</span>
   return <div>
-    <p>采集时的桶本地数据流配置；Zone 使用原生标识，不推断名称。是否实际复制仍取决于组状态、管道和上层策略，不代表运行状态或同步进度。</p>
-    {!groups.length && <p>无桶本地同步组（不代表不存在继承的复制策略）</p>}
+    <p>采集时的{label}数据流配置；Zone 使用原生标识，不推断名称。是否实际复制仍取决于组状态、管道和上层策略，不代表运行状态或同步进度。</p>
+    {scope === 'zonegroup' && <p>Zonegroup get 返回 Zone ID；不转换为默认 Zonegroup 的名称，不推断当前 period 已发布此配置。</p>}
+    {!groups.length && <p>{scope === 'zonegroup' ? '无 Zonegroup 同步组（不代表停止默认复制行为）' : '无桶本地同步组（不代表不存在继承的复制策略）'}</p>}
     {groups.map(group => <section key={group.id}>
       <h4>同步组 {exact(group.id)}</h4>
       {group.unavailable && <p>部分数据流格式不可用；以下仅展示可识别项，请检查原生策略。</p>}
       {group.extensions.length > 0 && <p>存在未识别的数据流字段：{group.extensions.map(exact).join(' / ')}；完整内容见原生策略。</p>}
       <Table size="small" rowKey="index" dataSource={group.rows} pagination={group.rows.length > 5 ? { pageSize: 5 } : false} scroll={{ x: 650 }}
-        locale={{ emptyText: group.unavailable || group.extensions.length ? '无可识别数据流（不推断为空配置）' : '此组无桶本地数据流' }}
+        locale={{ emptyText: group.unavailable || group.extensions.length ? '无可识别数据流（不推断为空配置）' : `此组无${label}数据流` }}
         columns={[
           { title: '类型', dataIndex: 'kind' }, { title: '数据流 ID', dataIndex: 'id' },
           { title: '对称 Zone 列表', dataIndex: 'zones' }, { title: '源 Zone', dataIndex: 'source' },

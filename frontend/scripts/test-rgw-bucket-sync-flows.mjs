@@ -37,6 +37,13 @@ for (const [value, pattern] of [[policy({}), /此组无桶本地/], [policy({ fu
 const many = { symmetrical: Array.from({ length: 6 }, (_, i) => ({ id: String(i), zones: [] })) }
 assert.equal(nodes(api.RgwBucketSyncFlows({ value: policy(many) })).find(node => node.type === 'Table').props.pagination.pageSize, 5)
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
+const zoneView = api.RgwBucketSyncFlows({ value: policy(flow), scope: 'zonegroup' })
+assert.equal(nodes(zoneView).find(node => node.type === 'Table').props.dataSource[0].zones, '" zone-a " / "<zone-b>"')
+assert.match(JSON.stringify(zoneView), /Zonegroup get 返回 Zone ID/)
+assert.doesNotMatch(JSON.stringify(zoneView), /桶本地/)
+assert.match(JSON.stringify(api.RgwBucketSyncFlows({ value: null, scope: 'zonegroup' })), /Zonegroup/)
+assert.match(nodes(api.RgwBucketSyncFlows({ value: policy({}), scope: 'zonegroup' })).find(node => node.type === 'Table').props.locale.emptyText, /无Zonegroup数据流/)
+assert.match(pages, /<RgwBucketSyncFlows value=\{value\} scope="zonegroup" \/>/)
 assert.match(pages, /<RgwBucketSyncFlows value=\{value\} \/>/)
 assert.match(pages, /JSON.stringify\(value, null, 2\)/)
 console.log('bucket native symmetrical and directional flow presentation checks passed')

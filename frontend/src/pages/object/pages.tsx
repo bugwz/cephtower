@@ -908,7 +908,7 @@ const definitions: Record<
       { key: 'default_placement', title: '默认放置目标' },
       { key: 'hostnames', title: '主机名' },
       { key: 'hostnames_s3website', title: '静态网站主机名' },
-      { key: 'sync_policy', title: '同步策略' },
+      { key: 'sync_policy', title: 'Zonegroup 同步策略（采集时）', ellipsis: false, render: (value) => <div>{rgwBucketSyncPolicy(value, 'zonegroup')}<details><summary>查看 Zonegroup 数据流</summary><RgwBucketSyncFlows value={value} scope="zonegroup" /></details><details><summary>查看 Zonegroup 管道</summary><RgwBucketSyncPipes value={value} scope="zonegroup" /></details>{value != null && <details><summary>查看 Zonegroup 原生策略</summary><pre>{JSON.stringify(value, null, 2)}</pre></details>}</div> },
       { key: 'enabled_features', title: '启用特性' },
       { key: 'resource_version', title: '版本' }
     ]
