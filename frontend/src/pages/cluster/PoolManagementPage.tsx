@@ -896,12 +896,13 @@ export function PoolManagementPage() {
             <Form.Item
               name="k"
               label={<HelpLabel label="数据块数 (k)" title="每个对象被拆分的数据块数量。" />}
-              dependencies={['m', 'l', 'plugin', 'crush_failure_domain', 'crush_num_failure_domains', 'crush_osds_per_failure_domain', 'crush_root', 'crush_device_class']}
+              dependencies={['m', 'l', 'c', 'plugin', 'crush_failure_domain', 'crush_num_failure_domains', 'crush_osds_per_failure_domain', 'crush_root', 'crush_device_class']}
               rules={[
                 { required: true, message: '请输入数据块数' },
                 { type: 'number', min: 2, message: '数据块数必须大于或等于 2' },
                 ecChunkRule(erasureCodeTopology),
-                lrcGroupingRule
+                lrcGroupingRule,
+                shecParameterRule
               ]}
             >
               <InputNumber min={2} precision={0} className="full-width-control" />
@@ -909,12 +910,13 @@ export function PoolManagementPage() {
             <Form.Item
               name="m"
               label={<HelpLabel label="编码块数 (m)" title="为每个对象计算并存储在不同 OSD 上的编码块数量，也表示可容忍同时故障的 OSD 数。" />}
-              dependencies={['k', 'l', 'plugin', 'crush_failure_domain', 'crush_num_failure_domains', 'crush_osds_per_failure_domain', 'crush_root', 'crush_device_class']}
+              dependencies={['k', 'l', 'c', 'plugin', 'crush_failure_domain', 'crush_num_failure_domains', 'crush_osds_per_failure_domain', 'crush_root', 'crush_device_class']}
               rules={[
                 { required: true, message: '请输入编码块数' },
                 { type: 'number', min: 1, message: '编码块数必须大于或等于 1' },
                 ecChunkRule(erasureCodeTopology),
-                lrcGroupingRule
+                lrcGroupingRule,
+                shecParameterRule
               ]}
             >
               <InputNumber min={1} precision={0} className="full-width-control" />
@@ -981,7 +983,7 @@ export function PoolManagementPage() {
               </>
             ) : null}
             {erasureCodePlugin === 'shec' ? (
-              <Form.Item name="c" label={<HelpLabel label="耐久性估算值 (c)" title="SHEC 编码使用的耐久性估算值，不能大于编码块数 m。" />} dependencies={['m']} rules={[shecDurabilityRule]}>
+              <Form.Item name="c" label={<HelpLabel label="耐久性估算值 (c)" title="SHEC 要求 1≤c≤m≤k、k≤12 且 k+m≤20。" />} dependencies={['k', 'm', 'plugin']} rules={[shecParameterRule]}>
                 <InputNumber min={1} precision={0} className="full-width-control" />
               </Form.Item>
             ) : null}
@@ -1414,16 +1416,20 @@ function lrcGroupingRule({ getFieldValue }: { getFieldValue: (name: keyof Erasur
   }
 }
 
-const shecDurabilityRule = ({ getFieldValue }: { getFieldValue: (name: keyof ErasureCodeProfileFormValues) => unknown }) => ({
-  validator(_: unknown, value: unknown) {
-    const c = numberValue(value) ?? 0
-    const m = numberValue(getFieldValue('m')) ?? 0
-    if (c < 1 || c > m) {
-      return Promise.reject(new Error('耐久性估算值 c 必须在 1 到编码块数 m 之间'))
+function shecParameterRule({ getFieldValue }: { getFieldValue: (name: keyof ErasureCodeProfileFormValues) => unknown }) {
+  return {
+    validator() {
+      if (getFieldValue('plugin') !== 'shec') return Promise.resolve()
+      const k = getFieldValue('k')
+      const m = getFieldValue('m')
+      const c = getFieldValue('c')
+      if (typeof k !== 'number' || typeof m !== 'number' || typeof c !== 'number' || ![k, m, c].every(Number.isSafeInteger) || c < 1 || m < c || k < m || k > 12 || k + m > 20) {
+        return Promise.reject(new Error('SHEC 要求整数参数满足 1≤c≤m≤k、k≤12 且 k+m≤20'))
+      }
+      return Promise.resolve()
     }
-    return Promise.resolve()
   }
-})
+}
 
 const clayHelperChunksRule = ({ getFieldValue }: { getFieldValue: (name: keyof ErasureCodeProfileFormValues) => unknown }) => ({
   validator(_: unknown, value: unknown) {

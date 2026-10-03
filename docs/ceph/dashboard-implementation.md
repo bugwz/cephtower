@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+SHEC 创建补齐参考 shecDataValidation 和原生 ErasureCodeShec 参数限制：
+整数参数必须满足 1≤c≤m≤k、k≤12、k+m≤20，k/m/c 字段联动验证，其他插件不套用。
+沿用 profile set 命令写入，非法组合在表单提交前提示。离线测试覆盖上下界、缺失值、
+非整数和插件切换；未做真实集群或浏览器验证。
+
 LRC 创建表单按参考 lrcDataValidation/lrcLocalityValidation 及原生
 ErasureCodeLrc 的 k/m/l 分组逻辑校验整除关系，k、m、l 修改时联动验证；无效整数
 及无法分组的组合不会进入表单提交。l 说明改为不含额外局部校验块的分组大小。
