@@ -50,6 +50,8 @@ import { rgwBucketConfigurationOptions, rgwBucketConfigurationInput, rgwBucketCo
 import { rgwBucketEncryptionSummary } from './rgwBucketEncryptionSummary'
 import { RgwBucketCorsRules } from './RgwBucketCorsRules'
 import { RgwBucketLifecycleRules } from './RgwBucketLifecycleRules'
+import { RgwBucketLifecycleEditor } from './RgwBucketLifecycleEditor'
+import { lifecycleFormInitial, lifecycleFormBlocked, lifecycleFormInput, lifecycleFormConfirmation } from './rgwBucketLifecycleForm'
 import { RgwBucketCorsEditor } from './RgwBucketCorsEditor'
 import { corsFormInitial, corsFormBlocked, corsFormInput, corsFormConfirmation } from './rgwBucketCorsForm'
 import { bucketDeleteInput, bucketDeleteBlocked, bucketDeleteConfirmation } from './rgwBucketDelete'
@@ -906,6 +908,19 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...rgwBucketConfigurationDeleteInput(row) })
     },
     extraActions: [{
+      title: '编辑生命周期规则',
+      buttonLabel: '编辑生命周期',
+      path: '/rgw/bucket/policy', method: 'PATCH',
+      successMessage: '生命周期已提交并回读核验（不代表对象处理完成）',
+      visibleWhen: (row) => row.kind === 'lifecycle',
+      disabledWhen: lifecycleFormBlocked, initialValues: lifecycleFormInitial, confirmation: lifecycleFormConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'kind', label: '配置类型（不可更改）', readOnly: true },
+        { name: 'lifecycle_draft', label: '完整生命周期规则', required: true, renderControl: (disabled) => <RgwBucketLifecycleEditor disabled={disabled} /> }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...lifecycleFormInput(values, row) })
+    }, {
       title: '编辑 CORS 规则',
       buttonLabel: '编辑 CORS',
       path: '/rgw/bucket/policy', method: 'PATCH',

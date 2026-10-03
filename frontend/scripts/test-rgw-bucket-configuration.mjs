@@ -4,7 +4,9 @@ import ts from 'typescript'
 import './test-external-form-confirmation.mjs'
 import './test-rgw-bucket-tag-form.mjs'
 import './test-rgw-bucket-lifecycle.mjs'
+import './test-rgw-bucket-lifecycle-form.mjs'
 const helpers = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketLifecycleForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketCorsForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 const cors = {}
 new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwBucketCorsRules.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText)(cors, (name) => name === 'antd' ? { Table: 'Table' } : { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) })
@@ -63,6 +65,14 @@ function visit(node) {
 }
 visit(source)
 assert.ok(definition)
+const lifecycleAction = definition.extraActions.find(action => action.title === '编辑生命周期规则')
+const lifecycleRow = { bucket_id: 'AGJ1Y2tldA', kind: 'lifecycle', configured: false, lifecycle_rules: [] }
+assert.ok(lifecycleAction.visibleWhen(lifecycleRow))
+assert.ok(!lifecycleAction.visibleWhen({ kind: 'cors' }))
+assert.equal(lifecycleAction.disabledWhen(lifecycleRow), undefined)
+assert.deepEqual(lifecycleAction.initialValues(lifecycleRow).lifecycle_draft, { rules: [] })
+assert.equal(typeof lifecycleAction.fields.find(field => field.name === 'lifecycle_draft').renderControl, 'function')
+assert.throws(() => lifecycleAction.buildBody(lifecycleAction.initialValues(lifecycleRow), 7, lifecycleRow))
 const corsAction = definition.extraActions.find(action => action.title === '编辑 CORS 规则')
 const corsRow = { bucket_id: 'AGJ1Y2tldA', kind: 'cors', configured: true, cors_rules: [corsRule] }
 const corsValues = corsAction.initialValues(corsRow)

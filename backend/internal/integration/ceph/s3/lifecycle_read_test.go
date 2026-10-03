@@ -1,6 +1,23 @@
 package s3
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
+
+func TestLifecycleEditorDocument(t *testing.T) {
+	body, err := os.ReadFile("testdata/lifecycle-editor.xml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rules, err := BucketLifecycle(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rules) != 1 || rules[0].ID != "rule<&\r" || rules[0].Status != "Disabled" || len(rules[0].Actions) != 5 || rules[0].Actions[3].Fields["Days"] != "0" {
+		t.Fatalf("editor document lost data: %+v", rules)
+	}
+}
 
 func TestBucketLifecycleRead(t *testing.T) {
 	body := []byte(`<LifecycleConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/"><Rule><ID>a&amp;b</ID><Status>Enabled</Status><Filter><And><Prefix> x/ </Prefix><Tag><Key>a</Key><Value>1</Value></Tag><Tag><Key>a</Key><Value>2</Value></Tag><ObjectSizeGreaterThan>9007199254740993</ObjectSizeGreaterThan><ArchiveZone/></And></Filter><Expiration><Days>90</Days></Expiration><NoncurrentVersionExpiration><NoncurrentDays>30</NoncurrentDays><NewerNoncurrentVersions>0</NewerNoncurrentVersions></NoncurrentVersionExpiration><AbortIncompleteMultipartUpload><DaysAfterInitiation>7</DaysAfterInitiation></AbortIncompleteMultipartUpload><Transition><Days>0</Days><StorageClass>COLD</StorageClass></Transition><Transition><Days>60</Days><StorageClass>ARCHIVE</StorageClass></Transition><NoncurrentVersionTransition><NoncurrentDays>1</NoncurrentDays><StorageClass>COLD</StorageClass></NoncurrentVersionTransition></Rule><Rule><Status>Disabled</Status><Prefix/><Expiration><ExpiredObjectDeleteMarker>true</ExpiredObjectDeleteMarker></Expiration></Rule></LifecycleConfiguration>`)
