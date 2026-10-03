@@ -33,6 +33,25 @@ for (const value of [undefined, null, '']) assert.equal(timeExports.formatDateTi
 assert.equal(timeExports.formatDateTime('2026-10-03 01:02:03.000000'), '2026-10-03 01:02:03.000000')
 assert.match(timeExports.formatDateTime('2026-10-03T01:02:03Z'), /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
 console.log('Device prediction creation timestamp display checks passed')
+const inventoryNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'normalizeInventoryDeviceRow')
+const inventoryCode = ts.transpileModule(inventoryNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const normalizeInventory = new Function('isRecord', 'stringArray', 'textValue', 'numberValue', 'formatBytes', `${inventoryCode}; return normalizeInventoryDeviceRow`)(
+  (v) => v !== null && typeof v === 'object' && !Array.isArray(v),
+  (v) => Array.isArray(v) ? v.filter((item) => typeof item === 'string') : [],
+  (v, fallback) => v ?? fallback, (v) => typeof v === 'number' ? v : undefined, String)
+for (const rotational of [undefined, null, '', 'unknown', 2]) {
+  const row = normalizeInventory({ rotational }, [])
+  assert.equal(row.type_display, '未知')
+  assert.equal(row.availability_display, 'unknown')
+}
+for (const rotational of [true, '1', 1]) assert.equal(normalizeInventory({ sys_api: { rotational } }, []).type_display, 'HDD')
+for (const rotational of [false, '0', 0]) assert.equal(normalizeInventory({ rotational }, []).type_display, 'SSD')
+assert.equal(normalizeInventory({ rotational: false, sys_api: { rotational: '1' } }, []).type_display, 'SSD')
+assert.equal(normalizeInventory({ device_type: 'nvme' }, []).type_display, 'NVME')
+assert.equal(normalizeInventory({ available: false }, []).availability_display, 'unavailable')
+assert.equal(normalizeInventory({ available: true }, []).availability_display, 'available')
+assert.equal(normalizeInventory({ available: 'false' }, []).availability_display, 'unknown')
+console.log('Disk inventory distinguishes missing type and availability from explicit values')
 const smartNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'normalizeSMARTData')
 const smartCode = ts.transpileModule(smartNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const smartNumberNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'smartMetricNumber')

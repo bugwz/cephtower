@@ -559,8 +559,10 @@ function normalizeInventoryDeviceRow(row: ApiRecord, deviceInfo: ApiRecord[]): A
       osdIDs.push(daemon)
     }
   })
-  const type = textValue(row.device_type ?? row.human_readable_type ?? row.type, '')
-    || (row.rotational === true || sysAPI.rotational === '1' ? 'HDD' : 'SSD')
+  const rotational = row.rotational ?? sysAPI.rotational
+  const inferredType = rotational === true || rotational === '1' || rotational === 1 ? 'HDD'
+    : rotational === false || rotational === '0' || rotational === 0 ? 'SSD' : '未知'
+  const type = textValue(row.device_type ?? row.human_readable_type ?? row.type, '') || inferredType
   const size = numberValue(row.size_bytes ?? row.size ?? sysAPI.size)
   return {
     ...row,
@@ -568,7 +570,7 @@ function normalizeInventoryDeviceRow(row: ApiRecord, deviceInfo: ApiRecord[]): A
     path_display: path,
     name_display: path,
     type_display: type.toUpperCase(),
-    availability_display: row.available === true ? 'available' : 'unavailable',
+    availability_display: row.available === true ? 'available' : row.available === false ? 'unavailable' : 'unknown',
     rejected_reasons_display: stringArray(row.rejected_reasons),
     vendor_display: textValue(row.vendor ?? sysAPI.vendor, ''),
     model_display: textValue(row.model ?? sysAPI.model, ''),
@@ -628,6 +630,9 @@ function renderDeviceHealth(value: unknown) {
 }
 
 function renderDeviceAvailability(row: ApiRecord) {
+  if (row.availability_display === 'unknown') {
+    return <Tag>未知</Tag>
+  }
   if (row.availability_display === 'available') {
     return <Tag color="success">可用</Tag>
   }
