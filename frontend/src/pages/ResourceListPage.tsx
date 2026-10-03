@@ -540,6 +540,7 @@ function refreshKinds(definition: ResourceListPageDefinition) {
     '/rgw/buckets': ['rgw_bucket'],
     '/rgw/realms': ['rgw_realm'],
     '/rgw/roles': ['rgw_role'],
+    '/rgw/topics': ['rgw_topic'],
     '/rgw/users': ['rgw_user'],
     '/rgw/zonegroups': ['rgw_zonegroup', 'rgw_zone'],
     '/rgw/zones': ['rgw_zone'],

@@ -45,6 +45,7 @@ export type PageKey =
   | 'rgwUsers'
   | 'rgwAccounts'
   | 'rgwRoles'
+  | 'rgwTopics'
   | 'bucketManagement'
   | 'bucketPolicy'
   | 'gatewayManagement'
@@ -245,6 +246,7 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
     icon: 'object',
     children: [
       { key: 'rgwOverview', label: 'RGW 总览', path: '/object/rgw-overview', icon: 'object', permission: 'storage' },
+      { key: 'rgwTopics', label: '通知目标', path: '/object/topics', icon: 'object', permission: 'storage' },
       {
         key: 'rgw-user-section',
         label: '用户管理',

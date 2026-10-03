@@ -7,6 +7,7 @@ import './test-rgw-bucket-lifecycle.mjs'
 import './test-rgw-bucket-lifecycle-form.mjs'
 import './test-rgw-bucket-acl.mjs'
 import './test-rgw-bucket-replication.mjs'
+import './test-rgw-topics.mjs'
 const helpers = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketReplicationForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketAclForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)

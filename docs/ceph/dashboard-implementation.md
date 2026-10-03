@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **RGW 通知目标 Topic 列表与详情**：对照 `rgw-topic-list.component.ts`、`RgwTopicmanagement.list_topics` 及原生 `rgw_pubsub_topic::dump`，使用 `radosgw-admin metadata list topic --format json`，逐项执行 `metadata get topic:<key> --format json`。新增 `rgw_topic` 资源采集/刷新、`GET /rgw/topics` 和对象存储“通知目标”导航，展示名称、Owner、ARN、脱敏端点、持久化、TTL、重试、队列、Opaque Data 和 Policy。
+  - 元数据键完整编码为资源身份，区分全局租户、命名租户及 Account 下的同名 Topic；校验返回 key 与请求一致、名称与键一致。空列表与缺失/重复/非法列表、逐项读取失败分开处理，失败标记资源不可用，不将旧缓存当作成功空结果清除。沿用现有资源分页、集群隔离、能力检查与陈旧状态展示。
+  - 在生成 Observation 前屏蔽全部 `push_endpoint_args`、未知字段，并移除 URL 用户信息、查询参数及片段；非法地址不回显原文。只返回 `stored_secret` 布尔标记，不返回其凭据内容。TTL/重试保留原生字符串（包括 0、默认值和大整数），缺失布尔值不当作 false；Policy/Opaque Data 作为文本渲染。
+  - 补充原生命令、身份隔离、字段脱敏、故障保留缓存、采集到 API 链路和前端绑定测试。页面仅表达采集时配置，不推断投递成功；Topic 创建/编辑/删除及桶通知规则仍需后续实现，不以只读列表替代这些写操作。没有真实集群或浏览器视觉验证。
+
 - **Dashboard 桶级 S3 复制规则写入**：新增 `POST /rgw/bucket/replication` 和复制配置页“设置同名桶复制”入口，对照 `rgw_client.py::set_bucket_replication` 写入固定 `dashboard_admin_pipe`、Enabled、优先级 0、全部对象/Zone、同名目标桶的规则。使用已有签名 S3 链路，不伪造 `radosgw-admin` 的 S3 配置接口；整体替换 S3 管理的复制规则，保留其他本地同步组。
   - 原生 `rgw_rest_s3.cc::ReplicationConfiguration::Rule::to_sync_policy_pipe` 从认证身份推导目标租户，忽略目标 ARN 的 account 字段；因此写前使用签名 ListBuckets 的 Owner UID 校验凭据租户与目标桶一致，并拒绝 Session Token。Account/IAM 所有者不受该 Ceph 实现支持，仍由原生拒绝。需要额外的 ListBuckets 权限，读取超限或身份无法确认时不写入。
   - 写前比较用户所见完整原文快照，处理原生空规则及明确未配置响应；写后校验固定规则、优先级、状态及带租户 ARN，同时考虑原生 Role 丢弃、空 Filter 省略的归一化行为。失败不自动重试或回滚；快照校验不是原子 CAS，仍需避免外部并发写入。

@@ -1,4 +1,5 @@
 import type { ApiRecord } from '../../api/client'
+import { RgwTopicDetails, topicText, topicBoolean, topicEndpoint } from './RgwTopicDetails'
 import { bucketReplicationFormBlocked, bucketReplicationFormInitial, bucketReplicationFormInput, bucketReplicationFormConfirmation } from './rgwBucketReplicationForm'
 import { useClusterContext } from '../../state/ClusterContext'
 import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
@@ -106,6 +107,10 @@ export function RgwRolesPage() {
   return <ResourceListPage definition={definitions.rgwRoles} />
 }
 
+export function RgwTopicsPage() {
+  return <ResourceListPage definition={definitions.rgwTopics} />
+}
+
 export function BucketManagementPage() {
   return <ResourceListPage definition={definitions.bucketManagement} />
 }
@@ -154,6 +159,7 @@ const definitions: Record<
   | 'rgwUsers'
   | 'rgwAccounts'
   | 'rgwRoles'
+  | 'rgwTopics'
   | 'bucketManagement'
   | 'gatewayManagement'
   | 'multisite'
@@ -516,6 +522,22 @@ const definitions: Record<
       { key: 'max_buckets', title: 'Bucket 上限', render: rgwBucketLimit },
       { key: 'max_access_keys', title: '每用户访问密钥上限', render: rgwAccountLimit },
       { key: 'resource_version', title: '版本' }
+    ]
+  },
+  rgwTopics: {
+    title: 'RGW 通知目标（Topics）', path: '/rgw/topics', requiredCapabilities: ['rgw_admin'],
+    rowKeyCandidates: ['natural_key'],
+    detailContent: (row) => <RgwTopicDetails row={row} />,
+    columns: [
+      { key: 'name', title: '名称', render: topicText },
+      { key: 'owner', title: 'Owner', render: topicText },
+      { key: 'scope', title: '租户 / Account', render: (value) => value === '' ? '全局租户' : topicText(value) },
+      { key: 'arn', title: 'ARN', render: topicText },
+      { key: 'push_endpoint', title: '推送端点（已脱敏）', render: (_, row) => topicEndpoint(row) },
+      { key: 'persistent', title: '持久化', render: topicBoolean },
+      { key: 'time_to_live', title: 'TTL（原生值）', render: topicText },
+      { key: 'max_retries', title: '重试次数（原生值）', render: topicText },
+      { key: 'retry_sleep_duration', title: '重试等待（原生值）', render: topicText }
     ]
   },
   rgwRoles: {

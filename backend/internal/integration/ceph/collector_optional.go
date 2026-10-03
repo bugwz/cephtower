@@ -543,6 +543,7 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 		}
 	}
 	attachZoneMemberships(rows)
+	rows = append(rows, p.collectRGWTopics(ctx, access, now)...)
 	return rows
 }
 

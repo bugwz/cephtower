@@ -71,6 +71,7 @@ import {
   RgwOverviewPage,
   RgwPeriodPage,
   RgwRolesPage,
+  RgwTopicsPage,
   RgwUsersPage,
   RgwZonegroupsPage,
   RgwZonesPage
@@ -138,6 +139,7 @@ export const pageComponents: Record<PageKey, ComponentType> = {
   rgwUsers: RgwUsersPage,
   rgwAccounts: RgwAccountsPage,
   rgwRoles: RgwRolesPage,
+  rgwTopics: RgwTopicsPage,
   bucketManagement: BucketManagementPage,
   bucketPolicy: BucketPolicyPage,
   gatewayManagement: GatewayManagementPage,

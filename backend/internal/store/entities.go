@@ -41,6 +41,7 @@ var entityKinds = []string{
 	"rgw_realm",
 	"rgw_role",
 	"rgw_status",
+	"rgw_topic",
 	"rgw_user",
 	"rgw_zone",
 	"rgw_zonegroup",

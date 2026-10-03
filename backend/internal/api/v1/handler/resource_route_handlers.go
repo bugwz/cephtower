@@ -637,6 +637,10 @@ func (h *Handler) ListRGWRoles(w http.ResponseWriter, r *http.Request) {
 	h.ReadResource("rgw_role", false)(w, r)
 }
 
+func (h *Handler) ListRGWTopics(w http.ResponseWriter, r *http.Request) {
+	h.ReadResource("rgw_topic", false)(w, r)
+}
+
 func (h *Handler) CreateRGWRole(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_role", "rgw_role.create", "medium")(w, r)
 }
