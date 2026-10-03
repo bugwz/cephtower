@@ -54,6 +54,7 @@ import { rgwLifecycleProgress } from './rgwLifecycleProgress'
 import { rgwBucketSyncPolicy } from './rgwBucketSyncPolicy'
 import { bucketSyncGroupBlocked, bucketSyncGroupInitial, bucketSyncGroupInput, bucketSyncGroupConfirmation } from './rgwBucketSyncGroupForm'
 import { bucketSyncGroupCreateBlocked, bucketSyncGroupCreateInitial, bucketSyncGroupCreateInput, bucketSyncGroupCreateConfirmation } from './rgwBucketSyncGroupForm'
+import { bucketSyncGroupDeleteInput, bucketSyncGroupDeleteConfirmation } from './rgwBucketSyncGroupForm'
 import { rgwBucketConfigurationReadOptions } from './rgwBucketConfiguration'
 import { rgwBucketObjectLockSummary } from './rgwBucketObjectLockSummary'
 import { RgwBucketAcl } from './RgwBucketAcl'
@@ -615,6 +616,16 @@ const definitions: Record<
         { name: 'confirm_create', label: '创建范围确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '我确认仅创建桶本地空组，不会建立完整复制链路' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketSyncGroupCreateInput(values, row) })
+    }, {
+      title: '删除桶同步组', path: '/rgw/bucket/sync/group', method: 'DELETE',
+      successMessage: '桶同步组删除已回读核验',
+      disabledWhen: bucketSyncGroupBlocked, initialValues: bucketSyncGroupInitial, confirmation: bucketSyncGroupDeleteConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'group_id', label: '要删除的完整同步组 ID', required: true },
+        { name: 'confirm_delete', label: '删除范围确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '我确认删除整个组及其全部数据流和管道，已备份策略' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketSyncGroupDeleteInput(values, row) })
     }, {
       title: '修改桶同步组状态', path: '/rgw/bucket/sync/group', method: 'PATCH',
       successMessage: '桶同步组状态已回读核验（不代表同步完成）',

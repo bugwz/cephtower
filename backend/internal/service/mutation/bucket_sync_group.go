@@ -38,7 +38,7 @@ func bucketSyncGroupCommand(action string, p map[string]any, rgw func([]string, 
 		return command{}, invalid("invalid group_id")
 	}
 	status := syncGroupString(p, "status")
-	if status != "enabled" && status != "allowed" && status != "forbidden" {
+	if action != "rgw_bucket.sync_group_delete" && status != "enabled" && status != "allowed" && status != "forbidden" {
 		return command{}, invalid("invalid sync group status")
 	}
 	if action == "rgw_bucket.sync_group" && syncGroupString(p, "expected_status") == "" {
@@ -50,6 +50,12 @@ func bucketSyncGroupCommand(action string, p map[string]any, rgw func([]string, 
 		verb = "create"
 	}
 	args := append([]string{"sync", "group", verb, "--group-id", group, "--status", status}, target...)
+	if action == "rgw_bucket.sync_group_delete" {
+		if syncGroupString(p, "expected_group") == "" {
+			return command{}, invalid("expected_group is required")
+		}
+		args = append([]string{"sync", "group", "remove", "--group-id", group}, target...)
+	}
 	return rgw(args, append([]string{"sync", "policy", "get"}, target...)), nil
 }
 
@@ -111,10 +117,18 @@ func (s *Service) executeBucketSyncGroup(ctx context.Context, access executor.Cl
 		}
 		group = map[string]any{"id": id, "data_flow": map[string]any{}, "pipes": []any{}}
 		groups[id] = group
+	} else if request.Action == "rgw_bucket.sync_group_delete" {
+		_, expected, valid := bucketSyncPolicyDocument([]byte(`{"groups":[` + syncGroupString(request.Parameters, "expected_group") + `]}`))
+		if !valid || len(expected) != 1 || group == nil || !reflect.DeepEqual(group, expected[id]) {
+			return fail("pre_check_failed", "sync group missing or changed; refresh before deleting")
+		}
+		delete(groups, id)
 	} else if group == nil || group["status"] != syncGroupString(request.Parameters, "expected_status") {
 		return fail("pre_check_failed", "sync group missing or status changed; refresh before retrying")
 	}
-	group["status"] = syncGroupString(request.Parameters, "status")
+	if request.Action != "rgw_bucket.sync_group_delete" {
+		group["status"] = syncGroupString(request.Parameters, "status")
+	}
 	_, err = s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Mutating: true, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput})
 	if err != nil {
 		return fail("command_failed", "sync group write outcome is uncertain; refresh before retrying")

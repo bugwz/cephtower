@@ -16,8 +16,12 @@ console.log('bucket local sync policy summary checks passed')
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketSyncGroupForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(api)
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-let action, createAction
+let action, createAction, deleteAction
 function visit(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '删除桶同步组')) {
+    const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+    deleteAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
+  }
   if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '修改桶同步组状态')) {
     const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
     action = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
@@ -63,3 +67,12 @@ for (const status of ['enabled', 'allowed', 'forbidden']) {
   for (const change of [{ group_id: group.id }, { group_id:'' }, { group_id:'-bad' }, { group_id:'a\nb' }, { group_id:'\ud800' }, { group_id:'中'.repeat(171) }, { bucket_id:'other' }, { status:'unknown' }, { confirm_create:true }]) assert.throws(() => createAction.buildBody({ ...values, ...change }, 7, row))
 }
 console.log('bucket sync group creation form checks passed')
+assert.equal(deleteAction.method, 'DELETE')
+assert.equal(deleteAction.path, '/rgw/bucket/sync/group')
+assert.ok(deleteAction.disabledWhen(emptyRow))
+assert.ok(deleteAction.disabledWhen({ ...row, stale: true }))
+const deletion = { ...deleteAction.initialValues(row), group_id: group.id, confirm_delete: 'acknowledged' }
+assert.deepEqual(deleteAction.buildBody(deletion, 7, row), { cluster_id: 7, bucket_id: row.natural_key, group_id: group.id, expected_group: JSON.stringify(group) })
+assert.match(deleteAction.confirmation(deletion, row), /全部数据流、管道.*forbidden.*不自动回滚/)
+for (const change of [{ bucket_id: 'other' }, { group_id: 'other' }, { confirm_delete: true }]) assert.throws(() => deleteAction.buildBody({ ...deletion, ...change }, 7, row))
+console.log('bucket sync group deletion form checks passed')

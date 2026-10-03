@@ -28,6 +28,19 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：补齐桶本地同步组删除。追溯参考同步策略页面的 removeSyncPolicyGroup、
+  Dashboard remove_sync_policy_group 与原生 SYNC_GROUP_REMOVE，新增高风险
+  DELETE /rgw/bucket/sync/group → 操作队列 → sync policy get / sync group remove /
+  sync policy get；显式传桶和租户，复用桶锁，不依赖 S3 端点。
+  前端要求准确组 ID 与删除确认，提交完整 expected_group 快照；后端仅在快照与当前组
+  完全一致时删除，写后要求目标组消失且其余完整策略未变。精确 JSON 数字比较使大整数
+  被前端舍入时安全拒绝，而非误删。删除包含全部组内数据流、管道，不删除对象副本；
+  删除 forbidden 组可能解除限制，因此不能宣称所有复制停止。
+  不修改 Zonegroup 或提交 period。原生无 CAS，仍须避免外部并发；不自动重试或回滚。
+  回归覆盖命名/全局租户、最后一组、缺失/变化快照、大整数、读写失败、其他组变化、
+  高风险队列与前端动作绑定。make test-backend（含 OpenAPI 同步检查）和
+  make test-frontend（含 TypeScript/Vite 构建）通过；无真实集群或浏览器视觉验证。
+
 - 2026-10-04：补齐桶本地同步组创建。依据参考 Dashboard create_sync_policy_group
   与原生 SYNC_GROUP_CREATE，实现 POST /rgw/bucket/sync/group → 高风险操作队列 →
   sync policy get / sync group create / sync policy get，复用桶资源锁及 rgw_admin 能力门控。

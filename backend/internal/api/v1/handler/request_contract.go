@@ -326,6 +326,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"rgw_bucket.acl"}, true, map[string]JSONField{"bucket_id": stringField(true), "acl": stringField(true, "private", "public-read", "public-read-write", "authenticated-read")})
 	add([]string{"rgw_bucket.sync_group"}, true, map[string]JSONField{"bucket_id": stringField(true), "group_id": stringField(true), "expected_status": stringField(true), "status": stringField(true, "enabled", "allowed", "forbidden")})
 	add([]string{"rgw_bucket.sync_group_create"}, true, map[string]JSONField{"bucket_id": stringField(true), "group_id": stringField(true), "status": stringField(true, "enabled", "allowed", "forbidden")})
+	add([]string{"rgw_bucket.sync_group_delete"}, true, map[string]JSONField{"bucket_id": stringField(true), "group_id": stringField(true), "expected_group": stringField(true)})
 	add([]string{"rgw_bucket_policy.update"}, true, map[string]JSONField{"kind": stringField(true, "policy", "cors", "lifecycle", "encryption", "tagging", "object-lock"), "document": stringField(true)})
 	add([]string{"rgw_bucket_policy.delete"}, true, map[string]JSONField{"kind": stringField(true, "policy", "cors", "lifecycle", "encryption", "tagging", "replication"), "bucket_id": stringField(true)})
 	portal := objectArrayField(false, map[string]JSONField{"host": stringField(true), "ip": stringField(true)})

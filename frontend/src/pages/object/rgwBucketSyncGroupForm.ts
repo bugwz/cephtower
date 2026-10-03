@@ -30,6 +30,19 @@ export function bucketSyncGroupConfirmation(values: Record<string, unknown>, row
   return `确认修改 Bucket ID ${input.bucket_id} 的同步组 ${JSON.stringify(input.group_id)}：${input.expected_status} → ${input.status}？enabled 启用、allowed 仅允许但不启用、forbidden 禁止；可能改变后续复制行为。不会新建数据流或管道、不修改 Zonegroup 策略或提交 period。最终同步效果仍取决于上层策略和拓扑；已有副本不会删除。请备份策略，并避免外部并发修改；核验失败不代表未生效，操作不会自动回滚。`
 }
 
+export function bucketSyncGroupDeleteInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const available = groups(row)
+  if (values.bucket_id !== row!.natural_key) throw new Error('Bucket ID 不可更改')
+  const group = available.find(group => group.id === values.group_id)
+  if (!group) throw new Error('请输入当前策略中准确的同步组 ID')
+  if (values.confirm_delete !== 'acknowledged') throw new Error('请确认删除整个组及其数据流和管道')
+  return { bucket_id: row!.natural_key as string, group_id: group.id, expected_group: JSON.stringify(group) }
+}
+export function bucketSyncGroupDeleteConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const input = bucketSyncGroupDeleteInput(values, row)
+  return `确认删除 Bucket ID ${input.bucket_id} 的同步组 ${JSON.stringify(input.group_id)}？整个组及其全部数据流、管道将被移除，可能改变复制行为（包括移除 forbidden 限制）；不删除已有对象副本，不保证所有复制停止。不修改 Zonegroup 或提交 period。请先备份策略并避免外部并发修改，核验失败不代表未生效，不自动回滚。`
+}
+
 export function bucketSyncGroupCreateBlocked(row: Record<string, unknown>) {
   try { groups(row, true); return undefined } catch (error) { return (error as Error).message }
 }
