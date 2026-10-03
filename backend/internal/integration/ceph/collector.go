@@ -361,6 +361,7 @@ type hostFacts struct {
 }
 
 type daemonWire struct {
+	cephdomain.DaemonRuntime
 	DaemonName         string  `json:"daemon_name"`
 	DaemonType         string  `json:"daemon_type"`
 	Hostname           *string `json:"hostname"`
@@ -501,6 +502,7 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 			return nil, fmt.Errorf("parse collect.daemon response: daemon_name and daemon_type are required")
 		}
 		payload := cephdomain.Daemon{
+			DaemonRuntime:  wire.DaemonRuntime,
 			Name:           wire.DaemonName,
 			Type:           wire.DaemonType,
 			Hostname:       wire.Hostname,

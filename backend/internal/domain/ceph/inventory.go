@@ -30,6 +30,7 @@ type ServiceInstance struct {
 }
 
 type Daemon struct {
+	DaemonRuntime
 	Name           string  `json:"name"`
 	Type           string  `json:"type"`
 	Hostname       *string `json:"hostname"`
@@ -39,6 +40,22 @@ type Daemon struct {
 	CPUPercentage  *string `json:"cpu_percentage,omitempty"`
 	MemoryUsage    *uint64 `json:"memory_usage,omitempty"`
 	LastRefresh    *string `json:"last_refresh,omitempty"`
+}
+type DaemonRuntime struct {
+	DaemonID              *string  `json:"daemon_id,omitempty"`
+	ContainerID           *string  `json:"container_id,omitempty"`
+	ContainerImageID      *string  `json:"container_image_id,omitempty"`
+	ContainerImageDigests []string `json:"container_image_digests,omitempty"`
+	IP                    *string  `json:"ip,omitempty"`
+	Ports                 []int    `json:"ports,omitempty"`
+	SystemdUnit           *string  `json:"systemd_unit,omitempty"`
+	IsActive              *bool    `json:"is_active,omitempty"`
+	OSDSpecAffinity       *string  `json:"osdspec_affinity,omitempty"`
+	Created               *string  `json:"created,omitempty"`
+	Started               *string  `json:"started,omitempty"`
+	LastDeployed          *string  `json:"last_deployed,omitempty"`
+	LastConfigured        *string  `json:"last_configured,omitempty"`
+	Events                []string `json:"events,omitempty"`
 }
 type Service struct {
 	Networks           []string `json:"networks"`

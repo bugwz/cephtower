@@ -10,6 +10,7 @@ import { DataTable } from '../../components/DataTable'
 import { HostHardware } from './HostHardware'
 import { SMARTDetails } from './SMARTDetails'
 import { DaemonPerf } from './DaemonPerf'
+import { DaemonRuntimeDetails } from './ServiceDaemons'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
@@ -387,6 +388,7 @@ function HostDaemonTable({ daemons, clusterId }: { daemons: ApiRecord[]; cluster
         { key: 'type_display', title: '类型' },
         { key: 'status_display', title: '状态', render: (value) => renderDaemonStatus(value) },
         { key: 'status_desc', title: '原生状态说明', ellipsis: false },
+        { key: 'runtime_details', title: '运行详情', filterKey: false, ellipsis: false, render: (_, row) => <DaemonRuntimeDetails row={{ ...row, daemon_type: row.type_display }} /> },
         { key: 'last_refresh_display', title: '最近刷新' },
         { key: 'version_display', title: '版本' },
         { key: 'cpu_usage_display', title: 'CPU 使用率' },

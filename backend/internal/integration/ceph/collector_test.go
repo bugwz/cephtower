@@ -250,6 +250,30 @@ func TestCollectParsesCeph2022Fixtures(t *testing.T) {
 	}
 }
 
+func TestCollectTopologyPreservesDaemonRuntimeDetails(t *testing.T) {
+	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+		"collect.daemon": []byte(`[{"daemon_name":"osd.0","daemon_type":"osd","daemon_id":"0","container_id":"abc","container_image_id":"sha256:def","container_image_digests":["sha256:ghi"],"ip":"192.0.2.1","ports":[6800],"systemd_unit":"ceph-osd@0","is_active":false,"osdspec_affinity":"data","created":"2026-10-03T01:00:00Z","started":"2026-10-03T02:00:00Z","last_deployed":"2026-10-03T03:00:00Z","last_configured":"2026-10-03T04:00:00Z","events":["deployment scheduled"]}]`),
+	}}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "topology")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range rows {
+		if row.Kind != "daemon" {
+			continue
+		}
+		payload := row.Payload.(cephdomain.Daemon)
+		if payload.DaemonID == nil || *payload.DaemonID != "0" || payload.ContainerID == nil || *payload.ContainerID != "abc" || payload.IsActive == nil || *payload.IsActive {
+			t.Fatalf("runtime identity lost: %#v", payload.DaemonRuntime)
+		}
+		if len(payload.Events) != 1 || payload.Events[0] != "deployment scheduled" || len(payload.Ports) != 1 || payload.Ports[0] != 6800 || payload.Started == nil || payload.LastDeployed == nil || payload.LastConfigured == nil || payload.SystemdUnit == nil || payload.IP == nil || payload.Created == nil || payload.OSDSpecAffinity == nil || payload.ContainerImageID == nil || len(payload.ContainerImageDigests) != 1 {
+			t.Fatalf("runtime details lost: %#v", payload.DaemonRuntime)
+		}
+		return
+	}
+	t.Fatal("daemon observation missing")
+}
+
 func TestCollectTopologyPreservesDaemonRuntimeMetrics(t *testing.T) {
 	base := fixtureExecutor{t}
 	provider := NativeProvider{Executor: malformedExecutor{base: base, override: map[string][]byte{

@@ -24,6 +24,15 @@ function daemonDetailText(value: unknown): string {
   return String(value)
 }
 
+export function DaemonRuntimeDetails({ row }: { row: ApiRecord }) {
+  return <details>
+    <summary>展开运行详情</summary>
+    <Descriptions bordered size="small" column={1} style={{ minWidth: 360 }} items={daemonDetailFields.map(([key, label]) => ({
+      key, label, children: <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{daemonDetailText(row[key])}</div>
+    }))} />
+  </details>
+}
+
 export function ServiceDaemons({ clusterId, name }: { clusterId: number; name: string }) {
   const [perf, setPerf] = useState<{ clusterId: number; service: string; daemon: string } | null>(null)
   const visiblePerf = perf?.clusterId === clusterId && perf.service === name ? perf : null
@@ -47,12 +56,7 @@ export function ServiceDaemons({ clusterId, name }: { clusterId: number; name: s
       { key: 'performance', title: '性能', filterKey: false, render: (_, row) => <Button
         disabled={typeof row.daemon_name !== 'string' || !/^(mon|mgr|mds|osd|rgw|rbd-mirror)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(row.daemon_name)}
         onClick={() => setPerf({ clusterId, service: name, daemon: String(row.daemon_name) })}>性能计数器</Button> },
-      { key: 'runtime_details', title: '运行详情', filterKey: false, ellipsis: false, render: (_, row) => <details>
-        <summary>展开运行详情</summary>
-        <Descriptions bordered size="small" column={1} style={{ minWidth: 360 }} items={daemonDetailFields.map(([key, label]) => ({
-          key, label, children: <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{daemonDetailText(row[key])}</div>
-        }))} />
-      </details> },
+      { key: 'runtime_details', title: '运行详情', filterKey: false, ellipsis: false, render: (_, row) => <DaemonRuntimeDetails row={row} /> },
     ]} />
     {visiblePerf && <Space direction="vertical" style={{ width: '100%' }}>
       <Space><Typography.Title level={5}>{visiblePerf.daemon} 性能计数器</Typography.Title><Button onClick={() => setPerf(null)}>关闭性能详情</Button></Space>
