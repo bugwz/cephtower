@@ -1276,6 +1276,11 @@ which could collapse multiple paths and schedules into one resource key.
 
 ### RBD feature mutation
 
+Shared resource forms re-evaluate row action guards before showing confirmation and
+again after confirmation, before issuing any mutation. RBD restore and other guarded
+forms therefore enforce the same predicate at open and submit time; this is a check
+of available client state, not a fresh cluster read or a replacement for native checks.
+
 Moving an image to trash is a dedicated confirmed action requiring collected format 2.
 Format 1 is unsupported by `librbd/api/Trash.cc`, matching Dashboard's move guard;
 unknown format requires a refresh. The request builder repeats this check and retains

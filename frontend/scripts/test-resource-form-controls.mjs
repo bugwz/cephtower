@@ -384,6 +384,33 @@ for (const mode of ['success', 'cancel', 'switch-confirm', 'switch-result', 'fai
 }
 console.log('Successful current-cluster mutations invalidate live schedules before inventory refresh')
 
+for (const mode of ['blocked-before', 'blocked-confirm', 'allowed']) {
+  let blocked = mode === 'blocked-before'
+  let writes = 0
+  let confirmations = 0
+  let notices = 0
+  let submittingState = false
+  const row = { image_id: 'image', trash_source: 'USER' }
+  const env = {
+    selectedClusterId: 7, formClusterId: 7, submitting: false, mutationBlocked: false,
+    currentClusterId: { current: 7 }, clusterGeneration: { current: 1 },
+    activeRow: row,
+    activeAction: { path: '/rbd/trash/restore', method: 'POST', confirmation: () => 'confirm', disabledWhen: (candidate) => { assert.equal(candidate, row); return blocked ? 'state prevents action' : undefined }, buildBody: () => ({}) },
+    message: { warning(reason) { assert.equal(reason, 'state prevents action'); notices++ }, success() {} },
+    setSubmitting(value) { submittingState = value }, closeForm() {}, form: {},
+    Modal: { confirm(options) { confirmations++; if (mode === 'blocked-confirm') blocked = true; options.onOk() } },
+    operationMutation: { run: async (fn) => fn() }, mutateResource: async () => { writes++; return {} },
+    onFormMutationSuccess() {}, refreshResource: async () => {}, refresh: async () => {},
+  }
+  const submit = new Function(...Object.keys(env), `${submitCode}; return submitForm`)(...Object.values(env))
+  await submit({})
+  assert.equal(writes, mode === 'allowed' ? 1 : 0)
+  assert.equal(notices, mode === 'allowed' ? 0 : 1)
+  assert.equal(confirmations, mode === 'blocked-before' ? 0 : 1)
+  assert.equal(submittingState, false)
+}
+console.log('Form action guards are checked before confirmation and again before mutation')
+
 const imageScheduleDetails = mirrorExports.imageMirrorScheduleDetails
 for (const [origin, label] of [['cluster', '继承集群'], ['pool', '继承池'], ['namespace', '继承命名空间'], ['', '镜像专属']]) {
   const details = imageScheduleDetails({ name: origin === 'cluster' ? '' : 'images/team/vm', inherited_from: origin, schedule_status: 'available', schedule_time: '2026-10-03 12:30:00', schedule_interval: items })

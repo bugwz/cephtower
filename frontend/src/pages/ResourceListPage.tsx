@@ -217,6 +217,11 @@ export function ResourceListPage({ definition, embedded = false, onFormMutationS
       return
     }
     const action = activeAction
+    const blockedReason = activeRow ? action.disabledWhen?.(activeRow) : undefined
+    if (blockedReason) {
+      message.warning(blockedReason)
+      return
+    }
     const generation = clusterGeneration.current
     setSubmitting(true)
     try {
@@ -228,6 +233,11 @@ export function ResourceListPage({ definition, embedded = false, onFormMutationS
         if (!approved) return
       }
       if (currentClusterId.current !== formClusterId || clusterGeneration.current !== generation) return
+      const confirmedBlockedReason = activeRow ? action.disabledWhen?.(activeRow) : undefined
+      if (confirmedBlockedReason) {
+        message.warning(confirmedBlockedReason)
+        return
+      }
       const result = await operationMutation.run(() => mutateResource(
         action.path,
         action.method,
