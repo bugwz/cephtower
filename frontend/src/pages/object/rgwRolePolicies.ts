@@ -19,10 +19,20 @@ export function rgwPolicyMutation(values: Record<string, unknown>, row?: Record<
     if (typeof name !== 'string' || !rgwPolicyDeleteOptions(row).some(option => option.value === name)) throw new Error('请选择当前角色已采集的内联策略')
     return { action: 'delete', policy_name: name }
   }
-  if (values.action !== 'put') throw new Error('请选择有效的策略操作')
-  if (typeof values.policy_name !== 'string' || values.policy_name.trim() === '') throw new Error('请输入策略名称')
+  if (values.action !== 'put' && values.action !== 'edit') throw new Error('请选择有效的策略操作')
+  const name = values.action === 'edit' ? values.existing_policy : values.policy_name
+  if (values.action === 'edit' && !rgwPolicyDeleteOptions(row).some(option => option.value === name)) throw new Error('请选择当前角色已采集的内联策略')
+  if (typeof name !== 'string' || name.trim() === '') throw new Error('请输入策略名称')
   if (typeof values.policy_document !== 'string') throw new Error('请输入策略 JSON 对象')
   const doc: unknown = JSON.parse(values.policy_document)
   if (!doc || typeof doc !== 'object' || Array.isArray(doc)) throw new Error('请输入策略 JSON 对象')
-  return { action: 'put', policy_name: values.policy_name, policy_document: values.policy_document }
+  return { action: 'put', policy_name: name, policy_document: values.policy_document }
+}
+
+export function rgwPolicyChanged(changed: Record<string, unknown>, values: Record<string, unknown>, row?: Record<string, unknown>) {
+  if (Object.prototype.hasOwnProperty.call(changed, 'action')) return { policy_document: undefined }
+  if (values.action !== 'edit' || !Object.prototype.hasOwnProperty.call(changed, 'existing_policy')) return {}
+  const policies = rgwRolePolicies(row?.PermissionPolicies)
+  const matches = policies?.filter(policy => policy.name === values.existing_policy)
+  return { policy_document: matches?.length === 1 ? matches[0].document : undefined }
 }

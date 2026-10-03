@@ -53,6 +53,7 @@ export interface ResourceFormAction {
   confirmation?: (values: MutationFormValues, row?: ApiRecord) => string | undefined
   fields: MutationFormField[]
   initialValues?: MutationFormValues | ((row?: ApiRecord) => MutationFormValues)
+  changedValues?: (changed: MutationFormValues, values: MutationFormValues, row?: ApiRecord) => MutationFormValues
   buildBody: (values: MutationFormValues, clusterId: number, row?: ApiRecord) => ApiRecord
   keepOpenOnSuccess?: boolean
   resultValues?: (result: ApiRecord, values: MutationFormValues, row?: ApiRecord) => MutationFormValues
@@ -420,6 +421,7 @@ export function ResourceListPage({ definition, embedded = false, onFormMutationS
       >
         <Form form={form} layout="vertical" onFinish={submitForm} onValuesChange={(changed) => {
           for (const name of dependentFormFields(activeAction?.fields ?? [], Object.keys(changed))) form.setFieldValue(name, undefined)
+          if (activeAction?.changedValues) form.setFieldsValue(activeAction.changedValues(changed, form.getFieldsValue(true), activeRow))
         }}>
           {activeAction?.fields.filter((field) => !field.visibleWhen || field.visibleWhen(formValues ?? {})).map((field) => (
             <Form.Item

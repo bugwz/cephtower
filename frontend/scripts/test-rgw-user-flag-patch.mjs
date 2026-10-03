@@ -50,3 +50,25 @@ assert.deepEqual(policies.rgwPolicyMutation({ action: 'put', policy_name: 'new',
 for (const policy_document of ['null', '[]', 'invalid']) assert.throws(() => policies.rgwPolicyMutation({ action: 'put', policy_name: 'new', policy_document }))
 assert.throws(() => policies.rgwPolicyMutation({ action: 'unknown' }))
 assert.ok(pages.includes('...rgwPolicyMutation(values, row)'))
+assert.deepEqual(policies.rgwPolicyChanged({ existing_policy: 'native' }, { action: 'edit', existing_policy: 'native' }, policyRow), { policy_document: document })
+assert.deepEqual(policies.rgwPolicyChanged({ policy_document: 'typed' }, { action: 'edit', existing_policy: 'native' }, policyRow), {})
+assert.deepEqual(policies.rgwPolicyChanged({ action: 'edit' }, { action: 'edit', existing_policy: 'native' }, policyRow), { policy_document: undefined })
+assert.deepEqual(policies.rgwPolicyChanged({ existing_policy: 'missing' }, { action: 'edit', existing_policy: 'missing' }, policyRow), { policy_document: undefined })
+assert.deepEqual(policies.rgwPolicyMutation({ action: 'edit', existing_policy: 'native', policy_name: 'stale', policy_document: document }, policyRow), { action: 'put', policy_name: 'native', policy_document: document })
+assert.throws(() => policies.rgwPolicyMutation({ action: 'edit', existing_policy: 'missing', policy_document: document }, policyRow))
+assert.ok(pages.includes('changedValues: rgwPolicyChanged'))
+const resourceSource = ts.createSourceFile('ResourceListPage.tsx', readFileSync(new URL('../src/pages/ResourceListPage.tsx', import.meta.url), 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+let changeHandler
+function visit(node) {
+  if (ts.isJsxAttribute(node) && node.name.getText(resourceSource) === 'onValuesChange') changeHandler = node.initializer.expression
+  ts.forEachChild(node, visit)
+}
+visit(resourceSource)
+const state = { action: 'edit', existing_policy: 'native', policy_document: 'old' }
+const mockForm = { setFieldValue: (key, value) => { state[key] = value }, getFieldsValue: () => state, setFieldsValue: values => Object.assign(state, values) }
+const handler = new Function('form', 'activeAction', 'activeRow', 'dependentFormFields', `return (${changeHandler.getText(resourceSource)})`)(mockForm, { fields: [], changedValues: policies.rgwPolicyChanged }, policyRow, () => [])
+handler({ existing_policy: 'native' })
+assert.equal(state.policy_document, document)
+state.policy_document = 'typed'
+handler({ policy_document: 'typed' })
+assert.equal(state.policy_document, 'typed')
