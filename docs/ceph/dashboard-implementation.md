@@ -5,6 +5,10 @@
 
 ## 如何追踪调用链
 
+RBD 镜像创建时间来自 rbd info 的 create_timestamp，经 image_created_at 字段提供给
+前端。它与库存 created_at 分离，避免通用资源列表合并元数据时覆盖原生镜像时间；
+未返回原生时间时不以库存时间替代，前端保留命令原值。
+
 RBD 回收站的 rbd trash ls --all --long 原生 status/source 在采集时改名为
 deferment_status/trash_source，避免被库存公共 status/source 覆盖。前端依据原生
 Trash.cc 的 protected until / expired at 前缀展示采集时延期状态和截止时间原值，

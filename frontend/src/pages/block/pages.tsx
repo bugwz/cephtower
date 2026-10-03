@@ -223,7 +223,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'total_used_bytes', title: '含快照总占用（bytes）', render: (value, row) => rbdUsageText(value, row.features) },
       { key: 'object_count', title: '对象数' },
       { key: 'object_size_bytes', title: '对象大小（bytes）' },
-      { key: 'created_at', title: '创建时间' },
+      { key: 'image_created_at', title: '镜像创建时间（命令原值）' },
       { key: 'format', title: '格式' },
       { key: 'features', title: '特性' },
       { key: 'data_pool', title: '数据池' },

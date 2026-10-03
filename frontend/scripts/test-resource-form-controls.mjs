@@ -100,6 +100,20 @@ for (const value of [undefined, null, -1, 0.5, NaN, Infinity, Number.MAX_SAFE_IN
 console.log('RBD usage distinguishes missing fast-diff, unavailable statistics and valid zero')
 
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')
+assert.ok(blockSource.includes("key: 'image_created_at', title: '镜像创建时间（命令原值）'"))
+const resourceApiSource = readFileSync(new URL('../src/api/resource.ts', import.meta.url), 'utf8')
+const resourceApiTree = ts.createSourceFile('resource.ts', resourceApiSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS)
+const listResourceNode = resourceApiTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'listResource')
+const listResourceCode = ts.transpileModule(listResourceNode.getText(resourceApiTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const readImages = new Function('request', 'jsonInit', 'toRecord', `${listResourceCode}; return listResource`)(
+  async () => ({ items: [{ created_at: 'inventory-time', data: { image_created_at: 'native-image-time' } }, { created_at: 'inventory-only', data: {} }] }),
+  (method, body) => ({ method, body }), (value) => value
+)
+const imageTimes = (await readImages('/rbd/images', 7)).items
+assert.equal(imageTimes[0].created_at, 'inventory-time')
+assert.equal(imageTimes[0].image_created_at, 'native-image-time')
+assert.equal(imageTimes[1].image_created_at, undefined)
+console.log('Native image creation time remains separate from inventory creation time')
 assert.ok(blockSource.includes('disabledWhen: rbdSnapshotDeleteReason'))
 assert.ok(blockSource.includes('disabledWhen: rbdTrashRestoreReason'))
 const blockTree = ts.createSourceFile('pages.tsx', blockSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)

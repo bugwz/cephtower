@@ -102,7 +102,7 @@ type RBDImage struct {
 	MirrorState    string                     `json:"mirror_state,omitempty"`
 	MirrorGlobalID string                     `json:"mirror_global_id,omitempty"`
 	Primary        *bool                      `json:"primary,omitempty"`
-	CreatedAt      string                     `json:"created_at,omitempty"`
+	CreatedAt      string                     `json:"image_created_at,omitempty"`
 	DataPool       string                     `json:"data_pool,omitempty"`
 	BlockPrefix    string                     `json:"block_name_prefix,omitempty"`
 	ImagePath      string                     `json:"image_path"`

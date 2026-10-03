@@ -214,6 +214,17 @@ func TestRBDImageInfoEnrichment(t *testing.T) {
 	if payload.CreatedAt != "2026-09-23T02:03:04Z" || payload.DataPool != "rbd-data" || payload.BlockPrefix != "rbd_data.1" {
 		t.Fatalf("missing image identity details: %+v", payload)
 	}
+	encodedImage, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wireImage map[string]json.RawMessage
+	if err := json.Unmarshal(encodedImage, &wireImage); err != nil {
+		t.Fatal(err)
+	}
+	if string(wireImage["image_created_at"]) != `"2026-09-23T02:03:04Z"` || wireImage["created_at"] != nil {
+		t.Fatalf("image timestamp collides with inventory metadata: %s", encodedImage)
+	}
 	if payload.UsedBytes == nil || *payload.UsedBytes != 2097152 || payload.TotalUsedBytes == nil || *payload.TotalUsedBytes != 3145728 {
 		t.Fatalf("missing image usage details: %+v", payload)
 	}
