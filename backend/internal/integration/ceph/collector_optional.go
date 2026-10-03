@@ -87,6 +87,8 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 										continue
 									}
 									snapshot["children"] = children
+								} else {
+									continue
 								}
 							}
 							if used, ok := payload.SnapshotUsage[name]; ok {

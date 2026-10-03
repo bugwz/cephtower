@@ -258,6 +258,39 @@ func TestRBDFeatureAvailabilitySurvivesJSON(t *testing.T) {
 	}
 }
 
+func TestSnapshotChildrenFailureDoesNotPublishEmptyDependencies(t *testing.T) {
+	for _, output := range []string{`[]`, `null`, `invalid`, `{}`} {
+		provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+			"collect.rbd_namespace":         []byte(`[]`),
+			"collect.rbd_image_detail":      []byte(`[{"image":"image","size":1024,"format":2}]`),
+			"collect.rbd_image_info":        []byte(`{"name":"image","features":[]}`),
+			"collect.rbd_snapshot":          []byte(`[{"name":"snap","protected":false}]`),
+			"collect.rbd_snapshot_children": []byte(output),
+		}}}
+		trace := &collectionTrace{unavailable: map[string]struct{}{}}
+		ctx := context.WithValue(context.Background(), collectionTraceKey{}, trace)
+		rows := provider.collectStorageOptional(ctx, ClusterAccess{}, []poolWire{{PoolName: "pool"}}, fsDumpWire{}, time.Now())
+		count := 0
+		for _, row := range rows {
+			if row.Kind == "rbd_snapshot" {
+				count++
+			}
+		}
+		if output == `[]` {
+			if count != 1 {
+				t.Fatalf("valid empty dependencies lost: %v", rows)
+			}
+		} else {
+			if count != 0 {
+				t.Fatalf("invalid dependency read published snapshot: %s", output)
+			}
+			if _, ok := trace.unavailable["rbd_snapshot"]; !ok {
+				t.Fatalf("snapshot inventory not marked unavailable: %s", output)
+			}
+		}
+	}
+}
+
 func TestRBDImageInfoDefaultsToDisabledMirroring(t *testing.T) {
 	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rbd_image_info": []byte(`{"name":"image","features":[]}`),
