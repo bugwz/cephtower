@@ -103265,6 +103265,16 @@ components:
         configured: {type: boolean}
         document: {type: string, nullable: true}
         content_type: {type: string, nullable: true}
+        encryption:
+          type: object
+          nullable: true
+          additionalProperties: false
+          required: [rule_exists, algorithm, kms_master_key_id, bucket_key_enabled]
+          properties:
+            rule_exists: {type: boolean}
+            algorithm: {type: string}
+            kms_master_key_id: {type: string}
+            bucket_key_enabled: {type: boolean}
         tags:
           type: array
           items:

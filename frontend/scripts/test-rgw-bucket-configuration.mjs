@@ -4,6 +4,7 @@ import ts from 'typescript'
 import './test-external-form-confirmation.mjs'
 import './test-rgw-bucket-tag-form.mjs'
 const helpers = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketEncryptionSummary.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketConfiguration.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketTagForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 for (const [kind, document] of [['policy', '{"Statement":[],"large":9007199254740993}'], ['cors', '<CORSConfiguration/>'], ['lifecycle', '<LifecycleConfiguration/>'], ['encryption', '<ServerSideEncryptionConfiguration/>'], ['tagging', '<Tagging><TagSet/></Tagging>']]) {
@@ -37,7 +38,15 @@ assert.ok(tagAction.confirmation(tagValues, tagRow).includes('整体替换'))
 assert.equal(typeof tagAction.fields.find(field => field.name === 'tag_set').renderControl, 'function')
 assert.equal(definition.buildQuery({ kind: 'cors' }).toString(), 'kind=cors')
 assert.deepEqual(definition.filterFields.find(field => field.name === 'kind').options, helpers.rgwBucketConfigurationOptions)
-assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'content_type', 'document'])
+assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'encryption', 'content_type', 'document'])
+const encryption = definition.columns.find(column => column.key === 'encryption').render
+assert.equal(encryption(null, { kind: 'policy' }), '—')
+assert.match(encryption(null, { kind: 'encryption', configured: false }), /未设置/)
+for (const value of [undefined, null, {}, { rule_exists: true }]) assert.match(encryption(value, { kind: 'encryption', configured: true }), /不可用/)
+const config = { rule_exists: false, algorithm: '', kms_master_key_id: '', bucket_key_enabled: false }
+assert.match(encryption(config, { kind: 'encryption', configured: true }), /没有默认加密规则/)
+assert.match(encryption({ ...config, rule_exists: true }, { kind: 'encryption', configured: true }), /算法：.*空/)
+assert.match(encryption({ ...config, rule_exists: true, algorithm: 'future:algorithm', kms_master_key_id: ' key ', bucket_key_enabled: true }, { kind: 'encryption', configured: true }), /future:algorithm.*" key ".*启用.*不代表已有对象/)
 const status = definition.columns.find(column => column.key === 'configured').render
 assert.equal(status(true), '已配置')
 assert.equal(status(false), '未配置')

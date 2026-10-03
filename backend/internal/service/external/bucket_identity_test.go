@@ -60,7 +60,11 @@ func TestBucketRequestsPreserveFullInventoryIdentity(t *testing.T) {
 				if r.Method != "GET" || r.URL.Path != "/"+tenant+":same-bucket" || r.URL.RawQuery != kind+"=" {
 					t.Fatalf("wrong read target: %s", r.URL)
 				}
-				return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader("native"))}, nil
+				body := "native"
+				if kind == "encryption" {
+					body = "<ServerSideEncryptionConfiguration/>"
+				}
+				return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(body))}, nil
 			})
 			result, err := service.readBucketPolicy(ctx, cluster.ID, id, url.Values{"kind": {kind}})
 			if err != nil || result.(map[string]any)["bucket_id"] != id {

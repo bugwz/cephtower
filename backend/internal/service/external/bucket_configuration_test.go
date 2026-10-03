@@ -58,6 +58,9 @@ func TestBucketConfigurationWritesUseExplicitDocument(t *testing.T) {
 	}
 	for _, kind := range []string{"policy", "cors", "lifecycle", "encryption"} {
 		body := "native-" + kind
+		if kind == "encryption" {
+			body = "<ServerSideEncryptionConfiguration/>"
+		}
 		service.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
 			if r.Method != "GET" || r.URL.Path != "/:bucket" || r.URL.RawQuery != kind+"=" {
 				t.Fatalf("wrong scoped read: %s %s", r.Method, r.URL)
