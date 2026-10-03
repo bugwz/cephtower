@@ -95,7 +95,7 @@ type RBDImage struct {
 	Configuration  []PoolConfig               `json:"configuration,omitempty"`
 	RuntimeStatus  map[string]any             `json:"runtime_status,omitempty"`
 	ScheduleInfo   *RBDMirrorSnapshotSchedule `json:"schedule_info,omitempty"`
-	Features       []string                   `json:"features,omitempty"`
+	Features       []string                   `json:"features"`
 	Parent         map[string]any             `json:"parent,omitempty"`
 	Details        map[string]any             `json:"details,omitempty"`
 	MirrorMode     string                     `json:"mirror_mode,omitempty"`

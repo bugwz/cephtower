@@ -225,6 +225,39 @@ func TestRBDImageInfoEnrichment(t *testing.T) {
 	}
 }
 
+func TestRBDFeatureAvailabilitySurvivesJSON(t *testing.T) {
+	for _, tc := range []struct{ info, want string }{
+		{`{"features":[]}`, `[]`},
+		{`{"features":["layering"]}`, `["layering"]`},
+		{`{}`, `null`},
+		{`{"features":null}`, `null`},
+		{`{"features":["fast-diff",123]}`, `null`},
+		{`{"features":{"unexpected":["fast-diff"]}}`, `null`},
+		{`{"features":[""]}`, `null`},
+	} {
+		var calls []executor.CommandSpec
+		provider := NativeProvider{Executor: recordingExecutor{base: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.rbd_image_info": []byte(tc.info)}}, calls: &calls}}
+		image := cephdomain.RBDImage{ImagePath: "pool/image"}
+		provider.enrichRBDImage(context.Background(), ClusterAccess{}, image.ImagePath, &image)
+		data, err := json.Marshal(image)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var wire map[string]json.RawMessage
+		if err := json.Unmarshal(data, &wire); err != nil {
+			t.Fatal(err)
+		}
+		if string(wire["features"]) != tc.want {
+			t.Fatalf("%s: %s", tc.info, data)
+		}
+		for _, call := range calls {
+			if call.ID == "collect.rbd_image_usage" {
+				t.Fatalf("invalid or absent fast-diff triggered usage: %s", tc.info)
+			}
+		}
+	}
+}
+
 func TestRBDImageInfoDefaultsToDisabledMirroring(t *testing.T) {
 	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rbd_image_info": []byte(`{"name":"image","features":[]}`),

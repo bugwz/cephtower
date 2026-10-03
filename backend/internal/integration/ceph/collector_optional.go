@@ -699,7 +699,7 @@ func (p *NativeProvider) enrichRBDImage(ctx context.Context, access ClusterAcces
 		return
 	}
 	image.Details = info
-	image.Features = stringList(info["features"], "")
+	image.Features = rbdImageFeatures(info["features"])
 	image.Parent, _ = info["parent"].(map[string]any)
 	if size := firstUintPointer(info, "size"); size != nil {
 		image.SizeBytes = size
@@ -731,6 +731,22 @@ func (p *NativeProvider) enrichRBDImage(ctx context.Context, access ClusterAcces
 			}
 		}
 	}
+}
+
+func rbdImageFeatures(value any) []string {
+	items, ok := value.([]any)
+	if !ok || items == nil {
+		return nil
+	}
+	features := make([]string, 0, len(items))
+	for _, item := range items {
+		feature, ok := item.(string)
+		if !ok || strings.TrimSpace(feature) == "" {
+			return nil
+		}
+		features = append(features, feature)
+	}
+	return features
 }
 
 func hasString(values []string, target string) bool {
