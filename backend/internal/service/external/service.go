@@ -453,6 +453,13 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 			return cephdomain.ActionResult{}, failure("invalid_request", err.Error(), false)
 		}
 		err = api.PutBucketConfiguration(ctx, bucket, kind, body)
+		if err == nil && kind == "lifecycle" {
+			actual, _, readErr := api.GetBucketConfiguration(ctx, bucket, kind)
+			matches, parseErr := s3.BucketLifecycleMatches(body, actual)
+			if readErr != nil || parseErr != nil || !matches {
+				return cephdomain.ActionResult{}, failure("post_check_failed", "bucket lifecycle was submitted but could not be verified; refresh before another change", false)
+			}
+		}
 		if err == nil && kind == "cors" {
 			actual, _, readErr := api.GetBucketConfiguration(ctx, bucket, kind)
 			wantedRules, _ := s3.BucketCORS(body)

@@ -3,12 +3,14 @@ package external
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 	"testing"
 
+	cephdomain "cephtower/backend/internal/domain/ceph"
 	"cephtower/backend/internal/integration/ceph/s3"
 	endpointservice "cephtower/backend/internal/service/endpoint"
 )
@@ -60,6 +62,62 @@ func TestBucketLifecycleRead(t *testing.T) {
 			}
 		} else if len(rules) != 0 || rules == nil || row["document"] != nil {
 			t.Fatal("missing configuration misrepresented")
+		}
+	}
+}
+
+func TestBucketLifecycleWriteVerification(t *testing.T) {
+	service, endpoints, cluster := externalTestService(t)
+	ctx := context.Background()
+	if _, err := endpoints.CreateEndpoint(ctx, cluster.ID, endpointservice.EndpointInput{Kind: "s3", URL: "https://s3.example.test"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := endpoints.PutCredential(ctx, cluster.ID, endpointservice.CredentialInput{Kind: "s3", Value: map[string]any{"access_key": "access", "secret_key": "secret"}}); err != nil {
+		t.Fatal(err)
+	}
+	document := `<LifecycleConfiguration><Rule><Status>Enabled</Status><Filter/><Expiration><Days>30</Days></Expiration></Rule></LifecycleConfiguration>`
+	actual := strings.Replace(strings.Replace(document, "<Rule>", "<Rule><ID>generated</ID>", 1), "<Filter/>", "<Prefix/>", 1)
+	for _, tc := range []struct {
+		body   string
+		status int
+		valid  bool
+	}{
+		{actual, 200, true}, {strings.Replace(actual, "30", "31", 1), 200, false},
+		{"broken", 200, false}, {actual, 403, false}, {actual, 503, false},
+		{`<Error><Code>NoSuchLifecycleConfiguration</Code></Error>`, 404, false},
+	} {
+		calls := 0
+		service.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+			calls++
+			if r.URL.Path != "/team:bucket" || r.URL.RawQuery != "lifecycle=" {
+				t.Fatal("wrong scoped target")
+			}
+			if calls == 1 {
+				body, _ := io.ReadAll(r.Body)
+				if r.Method != "PUT" || string(body) != document {
+					t.Fatal("write document changed")
+				}
+				return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(""))}, nil
+			}
+			if calls != 2 || r.Method != "GET" {
+				t.Fatal("unexpected request")
+			}
+			return &http.Response{StatusCode: tc.status, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(tc.body))}, nil
+		})
+		id := base64.RawURLEncoding.EncodeToString([]byte("team\x00bucket"))
+		_, err := service.Execute(ctx, Request{ClusterID: cluster.ID, Action: "rgw_bucket_policy.update", ResourceKey: "rgw/bucket/" + id + "/policy", Parameters: map[string]any{"kind": "lifecycle", "document": document}})
+		if calls != 2 {
+			t.Fatalf("calls=%d", calls)
+		}
+		if tc.valid {
+			if err != nil {
+				t.Fatal(err)
+			}
+			continue
+		}
+		var actionError *cephdomain.ActionError
+		if !errors.As(err, &actionError) || actionError.Code != "post_check_failed" || actionError.Retryable {
+			t.Fatalf("unsafe failure: %v", err)
 		}
 	}
 }

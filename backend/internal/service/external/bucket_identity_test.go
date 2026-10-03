@@ -86,6 +86,9 @@ func TestBucketRequestsPreserveFullInventoryIdentity(t *testing.T) {
 				if (tc.kind == "encryption" || tc.kind == "cors") && calls == 2 {
 					method, body = "GET", tc.document
 				}
+				if tc.kind == "lifecycle" && calls == 2 {
+					method, body = "GET", strings.Replace(tc.document, "<Rule>", "<Rule><ID>generated</ID>", 1)
+				}
 				if tc.kind == "versioning" && calls == 2 {
 					method, body = "GET", "<VersioningConfiguration><Status>Enabled</Status><MfaDelete>Disabled</MfaDelete></VersioningConfiguration>"
 				}
@@ -100,7 +103,7 @@ func TestBucketRequestsPreserveFullInventoryIdentity(t *testing.T) {
 			}
 			result, err := service.Execute(ctx, Request{ClusterID: cluster.ID, Action: tc.action, ResourceKey: key, Parameters: map[string]any{"kind": tc.kind, "document": tc.document, "versioning": "enabled"}})
 			wantCalls := 1
-			if tc.kind == "encryption" || tc.kind == "versioning" || tc.kind == "cors" {
+			if tc.kind == "encryption" || tc.kind == "versioning" || tc.kind == "cors" || tc.kind == "lifecycle" {
 				wantCalls = 2
 			}
 			if err != nil || calls != wantCalls || result.ResourceURL != fmt.Sprintf("/api/v1/cluster/%d/rgw/bucket/%s", cluster.ID, id) {
