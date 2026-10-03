@@ -30,9 +30,13 @@ interface HostLabelFormValues {
 }
 
 export function HostDetailPage() {
-  const navigate = useNavigate()
   const { name = '' } = useParams()
   const { selectedClusterId } = useClusterContext()
+  return <HostDetailContent key={JSON.stringify([selectedClusterId, name])} name={name} selectedClusterId={selectedClusterId} />
+}
+
+function HostDetailContent({ name, selectedClusterId }: { name: string; selectedClusterId?: number }) {
+  const navigate = useNavigate()
   const decodedName = name
   const loader = useCallback(async () => {
     if (!selectedClusterId || !decodedName) {

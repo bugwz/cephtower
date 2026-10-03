@@ -4,7 +4,10 @@ import ts from 'typescript'
 
 const hostDetailSource = readFileSync(new URL('../src/pages/cluster/HostDetailPage.tsx', import.meta.url), 'utf8')
 const hostDetailTree = ts.createSourceFile('host.tsx', hostDetailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-const hostDetailFn = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HostDetailPage')
+const hostDetailFn = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HostDetailContent')
+const hostDetailWrapper = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HostDetailPage').getText(hostDetailTree)
+assert.ok(hostDetailWrapper.includes('key={JSON.stringify([selectedClusterId, name])}'))
+assert.ok(hostDetailWrapper.includes('name={name} selectedClusterId={selectedClusterId}'))
 const hostLoader = hostDetailFn.body.statements.find((node) => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(hostDetailTree) === 'loader').declarationList.declarations[0].initializer.arguments[0]
 const hostLoaderCode = ts.transpileModule(`const load = ${hostLoader.getText(hostDetailTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 for (const failed of ['none', 'device', 'smart', 'both']) {
