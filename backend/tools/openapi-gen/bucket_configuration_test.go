@@ -86,6 +86,24 @@ func TestBucketNotificationDeletionContract(t *testing.T) {
 	}
 }
 
+func TestBucketNotificationWriteContract(t *testing.T) {
+	got, ok := requestSchema(router.Route{Method: "POST", Path: "/rgw/bucket/notification"})
+	want, _ := handler.MutationRequestContract("rgw_bucket.notification_set")
+	if !ok || !reflect.DeepEqual(got, want) {
+		t.Fatal("notification write contract mismatch")
+	}
+	for _, field := range []string{"bucket_id", "mode", "rule", "expected_document"} {
+		if !got.Fields[field].Required {
+			t.Fatal("required field missing")
+		}
+	}
+	for _, field := range []string{"id", "topic", "events", "filters"} {
+		if !got.Fields["rule"].Properties[field].Required {
+			t.Fatal("incomplete rule allowed")
+		}
+	}
+}
+
 func TestBucketReplicationReadContract(t *testing.T) {
 	found := false
 	for _, parameter := range routeParameters(router.Route{Method: "GET", Path: "/rgw/bucket/policy"}) {

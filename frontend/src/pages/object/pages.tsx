@@ -84,6 +84,8 @@ import { rgwBucketObjectLockSummary } from './rgwBucketObjectLockSummary'
 import { RgwBucketAcl } from './RgwBucketAcl'
 import { RgwBucketReplication } from './RgwBucketReplication'
 import { RgwBucketNotifications } from './RgwBucketNotifications'
+import { RgwBucketNotificationEditor } from './RgwBucketNotificationEditor'
+import { notificationFormBlocked, notificationFormInitial, notificationFormInput, notificationFormConfirmation } from './rgwBucketNotificationForm'
 import { bucketNotificationDeleteBlocked, bucketNotificationDeleteInitial, bucketNotificationDeleteInput, bucketNotificationDeleteConfirmation } from './rgwBucketNotificationDelete'
 import { bucketAclOptions, bucketAclFormBlocked, bucketAclFormInitial, bucketAclFormInput, bucketAclFormConfirmation } from './rgwBucketAclForm'
 import { objectLockFormInitial, objectLockFormBlocked, objectLockFormInput, objectLockFormConfirmation } from './rgwBucketObjectLockForm'
@@ -1357,6 +1359,16 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...rgwBucketConfigurationDeleteInput(row) })
     },
     extraActions: [{
+      title: '创建或编辑 Bucket 通知', buttonLabel: '创建 / 编辑通知', path: '/rgw/bucket/notification', method: 'POST',
+      successMessage: '通知配置已回读核验（不代表消息投递成功）',
+      visibleWhen: row => row.kind === 'notification', disabledWhen: notificationFormBlocked, initialValues: notificationFormInitial, confirmation: notificationFormConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'notification_draft', label: '通知配置', required: true, renderControl: disabled => <RgwBucketNotificationEditor disabled={disabled} /> },
+        { name: 'confirm_notification', label: '非原子修改确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份配置，接受更换 Topic 的先删后建、通知空窗及失败无自动回滚' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...notificationFormInput(values, row) })
+    }, {
       title: '删除 Bucket 通知规则', buttonLabel: '删除通知',
       path: '/rgw/bucket/notification', method: 'DELETE',
       successMessage: '通知删除已回读核验（不代表队列或 Topic 映射已清理）',

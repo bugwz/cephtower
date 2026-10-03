@@ -697,6 +697,10 @@ func (h *Handler) DeleteRGWBucketNotification(w http.ResponseWriter, r *http.Req
 	h.MutateResource("rgw_bucket", "rgw_bucket.notification_delete", "high")(w, r)
 }
 
+func (h *Handler) SetRGWBucketNotification(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_bucket", "rgw_bucket.notification_set", "high")(w, r)
+}
+
 func (h *Handler) UpdateRGWBucketSyncGroup(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_bucket", "rgw_bucket.sync_group", "high")(w, r)
 }

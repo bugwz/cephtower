@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **RGW Bucket 通知创建与编辑**：新增 `POST /rgw/bucket/notification` 高风险操作（显式 create/edit）及可视化规则编辑器，覆盖准确 ID、Topic ARN、事件多选与 S3Key/S3Metadata/S3Tags 条件增删。编辑从已读取的唯一 ID 加载独立草稿，ID 不可改名；创建要求 ID 不存在，空配置可创建。规则经后端生成安全 XML，发送一条非空 TopicConfiguration，不把未列出的其他规则当作删除目标。
+  - 对照 `RGWPSCreateNotifOp`、`topic_to_unique`、`rgw_s3_filter.cc` 与 `rgw_notify_event_type.cc`：先核对完整快照及原生 ID_TopicName 键碰撞，再通过 SNS GetTopicAttributes 核验准确目标 ARN/Name；需要 HTTPS 和额外 Topic 读取权限，原生 Publish 与 Bucket 通知读写权限仍由 RGW 判定。同名 Topic 更新直接 PUT；更换 Topic 名称先 DELETE 旧 ID、回读其余规则，再 PUT 新规则，明确提示非事务空窗及可能只完成删除，无自动重试/回滚。
+  - 事件按真实 RGW 后端白名单提供，包括前端参考遗漏的 Post、生命周期和复制事件；不提供参考界面中后端不识别的 ObjectRestore。空事件列表按源码回读为 ObjectCreated:* 与 ObjectRemoved:*；处理 NonCurrent 别名及 AbortMultipartUpload 写入/AbortMPU 返回不对称。S3Key 空值在原生回读省略，元数据/标签空值保留；重复过滤名称拒绝而非静默去重，正则只传递，不用 JavaScript/Go 正则冒充 C++ 校验。
+  - 最终回读比较全部规则多重集合，允许原生 Map 顺序调整但保留重复项与事件顺序；Topic、其他规则或过滤条件改变均不报成功。配置回读不证明消息送达或 Topic/Bucket 映射更新，旧格式可能由 RGW 生成内部 Topic。补充原生 XML、归一化、键冲突、空桶创建、跨范围更新、各阶段失败、API 锁/风险、前端控件禁用与实际绑定回归。`make test-backend`（含 OpenAPI 一致性）与 `make test-frontend`（含生产构建）通过，无真实集群及浏览器视觉验证。
+
 - **RGW Bucket 通知规则删除**：新增 `DELETE /rgw/bucket/notification` 高风险队列操作及配置页删除表单，区分指定唯一 ID 和全部删除；显式确认、完整 XML 快照、集群端点检查和 Bucket 级操作锁贯穿原生 S3 删除链路。单条删除精确保留 ID 空格及特殊字符，不把空 ID 降级为全部删除；指定 ID 缺失或重复时拒绝写入，全部删除必须显式选择且 ID 为空。
   - 对照 `RGWPSDeleteNotifOp`、`find_unique_topic` 和 `remove_notification_v2`：删除前再次读取并匹配完整快照，删除后读取全部通知，比较剩余规则及事件/过滤条件；404/无权限/损坏响应不视为成功，删除失败或回读不一致不自动重试/回滚。原生映射更新可能静默失败，前端明确不保证 Topic/Bucket 映射清理或已排队投递停止，不删除 Bucket、对象或独立 Topic。
   - 特殊 ID 回归揭示已有 S3 查询签名把空格保留为 `+`；按 `rgw_auth_s3.cc::get_v4_canonical_qs` 修正为 `%20` 并对编码后的键值排序。签名修复独立提交；通知功能补充两种删除范围、租户、歧义 ID、最后一条规则、各阶段故障、其他规则改变、API 风险/锁及前端绑定测试。`make test-backend`（含 OpenAPI 一致性）及 `make test-frontend`（含生产构建）通过。无真实集群或浏览器视觉验证；通知创建与编辑仍待实现。

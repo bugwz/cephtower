@@ -377,6 +377,14 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 				t.Fatalf("incorrect notification operation: %+v %v", notificationOperation, err)
 			}
 		}
+		response = sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/bucket/notification", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"mode":"create","expected_document":"<NotificationConfiguration/>","rule":{"id":"id","topic":"arn:aws:sns:east::topic","events":[],"filters":[]}}`, cluster.ID, id), "bucket-notification-set-"+tenant)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("notification write queue: %d %s", response.Code, response.Body.String())
+		}
+		notificationWrite, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || notificationWrite.Action != "rgw_bucket.notification_set" || notificationWrite.Risk != "high" || notificationWrite.ResourceKey != row.ResourceKey || notificationWrite.LockKey != updated.LockKey {
+			t.Fatalf("incorrect notification write identity: %+v %v", notificationWrite, err)
+		}
 		for _, kind := range []string{"policy", "cors", "lifecycle", "encryption", "tagging"} {
 			response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/bucket/policy", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"kind":%q,"document":"raw"}`, cluster.ID, id, kind), "bucket-config-"+tenant+"-"+kind)
 			if response.Code != http.StatusAccepted {

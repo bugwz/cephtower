@@ -27,6 +27,7 @@ var mutationRouteActions = map[string]string{
 	"PATCH /rgw/bucket/acl":                         "rgw_bucket.acl",
 	"POST /rgw/bucket/replication":                  "rgw_bucket.replication_enable",
 	"DELETE /rgw/bucket/notification":               "rgw_bucket.notification_delete",
+	"POST /rgw/bucket/notification":                 "rgw_bucket.notification_set",
 	"DELETE /alert/silence":                         "silence.delete",
 	"DELETE /ceph/user":                             "ceph_user.delete",
 	"DELETE /configuration/value":                   "config_value.delete",
