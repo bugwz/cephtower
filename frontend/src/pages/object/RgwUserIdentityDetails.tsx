@@ -18,6 +18,7 @@ export function RgwUserIdentityDetails({ row }: { row: ApiRecord }) {
     { key: 'path', label: '用户路径', children: rgwIdentityText(row.path, '空路径') },
     { key: 'created', label: '创建时间（命令原值）', children: rgwIdentityText(row.create_date, '未提供时间') },
     { key: 'tags', label: '用户标签', children: <RgwUserTagsTable value={row.tags} /> },
+    { key: 'policies', label: '直接关联的托管策略 ARN（非完整有效权限）', children: row.account_id === '' || row.type === 'root' ? '不适用' : <Identifiers value={row.managed_user_policies} /> },
     { key: 'mask', label: '操作掩码（命令原值）', children: rgwIdentityText(row.op_mask, '空操作掩码') },
     { key: 'mfa', label: 'MFA 标识', children: <Identifiers value={row.mfa_ids} /> },
     { key: 'groups', label: '用户组 ID', children: <Identifiers value={row.group_ids} /> }

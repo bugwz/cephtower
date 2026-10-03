@@ -74,6 +74,7 @@ var collectionFailureKinds = map[string][]string{
 	"collect.cephfs_schedule_status":  {"snapshot_schedule"},
 	"collect.rgw_user_ratelimit":      {"rgw_user"},
 	"collect.rgw_user_stats":          {"rgw_user"},
+	"collect.rgw_user_policies":       {"rgw_user"},
 	"collect.rgw_user_detail":         {"rgw_user"},
 	"collect.rgw_user":                {"rgw_user"},
 	"collect.rgw_account_stats":       {"rgw_account"},

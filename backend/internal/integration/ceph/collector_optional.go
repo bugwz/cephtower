@@ -402,6 +402,23 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 			}
 			if resource.kind == "rgw_user" {
 				details["uid"] = id
+				if textField(details, "account_id") != "" && textField(details, "type") != "root" {
+					var policies []string
+					if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_user_policies", []string{"user", "policy", "list", "attached", "--uid", id, "--format", "json"}, &policies) {
+						valid := policies != nil
+						for _, arn := range policies {
+							if arn == "" {
+								valid = false
+								break
+							}
+						}
+						if valid {
+							details["managed_user_policies"] = policies
+						} else {
+							markCollectionUnavailable(ctx, "collect.rgw_user_policies")
+						}
+					}
+				}
 				var limits map[string]any
 				if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_user_ratelimit", []string{"ratelimit", "get", "--uid", id, "--ratelimit-scope", "user", "--format", "json"}, &limits) {
 					if value, ok := limits["user_ratelimit"].(map[string]any); ok {

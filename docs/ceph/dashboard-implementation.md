@@ -5,6 +5,13 @@
 
 ## 如何追踪调用链
 
+RGW 账户下非 root 用户补充直接关联的托管策略 ARN 展示。对照 Dashboard RgwUser._get
+的账户/类型条件，执行 radosgw-admin user policy list attached --uid <uid> --format json；
+原生 show_policy_arns 输出字符串数组，成功结果存入 managed_user_policies 并经用户库存
+API 展示，空数组与命令失败/格式错误分离。此列表不是包含用户组、内联策略等在内的完整
+有效权限，也未在本项实现策略关联/解除操作。测试覆盖命令参数、账户范围与响应形状，
+未进行浏览器或真实集群验证。
+
 RGW 用户身份详情补充创建时间原文与用户标签表。来源为 user info 的 create_date / tags，
 其中 tags 由 ceph_json.h 的 multimap 编码为 key/val 数组，区别于角色标签 Key/Value；
 保留重复键、顺序及空字符串，未知或无效数据不显示为空列表。复用现有用户信息采集与

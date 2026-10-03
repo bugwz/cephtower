@@ -40,3 +40,6 @@ for (const value of [undefined, null, {}, [null], [{ Key: 'role', Value: 'wrong 
 assert.ok(components.includes('<RgwUserTagsTable value={row.tags} />'))
 assert.ok(components.includes("rgwIdentityText(row.create_date, '未提供时间')"))
 assert.equal(identity.rgwIdentityText('2026-10-03T12:34:56.123456789Z', '未提供时间'), '2026-10-03T12:34:56.123456789Z')
+assert.ok(components.includes('<Identifiers value={row.managed_user_policies} />'))
+assert.ok(components.includes("row.account_id === '' || row.type === 'root' ? '不适用'"))
+assert.deepEqual(identity.rgwIdentityList(['arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess']), ['arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'])
