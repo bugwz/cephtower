@@ -5,6 +5,13 @@
 
 ## 如何追踪调用链
 
+新增独立实时镜像调度面板，GET /rbd/mirroring/schedules 直接执行 rbd mirror snapshot
+schedule list --recursive --format json，不依赖存储池或镜像库存；因此无池库存时仍可
+查看全局配置。与采集器共用原生列表校验，返回受控字段、读取时间及 no-store。
+前端按集群隔离，显示所有范围及继承优先级，支持手动重读、空结果和历史结果错误提示。
+修改调度后需点击重读，不将旧结果宣称为实时状态。离线覆盖命令、API、解析和前端加载；
+未进行真实集群或浏览器验证。
+
 RBD 镜像同步页面新增独立的全局快照调度工具栏入口，支持添加、移除指定间隔/起始
 时间以及移除全部全局调度。POST /rbd/mirroring/global/schedule 使用高风险操作队列，
 禁止 pool/namespace/image 参数，按原生 Schedule.cc 的空 level_spec 执行不带范围

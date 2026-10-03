@@ -143,6 +143,10 @@ func (s *Service) ConfigurationOption(ctx context.Context, clusterID uint64, nam
 	return option, nil
 }
 func (s *Service) read(ctx context.Context, clusterID uint64, id string, args []string, out any) error {
+	return s.readBinary(ctx, clusterID, id, executor.BinaryCeph, args, out)
+}
+
+func (s *Service) readBinary(ctx context.Context, clusterID uint64, id string, binary executor.Binary, args []string, out any) error {
 	if clusterID == 0 {
 		return invalid("cluster_id is required")
 	}
@@ -150,7 +154,7 @@ func (s *Service) read(ctx context.Context, clusterID uint64, id string, args []
 	if err != nil {
 		return err
 	}
-	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: id, Binary: executor.BinaryCeph, Args: args, Timeout: 20 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: id, Binary: binary, Args: args, Timeout: 20 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 	if err != nil {
 		return &cephdomain.ActionError{Code: "ceph_command_failed", Message: security.Redact(err.Error()), Retryable: true}
 	}

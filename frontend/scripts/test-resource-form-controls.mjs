@@ -90,6 +90,21 @@ assert.equal(mirrorRows([{ pool: 'images', image: 'vm', items }]), undefined)
 assert.equal(mirrorRows([{ pool: 'images', namespace: '-', image: 'vm', items }]), undefined)
 for (const value of [null, {}, [null], [{}], [{ pool: 'images', namespace: '-', image: '-', items: null }], [{ pool: '-', namespace: 'team', image: '-', items }], [{ pool: 'images', namespace: '-', image: '-', items: [{}] }]]) assert.equal(mirrorRows(value), undefined)
 console.log('Mirror schedule scope display checks passed')
+const liveSource = readFileSync(new URL('../src/pages/block/LiveMirrorSchedules.tsx', import.meta.url), 'utf8')
+const liveTree = ts.createSourceFile('LiveMirrorSchedules.tsx', liveSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const liveFn = liveTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'LiveMirrorSchedules')
+const liveLoader = liveFn.body.statements.find((node) => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(liveTree) === 'loader').declarationList.declarations[0].initializer.arguments[0]
+const liveCode = ts.transpileModule(`const loader = ${liveLoader.getText(liveTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const loadLive = (payload) => new Function('request', 'jsonInit', 'mirrorScheduleRows', 'clusterId', `${liveCode}; return loader`)(async (path, init) => {
+  assert.equal(path, '/rbd/mirroring/schedules'); assert.deepEqual(init, { method: 'GET', body: { cluster_id: 9 } }); return payload
+}, (method, body) => ({ method, body }), mirrorRows, 9)()
+const liveData = { schedules: [{ pool: '-', namespace: '-', image: '-', items }], observed_at: '2026-10-03T00:00:00Z' }
+assert.deepEqual(await loadLive(liveData), liveData)
+assert.deepEqual((await loadLive({ ...liveData, schedules: [] })).schedules, [])
+for (const payload of [null, {}, { ...liveData, schedules: null }, { ...liveData, schedules: [duplicateScope, duplicateScope] }, { ...liveData, observed_at: null }]) await assert.rejects(loadLive(payload))
+assert.ok(blockSource.includes('<LiveMirrorSchedules key={selectedClusterId} clusterId={selectedClusterId} />'))
+assert.ok(liveSource.includes('下方为上次成功读取结果，不代表当前配置。'))
+console.log('Live mirror schedules preserve cluster scope, empty results and read failures')
 
 const imageScheduleDetails = mirrorExports.imageMirrorScheduleDetails
 for (const [origin, label] of [['cluster', '继承集群'], ['pool', '继承池'], ['namespace', '继承命名空间'], ['', '镜像专属']]) {

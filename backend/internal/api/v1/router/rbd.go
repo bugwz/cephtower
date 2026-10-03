@@ -29,6 +29,7 @@ func rbdRoutes(h *handler.Handler) []Route {
 		{"POST", "/rbd/group/member", h.UpdateRBDGroupMember},
 		{"POST", "/rbd/group/snapshot", h.CreateRBDGroupSnapshot},
 		{"GET", "/rbd/mirroring", h.GetRBDMirroring},
+		{"GET", "/rbd/mirroring/schedules", h.GetRBDMirrorSchedules},
 		{"PATCH", "/rbd/mirroring", h.UpdateRBDMirroring},
 		{"POST", "/rbd/mirroring/schedule", h.UpdateRBDMirroringSchedule},
 		{"POST", "/rbd/mirroring/global/schedule", h.UpdateRBDGlobalSchedule},

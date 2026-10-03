@@ -47,6 +47,37 @@ type rbdMirrorScheduleStatusWire struct {
 	} `json:"scheduled_images"`
 }
 
+// ParseRBDMirrorSchedules validates native recursive-list output and returns
+// only its typed schedule fields, for both live inspection and inventory use.
+func ParseRBDMirrorSchedules(data []byte) (json.RawMessage, error) {
+	var schedules []rbdMirrorScheduleWire
+	if err := json.Unmarshal(data, &schedules); err != nil {
+		return nil, err
+	}
+	if !validRBDMirrorSchedules(schedules) {
+		return nil, fmt.Errorf("invalid mirror schedules")
+	}
+	return json.Marshal(schedules)
+}
+
+func validRBDMirrorSchedules(schedules []rbdMirrorScheduleWire) bool {
+	if schedules == nil {
+		return false
+	}
+	seen := map[[3]string]bool{}
+	for _, schedule := range schedules {
+		if schedule.Pool == "" || schedule.Items == nil || !validRBDMirrorScheduleItems(schedule.Items) {
+			return false
+		}
+		scope := [3]string{schedule.Pool, schedule.Namespace, schedule.Image}
+		if seen[scope] {
+			return false
+		}
+		seen[scope] = true
+	}
+	return true
+}
+
 func (p *NativeProvider) attachRBDMirrorSnapshotSchedules(ctx context.Context, access ClusterAccess, rows []Observation) {
 	hasResources := false
 	for _, row := range rows {
@@ -65,19 +96,8 @@ func (p *NativeProvider) attachRBDMirrorSnapshotSchedules(ctx context.Context, a
 	var schedules []rbdMirrorScheduleWire
 	if !p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_mirror_schedule", []string{
 		"mirror", "snapshot", "schedule", "list", "--recursive", "--format", "json",
-	}, &schedules) || schedules == nil {
+	}, &schedules) || !validRBDMirrorSchedules(schedules) {
 		return
-	}
-	seenScopes := map[[3]string]bool{}
-	for _, schedule := range schedules {
-		if schedule.Pool == "" || !validRBDMirrorScheduleItems(schedule.Items) || schedule.Items == nil {
-			return
-		}
-		scope := [3]string{schedule.Pool, schedule.Namespace, schedule.Image}
-		if seenScopes[scope] {
-			return
-		}
-		seenScopes[scope] = true
 	}
 	for _, row := range rows {
 		if row.Kind != "rbd_mirroring" && row.Kind != "rbd_namespace" {

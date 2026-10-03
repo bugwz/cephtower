@@ -14,6 +14,7 @@ import (
 	"cephtower/backend/internal/integration/ceph/executor"
 	"cephtower/backend/internal/security"
 	clusterservice "cephtower/backend/internal/service/cluster"
+	"cephtower/backend/internal/service/clusterinspect"
 	mutationservice "cephtower/backend/internal/service/mutation"
 	operationservice "cephtower/backend/internal/service/operation"
 	"cephtower/backend/internal/store"
@@ -22,7 +23,7 @@ import (
 type globalScheduleRunner struct{}
 
 func (globalScheduleRunner) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
-	if spec.ID == "rbd_mirroring.global_schedule.post_check" {
+	if spec.ID == "rbd_mirroring.global_schedule.post_check" || spec.ID == "rbd.mirror.schedules" {
 		return executor.CommandResult{Stdout: []byte(`[{"pool":"-","namespace":"-","image":"-","items":[{"interval":"1h","start_time":""}]}]`)}, nil
 	}
 	return executor.CommandResult{}, nil
@@ -53,7 +54,13 @@ func TestGlobalMirrorScheduleAPI(t *testing.T) {
 	}
 	t.Cleanup(operations.Stop)
 	mux := http.NewServeMux()
-	Register(mux, handler.New(handler.Dependencies{Database: database, Clusters: clusters, Mutations: mutations, Operations: operations, AuthEnabled: func() bool { return false }}))
+	Register(mux, handler.New(handler.Dependencies{Database: database, Clusters: clusters, Inspection: clusterinspect.New(clusters, globalScheduleRunner{}), Mutations: mutations, Operations: operations, AuthEnabled: func() bool { return false }}))
+	query, _ := json.Marshal(map[string]any{"cluster_id": cluster.ID})
+	read := httptest.NewRecorder()
+	mux.ServeHTTP(read, httptest.NewRequest("GET", "/api/v1/rbd/mirroring/schedules", strings.NewReader(string(query))))
+	if read.Code != http.StatusOK || read.Header().Get("Cache-Control") != "no-store" || !strings.Contains(read.Body.String(), `"schedules":[{"pool":"-"`) {
+		t.Fatal(read.Code, read.Body.String())
+	}
 	body, _ := json.Marshal(map[string]any{"cluster_id": cluster.ID, "action": "mirror-schedule-add", "interval": "1h"})
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, httptest.NewRequest("POST", "/api/v1/rbd/mirroring/global/schedule", strings.NewReader(string(body))))

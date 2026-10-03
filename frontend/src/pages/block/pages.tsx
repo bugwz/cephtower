@@ -4,6 +4,8 @@ import { PoolPage } from './PoolPage'
 import { ImageMirrorSchedule, MirrorSchedules } from './MirrorSchedules'
 import { RbdRuntimeStatus } from './RbdRuntimeStatus'
 import { RbdConfiguration } from './RbdConfiguration'
+import { LiveMirrorSchedules } from './LiveMirrorSchedules'
+import { useClusterContext } from '../../state/ClusterContext'
 
 export function BlockPoolsPage() {
   return <PoolPage />
@@ -30,7 +32,8 @@ export function RbdGroupsPage() {
 }
 
 export function ImageMirroringPage() {
-  return <ResourceListPage definition={resourceDefinitions.imageMirroring} />
+  const { selectedClusterId } = useClusterContext()
+  return <><ResourceListPage definition={resourceDefinitions.imageMirroring} />{selectedClusterId && <LiveMirrorSchedules key={selectedClusterId} clusterId={selectedClusterId} />}</>
 }
 
 export function IscsiPage() {
