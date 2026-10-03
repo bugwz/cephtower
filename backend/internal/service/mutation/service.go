@@ -527,8 +527,20 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, err
 		}
 		serviceID := optional(p, "service_id")
-		if action == "service.update" && serviceID == "" {
-			serviceID = last(tail)
+		if action == "service.update" {
+			name := last(tail)
+			expectedID := ""
+			if name != serviceType {
+				prefix := serviceType + "."
+				if !strings.HasPrefix(name, prefix) || len(name) == len(prefix) {
+					return command{}, invalid("service type must match the update target")
+				}
+				expectedID = strings.TrimPrefix(name, prefix)
+			}
+			if _, supplied := p["service_id"]; supplied && serviceID != expectedID {
+				return command{}, invalid("service id must match the update target")
+			}
+			serviceID = expectedID
 		}
 		spec := map[string]any{"service_type": serviceType}
 		if serviceID != "" {

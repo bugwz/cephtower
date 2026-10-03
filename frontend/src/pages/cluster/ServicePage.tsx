@@ -252,10 +252,10 @@ export function ServicePage() {
       >
         <Form form={form} layout="vertical" onFinish={submitService}>
           <Form.Item name="service_type" label="服务类型" rules={[{ required: true, message: '请选择服务类型' }]}>
-            <Select options={serviceTypeOptions} />
+            <Select disabled={Boolean(editingService)} options={serviceTypeOptions} />
           </Form.Item>
           <Form.Item name="service_id" label="Service ID">
-            <Input />
+            <Input disabled={Boolean(editingService)} />
           </Form.Item>
           <Form.Item name="placement_json" label="Placement JSON">
             <Input.TextArea rows={5} spellCheck={false} placeholder='{"count":1,"host_pattern":"*"}' />
@@ -275,7 +275,9 @@ function serviceType(row: ApiRecord) {
 }
 
 function serviceId(row: ApiRecord) {
-  return textValue(row.service_id ?? row.id, '')
+  const name = serviceName(row)
+  const type = serviceType(row)
+  return name.startsWith(`${type}.`) ? name.slice(type.length + 1) : ''
 }
 
 function parsePlacement(value?: string): ApiRecord {
