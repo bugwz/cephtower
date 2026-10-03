@@ -415,6 +415,14 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 			return cephdomain.ActionResult{}, failure("invalid_request", err.Error(), false)
 		}
 		err = api.PutBucketConfiguration(ctx, bucket, kind, body)
+		if err == nil && kind == "encryption" {
+			actual, _, readErr := api.GetBucketConfiguration(ctx, bucket, kind)
+			wantedConfiguration, _ := s3.BucketEncryption(body)
+			actualConfiguration, parseErr := s3.BucketEncryption(actual)
+			if readErr != nil || parseErr != nil || wantedConfiguration != actualConfiguration {
+				return cephdomain.ActionResult{}, failure("post_check_failed", "bucket encryption was submitted but could not be verified; refresh before another change", false)
+			}
+		}
 		if err == nil && kind == "tagging" {
 			actual, _, readErr := api.GetBucketConfiguration(ctx, bucket, kind)
 			wantedTags, _ := s3.BucketTags(body)
