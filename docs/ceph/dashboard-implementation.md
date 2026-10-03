@@ -1254,6 +1254,10 @@ which could collapse multiple paths and schedules into one resource key.
 - Source fields follow `src/tools/rbd/action/Info.cc`; details retain striping,
   timestamps and other native attributes. Failed info reads mark image collection
   unavailable instead of treating missing details as authoritative.
+- The image flags column reads the existing `details.flags` from `rbd info` without
+  another command. It labels object-map and fast-diff invalid flags, preserves unknown
+  flags, and distinguishes an explicit empty list from unavailable data. As documented
+  by `DiskUsage.cc`, invalid fast-diff warns of slow usage collection, not zero usage.
 - Images with `fast-diff` additionally run `rbd du <spec> --format json`. The head
   row supplies current-image usage, while summing snapshot and head rows supplies
   total usage including snapshots, matching the two values shown by Dashboard.

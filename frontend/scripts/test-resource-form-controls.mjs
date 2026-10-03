@@ -34,6 +34,18 @@ assert.deepEqual(protection(false), { label: '未保护', color: 'blue' })
 for (const value of [undefined, null, 0, 1, 'false', 'true', {}, []]) assert.deepEqual(protection(value), { label: '保护状态未知', color: 'default' })
 console.log('Snapshot protection tags distinguish explicit booleans from unknown values')
 
+const flagsSource = readFileSync(new URL('../src/pages/block/RbdImageFlags.tsx', import.meta.url), 'utf8')
+const flagsTree = ts.createSourceFile('flags.tsx', flagsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const flagsNode = flagsTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'rbdImageFlags')
+const flagsCode = ts.transpileModule(flagsNode.getText(flagsTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const imageFlags = new Function(`${flagsCode}; return rbdImageFlags`)()
+assert.equal(imageFlags({ flags: [] })[0].label, '未报告异常标志')
+for (const details of [null, [], {}, { flags: null }, { flags: 'fast diff invalid' }, { flags: [null] }, { flags: [''] }, { flags: ['fast diff invalid', 1] }]) assert.equal(imageFlags(details)[0].label, '镜像标志未返回或无效')
+const nativeFlags = imageFlags({ flags: ['object map invalid', 'fast diff invalid', 'future flag'] })
+assert.deepEqual(nativeFlags.map((flag) => flag.label), ['object map invalid', 'fast diff invalid', 'future flag'])
+assert.deepEqual(nativeFlags.map((flag) => flag.color), ['orange', 'orange', 'default'])
+assert.ok(nativeFlags[1].explanation.includes('可能较慢'))
+
 const trashSource = readFileSync(new URL('../src/pages/block/RbdTrashStatus.tsx', import.meta.url), 'utf8')
 const trashTree = ts.createSourceFile('trash.tsx', trashSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const trashNode = trashTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'rbdTrashStatus')
@@ -99,6 +111,7 @@ for (const value of [undefined, null, 0, 4096, -1, 0.5, NaN, Infinity, Number.MA
 console.log('RBD usage distinguishes missing fast-diff, unavailable statistics and valid zero')
 
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')
+assert.ok(blockSource.includes('<RbdImageFlags details={row.details} />'))
 assert.ok(blockSource.includes("key: 'used_bytes', title: '占用（bytes）', render: (value, row) => rbdUsageText(value, row.image_features)"))
 assert.ok(blockSource.includes("key: 'image_created_at', title: '镜像创建时间（命令原值）'"))
 const resourceApiSource = readFileSync(new URL('../src/api/resource.ts', import.meta.url), 'utf8')

@@ -5,6 +5,7 @@ import { ImageMirrorSchedule, MirrorSchedules } from './MirrorSchedules'
 import { RbdRuntimeStatus } from './RbdRuntimeStatus'
 import { RbdConfiguration } from './RbdConfiguration'
 import { RbdParent } from './RbdParent'
+import { RbdImageFlags } from './RbdImageFlags'
 import { RbdSnapshotProtection } from './RbdSnapshotProtection'
 import { RbdTrashStatus, rbdTrashRestoreReason } from './RbdTrashStatus'
 import { RbdChildren, rbdSnapshotDeleteReason } from './RbdChildren'
@@ -226,6 +227,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'image_created_at', title: '镜像创建时间（命令原值）' },
       { key: 'format', title: '格式' },
       { key: 'features', title: '特性' },
+      { key: 'image_flags', title: '镜像标志（采集时）', ellipsis: false, render: (_value, row) => <RbdImageFlags details={row.details} /> },
       { key: 'data_pool', title: '数据池' },
       { key: 'block_name_prefix', title: '块名称前缀' },
       { key: 'order', title: '对象顺序' },
