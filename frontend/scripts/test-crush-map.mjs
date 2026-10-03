@@ -108,6 +108,17 @@ await assert.rejects(() => failedPages('/pools', 7), /second page unavailable/)
 assert.ok(poolSource.includes('压缩后大小与原始大小的比例上限'), 'compression ratio is an upper bound, not a minimum ratio')
 assert.ok(poolSource.includes('分配单元对齐和压缩头开销'), 'compression storage is also subject to native allocation constraints')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const poolRowNode = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'normalizePoolRow')
+const poolRowProperties = poolRowNode.body.statements.find((node) => ts.isReturnStatement(node)).expression.properties
+const pgDisplayProperty = poolRowProperties.find((node) => node.name?.getText(poolTree) === 'pg_status_display')
+const autoscaleDisplayProperty = poolRowProperties.find((node) => node.name?.getText(poolTree) === 'pg_autoscale_display')
+const pgDisplaysCode = ts.transpileModule(`const displays = { ${pgDisplayProperty.getText(poolTree)}, ${autoscaleDisplayProperty.getText(poolTree)} }`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const pgDisplays = new Function('row', 'poolPGStatus', 'pgAutoscale', `${pgDisplaysCode}; return displays`)({ pg_status: { 'active+clean': 3 } }, (value) => JSON.stringify(value), 'warn')
+assert.equal(pgDisplays.pg_status_display, '{"active+clean":3}')
+assert.equal(pgDisplays.pg_autoscale_display, 'warn')
+assert.ok(poolSource.includes("{ key: 'pg_status_display', title: 'PG 状态', filterKey: false }"))
+assert.ok(poolSource.includes("{ key: 'pg_autoscale_display', title: 'PG 自动伸缩', filterKey: 'pg_autoscale_mode' }"))
+console.log('Pool PG state display and autoscale filtering use separate columns')
 const techniqueFunctions = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['erasureCodeTechniqueOptions', 'clayTechniqueForScalar'].includes(node.name.text))
 const techniqueCode = ts.transpileModule(techniqueFunctions.map((node) => node.getText(poolTree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const techniques = new Function(`${techniqueCode}; return { options: erasureCodeTechniqueOptions, change: clayTechniqueForScalar }`)()
