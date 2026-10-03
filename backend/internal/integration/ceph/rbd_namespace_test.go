@@ -330,6 +330,43 @@ func TestSnapshotMirroringStillReadsUserSnapshotChildren(t *testing.T) {
 	}
 }
 
+func TestTrashCollectionIncludesAllSourcesInEachNamespace(t *testing.T) {
+	var calls []executor.CommandSpec
+	provider := NativeProvider{Executor: recordingExecutor{base: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+		"collect.rbd_namespace":    []byte(`[{"name":"team"}]`),
+		"collect.rbd_image_detail": []byte(`[]`),
+		"collect.rbd_trash":        []byte(`[{"id":"a","name":"user","source":"USER"},{"id":"b","name":"parent","source":"USER_PARENT"},{"id":"c","name":"mirror","source":"MIRRORING"},{"id":"d","name":"migration","source":"MIGRATION"},{"id":"e","name":"removing","source":"REMOVING"}]`),
+	}}, calls: &calls}}
+	rows := provider.collectStorageOptional(context.Background(), ClusterAccess{}, []poolWire{{PoolName: "pool"}}, fsDumpWire{}, time.Now())
+	counts := map[string]int{}
+	for _, row := range rows {
+		if row.Kind != "rbd_trash" {
+			continue
+		}
+		payload := row.Payload.(map[string]any)
+		counts[payload["trash_source"].(string)]++
+	}
+	for _, source := range []string{"USER", "USER_PARENT", "MIRRORING", "MIGRATION", "REMOVING"} {
+		if counts[source] != 2 {
+			t.Fatalf("missing source %s: %v", source, counts)
+		}
+	}
+	commands := map[string]bool{}
+	for _, call := range calls {
+		if call.ID == "collect.rbd_trash" {
+			if call.Mutating || call.Binary != executor.BinaryRBD {
+				t.Fatal(call)
+			}
+			commands[strings.Join(call.Args, " ")] = true
+		}
+	}
+	for _, args := range []string{"trash ls --all --long --pool pool --format json", "trash ls --all --long --pool pool --format json --namespace team"} {
+		if !commands[args] {
+			t.Fatalf("missing complete source query %s: %v", args, commands)
+		}
+	}
+}
+
 func TestRBDImageInfoDefaultsToDisabledMirroring(t *testing.T) {
 	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rbd_image_info": []byte(`{"name":"image","features":[]}`),

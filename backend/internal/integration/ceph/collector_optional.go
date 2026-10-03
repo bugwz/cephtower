@@ -101,7 +101,7 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 		}
 		for _, namespace := range append([]string{""}, namespaces...) {
 			scope := pool.PoolName
-			args := []string{"trash", "ls", "--long", "--pool", pool.PoolName, "--format", "json"}
+			args := []string{"trash", "ls", "--all", "--long", "--pool", pool.PoolName, "--format", "json"}
 			if namespace != "" {
 				scope += "/" + namespace
 				args = append(args, "--namespace", namespace)
