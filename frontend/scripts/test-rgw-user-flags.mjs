@@ -30,3 +30,13 @@ assert.ok(components.includes('<Identifiers value={row.placement_tags} />'))
 assert.equal(identity.rgwIdentityText('', '未显式设置'), '未显式设置')
 assert.equal(identity.rgwIdentityText('custom-archive', '未显式设置'), 'custom-archive')
 assert.deepEqual(identity.rgwIdentityList(['placement,tag', 'cold']), ['placement,tag', 'cold'])
+const tags = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserTags.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(tags)
+assert.deepEqual(tags.rgwUserTags([]), [])
+assert.deepEqual(tags.rgwUserTags([{ key: 'team', val: 'one' }, { key: 'team', val: '' }, { key: '', val: '<tag>' }]), [
+  { id: 0, key: 'team', value: 'one' }, { id: 1, key: 'team', value: '' }, { id: 2, key: '', value: '<tag>' }
+])
+for (const value of [undefined, null, {}, [null], [{ Key: 'role', Value: 'wrong schema' }], [{ key: 'a', val: 0 }]]) assert.equal(tags.rgwUserTags(value), undefined)
+assert.ok(components.includes('<RgwUserTagsTable value={row.tags} />'))
+assert.ok(components.includes("rgwIdentityText(row.create_date, '未提供时间')"))
+assert.equal(identity.rgwIdentityText('2026-10-03T12:34:56.123456789Z', '未提供时间'), '2026-10-03T12:34:56.123456789Z')

@@ -1,6 +1,7 @@
 import { Descriptions } from 'antd'
 import type { ApiRecord } from '../../api/client'
 import { rgwIdentityList, rgwIdentityText } from './rgwUserIdentity'
+import { RgwUserTagsTable } from './RgwUserTagsTable'
 
 function Identifiers({ value }: { value: unknown }) {
   const ids = rgwIdentityList(value)
@@ -15,6 +16,8 @@ export function RgwUserIdentityDetails({ row }: { row: ApiRecord }) {
     { key: 'account', label: '账户 ID', children: rgwIdentityText(row.account_id, '未关联账户') },
     { key: 'type', label: '用户类型（命令原值）', children: rgwIdentityText(row.type, '空类型') },
     { key: 'path', label: '用户路径', children: rgwIdentityText(row.path, '空路径') },
+    { key: 'created', label: '创建时间（命令原值）', children: rgwIdentityText(row.create_date, '未提供时间') },
+    { key: 'tags', label: '用户标签', children: <RgwUserTagsTable value={row.tags} /> },
     { key: 'mask', label: '操作掩码（命令原值）', children: rgwIdentityText(row.op_mask, '空操作掩码') },
     { key: 'mfa', label: 'MFA 标识', children: <Identifiers value={row.mfa_ids} /> },
     { key: 'groups', label: '用户组 ID', children: <Identifiers value={row.group_ids} /> }
