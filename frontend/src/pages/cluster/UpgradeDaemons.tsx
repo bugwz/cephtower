@@ -6,9 +6,10 @@ import { DataTable } from '../../components/DataTable'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 
 export function upgradeDaemonRows(items: ApiRecord[], search: string) {
+  const types = new Set(['mgr', 'mon', 'crash', 'osd', 'mds', 'rgw', 'rbd-mirror', 'cephfs-mirror', 'iscsi', 'nfs'])
   const text = (value: unknown) => typeof value === 'string' && value.trim() ? value : '未知'
   const query = search.trim().toLowerCase()
-  return items.map((item) => ({
+  return items.filter((item) => typeof item.type === 'string' && types.has(item.type)).map((item) => ({
     natural_key: item.natural_key,
     name: text(item.name), hostname: text(item.hostname), version: text(item.version),
     image: text(item.container_image), freshness: item.stale === true ? '已过期' : item.stale === false ? '有效' : '未知'
@@ -33,6 +34,7 @@ export function UpgradeDaemons({ clusterId, revision }: { clusterId: number; rev
     <Space direction="vertical" style={{ width: '100%' }}>
       {error && <Alert type="error" message={error} />}
       {data && <>
+        <Alert type="info" message="仅展示 Dashboard 升级范围内的 mgr、mon、crash、osd、mds、rgw、rbd-mirror、cephfs-mirror、iscsi、nfs。其他类型及缺少类型的库存不纳入此版本表；可在服务页检查全部守护进程。" />
         <ResourceMetaBar observedAt={data.observedAt} stale={data.stale} staleReason={data.staleReason} />
         {data.stale && <Alert type="warning" message="守护进程库存已过期，请重新采集后判断版本状态。" />}
         <Input.Search aria-label="搜索守护进程版本" placeholder="按名称、主机或版本搜索" value={search} onChange={(event) => setSearch(event.target.value)} allowClear />
