@@ -6,6 +6,22 @@ export interface MirrorScheduleRow {
   startTime: string
 }
 
+export function imageMirrorScheduleDetails(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const info = value as Record<string, unknown>
+  if (typeof info.name !== 'string' || !Array.isArray(info.schedule_interval) || !info.schedule_interval.length) return undefined
+  const origins = new Map([['cluster', '继承集群'], ['pool', '继承池'], ['namespace', '继承命名空间'], ['', '镜像专属']])
+  const origin = info.inherited_from == null ? '' : info.inherited_from
+  if (typeof origin !== 'string' || !origins.has(origin)) return undefined
+  if (info.schedule_time != null && typeof info.schedule_time !== 'string') return undefined
+  const intervals: { key: string; interval: string; startTime: string }[] = []
+  for (const [index, item] of info.schedule_interval.entries()) {
+    if (!item || typeof item !== 'object' || typeof item.interval !== 'string' || !/^[1-9][0-9]*[mhd]$/.test(item.interval) || (item.start_time != null && typeof item.start_time !== 'string')) return undefined
+    intervals.push({ key: String(index), interval: item.interval, startTime: item.start_time || '未指定' })
+  }
+  return { origin: origins.get(origin)!, target: origin === 'cluster' ? '集群' : info.name || '未返回', nextRun: info.schedule_time || '未返回下次运行时间', intervals }
+}
+
 export function mirrorScheduleRows(value: unknown): MirrorScheduleRow[] | undefined {
   if (!Array.isArray(value)) return undefined
   const rows: MirrorScheduleRow[] = []

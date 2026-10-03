@@ -1,7 +1,7 @@
 import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceListPage'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { PoolPage } from './PoolPage'
-import { MirrorSchedules } from './MirrorSchedules'
+import { ImageMirrorSchedule, MirrorSchedules } from './MirrorSchedules'
 
 export function BlockPoolsPage() {
   return <PoolPage />
@@ -225,7 +225,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'mirror_mode', title: '同步模式' },
       { key: 'mirror_state', title: '同步状态' },
       { key: 'primary', title: '同步角色', render:(value)=>value === true ? '主镜像' : value === false ? '从镜像' : '—' },
-      { key: 'schedule_info', title: '下次同步快照', render:(value)=>typeof value === 'object' && value !== null && !Array.isArray(value) ? String((value as Record<string,unknown>).schedule_time ?? '—') : '—' },
+      { key: 'schedule_info', title: '匹配的同步快照调度', ellipsis: false, render:(value)=><ImageMirrorSchedule value={value} /> },
       { key: 'status', title: '状态' },
       { key: 'resource_version', title: '版本' }
     ]

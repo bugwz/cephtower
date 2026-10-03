@@ -69,6 +69,20 @@ assert.deepEqual(mirrorRows([]), [])
 for (const value of [null, {}, [null], [{}], [{ pool: 'images', namespace: '-', image: '-', items: null }], [{ pool: '-', namespace: 'team', image: '-', items }], [{ pool: 'images', namespace: '-', image: '-', items: [{}] }]]) assert.equal(mirrorRows(value), undefined)
 console.log('Mirror schedule scope display checks passed')
 
+const imageScheduleDetails = mirrorExports.imageMirrorScheduleDetails
+for (const [origin, label] of [['cluster', '继承集群'], ['pool', '继承池'], ['namespace', '继承命名空间'], ['', '镜像专属']]) {
+  const details = imageScheduleDetails({ name: origin === 'cluster' ? '' : 'images/team/vm', inherited_from: origin, schedule_time: '2026-10-03 12:30:00', schedule_interval: items })
+  assert.equal(details.origin, label)
+  assert.equal(details.target, origin === 'cluster' ? '集群' : 'images/team/vm')
+  assert.equal(details.nextRun, '2026-10-03 12:30:00')
+  assert.equal(details.intervals[0].startTime, '01:00:00+08:00')
+  assert.equal(details.intervals[1].startTime, '未指定')
+}
+assert.equal(imageScheduleDetails({ name: 'images/vm', schedule_interval: items }).origin, '镜像专属')
+assert.equal(imageScheduleDetails({ name: 'images/vm', schedule_interval: items }).nextRun, '未返回下次运行时间')
+for (const value of [null, [], {}, { name: 'images/vm', schedule_interval: [] }, { name: 'images/vm', inherited_from: 'constructor', schedule_interval: items }, { name: 'images/vm', schedule_interval: [{}] }, { name: 'images/vm', schedule_time: 123, schedule_interval: items }]) assert.equal(imageScheduleDetails(value), undefined)
+console.log('Image mirror schedule inheritance display checks passed')
+
 let namespaceScheduleNode
 function findNamespaceSchedule(node) {
   if (ts.isObjectLiteralExpression(node) && node.properties.some((property) => ts.isPropertyAssignment(property) && property.name.getText(blockTree) === 'path' && property.initializer.getText(blockTree) === "'/rbd/namespace/schedule'")) namespaceScheduleNode = node
