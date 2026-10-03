@@ -1496,6 +1496,32 @@ func TestRGWUserSuspensionUsesNativeSubcommand(t *testing.T) {
 	}
 }
 
+func TestRGWUserCreateBucketLimitBounds(t *testing.T) {
+	request := Request{Action: "rgw_user.create"}
+	for _, value := range []any{nil, "", true, false, json.Number("-2"), 0.5, json.Number("2147483648")} {
+		if _, err := build(request, map[string]any{"uid": "user-a", "display_name": "User A", "max_buckets": value}); err == nil {
+			t.Fatalf("accepted invalid create limit %#v", value)
+		}
+	}
+	for _, value := range []int64{-1, 0, 1, 2147483647} {
+		cmd, err := build(request, map[string]any{"uid": "user-a", "display_name": "User A", "max_buckets": json.Number(strconv.FormatInt(value, 10))})
+		if err != nil {
+			t.Fatal(err)
+		}
+		index := slices.Index(cmd.args, "--max-buckets")
+		if index < 0 || index+1 >= len(cmd.args) || cmd.args[index+1] != strconv.FormatInt(value, 10) {
+			t.Fatalf("args=%v", cmd.args)
+		}
+	}
+	cmd, err := build(request, map[string]any{"uid": "user-a", "display_name": "User A"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if slices.Contains(cmd.args, "--max-buckets") {
+		t.Fatalf("omitted create limit was written: %v", cmd.args)
+	}
+}
+
 func TestRGWUserUpdateBucketLimitBounds(t *testing.T) {
 	request := Request{Action: "rgw_user.update", ResourceKey: "rgw/user/user-a"}
 	for _, value := range []any{nil, "", true, json.Number("-2"), 0.5, json.Number("2147483648"), json.Number("9223372036854775807")} {

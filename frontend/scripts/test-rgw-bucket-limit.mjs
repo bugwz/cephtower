@@ -31,6 +31,7 @@ assert.equal(pages.match(/-1 禁止创建，0 无限制/g).length, 3)
 assert.equal(pages.match(/\.\.\.rgwBucketLimitInput\(values.max_buckets\)/g).length, 1)
 assert.ok(pages.includes('...rgwBucketLimitPatch(values.max_buckets, row?.max_buckets)'))
 assert.ok(!pages.includes('values.max_buckets !== undefined ?'))
+assert.ok(pages.includes("type:'number',min:-1,max:2147483647"))
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 let updateBody
 function visit(node) {

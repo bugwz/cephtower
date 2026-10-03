@@ -118,7 +118,7 @@ const definitions: Record<
         { name: 'uid', label: 'UID', required: true },
         { name: 'display_name', label: '显示名', required:true },
         { name: 'email', label: '邮箱' },
-        { name:'max_buckets',label:'最大 Bucket 数（-1 禁止创建，0 无限制）',type:'number',min:-1 }
+        { name:'max_buckets',label:'最大 Bucket 数（-1 禁止创建，0 无限制）',type:'number',min:-1,max:2147483647 }
       ],
       buildBody: (values, clusterId) => ({
         cluster_id: clusterId,

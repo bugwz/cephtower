@@ -1825,12 +1825,12 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("display_name is required")
 		}
 		args := []string{"user", "create", "--uid", uid}
-		if maximum := optional(p, "max_buckets"); maximum != "" {
-			limit, err := strconv.ParseInt(maximum, 10, 32)
+		if _, exists := p["max_buckets"]; exists {
+			limit, err := strconv.ParseInt(optional(p, "max_buckets"), 10, 32)
 			if err != nil || limit < -1 {
 				return command{}, invalid("max_buckets must be -1 or a nonnegative integer")
 			}
-			args = append(args, "--max-buckets", maximum)
+			args = append(args, "--max-buckets", strconv.FormatInt(limit, 10))
 		}
 		for field, flag := range map[string]string{"display_name": "--display-name", "email": "--email"} {
 			if value := rawText(p, field); value != "" {
