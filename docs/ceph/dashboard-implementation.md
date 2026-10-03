@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+生命周期 Filter 增加结构校验，依据 `LCFilter_S3::decode_xml` 选择单层 And 或直接条件的行为，保留空过滤器、Prefix/Tag 直接组合、多 Tag、对象大小条件和 ArchiveZone 扩展。拒绝 And 与外部条件混用（原生会忽略外部字段）、重复标量、未知节点、标量嵌套及 Tag 的重复 Key/Value；ArchiveZone 非空文本被拒绝，避免误把 false 当作关闭。测试覆盖上述合法结构与错误路径，完整后端测试及 OpenAPI 校验通过。对象大小的数值语义与上下界关系、标签具体语义及跨规则约束仍需后续补齐；本次无前端修改，未重跑前端测试，无真实集群验证。
+
 生命周期五类动作新增内部字段结构校验，依据 `rgw_lc_s3.cc` 的 Expiration/Transition/Noncurrent/Multipart 解码逻辑：过期的 Days/Date/ExpiredObjectDeleteMarker 三选一，转换 Days/Date 二选一且需 StorageClass，非当前版本动作需 NoncurrentDays，终止分段上传需 DaysAfterInitiation。拒绝未知、重复及非标量子字段，支持 NewerNoncurrentVersions 和自定义存储类别名称。测试覆盖合法变体、必填缺失、互斥冲突与非法嵌套；完整后端测试及 OpenAPI 校验通过。本次无前端修改，未重跑前端测试，无真实集群验证。数值/日期、过滤器和跨规则约束仍待完善，尚未增加结构化生命周期界面或写后核验。
 
 生命周期 XML 写入补齐规则外层校验，依据 `rgw_lc_s3.cc::LCRule_S3::decode_xml`：配置需有 Rule，规则需有精确 Enabled/Disabled 状态、Filter 或 Prefix，以及至少一种过期/转换动作。拒绝空动作节点、未知顶层字段、重复单值字段和同时出现 Filter/Prefix 导致的静默忽略；保留五类原生动作与多条 Transition/NoncurrentVersionTransition，不限制为仅 Expiration。测试修正原先不符合原生要求的空配置及无 Filter 样例，覆盖原生动作组合和非法配置零网络请求；完整后端测试及 OpenAPI 校验通过。本次无前端改动，未重跑前端测试，无真实集群验证。嵌套过滤器、日期/天数和跨规则约束仍由 RGW 校验，结构化展示、编辑器和写后核验尚未完成。

@@ -2,6 +2,22 @@ package s3
 
 import "testing"
 
+func TestLifecycleFilterStructure(t *testing.T) {
+	wrap := func(filter string) []byte {
+		return []byte("<LifecycleConfiguration><Rule><Status>Enabled</Status><Filter>" + filter + "</Filter><Expiration><Days>30</Days></Expiration></Rule></LifecycleConfiguration>")
+	}
+	for _, filter := range []string{"", "<And/>", "<Prefix>p/</Prefix><Tag><Key>a</Key><Value>b</Value></Tag>", "<And><Prefix/><Tag/><Tag><Key>a</Key></Tag><ArchiveZone/><ObjectSizeGreaterThan>0</ObjectSizeGreaterThan><ObjectSizeLessThan>100</ObjectSizeLessThan></And>"} {
+		if err := ValidateBucketConfiguration("lifecycle", wrap(filter)); err != nil {
+			t.Fatalf("%s: %v", filter, err)
+		}
+	}
+	for _, filter := range []string{"<And/><Prefix/>", "<And/><And/>", "<And><And/></And>", "<Prefix/><Prefix/>", "<Unknown/>", "<Prefix><Nested/></Prefix>", "<ArchiveZone>false</ArchiveZone>", "<Tag><Key>a</Key><Key>b</Key></Tag>", "<Tag><Value><Nested/></Value></Tag>", "<Tag>text</Tag>", "<Tag><Unknown/></Tag>", "<ObjectSizeGreaterThan>0</ObjectSizeGreaterThan><ObjectSizeGreaterThan>1</ObjectSizeGreaterThan>"} {
+		if err := ValidateBucketConfiguration("lifecycle", wrap(filter)); err == nil {
+			t.Fatalf("accepted %s", filter)
+		}
+	}
+}
+
 func TestLifecycleActionStructure(t *testing.T) {
 	wrap := func(action string) []byte {
 		return []byte("<LifecycleConfiguration><Rule><Status>Enabled</Status><Filter/>" + action + "</Rule></LifecycleConfiguration>")

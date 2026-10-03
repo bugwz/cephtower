@@ -48,6 +48,9 @@ func validateBucketLifecycle(body []byte) error {
 				if strings.TrimSpace(field.Text) != "" {
 					return invalid
 				}
+				if err := validateLifecycleFilter(field); err != nil {
+					return err
+				}
 			case "Expiration", "NoncurrentVersionExpiration", "AbortIncompleteMultipartUpload", "Transition", "NoncurrentVersionTransition":
 				if strings.TrimSpace(field.Text) != "" || len(field.Children) == 0 {
 					return invalid
@@ -64,6 +67,49 @@ func validateBucketLifecycle(body []byte) error {
 			}
 		}
 		if counts["Status"] != 1 || counts["Filter"]+counts["Prefix"] != 1 || actions == 0 {
+			return invalid
+		}
+	}
+	return nil
+}
+
+func validateLifecycleFilter(filter lifecycleField) error {
+	invalid := fmt.Errorf("invalid lifecycle Filter: use scalar conditions and Tag entries, optionally inside one exclusive And element")
+	children := filter.Children
+	for _, child := range children {
+		if child.XMLName.Local == "And" {
+			if len(children) != 1 || strings.TrimSpace(child.Text) != "" {
+				return invalid
+			}
+			children = child.Children
+			break
+		}
+	}
+	counts := map[string]int{}
+	for _, child := range children {
+		name := child.XMLName.Local
+		counts[name]++
+		switch name {
+		case "Prefix", "ObjectSizeGreaterThan", "ObjectSizeLessThan", "ArchiveZone":
+			if len(child.Children) > 0 || counts[name] > 1 {
+				return invalid
+			}
+			if name == "ArchiveZone" && strings.TrimSpace(child.Text) != "" {
+				return invalid
+			}
+		case "Tag":
+			if strings.TrimSpace(child.Text) != "" {
+				return invalid
+			}
+			fields := map[string]bool{}
+			for _, field := range child.Children {
+				key := field.XMLName.Local
+				if (key != "Key" && key != "Value") || fields[key] || len(field.Children) > 0 {
+					return invalid
+				}
+				fields[key] = true
+			}
+		default:
 			return invalid
 		}
 	}
