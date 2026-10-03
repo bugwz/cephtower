@@ -5,6 +5,12 @@
 
 ## 如何追踪调用链
 
+RBD 父镜像展示沿用 rbd info <image-spec> --format json → RBDImage.Parent →
+镜像库存 API 链路，按原生 Info.cc 的 pool/pool_namespace/image/snapshot 组合父快照
+路径，并显示 id 和 trash。对照参考 rbd-details.component.html 的父镜像展示；
+命名空间缺失不推断为默认命名空间，trash 缺失不推断为 false，原始 details 仍保留。
+前端离线测试覆盖命名空间、回收站状态、缺失字段及名称空白，未做真实集群或浏览器验证。
+
 镜像同步页面新增独立待执行任务面板：GET /rbd/mirroring/schedule/status →
 rbd mirror snapshot schedule status --format json。依据参考 Dashboard services/rbd.py
 中的 snapshot_schedule_status / get_schedule_time_for_image 及原生

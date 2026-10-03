@@ -4,6 +4,7 @@ import { PoolPage } from './PoolPage'
 import { ImageMirrorSchedule, MirrorSchedules } from './MirrorSchedules'
 import { RbdRuntimeStatus } from './RbdRuntimeStatus'
 import { RbdConfiguration } from './RbdConfiguration'
+import { RbdParent } from './RbdParent'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
 import { LiveMirrorScheduleStatus } from './LiveMirrorScheduleStatus'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -226,7 +227,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'order', title: '对象顺序' },
       { key: 'stripe_unit_bytes', title: '条带单元（bytes）' },
       { key: 'stripe_count', title: '条带数量' },
-      { key: 'parent', title: '父镜像' },
+      { key: 'parent', title: '父镜像', ellipsis: false, render: (value) => <RbdParent value={value} /> },
       { key: 'details', title: '镜像详情' },
       { key: 'runtime_status', title: '连接客户端 / 迁移 / 缓存状态', render: (value, row) => <RbdRuntimeStatus key={String(row.cluster_id ?? '') + ':' + imageSpec(row)} value={value} name={imageSpec(row)} /> },
       { key: 'configuration', title: '生效配置及来源', render: (value, row) => <RbdConfiguration key={String(row.cluster_id ?? '') + ':' + imageSpec(row)} value={value} name={imageSpec(row)} /> },

@@ -24,6 +24,21 @@ for (const multiple of [false, true]) {
 }
 console.log('Resource form select clearing checks passed')
 
+const parentSource = readFileSync(new URL('../src/pages/block/RbdParent.tsx', import.meta.url), 'utf8')
+const parentTree = ts.createSourceFile('parent.tsx', parentSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const parentNode = parentTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'rbdParentDetails')
+const parentCode = ts.transpileModule(parentNode.getText(parentTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const parentDetails = new Function(`${parentCode}; return rbdParentDetails`)()
+const parent = { pool: 'images', pool_namespace: 'team', image: 'base', snapshot: 'v1', id: 'abc', trash: false }
+assert.deepEqual(parentDetails(parent), { path: 'images/team/base@v1', id: 'abc', trash: '不在回收站' })
+assert.equal(parentDetails({ ...parent, pool_namespace: '', trash: true }).path, 'images/base@v1')
+assert.equal(parentDetails({ ...parent, trash: true }).trash, '位于回收站')
+assert.equal(parentDetails({ pool: 'p', pool_namespace: '', image: 'i', snapshot: 's' }).trash, '未返回')
+assert.equal(parentDetails({ ...parent, trash: 'false' }).trash, '未返回')
+assert.equal(parentDetails({ ...parent, image: ' base ' }).path, 'images/team/ base @v1')
+for (const value of [null, [], {}, { ...parent, snapshot: null }, { ...parent, pool_namespace: undefined }, { ...parent, pool_namespace: 1 }]) assert.equal(parentDetails(value), undefined)
+console.log('Native RBD parent paths preserve namespace and explicit trash state')
+
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')
 const blockTree = ts.createSourceFile('pages.tsx', blockSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 let scheduleNode
