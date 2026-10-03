@@ -70,7 +70,7 @@ func TestBucketRequestsPreserveFullInventoryIdentity(t *testing.T) {
 		for _, tc := range []struct{ action, method, kind, document string }{
 			{"rgw_bucket_policy.update", "PUT", "policy", "{}"},
 			{"rgw_bucket_policy.update", "PUT", "cors", "<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin></CORSRule></CORSConfiguration>"},
-			{"rgw_bucket_policy.update", "PUT", "lifecycle", "<LifecycleConfiguration/>"},
+			{"rgw_bucket_policy.update", "PUT", "lifecycle", "<LifecycleConfiguration><Rule><Status>Enabled</Status><Filter/><Expiration><Days>30</Days></Expiration></Rule></LifecycleConfiguration>"},
 			{"rgw_bucket_policy.update", "PUT", "encryption", "<ServerSideEncryptionConfiguration/>"},
 			{"rgw_bucket.update", "PUT", "versioning", ""},
 			{"rgw_bucket.delete", "DELETE", "", ""},

@@ -66,6 +66,9 @@ func ValidateBucketConfiguration(kind string, body []byte) error {
 	if kind == "cors" {
 		return validateBucketCORS(body)
 	}
+	if kind == "lifecycle" {
+		return validateBucketLifecycle(body)
+	}
 	if kind == "encryption" {
 		_, err := parseBucketEncryption(body)
 		return err
