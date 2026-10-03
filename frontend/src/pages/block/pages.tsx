@@ -10,6 +10,7 @@ import { RbdSnapshotProtection } from './RbdSnapshotProtection'
 import { RbdTrashStatus, rbdTrashRestoreReason } from './RbdTrashStatus'
 import { RbdChildren, rbdSnapshotDeleteReason } from './RbdChildren'
 import { rbdUsageText } from './rbdUsage'
+import { rbdSnapshotLimitText } from './rbdSnapshotLimit'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
 import { LiveMirrorScheduleStatus } from './LiveMirrorScheduleStatus'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -223,6 +224,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'used_bytes', title: '当前占用（bytes）', render: (value, row) => rbdUsageText(value, row.features) },
       { key: 'total_used_bytes', title: '含快照总占用（bytes）', render: (value, row) => rbdUsageText(value, row.features) },
       { key: 'object_count', title: '对象数' },
+      { key: 'snapshot_limit', title: '快照数量上限', render: (value) => rbdSnapshotLimitText(value) },
       { key: 'object_size_bytes', title: '对象大小（bytes）' },
       { key: 'image_created_at', title: '镜像创建时间（命令原值）' },
       { key: 'format', title: '格式' },

@@ -113,6 +113,7 @@ type RBDImage struct {
 	SizeBytes      *uint64                    `json:"size_bytes"`
 	UsedBytes      *uint64                    `json:"used_bytes,omitempty,string"`
 	TotalUsedBytes *uint64                    `json:"total_used_bytes,omitempty,string"`
+	SnapshotLimit  *uint64                    `json:"snapshot_limit,omitempty,string"`
 	ObjectCount    *uint64                    `json:"object_count,omitempty"`
 	ObjectSize     *uint64                    `json:"object_size_bytes,omitempty"`
 	StripeUnit     *uint64                    `json:"stripe_unit_bytes,omitempty"`

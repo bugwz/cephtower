@@ -13,6 +13,36 @@ import (
 	"time"
 )
 
+func TestRBDImageSnapshotLimit(t *testing.T) {
+	for _, value := range []string{"0", "1", "9007199254740993", "18446744073709551614", "18446744073709551615", "18446744073709551616", "null", "-1", "1.5", `"1"`} {
+		t.Run(value, func(t *testing.T) {
+			provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+				"collect.rbd_image_info": []byte(`{"features":[],"snapshot_limit":` + value + `}`),
+			}}}
+			image := cephdomain.RBDImage{ImagePath: "pool/image"}
+			provider.enrichRBDImage(context.Background(), ClusterAccess{}, image.ImagePath, &image)
+			encoded, err := json.Marshal(image)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var payload map[string]json.RawMessage
+			if err := json.Unmarshal(encoded, &payload); err != nil {
+				t.Fatal(err)
+			}
+			switch value {
+			case "0", "1", "9007199254740993", "18446744073709551614":
+				if string(payload["snapshot_limit"]) != `"`+value+`"` {
+					t.Fatalf("limit precision lost: %s", encoded)
+				}
+			default:
+				if _, ok := payload["snapshot_limit"]; ok {
+					t.Fatalf("invalid finite limit published: %s", encoded)
+				}
+			}
+		})
+	}
+}
+
 func TestSnapshotUsagePrecisionAndAvailability(t *testing.T) {
 	for _, tc := range []struct{ features, usage, want string }{
 		{`["fast-diff"]`, `0`, "0"},

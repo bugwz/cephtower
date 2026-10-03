@@ -710,6 +710,11 @@ func (p *NativeProvider) enrichRBDImage(ctx context.Context, access ClusterAcces
 		image.SizeBytes = size
 	}
 	image.ObjectCount = firstUintPointer(info, "objects")
+	if rawLimit, ok := info["snapshot_limit"].(json.Number); ok {
+		if limit, err := strconv.ParseUint(rawLimit.String(), 10, 64); err == nil && limit < ^uint64(0) {
+			image.SnapshotLimit = &limit
+		}
+	}
 	image.ObjectSize = firstUintPointer(info, "object_size")
 	image.StripeUnit = firstUintPointer(info, "stripe_unit")
 	image.StripeCount = firstUintPointer(info, "stripe_count")

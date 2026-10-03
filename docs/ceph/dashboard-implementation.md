@@ -1258,6 +1258,9 @@ which could collapse multiple paths and schedules into one resource key.
   another command. It labels object-map and fast-diff invalid flags, preserves unknown
   flags, and distinguishes an explicit empty list from unavailable data. As documented
   by `DiskUsage.cc`, invalid fast-diff warns of slow usage collection, not zero usage.
+- Snapshot limits use the same `rbd info` response and expose finite uint64 values as
+  decimal strings. `Info.cc` omits the field for UINT64_MAX (unlimited); the UI explains
+  that omission without interpreting unavailable information as proven unlimited.
 - Images with `fast-diff` additionally run `rbd du <spec> --format json`. The head
   row supplies current-image usage, while summing snapshot and head rows supplies
   total usage including snapshots, matching the two values shown by Dashboard.

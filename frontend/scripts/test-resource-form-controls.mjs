@@ -101,6 +101,10 @@ for (const children of [undefined, null, {}, '']) assert.match(snapshotDeleteRea
 for (const children of [[{ trash: true }], [{}], [null]]) assert.match(snapshotDeleteReason({ is_protected: false, children }), /仍有子镜像/)
 
 const usageExports = {}
+const limitExports = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdSnapshotLimit.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(limitExports)
+for (const value of ['0', '1', '9007199254740993', '18446744073709551614']) assert.equal(limitExports.rbdSnapshotLimitText(value), value)
+for (const value of [undefined, null, 0, -1, '', '01', '1.5', '18446744073709551615', '18446744073709551616']) assert.equal(limitExports.rbdSnapshotLimitText(value), '未返回有效上限（原生命令在无限制时省略此字段）')
 const usageCode = ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdUsage.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
 new Function('exports', usageCode)(usageExports)
 const usageText = usageExports.rbdUsageText
@@ -111,6 +115,7 @@ for (const value of [undefined, null, 0, 4096, -1, 0.5, NaN, Infinity, Number.MA
 console.log('RBD usage distinguishes missing fast-diff, unavailable statistics and valid zero')
 
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')
+assert.ok(blockSource.includes("key: 'snapshot_limit', title: '快照数量上限', render: (value) => rbdSnapshotLimitText(value)"))
 assert.ok(blockSource.includes('<RbdImageFlags details={row.details} />'))
 assert.ok(blockSource.includes("key: 'used_bytes', title: '占用（bytes）', render: (value, row) => rbdUsageText(value, row.image_features)"))
 assert.ok(blockSource.includes("key: 'image_created_at', title: '镜像创建时间（命令原值）'"))
