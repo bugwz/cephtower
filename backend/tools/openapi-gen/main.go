@@ -357,7 +357,7 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 	case "GET /logs":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "channel": {Type: "string", Enum: []string{"cluster", "audit", "cephadm", "*"}}, "level": {Type: "string", Enum: []string{"debug", "info", "sec", "warn", "error"}}, "limit": integerField(false)}
 	case "GET /host/hardware":
-		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "host": stringField(false), "category": {Type: "string", Required: true, Enum: []string{"memory", "storage", "processors", "network", "power", "fans", "firmwares", "criticals"}}}
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "host": stringField(false), "category": {Type: "string", Required: true, Enum: []string{"memory", "storage", "processors", "network", "power", "fans", "firmwares", "criticals", "fullreport"}}}
 	case "GET /filesystem/snapshot/schedule/status":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true), "subvol": stringField(false), "group": stringField(false)}
 	case "GET /filesystem/entries":

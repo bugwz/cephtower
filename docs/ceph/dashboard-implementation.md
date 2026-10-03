@@ -46,6 +46,15 @@ CephTower `/host/hardware` 支持 memory、storage、processors、network、powe
 Ceph NodeProxyCache 按已报告的非 ok 健康值筛选，因此包含 Warning 等状态，不仅 Critical；
 界面不重复筛除、不把空结果等同于全群健康，也不将未报告主机计为健康。
 
+单主机硬件页提供完整报告：`orch hardware status --hostname <host> --category
+fullreport --format json` → `GET /host/hardware`，依据 orchestrator `_hardware_status`
+和 NodeProxyCache `fullreport` 返回主机序列号及完整缓存属性。后端同时校验外层主机键
+和报告内的 host，拒绝缺失或混入其他主机的报告；序列号缺失保持未知。报告结构化脱敏
+后以 JSON 文本传递，浏览器不重新解析数值，保留 uint64 精度及分类表未投影的字段。
+该入口只读、仅单主机可用，不计入六类健康汇总，也不据此推断实时或全机健康。
+离线测试覆盖命令参数、身份范围、异常响应、脱敏、序列号及精确数值；未做真实集群
+或浏览器视觉验证。
+
 配置表单区分 no_mon_update（禁止 Monitor 配置库写入）与不可运行时更新（可能需重启）。
 匹配当前选项的 no_mon_update 元数据会禁用提交并在保存处理再次拦截；不添加 force
 绕过。缺失更新能力明确标注未知，旧选项的说明不用于当前选项。离线测试覆盖标志

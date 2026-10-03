@@ -236,9 +236,26 @@ const optionsCode = ts.transpileModule(`const options = ${hardwareOptions.getTex
 const hardwareOptionsForHost = new Function('host', `${optionsCode}; return options`)
 assert.equal(hardwareOptionsForHost('node1').some((option) => option.value === 'firmwares'), true)
 assert.equal(hardwareOptionsForHost('').some((option) => option.value === 'firmwares'), false)
+assert.equal(hardwareOptionsForHost('node1').some((option) => option.value === 'fullreport'), true)
+assert.equal(hardwareOptionsForHost('').some((option) => option.value === 'fullreport'), false)
 assert.equal(hardwareOptionsForHost('').some((option) => option.value === 'criticals'), true)
 assert.equal(hardwareOptionsForHost('node1').some((option) => option.value === 'criticals'), true)
 console.log('Firmware request and host-only selection checks passed')
+const fullReportSource = readFileSync(new URL('../src/pages/cluster/HostHardwareFullReport.tsx', import.meta.url), 'utf8')
+const fullReportTree = ts.createSourceFile('fullreport.tsx', fullReportSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const fullReportFn = fullReportTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HostHardwareFullReport')
+const fullReportLoader = fullReportFn.body.statements.find((node) => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(fullReportTree) === 'loader').declarationList.declarations[0].initializer.arguments[0]
+const fullReportCode = ts.transpileModule(`const load = ${fullReportLoader.getText(fullReportTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const fullReportResponse = { host: 'node1', category: 'fullreport', serial_number: '00123', report: '{"capacity_bytes":18446744073709551615}' }
+for (const response of [fullReportResponse, { ...fullReportResponse, host: 'other' }, { ...fullReportResponse, category: 'memory' }, { ...fullReportResponse, report: {} }, { ...fullReportResponse, report: ' ' }, { ...fullReportResponse, serial_number: 123 }]) {
+  const calls = []
+  const load = new Function('request', 'jsonInit', 'clusterId', 'host', `${fullReportCode}; return load`)(async (...args) => { calls.push(args); return response }, (method, body) => ({ method, body }), 7, 'node1')
+  if (response === fullReportResponse) assert.equal(await load(), fullReportResponse)
+  else await assert.rejects(load())
+  assert.deepEqual(calls, [['/host/hardware', { method: 'GET', body: { cluster_id: 7, host: 'node1', category: 'fullreport' } }]])
+}
+assert.ok(!fullReportSource.includes('JSON.parse'))
+console.log('Full hardware report identity, precision and host-only selection checks passed')
 const healthSource = readFileSync(new URL('../src/pages/cluster/hardwareHealth.ts', import.meta.url), 'utf8')
 const healthCode = ts.transpileModule(healthSource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText
 const healthModule = {}

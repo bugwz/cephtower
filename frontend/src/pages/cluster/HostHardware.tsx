@@ -5,6 +5,7 @@ import { DataTable } from '../../components/DataTable'
 import { useResource } from '../../hooks'
 import { hardwareAttributeColumns, hardwareHealthCounts, hardwareHealthGroup, type HardwareHealthGroup } from './hardwareHealth'
 import { HostHardwareSummary } from './HostHardwareSummary'
+import { HostHardwareFullReport } from './HostHardwareFullReport'
 
 export function HostHardware({ clusterId, host }: { clusterId: number; host: string }) {
   const [category, setCategory] = useState('memory')
@@ -15,9 +16,10 @@ export function HostHardware({ clusterId, host }: { clusterId: number; host: str
       { value: 'criticals', label: '非 OK 组件报告（原生）' },
       { value: 'memory', label: '内存' }, { value: 'storage', label: '存储' }, { value: 'processors', label: '处理器' },
       { value: 'network', label: '网络' }, { value: 'power', label: '电源' }, { value: 'fans', label: '风扇' },
-      ...(host ? [{ value: 'firmwares', label: '固件清单（只读）' }] : []),
+      ...(host ? [{ value: 'firmwares', label: '固件清单（只读）' }, { value: 'fullreport', label: '完整硬件报告（脱敏）' }] : []),
     ]} />
     {category === 'summary' ? <HostHardwareSummary key={`${clusterId}:${host}`} clusterId={clusterId} host={host} />
+      : category === 'fullreport' ? <HostHardwareFullReport key={`${clusterId}:${host}`} clusterId={clusterId} host={host} />
       : <HardwareCategory key={`${clusterId}:${host}:${category}`} clusterId={clusterId} host={host} category={category} />}
   </Space>
 }
