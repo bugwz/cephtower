@@ -108,6 +108,35 @@ await assert.rejects(() => failedPages('/pools', 7), /second page unavailable/)
 assert.ok(poolSource.includes('压缩后大小与原始大小的比例上限'), 'compression ratio is an upper bound, not a minimum ratio')
 assert.ok(poolSource.includes('分配单元对齐和压缩头开销'), 'compression storage is also subject to native allocation constraints')
 const poolTree = ts.createSourceFile('PoolManagementPage.tsx', poolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const techniqueFunctions = poolTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['erasureCodeTechniqueOptions', 'clayTechniqueForScalar'].includes(node.name.text))
+const techniqueCode = ts.transpileModule(techniqueFunctions.map((node) => node.getText(poolTree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const techniques = new Function(`${techniqueCode}; return { options: erasureCodeTechniqueOptions, change: clayTechniqueForScalar }`)()
+for (const [scalar, expected] of Object.entries({ jerasure: ['reed_sol_van', 'reed_sol_r6_op', 'cauchy_orig', 'cauchy_good', 'liber8tion'], isa: ['reed_sol_van', 'cauchy'], shec: ['single', 'multiple'] })) {
+  assert.deepEqual(techniques.options('clay', scalar).map((option) => option.value), expected)
+  for (const value of expected) assert.equal(techniques.change(scalar, value), value)
+  assert.equal(techniques.change(scalar, 'invalid'), expected[0])
+}
+assert.equal(techniques.change('shec', 'reed_sol_van'), 'single')
+assert.equal(techniques.change('isa', 'multiple'), 'reed_sol_van')
+assert.deepEqual(techniques.options('clay', undefined), [])
+assert.ok(techniques.options('jerasure').some((option) => option.value === 'liberation'))
+let techniqueRules
+function findTechniqueRules(node) {
+  if (ts.isJsxOpeningElement(node) && node.tagName.getText(poolTree) === 'Form.Item' && node.attributes.properties.some((attribute) => attribute.name?.getText(poolTree) === 'name' && attribute.initializer?.text === 'technique')) {
+    techniqueRules = node.attributes.properties.find((attribute) => attribute.name?.getText(poolTree) === 'rules').initializer.expression
+  }
+  ts.forEachChild(node, findTechniqueRules)
+}
+findTechniqueRules(poolTree)
+const techniqueRulesCode = ts.transpileModule(`const rules = ${techniqueRules.getText(poolTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const techniqueRule = new Function('erasureCodeTechniqueOptions', `${techniqueRulesCode}; return rules[1]`)(techniques.options)
+for (const scalar of ['jerasure', 'isa', 'shec']) {
+  const validator = techniqueRule({ getFieldValue: (name) => name === 'plugin' ? 'clay' : scalar }).validator
+  await validator(null, techniques.options('clay', scalar)[0].value)
+  for (const value of ['liberation', 'blaum_roth', '', undefined]) await assert.rejects(validator(null, value))
+}
+assert.ok(poolSource.includes("technique: clayTechniqueForScalar(value, erasureCodeProfileForm.getFieldValue('technique'))"))
+console.log('CLAY scalar plugin technique options, transitions and form validation checks passed')
 const adjustmentFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolPGAdjustment')
 const adjustmentCode = ts.transpileModule(adjustmentFn.getText(poolTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const adjustment = new Function(`${adjustmentCode}; return poolPGAdjustment`)()

@@ -946,8 +946,12 @@ export function PoolManagementPage() {
             {(erasureCodePlugin === 'isa' || erasureCodePlugin === 'jerasure' || erasureCodePlugin === 'clay') ? (
               <Form.Item
                 name="technique"
+                dependencies={['plugin', 'scalar_mds']}
                 label={<HelpLabel label="编码技术" title={erasureCodeTechniqueDescription(erasureCodePlugin)} />}
-                rules={[{ required: true, message: '请选择编码技术' }]}
+                rules={[{ required: true, message: '请选择编码技术' }, ({ getFieldValue }) => ({
+                  validator: (_, value) => erasureCodeTechniqueOptions(getFieldValue('plugin'), getFieldValue('scalar_mds')).some((option) => option.value === value)
+                    ? Promise.resolve() : Promise.reject(new Error('编码技术不适用于当前插件，请重新选择'))
+                })]}
               >
                 <Select
                   options={erasureCodeTechniqueOptions(erasureCodePlugin, erasureCodeScalarMDS)}
@@ -984,6 +988,7 @@ export function PoolManagementPage() {
                 <Form.Item name="scalar_mds" label={<HelpLabel label="标量 MDS" title="CLAY 用作构建块的标量 MDS 插件。" />} rules={[{ required: true }]}>
                   <Select
                     options={['jerasure', 'isa', 'shec'].map((value) => ({ label: value.toUpperCase(), value }))}
+                    onChange={(value) => erasureCodeProfileForm.setFieldsValue({ technique: clayTechniqueForScalar(value, erasureCodeProfileForm.getFieldValue('technique')) })}
                     getPopupContainer={nestedModalPopupContainer}
                   />
                 </Form.Item>
@@ -1464,8 +1469,16 @@ function erasureCodeTechniqueOptions(plugin: ErasureCodePlugin, scalarMDS?: Eras
   if (plugin === 'clay' && scalarMDS === 'shec') {
     return ['single', 'multiple'].map((value) => ({ label: value, value }))
   }
+  if (plugin === 'clay') {
+    return scalarMDS === 'jerasure' ? ['reed_sol_van', 'reed_sol_r6_op', 'cauchy_orig', 'cauchy_good', 'liber8tion'].map((value) => ({ label: value, value })) : []
+  }
   return ['reed_sol_van', 'reed_sol_r6_op', 'cauchy_orig', 'cauchy_good', 'liberation', 'blaum_roth', 'liber8tion']
     .map((value) => ({ label: value, value }))
+}
+
+function clayTechniqueForScalar(scalarMDS: ErasureCodeProfileFormValues['scalar_mds'], current: string) {
+  const options = erasureCodeTechniqueOptions('clay', scalarMDS)
+  return options.some((option) => option.value === current) ? current : options[0]?.value
 }
 
 function erasureCodePluginDescription(plugin: ErasureCodePlugin) {

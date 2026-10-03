@@ -5,6 +5,12 @@
 
 ## 如何追踪调用链
 
+纠删码 CLAY 创建表单的编码技术按参考 `setClayDefaultsForScalar` 和原生
+`ErasureCodeClay::parse` 支持范围筛选。CLAY/Jerasure 不再提供 liberation、blaum_roth；
+独立 Jerasure 仍保留这些技术。切换 scalar_mds 时保留兼容选择，否则使用该插件首个
+支持值；表单依赖校验拒绝失效技术，之后沿用 profile set 写链路。离线测试覆盖三种
+标量插件的选项、切换及校验，未执行真实集群配置创建。
+
 主机设备名称按参考 `device-list.component.html` 的 `location.host === hostname`
 筛选：沿用 `device ls-by-host` → 主机设备 API 的原生 location 数组，不将其他主机或
 缺失主机身份的位置展示为当前设备路径。物理磁盘补充 OSD 关联使用筛选后的设备名数组，
