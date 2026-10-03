@@ -25,9 +25,23 @@ for (const failed of ['none', 'device', 'smart', 'both']) {
 console.log('Host diagnostic failures remain distinct from empty responses')
 const smartNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'normalizeSMARTData')
 const smartCode = ts.transpileModule(smartNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-const normalizeSmart = new Function('isRecord', 'textValue', 'numberValue', 'formatTemperature', 'formatHours', 'formatWear', `${smartCode}; return normalizeSMARTData`)(
+const smartNumberNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'smartMetricNumber')
+const smartNumberCode = ts.transpileModule(smartNumberNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const smartNumber = new Function(`${smartNumberCode}; return smartMetricNumber`)()
+const normalizeSmart = new Function('isRecord', 'textValue', 'smartMetricNumber', 'formatTemperature', 'formatHours', 'formatWear', `${smartCode}; return normalizeSMARTData`)(
   (v) => v !== null && typeof v === 'object' && !Array.isArray(v), (v, fallback) => v ?? fallback,
-  (v) => typeof v === 'number' ? v : undefined, (v) => v, (v) => v, (v) => v)
+  smartNumber, (v) => v, (v) => v, (v) => v)
+for (const value of [undefined, null, '', ' ', '\t', false, [], {}, '0x10', 'Infinity', NaN, Infinity, '9007199254740993']) {
+  const row = normalizeSmart({ disk: { temperature: { current: value }, percentage_used: value } })[0]
+  assert.equal(row.temperature_display, undefined)
+  assert.equal(row.wear_level_display, undefined)
+}
+for (const [value, expected] of [['0', 0], [0, 0], ['42.5', 42.5], ['-5', -5], ['120', 120]]) {
+  assert.equal(smartNumber(value), expected)
+}
+const numericSmart = normalizeSmart({ disk: { nvme_smart_health_information_log: { temperature: '42', percentage_used: '0' } } })[0]
+assert.equal(numericSmart.temperature_display, 42)
+assert.equal(numericSmart.wear_level_display, 0)
 const smartRows = normalizeSmart({ disk1: { smart_status: { passed: true } }, disk2: { error: 'unsupported device', smartctl_error_code: -22 }, disk3: { error: '', smart_status: { passed: true } }, disk4: null, disk5: { smart_status: { passed: false } } })
 assert.equal(smartRows.length, 5)
 assert.equal(smartRows[0].health_display, 'good')

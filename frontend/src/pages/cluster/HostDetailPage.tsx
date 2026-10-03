@@ -602,9 +602,9 @@ function normalizeSMARTData(value: ApiRecord): ApiRecord[] {
       name_display: textValue(device.name ?? raw.dev ?? deviceID, deviceID),
       serial_display: textValue(raw.serial_number ?? raw.serial ?? deviceID, ''),
       health_display: typeof passed === 'boolean' ? (passed ? 'good' : 'bad') : textValue(raw.health ?? raw.state, 'unknown'),
-      temperature_display: formatTemperature(numberValue(temperature.current ?? raw.temperature ?? nvmeHealth.temperature)),
+      temperature_display: formatTemperature(smartMetricNumber(temperature.current ?? raw.temperature ?? nvmeHealth.temperature)),
       power_on_hours_display: formatHours(powerOnTime.hours ?? raw.power_on_hours ?? nvmeHealth.power_on_hours),
-      wear_level_display: formatWear(numberValue(raw.percentage_used ?? nvmeHealth.percentage_used)),
+      wear_level_display: formatWear(smartMetricNumber(raw.percentage_used ?? nvmeHealth.percentage_used)),
       ssd_life_left_display: raw.ssd_life_left == null ? '-' : String(raw.ssd_life_left)
     }]
   })
@@ -649,6 +649,14 @@ function stringArray(value: unknown) {
     return []
   }
   return value.map((item) => textValue(item, '')).filter(Boolean)
+}
+
+function smartMetricNumber(value: unknown): number | undefined {
+  if (typeof value === 'string') {
+    if (!/^-?\d+(\.\d+)?$/.test(value)) return undefined
+    value = Number(value)
+  }
+  return typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= Number.MAX_SAFE_INTEGER ? value : undefined
 }
 
 function formatTemperature(value?: number) {
