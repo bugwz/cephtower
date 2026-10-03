@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+Bucket 索引详情补齐参考界面的 index_type，并展示 bucket stats 中的 index_generation、
+num_shards、ver、master_ver、marker、max_marker。依据 driver/rados/rgw_bucket.cc，
+分片数、版本及最大标记只在本地 Zonegroup 且为普通索引时输出；页面说明该条件，不将
+缺失值转换为零。字符串保留原文，整数超过 JavaScript 安全范围时明确提示；复用现有
+采集和库存 API，新增离线边界/绑定测试，未进行浏览器或真实集群验证。
+
 用户托管策略补充 Service.Execute 层离线测试：验证写命令及只读回查的顺序、目标 UID、
 Mutating 标记、写失败立即停止，以及回读失败/不匹配/无效 JSON 时返回不可自动重试的
 post_check_failed。关联和解除成功路径均覆盖；这些替身执行器测试不代表真实集群验证。

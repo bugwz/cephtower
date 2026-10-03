@@ -12,6 +12,7 @@ import { ServiceDaemons } from '../cluster/ServiceDaemons'
 import { RgwQuota } from './RgwQuota'
 import { RgwStorage } from './RgwStorage'
 import { rgwStorageScope } from './rgwStorageDetails'
+import { RgwBucketIndexDetails } from './RgwBucketIndexDetails'
 import { rgwUserPolicyBlocked, rgwUserPolicyInput, rgwUserPolicyOptions } from './rgwUserPolicy'
 import { RgwRateLimit } from './RgwRateLimit'
 import { RgwPermissions } from './RgwPermissions'
@@ -438,7 +439,7 @@ const definitions: Record<
       { key: 'tenant', title: '租户' },
       { key: 'owner', title: 'Owner' },
       { key: 'versioning', title: '版本控制' },
-      { key: 'num_shards', title: '索引分片数' },
+      { key: 'bucket_index', title: '索引详情', ellipsis: false, render: (_value, row) => <RgwBucketIndexDetails row={row} /> },
       { key: 'placement_rule', title: '放置规则' },
       { key: 'zonegroup', title: 'Zonegroup' },
       { key: 'bucket_quota', title: 'Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
