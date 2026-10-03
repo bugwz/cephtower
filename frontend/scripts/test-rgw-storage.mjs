@@ -108,3 +108,4 @@ assert.deepEqual(times({ last_stats_sync: '2026-10-03 12:00:00.123456Z', last_st
 assert.deepEqual(times({ last_synced: 'sync', last_updated: 'update' }, true), { synced: 'sync', updated: 'update' })
 assert.equal(times({ last_synced: 'wrong scope' }).synced, '未返回或格式无效')
 for (const value of [null, undefined, '', 0, false, []]) assert.equal(times({ last_stats_sync: value }).synced, '未返回或格式无效')
+import './test-rgw-lifecycle-progress.mjs'

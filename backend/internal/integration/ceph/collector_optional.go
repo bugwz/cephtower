@@ -445,6 +445,12 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 	}
 	var buckets any
 	if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_bucket", []string{"bucket", "list", "--format", "json"}, &buckets) {
+		var progress any
+		progressAvailable := p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_lifecycle_progress", []string{"lc", "list", "--format", "json"}, &progress)
+		progressEntries, progressValid := rgwLifecycleProgress(progress)
+		if progressAvailable && !progressValid {
+			markCollectionUnavailable(ctx, "collect.rgw_lifecycle_progress")
+		}
 		for _, entry := range stringList(buckets, "buckets") {
 			tenant, bucket := "", entry
 			if prefix, name, found := strings.Cut(entry, "/"); found {
@@ -480,6 +486,7 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 				}
 			}
 			key := opaquePair(tenant, bucket)
+			details["lifecycle_progress"] = rgwBucketLifecycleProgress(details, progressEntries, progressAvailable && progressValid)
 			rows = append(rows, observation("rgw_bucket", key, bucket, "rgw_admin", details, now))
 		}
 	}

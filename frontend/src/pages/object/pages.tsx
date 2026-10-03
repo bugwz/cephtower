@@ -50,6 +50,7 @@ import { rgwBucketConfigurationOptions, rgwBucketConfigurationInput, rgwBucketCo
 import { rgwBucketEncryptionSummary } from './rgwBucketEncryptionSummary'
 import { RgwBucketCorsRules } from './RgwBucketCorsRules'
 import { RgwBucketLifecycleRules } from './RgwBucketLifecycleRules'
+import { rgwLifecycleProgress } from './rgwLifecycleProgress'
 import { RgwBucketLifecycleEditor } from './RgwBucketLifecycleEditor'
 import { lifecycleFormInitial, lifecycleFormBlocked, lifecycleFormInput, lifecycleFormConfirmation } from './rgwBucketLifecycleForm'
 import { RgwBucketCorsEditor } from './RgwBucketCorsEditor'
@@ -634,6 +635,7 @@ const definitions: Record<
       { key: 'object_lock_enabled', title: '对象锁启用标记（非保留策略）', render: rgwBucketBooleanState },
       { key: 'mfa_enabled', title: 'MFA Delete', render: rgwBucketBooleanState },
       { key: 'reshard_status', title: '重新分片状态（采集时）', ellipsis: false, render: rgwBucketReshardState },
+      { key: 'lifecycle_progress', title: '生命周期处理进度（采集时）', ellipsis: false, render: rgwLifecycleProgress },
       { key: 'status', title: '状态' },
       { key: 'usage', title: '使用量', ellipsis: false, render: (value) => <RgwStorage value={value} categorized /> },
       { key: 'rate_limit', title: 'Bucket 限流（每 RGW）', ellipsis: false, render: (value) => <RgwRateLimit value={value} /> },

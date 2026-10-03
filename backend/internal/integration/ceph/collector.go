@@ -83,6 +83,7 @@ var collectionFailureKinds = map[string][]string{
 	"collect.rgw_role_detail":         {"rgw_role"},
 	"collect.rgw_role":                {"rgw_role"},
 	"collect.rgw_bucket_ratelimit":    {"rgw_bucket"},
+	"collect.rgw_lifecycle_progress":  {"rgw_bucket"},
 	"collect.rgw_bucket_detail":       {"rgw_bucket"},
 	"collect.rgw_bucket":              {"rgw_bucket"},
 	"collect.rgw_zone_detail":         {"rgw_zone"},
