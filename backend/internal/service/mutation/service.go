@@ -120,6 +120,18 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	var upgradeTarget map[string]any
 	var s3KeyActive *bool
+	var expectedCaps map[string]uint8
+	if request.Action == "rgw_user.caps" {
+		checked, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if readErr != nil {
+			return cephdomain.ActionResult{}, normalize(readErr)
+		}
+		var valid bool
+		expectedCaps, valid = rgwExpectedCaps(checked.Stdout, request.Parameters)
+		if !valid {
+			return cephdomain.ActionResult{}, invalid("user identity or current capabilities could not be verified; no changes were made")
+		}
+	}
 	if request.Action == "rgw_key.create" || request.Action == "rgw_key.update" || request.Action == "rgw_key.delete" {
 		checked, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 		if readErr != nil {
@@ -316,6 +328,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: request.Action != "osd_deployment.preview", SensitiveArgs: spec.sensitive})
 	if err != nil {
+		if request.Action == "rgw_user.caps" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "capability command failed; inspect user capabilities before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_user.subuser" || request.Action == "rgw_key.create" || request.Action == "rgw_key.update" || request.Action == "rgw_key.delete" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "user credential command failed; inspect user, subuser and key state before any manual retry", Retryable: false}
 		}
@@ -375,6 +390,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "rgw_user.caps" && (err != nil || !rgwUserCapsMatch(checked.Stdout, rawText(request.Parameters, "uid"), expectedCaps)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "capability command was accepted but permissions could not be verified; inspect user capabilities before any manual retry", Retryable: false}
+		}
 		if (request.Action == "rgw_key.create" || request.Action == "rgw_key.update" || request.Action == "rgw_key.delete") && (err != nil || !rgwS3KeyMatches(request.Action, checked.Stdout, request.Parameters, false)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "S3 key command was accepted but credential state could not be verified; inspect user info before any manual retry", Retryable: false}
 		}

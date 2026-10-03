@@ -89,6 +89,9 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		refreshed, err = d.reconciler.RefreshKindIfSupported(ctx, request.ClusterID, request.ResourceKind)
 	}
 	if err != nil {
+		if request.Action == "rgw_user.caps" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "capability change was verified but inventory refresh failed; refresh user inventory without repeating the change", Retryable: false}
+		}
 		if request.Action == "rgw_user.create" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "user creation completed but inventory refresh failed; refresh user and account inventory without repeating creation", Retryable: false}
 		}

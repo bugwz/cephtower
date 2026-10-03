@@ -349,7 +349,7 @@ const definitions: Record<
           { name: 'type', label: '权限类型', required: true, placeholder: '例如 users、buckets、usage' },
           { name: 'permission', label: '权限', type: 'select', required: true, options: [{ label: '读', value: 'read' }, { label: '写', value: 'write' }, { label: '读写', value: 'read,write' }, { label: '全部', value: '*' }] }
         ],
-        confirmation: () => '确认修改该用户的 RGW 管理权限？',
+        confirmation: (values, row) => `${values.action === 'add' ? '合并添加' : '仅移除'}用户 ${JSON.stringify(userId(row))} 的 ${JSON.stringify(values.type)} 管理权限 ${JSON.stringify(values.permission)}？这不是整体替换：其它权限保留。RGW 管理权限可能允许访问其他用户的数据，请确认授权范围。`,
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), action: String(values.action), type: String(values.type ?? ''), permission: String(values.permission) })
       }],
     deleteAction: {
