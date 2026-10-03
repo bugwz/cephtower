@@ -1321,6 +1321,13 @@ func poolRawDetail(raw map[string]any, poolType string) map[string]any {
 	for key, value := range raw {
 		detail[key] = value
 	}
+	// Cache-tier counters are presentation values and may exceed JavaScript's
+	// safe integer range. Preserve their native decimal spelling in the API.
+	for _, key := range []string{"cache_min_evict_age", "cache_min_flush_age", "target_max_bytes", "target_max_objects"} {
+		if value, ok := detail[key].(json.Number); ok {
+			detail[key] = value.String()
+		}
+	}
 	if poolType != "" {
 		detail["type"] = poolType
 	}

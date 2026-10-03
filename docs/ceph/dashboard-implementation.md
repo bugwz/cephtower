@@ -5,6 +5,12 @@
 
 ## 如何追踪调用链
 
+存储池详情新增缓存层表，按参考 pool-list.getSelectionTiers / PoolDetailsComponent
+将 tiers ID 与同集群完整池库存关联，显示模式、最短淘汰/刷写秒数、目标字节和对象数。
+复用 ceph osd pool ls detail → raw_detail → /pools 链路，四个原生计数转为精确十进制
+字符串，避免浏览器大整数舍入。显式空 tiers、关系缺失、缓存池未解析和库存过期分别
+展示；不提供缓存层修改操作。离线覆盖 ID 关联、异常关系与精度，未做实机或浏览器验证。
+
 纠删码详情补齐 LRC 的 mapping、layers、crush-steps，CRUSH 页面与建池表单的
 配置详情共用展示。原生 ErasureCodeLrc::parse_kml 支持无 k/m/l 的高级配置；详情不
 从缺失参数推导这些字段，保留原生字符串及空值。沿用 ceph osd erasure-code-profile
