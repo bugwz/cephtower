@@ -23,6 +23,16 @@ for (const failed of ['none', 'device', 'smart', 'both']) {
   assert.equal(result.host.hostname, 'node1')
 }
 console.log('Host diagnostic failures remain distinct from empty responses')
+const deviceInfoTable = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HostDeviceInfoTable')
+assert.ok(deviceInfoTable.getText(hostDetailTree).includes("key: 'life_expectancy_stamp'"))
+const timeSource = readFileSync(new URL('../src/utils/time.ts', import.meta.url), 'utf8')
+const timeCode = ts.transpileModule(timeSource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText
+const timeExports = {}
+new Function('exports', timeCode)(timeExports)
+for (const value of [undefined, null, '']) assert.equal(timeExports.formatDateTime(value), '-')
+assert.equal(timeExports.formatDateTime('2026-10-03 01:02:03.000000'), '2026-10-03 01:02:03.000000')
+assert.match(timeExports.formatDateTime('2026-10-03T01:02:03Z'), /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+console.log('Device prediction creation timestamp display checks passed')
 const smartNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'normalizeSMARTData')
 const smartCode = ts.transpileModule(smartNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const smartNumberNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'smartMetricNumber')

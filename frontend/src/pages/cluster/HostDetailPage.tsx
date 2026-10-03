@@ -344,6 +344,7 @@ function HostDeviceInfoTable({ devices }: { devices: ApiRecord[] }) {
         { key: 'device_id_display', title: '设备 ID' },
         { key: 'health_display', title: '健康状态', render: (value) => renderDeviceHealth(value) },
         { key: 'life_expectancy_display', title: '预计寿命' },
+        { key: 'life_expectancy_stamp', title: '预测生成时间', render: (value) => formatDateTime(value) },
         { key: 'name_display', title: '设备名称' },
         { key: 'daemons_display', title: '守护进程' }
       ]}

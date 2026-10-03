@@ -74,13 +74,16 @@ func TestSMARTRejectsNullNativeResponses(t *testing.T) {
 }
 
 func TestDevicesUsesCephDeviceListByHost(t *testing.T) {
-	service, runner, clusterID := testService(t, []byte(`[{"devid":"disk-1"}]`))
+	service, runner, clusterID := testService(t, []byte(`[{"devid":"disk-1","life_expectancy_stamp":"2026-10-03T01:02:03Z"}]`))
 	devices, err := service.Devices(context.Background(), clusterID, "node-1")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(devices) != 1 || devices[0]["devid"] != "disk-1" {
 		t.Fatalf("devices = %#v", devices)
+	}
+	if devices[0]["life_expectancy_stamp"] != "2026-10-03T01:02:03Z" {
+		t.Fatal("device prediction timestamp was lost")
 	}
 	want := []string{"device", "ls-by-host", "node-1", "--format", "json"}
 	if !reflect.DeepEqual(runner.args[0], want) {
