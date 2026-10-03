@@ -57,6 +57,22 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	if unscoped.Code != http.StatusBadRequest {
 		t.Fatalf("unscoped commit accepted: %d", unscoped.Code)
 	}
+	for _, scope := range []string{"", "team", "RGW12345678901234567"} {
+		id := base64.RawURLEncoding.EncodeToString([]byte(scope + ":events"))
+		body := fmt.Sprintf(`{"cluster_id":%d,"topic_id":%q,"expected_version":%q}`, cluster.ID, id, `{"tag":"t","ver":9007199254740993}`)
+		response := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/topic", body, "topic-delete-"+scope)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("topic deletion queue: %d %s", response.Code, response.Body.String())
+		}
+		op, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || op.Action != "rgw_topic.delete" || op.Risk != "high" || op.ResourceKey != "rgw/topic/"+id || !strings.Contains(op.LockKey, id) {
+			t.Fatalf("wrong topic operation %+v %v", op, err)
+		}
+		invalid := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/topic", strings.TrimSuffix(body, "}")+`,"purge":true}`, "topic-invalid-"+scope)
+		if invalid.Code != http.StatusBadRequest {
+			t.Fatalf("unknown deletion field accepted %d", invalid.Code)
+		}
+	}
 	for _, realm := range []string{"", "realm"} {
 		response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/sync/group", fmt.Sprintf(`{"cluster_id":%d,"name":"east","zonegroup_id":"zg","realm_id":%q,"group_id":"g","expected_group":%q,"status":"enabled"}`, cluster.ID, realm, `{"id":"g","status":"allowed","data_flow":{},"pipes":[]}`), "zonegroup-sync-"+realm)
 		if response.Code != http.StatusAccepted {

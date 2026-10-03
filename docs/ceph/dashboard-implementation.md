@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **RGW Topic 原生删除与队列影响确认**：新增 `DELETE /rgw/topic` 高风险操作和列表删除入口。参考 Dashboard 的 `RgwTopicmanagement.delete_topic` 仅执行 `metadata rm topic:<key>`；此处改用完整的原生 `topic rm --tenant <scope> --topic <name>`，依据 `RGWPubSub::remove_topic_v2` 清理持久化队列再删除 Topic，保留 CLI 的主 Zone 检查和迁移中拒绝行为。`RGWPubSub` 将 scope 作为租户或 Account 存储命名空间，因此全局空租户、命名租户和 Account 均使用明确 scope，不推断默认租户。
+  - 采集保留原生元数据 `{tag, ver}` 的完整字符串版本，避免前端 JSON 数字精度损失。删除前核验完整元数据键、名称和版本，再用相同 scope 的 `topic get` 要求 v2 的 `subscribed_buckets` 字段，并比较未脱敏的完整原生配置（只在后端内存比较，不回传秘密）；旧格式或配置不一致不写入。删除后重新列举 Topic 元数据核验目标键不存在，不把读取失败当作不存在。
+  - 前端明确持久化队列及未投递消息可能永久丢失、桶通知引用不会自动清理、主 Zone 要求、非事务并发和部分生效风险；操作不删除 Bucket 或对象。禁止陈旧库存/缺失版本/编码身份不一致提交，完成后刷新 Topic 库存；失败不自动重试或回滚。
+  - 测试覆盖三种 scope、各阶段故障、过期/缺失版本、错误身份、配置改变、旧格式和非法绑定、删除后残留/非法列表、版本精度、API 高风险资源锁及前端操作绑定。Topic 创建、编辑及桶通知规则仍未接入；没有真实集群或浏览器视觉验证。
+
 - **RGW 通知目标 Topic 列表与详情**：对照 `rgw-topic-list.component.ts`、`RgwTopicmanagement.list_topics` 及原生 `rgw_pubsub_topic::dump`，使用 `radosgw-admin metadata list topic --format json`，逐项执行 `metadata get topic:<key> --format json`。新增 `rgw_topic` 资源采集/刷新、`GET /rgw/topics` 和对象存储“通知目标”导航，展示名称、Owner、ARN、脱敏端点、持久化、TTL、重试、队列、Opaque Data 和 Policy。
   - 元数据键完整编码为资源身份，区分全局租户、命名租户及 Account 下的同名 Topic；校验返回 key 与请求一致、名称与键一致。空列表与缺失/重复/非法列表、逐项读取失败分开处理，失败标记资源不可用，不将旧缓存当作成功空结果清除。沿用现有资源分页、集群隔离、能力检查与陈旧状态展示。
   - 在生成 Observation 前屏蔽全部 `push_endpoint_args`、未知字段，并移除 URL 用户信息、查询参数及片段；非法地址不回显原文。只返回 `stored_secret` 布尔标记，不返回其凭据内容。TTL/重试保留原生字符串（包括 0、默认值和大整数），缺失布尔值不当作 false；Policy/Opaque Data 作为文本渲染。

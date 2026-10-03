@@ -1,5 +1,6 @@
 import type { ApiRecord } from '../../api/client'
 import { RgwTopicDetails, topicText, topicBoolean, topicEndpoint } from './RgwTopicDetails'
+import { topicDeleteBlocked, topicDeleteInput, topicDeleteConfirmation } from './rgwTopicDelete'
 import { bucketReplicationFormBlocked, bucketReplicationFormInitial, bucketReplicationFormInput, bucketReplicationFormConfirmation } from './rgwBucketReplicationForm'
 import { useClusterContext } from '../../state/ClusterContext'
 import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
@@ -527,6 +528,13 @@ const definitions: Record<
   rgwTopics: {
     title: 'RGW 通知目标（Topics）', path: '/rgw/topics', requiredCapabilities: ['rgw_admin'],
     rowKeyCandidates: ['natural_key'],
+    deleteAction: {
+      title: '删除 RGW 通知目标', path: '/rgw/topic', action: 'rgw_topic.delete', resourceKind: 'rgw_topic', risk: 'high',
+      successMessage: 'Topic 删除命令成功，元数据不存在已核验；请检查桶通知引用',
+      disabledWhen: topicDeleteBlocked, confirmation: topicDeleteConfirmation,
+      resourceKey: (row) => String(row.metadata_key),
+      buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...topicDeleteInput(row) })
+    },
     detailContent: (row) => <RgwTopicDetails row={row} />,
     columns: [
       { key: 'name', title: '名称', render: topicText },

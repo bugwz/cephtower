@@ -3,7 +3,9 @@ package ceph
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -49,9 +51,34 @@ func (p *NativeProvider) collectRGWTopics(ctx context.Context, access ClusterAcc
 		}
 		payload["metadata_key"] = key
 		payload["scope"] = scope
+		if version, valid := RGWTopicMetadataVersion(document["ver"]); valid {
+			payload["metadata_version"] = version
+		}
 		rows = append(rows, observation("rgw_topic", base64.RawURLEncoding.EncodeToString([]byte(key)), payload["name"].(string), "rgw_admin", payload, now))
 	}
 	return rows
+}
+
+// Keep the native uint64 revision in an opaque JSON string across browser DTOs.
+func RGWTopicMetadataVersion(value any) (string, bool) {
+	version, ok := value.(map[string]any)
+	if !ok || len(version) != 2 {
+		return "", false
+	}
+	tag, ok := version["tag"].(string)
+	if !ok || tag == "" {
+		return "", false
+	}
+	number, ok := version["ver"].(json.Number)
+	if !ok {
+		return "", false
+	}
+	n, err := strconv.ParseUint(number.String(), 10, 64)
+	if err != nil || n == 0 {
+		return "", false
+	}
+	body, err := json.Marshal(map[string]any{"tag": tag, "ver": json.Number(strconv.FormatUint(n, 10))})
+	return string(body), err == nil
 }
 
 func rgwTopicPayload(data map[string]any) (map[string]any, bool) {

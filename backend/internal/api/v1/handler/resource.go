@@ -555,6 +555,8 @@ func readResourceKey(kind string, body map[string]any) string {
 		return optionalStringBody(body, "uid")
 	case "rgw_account":
 		return optionalStringBody(body, "account_id", "id")
+	case "rgw_topic":
+		return optionalStringBody(body, "topic_id")
 	case "rgw_role":
 		name := optionalStringBody(body, "name")
 		if account := optionalStringBody(body, "account_id"); account != "" {
@@ -747,6 +749,8 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 		return segments("rgw", "user", pathValue("uid"), "key")
 	case "rgw_account":
 		return segments("rgw", "account", pathValue("account_id", "id"))
+	case "rgw_topic":
+		return segments("rgw", "topic", pathValue("topic_id"))
 	case "rgw_role":
 		return segments("rgw", "role", pathValue("account_id"), pathValue("name"))
 	case "rgw_bucket":

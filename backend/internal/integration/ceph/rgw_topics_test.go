@@ -103,3 +103,17 @@ func TestTopicEndpointRedaction(t *testing.T) {
 		}
 	}
 }
+
+func TestTopicMetadataRevisionPrecision(t *testing.T) {
+	for _, revision := range []string{"1", "9007199254740993", "18446744073709551615"} {
+		version, ok := RGWTopicMetadataVersion(map[string]any{"tag": "tag", "ver": json.Number(revision)})
+		if !ok || version != `{"tag":"tag","ver":`+revision+`}` {
+			t.Fatalf("revision rounded %s", version)
+		}
+	}
+	for _, value := range []any{nil, map[string]any{}, map[string]any{"tag": "", "ver": json.Number("1")}, map[string]any{"tag": "t", "ver": float64(1)}, map[string]any{"tag": "t", "ver": json.Number("0")}, map[string]any{"tag": "t", "ver": json.Number("-1")}, map[string]any{"tag": "t", "ver": json.Number("18446744073709551616")}} {
+		if _, ok := RGWTopicMetadataVersion(value); ok {
+			t.Fatal("invalid revision accepted")
+		}
+	}
+}

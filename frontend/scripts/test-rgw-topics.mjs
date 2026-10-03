@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 const api = {}
+new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicDelete.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
 const jsx = (type, props) => ({ type, props })
 new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwTopicDetails.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText)(api,()=>({jsx,jsxs:jsx}))
 assert.equal(api.topicText('18446744073709551615'),'18446744073709551615')
@@ -37,8 +38,22 @@ for (const key of ['name','owner','scope','arn','push_endpoint','persistent','ti
 assert.equal(definition.columns.find(column=>column.key==='scope').render(''),'全局租户')
 assert.equal(definition.columns.find(column=>column.key==='scope').render(undefined),'未返回或不可用')
 assert.equal(definition.createAction,undefined)
+for (const scope of ['', 'team', 'RGW12345678901234567']) {
+  const key = `${scope}:events`
+  const row = { natural_key: Buffer.from(key).toString('base64url'), metadata_key: key, name:'events', scope, arn:'arn:topic', metadata_version:'{"tag":"t","ver":9007199254740993}' }
+  const action = definition.deleteAction
+  assert.equal(action.path,'/rgw/topic')
+  assert.equal(action.action,'rgw_topic.delete')
+  assert.equal(action.risk,'high')
+  assert.equal(action.disabledWhen(row),undefined)
+  assert.deepEqual(action.buildBody(row,42),{cluster_id:42,topic_id:row.natural_key,expected_version:row.metadata_version})
+  assert.equal(action.resourceKey(row),key)
+  for (const warning of ['持久化队列','永久丢失','不会自动清理','主 Zone','原子锁','回滚']) assert.ok(action.confirmation(row).includes(warning))
+  for (const change of [{stale:true},{natural_key:'other'},{metadata_version:null},{metadata_key:'other:events'},{scope:undefined}]) assert.throws(()=>action.buildBody({...row,...change},42))
+}
 const navigation = readFileSync(new URL('../src/navigation.ts',import.meta.url),'utf8')
 assert.match(navigation,/key: 'rgwTopics'.*path: '\/object\/topics'/)
 const refresh = readFileSync(new URL('../src/pages/ResourceListPage.tsx',import.meta.url),'utf8')
 assert.match(refresh,/'\/rgw\/topics': \['rgw_topic'\]/)
+assert.match(refresh,/action.path === '\/rgw\/topic'.*kinds: \['rgw_topic'\]/)
 console.log('RGW topic display, precision, redaction notices and page bindings passed')

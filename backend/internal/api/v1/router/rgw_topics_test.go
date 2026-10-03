@@ -33,7 +33,7 @@ func (e *topicAPIExecutor) Run(ctx context.Context, access executor.ClusterAcces
 		}
 		return executor.CommandResult{Stdout: []byte(`["tenant:events"]`)}, nil
 	case "collect.rgw_topic_detail":
-		return executor.CommandResult{Stdout: []byte(`{"key":"topic:tenant:events","data":{"name":"events","owner":"tenant$user","arn":"arn:aws:sns:zone:tenant:events","dest":{"push_endpoint":"https://user:secret-value@host/path?token=secret-value","push_endpoint_args":"password=secret-value","persistent":false,"max_retries":"18446744073709551615"}}}`)}, nil
+		return executor.CommandResult{Stdout: []byte(`{"key":"topic:tenant:events","ver":{"tag":"t","ver":9007199254740993},"data":{"name":"events","owner":"tenant$user","arn":"arn:aws:sns:zone:tenant:events","dest":{"push_endpoint":"https://user:secret-value@host/path?token=secret-value","push_endpoint_args":"password=secret-value","persistent":false,"max_retries":"18446744073709551615"}}}`)}, nil
 	}
 	return e.filesystemFieldsExecutor.Run(ctx, access, spec)
 }
@@ -85,6 +85,9 @@ func TestRGWTopicsNativeToAPI(t *testing.T) {
 			t.Fatalf("%d %s", rec.Code, rec.Body.String())
 		}
 		data := response.Data.Items[0].Data
+		if data["metadata_version"] != `{"tag":"t","ver":9007199254740993}` {
+			t.Fatalf("native version rounded: %v", data["metadata_version"])
+		}
 		if data["name"] != "events" || data["scope"] != "tenant" || data["push_endpoint"] != "https://host/path" || data["persistent"] != false || data["max_retries"] != "18446744073709551615" || strings.Contains(rec.Body.String(), "secret-value") {
 			t.Fatalf("bad topic response %s", rec.Body.String())
 		}

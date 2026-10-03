@@ -641,6 +641,10 @@ func (h *Handler) ListRGWTopics(w http.ResponseWriter, r *http.Request) {
 	h.ReadResource("rgw_topic", false)(w, r)
 }
 
+func (h *Handler) DeleteRGWTopic(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_topic", "rgw_topic.delete", "high")(w, r)
+}
+
 func (h *Handler) CreateRGWRole(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_role", "rgw_role.create", "medium")(w, r)
 }

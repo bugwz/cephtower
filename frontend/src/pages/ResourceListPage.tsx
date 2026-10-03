@@ -327,6 +327,7 @@ export function ResourceListPage({ definition, embedded = false, onFormMutationS
         if (!isCurrentScope()) return
         message.success(action.successMessage)
         if (action.path === '/crush/rule') await refreshResource({ clusterId: selectedClusterId, kinds: ['crush_rule'] })
+        if (action.path === '/rgw/topic') await refreshResource({ clusterId: selectedClusterId, kinds: ['rgw_topic'] })
         if (action.path === '/erasure/code/profile') await refreshResource({ clusterId: selectedClusterId, kinds: ['erasure_code_profile'] })
         if (action.path.startsWith('/rbd/')) await refreshResource({ clusterId:selectedClusterId,kinds:['rbd_image','rbd_snapshot','rbd_namespace','rbd_trash','rbd_group'] })
           if (action.path === '/rgw/zone') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_zone','rgw_zonegroup'] })

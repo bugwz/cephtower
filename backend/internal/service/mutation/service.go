@@ -93,7 +93,7 @@ func Supports(action string) bool {
 		"cephfs_authorization.create", "cephfs_client.evict", "cephfs_entry.quota", "cephfs_entry_snapshot.create", "cephfs_entry_snapshot.delete",
 		"cephfs_entry.create", "cephfs_entry.delete", "cephfs_entry.rename",
 		"rgw_user.create", "rgw_user.update", "rgw_user.delete", "rgw_user.quota", "rgw_user.caps", "rgw_user.subuser", "rgw_user.policy", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_bucket.quota",
-		"rgw_account.create", "rgw_account.update", "rgw_account.quota", "rgw_account.delete", "rgw_role.create", "rgw_role.update", "rgw_role.delete", "rgw_role.policy", "rgw_key.create", "rgw_key.update", "rgw_key.delete",
+		"rgw_account.create", "rgw_account.update", "rgw_account.quota", "rgw_account.delete", "rgw_role.create", "rgw_role.update", "rgw_role.delete", "rgw_role.policy", "rgw_topic.delete", "rgw_key.create", "rgw_key.update", "rgw_key.delete",
 		"rgw_realm.create", "rgw_realm.update", "rgw_zonegroup.create", "rgw_zonegroup.update", "rgw_zone.create", "rgw_zone.update", "rgw_period.commit",
 		"nfs_cluster.create", "nfs_cluster.delete", "nfs_export.create", "nfs_export.update", "nfs_export.delete",
 		"smb_cluster.create", "smb_cluster.update", "smb_cluster.delete",
@@ -129,6 +129,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if request.Action == "rgw_period.commit" {
 		return s.executePeriodCommit(ctx, access, request, spec)
+	}
+	if request.Action == "rgw_topic.delete" {
+		return s.executeTopicDelete(ctx, access, request, spec)
 	}
 	if request.Action == "rgw_zonegroup.sync_group" || request.Action == "rgw_zonegroup.sync_group_create" || request.Action == "rgw_zonegroup.sync_group_delete" || request.Action == "rgw_zonegroup.sync_flow_create" || request.Action == "rgw_zonegroup.sync_flow_delete" || request.Action == "rgw_zonegroup.sync_flow_update" || request.Action == "rgw_zonegroup.sync_pipe_create" || request.Action == "rgw_zonegroup.sync_pipe_delete" || request.Action == "rgw_zonegroup.sync_pipe_update" || request.Action == "rgw_zonegroup.sync_pipe_zones" || request.Action == "rgw_zonegroup.replication_prepare" {
 		return s.executeZonegroupSyncGroup(ctx, access, request, spec)
@@ -677,6 +680,11 @@ func build(request Request, p map[string]any) (command, error) {
 		return command{binary: executor.BinaryCephFSShell, args: args, check: check, timeout: 2 * time.Minute}
 	}
 	switch action {
+	case "rgw_topic.delete":
+		if request.ResourceKey != "" && request.ResourceKey != "rgw/topic/"+syncGroupString(p, "topic_id") {
+			return command{}, invalid("topic resource scope mismatch")
+		}
+		return topicDeleteCommand(p, rgw)
 	case "rgw_bucket.sync_group", "rgw_bucket.sync_group_create", "rgw_bucket.sync_group_delete", "rgw_bucket.sync_flow_create", "rgw_bucket.sync_flow_delete", "rgw_bucket.sync_pipe_delete", "rgw_bucket.sync_pipe_create", "rgw_bucket.sync_flow_update":
 		return bucketSyncGroupCommand(action, p, rgw)
 	case "rgw_bucket.sync_pipe_update", "rgw_bucket.sync_pipe_zones":
