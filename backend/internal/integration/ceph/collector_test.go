@@ -223,8 +223,13 @@ func TestOverviewScrubStatusMatchesDashboardSemantics(t *testing.T) {
 		flagsKnown bool
 		want       string
 	}{
-		{"disabled takes priority", []cephdomain.PGState{{Name: "active+scrubbing"}}, []string{"noscrub"}, true, "disabled"},
-		{"deep scrub active", []cephdomain.PGState{{Name: "active+clean+deep"}}, nil, true, "active"},
+		{"disabled takes priority", []cephdomain.PGState{{Name: "active+scrubbing", Count: 1}}, []string{"noscrub"}, true, "disabled"},
+		{"deep scrub active", []cephdomain.PGState{{Name: "active+clean+deep", Count: 1}}, nil, true, "active"},
+		{"scrub active without flags", []cephdomain.PGState{{Name: "active+scrubbing", Count: 2}}, nil, false, "active"},
+		{"zero scrub count", []cephdomain.PGState{{Name: "active+scrubbing+deep", Count: 0}}, nil, true, "inactive"},
+		{"unrecognized substring", []cephdomain.PGState{{Name: "active+not_scrubbing+deep_unknown", Count: 1}}, nil, true, "inactive"},
+		{"exact state after other text", []cephdomain.PGState{{Name: "active+deep_unknown+scrubbing", Count: 1}}, nil, true, "active"},
+		{"deep disabled priority", []cephdomain.PGState{{Name: "active+scrubbing+deep", Count: 1}}, []string{"nodeep-scrub"}, true, "disabled"},
 		{"inactive", []cephdomain.PGState{{Name: "active+clean"}}, nil, true, "inactive"},
 		{"unknown without flags", []cephdomain.PGState{{Name: "active+clean"}}, nil, false, ""},
 	}

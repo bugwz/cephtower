@@ -346,8 +346,13 @@ func overviewScrubStatus(states []cephdomain.PGState, flags []string, flagsKnown
 		}
 	}
 	for _, state := range states {
-		if strings.Contains(state.Name, "scrubbing") || strings.Contains(state.Name, "deep") {
-			return "active"
+		if state.Count == 0 {
+			continue
+		}
+		for _, token := range strings.Split(state.Name, "+") {
+			if token == "scrubbing" || token == "deep" {
+				return "active"
+			}
 		}
 	}
 	if flagsKnown && states != nil {
