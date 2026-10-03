@@ -35,6 +35,16 @@ export function upgradeControlAllowed(data: ApiRecord, stale: boolean, action: U
   return action === 'pause' ? data.is_paused === false : action === 'resume' && data.is_paused === true
 }
 
+export async function collectUpgradeState(clusterId: number) {
+  await refreshResource({ clusterId, kinds: ['upgrade', 'daemon'] })
+  const { item } = await getResource('/upgrade', clusterId)
+  if (item.stale !== false || typeof item.data.in_progress !== 'boolean'
+    || (item.data.in_progress && typeof item.data.is_paused !== 'boolean')) {
+    throw new Error('采集后升级状态仍过期或不完整，无法恢复升级操作')
+  }
+  return item
+}
+
 export function upgradeStatusFields(data: ApiRecord) {
   const value = (input: unknown): string => input == null ? '未提供' : typeof input === 'string' ? (input || '无') : Array.isArray(input) && input.every((entry) => typeof entry === 'string') ? (input.join('、') || '无') : '未知'
   return [
@@ -92,13 +102,17 @@ function UpgradeContent({ selectedClusterId }: { selectedClusterId?: number }) {
   async function collect() {
     if (!active.current || !selectedClusterId) return
     try {
-      await operation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['upgrade', 'daemon'] }), false)
+      await operation.run(() => collectUpgradeState(selectedClusterId), false)
       if (!active.current) return
       setRecord(null)
       setNeedsCollection(false)
       message.success('升级状态与守护进程采集完成')
       setRevision((value) => value + 1)
-    } catch (err) { if (active.current) setError(err instanceof Error ? err.message : '采集失败') }
+    } catch (err) {
+      if (!active.current) return
+      setNeedsCollection(true)
+      setError(err instanceof Error && err.message ? err.message : '采集失败')
+    }
   }
   return <><Card title="集群升级状态" loading={loading} extra={<Space wrap>
     <Switch aria-label="自动读取升级状态" checked={auto} onChange={setAuto} checkedChildren="自动读取" unCheckedChildren="已暂停读取" />

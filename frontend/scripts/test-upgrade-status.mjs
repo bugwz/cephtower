@@ -40,6 +40,16 @@ for (const stage of ['mutation', 'collection']) {
 }
 assert.ok(source.includes('disabled={needsCollection || loading || operation.loading}'))
 assert.ok(source.includes('setNeedsCollection(false)'))
+const collectNode = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'collectUpgradeState')
+const collectCode = ts.transpileModule(collectNode.getText(tree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const item of [{ stale: false, data: { in_progress: false } }, { stale: false, data: { in_progress: true, is_paused: false } }, { stale: true, data: { in_progress: false } }, { data: { in_progress: false } }, { stale: false, data: {} }, { stale: false, data: { in_progress: true } }]) {
+  const calls = []
+  const collect = new Function('refreshResource', 'getResource', `${collectCode}; return collectUpgradeState`)(
+    async (args) => { calls.push(['refresh', args]) }, async (...args) => { calls.push(['read', ...args]); return { item } })
+  if (item.stale === false && typeof item.data.in_progress === 'boolean' && (!item.data.in_progress || typeof item.data.is_paused === 'boolean')) assert.equal(await collect(3), item)
+  else await assert.rejects(collect(3))
+  assert.deepEqual(calls, [['refresh', { clusterId: 3, kinds: ['upgrade', 'daemon'] }], ['read', '/upgrade', 3]])
+}
 const code = ts.transpileModule(functions.map((fn) => fn.getText(tree)).join('\n'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
 const exports = {}
 new Function('exports', code)(exports)
