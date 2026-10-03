@@ -28,6 +28,10 @@
 
 ### 增量实现与验证记录
 
+#### 管道 Zone 修改预检查故障覆盖
+
+为 `sync_pipe_zones` 增加 16 类故障 × 全局/租户桶的 32 个执行链路回归用例，验证缺失/重复/损坏管道、非法快照、源/目标选择器缺失、目标 Zone 列表异常、孤立 Zone、重复或含混映射、未知目标 ID 均返回不可重试的 `pre_check_failed`，且执行器没有任何写调用。特别覆盖源端计划已经成功、目标端校验失败的路径，防止未来改动引入边校验边写入。本增量不修改业务功能或前端；执行全量后端测试及 OpenAPI 校验，未进行真实集群测试。
+
 #### 桶同步管道 Zone 成员编辑
 
 对照 Dashboard 管道 Zone 选择以及 `rgw_sync_bucket_entities::add_zones/remove_zones`，增加 `PATCH /api/v1/rgw/bucket/sync/pipe/zones` 与“编辑桶同步管道 Zone”。请求包含完整源/目标 Zone ID 数组及原组快照；后端读取桶策略和 `zonegroup get`，将名称映射回 ID，执行 `sync group pipe modify/remove --source-zone-ids/--dest-zone-ids`。明确集合先追加再移除；`["*"]` 与明确集合直接通过 modify 切换，不额外移除星号。每步回读完整策略，保留桶选择器、身份、过滤器和其他组/流/管道；异常停止，不自动回滚或重试。

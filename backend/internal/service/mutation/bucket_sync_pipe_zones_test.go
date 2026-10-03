@@ -14,6 +14,60 @@ import (
 
 const pipeZonesMapping = `{"zones":[{"id":"a","name":"Zeta"},{"id":"b","name":"Alpha"},{"id":"c","name":"Gamma"}]}`
 
+func TestBucketSyncPipeZonesPreflightNeverWrites(t *testing.T) {
+	pipe := `{"id":"p","source":{"bucket":"*","zones":["Zeta"]},"dest":{"bucket":"*","zones":["Alpha"]},"params":{"mode":"system"}}`
+	group := func(pipes string) string {
+		return `{"id":"g","status":"enabled","data_flow":{},"pipes":[` + pipes + `]}`
+	}
+	for _, tc := range []struct {
+		name, pipes, mapping, expected string
+		calls                          int
+	}{
+		{"missing pipe", "", pipeZonesMapping, "", 1},
+		{"duplicate pipe", pipe + "," + pipe, pipeZonesMapping, "", 1},
+		{"null pipe", "null", pipeZonesMapping, "", 1},
+		{"invalid pipe id", `{"id":1}`, pipeZonesMapping, "", 1},
+		{"malformed expectation", pipe, pipeZonesMapping, "broken", 1},
+		{"source absent", strings.Replace(pipe, `"source"`, `"unknown"`, 1), pipeZonesMapping, "", 2},
+		{"destination absent", strings.Replace(pipe, `"dest"`, `"unknown"`, 1), pipeZonesMapping, "", 2},
+		{"destination null zones", strings.Replace(pipe, `["Alpha"]`, `null`, 1), pipeZonesMapping, "", 2},
+		{"destination unknown zone", strings.Replace(pipe, `"Alpha"`, `"orphan"`, 1), pipeZonesMapping, "", 2},
+		{"destination duplicate zones", strings.Replace(pipe, `["Alpha"]`, `["Alpha","Alpha"]`, 1), pipeZonesMapping, "", 2},
+		{"destination mixed wildcard", strings.Replace(pipe, `["Alpha"]`, `["*","Alpha"]`, 1), pipeZonesMapping, "", 2},
+		{"mapping malformed", pipe, `broken`, "", 2},
+		{"mapping duplicate id", pipe, `{"zones":[{"id":"a","name":"Zeta"},{"id":"a","name":"Alpha"}]}`, "", 2},
+		{"mapping duplicate name", pipe, `{"zones":[{"id":"a","name":"Zeta"},{"id":"b","name":"Zeta"}]}`, "", 2},
+		{"mapping unknown desired", pipe, `{"zones":[{"id":"a","name":"Zeta"},{"id":"b","name":"Alpha"}]}`, "", 2},
+		{"mapping wildcard name", pipe, `{"zones":[{"id":"a","name":"*"}]}`, "", 2},
+	} {
+		for _, tenant := range []string{"", "team"} {
+			t.Run(tc.name+"/"+tenant, func(t *testing.T) {
+				service, _, clusterID := newCephUserService(t)
+				before := group(tc.pipes)
+				expected := tc.expected
+				if expected == "" {
+					expected = before
+				}
+				runner := &pipeZonesExecutor{bodies: map[string]string{"pre_check": `{"groups":[` + before + `]}`, "zones": tc.mapping}}
+				service.executor = runner
+				_, err := service.Execute(context.Background(), Request{ClusterID: clusterID, Action: "rgw_bucket.sync_pipe_zones", Parameters: map[string]any{"bucket_id": base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00photos")), "group_id": "g", "pipe_id": "p", "expected_group": expected, "source_zones": []any{"c"}, "dest_zones": []any{"c"}}})
+				var ae *cephdomain.ActionError
+				if !errors.As(err, &ae) || ae.Code != "pre_check_failed" || ae.Retryable {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				if len(runner.calls) != tc.calls {
+					t.Fatalf("calls: %+v", runner.calls)
+				}
+				for _, call := range runner.calls {
+					if call.Mutating {
+						t.Fatalf("preflight wrote: %+v", call)
+					}
+				}
+			})
+		}
+	}
+}
+
 func TestBucketSyncPipeZonesSingleStage(t *testing.T) {
 	for _, tc := range []struct {
 		name, before, after, verb, delta string
