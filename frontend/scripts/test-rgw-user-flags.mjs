@@ -33,13 +33,19 @@ for (const tags of [undefined, null, false, [], '', ' ', ',', 'a,', ',a', 'a,,b'
 assert.ok(pages.includes('...rgwUserPlacementTagsInput(values)'))
 assert.ok(pages.includes('JSON.stringify(rgwUserPlacementTagsInput(values).placement_tags_csv)'))
 const placementSource = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const userIDFunction = placementSource.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'userId')
+assert.ok(userIDFunction)
+const userIDExports = {}
+new Function('exports', ts.transpileModule('export ' + userIDFunction.getText(placementSource), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(userIDExports)
+for (const uid of ['user', 'tenant$user', 'tenant$namespace$user', '$namespace$user', ' raw ']) assert.equal(userIDExports.userId({ uid, user_id: 'wrong', natural_key: 'wrong' }), uid)
+for (const row of [undefined, {}, { user_id: 'local', tenant: 'tenant' }, { natural_key: 'tenant$user' }, { full_user_id: 'tenant$user' }, { name: 'user' }, ...[null, false, 1, '', ' ', 'bad\nuid', 'bad\0uid'].map(uid => ({ uid, user_id: 'local' }))]) assert.throws(() => userIDExports.userId(row), /完整 UID/)
 const placementActions = new Map()
 function findPlacementActions(node) {
   if (ts.isObjectLiteralExpression(node)) {
     const title = node.properties.find(property => ts.isPropertyAssignment(property) && property.name.getText(placementSource) === 'title')
     if (title && ["'设置用户默认放置'", "'替换用户放置标签'"].includes(title.initializer.getText(placementSource))) {
       const expression = node.getText(placementSource)
-      placementActions.set(title.initializer.text, new Function('rgwUserPlacementInput', 'rgwUserPlacementTagsInput', 'userId', `return (${expression})`)(placementForm.rgwUserPlacementInput, placementForm.rgwUserPlacementTagsInput, row => row.uid))
+      placementActions.set(title.initializer.text, new Function('rgwUserPlacementInput', 'rgwUserPlacementTagsInput', 'userId', `return (${expression})`)(placementForm.rgwUserPlacementInput, placementForm.rgwUserPlacementTagsInput, userIDExports.userId))
     }
   }
   ts.forEachChild(node, findPlacementActions)
@@ -63,6 +69,8 @@ for (const [title, values] of [
   }
   assert.throws(() => action.buildBody({}, 'cluster', placementRow))
   assert.throws(() => action.confirmation({}, placementRow))
+  assert.throws(() => action.buildBody(values, 'cluster', { user_id: 'local', tenant: 'tenant' }), /完整 UID/)
+  assert.throws(() => action.confirmation(values, { user_id: 'local', tenant: 'tenant' }), /完整 UID/)
 }
 assert.ok(pages.includes('detailContent: (row) => <RgwUserDetails row={row} />'))
 const userDetailsExports = {}

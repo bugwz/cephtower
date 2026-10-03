@@ -739,7 +739,11 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
 }
 
 function userId(row?: Record<string, unknown>) {
-  return String(row?.uid ?? row?.user_id ?? row?.natural_key ?? row?.name ?? '').trim()
+  const uid = row?.uid
+  if (typeof uid !== 'string' || uid.trim() === '' || /[\0\r\n]/.test(uid)) {
+    throw new Error('用户完整 UID 未返回或无效，请刷新库存后重试')
+  }
+  return uid
 }
 
 function bucketId(row?: Record<string, unknown>) {
