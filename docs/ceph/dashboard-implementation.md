@@ -5,6 +5,12 @@
 
 ## 如何追踪调用链
 
+账户 IAM 用户、角色、用户组和访问密钥上限按 rgw_rest_iam_user.cc、rgw_rest_role.cc
+及 rgw_rest_iam_group.cc 展示：负数无限制，零禁止新增，与 Bucket 上限规则不同。
+max_access_keys 是每用户访问密钥数而非账户合计，列表明确其范围。复用 account get
+已采集字段；缺失或超出 int32 的值显示无效，不推断默认值。离线测试覆盖边界及绑定，
+尚未进行真实集群或浏览器验证。
+
 RGW 用户和账户的 max_buckets 按 rgw_op.cc 的 check_owner_max_buckets 解释：负数禁止
 创建 Bucket，零无限制，正整数为数量上限。修正用户创建/编辑及账户编辑表单此前错误的
 “-1 为无限制”提示，并在两类列表展示该字段含义；复用 user info / account get 字段。

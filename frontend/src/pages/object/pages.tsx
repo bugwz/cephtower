@@ -14,6 +14,7 @@ import { RgwStorage } from './RgwStorage'
 import { RgwRateLimit } from './RgwRateLimit'
 import { RgwPermissions } from './RgwPermissions'
 import { rgwBucketLimit } from './rgwBucketLimit'
+import { rgwAccountLimit } from './rgwAccountLimit'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -223,7 +224,7 @@ const definitions: Record<
       fields: [
         { name: 'account_name', label: '账户名称（不支持清空）' },
         { name: 'email', label: '邮箱（不支持清空）' },
-        ...['max_users', 'max_roles', 'max_groups', 'max_buckets', 'max_access_keys'].map((name, index) => ({ name, label: ['用户上限', '角色上限', '用户组上限', 'Bucket 上限', '访问密钥上限'][index] + (name === 'max_buckets' ? '（-1 禁止创建，0 无限制）' : '（-1 为无限制）'), type: 'number' as const, min: -1 }))
+        ...['max_users', 'max_roles', 'max_groups', 'max_buckets', 'max_access_keys'].map((name, index) => ({ name, label: ['用户上限', '角色上限', '用户组上限', 'Bucket 上限', '每用户访问密钥上限'][index] + (name === 'max_buckets' ? '（-1 禁止创建，0 无限制）' : '（-1 无限制，0 禁止新增）'), type: 'number' as const, min: -1 }))
       ],
       initialValues: (row) => ({ account_name: text(row?.account_name), email: text(row?.email), ...Object.fromEntries(['max_users', 'max_roles', 'max_groups', 'max_buckets', 'max_access_keys'].map((key) => [key, numberOrUndefined(row?.[key])])) }),
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, account_id: String(row?.account_id ?? row?.natural_key ?? ''),
@@ -255,11 +256,11 @@ const definitions: Record<
       { key: 'quota', title: '账户配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'bucket_quota', title: '默认 Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'storage_stats', title: '容量与对象统计', ellipsis: false, render: (value) => <RgwStorage value={value} /> },
-      { key: 'max_users', title: '用户上限' },
-      { key: 'max_roles', title: '角色上限' },
-      { key: 'max_groups', title: '用户组上限' },
+      { key: 'max_users', title: '用户上限', render: rgwAccountLimit },
+      { key: 'max_roles', title: '角色上限', render: rgwAccountLimit },
+      { key: 'max_groups', title: '用户组上限', render: rgwAccountLimit },
       { key: 'max_buckets', title: 'Bucket 上限', render: rgwBucketLimit },
-      { key: 'max_access_keys', title: '访问密钥上限' },
+      { key: 'max_access_keys', title: '每用户访问密钥上限', render: rgwAccountLimit },
       { key: 'resource_version', title: '版本' }
     ]
   },
