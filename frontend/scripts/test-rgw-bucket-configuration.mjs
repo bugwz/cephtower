@@ -4,6 +4,7 @@ import ts from 'typescript'
 import './test-external-form-confirmation.mjs'
 import './test-rgw-bucket-tag-form.mjs'
 const helpers = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketCorsForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 const cors = {}
 new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwBucketCorsRules.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText)(cors, (name) => name === 'antd' ? { Table: 'Table' } : { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) })
 const corsRule = { id: '<rule>', allowed_origins: ['*'], allowed_methods: ['GET'], allowed_headers: [], expose_headers: ['b', 'a', 'b'], max_age_seconds: 0 }
@@ -61,6 +62,45 @@ function visit(node) {
 }
 visit(source)
 assert.ok(definition)
+const corsAction = definition.extraActions.find(action => action.title === '编辑 CORS 规则')
+const corsRow = { bucket_id: 'AGJ1Y2tldA', kind: 'cors', configured: true, cors_rules: [corsRule] }
+const corsValues = corsAction.initialValues(corsRow)
+corsValues.cors_draft.rules[0].expose_headers.push('extra')
+assert.deepEqual(corsRow.cors_rules[0].expose_headers, ['b', 'a', 'b'])
+assert.ok(corsAction.visibleWhen(corsRow))
+assert.ok(!corsAction.visibleWhen({ kind: 'policy' }))
+assert.equal(corsAction.disabledWhen(corsRow), undefined)
+assert.equal(corsAction.method, 'PATCH')
+assert.equal(corsAction.path, '/rgw/bucket/policy')
+assert.match(corsAction.buildBody(corsValues, 7, corsRow).document, /<ID>&lt;rule&gt;<\/ID>/)
+assert.match(corsAction.confirmation(corsValues, corsRow), /整体替换.*不替代访问权限策略/)
+assert.throws(() => corsAction.buildBody({ ...corsValues, bucket_id: 'different' }, 7, corsRow))
+for (const patch of [{ allowed_origins: [] }, { allowed_origins: ['**'] }, { allowed_headers: [''] }, { allowed_methods: ['PATCH'] }, { id: 'é'.repeat(128) }, { id: '\u0000' }, { max_age_seconds: -1 }]) assert.throws(() => helpers.corsDocument({ rules: [{ ...corsRule, ...patch }] }))
+assert.throws(() => helpers.corsDocument({ rules: [] }))
+assert.match(helpers.corsDocument({ rules: [{ ...corsRule, id: '\r<&', max_age_seconds: null }] }), /<ID>&#13;&lt;&amp;<\/ID>/)
+assert.ok(!helpers.corsDocument({ rules: [{ ...corsRule, max_age_seconds: null }] }).includes('MaxAgeSeconds'))
+const editor = {}
+new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwBucketCorsEditor.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText)(editor, name => name === './rgwBucketCorsForm' ? helpers : name === 'antd' ? { Alert: 'Alert', Button: 'Button', Input: { TextArea: 'TextArea' }, InputNumber: 'InputNumber', Select: 'Select', Space: 'Space' } : { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) })
+function flattenCors(node) { return Array.isArray(node) ? node.flatMap(flattenCors) : node && typeof node === 'object' ? [node, ...flattenCors(node.props?.children)] : [] }
+let edited
+const controls = flattenCors(editor.RgwBucketCorsEditor({ value: { rules: [corsRule] }, onChange: value => { edited = value } }))
+controls.find(node => node.type === 'Button' && node.props.children === '添加规则').props.onClick()
+assert.equal(edited.rules.length, 2)
+controls.find(node => node.type === 'TextArea' && node.props['aria-label'] === '规则 1 ID').props.onChange({ target: { value: ' changed ' } })
+assert.equal(edited.rules[0].id, ' changed ')
+assert.equal(corsRule.id, '<rule>')
+const twoRules = flattenCors(editor.RgwBucketCorsEditor({ value: { rules: [corsRule, { ...corsRule, id: 'second' }] }, onChange: value => { edited = value } }))
+twoRules.find(node => node.type === 'Button' && node.props.children === '下移').props.onClick()
+assert.deepEqual(edited.rules.map(rule => rule.id), ['second', '<rule>'])
+twoRules.find(node => node.type === 'Button' && node.props.children === '移除规则').props.onClick()
+assert.deepEqual(edited.rules.map(rule => rule.id), ['second'])
+const newCorsRow = { ...corsRow, configured: false, cors_rules: [] }
+assert.equal(corsAction.initialValues(newCorsRow).cors_draft.rules.length, 0)
+assert.equal(corsAction.disabledWhen(newCorsRow), undefined)
+edited = undefined
+const locked = flattenCors(editor.RgwBucketCorsEditor({ value: { rules: [corsRule] }, disabled: true, onChange: value => { edited = value } }))
+for (const node of locked.filter(node => node.type === 'Button')) node.props.onClick()
+assert.equal(edited, undefined)
 const encryptionAction = definition.extraActions.find(action => action.title === '编辑 Bucket 默认加密')
 const encryptionRow = { bucket_id: 'AGJ1Y2tldA', kind: 'encryption', configured: true, encryption: { rule_exists: true, algorithm: 'aws:kms', kms_master_key_id: ' key<&\r\n😀 ', bucket_key_enabled: true } }
 const encryptionValues = encryptionAction.initialValues(encryptionRow)

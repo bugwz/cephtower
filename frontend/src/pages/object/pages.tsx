@@ -49,6 +49,8 @@ import { rgwUserCreateFlags } from './rgwUserCreateFlags'
 import { rgwBucketConfigurationOptions, rgwBucketConfigurationInput, rgwBucketConfigurationDeleteBlocked, rgwBucketConfigurationDeleteInput, rgwBucketConfigurationDeleteConfirmation, rgwBucketConfigurationEditBlocked, rgwBucketConfigurationEditInitial, rgwBucketConfigurationEditInput, rgwBucketConfigurationUpdateConfirmation } from './rgwBucketConfiguration'
 import { rgwBucketEncryptionSummary } from './rgwBucketEncryptionSummary'
 import { RgwBucketCorsRules } from './RgwBucketCorsRules'
+import { RgwBucketCorsEditor } from './RgwBucketCorsEditor'
+import { corsFormInitial, corsFormBlocked, corsFormInput, corsFormConfirmation } from './rgwBucketCorsForm'
 import { bucketDeleteInput, bucketDeleteBlocked, bucketDeleteConfirmation } from './rgwBucketDelete'
 import { bucketVersioningInitial, bucketVersioningInput, bucketVersioningConfirmation } from './rgwBucketVersioningForm'
 import { bucketEncryptionFormInitial, bucketEncryptionFormBlocked, bucketEncryptionFormInput, bucketEncryptionFormConfirmation } from './rgwBucketEncryptionForm'
@@ -903,6 +905,19 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...rgwBucketConfigurationDeleteInput(row) })
     },
     extraActions: [{
+      title: '编辑 CORS 规则',
+      buttonLabel: '编辑 CORS',
+      path: '/rgw/bucket/policy', method: 'PATCH',
+      successMessage: 'CORS 已提交并回读核验',
+      visibleWhen: (row) => row.kind === 'cors',
+      disabledWhen: corsFormBlocked, initialValues: corsFormInitial, confirmation: corsFormConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'kind', label: '配置类型（不可更改）', readOnly: true },
+        { name: 'cors_draft', label: '完整 CORS 规则（保留顺序）', required: true, renderControl: (disabled) => <RgwBucketCorsEditor disabled={disabled} /> }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...corsFormInput(values, row) })
+    }, {
       title: '编辑 Bucket 默认加密',
       buttonLabel: '编辑加密',
       path: '/rgw/bucket/policy',
