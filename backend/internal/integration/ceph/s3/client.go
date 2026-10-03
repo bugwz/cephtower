@@ -42,7 +42,13 @@ func New(rawURL string, credentials Credentials, client *http.Client) (*Client, 
 	if client == nil {
 		client = &http.Client{Timeout: 20 * time.Second}
 	}
-	return &Client{base: base, credentials: credentials, http: client, now: time.Now}, nil
+	// A redirect is not an authenticated endpoint discovery mechanism. Replaying
+	// signed requests can leak session tokens or secret-bearing SNS bodies, and a
+	// redirected request is no longer signed for its actual target. Keep the
+	// caller's transport/timeout but never mutate its shared redirect policy.
+	requestClient := *client
+	requestClient.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+	return &Client{base: base, credentials: credentials, http: &requestClient, now: time.Now}, nil
 }
 
 func (c *Client) CreateBucket(ctx context.Context, bucket string) error {
