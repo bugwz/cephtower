@@ -12,7 +12,10 @@ function Identifiers({ value }: { value: unknown }) {
 
 export function RgwUserIdentityDetails({ row }: { row: ApiRecord }) {
   return <Descriptions size="small" column={1} items={[
+    { key: 'full-uid', label: '完整 UID（命令原值）', children: rgwIdentityText(row.full_user_id, '空 UID') },
+    { key: 'local-id', label: '本地用户 ID', children: rgwIdentityText(row.user_id, '空用户 ID') },
     { key: 'tenant', label: '租户', children: rgwIdentityText(row.tenant, '默认租户') },
+    { key: 'namespace', label: '用户命名空间', children: row.namespace === undefined ? '未返回（原生命令在命名空间为空时省略）' : rgwIdentityText(row.namespace, '空命名空间') },
     { key: 'account', label: '账户 ID', children: rgwIdentityText(row.account_id, '未关联账户') },
     { key: 'type', label: '用户类型（命令原值）', children: rgwIdentityText(row.type, '空类型') },
     { key: 'path', label: '用户路径', children: rgwIdentityText(row.path, '空路径') },

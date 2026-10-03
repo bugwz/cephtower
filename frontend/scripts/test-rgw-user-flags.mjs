@@ -81,6 +81,29 @@ for (const row of [{}, { uid: 'tenant$user', account_id: 'RGW123', tags: [], pla
   for (const item of view.props.items) assert.equal(item.children.props.row, row)
 }
 const components = readFileSync(new URL('../src/pages/object/RgwUserIdentityDetails.tsx', import.meta.url), 'utf8')
+const identityView = {}
+new Function('exports', 'require', ts.transpileModule(components, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(identityView, (name) => {
+  if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }
+  if (name === 'antd') return { Descriptions: 'Descriptions' }
+  if (name === './rgwUserIdentity') return identity
+  if (name === './RgwUserTagsTable') return { RgwUserTagsTable: 'Tags' }
+  throw new Error(`unexpected import ${name}`)
+})
+for (const row of [
+  { full_user_id: 'user', user_id: 'user', tenant: '' },
+  { full_user_id: 'tenant$namespace$user', user_id: 'user', tenant: 'tenant', namespace: 'namespace' },
+  { full_user_id: '$namespace$user', user_id: 'user', tenant: '', namespace: 'namespace' }
+]) {
+  const fields = Object.fromEntries(identityView.RgwUserIdentityDetails({ row }).props.items.map(item => [item.key, item.children]))
+  assert.equal(fields['full-uid'], row.full_user_id)
+  assert.equal(fields['local-id'], row.user_id)
+  assert.equal(fields.tenant, row.tenant || '默认租户')
+  assert.equal(fields.namespace, row.namespace ?? '未返回（原生命令在命名空间为空时省略）')
+}
+for (const value of [null, false, 1, []]) {
+  const fields = Object.fromEntries(identityView.RgwUserIdentityDetails({ row: { full_user_id: value, user_id: value, namespace: value } }).props.items.map(item => [item.key, item.children]))
+  for (const key of ['full-uid', 'local-id', 'namespace']) assert.equal(fields[key], '未返回或格式无效')
+}
 assert.ok(components.includes("rgwIdentityText(row.default_placement, '未显式设置')"))
 assert.ok(components.includes("rgwIdentityText(row.default_storage_class, '未显式设置')"))
 assert.ok(components.includes('<Identifiers value={row.placement_tags} />'))
