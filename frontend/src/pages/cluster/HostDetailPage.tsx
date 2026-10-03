@@ -513,7 +513,8 @@ function HostDeviceHealthPanel({ devices }: { devices: ApiRecord[] }) {
         { key: 'smartctl_error_code', title: 'smartctl 错误码' },
         { key: 'temperature_display', title: '温度' },
         { key: 'power_on_hours_display', title: '通电时间' },
-        { key: 'wear_level_display', title: '磨损程度' }
+        { key: 'wear_level_display', title: '已使用寿命（percentage_used）' },
+        { key: 'ssd_life_left_display', title: 'ssd_life_left（原始值）' }
       ]}
     />
   )
@@ -598,8 +599,9 @@ function normalizeSMARTData(value: ApiRecord): ApiRecord[] {
       serial_display: textValue(raw.serial_number ?? raw.serial ?? deviceID, ''),
       health_display: typeof passed === 'boolean' ? (passed ? 'good' : 'bad') : textValue(raw.health ?? raw.state, 'unknown'),
       temperature_display: formatTemperature(numberValue(temperature.current ?? raw.temperature ?? nvmeHealth.temperature)),
-      power_on_hours_display: formatHours(numberValue(powerOnTime.hours ?? raw.power_on_hours)),
-      wear_level_display: formatWear(numberValue(raw.percentage_used ?? nvmeHealth.percentage_used ?? raw.ssd_life_left))
+      power_on_hours_display: formatHours(numberValue(powerOnTime.hours ?? raw.power_on_hours ?? nvmeHealth.power_on_hours)),
+      wear_level_display: formatWear(numberValue(raw.percentage_used ?? nvmeHealth.percentage_used)),
+      ssd_life_left_display: raw.ssd_life_left == null ? '-' : String(raw.ssd_life_left)
     }]
   })
 }

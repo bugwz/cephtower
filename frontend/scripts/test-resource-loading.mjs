@@ -39,6 +39,19 @@ assert.equal(smartRows[3].health_display, 'unavailable')
 assert.equal(smartRows[4].health_display, 'bad')
 assert.deepEqual(normalizeSmart({}), [])
 console.log('Per-device SMART failures remain visible with unknown health')
+const smartWearRows = normalizeSmart({
+  nvme: { nvme_smart_health_information_log: { percentage_used: 0, power_on_hours: 13 }, ssd_life_left: 100 },
+  remaining: { ssd_life_left: 80 },
+  worn: { percentage_used: 120, power_on_time: { hours: 0 }, nvme_smart_health_information_log: { power_on_hours: 13 } },
+})
+assert.equal(smartWearRows[0].wear_level_display, 0)
+assert.equal(smartWearRows[0].power_on_hours_display, 13)
+assert.equal(smartWearRows[0].ssd_life_left_display, '100')
+assert.equal(smartWearRows[1].wear_level_display, undefined)
+assert.equal(smartWearRows[1].ssd_life_left_display, '80')
+assert.equal(smartWearRows[2].wear_level_display, 120)
+assert.equal(smartWearRows[2].power_on_hours_display, 0)
+console.log('SMART used-life and remaining-life fields are kept distinct')
 
 const hardwareSource = readFileSync(new URL('../src/pages/cluster/HostHardware.tsx', import.meta.url), 'utf8')
 const hardwareTree = ts.createSourceFile('hardware.tsx', hardwareSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
