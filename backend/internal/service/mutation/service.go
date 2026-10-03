@@ -588,11 +588,15 @@ func build(request Request, p map[string]any) (command, error) {
 		return ceph([]string{"orch", "rm", name}, []string{"orch", "ls", "--export", "--format", "json"}), nil
 	case "daemon.action":
 		name := pathValue(tail, "daemon")
+		daemonType, daemonID, found := strings.Cut(name, ".")
+		if !found || !regexp.MustCompile(`^[a-z][a-z0-9-]*$`).MatchString(daemonType) || !regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_.-]*$`).MatchString(daemonID) {
+			return command{}, invalid("daemon name must contain a type and a nonempty identifier")
+		}
 		verb, err := enum(p, "action", "start", "stop", "restart", "reconfig", "redeploy", "rotate-key")
 		if err != nil {
 			return command{}, err
 		}
-		return ceph([]string{"orch", "daemon", verb, name}, []string{"orch", "ps", "--daemon_name", name, "--refresh", "--format", "json"}), nil
+		return ceph([]string{"orch", "daemon", verb, name}, []string{"orch", "ps", "--daemon-type", daemonType, "--daemon-id", daemonID, "--refresh", "--format", "json"}), nil
 	case "upgrade.check":
 		target, err := upgradeTargetArgs(p)
 		if err != nil {
