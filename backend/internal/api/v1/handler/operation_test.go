@@ -36,6 +36,27 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	h := handler.New(handler.Dependencies{Clusters: clusters, Operations: operations, Database: database, AuthEnabled: func() bool { return false }})
 	mux := http.NewServeMux()
 	router.Register(mux, h)
+	if err := db.UpsertCapabilities(context.Background(), []store.CephClusterCapability{{ClusterID: cluster.ID, Name: "rgw_admin", Supported: true, ObservedAt: now, UpdatedAt: now}}); err != nil {
+		t.Fatal(err)
+	}
+	for index, tc := range []struct{ fields, risk string }{
+		{`"email":"before@example.test"`, "medium"},
+		{`"account_root":true,"expected_account_id":"RGW12345678901234567"`, "high"},
+		{`"account_root":false,"expected_account_id":"RGW12345678901234567"`, "high"},
+		{`"email":"after@example.test"`, "medium"},
+	} {
+		response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/user", fmt.Sprintf(`{"cluster_id":%d,"uid":"tenant$user",%s}`, cluster.ID, tc.fields), fmt.Sprintf("user-risk-%d", index))
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("user update: %d %s", response.Code, response.Body.String())
+		}
+		row, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || row.Risk != tc.risk || row.Action != "rgw_user.update" || row.ResourceKey != "rgw/user/tenant$user" {
+			t.Fatalf("incorrect user risk or identity: %+v %v", row, err)
+		}
+		if !strings.Contains(response.Body.String(), `"risk":"`+tc.risk+`"`) {
+			t.Fatalf("response risk differs: %s", response.Body.String())
+		}
+	}
 	for _, action := range []string{"start", "stop", "restart", "redeploy", "reconfig", "rotate-key"} {
 		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/daemon/action", fmt.Sprintf(`{"cluster_id":%d,"name":"osd.1","action":%q}`, cluster.ID, action), "daemon-"+action)
 		if response.Code != http.StatusAccepted {

@@ -209,6 +209,10 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 			WriteError(w, r, http.StatusBadRequest, "invalid_request", err.Error(), false, nil)
 			return
 		}
+		requestRisk := risk
+		if _, changesRoot := body["account_root"]; action == "rgw_user.update" && changesRoot {
+			requestRisk = "high"
+		}
 		var generation *uint64
 		if value := r.Header.Get("If-Match"); value != "" {
 			parsed, err := strconv.ParseUint(value, 10, 64)
@@ -223,7 +227,7 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 		if kind == "subvolume" || kind == "cephfs_snapshot" {
 			lookupKey = readResourceKey(kind, body)
 		}
-		annotateAudit(r, action, kind, resourceKey, risk, &id)
+		annotateAudit(r, action, kind, resourceKey, requestRisk, &id)
 		if generation != nil {
 			if err := h.checkResourceGeneration(r.Context(), id, kind, lookupKey, *generation); err != nil {
 				WriteError(w, r, http.StatusConflict, "resource_conflict", err.Error(), false, nil)
@@ -232,7 +236,7 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 		}
 		operation, err := h.enqueueOperation(r, operationservice.EnqueueRequest{
 			ClusterID: id, Action: action, ResourceKind: kind, ResourceKey: resourceKey,
-			Risk: risk, LockKey: lookupKey, ExpectedVersion: generation,
+			Risk: requestRisk, LockKey: lookupKey, ExpectedVersion: generation,
 			Parameters: body,
 		})
 		if err != nil {
