@@ -58,6 +58,16 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 			t.Fatalf("response risk differs: %s", response.Body.String())
 		}
 	}
+	for _, action := range []string{"add", "rm", "replace"} {
+		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/user/caps", fmt.Sprintf(`{"cluster_id":%d,"uid":"tenant$user","action":%q,"type":"users","permission":"read"}`, cluster.ID, action), "caps-"+action)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("caps mutation: %d %s", response.Code, response.Body.String())
+		}
+		row, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || row.Action != "rgw_user.caps" || row.ResourceKey != "rgw/user/tenant$user" {
+			t.Fatalf("wrong caps operation: %+v %v", row, err)
+		}
+	}
 	for _, action := range []string{"modify", "rm", "rotate-swift-key"} {
 		fields := ""
 		if action == "modify" {

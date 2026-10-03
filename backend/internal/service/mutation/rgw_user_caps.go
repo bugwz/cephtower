@@ -46,7 +46,12 @@ func rgwExpectedCaps(raw []byte, p map[string]any) (map[string]uint8, bool) {
 	}
 	bits := map[string]uint8{"read": 1, "write": 2, "read,write": 3, "*": 3}[rawText(p, "permission")]
 	kind := rawText(p, "type")
-	if rawText(p, "action") == "add" {
+	if rawText(p, "action") == "replace" {
+		if _, exists := caps[kind]; !exists {
+			return nil, false
+		}
+		caps[kind] = bits
+	} else if rawText(p, "action") == "add" {
 		caps[kind] |= bits
 	} else {
 		caps[kind] &^= bits

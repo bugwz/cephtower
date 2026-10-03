@@ -382,6 +382,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		stepID := fmt.Sprintf("%s.step%d", request.Action, index+2)
 		result, err = s.executor.Run(ctx, access, executor.CommandSpec{ID: stepID, Binary: followup.binary, Args: followup.args, Stdin: followup.stdin, Timeout: followup.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true, SensitiveArgs: followup.sensitive})
 		if err != nil {
+			if request.Action == "rgw_user.caps" {
+				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "capability replacement failed after removal; permissions may be missing; inspect user capabilities before any manual retry", Retryable: false}
+			}
 			return cephdomain.ActionResult{}, normalize(err)
 		}
 		if len(followup.check) > 0 {
@@ -2166,7 +2169,7 @@ func build(request Request, p map[string]any) (command, error) {
 		if !regexp.MustCompile(`^[A-Za-z0-9_.:@$-]+$`).MatchString(uid) || strings.HasPrefix(uid, "-") {
 			return command{}, invalid("uid is invalid")
 		}
-		verb, err := enum(p, "action", "add", "rm")
+		verb, err := enum(p, "action", "add", "rm", "replace")
 		if err != nil {
 			return command{}, err
 		}
@@ -2178,7 +2181,13 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
-		return rgw([]string{"caps", verb, "--uid", uid, "--caps", kind + "=" + permission}, []string{"user", "info", "--uid", uid}), nil
+		check := []string{"user", "info", "--uid", uid}
+		if verb == "replace" {
+			result := rgw([]string{"caps", "rm", "--uid", uid, "--caps", kind + "=*"}, check)
+			result.followups = []command{rgw([]string{"caps", "add", "--uid", uid, "--caps", kind + "=" + permission}, check)}
+			return result, nil
+		}
+		return rgw([]string{"caps", verb, "--uid", uid, "--caps", kind + "=" + permission}, check), nil
 	case "rgw_user.delete":
 		uid := last(tail)
 		return rgw([]string{"user", "rm", "--uid", uid}, []string{"user", "list"}), nil

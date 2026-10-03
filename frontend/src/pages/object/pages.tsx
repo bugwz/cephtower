@@ -40,6 +40,7 @@ import { rgwS3KeyOwnerOptions, rgwS3KeyCreateInput } from './rgwS3KeyCreate'
 import { rgwS3KeyDeleteOptions, rgwS3KeyDeleteInput } from './rgwS3KeyDelete'
 import { rgwS3KeyRotateInput } from './rgwS3KeyRotate'
 import { RgwGeneratedCredentialInput } from './RgwGeneratedCredentialInput'
+import { rgwCapabilityOptions, rgwCapabilityInput } from './rgwUserCapsForm'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
@@ -345,12 +346,16 @@ const definitions: Record<
       { title: '管理用户权限（caps）', path: '/rgw/user/caps', method: 'POST', successMessage: '用户管理权限操作执行成功',
         initialValues: { action: 'add', permission: 'read' },
         fields: [
-          { name: 'action', label: '操作', type: 'select', required: true, options: [{ label: '添加权限', value: 'add' }, { label: '移除权限', value: 'rm' }] },
-          { name: 'type', label: '权限类型', required: true, placeholder: '例如 users、buckets、usage' },
+          { name: 'action', label: '操作', type: 'select', required: true, options: [{ label: '合并添加权限', value: 'add' }, { label: '移除指定权限', value: 'rm' }, { label: '替换已有类型的权限', value: 'replace' }] },
+          { name: 'type', label: '权限类型', type: 'select', required: true, optionsDependencies: ['action'], optionsLoader: async (_clusterId, row, values) => rgwCapabilityOptions(row, values?.action) },
           { name: 'permission', label: '权限', type: 'select', required: true, options: [{ label: '读', value: 'read' }, { label: '写', value: 'write' }, { label: '读写', value: 'read,write' }, { label: '全部', value: '*' }] }
         ],
-        confirmation: (values, row) => `${values.action === 'add' ? '合并添加' : '仅移除'}用户 ${JSON.stringify(userId(row))} 的 ${JSON.stringify(values.type)} 管理权限 ${JSON.stringify(values.permission)}？这不是整体替换：其它权限保留。RGW 管理权限可能允许访问其他用户的数据，请确认授权范围。`,
-        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), action: String(values.action), type: String(values.type ?? ''), permission: String(values.permission) })
+        confirmation: (values, row) => {
+          const input = rgwCapabilityInput(values, row)
+          const scope = `用户 ${JSON.stringify(userId(row))} 的 ${JSON.stringify(input.type)} 管理权限 ${JSON.stringify(input.permission)}`
+          return input.action === 'replace' ? `整体替换${scope}？其它类型权限保留。这会先移除该类型权限，再添加新权限，并非原子操作；失败时权限可能已被移除，请检查实际状态后处理，不要盲目重试。RGW 管理权限可能允许访问其他用户的数据。` : `${input.action === 'add' ? '合并添加' : '仅移除'}${scope}？这不是整体替换：其它权限保留。RGW 管理权限可能允许访问其他用户的数据，请确认授权范围。`
+        },
+        buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwCapabilityInput(values, row) })
       }],
     deleteAction: {
       title: '删除 RGW 用户',
