@@ -25,6 +25,7 @@ export interface ExternalListPageDefinition extends FeatureRequirements {
   title: string
   path: string
   body?: ApiRecord
+  buildQuery?: (body: ApiRecord) => URLSearchParams
   filterFields?: MutationFormField[]
   columns: FieldColumn[]
   rowKeyCandidates?: string[]
@@ -53,9 +54,9 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
     if (missingRequiredFilters.length > 0) {
       return []
     }
-    const payload = await readExternalList(definition.path, selectedClusterId, queryBody)
+    const payload = await readExternalList(definition.path, selectedClusterId, queryBody, definition.buildQuery?.(queryBody))
     return payload.items
-  }, [definition.path, missingRequiredFilters.length, queryBody, selectedClusterId])
+  }, [definition.path, definition.buildQuery, missingRequiredFilters.length, queryBody, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const featureStatus = useFeatureRequirements(selectedClusterId, definition)
   const mutationBlocked = featureStatus.loading || featureStatus.blocked || Boolean(featureStatus.error)

@@ -43,6 +43,7 @@ import { RgwGeneratedCredentialInput } from './RgwGeneratedCredentialInput'
 import { rgwCapabilityOptions, rgwCapabilityInput } from './rgwUserCapsForm'
 import { rgwUserCreateCredentials } from './rgwUserCreateCredentials'
 import { rgwUserCreateFlags } from './rgwUserCreateFlags'
+import { rgwBucketConfigurationOptions, rgwBucketConfigurationInput } from './rgwBucketConfiguration'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
@@ -831,20 +832,23 @@ const definitions: Record<
 
 const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = {
   bucketPolicy: {
-    title: 'Bucket Policy',
+    title: 'Bucket 配置文档',
     path: '/rgw/bucket/policy',
     requiredCapabilities: ['rgw_admin'],
     requiredEndpoints: ['s3'],
     rowKeyCandidates: ['bucket_id', 'name', 'kind'],
+    body: { kind: 'policy' },
+    buildQuery: (body) => new URLSearchParams({ kind: String(body.kind ?? 'policy') }),
     filterFields: [
-      { name: 'bucket_id', label: 'Bucket ID', required: true }
+      { name: 'bucket_id', label: 'Bucket ID', required: true },
+      { name: 'kind', label: '配置类型', type: 'select', required: true, options: rgwBucketConfigurationOptions }
     ],
     createAction: {
-      title: '更新 Bucket Policy',
+      title: '更新 Bucket 配置文档',
       buttonLabel: '更新配置',
       path: '/rgw/bucket/policy',
       method: 'PATCH',
-      successMessage: 'Bucket Policy 更新执行成功',
+      successMessage: 'Bucket 配置文档提交成功',
       fields: [
         { name: 'bucket_id', label: 'Bucket ID', required: true },
         {
@@ -852,33 +856,18 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
           label: '配置类型',
           type: 'select',
           required: true,
-          options: [
-            { label: 'Policy', value: 'policy' },
-            { label: 'CORS', value: 'cors' },
-            { label: 'Lifecycle', value: 'lifecycle' },
-            { label: 'Encryption', value: 'encryption' }
-          ]
+          options: rgwBucketConfigurationOptions
         },
-        { name: 'document_json', label: 'JSON 文档', type: 'textarea', required: true }
+        { name: 'document', label: '完整配置文档（Policy 为 JSON，其它为 XML；提交将替换该配置）', type: 'textarea', required: true }
       ],
-      initialValues: { kind: 'policy', document_json: '{}' },
-      buildBody: (values, clusterId) => {
-        const kind = String(values.kind ?? 'policy')
-        return {
-          cluster_id: clusterId,
-          bucket_id: String(values.bucket_id ?? ''),
-          kind,
-          [kind]: parseJSONDocument(values.document_json)
-        }
-      }
+      initialValues: { kind: 'policy' },
+      buildBody: (values, clusterId) => ({ cluster_id: clusterId, ...rgwBucketConfigurationInput(values) })
     },
     columns: [
       { key: 'bucket_id', title: 'Bucket ID' },
-      { key: 'name', title: 'Bucket' },
-      { key: 'policy', title: 'Policy' },
-      { key: 'cors', title: 'CORS' },
-      { key: 'lifecycle', title: 'Lifecycle' },
-      { key: 'encryption', title: 'Encryption' }
+      { key: 'kind', title: '配置类型' },
+      { key: 'content_type', title: '响应类型' },
+      { key: 'document', title: '原始配置文档', ellipsis: false, render: (value) => <pre style={{ whiteSpace: 'pre-wrap', maxHeight: 240, overflow: 'auto' }}>{typeof value === 'string' ? value : '配置文档不可用'}</pre> }
     ]
   }
 }
@@ -959,8 +948,4 @@ function text(value: unknown) {
 function numberOrUndefined(value: unknown) {
   return typeof value === 'number' && Number.isInteger(value) && value >= -2147483648 && value <= 2147483647
     ? value : undefined
-}
-
-function parseJSONDocument(value: unknown) {
-  return JSON.parse(String(value || '{}')) as unknown
 }

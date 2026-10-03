@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
+import './test-rgw-bucket-configuration.mjs'
 const exports = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwPermissionRows.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
 const rows = exports.rgwPermissionRows

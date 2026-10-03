@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"crypto/hmac"
+	"crypto/md5"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -59,9 +61,8 @@ func (c *Client) HeadBucket(ctx context.Context, bucket string) error {
 }
 
 func (c *Client) PutBucketConfiguration(ctx context.Context, bucket, kind string, body []byte) error {
-	allowed := map[string]bool{"policy": true, "cors": true, "lifecycle": true, "encryption": true, "versioning": true}
-	if !allowed[kind] {
-		return fmt.Errorf("unsupported S3 bucket configuration %q", kind)
+	if err := ValidateBucketConfiguration(kind, body); err != nil {
+		return err
 	}
 	_, _, err := c.request(ctx, http.MethodPut, bucket, url.Values{kind: []string{""}}, body)
 	return err
@@ -90,6 +91,15 @@ func (c *Client) request(ctx context.Context, method, bucket string, query url.V
 	payloadHash := sha256Hex(body)
 	req.Header.Set("X-Amz-Date", now.Format("20060102T150405Z"))
 	req.Header.Set("X-Amz-Content-Sha256", payloadHash)
+	if len(body) > 0 {
+		contentType := "application/xml"
+		if query.Has("policy") {
+			contentType = "application/json"
+		}
+		req.Header.Set("Content-Type", contentType)
+		checksum := md5.Sum(body) // S3 transport integrity header, not a security hash.
+		req.Header.Set("Content-MD5", base64.StdEncoding.EncodeToString(checksum[:]))
+	}
 	if c.credentials.SessionToken != "" {
 		req.Header.Set("X-Amz-Security-Token", c.credentials.SessionToken)
 	}

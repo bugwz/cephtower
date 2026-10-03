@@ -11,6 +11,22 @@ import (
 	"testing"
 )
 
+func TestBucketConfigurationContractRequiresRawDocument(t *testing.T) {
+	for _, kind := range []string{"policy", "cors", "lifecycle", "encryption"} {
+		if err := ValidateMutationRequest("rgw_bucket_policy.update", map[string]any{"cluster_id": float64(1), "bucket_id": "AGJ1Y2tldA", "kind": kind, "document": "raw document"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, fields := range []map[string]any{
+		{"kind": "policy"}, {"document": "{}"}, {"kind": "cors", "document": map[string]any{}}, {"kind": "policy", "policy": map[string]any{}}, {"kind": "unknown", "document": "{}"},
+	} {
+		fields["cluster_id"], fields["bucket_id"] = float64(1), "AGJ1Y2tldA"
+		if err := ValidateMutationRequest("rgw_bucket_policy.update", fields); err == nil {
+			t.Fatalf("accepted obsolete or invalid shape: %v", fields)
+		}
+	}
+}
+
 func TestMutationContractsRejectUnknownAndWrongType(t *testing.T) {
 	if err := ValidateMutationRequest("host.create", map[string]any{"hostname": "node-1", "password": "secret"}); err == nil {
 		t.Fatal("unknown field was accepted")

@@ -378,28 +378,15 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 		err = api.PutBucketConfiguration(ctx, bucket, "versioning", body)
 	case "rgw_bucket_policy.update":
 		kind, _ := parameters["kind"].(string)
-		if kind == "" {
-			kind = "policy"
+		document, _ := parameters["document"].(string)
+		body := []byte(document)
+		if err := s3.ValidateBucketConfiguration(kind, body); err != nil {
+			return cephdomain.ActionResult{}, failure("invalid_request", err.Error(), false)
 		}
-		document, exists := parameters["document"]
-		if !exists {
-			document = parameters[kind]
-		}
-		var body []byte
-		if text, ok := document.(string); ok {
-			body = []byte(text)
-		} else {
-			body, err = json.Marshal(document)
-		}
-		if err == nil && (len(body) == 0 || string(body) == "null") {
-			err = fmt.Errorf("bucket configuration document is required")
-		}
-		if err == nil {
-			err = api.PutBucketConfiguration(ctx, bucket, kind, body)
-		}
+		err = api.PutBucketConfiguration(ctx, bucket, kind, body)
 	}
 	if err != nil {
-		return cephdomain.ActionResult{}, failure("s3_failed", err.Error(), true)
+		return cephdomain.ActionResult{}, failure("s3_failed", err.Error(), request.Action != "rgw_bucket_policy.update")
 	}
 	encodedID := base64.RawURLEncoding.EncodeToString([]byte("\x00" + bucket))
 	return cephdomain.ActionResult{ResourceURL: fmt.Sprintf("/api/v1/cluster/%d/rgw/bucket/%s", clusterID, encodedID)}, nil
