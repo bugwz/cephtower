@@ -77,7 +77,7 @@ func Supports(action string) bool {
 		"rbd_image.create", "rbd_image.update", "rbd_image.delete", "rbd_image.action",
 		"rbd_snapshot.create", "rbd_snapshot.update", "rbd_snapshot.delete", "rbd_snapshot.action",
 		"rbd_namespace.create", "rbd_namespace.delete", "rbd_trash.restore", "rbd_trash.delete",
-		"rbd_trash.purge", "rbd_group.create", "rbd_group.action", "rbd_group.member", "rbd_group.snapshot", "rbd_mirroring.update", "rbd_mirroring.peer",
+		"rbd_trash.purge", "rbd_group.create", "rbd_group.action", "rbd_group.member", "rbd_group.snapshot", "rbd_mirroring.update", "rbd_mirroring.peer", "rbd_mirroring.schedule",
 		"filesystem.create", "filesystem.update", "filesystem.delete", "filesystem.rename",
 		"subvolume_group.create", "subvolume_group.update", "subvolume_group.delete",
 		"subvolume.create", "subvolume.update", "subvolume.delete", "subvolume.clone_cancel", "subvolume.snapshot_visibility",
@@ -1007,8 +1007,20 @@ func build(request Request, p map[string]any) (command, error) {
 		pool := pathValue(tail, "namespace")
 		namespace := last(tail)
 		return rbd([]string{"namespace", "remove", pool + "/" + namespace}, []string{"namespace", "list", pool}), nil
-	case "rbd_image.action":
-		spec, err := decodeImageSpec(pathValue(tail, "image"))
+	case "rbd_image.action", "rbd_mirroring.schedule":
+		var spec string
+		var err error
+		if action == "rbd_mirroring.schedule" {
+			spec, err = required(p, "pool")
+			if err == nil && (!identifier.MatchString(spec) || strings.ContainsAny(spec, "/@")) {
+				err = invalid("invalid pool name")
+			}
+			if !isRBDMirrorScheduleMutation(p) {
+				return command{}, invalid("unsupported pool schedule action")
+			}
+		} else {
+			spec, err = decodeImageSpec(pathValue(tail, "image"))
+		}
 		if err != nil {
 			return command{}, err
 		}
@@ -1083,7 +1095,11 @@ func build(request Request, p map[string]any) (command, error) {
 					return command{}, err
 				}
 			}
-			args := []string{"mirror", "snapshot", "schedule", strings.TrimPrefix(verb, "mirror-schedule-"), "--image=" + spec}
+			scope := "--image=" + spec
+			if action == "rbd_mirroring.schedule" {
+				scope = "--pool=" + spec
+			}
+			args := []string{"mirror", "snapshot", "schedule", strings.TrimPrefix(verb, "mirror-schedule-"), scope}
 			if interval != "" {
 				args = append(args, interval)
 			}
@@ -3319,14 +3335,20 @@ func isRBDMirrorScheduleMutation(parameters map[string]any) bool {
 }
 
 func rbdMirrorScheduleReadbackMatches(request Request, data []byte) bool {
-	spec, err := decodeImageSpec(pathValue(resourceTail(request.ResourceKey), "image"))
-	if err != nil {
-		return false
-	}
-	parts := strings.Split(spec, "/")
-	pool, namespace, image := parts[0], "", parts[len(parts)-1]
-	if len(parts) == 3 {
-		namespace = parts[1]
+	var err error
+	pool, namespace, image := "", "", ""
+	if request.Action == "rbd_mirroring.schedule" {
+		pool, namespace, image = optional(request.Parameters, "pool"), "-", "-"
+	} else {
+		spec, decodeErr := decodeImageSpec(pathValue(resourceTail(request.ResourceKey), "image"))
+		if decodeErr != nil {
+			return false
+		}
+		parts := strings.Split(spec, "/")
+		pool, image = parts[0], parts[len(parts)-1]
+		if len(parts) == 3 {
+			namespace = parts[1]
+		}
 	}
 	var schedules []struct {
 		Pool      string `json:"pool"`

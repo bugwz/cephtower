@@ -967,6 +967,46 @@ func TestRBDImageMirroringCommands(t *testing.T) {
 	}
 }
 
+func TestRBDMirrorPoolScheduleCommandsAndReadback(t *testing.T) {
+	removeAll := Request{Action: "rbd_mirroring.schedule", Parameters: map[string]any{"pool": "images", "action": "mirror-schedule-remove"}}
+	cmd, err := build(removeAll, removeAll.Parameters)
+	if err != nil || !reflect.DeepEqual(cmd.args, []string{"mirror", "snapshot", "schedule", "remove", "--pool=images"}) {
+		t.Fatalf("remove all: %#v %v", cmd, err)
+	}
+	if !rbdMirrorScheduleReadbackMatches(removeAll, []byte(`[]`)) || rbdMirrorScheduleReadbackMatches(removeAll, []byte(`null`)) {
+		t.Fatal("invalid remove-all readback")
+	}
+	for _, verb := range []string{"mirror-schedule-add", "mirror-schedule-remove"} {
+		p := map[string]any{"pool": "images", "action": verb, "interval": "12h"}
+		req := Request{Action: "rbd_mirroring.schedule", ResourceKey: "images", Parameters: p}
+		cmd, err := build(req, p)
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := []string{"mirror", "snapshot", "schedule", strings.TrimPrefix(verb, "mirror-schedule-"), "--pool=images", "12h"}
+		if !reflect.DeepEqual(cmd.args, want) {
+			t.Fatal(cmd.args)
+		}
+		present := []byte(`[{"pool":"images","namespace":"-","image":"-","items":[{"interval":"12h","start_time":""}]}]`)
+		inherited := []byte(`[{"pool":"-","namespace":"-","image":"-","items":[{"interval":"12h","start_time":""}]},{"pool":"images","namespace":"team","image":"-","items":[{"interval":"12h","start_time":""}]}]`)
+		if rbdMirrorScheduleReadbackMatches(req, present) != (verb == "mirror-schedule-add") {
+			t.Fatal("incorrect exact scope verification")
+		}
+		if rbdMirrorScheduleReadbackMatches(req, inherited) != (verb == "mirror-schedule-remove") {
+			t.Fatal("inherited schedule treated as pool schedule")
+		}
+	}
+	for _, p := range []map[string]any{
+		{"pool": "images", "action": "flatten"}, {"pool": "images", "action": "mirror-schedule-add"},
+		{"pool": "images/team", "action": "mirror-schedule-add", "interval": "1h"},
+		{"pool": "images", "action": "mirror-schedule-remove", "start_time": "01:00"},
+	} {
+		if _, err := build(Request{Action: "rbd_mirroring.schedule"}, p); err == nil {
+			t.Fatalf("accepted %#v", p)
+		}
+	}
+}
+
 func TestRBDMirrorSnapshotScheduleCommands(t *testing.T) {
 	spec := "pool/team/image"
 	key := "rbd/image/" + base64.RawURLEncoding.EncodeToString([]byte(spec)) + "/action"

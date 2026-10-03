@@ -463,6 +463,20 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       buildBody:(values,clusterId) => ({cluster_id:clusterId,pool:String(values.pool),mode:String(values.mode)})
     },
     extraActions:[{
+      title:'池镜像快照调度',buttonLabel:'池快照调度',path:'/rbd/mirroring/schedule',method:'POST',successMessage:'池调度已更新并核验',
+      confirmation:(values,row)=>values.action==='mirror-schedule-remove' ? `移除池 ${String(row?.pool ?? row?.name)} ${values.remove_interval ? `的 ${String(values.remove_interval)} 调度` : '的全部池级调度'}？不会删除集群、命名空间或镜像级调度；池内镜像可能重新继承集群调度。` : `为池 ${String(row?.pool ?? row?.name)} 添加调度？会影响没有更具体调度的快照同步镜像。`,
+      fields:[
+        {name:'action',label:'操作',type:'select',required:true,options:[{label:'添加池调度',value:'mirror-schedule-add'},{label:'移除池调度',value:'mirror-schedule-remove'}]},
+        {name:'interval',label:'间隔',required:true,visibleWhen:(values)=>values.action==='mirror-schedule-add',placeholder:'例如 10m、12h、1d',pattern:/^[1-9][0-9]*(m|h|d)$/,patternMessage:'请输入正整数及 m、h 或 d 单位'},
+        {name:'remove_interval',label:'指定要移除的间隔（留空移除全部池级调度）',visibleWhen:(values)=>values.action==='mirror-schedule-remove',placeholder:'例如 10m、12h、1d',pattern:/^$|^[1-9][0-9]*(m|h|d)$/,patternMessage:'请输入正整数及 m、h 或 d 单位'},
+        {name:'start_time',label:'起始时间（可选）',visibleWhen:(values)=>values.action==='mirror-schedule-add' || Boolean(values.remove_interval),placeholder:'例如 00:15 或 00:15:00+08:00'}
+      ],
+      initialValues:{action:'mirror-schedule-add'},
+      buildBody:(values,clusterId,row)=>{
+        const interval=values.action==='mirror-schedule-add' ? values.interval : values.remove_interval
+        return {cluster_id:clusterId,pool:String(row?.pool ?? row?.name),action:String(values.action),...(interval ? {interval:String(interval)} : {}),...(interval && values.start_time ? {start_time:String(values.start_time)} : {})}
+      }
+    },{
       title:'生成 Bootstrap Token',buttonLabel:'生成 Token',path:'/rbd/mirroring/bootstrap/token',method:'POST',successMessage:'Bootstrap Token 已生成，请立即复制并安全保存',
       fields:[
         {name:'site_name',label:'本站点名称',required:true,placeholder:'site-a'},
