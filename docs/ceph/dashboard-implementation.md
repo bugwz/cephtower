@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### Realm 当前 Period 快照采集与展示
+
+根据 `RGWPeriod::dump`、`RGWPeriodMap::dump` 及 `period get` 的 Realm/Period 定位语义，Realm 采集增加 `period get --realm-id <id> --period <current_period> --format json`，同时验证返回 Realm ID 与 Period ID。结果经现有 Observation/资源 API 放入 `current_period_details`；读取失败、缺失或身份不匹配不伪装为空 Period，保留 Realm 行并记录可选采集不可用。显式 Period ID 避免命令读取期间默认 Realm 或当前指向变化造成跨范围混用。
+
+Realm 和 Period 页面增加 epoch、Realm epoch、前驱、主 Zonegroup/Zone、Period 内 Zonegroup 列表、同步策略及原生配置详情。缺失/损坏列表与空列表分开显示，epoch 非精确整数不作为可信数值展示；明确声明这是采集快照，不是待提交差异或远端同步确认。离线测试覆盖精确命令、归属错误、可选采集失败、不存在当前 Period、大整数保留、表格与页面绑定。全量后端/OpenAPI和前端测试构建通过后提交；无真实集群或浏览器视觉验证。
+
 #### Period 提交明确 Realm 范围及回读核验
 
 检查 Zonegroup 策略发布基础链路时发现原 Period 页面按钮仅传集群 ID，原生命令会选择默认 Realm。移除该入口，改为从 Realm 库存行提交，API 必须提供 `realm_id` 与 `expected_current_period`，不保留无范围调用。所有 realm get、period update --commit、period get 均指定 Realm ID；写前核对 Realm 身份及当前 period 快照，写后核对返回 period 的 Realm/ID/epoch、Realm 当前指向，以及完整 period 回读内容。沿用集群内 Period 提交锁，任何提交或核验失败均不自动重试/回滚。

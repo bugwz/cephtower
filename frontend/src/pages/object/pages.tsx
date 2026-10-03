@@ -1,6 +1,7 @@
 import type { ApiRecord } from '../../api/client'
 import { useClusterContext } from '../../state/ClusterContext'
 import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
+import { RgwCurrentPeriod } from './RgwCurrentPeriod'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAction } from '../ResourceListPage'
 import { ServiceDaemons } from '../cluster/ServiceDaemons'
@@ -860,6 +861,7 @@ const definitions: Record<
       { key: 'id', title: 'ID' },
       { key: 'is_default', title: '默认 Realm' },
       { key: 'current_period', title: 'Current Period' },
+      { key: 'current_period_details', title: '当前 Period 快照', ellipsis: false, render: (value, row) => <RgwCurrentPeriod value={value} realm={row.id} current={row.current_period} /> },
       { key: 'epoch', title: 'Epoch' },
       { key: 'resource_version', title: '版本' }
     ]

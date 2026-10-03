@@ -90,6 +90,7 @@ var collectionFailureKinds = map[string][]string{
 	"collect.rgw_zone_detail":         {"rgw_zone"},
 	"collect.rgw_zonegroup_detail":    {"rgw_zonegroup"},
 	"collect.rgw_realm_detail":        {"rgw_realm"},
+	"collect.rgw_current_period":      {"rgw_realm"},
 	"collect.rgw_realm":               {"rgw_realm"},
 	"collect.rgw_zonegroup":           {"rgw_zonegroup"},
 	"collect.rgw_zone":                {"rgw_zone"},

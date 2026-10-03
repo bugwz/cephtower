@@ -525,6 +525,20 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 					details["is_default"] = defaultID == textField(details, "id")
 				}
 			}
+			if resource.kind == "rgw_realm" {
+				details["current_period_details"] = nil
+				realmID, periodID := textField(details, "id"), textField(details, "current_period")
+				if periodID != "" {
+					var period map[string]any
+					if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_current_period", []string{"period", "get", "--realm-id", realmID, "--period", periodID, "--format", "json"}, &period) {
+						if period != nil && textField(period, "id") == periodID && textField(period, "realm_id") == realmID {
+							details["current_period_details"] = period
+						} else {
+							markCollectionUnavailable(ctx, "collect.rgw_current_period")
+						}
+					}
+				}
+			}
 			rows = append(rows, observation(resource.kind, name, name, "rgw_admin", details, now))
 		}
 	}
