@@ -64,9 +64,8 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
       getHostDeviceInfo(decodedName, selectedClusterId).then((value) => ({ value, error: '' })).catch((err) => ({ value: [] as ApiRecord[], error: err instanceof Error ? err.message : '设备信息读取失败' })),
       getHostSMART(decodedName, selectedClusterId).then((value) => ({ value, error: '' })).catch((err) => ({ value: {} as ApiRecord, error: err instanceof Error ? err.message : 'SMART 信息读取失败' }))
     ])
-    const hostRecord = hostPayload ? resourceToRecord(hostPayload.item) : { hostname: decodedName }
-    const host = normalizeHostRow(hostRecord, daemons, devices)
-    const name = textValue(host.hostname ?? decodedName, '')
+    const host = hostPayload ? normalizeHostRow(resourceToRecord(hostPayload.item), daemons, devices) : null
+    const name = textValue(host?.hostname ?? decodedName, '')
     return {
       host,
       daemons: daemons
@@ -232,18 +231,18 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
               <Descriptions.Item label="更新时间">{formatDateTime(host.updated_at)}</Descriptions.Item>
             </Descriptions>
           ) : (
-            <Text type="secondary">暂无主机详情</Text>
+            <Alert type="info" message={loading ? '正在读取主机详情' : '当前库存中未找到该主机'} description="主机可能已删除或库存尚未同步。可刷新库存重试；独立诊断数据不代表主机仍存在。" />
           )}
         </Card>
 
         <Card className="page-surface-card" title="主机操作">
           <Space wrap>
             <Button icon={<TagOutlined />} disabled={!host} onClick={openLabelModal}>标签</Button>
-            <Button loading={pendingAction.endsWith(':maintenance_enter')} disabled={Boolean(pendingAction)} onClick={() => runHostAction('maintenance_enter')}>维护</Button>
-            <Button loading={pendingAction.endsWith(':maintenance_exit')} disabled={Boolean(pendingAction)} onClick={() => runHostAction('maintenance_exit')}>退出维护</Button>
-            <Button loading={pendingAction.endsWith(':drain')} disabled={Boolean(pendingAction)} onClick={() => runHostAction('drain')}>Drain</Button>
-            <Button loading={pendingAction.endsWith(':stop_drain')} disabled={Boolean(pendingAction)} onClick={() => runHostAction('stop_drain')}>停止 Drain</Button>
-            <Button loading={pendingAction.endsWith(':rescan')} disabled={Boolean(pendingAction)} onClick={() => runHostAction('rescan')}>Rescan</Button>
+            <Button loading={pendingAction.endsWith(':maintenance_enter')} disabled={!host || Boolean(pendingAction)} onClick={() => runHostAction('maintenance_enter')}>维护</Button>
+            <Button loading={pendingAction.endsWith(':maintenance_exit')} disabled={!host || Boolean(pendingAction)} onClick={() => runHostAction('maintenance_exit')}>退出维护</Button>
+            <Button loading={pendingAction.endsWith(':drain')} disabled={!host || Boolean(pendingAction)} onClick={() => runHostAction('drain')}>Drain</Button>
+            <Button loading={pendingAction.endsWith(':stop_drain')} disabled={!host || Boolean(pendingAction)} onClick={() => runHostAction('stop_drain')}>停止 Drain</Button>
+            <Button loading={pendingAction.endsWith(':rescan')} disabled={!host || Boolean(pendingAction)} onClick={() => runHostAction('rescan')}>Rescan</Button>
           </Space>
         </Card>
 

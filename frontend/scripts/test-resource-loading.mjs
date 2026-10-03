@@ -12,7 +12,7 @@ const hostLoader = hostDetailFn.body.statements.find((node) => ts.isVariableStat
 const hostLoaderCode = ts.transpileModule(`const load = ${hostLoader.getText(hostDetailTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 for (const failed of ['none', 'device', 'smart', 'both']) {
   const env = {
-    selectedClusterId: 3, decodedName: 'node1', getOptionalResource: async () => null, listDaemons: async () => [],
+    selectedClusterId: 3, decodedName: 'node1', getOptionalResource: async () => ({ item: { hostname: 'node1' } }), listDaemons: async () => [],
     listHostDevices: async () => [{ name: 'disk1' }], listResource: async () => ({ items: [] }),
     getHostDeviceInfo: async () => { if (['device', 'both'].includes(failed)) throw new Error('device unavailable'); return [] },
     getHostSMART: async () => { if (['smart', 'both'].includes(failed)) throw new Error('smart unavailable'); return {} },
@@ -24,6 +24,11 @@ for (const failed of ['none', 'device', 'smart', 'both']) {
   assert.equal(result.deviceInfoError, ['device', 'both'].includes(failed) ? 'device unavailable' : '')
   assert.equal(result.smartError, ['smart', 'both'].includes(failed) ? 'smart unavailable' : '')
   assert.equal(result.host.hostname, 'node1')
+  env.getOptionalResource = async () => null
+  const loadMissing = new Function(...Object.keys(env), `${hostLoaderCode}; return load`)(...Object.values(env))
+  const missing = await loadMissing()
+  assert.equal(missing.host, null)
+  assert.equal(missing.devices.length, 1)
 }
 console.log('Host diagnostic failures remain distinct from empty responses')
 const deleteHostNode = hostDetailFn.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'deleteHost')
