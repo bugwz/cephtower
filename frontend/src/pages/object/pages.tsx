@@ -14,7 +14,7 @@ import { RgwStorage } from './RgwStorage'
 import { RgwRateLimit } from './RgwRateLimit'
 import { RgwPermissions } from './RgwPermissions'
 import { rgwBucketLimit, rgwBucketLimitInput } from './rgwBucketLimit'
-import { rgwAccountLimit } from './rgwAccountLimit'
+import { rgwAccountLimit, rgwAccountLimitPatch } from './rgwAccountLimit'
 import { rgwUserSuspension, rgwUserBooleanFlag } from './rgwUserFlags'
 import { rgwUserFlagPatch } from './rgwUserFlagPatch'
 import { rgwUserEmailPatch } from './rgwUserEmailPatch'
@@ -237,7 +237,7 @@ const definitions: Record<
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, account_id: String(row?.account_id ?? row?.natural_key ?? ''),
         ...(values.account_name !== text(row?.account_name) ? { account_name: String(values.account_name ?? '') } : {}),
         ...(values.email !== text(row?.email) ? { email: String(values.email ?? '') } : {}),
-        ...Object.fromEntries(['max_users', 'max_roles', 'max_groups', 'max_buckets', 'max_access_keys'].filter((key) => values[key] != null).map((key) => [key, Number(values[key])])) })
+        ...rgwAccountLimitPatch(values, row) })
     },
     extraActions: (['account', 'bucket'] as const).map((scope) => ({
       title: scope === 'account' ? '账户总配额' : '默认 Bucket 配额', path: '/rgw/account/quota', method: 'PUT' as const, successMessage: '账户配额更新执行成功',
@@ -752,8 +752,8 @@ function text(value: unknown) {
 }
 
 function numberOrUndefined(value: unknown) {
-  const parsed = typeof value === 'number' ? value : Number(value)
-  return Number.isFinite(parsed) ? parsed : undefined
+  return typeof value === 'number' && Number.isInteger(value) && value >= -2147483648 && value <= 2147483647
+    ? value : undefined
 }
 
 function parseJSONDocument(value: unknown) {
