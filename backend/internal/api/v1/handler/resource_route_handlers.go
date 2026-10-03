@@ -685,6 +685,10 @@ func (h *Handler) UpdateRGWBucketSyncPipe(w http.ResponseWriter, r *http.Request
 	h.MutateResource("rgw_bucket", "rgw_bucket.sync_pipe_update", "high")(w, r)
 }
 
+func (h *Handler) UpdateRGWBucketSyncPipeZones(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_bucket", "rgw_bucket.sync_pipe_zones", "high")(w, r)
+}
+
 func (h *Handler) DeleteRGWBucketSyncFlow(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_bucket", "rgw_bucket.sync_flow_delete", "high")(w, r)
 }

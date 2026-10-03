@@ -138,6 +138,22 @@ export function bucketSyncPipeDeleteConfirmation(values: Record<string, unknown>
   return `确认删除 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中的整个管道 ${JSON.stringify(input.pipe_id)}？源选择：${JSON.stringify(pipe.source)}；目标选择：${JSON.stringify(pipe.dest)}。该管道全部选择器、过滤和权限参数将被移除；保留组状态、数据流及其他管道，不删除已有对象副本，不保证所有复制停止。不修改 Zonegroup 或提交 period。请备份策略并避免外部并发，核验失败不代表未生效，不自动回滚。`
 }
 
+export function bucketSyncPipeZonesInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const selected = bucketSyncPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
+  const zones = (key: string) => {
+    let result: unknown
+    try { result = JSON.parse(String(values[key])) } catch { throw new Error('Zone ID 列表必须为 JSON 数组') }
+    if (!Array.isArray(result) || !result.length || new Set(result).size !== result.length || result.some(id => typeof id !== 'string' || !id || id.startsWith('-') || new TextEncoder().encode(id).length > 512 || /[\s,;=\p{Cc}]/u.test(id) || (id.includes('*') && (id !== '*' || result.length !== 1)) || [...id].some(c => { const n = c.codePointAt(0)!; return n >= 0xd800 && n <= 0xdfff }))) throw new Error('请输入非空、无重复 Zone ID 数组；通配仅允许单独 ["*"]')
+    return result as string[]
+  }
+  if (values.confirm_pipe_zones !== 'acknowledged') throw new Error('请确认 Zone 范围及非事务修改风险')
+  return { ...selected, source_zones: zones('source_zones_json'), dest_zones: zones('dest_zones_json') }
+}
+export function bucketSyncPipeZonesConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const p = bucketSyncPipeZonesInput(values, row)
+  return `确认修改 Bucket ID ${p.bucket_id} 的组 ${JSON.stringify(p.group_id)} 中管道 ${JSON.stringify(p.pipe_id)}？完整源 Zone IDs ${JSON.stringify(p.source_zones)}；完整目标 Zone IDs ${JSON.stringify(p.dest_zones)}。* 匹配全部 Zone，可能扩大复制范围。明确集合先增后删，通配与明确集合直接切换；非事务操作，中间范围可能变化，失败可能部分生效，不自动回滚或重试。保留桶选择器、执行身份和高级参数，不修改组状态、数据流或 Zonegroup/period。请备份并避免外部并发，核验成功不代表同步完成。`
+}
+
 export function bucketSyncPipeUpdateInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const selected = bucketSyncPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
   const group = JSON.parse(selected.expected_group)

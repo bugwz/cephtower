@@ -126,6 +126,19 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if err != nil || pipeUpdated.Action != "rgw_bucket.sync_pipe_update" || pipeUpdated.Risk != "high" || pipeUpdated.ResourceKey != nativeOperation.ResourceKey || pipeUpdated.LockKey != nativeOperation.LockKey {
 			t.Fatalf("wrong pipe update: %+v %v", pipeUpdated, err)
 		}
+		pipeZonesBody := fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"group_id":"g","pipe_id":"p","expected_group":%q,"source_zones":["a"],"dest_zones":["*"]}`, cluster.ID, id, `{"id":"g","status":"allowed","data_flow":{},"pipes":[{"id":"p"}]}`)
+		pipeZonesResponse := sendOperationRequest(t, nativeMux, http.MethodPatch, "/api/v1/rgw/bucket/sync/pipe/zones", pipeZonesBody, "sync-pipe-zones-"+tenant)
+		if pipeZonesResponse.Code != http.StatusAccepted {
+			t.Fatalf("pipe zones queue: %d %s", pipeZonesResponse.Code, pipeZonesResponse.Body.String())
+		}
+		pipeZones, err := db.FindOperation(context.Background(), operationIDFromResponse(t, pipeZonesResponse))
+		if err != nil || pipeZones.Action != "rgw_bucket.sync_pipe_zones" || pipeZones.Risk != "high" || pipeZones.ResourceKey != nativeOperation.ResourceKey || pipeZones.LockKey != nativeOperation.LockKey {
+			t.Fatalf("wrong pipe zones: %+v %v", pipeZones, err)
+		}
+		invalidZones := sendOperationRequest(t, nativeMux, http.MethodPatch, "/api/v1/rgw/bucket/sync/pipe/zones", strings.TrimSuffix(pipeZonesBody, "}")+`,"mode":"system"}`, "invalid-pipe-zones-"+tenant)
+		if invalidZones.Code != http.StatusBadRequest {
+			t.Fatalf("unexpected mode accepted: %d", invalidZones.Code)
+		}
 		invalidPipeUpdate := sendOperationRequest(t, nativeMux, http.MethodPatch, "/api/v1/rgw/bucket/sync/pipe", strings.TrimSuffix(pipeUpdateBody, "}")+`,"source_zones":["*"]}`, "invalid-pipe-update-"+tenant)
 		if invalidPipeUpdate.Code != http.StatusBadRequest {
 			t.Fatalf("unexpected zone update accepted: %d", invalidPipeUpdate.Code)

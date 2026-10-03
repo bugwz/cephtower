@@ -66,7 +66,7 @@ type command struct {
 
 func Supports(action string) bool {
 	switch action {
-	case "rgw_bucket.sync_pipe_update":
+	case "rgw_bucket.sync_pipe_update", "rgw_bucket.sync_pipe_zones":
 		return true
 	case "rgw_bucket.sync_group", "rgw_bucket.sync_group_create", "rgw_bucket.sync_group_delete", "rgw_bucket.sync_flow_create", "rgw_bucket.sync_flow_delete", "rgw_bucket.sync_pipe_delete", "rgw_bucket.sync_pipe_create", "rgw_bucket.sync_flow_update":
 		return true
@@ -124,6 +124,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if request.Action == "rgw_bucket.sync_pipe_update" {
 		return s.executeBucketSyncGroup(ctx, access, request, spec)
+	}
+	if request.Action == "rgw_bucket.sync_pipe_zones" {
+		return s.executeBucketSyncPipeZones(ctx, access, request, spec)
 	}
 	if request.Action == "rgw_bucket.sync_flow_update" {
 		return s.executeBucketSyncFlowUpdate(ctx, access, request, spec)
@@ -668,7 +671,7 @@ func build(request Request, p map[string]any) (command, error) {
 	switch action {
 	case "rgw_bucket.sync_group", "rgw_bucket.sync_group_create", "rgw_bucket.sync_group_delete", "rgw_bucket.sync_flow_create", "rgw_bucket.sync_flow_delete", "rgw_bucket.sync_pipe_delete", "rgw_bucket.sync_pipe_create", "rgw_bucket.sync_flow_update":
 		return bucketSyncGroupCommand(action, p, rgw)
-	case "rgw_bucket.sync_pipe_update":
+	case "rgw_bucket.sync_pipe_update", "rgw_bucket.sync_pipe_zones":
 		return bucketSyncGroupCommand(action, p, rgw)
 	case "ceph_user.create", "ceph_user.update", "ceph_user.delete", "ceph_user.import":
 		return cephUserCommand(request, p)

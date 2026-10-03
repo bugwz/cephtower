@@ -38,10 +38,12 @@ func bucketSyncGroupCommand(action string, p map[string]any, rgw func([]string, 
 		return command{}, invalid("invalid group_id")
 	}
 	status := syncGroupString(p, "status")
-	if action == "rgw_bucket.sync_pipe_delete" || action == "rgw_bucket.sync_pipe_create" || action == "rgw_bucket.sync_pipe_update" {
+	if action == "rgw_bucket.sync_pipe_delete" || action == "rgw_bucket.sync_pipe_create" || action == "rgw_bucket.sync_pipe_update" || action == "rgw_bucket.sync_pipe_zones" {
 		var args []string
 		var err error
-		if action == "rgw_bucket.sync_pipe_update" {
+		if action == "rgw_bucket.sync_pipe_zones" {
+			args, err = bucketSyncPipeZonesArgs(p)
+		} else if action == "rgw_bucket.sync_pipe_update" {
 			args, err = bucketSyncPipeUpdateArgs(p)
 		} else if action == "rgw_bucket.sync_pipe_create" {
 			args, err = bucketSyncPipeCreateArgs(p)

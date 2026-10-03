@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### 桶同步管道 Zone 成员编辑
+
+对照 Dashboard 管道 Zone 选择以及 `rgw_sync_bucket_entities::add_zones/remove_zones`，增加 `PATCH /api/v1/rgw/bucket/sync/pipe/zones` 与“编辑桶同步管道 Zone”。请求包含完整源/目标 Zone ID 数组及原组快照；后端读取桶策略和 `zonegroup get`，将名称映射回 ID，执行 `sync group pipe modify/remove --source-zone-ids/--dest-zone-ids`。明确集合先追加再移除；`["*"]` 与明确集合直接通过 modify 切换，不额外移除星号。每步回读完整策略，保留桶选择器、身份、过滤器和其他组/流/管道；异常停止，不自动回滚或重试。
+
+支持源/目标独立或同时变化、通配双向转换、非空明确集合增删；不提供空目标集合，删除整个管道仍使用独立入口。无变化、过期快照、无效/重复 ID、未知或含混名称映射均不写入。前端明确提示非事务中间范围及部分生效风险。离线测试覆盖转换计划、单步/两步精确命令、故障停止、参数保留、全局/租户范围、API 高风险入队和桶锁、前端实际按钮绑定及非法输入。全量后端/OpenAPI和前端测试构建通过后独立提交；无真实集群或浏览器视觉验证。Zonegroup 级策略及高级参数写入仍未完成。
+
 #### 桶同步管道选择器与执行身份编辑
 
 对照 Dashboard `rgw_client.py::create_sync_pipe` 的桶选择器、mode、user 字段及 `radosgw-admin.cc` 的 `SYNC_GROUP_PIPE_MODIFY` 分支，新增 `PATCH /api/v1/rgw/bucket/sync/pipe` 和“编辑桶同步管道配置”。使用 `sync group pipe modify` 而非创建/删除重建，只接受已存在的唯一管道；显式填写源/目标租户、桶名、实例选择器与 system/user 模式，user 模式要求完整 UID。system 模式按原生行为保留已存储 UID，不声称删除用户或凭据。空租户与 `*` 均不限定租户，界面明确提示匹配范围。

@@ -18,8 +18,12 @@ console.log('bucket local sync policy summary checks passed')
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketSyncGroupForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(api)
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-let action, createAction, deleteAction, flowAction, deleteFlowAction, deletePipeAction, createPipeAction, updateFlowAction, updatePipeAction
+let action, createAction, deleteAction, flowAction, deleteFlowAction, deletePipeAction, createPipeAction, updateFlowAction, updatePipeAction, pipeZonesAction
 function visit(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '编辑桶同步管道 Zone')) {
+    const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+    pipeZonesAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
+  }
   if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '编辑桶同步管道配置')) {
     const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
     updatePipeAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
@@ -65,6 +69,17 @@ assert.equal(action.method, 'PATCH')
 const row = { natural_key: 'AGJ1Y2tldA', bucket_sync_policy: { groups: [group] } }
 const pipeEditGroup = { ...group, pipes: [{ id: ' 管道 ', source: { bucket: '*', zones: ['A'] }, dest: { bucket: '*', zones: ['*'] }, params: { mode: 'user', user: 'old', priority: 123 } }] }
 const pipeEditRow = { ...row, bucket_sync_policy: { groups: [pipeEditGroup] } }
+const pipeZonesValues = { bucket_id: row.natural_key, group_id: group.id, pipe_id: ' 管道 ', source_zones_json: '["a","b"]', dest_zones_json: '["*"]', confirm_pipe_zones: 'acknowledged' }
+assert.equal(pipeZonesAction.method, 'PATCH')
+assert.equal(pipeZonesAction.path, '/rgw/bucket/sync/pipe/zones')
+assert.deepEqual(pipeZonesAction.buildBody(pipeZonesValues, 7, pipeEditRow), { cluster_id: 7, bucket_id: row.natural_key, group_id: group.id, pipe_id: ' 管道 ', expected_group: JSON.stringify(pipeEditGroup), source_zones: ['a','b'], dest_zones: ['*'] })
+assert.match(pipeZonesAction.confirmation(pipeZonesValues, pipeEditRow), /先增后删.*直接切换.*部分生效.*不自动回滚或重试/)
+for (const field of ['source_zones_json', 'dest_zones_json']) {
+  for (const value of ['[]','["*","a"]','["a","a"]','["a;b"]','["a=b"]','["a b"]','["-a"]','[null]','{}','broken','["\\ud800"]']) assert.throws(() => pipeZonesAction.buildBody({ ...pipeZonesValues, [field]: value }, 7, pipeEditRow))
+}
+for (const change of [{ bucket_id: 'wrong' }, { group_id:'wrong' }, { pipe_id:'wrong' }, { confirm_pipe_zones:true }]) assert.throws(() => pipeZonesAction.buildBody({ ...pipeZonesValues, ...change }, 7, pipeEditRow))
+assert.ok(pipeZonesAction.disabledWhen({ ...pipeEditRow, stale: true }))
+console.log('bucket pipe zone membership form checks passed')
 const pipeEditValues = { bucket_id: row.natural_key, group_id: group.id, pipe_id: ' 管道 ', source_bucket: 'photos', dest_bucket: '*', mode: 'system', confirm_pipe_update: 'acknowledged' }
 assert.equal(updatePipeAction.method, 'PATCH')
 assert.equal(updatePipeAction.path, '/rgw/bucket/sync/pipe')
