@@ -447,8 +447,8 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 	if err := p.runInto(ctx, access, "collect.daemon", []string{"orch", "ps", "--refresh", "--format", "json"}, &daemons); err != nil {
 		return nil, err
 	}
-	var services []serviceWire
-	if err := p.runInto(ctx, access, "collect.service", []string{"orch", "ls", "--refresh", "--format", "json"}, &services); err != nil {
+	services, err := p.collectServiceList(ctx, access)
+	if err != nil {
 		return nil, err
 	}
 	var mons monDumpWire
