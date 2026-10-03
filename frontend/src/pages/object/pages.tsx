@@ -23,6 +23,7 @@ import { rgwQuotaInitial, rgwQuotaInput } from './rgwQuotaForm'
 import { rgwRoleInitial, rgwRolePatch } from './rgwRoleEdit'
 import { RgwRoleTagsTable } from './RgwRoleTagsTable'
 import { RgwPolicyDocument, RgwRolePolicyDetails } from './RgwRolePolicyDetails'
+import { rgwPolicyDeleteOptions, rgwPolicyMutation } from './rgwRolePolicies'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -318,11 +319,12 @@ const definitions: Record<
       initialValues: { action: 'put' },
       fields: [
         { name: 'action', label: '操作', type: 'select', required: true, options: [{ label: '新增或替换', value: 'put' }, { label: '删除', value: 'delete' }] },
-        { name: 'policy_name', label: '策略名称', required: true },
+        { name: 'policy_name', label: '策略名称', required: true, visibleWhen: (values) => values.action === 'put' },
+        { name: 'existing_policy', label: '已有内联策略', type: 'select', required: true, visibleWhen: (values) => values.action === 'delete', optionsDependencies: ['action'], optionsLoader: async (_clusterId, row, values) => values?.action === 'delete' ? rgwPolicyDeleteOptions(row) : [] },
         { name: 'policy_document', label: '权限策略（JSON）', type: 'textarea', required: true, visibleWhen: (values) => values.action === 'put' }
       ],
       confirmation: (values) => values.action === 'delete' ? '确认删除该角色的指定内联权限策略？' : '同名策略将被替换，确认提交？',
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...(row?.AccountId ? { account_id: String(row.AccountId) } : {}), name: String(row?.RoleName ?? row?.natural_key ?? ''), action: String(values.action), policy_name: String(values.policy_name ?? ''), ...(values.action === 'put' ? { policy_document: String(values.policy_document ?? '') } : {}) })
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...(row?.AccountId ? { account_id: String(row.AccountId) } : {}), name: String(row?.RoleName ?? row?.natural_key ?? ''), ...rgwPolicyMutation(values, row) })
     }],
     deleteAction: {
       title: '删除 RGW Role', path: '/rgw/role', action: 'rgw_role.delete',

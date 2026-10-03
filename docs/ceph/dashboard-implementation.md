@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+Role 内联策略删除从当前角色采集列表选择，提交时再次检查名称属于该列表；缺失、
+畸形或重名列表不能据此删除。切换操作后不使用残留的新增策略名称/文档。新增或替换
+仍支持指定名称，并在前端检查 JSON 对象、保持原文传递到 role-policy put；删除沿用
+role-policy delete。该校验基于库存而非实时并发锁，离线测试通过，未做集群或浏览器验证。
+
 Role 信任策略与内联策略支持展开原文查看，内联策略按 PolicyName 分项展示，复用
 role get/list 返回的 AssumeRolePolicyDocument 和 PermissionPolicies。按 rgw_role.cc
 原生字符串保留文档，不经 JSON.parse/stringify 改写大整数或重复键，不执行 HTML。
