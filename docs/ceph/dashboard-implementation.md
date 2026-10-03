@@ -28,6 +28,16 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：补齐桶 ACL 读取与展示。依据参考 Dashboard 的 rgw_client.py/get_acl、
+  rgw-bucket-details 及原生 rgw_acl_s3.cc，通过签名 S3 GET ?acl（非 Dashboard HTTP）
+  读取显式租户桶，沿现有桶配置 API 返回原文、所有者、受权者身份与权限数组。
+  保留多 Permission、未知类型和权限值；区分空授权列表、读取失败，不把 404 当作私有配置。
+  前端桶配置类型新增只读 ACL，表格展示用户、邮箱、组 URI 和全部权限，
+  对 AllUsers/AuthenticatedUsers 提示范围；不据此推断最终有效权限或对象权限。
+  ACL 修改尚未实现，现有写入和删除契约仍拒绝 ACL。测试覆盖解析、异常响应、
+  签名租户作用域、API 契约及表格逻辑；make test-backend（含 OpenAPI 同步检查）、
+  make test-frontend（含 TypeScript/Vite 构建）通过；无真实集群或浏览器视觉验证。
+
 - 2026-10-04：修复 OpenAPI 写接口请求契约串用问题：152 个原生操作路由直接使用各自运行时
   MutationRequestContract，删除所有操作字段合集与重复特例，保留正确的必填字段、类型和枚举。
   未登记的集群写接口现在使生成失败，不再静默生成宽泛契约；补齐主机 SSH 保存的独立请求结构。

@@ -23,3 +23,27 @@ func TestBucketConfigurationDeletionSchemaMatchesRuntime(t *testing.T) {
 		t.Fatal("delete must not take a configuration document")
 	}
 }
+
+func TestBucketACLIsReadOnlyInContract(t *testing.T) {
+	found := false
+	for _, parameter := range routeParameters(router.Route{Method: "GET", Path: "/rgw/bucket/policy"}) {
+		if parameter.Name == "kind" {
+			for _, value := range parameter.Enum {
+				if value == "acl" {
+					found = true
+				}
+			}
+		}
+	}
+	if !found {
+		t.Fatal("ACL query missing")
+	}
+	for _, method := range []string{"PATCH", "DELETE"} {
+		schema, _ := requestSchema(router.Route{Method: method, Path: "/rgw/bucket/policy"})
+		for _, value := range schema.Fields["kind"].Enum {
+			if value == "acl" {
+				t.Fatal("read-only ACL writable")
+			}
+		}
+	}
+}

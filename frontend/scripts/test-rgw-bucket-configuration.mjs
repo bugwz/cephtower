@@ -5,6 +5,7 @@ import './test-external-form-confirmation.mjs'
 import './test-rgw-bucket-tag-form.mjs'
 import './test-rgw-bucket-lifecycle.mjs'
 import './test-rgw-bucket-lifecycle-form.mjs'
+import './test-rgw-bucket-acl.mjs'
 const helpers = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketObjectLockForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketObjectLockSummary.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
@@ -163,7 +164,12 @@ assert.ok(tagAction.confirmation(tagValues, tagRow).includes('整体替换'))
 assert.equal(typeof tagAction.fields.find(field => field.name === 'tag_set').renderControl, 'function')
 assert.equal(definition.buildQuery({ kind: 'cors' }).toString(), 'kind=cors')
 assert.deepEqual(definition.filterFields.find(field => field.name === 'kind').options, helpers.rgwBucketConfigurationReadOptions)
-assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'encryption', 'object_lock', 'cors_rules', 'lifecycle_rules', 'content_type', 'document'])
+assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'encryption', 'object_lock', 'acl', 'cors_rules', 'lifecycle_rules', 'content_type', 'document'])
+const readonlyAcl = { bucket_id: 'AGJ1Y2tldA', kind: 'acl', configured: true, document: '<AccessControlPolicy/>' }
+assert.ok(helpers.rgwBucketConfigurationEditBlocked(readonlyAcl))
+assert.ok(helpers.rgwBucketConfigurationDeleteBlocked(readonlyAcl))
+assert.ok(helpers.rgwBucketConfigurationReadOptions.some(option => option.value === 'acl'))
+assert.ok(!helpers.rgwBucketConfigurationOptions.some(option => option.value === 'acl'))
 const lockSummary = definition.columns.find(column => column.key === 'object_lock').render
 assert.match(lockSummary(null, { kind: 'object-lock', configured: false }), /未启用/)
 assert.match(lockSummary({ enabled: true, default_retention: null }, { kind: 'object-lock', configured: true }), /未设置默认保留期/)

@@ -259,7 +259,7 @@ func routeParameters(route router.Route) []parameterSpec {
 		result = append(result, parameterSpec{Name: "metric_id", In: "query", Type: "string", Required: true}, parameterSpec{Name: "start", In: "query", Type: "string", Format: "date-time", Required: true}, parameterSpec{Name: "end", In: "query", Type: "string", Format: "date-time", Required: true}, parameterSpec{Name: "step", In: "query", Type: "string", Required: true})
 	case "/rgw/bucket/policy":
 		if route.Method == "GET" {
-			result = append(result, parameterSpec{Name: "kind", In: "query", Type: "string", Enum: []string{"policy", "cors", "lifecycle", "encryption", "versioning", "tagging", "object-lock"}})
+			result = append(result, parameterSpec{Name: "kind", In: "query", Type: "string", Enum: []string{"policy", "cors", "lifecycle", "encryption", "versioning", "tagging", "object-lock", "acl"}})
 		}
 	}
 	return result
@@ -893,10 +893,42 @@ const components = `components:
       required: [bucket_id, kind, configured, document, content_type]
       properties:
         bucket_id: {type: string}
-        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning, tagging, object-lock]}
+        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning, tagging, object-lock, acl]}
         configured: {type: boolean}
         document: {type: string, nullable: true}
         content_type: {type: string, nullable: true}
+        acl:
+          type: object
+          additionalProperties: false
+          required: [owner, grants]
+          properties:
+            owner:
+              type: object
+              additionalProperties: false
+              required: [id, display_name]
+              properties:
+                id: {type: string}
+                display_name: {type: string}
+            grants:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [grantee, permissions]
+                properties:
+                  grantee:
+                    type: object
+                    additionalProperties: false
+                    required: [type, id, display_name, uri, email_address]
+                    properties:
+                      type: {type: string}
+                      id: {type: string}
+                      display_name: {type: string}
+                      uri: {type: string}
+                      email_address: {type: string}
+                  permissions:
+                    type: array
+                    items: {type: string}
         object_lock:
           type: object
           nullable: true

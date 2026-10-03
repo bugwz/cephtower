@@ -19201,7 +19201,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: ["policy", "cors", "lifecycle", "encryption", "versioning", "tagging", "object-lock"]
+            enum: ["policy", "cors", "lifecycle", "encryption", "versioning", "tagging", "object-lock", "acl"]
       requestBody:
         required: true
         content:
@@ -25985,10 +25985,42 @@ components:
       required: [bucket_id, kind, configured, document, content_type]
       properties:
         bucket_id: {type: string}
-        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning, tagging, object-lock]}
+        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning, tagging, object-lock, acl]}
         configured: {type: boolean}
         document: {type: string, nullable: true}
         content_type: {type: string, nullable: true}
+        acl:
+          type: object
+          additionalProperties: false
+          required: [owner, grants]
+          properties:
+            owner:
+              type: object
+              additionalProperties: false
+              required: [id, display_name]
+              properties:
+                id: {type: string}
+                display_name: {type: string}
+            grants:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [grantee, permissions]
+                properties:
+                  grantee:
+                    type: object
+                    additionalProperties: false
+                    required: [type, id, display_name, uri, email_address]
+                    properties:
+                      type: {type: string}
+                      id: {type: string}
+                      display_name: {type: string}
+                      uri: {type: string}
+                      email_address: {type: string}
+                  permissions:
+                    type: array
+                    items: {type: string}
         object_lock:
           type: object
           nullable: true

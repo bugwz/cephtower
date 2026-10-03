@@ -53,6 +53,7 @@ import { RgwBucketLifecycleRules } from './RgwBucketLifecycleRules'
 import { rgwLifecycleProgress } from './rgwLifecycleProgress'
 import { rgwBucketConfigurationReadOptions } from './rgwBucketConfiguration'
 import { rgwBucketObjectLockSummary } from './rgwBucketObjectLockSummary'
+import { RgwBucketAcl } from './RgwBucketAcl'
 import { objectLockFormInitial, objectLockFormBlocked, objectLockFormInput, objectLockFormConfirmation } from './rgwBucketObjectLockForm'
 import { RgwBucketLifecycleEditor } from './RgwBucketLifecycleEditor'
 import { lifecycleFormInitial, lifecycleFormBlocked, lifecycleFormInput, lifecycleFormConfirmation } from './rgwBucketLifecycleForm'
@@ -996,6 +997,7 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       { key: 'tags', title: '标签条目', ellipsis: false, render: (value, row) => row.kind === 'tagging' ? <RgwBucketTagEntries value={value} /> : '—' },
       { key: 'encryption', title: '默认加密', ellipsis: false, render: rgwBucketEncryptionSummary },
       { key: 'object_lock', title: '对象锁默认保留', ellipsis: false, render: rgwBucketObjectLockSummary },
+      { key: 'acl', title: 'ACL 访问控制', ellipsis: false, render: (value, row) => row.kind === 'acl' ? <RgwBucketAcl value={value} configured={row.configured} /> : '—' },
       { key: 'cors_rules', title: 'CORS 规则', ellipsis: false, render: (value, row) => row.kind === 'cors' ? <RgwBucketCorsRules value={value} configured={row.configured} /> : '—' },
       { key: 'lifecycle_rules', title: '生命周期规则', ellipsis: false, render: (value, row) => row.kind === 'lifecycle' ? <RgwBucketLifecycleRules value={value} configured={row.configured} /> : '—' },
       { key: 'content_type', title: '响应类型' },
