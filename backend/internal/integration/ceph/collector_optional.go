@@ -55,9 +55,12 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 					imageKey := base64.RawURLEncoding.EncodeToString([]byte(spec))
 					payload := cephdomain.RBDImage{ImagePath: spec, ImageSpec: imageKey, Pool: pool.PoolName, Namespace: namespace, Name: image.Name, SizeBytes: image.Size, Format: image.Format}
 					p.enrichRBDImage(ctx, access, spec, &payload)
+					imageRowIndex := len(rows)
 					rows = append(rows, observation("rbd_image", imageKey, image.Name, "rbd_cli", payload, now))
 					var snapshots []map[string]any
 					if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_snapshot", []string{"snap", "ls", spec, "--format", "json"}, &snapshots) {
+						checkedSnapshots := 0
+						hasChildren := false
 						if snapshots == nil {
 							markCollectionUnavailable(ctx, "collect.rbd_snapshot")
 						}
@@ -89,6 +92,8 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 								continue
 							}
 							snapshot["children"] = children
+							checkedSnapshots++
+							hasChildren = hasChildren || len(children) > 0
 							snapshot["image_features"] = payload.Features
 							if used, ok := payload.SnapshotUsage[name]; ok {
 								snapshot["used_bytes"] = strconv.FormatUint(used, 10)
@@ -96,7 +101,11 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 							}
 							rows = append(rows, Observation{Kind: "rbd_snapshot", NaturalKey: imageKey + "@" + name, ParentKind: "rbd_image", ParentKey: imageKey, Name: name, Status: "available", Source: "rbd_cli", Payload: snapshot, ObservedAt: now})
 						}
+						if hasChildren || (snapshots != nil && checkedSnapshots == len(snapshots)) {
+							payload.HasSnapshotChildren = &hasChildren
+						}
 					}
+					rows[imageRowIndex].Payload = payload
 				}
 			}
 		}

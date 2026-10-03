@@ -1276,6 +1276,13 @@ which could collapse multiple paths and schedules into one resource key.
 
 ### RBD feature mutation
 
+Image deletion uses `has_snapshot_children`, aggregated from the existing user
+snapshot and `children --all` reads. True includes trash children; false requires
+every snapshot dependency read to succeed (or an explicit empty snapshot list).
+Incomplete collection stays null. The UI blocks secondary-image deletion and known
+or unknown snapshot dependencies, following Dashboard's cloned-snapshot guard without
+mistaking failed collection for no children. Native Ceph remains the final authority.
+
 Mirror promote, demote and resync submissions require collected `mirror_state=enabled`
 and an explicit boolean primary role. Promote/resync require a non-primary image;
 demote requires a primary image, following Dashboard's role guards. Unknown role data

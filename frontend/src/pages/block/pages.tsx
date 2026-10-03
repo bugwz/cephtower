@@ -12,6 +12,7 @@ import { RbdChildren, rbdSnapshotDeleteReason } from './RbdChildren'
 import { rbdUsageText } from './rbdUsage'
 import { rbdSnapshotLimitText } from './rbdSnapshotLimit'
 import { rbdMirrorRoleReason } from './rbdMirrorRole'
+import { rbdImageDeleteReason } from './rbdImageDelete'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
 import { LiveMirrorScheduleStatus } from './LiveMirrorScheduleStatus'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -226,6 +227,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       action: 'rbd_image.delete',
       resourceKind: 'rbd_image',
       successMessage: 'RBD 镜像删除执行成功',
+      disabledWhen: rbdImageDeleteReason,
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, image_spec: imageSpec(row) }),
       resourceKey: (row) => `rbd/image/${imageSpec(row)}`
     },

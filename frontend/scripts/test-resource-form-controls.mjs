@@ -107,6 +107,14 @@ for (const children of [undefined, null, {}, '']) assert.match(snapshotDeleteRea
 for (const children of [[{ trash: true }], [{}], [null]]) assert.match(snapshotDeleteReason({ is_protected: false, children }), /仍有子镜像/)
 
 const usageExports = {}
+const imageDeleteExports = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdImageDelete.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(imageDeleteExports)
+const imageDeleteReason = imageDeleteExports.rbdImageDeleteReason
+assert.equal(imageDeleteReason({ has_snapshot_children: false }), undefined)
+assert.equal(imageDeleteReason({ has_snapshot_children: false, primary: true }), undefined)
+assert.match(imageDeleteReason({ has_snapshot_children: false, primary: false }), /非主镜像/)
+assert.match(imageDeleteReason({ has_snapshot_children: true }), /克隆子镜像/)
+for (const value of [undefined, null, 0, 'false', []]) assert.match(imageDeleteReason({ has_snapshot_children: value }), /未完整采集/)
 const roleExports = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdMirrorRole.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(roleExports)
 const roleReason = roleExports.rbdMirrorRoleReason
@@ -135,6 +143,7 @@ for (const value of [undefined, null, 0, 4096, -1, 0.5, NaN, Infinity, Number.MA
 console.log('RBD usage distinguishes missing fast-diff, unavailable statistics and valid zero')
 
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')
+assert.ok(blockSource.includes('disabledWhen: rbdImageDeleteReason'))
 assert.ok(blockSource.includes('disabledWhen: rbdFlattenReason'))
 assert.ok(blockSource.includes('const reason = rbdMirrorRoleReason(values.action, row ?? {})'))
 assert.ok(blockSource.includes('const reason = rbdFlattenReason(row ?? {})'))

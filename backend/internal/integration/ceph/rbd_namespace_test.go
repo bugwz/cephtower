@@ -13,6 +13,49 @@ import (
 	"time"
 )
 
+func TestRBDImageSnapshotDependencySummary(t *testing.T) {
+	for _, tc := range []struct{ snapshots, children, want string }{
+		{`[]`, `[]`, "false"},
+		{`null`, `[]`, "null"},
+		{`[{"name":"snap","protected":false}]`, `[]`, "false"},
+		{`[{"name":"snap","protected":false}]`, `[{"pool":"pool","pool_namespace":"","image":"child","trash":true}]`, "true"},
+		{`[{"name":"snap","protected":false}]`, `null`, "null"},
+		{`[{"name":"snap","protected":false}]`, `invalid`, "null"},
+		{`[{"name":"snap","protected":false},{}]`, `[]`, "null"},
+		{`[{"name":"snap","protected":false},{}]`, `[{"image":"child"}]`, "true"},
+	} {
+		t.Run(tc.snapshots+tc.children, func(t *testing.T) {
+			provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+				"collect.rbd_namespace":         []byte(`[]`),
+				"collect.rbd_image_detail":      []byte(`[{"image":"image"}]`),
+				"collect.rbd_snapshot":          []byte(tc.snapshots),
+				"collect.rbd_snapshot_children": []byte(tc.children),
+			}}}
+			found := false
+			for _, row := range provider.collectStorageOptional(context.Background(), ClusterAccess{}, []poolWire{{PoolName: "pool"}}, fsDumpWire{}, time.Now()) {
+				if row.Kind != "rbd_image" {
+					continue
+				}
+				found = true
+				encoded, err := json.Marshal(row.Payload)
+				if err != nil {
+					t.Fatal(err)
+				}
+				var payload map[string]json.RawMessage
+				if err := json.Unmarshal(encoded, &payload); err != nil {
+					t.Fatal(err)
+				}
+				if string(payload["has_snapshot_children"]) != tc.want {
+					t.Fatalf("wrong dependency summary: %s", encoded)
+				}
+			}
+			if !found {
+				t.Fatal("missing image")
+			}
+		})
+	}
+}
+
 func TestRBDImageSnapshotLimit(t *testing.T) {
 	for _, value := range []string{"0", "1", "9007199254740993", "18446744073709551614", "18446744073709551615", "18446744073709551616", "null", "-1", "1.5", `"1"`} {
 		t.Run(value, func(t *testing.T) {
