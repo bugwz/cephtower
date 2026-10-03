@@ -150,14 +150,16 @@ const definitions: Record<
         suspended: 'keep',
         system: 'keep'
       }),
-      buildBody: (values, clusterId, row) => ({
-        cluster_id: clusterId,
-        uid: userId(row),
-        ...rgwUserDisplayNamePatch(values.display_name, row?.display_name),
-        ...rgwUserEmailPatch(values),
-        ...rgwBucketLimitPatch(values.max_buckets, row?.max_buckets),
-        ...rgwUserFlagPatch(values)
-      })
+      buildBody: (values, clusterId, row) => {
+        const patch = {
+          ...rgwUserDisplayNamePatch(values.display_name, row?.display_name),
+          ...rgwUserEmailPatch(values),
+          ...rgwBucketLimitPatch(values.max_buckets, row?.max_buckets),
+          ...rgwUserFlagPatch(values)
+        }
+        if (Object.keys(patch).length === 0) throw new Error('没有需要提交的用户修改')
+        return { cluster_id: clusterId, uid: userId(row), ...patch }
+      }
     },
     extraActions: [...(['user', 'bucket'] as const).map<ResourceFormAction>((scope) => ({
       title: scope === 'user' ? '用户总配额' : '默认 Bucket 配额', path: '/rgw/user/quota', method: 'PUT' as const, successMessage: '用户配额更新执行成功',

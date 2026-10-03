@@ -48,11 +48,21 @@ const namePatch = displayName.rgwUserDisplayNamePatch
 for (const value of [undefined, null, '', 'Original']) assert.deepEqual(namePatch(value, 'Original'), {})
 assert.deepEqual(namePatch('New name', 'Original'), { display_name: 'New name' })
 for (const value of [false, 1, {}, '   ', 'bad\nname', 'bad\0name']) assert.throws(() => namePatch(value, 'Original'))
-const buildBody = new Function('rgwBucketLimitPatch', 'rgwUserEmailPatch', 'rgwUserFlagPatch', 'userId', 'rgwUserDisplayNamePatch', `return (${updateBody})`)(patch, () => ({}), () => ({}), (row) => row.uid, namePatch)
+function loadHelper(name) {
+  const exports = {}
+  new Function('exports', ts.transpileModule(readFileSync(new URL(`../src/pages/object/${name}.ts`, import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
+  return exports[name]
+}
+const buildBody = new Function('rgwBucketLimitPatch', 'rgwUserEmailPatch', 'rgwUserFlagPatch', 'userId', 'rgwUserDisplayNamePatch', `return (${updateBody})`)(patch, loadHelper('rgwUserEmailPatch'), loadHelper('rgwUserFlagPatch'), (row) => row.uid, namePatch)
 const row = { uid: 'tenant$user', max_buckets: 100 }
-assert.deepEqual(buildBody({ max_buckets: 100 }, 'cluster', row), { cluster_id: 'cluster', uid: 'tenant$user' })
+for (const values of [{}, { max_buckets: 100 }, { max_buckets: null }, { email_action: 'keep', email: 'ignored', suspended: 'keep', system: 'keep' }, { display_name: 'Original', max_buckets: 100, email_action: 'keep', suspended: 'keep', system: 'keep' }]) {
+  assert.throws(() => buildBody(values, 'cluster', { ...row, display_name: 'Original' }), /没有需要提交的用户修改/)
+}
 assert.deepEqual(buildBody({ max_buckets: 0 }, 'cluster', row), { cluster_id: 'cluster', uid: 'tenant$user', max_buckets: 0 })
-assert.deepEqual(buildBody({ max_buckets: null }, 'cluster', row), { cluster_id: 'cluster', uid: 'tenant$user' })
+assert.deepEqual(buildBody({ email_action: 'clear' }, 'cluster', row), { cluster_id: 'cluster', uid: 'tenant$user', email: '' })
+for (const field of ['system', 'suspended']) {
+  assert.deepEqual(buildBody({ [field]: 'disable' }, 'cluster', row), { cluster_id: 'cluster', uid: 'tenant$user', [field]: false })
+}
 assert.deepEqual(buildBody({ display_name: 'Original', max_buckets: 0 }, 'cluster', { ...row, display_name: 'Original' }), { cluster_id: 'cluster', uid: 'tenant$user', max_buckets: 0 })
 assert.deepEqual(buildBody({ display_name: 'New name' }, 'cluster', { ...row, display_name: 'Original' }), { cluster_id: 'cluster', uid: 'tenant$user', display_name: 'New name' })
 console.log('RGW bucket count limits preserve native disabled and unlimited semantics')
