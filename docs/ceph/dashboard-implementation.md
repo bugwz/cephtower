@@ -5,6 +5,11 @@
 
 ## 如何追踪调用链
 
+用户用量范围明确提示账户用户读取的是所属账户汇总，显示账户 ID，并提醒同账户用户
+的用量不可相加。依据 radosgw-admin user stats 以 account_id 替换统计 owner 的逻辑；
+未知 stats_scope 不再默认解释为用户统计。复用采集标记，离线测试覆盖范围和缺失 ID，
+未进行浏览器或真实集群验证。
+
 用户/账户用量明细补充统计同步与更新时间：user stats 原生字段为 last_stats_sync /
 last_stats_update，account stats 为 last_synced / last_updated。按资源类型读取，保留
 命令时间原文，不替换为库存更新时间或推断时区；Bucket 分类表不展示这些汇总时间。

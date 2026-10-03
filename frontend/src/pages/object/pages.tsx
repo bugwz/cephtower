@@ -11,6 +11,7 @@ import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAct
 import { ServiceDaemons } from '../cluster/ServiceDaemons'
 import { RgwQuota } from './RgwQuota'
 import { RgwStorage } from './RgwStorage'
+import { rgwStorageScope } from './rgwStorageDetails'
 import { RgwRateLimit } from './RgwRateLimit'
 import { RgwPermissions } from './RgwPermissions'
 import { rgwBucketLimit, rgwBucketLimitInput } from './rgwBucketLimit'
@@ -206,7 +207,7 @@ const definitions: Record<
       { key: 'rate_limit', title: '用户限流（每 RGW）', ellipsis: false, render: (value) => <RgwRateLimit value={value} /> },
       { key: 'user_quota', title: '用户总配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'bucket_quota', title: '默认 Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
-      { key: 'stats_scope', title: '统计范围', render:(value)=>value === 'account' ? '所属账户' : '用户' },
+      { key: 'stats_scope', title: '统计范围', ellipsis: false, render: (value, row) => rgwStorageScope(value, row.account_id) },
       { key: 'storage_stats', title: '容量与对象统计', ellipsis: false, render: (value) => <RgwStorage value={value} /> },
       { key: 'resource_version', title: '版本' }
     ]

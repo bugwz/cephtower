@@ -1,4 +1,12 @@
 type RecordValue = Record<string, unknown>
+export function rgwStorageScope(scope: unknown, accountId: unknown) {
+  if (scope === 'user') return '用户汇总'
+  if (scope === 'account') {
+    const identity = typeof accountId === 'string' && accountId !== '' ? ` ${accountId}` : '（账户 ID 未返回）'
+    return `所属账户${identity} 的汇总，非单用户用量；同账户用户之间不可相加`
+  }
+  return '统计范围未知，请重新采集'
+}
 export function rgwStorageTimes(value: unknown, account = false) {
   const stats = record(value) ? value : {}
   const display = (value: unknown) => typeof value === 'string' && value !== '' ? value : '未返回或格式无效'
