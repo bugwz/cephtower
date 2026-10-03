@@ -6,10 +6,11 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"sort"
 	"time"
 )
 
-func zonegroupSyncGroupCommand(p map[string]any, rgw func([]string, []string) command) (command, error) {
+func zonegroupSyncGroupCommand(action string, p map[string]any, rgw func([]string, []string) command) (command, error) {
 	for _, key := range []string{"zonegroup_id", "name", "group_id"} {
 		if !syncFlowToken(syncGroupString(p, key)) {
 			return command{}, invalid("valid zonegroup identity and group_id are required")
@@ -23,11 +24,15 @@ func zonegroupSyncGroupCommand(p map[string]any, rgw func([]string, []string) co
 	if status != "enabled" && status != "allowed" && status != "forbidden" {
 		return command{}, invalid("invalid sync group status")
 	}
-	if syncGroupString(p, "expected_group") == "" {
-		return command{}, invalid("expected_group is required")
+	verb, expectedKey := "modify", "expected_group"
+	if action == "rgw_zonegroup.sync_group_create" {
+		verb, expectedKey = "create", "expected_policy"
+	}
+	if syncGroupString(p, expectedKey) == "" {
+		return command{}, invalid(expectedKey + " is required")
 	}
 	target := []string{"--zonegroup-id", syncGroupString(p, "zonegroup_id")}
-	return rgw(append([]string{"sync", "group", "modify", "--group-id", syncGroupString(p, "group_id"), "--status", status}, target...), append([]string{"zonegroup", "get"}, target...)), nil
+	return rgw(append([]string{"sync", "group", verb, "--group-id", syncGroupString(p, "group_id"), "--status", status}, target...), append([]string{"zonegroup", "get"}, target...)), nil
 }
 
 func (s *Service) executeZonegroupSyncGroup(ctx context.Context, access executor.ClusterAccess, request Request, spec command) (cephdomain.ActionResult, error) {
@@ -46,22 +51,37 @@ func (s *Service) executeZonegroupSyncGroup(ctx context.Context, access executor
 		return fail("pre_check_failed", "zonegroup identity or realm changed; no write submitted")
 	}
 	body, _ := json.Marshal(wanted["sync_policy"])
-	_, groups, valid := bucketSyncPolicyDocument(body)
-	_, expected, expectedValid := bucketSyncPolicyDocument([]byte(`{"groups":[` + syncGroupString(p, "expected_group") + `]}`))
-	id := syncGroupString(p, "group_id")
-	group := groups[id]
-	if !valid || !expectedValid || len(expected) != 1 || group == nil || !reflect.DeepEqual(group, expected[id]) {
-		return fail("pre_check_failed", "sync group missing or changed; refresh before editing")
+	currentPolicy, groups, valid := bucketSyncPolicyDocument(body)
+	if !valid {
+		return fail("pre_check_failed", "sync policy unavailable; no write submitted")
 	}
-	if group["status"] == syncGroupString(p, "status") {
-		return fail("pre_check_failed", "sync group status unchanged")
-	}
-	// Update the original array, not the canonical index used for comparison.
 	policy := wanted["sync_policy"].(map[string]any)
-	for _, raw := range policy["groups"].([]any) {
-		g := raw.(map[string]any)
-		if g["id"] == id {
-			g["status"] = syncGroupString(p, "status")
+	id := syncGroupString(p, "group_id")
+	if request.Action == "rgw_zonegroup.sync_group_create" {
+		expectedPolicy, _, valid := bucketSyncPolicyDocument([]byte(syncGroupString(p, "expected_policy")))
+		if !valid || !reflect.DeepEqual(currentPolicy, expectedPolicy) || groups[id] != nil {
+			return fail("pre_check_failed", "policy changed or group already exists; refresh before creating")
+		}
+		entries := append(policy["groups"].([]any), map[string]any{"id": id, "status": syncGroupString(p, "status"), "data_flow": map[string]any{}, "pipes": []any{}})
+		sort.Slice(entries, func(i, j int) bool {
+			return entries[i].(map[string]any)["id"].(string) < entries[j].(map[string]any)["id"].(string)
+		})
+		policy["groups"] = entries
+	} else {
+		_, expected, expectedValid := bucketSyncPolicyDocument([]byte(`{"groups":[` + syncGroupString(p, "expected_group") + `]}`))
+		group := groups[id]
+		if !valid || !expectedValid || len(expected) != 1 || group == nil || !reflect.DeepEqual(group, expected[id]) {
+			return fail("pre_check_failed", "sync group missing or changed; refresh before editing")
+		}
+		if group["status"] == syncGroupString(p, "status") {
+			return fail("pre_check_failed", "sync group status unchanged")
+		}
+		// Update the original array, not the canonical index used for comparison.
+		for _, raw := range policy["groups"].([]any) {
+			g := raw.(map[string]any)
+			if g["id"] == id {
+				g["status"] = syncGroupString(p, "status")
+			}
 		}
 	}
 	current := ""

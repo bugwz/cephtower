@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### Zonegroup 同步组创建与发布
+
+补齐 Dashboard 同步组创建入口：`POST /api/v1/rgw/zonegroup/sync/group` 接收明确 Zonegroup/Realm 身份、新组 ID、初始状态和完整策略快照。使用 `sync group create --zonegroup-id ... --group-id ... --status ...`，写前核验完整原策略并拒绝已有 ID，防止原生 create 的同名更新行为被当作创建。新组仅包含空数据流与空管道；按原生 map 的组 ID 顺序构造期望结果并核验整个 Zonegroup，保留其他组与未知字段。有 Realm 时复用已验证的 Period 发布及目标策略核验，无 Realm 不发布。
+
+前端区分空策略可创建与不可用策略不可提交，确认明确空组不建立复制链路、Realm 全范围发布及并发覆盖/部分生效风险。测试覆盖三种初始状态、空/非空策略、两种 Realm 归属、同名拒绝、快照过期、写入/回读/发布故障、原有大整数参数保留、实际按钮绑定和 API 资源锁。全量后端/OpenAPI及前端测试构建通过后独立提交；没有真实集群或浏览器视觉验证。Zonegroup 组删除和流/管道写入仍待后续实现。
+
 #### Zonegroup 同步组状态修改与对应 Realm 发布
 
 根据 `SYNC_GROUP_MODIFY` 和 Dashboard 同步组状态更新后发布 period 的流程，增加 `PATCH /api/v1/rgw/zonegroup/sync/group` 与 Zonegroup 行上的状态修改入口。明确提交 Zonegroup ID、名称、Realm 归属、完整组快照和目标状态；读取 `zonegroup get --zonegroup-id` 校验身份及快照，执行 `sync group modify --zonegroup-id ... --group-id ... --status ...`，回读完整 Zonegroup 配置，确保仅目标组状态改变。缺失组、过期快照、未改变状态和归属错误不写入。

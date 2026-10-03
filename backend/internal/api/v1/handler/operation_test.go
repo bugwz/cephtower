@@ -66,6 +66,14 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if err != nil || op.Action != "rgw_zonegroup.sync_group" || op.Risk != "high" || op.ResourceKey != "rgw/zonegroup/east" {
 			t.Fatalf("wrong zonegroup operation: %+v %v", op, err)
 		}
+		created := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/zonegroup/sync/group", fmt.Sprintf(`{"cluster_id":%d,"name":"east","zonegroup_id":"zg","realm_id":%q,"group_id":"new","expected_policy":%q,"status":"allowed"}`, cluster.ID, realm, `{"groups":[]}`), "zonegroup-sync-create-"+realm)
+		if created.Code != http.StatusAccepted {
+			t.Fatalf("zonegroup create queue: %d %s", created.Code, created.Body.String())
+		}
+		creation, err := db.FindOperation(context.Background(), operationIDFromResponse(t, created))
+		if err != nil || creation.Action != "rgw_zonegroup.sync_group_create" || creation.Risk != "high" || creation.ResourceKey != op.ResourceKey || creation.LockKey != op.LockKey {
+			t.Fatalf("wrong zonegroup creation: %+v %v", creation, err)
+		}
 	}
 	for _, tenant := range []string{"", "team"} {
 		id := base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00same-bucket"))

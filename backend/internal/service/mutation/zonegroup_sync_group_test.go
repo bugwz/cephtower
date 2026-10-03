@@ -18,7 +18,7 @@ type zonegroupSyncExecutor struct {
 
 func (e *zonegroupSyncExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.calls = append(e.calls, spec)
-	stage := strings.TrimPrefix(spec.ID, "rgw_zonegroup.sync_group.")
+	stage := strings.TrimPrefix(strings.TrimPrefix(spec.ID, "rgw_zonegroup.sync_group."), "rgw_zonegroup.sync_group_create.")
 	if stage == e.failure {
 		return executor.CommandResult{}, errors.New("injected failure")
 	}
