@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+Bucket 原生 S3 现有资源操作修正完整身份链路。API 实际将配置写入任务保存为 `rgw/bucket/<ID>/policy`，执行器原先错误地把末段 `policy` 作为 ID；现按动作严格解析资源键，测试改用真实入队形状，并增加 API 入队断言。依据 `src/rgw/rgw_bucket.cc::rgw_parse_url_bucket`，所有已存在 Bucket 的配置读取、配置写入、版本控制和 Bucket 删除使用 `tenant:bucket` 寻址，包括全局租户的显式 `:bucket`，不再丢弃租户或隐式使用凭据租户。ID 必须为规范 Base64URL 编码的 `tenant + NUL + bucket`，拒绝无分隔符、重复分隔符、无效 UTF-8、路径/冒号注入和空白控制字符；成功结果保持原始库存 ID，不重新构造为全局租户。测试覆盖三个租户的同名 Bucket、四类配置读写、版本控制、删除、返回资源 URL 和非法身份请求零网络调用；完整后端和 OpenAPI 检查通过。未真实集群验证。本次优先修复删除配置前发现的现有调用链问题，配置删除功能尚未加入，新建 Bucket 的身份流程也未在本次改动范围内。
+
 Bucket 配置读取区分“未配置”和“读取失败”。依据 `src/rgw/rgw_common.cc` 的原生错误映射，只有 HTTP 404 与当前配置类型对应的 NoSuchBucketPolicy、NoSuchCORSConfiguration、NoSuchLifecycleConfiguration、ServerSideEncryptionConfigurationNotFoundError 精确匹配时，API 返回 `configured: false` 和空文档；正常读取返回 `configured: true`。S3 适配器保留结构化状态和错误码，限制错误体大小，拒绝从损坏、重复 Code、多根、截断或超限 XML 推断缺省状态。Bucket 不存在、权限拒绝、其它类型错误和未知响应继续报错。前端展示已配置/未配置/状态不可用，不以空值猜测 false，也不为未配置状态伪造文档。适配器、服务读取链路及页面状态绑定测试通过，完整前后端与 OpenAPI 检查通过。未真实集群或浏览器视觉验证；本次没有增加配置删除操作。
 
 Bucket 配置文档入口还受通用 API 的 1 MiB JSON 请求体上限约束；前端按序列化后的文档和身份字段计算字节数，并预留 cluster_id 空间，而不是承诺可经 API 提交适配器边界允许的 4 MiB 原文。XML 声明允许保留，其它处理指令和 DTD 被拒绝。

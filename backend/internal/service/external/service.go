@@ -1,7 +1,6 @@
 package external
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -355,13 +354,19 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 		return cephdomain.ActionResult{}, failure("invalid_credential", err.Error(), false)
 	}
 	bucket := ""
+	encodedID := ""
 	if request.Action == "rgw_bucket.create" {
 		bucket, _ = parameters["name"].(string)
 		if bucket == "" {
 			bucket, _ = parameters["bucket"].(string)
 		}
+		encodedID = base64.RawURLEncoding.EncodeToString([]byte("\x00" + bucket))
 	} else {
-		bucket, err = decodeBucketID(last(request.ResourceKey))
+		encodedID, err = bucketResourceID(request.Action, request.ResourceKey)
+		if err != nil {
+			return cephdomain.ActionResult{}, failure("invalid_request", err.Error(), false)
+		}
+		bucket, err = decodeBucketID(encodedID)
 		if err != nil {
 			return cephdomain.ActionResult{}, failure("invalid_request", "bucket_id is invalid", false)
 		}
@@ -391,7 +396,6 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 	if err != nil {
 		return cephdomain.ActionResult{}, failure("s3_failed", err.Error(), request.Action != "rgw_bucket_policy.update")
 	}
-	encodedID := base64.RawURLEncoding.EncodeToString([]byte("\x00" + bucket))
 	return cephdomain.ActionResult{ResourceURL: fmt.Sprintf("/api/v1/cluster/%d/rgw/bucket/%s", clusterID, encodedID)}, nil
 }
 func (s *Service) alertmanager(ctx context.Context, clusterID uint64, request Request, parameters map[string]any) (cephdomain.ActionResult, error) {
@@ -622,18 +626,6 @@ func pathAfter(path, segment string) string {
 func last(path string) string {
 	parts := strings.Split(strings.Trim(path, "/"), "/")
 	return parts[len(parts)-1]
-}
-func decodeBucketID(value string) (string, error) {
-	decoded, err := base64.RawURLEncoding.Strict().DecodeString(value)
-	if err != nil || len(decoded) == 0 {
-		return "", fmt.Errorf("invalid bucket ID")
-	}
-	parts := bytes.SplitN(decoded, []byte{0}, 2)
-	bucket := parts[len(parts)-1]
-	if len(bucket) == 0 || bytes.ContainsAny(bucket, "/\x00") {
-		return "", fmt.Errorf("invalid bucket ID")
-	}
-	return string(bucket), nil
 }
 func failure(code, message string, retryable bool) error {
 	return &cephdomain.ActionError{Code: code, Message: message, Retryable: retryable}

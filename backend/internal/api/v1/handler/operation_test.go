@@ -3,6 +3,7 @@ package handler_test
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 	"cephtower/backend/internal/api/v1/router"
 	"cephtower/backend/internal/config"
 	clusterservice "cephtower/backend/internal/service/cluster"
+	endpointservice "cephtower/backend/internal/service/endpoint"
 	operationservice "cephtower/backend/internal/service/operation"
 	"cephtower/backend/internal/store"
 )
@@ -33,11 +35,28 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	database := func() *store.Database { return db }
 	clusters := clusterservice.New(database, contractKey, unusedProvider{})
 	operations := operationservice.New(database, contractKey, nil, operationservice.Options{})
-	h := handler.New(handler.Dependencies{Clusters: clusters, Operations: operations, Database: database, AuthEnabled: func() bool { return false }})
+	endpoints := endpointservice.New(database, contractKey)
+	if _, err := endpoints.CreateEndpoint(context.Background(), cluster.ID, endpointservice.EndpointInput{Kind: "s3", URL: "https://s3.example.test"}); err != nil {
+		t.Fatal(err)
+	}
+	h := handler.New(handler.Dependencies{Clusters: clusters, Endpoints: endpoints, Operations: operations, Database: database, AuthEnabled: func() bool { return false }})
 	mux := http.NewServeMux()
 	router.Register(mux, h)
 	if err := db.UpsertCapabilities(context.Background(), []store.CephClusterCapability{{ClusterID: cluster.ID, Name: "rgw_admin", Supported: true, ObservedAt: now, UpdatedAt: now}}); err != nil {
 		t.Fatal(err)
+	}
+	for _, tenant := range []string{"", "team"} {
+		id := base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00same-bucket"))
+		for _, kind := range []string{"policy", "cors", "lifecycle", "encryption"} {
+			response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/bucket/policy", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"kind":%q,"document":"raw"}`, cluster.ID, id, kind), "bucket-config-"+tenant+"-"+kind)
+			if response.Code != http.StatusAccepted {
+				t.Fatalf("bucket configuration queue: %d %s", response.Code, response.Body.String())
+			}
+			row, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+			if err != nil || row.Action != "rgw_bucket_policy.update" || row.ResourceKey != "rgw/bucket/"+id+"/policy" {
+				t.Fatalf("incorrect bucket configuration identity: %+v %v", row, err)
+			}
+		}
 	}
 	for index, tc := range []struct{ fields, risk string }{
 		{`"email":"before@example.test"`, "medium"},

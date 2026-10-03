@@ -41,7 +41,7 @@ func TestBucketConfigurationWritesUseExplicitDocument(t *testing.T) {
 			}
 			return &http.Response{StatusCode: tc.status, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(""))}, nil
 		})
-		_, err := service.Execute(ctx, Request{ClusterID: cluster.ID, Action: "rgw_bucket_policy.update", ResourceKey: "rgw/bucket/" + base64.RawURLEncoding.EncodeToString([]byte("\x00bucket")), Parameters: map[string]any{"kind": tc.kind, "document": tc.document}})
+		_, err := service.Execute(ctx, Request{ClusterID: cluster.ID, Action: "rgw_bucket_policy.update", ResourceKey: "rgw/bucket/" + base64.RawURLEncoding.EncodeToString([]byte("\x00bucket")) + "/policy", Parameters: map[string]any{"kind": tc.kind, "document": tc.document}})
 		if calls != tc.calls {
 			t.Fatalf("calls=%d want=%d", calls, tc.calls)
 		}
@@ -59,7 +59,7 @@ func TestBucketConfigurationWritesUseExplicitDocument(t *testing.T) {
 	for _, kind := range []string{"policy", "cors", "lifecycle", "encryption"} {
 		body := "native-" + kind
 		service.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
-			if r.Method != "GET" || r.URL.Path != "/bucket" || r.URL.RawQuery != kind+"=" {
+			if r.Method != "GET" || r.URL.Path != "/:bucket" || r.URL.RawQuery != kind+"=" {
 				t.Fatalf("wrong scoped read: %s %s", r.Method, r.URL)
 			}
 			return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"application/xml"}}, Body: io.NopCloser(strings.NewReader(body))}, nil
