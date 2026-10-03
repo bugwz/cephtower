@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -31,6 +32,9 @@ func (s *Service) Devices(ctx context.Context, clusterID uint64, hostname string
 	if err := s.runJSON(ctx, clusterID, "host.devices", []string{"device", "ls-by-host", hostname, "--format", "json"}, &devices); err != nil {
 		return nil, err
 	}
+	if devices == nil {
+		return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph device list must be an array"}
+	}
 	return devices, nil
 }
 
@@ -48,11 +52,19 @@ func (s *Service) SMART(ctx context.Context, clusterID uint64, hostname string) 
 		}
 	}
 	result := make(map[string]any)
+	ordered := make([]string, 0, len(daemons))
 	for daemon := range daemons {
+		ordered = append(ordered, daemon)
+	}
+	sort.Strings(ordered)
+	for _, daemon := range ordered {
 		var payload map[string]any
 		err := s.runJSON(ctx, clusterID, "host.smart", []string{"device", "query-daemon-health-metrics", daemon, "--format", "json"}, &payload)
 		if err != nil {
-			continue
+			return nil, err
+		}
+		if payload == nil {
+			return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph SMART response must be an object"}
 		}
 		for deviceID, data := range payload {
 			result[deviceID] = data

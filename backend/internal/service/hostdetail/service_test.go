@@ -2,6 +2,7 @@ package hostdetail
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"testing"
 	"time"
@@ -19,13 +20,55 @@ const testEncryptionKey = "0123456789abcdefghijklmnopqrstuv"
 type fakeExecutor struct {
 	args    [][]string
 	outputs [][]byte
+	failAt  map[int]error
 }
 
 func (f *fakeExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	f.args = append(f.args, append([]string(nil), spec.Args...))
+	if err := f.failAt[len(f.args)]; err != nil {
+		return executor.CommandResult{}, err
+	}
 	output := f.outputs[0]
 	f.outputs = f.outputs[1:]
 	return executor.CommandResult{Stdout: output}, nil
+}
+
+func TestSMARTDoesNotHideFailedDaemonQueries(t *testing.T) {
+	for _, partial := range []bool{false, true} {
+		service, runner, id := testService(t,
+			[]byte(`[{"devid":"disk-1","daemons":["osd.2","osd.1"]}]`),
+			[]byte(`{"disk-1":{"smart_status":{"passed":true}}}`),
+		)
+		failureCall := 2
+		if partial {
+			failureCall = 3
+		}
+		runner.failAt = map[int]error{failureCall: errors.New("daemon query failed")}
+		result, err := service.SMART(context.Background(), id, "node-1")
+		if err == nil || result != nil || len(runner.args) != failureCall {
+			t.Fatalf("failed query hidden: %v %+v", err, result)
+		}
+		if runner.args[1][2] != "osd.1" {
+			t.Fatal("daemon query order is not deterministic")
+		}
+	}
+}
+
+func TestSMARTRejectsNullNativeResponses(t *testing.T) {
+	service, _, id := testService(t, []byte(`null`))
+	if result, err := service.SMART(context.Background(), id, "node-1"); err == nil || result != nil {
+		t.Fatal("null device inventory accepted")
+	}
+	for _, output := range []string{`null`, `[]`, `{bad`, `{} {}`} {
+		service, _, id = testService(t, []byte(`[{"devid":"disk-1","daemons":["osd.1"]}]`), []byte(output))
+		if result, err := service.SMART(context.Background(), id, "node-1"); err == nil || result != nil {
+			t.Fatalf("accepted %s", output)
+		}
+	}
+	service, _, id = testService(t, []byte(`[]`))
+	if result, err := service.SMART(context.Background(), id, "node-1"); err != nil || result == nil || len(result) != 0 {
+		t.Fatal("valid empty inventory rejected")
+	}
 }
 
 func TestDevicesUsesCephDeviceListByHost(t *testing.T) {
