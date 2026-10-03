@@ -9,6 +9,19 @@ function snapshot(row?: Record<string, unknown>, allowEmpty = false) {
 }
 export function zonegroupSyncInitial(row?: Record<string, unknown>) { const { groups: _, ...identity } = snapshot(row); return { ...identity, group_id: undefined, status: undefined, confirm_change: undefined } }
 export function zonegroupSyncBlocked(row: Record<string, unknown>) { try { snapshot(row); return undefined } catch (error) { return (error as Error).message } }
+export function zonegroupPipeDeleteInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const { groups, ...identity } = snapshot(row)
+  if (values.name !== identity.name || values.zonegroup_id !== identity.zonegroup_id || values.realm_id !== identity.realm_id) throw new Error('Zonegroup 和 Realm 身份不可修改')
+  const group = groups.find(g => g.id === values.group_id)
+  const pipes = group?.pipes
+  if (!group || !Array.isArray(pipes) || pipes.some(p => !record(p) || typeof p.id !== 'string') || !token(values.pipe_id) || pipes.filter(p => p.id === values.pipe_id).length !== 1) throw new Error('请输入当前策略中唯一的完整管道 ID')
+  if (values.confirm_pipe_delete !== 'acknowledged') throw new Error('请确认整个管道删除与发布风险')
+  return { ...identity, group_id: group.id as string, pipe_id: values.pipe_id, expected_group: JSON.stringify(group) }
+}
+export function zonegroupPipeDeleteConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const p = zonegroupPipeDeleteInput(values,row)
+  return `确认删除 Zonegroup ${JSON.stringify(p.name)}（${p.zonegroup_id}）中同步组 ${JSON.stringify(p.group_id)} 的整个管道 ${JSON.stringify(p.pipe_id)}？全部源/目标选择器、权限模式和高级参数将移除；保留组状态和流，不删除已有对象副本，也不保证其他策略的复制停止。${p.realm_id ? `随后提交 Realm ${JSON.stringify(p.realm_id)} 的 Period，可能发布其他待提交变更。` : '无 Realm，不提交 Period。'}请备份并避免外部或其他页面并发；非事务，失败可能部分生效，不自动回滚或重试。`
+}
 export function zonegroupPipeCreateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {
   const { groups, ...identity } = snapshot(row)
   if (values.name !== identity.name || values.zonegroup_id !== identity.zonegroup_id || values.realm_id !== identity.realm_id) throw new Error('Zonegroup 和 Realm 身份不可修改')

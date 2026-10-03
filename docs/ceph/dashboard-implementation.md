@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### Zonegroup 同步管道删除
+
+新增 DELETE /api/v1/rgw/zonegroup/sync/pipe 与整管道删除入口，对齐原生 SYNC_GROUP_PIPE_REMOVE 在不携带源/目标选择器时的删除语义。API 拒绝选择器字段，命令仅带明确 Zonegroup ID、组 ID 和管道 ID。删除前校验完整组快照和唯一管道，删除后检查完整配置，保留组状态、流、其他管道及未知参数；允许清理含孤立 Zone ID 的管道，不依赖当前成员映射。
+
+有 Realm 时继续发布并核验 Period，无 Realm 不发布。前端明确整个管道的全部选择器、模式和高级参数会移除，但不删除已有对象，也不保证其他策略的复制停止；提示 Realm 全范围发布及非事务并发风险。离线测试覆盖最后一条/保留其他管道、两种 Realm 归属、重复/缺失/过期拒绝、命令不携带选择器、写入/回读/发布失败、API 高风险锁及前端绑定。无真实集群或浏览器视觉验证；管道配置和 Zone 成员编辑待后续补齐。
+
 #### Zonegroup 同步管道创建
 
 新增 POST /api/v1/rgw/zonegroup/sync/pipe 与管道创建表单，对齐原生 SYNC_GROUP_PIPE_CREATE 的源/目标 Zone、桶选择器、system/user 模式及完整 UID 参数。创建前核验完整组快照和管道 ID 不存在，拒绝原生同名更新；明确 Zone ID 必须属于当前 Zonegroup，或单独使用通配数组 ["*"]。共享桶管道参数校验，但 Zonegroup 期望结果保持原始 ID，不转换为桶策略的名称格式。

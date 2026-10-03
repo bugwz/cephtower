@@ -9,6 +9,7 @@ import { zonegroupFlowCreateInput, zonegroupFlowCreateConfirmation } from './rgw
 import { zonegroupFlowDeleteInput, zonegroupFlowDeleteConfirmation } from './rgwZonegroupSyncGroup'
 import { zonegroupFlowUpdateInput, zonegroupFlowUpdateConfirmation } from './rgwZonegroupSyncGroup'
 import { zonegroupPipeCreateInput, zonegroupPipeCreateConfirmation } from './rgwZonegroupSyncGroup'
+import { zonegroupPipeDeleteInput, zonegroupPipeDeleteConfirmation } from './rgwZonegroupSyncGroup'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAction } from '../ResourceListPage'
 import { ServiceDaemons } from '../cluster/ServiceDaemons'
@@ -990,6 +991,19 @@ const definitions: Record<
         { name: 'confirm_pipe_create', label: '范围及发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，了解复制范围、权限模式和 Realm 发布风险' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupPipeCreateInput(values,row) })
+    }, {
+      title: '删除 Zonegroup 同步管道', path: '/rgw/zonegroup/sync/pipe', method: 'DELETE',
+      successMessage: 'Zonegroup 管道删除与适用的 Period 发布已核验',
+      disabledWhen: zonegroupSyncBlocked, initialValues: zonegroupSyncInitial, confirmation: zonegroupPipeDeleteConfirmation,
+      fields: [
+        { name: 'name', label: 'Zonegroup 名称（不可更改）', readOnly: true },
+        { name: 'zonegroup_id', label: 'Zonegroup ID（不可更改）', readOnly: true },
+        { name: 'realm_id', label: 'Realm ID（不可更改）', readOnly: true },
+        { name: 'group_id', label: '已有同步组 ID', required: true },
+        { name: 'pipe_id', label: '要删除的完整管道 ID', required: true },
+        { name: 'confirm_pipe_delete', label: '删除及发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，确认删除整个管道，了解 Realm 发布和部分生效风险' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupPipeDeleteInput(values,row) })
     }, {
       title: '删除 Zonegroup 同步组', path: '/rgw/zonegroup/sync/group', method: 'DELETE',
       successMessage: 'Zonegroup 同步组删除与适用的 Period 发布已核验',
