@@ -58,7 +58,15 @@ func (s *Service) DaemonPerf(ctx context.Context, clusterID uint64, name string)
 			}
 			var value any
 			if data, exists := values[group][counter]; exists && string(data) != "null" {
-				value = security.Redact(string(data)) // Keep exact integer and average-pair values as text.
+				redacted, err := security.RedactJSON(data)
+				if err != nil {
+					return bad()
+				}
+				encoded, err := json.Marshal(redacted)
+				if err != nil {
+					return bad()
+				}
+				value = string(encoded) // Keep exact integer and average-pair values as text.
 			}
 			items = append(items, map[string]any{"name": qualifiedName, "description": security.Redact(definition.Description), "units": definition.Units, "value_type": definition.ValueType, "type": definition.Type, "priority": definition.Priority, "raw_value": value})
 		}

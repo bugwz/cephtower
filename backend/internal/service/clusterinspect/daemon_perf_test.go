@@ -3,6 +3,7 @@ package clusterinspect
 import (
 	"context"
 	"reflect"
+	"strings"
 	"testing"
 
 	"cephtower/backend/internal/integration/ceph/executor"
@@ -11,6 +12,19 @@ import (
 type perfFixtureExecutor struct {
 	schema, dump string
 	specs        []executor.CommandSpec
+}
+
+func TestDaemonPerfRedactsCompositeValues(t *testing.T) {
+	s, _, id := testInspection(t)
+	s.executor = &perfFixtureExecutor{schema: `{"osd":{"value":{}}}`, dump: `{"osd":{"value":{"avgcount":18446744073709551615,"sum":1.25,"password":"fixture-password","extra":[{"to\u006ben":"fixture-token"}]}}}`}
+	result, err := s.DaemonPerf(context.Background(), id, "osd.1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	value := result["items"].([]map[string]any)[0]["raw_value"].(string)
+	if strings.Contains(value, "fixture-password") || strings.Contains(value, "fixture-token") || !strings.Contains(value, "[REDACTED]") || !strings.Contains(value, `"avgcount":18446744073709551615`) || !strings.Contains(value, `"sum":1.25`) {
+		t.Fatal("performance value leaked credentials or lost numeric precision")
+	}
 }
 
 func (e *perfFixtureExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
