@@ -53,10 +53,10 @@ assert.equal(smartWearRows[2].wear_level_display, 120)
 assert.equal(smartWearRows[2].power_on_hours_display, 0)
 console.log('SMART used-life and remaining-life fields are kept distinct')
 const detailedSmart = normalizeSmart({ disk: { nvme_smart_health_information_log: { data_units_written: '18446744073709551615' }, ata_smart_attributes: { table: [{ raw: { value: '9007199254740993' } }] }, scsi_error_counter_log: { read: { total_uncorrected_errors: '0' } } } })[0]
-assert.ok(detailedSmart.smart_details.includes('18446744073709551615'))
-assert.ok(detailedSmart.smart_details.includes('9007199254740993'))
-assert.ok(detailedSmart.smart_details.includes('scsi_error_counter_log'))
-assert.ok(smartRows[1].smart_details.includes('unsupported device'))
+assert.ok(JSON.stringify(detailedSmart.smart_report).includes('18446744073709551615'))
+assert.ok(JSON.stringify(detailedSmart.smart_report).includes('9007199254740993'))
+assert.ok(JSON.stringify(detailedSmart.smart_report).includes('scsi_error_counter_log'))
+assert.equal(smartRows[1].smart_report.error, 'unsupported device')
 const hoursNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'formatHours')
 const hoursCode = ts.transpileModule(hoursNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const smartHours = new Function(`${hoursCode}; return formatHours`)()
@@ -64,6 +64,26 @@ assert.equal(smartHours('18446744073709551615'), '18446744073709551615 小时')
 assert.equal(smartHours('0'), '0 小时')
 for (const value of [undefined, null, '', 'not-hours', Number.MAX_SAFE_INTEGER + 1]) assert.equal(smartHours(value), '-')
 console.log('SMART native detail and exact power-on hour display checks passed')
+const protocolSource = readFileSync(new URL('../src/pages/cluster/SMARTDetails.tsx', import.meta.url), 'utf8')
+const protocolTree = ts.createSourceFile('protocol.tsx', protocolSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const protocolHelpers = {}
+for (const name of ['ataRows', 'scsiRows']) {
+  const fn = protocolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === name)
+  const code = ts.transpileModule(fn.getText(protocolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+  protocolHelpers[name] = new Function('isRecord', `${code}; return ${name}`)((v) => v !== null && typeof v === 'object' && !Array.isArray(v))
+}
+const ataReport = { table: [{ id: '9', raw: { value: '18446744073709551615' }, value: '0' }, { id: '9' }] }
+const ataTable = protocolHelpers.ataRows(ataReport)
+assert.equal(ataTable[0].raw_value, '18446744073709551615')
+assert.equal(ataTable[0].value, '0')
+assert.equal(ataTable[1].raw_value, null)
+assert.notEqual(ataTable[0].row_key, ataTable[1].row_key)
+assert.deepEqual(protocolHelpers.scsiRows({ read: { total_uncorrected_errors: '9007199254740993' } }), [{ operation: 'read', total_uncorrected_errors: '9007199254740993' }])
+for (const value of [null, [], { table: [null] }]) assert.equal(protocolHelpers.ataRows(value), null)
+for (const value of [null, [], { read: null }]) assert.equal(protocolHelpers.scsiRows(value), null)
+assert.deepEqual(protocolHelpers.ataRows({ table: [] }), [])
+assert.deepEqual(protocolHelpers.scsiRows({}), [])
+console.log('SMART protocol tables preserve counters and reject invalid section shapes')
 
 const hardwareSource = readFileSync(new URL('../src/pages/cluster/HostHardware.tsx', import.meta.url), 'utf8')
 const hardwareTree = ts.createSourceFile('hardware.tsx', hardwareSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)

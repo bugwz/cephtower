@@ -8,6 +8,7 @@ import { getHostDeviceInfo, getHostSMART, getOptionalResource, listDaemons, list
 import type { ResourceDTO } from '../../api/types'
 import { DataTable } from '../../components/DataTable'
 import { HostHardware } from './HostHardware'
+import { SMARTDetails } from './SMARTDetails'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
 import { useResource } from '../../hooks'
@@ -515,7 +516,7 @@ function HostDeviceHealthPanel({ devices }: { devices: ApiRecord[] }) {
         { key: 'power_on_hours_display', title: '通电时间' },
         { key: 'wear_level_display', title: '已使用寿命（percentage_used）' },
         { key: 'ssd_life_left_display', title: 'ssd_life_left（原始值）' },
-        { key: 'smart_details', title: '原生 SMART 详情', ellipsis: false, filterKey: false, render: (value) => <details><summary>展开 ATA / SCSI / NVMe 原生数据</summary><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{String(value ?? '未返回')}</pre></details> }
+        { key: 'smart_report', title: 'SMART 详情', ellipsis: false, filterKey: false, render: (value) => <details><summary>展开 ATA / SCSI / NVMe 详情</summary><SMARTDetails data={value} /></details> }
       ]}
     />
   )
@@ -585,7 +586,7 @@ function normalizeSMARTData(value: ApiRecord): ApiRecord[] {
         device_id: deviceID, name_display: deviceID, health_display: 'unavailable',
         error_display: typeof error === 'string' && error.trim() ? error : '设备 SMART 读取失败，未返回有效错误说明',
         smartctl_error_code: isRecord(raw) ? raw.smartctl_error_code : undefined,
-        smart_details: JSON.stringify(raw, null, 2),
+        smart_report: raw,
       }]
     }
     const smartStatus = isRecord(raw.smart_status) ? raw.smart_status : {}
@@ -596,7 +597,7 @@ function normalizeSMARTData(value: ApiRecord): ApiRecord[] {
     const passed = smartStatus.passed
     return [{
       ...raw,
-      smart_details: JSON.stringify(raw, null, 2),
+      smart_report: raw,
       device_id: deviceID,
       name_display: textValue(device.name ?? raw.dev ?? deviceID, deviceID),
       serial_display: textValue(raw.serial_number ?? raw.serial ?? deviceID, ''),
