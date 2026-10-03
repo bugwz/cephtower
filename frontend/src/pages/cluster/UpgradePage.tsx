@@ -1,5 +1,5 @@
 import { Alert, Button, Card, Descriptions, Space, Switch } from 'antd'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getResource, mutateResource, refreshResource } from '../../api/resource'
 import type { ResourceDTO } from '../../api/types'
 import type { ApiRecord } from '../../api/client'
@@ -10,6 +10,7 @@ import { DraggableModal } from '../../components/DraggableModal'
 import { UpgradeCheck } from './UpgradeCheck'
 import { UpgradeDaemons } from './UpgradeDaemons'
 import { RuntimeLogsPanel } from '../monitoring/RuntimeLogsPage'
+import { message } from '../../utils/appMessage'
 
 type UpgradeControl = 'pause' | 'resume' | 'stop'
 const controlLabels = { pause: '暂停升级', resume: '恢复升级', stop: '停止升级' }
@@ -46,6 +47,12 @@ export function upgradeStatusFields(data: ApiRecord) {
 
 export function UpgradePage() {
   const { selectedClusterId } = useClusterContext()
+  return <UpgradeContent key={selectedClusterId ?? 'none'} selectedClusterId={selectedClusterId} />
+}
+
+function UpgradeContent({ selectedClusterId }: { selectedClusterId?: number }) {
+  const active = useRef(true)
+  useEffect(() => { active.current = true; return () => { active.current = false } }, [])
   const [revision, setRevision] = useState(0)
   const [record, setRecord] = useState<ResourceDTO | null>(null)
   const [loading, setLoading] = useState(false)
@@ -63,23 +70,27 @@ export function UpgradePage() {
   }, [selectedClusterId, revision, auto])
   useEffect(() => { setPending(null) }, [selectedClusterId])
   async function control() {
-    if (!pending || pending.clusterId !== selectedClusterId || !record || operation.loading || !upgradeControlAllowed(record.data, record.stale, pending.action)) return
+    if (!active.current || !pending || pending.clusterId !== selectedClusterId || !record || operation.loading || !upgradeControlAllowed(record.data, record.stale, pending.action)) return
     const { action, clusterId } = pending
     try {
       await operation.run(async () => {
         await mutateResource('/upgrade/action', 'POST', { cluster_id: clusterId, action }, { ifMatch: record.resource_version })
         await refreshResource({ clusterId, kinds: ['upgrade'] })
-      }, `${controlLabels[action]}状态已核验`)
+      }, false)
+      if (!active.current) return
+      message.success(`${controlLabels[action]}状态已核验`)
       setPending(null)
       setRevision((value) => value + 1)
-    } catch (err) { setError(err instanceof Error ? err.message : '升级控制失败') }
+    } catch (err) { if (active.current) setError(err instanceof Error ? err.message : '升级控制失败') }
   }
   async function collect() {
-    if (!selectedClusterId) return
+    if (!active.current || !selectedClusterId) return
     try {
-      await operation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['upgrade', 'daemon'] }), '升级状态与守护进程采集完成')
+      await operation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['upgrade', 'daemon'] }), false)
+      if (!active.current) return
+      message.success('升级状态与守护进程采集完成')
       setRevision((value) => value + 1)
-    } catch (err) { setError(err instanceof Error ? err.message : '采集失败') }
+    } catch (err) { if (active.current) setError(err instanceof Error ? err.message : '采集失败') }
   }
   return <><Card title="集群升级状态" loading={loading} extra={<Space wrap>
     <Switch aria-label="自动读取升级状态" checked={auto} onChange={setAuto} checkedChildren="自动读取" unCheckedChildren="已暂停读取" />

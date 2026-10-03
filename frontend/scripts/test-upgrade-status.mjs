@@ -4,6 +4,25 @@ import ts from 'typescript'
 
 const source = readFileSync(new URL('../src/pages/cluster/UpgradePage.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('UpgradePage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+assert.ok(source.includes("UpgradeContent key={selectedClusterId ?? 'none'}"))
+const content = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'UpgradeContent')
+const controlNode = content.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'control')
+const controlCode = ts.transpileModule(controlNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const phase of ['active', 'before', 'during']) {
+  const active = { current: phase !== 'before' }
+  const writes = []; const ui = []
+  const env = { active, pending: { action: 'pause', clusterId: 3 }, selectedClusterId: 3,
+    record: { data: {}, stale: false, resource_version: 7 }, operation: { loading: false, run: (fn) => fn() },
+    upgradeControlAllowed: () => true, controlLabels: { pause: '暂停升级' },
+    mutateResource: async (...args) => { writes.push(args); if (phase === 'during') active.current = false },
+    refreshResource: async () => {}, message: { success: () => ui.push('success') },
+    setPending: () => ui.push('pending'), setRevision: () => ui.push('revision'), setError: () => ui.push('error') }
+  const control = new Function(...Object.keys(env), `${controlCode}; return control`)(...Object.values(env))
+  await control()
+  assert.equal(writes.length, phase === 'before' ? 0 : 1)
+  assert.equal(ui.length, phase === 'active' ? 3 : 0)
+  if (writes.length) assert.deepEqual(writes[0][2], { cluster_id: 3, action: 'pause' })
+}
 const functions = tree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['upgradeStatusFields', 'upgradeControlAllowed'].includes(node.name.text))
 const code = ts.transpileModule(functions.map((fn) => fn.getText(tree)).join('\n'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
 const exports = {}
