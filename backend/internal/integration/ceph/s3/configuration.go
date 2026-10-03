@@ -63,5 +63,9 @@ func ValidateBucketConfiguration(kind string, body []byte) error {
 		_, err := parseBucketTags(body)
 		return err
 	}
+	if kind == "encryption" {
+		_, err := parseBucketEncryption(body)
+		return err
+	}
 	return nil
 }
