@@ -103,6 +103,36 @@ for (const scenario of ['ok', 'error', 'unmount', 'refresh-error']) {
 }
 console.log('Service uncertain deletion recovery checks passed')
 
+const daemonActionNode = serviceContent.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'runDaemonAction')
+const daemonActionCode = ts.transpileModule(daemonActionNode.getText(servicePageTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const scenario of ['ok', 'error', 'stale', 'switch-before', 'switch-after']) {
+  const calls = []
+  let dialog
+  const active = { current: true }, running = { current: false }
+  const env = {
+    active, running, selectedClusterId: 7, loading: false, error: '', serviceWritable: () => scenario !== 'stale',
+    daemonActions: ['start', 'stop', 'restart', 'redeploy'].map((value) => ({ value, label: value })),
+    textValue: (value) => value, setSubmitting: () => {},
+    Modal: { confirm: (options) => { dialog = options; return { destroy: () => calls.push('destroy') } } },
+    message: { warning: () => calls.push('warning'), success: () => calls.push('success') },
+    mutateResource: async (...args) => { calls.push(args); if (scenario === 'switch-after') active.current = false; if (scenario === 'error') throw new Error('failure') },
+    refreshAfterMutation: async () => calls.push('refresh'),
+  }
+  const run = new Function(...Object.keys(env), `${daemonActionCode}; return runDaemonAction`)(...Object.values(env))
+  await run({ name: 'osd.1', resource_version: '9007199254740993' }, 'restart')
+  if (scenario === 'stale') { assert.equal(dialog, undefined); continue }
+  if (scenario === 'switch-before') active.current = false
+  if (['error', 'switch-before'].includes(scenario)) await assert.rejects(dialog.onOk())
+  else await dialog.onOk()
+  if (scenario === 'switch-before') { assert.deepEqual(calls, []); continue }
+  assert.deepEqual(calls[0], ['/daemon/action', 'POST', { cluster_id: 7, name: 'osd.1', action: 'restart' }, { ifMatch: '9007199254740993' }])
+  assert.equal(calls.includes('refresh'), scenario !== 'switch-after')
+  assert.equal(calls.includes('success'), scenario === 'ok')
+  assert.equal(calls.includes('destroy'), true)
+  assert.equal(running.current, false)
+}
+console.log('Daemon action confirmation, version, and scope checks passed')
+
 const writableNode = servicePageTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'serviceWritable')
 const writableCode = ts.transpileModule(writableNode.getText(servicePageTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const writable = new Function('serviceName', `${writableCode}; return serviceWritable`)((row) => row.name)

@@ -22,6 +22,11 @@ interface ServiceFormValues {
   networks?: string[]
 }
 
+const daemonActions = [
+  { value: 'start', label: '启动' }, { value: 'stop', label: '停止' },
+  { value: 'restart', label: '重启' }, { value: 'redeploy', label: '重新部署' },
+] as const
+
 const serviceTypeOptions = [
   'mon',
   'mgr',
@@ -201,6 +206,35 @@ function ServicePageContent() {
     })
   }
 
+  async function runDaemonAction(row: ApiRecord, action: string) {
+    if (!active.current || running.current || loading || error || !selectedClusterId || !serviceWritable(row)) return
+    const selected = daemonActions.find((item) => item.value === action)
+    if (!selected) return
+    const parameters = { cluster_id: selectedClusterId, name: textValue(row.name, ''), action }
+    const generation = String(row.resource_version)
+    const confirmation = Modal.confirm({
+      title: `${selected.label} ${parameters.name}`,
+      content: '操作可能中断依赖此守护进程的服务。不会自动使用强制选项；Ceph 安全检查拒绝时请先核对集群状态。命令接受不代表运行状态已完成切换。',
+      okText: `确认${selected.label}`, cancelText: '取消', okType: action === 'start' ? 'primary' : 'danger',
+      async onOk() {
+        if (!active.current) throw new Error('集群已切换，请重新确认操作')
+        if (running.current) throw new Error('已有操作正在执行')
+        running.current = true; setSubmitting(true)
+        try {
+          await mutateResource('/daemon/action', 'POST', parameters, { ifMatch: generation })
+          if (active.current) message.success('守护进程命令已接受，请核对刷新后的实际运行状态。')
+        } catch (err) {
+          if (active.current) message.warning('守护进程操作未确认成功，请先核对实际状态，不要直接重复提交。')
+          throw err
+        } finally {
+          confirmation.destroy()
+          try { if (active.current) await refreshAfterMutation() }
+          finally { running.current = false; if (active.current) setSubmitting(false) }
+        }
+      }
+    })
+  }
+
   return (
     <Page
       title="服务与守护进程"
@@ -284,7 +318,10 @@ function ServicePageContent() {
                     { key: 'hostname', title: '主机' },
                     { key: 'status', title: '状态' },
                     { key: 'version', title: '版本' },
-                    { key: 'container_image', title: '镜像' }
+                    { key: 'container_image', title: '镜像' },
+                    { key: 'actions', title: '操作', filterKey: false, render: (_, row) => <TableActions>
+                      {daemonActions.map((action) => <TableAction key={action.value} danger={action.value !== 'start'} disabled={loading || Boolean(error) || submitting || refreshingServices || !serviceWritable(row)} onClick={() => runDaemonAction(row, action.value)}>{action.label}</TableAction>)}
+                    </TableActions> }
                   ]}
                 />
                 </div>
