@@ -14,6 +14,7 @@ import { rbdSnapshotLimitText } from './rbdSnapshotLimit'
 import { rbdMirrorRoleReason } from './rbdMirrorRole'
 import { rbdImageDeleteReason } from './rbdImageDelete'
 import { rbdTrashMoveReason } from './rbdTrashMove'
+import { RbdGroupMembers, RbdGroupSnapshots } from './RbdGroupDetails'
 import { LiveMirrorSchedules } from './LiveMirrorSchedules'
 import { LiveMirrorScheduleStatus } from './LiveMirrorScheduleStatus'
 import { useClusterContext } from '../../state/ClusterContext'
@@ -506,8 +507,8 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'namespace', title: '命名空间' },
       { key: 'group_id', title: '组 ID' },
       { key: 'name', title: '名称' },
-      { key: 'images', title: '镜像' },
-      { key: 'snapshots', title: '快照' },
+      { key: 'images', title: '镜像', ellipsis: false, render: (value) => <RbdGroupMembers value={value} /> },
+      { key: 'snapshots', title: '快照', ellipsis: false, render: (value) => <RbdGroupSnapshots value={value} /> },
       { key: 'resource_version', title: '版本' }
     ]
   },

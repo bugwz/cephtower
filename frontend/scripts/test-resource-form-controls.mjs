@@ -107,6 +107,29 @@ for (const children of [undefined, null, {}, '']) assert.match(snapshotDeleteRea
 for (const children of [[{ trash: true }], [{}], [null]]) assert.match(snapshotDeleteReason({ is_protected: false, children }), /仍有子镜像/)
 
 const usageExports = {}
+const groupDetailsSource = readFileSync(new URL('../src/pages/block/RbdGroupDetails.tsx', import.meta.url), 'utf8')
+const groupDetailsTree = ts.createSourceFile('groups.tsx', groupDetailsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+function groupHelper(name) {
+  const node = groupDetailsTree.statements.find((item) => ts.isFunctionDeclaration(item) && item.name.text === name)
+  const code = ts.transpileModule(node.getText(groupDetailsTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+  return new Function(`${code}; return ${name}`)()
+}
+const groupMembers = groupHelper('rbdGroupMembers')
+const groupSnapshots = groupHelper('rbdGroupSnapshots')
+assert.deepEqual(groupMembers([]), [])
+assert.deepEqual(groupSnapshots([]), [])
+for (const value of [null, undefined, {}, [null], [{}]]) { assert.equal(groupMembers(value), undefined); assert.equal(groupSnapshots(value), undefined) }
+const memberBase = { pool: 'images', namespace: '', image: 'vm' }
+assert.deepEqual(groupMembers([{ ...memberBase, state: 0 }])[0], { key: 0, pool: 'images', namespace: '默认命名空间', image: 'vm', state: '已加入' })
+assert.equal(groupMembers([{ ...memberBase, namespace: 'team', state: 1 }])[0].state, '未完成')
+assert.equal(groupMembers([{ ...memberBase, state: 9 }])[0].state, '未知状态（9）')
+assert.equal(groupMembers([{ ...memberBase, state: '0' }])[0].state, '状态未返回或无效')
+assert.equal(groupMembers([{ ...memberBase, namespace: null }]), undefined)
+const snapBase = { id: '18446744073709551615', snapshot: ' snap ' }
+assert.deepEqual(groupSnapshots([{ ...snapBase, state: 'complete' }])[0], { key: 0, id: snapBase.id, name: ' snap ', state: '已完成' })
+assert.equal(groupSnapshots([{ ...snapBase, state: 'incomplete' }])[0].state, '未完成')
+assert.equal(groupSnapshots([{ ...snapBase, state: 'unknown (7)' }])[0].state, '未知状态：unknown (7)')
+assert.equal(groupSnapshots([{ ...snapBase, state: null }])[0].state, '状态未返回或无效')
 const trashMoveExports = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/block/rbdTrashMove.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(trashMoveExports)
 const trashMoveReason = trashMoveExports.rbdTrashMoveReason
@@ -149,6 +172,8 @@ for (const value of [undefined, null, 0, 4096, -1, 0.5, NaN, Infinity, Number.MA
 console.log('RBD usage distinguishes missing fast-diff, unavailable statistics and valid zero')
 
 const blockSource = readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8')
+assert.ok(blockSource.includes('<RbdGroupMembers value={value} />'))
+assert.ok(blockSource.includes('<RbdGroupSnapshots value={value} />'))
 assert.ok(blockSource.includes('disabledWhen: rbdImageDeleteReason'))
 assert.ok(blockSource.includes('disabledWhen: rbdFlattenReason'))
 assert.ok(blockSource.includes('const reason = rbdMirrorRoleReason(values.action, row ?? {})'))

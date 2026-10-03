@@ -1276,6 +1276,13 @@ which could collapse multiple paths and schedules into one resource key.
 
 ### RBD feature mutation
 
+RBD group members and snapshots render as paginated detail tables using the existing
+`group image list` and `group snap list` payloads. `Group.cc` supplies pool, namespace,
+image, integer member state (0 attached, 1 incomplete), and snapshot ID/name/string
+state. Unknown states stay explicit, IDs stay strings, and absent/malformed lists do
+not masquerade as empty groups. This extends the project's existing native group UI;
+the bundled Dashboard revision has no separate RBD group frontend page.
+
 Shared resource forms re-evaluate row action guards before showing confirmation and
 again after confirmation, before issuing any mutation. RBD restore and other guarded
 forms therefore enforce the same predicate at open and submit time; this is a check
