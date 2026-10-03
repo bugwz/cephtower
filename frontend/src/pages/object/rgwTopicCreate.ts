@@ -1,3 +1,22 @@
+// RGW extracts credentials from the raw URL; do not silently percent-encode them.
+export function topicPushEndpointFromFields(values: Record<string, unknown>) {
+  const protocol = values.push_protocol
+  if (typeof protocol !== 'string' || !['http', 'https', 'amqp', 'amqps', 'kafka'].includes(protocol)) throw new Error('请选择推送协议')
+  const host = values.push_host
+  if (typeof host !== 'string' || !/^[A-Za-z0-9.-]+$/.test(host)) throw new Error('请填写主机名或 IPv4 地址，不含协议、端口或路径')
+  const port = values.push_port ?? ''
+  if (typeof port !== 'string' || (port !== '' && (!/^[1-9][0-9]{0,4}$/.test(port) || Number(port) > 65535))) throw new Error('端口留空或填写 1–65535')
+  const user = values.push_user_secret ?? ''
+  const password = values.push_password_secret ?? ''
+  if (typeof user !== 'string' || typeof password !== 'string' || !!user !== !!password) throw new Error('用户名和密码必须同时填写或同时留空')
+  // Ambiguous URL delimiters and percent escapes need deliberate complete-URL input.
+  if (user && (!/^[A-Za-z0-9._~!$&'()*+,;=-]+$/.test(user) || !/^[A-Za-z0-9._~!$&'()*+,;=:-]+$/.test(password))) throw new Error('分项凭据仅接受无歧义 ASCII URL 字符；特殊凭据请使用完整 URL 并核对 RGW 的原始解析语义')
+  const path = values.push_path ?? ''
+  if (typeof path !== 'string' || (path !== '' && !/^\/[\x21-\x7E]*$/.test(path))) throw new Error('路径必须以 / 开头，不含空白或非 ASCII 字符')
+  if (protocol === 'kafka' && path !== '') throw new Error('Kafka 地址不支持路径，请清空路径字段')
+  return `${protocol}://${user ? `${user}:${password}@` : ''}${host}${port ? `:${port}` : ''}${path}`
+}
+
 export function topicCreateInput(values: Record<string,unknown>) {
   const name=typeof values.name==='string' ? values.name : ''
   const scope=typeof values.scope==='string' ? values.scope : ''
@@ -7,8 +26,8 @@ export function topicCreateInput(values: Record<string,unknown>) {
   if (!zonegroup || /[:\s]/.test(zonegroup) || /[:$\s]/.test(scope) || !/^[A-Za-z0-9_.$@-]{1,512}$/.test(owner_uid)) throw new Error('请填写准确 Zonegroup 名称、租户/Account 范围及凭据所属完整 UID')
   if (values.confirm_create!=='acknowledged') throw new Error('请确认凭据、命名空间和创建影响')
   if (values.persistent!=='true' && values.persistent!=='false') throw new Error('请明确选择持久化状态')
-  if (values.endpoint_mode!=='none' && values.endpoint_mode!=='url') throw new Error('请选择无推送端点或指定 URL')
-  const endpoint_secret=values.endpoint_mode==='none' ? '' : values.endpoint_secret
+  if (values.endpoint_mode!=='none' && values.endpoint_mode!=='url' && values.endpoint_mode!=='fields') throw new Error('请选择无推送端点、指定 URL 或分项输入')
+  const endpoint_secret=values.endpoint_mode==='none' ? '' : values.endpoint_mode==='fields' ? topicPushEndpointFromFields(values) : values.endpoint_secret
   if (typeof endpoint_secret!=='string'||(values.endpoint_mode==='url'&&!endpoint_secret)) throw new Error('请填写完整推送 URL')
   if (endpoint_secret) {
     if (!/^(https?|amqps?|kafka):\/\/(([^:\s]+):([^@\s]+)@)?([A-Za-z0-9.:-]+)(\/[\x20-\x7E]*)?$/.test(endpoint_secret)) throw new Error('推送 URL 不符合原生格式')

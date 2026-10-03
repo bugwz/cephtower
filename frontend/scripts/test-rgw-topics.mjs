@@ -58,6 +58,32 @@ for (const key of ['name','owner','scope','arn','push_endpoint','persistent','ti
 assert.equal(definition.columns.find(column=>column.key==='scope').render(''),'全局租户')
 assert.equal(definition.columns.find(column=>column.key==='scope').render(undefined),'未返回或不可用')
 assert.equal(definition.createAction.path,'/rgw/topic')
+{
+  const action = definition.createAction
+  const values = {...action.initialValues, name:'events',scope:'team',zonegroup:'zone',owner_uid:'team$user',endpoint_mode:'fields',push_host:'broker.example.test',push_port:'5671',push_path:'/vhost',push_user_secret:'delivery-user',push_password_secret:'delivery-password',persistent:'true',confirm_create:'acknowledged'}
+  for (const protocol of ['http','https','amqp','amqps','kafka']) {
+    const input = {...values,push_protocol:protocol,push_path:protocol==='kafka'?'':'/vhost'}
+    const body = action.buildBody(input,42)
+    assert.equal(body.endpoint_secret,`${protocol}://delivery-user:delivery-password@broker.example.test:5671${input.push_path}`)
+    for (const key of ['push_protocol','push_host','push_port','push_path','push_user_secret','push_password_secret']) assert.equal(body[key],undefined)
+    const confirmation = action.confirmation(input)
+    assert.ok(!confirmation.includes('delivery-user'))
+    assert.ok(!confirmation.includes('delivery-password'))
+    assert.ok(!confirmation.includes(body.endpoint_secret))
+  }
+  const input = {...values,push_protocol:'https'}
+  assert.equal(action.buildBody({...input,push_user_secret:'',push_password_secret:'',push_port:'',push_path:''},42).endpoint_secret,'https://broker.example.test')
+  assert.equal(action.buildBody({...input,endpoint_mode:'none',push_protocol:undefined},42).endpoint_secret,'')
+  assert.equal(action.buildBody({...input,endpoint_mode:'url',endpoint_secret:'https://explicit/path'},42).endpoint_secret,'https://explicit/path')
+  for (const change of [{push_protocol:undefined},{push_protocol:'ftp'},{push_host:''},{push_host:'host/path'},{push_host:'user@host'},{push_host:'[::1]'},{push_host:'host:123'},{push_port:'0'},{push_port:'65536'},{push_port:'01'},{push_port:123},{push_password_secret:''},{push_user_secret:''},{push_user_secret:'user:other'},{push_password_secret:'pass@host'},{push_password_secret:'pass%40host'},{push_password_secret:'pass#fragment'},{push_path:'vhost'},{push_path:'/bad\npath'},{push_protocol:'kafka',push_path:'/vhost'}]) assert.throws(()=>action.buildBody({...input,...change},42))
+  for (const key of ['push_protocol','push_host','push_port','push_path','push_user_secret','push_password_secret']) {
+    const field = action.fields.find(field=>field.name===key)
+    assert.ok(field.visibleWhen(input))
+    assert.ok(!field.visibleWhen({...input,endpoint_mode:'url'}))
+    assert.ok(!field.visibleWhen({...input,endpoint_mode:'none'}))
+    if (key.endsWith('_secret')) assert.equal(field.type,'password')
+  }
+}
 for (const scope of ['', 'team', 'RGW12345678901234567']) {
   const action=definition.createAction
   const values={...action.initialValues,name:'events',scope,zonegroup:'zone',owner_uid:'team$ns$user',endpoint_mode:'url',endpoint_secret:'amqps://user:create-secret@host/vhost',persistent:'true',confirm_create:'acknowledged',options:'{"verify-ssl":"true"}'}
