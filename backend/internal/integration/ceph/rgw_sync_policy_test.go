@@ -2,6 +2,7 @@ package ceph
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"testing"
 	"time"
@@ -15,6 +16,7 @@ func TestBucketSyncPolicyCollection(t *testing.T) {
 			name, payload string
 			valid         bool
 		}{
+			{"both flow types", `{"groups":[{"id":"g","status":"enabled","data_flow":{"symmetrical":[{"id":"双向","zones":[" a ","<b>"]}],"directional":[{"source_zone":"b","dest_zone":"c"}],"future":{"option":true}},"pipes":[]}]}`, true},
 			{"enabled", `{"groups":[{"id":"g","status":"enabled","data_flow":{"directional":[{"source_zone":"a","dest_zone":"b"}]},"pipes":[{"id":"p"}]}]}`, true},
 			{"allowed", `{"groups":[{"id":"g","status":"allowed","data_flow":{},"pipes":[]}]}`, true},
 			{"forbidden", `{"groups":[{"id":"g","status":"forbidden","data_flow":{},"pipes":[]}]}`, true},
@@ -53,6 +55,10 @@ func TestBucketSyncPolicyCollection(t *testing.T) {
 						t.Fatalf("wrong availability: %#v", value)
 					}
 					if tc.valid {
+						var original map[string]any
+						if err := json.Unmarshal([]byte(tc.payload), &original); err != nil || !reflect.DeepEqual(value, original) {
+							t.Fatalf("native policy fields changed: %#v", value)
+						}
 						policy, ok := rgwBucketSyncPolicy(value)
 						if !ok {
 							t.Fatal("invalid observed policy")

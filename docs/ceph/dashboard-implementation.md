@@ -28,6 +28,16 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：补齐桶本地数据流的结构化展示。参考同步策略详情页的对称流 ID/Zone
+  列表与定向流源/目标 Zone 列，并核对 rgw_sync_policy.cc 原生序列化；
+  定向流不虚构 ID。复用 sync policy get → bucket_sync_policy 采集/API 链路，
+  新增按组的分页数据流表，原生标识保留空白、Unicode 和特殊字符，不猜测 Zone 名称。
+  区分空配置、部分损坏、不可用和未知扩展，保留完整原始 JSON 供核查；不将配置当成
+  有效复制拓扑或运行进度。此增量只补齐展示，数据流与管道写操作仍待实现。
+  采集回归增加双类型流和未知字段完整保留校验；前端覆盖类型映射、空/异常状态、
+  未知扩展、分页与页面绑定。make test-backend（含 OpenAPI 检查）及 make test-frontend
+  （含 TypeScript/Vite 构建）通过；未进行真实集群或浏览器视觉验证。
+
 - 2026-10-04：补齐桶本地同步组删除。追溯参考同步策略页面的 removeSyncPolicyGroup、
   Dashboard remove_sync_policy_group 与原生 SYNC_GROUP_REMOVE，新增高风险
   DELETE /rgw/bucket/sync/group → 操作队列 → sync policy get / sync group remove /

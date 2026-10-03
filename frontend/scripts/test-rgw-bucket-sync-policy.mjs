@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import './test-rgw-bucket-sync-flows.mjs'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 const api = {}
