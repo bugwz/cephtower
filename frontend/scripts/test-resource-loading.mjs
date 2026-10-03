@@ -2,6 +2,20 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 
+const perfSource = readFileSync(new URL('../src/pages/cluster/DaemonPerf.tsx', import.meta.url), 'utf8')
+const perfTree = ts.createSourceFile('perf.tsx', perfSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const perfFn = perfTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'DaemonPerf')
+const perfLoader = perfFn.body.statements.find((node) => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(perfTree) === 'loader').declarationList.declarations[0].initializer.arguments[0]
+const perfCode = ts.transpileModule(`const load = ${perfLoader.getText(perfTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const response of [{ daemon_name: 'osd.1', items: [] }, { daemon_name: 'osd.2', items: [] }, { daemon_name: 'osd.1', items: null }]) {
+  const calls = []
+  const load = new Function('request', 'jsonInit', 'clusterId', 'name', `${perfCode}; return load`)(async (...args) => { calls.push(args); return response }, (method, body) => ({ method, body }), 7, 'osd.1')
+  if (response.daemon_name === 'osd.1' && Array.isArray(response.items)) assert.equal(await load(), response)
+  else await assert.rejects(load())
+  assert.deepEqual(calls, [['/daemon/perf', { method: 'GET', body: { cluster_id: 7, name: 'osd.1' } }]])
+}
+assert.ok(!perfSource.includes('JSON.parse'))
+
 const logsSource = readFileSync(new URL('../src/pages/monitoring/RuntimeLogsPage.tsx', import.meta.url), 'utf8')
 const logsTree = ts.createSourceFile('logs.tsx', logsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const logsPanelNode = logsTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'RuntimeLogsPanel')

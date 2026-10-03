@@ -12,6 +12,7 @@ import { useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 import { ServiceDaemons } from './ServiceDaemons'
+import { DaemonPerf } from './DaemonPerf'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 
 interface ServiceFormValues {
@@ -77,6 +78,8 @@ function ServicePageContent() {
   const requiresServiceID = ['mds', 'rgw', 'nfs', 'smb'].includes(selectedServiceType)
   const [formOpen, setFormOpen] = useState(false)
   const [detail, setDetail] = useState<{ clusterId: number; name: string } | null>(null)
+  const [perfDetail, setPerfDetail] = useState<{ clusterId: number; name: string } | null>(null)
+  const visiblePerf = perfDetail?.clusterId === selectedClusterId ? perfDetail : null
   const visibleDetail = detail?.clusterId === selectedClusterId ? detail : null
   const [editingService, setEditingService] = useState<ApiRecord | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -322,6 +325,7 @@ function ServicePageContent() {
                     { key: 'version', title: '版本' },
                     { key: 'container_image', title: '镜像' },
                     { key: 'actions', title: '操作', filterKey: false, render: (_, row) => <TableActions>
+                      <TableAction disabled={!selectedClusterId || !/^(mon|mgr|mds|osd|rgw|rbd-mirror)\./.test(textValue(row.name, ''))} onClick={() => { if (selectedClusterId) setPerfDetail({ clusterId: selectedClusterId, name: textValue(row.name, '') }) }}>性能计数器</TableAction>
                       {daemonActions.map((action) => <TableAction key={action.value} danger={action.value !== 'start'} disabled={loading || Boolean(error) || submitting || refreshingServices || !serviceWritable(row)} onClick={() => runDaemonAction(row, action.value)}>{action.label}</TableAction>)}
                     </TableActions> }
                   ]}
@@ -334,6 +338,9 @@ function ServicePageContent() {
       </Card>
       <Modal title={`服务 ${visibleDetail?.name ?? ''} 的守护进程`} open={Boolean(visibleDetail)} onCancel={() => setDetail(null)} footer={null} width="95vw" destroyOnClose>
         {visibleDetail && <ServiceDaemons key={`${visibleDetail.clusterId}:${visibleDetail.name}`} clusterId={visibleDetail.clusterId} name={visibleDetail.name} />}
+      </Modal>
+      <Modal title={`守护进程 ${visiblePerf?.name ?? ''} 性能计数器`} open={Boolean(visiblePerf)} onCancel={() => setPerfDetail(null)} footer={null} width="95vw" destroyOnClose>
+        {visiblePerf && <DaemonPerf key={`${visiblePerf.clusterId}:${visiblePerf.name}`} clusterId={visiblePerf.clusterId} name={visiblePerf.name} />}
       </Modal>
       <DraggableModal
         title={editingService ? '编辑服务' : '新增服务'}

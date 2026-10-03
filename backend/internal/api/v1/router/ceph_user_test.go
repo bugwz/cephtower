@@ -31,6 +31,10 @@ type authRouteExecutor struct{ specs []executor.CommandSpec }
 func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.specs = append(e.specs, spec)
 	switch spec.ID {
+	case "daemon.perf.schema":
+		return executor.CommandResult{Stdout: []byte(`{"osd":{"counter":{"description":"counter","type":10,"units":"bytes"}}}`)}, nil
+	case "daemon.perf.dump":
+		return executor.CommandResult{Stdout: []byte(`{"osd":{"counter":18446744073709551615}}`)}, nil
 	case "telemetry.status":
 		return executor.CommandResult{Stdout: []byte(`{"enabled":false,"channel_basic":true,"interval":24,"last_upload":null}`)}, nil
 	case "telemetry.report":
@@ -151,6 +155,10 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 			t.Fatalf("%s %s operation did not finish", method, path)
 		}
 		return rec
+	}
+	perfResult := send("GET", "/daemon/perf", map[string]any{"name": "osd.1"})
+	if perfResult.Header().Get("Cache-Control") != "no-store" || !strings.Contains(perfResult.Body.String(), `"daemon_name":"osd.1"`) || !strings.Contains(perfResult.Body.String(), `"raw_value":"18446744073709551615"`) {
+		t.Fatalf("daemon performance snapshot lost identity or precision: %s", perfResult.Body.String())
 	}
 	logResult := send("GET", "/logs", map[string]any{"channel": "audit", "level": "debug", "limit": 30})
 	if !strings.Contains(logResult.Body.String(), "entry") {

@@ -97,7 +97,7 @@ func successResponseSchema(route router.Route) string {
 	switch key {
 	case "GET /logs":
 		return "CephLogsResponse"
-	case "GET /upgrade/versions", "GET /crush/map", "GET /manager/telemetry/status", "GET /manager/telemetry/report", "GET /service/daemons":
+	case "GET /upgrade/versions", "GET /crush/map", "GET /manager/telemetry/status", "GET /manager/telemetry/report", "GET /service/daemons", "GET /daemon/perf":
 		return "ConfigurationOptionResponse"
 	case "GET /configuration/option", "GET /osd/inspection", "GET /filesystem/snapshot/schedule/status", "GET /filesystem/performance", "GET /filesystem/pools", "GET /filesystem/mds", "GET /filesystem/subvolume/snapshot/visibility":
 		return "ConfigurationOptionResponse"
@@ -366,7 +366,7 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true)}
 	case "GET /osd/inspection":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "osd_id": stringField(true), "section": {Type: "string", Required: true, Enum: []string{"metadata", "histogram"}}}
-	case "GET /configuration/option", "GET /service/daemons":
+	case "GET /configuration/option", "GET /service/daemons", "GET /daemon/perf":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "name": stringField(true)}
 	case "GET /manager/telemetry/report":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "mode": {Type: "string", Required: true, Enum: []string{"current", "preview"}}}
