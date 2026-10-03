@@ -24,10 +24,10 @@ func TestRGWUserCreateInAccount(t *testing.T) {
 				response, fail string
 				valid          bool
 			}{
-				{`{"full_user_id":"` + uid + `","account_id":"` + account + `","type":"` + kind + `"}`, "", true},
+				{`{"full_user_id":"` + uid + `","account_id":"` + account + `","type":"` + kind + `","keys":[],"swift_keys":[]}`, "", true},
 				{`{}`, "", false}, {`{}`, "rgw_user.create", false}, {`{}`, "rgw_user.create.post_check", false},
 			} {
-				runner := &directoryRenameExecutor{outputs: map[string]string{"rgw_user.create.post_check": tc.response}, failID: tc.fail}
+				runner := &directoryRenameExecutor{outputs: map[string]string{"rgw_user.create.pre_check": `[]`, "rgw_user.create.post_check": tc.response}, failID: tc.fail}
 				service.executor = runner
 				_, err := service.Execute(context.Background(), Request{ClusterID: clusterID, Action: "rgw_user.create", ResourceKey: "rgw/user/" + uid, Parameters: params})
 				if (err == nil) != tc.valid {
@@ -39,15 +39,15 @@ func TestRGWUserCreateInAccount(t *testing.T) {
 						t.Fatalf("unsafe retry: %v", err)
 					}
 				}
-				want := []string{"user", "create", "--uid", uid, "--account-id=" + account, "--account-root=" + strconv.FormatBool(root), "--display-name", "valid-name", "--format", "json"}
-				if !reflect.DeepEqual(runner.specs[0].Args, want) || !runner.specs[0].Mutating {
-					t.Fatalf("unexpected write: %+v", runner.specs[0])
+				want := []string{"user", "create", "--uid", uid, "--account-id=" + account, "--account-root=" + strconv.FormatBool(root), "--display-name", "valid-name", "--generate-key=false", "--format", "json"}
+				if !reflect.DeepEqual(runner.specs[1].Args, want) || !runner.specs[1].Mutating {
+					t.Fatalf("unexpected write: %+v", runner.specs[1])
 				}
 				if tc.fail == "rgw_user.create" {
-					if len(runner.specs) != 1 {
+					if len(runner.specs) != 2 {
 						t.Fatal("read after failed create")
 					}
-				} else if len(runner.specs) != 2 || runner.specs[1].Mutating || !reflect.DeepEqual(runner.specs[1].Args, []string{"user", "info", "--uid", uid, "--format", "json"}) {
+				} else if len(runner.specs) != 3 || runner.specs[2].Mutating || !reflect.DeepEqual(runner.specs[2].Args, []string{"user", "info", "--uid", uid, "--format", "json"}) {
 					t.Fatal("wrong readback")
 				}
 			}

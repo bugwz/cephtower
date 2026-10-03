@@ -121,6 +121,15 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	var upgradeTarget map[string]any
 	var s3KeyActive *bool
 	var expectedCaps map[string]uint8
+	if request.Action == "rgw_user.create" {
+		checked, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: executor.BinaryRGWAdmin, Args: []string{"user", "list", "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if readErr != nil {
+			return cephdomain.ActionResult{}, normalize(readErr)
+		}
+		if !rgwUserPresence(checked.Stdout, rawText(request.Parameters, "uid"), false) {
+			return cephdomain.ActionResult{}, invalid("new user absence could not be verified; no changes were made")
+		}
+	}
 	if request.Action == "rgw_user.delete" {
 		checked, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".pre_check", Binary: spec.binary, Args: spec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 		if readErr != nil {
@@ -346,8 +355,8 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "rgw_user.subuser" || request.Action == "rgw_key.create" || request.Action == "rgw_key.update" || request.Action == "rgw_key.delete" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "user credential command failed; inspect user, subuser and key state before any manual retry", Retryable: false}
 		}
-		if request.Action == "rgw_user.create" && rawText(request.Parameters, "account_id") != "" {
-			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "account user creation failed; inspect user existence and credentials before any manual retry", Retryable: false}
+		if request.Action == "rgw_user.create" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "user creation failed; inspect user existence and credentials before any manual retry", Retryable: false}
 		}
 		if rgwUserAccountMigrationRequested(request) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "account migration failed and bucket ownership may have partially changed; inspect user and bucket ownership before any manual retry", Retryable: false}
@@ -428,6 +437,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			if err != nil || !rgwUserAccountRootMatches(checked.Stdout, rawText(request.Parameters, "uid"), rawText(request.Parameters, "account_id"), &root) {
 				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "account user creation was accepted but membership and root status could not be verified; inspect user info before retrying", Retryable: false}
 			}
+		}
+		if request.Action == "rgw_user.create" && (err != nil || !rgwUserCreateKeysMatch(checked.Stdout, request.Parameters)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user creation was accepted but identity or requested credential state could not be verified; inspect user info before any manual retry", Retryable: false}
 		}
 		if rgwUserAccountMigrationRequested(request) {
 			root := false
@@ -1983,7 +1995,15 @@ func build(request Request, p map[string]any) (command, error) {
 				args = append(args, flag, value)
 			}
 		}
-		return rgw(args, []string{"user", "info", "--uid", uid}), nil
+		keyArgs, err := rgwUserCreateKeyArgs(p)
+		if err != nil {
+			return command{}, err
+		}
+		result := rgw(append(args, keyArgs...), []string{"user", "info", "--uid", uid})
+		if len(keyArgs) == 3 {
+			result.sensitive = map[int]struct{}{len(args) + 1: {}, len(args) + 2: {}}
+		}
+		return result, nil
 	case "rgw_user.update":
 		uid := last(tail)
 		args := []string{"user", "modify", "--uid", uid}

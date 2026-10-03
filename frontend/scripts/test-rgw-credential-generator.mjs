@@ -69,6 +69,7 @@ assert.equal(control.props.children[1].props.children, '安全随机生成')
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const expected = new Map([
+  ['新建 RGW 用户', { access_key: 'access', secret_key: 'secret' }],
   ['创建 S3 访问密钥', { access_key: 'access', secret_key: 'secret' }],
   ['创建子用户', { access_key: 'access', secret_key: 'secret' }],
   ['轮换 S3 访问密钥', { secret_key: 'secret' }],

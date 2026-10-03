@@ -119,6 +119,20 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 			t.Fatalf("wrong key rotation: %+v %v", row, err)
 		}
 	}
+	for _, account := range []bool{false, true} {
+		fields := ""
+		if account {
+			fields = `,"account_id":"RGW12345678901234567","account_root":false`
+		}
+		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/user", fmt.Sprintf(`{"cluster_id":%d,"uid":"new-key-user","display_name":"valid-name","access_key":"ACCESS123","secret_key":"SavedCreationSecret"%s}`, cluster.ID, fields), fmt.Sprintf("create-key-user-%t", account))
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("user key creation: %d %s", response.Code, response.Body.String())
+		}
+		row, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || row.Action != "rgw_user.create" || strings.Contains(row.ParametersCiphertext, "SavedCreationSecret") || strings.Contains(response.Body.String(), "SavedCreationSecret") || strings.Contains(response.Body.String(), "ACCESS123") {
+			t.Fatalf("unsafe creation response: %+v %v", row, err)
+		}
+	}
 	for _, root := range []bool{false, true} {
 		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/user", fmt.Sprintf(`{"cluster_id":%d,"uid":"new-user","display_name":"valid-name","account_id":"RGW12345678901234567","account_root":%t}`, cluster.ID, root), fmt.Sprintf("create-account-user-%t", root))
 		if response.Code != http.StatusAccepted {
