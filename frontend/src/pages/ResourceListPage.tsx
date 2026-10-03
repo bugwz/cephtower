@@ -257,6 +257,7 @@ export function ResourceListPage({ definition, embedded = false, onFormMutationS
       if (action.path === '/crush/rule') await refreshResource({ clusterId: selectedClusterId, kinds: ['crush_rule'] })
       if (action.path === '/rgw/topic/policy') await refreshResource({ clusterId: selectedClusterId, kinds: ['rgw_topic'] })
       if (action.path === '/rgw/topic/attribute') await refreshResource({ clusterId: selectedClusterId, kinds: ['rgw_topic'] })
+      if (action.path === '/rgw/topic/endpoint') await refreshResource({ clusterId: selectedClusterId, kinds: ['rgw_topic'] })
       if (action.path.startsWith('/rbd/')) {
         await refreshResource({ clusterId: selectedClusterId, kinds: ['rbd_image', 'rbd_snapshot', 'rbd_namespace', 'rbd_trash', 'rbd_group', 'rbd_mirroring'] })
       }

@@ -15,6 +15,7 @@ import (
 	"cephtower/backend/internal/api/v1/handler"
 	"cephtower/backend/internal/api/v1/router"
 	"cephtower/backend/internal/config"
+	"cephtower/backend/internal/security"
 	clusterservice "cephtower/backend/internal/service/cluster"
 	endpointservice "cephtower/backend/internal/service/endpoint"
 	operationservice "cephtower/backend/internal/service/operation"
@@ -97,6 +98,19 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		attributeInvalid := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/topic/attribute", strings.Replace(attributeBody, `"attribute":"persistent"`, `"attribute":"password"`, 1), "topic-attribute-invalid-"+scope)
 		if attributeInvalid.Code != http.StatusBadRequest {
 			t.Fatalf("unsupported attribute accepted: %d", attributeInvalid.Code)
+		}
+		endpointBody := fmt.Sprintf(`{"cluster_id":%d,"topic_id":%q,"topic_arn":%q,"expected_endpoint":"https://old/path","expected_redacted":false,"expected_stored_secret":false,"endpoint_secret":"amqps://user:private-password@broker/vhost"}`, cluster.ID, id, "arn:aws:sns:default:"+scope+":events")
+		endpointResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/topic/endpoint", endpointBody, "topic-endpoint-"+scope)
+		if endpointResponse.Code != http.StatusAccepted || strings.Contains(endpointResponse.Body.String(), "private-password") {
+			t.Fatalf("unsafe endpoint queue: %d", endpointResponse.Code)
+		}
+		endpointOp, err := db.FindOperation(context.Background(), operationIDFromResponse(t, endpointResponse))
+		if err != nil || endpointOp.Action != "rgw_topic.endpoint" || endpointOp.Risk != "high" || endpointOp.ResourceKey != op.ResourceKey || endpointOp.LockKey != op.LockKey || strings.Contains(endpointOp.ParametersCiphertext, "private-password") {
+			t.Fatal("unsafe endpoint operation")
+		}
+		plain, err := security.Decrypt(endpointOp.ParametersCiphertext, contractKey)
+		if err != nil || !strings.Contains(string(plain), "amqps://user:private-password@broker/vhost") {
+			t.Fatal("endpoint credentials not preserved encrypted")
 		}
 	}
 	for _, realm := range []string{"", "realm"} {

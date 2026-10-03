@@ -3,6 +3,7 @@ import { RgwTopicDetails, topicText, topicBoolean, topicEndpoint } from './RgwTo
 import { topicDeleteBlocked, topicDeleteInput, topicDeleteConfirmation } from './rgwTopicDelete'
 import { topicPolicyBlocked, topicPolicyInitial, topicPolicyInput, topicPolicyConfirmation } from './rgwTopicPolicy'
 import { topicAttributeOptions, topicAttributeBlocked, topicAttributeInitial, topicAttributeInput, topicAttributeConfirmation } from './rgwTopicAttribute'
+import { topicEndpointBlocked, topicEndpointInitial, topicEndpointInput, topicEndpointConfirmation } from './rgwTopicEndpoint'
 import { bucketReplicationFormBlocked, bucketReplicationFormInitial, bucketReplicationFormInput, bucketReplicationFormConfirmation } from './rgwBucketReplicationForm'
 import { useClusterContext } from '../../state/ClusterContext'
 import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
@@ -554,6 +555,18 @@ const definitions: Record<
         { name: 'persistent', label: '持久化（仅持久化属性使用）', type: 'select', options: [{ value: 'true', label: '开启持久化' }, { value: 'false', label: '关闭持久化（队列及未投递消息可能丢失）' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...topicAttributeInput(values, row) })
+    }, {
+      title: '修改 Topic 推送端点', buttonLabel: '修改推送端点', path: '/rgw/topic/endpoint', method: 'PATCH',
+      successMessage: 'Topic 端点配置已回读核验（不代表投递成功）',
+      disabledWhen: topicEndpointBlocked, initialValues: topicEndpointInitial, confirmation: topicEndpointConfirmation,
+      fields: [
+        { name: 'topic_id', label: 'Topic ID（不可更改）', readOnly: true },
+        { name: 'topic_arn', label: 'Topic ARN（不可更改）', readOnly: true },
+        { name: 'endpoint_mode', label: '操作', type: 'select', required: true, options: [{ value: 'replace', label: '替换完整 URL（含所需凭据和查询参数）' }, { value: 'clear', label: '清空推送端点（队列可能被删除）' }] },
+        { name: 'endpoint_secret', label: '完整新 URL（预先保存，不从脱敏数据回填）', type: 'password', visibleWhen: values => values.endpoint_mode === 'replace' },
+        { name: 'confirm_endpoint', label: '影响确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已保存完整配置，确认目标可信、传输安全、保留参数及队列风险' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...topicEndpointInput(values, row) })
     }],
     deleteAction: {
       title: '删除 RGW 通知目标', path: '/rgw/topic', action: 'rgw_topic.delete', resourceKind: 'rgw_topic', risk: 'high',

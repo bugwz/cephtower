@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **RGW Topic 推送端点替换与清空**：新增 `PATCH /rgw/topic/endpoint` 和密码型完整 URL 输入，使用原生 SNS `SetTopicAttributes(push-endpoint)`。根据 `rgw_url.cc::parse_url_userinfo` 及推送工厂支持 http(s)、amqp(s)、kafka，拒绝原生不接受的残缺凭据对/URL 格式；不会自动开启明文秘密配置。SNS 管理链路强制 HTTPS，推送链路本身的协议安全由用户明确确认，不以管理链路 TLS 冒充投递链路加密。
+  - 输入使用 `endpoint_secret` 敏感字段及 OpenAPI writeOnly，操作参数加密保存，不在确认、错误或结果回显完整 URL。采集和提交前检查复用同一脱敏投影；必须完整填写新 URL，不从脱敏库存自动恢复凭据。前置快照只比较可见 URL、脱敏标记和 stored-secret 标记，明确不能发现隐藏凭据变化，不声称具备完整版本锁或跨工具 CAS。
+  - 回读核验完整原始 URL，比较其他全部 Topic/EndPoint 字段，保留 EndpointArgs。依据 `validate_and_update_endpoint_secret`，新凭据只会把 HasStoredSecret 设置为 true，替换/清空无凭据 URL 不会自动清除旧标记。明确既有 EndpointArgs 凭据可能覆盖 URL 凭据，跨协议参数不会自动清理；清空持久化端点可能删除队列及未投递消息，恢复端点可能创建队列。失败不自动回滚或重试。
+  - 回归覆盖三类 scope、多协议、凭据增删、查询参数、清空/恢复、粘性 secret 标记、陈旧快照、各阶段故障、保留参数变化、加密操作存储/API 不泄密及前端确认。无真实集群或浏览器视觉验证，回读不证明投递成功。Topic 创建、独立认证/投递参数编辑及桶通知规则仍未完成。
+
 - **RGW Topic 通知属性编辑**：新增 `PATCH /rgw/topic/attribute` 和单属性编辑表单，覆盖参考 Topic 表单中的 Opaque Data、持久化、TTL、最大重试次数及重试间隔。使用原生 SNS `SetTopicAttributes`，不通过重新创建覆盖全部 Topic，也不直接写元数据。沿用 HTTPS、SNS 签名和 Topic 范围绑定，提交前比较选中属性快照，提交后比较全部外层属性和完整 EndPoint 字段（含不回传的端点秘密与未知字段），只允许目标字段变化。
   - 根据 `rgw_pubsub.cc::to_json_str` 核验 SNS 的大写 EndPoint 字段名与类型，不把它当作 CLI 的小写 dest。持久化值保持布尔，Opaque Data 保留空串/Unicode/空白。根据 `RGWHTTPArgs::get_int` 及 `strict_strtol`，显式数值限制在 0–2147483647，避免溢出后默默回退默认；原生显示的 `None` 通过明确选择全局默认转换为 `-1` 哨兵。
   - 前端分别说明 TTL/重试次数为 0 表示无限、重试间隔为 0 表示无延迟，默认不是 0。关闭持久化由原生删除队列，可能永久丢失待投递消息；开启可能创建队列，但属性回读不证明队列健康或消息成功投递。不自动回滚/重试，不更改 Policy、推送地址或桶通知规则。

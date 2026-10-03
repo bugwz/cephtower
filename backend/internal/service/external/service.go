@@ -54,7 +54,7 @@ type httpCredential struct {
 func Supports(action string) bool {
 	switch action {
 	case "silence.create", "silence.delete",
-		"rgw_topic.policy", "rgw_topic.attribute",
+		"rgw_topic.policy", "rgw_topic.attribute", "rgw_topic.endpoint",
 		"rgw_bucket.create", "rgw_bucket.update", "rgw_bucket.delete", "rgw_bucket.acl", "rgw_bucket.replication_enable", "rgw_bucket_policy.update", "rgw_bucket_policy.delete",
 		"iscsi_target.create", "iscsi_target.update", "iscsi_target.delete",
 		"nvmeof_subsystem.create", "nvmeof_subsystem.update", "nvmeof_subsystem.delete",
@@ -408,6 +408,8 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		return s.topicPolicy(ctx, request)
 	case request.Action == "rgw_topic.attribute":
 		return s.topicAttribute(ctx, request)
+	case request.Action == "rgw_topic.endpoint":
+		return s.topicEndpoint(ctx, request)
 	case strings.HasPrefix(request.Action, "silence."):
 		return s.alertmanager(ctx, request.ClusterID, request, request.Parameters)
 	case strings.HasPrefix(request.Action, "rgw_bucket"):

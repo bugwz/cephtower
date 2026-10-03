@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
 
 	"cephtower/backend/internal/integration/ceph/executor"
+	"cephtower/backend/internal/integration/ceph/s3"
 )
 
 // The Dashboard enumerates topic metadata, not a default tenant's topic list.
@@ -114,13 +114,8 @@ func rgwTopicPayload(data map[string]any) (map[string]any, bool) {
 	if !ok {
 		return nil, false
 	}
-	if endpoint == "" {
-		payload["push_endpoint"] = ""
-		payload["endpoint_redacted"] = false
-	} else if parsed, err := url.Parse(endpoint); err == nil && parsed.Scheme != "" && parsed.Hostname() != "" && !parsed.OmitHost {
-		redacted := parsed.User != nil || parsed.RawQuery != "" || parsed.ForceQuery || parsed.Fragment != ""
-		parsed.User, parsed.RawQuery, parsed.Fragment, parsed.RawFragment, parsed.ForceQuery = nil, "", "", "", false
-		payload["push_endpoint"], payload["endpoint_redacted"] = parsed.String(), redacted
+	if visible, redacted, valid := s3.RedactTopicEndpoint(endpoint); valid {
+		payload["push_endpoint"], payload["endpoint_redacted"] = visible, redacted
 	} else {
 		// Malformed URLs may contain passwords: never fall back to raw text.
 		payload["push_endpoint"] = nil

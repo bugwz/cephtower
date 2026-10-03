@@ -4,6 +4,7 @@ import ts from 'typescript'
 const api = {}
 new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicPolicy.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
 new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicAttribute.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api,()=>api)
+new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicEndpoint.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api,()=>api)
 new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicDelete.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
 const jsx = (type, props) => ({ type, props })
 new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwTopicDetails.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText)(api,()=>({jsx,jsxs:jsx}))
@@ -54,6 +55,31 @@ for (const scope of ['', 'team', 'RGW12345678901234567']) {
   for (const change of [{stale:true},{natural_key:'other'},{metadata_version:null},{metadata_key:'other:events'},{scope:undefined}]) assert.throws(()=>action.buildBody({...row,...change},42))
 }
 const navigation = readFileSync(new URL('../src/navigation.ts',import.meta.url),'utf8')
+for (const scope of ['', 'team', 'RGW12345678901234567']) {
+  const row = {scope,name:'events',metadata_key:`${scope}:events`,natural_key:Buffer.from(`${scope}:events`).toString('base64url'),arn:`arn:aws:sns:default:${scope}:events`,push_endpoint:'https://old/path',endpoint_redacted:true,stored_secret:true}
+  const action = definition.extraActions[2]
+  const initial = action.initialValues(row)
+  assert.equal(action.path,'/rgw/topic/endpoint')
+  assert.equal(action.method,'PATCH')
+  assert.equal(action.disabledWhen(row),undefined)
+  assert.equal(initial.endpoint_secret,undefined)
+  assert.equal(action.fields.find(field=>field.name==='endpoint_secret').type,'password')
+  for (const endpoint_secret of ['https://new/path?q=private&x=1','amqp://user:private-password@broker/vhost','amqps://broker/vhost','kafka://broker:9092','http://host/path']) {
+    const values = {...initial,endpoint_mode:'replace',endpoint_secret,confirm_endpoint:'acknowledged'}
+    assert.deepEqual(action.buildBody(values,42,row),{cluster_id:42,...initial,expected_endpoint:row.push_endpoint,expected_redacted:true,expected_stored_secret:true,endpoint_secret})
+    const confirmation = action.confirmation(values,row)
+    assert.ok(!confirmation.includes(endpoint_secret))
+    assert.ok(!confirmation.includes('private-password'))
+    for (const warning of ['永久丢失','EndpointArgs','隐藏凭据','HTTPS','回滚','脱敏快照']) assert.ok(confirmation.includes(warning))
+    for (const change of [{stale:true},{natural_key:'other'},{push_endpoint:null},{endpoint_redacted:undefined},{stored_secret:undefined}]) assert.throws(()=>action.buildBody(values,42,{...row,...change}))
+    assert.throws(()=>action.buildBody({...values,topic_id:'other'},42,row))
+    assert.throws(()=>action.buildBody({...values,confirm_endpoint:undefined},42,row))
+  }
+  const clear = {...initial,endpoint_mode:'clear',confirm_endpoint:'acknowledged',endpoint_secret:'must-not-be-sent'}
+  assert.equal(action.buildBody(clear,42,row).endpoint_secret,'')
+  for (const endpoint_secret of ['','ftp://host/a','https://user@host/a','https://user:@host/a','https://:pass@host/a','https://host?query=1','https://host/\n','https://[::1]/','https://host/'+'x'.repeat(1024*1024)]) assert.throws(()=>action.buildBody({...initial,endpoint_mode:'replace',confirm_endpoint:'acknowledged',endpoint_secret},42,row))
+  assert.throws(()=>action.buildBody({...initial,endpoint_mode:'replace',confirm_endpoint:'acknowledged',endpoint_secret:row.push_endpoint},42,{...row,endpoint_redacted:false}))
+}
 for (const scope of ['', 'team', 'RGW12345678901234567']) {
   const row = {scope,name:'events',metadata_key:`${scope}:events`,natural_key:Buffer.from(`${scope}:events`).toString('base64url'),arn:`arn:aws:sns:default:${scope}:events`,opaqueData:'old',persistent:true,time_to_live:'None',max_retries:'10',retry_sleep_duration:'0'}
   const action = definition.extraActions[1]
