@@ -17,6 +17,7 @@ func rbdRoutes(h *handler.Handler) []Route {
 		{"POST", "/rbd/image/snapshot/action", h.RunRBDSnapshotAction},
 		{"GET", "/rbd/namespaces", h.ListRBDNamespaces},
 		{"POST", "/rbd/namespace", h.CreateRBDNamespace},
+		{"POST", "/rbd/namespace/schedule", h.UpdateRBDNamespaceSchedule},
 		{"DELETE", "/rbd/namespace", h.DeleteRBDNamespace},
 		{"GET", "/rbd/trash", h.ListRBDTrash},
 		{"POST", "/rbd/trash/restore", h.RestoreRBDTrash},

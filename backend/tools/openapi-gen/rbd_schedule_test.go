@@ -28,3 +28,11 @@ func TestPoolMirrorScheduleSchemaUsesRuntimeContract(t *testing.T) {
 		}
 	}
 }
+
+func TestNamespaceScheduleSchemaUsesRuntimeContract(t *testing.T) {
+	got, ok := requestSchema(router.Route{Method: "POST", Path: "/rbd/namespace/schedule"})
+	want, _ := handler.MutationRequestContract("rbd_namespace.schedule")
+	if !ok || !reflect.DeepEqual(got, want) || !got.Fields["namespace"].Required {
+		t.Fatal("namespace schedule schema differs from runtime contract")
+	}
+}

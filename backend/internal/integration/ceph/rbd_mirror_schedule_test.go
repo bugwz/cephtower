@@ -90,6 +90,28 @@ func TestMirrorPoolSchedulesIncludeClusterAndExcludeOtherPools(t *testing.T) {
 	}
 }
 
+func TestMirrorNamespaceSchedulesIncludeOnlyRelevantScopes(t *testing.T) {
+	runner := &rbdMirrorScheduleExecutor{}
+	provider := NativeProvider{Executor: runner}
+	rows := []Observation{
+		{Kind: "rbd_namespace", NaturalKey: "images/team", Payload: map[string]any{}},
+		{Kind: "rbd_namespace", NaturalKey: "images/other", Payload: map[string]any{}},
+		{Kind: "rbd_namespace", NaturalKey: "archive/team", Payload: map[string]any{}},
+	}
+	provider.attachRBDMirrorSnapshotSchedules(context.Background(), ClusterAccess{}, rows)
+	for i, count := range []int{4, 2, 1} {
+		payload := rows[i].Payload.(map[string]any)
+		if payload["snapshot_schedules_status"] != "available" || len(payload["snapshot_schedules"].([]rbdMirrorScheduleWire)) != count {
+			t.Fatalf("namespace %s: %#v", rows[i].NaturalKey, payload)
+		}
+	}
+	runner.fail = true
+	provider.attachRBDMirrorSnapshotSchedules(context.Background(), ClusterAccess{}, rows)
+	if rows[0].Payload.(map[string]any)["snapshot_schedules_status"] != "unavailable" {
+		t.Fatal("failed collection left schedules marked available")
+	}
+}
+
 func TestMirrorPoolSchedulesDistinguishEmptyAndUnavailable(t *testing.T) {
 	for _, output := range []string{`[]`, `null`, `{}`, `[{"pool":"images","items":null}]`, `[{"pool":"images","items":[{"interval":"0m"}]}]`} {
 		for _, fail := range []bool{false, true} {

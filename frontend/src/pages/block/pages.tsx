@@ -315,6 +315,21 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
     path: '/rbd/namespaces',
     requiredCapabilities: ['rbd'],
     rowKeyCandidates: ['natural_key', 'namespace', 'name'],
+    extraActions:[{
+      title:'命名空间镜像快照调度',buttonLabel:'快照调度',path:'/rbd/namespace/schedule',method:'POST',successMessage:'命名空间调度已更新并核验',
+      confirmation:(values,row)=>values.action==='mirror-schedule-remove' ? `移除 ${namespacePool(row)}/${namespaceName(row)} ${values.remove_interval ? `的 ${String(values.remove_interval)} 调度` : '的全部命名空间级调度'}？镜像可能重新继承池或集群调度；不会删除其他范围的配置。` : `为 ${namespacePool(row)}/${namespaceName(row)} 添加调度？影响该命名空间中没有镜像专属调度的快照同步镜像。`,
+      fields:[
+        {name:'action',label:'操作',type:'select',required:true,options:[{label:'添加调度',value:'mirror-schedule-add'},{label:'移除调度',value:'mirror-schedule-remove'}]},
+        {name:'interval',label:'间隔',required:true,visibleWhen:(values)=>values.action==='mirror-schedule-add',placeholder:'例如 10m、12h、1d',pattern:/^[1-9][0-9]*(m|h|d)$/,patternMessage:'请输入正整数及 m、h 或 d 单位'},
+        {name:'remove_interval',label:'要移除的间隔（留空移除全部命名空间级调度）',visibleWhen:(values)=>values.action==='mirror-schedule-remove',pattern:/^$|^[1-9][0-9]*(m|h|d)$/,patternMessage:'请输入正整数及 m、h 或 d 单位'},
+        {name:'start_time',label:'起始时间（可选）',visibleWhen:(values)=>values.action==='mirror-schedule-add' || Boolean(values.remove_interval),placeholder:'例如 00:15:00+08:00'}
+      ],
+      initialValues:{action:'mirror-schedule-add'},
+      buildBody:(values,clusterId,row)=>{
+        const interval=values.action==='mirror-schedule-add' ? values.interval : values.remove_interval
+        return {cluster_id:clusterId,pool:namespacePool(row),namespace:namespaceName(row),action:String(values.action),...(interval ? {interval:String(interval)} : {}),...(interval && values.start_time ? {start_time:String(values.start_time)} : {})}
+      }
+    }],
     createAction: {
       title: '新建 RBD 命名空间',
       buttonLabel: '新建命名空间',
@@ -343,6 +358,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
     columns: [
       { key: 'pool', title: 'Pool' },
       { key: 'namespace', title: '命名空间' },
+      { key: 'snapshot_schedules', title: '镜像快照调度（含继承范围）', ellipsis: false, render: (value, row) => <MirrorSchedules value={value} status={row.snapshot_schedules_status} /> },
       { key: 'resource_version', title: '版本' }
     ]
   },

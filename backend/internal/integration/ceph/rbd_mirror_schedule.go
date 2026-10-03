@@ -28,12 +28,12 @@ type rbdMirrorScheduleStatusWire struct {
 func (p *NativeProvider) attachRBDMirrorSnapshotSchedules(ctx context.Context, access ClusterAccess, rows []Observation) {
 	hasResources := false
 	for _, row := range rows {
-		if row.Kind == "rbd_mirroring" {
+		if row.Kind == "rbd_mirroring" || row.Kind == "rbd_namespace" {
 			if payload, ok := row.Payload.(map[string]any); ok {
 				payload["snapshot_schedules_status"] = "unavailable"
 			}
 		}
-		if row.Kind == "rbd_image" || row.Kind == "rbd_mirroring" {
+		if row.Kind == "rbd_image" || row.Kind == "rbd_mirroring" || row.Kind == "rbd_namespace" {
 			hasResources = true
 		}
 	}
@@ -52,7 +52,7 @@ func (p *NativeProvider) attachRBDMirrorSnapshotSchedules(ctx context.Context, a
 		}
 	}
 	for _, row := range rows {
-		if row.Kind != "rbd_mirroring" {
+		if row.Kind != "rbd_mirroring" && row.Kind != "rbd_namespace" {
 			continue
 		}
 		payload, ok := row.Payload.(map[string]any)
@@ -60,8 +60,17 @@ func (p *NativeProvider) attachRBDMirrorSnapshotSchedules(ctx context.Context, a
 			continue
 		}
 		matching := make([]rbdMirrorScheduleWire, 0)
+		pool, namespace := row.NaturalKey, ""
+		if row.Kind == "rbd_namespace" {
+			pool, namespace, _ = strings.Cut(row.NaturalKey, "/")
+		}
 		for _, schedule := range schedules {
-			if schedule.Pool == row.NaturalKey || (schedule.Pool == "-" && schedule.Namespace == "-" && schedule.Image == "-") {
+			global := schedule.Pool == "-" && schedule.Namespace == "-" && schedule.Image == "-"
+			inScope := schedule.Pool == pool
+			if row.Kind == "rbd_namespace" {
+				inScope = inScope && (schedule.Namespace == namespace || (schedule.Namespace == "-" && schedule.Image == "-"))
+			}
+			if inScope || global {
 				matching = append(matching, schedule)
 			}
 		}

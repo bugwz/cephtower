@@ -68,3 +68,19 @@ assert.equal(new Set(rows.map((row) => row.key)).size, 8)
 assert.deepEqual(mirrorRows([]), [])
 for (const value of [null, {}, [null], [{}], [{ pool: 'images', namespace: '-', image: '-', items: null }], [{ pool: '-', namespace: 'team', image: '-', items }], [{ pool: 'images', namespace: '-', image: '-', items: [{}] }]]) assert.equal(mirrorRows(value), undefined)
 console.log('Mirror schedule scope display checks passed')
+
+let namespaceScheduleNode
+function findNamespaceSchedule(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some((property) => ts.isPropertyAssignment(property) && property.name.getText(blockTree) === 'path' && property.initializer.getText(blockTree) === "'/rbd/namespace/schedule'")) namespaceScheduleNode = node
+  ts.forEachChild(node, findNamespaceSchedule)
+}
+findNamespaceSchedule(blockTree)
+assert.ok(namespaceScheduleNode)
+const namespaceHelpers = blockTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['namespacePool', 'namespaceName'].includes(node.name?.text)).map((node) => node.getText(blockTree)).join('\n')
+const namespaceCode = ts.transpileModule(`${namespaceHelpers}\nconst schedule = ${namespaceScheduleNode.getText(blockTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const namespaceSchedule = new Function(`${namespaceCode}; return schedule`)()
+assert.deepEqual(namespaceSchedule.buildBody(addValues, 9, { pool: 'images', namespace: 'team' }), { cluster_id: 9, pool: 'images', namespace: 'team', action: 'mirror-schedule-add', interval: '12h', start_time: '01:00' })
+assert.deepEqual(namespaceSchedule.buildBody(removeValues, 9, { pool: 'images', namespace: 'team' }), { cluster_id: 9, pool: 'images', namespace: 'team', action: 'mirror-schedule-remove' })
+assert.match(namespaceSchedule.confirmation(removeValues, { pool: 'images', namespace: 'team' }), /images\/team.*全部命名空间级调度/)
+assert.equal(namespaceSchedule.fields.find((field) => field.name === 'interval').required, true)
+console.log('Namespace mirror schedule form checks passed')

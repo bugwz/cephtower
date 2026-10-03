@@ -449,6 +449,10 @@ func (h *Handler) UpdateRBDMirroringSchedule(w http.ResponseWriter, r *http.Requ
 	h.MutateResource("rbd_mirroring", "rbd_mirroring.schedule", "medium")(w, r)
 }
 
+func (h *Handler) UpdateRBDNamespaceSchedule(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rbd_namespace", "rbd_namespace.schedule", "medium")(w, r)
+}
+
 func (h *Handler) ListFilesystems(w http.ResponseWriter, r *http.Request) {
 	h.ReadResource("filesystem", false)(w, r)
 }

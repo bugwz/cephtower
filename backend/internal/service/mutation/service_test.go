@@ -1008,6 +1008,33 @@ func TestRBDMirrorPoolScheduleCommandsAndReadback(t *testing.T) {
 	}
 }
 
+func TestRBDNamespaceMirrorSchedule(t *testing.T) {
+	for _, verb := range []string{"mirror-schedule-add", "mirror-schedule-remove"} {
+		req := Request{Action: "rbd_namespace.schedule", Parameters: map[string]any{"pool": "images", "namespace": "team", "action": verb, "interval": "120m"}}
+		cmd, err := build(req, req.Parameters)
+		want := []string{"mirror", "snapshot", "schedule", strings.TrimPrefix(verb, "mirror-schedule-"), "--pool=images", "--namespace=team", "120m"}
+		if err != nil || !reflect.DeepEqual(cmd.args, want) {
+			t.Fatalf("command=%+v err=%v", cmd, err)
+		}
+		for _, namespace := range []string{"team", "other", "-"} {
+			data := []byte(fmt.Sprintf(`[{"pool":"images","namespace":%q,"image":"-","items":[{"interval":"2h","start_time":""}]}]`, namespace))
+			want := namespace == "team"
+			if verb == "mirror-schedule-remove" {
+				want = !want
+			}
+			if rbdMirrorScheduleReadbackMatches(req, data) != want {
+				t.Fatalf("incorrect %s readback for namespace %s", verb, namespace)
+			}
+		}
+	}
+	for _, pair := range [][2]string{{"", "team"}, {"bad/pool", "team"}, {"images", ""}, {"images", "-"}, {"images", "bad/ns"}, {"images", "ns@image"}} {
+		p := map[string]any{"pool": pair[0], "namespace": pair[1], "action": "mirror-schedule-add", "interval": "1h"}
+		if _, err := build(Request{Action: "rbd_namespace.schedule"}, p); err == nil {
+			t.Fatalf("accepted invalid scope %#v", p)
+		}
+	}
+}
+
 func TestRBDMirrorScheduleCanonicalIntervalReadback(t *testing.T) {
 	for _, scope := range []string{"rbd_mirroring.schedule", "rbd_image.action"} {
 		for _, pair := range [][2]string{{"60m", "1h"}, {"24h", "1d"}, {"2880m", "2d"}, {"120m", "2h"}, {"18446744073709551616h", "1106804644422573096960m"}} {
