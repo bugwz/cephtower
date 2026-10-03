@@ -663,6 +663,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -1400,6 +1404,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -3432,6 +3440,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -4169,6 +4181,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -5734,6 +5750,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -6567,6 +6587,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -7305,6 +7329,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -8700,6 +8728,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -9531,6 +9563,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -10268,6 +10304,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -11251,6 +11291,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -12484,6 +12528,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -13222,6 +13270,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -13960,6 +14012,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -15335,6 +15391,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -16218,6 +16278,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -17051,6 +17115,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -17788,6 +17856,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -19181,6 +19253,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -19918,6 +19994,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -20672,6 +20752,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -21503,6 +21587,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -22240,6 +22328,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -22978,6 +23070,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -23994,6 +24090,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -24922,6 +25022,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -25753,6 +25857,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -26490,6 +26598,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -27360,6 +27472,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -28098,6 +28214,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -29516,6 +29636,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -30539,6 +30663,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -31370,6 +31498,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -32203,6 +32335,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -33034,6 +33170,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -33771,6 +33911,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -34699,6 +34843,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -35530,6 +35678,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -36267,6 +36419,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -37100,6 +37256,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -37837,6 +37997,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -38670,6 +38834,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -39407,6 +39575,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -40240,6 +40412,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -41071,6 +41247,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -41808,6 +41988,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -42809,6 +42993,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -43641,6 +43829,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -44379,6 +44571,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -45117,6 +45313,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -45949,6 +46149,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -46721,6 +46925,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -47744,6 +47952,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -48575,6 +48787,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -49312,6 +49528,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -50145,6 +50365,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -50883,6 +51107,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -51621,6 +51849,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -52359,6 +52591,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -53192,6 +53428,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -54023,6 +54263,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -54760,6 +55004,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -55615,6 +55863,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -56352,6 +56604,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -57089,6 +57345,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -58213,6 +58473,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -59023,6 +59287,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -59761,6 +60029,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -60498,6 +60770,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -61331,6 +61607,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -62163,6 +62443,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -62901,6 +63185,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -63750,6 +64038,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -64487,6 +64779,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -65224,6 +65520,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -65962,6 +66262,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -66795,6 +67099,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -67626,6 +67934,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -68363,6 +68675,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -69202,6 +69518,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -69940,6 +70260,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -70678,6 +71002,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -71511,6 +71839,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -72249,6 +72581,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -72986,6 +73322,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -73819,6 +74159,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -74556,6 +74900,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -75293,6 +75641,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -76031,6 +76383,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -76959,6 +77315,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -77790,6 +78150,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -78527,6 +78891,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -79265,6 +79633,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -80003,6 +80375,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -80740,6 +81116,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -81478,6 +81858,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -82216,6 +82600,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -83049,6 +83437,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -83786,6 +84178,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -84524,6 +84920,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -85261,6 +85661,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -86329,6 +86733,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -86753,6 +87161,10 @@ paths:
                   type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 nqn:
                   type: string
                 nsid:
@@ -86882,6 +87294,10 @@ paths:
                   type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 nqn:
                   type: string
                 nsid:
@@ -87545,6 +87961,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -88376,6 +88796,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -89113,6 +89537,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -89946,6 +90374,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -90683,6 +91115,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -91420,6 +91856,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -92253,6 +92693,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -93084,6 +93528,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -93821,6 +94269,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -94654,6 +95106,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -95391,6 +95847,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:
@@ -96128,6 +96588,10 @@ paths:
                     type: string
                 namespace:
                   type: string
+                networks:
+                  type: array
+                  items:
+                    type: string
                 new_name:
                   type: string
                 new_size:

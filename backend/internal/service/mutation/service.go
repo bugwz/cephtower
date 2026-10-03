@@ -563,6 +563,19 @@ func build(request Request, p map[string]any) (command, error) {
 			serviceID = expectedID
 		}
 		spec := map[string]any{"service_type": serviceType}
+		if raw, exists := p["networks"]; exists {
+			encoded, err := json.Marshal(raw)
+			var networks []string
+			if err != nil || json.Unmarshal(encoded, &networks) != nil || networks == nil {
+				return command{}, invalid("networks must be an array of network strings")
+			}
+			for _, network := range networks {
+				if strings.TrimSpace(network) == "" {
+					return command{}, invalid("network entries cannot be empty")
+				}
+			}
+			spec["networks"] = networks
+		}
 		if raw, exists := p["unmanaged"]; exists {
 			unmanaged, ok := raw.(bool)
 			if !ok {

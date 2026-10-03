@@ -45,5 +45,8 @@ func mergeServiceSpec(exported, patch []byte, name string) ([]byte, error) {
 	if unmanaged, exists := changes["unmanaged"]; exists {
 		current["unmanaged"] = unmanaged
 	}
+	if networks, exists := changes["networks"]; exists {
+		current["networks"] = networks
+	}
 	return json.Marshal(current)
 }

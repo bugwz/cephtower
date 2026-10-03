@@ -47,6 +47,34 @@ func TestServiceRuntimeMetadataReachesPayload(t *testing.T) {
 	}
 }
 
+func TestServiceNetworksReachInventory(t *testing.T) {
+	for _, networkJSON := range []string{`[]`, `["192.0.2.0/24","2001:db8::/64"]`} {
+		provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.service": []byte(`[{"service_name":"mgr","service_type":"mgr","networks":` + networkJSON + `}]`)}}}
+		rows, err := provider.Collect(context.Background(), ClusterAccess{}, "topology")
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for _, row := range rows {
+			if row.Kind != "service" {
+				continue
+			}
+			found = true
+			data, _ := json.Marshal(row.Payload)
+			var payload map[string]json.RawMessage
+			if err := json.Unmarshal(data, &payload); err != nil {
+				t.Fatal(err)
+			}
+			if string(payload["networks"]) != networkJSON {
+				t.Fatalf("network mismatch: %s", data)
+			}
+		}
+		if !found {
+			t.Fatal("missing service")
+		}
+	}
+}
+
 func TestServiceListNativeEmptyResponse(t *testing.T) {
 	for _, output := range []string{"No services reported", "No services reported\n", "[]"} {
 		provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.service": []byte(output)}}}

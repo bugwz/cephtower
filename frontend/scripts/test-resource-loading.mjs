@@ -38,6 +38,8 @@ console.log('Service edit identity checks passed')
 assert.ok(servicePage.includes('name="unmanaged" label="非托管" valuePropName="checked"'))
 assert.ok(servicePage.includes("typeof values.unmanaged === 'boolean' ? { unmanaged: values.unmanaged } : {}"))
 assert.ok(servicePage.includes("unmanaged: typeof row.unmanaged === 'boolean' ? row.unmanaged : undefined"))
+assert.ok(servicePage.includes('name="networks" label="绑定网段"'))
+assert.ok(servicePage.includes('Array.isArray(values.networks) ? { networks: values.networks } : {}'))
 
 for (const key of ['unmanaged', 'last_refresh', 'ports', 'events', 'service_url', 'virtual_ip', 'container_image_name', 'container_image_id', 'ceph_created_at']) assert.ok(servicePage.includes(`key: '${key}'`))
 assert.ok(servicePage.includes('serviceMeta: services, daemonMeta: daemons'))

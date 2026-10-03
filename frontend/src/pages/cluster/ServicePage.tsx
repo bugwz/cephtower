@@ -19,6 +19,7 @@ interface ServiceFormValues {
   service_id?: string
   placement_json?: string
   unmanaged?: boolean
+  networks?: string[]
 }
 
 const serviceTypeOptions = [
@@ -102,7 +103,7 @@ function ServicePageContent() {
     if (!active.current || running.current || !selectedClusterId) return
     setEditingService(null)
     form.resetFields()
-    form.setFieldsValue({ service_type: 'rgw', placement_json: '{}', unmanaged: false })
+    form.setFieldsValue({ service_type: 'rgw', placement_json: '{}', unmanaged: false, networks: [] })
     setFormOpen(true)
   }
 
@@ -114,6 +115,7 @@ function ServicePageContent() {
       service_type: serviceType(row),
       service_id: serviceId(row),
       unmanaged: typeof row.unmanaged === 'boolean' ? row.unmanaged : undefined,
+      networks: Array.isArray(row.networks) ? row.networks.map(String) : undefined,
       placement_json: JSON.stringify(readObject(row.placement), null, 2)
     })
     setFormOpen(true)
@@ -139,6 +141,7 @@ function ServicePageContent() {
         service_type: values.service_type,
         ...(values.service_id ? { service_id: values.service_id } : {}),
         ...(typeof values.unmanaged === 'boolean' ? { unmanaged: values.unmanaged } : {}),
+        ...(Array.isArray(values.networks) ? { networks: values.networks } : {}),
         placement
       }
       const successMessage = editingService ? '服务更新执行成功' : '服务创建执行成功'
@@ -233,6 +236,7 @@ function ServicePageContent() {
                     { key: 'name', title: '服务名' },
                     { key: 'type', title: '类型' },
                     { key: 'placement', title: '放置策略' },
+                    { key: 'networks', title: '绑定网段', filterKey: false },
                     { key: 'unmanaged', title: '管理模式', filterKey: false, render: (value) => value === true ? '非托管' : value === false ? '编排器管理' : '未采集' },
                     { key: 'running', title: '运行数' },
                     { key: 'size', title: '目标数' },
@@ -310,6 +314,9 @@ function ServicePageContent() {
           </Form.Item>
           <Form.Item name="unmanaged" label="非托管" valuePropName="checked" extra="启用后 Ceph 编排器停止自动部署和移除该服务的守护进程；关闭后恢复自动管理，并可能按放置策略调整守护进程。">
             <Switch />
+          </Form.Item>
+          <Form.Item name="networks" label="绑定网段" extra="输入 IPv4 或 IPv6 网段后按回车，可添加多个；清空将移除网络限制。网段语法及服务类型支持情况由 Ceph 校验，修改可能影响服务访问。">
+            <Select mode="tags" tokenSeparators={[',']} placeholder="例如 192.0.2.0/24 或 2001:db8::/64" />
           </Form.Item>
           <Form.Item name="placement_json" label="Placement JSON" extra='支持 count、count_per_host、hosts、label 和 host_pattern。count 与 count_per_host 互斥；每主机数量必须指定主机选择条件。host_pattern 支持通配符字符串或 {"pattern":"node-[0-9]+","pattern_type":"regex"}，正则语法由 Ceph 校验。'>
             <Input.TextArea rows={5} spellCheck={false} placeholder='{"count":1,"host_pattern":"*"}' />

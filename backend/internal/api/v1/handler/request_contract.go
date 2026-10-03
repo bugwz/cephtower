@@ -97,6 +97,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"service.create", "service.update"}, true, map[string]JSONField{"service_type": stringField(true, "mon", "mgr", "mds", "rgw", "nfs", "smb", "prometheus", "alertmanager", "grafana", "node-exporter", "crash"), "service_id": stringField(false), "placement": placement})
 	for _, action := range []string{"service.create", "service.update"} {
 		contracts[action].Fields["unmanaged"] = boolField(false)
+		contracts[action].Fields["networks"] = stringsField(false)
 	}
 	add([]string{"daemon.action"}, true, map[string]JSONField{"action": stringField(true, "start", "stop", "restart", "reconfig", "redeploy", "rotate-key")})
 	add([]string{"upgrade.check"}, true, map[string]JSONField{"version": stringField(false), "image": stringField(false)})

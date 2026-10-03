@@ -104,3 +104,37 @@ func TestServiceManagementModeUpdatesPreserveSpec(t *testing.T) {
 		}
 	}
 }
+
+func TestServiceNetworkUpdates(t *testing.T) {
+	for _, networks := range [][]string{{}, {"192.0.2.0/24", "2001:db8::/64"}} {
+		for _, action := range []string{"service.create", "service.update"} {
+			cmd, err := build(Request{Action: action, ResourceKey: "service/mgr"}, map[string]any{"service_type": "mgr", "networks": networks})
+			if err != nil {
+				t.Fatal(err)
+			}
+			data := cmd.stdin
+			if action == "service.update" {
+				data, err = mergeServiceSpec([]byte(`[{"service_name":"mgr","service_type":"mgr","networks":["10.0.0.0/8"],"spec":{"custom":true}}]`), data, "mgr")
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			var parsed map[string]json.RawMessage
+			if err := json.Unmarshal(data, &parsed); err != nil {
+				t.Fatal(err)
+			}
+			want, _ := json.Marshal(networks)
+			if string(parsed["networks"]) != string(want) {
+				t.Fatalf("networks lost: %s", data)
+			}
+			if action == "service.update" && string(parsed["spec"]) != `{"custom":true}` {
+				t.Fatalf("spec lost: %s", data)
+			}
+		}
+	}
+	for _, networks := range []any{nil, "192.0.2.0/24", []any{false}, []string{" "}} {
+		if _, err := build(Request{Action: "service.create"}, map[string]any{"service_type": "mgr", "networks": networks}); err == nil {
+			t.Fatalf("accepted invalid networks: %#v", networks)
+		}
+	}
+}

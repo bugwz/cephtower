@@ -41,6 +41,7 @@ type Daemon struct {
 	LastRefresh    *string `json:"last_refresh,omitempty"`
 }
 type Service struct {
+	Networks           []string `json:"networks"`
 	ContainerImageName *string  `json:"container_image_name"`
 	ContainerImageID   *string  `json:"container_image_id"`
 	ServiceURL         *string  `json:"service_url"`

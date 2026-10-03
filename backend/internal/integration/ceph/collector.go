@@ -372,6 +372,7 @@ type daemonWire struct {
 	LastRefresh        *string `json:"last_refresh"`
 }
 type serviceWire struct {
+	Networks    []string `json:"networks"`
 	ServiceName string   `json:"service_name"`
 	ServiceType string   `json:"service_type"`
 	Placement   any      `json:"placement"`
@@ -526,6 +527,10 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 		}
 		payload := cephdomain.Service{Name: wire.ServiceName, Type: wire.ServiceType, Running: wire.Status.Running, Size: wire.Status.Size, Placement: wire.Placement, Unmanaged: wire.Unmanaged, LastRefresh: wire.Status.LastRefresh, Ports: wire.Status.Ports, Events: wire.Events}
 		payload.ContainerImageName = wire.Status.ContainerImageName
+		payload.Networks = wire.Networks
+		if payload.Networks == nil {
+			payload.Networks = []string{}
+		}
 		payload.ContainerImageID = wire.Status.ContainerImageID
 		payload.ServiceURL = wire.Status.ServiceURL
 		payload.VirtualIP = wire.Status.VirtualIP
