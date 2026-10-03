@@ -42,9 +42,17 @@ function visit(node) {
 }
 visit(source)
 assert.ok(updateBody)
-const buildBody = new Function('rgwBucketLimitPatch', 'rgwUserEmailPatch', 'rgwUserFlagPatch', 'userId', `return (${updateBody})`)(patch, () => ({}), () => ({}), (row) => row.uid)
+const displayName = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserDisplayName.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(displayName)
+const namePatch = displayName.rgwUserDisplayNamePatch
+for (const value of [undefined, null, '', 'Original']) assert.deepEqual(namePatch(value, 'Original'), {})
+assert.deepEqual(namePatch('New name', 'Original'), { display_name: 'New name' })
+for (const value of [false, 1, {}, '   ', 'bad\nname', 'bad\0name']) assert.throws(() => namePatch(value, 'Original'))
+const buildBody = new Function('rgwBucketLimitPatch', 'rgwUserEmailPatch', 'rgwUserFlagPatch', 'userId', 'rgwUserDisplayNamePatch', `return (${updateBody})`)(patch, () => ({}), () => ({}), (row) => row.uid, namePatch)
 const row = { uid: 'tenant$user', max_buckets: 100 }
 assert.deepEqual(buildBody({ max_buckets: 100 }, 'cluster', row), { cluster_id: 'cluster', uid: 'tenant$user' })
 assert.deepEqual(buildBody({ max_buckets: 0 }, 'cluster', row), { cluster_id: 'cluster', uid: 'tenant$user', max_buckets: 0 })
 assert.deepEqual(buildBody({ max_buckets: null }, 'cluster', row), { cluster_id: 'cluster', uid: 'tenant$user' })
+assert.deepEqual(buildBody({ display_name: 'Original', max_buckets: 0 }, 'cluster', { ...row, display_name: 'Original' }), { cluster_id: 'cluster', uid: 'tenant$user', max_buckets: 0 })
+assert.deepEqual(buildBody({ display_name: 'New name' }, 'cluster', { ...row, display_name: 'Original' }), { cluster_id: 'cluster', uid: 'tenant$user', display_name: 'New name' })
 console.log('RGW bucket count limits preserve native disabled and unlimited semantics')

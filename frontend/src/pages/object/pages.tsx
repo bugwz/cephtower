@@ -12,6 +12,7 @@ import { ServiceDaemons } from '../cluster/ServiceDaemons'
 import { RgwQuota } from './RgwQuota'
 import { RgwStorage } from './RgwStorage'
 import { rgwStorageScope } from './rgwStorageDetails'
+import { rgwUserDisplayNamePatch } from './rgwUserDisplayName'
 import { RgwBucketDetails } from './RgwBucketDetails'
 import { rgwBucketIndexCount, rgwBucketIndexText } from './rgwBucketIndex'
 import { rgwBucketVersioning, rgwBucketBooleanState, rgwBucketReshardState } from './rgwBucketState'
@@ -134,7 +135,7 @@ const definitions: Record<
       method: 'PATCH',
       successMessage: 'RGW 用户更新执行成功',
       fields: [
-        { name: 'display_name', label: '显示名' },
+        { name: 'display_name', label: '显示名（留空不修改）' },
         { name: 'email_action', label: '邮箱操作', type: 'select', options: [{ label: '保持不变', value: 'keep' }, { label: '设置邮箱', value: 'set' }, { label: '清空邮箱', value: 'clear' }] },
         { name: 'email', label: '邮箱', required: true, visibleWhen: (values) => values.email_action === 'set' },
         { name: 'max_buckets', label: '最大 Bucket 数（留空不修改，-1 禁止创建，0 无限制）', type: 'number', min: -1, max: 2147483647 },
@@ -152,7 +153,7 @@ const definitions: Record<
       buildBody: (values, clusterId, row) => ({
         cluster_id: clusterId,
         uid: userId(row),
-        ...(values.display_name ? { display_name: String(values.display_name) } : {}),
+        ...rgwUserDisplayNamePatch(values.display_name, row?.display_name),
         ...rgwUserEmailPatch(values),
         ...rgwBucketLimitPatch(values.max_buckets, row?.max_buckets),
         ...rgwUserFlagPatch(values)
