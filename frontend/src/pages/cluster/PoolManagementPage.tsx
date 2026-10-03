@@ -211,6 +211,10 @@ export function PoolManagementPage() {
   const erasureCodeRoot = Form.useWatch('crush_root', erasureCodeProfileForm) ?? 'default'
   const erasureCodeDeviceClass = Form.useWatch('crush_device_class', erasureCodeProfileForm)
   const erasureCodeScalarMDS = Form.useWatch('scalar_mds', erasureCodeProfileForm)
+  const erasureCodeK = Form.useWatch('k', erasureCodeProfileForm)
+  const erasureCodeM = Form.useWatch('m', erasureCodeProfileForm)
+  const erasureCodeL = Form.useWatch('l', erasureCodeProfileForm)
+  const lrcLayout = lrcLayoutPreview(erasureCodeK, erasureCodeM, erasureCodeL)
   const rbdApplicationEnabled = applications.includes('rbd')
   const rbdConfigurationEnabled = poolType === 'replicated' && rbdApplicationEnabled
   const operationMutation = useMutationOperation()
@@ -973,6 +977,9 @@ export function PoolManagementPage() {
                 <Form.Item name="l" label={<HelpLabel label="局部分组大小 (l)" title="每组包含的 k+m 分片数（不含额外局部校验块）。k+m 必须能被 l 整除，k 和 m 必须能被分组数 (k+m)/l 整除。" />} dependencies={['k', 'm', 'plugin']} rules={[{ required: true, min: 1, type: 'number' }, lrcGroupingRule]}>
                   <InputNumber min={1} precision={0} className="full-width-control" />
                 </Form.Item>
+                <Alert type="info" showIcon message="LRC 分组预览（表单计算）" description={lrcLayout
+                  ? `${lrcLayout.groups} 个局部分组；每组 ${lrcLayout.dataPerGroup} 个数据块、${lrcLayout.codingPerGroup} 个编码块及 1 个额外局部校验块，共 ${lrcLayout.totalChunks} 个分片。这不是集群实际放置结果，也不表示已具备故障容忍能力。`
+                  : '请输入满足分组约束的 k、m、l 后查看预览；不会用默认值推测布局。'} />
                 <Form.Item name="crush_locality" label={<HelpLabel label="CRUSH 局部性" title="LRC 局部恢复组使用的 CRUSH 故障域。" />}>
                   <Select
                     allowClear
@@ -1410,6 +1417,13 @@ function lrcGroupingRule({ getFieldValue }: { getFieldValue: (name: keyof Erasur
       return Promise.resolve()
     }
   }
+}
+
+function lrcLayoutPreview(k: unknown, m: unknown, l: unknown) {
+  if (typeof k !== 'number' || typeof m !== 'number' || typeof l !== 'number' || ![k, m, l, k + m].every(Number.isSafeInteger) || k < 2 || m < 1 || l < 1) return null
+  const groups = (k + m) / l
+  if ((k + m) % l !== 0 || k % groups !== 0 || m % groups !== 0 || !Number.isSafeInteger(k + m + groups)) return null
+  return { groups, dataPerGroup: k / groups, codingPerGroup: m / groups, totalChunks: k + m + groups }
 }
 
 function shecParameterRule({ getFieldValue }: { getFieldValue: (name: keyof ErasureCodeProfileFormValues) => unknown }) {
