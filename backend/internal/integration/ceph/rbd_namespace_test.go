@@ -13,6 +13,39 @@ import (
 	"time"
 )
 
+func TestRBDUsageRejectsPartialAndAmbiguousRows(t *testing.T) {
+	for _, rows := range []string{
+		`null`, `[]`, `{}`, `[null]`,
+		`[{"used_size":1},null]`,
+		`[{"used_size":1},{"snapshot":"snap"}]`,
+		`[{"used_size":1},{"snapshot":"snap","used_size":-1}]`,
+		`[{"used_size":1},{"snapshot":"snap","used_size":1.5}]`,
+		`[{"used_size":1},{"snapshot":"snap","used_size":"2"}]`,
+		`[{"used_size":18446744073709551616}]`,
+		`[{"used_size":1},{"snapshot":null,"used_size":2}]`,
+		`[{"used_size":1},{"snapshot":"","used_size":2}]`,
+		`[{"used_size":1},{"used_size":2}]`,
+		`[{"used_size":1},{"snapshot":"snap","used_size":2},{"snapshot":"snap","used_size":3}]`,
+		`[{"snapshot":"snap","used_size":2}]`,
+	} {
+		t.Run(rows, func(t *testing.T) {
+			var usage map[string]any
+			decoder := json.NewDecoder(strings.NewReader(`{"images":` + rows + `}`))
+			decoder.UseNumber()
+			if err := decoder.Decode(&usage); err != nil {
+				t.Fatal(err)
+			}
+			var image cephdomain.RBDImage
+			if applyRBDImageUsage(&image, usage) {
+				t.Fatal("invalid usage accepted")
+			}
+			if image.UsedBytes != nil || image.TotalUsedBytes != nil || image.SnapshotUsage != nil {
+				t.Fatal("partial usage published")
+			}
+		})
+	}
+}
+
 func TestRBDUsageJSONPreservesUint64(t *testing.T) {
 	for _, value := range []string{"0", "9007199254740993", "18446744073709551615"} {
 		t.Run(value, func(t *testing.T) {

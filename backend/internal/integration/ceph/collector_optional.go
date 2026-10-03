@@ -763,32 +763,48 @@ func hasString(values []string, target string) bool {
 }
 
 func applyRBDImageUsage(image *cephdomain.RBDImage, usage map[string]any) bool {
-	rows := objectList(usage["images"])
-	if len(rows) == 0 {
+	rows, ok := usage["images"].([]any)
+	if !ok || len(rows) == 0 {
 		return false
 	}
 	var total uint64
-	var found bool
 	var current *uint64
 	snapshots := map[string]uint64{}
-	for _, row := range rows {
-		used, ok := uintValue(row["used_size"])
+	for _, item := range rows {
+		row, ok := item.(map[string]any)
+		if !ok || row == nil {
+			return false
+		}
+		rawUsed, ok := row["used_size"].(json.Number)
 		if !ok {
-			continue
+			return false
+		}
+		used, err := strconv.ParseUint(rawUsed.String(), 10, 64)
+		if err != nil {
+			return false
 		}
 		if used > ^uint64(0)-total {
 			return false
 		}
 		total += used
-		found = true
-		if snapshot := textField(row, "snapshot"); snapshot != "" {
+		if rawSnapshot, isSnapshot := row["snapshot"]; isSnapshot {
+			snapshot, ok := rawSnapshot.(string)
+			if !ok || snapshot == "" {
+				return false
+			}
+			if _, duplicate := snapshots[snapshot]; duplicate {
+				return false
+			}
 			snapshots[snapshot] = used
-		} else if _, isSnapshot := row["snapshot"]; !isSnapshot {
+		} else {
+			if current != nil {
+				return false
+			}
 			value := used
 			current = &value
 		}
 	}
-	if !found || current == nil {
+	if current == nil {
 		return false
 	}
 	image.UsedBytes = current
