@@ -33,6 +33,24 @@ assert.match(rate(counter('18446744073709551616'), counter('0'), 1000), /超出/
 assert.match(rate(counter('1'), { ...counter('0'), units: 'none' }, 1000), /定义已变化/)
 console.log('Native uint64 snapshot rate precision and reset checks passed')
 
+const osdSource = readFileSync(new URL('../src/pages/cluster/OSDInspection.tsx', import.meta.url), 'utf8')
+const osdTree = ts.createSourceFile('osd.tsx', osdSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const osdNode = osdTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'OSDInspection')
+const osdCode = ts.transpileModule(osdNode.getText(osdTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
+const osdInspection = new Function('React', 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', `${osdCode}; return OSDInspection`)(
+  { createElement: (component, props) => ({ component, props }) }, 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf')
+const perfKeys = new Set()
+for (const [clusterId, osdId] of [[1, '0'], [1, '12'], [2, '12']]) {
+  const panel = osdInspection({ clusterId, osdId, record: {} })
+  const tab = panel.props.items.find((item) => item.key === 'perf')
+  assert.equal(tab.children.component, 'DaemonPerf')
+  assert.equal(tab.children.props.clusterId, clusterId)
+  assert.equal(tab.children.props.name, `osd.${osdId}`)
+  perfKeys.add(tab.children.props.key)
+}
+assert.equal(perfKeys.size, 3, 'cluster or OSD changes must reset the performance baseline')
+console.log('OSD performance navigation and snapshot scope checks passed')
+
 const logsSource = readFileSync(new URL('../src/pages/monitoring/RuntimeLogsPage.tsx', import.meta.url), 'utf8')
 const logsTree = ts.createSourceFile('logs.tsx', logsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const logsPanelNode = logsTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'RuntimeLogsPanel')

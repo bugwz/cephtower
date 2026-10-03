@@ -3,11 +3,13 @@ import { useEffect, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { RecordDetail } from '../../components/RecordDetail'
 import { OSDHistogram } from './OSDHistogram'
+import { DaemonPerf } from './DaemonPerf'
 
 export function OSDInspection({ clusterId, osdId, record }: { clusterId: number; osdId: string; record: ApiRecord }) {
   return <Tabs items={[
     { key: 'map', label: 'OSD 状态', children: <RecordDetail record={record} /> },
     { key: 'metadata', label: '元数据', children: <Diagnostic clusterId={clusterId} osdId={osdId} section="metadata" /> },
+    { key: 'perf', label: '性能计数器', children: <DaemonPerf key={`${clusterId}:osd.${osdId}`} clusterId={clusterId} name={`osd.${osdId}`} /> },
     { key: 'histogram', label: '性能直方图', children: <Diagnostic clusterId={clusterId} osdId={osdId} section="histogram" /> }
   ]} />
 }
