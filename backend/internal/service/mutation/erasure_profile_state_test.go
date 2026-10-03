@@ -49,3 +49,28 @@ func TestErasureProfileDeletionReadback(t *testing.T) {
 		}
 	}
 }
+
+func TestErasureProfileReadbackRequiresUnambiguousStringFields(t *testing.T) {
+	args := []string{"osd", "erasure-code-profile", "set", "ec", "plugin=isa", "k=4", "m=2"}
+	for _, data := range []string{
+		`{"plugin":"isa","k":"4","m":"2","technique":"reed_sol_van","crush-device-class":""}`,
+		`{"m":"2","k":"4","plugin":"isa"}`,
+	} {
+		if !erasureProfileCreated(args, []byte(data)) {
+			t.Fatalf("valid profile rejected: %s", data)
+		}
+	}
+	for _, data := range []string{
+		`{"plugin":"jerasure","plugin":"isa","k":"4","m":"2"}`,
+		`{"plugin":"isa","k":"4","m":"2","k":"4"}`,
+		`{"plugin":"isa","k":"4","m":"2","extra":null}`,
+		`{"plugin":"isa","k":"4","m":"2","extra":false}`,
+		`{"plugin":"isa","k":"4","m":"2","extra":{}}`,
+		`{"plugin":"isa","k":"4","m":"2","":"value"}`,
+		`{"plugin":"isa","k":"4","m":"2"`,
+	} {
+		if erasureProfileCreated(args, []byte(data)) {
+			t.Fatalf("ambiguous profile accepted: %s", data)
+		}
+	}
+}

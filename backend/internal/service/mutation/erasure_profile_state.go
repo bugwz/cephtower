@@ -9,9 +9,29 @@ import (
 
 // Compare the emitted parameters, allowing Ceph to add plugin defaults.
 func erasureProfileCreated(args []string, data []byte) bool {
-	var profile map[string]string
+	profile := make(map[string]string)
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	if decoder.Decode(&profile) != nil || decoder.Decode(new(any)) != io.EOF || len(profile) == 0 || profile["plugin"] == "" {
+	start, err := decoder.Token()
+	if err != nil || start != json.Delim('{') {
+		return false
+	}
+	for decoder.More() {
+		token, err := decoder.Token()
+		key, ok := token.(string)
+		if err != nil || !ok || strings.TrimSpace(key) == "" {
+			return false
+		}
+		if _, duplicate := profile[key]; duplicate {
+			return false
+		}
+		var value *string
+		if decoder.Decode(&value) != nil || value == nil {
+			return false
+		}
+		profile[key] = *value
+	}
+	end, err := decoder.Token()
+	if err != nil || end != json.Delim('}') || decoder.Decode(new(any)) != io.EOF || len(profile) == 0 || strings.TrimSpace(profile["plugin"]) == "" {
 		return false
 	}
 	if len(args) < 4 || args[0] != "osd" || args[1] != "erasure-code-profile" || args[2] != "set" {
