@@ -1,6 +1,6 @@
 import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Descriptions, Empty, Input, Space, Table, Tag, Typography } from 'antd'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { isRecord, textValue, type ApiRecord } from '../../api/client'
 import { getOptionalResource, refreshResource } from '../../api/resource'
@@ -65,10 +65,18 @@ const rbdConfigMetadata: Record<string, { name: string, description: string }> =
 }
 
 export function PoolDetailPage() {
-  const navigate = useNavigate()
   const { name = '' } = useParams()
   const { selectedClusterId } = useClusterContext()
-  const decodedName = name
+  return <ScopedPoolDetailPage key={JSON.stringify([selectedClusterId, name])} selectedClusterId={selectedClusterId} decodedName={name} />
+}
+
+function ScopedPoolDetailPage({ selectedClusterId, decodedName }: { selectedClusterId?: number; decodedName: string }) {
+  const navigate = useNavigate()
+  const activeRef = useRef(true)
+  useEffect(() => {
+    activeRef.current = true
+    return () => { activeRef.current = false }
+  }, [])
   const resourceScope = useRef({ clusterId: selectedClusterId, name: decodedName })
   if (resourceScope.current.clusterId !== selectedClusterId || resourceScope.current.name !== decodedName) {
     resourceScope.current = { clusterId: selectedClusterId, name: decodedName }
@@ -88,17 +96,17 @@ export function PoolDetailPage() {
   const configRows = useMemo(() => filterRows(poolConfigRows(data), configSearch), [data, configSearch])
 
   async function refreshPoolDetail() {
-    if (!selectedClusterId || !decodedName || refreshing) {
+    if (!activeRef.current || !selectedClusterId || !decodedName || refreshing) {
       return
     }
     setRefreshing(true)
     const scope = resourceScope.current
     try {
       await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kind: 'pool' }), false)
-      if (resourceScope.current !== scope) return
+      if (!activeRef.current || resourceScope.current !== scope) return
       await refresh()
     } finally {
-      setRefreshing(false)
+      if (activeRef.current && resourceScope.current === scope) setRefreshing(false)
     }
   }
 

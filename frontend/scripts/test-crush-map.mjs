@@ -435,18 +435,25 @@ assert.equal(detailFreshness({ stale: false }), undefined)
 assert.match(detailFreshness({ stale: true }), /历史采集/)
 for (const stale of [undefined, null, 'false', 0]) assert.match(detailFreshness({ stale }), /时效未知/)
 assert.ok(detailSource.includes('message={poolDetailFreshnessWarning(data)}'))
-const detailPageFn = detailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'PoolDetailPage')
+assert.ok(detailSource.includes('ScopedPoolDetailPage key={JSON.stringify([selectedClusterId, name])}'))
+assert.ok(detailSource.includes('return () => { activeRef.current = false }'))
+const detailPageFn = detailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ScopedPoolDetailPage')
 const detailRefreshFn = detailPageFn.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'refreshPoolDetail')
 const detailRefreshCode = ts.transpileModule(detailRefreshFn.getText(detailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-for (const changed of [false, true]) {
+for (const mode of ['current', 'changed', 'unmounted']) {
   let finish, reads = 0
+  const loadingStates = []
+  const active = { current: true }
   const scope = { current: { clusterId: 1, name: 'a' } }
-  const refreshDetail = new Function('resourceScope', 'operationMutation', 'refresh', `const selectedClusterId=1, decodedName='a', refreshing=false, setRefreshing=()=>{}; ${detailRefreshCode}; return refreshPoolDetail`)(scope, { run: (_action, success) => { assert.equal(success, false); return new Promise((resolve) => { finish = resolve }) } }, () => { reads++ })
+  const refreshDetail = new Function('resourceScope', 'operationMutation', 'refresh', 'activeRef', 'setRefreshing', `const selectedClusterId=1, decodedName='a', refreshing=false; ${detailRefreshCode}; return refreshPoolDetail`)(scope, { run: (_action, success) => { assert.equal(success, false); return new Promise((resolve) => { finish = resolve }) } }, () => { reads++ }, active, (value) => loadingStates.push(value))
   const pending = refreshDetail()
-  if (changed) scope.current = { clusterId: 2, name: 'b' }
+  if (mode === 'changed') scope.current = { clusterId: 2, name: 'b' }
+  if (mode === 'unmounted') active.current = false
   finish()
   await pending
-  assert.equal(reads, changed ? 0 : 1, 'old collection completion must not invoke an obsolete detail loader')
+  assert.equal(reads, mode === 'current' ? 1 : 0, 'old collection completion must not invoke an obsolete detail loader')
+  assert.deepEqual(loadingStates, mode === 'current' ? [true, false] : [true])
+  if (mode === 'unmounted') { await refreshDetail(); assert.deepEqual(loadingStates, [true]) }
 }
 assert.ok(detailSource.includes('pg_status_display: poolPGStatus(row.pg_status)'))
 assert.ok(!detailSource.includes('active+clean'), 'detail view must not fabricate healthy PG states')
