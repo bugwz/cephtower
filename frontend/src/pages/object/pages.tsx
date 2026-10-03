@@ -59,6 +59,7 @@ import { bucketSyncGroupCreateBlocked, bucketSyncGroupCreateInitial, bucketSyncG
 import { bucketSyncGroupDeleteInput, bucketSyncGroupDeleteConfirmation } from './rgwBucketSyncGroupForm'
 import { bucketSyncFlowInput, bucketSyncFlowConfirmation } from './rgwBucketSyncGroupForm'
 import { bucketSyncFlowUpdateInput, bucketSyncFlowUpdateConfirmation } from './rgwBucketSyncGroupForm'
+import { bucketSyncPipeUpdateInput, bucketSyncPipeUpdateConfirmation } from './rgwBucketSyncGroupForm'
 import { bucketSyncFlowDeleteInput, bucketSyncFlowDeleteConfirmation } from './rgwBucketSyncGroupForm'
 import { bucketSyncPipeDeleteInput, bucketSyncPipeDeleteConfirmation } from './rgwBucketSyncGroupForm'
 import { bucketSyncPipeCreateInput, bucketSyncPipeCreateConfirmation } from './rgwBucketSyncGroupForm'
@@ -706,6 +707,25 @@ const definitions: Record<
         { name: 'confirm_pipe_create', label: '范围确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '我确认匹配范围和模式，已备份策略并了解复制影响' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketSyncPipeCreateInput(values, row) })
+    }, {
+      title: '编辑桶同步管道配置', path: '/rgw/bucket/sync/pipe', method: 'PATCH',
+      successMessage: '管道选择器和模式已回读核验（不代表同步完成）',
+      disabledWhen: bucketSyncGroupBlocked, initialValues: bucketSyncGroupInitial, confirmation: bucketSyncPipeUpdateConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'group_id', label: '已有同步组 ID', required: true },
+        { name: 'pipe_id', label: '已有管道 ID', required: true },
+        { name: 'source_tenant', label: '源租户（空或 * 不限定租户）' },
+        { name: 'source_bucket', label: '完整目标源桶名（* 通配）', required: true },
+        { name: 'source_bucket_id', label: '源桶实例 ID（空或 * 不限定实例）' },
+        { name: 'dest_tenant', label: '目标租户（空或 * 不限定租户）' },
+        { name: 'dest_bucket', label: '完整目标桶名（* 通配）', required: true },
+        { name: 'dest_bucket_id', label: '目标桶实例 ID（空或 * 不限定实例）' },
+        { name: 'mode', label: '权限模式', type: 'select', required: true, options: [{ value: 'system', label: 'system 系统模式' }, { value: 'user', label: 'user 指定用户模式' }] },
+        { name: 'user', label: '完整 UID（user 必填；system 留空，保留已存储 UID）' },
+        { name: 'confirm_pipe_update', label: '修改确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份并确认选择器和权限变化；Zone 成员保持不变' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketSyncPipeUpdateInput(values, row) })
     }, {
       title: '修改桶同步组状态', path: '/rgw/bucket/sync/group', method: 'PATCH',
       successMessage: '桶同步组状态已回读核验（不代表同步完成）',

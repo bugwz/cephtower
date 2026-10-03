@@ -197,7 +197,7 @@ func (h *Handler) MutateResource(kind, action, risk string) http.HandlerFunc {
 			clusterError(w, r, err)
 			return
 		}
-		if strings.HasPrefix(action, "rgw_bucket.") && action != "rgw_bucket.ratelimit" && action != "rgw_bucket.quota" && action != "rgw_bucket.sync_group" && action != "rgw_bucket.sync_group_create" && action != "rgw_bucket.sync_group_delete" && action != "rgw_bucket.sync_flow_create" && action != "rgw_bucket.sync_flow_delete" && action != "rgw_bucket.sync_pipe_delete" && action != "rgw_bucket.sync_pipe_create" && action != "rgw_bucket.sync_flow_update" {
+		if strings.HasPrefix(action, "rgw_bucket.") && action != "rgw_bucket.ratelimit" && action != "rgw_bucket.quota" && action != "rgw_bucket.sync_group" && action != "rgw_bucket.sync_group_create" && action != "rgw_bucket.sync_group_delete" && action != "rgw_bucket.sync_flow_create" && action != "rgw_bucket.sync_flow_delete" && action != "rgw_bucket.sync_pipe_delete" && action != "rgw_bucket.sync_pipe_create" && action != "rgw_bucket.sync_flow_update" && action != "rgw_bucket.sync_pipe_update" {
 			if _, err := h.Endpoints.Endpoint(r.Context(), id, "s3"); err != nil {
 				WriteError(w, r, http.StatusNotImplemented, "capability_unavailable", "s3 endpoint is not configured", false, map[string]any{"capability": "s3"})
 				return

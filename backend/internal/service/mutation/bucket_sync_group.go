@@ -38,10 +38,12 @@ func bucketSyncGroupCommand(action string, p map[string]any, rgw func([]string, 
 		return command{}, invalid("invalid group_id")
 	}
 	status := syncGroupString(p, "status")
-	if action == "rgw_bucket.sync_pipe_delete" || action == "rgw_bucket.sync_pipe_create" {
+	if action == "rgw_bucket.sync_pipe_delete" || action == "rgw_bucket.sync_pipe_create" || action == "rgw_bucket.sync_pipe_update" {
 		var args []string
 		var err error
-		if action == "rgw_bucket.sync_pipe_create" {
+		if action == "rgw_bucket.sync_pipe_update" {
+			args, err = bucketSyncPipeUpdateArgs(p)
+		} else if action == "rgw_bucket.sync_pipe_create" {
 			args, err = bucketSyncPipeCreateArgs(p)
 		} else {
 			args, err = bucketSyncPipeDeleteArgs(p)
@@ -147,12 +149,16 @@ func (s *Service) executeBucketSyncGroup(ctx context.Context, access executor.Cl
 		}
 		group = map[string]any{"id": id, "data_flow": map[string]any{}, "pipes": []any{}}
 		groups[id] = group
-	} else if request.Action == "rgw_bucket.sync_group_delete" || request.Action == "rgw_bucket.sync_flow_create" || request.Action == "rgw_bucket.sync_flow_delete" || request.Action == "rgw_bucket.sync_pipe_delete" || request.Action == "rgw_bucket.sync_pipe_create" {
+	} else if request.Action == "rgw_bucket.sync_group_delete" || request.Action == "rgw_bucket.sync_flow_create" || request.Action == "rgw_bucket.sync_flow_delete" || request.Action == "rgw_bucket.sync_pipe_delete" || request.Action == "rgw_bucket.sync_pipe_create" || request.Action == "rgw_bucket.sync_pipe_update" {
 		_, expected, valid := bucketSyncPolicyDocument([]byte(`{"groups":[` + syncGroupString(request.Parameters, "expected_group") + `]}`))
 		if !valid || len(expected) != 1 || group == nil || !reflect.DeepEqual(group, expected[id]) {
 			return fail("pre_check_failed", "sync group missing or changed; refresh before changing it")
 		}
-		if request.Action == "rgw_bucket.sync_group_delete" {
+		if request.Action == "rgw_bucket.sync_pipe_update" {
+			if err := updateBucketSyncPipe(group, request.Parameters); err != nil {
+				return fail("pre_check_failed", err.Error())
+			}
+		} else if request.Action == "rgw_bucket.sync_group_delete" {
 			delete(groups, id)
 		} else if request.Action == "rgw_bucket.sync_pipe_delete" {
 			if err := removeBucketSyncPipe(group, request.Parameters); err != nil {

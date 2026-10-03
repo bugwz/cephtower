@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### 桶同步管道选择器与执行身份编辑
+
+对照 Dashboard `rgw_client.py::create_sync_pipe` 的桶选择器、mode、user 字段及 `radosgw-admin.cc` 的 `SYNC_GROUP_PIPE_MODIFY` 分支，新增 `PATCH /api/v1/rgw/bucket/sync/pipe` 和“编辑桶同步管道配置”。使用 `sync group pipe modify` 而非创建/删除重建，只接受已存在的唯一管道；显式填写源/目标租户、桶名、实例选择器与 system/user 模式，user 模式要求完整 UID。system 模式按原生行为保留已存储 UID，不声称删除用户或凭据。空租户与 `*` 均不限定租户，界面明确提示匹配范围。
+
+执行前核验完整组快照，执行后核验整个策略，保留源/目标 Zone 集合、过滤器、优先级、目标 ACL/存储类、其他管道与数据流。只使用桶本地命令，不修改 Zonegroup、不提交 period；使用高风险队列及桶资源锁，无需 S3 端点。测试覆盖两种模式、全局/租户桶、精确命令参数、UID 保留、执行/回读失败、意外策略变化、重复/缺失管道、无变化、API 入队与禁止 Zone 字段、前端参数和确认。全量后端/OpenAPI及前端测试构建通过后独立提交；没有真实集群或浏览器视觉验证。本次未实现管道 Zone 成员修改或高级参数写入，这些仍属于后续迁移缺口。
+
 #### 桶对称数据流 Zone 成员编辑
 
 参考 `rgw_client.py::create_sync_flow` 的先添加后移除顺序，以及 `rgw_sync_policy.cc::remove_symmetrical` 的部分 Zone 删除语义，增加 `PATCH /api/v1/rgw/bucket/sync/flow` 和“编辑桶对称数据流”入口。前端提交完整目标 Zone ID 列表与原组快照；后端先读取桶本地策略及 `zonegroup get`，将展示名称映射为 ID，计算差集，通过 `radosgw-admin sync group flow create/remove --zone-ids` 执行。每步回读完整策略，检查其他组、流、管道和大整数参数未变；快照过期、映射不明确、无变化和空列表不写入。沿用桶资源高风险队列及锁，不要求 S3 端点，不修改 Zonegroup 或提交 period。

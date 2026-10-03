@@ -138,6 +138,22 @@ export function bucketSyncPipeDeleteConfirmation(values: Record<string, unknown>
   return `确认删除 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中的整个管道 ${JSON.stringify(input.pipe_id)}？源选择：${JSON.stringify(pipe.source)}；目标选择：${JSON.stringify(pipe.dest)}。该管道全部选择器、过滤和权限参数将被移除；保留组状态、数据流及其他管道，不删除已有对象副本，不保证所有复制停止。不修改 Zonegroup 或提交 period。请备份策略并避免外部并发，核验失败不代表未生效，不自动回滚。`
 }
 
+export function bucketSyncPipeUpdateInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const selected = bucketSyncPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
+  const group = JSON.parse(selected.expected_group)
+  group.pipes = group.pipes.filter((pipe: { id: string }) => pipe.id !== values.pipe_id)
+  const input = bucketSyncPipeCreateInput({ ...values, source_zones_json: '["*"]', dest_zones_json: '["*"]', confirm_pipe_create: 'acknowledged' }, { ...row, bucket_sync_policy: { groups: [group] } })
+  if (values.confirm_pipe_update !== 'acknowledged') throw new Error('请确认修改桶选择器及权限模式的影响')
+  delete input.source_zones
+  delete input.dest_zones
+  input.expected_group = selected.expected_group
+  return input
+}
+export function bucketSyncPipeUpdateConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const input = bucketSyncPipeUpdateInput(values, row)
+  return `确认修改 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中管道 ${JSON.stringify(input.pipe_id)}？源租户/桶/实例 ${JSON.stringify([input.source_tenant, input.source_bucket, input.source_bucket_id])}；目标 ${JSON.stringify([input.dest_tenant, input.dest_bucket, input.dest_bucket_id])}；模式 ${input.mode}，用户 ${JSON.stringify(input.user)}。* 为通配，空租户不限定租户。system 模式保留已存储 UID（不使用其权限检查），不会删除用户或凭据。保留 Zone 成员、过滤器、优先级、目标 ACL 和存储类。可能改变复制范围或权限；请备份并避免外部并发，失败不代表未生效，不自动回滚。仅修改桶本地管道，不提交 period，不代表同步完成。`
+}
+
 export function bucketSyncPipeCreateInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const group = groups(row).find(group => group.id === values.group_id)
   if (values.bucket_id !== row!.natural_key) throw new Error('Bucket ID 不可更改')
