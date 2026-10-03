@@ -332,6 +332,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "config_value.delete" && (err != nil || !configurationDeleted(request.ResourceKey, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "configuration removal was accepted but scoped absence could not be verified; inspect configuration before retrying", Retryable: false}
 		}
+		if request.Action == "rbd_image.action" && (optional(request.Parameters, "action") == "config-set" || optional(request.Parameters, "action") == "config-remove") && (err != nil || !rbdImageConfigurationMatches(request.Parameters, checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "image configuration command was accepted but the value and source could not be verified; inspect image configuration before retrying", Retryable: false}
+		}
 		if upgradeTarget != nil && (err != nil || !upgradeStartMatches(upgradeTarget, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "upgrade start was accepted but the checked target is not confirmed running; inspect upgrade status before retrying", Retryable: false}
 		}
