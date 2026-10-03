@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+已有用户编辑补齐基础属性与标志回读：依据 `RGWUser::execute_modify`、USER_SUSPEND/USER_ENABLE 和 `dump_user_info`，用户 PATCH 完成后核验完整 UID 与所请求的 display_name、email（含空字符串清除）、max_buckets、system 布尔和 suspended 整数 0/1。不要求未修改字段存在，也不把缺失字段当作空值、零或 false；原有放置、操作掩码、账户归属等专门核验保留，组合暂停的测试补充真实状态字段。写入、后续启停、回读与库存刷新失败均不自动重试，避免重复执行部分已生效操作。系统标志修改无论开启或关闭都按高风险入队；前端确认明确 UID、系统能力变化、客户端暂停/恢复和多命令部分生效风险。测试覆盖逐字段与组合修改、清空邮箱、-1/0/上限、缺失/null/错误值、错误 UID、分步失败、API 风险隔离和确认文案；完整前后端及 OpenAPI 检查通过。未实机或浏览器视觉验证。
+
 新建 RGW 用户补齐参考 `RgwUser.create` 和用户表单的 system/suspended 选项。API 接收严格布尔值，创建命令使用 `--system=true/false`；参考 CLI 只在 USER_SUSPEND/USER_ENABLE 分支设置 suspension，因此暂停模式实现为创建后 `user suspend --uid`，不是虚构 `user create --suspended` 参数。前端默认关闭系统标志、保持启用，明确显示系统权限风险和两步暂停的非原子性；第二步失败提醒用户可能已创建且仍启用，不自动重试。启用系统标志按高风险入队，普通创建不继承其它请求风险。最终 `user info` 按原生 system 布尔、suspended 整数 0/1 精确核验，字段缺失与反向状态均不成功。测试覆盖四种组合、命令顺序、暂停失败、状态回读、严格类型、首次密钥敏感参数、API 风险和表单绑定；完整前后端及 OpenAPI 检查通过，生成文件未变化。未实机或浏览器视觉验证；两条命令之间存在用户尚未暂停的窗口，界面已明确告知。
 
 新建 RGW 用户的成功判定进一步核验表单基础属性：依据 `RGWUser::execute_add` 的赋值及 `dump_user_info` 的 `display_name/email/max_buckets` 输出，`user info` 回读必须与实际发送的显示名、非空邮箱和显式 Bucket 上限一致。缺失/null、错误值、非整数或字符串形式的上限不会被当作成功；未指定的邮箱和集群默认上限不猜测具体值。完整 UID、账户归属和凭据核验继续保留，基础属性不匹配返回不可自动重试的 `post_check_failed`。离线执行测试覆盖普通与账户用户、-1/0/正数/32 位上限、各字段异常和未指定默认值；完整后端及 OpenAPI 检查通过。本次无前端改动，未做真实集群验证。

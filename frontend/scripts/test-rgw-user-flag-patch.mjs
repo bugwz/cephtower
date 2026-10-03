@@ -15,6 +15,13 @@ assert.ok(!pages.includes('suspended: Boolean(values.suspended)'))
 assert.ok(pages.includes("suspended: 'keep'"))
 assert.ok(pages.includes("system: 'keep'"))
 console.log('RGW user flag updates omit unchanged values and preserve explicit false')
+for (const [values, expected] of [[{ system: 'enable' }, '授予 RGW 内部系统操作能力'], [{ system: 'disable' }, '中断'], [{ suspended: 'enable' }, '阻止其客户端访问'], [{ suspended: 'disable' }, '恢复该用户访问']]) {
+  const confirmation = exports.rgwUserUpdateConfirmation(values, 'tenant$ns$user')
+  assert.ok(confirmation.includes('tenant$ns$user') && confirmation.includes(expected))
+  if (values.suspended) assert.ok(confirmation.includes('部分变更') && confirmation.includes('不要盲目重试'))
+}
+assert.ok(!exports.rgwUserUpdateConfirmation({ system: 'keep' }, 'u').includes('授予'))
+assert.ok(pages.includes('confirmation: (values, row) => rgwUserUpdateConfirmation(values, userId(row))'))
 const role = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwRoleEdit.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(role)
 assert.deepEqual(role.rgwRoleInitial({}), { assume_role_policy: undefined, max_session_duration: undefined })

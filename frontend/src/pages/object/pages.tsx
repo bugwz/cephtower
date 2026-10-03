@@ -22,7 +22,7 @@ import { RgwRateLimit } from './RgwRateLimit'
 import { rgwBucketLimit, rgwBucketLimitInput, rgwBucketLimitPatch } from './rgwBucketLimit'
 import { rgwAccountLimit, rgwAccountLimitPatch } from './rgwAccountLimit'
 import { rgwUserSuspension, rgwUserBooleanFlag } from './rgwUserFlags'
-import { rgwUserFlagPatch } from './rgwUserFlagPatch'
+import { rgwUserFlagPatch, rgwUserUpdateConfirmation } from './rgwUserFlagPatch'
 import { rgwUserEmailPatch } from './rgwUserEmailPatch'
 import { rgwRateLimitInitial, rgwRateLimitInput } from './rgwRateLimitForm'
 import { rgwQuotaInitial, rgwQuotaInput } from './rgwQuotaForm'
@@ -175,6 +175,7 @@ const definitions: Record<
       path: '/rgw/user',
       method: 'PATCH',
       successMessage: 'RGW 用户更新执行成功',
+      confirmation: (values, row) => rgwUserUpdateConfirmation(values, userId(row)),
       fields: [
         { name: 'display_name', label: '显示名（留空不修改）' },
         { name: 'email_action', label: '邮箱操作', type: 'select', options: [{ label: '保持不变', value: 'keep' }, { label: '设置邮箱', value: 'set' }, { label: '清空邮箱', value: 'clear' }] },

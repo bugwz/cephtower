@@ -41,6 +41,8 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	}
 	for index, tc := range []struct{ fields, risk string }{
 		{`"email":"before@example.test"`, "medium"},
+		{`"system":true`, "high"},
+		{`"system":false`, "high"},
 		{`"account_root":true,"expected_account_id":"RGW12345678901234567"`, "high"},
 		{`"account_root":false,"expected_account_id":"RGW12345678901234567"`, "high"},
 		{`"target_account_id":"RGW12345678901234567","migration_confirm_uid":"tenant$user"`, "high"},

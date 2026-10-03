@@ -20,7 +20,11 @@ func TestRGWUserOperationMaskExecution(t *testing.T) {
 				if state != "unchanged" {
 					params["suspended"] = state == "suspend"
 				}
-				runner := &directoryRenameExecutor{outputs: map[string]string{"rgw_user.update.post_check": `{"full_user_id":"tenant$user","op_mask":"` + strings.ReplaceAll(mask, ",", ", ") + `"}`}}
+				suspension := "0"
+				if state == "suspend" {
+					suspension = "1"
+				}
+				runner := &directoryRenameExecutor{outputs: map[string]string{"rgw_user.update.post_check": `{"full_user_id":"tenant$user","suspended":` + suspension + `,"op_mask":"` + strings.ReplaceAll(mask, ",", ", ") + `"}`}}
 				service.executor = runner
 				_, err := service.Execute(context.Background(), Request{ClusterID: clusterID, Action: "rgw_user.update", ResourceKey: "rgw/user/tenant$user", Parameters: params})
 				if err != nil {

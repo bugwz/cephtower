@@ -87,6 +87,13 @@ func TestRGWUserPlacementIndependentExecution(t *testing.T) {
 						params["suspended"] = state == "suspend"
 					}
 					readback := strings.Replace(response, `{"`, `{"full_user_id":"tenant$user","`, 1)
+					if state != "unchanged" {
+						suspension := "0"
+						if state == "suspend" {
+							suspension = "1"
+						}
+						readback = strings.Replace(readback, `{"`, `{"suspended":`+suspension+`,"`, 1)
+					}
 					runner := &directoryRenameExecutor{outputs: map[string]string{"rgw_user.update.post_check": readback}}
 					service.executor = runner
 					_, err := service.Execute(context.Background(), Request{ClusterID: clusterID, Action: "rgw_user.update", ResourceKey: "rgw/user/tenant$user", Parameters: params})

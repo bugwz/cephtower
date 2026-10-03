@@ -104,6 +104,9 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		if request.Action == "rgw_user.update" && migration {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "account migration was verified but inventory refresh failed; refresh user, account and bucket inventory without repeating migration", Retryable: false}
 		}
+		if request.Action == "rgw_user.update" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "user update was verified but inventory refresh failed; refresh user inventory without repeating the update", Retryable: false}
+		}
 		if request.Action == "rbd_mirroring.global_schedule" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "global schedule was verified but inventory refresh failed; refresh inventory before another change", Retryable: false}
 		}
