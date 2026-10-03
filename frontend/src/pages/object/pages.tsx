@@ -12,9 +12,8 @@ import { ServiceDaemons } from '../cluster/ServiceDaemons'
 import { RgwQuota } from './RgwQuota'
 import { RgwStorage } from './RgwStorage'
 import { rgwStorageScope } from './rgwStorageDetails'
-import { RgwBucketIndexDetails } from './RgwBucketIndexDetails'
-import { RgwBucketPlacementDetails } from './RgwBucketPlacementDetails'
-import { RgwBucketTagsTable } from './RgwBucketTagsTable'
+import { RgwBucketDetails } from './RgwBucketDetails'
+import { rgwBucketIndexCount, rgwBucketIndexText } from './rgwBucketIndex'
 import { rgwBucketVersioning, rgwBucketBooleanState, rgwBucketReshardState } from './rgwBucketState'
 import { rgwUserPolicyBlocked, rgwUserPolicyInput, rgwUserPolicyOptions } from './rgwUserPolicy'
 import { RgwRateLimit } from './RgwRateLimit'
@@ -377,6 +376,7 @@ const definitions: Record<
     path: '/rgw/buckets',
     requiredCapabilities: ['rgw_admin'],
     rowKeyCandidates: ['natural_key', 'bucket_id', 'name'],
+    detailContent: (row) => <RgwBucketDetails row={row} />,
     createAction: {
       title: '新建 Bucket',
       buttonLabel: '新建 Bucket',
@@ -442,10 +442,9 @@ const definitions: Record<
       { key: 'tenant', title: '租户' },
       { key: 'owner', title: 'Owner' },
       { key: 'versioning', title: '版本控制', ellipsis: false, render: rgwBucketVersioning },
-      { key: 'bucket_index', title: '索引详情', ellipsis: false, render: (_value, row) => <RgwBucketIndexDetails row={row} /> },
+      { key: 'index_type', title: '索引类型', render: rgwBucketIndexText },
+      { key: 'num_shards', title: '索引分片数', render: rgwBucketIndexCount },
       { key: 'placement_rule', title: '放置规则' },
-      { key: 'explicit_placement', title: '显式存储池', ellipsis: false, render: (value) => <RgwBucketPlacementDetails value={value} /> },
-      { key: 'tagset', title: 'Bucket 标签', ellipsis: false, render: (value) => <RgwBucketTagsTable value={value} /> },
       { key: 'zonegroup', title: 'Zonegroup' },
       { key: 'bucket_quota', title: 'Bucket 配额', ellipsis: false, render: (value) => <RgwQuota value={value} /> },
       { key: 'object_lock_enabled', title: '对象锁启用标记（非保留策略）', render: rgwBucketBooleanState },
