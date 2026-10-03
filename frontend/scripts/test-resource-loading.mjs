@@ -62,6 +62,22 @@ for (const clusterId of [undefined, 1, 2]) {
 }
 assert.ok(gatewaySource.includes('<ServiceDaemons key={`${clusterId}:${row.name}`} clusterId={clusterId} name={row.name} />'))
 console.log('RGW gateway detail cluster isolation checks passed')
+let gatewayDefinition
+function findGatewayDefinition(node) {
+  if (ts.isPropertyAssignment(node) && node.name.getText(gatewayTree) === 'gatewayManagement') gatewayDefinition = node.initializer
+  ts.forEachChild(node, findGatewayDefinition)
+}
+findGatewayDefinition(gatewayTree)
+const gatewayColumnsNode = gatewayDefinition.properties.find((node) => node.name.getText(gatewayTree) === 'columns').initializer
+const gatewayColumnsCode = ts.transpileModule(`const columns = ${gatewayColumnsNode.getText(gatewayTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const gatewayColumns = new Function(`${gatewayColumnsCode}; return columns`)()
+const gatewayKeys = gatewayColumns.map((column) => column.key)
+for (const key of ['name', 'running', 'size', 'unmanaged', 'last_refresh', 'networks', 'ports', 'service_url', 'virtual_ip', 'container_image_name']) assert.ok(gatewayKeys.includes(key))
+for (const key of ['service_name', 'status']) assert.ok(!gatewayKeys.includes(key), `service inventory does not provide ${key}`)
+const managementMode = gatewayColumns.find((column) => column.key === 'unmanaged').render
+assert.equal(managementMode(false), '编排器管理')
+assert.equal(managementMode(true), '非托管')
+assert.equal(managementMode(null), '未采集')
 
 const logsSource = readFileSync(new URL('../src/pages/monitoring/RuntimeLogsPage.tsx', import.meta.url), 'utf8')
 const logsTree = ts.createSourceFile('logs.tsx', logsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)

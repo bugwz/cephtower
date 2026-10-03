@@ -417,12 +417,18 @@ const definitions: Record<
     detailContent: (row, clusterId) => clusterId && typeof row.name === 'string'
       ? <ServiceDaemons key={`${clusterId}:${row.name}`} clusterId={clusterId} name={row.name} /> : null,
     columns: [
-      { key: 'name', title: '名称' },
-      { key: 'service_name', title: '服务' },
-      { key: 'status', title: '状态' },
+      { key: 'name', title: '服务名' },
       { key: 'placement', title: '放置策略' },
       { key: 'running', title: '运行数' },
-      { key: 'resource_version', title: '版本' }
+      { key: 'size', title: '目标数' },
+      { key: 'unmanaged', title: '管理模式', filterKey: false, render: (value) => value === true ? '非托管' : value === false ? '编排器管理' : '未采集' },
+      { key: 'last_refresh', title: 'Ceph 最近刷新', filterKey: false },
+      { key: 'networks', title: '绑定网段', filterKey: false },
+      { key: 'ports', title: '端口', filterKey: false },
+      { key: 'service_url', title: '服务访问地址', filterKey: false },
+      { key: 'virtual_ip', title: '虚拟 IP', filterKey: false },
+      { key: 'container_image_name', title: '容器镜像', filterKey: false },
+      { key: 'resource_version', title: '资源版本' }
     ]
   },
   multisite: {
