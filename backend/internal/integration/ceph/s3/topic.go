@@ -13,15 +13,19 @@ import (
 // SNS shares the RGW endpoint and credentials, but uses its own signing scope.
 // Use a form body rather than putting policy contents in the URL or error text.
 func (c *Client) topicRequest(ctx context.Context, values url.Values) ([]byte, error) {
+	body, err := c.topicRawRequest(ctx, values)
+	if err != nil {
+		return nil, fmt.Errorf("SNS request failed")
+	}
+	return body, nil
+}
+func (c *Client) topicRawRequest(ctx context.Context, values url.Values) ([]byte, error) {
 	if c.base.Scheme != "https" {
 		return nil, fmt.Errorf("SNS topic operations require HTTPS")
 	}
 	values.Set("Version", "2010-03-31")
 	body, _, err := c.requestSignedTarget(ctx, http.MethodPost, "", nil, []byte(values.Encode()), http.Header{"Content-Type": {"application/x-www-form-urlencoded"}}, "sns")
-	if err != nil {
-		return nil, fmt.Errorf("SNS request failed")
-	}
-	return body, nil
+	return body, err
 }
 
 func (c *Client) GetTopicAttributes(ctx context.Context, arn string) (map[string]string, error) {

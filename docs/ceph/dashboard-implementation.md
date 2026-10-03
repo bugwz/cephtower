@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **RGW Topic 创建与凭据命名空间核验**：新增 `POST /rgw/topic` 高风险操作和创建表单，覆盖名称、完整推送 URL、持久化、TTL/重试、Opaque Data、Policy 以及 11 项已支持的非凭据投递参数。仍使用 SNS CreateTopic 原生协议，不直接写元数据。完整 URL 为 writeOnly 敏感字段，操作参数加密保存，确认和错误不回显秘密。
+  - 创建前通过只读 `radosgw-admin user info --uid=<完整 UID> --format json`，在后端内存核验所配置永久 Access/Secret Key、唯一键、active、未停用用户及完整 UID；命令参数不传入 Access/Secret Key。非 Account 使用 tenant 作为范围、UID 作为 Owner；Account 使用 account_id 作为范围和 Owner。依据原生 ListBuckets 返回用户 UID 而非 Account Owner 的源码，不用它猜测 SNS 命名空间。临时会话和子用户密钥尚不支持创建，明确拒绝。
+  - 对准确 ARN 执行 GetTopicAttributes，只接受完整 ErrorResponse/Error/Code=NotFound 且 HTTP 404 的原生响应；已有对象、权限失败、未知或重复错误码不当作不存在。随后 CreateTopic，核验返回 ARN，再比较完整 Owner、名称、Policy、Opaque Data、EndPoint、持久化、默认数值和原生剩余参数串。按源码保留 Version 参数及排序，None 映射为 -1 默认哨兵。失败不自动重试/删除回滚。
+  - 前端要求填写准确 Zonegroup 名称及租户/Account、配置密钥所属 UID，说明优先使用主 Zone、持久化队列/Policy 权限影响、不存在检查非原子且外部并发仍可能触发原生覆盖、推送明文风险、不创建桶通知规则。测试覆盖三类范围、原生 Owner 查询、不存在/权限/歧义错误、各写入/回读阶段及秘密保护、API 高风险锁和前端绑定；无真实集群或浏览器视觉验证。完整集群功能迁移仍未完成，凭据独立编辑、现有 Topic 的三项不可单独更新参数及桶通知规则仍待实现。
+
 - **RGW Topic 非凭据投递参数编辑**：新增 `PATCH /rgw/topic/option` 高风险操作，覆盖原生 SetTopicAttributes 支持的 verify-ssl、use-ssl、cloudevents、ca-location、amqp-exchange、amqp-ack-level、kafka-ack-level、mechanism 八项参数。前端使用已采集的明确值/未设置状态作为快照，重复或隐藏字段不能提交；空值仅允许 CA 路径和 Exchange，并明确它不是删除参数或恢复默认。
   - 提交前读取 SNS 完整属性，核验范围与快照，再精确模拟 `replace_str` 的首个子串匹配。只有首个匹配位于完整目标键边界且原始键可匹配时才允许替换；键名出现在密码/其他键值、编码键或重复键时拒绝，避免原生误改其他参数。新值限制为不会注入分隔符的协议值，原始秘密参数串只在内存中处理。
   - 写后比较完整 EndpointArgs 与模拟结果，并比较其他全部 Topic/EndPoint 属性，保留 URL、凭据、未知参数与 Policy。前端提示 TLS/证书校验、投递可靠性、非原子快照及部分生效风险；失败不自动回滚/重试，回读不证明当前协议适用或消息送达。

@@ -31,6 +31,10 @@ type Service struct {
 	endpoints     *endpointservice.Service
 	encryptionKey string
 	transport     http.RoundTripper
+	topicOwners   TopicOwnerVerifier
+}
+type TopicOwnerVerifier interface {
+	VerifyTopicOwner(context.Context, uint64, string, string, string) (string, string, error)
 }
 type Request struct {
 	ClusterID   uint64
@@ -54,7 +58,7 @@ type httpCredential struct {
 func Supports(action string) bool {
 	switch action {
 	case "silence.create", "silence.delete",
-		"rgw_topic.policy", "rgw_topic.attribute", "rgw_topic.endpoint", "rgw_topic.option",
+		"rgw_topic.policy", "rgw_topic.attribute", "rgw_topic.endpoint", "rgw_topic.option", "rgw_topic.create",
 		"rgw_bucket.create", "rgw_bucket.update", "rgw_bucket.delete", "rgw_bucket.acl", "rgw_bucket.replication_enable", "rgw_bucket_policy.update", "rgw_bucket_policy.delete",
 		"iscsi_target.create", "iscsi_target.update", "iscsi_target.delete",
 		"nvmeof_subsystem.create", "nvmeof_subsystem.update", "nvmeof_subsystem.delete",
@@ -67,12 +71,8 @@ func Supports(action string) bool {
 	}
 }
 
-func New(endpoints *endpointservice.Service, encryptionKeys ...string) *Service {
-	key := ""
-	if len(encryptionKeys) > 0 {
-		key = encryptionKeys[0]
-	}
-	return &Service{endpoints: endpoints, encryptionKey: key}
+func New(endpoints *endpointservice.Service, encryptionKey string, owners TopicOwnerVerifier) *Service {
+	return &Service{endpoints: endpoints, encryptionKey: encryptionKey, topicOwners: owners}
 }
 
 // Read performs protocol-native reads for resources that are not reconciled
@@ -404,6 +404,8 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		request.Parameters = map[string]any{}
 	}
 	switch {
+	case request.Action == "rgw_topic.create":
+		return s.topicCreate(ctx, request)
 	case request.Action == "rgw_topic.policy":
 		return s.topicPolicy(ctx, request)
 	case request.Action == "rgw_topic.attribute":

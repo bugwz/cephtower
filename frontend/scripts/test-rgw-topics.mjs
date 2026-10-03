@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 const api = {}
+new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicCreate.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
 new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicOption.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api,()=>api)
 new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicPolicy.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
 new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicAttribute.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api,()=>api)
@@ -56,7 +57,23 @@ assert.deepEqual(definition.rowKeyCandidates,['natural_key'])
 for (const key of ['name','owner','scope','arn','push_endpoint','persistent','time_to_live','max_retries','retry_sleep_duration']) assert.ok(definition.columns.some(column=>column.key===key))
 assert.equal(definition.columns.find(column=>column.key==='scope').render(''),'全局租户')
 assert.equal(definition.columns.find(column=>column.key==='scope').render(undefined),'未返回或不可用')
-assert.equal(definition.createAction,undefined)
+assert.equal(definition.createAction.path,'/rgw/topic')
+for (const scope of ['', 'team', 'RGW12345678901234567']) {
+  const action=definition.createAction
+  const values={...action.initialValues,name:'events',scope,zonegroup:'zone',owner_uid:'team$ns$user',endpoint_mode:'url',endpoint_secret:'amqps://user:create-secret@host/vhost',persistent:'true',confirm_create:'acknowledged',options:'{"verify-ssl":"true"}'}
+  const body=action.buildBody(values,42)
+  assert.equal(body.topic_id,Buffer.from(`${scope}:events`).toString('base64url'))
+  assert.equal(body.topic_arn,`arn:aws:sns:zone:${scope}:events`)
+  assert.equal(body.endpoint_secret,values.endpoint_secret)
+  assert.equal(body.persistent,true)
+  assert.equal(body.time_to_live,'None')
+  assert.deepEqual(body.options,{'verify-ssl':'true'})
+  assert.equal(action.buildBody({...values,endpoint_mode:'none'},42).endpoint_secret,'')
+  const confirmation=action.confirmation(values)
+  assert.ok(!confirmation.includes('create-secret'))
+  for (const warning of ['永久密钥','Account','原子锁','覆盖','队列','回读','桶通知']) assert.ok(confirmation.includes(warning))
+  for (const change of [{name:'bad:name'},{zonegroup:'bad:zone'},{owner_uid:''},{persistent:undefined},{endpoint_mode:undefined},{confirm_create:undefined},{time_to_live:'2147483648'},{max_retries:'-1'},{policy:'[]'},{options:'{"password":"secret"}'},{options:'[]'},{endpoint_secret:'https://user@host/path'}]) assert.throws(()=>action.buildBody({...values,...change},42))
+}
 for (const scope of ['', 'team', 'RGW12345678901234567']) {
   const key = `${scope}:events`
   const row = { natural_key: Buffer.from(key).toString('base64url'), metadata_key: key, name:'events', scope, arn:'arn:topic', metadata_version:'{"tag":"t","ver":9007199254740993}' }

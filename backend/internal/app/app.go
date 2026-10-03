@@ -91,10 +91,10 @@ func New(configPath string) (*App, error) {
 	native := &cephprovider.NativeProvider{Executor: runner}
 	clusters := clusterservice.New(manager.Current, cfg.Database.EncryptionKey, native)
 	endpoints := endpointservice.New(manager.Current, cfg.Database.EncryptionKey)
-	external := externalservice.New(endpoints, cfg.Database.EncryptionKey)
 	hostDetails := hostdetailservice.New(clusters, runner)
 	hostProfiles := hostprofileservice.New(manager.Current, cfg.Database.EncryptionKey)
 	mutations := mutationservice.New(clusters, runner)
+	external := externalservice.New(endpoints, cfg.Database.EncryptionKey, mutations)
 	reconciler := reconcilerservice.New(manager.Current, clusters, native, reconcilerservice.Options{Intervals: cfg.Collection.Intervals})
 	dispatcher := operationservice.NewActionDispatcher(mutations, external, reconciler)
 	operations := operationservice.New(manager.Current, cfg.Database.EncryptionKey, dispatcher, operationservice.Options{})

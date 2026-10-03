@@ -5,6 +5,7 @@ import { topicPolicyBlocked, topicPolicyInitial, topicPolicyInput, topicPolicyCo
 import { topicAttributeOptions, topicAttributeBlocked, topicAttributeInitial, topicAttributeInput, topicAttributeConfirmation } from './rgwTopicAttribute'
 import { topicEndpointBlocked, topicEndpointInitial, topicEndpointInput, topicEndpointConfirmation } from './rgwTopicEndpoint'
 import { topicWritableOptions, topicOptionBlocked, topicOptionInitial, topicOptionInput, topicOptionConfirmation } from './rgwTopicOption'
+import { topicCreateInput, topicCreateConfirmation } from './rgwTopicCreate'
 import { bucketReplicationFormBlocked, bucketReplicationFormInitial, bucketReplicationFormInput, bucketReplicationFormConfirmation } from './rgwBucketReplicationForm'
 import { useClusterContext } from '../../state/ClusterContext'
 import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
@@ -532,6 +533,22 @@ const definitions: Record<
   rgwTopics: {
     title: 'RGW 通知目标（Topics）', path: '/rgw/topics', requiredCapabilities: ['rgw_admin'],
     rowKeyCandidates: ['natural_key'],
+    createAction: {
+      title:'新建 RGW Topic',buttonLabel:'新建 Topic',path:'/rgw/topic',method:'POST',successMessage:'Topic 已创建并回读核验（桶通知规则需单独配置）',confirmation:topicCreateConfirmation,
+      initialValues:{scope:'',time_to_live:'None',max_retries:'None',retry_sleep_duration:'None',options:'{}',policy:'',opaque_data:''},
+      fields:[
+        {name:'name',label:'Topic 名称',required:true},{name:'owner_uid',label:'已配置 S3 永久密钥所属完整 UID（后端核验）',required:true},
+        {name:'scope',label:'租户 / Account ID（全局租户留空）'},{name:'zonegroup',label:'RGW 端点所属 Zonegroup 名称',required:true},
+        {name:'endpoint_mode',label:'推送端点',type:'select',required:true,options:[{value:'none',label:'无推送端点'},{value:'url',label:'指定完整 URL'}]},
+        {name:'endpoint_secret',label:'完整推送 URL（可含凭据，预先保存）',type:'password',visibleWhen:values=>values.endpoint_mode==='url'},
+        {name:'persistent',label:'持久化',type:'select',required:true,options:[{value:'true',label:'开启'},{value:'false',label:'关闭'}]},
+        {name:'time_to_live',label:'TTL 秒数（0 无限，None 全局默认）',required:true},{name:'max_retries',label:'最大重试（0 无限，None 全局默认）',required:true},{name:'retry_sleep_duration',label:'重试间隔秒数（0 无延迟，None 全局默认）',required:true},
+        {name:'opaque_data',label:'Opaque Data（加入通知正文）',type:'textarea'},{name:'policy',label:'完整 Policy JSON（可为空）',type:'textarea'},
+        {name:'options',label:'非凭据投递参数 JSON（verify-ssl、use-ssl、cloudevents、ca-location、amqp-version、amqp-exchange、amqp-ack-level、http-ack-level、kafka-ack-level、mechanism、kafka-brokers；值均为字符串）',type:'textarea',required:true},
+        {name:'confirm_create',label:'影响确认',type:'select',required:true,options:[{value:'acknowledged',label:'已核对凭据、范围和端点，理解队列、权限及并发风险'}]}
+      ],
+      buildBody:(values,clusterId)=>({cluster_id:clusterId,...topicCreateInput(values)})
+    },
     extraActions: [{
       title: '修改 Topic Policy', buttonLabel: '修改 Policy', path: '/rgw/topic/policy', method: 'PATCH',
       successMessage: 'Topic Policy 已回读核验',

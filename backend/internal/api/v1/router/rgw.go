@@ -26,6 +26,7 @@ func rgwRoutes(h *handler.Handler) []Route {
 		{"GET", "/rgw/roles", h.ListRGWRoles},
 		{"GET", "/rgw/topics", h.ListRGWTopics},
 		{"DELETE", "/rgw/topic", h.DeleteRGWTopic},
+		{"POST", "/rgw/topic", h.CreateRGWTopic},
 		{"PATCH", "/rgw/topic/policy", h.UpdateRGWTopicPolicy},
 		{"PATCH", "/rgw/topic/attribute", h.UpdateRGWTopicAttribute},
 		{"PATCH", "/rgw/topic/endpoint", h.UpdateRGWTopicEndpoint},

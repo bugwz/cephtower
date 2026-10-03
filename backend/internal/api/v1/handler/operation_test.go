@@ -60,6 +60,15 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	}
 	for _, scope := range []string{"", "team", "RGW12345678901234567"} {
 		id := base64.RawURLEncoding.EncodeToString([]byte(scope + ":events"))
+		createBody, _ := json.Marshal(map[string]any{"cluster_id": cluster.ID, "topic_id": id, "topic_arn": "arn:aws:sns:zone:" + scope + ":events", "owner_uid": "user", "endpoint_secret": "https://u:create-secret@host/path", "opaque_data": "", "policy": "", "persistent": false, "time_to_live": "None", "max_retries": "None", "retry_sleep_duration": "None", "options": map[string]any{}})
+		createResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/topic", string(createBody), "topic-create-"+scope)
+		if createResponse.Code != http.StatusAccepted || strings.Contains(createResponse.Body.String(), "create-secret") {
+			t.Fatalf("unsafe creation queue %d", createResponse.Code)
+		}
+		createOp, err := db.FindOperation(context.Background(), operationIDFromResponse(t, createResponse))
+		if err != nil || createOp.Action != "rgw_topic.create" || createOp.Risk != "high" || createOp.ResourceKey != "rgw/topic/"+id || strings.Contains(createOp.ParametersCiphertext, "create-secret") {
+			t.Fatal("wrong creation operation")
+		}
 		body := fmt.Sprintf(`{"cluster_id":%d,"topic_id":%q,"expected_version":%q}`, cluster.ID, id, `{"tag":"t","ver":9007199254740993}`)
 		response := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/topic", body, "topic-delete-"+scope)
 		if response.Code != http.StatusAccepted {

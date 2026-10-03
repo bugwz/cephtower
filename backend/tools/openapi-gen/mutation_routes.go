@@ -58,6 +58,7 @@ var mutationRouteActions = map[string]string{
 	"DELETE /rgw/bucket/policy":                     "rgw_bucket_policy.delete",
 	"DELETE /rgw/role":                              "rgw_role.delete",
 	"DELETE /rgw/topic":                             "rgw_topic.delete",
+	"POST /rgw/topic":                               "rgw_topic.create",
 	"PATCH /rgw/topic/policy":                       "rgw_topic.policy",
 	"PATCH /rgw/topic/attribute":                    "rgw_topic.attribute",
 	"PATCH /rgw/topic/endpoint":                     "rgw_topic.endpoint",

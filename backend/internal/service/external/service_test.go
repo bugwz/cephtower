@@ -37,7 +37,7 @@ func externalTestService(t *testing.T) (*Service, *endpointservice.Service, stor
 		t.Fatal(err)
 	}
 	endpoints := endpointservice.New(func() *store.Database { return db }, externalTestKey)
-	return New(endpoints), endpoints, cluster
+	return New(endpoints, "", nil), endpoints, cluster
 }
 
 func TestHTTPClientUsesEndpointTimeoutWithoutRequiringCredential(t *testing.T) {
