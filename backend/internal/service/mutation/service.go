@@ -567,13 +567,10 @@ func build(request Request, p map[string]any) (command, error) {
 			spec["service_id"] = serviceID
 		}
 		if placement, ok := p["placement"].(map[string]any); ok {
-			allowed := map[string]any{}
-			for _, key := range []string{"count", "host_pattern", "hosts", "label"} {
-				if value, exists := placement[key]; exists {
-					allowed[key] = value
-				}
+			if err := validateServicePlacement(placement); err != nil {
+				return command{}, err
 			}
-			spec["placement"] = allowed
+			spec["placement"] = placement
 		}
 		stdin, err := json.Marshal(spec)
 		if err != nil {

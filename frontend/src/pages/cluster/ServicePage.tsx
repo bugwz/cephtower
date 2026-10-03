@@ -286,7 +286,7 @@ function ServicePageContent() {
           <Form.Item name="service_id" label="Service ID">
             <Input disabled={Boolean(editingService)} />
           </Form.Item>
-          <Form.Item name="placement_json" label="Placement JSON">
+          <Form.Item name="placement_json" label="Placement JSON" extra='支持 count、count_per_host、hosts、label 和 host_pattern。count 与 count_per_host 互斥；每主机数量必须指定主机选择条件。例如 {"count_per_host":2,"label":"rgw"}。'>
             <Input.TextArea rows={5} spellCheck={false} placeholder='{"count":1,"host_pattern":"*"}' />
           </Form.Item>
         </Form>

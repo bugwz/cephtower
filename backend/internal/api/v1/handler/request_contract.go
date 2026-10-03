@@ -91,7 +91,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	})
 	add([]string{"device.identify"}, true, map[string]JSONField{"device": stringField(true), "state": stringField(true, "on", "off"), "light": stringField(false, "ident", "fault")})
 	add([]string{"device.zap"}, true, map[string]JSONField{"host": stringField(true), "device": stringField(true)})
-	placement := objectField(false, map[string]JSONField{"count": integerField(false), "host_pattern": stringField(false), "hosts": stringsField(false), "label": stringField(false)})
+	placement := objectField(false, map[string]JSONField{"count": integerField(false), "count_per_host": integerField(false), "host_pattern": stringField(false), "hosts": stringsField(false), "label": stringField(false)})
 	add([]string{"service.create", "service.update"}, true, map[string]JSONField{"service_type": stringField(true, "mon", "mgr", "mds", "rgw", "nfs", "smb", "prometheus", "alertmanager", "grafana", "node-exporter", "crash"), "service_id": stringField(false), "placement": placement})
 	add([]string{"daemon.action"}, true, map[string]JSONField{"action": stringField(true, "start", "stop", "restart", "reconfig", "redeploy", "rotate-key")})
 	add([]string{"upgrade.check"}, true, map[string]JSONField{"version": stringField(false), "image": stringField(false)})
