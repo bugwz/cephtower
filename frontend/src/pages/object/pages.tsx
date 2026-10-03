@@ -109,7 +109,7 @@ const definitions: Record<
   rgwUsers: {
     title: 'RGW 用户',
     path: '/rgw/users',
-    detailContent: (row) => <RgwUserDetails row={row} />,
+    detailContent: (row, clusterId) => <RgwUserDetails row={row} clusterId={clusterId} />,
     requiredCapabilities: ['rgw_admin'],
     rowKeyCandidates: ['natural_key', 'uid', 'user_id'],
     createAction: {

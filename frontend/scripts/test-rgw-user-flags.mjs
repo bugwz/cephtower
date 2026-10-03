@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
+import './test-rgw-user-account.mjs'
 const exports = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserFlags.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
 assert.equal(exports.rgwUserSuspension(0), '未暂停')
@@ -80,12 +81,13 @@ for (const [title, values] of [
   assert.throws(() => action.buildBody(values, 'cluster', { user_id: 'local', tenant: 'tenant' }), /完整 UID/)
   assert.throws(() => action.confirmation(values, { user_id: 'local', tenant: 'tenant' }), /完整 UID/)
 }
-assert.ok(pages.includes('detailContent: (row) => <RgwUserDetails row={row} />'))
+assert.ok(pages.includes('detailContent: (row, clusterId) => <RgwUserDetails row={row} clusterId={clusterId} />'))
 const userDetailsExports = {}
 new Function('exports', 'require', ts.transpileModule(userDetailsSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(userDetailsExports, (name) => {
   if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }
   if (name === 'antd') return { Tabs: 'Tabs' }
   if (name === './RgwUserIdentityDetails') return { RgwUserIdentityDetails: 'Identity', RgwUserPlacementDetails: 'Placement' }
+  if (name === './RgwUserAccountDetails') return { RgwUserAccountDetails: 'Account' }
   if (name === './RgwPermissions') return { RgwPermissions: 'Permissions' }
   if (name === './RgwQuota') return { RgwQuota: 'Quota' }
   if (name === './RgwRateLimit') return { RgwRateLimit: 'RateLimit' }
@@ -94,9 +96,9 @@ new Function('exports', 'require', ts.transpileModule(userDetailsSource, { compi
   throw new Error(`unexpected import ${name}`)
 })
 for (const row of [{}, { uid: 'tenant$user', account_id: 'RGW123', stats_scope: 'account', tags: [], placement_tags: ['archive'], caps: [], subusers: [], user_quota: { enabled: false }, bucket_quota: { enabled: true, max_size: 0 }, rate_limit: { enabled: false }, storage_stats: { stats: { num_objects: 0 } } }]) {
-  const view = userDetailsExports.RgwUserDetails({ row })
+  const view = userDetailsExports.RgwUserDetails({ row, clusterId: 42 })
   assert.equal(view.type, 'Tabs')
-  assert.deepEqual(view.props.items.map(item => item.key), ['identity', 'placement', 'caps', 'subusers', 'quota', 'bucket-quota', 'rate-limit', 'usage'])
+  assert.deepEqual(view.props.items.map(item => item.key), ['identity', 'placement', 'caps', 'subusers', 'quota', 'bucket-quota', 'rate-limit', 'usage', 'account'])
   assert.equal(view.props.items[0].children.type, 'Identity')
   assert.equal(view.props.items[1].children.type, 'Placement')
   for (const item of view.props.items.slice(0, 2)) assert.equal(item.children.props.row, row)
@@ -109,6 +111,8 @@ for (const row of [{}, { uid: 'tenant$user', account_id: 'RGW123', stats_scope: 
   assert.deepEqual(usage[0].props.children, { scope: row.stats_scope, account: row.account_id })
   assert.equal(usage[1].type, 'Storage')
   assert.equal(usage[1].props.value, row.storage_stats)
+  assert.equal(view.props.items[8].children.type, 'Account')
+  assert.deepEqual(view.props.items[8].children.props, { clusterId: 42, accountId: row.account_id })
 }
 const components = readFileSync(new URL('../src/pages/object/RgwUserIdentityDetails.tsx', import.meta.url), 'utf8')
 const identityView = {}

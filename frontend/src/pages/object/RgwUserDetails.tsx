@@ -6,8 +6,9 @@ import { RgwQuota } from './RgwQuota'
 import { RgwRateLimit } from './RgwRateLimit'
 import { RgwStorage } from './RgwStorage'
 import { rgwStorageScope } from './rgwStorageDetails'
+import { RgwUserAccountDetails } from './RgwUserAccountDetails'
 
-export function RgwUserDetails({ row }: { row: ApiRecord }) {
+export function RgwUserDetails({ row, clusterId }: { row: ApiRecord; clusterId?: number }) {
   return <Tabs items={[
     { key: 'identity', label: '身份与归属', children: <RgwUserIdentityDetails row={row} /> },
     { key: 'placement', label: '用户放置配置', children: <RgwUserPlacementDetails row={row} /> },
@@ -19,6 +20,7 @@ export function RgwUserDetails({ row }: { row: ApiRecord }) {
     { key: 'usage', label: '容量与对象统计', children: <>
       <p>{rgwStorageScope(row.stats_scope, row.account_id)}</p>
       <RgwStorage value={row.storage_stats} />
-    </> }
+    </> },
+    { key: 'account', label: '关联账户', children: <RgwUserAccountDetails clusterId={clusterId} accountId={row.account_id} /> }
   ]} />
 }
