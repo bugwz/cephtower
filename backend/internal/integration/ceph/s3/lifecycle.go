@@ -172,6 +172,27 @@ func validateLifecycleAction(action lifecycleField) error {
 		if counts[key] > 1 {
 			return invalid
 		}
+		if key == "Days" || key == "NoncurrentDays" || key == "DaysAfterInitiation" || key == "NewerNoncurrentVersions" {
+			minimum := uint64(1)
+			if name == "Transition" || name == "NoncurrentVersionTransition" || key == "NewerNoncurrentVersions" {
+				minimum = 0
+			}
+			if child.Text == "" {
+				return fmt.Errorf("lifecycle %s must contain an integer", key)
+			}
+			for _, digit := range child.Text {
+				if digit < '0' || digit > '9' {
+					return fmt.Errorf("lifecycle %s must contain decimal digits only", key)
+				}
+			}
+			number, err := strconv.ParseUint(child.Text, 10, 31)
+			if err != nil || number < minimum {
+				return fmt.Errorf("lifecycle %s must be between %d and 2147483647", key, minimum)
+			}
+		}
+		if key == "ExpiredObjectDeleteMarker" && child.Text != "true" && child.Text != "false" {
+			return fmt.Errorf("ExpiredObjectDeleteMarker must be exactly true or false")
+		}
 	}
 	switch name {
 	case "Expiration":

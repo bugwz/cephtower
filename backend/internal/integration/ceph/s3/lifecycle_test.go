@@ -2,6 +2,37 @@ package s3
 
 import "testing"
 
+func TestLifecycleNumericActions(t *testing.T) {
+	wrap := func(action string) []byte {
+		return []byte("<LifecycleConfiguration><Rule><Status>Enabled</Status><Filter/>" + action + "</Rule></LifecycleConfiguration>")
+	}
+	for _, tc := range []struct {
+		action, field, extra string
+		zero                 bool
+	}{
+		{"Expiration", "Days", "", false},
+		{"NoncurrentVersionExpiration", "NoncurrentDays", "", false},
+		{"AbortIncompleteMultipartUpload", "DaysAfterInitiation", "", false},
+		{"Transition", "Days", "<StorageClass>COLD</StorageClass>", true},
+		{"NoncurrentVersionTransition", "NoncurrentDays", "<StorageClass>COLD</StorageClass>", true},
+		{"NoncurrentVersionExpiration", "NewerNoncurrentVersions", "<NoncurrentDays>1</NoncurrentDays>", true},
+	} {
+		for _, value := range []string{"0", "1", "001", "2147483647", "2147483648", "-1", "1x", "1.5", "", " 1"} {
+			body := wrap("<" + tc.action + "><" + tc.field + ">" + value + "</" + tc.field + ">" + tc.extra + "</" + tc.action + ">")
+			err := ValidateBucketConfiguration("lifecycle", body)
+			valid := value == "1" || value == "001" || value == "2147483647" || (value == "0" && tc.zero)
+			if (err == nil) != valid {
+				t.Fatalf("%s=%q err=%v valid=%v", tc.field, value, err, valid)
+			}
+		}
+	}
+	for _, value := range []string{"TRUE", "yes", "", "1"} {
+		if err := ValidateBucketConfiguration("lifecycle", wrap("<Expiration><ExpiredObjectDeleteMarker>"+value+"</ExpiredObjectDeleteMarker></Expiration>")); err == nil {
+			t.Fatalf("accepted marker %q", value)
+		}
+	}
+}
+
 func TestLifecycleObjectSizeBounds(t *testing.T) {
 	wrap := func(bounds string) []byte {
 		return []byte("<LifecycleConfiguration><Rule><Status>Enabled</Status><Filter>" + bounds + "</Filter><Expiration><Days>30</Days></Expiration></Rule></LifecycleConfiguration>")
