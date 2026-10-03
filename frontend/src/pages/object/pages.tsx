@@ -558,9 +558,10 @@ const definitions: Record<
       method: 'POST',
       successMessage: 'Bucket 创建执行成功',
       fields: [
-        { name: 'name', label: 'Bucket 名称', required: true }
+        { name: 'name', label: 'Bucket 名称', required: true },
+        { name: 'tenant', label: '租户（留空明确表示全局租户；须与 S3 凭据权限匹配）' }
       ],
-      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? '') })
+      buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: String(values.name ?? ''), tenant: String(values.tenant ?? '') })
     },
     updateAction: {
       title: '更新 Bucket 版本控制',

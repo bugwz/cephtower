@@ -15,6 +15,43 @@ import (
 	endpointservice "cephtower/backend/internal/service/endpoint"
 )
 
+func TestBucketCreationUsesExplicitTenantIdentity(t *testing.T) {
+	service, endpoints, cluster := externalTestService(t)
+	ctx := context.Background()
+	if _, err := endpoints.CreateEndpoint(ctx, cluster.ID, endpointservice.EndpointInput{Kind: "s3", URL: "https://s3.example.test"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := endpoints.PutCredential(ctx, cluster.ID, endpointservice.CredentialInput{Kind: "s3", Value: map[string]any{"access_key": "access", "secret_key": "secret"}}); err != nil {
+		t.Fatal(err)
+	}
+	for _, tenant := range []string{"", "team", "other"} {
+		calls := 0
+		service.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+			calls++
+			if r.Method != "PUT" || r.URL.Path != "/"+tenant+":bucket" || r.URL.RawQuery != "" || r.Header.Get("Authorization") == "" {
+				t.Fatalf("wrong create target %s", r.URL)
+			}
+			return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(""))}, nil
+		})
+		result, err := service.Execute(ctx, Request{ClusterID: cluster.ID, Action: "rgw_bucket.create", Parameters: map[string]any{"name": "bucket", "tenant": tenant}})
+		id := base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00bucket"))
+		if err != nil || calls != 1 || result.ResourceURL != fmt.Sprintf("/api/v1/cluster/%d/rgw/bucket/%s", cluster.ID, id) {
+			t.Fatalf("wrong identity %+v %v", result, err)
+		}
+	}
+	service.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+		t.Fatal("invalid identity reached network")
+		return nil, nil
+	})
+	for _, input := range []map[string]any{{"name": ""}, {"name": "team:bucket"}, {"name": "../bucket"}, {"name": "bucket", "tenant": "a/b"}, {"name": "bucket", "tenant": true}, {"name": "bucket", "tenant": "a\x00b"}, {"bucket": "legacy"}} {
+		_, err := service.Execute(ctx, Request{ClusterID: cluster.ID, Action: "rgw_bucket.create", Parameters: input})
+		var failure *cephdomain.ActionError
+		if !errors.As(err, &failure) || failure.Code != "invalid_request" || failure.Retryable {
+			t.Fatalf("unsafe failure %v", err)
+		}
+	}
+}
+
 func TestBucketRequestsPreserveFullInventoryIdentity(t *testing.T) {
 	service, endpoints, cluster := externalTestService(t)
 	ctx := context.Background()

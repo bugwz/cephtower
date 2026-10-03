@@ -321,7 +321,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"config_value.set"}, true, map[string]JSONField{"value": stringField(true)})
 	matcher := map[string]JSONField{"name": stringField(true), "value": stringField(true), "isRegex": boolField(true), "isEqual": boolField(true)}
 	add([]string{"silence.create"}, true, map[string]JSONField{"matchers": objectArrayField(true, matcher), "startsAt": stringField(true), "endsAt": stringField(true), "createdBy": stringField(true), "comment": stringField(true)})
-	add([]string{"rgw_bucket.create"}, true, map[string]JSONField{"name": stringField(true)})
+	add([]string{"rgw_bucket.create"}, true, map[string]JSONField{"name": stringField(true), "tenant": stringField(false)})
 	add([]string{"rgw_bucket.update"}, true, map[string]JSONField{"versioning": stringField(true, "enabled", "suspended")})
 	add([]string{"rgw_bucket_policy.update"}, true, map[string]JSONField{"kind": stringField(true, "policy", "cors", "lifecycle", "encryption", "tagging"), "document": stringField(true)})
 	add([]string{"rgw_bucket_policy.delete"}, true, map[string]JSONField{"kind": stringField(true, "policy", "cors", "lifecycle", "encryption", "tagging"), "bucket_id": stringField(true)})

@@ -379,11 +379,16 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 	bucket := ""
 	encodedID := ""
 	if request.Action == "rgw_bucket.create" {
-		bucket, _ = parameters["name"].(string)
-		if bucket == "" {
-			bucket, _ = parameters["bucket"].(string)
+		name, nameOK := parameters["name"].(string)
+		tenant, tenantOK := parameters["tenant"].(string)
+		if !nameOK || (parameters["tenant"] != nil && !tenantOK) {
+			return cephdomain.ActionResult{}, failure("invalid_request", "name and tenant must be strings", false)
 		}
-		encodedID = base64.RawURLEncoding.EncodeToString([]byte("\x00" + bucket))
+		encodedID = base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00" + name))
+		bucket, err = decodeBucketID(encodedID)
+		if err != nil {
+			return cephdomain.ActionResult{}, failure("invalid_request", "invalid bucket name or tenant", false)
+		}
 	} else {
 		encodedID, err = bucketResourceID(request.Action, request.ResourceKey)
 		if err != nil {
