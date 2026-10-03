@@ -17,8 +17,12 @@ console.log('bucket local sync policy summary checks passed')
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketSyncGroupForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(api)
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-let action, createAction, deleteAction
+let action, createAction, deleteAction, flowAction
 function visit(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '创建桶数据流')) {
+    const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+    flowAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
+  }
   if (ts.isObjectLiteralExpression(node) && node.properties.some(p => ts.isPropertyAssignment(p) && p.name.getText(source) === 'title' && p.initializer.text === '删除桶同步组')) {
     const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
     deleteAction = new Function(...Object.keys(api), `${code}; return action`)(...Object.values(api))
@@ -77,3 +81,21 @@ assert.deepEqual(deleteAction.buildBody(deletion, 7, row), { cluster_id: 7, buck
 assert.match(deleteAction.confirmation(deletion, row), /全部数据流、管道.*forbidden.*不自动回滚/)
 for (const change of [{ bucket_id: 'other' }, { group_id: 'other' }, { confirm_delete: true }]) assert.throws(() => deleteAction.buildBody({ ...deletion, ...change }, 7, row))
 console.log('bucket sync group deletion form checks passed')
+assert.equal(flowAction.path, '/rgw/bucket/sync/flow')
+assert.equal(flowAction.method, 'POST')
+assert.ok(flowAction.disabledWhen(emptyRow))
+assert.ok(flowAction.disabledWhen({ ...row, stale: true }))
+const flowBase = { ...flowAction.initialValues(row), group_id: group.id, confirm_flow: 'acknowledged' }
+const sym = { ...flowBase, flow_type: 'symmetrical', flow_id: ' 流 ', zones_json: '["b","a"]' }
+const dir = { ...flowBase, flow_type: 'directional', source_zone: 'a', dest_zone: 'b' }
+assert.deepEqual(flowAction.buildBody(sym, 7, row), { cluster_id: 7, bucket_id: row.natural_key, group_id: group.id, expected_group: JSON.stringify(group), flow_type: 'symmetrical', flow_id: ' 流 ', zones: ['b', 'a'] })
+assert.deepEqual(flowAction.buildBody(dir, 7, row), { cluster_id: 7, bucket_id: row.natural_key, group_id: group.id, expected_group: JSON.stringify(group), flow_type: 'directional', source_zone: 'a', dest_zone: 'b' })
+for (const values of [sym, dir]) {
+  assert.match(flowAction.confirmation(values, row), /不创建管道.*不自动回滚/)
+  for (const change of [{ bucket_id: 'other' }, { group_id: 'other' }, { confirm_flow: true }, { flow_type: 'unknown' }]) assert.throws(() => flowAction.buildBody({ ...values, ...change }, 7, row))
+}
+for (const change of [{ flow_id: '-bad' }, { zones_json: '[]' }, { zones_json: '["a","a"]' }, { zones_json: '["*"]' }, { zones_json: '["a,b"]' }, { zones_json: '[3]' }, { zones_json: 'broken' }, { source_zone: 'a' }]) assert.throws(() => flowAction.buildBody({ ...sym, ...change }, 7, row))
+for (const change of [{ source_zone: 'b' }, { dest_zone: '' }, { flow_id: 'f' }, { zones_json: '[]' }]) assert.throws(() => flowAction.buildBody({ ...dir, ...change }, 7, row))
+const existingRow = { ...row, bucket_sync_policy: { groups: [{ ...group, data_flow: { symmetrical: [{ id: ' 流 ', zones: ['a'] }], directional: [{ source_zone: 'a', dest_zone: 'b' }] } }] } }
+for (const values of [sym, dir]) assert.throws(() => flowAction.buildBody(values, 7, existingRow))
+console.log('bucket sync flow creation form and binding checks passed')

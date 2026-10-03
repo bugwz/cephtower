@@ -28,6 +28,25 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：补齐桶本地对称/定向数据流创建。依据参考同步流表单、
+  create_sync_flow 和原生 SYNC_GROUP_FLOW_CREATE，新增高风险
+  POST /rgw/bucket/sync/flow → 队列 → sync policy get / sync group flow create /
+  sync policy get。显式桶/租户及 Zone ID 参数，不将名称当 ID；
+  对称流使用 --zone-ids，定向流使用 --source-zone-id/--dest-zone-id。
+  写前额外读取 zonegroup get，要求 ID 属于当前 Zonegroup 且名称映射无歧义；
+  sync policy get 的专用格式化器将已知 ID 输出成名称，对称集合仍按 ID 排序，
+  因而期望值按该规则构造。Zone 列表拒绝原生分隔符逗号、分号、等号及空白。
+  原生 CLI 要求定向流携带 flow-id，但实际只按源/目标对识别，接口不虚构存储 ID。
+  创建前比对完整组快照，拒绝已存在对称流 ID 或定向 Zone 对，避免原生追加语义；
+  写后比较完整策略，保留已有流、管道、组状态及精确数字。参数禁止重复 Zone、
+  通配符、分隔符注入与混用类型字段。前端明确 Zone ID、备份及复制影响确认。
+  不创建管道、不更改组状态或 Zonegroup、不提交 period；不保证复制实际生效。
+  外部并发仍无法由原生 CAS 防护，失败不自动重试/回滚。回归覆盖双类型/双租户、
+  快照及重复流、已有流保留、读写失败、意外策略变化、队列与前端动作绑定。
+  ID/名称不一致和 ID 排序不同于名称排序均纳入回归；make test-backend
+  （含 OpenAPI 同步检查）及 make test-frontend（含 TypeScript/Vite 构建）通过。
+  尚无真实集群或浏览器视觉验证；数据流修改/删除及管道写操作仍待补齐。
+
 - 2026-10-04：补齐桶本地数据流的结构化展示。参考同步策略详情页的对称流 ID/Zone
   列表与定向流源/目标 Zone 列，并核对 rgw_sync_policy.cc 原生序列化；
   定向流不虚构 ID。复用 sync policy get → bucket_sync_policy 采集/API 链路，

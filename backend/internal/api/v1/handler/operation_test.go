@@ -73,6 +73,14 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if err != nil || deletedGroup.Action != "rgw_bucket.sync_group_delete" || deletedGroup.Risk != "high" || deletedGroup.ResourceKey != nativeOperation.ResourceKey || deletedGroup.LockKey != nativeOperation.LockKey {
 			t.Fatalf("wrong sync group deletion: %+v %v", deletedGroup, err)
 		}
+		flowResponse := sendOperationRequest(t, nativeMux, http.MethodPost, "/api/v1/rgw/bucket/sync/flow", fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"group_id":"g","expected_group":%q,"flow_type":"directional","source_zone":"a","dest_zone":"b"}`, cluster.ID, id, `{"id":"g","status":"allowed","data_flow":{},"pipes":[]}`), "sync-flow-create-"+tenant)
+		if flowResponse.Code != http.StatusAccepted {
+			t.Fatalf("sync flow queue: %d %s", flowResponse.Code, flowResponse.Body.String())
+		}
+		flowOperation, err := db.FindOperation(context.Background(), operationIDFromResponse(t, flowResponse))
+		if err != nil || flowOperation.Action != "rgw_bucket.sync_flow_create" || flowOperation.Risk != "high" || flowOperation.ResourceKey != nativeOperation.ResourceKey || flowOperation.LockKey != nativeOperation.LockKey {
+			t.Fatalf("wrong sync flow operation: %+v %v", flowOperation, err)
+		}
 		response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/bucket", fmt.Sprintf(`{"cluster_id":%d,"name":"same-bucket","tenant":%q}`, cluster.ID, tenant), "bucket-create-"+tenant)
 		if response.Code != http.StatusAccepted {
 			t.Fatalf("bucket creation queue: %d %s", response.Code, response.Body.String())
