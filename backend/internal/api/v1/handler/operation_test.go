@@ -57,6 +57,16 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	if unscoped.Code != http.StatusBadRequest {
 		t.Fatalf("unscoped commit accepted: %d", unscoped.Code)
 	}
+	for _, realm := range []string{"", "realm"} {
+		response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/sync/group", fmt.Sprintf(`{"cluster_id":%d,"name":"east","zonegroup_id":"zg","realm_id":%q,"group_id":"g","expected_group":%q,"status":"enabled"}`, cluster.ID, realm, `{"id":"g","status":"allowed","data_flow":{},"pipes":[]}`), "zonegroup-sync-"+realm)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("zonegroup sync queue: %d %s", response.Code, response.Body.String())
+		}
+		op, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || op.Action != "rgw_zonegroup.sync_group" || op.Risk != "high" || op.ResourceKey != "rgw/zonegroup/east" {
+			t.Fatalf("wrong zonegroup operation: %+v %v", op, err)
+		}
+	}
 	for _, tenant := range []string{"", "team"} {
 		id := base64.RawURLEncoding.EncodeToString([]byte(tenant + "\x00same-bucket"))
 		nativeMux := http.NewServeMux()

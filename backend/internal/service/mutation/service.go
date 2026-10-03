@@ -66,6 +66,8 @@ type command struct {
 
 func Supports(action string) bool {
 	switch action {
+	case "rgw_zonegroup.sync_group":
+		return true
 	case "rgw_bucket.sync_pipe_update", "rgw_bucket.sync_pipe_zones":
 		return true
 	case "rgw_bucket.sync_group", "rgw_bucket.sync_group_create", "rgw_bucket.sync_group_delete", "rgw_bucket.sync_flow_create", "rgw_bucket.sync_flow_delete", "rgw_bucket.sync_pipe_delete", "rgw_bucket.sync_pipe_create", "rgw_bucket.sync_flow_update":
@@ -127,6 +129,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if request.Action == "rgw_period.commit" {
 		return s.executePeriodCommit(ctx, access, request, spec)
+	}
+	if request.Action == "rgw_zonegroup.sync_group" {
+		return s.executeZonegroupSyncGroup(ctx, access, request, spec)
 	}
 	if request.Action == "rgw_bucket.sync_pipe_zones" {
 		return s.executeBucketSyncPipeZones(ctx, access, request, spec)
@@ -2779,6 +2784,8 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("realm_id and expected_current_period are required")
 		}
 		return rgw([]string{"period", "update", "--commit", "--realm-id", realm}, []string{"period", "get", "--realm-id", realm}), nil
+	case "rgw_zonegroup.sync_group":
+		return zonegroupSyncGroupCommand(p, rgw)
 	case "nfs_cluster.create":
 		name, err := required(p, "name")
 		if err != nil {

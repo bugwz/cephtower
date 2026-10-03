@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import './test-rgw-period-commit.mjs'
+import './test-rgw-zonegroup-sync-group.mjs'
 import './test-rgw-bucket-sync-flows.mjs'
 import './test-rgw-bucket-sync-pipes.mjs'
 import { readFileSync } from 'node:fs'

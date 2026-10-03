@@ -2,6 +2,7 @@ import type { ApiRecord } from '../../api/client'
 import { useClusterContext } from '../../state/ClusterContext'
 import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
 import { RgwCurrentPeriod } from './RgwCurrentPeriod'
+import { zonegroupSyncInitial, zonegroupSyncBlocked, zonegroupSyncInput, zonegroupSyncConfirmation } from './rgwZonegroupSyncGroup'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAction } from '../ResourceListPage'
 import { ServiceDaemons } from '../cluster/ServiceDaemons'
@@ -900,6 +901,20 @@ const definitions: Record<
       initialValues: (row) => ({ new_name: text(row?.name), realm_id: text(row?.realm_id), endpoints: Array.isArray(row?.endpoints) ? row.endpoints.join(',') : '', master: false, default: false }),
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: text(row?.name), new_name: String(values.new_name ?? ''), realm_id: String(values.realm_id ?? ''), ...(values.endpoints ? { endpoints: String(values.endpoints) } : {}), add_zones: String(values.add_zones ?? '').split(',').map((zone) => zone.trim()).filter(Boolean), remove_zones: String(values.remove_zones ?? '').split(',').map((zone) => zone.trim()).filter(Boolean), master: Boolean(values.master), default: Boolean(values.default) })
     },
+    extraActions: [{
+      title: '修改 Zonegroup 同步组状态', path: '/rgw/zonegroup/sync/group', method: 'PATCH',
+      successMessage: 'Zonegroup 策略与适用的 Period 发布已回读核验（不代表远端同步完成）',
+      disabledWhen: zonegroupSyncBlocked, initialValues: zonegroupSyncInitial, confirmation: zonegroupSyncConfirmation,
+      fields: [
+        { name: 'name', label: 'Zonegroup 名称（不可更改）', readOnly: true },
+        { name: 'zonegroup_id', label: 'Zonegroup ID（不可更改）', readOnly: true },
+        { name: 'realm_id', label: 'Realm ID（空表示无 Realm，不可更改）', readOnly: true },
+        { name: 'group_id', label: '已有同步组 ID', required: true },
+        { name: 'status', label: '目标状态', type: 'select', required: true, options: [{ value: 'enabled', label: 'enabled 启用' }, { value: 'allowed', label: 'allowed 允许但不启用' }, { value: 'forbidden', label: 'forbidden 禁止' }] },
+        { name: 'confirm_change', label: '修改与发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份并核对 Realm 全部待发布变更，了解部分生效风险' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupSyncInput(values,row) })
+    }],
     columns: [
       { key: 'name', title: 'ZoneGroup' },
       { key: 'status', title: '状态' },

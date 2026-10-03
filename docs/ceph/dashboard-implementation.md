@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### Zonegroup 同步组状态修改与对应 Realm 发布
+
+根据 `SYNC_GROUP_MODIFY` 和 Dashboard 同步组状态更新后发布 period 的流程，增加 `PATCH /api/v1/rgw/zonegroup/sync/group` 与 Zonegroup 行上的状态修改入口。明确提交 Zonegroup ID、名称、Realm 归属、完整组快照和目标状态；读取 `zonegroup get --zonegroup-id` 校验身份及快照，执行 `sync group modify --zonegroup-id ... --group-id ... --status ...`，回读完整 Zonegroup 配置，确保仅目标组状态改变。缺失组、过期快照、未改变状态和归属错误不写入。
+
+有 Realm 时先读取当前 period，策略写入核验成功后使用明确 Realm 的 period update --commit 链路核验发布，并检查当前 Period 的目标 Zonegroup 同步策略；无 Realm 时不提交 period。步骤非事务：本地修改成功后发布失败会报告部分状态，不自动回滚/重试。确认框提示可能同时发布该 Realm 其他待提交变更，要求备份、检查及避免外部/其他页面并发；现有单资源锁不是跨 Zonegroup/Period 的事务锁。离线测试覆盖两种归属、状态、各阶段故障、发布策略不符、精确命令、API 高风险入队及前端按钮绑定。全量后端/OpenAPI和前端测试构建通过后提交；无真实集群或视觉验证。本次尚未包含 Zonegroup 同步组创建/删除、流/管道写入。
+
 #### Realm 当前 Period 快照采集与展示
 
 根据 `RGWPeriod::dump`、`RGWPeriodMap::dump` 及 `period get` 的 Realm/Period 定位语义，Realm 采集增加 `period get --realm-id <id> --period <current_period> --format json`，同时验证返回 Realm ID 与 Period ID。结果经现有 Observation/资源 API 放入 `current_period_details`；读取失败、缺失或身份不匹配不伪装为空 Period，保留 Realm 行并记录可选采集不可用。显式 Period ID 避免命令读取期间默认 Realm 或当前指向变化造成跨范围混用。
