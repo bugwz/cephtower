@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"regexp"
 	"strconv"
 	"strings"
@@ -74,6 +75,9 @@ func (s *Service) Logs(ctx context.Context, clusterID uint64, channel, level str
 		return Logs{}, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph log response must be an array"}
 	}
 	for i := range rows {
+		if rows[i].Seq == "" || strings.TrimSpace(rows[i].Stamp) == "" {
+			return Logs{}, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph log records require a sequence and timestamp"}
+		}
 		rows[i].Message = security.Redact(rows[i].Message)
 	}
 	// Ceph returns oldest first; Dashboard renders the latest record first.
@@ -154,6 +158,9 @@ func (s *Service) read(ctx context.Context, clusterID uint64, id string, args []
 	decoder.UseNumber()
 	if err := decoder.Decode(out); err != nil {
 		return &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph returned invalid JSON"}
+	}
+	if decoder.Decode(new(any)) != io.EOF {
+		return &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph returned extra data after the JSON response"}
 	}
 	return nil
 }

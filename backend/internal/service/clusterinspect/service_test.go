@@ -2,6 +2,7 @@ package clusterinspect
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"reflect"
 	"testing"
@@ -85,7 +86,7 @@ func TestInspectionValidationAndFailures(t *testing.T) {
 	if len(runner.specs) != 0 {
 		t.Fatal("invalid request executed")
 	}
-	for _, output := range []string{"null", "not json", "{}"} {
+	for _, output := range []string{"null", "not json", "{}", "[] {}", "[] failed", "[null]", "[{}]", `[{"stamp":"2026-10-03T00:00:00Z"}]`, `[{"seq":0}]`, `[{"seq":-1,"stamp":"2026-10-03T00:00:00Z"}]`} {
 		runner.output = output
 		if _, err := service.Logs(context.Background(), id, "audit", "info", 10); err == nil {
 			t.Fatalf("accepted malformed output %s", output)
@@ -94,6 +95,29 @@ func TestInspectionValidationAndFailures(t *testing.T) {
 	runner.fail = true
 	if _, err := service.Logs(context.Background(), id, "cluster", "info", 10); err == nil {
 		t.Fatal("failure became empty log")
+	}
+}
+
+func TestInspectionReaderRejectsTrailingJSONWithoutLosingPrecision(t *testing.T) {
+	s, runner, id := testInspection(t)
+	for _, output := range []string{`{"value":18446744073709551615} {}`, `{"value":18446744073709551615} warning`} {
+		runner.output = output
+		var value map[string]any
+		if err := s.read(context.Background(), id, "fixture", []string{"status", "--format", "json"}, &value); err == nil {
+			t.Fatalf("accepted trailing data: %s", output)
+		}
+	}
+	runner.output = "{\"value\":18446744073709551615}\n\t"
+	var value map[string]any
+	if err := s.read(context.Background(), id, "fixture", []string{"status", "--format", "json"}, &value); err != nil {
+		t.Fatal(err)
+	}
+	if value["value"] != json.Number("18446744073709551615") {
+		t.Fatalf("precision lost: %+v", value)
+	}
+	runner.output = `[{"seq":0,"stamp":"2026-10-03T00:00:00Z","message":""}]`
+	if _, err := s.Logs(context.Background(), id, "cluster", "debug", 10); err != nil {
+		t.Fatalf("zero sequence rejected: %v", err)
 	}
 }
 func TestConfigurationMetadataUsesHelp(t *testing.T) {
