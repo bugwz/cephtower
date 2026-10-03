@@ -26,6 +26,30 @@ for (const failed of ['none', 'device', 'smart', 'both']) {
   assert.equal(result.host.hostname, 'node1')
 }
 console.log('Host diagnostic failures remain distinct from empty responses')
+const deleteHostNode = hostDetailFn.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'deleteHost')
+const deleteHostCode = ts.transpileModule(deleteHostNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const timing of ['current', 'before-confirm', 'during-request']) {
+  const active = { current: true }
+  let confirmation
+  let writes = 0
+  let navigations = 0
+  const env = {
+    selectedClusterId: 3, host: { hostname: 'node1', resource_version: 4 }, hostName: (row) => row.hostname,
+    message: { success() {}, error() {} }, active, deleteConfirmation: { current: null },
+    Modal: { confirm(options) { confirmation = options; return { destroy() {} } } },
+    operationMutation: { run: (fn) => fn() },
+    mutateResource: async () => { writes++; if (timing === 'during-request') active.current = false },
+    navigate: () => { navigations++ },
+  }
+  const remove = new Function(...Object.keys(env), `${deleteHostCode}; return deleteHost`)(...Object.values(env))
+  await remove()
+  if (timing === 'before-confirm') active.current = false
+  await confirmation.onOk()
+  assert.equal(writes, timing === 'before-confirm' ? 0 : 1)
+  assert.equal(navigations, timing === 'current' ? 1 : 0)
+}
+assert.ok(hostDetailFn.getText(hostDetailTree).includes('deleteConfirmation.current?.destroy()'))
+console.log('Host deletion cannot submit or navigate from an inactive detail page')
 const hostPerfNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'hostDaemonSupportsPerf')
 const hostPerfCode = ts.transpileModule(hostPerfNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const hostPerfSupported = new Function(`${hostPerfCode}; return hostDaemonSupportsPerf`)()

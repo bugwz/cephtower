@@ -1,6 +1,6 @@
 import { ArrowLeftOutlined, DeleteOutlined, ReloadOutlined, TagOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Col, Descriptions, Form, Input, Modal, Row, Select, Space, Spin, Statistic, Tabs, Tag, Tooltip, Typography } from 'antd'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { isRecord, numberValue, textValue, type ApiRecord } from '../../api/client'
 import { queryMetric, type MetricResponse } from '../../api/external'
@@ -37,6 +37,15 @@ export function HostDetailPage() {
 
 function HostDetailContent({ name, selectedClusterId }: { name: string; selectedClusterId?: number }) {
   const navigate = useNavigate()
+  const active = useRef(true)
+  const deleteConfirmation = useRef<{ destroy: () => void } | null>(null)
+  useEffect(() => {
+    active.current = true
+    return () => {
+      active.current = false
+      deleteConfirmation.current?.destroy()
+    }
+  }, [])
   const decodedName = name
   const loader = useCallback(async () => {
     if (!selectedClusterId || !decodedName) {
@@ -85,7 +94,9 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
     }
     setRefreshing(true)
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['host', 'daemon', 'device'] }), '刷新成功')
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['host', 'daemon', 'device'] }), false)
+      if (!active.current) return
+      message.success('刷新成功')
       await refresh()
     } finally {
       setRefreshing(false)
@@ -125,6 +136,7 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
         labels_add: values.action === 'rm' ? [] : [label],
         labels_remove: values.action === 'rm' ? [label] : []
       }, { ifMatch: Number(host.resource_version ?? 0) }), false)
+      if (!active.current) return
       setLabelModalOpen(false)
       message.success('主机标签更新成功')
       void refresh({ showLoading: false })
@@ -149,7 +161,9 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
         cluster_id: selectedClusterId,
         host: name,
         action
-      }), `主机 ${action} 执行成功`)
+      }), false)
+      if (!active.current) return
+      message.success(`主机 ${action} 执行成功`)
       await refresh()
     } finally {
       setPendingAction('')
@@ -167,21 +181,22 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
       return
     }
     const generation = Number(host.resource_version ?? 0)
-    Modal.confirm({
+    deleteConfirmation.current?.destroy()
+    deleteConfirmation.current = Modal.confirm({
       title: `删除主机 ${name}`,
       content: '该操作为高风险操作，确认后将直接执行删除操作。',
       okText: '提交删除',
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
+        if (!active.current) return
         await operationMutation.run(() => mutateResource('/host', 'DELETE', {
           cluster_id: selectedClusterId,
           host: name
         }, { ifMatch: generation }), false)
-        window.setTimeout(() => {
-          message.success('主机删除执行成功')
-          navigate('/cluster/host')
-        })
+        if (!active.current) return
+        message.success('主机删除执行成功')
+        navigate('/cluster/host')
       }
     })
   }
