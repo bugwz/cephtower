@@ -2,6 +2,19 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 
+const pgCategorySource = readFileSync(new URL('../src/pages/overview/pgCategory.ts', import.meta.url), 'utf8')
+const pgCategoryCode = ts.transpileModule(pgCategorySource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText
+const pgCategoryExports = {}
+new Function('exports', pgCategoryCode)(pgCategoryExports)
+const classifyPG = pgCategoryExports.pgCategory
+assert.equal(classifyPG('active+clean').key, 'clean')
+assert.equal(classifyPG('active+clean+scrubbing+deep').key, 'working')
+for (const state of ['activating', 'backfill_wait', 'backfilling', 'creating', 'deep', 'degraded', 'forced_backfill', 'forced_recovery', 'peering', 'peered', 'recovering', 'recovery_wait', 'repair', 'scrubbing', 'snaptrim', 'snaptrim_wait']) assert.equal(classifyPG(`active+${state}`).key, 'working')
+for (const state of ['backfill_toofull', 'backfill_unfound', 'down', 'incomplete', 'inconsistent', 'recovery_toofull', 'recovery_unfound', 'remapped', 'snaptrim_error', 'stale', 'undersized']) assert.equal(classifyPG(`active+new_state+${state}`).key, 'warning')
+for (const value of [null, undefined, '', ' ', 0, {}, 'active+new_state', 'clean+scrubbing+new_state', 'active1', 'constructor', 'ACTIVE']) assert.equal(classifyPG(value).key, 'unknown')
+assert.equal(classifyPG(' active + clean + active ').key, 'clean')
+console.log('Native PG categories preserve warning precedence and unknown compound states')
+
 const hostDetailSource = readFileSync(new URL('../src/pages/cluster/HostDetailPage.tsx', import.meta.url), 'utf8')
 const hostDetailTree = ts.createSourceFile('host.tsx', hostDetailSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const hostDetailFn = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HostDetailContent')

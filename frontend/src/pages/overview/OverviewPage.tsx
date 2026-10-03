@@ -22,6 +22,7 @@ import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
+import { pgCategory } from './pgCategory'
 import { message } from '../../utils/appMessage'
 
 const { Text } = Typography
@@ -150,6 +151,7 @@ export function OverviewPage() {
             <Text type="secondary">PG 总数：{data?.overview.placement_groups ? totalPGs : '—'}</Text>
             <AppTable<ApiRecord> size="small" rowKey="name" dataSource={pgStates} pagination={false} columns={[
               { title: '状态', dataIndex: 'name', render: (value) => <Tag>{String(value)}</Tag> },
+              { key: 'category', title: '分类', dataIndex: 'name', filters: [{ text: '正常', value: 'clean' }, { text: '处理中', value: 'working' }, { text: '告警', value: 'warning' }, { text: '未知', value: 'unknown' }], onFilter: (value, row) => pgCategory(row.name).key === value, render: (value) => { const category = pgCategory(value); return <Tag color={category.color}>{category.label}</Tag> } },
               { title: '数量', dataIndex: 'count' },
               { title: '占比', render: (_, row) => <Progress percent={totalPGs ? Math.round((numberValue(row.count) ?? 0) / totalPGs * 1000) / 10 : 0} /> }
             ]} />
