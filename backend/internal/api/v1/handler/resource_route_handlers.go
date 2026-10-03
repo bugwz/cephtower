@@ -669,6 +669,10 @@ func (h *Handler) CreateRGWRole(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_role", "rgw_role.create", "medium")(w, r)
 }
 
+func (h *Handler) SetRGWRoleManagedPolicy(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_role", "rgw_role.managed_policy", "high")(w, r)
+}
+
 func (h *Handler) ListRGWBuckets(w http.ResponseWriter, r *http.Request) {
 	h.ReadResource("rgw_bucket", false)(w, r)
 }

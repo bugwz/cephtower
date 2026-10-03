@@ -10,6 +10,7 @@ import './test-rgw-bucket-replication.mjs'
 import './test-rgw-bucket-notifications.mjs'
 import './test-rgw-bucket-mfa.mjs'
 import './test-rgw-topics.mjs'
+import './test-rgw-role-managed-policy.mjs'
 const helpers = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketMFA.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketNotificationForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)

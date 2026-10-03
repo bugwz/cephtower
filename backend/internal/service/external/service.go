@@ -58,6 +58,7 @@ type httpCredential struct {
 func Supports(action string) bool {
 	switch action {
 	case "silence.create", "silence.delete",
+		"rgw_role.managed_policy",
 		"rgw_bucket.mfa",
 		"rgw_bucket.notification_set",
 		"rgw_topic.policy", "rgw_topic.attribute", "rgw_topic.endpoint", "rgw_topic.option", "rgw_topic.create",
@@ -420,6 +421,8 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		request.Parameters = map[string]any{}
 	}
 	switch {
+	case request.Action == "rgw_role.managed_policy":
+		return s.roleManagedPolicy(ctx, request)
 	case request.Action == "rgw_topic.create":
 		return s.topicCreate(ctx, request)
 	case request.Action == "rgw_topic.policy":

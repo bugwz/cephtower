@@ -7,8 +7,9 @@
 
 ### 已核实的角色托管策略命令缺口
 
-角色托管策略展示已接入，但关联/解除仍未实现，不能将命令帮助中列出的操作直接视为
-本参考版本可用的执行链路。本地参考源码存在以下不一致（静态分析，未做集群复现）：
+角色托管策略关联/解除现已改由经身份核验的原生 IAM 接口实现，未采用下列 CLI 分支。
+不能将命令帮助中列出的操作直接视为本参考版本可用的执行链路。
+本地参考源码存在以下不一致（静态分析，未做集群复现）：
 
 1. `src/rgw/radosgw-admin/radosgw-admin.cc` 的 `ROLE_POLICY_ATTACH`、
    `ROLE_POLICY_DETACH`、`ROLE_POLICY_LIST_ATTACHED` 分支均调用
@@ -20,13 +21,19 @@
 4. `RadosRole::load_by_id` 使用 `info.id` 调用 `rgwrados::role::read_by_id`，
    因此上述分支没有从名称解析出 ID。传入 RoleId 作为 `--role-name` 也不能修复这个构造路径。
 
-据此，暂不增加调用上述命令的写操作按钮，亦不修改只读参考源码或直接写 RGW 元数据绕过
-原生接口。现有角色列表展示使用 `role list` 的 `ManagedPermissionPolicies`，不依赖这三个
-分支。后续需要核实目标 Ceph 版本是否修复此问题，或单独实现经认证的 IAM
-`AttachRolePolicy` / `DetachRolePolicy` 调用（参考 `src/rgw/rgw_rest_iam.cc`）；不能以
-成功返回的模拟执行器测试代替原生链路证据。此缺口仍属于整体迁移的未完成项。
+据此，不调用上述命令，亦不修改只读参考源码或直接写 RGW 元数据绕过原生接口。
+角色列表使用 `role list` 的 `ManagedPermissionPolicies`，写操作使用 IAM
+`AttachRolePolicy` / `DetachRolePolicy`（参考 `src/rgw/rgw_rest_iam.cc`），并限制为
+凭据所属 Account 的角色。原生 IAM 通过 `load_by_name` 加载，不使用问题分支。
+离线测试不能替代真实集群验证；整体迁移仍未完成。
 
 ### 增量实现与验证记录
+
+- **Account 角色托管策略关联/解除完整链路**：新增高风险 `PATCH /rgw/role/managed/policy`，接入操作队列、已有角色锁和列表表单。通过只读用户信息核验永久 S3 Key 属于所填完整 UID、处于 active 且未停用，scope/owner 必须均等于目标 Account；不支持临时会话、子用户密钥或非 Account 角色，不把同名角色视为相同身份。
+  - IAM GetRole 核验准确 RoleId/Arn，ListAttachedRolePolicies 比较完整策略集合，再 Attach/Detach；写后重新读取完整角色字段与策略集合，只允许所选策略变化。所有失败均不自动重试/回滚；使用 HTTPS、不通过有问题的 role policy attach/detach CLI。共享原生凭据归属核验器，不向命令参数或 API 返回密钥。
+  - 前端绑定原行 Account/名称/RoleId/Arn，拒绝过期、身份不完整、重复策略和无变化操作，明确权限变化及外部并发删除/重建角色竞态。参考 `RGWRoleInfo::dump` 在无关联时省略 ManagedPermissionPolicies，表单可据此提交空快照，但必须通过实时 IAM 空列表核验；这不证明完整有效权限。关联策略由目标 Ceph 内置策略支持情况与 IAM 权限最终判定，不修改内联或信任策略。
+  - 补充关联/解除各阶段故障、错误 Account/资源路径/角色 ID/ARN、快照变化、额外策略变动、属性漂移、错误脱敏、不重试、API 高风险和已有角色锁，以及前端实际操作绑定。OpenAPI 已重新生成；真实集群及浏览器视觉验证仍未进行。
+  - 最终 `make test-backend`（含 OpenAPI 一致性）与 `make test-frontend`（含类型检查和生产构建）通过。接口沿用项目分段路径约定；锁与已有角色更新/删除共享，以角色名保守串行化，包括跨 Account 同名角色。
 
 - **角色托管策略 IAM 协议层**：核实 `rgw_rest_iam.cc` 操作注册、`rgw_rest_role.cc::load_role` 的 `load_by_name` 路径及 Attach/Detach/ListAttached 的 Account 限制，新增内部 GetRole、ListAttachedRolePolicies、AttachRolePolicy、DetachRolePolicy 原生请求方法。通过已配置 RGW HTTPS 端点发送表单 POST、Version=2010-05-08、SigV4 `iam` 签名域，沿用会话凭据和禁止重定向策略；原生错误不回显响应内容。
   - 角色读取要求完整字段及准确名称；列表区分空集合与损坏/重复/部分结果，参考版本返回完整列表、不支持此方法的分页，本实现遇到分页字段明确拒绝而非误当完整。写入只接受相应响应根及 RequestId 元数据，不把空响应、其他操作结果或嵌套错误当成功。

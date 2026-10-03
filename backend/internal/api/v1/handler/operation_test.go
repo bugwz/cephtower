@@ -58,6 +58,21 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	if unscoped.Code != http.StatusBadRequest {
 		t.Fatalf("unscoped commit accepted: %d", unscoped.Code)
 	}
+	for _, mode := range []string{"attach", "detach"} {
+		body := fmt.Sprintf(`{"cluster_id":%d,"account_id":"RGW12345678901234567","name":"role","owner_uid":"tenant$user","mode":%q,"policy_arn":"arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess","expected_role_id":"role-id","expected_role_arn":"arn:aws:iam::RGW12345678901234567:role/role","expected_policies":[]}`, cluster.ID, mode)
+		response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/role/managed/policy", body, "role-policy-"+mode)
+		if response.Code != http.StatusAccepted {
+			t.Fatalf("managed policy queue: %d %s", response.Code, response.Body.String())
+		}
+		op, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || op.Action != "rgw_role.managed_policy" || op.Risk != "high" || op.ResourceKey != "rgw/role/RGW12345678901234567/role" || op.LockKey != "role" {
+			t.Fatalf("wrong managed policy operation: %+v %v", op, err)
+		}
+		bad := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/role/managed/policy", strings.Replace(body, `"expected_policies":[]`, `"expected_policies":null`, 1), "bad-role-policy-"+mode)
+		if bad.Code != http.StatusBadRequest {
+			t.Fatal("missing managed policy snapshot accepted")
+		}
+	}
 	for _, scope := range []string{"", "team", "RGW12345678901234567"} {
 		id := base64.RawURLEncoding.EncodeToString([]byte(scope + ":events"))
 		createBody, _ := json.Marshal(map[string]any{"cluster_id": cluster.ID, "topic_id": id, "topic_arn": "arn:aws:sns:zone:" + scope + ":events", "owner_uid": "user", "endpoint_secret": "https://u:create-secret@host/path", "opaque_data": "", "policy": "", "persistent": false, "time_to_live": "None", "max_retries": "None", "retry_sleep_duration": "None", "options": map[string]any{}})

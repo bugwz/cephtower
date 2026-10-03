@@ -165,6 +165,7 @@ var mutationRouteActions = map[string]string{
 	"POST /rgw/realm":                               "rgw_realm.create",
 	"POST /rgw/role":                                "rgw_role.create",
 	"POST /rgw/role/policy":                         "rgw_role.policy",
+	"PATCH /rgw/role/managed/policy":                "rgw_role.managed_policy",
 	"POST /rgw/user":                                "rgw_user.create",
 	"POST /rgw/user/caps":                           "rgw_user.caps",
 	"POST /rgw/user/key":                            "rgw_key.create",
