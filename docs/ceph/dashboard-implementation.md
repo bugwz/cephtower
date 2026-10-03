@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **RGW Topic 非凭据投递参数编辑**：新增 `PATCH /rgw/topic/option` 高风险操作，覆盖原生 SetTopicAttributes 支持的 verify-ssl、use-ssl、cloudevents、ca-location、amqp-exchange、amqp-ack-level、kafka-ack-level、mechanism 八项参数。前端使用已采集的明确值/未设置状态作为快照，重复或隐藏字段不能提交；空值仅允许 CA 路径和 Exchange，并明确它不是删除参数或恢复默认。
+  - 提交前读取 SNS 完整属性，核验范围与快照，再精确模拟 `replace_str` 的首个子串匹配。只有首个匹配位于完整目标键边界且原始键可匹配时才允许替换；键名出现在密码/其他键值、编码键或重复键时拒绝，避免原生误改其他参数。新值限制为不会注入分隔符的协议值，原始秘密参数串只在内存中处理。
+  - 写后比较完整 EndpointArgs 与模拟结果，并比较其他全部 Topic/EndPoint 属性，保留 URL、凭据、未知参数与 Policy。前端提示 TLS/证书校验、投递可靠性、非原子快照及部分生效风险；失败不自动回滚/重试，回读不证明当前协议适用或消息送达。
+  - 增加八项参数、三类 scope、未设置/已有值/空值、编码和子串冲突、各阶段失败、其他字段修改、API 高风险锁与前端绑定回归。无真实集群或浏览器视觉验证。用户名/密码独立编辑、原生不支持 SetTopicAttributes 的三项只读参数、Topic 创建及桶通知规则仍未完成。
+
 - **RGW Topic 投递协议参数安全展示**：原生 `push_endpoint_args` 不再只能整体隐藏；采集后仅投影 11 个已识别的非凭据参数到 `endpoint_options`，通过现有 Topic API 和详情展示 verify-ssl/use-ssl、CloudEvents、CA 路径、AMQP 版本/Exchange/确认级别、HTTP/Kafka 确认级别、Kafka SASL 机制和 Brokers。用户名、密码、未知参数与原始参数串仍不入库。Brokers 中的凭据式内容及不符合安全展示规则的值不返回原文。
   - 依据 `RGWHTTPArgs::parse`，先按 `&` 分段，对整个段进行 query 解码，再拆首个 `=`，不误用先拆键值的通用 query 解析器。保留明确 false、空字符串，区分 unset、returned、duplicate、hidden_invalid；原始字段缺失与损坏分别记录 unavailable/malformed，无法完整解析时不输出部分结果来冒充完整配置。未知/未设置不推断协议默认或有效状态。
   - 对照 `driver/rados/rgw_pubsub_push.cc` 标注 HTTP ack-level 当前未用于发送结果判定；显示配置不代表适用于当前协议或成功投递。新增解析、脱敏、缺失/重复/编码边界、采集入库到 API 和前端详情回归。无真实集群或浏览器视觉验证。

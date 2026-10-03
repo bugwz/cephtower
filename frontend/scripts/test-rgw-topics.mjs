@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 const api = {}
+new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicOption.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api,()=>api)
 new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicPolicy.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api)
 new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicAttribute.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api,()=>api)
 new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwTopicEndpoint.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(api,()=>api)
@@ -70,6 +71,23 @@ for (const scope of ['', 'team', 'RGW12345678901234567']) {
   for (const change of [{stale:true},{natural_key:'other'},{metadata_version:null},{metadata_key:'other:events'},{scope:undefined}]) assert.throws(()=>action.buildBody({...row,...change},42))
 }
 const navigation = readFileSync(new URL('../src/navigation.ts',import.meta.url),'utf8')
+for (const scope of ['', 'team', 'RGW12345678901234567']) {
+  const row={scope,name:'events',metadata_key:`${scope}:events`,natural_key:Buffer.from(`${scope}:events`).toString('base64url'),arn:`arn:aws:sns:default:${scope}:events`,endpoint_options_status:'parsed',endpoint_options:api.topicWritableOptions.map(item=>({name:item.value,status:'unset'}))}
+  const action=definition.extraActions[3], initial=action.initialValues(row)
+  assert.equal(action.path,'/rgw/topic/option')
+  assert.equal(action.method,'PATCH')
+  for (const [option,value] of Object.entries({'verify-ssl':'false','use-ssl':'true',cloudevents:'true','ca-location':'/etc/ca.pem','amqp-exchange':'events','amqp-ack-level':'routable','kafka-ack-level':'none',mechanism:'SCRAM-SHA-256'})) {
+    const values={...initial,option,value,value_mode:'set',confirm_option:'acknowledged'}
+    assert.deepEqual(action.buildBody(values,42,row),{cluster_id:42,...initial,option,value,expected_status:'unset',expected_value:''})
+    for (const status of ['duplicate','hidden_invalid']) assert.throws(()=>action.buildBody(values,42,{...row,endpoint_options:[{name:option,status}]}))
+    assert.throws(()=>action.buildBody(values,42,{...row,endpoint_options:[{name:option,status:'returned',value}]}))
+    assert.throws(()=>action.buildBody({...values,confirm_option:undefined},42,row))
+    assert.throws(()=>action.buildBody(values,42,{...row,stale:true}))
+    for (const warning of ['TLS','空值不等于','原生子串','原子锁','回滚']) assert.ok(action.confirmation(values,row).includes(warning))
+  }
+  assert.equal(action.buildBody({...initial,option:'amqp-exchange',value_mode:'empty',confirm_option:'acknowledged'},42,row).value,'')
+  for (const [option,value] of [['password','secret'],['kafka-brokers','host'],['ca-location','/path&password=secret'],['verify-ssl','1'],['mechanism','other'],['amqp-exchange','a%26b']]) assert.throws(()=>action.buildBody({...initial,option,value,value_mode:'set',confirm_option:'acknowledged'},42,row))
+}
 for (const scope of ['', 'team', 'RGW12345678901234567']) {
   const row = {scope,name:'events',metadata_key:`${scope}:events`,natural_key:Buffer.from(`${scope}:events`).toString('base64url'),arn:`arn:aws:sns:default:${scope}:events`,push_endpoint:'https://old/path',endpoint_redacted:true,stored_secret:true}
   const action = definition.extraActions[2]

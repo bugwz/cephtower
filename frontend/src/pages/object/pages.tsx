@@ -4,6 +4,7 @@ import { topicDeleteBlocked, topicDeleteInput, topicDeleteConfirmation } from '.
 import { topicPolicyBlocked, topicPolicyInitial, topicPolicyInput, topicPolicyConfirmation } from './rgwTopicPolicy'
 import { topicAttributeOptions, topicAttributeBlocked, topicAttributeInitial, topicAttributeInput, topicAttributeConfirmation } from './rgwTopicAttribute'
 import { topicEndpointBlocked, topicEndpointInitial, topicEndpointInput, topicEndpointConfirmation } from './rgwTopicEndpoint'
+import { topicWritableOptions, topicOptionBlocked, topicOptionInitial, topicOptionInput, topicOptionConfirmation } from './rgwTopicOption'
 import { bucketReplicationFormBlocked, bucketReplicationFormInitial, bucketReplicationFormInput, bucketReplicationFormConfirmation } from './rgwBucketReplicationForm'
 import { useClusterContext } from '../../state/ClusterContext'
 import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
@@ -567,6 +568,18 @@ const definitions: Record<
         { name: 'confirm_endpoint', label: '影响确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已保存完整配置，确认目标可信、传输安全、保留参数及队列风险' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...topicEndpointInput(values, row) })
+    }, {
+      title: '修改 Topic 投递参数', buttonLabel: '修改协议参数', path: '/rgw/topic/option', method: 'PATCH',
+      successMessage: 'Topic 投递参数已回读核验（不代表实际投递成功）',
+      disabledWhen: topicOptionBlocked, initialValues: topicOptionInitial, confirmation: topicOptionConfirmation,
+      fields: [
+        {name:'topic_id',label:'Topic ID（不可更改）',readOnly:true}, {name:'topic_arn',label:'Topic ARN（不可更改）',readOnly:true},
+        {name:'option',label:'单次修改参数（当前状态见详情）',type:'select',required:true,options:topicWritableOptions},
+        {name:'value_mode',label:'赋值方式',type:'select',required:true,options:[{value:'set',label:'设置指定值'},{value:'empty',label:'显式空值（仅 CA / Exchange，不是删除）'}]},
+        {name:'value',label:'新值（SASL: PLAIN / SCRAM-SHA-256 / SCRAM-SHA-512 / GSSAPI / OAUTHBEARER）'},
+        {name:'confirm_option',label:'影响确认',type:'select',required:true,options:[{value:'acknowledged',label:'确认当前协议支持此值，理解 TLS、认证及投递可靠性风险'}]}
+      ],
+      buildBody:(values,clusterId,row)=>({cluster_id:clusterId,...topicOptionInput(values,row)})
     }],
     deleteAction: {
       title: '删除 RGW 通知目标', path: '/rgw/topic', action: 'rgw_topic.delete', resourceKind: 'rgw_topic', risk: 'high',

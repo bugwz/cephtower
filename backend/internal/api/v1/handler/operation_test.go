@@ -99,6 +99,19 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		if attributeInvalid.Code != http.StatusBadRequest {
 			t.Fatalf("unsupported attribute accepted: %d", attributeInvalid.Code)
 		}
+		optionBody := fmt.Sprintf(`{"cluster_id":%d,"topic_id":%q,"topic_arn":%q,"option":"verify-ssl","value":"false","expected_status":"unset","expected_value":""}`, cluster.ID, id, "arn:aws:sns:default:"+scope+":events")
+		optionResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/topic/option", optionBody, "topic-option-"+scope)
+		if optionResponse.Code != http.StatusAccepted {
+			t.Fatalf("option queue: %d", optionResponse.Code)
+		}
+		optionOp, err := db.FindOperation(context.Background(), operationIDFromResponse(t, optionResponse))
+		if err != nil || optionOp.Action != "rgw_topic.option" || optionOp.Risk != "high" || optionOp.ResourceKey != op.ResourceKey || optionOp.LockKey != op.LockKey {
+			t.Fatal("wrong option operation")
+		}
+		optionInvalid := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/topic/option", strings.Replace(optionBody, `"verify-ssl"`, `"password"`, 1), "topic-option-invalid-"+scope)
+		if optionInvalid.Code != http.StatusBadRequest {
+			t.Fatal("credential option allowed")
+		}
 		endpointBody := fmt.Sprintf(`{"cluster_id":%d,"topic_id":%q,"topic_arn":%q,"expected_endpoint":"https://old/path","expected_redacted":false,"expected_stored_secret":false,"endpoint_secret":"amqps://user:private-password@broker/vhost"}`, cluster.ID, id, "arn:aws:sns:default:"+scope+":events")
 		endpointResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/topic/endpoint", endpointBody, "topic-endpoint-"+scope)
 		if endpointResponse.Code != http.StatusAccepted || strings.Contains(endpointResponse.Body.String(), "private-password") {
