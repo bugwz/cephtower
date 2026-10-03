@@ -933,7 +933,7 @@ export function PoolManagementPage() {
             </Form.Item>
             <Form.Item
               name="crush_num_failure_domains"
-              label={<HelpLabel label="CRUSH 故障域数量" title="要映射的故障域数量。与每故障域 OSD 数配合使用时会创建 CRUSH MSR 规则。" />}
+              label={<HelpLabel label="CRUSH 故障域数量" title="要映射的故障域数量。仅当每故障域 OSD 数大于 1 时使用 MSR，并要求此数量至少为 1。" />}
               dependencies={['crush_osds_per_failure_domain', 'crush_failure_domain', 'crush_root', 'crush_device_class']}
               rules={[ecFailureDomainCountRule(erasureCodeTopology)]}
             >
@@ -1370,8 +1370,8 @@ function ecFailureDomainCountRule(counts: Record<string, number>) {
       if (count < 0) {
         return Promise.reject(new Error('CRUSH 故障域数量不能小于 0'))
       }
-      if (osdsPerDomain > 0 && count < 1) {
-        return Promise.reject(new Error('设置每故障域 OSD 数时必须指定 CRUSH 故障域数量'))
+      if (osdsPerDomain > 1 && count < 1) {
+        return Promise.reject(new Error('每故障域 OSD 数大于 1 时必须指定 CRUSH 故障域数量'))
       }
       const failureDomain = textValue(getFieldValue('crush_failure_domain'), 'host')
       const available = counts[failureDomain] ?? 0
@@ -1383,15 +1383,11 @@ function ecFailureDomainCountRule(counts: Record<string, number>) {
   })
 }
 
-const ecOSDsPerFailureDomainRule = ({ getFieldValue }: { getFieldValue: (name: keyof ErasureCodeProfileFormValues) => unknown }) => ({
+const ecOSDsPerFailureDomainRule = () => ({
   validator(_: unknown, value: unknown) {
     const count = numberValue(value) ?? 0
-    const failureDomains = numberValue(getFieldValue('crush_num_failure_domains')) ?? 0
     if (count < 0) {
       return Promise.reject(new Error('每故障域 OSD 数不能小于 0'))
-    }
-    if (failureDomains > 0 && count < 1) {
-      return Promise.reject(new Error('设置 CRUSH 故障域数量时必须指定每故障域 OSD 数'))
     }
     return Promise.resolve()
   }

@@ -157,6 +157,21 @@ await validateSHEC(16, 4, undefined, 'isa')
 assert.equal((poolSource.match(/lrcGroupingRule,\s+shecParameterRule/g) ?? []).length, 2)
 assert.ok(poolSource.includes("dependencies={['k', 'm', 'plugin']} rules={[shecParameterRule]}"))
 console.log('SHEC native parameter boundaries and plugin isolation checks passed')
+const domainRuleNode = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ecFailureDomainCountRule')
+const osdsRuleNode = poolTree.statements.find((node) => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(poolTree) === 'ecOSDsPerFailureDomainRule')
+const msrCode = ts.transpileModule(domainRuleNode.getText(poolTree) + '\n' + osdsRuleNode.getText(poolTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const msrRules = new Function('numberValue', 'textValue', `${msrCode}; return { domains: ecFailureDomainCountRule, osds: ecOSDsPerFailureDomainRule }`)((value) => typeof value === 'number' ? value : undefined, (value, fallback) => value ?? fallback)
+for (const perDomain of [undefined, 0, 1]) {
+  const validator = msrRules.domains({ host: 3 })({ getFieldValue: (name) => name === 'crush_osds_per_failure_domain' ? perDomain : 'host' }).validator
+  await validator(null, 0)
+  await validator(null, 3)
+  await msrRules.osds().validator(null, perDomain)
+}
+const msrDomainValidator = msrRules.domains({ host: 3 })({ getFieldValue: (name) => name === 'crush_osds_per_failure_domain' ? 2 : 'host' }).validator
+for (const value of [undefined, 0, -1, 4]) await assert.rejects(msrDomainValidator(null, value))
+await msrDomainValidator(null, 3)
+await assert.rejects(msrRules.osds().validator(null, -1))
+console.log('Native simple-rule and MSR parameter activation checks passed')
 const adjustmentFn = poolTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'poolPGAdjustment')
 const adjustmentCode = ts.transpileModule(adjustmentFn.getText(poolTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const adjustment = new Function(`${adjustmentCode}; return poolPGAdjustment`)()
