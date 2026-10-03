@@ -23,6 +23,22 @@ for (const failed of ['none', 'device', 'smart', 'both']) {
   assert.equal(result.host.hostname, 'node1')
 }
 console.log('Host diagnostic failures remain distinct from empty responses')
+const smartNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'normalizeSMARTData')
+const smartCode = ts.transpileModule(smartNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const normalizeSmart = new Function('isRecord', 'textValue', 'numberValue', 'formatTemperature', 'formatHours', 'formatWear', `${smartCode}; return normalizeSMARTData`)(
+  (v) => v !== null && typeof v === 'object' && !Array.isArray(v), (v, fallback) => v ?? fallback,
+  (v) => typeof v === 'number' ? v : undefined, (v) => v, (v) => v, (v) => v)
+const smartRows = normalizeSmart({ disk1: { smart_status: { passed: true } }, disk2: { error: 'unsupported device', smartctl_error_code: -22 }, disk3: { error: '', smart_status: { passed: true } }, disk4: null, disk5: { smart_status: { passed: false } } })
+assert.equal(smartRows.length, 5)
+assert.equal(smartRows[0].health_display, 'good')
+assert.equal(smartRows[1].health_display, 'unavailable')
+assert.equal(smartRows[1].smartctl_error_code, -22)
+assert.equal(smartRows[1].error_display, 'unsupported device')
+assert.equal(smartRows[2].health_display, 'unavailable')
+assert.equal(smartRows[3].health_display, 'unavailable')
+assert.equal(smartRows[4].health_display, 'bad')
+assert.deepEqual(normalizeSmart({}), [])
+console.log('Per-device SMART failures remain visible with unknown health')
 
 const hardwareSource = readFileSync(new URL('../src/pages/cluster/HostHardware.tsx', import.meta.url), 'utf8')
 const hardwareTree = ts.createSourceFile('hardware.tsx', hardwareSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)

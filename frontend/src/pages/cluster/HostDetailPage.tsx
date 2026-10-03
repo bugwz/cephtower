@@ -509,6 +509,8 @@ function HostDeviceHealthPanel({ devices }: { devices: ApiRecord[] }) {
         { key: 'name_display', title: '设备' },
         { key: 'serial_display', title: '序列号' },
         { key: 'health_display', title: 'SMART 状态', render: (value) => renderDeviceHealth(value) },
+        { key: 'error_display', title: '读取错误', ellipsis: false },
+        { key: 'smartctl_error_code', title: 'smartctl 错误码' },
         { key: 'temperature_display', title: '温度' },
         { key: 'power_on_hours_display', title: '通电时间' },
         { key: 'wear_level_display', title: '磨损程度' }
@@ -574,9 +576,14 @@ function normalizeInventoryDeviceRow(row: ApiRecord, deviceInfo: ApiRecord[]): A
 }
 
 function normalizeSMARTData(value: ApiRecord): ApiRecord[] {
-  return Object.entries(value).flatMap(([deviceID, raw]) => {
-    if (!isRecord(raw) || raw.error) {
-      return []
+  return Object.entries(value).flatMap<ApiRecord>(([deviceID, raw]) => {
+    if (!isRecord(raw) || Object.prototype.hasOwnProperty.call(raw, 'error')) {
+      const error = isRecord(raw) ? raw.error : '设备 SMART 响应格式无效'
+      return [{
+        device_id: deviceID, name_display: deviceID, health_display: 'unavailable',
+        error_display: typeof error === 'string' && error.trim() ? error : '设备 SMART 读取失败，未返回有效错误说明',
+        smartctl_error_code: isRecord(raw) ? raw.smartctl_error_code : undefined,
+      }]
     }
     const smartStatus = isRecord(raw.smart_status) ? raw.smart_status : {}
     const device = isRecord(raw.device) ? raw.device : {}
@@ -606,7 +613,8 @@ function renderDeviceHealth(value: unknown) {
     bad: { label: '异常', color: 'error' },
     failed: { label: '异常', color: 'error' },
     stale: { label: '数据过期', color: 'processing' },
-    unknown: { label: '未知', color: 'default' }
+    unknown: { label: '未知', color: 'default' },
+    unavailable: { label: '读取失败（健康未知）', color: 'error' }
   }
   const item = mapping[status] ?? { label: textValue(value), color: 'default' }
   return <Tag color={item.color}>{item.label}</Tag>
