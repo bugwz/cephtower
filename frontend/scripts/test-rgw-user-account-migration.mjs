@@ -22,7 +22,11 @@ function visit(value) {
 visit(source)
 assert.ok(node)
 const code = ts.transpileModule(`const action = ${node.getText(source)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-const action = new Function('rgwUserAccountMigrationBlocked', 'rgwUserAccountMigrationInput', 'userId', `${code}; return action`)(helpers.rgwUserAccountMigrationBlocked, helpers.rgwUserAccountMigrationInput, row => row.uid)
+const optionsLoader = async () => []
+const action = new Function('rgwUserAccountMigrationBlocked', 'rgwUserAccountMigrationInput', 'userId', 'loadRgwMigrationAccountOptions', `${code}; return action`)(helpers.rgwUserAccountMigrationBlocked, helpers.rgwUserAccountMigrationInput, row => row.uid, optionsLoader)
+const targetField = action.fields.find(field => field.name === 'target_account_id')
+assert.equal(targetField.type, 'select')
+assert.equal(targetField.optionsLoader, optionsLoader)
 assert.deepEqual(action.buildBody(values, 7, row), { cluster_id: 7, uid: row.uid, ...values })
 const confirmation = action.confirmation(values, row)
 for (const text of [row.uid, values.target_account_id, '不可逆', 'Bucket', '部分', '不能直接重试']) assert.ok(confirmation.includes(text))

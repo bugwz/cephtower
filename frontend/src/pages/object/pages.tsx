@@ -34,6 +34,7 @@ import { RgwUserDetails } from './RgwUserDetails'
 import { rgwUserOperationMaskInput, rgwUserOperationMaskOptions } from './rgwUserOperationMask'
 import { rgwUserAccountRootBlocked, rgwUserAccountRootInput } from './rgwUserAccountRoot'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
+import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { rgwUserPlacementInput, rgwUserPlacementTagsInput } from './rgwUserPlacementForm'
 
 export function RgwOverviewPage() {
@@ -179,7 +180,7 @@ const definitions: Record<
       { title: '迁入账户（不可逆）', path: '/rgw/user', method: 'PATCH', successMessage: '迁入命令完成且用户账户归属已确认，请检查 Bucket 归属及访问策略',
         disabledWhen: rgwUserAccountMigrationBlocked,
         fields: [
-          { name: 'target_account_id', label: '目标账户 ID（必须与用户租户一致）', required: true },
+          { name: 'target_account_id', label: '目标账户（同租户库存；无选项时请先采集账户）', type: 'select', required: true, optionsLoader: loadRgwMigrationAccountOptions },
           { name: 'migration_confirm_uid', label: '输入完整用户 UID，确认转移用户及其 Bucket 归属，且不能迁出账户', required: true }
         ],
         confirmation: (values, row) => {
