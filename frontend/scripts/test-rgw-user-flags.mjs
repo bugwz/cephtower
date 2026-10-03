@@ -21,8 +21,23 @@ for (const value of [null, undefined, 0, false, []]) assert.equal(identity.rgwId
 assert.deepEqual(identity.rgwIdentityList([]), [])
 assert.deepEqual(identity.rgwIdentityList(['mfa:one', 'group,id']), ['mfa:one', 'group,id'])
 for (const value of [null, undefined, {}, [null], [''], [1]]) assert.equal(identity.rgwIdentityList(value), undefined)
-assert.ok(pages.includes('<RgwUserIdentityDetails row={row} />'))
-assert.ok(pages.includes('<RgwUserPlacementDetails row={row} />'))
+const userDetailsSource = readFileSync(new URL('../src/pages/object/RgwUserDetails.tsx', import.meta.url), 'utf8')
+assert.ok(pages.includes('detailContent: (row) => <RgwUserDetails row={row} />'))
+const userDetailsExports = {}
+new Function('exports', 'require', ts.transpileModule(userDetailsSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(userDetailsExports, (name) => {
+  if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }) }
+  if (name === 'antd') return { Tabs: 'Tabs' }
+  if (name === './RgwUserIdentityDetails') return { RgwUserIdentityDetails: 'Identity', RgwUserPlacementDetails: 'Placement' }
+  throw new Error(`unexpected import ${name}`)
+})
+for (const row of [{}, { uid: 'tenant$user', account_id: 'RGW123', tags: [], placement_tags: ['archive'] }]) {
+  const view = userDetailsExports.RgwUserDetails({ row })
+  assert.equal(view.type, 'Tabs')
+  assert.deepEqual(view.props.items.map(item => item.key), ['identity', 'placement'])
+  assert.equal(view.props.items[0].children.type, 'Identity')
+  assert.equal(view.props.items[1].children.type, 'Placement')
+  for (const item of view.props.items) assert.equal(item.children.props.row, row)
+}
 const components = readFileSync(new URL('../src/pages/object/RgwUserIdentityDetails.tsx', import.meta.url), 'utf8')
 assert.ok(components.includes("rgwIdentityText(row.default_placement, '未显式设置')"))
 assert.ok(components.includes("rgwIdentityText(row.default_storage_class, '未显式设置')"))

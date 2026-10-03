@@ -32,7 +32,7 @@ import { rgwRoleInitial, rgwRolePatch } from './rgwRoleEdit'
 import { RgwRoleTagsTable } from './RgwRoleTagsTable'
 import { RgwPolicyDocument, RgwRolePolicyDetails, RgwRoleManagedPolicies } from './RgwRolePolicyDetails'
 import { rgwPolicyChanged, rgwPolicyConfirmation, rgwPolicyDeleteOptions, rgwPolicyMutation } from './rgwRolePolicies'
-import { RgwUserIdentityDetails, RgwUserPlacementDetails } from './RgwUserIdentityDetails'
+import { RgwUserDetails } from './RgwUserDetails'
 
 export function RgwOverviewPage() {
   return <ResourceListPage definition={definitions.rgwOverview} />
@@ -109,6 +109,7 @@ const definitions: Record<
   rgwUsers: {
     title: 'RGW 用户',
     path: '/rgw/users',
+    detailContent: (row) => <RgwUserDetails row={row} />,
     requiredCapabilities: ['rgw_admin'],
     rowKeyCandidates: ['natural_key', 'uid', 'user_id'],
     createAction: {
@@ -216,8 +217,6 @@ const definitions: Record<
     },
     columns: [
       { key: 'uid', title: 'UID' },
-      { key: 'user_identity', title: '身份与归属', ellipsis: false, render: (_value, row) => <RgwUserIdentityDetails row={row} /> },
-      { key: 'user_placement', title: '用户放置配置', ellipsis: false, render: (_value, row) => <RgwUserPlacementDetails row={row} /> },
       { key: 'display_name', title: '显示名' },
       { key: 'email', title: '邮箱' },
       { key: 'max_buckets', title: '最大 Bucket 数', render: rgwBucketLimit },
