@@ -259,7 +259,7 @@ func routeParameters(route router.Route) []parameterSpec {
 		result = append(result, parameterSpec{Name: "metric_id", In: "query", Type: "string", Required: true}, parameterSpec{Name: "start", In: "query", Type: "string", Format: "date-time", Required: true}, parameterSpec{Name: "end", In: "query", Type: "string", Format: "date-time", Required: true}, parameterSpec{Name: "step", In: "query", Type: "string", Required: true})
 	case "/rgw/bucket/policy":
 		if route.Method == "GET" {
-			result = append(result, parameterSpec{Name: "kind", In: "query", Type: "string", Enum: []string{"policy", "cors", "lifecycle", "encryption", "versioning", "tagging", "object-lock", "acl", "replication"}})
+			result = append(result, parameterSpec{Name: "kind", In: "query", Type: "string", Enum: []string{"policy", "cors", "lifecycle", "encryption", "versioning", "tagging", "object-lock", "acl", "replication", "notification"}})
 		}
 	}
 	return result
@@ -893,10 +893,33 @@ const components = `components:
       required: [bucket_id, kind, configured, document, content_type]
       properties:
         bucket_id: {type: string}
-        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning, tagging, object-lock, acl, replication]}
+        kind: {type: string, enum: [policy, cors, lifecycle, encryption, versioning, tagging, object-lock, acl, replication, notification]}
         configured: {type: boolean}
         document: {type: string, nullable: true}
         content_type: {type: string, nullable: true}
+        notifications:
+          type: array
+          description: Native notification rules; an empty array is a successful empty configuration, not a read failure.
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, topic, events, filters]
+            properties:
+              id: {type: string}
+              topic: {type: string}
+              events:
+                type: array
+                items: {type: string}
+              filters:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [kind, name, value]
+                  properties:
+                    kind: {type: string, enum: [S3Key, S3Metadata, S3Tags]}
+                    name: {type: string}
+                    value: {type: string}
         replication:
           type: object
           nullable: true

@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **RGW Bucket 事件通知读取与展示**：对照参考 `rgw-notification-form`、`notification-configuration.model.ts`、`RGWPSListNotifsOp`、`rgw_pubsub_s3_notification::dump_xml` 和 `rgw_s3_filter.cc`，通过现有集群 S3 端点和 SigV4 请求 `GET /<tenant>:<bucket>?notification=`，由 `GET /rgw/bucket/policy?kind=notification` 返回完整 XML 与结构化 `notifications`。无需部署 Dashboard 服务或读取含投递凭据的 Topic 元数据。
+  - Bucket 配置页新增事件通知选项及规则表，展示 ID、目标 Topic ARN、原生事件列表和 S3Key/S3Metadata/S3Tags 过滤名称与值。保留重复 ID、未知事件、未知过滤名称、顺序、空值与空格；不执行正则、不推断默认事件、过滤组合语义、Topic 存在性或消息投递结果。
+  - 成功空配置返回非 null 空数组并显示无规则；404、权限失败、服务失败和畸形/歧义 XML 不冒充空配置。完整文档保留，结构化解析拒绝未知容器、重复单值字段、缺失身份字段和嵌套标量。补充签名路径、租户范围、服务读取、OpenAPI 只读边界和前端实际列绑定回归。
+  - 原生 `RGWPSCreateNotifOp::execute_v2` 对非空 PUT 合并已有规则，并非完整替换；空 PUT 删除全部规则。此增量仅开放读取，未复用通用配置编辑/删除。`make test-backend`（含 OpenAPI 一致性）及 `make test-frontend`（含生产构建）通过。通知创建、编辑、删除需独立操作链路继续实现；无真实集群及浏览器视觉验证。
+
 - **RGW Topic 创建与凭据命名空间核验**：新增 `POST /rgw/topic` 高风险操作和创建表单，覆盖名称、完整推送 URL、持久化、TTL/重试、Opaque Data、Policy 以及 11 项已支持的非凭据投递参数。仍使用 SNS CreateTopic 原生协议，不直接写元数据。完整 URL 为 writeOnly 敏感字段，操作参数加密保存，确认和错误不回显秘密。
   - 创建前通过只读 `radosgw-admin user info --uid=<完整 UID> --format json`，在后端内存核验所配置永久 Access/Secret Key、唯一键、active、未停用用户及完整 UID；命令参数不传入 Access/Secret Key。非 Account 使用 tenant 作为范围、UID 作为 Owner；Account 使用 account_id 作为范围和 Owner。依据原生 ListBuckets 返回用户 UID 而非 Account Owner 的源码，不用它猜测 SNS 命名空间。临时会话和子用户密钥尚不支持创建，明确拒绝。
   - 对准确 ARN 执行 GetTopicAttributes，只接受完整 ErrorResponse/Error/Code=NotFound 且 HTTP 404 的原生响应；已有对象、权限失败、未知或重复错误码不当作不存在。随后 CreateTopic，核验返回 ARN，再比较完整 Owner、名称、Policy、Opaque Data、EndPoint、持久化、默认数值和原生剩余参数串。按源码保留 Version 参数及排序，None 映射为 -1 默认哨兵。失败不自动重试/删除回滚。

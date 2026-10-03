@@ -83,6 +83,7 @@ import { rgwBucketConfigurationReadOptions } from './rgwBucketConfiguration'
 import { rgwBucketObjectLockSummary } from './rgwBucketObjectLockSummary'
 import { RgwBucketAcl } from './RgwBucketAcl'
 import { RgwBucketReplication } from './RgwBucketReplication'
+import { RgwBucketNotifications } from './RgwBucketNotifications'
 import { bucketAclOptions, bucketAclFormBlocked, bucketAclFormInitial, bucketAclFormInput, bucketAclFormConfirmation } from './rgwBucketAclForm'
 import { objectLockFormInitial, objectLockFormBlocked, objectLockFormInput, objectLockFormConfirmation } from './rgwBucketObjectLockForm'
 import { RgwBucketLifecycleEditor } from './RgwBucketLifecycleEditor'
@@ -1463,6 +1464,7 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       { key: 'object_lock', title: '对象锁默认保留', ellipsis: false, render: rgwBucketObjectLockSummary },
       { key: 'acl', title: 'ACL 访问控制', ellipsis: false, render: (value, row) => row.kind === 'acl' ? <RgwBucketAcl value={value} configured={row.configured} /> : '—' },
       { key: 'replication', title: 'S3 复制规则', ellipsis: false, render: (value, row) => row.kind === 'replication' ? <RgwBucketReplication value={value} configured={row.configured} /> : '—' },
+      { key: 'notifications', title: '事件通知规则', ellipsis: false, render: (value, row) => row.kind === 'notification' ? <RgwBucketNotifications value={value} configured={row.configured} /> : '—' },
       { key: 'cors_rules', title: 'CORS 规则', ellipsis: false, render: (value, row) => row.kind === 'cors' ? <RgwBucketCorsRules value={value} configured={row.configured} /> : '—' },
       { key: 'lifecycle_rules', title: '生命周期规则', ellipsis: false, render: (value, row) => row.kind === 'lifecycle' ? <RgwBucketLifecycleRules value={value} configured={row.configured} /> : '—' },
       { key: 'content_type', title: '响应类型' },

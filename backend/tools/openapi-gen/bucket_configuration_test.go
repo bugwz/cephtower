@@ -48,6 +48,28 @@ func TestBucketACLIsReadOnlyInContract(t *testing.T) {
 	}
 }
 
+func TestBucketNotificationsReadContract(t *testing.T) {
+	found := false
+	for _, parameter := range routeParameters(router.Route{Method: "GET", Path: "/rgw/bucket/policy"}) {
+		if parameter.Name == "kind" {
+			for _, value := range parameter.Enum {
+				found = found || value == "notification"
+			}
+		}
+	}
+	if !found {
+		t.Fatal("notification query missing")
+	}
+	for _, method := range []string{"PATCH", "DELETE"} {
+		schema, _ := requestSchema(router.Route{Method: method, Path: "/rgw/bucket/policy"})
+		for _, value := range schema.Fields["kind"].Enum {
+			if value == "notification" {
+				t.Fatal("native notification merge semantics must not use generic configuration writes")
+			}
+		}
+	}
+}
+
 func TestBucketReplicationReadContract(t *testing.T) {
 	found := false
 	for _, parameter := range routeParameters(router.Route{Method: "GET", Path: "/rgw/bucket/policy"}) {

@@ -327,6 +327,13 @@ func (s *Service) readBucketPolicy(ctx context.Context, clusterID uint64, key st
 		return nil, failure("s3_failed", err.Error(), true)
 	}
 	row := map[string]any{"bucket_id": key, "kind": kind, "configured": true, "document": string(body), "content_type": contentType}
+	if kind == "notification" {
+		rules, err := s3.BucketNotifications(body)
+		if err != nil {
+			return nil, failure("s3_failed", err.Error(), false)
+		}
+		row["notifications"] = rules
+	}
 	if kind == "replication" {
 		configuration, err := s3.BucketReplication(body)
 		if err != nil {

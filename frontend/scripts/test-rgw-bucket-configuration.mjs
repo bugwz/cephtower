@@ -7,6 +7,7 @@ import './test-rgw-bucket-lifecycle.mjs'
 import './test-rgw-bucket-lifecycle-form.mjs'
 import './test-rgw-bucket-acl.mjs'
 import './test-rgw-bucket-replication.mjs'
+import './test-rgw-bucket-notifications.mjs'
 import './test-rgw-topics.mjs'
 const helpers = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketReplicationForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
@@ -187,7 +188,7 @@ assert.ok(tagAction.confirmation(tagValues, tagRow).includes('整体替换'))
 assert.equal(typeof tagAction.fields.find(field => field.name === 'tag_set').renderControl, 'function')
 assert.equal(definition.buildQuery({ kind: 'cors' }).toString(), 'kind=cors')
 assert.deepEqual(definition.filterFields.find(field => field.name === 'kind').options, helpers.rgwBucketConfigurationReadOptions)
-assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'encryption', 'object_lock', 'acl', 'replication', 'cors_rules', 'lifecycle_rules', 'content_type', 'document'])
+assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'tags', 'encryption', 'object_lock', 'acl', 'replication', 'notifications', 'cors_rules', 'lifecycle_rules', 'content_type', 'document'])
 const readonlyReplication = { bucket_id: 'AGJ1Y2tldA', kind: 'replication', configured: true, document: '<ReplicationConfiguration/>' }
 assert.ok(helpers.rgwBucketConfigurationEditBlocked(readonlyReplication))
 assert.ok(helpers.rgwBucketConfigurationDeleteBlocked(readonlyReplication))
