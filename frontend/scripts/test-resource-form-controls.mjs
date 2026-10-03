@@ -183,6 +183,38 @@ for (const payload of [{}, { scheduled_images: null, observed_at: 'now' }, { sch
 assert.ok(blockSource.includes('key={`status/${selectedClusterId}/${scheduleRevision}`}'))
 console.log('Live pending mirror tasks preserve native times, repeated images and isolated scope')
 const resourceFn = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ResourceListPage')
+const deleteNode = resourceFn.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'deleteRow')
+const deleteCode = ts.transpileModule(deleteNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const risk of ['high', 'medium']) for (const phase of ['current', 'confirm-switch', 'confirm-return', 'unmount', 'result-switch', 'refresh-switch']) {
+  let confirmation, writes = 0, notices = 0, refreshes = 0
+  const currentClusterId = { current: 7 }, clusterGeneration = { current: 0 }
+  const switchScope = () => { currentClusterId.current = 9; clusterGeneration.current++ }
+  const env = {
+    selectedClusterId: 7, currentClusterId, clusterGeneration, mutationBlocked: false,
+    definition: { deleteAction: { risk, path: '/rbd/image/snapshot', resourceKey: () => 'snapshot', buildBody: () => ({ cluster_id: 7 }) } },
+    message: { success() { notices++ }, warning() {}, error() {} },
+    Modal: { confirm(options) { confirmation = options } },
+    operationMutation: { run: async (fn) => { const result = await fn(); if (phase === 'result-switch') switchScope(); return result } },
+    mutateResource: async (path, method, body, options) => {
+      writes++; assert.equal(method, 'DELETE'); assert.equal(body.cluster_id, 7)
+      assert.deepEqual(options, risk === 'high' ? { ifMatch: 3 } : undefined)
+    },
+    refreshResource: async () => { if (phase === 'refresh-switch') switchScope() },
+    refresh: async () => { refreshes++ }
+  }
+  const remove = new Function(...Object.keys(env), `${deleteCode}; return deleteRow`)(...Object.values(env))
+  await remove({ resource_version: 3 })
+  if (phase === 'confirm-switch' || phase === 'confirm-return') switchScope()
+  if (phase === 'confirm-return') { currentClusterId.current = 7; clusterGeneration.current++ }
+  if (phase === 'unmount') clusterGeneration.current++
+  await confirmation.onOk()
+  const blocked = ['confirm-switch', 'confirm-return', 'unmount'].includes(phase)
+  assert.equal(writes, blocked ? 0 : 1)
+  assert.equal(notices, blocked || phase === 'result-switch' ? 0 : 1)
+  assert.equal(refreshes, phase === 'current' ? 1 : 0)
+}
+assert.ok(source.includes('useEffect(() => () => { clusterGeneration.current += 1 }, [])'))
+console.log('Resource deletion confirmations and completions remain bound to the original scope')
 const submitNode = resourceFn.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submitForm')
 const submitCode = ts.transpileModule(submitNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 for (const mode of ['success', 'cancel', 'switch-confirm', 'switch-result', 'failed', 'refresh-failed']) {

@@ -94,6 +94,7 @@ export function ResourceListPage({ definition, embedded = false, onFormMutationS
   const clusterGeneration = useRef(0)
   if (currentClusterId.current !== selectedClusterId) clusterGeneration.current += 1
   currentClusterId.current = selectedClusterId
+  useEffect(() => () => { clusterGeneration.current += 1 }, [])
   const [formClusterId, setFormClusterId] = useState<number | undefined>()
   const [refreshing, setRefreshing] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
@@ -276,6 +277,8 @@ export function ResourceListPage({ definition, embedded = false, onFormMutationS
     }
     const generation = Number(row.resource_version ?? 0)
     const parameters = action.buildBody(row, selectedClusterId)
+    const scopeGeneration = clusterGeneration.current
+    const isCurrentScope = () => currentClusterId.current === selectedClusterId && clusterGeneration.current === scopeGeneration
     if (action.risk && action.risk !== 'high') {
       Modal.confirm({
         title: `${action.title} ${resourceKey}`,
@@ -284,7 +287,9 @@ export function ResourceListPage({ definition, embedded = false, onFormMutationS
         okType: action.risk === 'medium' ? 'danger' : 'primary',
         cancelText: '取消',
         async onOk() {
+          if (!isCurrentScope()) return
           await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters), false)
+          if (!isCurrentScope()) return
           message.success(action.successMessage)
           if (action.path.startsWith('/rbd/')) await refreshResource({ clusterId:selectedClusterId,kinds:['rbd_image','rbd_snapshot','rbd_namespace','rbd_trash','rbd_group'] })
           if (action.path === '/rgw/zone') await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_zone','rgw_zonegroup'] })
@@ -294,7 +299,7 @@ export function ResourceListPage({ definition, embedded = false, onFormMutationS
       if (action.path.startsWith('/rgw/role')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_role'] })
       if ((action.path === '/rgw/bucket/ratelimit' || action.path === '/rgw/bucket/quota')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_bucket'] })
       if (action.path.startsWith('/rgw/user')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_user'] })
-          await refresh({ showLoading:false })
+          if (isCurrentScope()) await refresh({ showLoading:false })
         }
       })
       return
@@ -306,7 +311,9 @@ export function ResourceListPage({ definition, embedded = false, onFormMutationS
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
+        if (!isCurrentScope()) return
         await operationMutation.run(() => mutateResource(action.path, 'DELETE', parameters, { ifMatch: generation }), false)
+        if (!isCurrentScope()) return
         message.success(action.successMessage)
         if (action.path === '/crush/rule') await refreshResource({ clusterId: selectedClusterId, kinds: ['crush_rule'] })
         if (action.path === '/erasure/code/profile') await refreshResource({ clusterId: selectedClusterId, kinds: ['erasure_code_profile'] })
@@ -318,7 +325,7 @@ export function ResourceListPage({ definition, embedded = false, onFormMutationS
       if (action.path.startsWith('/rgw/role')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_role'] })
       if ((action.path === '/rgw/bucket/ratelimit' || action.path === '/rgw/bucket/quota')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_bucket'] })
       if (action.path.startsWith('/rgw/user')) await refreshResource({ clusterId:selectedClusterId,kinds:['rgw_user'] })
-        await refresh({ showLoading:false })
+        if (isCurrentScope()) await refresh({ showLoading:false })
       }
     })
   }
