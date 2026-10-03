@@ -4,6 +4,7 @@ import ts from 'typescript'
 import './test-external-form-confirmation.mjs'
 import './test-rgw-bucket-tag-form.mjs'
 const helpers = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketEncryptionForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketEncryptionSummary.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketConfiguration.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketTagForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(helpers)
@@ -25,6 +26,30 @@ function visit(node) {
 }
 visit(source)
 assert.ok(definition)
+const encryptionAction = definition.extraActions.find(action => action.title === '编辑 Bucket 默认加密')
+const encryptionRow = { bucket_id: 'AGJ1Y2tldA', kind: 'encryption', configured: true, encryption: { rule_exists: true, algorithm: 'aws:kms', kms_master_key_id: ' key<&\r\n😀 ', bucket_key_enabled: true } }
+const encryptionValues = encryptionAction.initialValues(encryptionRow)
+assert.equal(encryptionValues.kms_master_key_id, encryptionRow.encryption.kms_master_key_id)
+assert.equal(encryptionAction.disabledWhen(encryptionRow), undefined)
+assert.ok(encryptionAction.visibleWhen(encryptionRow))
+assert.ok(!encryptionAction.visibleWhen({ kind: 'policy' }))
+assert.equal(encryptionAction.method, 'PATCH')
+assert.equal(encryptionAction.path, '/rgw/bucket/policy')
+const encryptionBody = encryptionAction.buildBody(encryptionValues, 7, encryptionRow)
+assert.equal(encryptionBody.cluster_id, 7)
+assert.match(encryptionBody.document, /<KMSMasterKeyID> key&lt;&amp;&#13;\n😀 <\/KMSMasterKeyID>/)
+assert.match(encryptionBody.document, /<BucketKeyEnabled>true<\/BucketKeyEnabled>/)
+assert.match(encryptionAction.confirmation(encryptionValues, encryptionRow), /不会重新加密已有对象/)
+assert.ok(!encryptionAction.confirmation(encryptionValues, encryptionRow).includes('key<&'))
+for (const change of [{ bucket_id: 'other' }, { kind: 'policy' }, { algorithm: 'other' }, { kms_master_key_id: '' }, { kms_master_key_id: '\u0000' }, { kms_master_key_id: '\ud800' }, { bucket_key_enabled: true }, { algorithm: 'AES256' }]) assert.throws(() => encryptionAction.buildBody({ ...encryptionValues, ...change }, 7, encryptionRow))
+const aesBody = encryptionAction.buildBody({ ...encryptionValues, algorithm: 'AES256', kms_master_key_id: '', bucket_key_enabled: 'false' }, 7, encryptionRow)
+assert.ok(!aesBody.document.includes('KMSMasterKeyID'))
+assert.match(aesBody.document, /<SSEAlgorithm>AES256<\/SSEAlgorithm>/)
+assert.ok(encryptionAction.disabledWhen({ ...encryptionRow, encryption: { ...encryptionRow.encryption, algorithm: 'future' } }))
+assert.ok(encryptionAction.disabledWhen({ ...encryptionRow, configured: undefined }))
+const fresh = encryptionAction.initialValues({ ...encryptionRow, configured: false, encryption: null })
+assert.equal(fresh.algorithm, undefined)
+assert.throws(() => encryptionAction.buildBody(fresh, 7, { ...encryptionRow, configured: false, encryption: null }))
 const tagAction = definition.extraActions.find(action => action.title === '逐条编辑 Bucket 标签')
 assert.ok(tagAction.visibleWhen({ kind: 'tagging' }))
 assert.ok(!tagAction.visibleWhen({ kind: 'policy' }))

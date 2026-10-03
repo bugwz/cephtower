@@ -48,6 +48,7 @@ import { rgwUserCreateCredentials } from './rgwUserCreateCredentials'
 import { rgwUserCreateFlags } from './rgwUserCreateFlags'
 import { rgwBucketConfigurationOptions, rgwBucketConfigurationInput, rgwBucketConfigurationDeleteBlocked, rgwBucketConfigurationDeleteInput, rgwBucketConfigurationDeleteConfirmation, rgwBucketConfigurationEditBlocked, rgwBucketConfigurationEditInitial, rgwBucketConfigurationEditInput, rgwBucketConfigurationUpdateConfirmation } from './rgwBucketConfiguration'
 import { rgwBucketEncryptionSummary } from './rgwBucketEncryptionSummary'
+import { bucketEncryptionFormInitial, bucketEncryptionFormBlocked, bucketEncryptionFormInput, bucketEncryptionFormConfirmation } from './rgwBucketEncryptionForm'
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
@@ -896,6 +897,24 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...rgwBucketConfigurationDeleteInput(row) })
     },
     extraActions: [{
+      title: '编辑 Bucket 默认加密',
+      buttonLabel: '编辑加密',
+      path: '/rgw/bucket/policy',
+      method: 'PATCH',
+      successMessage: '默认加密配置提交成功并已回读核验',
+      visibleWhen: (row) => row.kind === 'encryption',
+      disabledWhen: bucketEncryptionFormBlocked,
+      initialValues: bucketEncryptionFormInitial,
+      confirmation: bucketEncryptionFormConfirmation,
+      fields: [
+        { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
+        { name: 'kind', label: '配置类型（不可更改）', readOnly: true },
+        { name: 'algorithm', label: '默认加密算法（需先配置 RGW 加密服务）', type: 'select', required: true, options: [{ label: 'SSE-S3 / AES256', value: 'AES256' }, { label: 'SSE-KMS / aws:kms', value: 'aws:kms' }] },
+        { name: 'kms_master_key_id', label: 'KMS Key ID（KMS 必填，AES256 请清空）', type: 'textarea' },
+        { name: 'bucket_key_enabled', label: 'Bucket Key 配置值', type: 'select', required: true, options: [{ label: '启用', value: 'true' }, { label: '不启用', value: 'false' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketEncryptionFormInput(values, row) })
+    }, {
       title: '逐条编辑 Bucket 标签',
       buttonLabel: '编辑标签',
       path: '/rgw/bucket/policy',
