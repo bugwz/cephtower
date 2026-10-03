@@ -4,16 +4,19 @@ import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { DataTable } from '../../components/DataTable'
 import { useResource } from '../../hooks'
 import { hardwareHealthCounts, hardwareHealthGroup, type HardwareHealthGroup } from './hardwareHealth'
+import { HostHardwareSummary } from './HostHardwareSummary'
 
 export function HostHardware({ clusterId, host }: { clusterId: number; host: string }) {
   const [category, setCategory] = useState('memory')
   return <Space direction="vertical" style={{ width: '100%' }}>
     <Alert type="info" message="原生硬件健康（node-proxy）" description="按所选类别读取 ceph orch hardware status，需要集群部署并配置 node-proxy。无记录或缺少健康字段不代表硬件健康；原生详情按文本保留数值精度。" />
     <Select aria-label="硬件类别" value={category} onChange={setCategory} style={{ width: 220 }} options={[
+      { value: 'summary', label: '当前主机全部类别汇总' },
       { value: 'memory', label: '内存' }, { value: 'storage', label: '存储' }, { value: 'processors', label: '处理器' },
       { value: 'network', label: '网络' }, { value: 'power', label: '电源' }, { value: 'fans', label: '风扇' },
     ]} />
-    <HardwareCategory key={`${clusterId}:${host}:${category}`} clusterId={clusterId} host={host} category={category} />
+    {category === 'summary' ? <HostHardwareSummary key={`${clusterId}:${host}`} clusterId={clusterId} host={host} />
+      : <HardwareCategory key={`${clusterId}:${host}:${category}`} clusterId={clusterId} host={host} category={category} />}
   </Space>
 }
 

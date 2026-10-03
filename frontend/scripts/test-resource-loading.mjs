@@ -27,6 +27,25 @@ for (const value of ['Warning', 'Critical', 'Unknown', 'NEW_STATUS', 'ok']) asse
 assert.deepEqual(healthModule.hardwareHealthCounts([{ health: 'OK' }, { health: 'Warning' }, { health: 'Critical' }, {}, { health: '' }]), { total: 5, ok: 1, other: 2, unknown: 2 })
 assert.deepEqual(healthModule.hardwareHealthCounts([]), { total: 0, ok: 0, other: 0, unknown: 0 })
 console.log('Hardware health counts and unknown-state classification checks passed')
+const summarySource = readFileSync(new URL('../src/pages/cluster/HostHardwareSummary.tsx', import.meta.url), 'utf8')
+const summaryTree = ts.createSourceFile('summary.tsx', summarySource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const summaryFn = summaryTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'loadHardwareSummary')
+const summaryCode = ts.transpileModule(summaryFn.getText(summaryTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const summaryCalls = []
+const summaryLoad = new Function('request', 'jsonInit', 'hardwareHealthCounts', `${summaryCode}; return loadHardwareSummary`)(async (_, init) => {
+  summaryCalls.push(init.body)
+  const { host, category } = init.body
+  if (category === 'power') throw new Error('node-proxy unavailable')
+  return { host: category === 'fans' ? 'wrong-host' : host, category, items: category === 'storage' ? [] : [{ health: 'OK' }, {}], observed_at: '2026-10-03T00:00:00Z' }
+}, (method, body) => ({ method, body }), healthModule.hardwareHealthCounts)
+const summaryRows = await summaryLoad(8, 'node1')
+assert.equal(summaryCalls.length, 6)
+assert.ok(summaryCalls.every((call) => call.cluster_id === 8 && call.host === 'node1'))
+assert.equal(summaryRows[0].ok, 1)
+assert.equal(summaryRows[0].unknown, 1)
+assert.equal(summaryRows[1].total, 0)
+for (const row of summaryRows.slice(4)) { assert.equal(row.total, null); assert.ok(row.error) }
+console.log('Hardware summary partial failures and exact request scope checks passed')
 
 const perfSource = readFileSync(new URL('../src/pages/cluster/DaemonPerf.tsx', import.meta.url), 'utf8')
 const perfTree = ts.createSourceFile('perf.tsx', perfSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
