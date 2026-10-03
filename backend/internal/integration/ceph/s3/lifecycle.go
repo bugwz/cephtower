@@ -13,8 +13,8 @@ type lifecycleField struct {
 	Children []lifecycleField `xml:",any"`
 }
 
-// Validate rule and action structure; numeric/date and filter semantics are
-// still checked by RGW rather than replaced with a reduced feature subset.
+// Validate the native rule structure and supported local semantic checks.
+// RGW remains authoritative for dates, placement and cross-rule constraints.
 func validateBucketLifecycle(body []byte) error {
 	var document struct {
 		Rules []struct {
@@ -34,6 +34,8 @@ func validateBucketLifecycle(body []byte) error {
 		}
 		counts := map[string]int{}
 		actions := 0
+		usingDays, usingDate := false, false
+		classes := map[string]map[string]bool{"Transition": {}, "NoncurrentVersionTransition": {}}
 		for _, field := range rule.Fields {
 			name := field.XMLName.Local
 			counts[name]++
@@ -44,6 +46,9 @@ func validateBucketLifecycle(body []byte) error {
 				}
 				if name == "Status" && field.Text != "Enabled" && field.Text != "Disabled" {
 					return invalid
+				}
+				if name == "ID" && len(field.Text) > 255 {
+					return fmt.Errorf("lifecycle rule ID exceeds 255 UTF-8 bytes")
 				}
 			case "Filter":
 				if strings.TrimSpace(field.Text) != "" {
@@ -59,7 +64,24 @@ func validateBucketLifecycle(body []byte) error {
 				if err := validateLifecycleAction(field); err != nil {
 					return err
 				}
-				actions++
+				effective := false
+				for _, child := range field.Children {
+					key := child.XMLName.Local
+					if name == "Expiration" || name == "Transition" {
+						usingDays = usingDays || key == "Days"
+						usingDate = usingDate || key == "Date"
+					}
+					if key == "StorageClass" {
+						if classes[name][child.Text] {
+							return fmt.Errorf("duplicate lifecycle %s storage class", name)
+						}
+						classes[name][child.Text] = true
+					}
+					effective = effective || key != "ExpiredObjectDeleteMarker" || child.Text == "true"
+				}
+				if effective {
+					actions++
+				}
 			default:
 				return invalid
 			}
@@ -69,6 +91,9 @@ func validateBucketLifecycle(body []byte) error {
 		}
 		if counts["Status"] != 1 || counts["Filter"]+counts["Prefix"] != 1 || actions == 0 {
 			return invalid
+		}
+		if usingDays && usingDate {
+			return fmt.Errorf("lifecycle current-version expiration and transitions cannot mix Days and Date")
 		}
 	}
 	return nil

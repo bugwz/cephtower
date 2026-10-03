@@ -1,6 +1,45 @@
 package s3
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
+
+func TestLifecycleRuleActionConflicts(t *testing.T) {
+	transition := func(kind, timing, class string) string {
+		return "<" + kind + ">" + timing + "<StorageClass>" + class + "</StorageClass></" + kind + ">"
+	}
+	days := "<Days>30</Days>"
+	date := "<Date>2030-01-01T00:00:00Z</Date>"
+	current := transition("Transition", days, "COLD")
+	noncurrent := transition("NoncurrentVersionTransition", "<NoncurrentDays>30</NoncurrentDays>", "COLD")
+	markerFalse := "<Expiration><ExpiredObjectDeleteMarker>false</ExpiredObjectDeleteMarker></Expiration>"
+	for _, tc := range []struct {
+		name, fields string
+		valid        bool
+	}{
+		{"duplicate current class", current + current, false},
+		{"duplicate noncurrent class", noncurrent + noncurrent, false},
+		{"separate class namespaces", current + noncurrent, true},
+		{"distinct current classes", current + transition("Transition", days, "ARCHIVE"), true},
+		{"mixed transitions", current + transition("Transition", date, "ARCHIVE"), false},
+		{"mixed expiration", current + "<Expiration>" + date + "</Expiration>", false},
+		{"matching expiration", current + "<Expiration>" + days + "</Expiration>", true},
+		{"noncurrent days with current date", noncurrent + "<Expiration>" + date + "</Expiration>", true},
+		{"false marker alone", markerFalse, false},
+		{"false marker with action", markerFalse + current, true},
+		{"true marker alone", "<Expiration><ExpiredObjectDeleteMarker>true</ExpiredObjectDeleteMarker></Expiration>", true},
+		{"id boundary", "<ID>" + strings.Repeat("a", 255) + "</ID>" + current, true},
+		{"id byte overflow", "<ID>" + strings.Repeat("界", 86) + "</ID>" + current, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			body := []byte("<LifecycleConfiguration><Rule><Status>Disabled</Status><Filter/>" + tc.fields + "</Rule></LifecycleConfiguration>")
+			if err := ValidateBucketConfiguration("lifecycle", body); (err == nil) != tc.valid {
+				t.Fatalf("valid=%v err=%v", tc.valid, err)
+			}
+		})
+	}
+}
 
 func TestLifecycleNumericActions(t *testing.T) {
 	wrap := func(action string) []byte {
