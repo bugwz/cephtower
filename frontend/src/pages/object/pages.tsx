@@ -911,7 +911,7 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       action: 'rgw_bucket_policy.delete',
       resourceKind: 'rgw_bucket_policy',
       risk: 'high',
-      successMessage: 'Bucket 配置删除完成并已确认未配置',
+      successMessage: 'Bucket 配置删除已回读核验（复制配置允许返回空规则）',
       disabledWhen: rgwBucketConfigurationDeleteBlocked,
       confirmation: rgwBucketConfigurationDeleteConfirmation,
       resourceKey: (row) => `${rgwBucketConfigurationDeleteInput(row).bucket_id} / ${row.kind}`,

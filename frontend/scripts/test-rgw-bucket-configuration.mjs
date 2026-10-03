@@ -189,6 +189,12 @@ assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'ki
 const readonlyReplication = { bucket_id: 'AGJ1Y2tldA', kind: 'replication', configured: true, document: '<ReplicationConfiguration/>' }
 assert.ok(helpers.rgwBucketConfigurationEditBlocked(readonlyReplication))
 assert.ok(helpers.rgwBucketConfigurationDeleteBlocked(readonlyReplication))
+const deletableReplication = { ...readonlyReplication, replication: { role: '', rules: [{ id: 'r', status: 'Enabled', priority: '1', destination_bucket: 'target' }] } }
+assert.equal(helpers.rgwBucketConfigurationDeleteBlocked(deletableReplication), undefined)
+assert.deepEqual(helpers.rgwBucketConfigurationDeleteInput(deletableReplication), { bucket_id: 'AGJ1Y2tldA', kind: 'replication' })
+assert.match(helpers.rgwBucketConfigurationDeleteConfirmation(deletableReplication), /移除全部 S3 复制规则.*不会关闭其他桶本地或 Zonegroup 同步策略/)
+assert.ok(helpers.rgwBucketConfigurationDeleteBlocked({ ...deletableReplication, replication: { rules: [] } }))
+assert.ok(helpers.rgwBucketConfigurationEditBlocked(deletableReplication))
 assert.ok(helpers.rgwBucketConfigurationReadOptions.some(option => option.value === 'replication'))
 const readonlyAcl = { bucket_id: 'AGJ1Y2tldA', kind: 'acl', configured: true, document: '<AccessControlPolicy/>' }
 assert.ok(helpers.rgwBucketConfigurationEditBlocked(readonlyAcl))

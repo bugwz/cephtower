@@ -28,7 +28,7 @@ func TestBucketConfigurationContractRequiresRawDocument(t *testing.T) {
 }
 
 func TestBucketConfigurationDeleteContract(t *testing.T) {
-	for _, kind := range []string{"policy", "cors", "lifecycle", "encryption", "tagging"} {
+	for _, kind := range []string{"policy", "cors", "lifecycle", "encryption", "tagging", "replication"} {
 		if err := ValidateMutationRequest("rgw_bucket_policy.delete", map[string]any{"cluster_id": float64(1), "bucket_id": "AGJ1Y2tldA", "kind": kind}); err != nil {
 			t.Fatal(err)
 		}

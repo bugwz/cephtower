@@ -325,7 +325,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"rgw_bucket.update"}, true, map[string]JSONField{"versioning": stringField(true, "enabled", "suspended")})
 	add([]string{"rgw_bucket.acl"}, true, map[string]JSONField{"bucket_id": stringField(true), "acl": stringField(true, "private", "public-read", "public-read-write", "authenticated-read")})
 	add([]string{"rgw_bucket_policy.update"}, true, map[string]JSONField{"kind": stringField(true, "policy", "cors", "lifecycle", "encryption", "tagging", "object-lock"), "document": stringField(true)})
-	add([]string{"rgw_bucket_policy.delete"}, true, map[string]JSONField{"kind": stringField(true, "policy", "cors", "lifecycle", "encryption", "tagging"), "bucket_id": stringField(true)})
+	add([]string{"rgw_bucket_policy.delete"}, true, map[string]JSONField{"kind": stringField(true, "policy", "cors", "lifecycle", "encryption", "tagging", "replication"), "bucket_id": stringField(true)})
 	portal := objectArrayField(false, map[string]JSONField{"host": stringField(true), "ip": stringField(true)})
 	disk := objectArrayField(false, map[string]JSONField{"pool": stringField(true), "image": stringField(true), "backstore": stringField(false)})
 	initiator := objectArrayField(false, map[string]JSONField{"iqn": stringField(true), "luns": stringsField(false)})

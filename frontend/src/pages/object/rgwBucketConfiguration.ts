@@ -5,12 +5,15 @@ export const rgwBucketConfigurationOptions = [
   { label: 'Encryption（XML）', value: 'encryption' },
   { label: 'Tags 标签（XML，最多 50 条）', value: 'tagging' }
 ]
-export const rgwBucketConfigurationReadOptions = [...rgwBucketConfigurationOptions, { label: 'Object Lock 默认保留', value: 'object-lock' }, { label: 'ACL 访问控制列表', value: 'acl' }, { label: 'S3 复制规则（只读）', value: 'replication' }]
+export const rgwBucketConfigurationReadOptions = [...rgwBucketConfigurationOptions, { label: 'Object Lock 默认保留', value: 'object-lock' }, { label: 'ACL 访问控制列表', value: 'acl' }, { label: 'S3 复制规则', value: 'replication' }]
 
 export function rgwBucketConfigurationDeleteBlocked(row: Record<string, unknown>) {
   if (row.configured !== true) return '只有已确认存在的配置可以删除，请先刷新'
   if (typeof row.bucket_id !== 'string' || !/^[A-Za-z0-9_-]+$/.test(row.bucket_id)) return 'Bucket ID 缺失或无效'
-  if (!rgwBucketConfigurationOptions.some(option => option.value === row.kind)) return '配置类型缺失或无效'
+  if (row.kind === 'replication') {
+    const policy = row.replication as { rules?: unknown } | undefined
+    if (!policy || !Array.isArray(policy.rules) || policy.rules.length === 0) return '没有已确认存在的 S3 复制规则，请刷新'
+  } else if (!rgwBucketConfigurationOptions.some(option => option.value === row.kind)) return '配置类型缺失或无效'
   return undefined
 }
 
@@ -23,6 +26,7 @@ export function rgwBucketConfigurationDeleteInput(row: Record<string, unknown>) 
 export function rgwBucketConfigurationDeleteConfirmation(row: Record<string, unknown>) {
   const { bucket_id, kind } = rgwBucketConfigurationDeleteInput(row)
   const impact: Record<string, string> = {
+    replication: '将移除全部 S3 复制规则，可能影响后续数据复制；不会关闭其他桶本地或 Zonegroup 同步策略，不保证同步立即停止，不会删除或回收已复制的数据。',
     policy: '将移除 Bucket Policy 中的允许和拒绝规则，访问权限可能变化。',
     cors: '将移除全部 CORS 规则，浏览器跨域访问可能失败。',
     lifecycle: '将移除全部生命周期规则，不会恢复已过期或已迁移的对象。',

@@ -64,10 +64,14 @@ func TestBucketReplicationReadContract(t *testing.T) {
 	}
 	for _, method := range []string{"PATCH", "DELETE"} {
 		schema, _ := requestSchema(router.Route{Method: method, Path: "/rgw/bucket/policy"})
+		allowed := false
 		for _, value := range schema.Fields["kind"].Enum {
 			if value == "replication" {
-				t.Fatal("read-only replication writable")
+				allowed = true
 			}
+		}
+		if allowed != (method == "DELETE") {
+			t.Fatal("replication must allow deletion but not XML writes")
 		}
 	}
 }

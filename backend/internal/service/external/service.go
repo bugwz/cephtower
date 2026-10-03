@@ -566,13 +566,26 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 		if !s3.DeletableBucketConfiguration(kind) {
 			return cephdomain.ActionResult{}, failure("invalid_request", "unsupported bucket configuration deletion", false)
 		}
-		if _, _, err := api.GetBucketConfiguration(ctx, bucket, kind); err != nil {
+		before, _, err := api.GetBucketConfiguration(ctx, bucket, kind)
+		if err != nil {
 			return cephdomain.ActionResult{}, failure("pre_check_failed", "cannot confirm existing bucket configuration: "+err.Error(), false)
+		}
+		if kind == "replication" {
+			policy, parseErr := s3.BucketReplication(before)
+			if parseErr != nil || len(policy.Rules) == 0 {
+				return cephdomain.ActionResult{}, failure("pre_check_failed", "cannot confirm existing S3 replication rules; no deletion submitted", false)
+			}
 		}
 		if err := api.DeleteBucketConfiguration(ctx, bucket, kind); err != nil {
 			return cephdomain.ActionResult{}, failure("s3_failed", "configuration deletion outcome is uncertain; refresh before retrying: "+err.Error(), false)
 		}
-		if _, _, err := api.GetBucketConfiguration(ctx, bucket, kind); !s3.IsConfigurationMissing(kind, err) {
+		after, _, readErr := api.GetBucketConfiguration(ctx, bucket, kind)
+		removed := s3.IsConfigurationMissing(kind, readErr)
+		if kind == "replication" && readErr == nil {
+			policy, parseErr := s3.BucketReplication(after)
+			removed = parseErr == nil && len(policy.Rules) == 0
+		}
+		if !removed {
 			return cephdomain.ActionResult{}, failure("post_check_failed", "configuration deletion was sent but absence could not be verified; refresh before another change", false)
 		}
 	}

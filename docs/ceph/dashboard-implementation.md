@@ -28,6 +28,18 @@
 
 ### 增量实现与验证记录
 
+- 2026-10-04：新增删除全部 S3 桶复制规则的操作。依据
+  RGWDeleteBucketReplication_ObjStore_S3::update_sync_policy，仅移除
+  s3-bucket-replication:enabled/disabled 两个专用组，其他同步策略不受此接口删除。
+  复用高风险桶配置删除 API/队列与签名 S3 DELETE ?replication，
+  先 GET 并确认至少一条可解析规则，后 GET 核验空规则或精确的配置不存在错误；
+  损坏响应、遗留规则（含 Disabled）、错误 404 和读取失败不算成功，
+  写入不确定及核验失败不自动重试。前端空规则禁用删除，提示备份、复制影响、
+  其他策略仍可能工作且已复制数据不会回收；原始复制 XML 写入仍未开放。
+  回归覆盖全局/指定租户、删除调用顺序、原生空响应、缺失响应及各阶段失败。
+  make test-backend（含 OpenAPI 同步检查）与 make test-frontend
+  （含 TypeScript/Vite 构建）通过；无真实集群或浏览器视觉验证。
+
 - 2026-10-04：补齐桶本地同步策略采集与展示。依据参考 rgw_client.py/get_sync_policy、
   radosgw-admin.cc/SyncPolicyContext 及 rgw_sync_policy_info::dump，对每个已核对身份的桶
   执行 radosgw-admin sync policy get --bucket NAME --tenant TENANT --format json；

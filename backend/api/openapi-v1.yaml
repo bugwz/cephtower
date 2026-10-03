@@ -19247,7 +19247,7 @@ paths:
                   type: string
                 kind:
                   type: string
-                  enum: ["cors", "encryption", "lifecycle", "policy", "tagging"]
+                  enum: ["cors", "encryption", "lifecycle", "policy", "replication", "tagging"]
                 listener_id:
                   type: string
                 name:

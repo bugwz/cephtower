@@ -48,7 +48,7 @@ func TestBucketReplicationRejectsAmbiguousSummaries(t *testing.T) {
 			t.Errorf("ambiguous response accepted: %s", body)
 		}
 	}
-	if ValidateBucketConfiguration("replication", []byte(replicationExample)) == nil || DeletableBucketConfiguration("replication") {
-		t.Fatal("read-only replication writable")
+	if ValidateBucketConfiguration("replication", []byte(replicationExample)) == nil || !DeletableBucketConfiguration("replication") {
+		t.Fatal("replication must allow deletion but not XML writes")
 	}
 }

@@ -81,7 +81,7 @@ func (c *Client) GetBucketConfiguration(ctx context.Context, bucket, kind string
 }
 
 func DeletableBucketConfiguration(kind string) bool {
-	return kind == "policy" || kind == "cors" || kind == "lifecycle" || kind == "encryption" || kind == "tagging"
+	return kind == "policy" || kind == "cors" || kind == "lifecycle" || kind == "encryption" || kind == "tagging" || kind == "replication"
 }
 
 func (c *Client) DeleteBucketConfiguration(ctx context.Context, bucket, kind string) error {
