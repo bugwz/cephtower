@@ -136,6 +136,40 @@ func TestRGWAccountMigrationRefreshesAffectedResources(t *testing.T) {
 	}
 }
 
+func TestRGWUserCreationRefreshDoesNotRetryCreation(t *testing.T) {
+	for _, params := range []map[string]any{nil, {"account_id": "RGW12345678901234567", "account_root": false}, {"account_id": "RGW12345678901234567", "account_root": true}} {
+		for _, fail := range []bool{false, true} {
+			mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{"created": true}}}
+			reconciler := &reconcileExecutorFake{refreshResult: true}
+			if fail {
+				reconciler.err = errors.New("refresh failed")
+			}
+			result, err := NewActionDispatcher(mutations, nil, reconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_user.create", ResourceKind: "rgw_user", Parameters: params})
+			if params == nil {
+				if reconciler.kind != "rgw_user" || len(reconciler.kinds) != 0 {
+					t.Fatalf("unexpected independent user refresh: %+v", reconciler)
+				}
+			} else if !reflect.DeepEqual(reconciler.kinds, []string{"rgw_user", "rgw_account"}) || reconciler.kind != "" {
+				t.Fatalf("unexpected account user refresh: %+v", reconciler)
+			}
+			if fail {
+				var actionErr *cephdomain.ActionError
+				if !errors.As(err, &actionErr) || actionErr.Code != "post_reconcile_failed" || actionErr.Retryable {
+					t.Fatalf("unsafe refresh failure: %v", err)
+				}
+			} else if err != nil || result.Details.(map[string]any)["reconciled"] != true || result.Details.(map[string]any)["created"] != true {
+				t.Fatalf("unexpected result: %+v %v", result, err)
+			}
+		}
+	}
+	mutations := &mutationExecutorFake{err: errors.New("creation failed")}
+	reconciler := &reconcileExecutorFake{}
+	_, err := NewActionDispatcher(mutations, nil, reconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_user.create", ResourceKind: "rgw_user", Parameters: map[string]any{"account_id": "RGW12345678901234567"}})
+	if err != mutations.err || reconciler.kind != "" || len(reconciler.kinds) != 0 {
+		t.Fatal("refreshed after failed creation")
+	}
+}
+
 func TestActionDispatcherRoutesRefreshAndExternalActions(t *testing.T) {
 	reconciler := &reconcileExecutorFake{}
 	external := &externalExecutorFake{}
