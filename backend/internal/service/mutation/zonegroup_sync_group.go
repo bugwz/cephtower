@@ -11,6 +11,9 @@ import (
 )
 
 func zonegroupSyncGroupCommand(action string, p map[string]any, rgw func([]string, []string) command) (command, error) {
+	if action == "rgw_zonegroup.replication_prepare" {
+		p = replicationPrepareParameters(p)
+	}
 	for _, key := range []string{"zonegroup_id", "name", "group_id"} {
 		if !syncFlowToken(syncGroupString(p, key)) {
 			return command{}, invalid("valid zonegroup identity and group_id are required")
@@ -75,7 +78,7 @@ func zonegroupSyncGroupCommand(action string, p map[string]any, rgw func([]strin
 		return command{}, invalid("invalid sync group status")
 	}
 	verb, expectedKey := "modify", "expected_group"
-	if action == "rgw_zonegroup.sync_group_create" {
+	if action == "rgw_zonegroup.sync_group_create" || action == "rgw_zonegroup.replication_prepare" {
 		verb, expectedKey = "create", "expected_policy"
 	}
 	if deleting {
@@ -102,6 +105,9 @@ func (s *Service) executeZonegroupSyncGroup(ctx context.Context, access executor
 	before, err := run("pre_check", spec.check, false)
 	wanted := periodDocument(before.Stdout)
 	p := request.Parameters
+	if request.Action == "rgw_zonegroup.replication_prepare" {
+		p = replicationPrepareParameters(p)
+	}
 	realm := syncGroupString(p, "realm_id")
 	zonegroup := syncGroupString(p, "zonegroup_id")
 	if err != nil || wanted == nil || wanted["id"] != zonegroup || wanted["name"] != syncGroupString(p, "name") || wanted["realm_id"] != realm {
@@ -115,7 +121,7 @@ func (s *Service) executeZonegroupSyncGroup(ctx context.Context, access executor
 	policy := wanted["sync_policy"].(map[string]any)
 	id := syncGroupString(p, "group_id")
 	var writes []zonegroupSyncWrite
-	if request.Action == "rgw_zonegroup.sync_group_create" {
+	if request.Action == "rgw_zonegroup.sync_group_create" || request.Action == "rgw_zonegroup.replication_prepare" {
 		expectedPolicy, _, valid := bucketSyncPolicyDocument([]byte(syncGroupString(p, "expected_policy")))
 		if !valid || !reflect.DeepEqual(currentPolicy, expectedPolicy) || groups[id] != nil {
 			return fail("pre_check_failed", "policy changed or group already exists; refresh before creating")
@@ -125,6 +131,12 @@ func (s *Service) executeZonegroupSyncGroup(ctx context.Context, access executor
 			return entries[i].(map[string]any)["id"].(string) < entries[j].(map[string]any)["id"].(string)
 		})
 		policy["groups"] = entries
+		if request.Action == "rgw_zonegroup.replication_prepare" {
+			writes, err = zonegroupReplicationPreparation(wanted, p, spec)
+			if err != nil {
+				return fail("pre_check_failed", err.Error())
+			}
+		}
 	} else {
 		_, expected, expectedValid := bucketSyncPolicyDocument([]byte(`{"groups":[` + syncGroupString(p, "expected_group") + `]}`))
 		group := groups[id]

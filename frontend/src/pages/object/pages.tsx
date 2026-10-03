@@ -12,6 +12,7 @@ import { zonegroupPipeCreateInput, zonegroupPipeCreateConfirmation } from './rgw
 import { zonegroupPipeDeleteInput, zonegroupPipeDeleteConfirmation } from './rgwZonegroupSyncGroup'
 import { zonegroupPipeUpdateInput, zonegroupPipeUpdateConfirmation } from './rgwZonegroupSyncGroup'
 import { zonegroupPipeZonesInput, zonegroupPipeZonesConfirmation } from './rgwZonegroupSyncGroup'
+import { zonegroupReplicationPrepareBlocked, zonegroupReplicationPrepareInitial, zonegroupReplicationPrepareInput, zonegroupReplicationPrepareConfirmation } from './rgwZonegroupSyncGroup'
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 import { ResourceListPage, type ResourceListPageDefinition, type ResourceFormAction } from '../ResourceListPage'
 import { ServiceDaemons } from '../cluster/ServiceDaemons'
@@ -1042,6 +1043,17 @@ const definitions: Record<
         { name: 'confirm_pipe_zones', label: '成员与发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，了解中间范围变化、Realm 发布与部分生效风险' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupPipeZonesInput(values,row) })
+    }, {
+      title: '准备桶复制上层策略', path: '/rgw/zonegroup/replication/prepare', method: 'POST',
+      successMessage: '上层 allowed 策略准备与 Period 发布已核验（未写入桶 S3 复制规则）',
+      disabledWhen: zonegroupReplicationPrepareBlocked, initialValues: zonegroupReplicationPrepareInitial, confirmation: zonegroupReplicationPrepareConfirmation,
+      fields: [
+        { name: 'name', label: 'Zonegroup 名称（不可更改）', readOnly: true },
+        { name: 'zonegroup_id', label: 'Zonegroup ID（不可更改）', readOnly: true },
+        { name: 'realm_id', label: 'Realm ID（不可更改）', readOnly: true },
+        { name: 'confirm_replication_prepare', label: '上层许可与发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，了解全桶通配许可、Realm 发布及部分生效风险；尚未启用桶复制' }] }
+      ],
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupReplicationPrepareInput(values,row) })
     }, {
       title: '删除 Zonegroup 同步组', path: '/rgw/zonegroup/sync/group', method: 'DELETE',
       successMessage: 'Zonegroup 同步组删除与适用的 Period 发布已核验',

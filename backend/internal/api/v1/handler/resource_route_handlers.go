@@ -729,6 +729,10 @@ func (h *Handler) UpdateRGWZonegroupSyncPipeZones(w http.ResponseWriter, r *http
 	h.MutateResource("rgw_zonegroup", "rgw_zonegroup.sync_pipe_zones", "high")(w, r)
 }
 
+func (h *Handler) PrepareRGWZonegroupReplication(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_zonegroup", "rgw_zonegroup.replication_prepare", "high")(w, r)
+}
+
 func (h *Handler) DeleteRGWBucketSyncFlow(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_bucket", "rgw_bucket.sync_flow_delete", "high")(w, r)
 }

@@ -9,6 +9,30 @@ function snapshot(row?: Record<string, unknown>, allowEmpty = false) {
 }
 export function zonegroupSyncInitial(row?: Record<string, unknown>) { const { groups: _, ...identity } = snapshot(row); return { ...identity, group_id: undefined, status: undefined, confirm_change: undefined } }
 export function zonegroupSyncBlocked(row: Record<string, unknown>) { try { snapshot(row); return undefined } catch (error) { return (error as Error).message } }
+function replicationPreparationSnapshot(row?: Record<string, unknown>) {
+  const state = snapshot(row,true)
+  if (!state.realm_id) throw new Error('需要明确的 Realm 归属以发布准备策略')
+  if (state.groups.some(g => g.id === 'dashboard_admin_group')) throw new Error('dashboard_admin_group 已存在，请检查已有策略；此操作不会覆盖')
+  const zones = row?.zones
+  if (!Array.isArray(zones) || !zones.length || zones.some(z => !record(z) || !token(z.id) || /[\s,;=*]/u.test(z.id) || !token(z.name)) || new Set(zones.map(z => z.id)).size !== zones.length || new Set(zones.map(z => z.name)).size !== zones.length) throw new Error('当前 Zone 成员不可用或有歧义')
+  return { ...state, zones: zones.map(z => z.id as string) }
+}
+export function zonegroupReplicationPrepareBlocked(row: Record<string, unknown>) { try { replicationPreparationSnapshot(row); return undefined } catch (error) { return (error as Error).message } }
+export function zonegroupReplicationPrepareInitial(row?: Record<string, unknown>) {
+  const { groups: _, zones: __, ...identity } = replicationPreparationSnapshot(row)
+  return { ...identity, confirm_replication_prepare: undefined }
+}
+export function zonegroupReplicationPrepareInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const { groups: _, zones, ...identity } = replicationPreparationSnapshot(row)
+  if (values.name !== identity.name || values.zonegroup_id !== identity.zonegroup_id || values.realm_id !== identity.realm_id) throw new Error('Zonegroup 和 Realm 身份不可修改')
+  if (values.confirm_replication_prepare !== 'acknowledged') throw new Error('请确认全范围 allowed 策略及发布影响')
+  return { ...identity, expected_policy: JSON.stringify(row!.sync_policy), expected_zones: zones }
+}
+export function zonegroupReplicationPrepareConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  const p = zonegroupReplicationPrepareInput(values,row)
+  const state = replicationPreparationSnapshot(row)
+  return `确认在 Zonegroup ${JSON.stringify(p.name)}（${p.zonegroup_id}）准备桶复制上层策略？创建 allowed 组 dashboard_admin_group、覆盖当前 Zone IDs ${JSON.stringify(state.zones)} 的对称流 dashboard_admin_flow，以及全部 Zone/租户/桶/实例的 system 通配管道 dashboard_admin_pipe。只提供上层许可，可能让已有桶本地策略获得许可；不写 S3 规则，不代表桶复制已启用。随后提交 Realm ${JSON.stringify(p.realm_id)} 的 Period，可能发布其他待提交变更。新增 Zone 不会自动加入该对称流。请备份并避免外部或其他页面并发；分步非事务，失败可能部分生效，不自动回滚或重试。`
+}
 export function zonegroupPipeZonesInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const selected = zonegroupPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
   const available = row?.zones

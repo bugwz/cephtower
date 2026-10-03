@@ -28,6 +28,12 @@
 
 ### 增量实现与验证记录
 
+#### 桶复制上层策略准备
+
+核对 controllers/rgw.py::_set_replication 后，确认 Dashboard 的启用流程不只是 S3 PUT：缺少管理组时先创建 allowed 组、全当前 Zone 对称流及通配管道，并发布 Period。新增 POST /api/v1/rgw/zonegroup/replication/prepare 和显式 Zonegroup 行入口，实现此上层准备阶段。固定使用参考中的 dashboard_admin_group、dashboard_admin_flow、dashboard_admin_pipe，组状态 allowed、管道 system 模式；不调用默认 Zonegroup，必须有明确 Realm 和有效当前 Zone 成员。
+
+准备前比较完整策略并拒绝同名组，三次写入分别回读完整 Zonegroup，再发布/核验 Realm Period。保留其他组及其大整数参数；失败立即停止，不自动重试/回滚。界面明确全租户/桶/实例通配许可可能影响已有桶策略、新增 Zone 不自动加入流、Realm 可能发布其他待提交配置。离线测试覆盖空/非空原策略、精确命令和中间状态、同名/过期/无 Realm/非法 Zone 拒绝、各阶段故障及 API/前端绑定。此操作不写 S3 复制规则，不宣称已启用桶复制；后续仍需接通 S3 规则写入及其验证。无真实集群或浏览器视觉验证。
+
 #### Zonegroup 管道 Zone 成员编辑
 
 新增 PATCH /api/v1/rgw/zonegroup/sync/pipe/zones 与源/目标完整 Zone ID 集合表单。复用原生 add_zones/remove_zones 的集合语义：明确集合先增后删，切换到 ["*"] 重置明确集合，从 ["*"] 切到明确集合直接用 modify 设置，不再移除通配符。两侧差异合并为必要的添加/移除命令，每一步核验完整 Zonegroup；全部成功后才发布和核验 Realm Period。
