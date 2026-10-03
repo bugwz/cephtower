@@ -148,12 +148,12 @@ type statusWire struct {
 		NumInOSDs int `json:"num_in_osds"`
 	} `json:"osdmap"`
 	PGMap struct {
-		NumPGs     uint64  `json:"num_pgs"`
+		NumPGs     *uint64 `json:"num_pgs"`
 		NumPools   *uint64 `json:"num_pools"`
 		NumObjects *uint64 `json:"num_objects"`
 		PGsByState []struct {
-			StateName string `json:"state_name"`
-			Count     uint64 `json:"count"`
+			StateName string  `json:"state_name"`
+			Count     *uint64 `json:"count"`
 		} `json:"pgs_by_state"`
 		ReadBytesSec          *uint64 `json:"read_bytes_sec"`
 		WriteBytesSec         *uint64 `json:"write_bytes_sec"`
@@ -232,9 +232,7 @@ func (p *NativeProvider) collectFast(ctx context.Context, access ClusterAccess) 
 	if versions, err := p.run(ctx, access, "collect.versions", 30*time.Second, "versions", "--format", "json"); err == nil {
 		overview.CephVersion = cephVersionFromVersions(versions)
 	}
-	for _, state := range status.PGMap.PGsByState {
-		overview.PlacementGroups = append(overview.PlacementGroups, cephdomain.PGState{Name: state.StateName, Count: state.Count})
-	}
+	overview.PlacementGroups = validatedOverviewPGStates(status)
 	p.collectOverviewDetails(ctx, access, &overview)
 	rows := []Observation{{Kind: "overview", NaturalKey: "overview", Name: "overview", Status: status.Health.Status, Source: "ceph_cli", SourceVersion: overview.CephVersion, Payload: overview, ObservedAt: now}}
 	var health struct {
@@ -318,6 +316,27 @@ func (p *NativeProvider) collectOverviewDetails(ctx context.Context, access Clus
 	}
 }
 
+func validatedOverviewPGStates(status statusWire) []cephdomain.PGState {
+	if status.PGMap.NumPGs == nil || status.PGMap.PGsByState == nil {
+		return nil
+	}
+	states := make([]cephdomain.PGState, 0, len(status.PGMap.PGsByState))
+	seen := make(map[string]bool)
+	var total uint64
+	for _, state := range status.PGMap.PGsByState {
+		if strings.TrimSpace(state.StateName) == "" || seen[state.StateName] || state.Count == nil || *state.Count > ^uint64(0)-total {
+			return nil
+		}
+		seen[state.StateName] = true
+		total += *state.Count
+		states = append(states, cephdomain.PGState{Name: state.StateName, Count: *state.Count})
+	}
+	if total != *status.PGMap.NumPGs {
+		return nil
+	}
+	return states
+}
+
 func overviewScrubStatus(states []cephdomain.PGState, flags []string, flagsKnown bool) string {
 	if flagsKnown {
 		for _, flag := range flags {
@@ -331,7 +350,7 @@ func overviewScrubStatus(states []cephdomain.PGState, flags []string, flagsKnown
 			return "active"
 		}
 	}
-	if flagsKnown {
+	if flagsKnown && states != nil {
 		return "inactive"
 	}
 	return ""
