@@ -43,10 +43,16 @@ func TestDaemonPerfSnapshotPreservesNativeValues(t *testing.T) {
 
 func TestDaemonPerfRejectsInvalidResponsesAndNames(t *testing.T) {
 	s, _, id := testInspection(t)
-	for _, schema := range []string{"null", "[]", "{} {}", `{"osd":null}`, `{"osd":{"x":null}}`, `{"osd":{"x":{"type":"counter"}}}`} {
+	for _, schema := range []string{"null", "[]", "{} {}", `{"osd":null}`, `{"osd":{"x":null}}`, `{"osd":{"x":{"type":"counter"}}}`, `{" ":{"x":{}}}`, `{"osd":{"":{}}}`, `{"osd":{"a.b":{}},"osd.a":{"b":{}}}`} {
 		s.executor = &perfFixtureExecutor{schema: schema, dump: `{}`}
 		if _, err := s.DaemonPerf(context.Background(), id, "osd.1"); err == nil {
 			t.Fatalf("accepted %s", schema)
+		}
+	}
+	for _, dump := range []string{"null", "[]", "{} {}", `{"osd":null}`, `{"osd":[]}`, `{" ":{}}`} {
+		s.executor = &perfFixtureExecutor{schema: `{"osd":{"x":{}}}`, dump: dump}
+		if result, err := s.DaemonPerf(context.Background(), id, "osd.1"); err == nil || result != nil {
+			t.Fatalf("accepted malformed dump %s: %+v", dump, result)
 		}
 	}
 	e := &perfFixtureExecutor{schema: `{}`, dump: `{}`}

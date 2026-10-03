@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
@@ -29,11 +30,22 @@ func (s *Service) DaemonPerf(ctx context.Context, clusterID uint64, name string)
 		return bad()
 	}
 	items := make([]map[string]any, 0)
+	seen := make(map[string]bool)
+	for group, counters := range values {
+		if strings.TrimSpace(group) == "" || counters == nil {
+			return bad()
+		}
+	}
 	for group, counters := range schema {
-		if counters == nil {
+		if strings.TrimSpace(group) == "" || counters == nil {
 			return bad()
 		}
 		for counter, raw := range counters {
+			qualifiedName := group + "." + counter
+			if strings.TrimSpace(counter) == "" || seen[qualifiedName] {
+				return bad()
+			}
+			seen[qualifiedName] = true
 			var definition *struct {
 				Description string `json:"description"`
 				Units       string `json:"units"`
@@ -48,7 +60,7 @@ func (s *Service) DaemonPerf(ctx context.Context, clusterID uint64, name string)
 			if data, exists := values[group][counter]; exists && string(data) != "null" {
 				value = security.Redact(string(data)) // Keep exact integer and average-pair values as text.
 			}
-			items = append(items, map[string]any{"name": group + "." + counter, "description": security.Redact(definition.Description), "units": definition.Units, "value_type": definition.ValueType, "type": definition.Type, "priority": definition.Priority, "raw_value": value})
+			items = append(items, map[string]any{"name": qualifiedName, "description": security.Redact(definition.Description), "units": definition.Units, "value_type": definition.ValueType, "type": definition.Type, "priority": definition.Priority, "raw_value": value})
 		}
 	}
 	sort.Slice(items, func(i, j int) bool { return items[i]["name"].(string) < items[j]["name"].(string) })
