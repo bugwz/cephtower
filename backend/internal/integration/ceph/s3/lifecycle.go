@@ -6,17 +6,19 @@ import (
 	"strings"
 )
 
-// Validate the rule envelope without reducing native action/filter subtrees to
-// a smaller supported subset. Their detailed semantics remain RGW's authority.
+type lifecycleField struct {
+	XMLName  xml.Name
+	Text     string           `xml:",chardata"`
+	Children []lifecycleField `xml:",any"`
+}
+
+// Validate rule and action structure; numeric/date and filter semantics are
+// still checked by RGW rather than replaced with a reduced feature subset.
 func validateBucketLifecycle(body []byte) error {
 	var document struct {
 		Rules []struct {
-			Fields []struct {
-				XMLName  xml.Name
-				Text     string     `xml:",chardata"`
-				Children []xml.Name `xml:",any"`
-			} `xml:",any"`
-			Text string `xml:",chardata"`
+			Fields []lifecycleField `xml:",any"`
+			Text   string           `xml:",chardata"`
 		} `xml:"Rule"`
 		Unknown []xml.Name `xml:",any"`
 		Text    string     `xml:",chardata"`
@@ -50,6 +52,9 @@ func validateBucketLifecycle(body []byte) error {
 				if strings.TrimSpace(field.Text) != "" || len(field.Children) == 0 {
 					return invalid
 				}
+				if err := validateLifecycleAction(field); err != nil {
+					return err
+				}
 				actions++
 			default:
 				return invalid
@@ -59,6 +64,59 @@ func validateBucketLifecycle(body []byte) error {
 			}
 		}
 		if counts["Status"] != 1 || counts["Filter"]+counts["Prefix"] != 1 || actions == 0 {
+			return invalid
+		}
+	}
+	return nil
+}
+
+func validateLifecycleAction(action lifecycleField) error {
+	name := action.XMLName.Local
+	allowed := map[string][]string{
+		"Expiration":                     {"Days", "Date", "ExpiredObjectDeleteMarker"},
+		"NoncurrentVersionExpiration":    {"NoncurrentDays", "NewerNoncurrentVersions"},
+		"AbortIncompleteMultipartUpload": {"DaysAfterInitiation"},
+		"Transition":                     {"Days", "Date", "StorageClass"},
+		"NoncurrentVersionTransition":    {"NoncurrentDays", "StorageClass"},
+	}[name]
+	counts := map[string]int{}
+	invalid := fmt.Errorf("invalid lifecycle %s fields: check required, exclusive and duplicate scalar elements", name)
+	for _, child := range action.Children {
+		key := child.XMLName.Local
+		known := false
+		for _, field := range allowed {
+			if key == field {
+				known = true
+				break
+			}
+		}
+		if !known || len(child.Children) > 0 {
+			return invalid
+		}
+		counts[key]++
+		if counts[key] > 1 {
+			return invalid
+		}
+	}
+	switch name {
+	case "Expiration":
+		if counts["Days"]+counts["Date"]+counts["ExpiredObjectDeleteMarker"] != 1 {
+			return invalid
+		}
+	case "Transition":
+		if counts["Days"]+counts["Date"] != 1 || counts["StorageClass"] != 1 {
+			return invalid
+		}
+	case "NoncurrentVersionTransition":
+		if counts["NoncurrentDays"] != 1 || counts["StorageClass"] != 1 {
+			return invalid
+		}
+	case "NoncurrentVersionExpiration":
+		if counts["NoncurrentDays"] != 1 {
+			return invalid
+		}
+	case "AbortIncompleteMultipartUpload":
+		if counts["DaysAfterInitiation"] != 1 {
 			return invalid
 		}
 	}

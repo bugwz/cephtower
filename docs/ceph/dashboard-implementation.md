@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+生命周期五类动作新增内部字段结构校验，依据 `rgw_lc_s3.cc` 的 Expiration/Transition/Noncurrent/Multipart 解码逻辑：过期的 Days/Date/ExpiredObjectDeleteMarker 三选一，转换 Days/Date 二选一且需 StorageClass，非当前版本动作需 NoncurrentDays，终止分段上传需 DaysAfterInitiation。拒绝未知、重复及非标量子字段，支持 NewerNoncurrentVersions 和自定义存储类别名称。测试覆盖合法变体、必填缺失、互斥冲突与非法嵌套；完整后端测试及 OpenAPI 校验通过。本次无前端修改，未重跑前端测试，无真实集群验证。数值/日期、过滤器和跨规则约束仍待完善，尚未增加结构化生命周期界面或写后核验。
+
 生命周期 XML 写入补齐规则外层校验，依据 `rgw_lc_s3.cc::LCRule_S3::decode_xml`：配置需有 Rule，规则需有精确 Enabled/Disabled 状态、Filter 或 Prefix，以及至少一种过期/转换动作。拒绝空动作节点、未知顶层字段、重复单值字段和同时出现 Filter/Prefix 导致的静默忽略；保留五类原生动作与多条 Transition/NoncurrentVersionTransition，不限制为仅 Expiration。测试修正原先不符合原生要求的空配置及无 Filter 样例，覆盖原生动作组合和非法配置零网络请求；完整后端测试及 OpenAPI 校验通过。本次无前端改动，未重跑前端测试，无真实集群验证。嵌套过滤器、日期/天数和跨规则约束仍由 RGW 校验，结构化展示、编辑器和写后核验尚未完成。
 
 CORS 配置增加专用规则编辑器，支持规则增删/上移/下移、ID、逐项来源/允许头/暴露头、方法多选和可空缓存秒数。表单从实时结构化数据克隆草稿，锁定 Bucket 身份，保留字段空白、暴露头重复项和规则顺序，生成转义 XML（回车使用字符引用）后复用原生写入及回读核验。校验来源、方法、通配符、UTF-8 ID 长度、XML 字符及请求大小；空规则不能提交为关闭配置，需使用已有删除操作。确认说明整体替换、跨域影响及并发风险。测试覆盖草稿隔离、生成 XML、身份/字段拒绝、未配置初始状态、实际控件修改/增删/排序与提交禁用；完整前端测试、类型检查和构建通过，追加排序测试单独复跑通过。本次无后端修改，未重跑后端测试，无真实集群或浏览器视觉验证。
