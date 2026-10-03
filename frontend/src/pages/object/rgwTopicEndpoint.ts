@@ -1,4 +1,5 @@
 import { topicIdentityBlocked } from './rgwTopicPolicy'
+import { topicPushEndpointFromFields } from './rgwTopicCreate'
 
 export function topicEndpointBlocked(row: Record<string, unknown>) {
   return topicIdentityBlocked(row) ?? (typeof row.push_endpoint !== 'string' || typeof row.endpoint_redacted !== 'boolean' || typeof row.stored_secret !== 'boolean' ? '当前端点快照不完整，请刷新' : undefined)
@@ -13,9 +14,9 @@ export function topicEndpointInitial(row?: Record<string, unknown>) {
 export function topicEndpointInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const initial = topicEndpointInitial(row)
   if (values.topic_id !== initial.topic_id || values.topic_arn !== initial.topic_arn) throw new Error('不可更改 Topic 身份')
-  if (values.endpoint_mode !== 'replace' && values.endpoint_mode !== 'clear') throw new Error('请选择替换或清空端点')
+  if (values.endpoint_mode !== 'replace' && values.endpoint_mode !== 'clear' && values.endpoint_mode !== 'fields') throw new Error('请选择完整 URL、分项替换或清空端点')
   if (values.confirm_endpoint !== 'acknowledged') throw new Error('请确认完整替换、凭据与队列影响')
-  const endpoint = values.endpoint_mode === 'clear' ? '' : values.endpoint_secret
+  const endpoint = values.endpoint_mode === 'clear' ? '' : values.endpoint_mode === 'fields' ? topicPushEndpointFromFields(values) : values.endpoint_secret
   if (typeof endpoint !== 'string' || (values.endpoint_mode === 'replace' && !endpoint)) throw new Error('请填写完整推送 URL')
   if (endpoint) {
     // Current RGW URL grammar requires a hostname and paired user:password.

@@ -140,6 +140,28 @@ for (const scope of ['', 'team', 'RGW12345678901234567']) {
   assert.equal(action.disabledWhen(row),undefined)
   assert.equal(initial.endpoint_secret,undefined)
   assert.equal(action.fields.find(field=>field.name==='endpoint_secret').type,'password')
+  for (const protocol of ['http','https','amqp','amqps','kafka']) {
+    const values = {...initial,endpoint_mode:'fields',push_protocol:protocol,push_host:'new.example.test',push_port:'1234',push_path:protocol==='kafka'?'':'/new-path',push_user_secret:'new-user',push_password_secret:'new-password',confirm_endpoint:'acknowledged',endpoint_secret:'ignored-old-url'}
+    const body = action.buildBody(values,42,row)
+    const endpoint = `${protocol}://new-user:new-password@new.example.test:1234${values.push_path}`
+    assert.deepEqual(body,{cluster_id:42,...initial,expected_endpoint:row.push_endpoint,expected_redacted:true,expected_stored_secret:true,endpoint_secret:endpoint})
+    const confirmation = action.confirmation(values,row)
+    for (const secret of ['new-user','new-password',endpoint,'ignored-old-url']) assert.ok(!confirmation.includes(secret))
+    for (const warning of ['完整替换','旧 URL','不会自动保留','EndpointArgs','脱敏快照','回滚']) assert.ok(confirmation.includes(warning))
+    for (const key of ['push_protocol','push_host','push_port','push_path','push_user_secret','push_password_secret']) {
+      assert.equal(initial[key],undefined)
+      const field = action.fields.find(field=>field.name===key)
+      assert.ok(field.visibleWhen(values))
+      assert.ok(!field.visibleWhen({...values,endpoint_mode:'replace'}))
+      assert.ok(!field.visibleWhen({...values,endpoint_mode:'clear'}))
+      if (key.endsWith('_secret')) assert.equal(field.type,'password')
+    }
+    assert.equal(action.buildBody({...values,push_user_secret:'',push_password_secret:''},42,row).endpoint_secret,`${protocol}://new.example.test:1234${values.push_path}`)
+    assert.equal(action.buildBody({...values,endpoint_mode:'clear'},42,row).endpoint_secret,'')
+    for (const change of [{push_protocol:undefined},{push_host:'user@host'},{push_password_secret:''},{push_user_secret:''},{push_port:'65536'},{confirm_endpoint:undefined},{topic_id:'other'}]) assert.throws(()=>action.buildBody({...values,...change},42,row))
+    assert.throws(()=>action.buildBody(values,42,{...row,stale:true}))
+  }
+  assert.throws(()=>action.buildBody({...initial,endpoint_mode:'fields',push_protocol:'https',push_host:'old',push_path:'/path',confirm_endpoint:'acknowledged'},42,{...row,endpoint_redacted:false}))
   for (const endpoint_secret of ['https://new/path?q=private&x=1','amqp://user:private-password@broker/vhost','amqps://broker/vhost','kafka://broker:9092','http://host/path']) {
     const values = {...initial,endpoint_mode:'replace',endpoint_secret,confirm_endpoint:'acknowledged'}
     assert.deepEqual(action.buildBody(values,42,row),{cluster_id:42,...initial,expected_endpoint:row.push_endpoint,expected_redacted:true,expected_stored_secret:true,endpoint_secret})

@@ -591,8 +591,14 @@ const definitions: Record<
       fields: [
         { name: 'topic_id', label: 'Topic ID（不可更改）', readOnly: true },
         { name: 'topic_arn', label: 'Topic ARN（不可更改）', readOnly: true },
-        { name: 'endpoint_mode', label: '操作', type: 'select', required: true, options: [{ value: 'replace', label: '替换完整 URL（含所需凭据和查询参数）' }, { value: 'clear', label: '清空推送端点（队列可能被删除）' }] },
+        { name: 'endpoint_mode', label: '操作', type: 'select', required: true, options: [{ value: 'replace', label: '替换完整 URL（含所需凭据和查询参数）' }, { value: 'fields', label: '分项填写完整新端点（旧凭据不保留）' }, { value: 'clear', label: '清空推送端点（队列可能被删除）' }] },
         { name: 'endpoint_secret', label: '完整新 URL（预先保存，不从脱敏数据回填）', type: 'password', visibleWhen: values => values.endpoint_mode === 'replace' },
+        {name:'push_protocol',label:'推送协议（Kafka TLS 由 use-ssl 参数控制）',type:'select',required:true,options:[{value:'https',label:'HTTPS'},{value:'http',label:'HTTP（明文）'},{value:'amqps',label:'AMQPS'},{value:'amqp',label:'AMQP（明文）'},{value:'kafka',label:'Kafka'}],visibleWhen:values=>values.endpoint_mode==='fields'},
+        {name:'push_host',label:'新主机名 / IPv4（不含协议、端口、路径）',required:true,visibleWhen:values=>values.endpoint_mode==='fields'},
+        {name:'push_port',label:'新端口（1–65535，留空不在 URL 中指定端口）',visibleWhen:values=>values.endpoint_mode==='fields'},
+        {name:'push_path',label:'新 HTTP 路径 / AMQP VHost（以 / 开头，Kafka 留空；不自动编码）',visibleWhen:values=>values.endpoint_mode==='fields'},
+        {name:'push_user_secret',label:'新推送用户名（与密码同时填写，留空不保留旧 URL 凭据）',type:'password',visibleWhen:values=>values.endpoint_mode==='fields'},
+        {name:'push_password_secret',label:'新推送密码（不回填，不出现在确认文案）',type:'password',visibleWhen:values=>values.endpoint_mode==='fields'},
         { name: 'confirm_endpoint', label: '影响确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已保存完整配置，确认目标可信、传输安全、保留参数及队列风险' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...topicEndpointInput(values, row) })

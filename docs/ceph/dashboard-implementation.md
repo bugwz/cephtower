@@ -28,6 +28,11 @@
 
 ### 增量实现与验证记录
 
+- **RGW Topic 现有端点分项编辑**：端点修改表单新增协议、主机/IPv4、可选端口、路径/VHost、用户名和密码输入，复用创建表单的原始地址生成规则。生成值沿现有 `PATCH /rgw/topic/endpoint` → 加密队列 → SNS `SetTopicAttributes(push-endpoint)` → 完整属性回读链路执行，不新增 CLI 拼接或直接元数据写入。
+  - 不从脱敏地址回填任何分项字段，必须明确填写完整目标；用户名与密码同时留空表示新 URL 不含旧凭据，不是保留旧凭据。确认仍提示 EndpointArgs 保留、可能覆盖 URL 凭据、队列与非原子快照风险。补充三种命名空间 × 五种协议的实际 action 绑定，以及不回填、脱敏、无变化、过期范围、凭据校验和隐藏草稿隔离回归。
+  - 本轮核实独立 `user-name` / `password` 更新仍存在原生边界：`rgw_rest_pubsub.cc::RGWPSSetTopicAttributesOp::map_attributes` 对这两项只调用字符串替换并返回，不调用 `validate_and_update_endpoint_secret`；`topic_has_endpoint_secret` 却仅返回 `stored_secret`，GetTopic/GetTopicAttributes 的传输保护依赖它。因此不能把这两个原生参数直接包装成通用凭据按钮，尤其是初始秘密标记为 false 的 Topic；本功能更新的是完整 URL，不声称处理或清除 EndpointArgs 中的凭据。独立参数编辑继续列为未完成项，需进一步设计原生状态一致性链路。
+  - 验证：`make test-frontend`（含类型检查与生产构建），及 S3/SNS Topic 端点后端定向回归；无真实集群或浏览器视觉验证。
+
 - **RGW Topic 创建端点分项表单**：参照 `rgw-topic-form.component.ts` 的 HTTP/AMQP/Kafka 地址生成逻辑，创建 Topic 新增分项输入模式，覆盖五种协议、主机/IPv4、可选端口、HTTP 路径/AMQP VHost、成对用户名与密码。Kafka 的 TLS 仍通过原生 `use-ssl` 参数控制，不虚构 `kafkas` 协议；分项模式拒绝 Kafka 路径，不自动填写或推断端口。
   - 分项输入只生成已有 writeOnly `endpoint_secret`，继续走 `POST /rgw/topic` → 加密队列 → SNS CreateTopic → 完整属性回读，不新增平行后端路径。用户名与密码使用密码控件，确认不回显，分项字段不会额外提交；切换无端点或完整 URL 时不混入隐藏的分项草稿。
   - 对照 `rgw_url.cc`，原生直接捕获 URL 中的凭据，故不擅自百分号编码；分项凭据拒绝有歧义的分隔符与转义字符，复杂原始地址仍可显式使用完整 URL 模式。补充五协议实际表单绑定、范围/端口/凭据校验、隐藏字段隔离和确认脱敏回归。`make test-frontend`（含类型检查与生产构建）通过；本次未改后端，无真实集群或浏览器视觉验证。
