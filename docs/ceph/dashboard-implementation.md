@@ -28,6 +28,8 @@
 
 ### 增量实现与验证记录
 
+用户详情对齐参考 `rgw-user-details.component.html` 的管理权限、子用户、用户总配额、默认 Bucket 配额及限流分区，新增对应详情分页，并将已有容量统计与统计范围提示放在同一分页；移除用户列表中的嵌套明细表格，保留原有变更入口。数据沿用 `user info`、`user stats`、`ratelimit get --ratelimit-scope user` 采集链路，不新增重复请求。组件测试验证完整与缺失库存的字段传递，原有格式测试继续覆盖未知值、零值和禁用状态；未进行浏览器视觉或真实集群验证。
+
 - RGW 用户操作掩码执行后通过 `user info` 校验完整 UID 和 `op_mask`。依据 `src/rgw/rgw_common.cc` 的 `mask_to_str`/`op_type_flags`，原生结果按 read、write、delete 顺序使用逗号加空格分隔；校验按该格式比较，不把其他用户或缺失字段当作成功。回读失败或不一致返回不可自动重试的 `post_check_failed`，提醒检查实际状态。执行测试覆盖七种组合、独立设置及与启用/暂停串联、错误身份、无效响应和命令失败；尚无真实集群验证。
 
 用户操作掩码增加七种非空 read/write/delete 组合设置，经 PATCH 用户 API 映射为 `user modify --op-mask=...` 并 `user info` 回读。参考 `radosgw-admin.cc` 6800 附近与 `rgw_common.cc` 的操作类型映射、`driver/rados/rgw_user.cc` 修改分支；空值不会触发原生更新，因此不提供空值作为禁用全部。界面要求显式选择并确认用户及目标掩码，提示 ACL/策略独立生效；前后端覆盖合法组合和非法输入，未做真实集群验证。

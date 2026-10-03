@@ -83,18 +83,32 @@ for (const [title, values] of [
 assert.ok(pages.includes('detailContent: (row) => <RgwUserDetails row={row} />'))
 const userDetailsExports = {}
 new Function('exports', 'require', ts.transpileModule(userDetailsSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(userDetailsExports, (name) => {
-  if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }) }
+  if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }
   if (name === 'antd') return { Tabs: 'Tabs' }
   if (name === './RgwUserIdentityDetails') return { RgwUserIdentityDetails: 'Identity', RgwUserPlacementDetails: 'Placement' }
+  if (name === './RgwPermissions') return { RgwPermissions: 'Permissions' }
+  if (name === './RgwQuota') return { RgwQuota: 'Quota' }
+  if (name === './RgwRateLimit') return { RgwRateLimit: 'RateLimit' }
+  if (name === './RgwStorage') return { RgwStorage: 'Storage' }
+  if (name === './rgwStorageDetails') return { rgwStorageScope: (scope, account) => ({ scope, account }) }
   throw new Error(`unexpected import ${name}`)
 })
-for (const row of [{}, { uid: 'tenant$user', account_id: 'RGW123', tags: [], placement_tags: ['archive'] }]) {
+for (const row of [{}, { uid: 'tenant$user', account_id: 'RGW123', stats_scope: 'account', tags: [], placement_tags: ['archive'], caps: [], subusers: [], user_quota: { enabled: false }, bucket_quota: { enabled: true, max_size: 0 }, rate_limit: { enabled: false }, storage_stats: { stats: { num_objects: 0 } } }]) {
   const view = userDetailsExports.RgwUserDetails({ row })
   assert.equal(view.type, 'Tabs')
-  assert.deepEqual(view.props.items.map(item => item.key), ['identity', 'placement'])
+  assert.deepEqual(view.props.items.map(item => item.key), ['identity', 'placement', 'caps', 'subusers', 'quota', 'bucket-quota', 'rate-limit', 'usage'])
   assert.equal(view.props.items[0].children.type, 'Identity')
   assert.equal(view.props.items[1].children.type, 'Placement')
-  for (const item of view.props.items) assert.equal(item.children.props.row, row)
+  for (const item of view.props.items.slice(0, 2)) assert.equal(item.children.props.row, row)
+  for (const [index, type, field] of [[2, 'Permissions', 'caps'], [3, 'Permissions', 'subusers'], [4, 'Quota', 'user_quota'], [5, 'Quota', 'bucket_quota'], [6, 'RateLimit', 'rate_limit']]) {
+    assert.equal(view.props.items[index].children.type, type)
+    assert.equal(view.props.items[index].children.props.value, row[field])
+  }
+  assert.equal(view.props.items[3].children.props.subusers, true)
+  const usage = view.props.items[7].children.props.children
+  assert.deepEqual(usage[0].props.children, { scope: row.stats_scope, account: row.account_id })
+  assert.equal(usage[1].type, 'Storage')
+  assert.equal(usage[1].props.value, row.storage_stats)
 }
 const components = readFileSync(new URL('../src/pages/object/RgwUserIdentityDetails.tsx', import.meta.url), 'utf8')
 const identityView = {}
