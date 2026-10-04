@@ -29,6 +29,31 @@
 
 ### 增量实现与验证记录
 
+#### SMB 当前覆盖复核（不是完成声明）
+
+本次按当前源码重新核对参考 `shared/api/smb.service.ts`、`smb.model.ts`、
+`smb-usersgroups-form.component.ts/html` 与本项目 `frontend/src/pages/file/pages.tsx`，
+避免将下方历史记录中的“尚未实现”直接当作当前待办。
+
+| 参考能力 | 当前实现证据 | 复核结论 |
+| --- | --- | --- |
+| 集群认证、域引用、本地用户组引用、部署数量/主机/标签、DNS、CTDB 和公开地址 | `smbClusterFields.ts`、`pages.tsx` 的集群创建/更新动作、`SMBClusterDetails.tsx` | 已有表单和展示；不证明实际部署成功 |
+| 共享 CephFS 路径、子卷范围、只读/浏览、登录控制 | `smbShareFields.ts`、`SMBLoginControlEditor.tsx`、`pages.tsx` 共享动作及列 | 已有结构化表单与对应展示 |
+| 域加入凭据创建、更新、删除及集群选择 | `pages.tsx` 的 `smbJoinAuths` 相关动作与 `smbJoinAuthOptions`、后端 `smb_auth.go` | 旧记录中的凭据管理缺口已被后续实现覆盖；密码不应回显 |
+| 用户组资源创建、替换、删除、用户和组展示 | `SMBUsersEditor.tsx`、`pages.tsx`、后端 `smb_usersgroups.go` | 已有结构化编辑；替换仍需提供保留用户的密码 |
+| 用户组资源 JSON/YAML 文件导入并填入表单 | 参考 `SmbService.uploadData` → `dataUploader` → `SmbUsersgroupsFormComponent.fillForm`；当前文件页面未发现文件读取/上传入口 | **确认仍缺失，下一项实现候选** |
+
+导入的准确参考范围是用户组表单，不能仅凭服务中的 `SMBResource` 联合类型就声称
+四类 SMB 资源都存在导入界面。后续应将单个 `ceph.smb.usersgroups` 文档填入现有
+创建/更新表单，保留资源身份与绑定选择验证，再使用既有 API →
+`ceph smb apply -i - --password-filter-out=hidden --format json` 链路。
+导入本身不执行写入；不得将文件密码放入错误信息、日志或操作确认中。需要覆盖
+错误资源类型、损坏或多文档输入、未知字段处理、空集合、重复名称、编辑 ID 不匹配、
+异步读取与表单关闭/切换的竞态，以及 JSON/YAML 等价输入。
+
+本次仅做源码覆盖复核，未改运行时代码，未运行构建或新增实机验证；以上“已有”不等于
+完整交互、协议或真实集群验证通过，也不代表整体 Dashboard 迁移完成。
+
 - **管道执行 UID 的原生分隔语义修复**：对照 `rgw_user_types.h::rgw_user::from_str/to_str`，UID 只按前两个 `$` 拆出租户和命名空间，剩余内容完整属于用户 ID。修复 Bucket/Zonegroup 管道创建、编辑共用的后端参数校验及前端输入/回填校验，允许 `team$ns$user$extra`、`$ns$$` 等可往返身份，仍拒绝空命名空间等会被自动归一化的格式。新增原样 CLI 参数、创建/编辑预期策略及两类页面回填回归；不新增 API、不验证用户存在或复制权限。运行全量后端/OpenAPI 一致性及前端测试构建，无真实集群验证。
 
 - **管道 Zone 成员选择与回填**：Bucket 和 Zonegroup 的成员编辑表单复用当前策略内的组/管道联动选项，选择后载入源、目标完整 Zone ID 数组，切换时清空旧成员编辑及风险确认。依据参考 `rgw-multisite-sync-pipe-modal.component.ts` 编辑回填和 `rgw_sync_policy.cc::rgw_sync_bucket_entities::dump`，保留原始通配符、空数组与孤立旧 ID 供检查，不把缺失/损坏成员转换为全范围。最终提交仍沿用已有非空集合校验，Zonegroup 要求当前成员或独立通配符；载入失败阻止提交。复用原生 CLI、快照校验及适用的 Period 发布，不新增接口。实际动作回归覆盖两种范围、清空确认、通配/空/孤立集合及损坏数据；全量前端测试、类型校验与构建通过。未修改后端，无真实集群或浏览器视觉验证。
