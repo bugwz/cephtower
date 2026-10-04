@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+- **Bucket / Zonegroup 管道源前缀编辑**：现有管道编辑 API 增加 `prefix_mode=set/remove` 与 `source_prefix`，分别映射原生 `--prefix=<原值>` 和 `--prefix-rm true`；后者在参考版本是带参数选项，参数存在才触发 reset。依据 `rgw_sync_pipe_filter::set_prefix` 区分未修改、显式空字符串和移除字段；表单分别提供保持、设置、空前缀和移除，忽略隐藏旧值，保留 Unicode/空格/前导短横线/等号，不作正则或路径归一化。请求拒绝控制字符、无效 Unicode、超 1024 UTF-8 字节及矛盾组合。
+  - 通过完整组快照与写后完整策略核验保留标签、ACL、存储类、优先级和 Zone 成员，Zonegroup 继续发布并核验 Realm Period。确认提示空前缀或移除可能扩大匹配范围，仍受其他条件约束，非事务失败可能部分生效。补充三种操作、无变化、写入/回读故障、标签漂移、命令参数、API 类型、两类表单及 Realm 发布测试。无真实集群或浏览器视觉验证；标签与 ACL 编辑等仍待实现。
+  - `make test-backend`（含 OpenAPI 一致性）和 `make test-frontend`（含类型检查、生产构建）通过。
+
 - **Bucket / Zonegroup 管道目标存储类**：现有管道编辑 API 增加可选 `storage_class`，映射 `sync group pipe modify --storage-class`，沿用完整快照与写后策略核验、Zonegroup Realm Period 发布。参考 `rgw_sync_pipe_dest_params::set_storage_class`，明确保存空字符串不等于 reset optional；表单提供保持、设置完整名称、显式空字符串三种行为，忽略隐藏旧值，不虚构“移除覆盖”命令。保留 ACL、过滤器、优先级和 Zone 成员；不验证目标放置配置或声明已有对象已迁移。
   - 增加非空/空值、仅改存储类、无变化拒绝、回读不符、ACL 漂移、两种 Realm 归属、API 类型与实际表单绑定测试；OpenAPI 重新生成。无真实集群及浏览器视觉验证，ACL 和过滤器编辑等剩余项继续推进。
   - `make test-backend`（含 OpenAPI 一致性）、`make test-frontend`（含类型检查和生产构建）通过；补充“缺失字段 → 显式空字符串”用例后，存储类专项测试再次通过。

@@ -20964,6 +20964,9 @@ paths:
                   type: string
                 pool:
                   type: string
+                prefix_mode:
+                  type: string
+                  enum: ["remove", "set"]
                 priority:
                   type: integer
                 service_id:
@@ -20977,6 +20980,8 @@ paths:
                 source_bucket:
                   type: string
                 source_bucket_id:
+                  type: string
+                source_prefix:
                   type: string
                 source_tenant:
                   type: string
@@ -26001,6 +26006,9 @@ paths:
                   type: string
                 pool:
                   type: string
+                prefix_mode:
+                  type: string
+                  enum: ["remove", "set"]
                 priority:
                   type: integer
                 realm_id:
@@ -26016,6 +26024,8 @@ paths:
                 source_bucket:
                   type: string
                 source_bucket_id:
+                  type: string
+                source_prefix:
                   type: string
                 source_tenant:
                   type: string

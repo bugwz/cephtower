@@ -109,6 +109,17 @@ assert.equal(updatePipeAction.buildBody({...pipeEditValues,storage_class_mode:'p
 for (const storage_class of ['',null,'-x','x\n','x'.repeat(513),'\ud800']) assert.throws(()=>updatePipeAction.buildBody({...pipeEditValues,storage_class_mode:'set',storage_class},7,pipeEditRow))
 assert.throws(()=>updatePipeAction.buildBody({...pipeEditValues,storage_class_mode:'unknown'},7,pipeEditRow))
 assert.equal(updatePipeAction.fields.find(field=>field.name==='storage_class').visibleWhen({storage_class_mode:'empty'}),false)
+for (const source_prefix of [' photos/ ','目录/','--leading','a=b','x'.repeat(1024)]) {
+ const values={...pipeEditValues,prefix_mode:'set',source_prefix}
+ assert.equal(updatePipeAction.buildBody(values,7,pipeEditRow).source_prefix,source_prefix)
+ assert.ok(updatePipeAction.confirmation(values,pipeEditRow).includes(JSON.stringify(source_prefix)))
+}
+assert.equal(updatePipeAction.buildBody({...pipeEditValues,prefix_mode:'empty',source_prefix:'stale'},7,pipeEditRow).source_prefix,'')
+assert.equal(updatePipeAction.buildBody({...pipeEditValues,prefix_mode:'remove',source_prefix:'stale'},7,pipeEditRow).source_prefix,undefined)
+assert.equal(updatePipeAction.buildBody({...pipeEditValues,prefix_mode:'preserve',source_prefix:'stale'},7,pipeEditRow).prefix_mode,undefined)
+for (const source_prefix of ['',null,'x\n','x'.repeat(1025),'\ud800']) assert.throws(()=>updatePipeAction.buildBody({...pipeEditValues,prefix_mode:'set',source_prefix},7,pipeEditRow))
+assert.throws(()=>updatePipeAction.buildBody({...pipeEditValues,prefix_mode:'unknown'},7,pipeEditRow))
+assert.equal(updatePipeAction.fields.find(field=>field.name==='source_prefix').visibleWhen({prefix_mode:'empty'}),false)
 for (const change of [{ bucket_id:'other' }, { group_id:'other' }, { pipe_id:'missing' }, { confirm_pipe_update:true }, { source_bucket:'' }, { source_bucket:'a/b' }, { mode:'unknown' }, { user:'unexpected' }, { mode:'user' }]) assert.throws(() => updatePipeAction.buildBody({ ...pipeEditValues, ...change }, 7, pipeEditRow))
 assert.ok(updatePipeAction.disabledWhen({ ...pipeEditRow, stale: true }))
 assert.equal(pipeEditGroup.pipes[0].params.user, 'old')

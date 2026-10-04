@@ -12,7 +12,7 @@ import (
 func TestZonegroupSyncPipeUpdate(t *testing.T) {
 	for _, realm := range []string{"", "realm"} {
 		for _, mode := range []string{"system", "user"} {
-			for _, scenario := range []string{"success", "priority", "storage class", "empty storage class", "missing", "duplicate", "stale", "unchanged", "write", "post_check", "period.commit", "published_policy_check"} {
+			for _, scenario := range []string{"success", "priority", "storage class", "empty storage class", "prefix", "empty prefix", "remove prefix", "missing", "duplicate", "stale", "unchanged", "write", "post_check", "period.commit", "published_policy_check"} {
 				if realm == "" && (scenario == "period.commit" || scenario == "published_policy_check") {
 					continue
 				}
@@ -51,6 +51,20 @@ func TestZonegroupSyncPipeUpdate(t *testing.T) {
 					}
 					zg := map[string]any{"id": "zg", "name": "east", "realm_id": realm, "zones": []any{}, "sync_policy": map[string]any{"groups": []any{group}}}
 					before := encode(zg)
+					if scenario == "prefix" || scenario == "empty prefix" || scenario == "remove prefix" {
+						filter := nativeParams["source"].(map[string]any)["filter"].(map[string]any)
+						if scenario == "remove prefix" {
+							params["prefix_mode"] = "remove"
+							delete(filter, "prefix")
+						} else {
+							prefix := "--目录/ "
+							if scenario == "empty prefix" {
+								prefix = ""
+							}
+							params["prefix_mode"], params["source_prefix"] = "set", prefix
+							filter["prefix"] = prefix
+						}
+					}
 					if scenario == "storage class" || scenario == "empty storage class" {
 						value := "ARCHIVE"
 						if scenario == "empty storage class" {
@@ -103,7 +117,7 @@ func TestZonegroupSyncPipeUpdate(t *testing.T) {
 					}
 					service.executor = runner
 					_, err := service.Execute(context.Background(), Request{ClusterID: cluster, Action: "rgw_zonegroup.sync_pipe_update", Parameters: params})
-					if scenario == "success" || scenario == "priority" || scenario == "storage class" || scenario == "empty storage class" {
+					if scenario == "success" || scenario == "priority" || scenario == "storage class" || scenario == "empty storage class" || scenario == "prefix" || scenario == "empty prefix" || scenario == "remove prefix" {
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -127,6 +141,12 @@ func TestZonegroupSyncPipeUpdate(t *testing.T) {
 							}
 							if value, ok := params["storage_class"].(string); ok {
 								args = append(args, "--storage-class", value)
+							}
+							if params["prefix_mode"] == "set" {
+								args = append(args, "--prefix="+params["source_prefix"].(string))
+							}
+							if params["prefix_mode"] == "remove" {
+								args = append(args, "--prefix-rm", "true")
 							}
 							args = append(args, "--zonegroup-id", "zg", "--format", "json")
 							if !call.Mutating || !reflect.DeepEqual(call.Args, args) {

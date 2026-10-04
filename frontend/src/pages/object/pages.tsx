@@ -892,6 +892,8 @@ const definitions: Record<
         { name: 'priority', label: '优先级（留空保持原值；可能改变匹配管道选择）', type: 'number', min: -2147483648, max: 2147483647 },
         { name: 'storage_class_mode', label: '目标存储类变更', type: 'select', options: [{value:'preserve',label:'保持原值'},{value:'set',label:'设置完整存储类名称'},{value:'empty',label:'设置空字符串（不是移除覆盖字段）'}] },
         { name: 'storage_class', label: '目标存储类（需自行确认目标放置配置）', required: true, visibleWhen: values => values.storage_class_mode === 'set' },
+        { name: 'prefix_mode', label: '源前缀过滤变更', type: 'select', options: [{value:'preserve',label:'保持原值'},{value:'set',label:'设置完整前缀'},{value:'empty',label:'设置空前缀（保留字段）'},{value:'remove',label:'移除前缀字段'}] },
+        { name: 'source_prefix', label: '源对象前缀（保留空格，不是正则表达式）', required: true, visibleWhen: values => values.prefix_mode === 'set' },
         { name: 'confirm_pipe_update', label: '修改确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份并确认选择器、优先级和权限变化；Zone 成员保持不变' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketSyncPipeUpdateInput(values, row) })
@@ -1166,6 +1168,8 @@ const definitions: Record<
         { name: 'priority', label: '优先级（留空保持原值；可能改变匹配管道选择）', type: 'number', min: -2147483648, max: 2147483647 },
         { name: 'storage_class_mode', label: '目标存储类变更', type: 'select', options: [{value:'preserve',label:'保持原值'},{value:'set',label:'设置完整存储类名称'},{value:'empty',label:'设置空字符串（不是移除覆盖字段）'}] },
         { name: 'storage_class', label: '目标存储类（需自行确认目标放置配置）', required: true, visibleWhen: values => values.storage_class_mode === 'set' },
+        { name: 'prefix_mode', label: '源前缀过滤变更', type: 'select', options: [{value:'preserve',label:'保持原值'},{value:'set',label:'设置完整前缀'},{value:'empty',label:'设置空前缀（保留字段）'},{value:'remove',label:'移除前缀字段'}] },
+        { name: 'source_prefix', label: '源对象前缀（保留空格，不是正则表达式）', required: true, visibleWhen: values => values.prefix_mode === 'set' },
         { name: 'confirm_pipe_update', label: '配置与发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，确认完整选择器、优先级与权限模式，了解 Realm 发布及并发风险' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupPipeUpdateInput(values,row) })

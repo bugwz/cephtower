@@ -165,6 +165,17 @@ export function syncPipeStorageClassInput(values: Record<string, unknown>) {
   if (values.storage_class_mode !== 'set' || typeof values.storage_class !== 'string' || !values.storage_class || values.storage_class.startsWith('-') || new TextEncoder().encode(values.storage_class).length > 512 || /\p{Cc}/u.test(values.storage_class) || [...values.storage_class].some(c => {const n=c.codePointAt(0)!;return n>=0xd800&&n<=0xdfff})) throw new Error('请输入完整目标存储类；空字符串请显式选择')
   return {storage_class:values.storage_class}
 }
+export function syncPipePrefixInput(values: Record<string, unknown>) {
+  if (values.prefix_mode === undefined || values.prefix_mode === 'preserve') return {}
+  if (values.prefix_mode === 'remove') return {prefix_mode:'remove'}
+  if (values.prefix_mode === 'empty') return {prefix_mode:'set',source_prefix:''}
+  const prefix=values.source_prefix
+  if (values.prefix_mode !== 'set' || typeof prefix !== 'string' || !prefix || new TextEncoder().encode(prefix).length>1024 || /\p{Cc}/u.test(prefix) || [...prefix].some(c=>{const n=c.codePointAt(0)!;return n>=0xd800&&n<=0xdfff})) throw new Error('请输入完整源前缀；空前缀请显式选择')
+  return {prefix_mode:'set',source_prefix:prefix}
+}
+export function syncPipePrefixWarning(input: Record<string, unknown>) {
+  return `源前缀：${input.prefix_mode === 'remove' ? '移除前缀字段' : input.prefix_mode === 'set' ? JSON.stringify(input.source_prefix) : '保持原值'}；空前缀或移除前缀可能扩大对象匹配范围，仍受标签及其他策略约束。`
+}
 export function bucketSyncPipeUpdateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {
   const selected = bucketSyncPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
   const group = JSON.parse(selected.expected_group)
@@ -174,11 +185,11 @@ export function bucketSyncPipeUpdateInput(values: Record<string, unknown>, row?:
   delete input.source_zones
   delete input.dest_zones
   input.expected_group = selected.expected_group
-  return {...input,...syncPipePriorityInput(values),...syncPipeStorageClassInput(values)}
+  return {...input,...syncPipePriorityInput(values),...syncPipeStorageClassInput(values),...syncPipePrefixInput(values)}
 }
 export function bucketSyncPipeUpdateConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const input = bucketSyncPipeUpdateInput(values, row)
-  return `确认修改 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中管道 ${JSON.stringify(input.pipe_id)}？源租户/桶/实例 ${JSON.stringify([input.source_tenant, input.source_bucket, input.source_bucket_id])}；目标 ${JSON.stringify([input.dest_tenant, input.dest_bucket, input.dest_bucket_id])}；模式 ${input.mode}，用户 ${JSON.stringify(input.user)}。* 为通配，空租户不限定租户。system 模式保留已存储 UID（不使用其权限检查），不会删除用户或凭据。优先级：${input.priority === undefined ? '保持原值' : input.priority}，可能改变匹配管道的选择。目标存储类：${input.storage_class === undefined ? '保持原值' : JSON.stringify(input.storage_class)}；空字符串仍是显式覆盖，不是移除字段。保留 Zone 成员、过滤器和目标 ACL。不验证目标放置配置或已有对象迁移。可能改变复制范围或权限；请备份并避免外部并发，失败不代表未生效，不自动回滚。仅修改桶本地管道，不提交 period，不代表同步完成。`
+  return `确认修改 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中管道 ${JSON.stringify(input.pipe_id)}？源租户/桶/实例 ${JSON.stringify([input.source_tenant, input.source_bucket, input.source_bucket_id])}；目标 ${JSON.stringify([input.dest_tenant, input.dest_bucket, input.dest_bucket_id])}；模式 ${input.mode}，用户 ${JSON.stringify(input.user)}。* 为通配，空租户不限定租户。system 模式保留已存储 UID（不使用其权限检查），不会删除用户或凭据。优先级：${input.priority === undefined ? '保持原值' : input.priority}，可能改变匹配管道的选择。目标存储类：${input.storage_class === undefined ? '保持原值' : JSON.stringify(input.storage_class)}；空字符串仍是显式覆盖，不是移除字段。${syncPipePrefixWarning(input)}保留 Zone 成员、源标签和目标 ACL。不验证目标放置配置或已有对象迁移。可能改变复制范围或权限；请备份并避免外部并发，失败不代表未生效，不自动回滚。仅修改桶本地管道，不提交 period，不代表同步完成。`
 }
 
 export function bucketSyncPipeCreateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {

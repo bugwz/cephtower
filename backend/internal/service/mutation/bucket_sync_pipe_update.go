@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 func syncPipePriority(p map[string]any) (string, bool, error) {
@@ -38,6 +41,26 @@ func syncPipeStorageClass(p map[string]any) (string, bool, error) {
 		return "", true, invalid("invalid destination storage class")
 	}
 	return text, true, nil
+}
+
+func syncPipePrefix(p map[string]any) (string, string, error) {
+	raw, present := p["prefix_mode"]
+	value, hasValue := p["source_prefix"]
+	if !present && !hasValue {
+		return "", "", nil
+	}
+	mode, ok := raw.(string)
+	if !ok {
+		return "", "", invalid("prefix_mode is required")
+	}
+	if mode == "remove" && !hasValue {
+		return mode, "", nil
+	}
+	text, ok := value.(string)
+	if mode != "set" || !ok || !utf8.ValidString(text) || len(text) > 1024 || strings.IndexFunc(text, unicode.IsControl) >= 0 {
+		return "", "", invalid("invalid source prefix change")
+	}
+	return mode, text, nil
 }
 
 // Validate the same explicit selectors and identity as creation, but never send
@@ -74,6 +97,16 @@ func bucketSyncPipeUpdateArgs(p map[string]any) ([]string, error) {
 	}
 	if present {
 		result = append(result, "--storage-class", storageClass)
+	}
+	mode, prefix, err := syncPipePrefix(p)
+	if err != nil {
+		return nil, err
+	}
+	if mode == "set" {
+		result = append(result, "--prefix="+prefix)
+	}
+	if mode == "remove" {
+		result = append(result, "--prefix-rm", "true")
 	}
 	return result, nil
 }
@@ -123,6 +156,28 @@ func updateBucketSyncPipe(group map[string]any, p map[string]any) error {
 		}
 		changed = changed || !reflect.DeepEqual(dest["storage_class"], storageClass)
 		dest["storage_class"] = storageClass
+	}
+	prefixMode, prefix, err := syncPipePrefix(p)
+	if err != nil {
+		return err
+	}
+	if prefixMode != "" {
+		source, ok := params["source"].(map[string]any)
+		if !ok {
+			return invalid("pipe source params unavailable")
+		}
+		filter, ok := source["filter"].(map[string]any)
+		if !ok {
+			return invalid("pipe filter unavailable")
+		}
+		current, exists := filter["prefix"]
+		if prefixMode == "remove" {
+			changed = changed || exists
+			delete(filter, "prefix")
+		} else {
+			changed = changed || !exists || !reflect.DeepEqual(current, prefix)
+			filter["prefix"] = prefix
+		}
 	}
 	if syncGroupString(p, "mode") == "user" {
 		changed = changed || params["user"] != syncGroupString(p, "user")
