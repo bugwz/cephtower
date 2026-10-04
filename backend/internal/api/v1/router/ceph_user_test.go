@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,6 +32,10 @@ type authRouteExecutor struct{ specs []executor.CommandSpec }
 func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.specs = append(e.specs, spec)
 	switch spec.ID {
+	case "rgw_realm.token.read":
+		token := base64.StdEncoding.EncodeToString([]byte(`{"realm_id":"realm-id","realm_name":"realm-a","endpoint":"https://rgw.example","access_key":"realm-access","secret":"realm-secret"}`))
+		raw, _ := json.Marshal([]map[string]string{{"realm": "realm-a", "token": token}})
+		return executor.CommandResult{Stdout: raw}, nil
 	case "erasure_code.manager":
 		return executor.CommandResult{Stdout: []byte(`{"active_name":"node.a"}`)}, nil
 	case "erasure_code.configuration":
@@ -259,6 +264,25 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 		t.Fatal("export did not return a no-store keyring")
 	}
 	send("POST", "/ceph/users/import", map[string]any{"keyring": "[client.imported]\nkey = sensitive-import-key\n"})
+	realmResponse := send("POST", "/rgw/realm/token", map[string]any{"realm_id": "realm-id", "name": "realm-a"})
+	if realmResponse.Code != http.StatusOK || realmResponse.Header().Get("Cache-Control") != "no-store" || strings.Contains(realmResponse.Body.String(), "operation_id") {
+		t.Fatal("realm token was cached or queued")
+	}
+	var realmEnvelope struct {
+		Data struct {
+			Token string `json:"token"`
+		} `json:"data"`
+	}
+	if json.Unmarshal(realmResponse.Body.Bytes(), &realmEnvelope) != nil || realmEnvelope.Data.Token == "" {
+		t.Fatal("realm token missing")
+	}
+	for _, body := range []string{`{"cluster_id":0,"realm_id":"realm-id","name":"realm-a"}`, fmt.Sprintf(`{"cluster_id":%d,"realm_id":"wrong","name":"realm-a"}`, cluster.ID), fmt.Sprintf(`{"cluster_id":%d,"realm_id":"realm-id","name":"realm-a","extra":true}`, cluster.ID)} {
+		bad := httptest.NewRecorder()
+		mux.ServeHTTP(bad, httptest.NewRequest("POST", "/api/v1/rgw/realm/token", strings.NewReader(body)))
+		if bad.Code < 400 || bad.Header().Get("Cache-Control") != "no-store" || strings.Contains(bad.Body.String(), realmEnvelope.Data.Token) {
+			t.Fatal("invalid realm request succeeded or leaked token")
+		}
+	}
 	send("DELETE", "/ceph/user", map[string]any{"entity": "client.backup"})
 	for _, spec := range runner.specs {
 		if strings.Contains(fmt.Sprint(spec.Args), "sensitive-import-key") {
@@ -271,6 +295,10 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 	}
 	found := false
 	for _, audit := range audits {
+		encoded, _ := json.Marshal(audit)
+		if strings.Contains(string(encoded), realmEnvelope.Data.Token) || strings.Contains(string(encoded), "realm-secret") {
+			t.Fatal("realm token persisted in audit")
+		}
 		if audit.ParametersJSON != nil && (strings.Contains(*audit.ParametersJSON, "sensitive-import-key") || strings.Contains(*audit.ParametersJSON, "sensitive-config-value")) {
 			t.Fatal("import secret entered audit")
 		}

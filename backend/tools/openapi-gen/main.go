@@ -106,6 +106,8 @@ func successResponseSchema(route router.Route) string {
 		return "CephKeyringResponse"
 	case "POST /rbd/mirroring/bootstrap/token":
 		return "RBDMirrorBootstrapTokenResponse"
+	case "POST /rgw/realm/token":
+		return "RGWRealmTokenResponse"
 	case "GET /healthz", "GET /readyz":
 		return "HealthResponse"
 	case "GET /bootstrap":
@@ -208,6 +210,7 @@ func writeResponseSchemas(b *strings.Builder) {
 		{"BucketConfigurationResponse", "BucketConfiguration"},
 		{"CephKeyringResponse", "CephKeyring"},
 		{"RBDMirrorBootstrapTokenResponse", "RBDMirrorBootstrapToken"},
+		{"RGWRealmTokenResponse", "RGWRealmToken"},
 		{"CephLogsResponse", "CephLogs"}, {"ConfigurationOptionResponse", "JSONValue"},
 	}
 	for _, response := range responses {
@@ -391,6 +394,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 			"pool":       stringField(true),
 			"site_name":  stringField(true),
 		}
+	case "POST /rgw/realm/token":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "realm_id": stringField(true), "name": stringField(true)}
 	case "POST /rbd/mirroring/bootstrap/peer":
 		fields = map[string]handler.JSONField{
 			"cluster_id": integerField(true),
@@ -546,6 +551,7 @@ func isAsyncRoute(route router.Route) bool {
 		"POST /ceph/users/import", "POST /cluster", "POST /cluster/probe",
 		"POST /endpoint", "POST /role", "POST /role/binding", "POST /user",
 		"POST /rbd/mirroring/bootstrap/peer", "POST /rbd/mirroring/bootstrap/token",
+		"POST /rgw/realm/token",
 		"PUT /credential":
 		return false
 	default:
@@ -1241,6 +1247,12 @@ const components = `components:
       required: [keyring]
       properties:
         keyring: {type: string, description: 'Selected Ceph entities in keyring format; contains secrets'}
+    RGWRealmToken:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token: {type: string, readOnly: true, description: 'Existing RGW realm bootstrap token containing system credentials; not a newly rotated credential'}
     RBDMirrorBootstrapToken:
       type: object
       additionalProperties: false

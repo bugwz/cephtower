@@ -21667,6 +21667,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /rgw/realm/token:
+    post:
+      operationId: post_rgw_realm_token
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, name, realm_id]
+              properties:
+                cluster_id:
+                  type: integer
+                name:
+                  type: string
+                realm_id:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RGWRealmTokenResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /rgw/realms:
     get:
       operationId: get_rgw_realms
@@ -30167,6 +30200,12 @@ components:
       required: [keyring]
       properties:
         keyring: {type: string, description: 'Selected Ceph entities in keyring format; contains secrets'}
+    RGWRealmToken:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token: {type: string, readOnly: true, description: 'Existing RGW realm bootstrap token containing system credentials; not a newly rotated credential'}
     RBDMirrorBootstrapToken:
       type: object
       additionalProperties: false
@@ -30478,6 +30517,15 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/RBDMirrorBootstrapToken'
+    RGWRealmTokenResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          unevaluatedProperties: false
+          required: [data]
+          properties:
+            data:
+              $ref: '#/components/schemas/RGWRealmToken'
     CephLogsResponse:
       allOf:
         - $ref: '#/components/schemas/APIResponse'

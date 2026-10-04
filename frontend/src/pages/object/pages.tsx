@@ -1,4 +1,5 @@
 import type { ApiRecord } from '../../api/client'
+import { RgwRealmToken } from './RgwRealmToken'
 import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
 import { zonegroupPipeZonesSelectionChanged } from './rgwZonegroupSyncGroup'
 import { bucketSyncPipeGroupOptions, bucketSyncPipeOptions, bucketSyncPipeSelectionChanged } from './rgwBucketSyncGroupForm'
@@ -995,6 +996,7 @@ const definitions: Record<
   },
   multisite: {
     title: 'RGW Multisite',
+    detailContent: (row, clusterId) => <RgwRealmToken key={`${clusterId}:${row.id}:${row.name}`} row={row} clusterId={clusterId} />,
     path: '/rgw/realms',
     requiredCapabilities: ['rgw_admin'],
     createAction: {
