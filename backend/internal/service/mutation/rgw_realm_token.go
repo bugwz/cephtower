@@ -2,7 +2,6 @@ package mutation
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"time"
 
@@ -54,25 +53,8 @@ func selectRGWRealmToken(raw []byte, realmID, name string) (string, error) {
 			selected = entry.Token
 		}
 	}
-	if selected == "" || len(selected) > 64<<10 {
-		return failure()
-	}
-	decoded, err := base64.StdEncoding.Strict().DecodeString(selected)
-	if err != nil {
-		return failure()
-	}
-	defer clear(decoded)
-	if base64.StdEncoding.EncodeToString(decoded) != selected {
-		return failure()
-	}
-	var token struct {
-		RealmID   string `json:"realm_id"`
-		RealmName string `json:"realm_name"`
-		Endpoint  string `json:"endpoint"`
-		AccessKey string `json:"access_key"`
-		Secret    string `json:"secret"`
-	}
-	if json.Unmarshal(decoded, &token) != nil || token.RealmID != realmID || token.RealmName != name || token.Endpoint == "" || token.AccessKey == "" || token.Secret == "" {
+	token, err := parseRGWRealmToken(selected)
+	if err != nil || token.RealmID != realmID || token.RealmName != name {
 		return failure()
 	}
 	return selected, nil

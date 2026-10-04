@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+- **Realm Token 文档校验修复及导入链路核对**：提取读取功能共用的严格解析器，按参考 `RealmToken` 的五个字符串字段解码；拒绝重复键（包括身份或密钥字段）、未知字段、缺失/错误类型、非法 UTF-8、非规范 Base64、多 JSON 值及过大输入。端点必须为带主机的 HTTP/HTTPS URL，不允许 URL 用户凭据、片段或 opaque 形式；HTTP 仍按原生支持保留，不声称安全传输。错误不含原文或密钥，读取 API 已使用新校验，未新增写接口。补充字段、编码、端点及导出集成回归，运行全量后端/OpenAPI 检查；本次不改前端，无实机验证。
+  - 导入的副作用证据来自 `rgwam_core.py::zone_create`：检查 Zone 名称不存在 → 从远端拉取 Realm → 读取主 Zonegroup → 创建从 Zone → `period update --commit` → 在指定条件下 `apply_rgw` 部署；Period 步骤原生内部重试，整体非事务。
+  - 参考 Dashboard 将 archive 选项通过 Python `tier_type` 传入，但 `rgw/module.py::_cmd_rgw_zone_create` CLI 签名没有此参数；仅把它放进命令行或 RGWSpec 不能证明生效。CLI 支持通过 `-i` 传入含 Token 的 RGWSpec，可避免本项目进程参数暴露密钥。后续实现必须明确处理归档 Zone、部署选项、远端/本地身份与发布回读、失败部分生效及内部重试差异，不能把此次解析器修复视为 Token 导入已完成。
+
 - **Realm 引导 Token 按需读取**：参考 `RgwRealmService.getRealmTokens` → Dashboard `get_realm_tokens` → `rgw/module.py::get_realm_tokens`，接通只读原生命令 `ceph rgw realm tokens`。新增同步 `POST /rgw/realm/token`，要求集群及准确 Realm ID/名称；从命令返回中选择唯一名称，再解码并核验 Token 内的 ID/名称、端点和非空系统密钥。命令错误、原生“无主 Zone/端点/密钥”提示、缺失及歧义响应均不返回 Token 或原始错误。读取现有凭据，不创建/轮换凭据、不导入远端、不启动 RGW。原生命令只枚举主 Zone 在本地可用的 Realm，需启用 rgw 管理模块。
   - 敏感结果不走库存或持久化操作队列，API 返回 `Cache-Control: no-store`，审计仅记录读取动作与 Realm 身份，不落 Token；响应解析后清理原始命令输出字节。Realm 详情要求明确勾选风险确认，Token 默认密码遮罩，清空、关闭或切换范围使迟到响应失效；错误只显示固定提示。
   - 新增命令、响应身份/凭据完整性、失败脱敏、真实路由/审计、显式展示及竞态测试，生成新 OpenAPI 请求/响应契约。运行完整前后端测试、OpenAPI 一致性检查及生产构建。未做真实集群或浏览器视觉验证；Realm Token 导入、引导部署及迁移流程仍未因此实现，整体迁移继续。
