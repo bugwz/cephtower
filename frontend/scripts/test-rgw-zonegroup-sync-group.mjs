@@ -137,6 +137,18 @@ for(const realm of ['','realm']){
  assert.deepEqual(pipeUpdateAction.fields.find(f=>f.name==='pipe_id').optionsDependencies,['group_id'])
  const validRow=structuredClone(row)
  validRow.sync_policy.groups[0].pipes[0].dest={bucket:'archive:instance'}
+ validRow.sync_policy.groups[0].pipes[0].dest.zones=['*']
+ const zoneFill=pipeZonesAction.changedValues({pipe_id:'p'},values,validRow)
+ assert.deepEqual(JSON.parse(zoneFill.source_zones_json),['orphan'])
+ assert.deepEqual(JSON.parse(zoneFill.dest_zones_json),['*'])
+ assert.equal(zoneFill.confirm_pipe_zones,undefined)
+ assert.equal(zoneFill.pipe_load_error,undefined)
+ assert.equal(pipeZonesAction.changedValues({group_id:g.id},values,validRow).pipe_id,undefined)
+ assert.ok(pipeZonesAction.changedValues({pipe_id:'p'},values,row).pipe_load_error)
+ assert.ok(pipeZonesAction.changedValues({pipe_id:'p'},values,{...validRow,stale:true}).pipe_load_error)
+ assert.deepEqual(await pipeZonesAction.fields.find(f=>f.name==='pipe_id').optionsLoader(7,validRow,values),[{value:'p',label:'p'}])
+ assert.throws(()=>pipeZonesAction.buildBody({...values,...zoneFill,confirm_pipe_zones:'acknowledged'},7,validRow))
+ assert.throws(()=>pipeZonesAction.buildBody({...values,source_zones_json:'["*"]',dest_zones_json:'["*"]',confirm_pipe_zones:'acknowledged',pipe_load_error:'invalid'},7,validRow))
  const filled=pipeUpdateAction.changedValues({pipe_id:'p'},values,validRow)
  assert.equal(filled.source_tenant,'team')
  assert.equal(filled.source_bucket,'photos')

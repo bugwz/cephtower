@@ -87,6 +87,33 @@ for (const change of [{ bucket_id: 'wrong' }, { group_id:'wrong' }, { pipe_id:'w
 assert.ok(pipeZonesAction.disabledWhen({ ...pipeEditRow, stale: true }))
 console.log('bucket pipe zone membership form checks passed')
 const pipeEditValues = { bucket_id: row.natural_key, group_id: group.id, pipe_id: ' 管道 ', source_bucket: 'photos', dest_bucket: '*', mode: 'system', confirm_pipe_update: 'acknowledged' }
+const loadedZones=pipeZonesAction.changedValues({pipe_id:pipeEditValues.pipe_id},pipeEditValues,pipeEditRow)
+assert.deepEqual(JSON.parse(loadedZones.source_zones_json),['A'])
+assert.deepEqual(JSON.parse(loadedZones.dest_zones_json),['*'])
+assert.equal(loadedZones.confirm_pipe_zones,undefined)
+assert.equal(loadedZones.pipe_load_error,undefined)
+assert.deepEqual(pipeZonesAction.fields.find(f=>f.name==='pipe_id').optionsDependencies,['group_id'])
+assert.deepEqual(await pipeZonesAction.fields.find(f=>f.name==='pipe_id').optionsLoader(7,pipeEditRow,pipeEditValues),[{value:' 管道 ',label:' 管道 '}])
+assert.equal(pipeZonesAction.changedValues({group_id:'other'},pipeEditValues,pipeEditRow).source_zones_json,undefined)
+assert.equal(pipeZonesAction.changedValues({group_id:'other'},pipeEditValues,pipeEditRow).pipe_id,undefined)
+assert.deepEqual(pipeZonesAction.changedValues({source_zones_json:'[]'},pipeEditValues,pipeEditRow),{})
+for(const zones of [[],['orphan'],['*'],['a','b']]) {
+ const current=structuredClone(pipeEditRow)
+ current.bucket_sync_policy.groups[0].pipes[0].source.zones=zones
+ const filled=pipeZonesAction.changedValues({pipe_id:pipeEditValues.pipe_id},pipeEditValues,current)
+ assert.equal(filled.pipe_load_error,undefined)
+ assert.deepEqual(JSON.parse(filled.source_zones_json),zones)
+}
+for(const zones of [undefined,null,{},['a','a'],['*','a'],[null],['a b'],['-a'],['a;b'],['\ud800']]) {
+ const current=structuredClone(pipeEditRow)
+ current.bucket_sync_policy.groups[0].pipes[0].dest.zones=zones
+ const failed=pipeZonesAction.changedValues({pipe_id:pipeEditValues.pipe_id},pipeEditValues,current)
+ assert.ok(failed.pipe_load_error)
+ assert.equal(failed.source_zones_json,undefined)
+ assert.equal(failed.confirm_pipe_zones,undefined)
+ assert.throws(()=>pipeZonesAction.buildBody({...pipeZonesValues,pipe_load_error:failed.pipe_load_error},7,current))
+}
+assert.ok(pipeZonesAction.changedValues({pipe_id:pipeEditValues.pipe_id},pipeEditValues,{...pipeEditRow,stale:true}).pipe_load_error)
 assert.equal(updatePipeAction.method, 'PATCH')
 assert.equal(updatePipeAction.path, '/rgw/bucket/sync/pipe')
 assert.deepEqual(await updatePipeAction.fields.find(f=>f.name==='group_id').optionsLoader(7,pipeEditRow),[{value:group.id,label:group.id}])

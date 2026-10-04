@@ -1,5 +1,9 @@
 import { syncPipeCreateFields, syncPipePriorityInput, syncPipeStorageClassInput, syncPipePrefixInput, syncPipePrefixWarning, syncPipeTagsInput, syncPipeTagsWarning, syncPipeACLInput, syncPipeACLWarning, syncPipeGroupOptions, syncPipeOptions, syncPipeSelectionChanged } from './rgwBucketSyncGroupForm'
+import { syncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
 const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
+export function zonegroupPipeZonesSelectionChanged(changed: Record<string, unknown>, values: Record<string, unknown>, row?: Record<string, unknown>) {
+  return syncPipeZonesSelectionChanged(changed, values, () => snapshot(row).groups)
+}
 const token = (v: unknown): v is string => typeof v === 'string' && !!v && !v.startsWith('-') && new TextEncoder().encode(v).length <= 512 && !/\p{Cc}/u.test(v) && ![...v].some(c => { const n = c.codePointAt(0)!; return n >= 0xd800 && n <= 0xdfff })
 function snapshot(row?: Record<string, unknown>, allowEmpty = false) {
   if (!row || row.stale === true || !token(row.id) || !token(row.name) || typeof row.realm_id !== 'string' || (row.realm_id !== '' && !token(row.realm_id))) throw new Error('Zonegroup 身份或 Realm 归属不可用，请刷新')
@@ -39,6 +43,7 @@ export function zonegroupReplicationPrepareConfirmation(values: Record<string, u
   return `确认在 Zonegroup ${JSON.stringify(p.name)}（${p.zonegroup_id}）准备桶复制上层策略？创建 allowed 组 dashboard_admin_group、覆盖当前 Zone IDs ${JSON.stringify(state.zones)} 的对称流 dashboard_admin_flow，以及全部 Zone/租户/桶/实例的 system 通配管道 dashboard_admin_pipe。只提供上层许可，可能让已有桶本地策略获得许可；不写 S3 规则，不代表桶复制已启用。随后提交 Realm ${JSON.stringify(p.realm_id)} 的 Period，可能发布其他待提交变更。新增 Zone 不会自动加入该对称流。请备份并避免外部或其他页面并发；分步非事务，失败可能部分生效，不自动回滚或重试。`
 }
 export function zonegroupPipeZonesInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  if (values.pipe_load_error) throw new Error('当前管道成员未成功载入，请刷新并重新选择')
   const selected = zonegroupPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
   const available = row?.zones
   const validID = (v: unknown): v is string => token(v) && !/[\s,;=*]/u.test(v)

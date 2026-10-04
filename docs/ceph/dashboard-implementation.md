@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- **管道 Zone 成员选择与回填**：Bucket 和 Zonegroup 的成员编辑表单复用当前策略内的组/管道联动选项，选择后载入源、目标完整 Zone ID 数组，切换时清空旧成员编辑及风险确认。依据参考 `rgw-multisite-sync-pipe-modal.component.ts` 编辑回填和 `rgw_sync_policy.cc::rgw_sync_bucket_entities::dump`，保留原始通配符、空数组与孤立旧 ID 供检查，不把缺失/损坏成员转换为全范围。最终提交仍沿用已有非空集合校验，Zonegroup 要求当前成员或独立通配符；载入失败阻止提交。复用原生 CLI、快照校验及适用的 Period 发布，不新增接口。实际动作回归覆盖两种范围、清空确认、通配/空/孤立集合及损坏数据；全量前端测试、类型校验与构建通过。未修改后端，无真实集群或浏览器视觉验证。
+
 #### 同步管道编辑的范围选择与配置回填
 
 对照参考 `rgw-multisite-sync-pipe-modal.component.ts` 的选中管道编辑流程，以及 `rgw_sync_policy.cc::rgw_sync_bucket_entities::bucket_key` 的原生桶键编码，为 Bucket 与 Zonegroup 管道 PATCH 表单增加当前策略内的组/管道联动选择。选中管道后回填源和目标租户、桶、实例与权限模式；system 模式不回填存储 UID，沿用后端保留语义。高级变更默认保持原值，切换组或管道清空此前编辑及风险确认。只解析可往返的规范桶键；缺失选择器、重复管道 ID、非法身份、陈旧数据或不支持的编码显示载入错误并禁止提交，不将未知配置转换为通配符。

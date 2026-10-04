@@ -77,6 +77,33 @@ export function bucketSyncPipeOptions(row?: Record<string, unknown>, groupID?: u
 export function bucketSyncPipeSelectionChanged(changed: Record<string, unknown>, values: Record<string, unknown>, row?: Record<string, unknown>) {
   return syncPipeSelectionChanged(changed, values, () => groups(row))
 }
+export function syncPipeZonesSelectionChanged(changed: Record<string, unknown>, values: Record<string, unknown>, available: () => Record<string, unknown>[]) {
+  const has = (key: string) => Object.prototype.hasOwnProperty.call(changed, key)
+  if (!has('group_id') && !has('pipe_id')) return {}
+  const reset: Record<string, string | undefined> = { source_zones_json: undefined, dest_zones_json: undefined, confirm_pipe_zones: undefined, pipe_load_error: undefined }
+  if (has('group_id')) return { ...reset, pipe_id: undefined }
+  if (values.pipe_id === undefined) return reset
+  try {
+    const policyGroups = available()
+    if (!syncPipeOptions(policyGroups, values.group_id).some(option => option.value === values.pipe_id)) throw new Error('管道不在当前组中，请重新选择')
+    const group = policyGroups.find(group => group.id === values.group_id)!
+    const pipe = (group.pipes as Record<string, unknown>[]).find(pipe => pipe.id === values.pipe_id)!
+    const loaded: Record<string, string> = {}
+    for (const side of ['source', 'dest']) {
+      const entity = pipe[side] as Record<string, unknown> | undefined
+      const zones = entity?.zones
+      if (!Array.isArray(zones) || zones.some(id => typeof id !== 'string' || !id || id.startsWith('-') || new TextEncoder().encode(id).length > 512 || /[\s,;=\p{Cc}]/u.test(id) || (id.includes('*') && (id !== '*' || zones.length !== 1)) || [...id].some(c => { const n = c.codePointAt(0)!; return n >= 0xd800 && n <= 0xdfff })) || new Set(zones).size !== zones.length) throw new Error('当前 Zone 成员数据不可用，请刷新；不会自动替换为通配符')
+      // Preserve empty and orphaned native memberships for inspection and explicit correction.
+      loaded[`${side}_zones_json`] = JSON.stringify(zones, null, 2)
+    }
+    return { ...reset, ...loaded }
+  } catch (error) {
+    return { ...reset, pipe_load_error: (error as Error).message }
+  }
+}
+export function bucketSyncPipeZonesSelectionChanged(changed: Record<string, unknown>, values: Record<string, unknown>, row?: Record<string, unknown>) {
+  return syncPipeZonesSelectionChanged(changed, values, () => groups(row))
+}
 export function bucketSyncGroupInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const available = groups(row)
   if (values.bucket_id !== row!.natural_key) throw new Error('Bucket ID 不可更改')
@@ -201,6 +228,7 @@ export function bucketSyncPipeDeleteConfirmation(values: Record<string, unknown>
 }
 
 export function bucketSyncPipeZonesInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
+  if (values.pipe_load_error) throw new Error('当前管道成员未成功载入，请刷新并重新选择')
   const selected = bucketSyncPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
   const zones = (key: string) => {
     let result: unknown

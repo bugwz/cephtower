@@ -1,4 +1,6 @@
 import type { ApiRecord } from '../../api/client'
+import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
+import { zonegroupPipeZonesSelectionChanged } from './rgwZonegroupSyncGroup'
 import { bucketSyncPipeGroupOptions, bucketSyncPipeOptions, bucketSyncPipeSelectionChanged } from './rgwBucketSyncGroupForm'
 import { zonegroupPipeGroupOptions, zonegroupPipeOptions, zonegroupPipeSelectionChanged } from './rgwZonegroupSyncGroup'
 import { RgwTopicDetails, topicText, topicBoolean, topicEndpoint } from './RgwTopicDetails'
@@ -866,10 +868,12 @@ const definitions: Record<
       title: '编辑桶同步管道 Zone', path: '/rgw/bucket/sync/pipe/zones', method: 'PATCH',
       successMessage: '管道 Zone 成员已回读核验（不代表同步完成）',
       disabledWhen: bucketSyncGroupBlocked, initialValues: bucketSyncGroupInitial, confirmation: bucketSyncPipeZonesConfirmation,
+      changedValues: bucketSyncPipeZonesSelectionChanged,
       fields: [
         { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
-        { name: 'group_id', label: '已有同步组 ID', required: true },
-        { name: 'pipe_id', label: '已有管道 ID', required: true },
+        { name: 'group_id', label: '已有同步组 ID', type: 'select', required: true, optionsLoader: async (_clusterId, row) => bucketSyncPipeGroupOptions(row) },
+        { name: 'pipe_id', label: '已有管道 ID（选择后载入成员）', type: 'select', required: true, optionsDependencies: ['group_id'], optionsLoader: async (_clusterId, row, values) => bucketSyncPipeOptions(row, values?.group_id) },
+        { name: 'pipe_load_error', label: '成员载入失败', readOnly: true, visibleWhen: values => !!values.pipe_load_error },
         { name: 'source_zones_json', label: '完整源 Zone ID JSON 数组（不是名称；全部填 ["*"]）', type: 'textarea', required: true },
         { name: 'dest_zones_json', label: '完整目标 Zone ID JSON 数组（不是名称；全部填 ["*"]）', type: 'textarea', required: true },
         { name: 'confirm_pipe_zones', label: '范围确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，了解通配范围及分步修改可能部分生效' }] }
@@ -1193,13 +1197,15 @@ const definitions: Record<
       title: '编辑 Zonegroup 管道 Zone', path: '/rgw/zonegroup/sync/pipe/zones', method: 'PATCH',
       successMessage: 'Zonegroup 管道 Zone 成员与适用的 Period 发布已核验',
       disabledWhen: zonegroupSyncBlocked, initialValues: zonegroupSyncInitial, confirmation: zonegroupPipeZonesConfirmation,
+      changedValues: zonegroupPipeZonesSelectionChanged,
       fields: [
         { name: 'name', label: 'Zonegroup 名称（不可更改）', readOnly: true },
         { name: 'zonegroup_id', label: 'Zonegroup ID（不可更改）', readOnly: true },
         { name: 'realm_id', label: 'Realm ID（不可更改）', readOnly: true },
-        { name: 'group_id', label: '已有同步组 ID', required: true },
-        { name: 'pipe_id', label: '已有管道 ID', required: true },
-        { name: 'source_zones_json', label: '最终源 Zone ID 数组（全部填 ["*"]）', type: 'textarea', required: true },
+        { name: 'group_id', label: '已有同步组 ID', type: 'select', required: true, optionsLoader: async (_clusterId, row) => zonegroupPipeGroupOptions(row) },
+        { name: 'pipe_id', label: '已有管道 ID（选择后载入成员）', type: 'select', required: true, optionsDependencies: ['group_id'], optionsLoader: async (_clusterId, row, values) => zonegroupPipeOptions(row, values?.group_id) },
+        { name: 'pipe_load_error', label: '成员载入失败', readOnly: true, visibleWhen: values => !!values.pipe_load_error },
+        { name: 'source_zones_json', label: '最终源 Zone ID 数组（须为当前 Zonegroup 成员；全部填 ["*"]）', type: 'textarea', required: true },
         { name: 'dest_zones_json', label: '最终目标 Zone ID 数组（全部填 ["*"]）', type: 'textarea', required: true },
         { name: 'confirm_pipe_zones', label: '成员与发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，了解中间范围变化、Realm 发布与部分生效风险' }] }
       ],
