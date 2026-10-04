@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### 同步管道编辑的范围选择与配置回填
+
+对照参考 `rgw-multisite-sync-pipe-modal.component.ts` 的选中管道编辑流程，以及 `rgw_sync_policy.cc::rgw_sync_bucket_entities::bucket_key` 的原生桶键编码，为 Bucket 与 Zonegroup 管道 PATCH 表单增加当前策略内的组/管道联动选择。选中管道后回填源和目标租户、桶、实例与权限模式；system 模式不回填存储 UID，沿用后端保留语义。高级变更默认保持原值，切换组或管道清空此前编辑及风险确认。只解析可往返的规范桶键；缺失选择器、重复管道 ID、非法身份、陈旧数据或不支持的编码显示载入错误并禁止提交，不将未知配置转换为通配符。
+
+复用已有原生 CLI → 完整策略快照校验 → PATCH API 链路，无新增命令或接口。新增实际页面动作测试，覆盖两个策略范围、联动选项、配置往返、切换清空、异常载入及提交拦截；运行全量前端测试、TypeScript 校验和生产构建。未修改后端；无真实 Ceph 集群或浏览器视觉验证。
+
 - **Bucket / Zonegroup 管道目标 ACL 转换**：现有编辑 API 增加可选 `dest_owner`，使用原生 `--dest-owner=<完整 UID>`；空字符串依据 `set_owner` 移除 `acl_translation` 字段。对照 `rgw_user::from_str/to_str` 保留租户、命名空间及 ID，不静默归一化空租户/命名空间等歧义输入。表单明确区分保持、设置、移除，忽略隐藏旧值；不修改桶所有者，不把 Account ID 当作 UID。
   - 保留完整策略快照、写后完整字段核验与 Realm 发布流程。确认说明原生复制在 user 模式还会要求转换 UID 与目标桶所有者一致；配置回读不验证用户存在、实际复制权限或已有对象归属变更。测试覆盖全局/租户/命名空间 UID、移除/缺失/无变化、写入/回读失败、存储类漂移、API 类型、前端绑定和 Realm 归属。无真实集群或浏览器视觉验证；整体 Dashboard 迁移仍未完成。
   - `make test-backend`（含 OpenAPI 一致性）与 `make test-frontend`（含类型检查、生产构建）通过。

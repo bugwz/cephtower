@@ -1,4 +1,6 @@
 import type { ApiRecord } from '../../api/client'
+import { bucketSyncPipeGroupOptions, bucketSyncPipeOptions, bucketSyncPipeSelectionChanged } from './rgwBucketSyncGroupForm'
+import { zonegroupPipeGroupOptions, zonegroupPipeOptions, zonegroupPipeSelectionChanged } from './rgwZonegroupSyncGroup'
 import { RgwTopicDetails, topicText, topicBoolean, topicEndpoint } from './RgwTopicDetails'
 import { topicDeleteBlocked, topicDeleteInput, topicDeleteConfirmation } from './rgwTopicDelete'
 import { topicPolicyBlocked, topicPolicyInitial, topicPolicyInput, topicPolicyConfirmation } from './rgwTopicPolicy'
@@ -877,10 +879,12 @@ const definitions: Record<
       title: '编辑桶同步管道配置', path: '/rgw/bucket/sync/pipe', method: 'PATCH',
       successMessage: '管道选择器和模式已回读核验（不代表同步完成）',
       disabledWhen: bucketSyncGroupBlocked, initialValues: bucketSyncGroupInitial, confirmation: bucketSyncPipeUpdateConfirmation,
+      changedValues: bucketSyncPipeSelectionChanged,
       fields: [
         { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
-        { name: 'group_id', label: '已有同步组 ID', required: true },
-        { name: 'pipe_id', label: '已有管道 ID', required: true },
+        { name: 'group_id', label: '已有同步组 ID', type: 'select', required: true, optionsLoader: async (_clusterId, row) => bucketSyncPipeGroupOptions(row) },
+        { name: 'pipe_id', label: '已有管道 ID（选择后回填）', type: 'select', required: true, optionsDependencies: ['group_id'], optionsLoader: async (_clusterId, row, values) => bucketSyncPipeOptions(row, values?.group_id) },
+        { name: 'pipe_load_error', label: '配置载入失败', readOnly: true, visibleWhen: values => !!values.pipe_load_error },
         { name: 'source_tenant', label: '源租户（空或 * 不限定租户）' },
         { name: 'source_bucket', label: '完整目标源桶名（* 通配）', required: true },
         { name: 'source_bucket_id', label: '源桶实例 ID（空或 * 不限定实例）' },
@@ -1156,12 +1160,14 @@ const definitions: Record<
       title: '编辑 Zonegroup 管道选择器与身份', path: '/rgw/zonegroup/sync/pipe', method: 'PATCH',
       successMessage: 'Zonegroup 管道配置与适用的 Period 发布已核验',
       disabledWhen: zonegroupSyncBlocked, initialValues: zonegroupSyncInitial, confirmation: zonegroupPipeUpdateConfirmation,
+      changedValues: zonegroupPipeSelectionChanged,
       fields: [
         { name: 'name', label: 'Zonegroup 名称（不可更改）', readOnly: true },
         { name: 'zonegroup_id', label: 'Zonegroup ID（不可更改）', readOnly: true },
         { name: 'realm_id', label: 'Realm ID（不可更改）', readOnly: true },
-        { name: 'group_id', label: '已有同步组 ID', required: true },
-        { name: 'pipe_id', label: '已有管道 ID', required: true },
+        { name: 'group_id', label: '已有同步组 ID', type: 'select', required: true, optionsLoader: async (_clusterId, row) => zonegroupPipeGroupOptions(row) },
+        { name: 'pipe_id', label: '已有管道 ID（选择后回填）', type: 'select', required: true, optionsDependencies: ['group_id'], optionsLoader: async (_clusterId, row, values) => zonegroupPipeOptions(row, values?.group_id) },
+        { name: 'pipe_load_error', label: '配置载入失败', readOnly: true, visibleWhen: values => !!values.pipe_load_error },
         { name: 'source_tenant', label: '完整源租户（空或 * 不限租户）' },
         { name: 'source_bucket', label: '完整源桶名（* 为通配）', required: true },
         { name: 'source_bucket_id', label: '完整源实例 ID（空或 * 不限实例）' },

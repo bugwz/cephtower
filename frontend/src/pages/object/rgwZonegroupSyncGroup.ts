@@ -1,4 +1,4 @@
-import { syncPipeCreateFields, syncPipePriorityInput, syncPipeStorageClassInput, syncPipePrefixInput, syncPipePrefixWarning, syncPipeTagsInput, syncPipeTagsWarning, syncPipeACLInput, syncPipeACLWarning } from './rgwBucketSyncGroupForm'
+import { syncPipeCreateFields, syncPipePriorityInput, syncPipeStorageClassInput, syncPipePrefixInput, syncPipePrefixWarning, syncPipeTagsInput, syncPipeTagsWarning, syncPipeACLInput, syncPipeACLWarning, syncPipeGroupOptions, syncPipeOptions, syncPipeSelectionChanged } from './rgwBucketSyncGroupForm'
 const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 const token = (v: unknown): v is string => typeof v === 'string' && !!v && !v.startsWith('-') && new TextEncoder().encode(v).length <= 512 && !/\p{Cc}/u.test(v) && ![...v].some(c => { const n = c.codePointAt(0)!; return n >= 0xd800 && n <= 0xdfff })
 function snapshot(row?: Record<string, unknown>, allowEmpty = false) {
@@ -8,6 +8,11 @@ function snapshot(row?: Record<string, unknown>, allowEmpty = false) {
   return { name: row.name, zonegroup_id: row.id, realm_id: row.realm_id, groups: groups as Record<string, unknown>[] }
 }
 export function zonegroupSyncInitial(row?: Record<string, unknown>) { const { groups: _, ...identity } = snapshot(row); return { ...identity, group_id: undefined, status: undefined, confirm_change: undefined } }
+export function zonegroupPipeGroupOptions(row?: Record<string, unknown>) { return syncPipeGroupOptions(snapshot(row).groups) }
+export function zonegroupPipeOptions(row?: Record<string, unknown>, groupID?: unknown) { return syncPipeOptions(snapshot(row).groups, groupID) }
+export function zonegroupPipeSelectionChanged(changed: Record<string, unknown>, values: Record<string, unknown>, row?: Record<string, unknown>) {
+  return syncPipeSelectionChanged(changed, values, () => snapshot(row).groups)
+}
 export function zonegroupSyncBlocked(row: Record<string, unknown>) { try { snapshot(row); return undefined } catch (error) { return (error as Error).message } }
 function replicationPreparationSnapshot(row?: Record<string, unknown>) {
   const state = snapshot(row,true)
@@ -53,6 +58,7 @@ export function zonegroupPipeZonesConfirmation(values: Record<string, unknown>, 
   return `确认修改 Zonegroup ${JSON.stringify(p.name)}（${p.zonegroup_id}）中同步组 ${JSON.stringify(p.group_id)} 的管道 ${JSON.stringify(p.pipe_id)}？最终源 Zone IDs ${JSON.stringify(p.source_zones)}，目标 ${JSON.stringify(p.dest_zones)}。* 匹配全部 Zone；明确集合先增后删，通配直接切换，中间复制范围可能扩大。保留桶选择器、执行身份和高级参数。${p.realm_id ? `随后提交 Realm ${JSON.stringify(p.realm_id)} 的 Period，可能发布其他待提交变更。` : '无 Realm，不提交 Period。'}请备份并避免外部或其他页面并发；非事务，失败可能部分生效，不自动回滚或重试；成功不代表远端复制完成。`
 }
 export function zonegroupPipeUpdateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {
+  if (values.pipe_load_error) throw new Error('当前管道配置未成功载入，请刷新并重新选择')
   const selected = zonegroupPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
   const group = JSON.parse(selected.expected_group)
   group.pipes = group.pipes.filter((p: { id: string }) => p.id !== selected.pipe_id)

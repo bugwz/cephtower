@@ -132,6 +132,22 @@ for(const realm of ['','realm']){
  const g={...group,pipes:[pipe]}
  const row={id:'zg',name:'east',realm_id:realm,zones:[],sync_policy:{groups:[g]}}
  const values={...pipeUpdateAction.initialValues(row),group_id:g.id,pipe_id:'p',source_bucket:'*',dest_bucket:'archive',mode:'system',confirm_pipe_update:'acknowledged'}
+ assert.deepEqual(await pipeUpdateAction.fields.find(f=>f.name==='group_id').optionsLoader(7,row),[{value:g.id,label:g.id}])
+ assert.deepEqual(await pipeUpdateAction.fields.find(f=>f.name==='pipe_id').optionsLoader(7,row,values),[{value:'p',label:'p'}])
+ assert.deepEqual(pipeUpdateAction.fields.find(f=>f.name==='pipe_id').optionsDependencies,['group_id'])
+ const validRow=structuredClone(row)
+ validRow.sync_policy.groups[0].pipes[0].dest={bucket:'archive:instance'}
+ const filled=pipeUpdateAction.changedValues({pipe_id:'p'},values,validRow)
+ assert.equal(filled.source_tenant,'team')
+ assert.equal(filled.source_bucket,'photos')
+ assert.equal(filled.dest_bucket_id,'instance')
+ assert.equal(filled.user,'team$u')
+ assert.equal(filled.confirm_pipe_update,undefined)
+ assert.equal(filled.pipe_load_error,undefined)
+ assert.equal(pipeUpdateAction.changedValues({group_id:g.id},values,row).pipe_id,undefined)
+ assert.ok(pipeUpdateAction.changedValues({pipe_id:'p'},values,row).pipe_load_error)
+ assert.ok(pipeUpdateAction.changedValues({pipe_id:'p'},values,{...validRow,stale:true}).pipe_load_error)
+ assert.throws(()=>pipeUpdateAction.buildBody({...values,pipe_load_error:'invalid'},7,validRow))
  assert.deepEqual(pipeUpdateAction.buildBody(values,7,row),{cluster_id:7,name:'east',zonegroup_id:'zg',realm_id:realm,group_id:g.id,pipe_id:'p',source_tenant:'',source_bucket:'*',source_bucket_id:'*',dest_tenant:'',dest_bucket:'archive',dest_bucket_id:'*',mode:'system',expected_group:JSON.stringify(g)})
  assert.equal(pipeUpdateAction.buildBody({...values,mode:'user',user:'new$u'},7,row).user,'new$u')
  for (const priority of [-2147483648,0,2147483647]) {

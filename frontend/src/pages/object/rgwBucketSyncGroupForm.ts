@@ -15,6 +15,68 @@ export function bucketSyncGroupInitial(row?: Record<string, unknown>) {
   groups(row)
   return { bucket_id: row!.natural_key as string, group_id: undefined, status: undefined, confirm_change: undefined }
 }
+export function syncPipeGroupOptions(available: Record<string, unknown>[]) {
+  return available.map(group => ({ value: String(group.id), label: String(group.id) }))
+}
+export function syncPipeOptions(available: Record<string, unknown>[], groupID: unknown) {
+  if (groupID === undefined) return []
+  const group = available.find(group => group.id === groupID)
+  if (!group || !Array.isArray(group.pipes)) throw new Error('当前组的管道列表不可用，请刷新')
+  const seen = new Set<string>()
+  return group.pipes.map(pipe => {
+    if (!pipe || typeof pipe !== 'object' || typeof pipe.id !== 'string' || !pipe.id || seen.has(pipe.id)) throw new Error('管道 ID 缺失或重复，请刷新')
+    seen.add(pipe.id)
+    return { value: pipe.id as string, label: pipe.id as string }
+  })
+}
+export function syncPipeSelectionChanged(changed: Record<string, unknown>, values: Record<string, unknown>, available: () => Record<string, unknown>[]) {
+  const has = (key: string) => Object.prototype.hasOwnProperty.call(changed, key)
+  if (!has('group_id') && !has('pipe_id')) return {}
+  const reset: Record<string, string | undefined> = Object.fromEntries([
+    'source_tenant', 'source_bucket', 'source_bucket_id', 'dest_tenant', 'dest_bucket', 'dest_bucket_id',
+    'mode', 'user', 'priority', 'storage_class', 'source_prefix', 'tags_add_json', 'tags_remove_json',
+    'dest_owner', 'confirm_pipe_update', 'pipe_load_error'
+  ].map(name => [name, undefined]))
+  for (const name of ['storage_class_mode', 'prefix_mode', 'tags_mode', 'acl_mode']) reset[name] = 'preserve'
+  if (has('group_id')) return { ...reset, pipe_id: undefined }
+  if (values.pipe_id === undefined) return reset
+  try {
+    const policyGroups = available()
+    if (!syncPipeOptions(policyGroups, values.group_id).some(option => option.value === values.pipe_id)) throw new Error('管道不在当前组中，请重新选择')
+    const group = policyGroups.find(group => group.id === values.group_id)!
+    const pipe = (group.pipes as Record<string, unknown>[]).find(pipe => pipe.id === values.pipe_id)!
+    const loaded: Record<string, string | undefined> = {}
+    for (const side of ['source', 'dest']) {
+      const entity = pipe[side] as Record<string, unknown> | undefined
+      const key = entity?.bucket
+      if (typeof key !== 'string') throw new Error('桶选择器不可用，请刷新')
+      const match = /^(?:([^/:]+)\/)?([^/:]+)(?::([^/:]+))?$/u.exec(key)
+      if (!match) throw new Error('桶选择器无法安全回填，请检查原始策略')
+      const [, tenant = '', bucket, instance = '*'] = match
+      // Native modify normalizes wildcard tenants/instances; reject non-roundtrippable keys.
+      if (tenant === '*' || (match[3] !== undefined && instance === '*')) throw new Error('桶选择器不是规范格式，请检查原始策略')
+      loaded[`${side}_tenant`] = tenant
+      loaded[`${side}_bucket`] = bucket
+      loaded[`${side}_bucket_id`] = instance
+    }
+    const params = pipe.params as Record<string, unknown> | undefined
+    if (params?.mode !== 'system' && params?.mode !== 'user') throw new Error('权限模式不可用，请刷新')
+    if (params.mode === 'user' && typeof params.user !== 'string') throw new Error('用户身份不可用，请刷新')
+    loaded.mode = params.mode
+    loaded.user = params.mode === 'user' ? params.user as string : undefined
+    // Reuse command-input validation before showing values; never replace invalid keys with '*'.
+    const validationGroup = { ...group, id: String(group.id), status: String(group.status), pipes: [] }
+    syncPipeCreateFields({ ...loaded, group_id: values.group_id, pipe_id: values.pipe_id, source_zones_json: '["*"]', dest_zones_json: '["*"]', confirm_pipe_create: 'acknowledged' }, validationGroup)
+    return { ...reset, ...loaded }
+  } catch (error) {
+    return { ...reset, pipe_load_error: (error as Error).message }
+  }
+}
+export function bucketSyncPipeGroupOptions(row?: Record<string, unknown>) { return syncPipeGroupOptions(groups(row)) }
+export function bucketSyncPipeOptions(row?: Record<string, unknown>, groupID?: unknown) { return syncPipeOptions(groups(row), groupID) }
+export function bucketSyncPipeSelectionChanged(changed: Record<string, unknown>, values: Record<string, unknown>, row?: Record<string, unknown>) {
+  return syncPipeSelectionChanged(changed, values, () => groups(row))
+}
 export function bucketSyncGroupInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const available = groups(row)
   if (values.bucket_id !== row!.natural_key) throw new Error('Bucket ID 不可更改')
@@ -212,6 +274,7 @@ export function syncPipeACLWarning(input: Record<string, unknown>) {
   return `目标 ACL 转换：${input.dest_owner === undefined ? '保持原值' : input.dest_owner === '' ? '移除转换字段' : `设置所有者 UID ${JSON.stringify(input.dest_owner)}`}。不修改桶本身所有者；user 模式复制时要求该 UID 与目标桶所有者一致，Account ID 不等同 UID；配置回读不验证目标用户存在或实际复制权限。`
 }
 export function bucketSyncPipeUpdateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {
+  if (values.pipe_load_error) throw new Error('当前管道配置未成功载入，请刷新并重新选择')
   const selected = bucketSyncPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
   const group = JSON.parse(selected.expected_group)
   group.pipes = group.pipes.filter((pipe: { id: string }) => pipe.id !== values.pipe_id)
