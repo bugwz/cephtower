@@ -817,6 +817,10 @@ func (h *Handler) CreateRGWRealm(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_realm", "rgw_realm.create", "medium")(w, r)
 }
 
+func (h *Handler) ImportRGWRealm(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_realm", "rgw_realm.import", "high")(w, r)
+}
+
 func (h *Handler) ListRGWZonegroups(w http.ResponseWriter, r *http.Request) {
 	h.ReadResource("rgw_zonegroup", false)(w, r)
 }

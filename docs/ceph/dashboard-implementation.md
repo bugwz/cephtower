@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+- **Realm Token 普通从 Zone 导入与部署**：接通 Multisite 工具栏 → 高风险 `POST /rgw/realm/import` → 加密操作队列 → `ceph rgw zone create -i -`，按参考 `_parse_rgw_specs` 用标准输入传递含 Token 的 RGWSpec，不将凭据放入命令参数。支持新 Zone 名称、端口、默认/主机/标签部署位置及实例数；表单密码遮罩、配置修改后清除风险确认，提交前说明远端可信来源、HTTP 风险、拉取 Realm、创建 Zone、发布整个 Period、提交部署及非事务副作用。
+  - 导入前读取 Zone 列表、Realm 列表/已有 Realm 身份、目标服务导出，拒绝已存在 Zone、不同身份 Realm 或已有服务。命令后核验 Realm ID/名称、Zone ID/名称/Realm、当前已发布 Period 中主 Zonegroup 的从 Zone，以及 RGW 服务身份、Realm/Zonegroup/Zone、端口和指定放置字段。不把服务规格存在等同于守护进程就绪或数据同步完成。Token 内远端身份只能在原生拉取后回读核验，失败可能已经产生资源；本项目集群操作串行不能锁住远端或外部管理员。
+  - 原始命令输出及错误不进入结果，失败使用固定信息并禁止应用级自动重试；Ceph 内部 Period 重试仍存在。成功后刷新 Realm、Zonegroup、Zone、服务库存，刷新失败也不可重试导入。增加命令/失败截断/敏感输出、加密队列与请求契约、刷新行为及表单测试，更新生成的 OpenAPI；运行全量前后端测试及构建。无真实集群或浏览器视觉验证。
+  - **尚未完成**：archive 导入没有原生 CLI `tier_type` 参数，本入口明确限定普通从 Zone，并拒绝 `tier_type`/`unmanaged` 请求字段；不虚构归档支持或照搬参考界面未转发的 unmanaged 行为。归档导入、Realm bootstrap、迁移与其余覆盖仍继续实现。
+
 - **Realm Token 文档校验修复及导入链路核对**：提取读取功能共用的严格解析器，按参考 `RealmToken` 的五个字符串字段解码；拒绝重复键（包括身份或密钥字段）、未知字段、缺失/错误类型、非法 UTF-8、非规范 Base64、多 JSON 值及过大输入。端点必须为带主机的 HTTP/HTTPS URL，不允许 URL 用户凭据、片段或 opaque 形式；HTTP 仍按原生支持保留，不声称安全传输。错误不含原文或密钥，读取 API 已使用新校验，未新增写接口。补充字段、编码、端点及导出集成回归，运行全量后端/OpenAPI 检查；本次不改前端，无实机验证。
   - 导入的副作用证据来自 `rgwam_core.py::zone_create`：检查 Zone 名称不存在 → 从远端拉取 Realm → 读取主 Zonegroup → 创建从 Zone → `period update --commit` → 在指定条件下 `apply_rgw` 部署；Period 步骤原生内部重试，整体非事务。
   - 参考 Dashboard 将 archive 选项通过 Python `tier_type` 传入，但 `rgw/module.py::_cmd_rgw_zone_create` CLI 签名没有此参数；仅把它放进命令行或 RGWSpec 不能证明生效。CLI 支持通过 `-i` 传入含 Token 的 RGWSpec，可避免本项目进程参数暴露密钥。后续实现必须明确处理归档 Zone、部署选项、远端/本地身份与发布回读、失败部分生效及内部重试差异，不能把此次解析器修复视为 Token 导入已完成。

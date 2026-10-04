@@ -92,6 +92,15 @@ func TestGlobalScheduleDoesNotRetryAfterInventoryFailure(t *testing.T) {
 	}
 }
 
+func TestRealmImportRefreshDoesNotRetry(t *testing.T) {
+	reconciler := &reconcileExecutorFake{err: errors.New("offline")}
+	_, err := NewActionDispatcher(&mutationExecutorFake{}, nil, reconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_realm.import", ResourceKind: "rgw_realm"})
+	var failure *cephdomain.ActionError
+	if !errors.As(err, &failure) || failure.Retryable || failure.Code != "post_reconcile_failed" || !reflect.DeepEqual(reconciler.kinds, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone", "service"}) {
+		t.Fatal("unsafe import refresh", err)
+	}
+}
+
 func TestFilesystemRenameRefreshesAffectedStorage(t *testing.T) {
 	for _, fail := range []bool{false, true} {
 		mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{"native_output": "renamed"}}}

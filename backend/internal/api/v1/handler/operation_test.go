@@ -47,6 +47,25 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal(err)
 	}
 	periodResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/period/commit", fmt.Sprintf(`{"cluster_id":%d,"realm_id":"realm-explicit","expected_current_period":"old"}`, cluster.ID), "scoped-period")
+	importBody := fmt.Sprintf(`{"cluster_id":%d,"name":"secondary","realm_token":"private-import-token","port":80,"placement":{},"confirm_import":true}`, cluster.ID)
+	importResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/realm/import", importBody, "realm-import")
+	if importResponse.Code != http.StatusAccepted || strings.Contains(importResponse.Body.String(), "private-import-token") {
+		t.Fatal("unsafe import queue response", importResponse.Code)
+	}
+	importOp, importErr := db.FindOperation(context.Background(), operationIDFromResponse(t, importResponse))
+	if importErr != nil || importOp.Action != "rgw_realm.import" || importOp.Risk != "high" || importOp.MaxAttempts != 1 || strings.Contains(importOp.ParametersCiphertext, "private-import-token") {
+		t.Fatal("unsafe import operation")
+	}
+	importPlain, importErr := security.Decrypt(importOp.ParametersCiphertext, contractKey)
+	if importErr != nil || !strings.Contains(string(importPlain), "private-import-token") {
+		t.Fatal("encrypted import token lost")
+	}
+	for _, extra := range []string{`,"tier_type":"archive"}`, `,"unmanaged":true}`} {
+		bad := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/realm/import", strings.TrimSuffix(importBody, "}")+extra, "bad-realm-import-"+extra)
+		if bad.Code != http.StatusBadRequest {
+			t.Fatal("unsupported import option accepted")
+		}
+	}
 	if periodResponse.Code != http.StatusAccepted {
 		t.Fatalf("period queue: %d %s", periodResponse.Code, periodResponse.Body.String())
 	}

@@ -66,6 +66,8 @@ type command struct {
 
 func Supports(action string) bool {
 	switch action {
+	case "rgw_realm.import":
+		return true
 	case "rgw_zonegroup.sync_group", "rgw_zonegroup.sync_group_create", "rgw_zonegroup.sync_group_delete", "rgw_zonegroup.sync_flow_create", "rgw_zonegroup.sync_flow_delete", "rgw_zonegroup.sync_flow_update", "rgw_zonegroup.sync_pipe_create", "rgw_zonegroup.sync_pipe_delete", "rgw_zonegroup.sync_pipe_update", "rgw_zonegroup.sync_pipe_zones", "rgw_zonegroup.replication_prepare":
 		return true
 	case "rgw_bucket.sync_pipe_update", "rgw_bucket.sync_pipe_zones":
@@ -123,6 +125,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	spec, err := build(request, request.Parameters)
 	if err != nil {
 		return cephdomain.ActionResult{}, err
+	}
+	if request.Action == "rgw_realm.import" {
+		return s.executeRealmImport(ctx, access, request, spec)
 	}
 	if request.Action == "rgw_bucket.sync_pipe_update" {
 		return s.executeBucketSyncGroup(ctx, access, request, spec)
@@ -652,6 +657,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 
 func build(request Request, p map[string]any) (command, error) {
 	action := request.Action
+	if action == "rgw_realm.import" {
+		return buildRealmImport(p)
+	}
 	tail := resourceTail(request.ResourceKey)
 	ceph := func(args, check []string) command {
 		return command{binary: executor.BinaryCeph, args: args, check: check, timeout: 2 * time.Minute}

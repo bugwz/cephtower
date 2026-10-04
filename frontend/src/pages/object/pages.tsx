@@ -1,4 +1,5 @@
 import type { ApiRecord } from '../../api/client'
+import { rgwRealmImportAction } from './rgwRealmImport'
 import { RgwRealmToken } from './RgwRealmToken'
 import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
 import { zonegroupPipeZonesSelectionChanged } from './rgwZonegroupSyncGroup'
@@ -155,7 +156,7 @@ export function RgwZonesPage() {
 }
 
 export function RgwPeriodPage() {
-  return <ResourceListPage definition={{ ...definitions.multisite, title: 'RGW Period（按 Realm 提交）', createAction: undefined, updateAction: undefined, extraActions: [{
+  return <ResourceListPage definition={{ ...definitions.multisite, title: 'RGW Period（按 Realm 提交）', createAction: undefined, toolbarActions: undefined, updateAction: undefined, extraActions: [{
     title: '提交 Realm Period', path: '/rgw/period/commit', method: 'POST',
     successMessage: 'Realm 当前 period 已回读核验（不代表远端同步完成）',
     disabledWhen: periodCommitBlocked, initialValues: periodCommitInitial, confirmation: periodCommitConfirmation,
@@ -995,6 +996,7 @@ const definitions: Record<
     ]
   },
   multisite: {
+    toolbarActions: [rgwRealmImportAction],
     title: 'RGW Multisite',
     detailContent: (row, clusterId) => <RgwRealmToken key={`${clusterId}:${row.id}:${row.name}`} row={row} clusterId={clusterId} />,
     path: '/rgw/realms',
