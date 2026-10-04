@@ -20,6 +20,7 @@ import { useClusterContext } from '../state/ClusterContext'
 import { resourceColumnFilters, resourceFilterFields } from './resourceColumnFilters'
 import { dependentFormFields } from './dependentFormFields'
 import { message } from '../utils/appMessage'
+import { ResourceFormImport, type ResourceImportParser } from './ResourceFormImport'
 
 const { Text } = Typography
 
@@ -45,6 +46,7 @@ export interface MutationFormField {
 export type MutationFormValues = Record<string, string | string[] | number | boolean | null | undefined | ApiRecord>
 
 export interface ResourceFormAction {
+  importFile?: ResourceImportParser
   title: string
   buttonLabel?: string
   path: string
@@ -425,6 +427,7 @@ export function ResourceListPage({ definition, embedded = false, onFormMutationS
         okButtonProps={{ icon: <SaveOutlined />, disabled: mutationBlocked }}
         destroyOnClose
       >
+        {activeAction?.importFile && <ResourceFormImport parse={activeAction.importFile} row={activeRow} active={formOpen && formClusterId === selectedClusterId} disabled={submitting || mutationBlocked} scope={selectedClusterId} values={() => form.getFieldsValue(true)} apply={values => form.setFieldsValue(values)} />}
         <Form form={form} layout="vertical" onFinish={submitForm} onValuesChange={(changed) => {
           for (const name of dependentFormFields(activeAction?.fields ?? [], Object.keys(changed))) form.setFieldValue(name, undefined)
           if (activeAction?.changedValues) form.setFieldsValue(activeAction.changedValues(changed, form.getFieldsValue(true), activeRow))

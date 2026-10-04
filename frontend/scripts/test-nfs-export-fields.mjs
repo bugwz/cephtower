@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import * as yaml from 'yaml'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 import { createRequire } from 'node:module'
@@ -87,7 +88,10 @@ for (const [key, path, columns] of [
 ]) {
   const definition = definitionNode.properties.find((property) => property.name.getText(tree) === key).initializer
   const code = ts.transpileModule(`const value = ${definition.getText(tree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
-  const value = new Function('resourceName', 'smbClusterOptions', 'smbUsersBody', 'smbUsersInitialValues', 'smbUpdateGroupsBody', `${code}; return value`)((row) => row.name, async () => [], smbEditorExports.smbUsersBody, smbEditorExports.smbUsersInitialValues, smbEditorExports.smbUpdateGroupsBody)
+  const importExports = {}
+  new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/file/smbUsersImport.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(importExports,()=>yaml)
+  const importParser = importExports.smbUsersImport
+  const value = new Function('resourceName', 'smbClusterOptions', 'smbUsersBody', 'smbUsersInitialValues', 'smbUpdateGroupsBody', 'smbUsersImport', `${code}; return value`)((row) => row.name, async () => [], smbEditorExports.smbUsersBody, smbEditorExports.smbUsersInitialValues, smbEditorExports.smbUpdateGroupsBody, importParser)
   assert.equal(value.path, path)
   assert.deepEqual(value.requiredCapabilities, ['smb'])
   assert.deepEqual(value.columns.map((column) => column.key), columns)
@@ -101,6 +105,14 @@ for (const [key, path, columns] of [
     assert.deepEqual(value.createAction.buildBody({ name: 'auth', username: 'admin', password: 'test-secret' }, 17), { cluster_id: 17, name: 'auth', username: 'admin', password: 'test-secret' })
   } else {
     assert.equal(value.createAction.path, '/smb/usersgroup')
+    assert.equal(value.createAction.importFile, importParser)
+    assert.equal(value.updateAction.importFile, importParser)
+    const document = {resource_type:'ceph.smb.usersgroups',users_groups_id:'target',values:{users:[{name:'alice',password:' secret '}],groups:[{name:'ops'}]},linked_to_cluster:'smb-a'}
+    for(const action of [value.createAction,value.updateAction]) {
+      const imported=action.importFile(yaml.stringify(document),action===value.updateAction?{name:'target'}:undefined)
+      assert.deepEqual(action.buildBody(imported,17,{name:'target'}),{cluster_id:17,name:'target',users:[{name:'alice',password:' secret '}],groups:['ops'],linked_to_cluster:'smb-a'})
+      assert.deepEqual(action.fields.find(field=>field.name==='linked_to_cluster').optionsDependencies,[])
+    }
     const renderNames = value.columns.find((column) => column.key === 'user_names').render
     assert.equal(renderNames(['alice', 'bob']), 'alice、bob')
     assert.equal(renderNames([]), '无用户')

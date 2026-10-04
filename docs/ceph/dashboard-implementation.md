@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- **SMB 用户组 JSON/YAML 导入**：接通参考 `SmbService.uploadData` → 用户组表单回填流程，创建和替换页面可读取单个 `ceph.smb.usersgroups` 文件，填入资源 ID、用户/密码、组名及集群绑定。只填表不写集群，提交继续使用既有 API 和 `smb apply -i - --password-filter-out=hidden` 敏感参数链路；未增加后端接口。编辑必须匹配当前资源身份，绑定必须在已载入的当前集群选项中。支持显式空用户/组、解除绑定和密码空格/换行，不静默丢弃未知字段或修剪组名；限制 1 MiB、用户和组各 1000 项，拒绝多文档、重复键/名称、别名展开、未知标签和错误类型。解析/读取错误不回显原文或密码。异步结果在表单关闭、切换集群/对象、开始提交、选择新文件或表单已修改后不覆盖输入。增加锁定版本 YAML 解析依赖、解析和交互竞态回归及实际动作绑定测试；运行全量前端回归、类型检查和构建，无真实集群或浏览器视觉验证。
+
 #### SMB 当前覆盖复核（不是完成声明）
 
 本次按当前源码重新核对参考 `shared/api/smb.service.ts`、`smb.model.ts`、
@@ -41,7 +43,7 @@
 | 共享 CephFS 路径、子卷范围、只读/浏览、登录控制 | `smbShareFields.ts`、`SMBLoginControlEditor.tsx`、`pages.tsx` 共享动作及列 | 已有结构化表单与对应展示 |
 | 域加入凭据创建、更新、删除及集群选择 | `pages.tsx` 的 `smbJoinAuths` 相关动作与 `smbJoinAuthOptions`、后端 `smb_auth.go` | 旧记录中的凭据管理缺口已被后续实现覆盖；密码不应回显 |
 | 用户组资源创建、替换、删除、用户和组展示 | `SMBUsersEditor.tsx`、`pages.tsx`、后端 `smb_usersgroups.go` | 已有结构化编辑；替换仍需提供保留用户的密码 |
-| 用户组资源 JSON/YAML 文件导入并填入表单 | 参考 `SmbService.uploadData` → `dataUploader` → `SmbUsersgroupsFormComponent.fillForm`；当前文件页面未发现文件读取/上传入口 | **确认仍缺失，下一项实现候选** |
+| 用户组资源 JSON/YAML 文件导入并填入表单 | 参考 `SmbService.uploadData` → `dataUploader` → `SmbUsersgroupsFormComponent.fillForm` | 复核时缺失，现已接通，见上方导入增量 |
 
 导入的准确参考范围是用户组表单，不能仅凭服务中的 `SMBResource` 联合类型就声称
 四类 SMB 资源都存在导入界面。后续应将单个 `ceph.smb.usersgroups` 文档填入现有

@@ -1,4 +1,5 @@
 import { SnapshotScheduleStatus } from './SnapshotScheduleStatus'
+import { smbUsersImport } from './smbUsersImport'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClusterDetails } from './NFSClusterDetails'
 import { SMBClusterDetails } from './SMBClusterDetails'
@@ -790,6 +791,7 @@ const definitions: Record<
     requiredCapabilities: ['smb'],
     createAction: {
       title: '新建 SMB 用户组资源',
+      importFile: smbUsersImport,
       path: '/smb/usersgroup',
       method: 'POST',
       successMessage: '用户组资源创建及元数据核验成功（未验证客户端登录）',
@@ -798,7 +800,7 @@ const definitions: Record<
         { name: 'name', label: '资源 ID', required: true, pattern: /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,16}[a-zA-Z0-9])?$/, patternMessage: '1–18 个英文字母、数字或连字符，首尾为字母或数字' },
         { name: 'users', label: '本地用户（可为空）', required: true, renderControl: () => <SMBUsersEditor /> },
         { name: 'groups', label: '组名（可选，每行一个）', type: 'textarea' },
-        { name: 'linked_to_cluster', label: '绑定 SMB 集群（可选）', type: 'select', optionsLoader: smbClusterOptions, placeholder: '绑定后仅该集群可用，并随集群删除' }
+        { name: 'linked_to_cluster', label: '绑定 SMB 集群（可选）', type: 'select', optionsLoader: smbClusterOptions, optionsDependencies: [], placeholder: '绑定后仅该集群可用，并随集群删除' }
       ],
       buildBody: (values, clusterId) => ({ cluster_id: clusterId, name: values.name, users: smbUsersBody(values.users), groups: String(values.groups ?? '').split('\n').map((name) => name.trim()).filter(Boolean), ...(values.linked_to_cluster ? { linked_to_cluster: values.linked_to_cluster } : {}) })
     },
@@ -814,6 +816,7 @@ const definitions: Record<
     },
     updateAction: {
       title: '替换 SMB 用户组配置',
+      importFile: smbUsersImport,
       path: '/smb/usersgroup',
       method: 'PATCH',
       successMessage: '用户组资源更新及元数据核验成功（未验证客户端登录）',
@@ -822,7 +825,7 @@ const definitions: Record<
         { name: 'users', label: '完整用户列表（可删除全部用户；保留的用户须重新输入密码）', required: true, renderControl: () => <SMBUsersEditor /> },
         { name: 'clear_groups', label: '明确清空全部组', type: 'boolean' },
         { name: 'groups', label: '完整组名列表（每行一个）', type: 'textarea', visibleWhen: (values) => values.clear_groups !== true },
-        { name: 'linked_to_cluster', label: '绑定 SMB 集群（留空解除绑定）', type: 'select', optionsLoader: smbClusterOptions }
+        { name: 'linked_to_cluster', label: '绑定 SMB 集群（留空解除绑定）', type: 'select', optionsLoader: smbClusterOptions, optionsDependencies: [] }
       ],
       initialValues: smbUsersInitialValues,
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: resourceName(row), users: smbUsersBody(values.users), groups: smbUpdateGroupsBody(values), ...(values.linked_to_cluster ? { linked_to_cluster: values.linked_to_cluster } : {}) })
