@@ -12,7 +12,7 @@ import (
 func TestZonegroupSyncPipeUpdate(t *testing.T) {
 	for _, realm := range []string{"", "realm"} {
 		for _, mode := range []string{"system", "user"} {
-			for _, scenario := range []string{"success", "priority", "storage class", "empty storage class", "prefix", "empty prefix", "remove prefix", "missing", "duplicate", "stale", "unchanged", "write", "post_check", "period.commit", "published_policy_check"} {
+			for _, scenario := range []string{"success", "priority", "storage class", "empty storage class", "prefix", "empty prefix", "remove prefix", "tags", "missing", "duplicate", "stale", "unchanged", "write", "post_check", "period.commit", "published_policy_check"} {
 				if realm == "" && (scenario == "period.commit" || scenario == "published_policy_check") {
 					continue
 				}
@@ -51,6 +51,11 @@ func TestZonegroupSyncPipeUpdate(t *testing.T) {
 					}
 					zg := map[string]any{"id": "zg", "name": "east", "realm_id": realm, "zones": []any{}, "sync_policy": map[string]any{"groups": []any{group}}}
 					before := encode(zg)
+					if scenario == "tags" {
+						params["tags_remove"] = []any{map[string]any{"key": "k", "value": "v"}}
+						params["tags_add"] = []any{map[string]any{"key": "k", "value": "new"}}
+						nativeParams["source"].(map[string]any)["filter"].(map[string]any)["tags"] = params["tags_add"]
+					}
 					if scenario == "prefix" || scenario == "empty prefix" || scenario == "remove prefix" {
 						filter := nativeParams["source"].(map[string]any)["filter"].(map[string]any)
 						if scenario == "remove prefix" {
@@ -117,7 +122,7 @@ func TestZonegroupSyncPipeUpdate(t *testing.T) {
 					}
 					service.executor = runner
 					_, err := service.Execute(context.Background(), Request{ClusterID: cluster, Action: "rgw_zonegroup.sync_pipe_update", Parameters: params})
-					if scenario == "success" || scenario == "priority" || scenario == "storage class" || scenario == "empty storage class" || scenario == "prefix" || scenario == "empty prefix" || scenario == "remove prefix" {
+					if scenario == "success" || scenario == "priority" || scenario == "storage class" || scenario == "empty storage class" || scenario == "prefix" || scenario == "empty prefix" || scenario == "remove prefix" || scenario == "tags" {
 						if err != nil {
 							t.Fatal(err)
 						}
@@ -147,6 +152,9 @@ func TestZonegroupSyncPipeUpdate(t *testing.T) {
 							}
 							if params["prefix_mode"] == "remove" {
 								args = append(args, "--prefix-rm", "true")
+							}
+							if scenario == "tags" {
+								args = append(args, "--tags-rm=k=v", "--tags-add=k=new")
 							}
 							args = append(args, "--zonegroup-id", "zg", "--format", "json")
 							if !call.Mutating || !reflect.DeepEqual(call.Args, args) {

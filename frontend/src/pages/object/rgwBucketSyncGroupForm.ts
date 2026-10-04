@@ -176,6 +176,29 @@ export function syncPipePrefixInput(values: Record<string, unknown>) {
 export function syncPipePrefixWarning(input: Record<string, unknown>) {
   return `源前缀：${input.prefix_mode === 'remove' ? '移除前缀字段' : input.prefix_mode === 'set' ? JSON.stringify(input.source_prefix) : '保持原值'}；空前缀或移除前缀可能扩大对象匹配范围，仍受标签及其他策略约束。`
 }
+export function syncPipeTagsInput(values: Record<string, unknown>) {
+  if (values.tags_mode === undefined || values.tags_mode === 'preserve') return {}
+  if (values.tags_mode !== 'change') throw new Error('请选择标签变更方式')
+  const seen=new Set<string>()
+  const read=(name:string)=>{
+    const raw=values[name]
+    let entries: unknown
+    try {entries=raw===undefined||raw===''?[]:JSON.parse(String(raw))} catch {throw new Error('标签必须为 key/value 对象的 JSON 数组')}
+    if (!Array.isArray(entries)||entries.length>100) throw new Error('每个标签增删列表最多 100 对')
+    return entries.map(item=>{
+      const valid=(s:unknown):s is string=>typeof s==='string'&&new TextEncoder().encode(s).length<=1024&&!s.includes(',')&&!/\p{Cc}/u.test(s)&&![...s].some(c=>{const n=c.codePointAt(0)!;return n>=0xd800&&n<=0xdfff})
+      if (!item||typeof item!=='object'||Array.isArray(item)||Object.keys(item).length!==2||!valid(item.key)||!valid(item.value)||item.key.includes('=')) throw new Error('标签键值不能含逗号或控制字符，键不能含等号；每项最多 1024 UTF-8 字节')
+      const id=JSON.stringify([item.key,item.value]);if(seen.has(id))throw new Error('标签对重复或同时添加和移除');seen.add(id)
+      return {key:item.key,value:item.value}
+    })
+  }
+  const tags_remove=read('tags_remove_json'),tags_add=read('tags_add_json')
+  if (!tags_remove.length&&!tags_add.length) throw new Error('至少填写一个标签增删项')
+  return {tags_remove,tags_add}
+}
+export function syncPipeTagsWarning(input: Record<string, unknown>) {
+  return input.tags_add === undefined && input.tags_remove === undefined ? '源标签保持不变。' : `移除标签对 ${JSON.stringify(input.tags_remove)}，添加标签对 ${JSON.stringify(input.tags_add)}；原生先移除后添加，按完整键值对匹配，不按键覆盖。可能改变对象复制匹配范围，不修改对象本身的标签。`
+}
 export function bucketSyncPipeUpdateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {
   const selected = bucketSyncPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
   const group = JSON.parse(selected.expected_group)
@@ -185,11 +208,11 @@ export function bucketSyncPipeUpdateInput(values: Record<string, unknown>, row?:
   delete input.source_zones
   delete input.dest_zones
   input.expected_group = selected.expected_group
-  return {...input,...syncPipePriorityInput(values),...syncPipeStorageClassInput(values),...syncPipePrefixInput(values)}
+  return {...input,...syncPipePriorityInput(values),...syncPipeStorageClassInput(values),...syncPipePrefixInput(values),...syncPipeTagsInput(values)}
 }
 export function bucketSyncPipeUpdateConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const input = bucketSyncPipeUpdateInput(values, row)
-  return `确认修改 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中管道 ${JSON.stringify(input.pipe_id)}？源租户/桶/实例 ${JSON.stringify([input.source_tenant, input.source_bucket, input.source_bucket_id])}；目标 ${JSON.stringify([input.dest_tenant, input.dest_bucket, input.dest_bucket_id])}；模式 ${input.mode}，用户 ${JSON.stringify(input.user)}。* 为通配，空租户不限定租户。system 模式保留已存储 UID（不使用其权限检查），不会删除用户或凭据。优先级：${input.priority === undefined ? '保持原值' : input.priority}，可能改变匹配管道的选择。目标存储类：${input.storage_class === undefined ? '保持原值' : JSON.stringify(input.storage_class)}；空字符串仍是显式覆盖，不是移除字段。${syncPipePrefixWarning(input)}保留 Zone 成员、源标签和目标 ACL。不验证目标放置配置或已有对象迁移。可能改变复制范围或权限；请备份并避免外部并发，失败不代表未生效，不自动回滚。仅修改桶本地管道，不提交 period，不代表同步完成。`
+  return `确认修改 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中管道 ${JSON.stringify(input.pipe_id)}？源租户/桶/实例 ${JSON.stringify([input.source_tenant, input.source_bucket, input.source_bucket_id])}；目标 ${JSON.stringify([input.dest_tenant, input.dest_bucket, input.dest_bucket_id])}；模式 ${input.mode}，用户 ${JSON.stringify(input.user)}。* 为通配，空租户不限定租户。system 模式保留已存储 UID（不使用其权限检查），不会删除用户或凭据。优先级：${input.priority === undefined ? '保持原值' : input.priority}，可能改变匹配管道的选择。目标存储类：${input.storage_class === undefined ? '保持原值' : JSON.stringify(input.storage_class)}；空字符串仍是显式覆盖，不是移除字段。${syncPipePrefixWarning(input)}${syncPipeTagsWarning(input)}保留 Zone 成员和目标 ACL。不验证目标放置配置或已有对象迁移。可能改变复制范围或权限；请备份并避免外部并发，失败不代表未生效，不自动回滚。仅修改桶本地管道，不提交 period，不代表同步完成。`
 }
 
 export function bucketSyncPipeCreateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {

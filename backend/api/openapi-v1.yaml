@@ -20991,6 +20991,28 @@ paths:
                   type: string
                 subvolume:
                   type: string
+                tags_add:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [key, value]
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
+                tags_remove:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [key, value]
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
                 uid:
                   type: string
                 user:
@@ -26035,6 +26057,28 @@ paths:
                   type: string
                 subvolume:
                   type: string
+                tags_add:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [key, value]
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
+                tags_remove:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: false
+                    required: [key, value]
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
                 uid:
                   type: string
                 user:

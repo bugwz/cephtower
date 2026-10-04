@@ -108,6 +108,11 @@ func bucketSyncPipeUpdateArgs(p map[string]any) ([]string, error) {
 	if mode == "remove" {
 		result = append(result, "--prefix-rm", "true")
 	}
+	tagArgs, err := syncPipeTagArgs(p)
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, tagArgs...)
 	return result, nil
 }
 
@@ -179,6 +184,11 @@ func updateBucketSyncPipe(group map[string]any, p map[string]any) error {
 			filter["prefix"] = prefix
 		}
 	}
+	tagsChanged, err := updateSyncPipeTags(params, p)
+	if err != nil {
+		return err
+	}
+	changed = changed || tagsChanged
 	if syncGroupString(p, "mode") == "user" {
 		changed = changed || params["user"] != syncGroupString(p, "user")
 		params["user"] = syncGroupString(p, "user")

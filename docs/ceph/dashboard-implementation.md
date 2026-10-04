@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+- **Bucket / Zonegroup 管道源标签增删**：现有编辑 API 接收 `tags_add` / `tags_remove` 键值对象数组，使用原生 `--tags-rm=<列表>` / `--tags-add=<列表>`。对照 `get_str_list(val, ",", ...)`、`rgw_sync_pipe_filter_tag::from_str` 和 `set_tags`，按完整键值对先删后加，保留同键不同值、空键/值、Unicode 和空格，按原生键/值顺序核验结果。逗号及键中的等号无法无损表达，明确拒绝，不静默拆分或转义；重复或同时增删相同对亦拒绝。
+  - 表单使用明确的增删 JSON 数组，保持模式忽略隐藏旧值，不修改对象自身标签；确认列出准确增删对和匹配范围风险。沿用完整组快照、策略回读、Realm 发布和失败不自动重试；保留前缀、ACL、存储类、优先级和 Zone 成员。测试覆盖添加、删除最后一对、同键换值、空值、无变化、畸形集合、前缀漂移、命令失败、API 类型、两类表单与 Realm 归属。无真实集群或浏览器视觉验证；目标 ACL 编辑仍未补齐。
+  - `make test-backend`（含 OpenAPI 一致性）和 `make test-frontend`（含类型检查、生产构建）通过。
+
 - **Bucket / Zonegroup 管道源前缀编辑**：现有管道编辑 API 增加 `prefix_mode=set/remove` 与 `source_prefix`，分别映射原生 `--prefix=<原值>` 和 `--prefix-rm true`；后者在参考版本是带参数选项，参数存在才触发 reset。依据 `rgw_sync_pipe_filter::set_prefix` 区分未修改、显式空字符串和移除字段；表单分别提供保持、设置、空前缀和移除，忽略隐藏旧值，保留 Unicode/空格/前导短横线/等号，不作正则或路径归一化。请求拒绝控制字符、无效 Unicode、超 1024 UTF-8 字节及矛盾组合。
   - 通过完整组快照与写后完整策略核验保留标签、ACL、存储类、优先级和 Zone 成员，Zonegroup 继续发布并核验 Realm Period。确认提示空前缀或移除可能扩大匹配范围，仍受其他条件约束，非事务失败可能部分生效。补充三种操作、无变化、写入/回读故障、标签漂移、命令参数、API 类型、两类表单及 Realm 发布测试。无真实集群或浏览器视觉验证；标签与 ACL 编辑等仍待实现。
   - `make test-backend`（含 OpenAPI 一致性）和 `make test-frontend`（含类型检查、生产构建）通过。
