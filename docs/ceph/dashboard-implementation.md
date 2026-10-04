@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+- **Bucket / Zonegroup 管道目标 ACL 转换**：现有编辑 API 增加可选 `dest_owner`，使用原生 `--dest-owner=<完整 UID>`；空字符串依据 `set_owner` 移除 `acl_translation` 字段。对照 `rgw_user::from_str/to_str` 保留租户、命名空间及 ID，不静默归一化空租户/命名空间等歧义输入。表单明确区分保持、设置、移除，忽略隐藏旧值；不修改桶所有者，不把 Account ID 当作 UID。
+  - 保留完整策略快照、写后完整字段核验与 Realm 发布流程。确认说明原生复制在 user 模式还会要求转换 UID 与目标桶所有者一致；配置回读不验证用户存在、实际复制权限或已有对象归属变更。测试覆盖全局/租户/命名空间 UID、移除/缺失/无变化、写入/回读失败、存储类漂移、API 类型、前端绑定和 Realm 归属。无真实集群或浏览器视觉验证；整体 Dashboard 迁移仍未完成。
+  - `make test-backend`（含 OpenAPI 一致性）与 `make test-frontend`（含类型检查、生产构建）通过。
+
 - **Bucket / Zonegroup 管道源标签增删**：现有编辑 API 接收 `tags_add` / `tags_remove` 键值对象数组，使用原生 `--tags-rm=<列表>` / `--tags-add=<列表>`。对照 `get_str_list(val, ",", ...)`、`rgw_sync_pipe_filter_tag::from_str` 和 `set_tags`，按完整键值对先删后加，保留同键不同值、空键/值、Unicode 和空格，按原生键/值顺序核验结果。逗号及键中的等号无法无损表达，明确拒绝，不静默拆分或转义；重复或同时增删相同对亦拒绝。
   - 表单使用明确的增删 JSON 数组，保持模式忽略隐藏旧值，不修改对象自身标签；确认列出准确增删对和匹配范围风险。沿用完整组快照、策略回读、Realm 发布和失败不自动重试；保留前缀、ACL、存储类、优先级和 Zone 成员。测试覆盖添加、删除最后一对、同键换值、空值、无变化、畸形集合、前缀漂移、命令失败、API 类型、两类表单与 Realm 归属。无真实集群或浏览器视觉验证；目标 ACL 编辑仍未补齐。
   - `make test-backend`（含 OpenAPI 一致性）和 `make test-frontend`（含类型检查、生产构建）通过。

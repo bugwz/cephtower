@@ -113,6 +113,13 @@ func bucketSyncPipeUpdateArgs(p map[string]any) ([]string, error) {
 		return nil, err
 	}
 	result = append(result, tagArgs...)
+	owner, present, err := syncPipeDestinationOwner(p)
+	if err != nil {
+		return nil, err
+	}
+	if present {
+		result = append(result, "--dest-owner="+owner)
+	}
 	return result, nil
 }
 
@@ -189,6 +196,11 @@ func updateBucketSyncPipe(group map[string]any, p map[string]any) error {
 		return err
 	}
 	changed = changed || tagsChanged
+	aclChanged, err := updateSyncPipeACL(params, p)
+	if err != nil {
+		return err
+	}
+	changed = changed || aclChanged
 	if syncGroupString(p, "mode") == "user" {
 		changed = changed || params["user"] != syncGroupString(p, "user")
 		params["user"] = syncGroupString(p, "user")

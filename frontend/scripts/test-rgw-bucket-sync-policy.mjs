@@ -128,6 +128,16 @@ assert.equal(updatePipeAction.buildBody({...tagValues,tags_mode:'preserve',tags_
 for (const tags_add_json of ['null','{}','invalid','[{"key":"k," ,"value":"v"}]','[{"key":"k=","value":"v"}]','[{"key":"k","value":"old"}]','[{"key":"k","value":"v"},{"key":"k","value":"v"}]','[{"key":"k"}]',JSON.stringify([{key:'k',value:'\n'}]),JSON.stringify([{key:'k',value:'x'.repeat(1025)}]),JSON.stringify([{key:'k',value:'\ud800'}])]) assert.throws(()=>updatePipeAction.buildBody({...tagValues,tags_add_json},7,pipeEditRow))
 assert.throws(()=>updatePipeAction.buildBody({...pipeEditValues,tags_mode:'change'},7,pipeEditRow))
 assert.equal(updatePipeAction.fields.find(field=>field.name==='tags_remove_json').visibleWhen({tags_mode:'preserve'}),false)
+for (const dest_owner of ['u','team$u','$ns$u','team$ns$u','team$ns$u$extra']) {
+ const values={...pipeEditValues,acl_mode:'set',dest_owner}
+ assert.equal(updatePipeAction.buildBody(values,7,pipeEditRow).dest_owner,dest_owner)
+ assert.ok(updatePipeAction.confirmation(values,pipeEditRow).includes(JSON.stringify(dest_owner)))
+}
+assert.equal(updatePipeAction.buildBody({...pipeEditValues,acl_mode:'remove',dest_owner:'stale'},7,pipeEditRow).dest_owner,'')
+assert.equal(updatePipeAction.buildBody({...pipeEditValues,acl_mode:'preserve',dest_owner:'stale'},7,pipeEditRow).dest_owner,undefined)
+for (const dest_owner of ['',null,'-u','u x','u\n','$u','team$','team$$u','$ns$','x'.repeat(513),'\ud800']) assert.throws(()=>updatePipeAction.buildBody({...pipeEditValues,acl_mode:'set',dest_owner},7,pipeEditRow))
+assert.throws(()=>updatePipeAction.buildBody({...pipeEditValues,acl_mode:'unknown'},7,pipeEditRow))
+assert.equal(updatePipeAction.fields.find(field=>field.name==='dest_owner').visibleWhen({acl_mode:'remove'}),false)
 for (const change of [{ bucket_id:'other' }, { group_id:'other' }, { pipe_id:'missing' }, { confirm_pipe_update:true }, { source_bucket:'' }, { source_bucket:'a/b' }, { mode:'unknown' }, { user:'unexpected' }, { mode:'user' }]) assert.throws(() => updatePipeAction.buildBody({ ...pipeEditValues, ...change }, 7, pipeEditRow))
 assert.ok(updatePipeAction.disabledWhen({ ...pipeEditRow, stale: true }))
 assert.equal(pipeEditGroup.pipes[0].params.user, 'old')

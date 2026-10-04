@@ -326,6 +326,16 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		}
 		pipeUpdateBody := fmt.Sprintf(`{"cluster_id":%d,"bucket_id":%q,"group_id":"g","pipe_id":"p","expected_group":%q,"source_bucket":"*","dest_bucket":"photos","mode":"system"}`, cluster.ID, id, `{"id":"g","status":"allowed","data_flow":{},"pipes":[{"id":"p"}]}`)
 		pipeUpdateResponse := sendOperationRequest(t, nativeMux, http.MethodPatch, "/api/v1/rgw/bucket/sync/pipe", pipeUpdateBody, "sync-pipe-update-"+tenant)
+		for index, value := range []string{`"team$ns$u"`, `""`, "null", "7"} {
+			response := sendOperationRequest(t, nativeMux, http.MethodPatch, "/api/v1/rgw/bucket/sync/pipe", strings.TrimSuffix(pipeUpdateBody, "}")+`,"dest_owner":`+value+`}`, fmt.Sprintf("sync-acl-%s-%d", tenant, index))
+			want := http.StatusAccepted
+			if index >= 2 {
+				want = http.StatusBadRequest
+			}
+			if response.Code != want {
+				t.Fatalf("acl %s: %d %s", value, response.Code, response.Body.String())
+			}
+		}
 		for index, extra := range []string{`,"tags_add":[{"key":"k","value":""}]`, `,"tags_remove":[{"key":"k","value":"v"}]`, `,"tags_add":null`, `,"tags_add":[{"key":"k"}]`, `,"tags_add":[{"key":"k","value":1}]`} {
 			response := sendOperationRequest(t, nativeMux, http.MethodPatch, "/api/v1/rgw/bucket/sync/pipe", strings.TrimSuffix(pipeUpdateBody, "}")+extra+`}`, fmt.Sprintf("sync-tags-%s-%d", tenant, index))
 			want := http.StatusAccepted

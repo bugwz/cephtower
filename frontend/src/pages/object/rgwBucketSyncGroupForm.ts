@@ -199,6 +199,18 @@ export function syncPipeTagsInput(values: Record<string, unknown>) {
 export function syncPipeTagsWarning(input: Record<string, unknown>) {
   return input.tags_add === undefined && input.tags_remove === undefined ? '源标签保持不变。' : `移除标签对 ${JSON.stringify(input.tags_remove)}，添加标签对 ${JSON.stringify(input.tags_add)}；原生先移除后添加，按完整键值对匹配，不按键覆盖。可能改变对象复制匹配范围，不修改对象本身的标签。`
 }
+export function syncPipeACLInput(values: Record<string, unknown>) {
+  if (values.acl_mode === undefined || values.acl_mode === 'preserve') return {}
+  if (values.acl_mode === 'remove') return {dest_owner:''}
+  const uid=values.dest_owner
+  if (values.acl_mode !== 'set' || typeof uid !== 'string' || !uid || uid.startsWith('-') || new TextEncoder().encode(uid).length>512 || /[\s\p{Cc}]/u.test(uid) || [...uid].some(c=>{const n=c.codePointAt(0)!;return n>=0xd800&&n<=0xdfff})) throw new Error('请输入规范完整目标所有者 UID')
+  const parts=uid.split('$')
+  if ((parts.length===2&&(!parts[0]||!parts[1]))||(parts.length>=3&&(!parts[1]||!parts.slice(2).join('$')))) throw new Error('目标所有者 UID 不可自动归一化')
+  return {dest_owner:uid}
+}
+export function syncPipeACLWarning(input: Record<string, unknown>) {
+  return `目标 ACL 转换：${input.dest_owner === undefined ? '保持原值' : input.dest_owner === '' ? '移除转换字段' : `设置所有者 UID ${JSON.stringify(input.dest_owner)}`}。不修改桶本身所有者；user 模式复制时要求该 UID 与目标桶所有者一致，Account ID 不等同 UID；配置回读不验证目标用户存在或实际复制权限。`
+}
 export function bucketSyncPipeUpdateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {
   const selected = bucketSyncPipeDeleteInput({ ...values, confirm_pipe_delete: 'acknowledged' }, row)
   const group = JSON.parse(selected.expected_group)
@@ -208,11 +220,11 @@ export function bucketSyncPipeUpdateInput(values: Record<string, unknown>, row?:
   delete input.source_zones
   delete input.dest_zones
   input.expected_group = selected.expected_group
-  return {...input,...syncPipePriorityInput(values),...syncPipeStorageClassInput(values),...syncPipePrefixInput(values),...syncPipeTagsInput(values)}
+  return {...input,...syncPipePriorityInput(values),...syncPipeStorageClassInput(values),...syncPipePrefixInput(values),...syncPipeTagsInput(values),...syncPipeACLInput(values)}
 }
 export function bucketSyncPipeUpdateConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const input = bucketSyncPipeUpdateInput(values, row)
-  return `确认修改 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中管道 ${JSON.stringify(input.pipe_id)}？源租户/桶/实例 ${JSON.stringify([input.source_tenant, input.source_bucket, input.source_bucket_id])}；目标 ${JSON.stringify([input.dest_tenant, input.dest_bucket, input.dest_bucket_id])}；模式 ${input.mode}，用户 ${JSON.stringify(input.user)}。* 为通配，空租户不限定租户。system 模式保留已存储 UID（不使用其权限检查），不会删除用户或凭据。优先级：${input.priority === undefined ? '保持原值' : input.priority}，可能改变匹配管道的选择。目标存储类：${input.storage_class === undefined ? '保持原值' : JSON.stringify(input.storage_class)}；空字符串仍是显式覆盖，不是移除字段。${syncPipePrefixWarning(input)}${syncPipeTagsWarning(input)}保留 Zone 成员和目标 ACL。不验证目标放置配置或已有对象迁移。可能改变复制范围或权限；请备份并避免外部并发，失败不代表未生效，不自动回滚。仅修改桶本地管道，不提交 period，不代表同步完成。`
+  return `确认修改 Bucket ID ${input.bucket_id} 的组 ${JSON.stringify(input.group_id)} 中管道 ${JSON.stringify(input.pipe_id)}？源租户/桶/实例 ${JSON.stringify([input.source_tenant, input.source_bucket, input.source_bucket_id])}；目标 ${JSON.stringify([input.dest_tenant, input.dest_bucket, input.dest_bucket_id])}；模式 ${input.mode}，用户 ${JSON.stringify(input.user)}。* 为通配，空租户不限定租户。system 模式保留已存储 UID（不使用其权限检查），不会删除用户或凭据。优先级：${input.priority === undefined ? '保持原值' : input.priority}，可能改变匹配管道的选择。目标存储类：${input.storage_class === undefined ? '保持原值' : JSON.stringify(input.storage_class)}；空字符串仍是显式覆盖，不是移除字段。${syncPipePrefixWarning(input)}${syncPipeTagsWarning(input)}${syncPipeACLWarning(input)}保留 Zone 成员。不验证目标放置配置或已有对象迁移。可能改变复制范围或权限；请备份并避免外部并发，失败不代表未生效，不自动回滚。仅修改桶本地管道，不提交 period，不代表同步完成。`
 }
 
 export function bucketSyncPipeCreateInput(values: Record<string, unknown>, row?: Record<string, unknown>): Record<string, unknown> {

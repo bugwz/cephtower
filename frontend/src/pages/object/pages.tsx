@@ -897,6 +897,8 @@ const definitions: Record<
         { name: 'tags_mode', label: '源标签过滤变更', type: 'select', options: [{value:'preserve',label:'保持原值'},{value:'change',label:'增删完整标签对'}] },
         { name: 'tags_remove_json', label: '移除标签对 JSON 数组（如 [{"key":"env","value":"old"}]；空白不移除）', type: 'textarea', visibleWhen: values => values.tags_mode === 'change' },
         { name: 'tags_add_json', label: '添加标签对 JSON 数组（键值不能含逗号，键不能含等号；空白不添加）', type: 'textarea', visibleWhen: values => values.tags_mode === 'change' },
+        { name: 'acl_mode', label: '目标 ACL 转换', type: 'select', options: [{value:'preserve',label:'保持原值'},{value:'set',label:'设置目标所有者 UID'},{value:'remove',label:'移除 ACL 转换'}] },
+        { name: 'dest_owner', label: '目标所有者完整 UID（不是 Account ID，不修改桶所有者）', required: true, visibleWhen: values => values.acl_mode === 'set' },
         { name: 'confirm_pipe_update', label: '修改确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份并确认选择器、优先级和权限变化；Zone 成员保持不变' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...bucketSyncPipeUpdateInput(values, row) })
@@ -1176,6 +1178,8 @@ const definitions: Record<
         { name: 'tags_mode', label: '源标签过滤变更', type: 'select', options: [{value:'preserve',label:'保持原值'},{value:'change',label:'增删完整标签对'}] },
         { name: 'tags_remove_json', label: '移除标签对 JSON 数组（如 [{"key":"env","value":"old"}]；空白不移除）', type: 'textarea', visibleWhen: values => values.tags_mode === 'change' },
         { name: 'tags_add_json', label: '添加标签对 JSON 数组（键值不能含逗号，键不能含等号；空白不添加）', type: 'textarea', visibleWhen: values => values.tags_mode === 'change' },
+        { name: 'acl_mode', label: '目标 ACL 转换', type: 'select', options: [{value:'preserve',label:'保持原值'},{value:'set',label:'设置目标所有者 UID'},{value:'remove',label:'移除 ACL 转换'}] },
+        { name: 'dest_owner', label: '目标所有者完整 UID（不是 Account ID，不修改桶所有者）', required: true, visibleWhen: values => values.acl_mode === 'set' },
         { name: 'confirm_pipe_update', label: '配置与发布确认', type: 'select', required: true, options: [{ value: 'acknowledged', label: '已备份，确认完整选择器、优先级与权限模式，了解 Realm 发布及并发风险' }] }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...zonegroupPipeUpdateInput(values,row) })

@@ -20917,6 +20917,8 @@ paths:
                   type: string
                 dest_bucket_id:
                   type: string
+                dest_owner:
+                  type: string
                 dest_tenant:
                   type: string
                 device_id:
@@ -25980,6 +25982,8 @@ paths:
                 dest_bucket:
                   type: string
                 dest_bucket_id:
+                  type: string
+                dest_owner:
                   type: string
                 dest_tenant:
                   type: string

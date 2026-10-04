@@ -1,4 +1,4 @@
-import { syncPipeCreateFields, syncPipePriorityInput, syncPipeStorageClassInput, syncPipePrefixInput, syncPipePrefixWarning, syncPipeTagsInput, syncPipeTagsWarning } from './rgwBucketSyncGroupForm'
+import { syncPipeCreateFields, syncPipePriorityInput, syncPipeStorageClassInput, syncPipePrefixInput, syncPipePrefixWarning, syncPipeTagsInput, syncPipeTagsWarning, syncPipeACLInput, syncPipeACLWarning } from './rgwBucketSyncGroupForm'
 const record = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
 const token = (v: unknown): v is string => typeof v === 'string' && !!v && !v.startsWith('-') && new TextEncoder().encode(v).length <= 512 && !/\p{Cc}/u.test(v) && ![...v].some(c => { const n = c.codePointAt(0)!; return n >= 0xd800 && n <= 0xdfff })
 function snapshot(row?: Record<string, unknown>, allowEmpty = false) {
@@ -60,11 +60,11 @@ export function zonegroupPipeUpdateInput(values: Record<string, unknown>, row?: 
   if (values.confirm_pipe_update !== 'acknowledged') throw new Error('请确认选择器、权限及发布影响')
   delete input.source_zones
   delete input.dest_zones
-  return { ...input, ...selected, ...syncPipePriorityInput(values), ...syncPipeStorageClassInput(values), ...syncPipePrefixInput(values), ...syncPipeTagsInput(values) }
+  return { ...input, ...selected, ...syncPipePriorityInput(values), ...syncPipeStorageClassInput(values), ...syncPipePrefixInput(values), ...syncPipeTagsInput(values), ...syncPipeACLInput(values) }
 }
 export function zonegroupPipeUpdateConfirmation(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const p = zonegroupPipeUpdateInput(values,row)
-  return `确认修改 Zonegroup ${JSON.stringify(p.name)}（${p.zonegroup_id}）中同步组 ${JSON.stringify(p.group_id)} 的管道 ${JSON.stringify(p.pipe_id)}？源租户/桶/实例 ${JSON.stringify([p.source_tenant,p.source_bucket,p.source_bucket_id])}；目标 ${JSON.stringify([p.dest_tenant,p.dest_bucket,p.dest_bucket_id])}；模式 ${p.mode}，用户 ${JSON.stringify(p.user)}。* 为通配，空租户不限租户；system 模式保留已存储 UID，不删除用户或凭据。优先级：${p.priority === undefined ? '保持原值' : p.priority}，可能改变匹配管道的选择。目标存储类：${p.storage_class === undefined ? '保持原值' : JSON.stringify(p.storage_class)}；空字符串仍是显式覆盖，不是移除字段。${syncPipePrefixWarning(p)}${syncPipeTagsWarning(p)}保留 Zone 成员和目标 ACL。不验证目标放置配置或已有对象迁移。${p.realm_id ? `随后提交 Realm ${JSON.stringify(p.realm_id)} 的 Period，可能发布其他待提交变更。` : '无 Realm，不提交 Period。'}可能改变复制范围或权限，请备份并避免外部或其他页面并发；非事务，失败可能部分生效，不自动回滚或重试；成功不代表远端复制完成。`
+  return `确认修改 Zonegroup ${JSON.stringify(p.name)}（${p.zonegroup_id}）中同步组 ${JSON.stringify(p.group_id)} 的管道 ${JSON.stringify(p.pipe_id)}？源租户/桶/实例 ${JSON.stringify([p.source_tenant,p.source_bucket,p.source_bucket_id])}；目标 ${JSON.stringify([p.dest_tenant,p.dest_bucket,p.dest_bucket_id])}；模式 ${p.mode}，用户 ${JSON.stringify(p.user)}。* 为通配，空租户不限租户；system 模式保留已存储 UID，不删除用户或凭据。优先级：${p.priority === undefined ? '保持原值' : p.priority}，可能改变匹配管道的选择。目标存储类：${p.storage_class === undefined ? '保持原值' : JSON.stringify(p.storage_class)}；空字符串仍是显式覆盖，不是移除字段。${syncPipePrefixWarning(p)}${syncPipeTagsWarning(p)}${syncPipeACLWarning(p)}保留 Zone 成员。不验证目标放置配置或已有对象迁移。${p.realm_id ? `随后提交 Realm ${JSON.stringify(p.realm_id)} 的 Period，可能发布其他待提交变更。` : '无 Realm，不提交 Period。'}可能改变复制范围或权限，请备份并避免外部或其他页面并发；非事务，失败可能部分生效，不自动回滚或重试；成功不代表远端复制完成。`
 }
 export function zonegroupPipeDeleteInput(values: Record<string, unknown>, row?: Record<string, unknown>) {
   const { groups, ...identity } = snapshot(row)
