@@ -156,6 +156,12 @@ for(const realm of ['','realm']){
  assert.equal(filled.user,'team$u')
  assert.equal(filled.confirm_pipe_update,undefined)
  assert.equal(filled.pipe_load_error,undefined)
+ for(const user of ['team$ns$user$extra','$ns$$','team$ns$user$']) {
+  assert.equal(pipeUpdateAction.buildBody({...values,mode:'user',user},7,validRow).user,user)
+  const current=structuredClone(validRow)
+  current.sync_policy.groups[0].pipes[0].params.user=user
+  assert.equal(pipeUpdateAction.changedValues({pipe_id:'p'},values,current).user,user)
+ }
  assert.equal(pipeUpdateAction.changedValues({group_id:g.id},values,row).pipe_id,undefined)
  assert.ok(pipeUpdateAction.changedValues({pipe_id:'p'},values,row).pipe_load_error)
  assert.ok(pipeUpdateAction.changedValues({pipe_id:'p'},values,{...validRow,stale:true}).pipe_load_error)

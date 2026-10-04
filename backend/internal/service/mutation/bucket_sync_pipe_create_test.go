@@ -137,3 +137,49 @@ func TestBucketSyncPipeCreateValidation(t *testing.T) {
 		t.Fatal("unknown zone accepted")
 	}
 }
+
+func TestSyncPipeNamespacedUIDRoundTrip(t *testing.T) {
+	for _, uid := range []string{"user", "team$user", "$ns$user", "team$ns$user$extra", "$ns$$", "team$ns$user$"} {
+		t.Run(uid, func(t *testing.T) {
+			p := pipeCreateParameters()
+			p["mode"], p["user"] = "user", uid
+			for _, build := range []func(map[string]any) ([]string, error){bucketSyncPipeCreateArgs, bucketSyncPipeUpdateArgs} {
+				args, err := build(p)
+				if err != nil {
+					t.Fatal(err)
+				}
+				found := false
+				for i, arg := range args {
+					if arg == "--uid" && i+1 < len(args) && args[i+1] == uid {
+						found = true
+					}
+				}
+				if !found {
+					t.Fatalf("UID not preserved: %q", args)
+				}
+			}
+			g := map[string]any{"pipes": []any{}}
+			if err := addBucketSyncPipe(g, p, []byte(`{"zones":[{"id":"a","name":"A"},{"id":"b","name":"B"}]}`)); err != nil {
+				t.Fatal(err)
+			}
+			pipe := g["pipes"].([]any)[0].(map[string]any)
+			if pipe["params"].(map[string]any)["user"] != uid {
+				t.Fatalf("creation changed UID: %+v", pipe)
+			}
+			pipe["params"].(map[string]any)["user"] = "previous"
+			if err := updateBucketSyncPipe(g, p); err != nil {
+				t.Fatal(err)
+			}
+			if pipe["params"].(map[string]any)["user"] != uid {
+				t.Fatalf("update changed UID: %+v", pipe)
+			}
+		})
+	}
+	for _, uid := range []string{"$u", "team$", "team$$u", "$ns$", "team$ns$", "team$$u$extra"} {
+		p := pipeCreateParameters()
+		p["mode"], p["user"] = "user", uid
+		if _, err := bucketSyncPipeCreateArgs(p); err == nil {
+			t.Fatalf("accepted noncanonical UID %q", uid)
+		}
+	}
+}

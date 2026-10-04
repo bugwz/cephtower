@@ -336,7 +336,7 @@ export function syncPipeCreateFields(values: Record<string, unknown>, group: { i
   if (values.mode === 'user') {
     if (!token(user) || /\s/u.test(user)) throw new Error('请输入完整用户 UID')
     const parts = user.split('$')
-    if (!(parts.length === 1 || (parts.length === 2 && parts.every(Boolean)) || (parts.length === 3 && parts[1] && parts[2]))) throw new Error('用户 UID 格式无效')
+    if (!(parts.length === 1 || (parts.length === 2 && parts.every(Boolean)) || (parts.length >= 3 && parts[1] && parts.slice(2).join('$')))) throw new Error('用户 UID 格式无效')
   }
   const result: Record<string, unknown> = { group_id: group.id, pipe_id: values.pipe_id, expected_group: JSON.stringify(group), mode: values.mode }
   if (values.mode === 'user') result.user = user

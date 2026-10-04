@@ -56,7 +56,8 @@ func bucketSyncPipeCreateArgs(p map[string]any) ([]string, error) {
 		return nil, invalid("system mode must not include a user")
 	}
 	if mode == "user" {
-		parts := strings.Split(uid, "$")
+		// rgw_user::from_str splits only the tenant and namespace separators.
+		parts := strings.SplitN(uid, "$", 3)
 		valid := syncFlowToken(uid) && strings.IndexFunc(uid, unicode.IsSpace) < 0
 		switch len(parts) {
 		case 1:

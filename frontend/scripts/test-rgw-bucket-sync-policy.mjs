@@ -115,6 +115,14 @@ for(const zones of [undefined,null,{},['a','a'],['*','a'],[null],['a b'],['-a'],
 }
 assert.ok(pipeZonesAction.changedValues({pipe_id:pipeEditValues.pipe_id},pipeEditValues,{...pipeEditRow,stale:true}).pipe_load_error)
 assert.equal(updatePipeAction.method, 'PATCH')
+for(const user of ['team$ns$user$extra','$ns$$','team$ns$user$']) {
+ assert.equal(updatePipeAction.buildBody({...pipeEditValues,mode:'user',user},7,pipeEditRow).user,user)
+ const current=structuredClone(pipeEditRow)
+ current.bucket_sync_policy.groups[0].pipes[0].params.user=user
+ const filled=updatePipeAction.changedValues({pipe_id:pipeEditValues.pipe_id},pipeEditValues,current)
+ assert.equal(filled.pipe_load_error,undefined)
+ assert.equal(filled.user,user)
+}
 assert.equal(updatePipeAction.path, '/rgw/bucket/sync/pipe')
 assert.deepEqual(await updatePipeAction.fields.find(f=>f.name==='group_id').optionsLoader(7,pipeEditRow),[{value:group.id,label:group.id}])
 const pipePicker=updatePipeAction.fields.find(f=>f.name==='pipe_id')
