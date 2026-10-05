@@ -4,11 +4,12 @@ interface PageProps {
   title: string
   loading?: boolean
   error?: string
+  errorAction?: React.ReactNode
   stateVariant?: 'card' | 'inline'
   children: React.ReactNode
 }
 
-export function Page({ loading, error, stateVariant = 'card', children }: PageProps) {
+export function Page({ loading, error, errorAction, stateVariant = 'card', children }: PageProps) {
   return (
     <>
       {loading ? (
@@ -22,7 +23,7 @@ export function Page({ loading, error, stateVariant = 'card', children }: PagePr
           </Card>
         )
       ) : error ? (
-        <Alert type="error" message="加载失败" description={error} showIcon />
+        <><Alert type="error" message="加载失败" description={error} showIcon />{errorAction}</>
       ) : (
         children
       )}

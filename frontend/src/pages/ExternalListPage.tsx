@@ -285,7 +285,8 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
   )
 
   return (
-    <Page title={definition.title} loading={loading} error={error} stateVariant={embedded ? 'inline' : 'card'}>
+    <Page title={definition.title} loading={loading} error={error} stateVariant={embedded ? 'inline' : 'card'}
+      errorAction={<Space direction="vertical" style={{ marginTop: 16 }}>{filterFormContent}<Button icon={<ReloadOutlined />} loading={refreshing} disabled={refreshing || !selectedClusterId} onClick={reload}>重新读取</Button></Space>}>
       {listSurface}
 
       <DraggableModal
