@@ -2,8 +2,9 @@ import { Table } from 'antd'
 import { rgwRoleTags } from './rgwRoleTags'
 
 export function RgwRoleTagsTable({ value }: { value: unknown }) {
+  if (value === undefined) return <span>未返回标签字段（原生命令在无标签时省略）</span>
   const tags = rgwRoleTags(value)
-  if (!tags) return <span>标签未返回或格式无效</span>
+  if (!tags) return <span>标签格式无效</span>
   return <Table size="small" rowKey="id" dataSource={tags} pagination={tags.length > 5 ? { pageSize: 5 } : false}
     locale={{ emptyText: '标签列表为空' }} columns={[
       { title: '标签键', dataIndex: 'key' },

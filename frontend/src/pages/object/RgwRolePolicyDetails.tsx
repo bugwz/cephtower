@@ -17,8 +17,9 @@ export function RgwPolicyDocument({ value }: { value: unknown }) {
 }
 
 export function RgwRolePolicyDetails({ value }: { value: unknown }) {
+  if (value === undefined) return <span>未返回内联策略字段（原生命令在无内联策略时省略）；不能据此判断完整有效权限</span>
   const policies = rgwRolePolicies(value)
-  if (!policies) return <span>内联策略未返回或格式无效</span>
+  if (!policies) return <span>内联策略格式无效</span>
   if (policies.length === 0) return <span>内联策略列表为空</span>
   return <div>{policies.map(policy => <details key={policy.id}>
     <summary>{policy.name}</summary><RgwPolicyDocument value={policy.document} />
