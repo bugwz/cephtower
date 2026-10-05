@@ -432,6 +432,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "rgw_user.delete" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "user removal failed; users owning buckets cannot be removed without purging data, which this operation does not request; inspect user state before any manual retry", Retryable: false}
 		}
+		if request.Action == "rgw_account.delete" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "account removal was not confirmed; the account must be empty and this operation does not purge data; inspect account state before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_user.subuser" || request.Action == "rgw_key.create" || request.Action == "rgw_key.update" || request.Action == "rgw_key.delete" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "user credential command failed; inspect user, subuser and key state before any manual retry", Retryable: false}
 		}
@@ -508,6 +511,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
 		if request.Action == "rgw_user.update" && (err != nil || !rgwUserUpdatePropertiesMatch(checked.Stdout, request.Parameters, last(resourceTail(request.ResourceKey)))) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user update was accepted but requested properties or flags could not be verified; inspect user info before any manual retry", Retryable: false}
+		}
+		if request.Action == "rgw_account.delete" && (err != nil || !nameAbsent(rawText(request.Parameters, "account_id"), checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "account removal was accepted but absence could not be verified from the complete account list; inspect account state before any manual retry", Retryable: false}
 		}
 		if request.Action == "rgw_user.delete" && (err != nil || !rgwUserPresence(checked.Stdout, last(resourceTail(request.ResourceKey)), false)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user removal was accepted but absence could not be verified from the complete user list; inspect user state before any manual retry", Retryable: false}

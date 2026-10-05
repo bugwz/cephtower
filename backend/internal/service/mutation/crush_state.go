@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-// nameAbsent verifies native JSON name lists used by CRUSH and EC profiles.
+// nameAbsent verifies complete native JSON key lists, never paginated wrappers.
 func nameAbsent(name string, data []byte) bool {
 	var names []string
 	decoder := json.NewDecoder(bytes.NewReader(data))
