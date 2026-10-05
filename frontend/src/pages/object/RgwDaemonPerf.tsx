@@ -1,6 +1,7 @@
 import { Alert, Button, Space, Table } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { jsonInit, request } from '../../api/client'
+import { RgwDaemonHistory } from './RgwDaemonHistory'
 
 type Sample={metric:Record<string,string>;value:[number,string]}
 type Snapshot={service_map_id:string;source:'prometheus';result_type:'vector';available:boolean;observed_at:string;series:Sample[]}
@@ -38,5 +39,6 @@ export function RgwDaemonPerf({clusterId,serviceMapId,isCurrent}:{clusterId:numb
       {title:'样本时间（Unix 秒）',render:(_value:unknown,row:Sample)=>String(row.value[0])},
       {title:'原始数值',render:(_value:unknown,row:Sample)=>row.value[1]},
     ]}/>}</>}
+    <RgwDaemonHistory clusterId={clusterId} serviceMapId={serviceMapId} isCurrent={isCurrent}/>
   </Space>
 }
