@@ -43,6 +43,7 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
   currentClusterId.current = selectedClusterId
   useEffect(() => () => { clusterGeneration.current += 1 }, [])
   const [formClusterId, setFormClusterId] = useState<number | undefined>()
+  const [formGeneration, setFormGeneration] = useState<number | undefined>()
   const [refreshing, setRefreshing] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [activeAction, setActiveAction] = useState<ResourceFormAction | null>(null)
@@ -86,6 +87,18 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
     }
   }
 
+  function applyFilters(values: ApiRecord) {
+    // Invalidate pending confirmations before React commits the new query.
+    clusterGeneration.current += 1
+    form.resetFields()
+    setFormOpen(false)
+    setActiveAction(null)
+    setActiveRow(undefined)
+    setDetailRow(null)
+    setFormClusterId(undefined)
+    setQueryBody(cleanRecord(values))
+  }
+
   function openForm(action: ResourceFormAction, row?: ApiRecord) {
     if (mutationBlocked) {
       message.warning('当前集群未满足该功能的操作依赖')
@@ -97,6 +110,7 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
       return
     }
     setActiveAction(action)
+    setFormGeneration(clusterGeneration.current)
     setFormClusterId(selectedClusterId)
     setActiveRow(row)
     form.resetFields()
@@ -106,7 +120,7 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
   }
 
   async function submitForm(values: MutationFormValues) {
-    if (!selectedClusterId || formClusterId !== selectedClusterId || !activeAction || submitting || mutationBlocked) {
+    if (!selectedClusterId || formClusterId !== selectedClusterId || formGeneration !== clusterGeneration.current || !activeAction || submitting || mutationBlocked) {
       return
     }
     const action = activeAction
@@ -226,7 +240,7 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
       form={filterForm}
       layout="inline"
       initialValues={definition.body}
-      onFinish={(values) => setQueryBody(cleanRecord(values))}
+      onFinish={applyFilters}
     >
       {definition.filterFields.map((field) => (
         <Form.Item
