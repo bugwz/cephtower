@@ -124,7 +124,18 @@ func TestRGWDaemonAPI(t *testing.T) {
 	if w = send(statusBody); w.Code != 501 || w.Header().Get("Cache-Control") != "no-store" {
 		t.Fatal("missing monitoring endpoint not reported", w.Code)
 	}
+	path = "/api/v1/rgw/daemon/perf/history"
+	if w = send(statusBody); w.Code != 501 || w.Header().Get("Cache-Control") != "no-store" {
+		t.Fatal("history endpoint unavailable not reported")
+	}
+	if w = send(strings.TrimSuffix(statusBody, "}") + `,"start":"arbitrary"}`); w.Code != 400 {
+		t.Fatal("custom history window accepted")
+	}
 	auth = true
+	if w = send(statusBody); w.Code != 401 {
+		t.Fatal("history authentication bypass")
+	}
+	path = "/api/v1/rgw/daemon/perf"
 	if w = send(statusBody); w.Code != 401 {
 		t.Fatal("performance authentication bypass")
 	}

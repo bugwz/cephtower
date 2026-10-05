@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### RGW 固定窗口历史采样 API
+
+新增 `GET /rgw/daemon/perf/history`，沿用 cluster_id/service_map_id 严格请求、集群 Prometheus 端点及认证/审计，固定查询服务器当前时间之前一小时、60 秒步长的 `ceph_rgw_*` 精确实例序列，不开放自定义 PromQL 或无界窗口。返回 matrix、start/end/step_seconds、可用性和原始字符串样本；每条序列至多 61 点，拒绝越界、重复/逆序时间及畸形样本，不合并来源、不计算速率。范围查询时间是评估时间而非原始抓取时间；空结果不是零值，缺少监控历史仍不可用。新增查询参数、窗口/顺序/样本类型、服务信封、严格路由及认证测试，后端全量测试与 OpenAPI 检查通过。前端历史展示尚待接入，无真实集群验证，不等价于 Dashboard mgr 内部速率历史。
+
 #### RGW 系统与容器注册元数据
 
 追踪 Dashboard `RgwDaemon.get` 的 rgw_metadata、librados `service_daemon_register` 调用 `collect_sys_info` 以及 RGWRados 的附加元数据，新增明确白名单：短版本、release、系统、内核版本/描述、架构、Pod/容器名称与镜像、容器主机、命名空间、num_handles 和 service_unique_id。通过现有 service dump/API 返回注册元数据，缺失字段不补造；保留字符串精度并对值脱敏，不透传 frontend 配置、未知字段或凭据。注册行展开详情展示文本键值与空数据提示，明确非实时探测。新增后端投影、缺失字段及大整数字符串测试，前端白名单、类型验证、详情传递与 HTML 文本渲染测试；前后端全量测试、OpenAPI、类型检查及构建通过。未做真实集群或浏览器视觉验证。

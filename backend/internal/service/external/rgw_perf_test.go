@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	endpointservice "cephtower/backend/internal/service/endpoint"
 )
@@ -51,5 +52,27 @@ func TestRGWPerfSnapshot(t *testing.T) {
 	body = `private-diagnostic`
 	if result, err = s.RGWPerf(ctx, cluster.ID, "1"); err == nil || result != nil || strings.Contains(err.Error(), "private-") {
 		t.Fatal("failure leaked or hidden")
+	}
+}
+
+func TestRGWPerfHistoryWindow(t *testing.T) {
+	s, endpoints, cluster := externalTestService(t)
+	ctx := context.Background()
+	if _, err := endpoints.CreateEndpoint(ctx, cluster.ID, endpointservice.EndpointInput{Kind: "prometheus", URL: "https://prometheus.example.test"}); err != nil {
+		t.Fatal(err)
+	}
+	s.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+		if r.URL.Path != "/api/v1/query_range" {
+			t.Fatal("not history query")
+		}
+		return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(`{"status":"success","data":{"resultType":"matrix","result":[]}}`)), Request: r}, nil
+	})
+	result, err := s.RGWPerfHistory(ctx, cluster.ID, "1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := result.(map[string]any)
+	if data["available"] != false || data["result_type"] != "matrix" || data["step_seconds"] != 60 || data["end"].(time.Time).Sub(data["start"].(time.Time)) != time.Hour {
+		t.Fatal("incorrect history envelope")
 	}
 }
