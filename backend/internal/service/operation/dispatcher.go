@@ -104,6 +104,9 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		if request.Action == "rgw_encryption.update" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "encryption configuration verified but inventory refresh failed; refresh without repeating the mutation", Retryable: false}
 		}
+		if request.Action == "rgw_account.create" || request.Action == "rgw_account.update" || request.Action == "rgw_account.delete" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "account change was verified but inventory refresh failed; refresh account inventory without repeating the change", Retryable: false}
+		}
 		if request.Action == "rgw_zonegroup.cloud_create" || request.Action == "rgw_zonegroup.cloud_connection" || request.Action == "rgw_zonegroup.cloud_target" || request.Action == "rgw_zonegroup.cloud_acl" || request.Action == "rgw_zonegroup.cloud_restore" || request.Action == "rgw_zonegroup.placement_default" || request.Action == "rgw_zonegroup.placement_tags" || request.Action == "rgw_zonegroup.storage_class_delete" || request.Action == "rgw_zonegroup.storage_class_delete_local" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "placement configuration verified but inventory refresh failed; refresh without repeating the mutation", Retryable: false}
 		}
