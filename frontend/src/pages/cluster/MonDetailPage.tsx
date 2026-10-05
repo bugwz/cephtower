@@ -12,6 +12,7 @@ import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
 import { MonPublicAddresses } from './MonPublicAddresses'
 import { monSessionCount } from './monSessionCount'
+import { MonQuorumState } from './MonQuorumState'
 
 const { Text } = Typography
 const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
@@ -82,7 +83,7 @@ export function MonDetailPage() {
             <Descriptions.Item label="Public Addr">{textValue(mon.address)}</Descriptions.Item>
             <Descriptions.Item label="全部 Public 地址（协议 / 地址）"><MonPublicAddresses value={mon.public_addresses} /></Descriptions.Item>
             <Descriptions.Item label="状态">
-              <Tag color={mon.in_quorum === true ? 'success' : 'default'}>{mon.in_quorum === true ? '仲裁中' : '未加入仲裁'}</Tag>
+              <MonQuorumState value={mon.in_quorum} />
             </Descriptions.Item>
             <Descriptions.Item label="Open sessions（采集时）">{monSessionCount(mon.open_sessions)}</Descriptions.Item>
             <Descriptions.Item label="数据源">{textValue(mon.source)}</Descriptions.Item>
