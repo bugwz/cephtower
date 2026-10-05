@@ -145,6 +145,7 @@ type GatewayCluster struct {
 	Name string `json:"name"`
 }
 type RGWStatus struct {
+	DefaultRealmID  *string        `json:"default_realm_id"`
 	GlobalQuota     map[string]any `json:"global_quota,omitempty"`
 	GlobalRateLimit map[string]any `json:"global_rate_limit,omitempty"`
 	Realms          []string       `json:"realms"`

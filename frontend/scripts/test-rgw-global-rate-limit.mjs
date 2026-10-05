@@ -83,3 +83,9 @@ for (const enabled of [true, false, undefined]) {
 }
 for (const value of [undefined, null, [], '', false]) assert.equal(quota.RgwQuota({ value }).props.items.some(row => row.key === 'basis'), false)
 console.log('Quota capacity accounting preserves raw, rounded and unknown native flags')
+
+const { rgwDefaultRealm } = load('rgwDefaultRealm.ts')
+for (const id of ['realm-id', 'realm-中文', '<not-html>', ' opaque ']) assert.equal(rgwDefaultRealm(id), id)
+assert.equal(rgwDefaultRealm(''), '原生返回空 ID：可能未设置，也可能读取失败')
+for (const value of [undefined, null, false, 0, [], {}]) assert.equal(rgwDefaultRealm(value), '默认 Realm ID 未返回或不可用')
+assert.match(pages, /key: 'default_realm_id'[^\n]+render: rgwDefaultRealm/)

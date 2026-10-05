@@ -87,6 +87,7 @@ import { rgwUserEmailPatch } from './rgwUserEmailPatch'
 import { rgwRateLimitConfirmation, rgwRateLimitInitial, rgwRateLimitInput } from './rgwRateLimitForm'
 import { RgwGlobalRateLimit } from './RgwGlobalRateLimit'
 import { RgwGlobalQuota } from './RgwGlobalQuota'
+import { rgwDefaultRealm } from './rgwDefaultRealm'
 import { rgwQuotaConfirmation, rgwQuotaInitial, rgwQuotaInput } from './rgwQuotaForm'
 import { rgwRoleInitial, rgwRolePatch } from './rgwRoleEdit'
 import { RgwRoleTagsTable } from './RgwRoleTagsTable'
@@ -231,6 +232,7 @@ const definitions: Record<
     requiredCapabilities: ['rgw_admin'],
     columns: [
       { key: 'realms', title: 'Realms' },
+      { key: 'default_realm_id', title: '默认 Realm ID（realm list 采集值）', render: rgwDefaultRealm },
       { key: 'global_quota', title: '全局配额', render: (value) => <RgwGlobalQuota value={value} /> },
       { key: 'global_rate_limit', title: '默认 Realm 全局限流（每 RGW 每分钟）', render: (value) => <RgwGlobalRateLimit value={value} /> },
       { key: 'resource_version', title: '版本' }

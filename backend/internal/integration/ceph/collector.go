@@ -894,7 +894,8 @@ type namedWire struct {
 	Name string `json:"name"`
 }
 type rgwRealmWire struct {
-	Realms []string `json:"realms"`
+	Realms      []string        `json:"realms"`
+	DefaultInfo json.RawMessage `json:"default_info"`
 }
 
 func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAccess) ([]Observation, error) {
@@ -986,6 +987,10 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 	var realms rgwRealmWire
 	if err := p.runBinaryInto(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_status", []string{"realm", "list", "--format", "json"}, &realms); err == nil {
 		payload := cephdomain.RGWStatus{Realms: realms.Realms}
+		var defaultRealmID *string
+		if json.Unmarshal(realms.DefaultInfo, &defaultRealmID) == nil {
+			payload.DefaultRealmID = defaultRealmID
+		}
 		var quotas map[string]any
 		if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_global_quota", []string{"global", "quota", "get", "--format", "json"}, &quotas) {
 			user, userOK := quotas["user quota"].(map[string]any)
