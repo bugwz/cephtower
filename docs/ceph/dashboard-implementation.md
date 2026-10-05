@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### 已有云分层恢复配置编辑
+
+补齐参考 `modify_placement_targets` 的云分层恢复字段路径：Zonegroup 操作菜单选择已有 `cloud-s3` / `cloud-s3-glacier` 非 STANDARD 类，回填并编辑保留头对象、允许读穿透、读穿透恢复天数和本地恢复类。`PATCH /rgw/zonegroup/placement/restore` 进入高风险单次操作，以 `zonegroup placement modify --zonegroup-id ... --placement-id ... --storage-class ... --tier-config retain_head_object=...,allow_read_through=...,read_through_restore_days=...,restore_storage_class=...` 执行，布尔值使用原生小写文本，天数保留 0 且限制在前端精确整数范围。
+根据 `RGWZoneGroupPlacementTier::update_params` 的逐字段更新语义，写前验证组身份、Realm、默认规则、类声明、分层类型和恢复类为同目标非分层类；重读防止期间变化，写后完整比对确保端点、凭据、ACL、Glacier 专有参数和其他配置保持不变。已有 Realm 的 Period 随后定域提交与回读，刷新 Realm/组/Zone；不隐式创建 Realm 或重启服务，不直接恢复对象。原生空默认目标会初始化为当前目标 STANDARD，确认框予以说明。
+用户需核对各 Zone 恢复池映射、读穿透费用及头对象保留影响；Period 可能包含其他待提交变更，失败可部分生效，禁止自动重试和回滚。本增量不包含云分层创建、端点/凭据/ACL 或 Glacier 专有字段编辑。新增逐阶段错误/退出码、并发漂移、凭据意外变化、Glacier 保留、API 契约/锁/风险及前端回填/选择回归；后端全量测试、OpenAPI 一致性和前端全量回归/生产构建通过。无真实集群和浏览器视觉验证。
+
 #### 本地存储类的成员 Zone 池关联详情
 
 补齐参考 `RgwStorageClassDetailsComponent::getZoneInfo` / `BucketTieringUtils::getZoneInfoHelper` 的本地类 Zone 与数据池详情，在 Zonegroup 详情中按需读取完整分页 Zone 库存。复用已有 `collector_optional.go` 的 `radosgw-admin zone list/get --format json` → 库存 → `/rgw/zones` API 链路，不新增重复采集或虚构池信息。

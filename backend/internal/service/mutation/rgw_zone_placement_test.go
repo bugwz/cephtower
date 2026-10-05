@@ -27,6 +27,7 @@ func (e *placementExecutor) Run(_ context.Context, _ executor.ClusterAccess, c e
 	stage = strings.TrimPrefix(stage, "rgw_zonegroup.placement_create.")
 	stage = strings.TrimPrefix(stage, "rgw_zonegroup.placement_default.")
 	stage = strings.TrimPrefix(stage, "rgw_zonegroup.placement_tags.")
+	stage = strings.TrimPrefix(stage, "rgw_zonegroup.cloud_restore.")
 	stage = strings.TrimPrefix(stage, "rgw_zonegroup.storage_class_delete.")
 	stage = strings.TrimPrefix(stage, "rgw_zonegroup.storage_class_delete_local.")
 	if stage == e.fail {

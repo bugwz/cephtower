@@ -20,6 +20,7 @@ import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwZonePoolReferences } from './RgwZonePoolReferences'
 import { RgwPlacementClasses } from './RgwPlacementClasses'
 import { RgwLocalClassDetails } from './RgwLocalClassDetails'
+import { cloudRestoreBlocked, cloudRestoreTargets, cloudRestoreClasses, cloudRestoreLocalClasses, cloudRestoreChanged, cloudRestoreInput, cloudRestoreConfirmation } from './rgwCloudRestore'
 import { RgwRealmTransfer } from './RgwRealmTransfer'
 import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
 import { zonegroupPipeZonesSelectionChanged } from './rgwZonegroupSyncGroup'
@@ -1140,6 +1141,20 @@ const definitions: Record<
         {name:'confirm_tags',label:'范围确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份，了解目标标签、默认值和发布范围'}]}
       ],
       buildBody:(values,clusterId,row) => ({cluster_id:clusterId,...groupPlacementTagsInput(values,row)})
+    }, {
+      title:'编辑云分层恢复配置',path:'/rgw/zonegroup/placement/restore',method:'PATCH',
+      successMessage:'云分层恢复配置及 Realm Period 已回读核验（未直接恢复对象）',
+      disabledWhen:cloudRestoreBlocked,confirmation:cloudRestoreConfirmation,changedValues:cloudRestoreChanged,
+      fields:[
+        {name:'placement_id',label:'已有云分层目标',type:'select',required:true,optionsLoader:async (_clusterId,row)=>cloudRestoreTargets(row)},
+        {name:'storage_class',label:'已有云分层类',type:'select',required:true,optionsDependencies:['placement_id'],optionsLoader:async (_clusterId,row,values)=>cloudRestoreClasses(row,values?.placement_id)},
+        {name:'retain_head_object',label:'保留头对象（影响后续恢复）',type:'select',required:true,options:[{value:'true',label:'是'},{value:'false',label:'否'}]},
+        {name:'allow_read_through',label:'允许读穿透（可能产生远端请求及费用）',type:'select',required:true,options:[{value:'true',label:'是'},{value:'false',label:'否'}]},
+        {name:'read_through_restore_days',label:'读穿透恢复天数（原生值）',type:'number',required:true,min:0,max:Number.MAX_SAFE_INTEGER},
+        {name:'restore_storage_class',label:'恢复本地类（需自行核对各 Zone 池映射）',type:'select',required:true,optionsDependencies:['placement_id'],optionsLoader:async (_clusterId,row,values)=>cloudRestoreLocalClasses(row,values?.placement_id)},
+        {name:'confirm_restore',label:'变更与发布确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份并核对恢复类、头对象保留及 Realm 待发布变更'}]}
+      ],
+      buildBody:(values,clusterId,row)=>({cluster_id:clusterId,...cloudRestoreInput(values,row)})
     }, {
       title: '声明 Zonegroup 存储类', path: '/rgw/zonegroup/storage/class', method: 'POST',
       successMessage: '组存储类声明已回读核验（未配置 Zone 池或发布 Period）',

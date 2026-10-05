@@ -26379,6 +26379,126 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /rgw/zonegroup/placement/restore:
+    patch:
+      operationId: patch_rgw_zonegroup_placement_restore
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [allow_read_through, cluster_id, confirm_restore, expected_default_placement, name, placement_id, read_through_restore_days, realm_id, restore_storage_class, retain_head_object, storage_class, tier_type, zonegroup_id]
+              properties:
+                account_id:
+                  type: string
+                allow_read_through:
+                  type: boolean
+                binding_id:
+                  type: integer
+                bucket_id:
+                  type: string
+                client_id:
+                  type: string
+                cluster_id:
+                  type: integer
+                code:
+                  type: string
+                confirm_restore:
+                  type: boolean
+                device_id:
+                  type: string
+                endpoint_id:
+                  type: integer
+                expected_default_placement:
+                  type: string
+                export_id:
+                  type: string
+                fs:
+                  type: string
+                group:
+                  type: string
+                host:
+                  type: string
+                host_nqn:
+                  type: string
+                id:
+                  type: string
+                image_id:
+                  type: string
+                image_spec:
+                  type: string
+                iqn:
+                  type: string
+                listener_id:
+                  type: string
+                name:
+                  type: string
+                namespace:
+                  type: string
+                nqn:
+                  type: string
+                nsid:
+                  type: string
+                osd_id:
+                  type: string
+                placement_id:
+                  type: string
+                pool:
+                  type: string
+                read_through_restore_days:
+                  type: integer
+                realm_id:
+                  type: string
+                restore_storage_class:
+                  type: string
+                retain_head_object:
+                  type: boolean
+                service_id:
+                  type: string
+                share_id:
+                  type: string
+                silence_id:
+                  type: string
+                snap:
+                  type: string
+                storage_class:
+                  type: string
+                subsystem_nqn:
+                  type: string
+                subvolume:
+                  type: string
+                tier_type:
+                  type: string
+                  enum: ["cloud-s3", "cloud-s3-glacier"]
+                uid:
+                  type: string
+                who:
+                  type: string
+                zonegroup_id:
+                  type: string
+      responses:
+        '202':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /rgw/zonegroup/placement/tags:
     patch:
       operationId: patch_rgw_zonegroup_placement_tags

@@ -123,6 +123,20 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	}
 	defaultOp, defaultErr := db.FindOperation(context.Background(), operationIDFromResponse(t, defaultResponse))
 	tagsBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"tags-group","realm_id":"r","placement_id":"p","storage_class":"STANDARD","expected_default_placement":"old","expected_tags":["restricted"],"tags":[],"confirm_tags":true}`, cluster.ID)
+	restoreBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"restore-group","realm_id":"r","placement_id":"p","storage_class":"COLD","expected_default_placement":"old","tier_type":"cloud-s3","retain_head_object":false,"allow_read_through":true,"read_through_restore_days":0,"restore_storage_class":"STANDARD","confirm_restore":true}`, cluster.ID)
+	restoreResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/restore", restoreBody, "cloud-restore")
+	if restoreResponse.Code != http.StatusAccepted {
+		t.Fatal(restoreResponse.Code)
+	}
+	restoreOp, restoreErr := db.FindOperation(context.Background(), operationIDFromResponse(t, restoreResponse))
+	if restoreErr != nil || restoreOp.Action != "rgw_zonegroup.cloud_restore" || restoreOp.Risk != "high" || restoreOp.MaxAttempts != 1 || restoreOp.ResourceKey != "rgw/zonegroup/restore-group" {
+		t.Fatal("unsafe restore queue")
+	}
+	for _, body := range []string{strings.Replace(restoreBody, `"allow_read_through":true,`, "", 1), strings.TrimSuffix(restoreBody, "}") + `,"secret":"private"}`} {
+		if response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/restore", body, "bad-restore"); response.Code != http.StatusBadRequest {
+			t.Fatal("invalid restore contract accepted")
+		}
+	}
 	tagsResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/tags", tagsBody, "group-tags")
 	if tagsResponse.Code != http.StatusAccepted {
 		t.Fatal(tagsResponse.Code)
