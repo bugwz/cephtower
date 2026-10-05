@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### RGW 注册配置端口展示
+
+追踪 `RGWFrontendConfig::parse_config` 与 `rgw_asio_frontend.cc` 的 port/endpoint、ssl_port/ssl_endpoint 分支，解析服务映射中所有 frontend_config# 项，而非参考列表正则仅取第一项。对 Beast 配置投影 frontend 身份、HTTP/HTTPS 类型和端口，保留重复监听项及多 frontend；支持 IPv4、方括号 IPv6 与原生 endpoint 默认 80/443。未知框架、缺失/非法监听参数及无法确定的端口标记不完整，保留可识别部分，不回传原始配置或证书路径；不声称已绑定端口、TLS 可用或网络可达。前端新增端口列并严格验证响应类型、范围及不完整标志。后端与前端全量测试、OpenAPI、类型检查和构建通过，无真实集群或浏览器视觉验证；性能计数器与状态详情仍待继续接入。
+
 #### RGW 守护进程注册列表页面
 
 对象存储导航新增 `/object/daemons`，显式读取 `/rgw/daemons`，展示服务映射 ID、逻辑 RGW ID、主机、完整版本、Realm/Zonegroup/Zone 归属及读取时间，支持文本搜索、列排序与分页。按服务映射 ID 保留同名逻辑实例，严格校验响应来源、字段类型和唯一映射 ID，仅投影白名单，不展示额外返回字段。清晰区分未读取、失败、空注册及无搜索匹配；不把注册信息作为实时健康、端口或默认实例证据。

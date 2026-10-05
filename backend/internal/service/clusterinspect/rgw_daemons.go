@@ -14,14 +14,16 @@ import (
 
 // RGWDaemon describes service-map registration, not a live health probe.
 type RGWDaemon struct {
-	ServiceMapID  string `json:"service_map_id"`
-	ID            string `json:"id"`
-	Hostname      string `json:"hostname"`
-	Version       string `json:"version"`
-	RealmName     string `json:"realm_name"`
-	ZonegroupName string `json:"zonegroup_name"`
-	ZonegroupID   string `json:"zonegroup_id"`
-	ZoneName      string `json:"zone_name"`
+	Listeners         []RGWListener `json:"listeners"`
+	ListenersComplete bool          `json:"listeners_complete"`
+	ServiceMapID      string        `json:"service_map_id"`
+	ID                string        `json:"id"`
+	Hostname          string        `json:"hostname"`
+	Version           string        `json:"version"`
+	RealmName         string        `json:"realm_name"`
+	ZonegroupName     string        `json:"zonegroup_name"`
+	ZonegroupID       string        `json:"zonegroup_id"`
+	ZoneName          string        `json:"zone_name"`
 }
 
 func (s *Service) RGWDaemons(ctx context.Context, clusterID uint64) ([]RGWDaemon, error) {
@@ -84,8 +86,11 @@ func decodeRGWDaemons(body []byte) ([]RGWDaemon, error) {
 			return fail()
 		}
 		m := daemon.Metadata
+		listeners, complete := rgwListeners(m)
 		// Do not forward arbitrary metadata: frontend configs can contain credentials.
 		rows = append(rows, RGWDaemon{ServiceMapID: key, ID: m["id"], Hostname: m["hostname"], Version: m["ceph_version"], RealmName: m["realm_name"], ZonegroupName: m["zonegroup_name"], ZonegroupID: m["zonegroup_id"], ZoneName: m["zone_name"]})
+		rows[len(rows)-1].Listeners = listeners
+		rows[len(rows)-1].ListenersComplete = complete
 	}
 	sort.Slice(rows, func(i, j int) bool {
 		if rows[i].ID == rows[j].ID {
