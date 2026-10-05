@@ -65,6 +65,9 @@ type command struct {
 }
 
 func Supports(action string) bool {
+	if action == "rgw_encryption.update" {
+		return true
+	}
 	if action == "rgw_zonegroup.cloud_create" {
 		return true
 	}
@@ -149,6 +152,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if request.Action == "rgw_realm.import" {
 		return s.executeRealmImport(ctx, access, request, spec)
+	}
+	if request.Action == "rgw_encryption.update" {
+		return s.executeRGWEncryption(ctx, access, request)
 	}
 	if request.Action == "rgw_realm.delete" {
 		return s.executeRealmDelete(ctx, access, request, spec)
@@ -695,6 +701,10 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 }
 
 func build(request Request, p map[string]any) (command, error) {
+	if request.Action == "rgw_encryption.update" {
+		_, err := planRGWEncryption(p)
+		return command{}, err
+	}
 	if request.Action == "rgw_zonegroup.cloud_create" {
 		return buildCloudCreate(p)
 	}

@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### RGW 加密配置逐项执行与双重回读核验
+
+内部动作 `rgw_encryption.update` 接入 mutation 支持列表、参数校验和专用执行器，严格核对 `rgw/encryption/<entity>` 与参数实体一致。先读取所选提供商全部白名单配置和后端选择，核对 expected_backend；每项写入前再次比较该完整范围，写入后同时核验 `config dump --format json` 中准确实体、无 mask 的唯一显式记录及整个配置范围的 `config get` 结果。不能只凭继承值等于期望值就认为已建立实体级设置；显式写入相同值仍可建立覆盖。此流程不修改提供商选择或省略字段，不创建文件、不访问密钥服务。
+原生命令失败、异常回读、配置变化或中途取消立即停止；错误统一提示可能部分生效，不回滚、不自动重试、不返回原始输出。写入敏感索引不传播到读取命令，每条命令处理后清理 stdout/stderr 字节缓冲；结果只返回身份、字段数和配置核验标记，明确 runtime_verified/remote_connection_tested 为 false。动作分发刷新 config_value 库存，刷新失败要求单独刷新而不是重写。多次读取仍不是原子快照，外部并发可能发生在检查之间，也不能证明实际进程加载配置。
+新增三组合执行、多字段/空值/密码、所有阶段错误和非零退出、身份不一致、后端/字段变化、显式记录缺失/重复/mask、原始输出清理、中途失败保留已写字段及取消测试，另覆盖刷新失败不可重试。`make test-backend`（含 OpenAPI 一致性）通过；未修改或重测前端。写 API 的高风险入队、实体锁、单次尝试及编辑表单仍待下一步接入；本轮没有新增可供页面调用的写端点，无真实集群或浏览器验证。
+
 #### RGW 加密提供商写入参数与命令构造基础
 
 对照 `rgw-config-modal.onSubmit`、`CephService.set_encryption_config` 与 `rgw.yaml.in`，新增内部 `planRGWEncryption`，为三种既有配置组合构造明确字段补丁。要求具体 client.rgw 实体、预期后端选择、影响确认；密码提交另需安全保存确认。未知字段、展示用 backend/encryption_type/unique_id、跨提供商字段、错误类型、控制字符、脱敏占位及超长值均拒绝；TLS 校验采用布尔值，Vault auth/secret engine 按支持值校验。SSE-S3 模板单独映射原生键，未提交字段不构造命令，选择提供商不隐式修改后端选择。

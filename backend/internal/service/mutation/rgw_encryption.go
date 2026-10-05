@@ -18,6 +18,7 @@ type rgwEncryptionChange struct {
 type rgwEncryptionPlan struct {
 	entity, encryptionType, provider, backendKey, expectedBackend string
 	changes                                                       []rgwEncryptionChange
+	options                                                       []string
 }
 
 var rgwEncryptionEntityPattern = regexp.MustCompile(`^client\.rgw\.[A-Za-z0-9][A-Za-z0-9_.-]{0,255}$`)
@@ -68,6 +69,14 @@ func planRGWEncryption(p map[string]any) (rgwEncryptionPlan, error) {
 	if encryptionType == "s3" {
 		prefix = "rgw_crypt_sse_s3_vault_"
 		plan.backendKey = "rgw_crypt_sse_s3_backend"
+	}
+	plan.options = append(plan.options, plan.backendKey)
+	for _, field := range fields {
+		option := prefix + field
+		if field == "key_template" {
+			option = "rgw_crypt_sse_s3_key_template"
+		}
+		plan.options = append(plan.options, option)
 	}
 	names := make([]string, 0, len(values))
 	for name := range values {

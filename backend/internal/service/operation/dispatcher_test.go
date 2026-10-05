@@ -74,6 +74,12 @@ func TestActionDispatcherReconcilesNativeMutation(t *testing.T) {
 }
 
 func TestActionDispatcherFailsWhenPostReconcileFails(t *testing.T) {
+	encryptionReconciler := &reconcileExecutorFake{err: errors.New("offline")}
+	_, encryptionErr := NewActionDispatcher(&mutationExecutorFake{}, nil, encryptionReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_encryption.update", ResourceKind: "rgw_configuration"})
+	var encryptionFailure *cephdomain.ActionError
+	if !errors.As(encryptionErr, &encryptionFailure) || encryptionFailure.Retryable || !reflect.DeepEqual(encryptionReconciler.kinds, []string{"config_value"}) {
+		t.Fatal("unsafe encryption configuration refresh")
+	}
 	cloudCreateReconciler := &reconcileExecutorFake{err: errors.New("offline")}
 	_, cloudCreateErr := NewActionDispatcher(&mutationExecutorFake{}, nil, cloudCreateReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zonegroup.cloud_create", ResourceKind: "rgw_zonegroup"})
 	var cloudCreateFailure *cephdomain.ActionError
