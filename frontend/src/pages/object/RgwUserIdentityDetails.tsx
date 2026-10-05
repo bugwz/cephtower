@@ -2,6 +2,8 @@ import { Descriptions } from 'antd'
 import type { ApiRecord } from '../../api/client'
 import { rgwIdentityList, rgwIdentityText } from './rgwUserIdentity'
 import { RgwUserTagsTable } from './RgwUserTagsTable'
+import { rgwUserBooleanFlag, rgwUserSuspension } from './rgwUserFlags'
+import { rgwBucketLimit } from './rgwBucketLimit'
 
 function Identifiers({ value }: { value: unknown }) {
   const ids = rgwIdentityList(value)
@@ -14,6 +16,12 @@ export function RgwUserIdentityDetails({ row }: { row: ApiRecord }) {
   return <Descriptions size="small" column={1} items={[
     { key: 'full-uid', label: '完整 UID（命令原值）', children: rgwIdentityText(row.full_user_id, '空 UID') },
     { key: 'local-id', label: '本地用户 ID', children: rgwIdentityText(row.user_id, '空用户 ID') },
+    { key: 'display-name', label: '显示名', children: rgwIdentityText(row.display_name, '未设置') },
+    { key: 'email', label: '邮箱', children: rgwIdentityText(row.email, '未设置') },
+    { key: 'suspended', label: '暂停状态', children: rgwUserSuspension(row.suspended) },
+    { key: 'system', label: '系统用户', children: rgwUserBooleanFlag(row.system) },
+    { key: 'admin', label: '管理员标志（非完整有效权限）', children: rgwUserBooleanFlag(row.admin) },
+    { key: 'max-buckets', label: '最大 Bucket 数', children: rgwBucketLimit(row.max_buckets) },
     { key: 'tenant', label: '租户', children: rgwIdentityText(row.tenant, '默认租户') },
     { key: 'namespace', label: '用户命名空间', children: row.namespace === undefined ? '未返回（原生命令在命名空间为空时省略）' : rgwIdentityText(row.namespace, '空命名空间') },
     { key: 'account', label: '账户 ID', children: rgwIdentityText(row.account_id, '未关联账户') },

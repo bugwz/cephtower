@@ -182,11 +182,15 @@ for (const row of [{}, { uid: 'tenant$user', account_id: 'RGW123', stats_scope: 
   assert.equal(view.props.items[9].children.props.row, row)
 }
 const components = readFileSync(new URL('../src/pages/object/RgwUserIdentityDetails.tsx', import.meta.url), 'utf8')
+const bucketLimit = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketLimit.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(bucketLimit)
 const identityView = {}
 new Function('exports', 'require', ts.transpileModule(components, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(identityView, (name) => {
   if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }
   if (name === 'antd') return { Descriptions: 'Descriptions' }
   if (name === './rgwUserIdentity') return identity
+  if (name === './rgwUserFlags') return exports
+  if (name === './rgwBucketLimit') return bucketLimit
   if (name === './RgwUserTagsTable') return { RgwUserTagsTable: 'Tags' }
   throw new Error(`unexpected import ${name}`)
 })
@@ -206,6 +210,15 @@ for (const value of [null, false, 1, []]) {
   for (const key of ['full-uid', 'local-id', 'namespace']) assert.equal(fields[key], '未返回或格式无效')
 }
 assert.ok(components.includes("rgwIdentityText(row.default_placement, '未显式设置')"))
+for (const [row, expected] of [
+  [{ display_name: ' 用户 <name> ', email: 'user@example.test', suspended: 0, system: false, admin: true, max_buckets: 0 }, [' 用户 <name> ', 'user@example.test', '未暂停', '否', '是', '无限制']],
+  [{ display_name: '', email: '', suspended: 255, system: true, admin: false, max_buckets: -1 }, ['未设置', '未设置', '已暂停', '是', '否', '禁止创建 Bucket']],
+  [{ display_name: null, email: 0, suspended: false, system: 0, admin: 'false', max_buckets: '0' }, ['未返回或格式无效', '未返回或格式无效', '暂停状态未知', '未知', '未知', 'Bucket 上限未返回或无效']],
+  [{}, ['未返回或格式无效', '未返回或格式无效', '暂停状态未知', '未知', '未知', 'Bucket 上限未返回或无效']]
+]) {
+  const fields = Object.fromEntries(identityView.RgwUserIdentityDetails({ row }).props.items.map(item => [item.key, item.children]))
+  assert.deepEqual(['display-name', 'email', 'suspended', 'system', 'admin', 'max-buckets'].map(key => fields[key]), expected)
+}
 assert.ok(components.includes("rgwIdentityText(row.default_storage_class, '未显式设置')"))
 assert.ok(components.includes('<Identifiers value={row.placement_tags} />'))
 assert.equal(identity.rgwIdentityText('', '未显式设置'), '未显式设置')
