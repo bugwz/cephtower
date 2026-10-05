@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 本地存储类 Zone 与 Zonegroup 联动删除
+
+补齐参考 `rgw-storage-class-list.component.ts::removeStorageClassModal` 本地类分支及 `delete_placement_targets` 指定 Zone 路径：组页面显式选择成员 Zone、已有目标和非 STANDARD 本地类，经高风险 `DELETE /rgw/zonegroup/storage/class/local` 执行。
+原生顺序为 `zone placement rm --zone-id ... --placement-id ... --storage-class ...` 后 `zonegroup placement rm --zonegroup-id ...`，有 Realm 时提交并回读 Period。Zone 的 STANDARD 在 `RGWZoneStorageClasses::decode` 中恢复，故不把清空 STANDARD 配置伪装为删除；该入口排除 STANDARD 和云分层类。
+两侧身份、Realm、成员关系、类声明/映射均先核验；Zone 写前重读、写后核验输出与独立回读，再重读组防止覆盖期间变化。组删除回读后再次核验 Zone，随后才发布，刷新 Realm/组/Zone。完整配置比对保护索引池、额外数据池、其他类、组成员和其他目标。
+确认说明对象和池不删除，但映射删除可能影响旧数据访问；分步操作可能只有 Zone 删除成功，不自动重试/回滚，Period 可能含其他待提交变更。新增命令顺序、逐阶段失败、身份/成员/云类拒绝、并发漂移、API 和前端选择测试；全量后端/OpenAPI 检查、前端回归及构建通过。尚无真实集群或浏览器视觉验证。
+
 #### Zonegroup 存储类删除（保留 Zone 映射）
 
 对照参考 `delete_placement_targets` 的未指定 Zone 分支，实现高风险 `DELETE /rgw/zonegroup/storage/class`、已有目标/类选择与显式确认。命令为 `radosgw-admin zonegroup placement rm --zonegroup-id ... --placement-id ... --storage-class ...`，显式组 ID 避免参考调用省略组范围时使用默认组。

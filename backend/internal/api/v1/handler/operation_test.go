@@ -94,6 +94,20 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal(classDeleteResponse.Code)
 	}
 	classDeleteOp, classDeleteErr := db.FindOperation(context.Background(), operationIDFromResponse(t, classDeleteResponse))
+	localDeleteBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"local-class-group","realm_id":"r","zone_id":"z","zone_name":"zone","placement_id":"p","storage_class":"COLD","expected_default_placement":"p/COLD","confirm_delete":true}`, cluster.ID)
+	localDeleteResponse := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/zonegroup/storage/class/local", localDeleteBody, "local-class-delete")
+	if localDeleteResponse.Code != http.StatusAccepted {
+		t.Fatal(localDeleteResponse.Code)
+	}
+	localDeleteOp, localDeleteErr := db.FindOperation(context.Background(), operationIDFromResponse(t, localDeleteResponse))
+	if localDeleteErr != nil || localDeleteOp.Action != "rgw_zonegroup.storage_class_delete_local" || localDeleteOp.Risk != "high" || localDeleteOp.MaxAttempts != 1 || localDeleteOp.ResourceKey != "rgw/zonegroup/local-class-group" {
+		t.Fatal("unsafe linked class deletion queue")
+	}
+	for _, body := range []string{strings.Replace(localDeleteBody, `"zone_name":"zone",`, "", 1), strings.TrimSuffix(localDeleteBody, "}") + `,"purge_data":true}`} {
+		if response := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/zonegroup/storage/class/local", body, "bad-local-delete"); response.Code != http.StatusBadRequest {
+			t.Fatal("invalid linked deletion contract accepted")
+		}
+	}
 	if classDeleteErr != nil || classDeleteOp.Action != "rgw_zonegroup.storage_class_delete" || classDeleteOp.Risk != "high" || classDeleteOp.MaxAttempts != 1 || classDeleteOp.ResourceKey != "rgw/zonegroup/delete-class-group" {
 		t.Fatal("unsafe class deletion queue")
 	}

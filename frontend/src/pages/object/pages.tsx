@@ -14,6 +14,7 @@ import { groupPlacementCreateBlocked, groupPlacementCreateInput, groupPlacementC
 import { groupPlacementDefaultClasses, groupPlacementDefaultInput, groupPlacementDefaultConfirmation } from './rgwZonegroupStorageClass'
 import { groupPlacementTagsChanged, groupPlacementTagsInput, groupPlacementTagsConfirmation } from './rgwZonegroupStorageClass'
 import { groupStorageClassDeleteInput, groupStorageClassDeleteConfirmation } from './rgwZonegroupStorageClass'
+import { groupLocalClassDeleteZones, groupLocalClassDeleteClasses, groupLocalClassDeleteInput, groupLocalClassDeleteConfirmation } from './rgwZonegroupStorageClass'
 import { RgwTopologyView } from './RgwTopology'
 import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwZonePoolReferences } from './RgwZonePoolReferences'
@@ -1158,6 +1159,18 @@ const definitions: Record<
         {name:'confirm_delete',label:'删除与发布确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份并核对数据依赖，了解默认类回退、Realm 发布与 Zone 映射保留'}]}
       ],
       buildBody:(values,clusterId,row) => ({cluster_id:clusterId,...groupStorageClassDeleteInput(values,row)})
+    }, {
+      title: '联动删除本地存储类', path: '/rgw/zonegroup/storage/class/local', method: 'DELETE',
+      successMessage: 'Zone 映射、组声明删除与适用的 Period 发布已核验（未删除池或对象）',
+      disabledWhen: groupStorageClassBlocked, confirmation: groupLocalClassDeleteConfirmation,
+      changedValues: changed => ({...(Object.prototype.hasOwnProperty.call(changed,'placement_id') ? {storage_class:undefined} : {}),...(Object.keys(changed).some(key => key !== 'confirm_delete') ? {confirm_delete:undefined} : {})}),
+      fields: [
+        {name:'zone_id',label:'仅删除此成员 Zone 的类映射',type:'select',required:true,optionsLoader:async (_clusterId,row) => groupLocalClassDeleteZones(row)},
+        {name:'placement_id',label:'已有放置目标',type:'select',required:true,optionsLoader:async (_clusterId,row) => groupStorageClassOptions(row)},
+        {name:'storage_class',label:'待删除本地类（不支持 STANDARD）',type:'select',required:true,optionsDependencies:['placement_id'],optionsLoader:async (_clusterId,row,values) => groupLocalClassDeleteClasses(row,values?.placement_id)},
+        {name:'confirm_delete',label:'联动删除确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份，了解数据访问风险、部分生效和 Realm 发布范围'}]}
+      ],
+      buildBody:(values,clusterId,row) => ({cluster_id:clusterId,...groupLocalClassDeleteInput(values,row)})
     }, {
       title: '创建 Zonegroup 同步组', path: '/rgw/zonegroup/sync/group', method: 'POST',
       successMessage: 'Zonegroup 空同步组创建与适用的 Period 发布已核验',

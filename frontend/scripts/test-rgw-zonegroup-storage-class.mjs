@@ -51,3 +51,12 @@ assert.match(api.groupStorageClassDeleteConfirmation(deleteValues,deleteRow),/�
 assert.match(api.groupStorageClassDeleteConfirmation(deleteValues,deleteRow),/回退为此目标的 STANDARD/)
 assert.match(api.groupStorageClassDeleteConfirmation(deleteValues,deleteRow),/可能同时发布其他待提交/)
 assert.match(api.groupStorageClassDeleteConfirmation(deleteValues,{...deleteRow,realm_id:''}),/无 Realm，不发布 Period/)
+const localRow={...deleteRow,zones:[{id:'z',name:'zone'}]}
+const localValues={...deleteValues,zone_id:'z'}
+assert.equal(api.groupLocalClassDeleteInput(localValues,localRow).zone_name,'zone')
+assert.deepEqual(api.groupLocalClassDeleteClasses(localRow,'p'),[{value:'COLD',label:'COLD'}])
+assert.throws(()=>api.groupLocalClassDeleteInput({...localValues,zone_id:'missing'},localRow))
+assert.throws(()=>api.groupLocalClassDeleteInput({...localValues,storage_class:'STANDARD'},localRow))
+assert.throws(()=>api.groupLocalClassDeleteInput(localValues,{...localRow,placement_targets:[{name:'p',storage_classes:['STANDARD','COLD'],tier_targets:[{key:'COLD',val:{tier_type:'cloud-s3'}}]}]}))
+assert.match(api.groupLocalClassDeleteConfirmation(localValues,localRow),/Zone 删除成功后组删除或发布可能失败/)
+assert.match(api.groupLocalClassDeleteConfirmation(localValues,localRow),/不删除 RADOS 池或对象/)

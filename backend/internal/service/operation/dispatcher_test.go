@@ -74,6 +74,12 @@ func TestActionDispatcherReconcilesNativeMutation(t *testing.T) {
 }
 
 func TestActionDispatcherFailsWhenPostReconcileFails(t *testing.T) {
+	localDeleteReconciler := &reconcileExecutorFake{err: errors.New("offline")}
+	_, localDeleteErr := NewActionDispatcher(&mutationExecutorFake{}, nil, localDeleteReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zonegroup.storage_class_delete_local", ResourceKind: "rgw_zonegroup"})
+	var localDeleteFailure *cephdomain.ActionError
+	if !errors.As(localDeleteErr, &localDeleteFailure) || localDeleteFailure.Retryable || !reflect.DeepEqual(localDeleteReconciler.kinds, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone"}) {
+		t.Fatal("unsafe linked class deletion refresh")
+	}
 	classDeleteReconciler := &reconcileExecutorFake{err: errors.New("offline")}
 	_, classDeleteErr := NewActionDispatcher(&mutationExecutorFake{}, nil, classDeleteReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zonegroup.storage_class_delete", ResourceKind: "rgw_zonegroup"})
 	var classDeleteFailure *cephdomain.ActionError

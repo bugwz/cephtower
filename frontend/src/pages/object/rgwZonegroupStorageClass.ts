@@ -87,3 +87,27 @@ export function groupStorageClassDeleteConfirmation(values: Row,row?: Row) {
   const p=groupStorageClassDeleteInput(values,row)
   return `从 Zonegroup ${p.name}（${p.zonegroup_id}）的目标 ${p.placement_id} 删除存储类 ${p.storage_class} 及该类的云分层配置（若存在）。这是组级删除，保留目标、其他类、所有 Zone 池映射、RADOS 池及本地/云端对象；不会自动恢复、搬迁或清理数据。请先核对现有桶、生命周期、用户默认值及云对象恢复依赖，删除可能影响后续访问和恢复。若删除当前默认类，默认规则回退为此目标的 STANDARD；若类集合变空，原生读取会补回 STANDARD，需确认其 Zone 配置可用。${p.realm_id ? `将提交 Realm ${p.realm_id} 的 Period，可能同时发布其他待提交变更；不保证远端同步完成。` : '无 Realm，不发布 Period。'}请备份并确认无需同步删除 Zone 映射；检查不是原子锁，失败可能已部分生效，不自动重试或回滚。`
 }
+
+export function groupLocalClassDeleteZones(row?: Row) {
+  targets(row)
+  const zones=row!.zones
+  if (!Array.isArray(zones)||!zones.length||zones.some(z => !token(z?.id)||!token(z?.name))||new Set(zones.map(z => z.id)).size!==zones.length) throw new Error('组成员 Zone 清单不完整')
+  return zones.map(z => ({value:z.id,label:`${z.name} (${z.id})`}))
+}
+export function groupLocalClassDeleteClasses(row?: Row,placement?: unknown) {
+  const target=targets(row).find(p => p.name===placement)
+  if (!target) return []
+  const tiers=target.tier_targets ?? []
+  if (!Array.isArray(tiers)||tiers.some(t => !token(t?.key))) throw new Error('分层配置清单不完整')
+  return target.storage_classes.filter((c:string) => c!=='STANDARD'&&!tiers.some(t => t.key===c)).map((value:string) => ({value,label:value}))
+}
+export function groupLocalClassDeleteInput(values: Row,row?: Row) {
+  const p=groupStorageClassDeleteInput(values,row)
+  if (!groupLocalClassDeleteZones(row).some(z => z.value===values.zone_id)||!groupLocalClassDeleteClasses(row,values.placement_id).some((c:Row) => c.value===values.storage_class)) throw new Error('请选择所属 Zone 和非 STANDARD 本地类')
+  const zone=row!.zones.find((z:Row) => z.id===values.zone_id)
+  return {...p,zone_id:zone.id,zone_name:zone.name}
+}
+export function groupLocalClassDeleteConfirmation(values: Row,row?: Row) {
+  const p=groupLocalClassDeleteInput(values,row)
+  return `联动删除 Zone ${p.zone_name}（${p.zone_id}）目标 ${p.placement_id} 的本地存储类 ${p.storage_class} 映射，再删除 Zonegroup ${p.name}（${p.zonegroup_id}）中此类的声明。后端将核验 Zone 身份、成员关系、Realm、类存在且非云分层。保留索引池、额外数据池、其他类及其他 Zone 映射；不删除 RADOS 池或对象，不搬迁数据。请核对现有桶、生命周期和用户默认值，移除映射可能使已有数据不可访问。默认类被删除时回退 STANDARD，组类集合为空时原生补回 STANDARD。${p.realm_id ? `随后提交 Realm ${p.realm_id} 的 Period，可能同时发布其他待提交变更，不保证远端同步完成。` : '无 Realm，不发布 Period。'}请备份；操作不是事务，Zone 删除成功后组删除或发布可能失败，部分状态不会自动回滚或重试。`
+}

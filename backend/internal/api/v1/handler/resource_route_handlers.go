@@ -849,6 +849,10 @@ func (h *Handler) DeleteRGWZonegroupStorageClass(w http.ResponseWriter, r *http.
 	h.MutateResource("rgw_zonegroup", "rgw_zonegroup.storage_class_delete", "high")(w, r)
 }
 
+func (h *Handler) DeleteRGWLocalStorageClass(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_zonegroup", "rgw_zonegroup.storage_class_delete_local", "high")(w, r)
+}
+
 func (h *Handler) CreateRGWZoneStorageClass(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_zone", "rgw_zone.storage_class_create", "high")(w, r)
 }
