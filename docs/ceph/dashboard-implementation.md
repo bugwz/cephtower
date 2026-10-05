@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### 精确 Zone 用户计数基础
+
+核对 radosgw-admin 的 --realm-id/--zone-id 解析分支会设置 rgw_realm_id/rgw_zone_id，新增内部 RGWUserCountInZone：先用精确选择器读取 zone get，核对 id/realm_id，再将同一选择器传入完整 user list。拒绝缺失/非法身份、站点身份不符和两阶段命令失败，不回退默认站点；返回 zone 范围及明确身份、起止时间，不暴露用户列表。默认范围服务复用相同严格计数逻辑。新增精确命令、不同租户身份、身份拒绝零枚举和两阶段失败测试，后端全量测试及 OpenAPI 检查通过。此增量为跨 Realm 汇总提供选定站点读取基础，尚未实现 Realm 发现、代表站点选择与总览汇总；不保证不同 Zone 复制一致性，无真实集群验证。
+
 #### Bucket 使用量范围标识修复
 
 参考 Dashboard 的 buckets_and_users_count 会遍历不同 Realm，而当前原生使用量命令未指定 Realm/Zone，仅覆盖当前 RGW 配置范围。为防止概览被误读为跨 Realm 总量，API 增加 scope=current_rgw_configuration，前端严格校验并在卡片标题与提示中明确范围，不接受缺失或其他 scope。新增路由范围断言及前端范围拒绝/提示回归测试，前后端全量检查通过。此修复不代替尚待实现的跨 Realm 汇总，无真实集群验证。
