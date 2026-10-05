@@ -4,7 +4,7 @@ import { jsonInit, request } from '../../api/client'
 import { useClusterContext } from '../../state/ClusterContext'
 import { RgwDaemonStatus } from './RgwDaemonStatus'
 
-const fields=['service_map_id','id','hostname','version','realm_name','zonegroup_name','zonegroup_id','zone_name'] as const
+const fields=['service_map_id','id','hostname','version','realm_name','realm_id','zonegroup_name','zonegroup_id','zone_name','zone_id'] as const
 type Daemon=Record<typeof fields[number],string>&{listeners:Array<{frontend:string;tls:boolean;port:number}>;listeners_complete:boolean}
 export function daemonRegistrationData(value:unknown):{items:Daemon[];observed_at:string} {
   const data=value as {items:unknown[];observed_at:string;source:string}
@@ -35,7 +35,7 @@ export function RgwDaemonsView({clusterId}:{clusterId?:number}) {
     }catch{if(mounted.current&&current.current===clusterId&&ticket===sequence.current&&!controller.signal.aborted)setState({clusterId,busy:false,error:true})}
   }
   const scoped=state.clusterId===clusterId?state:undefined
-  const labels=['服务映射 ID','RGW ID','主机','版本','Realm','Zonegroup','Zonegroup ID','Zone']
+  const labels=['服务映射 ID','RGW ID','主机','版本','Realm','Realm ID','Zonegroup','Zonegroup ID','Zone','Zone ID']
   const rows=scoped?.data?.items.filter(row=>fields.some(key=>row[key].toLowerCase().includes(filter.toLowerCase())))
   const readSequence=sequence.current
   return <Card title="RGW 守护进程注册"><Space direction="vertical" style={{width:'100%'}}>

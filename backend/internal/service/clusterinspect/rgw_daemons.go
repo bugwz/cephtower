@@ -21,9 +21,11 @@ type RGWDaemon struct {
 	Hostname          string        `json:"hostname"`
 	Version           string        `json:"version"`
 	RealmName         string        `json:"realm_name"`
+	RealmID           string        `json:"realm_id"`
 	ZonegroupName     string        `json:"zonegroup_name"`
 	ZonegroupID       string        `json:"zonegroup_id"`
 	ZoneName          string        `json:"zone_name"`
+	ZoneID            string        `json:"zone_id"`
 }
 
 func (s *Service) RGWDaemons(ctx context.Context, clusterID uint64) ([]RGWDaemon, error) {
@@ -90,6 +92,8 @@ func decodeRGWDaemons(body []byte) ([]RGWDaemon, error) {
 		// Do not forward arbitrary metadata: frontend configs can contain credentials.
 		rows = append(rows, RGWDaemon{ServiceMapID: key, ID: m["id"], Hostname: m["hostname"], Version: m["ceph_version"], RealmName: m["realm_name"], ZonegroupName: m["zonegroup_name"], ZonegroupID: m["zonegroup_id"], ZoneName: m["zone_name"]})
 		rows[len(rows)-1].Listeners = listeners
+		rows[len(rows)-1].RealmID = m["realm_id"]
+		rows[len(rows)-1].ZoneID = m["zone_id"]
 		rows[len(rows)-1].ListenersComplete = complete
 	}
 	sort.Slice(rows, func(i, j int) bool {

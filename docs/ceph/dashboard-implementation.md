@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### RGW 注册多站点身份展示
+
+参考 Dashboard 的 metadata 详情及 `RGWRados::register_to_service_map` 上报字段，补齐此前白名单遗漏的 realm_id 与 zone_id。后端从 `ceph service dump` 原样投影，前端增加 Realm ID、Zone ID 列及搜索/排序，缺失值显示未知，不由同名 Realm/Zone 推断身份。新增同名不同 ID、缺失元数据、JSON 字段投影及前端字段验证/展示/搜索测试，前后端全量检查、OpenAPI、类型检查和构建通过。无真实集群或浏览器视觉验证。
+
 #### 原生命令非零退出拒绝
 
 检查性能采集链路发现共享 `readBinary` 仅判断执行器 error，未判断 ExitCode；非零退出携带合法 JSON 时可能被解释为成功数据。现于 JSON 解码前拒绝非零退出，返回固定命令失败信息，不透传 stderr。新增性能 schema 与 dump 两阶段非零退出且 stdout 合法的回归测试，验证不返回快照、schema 失败后不继续 dump、诊断不泄漏。后端全量测试与 OpenAPI 检查通过；此检查同时作用于复用该读取函数的检查接口，无真实集群验证。

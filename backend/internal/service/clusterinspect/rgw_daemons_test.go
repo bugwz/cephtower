@@ -66,3 +66,17 @@ func TestRGWDaemonServiceMap(t *testing.T) {
 		}
 	}
 }
+
+func TestRGWDaemonMultisiteIdentity(t *testing.T) {
+	rows, err := decodeRGWDaemons([]byte(`{"services":{"rgw":{"daemons":{"1":{"metadata":{"id":"a","realm_name":"same","realm_id":"realm-a","zone_name":"same","zone_id":"zone-a"}},"2":{"metadata":{"id":"b","realm_name":"same","realm_id":"realm-b","zone_name":"same","zone_id":"zone-b"}},"3":{"metadata":{"id":"c"}}}}}}`))
+	if err != nil || len(rows) != 3 {
+		t.Fatal("invalid registrations", err)
+	}
+	if rows[0].RealmID != "realm-a" || rows[1].RealmID != "realm-b" || rows[0].ZoneID != "zone-a" || rows[1].ZoneID != "zone-b" || rows[2].RealmID != "" || rows[2].ZoneID != "" {
+		t.Fatal("multisite identity lost or inferred")
+	}
+	encoded, _ := json.Marshal(rows[0])
+	if !strings.Contains(string(encoded), `"realm_id":"realm-a"`) || !strings.Contains(string(encoded), `"zone_id":"zone-a"`) {
+		t.Fatal("identity not exposed")
+	}
+}

@@ -15,7 +15,7 @@ for(const file of ['HostDetailPage','ServiceDaemons','ServicePage']){
 const ui={},states=[],refs=[],calls=[];let si=0,ri=0,deps,cleanup,pending
 const jsx=(type,props)=>({type,props}),react={useState:v=>{const i=si++;if(!(i in states))states[i]=v;return[states[i],v=>states[i]=v]},useRef:v=>refs[ri++]??(refs[ri-1]={current:v}),useEffect:(fn,next)=>{if(JSON.stringify(next)!==JSON.stringify(deps)){deps=next;pending=()=>{cleanup?.();cleanup=fn()}}}}
 new Function('exports','require',code)(ui,name=>name==='react'?react:name==='antd'?Object.fromEntries(['Alert','Button','Card','Input','Space','Table'].map(n=>[n,n])):name.includes('api/client')?{jsonInit:(method,body,opts)=>({method,body,...opts}),request:(path,init)=>new Promise((resolve,reject)=>calls.push({path,...init,resolve,reject}))}:name.includes('ClusterContext')?{useClusterContext:()=>({selectedClusterId:7})}:{jsx,jsxs:jsx})
-const row={service_map_id:'1',id:'rgw.a',hostname:'host',version:'ceph version',realm_name:'r',zonegroup_name:'g',zonegroup_id:'gid',zone_name:'z',listeners:[{frontend:'frontend_config#0',tls:true,port:443}],listeners_complete:true}
+const row={service_map_id:'1',id:'rgw.a',hostname:'host',version:'ceph version',realm_name:'r',realm_id:'realm-id',zonegroup_name:'g',zonegroup_id:'gid',zone_name:'z',zone_id:'zone-id',listeners:[{frontend:'frontend_config#0',tls:true,port:443}],listeners_complete:true}
 const data={items:[row,{...row,service_map_id:'2'}],source:'service_map',observed_at:'now'}
 assert.equal(ui.daemonRegistrationData(data).items.length,2)
 assert.deepEqual(ui.daemonRegistrationData({...data,items:[{...row,password:'private'}]}).items,[row])
@@ -27,6 +27,13 @@ const tick=()=>new Promise(r=>setTimeout(r,0))
 render();let tree=render();const old=tree.find(n=>n.type==='Button');old.props.onClick()
 assert.equal(calls[0].path,'/rgw/daemons');assert.deepEqual(calls[0].body,{cluster_id:7});assert.equal(calls[0].cache,'no-store')
 calls[0].resolve(data);await tick();tree=render();assert.equal(tree.find(n=>n.type==='Table').props.dataSource.length,2)
+for(const field of ['realm_id','zone_id']){
+ const column=tree.find(n=>n.type==='Table').props.columns.find(c=>c.dataIndex===field)
+ assert.ok(column);assert.equal(column.render(row[field]),row[field]);assert.equal(column.render(''),'—')
+ tree.find(n=>n.type==='Input').props.onChange({target:{value:row[field]}})
+ assert.equal(render().find(n=>n.type==='Table').props.dataSource.length,2)
+ assert.throws(()=>ui.daemonRegistrationData({...data,items:[{...row,[field]:null}]}))
+}
 const portColumn=tree.find(n=>n.type==='Table').props.columns.at(-1)
 const detail=tree.find(n=>n.type==='Table').props.expandable.expandedRowRender(row)
 assert.equal(detail.props.clusterId,7);assert.equal(detail.props.serviceMapId,'1');assert.equal(detail.props.isCurrent(),true)
