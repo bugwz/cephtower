@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+#### RGW Prometheus 实例快照查询基础
+
+核对 `mgr_module.py::_perfpath_to_path_labels` 与 Prometheus 模块 `get_perf_counters`，经典 mgr 导出的 RGW 指标使用服务映射 ID 对应的 instance_id 标签。新增内部固定查询 `ceph_rgw_.*` 并精确匹配该标签，不开放任意 PromQL；身份进行字符串转义，返回结果逐条验证指标前缀、实例标签及样本结构。保留各条采集序列和原始数值字符串，不合并重复采集、不转换大整数、不把空结果解释为零。
+新增查询转义、认证头、非法身份零请求、外来实例/指标与畸形样本测试；后端全量测试及 OpenAPI 检查通过。此处仅完成监控客户端基础，尚未接入 API 和页面。它不等价于 Dashboard 的 mgr 内部历史速率，也不覆盖所有通用性能计数器；需要配置 Prometheus 并实际导出匹配的标签和指标。新 ceph-exporter 的身份不能未经核实替换为逻辑 RGW ID，关闭性能导出或无匹配数据时应显示不可用。无真实集群验证。
+
 #### 原生 tell 性能目标纠正
 
 接入 RGW 性能前检查参考 `ceph_argparse.py::CephName.valid` 与 `ceph.in::ids_by_service`，发现现有通用性能接口/按钮允许 rgw.* 和 rbd-mirror.*，而这两种前缀不属于原生 tell 支持的名称类型。移除这两类无效目标，保留 mon/mgr/mds/osd 的现有快照能力；同步修正主机详情、服务 daemon 列表及服务页面按钮，服务页面改用完整身份校验。新增后端拒绝无效前缀零命令及三个前端入口模式测试，前后端全量检查通过。该修复不等同于 RGW 性能已实现；仍需接通 mgr 采样、受控 admin socket 或其他经源码验证的可用采集方式，不能仅把 service_map_id 拼入 tell rgw.*。无真实集群验证。
