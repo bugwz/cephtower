@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+#### 云分层敏感命令参数标记传递
+
+为后续端点与凭据编辑核对安全边界时，发现组 placement 共享执行器没有传递 command.sensitive。现仅向主 placement 写命令传递 SensitiveArgs，不将该命令的参数索引套用到读取、关联 Zone 写入或 Period 提交上。新增成功与主命令失败路径回归，验证标记与原始执行参数不变，其他阶段不携带这些索引。
+操作参数已有整体加密入库；库存端点和凭据已有独立脱敏。这些措施不消除原生 `--tier-config` 通过本机进程参数传递值的可见性，也不能保证外部程序任意输出不会泄密。后续入口必须明确这项限制，不以脱敏库存回填真实端点或秘密。本增量仅修复共享执行器，尚未开放端点/凭据写入 API 或表单；后端全量测试及 OpenAPI 一致性检查通过，无需前端构建，无真实集群验证。
+
 #### 已有云分层目标参数编辑
 
 补齐参考存储类表单/`RGWZoneGroupPlacementTierS3::update_params` 的六项目标设置：region、host_style、target_path、target_storage_class、multipart_sync_threshold、multipart_min_part_size。组操作菜单选择已有 Realm 中的非 STANDARD 云 S3/Glacier 类，库存回填；三个可空文本字段分别提供设置/显式清空选择，字节数保留 0，不将缺失值当作默认值。

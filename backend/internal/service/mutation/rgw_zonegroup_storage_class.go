@@ -47,7 +47,13 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: code, Message: "Zonegroup placement configuration could not be verified; inspect local configuration before retrying; no Period publication or Zone pool configuration performed", Retryable: false}
 	}
 	run := func(stage string, args []string, write bool) (map[string]any, bool) {
-		result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: req.Action + "." + stage, Binary: executor.BinaryRGWAdmin, Args: args, Mutating: write, Timeout: time.Minute, MaxOutput: executor.DefaultMaxOutput})
+		cmd := executor.CommandSpec{ID: req.Action + "." + stage, Binary: executor.BinaryRGWAdmin, Args: args, Mutating: write, Timeout: time.Minute, MaxOutput: executor.DefaultMaxOutput}
+		// Argument indices belong only to the primary placement command, not
+		// reads, linked Zone writes, or the separately executed Period commit.
+		if write && (stage == "add" || stage == "remove") {
+			cmd.SensitiveArgs = spec.sensitive
+		}
+		result, err := s.executor.Run(ctx, access, cmd)
 		defer func() { clear(result.Stdout); clear(result.Stderr) }()
 		return periodDocument(result.Stdout), err == nil && result.ExitCode == 0
 	}
