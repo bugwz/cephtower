@@ -1,4 +1,4 @@
-import { asArray, isApiError, jsonInit, request, type ApiRecord, type ApiRequestInit } from './client'
+import { asArray, jsonInit, request, type ApiRecord, type ApiRequestInit } from './client'
 import type { ListEnvelope } from './types'
 
 export interface MetricQueryInput {
@@ -21,18 +21,12 @@ export interface MetricResponse {
 
 export async function readExternalList(path: string, clusterId: number, body: ApiRecord = {}, query?: URLSearchParams) {
   const suffix = query?.toString() ? `?${query.toString()}` : ''
-  let payload: ListEnvelope<ApiRecord> | ApiRecord
-  try {
-    payload = await request<ListEnvelope<ApiRecord> | ApiRecord>(`${path}${suffix}`, jsonInit('GET', {
-      cluster_id: clusterId,
-      ...body
-    }))
-  } catch (err) {
-    if (isApiError(err, 501, 'capability_unavailable') || (isApiError(err, 501) && !err.code)) {
-      return { items: [], meta: undefined }
-    }
-    throw err
-  }
+  // Unavailable endpoints/capabilities are failures, not successful empty lists.
+  // Configuration absence is represented explicitly by the backend row.
+  const payload = await request<ListEnvelope<ApiRecord> | ApiRecord>(`${path}${suffix}`, jsonInit('GET', {
+    cluster_id: clusterId,
+    ...body
+  }))
   if ('items' in payload && Array.isArray(payload.items)) {
     return {
       items: payload.items,
