@@ -56,6 +56,18 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal("unsafe realm deletion operation")
 	}
 	groupDeleteBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"group","realm_id":"","expected_zones":[],"confirm_delete":true}`, cluster.ID)
+	zoneDeleteBody := fmt.Sprintf(`{"cluster_id":%d,"zone_id":"z","name":"zone","realm_id":"","confirm_delete":true}`, cluster.ID)
+	zoneDelete := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/zone", zoneDeleteBody, "zone-delete")
+	if zoneDelete.Code != http.StatusAccepted {
+		t.Fatal("zone deletion not queued", zoneDelete.Code)
+	}
+	zoneDeleteOp, zoneDeleteErr := db.FindOperation(context.Background(), operationIDFromResponse(t, zoneDelete))
+	if zoneDeleteErr != nil || zoneDeleteOp.Action != "rgw_zone.delete" || zoneDeleteOp.Risk != "high" || zoneDeleteOp.MaxAttempts != 1 || zoneDeleteOp.ResourceKey != "rgw/zone/zone" {
+		t.Fatal("unsafe zone deletion queue")
+	}
+	if bad := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/zone", strings.TrimSuffix(zoneDeleteBody, "}")+`,"delete_pools":true}`, "bad-zone-delete"); bad.Code != http.StatusBadRequest {
+		t.Fatal("unimplemented zone pool cleanup accepted")
+	}
 	groupDelete := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/zonegroup", groupDeleteBody, "zonegroup-delete")
 	if groupDelete.Code != http.StatusAccepted {
 		t.Fatal("zonegroup deletion not queued", groupDelete.Code)

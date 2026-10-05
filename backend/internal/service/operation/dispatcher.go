@@ -77,7 +77,7 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 	if request.Action == "rgw_realm.setup" || request.Action == "rgw_realm.migrate" {
 		_, err = d.reconciler.RefreshKinds(ctx, request.ClusterID, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone", "rgw_user", "pool", "service"})
 		refreshed = err == nil
-	} else if request.Action == "rgw_zonegroup.delete" {
+	} else if request.Action == "rgw_zonegroup.delete" || request.Action == "rgw_zone.delete" {
 		_, err = d.reconciler.RefreshKinds(ctx, request.ClusterID, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone"})
 		refreshed = err == nil
 	} else if request.Action == "rgw_realm.import" {
@@ -106,6 +106,9 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		}
 		if request.Action == "rgw_zonegroup.delete" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "Zonegroup removal was verified but inventory refresh failed; refresh without repeating deletion", Retryable: false}
+		}
+		if request.Action == "rgw_zone.delete" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "Zone removal was verified but inventory refresh failed; refresh without repeating deletion", Retryable: false}
 		}
 		if request.Action == "rgw_realm.import" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "import was verified but inventory refresh failed; refresh inventory without repeating import", Retryable: false}

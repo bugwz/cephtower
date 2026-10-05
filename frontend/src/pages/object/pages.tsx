@@ -5,6 +5,7 @@ import { rgwRealmMigrationAction } from './rgwRealmMigration'
 import { RgwRealmToken } from './RgwRealmToken'
 import { realmDeleteBlocked, realmDeleteInput, realmDeleteConfirmation } from './rgwRealmDelete'
 import { zonegroupDeleteBlocked, zonegroupDeleteInput, zonegroupDeleteConfirmation } from './rgwZonegroupDelete'
+import { zoneDeleteBlocked, zoneDeleteInput, zoneDeleteConfirmation } from './rgwZoneDelete'
 import { RgwTopologyView } from './RgwTopology'
 import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwZonePoolReferences } from './RgwZonePoolReferences'
@@ -1297,6 +1298,13 @@ const definitions: Record<
     ]
   },
   rgwZones: {
+    deleteAction: {
+      title: '删除 Zone（保留池）', path: '/rgw/zone', action: 'rgw_zone.delete', resourceKind: 'rgw_zone', risk: 'high',
+      disabledWhen: zoneDeleteBlocked, confirmation: zoneDeleteConfirmation,
+      resourceKey: row => String(row.name),
+      buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...zoneDeleteInput(row) }),
+      successMessage: 'Zone 删除、成员关系及适用的 Period 发布已核验；池和对象未删除'
+    },
     title: 'RGW Zones',
     path: '/rgw/zones',
     requiredCapabilities: ['rgw_admin'],

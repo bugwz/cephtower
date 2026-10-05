@@ -99,6 +99,7 @@ var mutationRouteActions = map[string]string{
 	"PATCH /rgw/realm":                              "rgw_realm.update",
 	"DELETE /rgw/realm":                             "rgw_realm.delete",
 	"DELETE /rgw/zonegroup":                         "rgw_zonegroup.delete",
+	"DELETE /rgw/zone":                              "rgw_zone.delete",
 	"PATCH /rgw/role":                               "rgw_role.update",
 	"PATCH /rgw/user":                               "rgw_user.update",
 	"PATCH /rgw/user/key":                           "rgw_key.update",

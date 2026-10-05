@@ -84,6 +84,7 @@ func rgwRoutes(h *handler.Handler) []Route {
 		{"POST", "/rgw/zonegroup", h.CreateRGWZonegroup},
 		{"PATCH", "/rgw/zonegroup", h.UpdateRGWZonegroup},
 		{"DELETE", "/rgw/zonegroup", h.DeleteRGWZonegroup},
+		{"DELETE", "/rgw/zone", h.DeleteRGWZone},
 		{"GET", "/rgw/zones", h.ListRGWZones},
 		{"POST", "/rgw/zone/sync/status", h.ReadRGWSyncStatus},
 		{"POST", "/rgw/zone", h.CreateRGWZone},

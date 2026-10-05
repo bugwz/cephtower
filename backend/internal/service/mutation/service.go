@@ -66,7 +66,7 @@ type command struct {
 
 func Supports(action string) bool {
 	switch action {
-	case "rgw_realm.import", "rgw_realm.setup", "rgw_realm.migrate", "rgw_realm.delete", "rgw_zonegroup.delete":
+	case "rgw_realm.import", "rgw_realm.setup", "rgw_realm.migrate", "rgw_realm.delete", "rgw_zonegroup.delete", "rgw_zone.delete":
 		return true
 	case "rgw_zonegroup.sync_group", "rgw_zonegroup.sync_group_create", "rgw_zonegroup.sync_group_delete", "rgw_zonegroup.sync_flow_create", "rgw_zonegroup.sync_flow_delete", "rgw_zonegroup.sync_flow_update", "rgw_zonegroup.sync_pipe_create", "rgw_zonegroup.sync_pipe_delete", "rgw_zonegroup.sync_pipe_update", "rgw_zonegroup.sync_pipe_zones", "rgw_zonegroup.replication_prepare":
 		return true
@@ -134,6 +134,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if request.Action == "rgw_zonegroup.delete" {
 		return s.executeZonegroupDelete(ctx, access, request, spec)
+	}
+	if request.Action == "rgw_zone.delete" {
+		return s.executeZoneDelete(ctx, access, request, spec)
 	}
 	if request.Action == "rgw_realm.setup" || request.Action == "rgw_realm.migrate" {
 		return s.executeRealmSetup(ctx, access, request)
@@ -665,6 +668,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 }
 
 func build(request Request, p map[string]any) (command, error) {
+	if request.Action == "rgw_zone.delete" {
+		return buildZoneDelete(p)
+	}
 	if request.Action == "rgw_zonegroup.delete" {
 		return buildZonegroupDelete(p)
 	}
