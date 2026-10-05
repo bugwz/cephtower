@@ -764,10 +764,16 @@ func dashboardPerfRawValue(value any, definition perfCounterSchema) any {
 }
 
 func dashboardMetricType(counterType int) string {
-	if counterType&perfCounterLongRunAvg != 0 || counterType&perfCounterCounter != 0 {
+	switch counterType &^ 3 {
+	case 0:
+		return "gauge"
+	case perfCounterLongRunAvg, perfCounterCounter:
 		return "counter"
+	case 0x10:
+		return "histogram"
+	default:
+		return ""
 	}
-	return "gauge"
 }
 
 func dashboardPerfUnit(unit, metricType string) string {

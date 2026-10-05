@@ -27,6 +27,8 @@ assert.deepEqual(counter.MonCounterValue({ value: '18446744073709551615', unit: 
 for (const value of [null, undefined, false, {}, [], NaN, Infinity, '']) assert.equal(counter.MonCounterValue({ value, unit: 'B/s' }).props.children, '未返回或格式无效')
 assert.equal(counter.monCounterType('counter'), '采样间隔速率')
 assert.equal(counter.monCounterType('gauge'), '采集值')
+assert.equal(counter.monCounterType('histogram'), '直方图')
+assert.equal(counter.monCounterType('future'), '类型未知')
 assert.equal(counter.monCounterType(undefined), '类型未知')
 assert.ok(readFileSync(new URL('../src/pages/cluster/MonDetailPage.tsx', import.meta.url), 'utf8').includes('<MonCounterValue value={value} unit={row.unit} />'))
 const quorum = {}
