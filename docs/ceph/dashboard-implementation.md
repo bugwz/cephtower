@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### 已注册 Realm 用户汇总 API
+
+新增 `GET /rgw/realms/users/counts`，严格接收 cluster_id，接入注册 Realm 发现、代表 Zone 核验与逐 Realm 用户计数；原样返回精确字符串总数/分项、registered_realms 范围、选择规则和起止时间。沿用认证、审计和 no-store，不接收自定义 Realm 或查询参数，不返回用户身份。新增成功分项、范围、空注册范围、非法参数零命令、身份不符、命令失败和认证测试；后端全量测试与 OpenAPI 检查通过。前端分项展示、未注册 Realm 和无 Realm 身份配置覆盖仍待完善，无真实集群验证。
+
 #### 已注册 Realm 用户汇总服务
 
 新增内部 RGWRealmUserCounts：读取 service map，按精确 Realm ID 分组，每组按 Zone ID、service_map_id 字典序选择代表，先核验 Zone/Realm，再枚举用户。避免同一 Realm 多 daemon 重复计数，不合并不同 Realm 的同名用户；总数和分项数量以十进制字符串返回，附代表身份、选择规则及起止时间。范围明确 registered_realms，不代表所有配置 Realm，也不证明 Zone 复制一致或在线健康。缺失/非法身份、同 Zone 对应不同 Realm 或任一读取失败均不返回部分汇总；两分钟总时限。新增去重、稳定选择、跨 Realm 同名身份、后续失败、异常注册和空注册范围测试，后端全量测试与 OpenAPI 检查通过。API/前端、未注册 Realm 及无 Realm 身份配置支持仍待补齐，无真实集群验证。

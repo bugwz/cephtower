@@ -202,7 +202,38 @@ func TestRGWDaemonAPI(t *testing.T) {
 		t.Fatal("failed user list accepted")
 	}
 	runner.exit = 0
+	path = "/api/v1/rgw/realms/users/counts"
+	runner.outputs["rgw.daemons.read"] = `{"services":{"rgw":{"daemons":{"1":{"metadata":{"id":"gateway","realm_id":"r","zone_id":"z"}}}}}}`
+	runner.outputs["rgw.counts.user.zone"] = `{"id":"z","realm_id":"r"}`
+	runner.outputs["rgw.counts.user"] = `["private-user"]`
+	if w = send(valid); w.Code != 200 || w.Header().Get("Cache-Control") != "no-store" || !strings.Contains(w.Body.String(), `"user_count":"1"`) || !strings.Contains(w.Body.String(), `"scope":"registered_realms"`) || !strings.Contains(w.Body.String(), `"zone_id":"z"`) || strings.Contains(w.Body.String(), "private-user") {
+		t.Fatal("invalid realm aggregate", w.Code)
+	}
+	count = runner.calls
+	for _, body := range []string{`{}`, `{"cluster_id":0}`, `{"cluster_id":"1"}`, strings.TrimSuffix(valid, "}") + `,"realm_id":"r"}`} {
+		if w = send(body); w.Code != 400 || runner.calls != count {
+			t.Fatal("invalid realm scope executed")
+		}
+	}
+	runner.outputs["rgw.counts.user.zone"] = `{"id":"other","realm_id":"r"}`
+	if w = send(valid); w.Code != 502 || strings.Contains(w.Body.String(), `"user_count"`) {
+		t.Fatal("identity mismatch yielded total")
+	}
+	runner.outputs["rgw.daemons.read"] = `{"services":{}}`
+	if w = send(valid); w.Code != 200 || !strings.Contains(w.Body.String(), `"items":[]`) || !strings.Contains(w.Body.String(), `"user_count":"0"`) {
+		t.Fatal("empty registration scope lost")
+	}
+	runner.exit = 2
+	if w = send(valid); w.Code != 502 {
+		t.Fatal("failed realm registration accepted")
+	}
+	runner.exit = 0
 	auth = true
+	count = runner.calls
+	if w = send(valid); w.Code != 401 || runner.calls != count {
+		t.Fatal("realm counts authentication bypass")
+	}
+	path = "/api/v1/rgw/users/count"
 	count = runner.calls
 	if w = send(valid); w.Code != 401 || runner.calls != count {
 		t.Fatal("user count authentication bypass")

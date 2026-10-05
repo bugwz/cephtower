@@ -22539,6 +22539,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /rgw/realms/users/counts:
+    get:
+      operationId: get_rgw_realms_users_counts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id]
+              properties:
+                cluster_id:
+                  type: integer
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationOptionResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /rgw/role:
     delete:
       operationId: delete_rgw_role
