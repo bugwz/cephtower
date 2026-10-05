@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### 本地存储类的成员 Zone 池关联详情
+
+补齐参考 `RgwStorageClassDetailsComponent::getZoneInfo` / `BucketTieringUtils::getZoneInfoHelper` 的本地类 Zone 与数据池详情，在 Zonegroup 详情中按需读取完整分页 Zone 库存。复用已有 `collector_optional.go` 的 `radosgw-admin zone list/get --format json` → 库存 → `/rgw/zones` API 链路，不新增重复采集或虚构池信息。
+以组成员 ID、名称、Realm、放置目标和类名精确关联，列出全部成员而非任取第一个匹配项，展示数据池原生引用、压缩、采集时间和关联状态。云分层及无法确定类型的类不当作本地类；缺失库存、未列出映射、重复身份、畸形配置和过期数据明确区分，不证明池存在、对象可访问或已发布。跨集群/组快照切换与卸载后丢弃迟到响应，分页失败不展示部分成功结果。
+新增成员范围、多 Zone、身份冲突、重复/畸形配置、云类排除、过期、分页中断和 UI 入口测试；前端全量回归、TypeScript 与生产构建通过。本轮后端未改动，未重跑后端测试；未进行真实集群或浏览器视觉验证。
+
 #### 云分层端点库存与 API 脱敏
 
 依据 `RGWZoneGroupPlacementTierS3::dump` 的原生 `s3.endpoint` 字段，修复仅前端隐藏 URL 敏感部分而库存仍可能保存任意查询参数/片段的缺口。递归 JSON 脱敏在采集入库前移除 HTTP(S) 端点用户信息、全部查询参数与片段，异常类型、协议或畸形地址整体隐藏；嵌套 Realm Period 中的组配置同样处理。组与 Realm 库存 DTO 再次执行脱敏，保护尚未重新采集的数据返回，前端标明端点敏感部分已隐藏。

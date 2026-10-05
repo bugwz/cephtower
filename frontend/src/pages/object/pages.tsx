@@ -19,6 +19,7 @@ import { RgwTopologyView } from './RgwTopology'
 import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwZonePoolReferences } from './RgwZonePoolReferences'
 import { RgwPlacementClasses } from './RgwPlacementClasses'
+import { RgwLocalClassDetails } from './RgwLocalClassDetails'
 import { RgwRealmTransfer } from './RgwRealmTransfer'
 import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
 import { zonegroupPipeZonesSelectionChanged } from './rgwZonegroupSyncGroup'
@@ -1072,6 +1073,7 @@ const definitions: Record<
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...zonegroupDeleteInput(row) })
     },
     title: 'RGW ZoneGroups',
+    detailContent: (row, clusterId) => <RgwLocalClassDetails row={row} clusterId={clusterId} />,
     path: '/rgw/zonegroups',
     requiredCapabilities: ['rgw_admin'],
     createAction: {
