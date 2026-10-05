@@ -426,6 +426,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "rgw_user.caps" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "capability command failed; inspect user capabilities before any manual retry", Retryable: false}
 		}
+		if request.Action == "rgw_role.create" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "role creation was not confirmed; inspect scoped role state before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_role.update" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "role update was not confirmed; inspect scoped trust policy and session duration before any manual retry", Retryable: false}
 		}
@@ -533,6 +536,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "rgw_role.create" && (err != nil || !rgwRoleCreateMatches(request.Parameters, checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "role creation was accepted but scoped role properties could not be verified; inspect role state before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_role.update" && (err != nil || !rgwRoleUpdateMatches(request.Parameters, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "role update was accepted but scoped trust policy or session duration could not be verified; inspect both fields before any manual retry", Retryable: false}
 		}
