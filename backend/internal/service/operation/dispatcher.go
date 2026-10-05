@@ -98,6 +98,9 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		if request.Action == "rgw_realm.setup" || request.Action == "rgw_realm.migrate" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "primary setup completed but inventory refresh failed; refresh inventory without repeating setup", Retryable: false}
 		}
+		if request.Action == "rgw_realm.delete" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "Realm absence was verified but inventory refresh failed; refresh without repeating deletion", Retryable: false}
+		}
 		if request.Action == "rgw_realm.import" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "import was verified but inventory refresh failed; refresh inventory without repeating import", Retryable: false}
 		}

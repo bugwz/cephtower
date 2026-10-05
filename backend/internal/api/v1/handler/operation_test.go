@@ -47,6 +47,14 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal(err)
 	}
 	periodResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/period/commit", fmt.Sprintf(`{"cluster_id":%d,"realm_id":"realm-explicit","expected_current_period":"old"}`, cluster.ID), "scoped-period")
+	deleteRealm := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/realm", fmt.Sprintf(`{"cluster_id":%d,"realm_id":"realm-id","name":"realm","expected_current_period":"period","confirm_delete":true}`, cluster.ID), "realm-delete")
+	if deleteRealm.Code != http.StatusAccepted {
+		t.Fatal("realm deletion not queued", deleteRealm.Code)
+	}
+	deleteOp, deleteErr := db.FindOperation(context.Background(), operationIDFromResponse(t, deleteRealm))
+	if deleteErr != nil || deleteOp.Action != "rgw_realm.delete" || deleteOp.Risk != "high" || deleteOp.MaxAttempts != 1 || deleteOp.ResourceKey != "rgw/realm/realm" {
+		t.Fatal("unsafe realm deletion operation")
+	}
 	importBody := fmt.Sprintf(`{"cluster_id":%d,"name":"secondary","realm_token":"private-import-token","port":80,"placement":{},"confirm_import":true}`, cluster.ID)
 	importResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/realm/import", importBody, "realm-import")
 	if importResponse.Code != http.StatusAccepted || strings.Contains(importResponse.Body.String(), "private-import-token") {

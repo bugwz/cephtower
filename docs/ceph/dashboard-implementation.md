@@ -29,6 +29,9 @@
 
 ### 增量实现与验证记录
 
+- **Realm 删除链路**：沿参考 `RgwRealmService.delete` → `delete_realm` → 原生 `REALM_DELETE`/`RadosRealmWriter::remove`，新增高风险、单次尝试的 `DELETE /rgw/realm`。确认 Realm ID、名称、当前 Period 与明确删除确认；先读取原生 Realm 列表/默认 ID 和目标详情，拒绝默认 Realm，要求先切换默认。按 ID 执行 `radosgw-admin realm rm --realm-id …`，不级联删除任何其他资源；写后要求按 ID 查询返回 ENOENT（2），名称索引恰好移除此项、其他名称集合和默认引用保持原样。命令/核验/库存刷新失败均不可自动重试，错误不回传原生命令输出。
+  - 原生 RADOS 删除不清理默认指针、Period、Zonegroup/Zone 引用或服务，故界面明确提示先备份、停用依赖业务及残留引用可能导致网关/复制不可用；不是远端 Realm 删除或数据清理入口。前置身份/Period 检查不是跨进程 CAS，不检测同一 Period ID 的所有内部更改，失败可能部分生效；成功仅证明 Realm ID 与名称索引消失。增加精确命令、每阶段失败截断、默认/身份/Period 漂移、索引残留、错误退出码、队列风险与前端确认测试；无真实集群验证。
+
 - **本地 Multisite 库存拓扑**：对照 `rgw-multisite-details.component.ts` 的 Realm → Zonegroup → Zone、独立 Zonegroup 与未归组 Zone 结构，在 Multisite 页面增加按需读取的本地配置树及节点元数据。复用后端 `realm/zonegroup/zone list/get --format json` 采集到的三类资源 API，读取所有分页，不把能力不可用或查询失败转换为空分支。按原生 ID 关联而非名称；重复/缺失身份和缺失成员数组拒绝构树。无对应本地 Zone 详情的成员明确标为缺少详情，不推断远端；无 Realm 归属和指向未知 Realm 分开，成员/本地身份冲突、主成员缺失、过期库存明确显示。节点元数据使用字段白名单，不暴露 system_key；切换集群、卸载、刷新会移除或丢弃旧拓扑和选择。说明三类库存非原子、非实时、非 Period；不新增写入或删除操作。新增多级/孤立/缺失关联、分页/失败、敏感字段排除及界面竞态测试；无真实集群或浏览器视觉验证。
 
 - **Period 成员 Zone 配置明细**：对照参考 Multisite 拓扑元数据展示与 `RGWZone::dump`，将已发布 Period 中的成员 JSON 补为可展开的明细表，包括组内主/非主角色、端点、只读、归档类型、同步来源、重定向、日志、最大索引分片及支持特性。复用已有 `radosgw-admin period get --realm-id … --period … --format json` → current_period_details → Realm 列表 API，不新增伪数据或命令旁路。依据 `RGWZone::syncs_from` 的 OR 语义，明确全部来源模式下 sync_from 不是排除列表；非主不等于远端或同步正常。缺失/异常值与 false、零、空列表分开，重复或缺失成员身份拒绝构建表格，主成员不在列表时提示核对。保留完整 Period 原文及采集快照说明，不替代当前本地拓扑或实时状态；无真实集群验证。

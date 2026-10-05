@@ -3,6 +3,7 @@ import { rgwRealmImportAction } from './rgwRealmImport'
 import { rgwRealmSetupAction } from './rgwRealmSetup'
 import { rgwRealmMigrationAction } from './rgwRealmMigration'
 import { RgwRealmToken } from './RgwRealmToken'
+import { realmDeleteBlocked, realmDeleteInput, realmDeleteConfirmation } from './rgwRealmDelete'
 import { RgwTopologyView } from './RgwTopology'
 import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwRealmTransfer } from './RgwRealmTransfer'
@@ -1002,6 +1003,15 @@ const definitions: Record<
     ]
   },
   multisite: {
+    deleteAction: {
+      title: '删除 Realm 配置', action: 'rgw_realm.delete', resourceKind: 'rgw_realm', risk: 'high',
+      resourceKey: (row) => String(row.name),
+      path: '/rgw/realm',
+      disabledWhen: realmDeleteBlocked,
+      confirmation: realmDeleteConfirmation,
+      successMessage: 'Realm ID 与名称索引删除已核验；关联资源与引用未清理',
+      buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...realmDeleteInput(row) })
+    },
     toolbarActions: [rgwRealmImportAction, rgwRealmSetupAction, rgwRealmMigrationAction],
     title: 'RGW Multisite',
     detailContent: (row, clusterId) => <><RgwRealmToken key={`token:${clusterId}:${row.id}:${row.name}`} row={row} clusterId={clusterId} /><RgwRealmTransfer key={`transfer:${clusterId}:${row.id}:${row.name}`} row={row} clusterId={clusterId} /></>,

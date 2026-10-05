@@ -79,6 +79,7 @@ func rgwRoutes(h *handler.Handler) []Route {
 		{"POST", "/rgw/realm/migrate", h.MigrateRGWRealm},
 		{"POST", "/rgw/realm", h.CreateRGWRealm},
 		{"PATCH", "/rgw/realm", h.UpdateRGWRealm},
+		{"DELETE", "/rgw/realm", h.DeleteRGWRealm},
 		{"GET", "/rgw/zonegroups", h.ListRGWZonegroups},
 		{"POST", "/rgw/zonegroup", h.CreateRGWZonegroup},
 		{"PATCH", "/rgw/zonegroup", h.UpdateRGWZonegroup},

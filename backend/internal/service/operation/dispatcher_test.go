@@ -74,6 +74,11 @@ func TestActionDispatcherReconcilesNativeMutation(t *testing.T) {
 }
 
 func TestActionDispatcherFailsWhenPostReconcileFails(t *testing.T) {
+	_, deleteErr := NewActionDispatcher(&mutationExecutorFake{}, nil, &reconcileExecutorFake{refreshResult: true, err: errors.New("offline")}).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_realm.delete", ResourceKind: "rgw_realm"})
+	var deleteFailure *cephdomain.ActionError
+	if !errors.As(deleteErr, &deleteFailure) || deleteFailure.Retryable {
+		t.Fatal("realm deletion refresh failure can retry")
+	}
 	dispatcher := NewActionDispatcher(&mutationExecutorFake{}, nil, &reconcileExecutorFake{refreshResult: true, err: errors.New("offline")})
 	_, err := dispatcher.Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "pool.create", ResourceKind: "pool"})
 	var actionError *cephdomain.ActionError
