@@ -1,5 +1,6 @@
 import { Alert, Button, Card, Input, Space, Table } from 'antd'
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { jsonInit, request } from '../../api/client'
 import { useClusterContext } from '../../state/ClusterContext'
 import { RgwDaemonStatus } from './RgwDaemonStatus'
@@ -22,7 +23,8 @@ export function daemonRegistrationData(value:unknown):{items:Daemon[];observed_a
   return {items,observed_at:data.observed_at}
 }
 export function RgwDaemonsPage(){const {selectedClusterId}=useClusterContext();return <RgwDaemonsView key={selectedClusterId??'none'} clusterId={selectedClusterId}/>}
-export function RgwDaemonsView({clusterId}:{clusterId?:number}) {
+export function RgwDaemonCount(){const {selectedClusterId}=useClusterContext();return <RgwDaemonsView key={selectedClusterId??'none'} clusterId={selectedClusterId} summary/>}
+export function RgwDaemonsView({clusterId,summary=false}:{clusterId?:number;summary?:boolean}) {
   const [filter,setFilter]=useState(''),[state,setState]=useState<{clusterId?:number;busy:boolean;data?:ReturnType<typeof daemonRegistrationData>;error?:boolean}>({busy:false})
   const current=useRef(clusterId),mounted=useRef(true),sequence=useRef(0),abort=useRef<AbortController>()
   current.current=clusterId
@@ -40,6 +42,13 @@ export function RgwDaemonsView({clusterId}:{clusterId?:number}) {
   const labels=['服务映射 ID','RGW ID','主机','版本','Realm','Realm ID','Zonegroup','Zonegroup ID','Zone','Zone ID']
   const rows=scoped?.data?.items.filter(row=>fields.some(key=>row[key].toLowerCase().includes(filter.toLowerCase())))
   const readSequence=sequence.current
+  if(summary)return <Card title="RGW 注册实例数量"><Space direction="vertical" style={{width:'100%'}}>
+    <Alert type="info" message="来自 ceph service dump 的服务映射记录数" description="每个服务映射 ID 计一次，同名 RGW ID 的不同注册分别计数。不是在线或健康实例数量，零记录不证明没有 RGW 进程。"/>
+    <Space><Button disabled={!clusterId||scoped?.busy} loading={scoped?.busy} onClick={()=>void read()}>读取注册实例数量</Button><Link to="/object/daemons">查看注册明细</Link></Space>
+    {!clusterId&&<Alert type="info" message="请先选择集群"/>}
+    {scoped?.error&&<Alert type="error" message="读取失败或注册数据不完整，未展示旧值或部分计数"/>}
+    {scoped?.data&&<><span>注册实例数：{String(scoped.data.items.length)}</span><span>读取时间：{scoped.data.observed_at}</span></>}
+  </Space></Card>
   return <Card title="RGW 守护进程注册"><Space direction="vertical" style={{width:'100%'}}>
     <Alert type="info" message="来自 ceph service dump 的注册信息，不是实时健康探测" description="同一 RGW ID 的不同服务映射记录分别保留；未注册不等于进程不存在。端口从已注册 Beast frontend 配置提取，不证明监听成功、TLS 可用或网络可达；未知配置会明确标注。"/>
     <Space wrap><Button disabled={!clusterId||scoped?.busy} loading={scoped?.busy} onClick={()=>void read()}>读取注册列表</Button><Input aria-label="搜索 RGW 注册" value={filter} onChange={event=>setFilter(event.target.value)} placeholder="ID、主机、版本或多站点归属"/></Space>
