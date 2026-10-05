@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### 用户库存完整 UID 身份核验
+
+核对原生 dump_user_info 输出 full_user_id，与本地 user_id、tenant 和可选 namespace 分开。采集器现要求 full_user_id 为字符串且精确匹配 user info 请求 UID，拒绝缺失、类型错误和错配响应，不再用列表 UID 为任意详情重新标记身份。异常时不产生该用户库存行，停止依赖的托管策略、限流、统计读取并标记用户采集不可用。测试覆盖普通/租户/命名空间 UID、空格差异和错误类型，同时修正原有测试样例以包含原生身份字段。后端全量测试及 OpenAPI 检查通过；未连接真实集群。
+
 #### Bucket 索引详情重新分片诊断字段
 
 索引详情补充 reshard_status 与 judge_reshard_lock_time，沿用 bucket stats 采集及库存 API 的原生字段。核对 rgw_reshard.cc 设置时间、rgw_rados.cc::check_reshard_logrecord_status/recover_reshard_logrecord 使用并更新时间的路径，明确该时间用于检查间隔控制，不是任务开始/完成时间；状态注明采集时快照。组件测试覆盖三个已知阶段、未知/缺失状态、精确时间字符串及错误类型。前端全量测试、类型检查与构建通过；未进行浏览器视觉或真实集群验证。

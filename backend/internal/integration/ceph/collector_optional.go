@@ -411,6 +411,10 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 
 			}
 			if resource.kind == "rgw_user" {
+				if observedID, ok := details["full_user_id"].(string); !ok || observedID != id {
+					markCollectionUnavailable(ctx, "collect.rgw_user_detail")
+					continue
+				}
 				details["uid"] = id
 				if textField(details, "account_id") != "" && textField(details, "type") != "root" {
 					var policies []string

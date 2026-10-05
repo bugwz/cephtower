@@ -11,7 +11,7 @@ func TestRGWOwnerStorageCountersRemainExact(t *testing.T) {
 	for _, kind := range []string{"rgw_user", "rgw_account"} {
 		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 			"collect." + kind:             []byte(`["owner"]`),
-			"collect." + kind + "_detail": []byte(`{"id":"owner","user_id":"owner","name":"owner"}`),
+			"collect." + kind + "_detail": []byte(`{"id":"owner","full_user_id":"owner","user_id":"owner","name":"owner"}`),
 			"collect." + kind + "_stats":  []byte(`{"stats":{"size":18446744073709551615,"size_actual":9007199254740993,"size_utilized":0,"num_objects":9007199254740995,"size_kb":1},"last_synced":"raw-time","last_stats_sync":"raw-time"}`),
 		}}}
 		found := false
@@ -64,7 +64,7 @@ func TestRGWOwnerStatsRejectMalformedContainers(t *testing.T) {
 				ctx := context.WithValue(context.Background(), collectionTraceKey{}, trace)
 				p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 					"collect." + kind:             []byte(`["owner"]`),
-					"collect." + kind + "_detail": []byte(`{"id":"owner","user_id":"owner","name":"owner"}`),
+					"collect." + kind + "_detail": []byte(`{"id":"owner","full_user_id":"owner","user_id":"owner","name":"owner"}`),
 					"collect." + kind + "_stats":  []byte(tc.raw),
 				}}}
 				found := false

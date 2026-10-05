@@ -669,7 +669,7 @@ func TestRBDNullListsMarkUnavailable(t *testing.T) {
 func TestRGWUserStatsPreserveAccountScope(t *testing.T) {
 	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rgw_user":        []byte(`["tenant$user"]`),
-		"collect.rgw_user_detail": []byte(`{"user_id":"user","account_id":"RGW123"}`),
+		"collect.rgw_user_detail": []byte(`{"full_user_id":"tenant$user","user_id":"user","account_id":"RGW123"}`),
 		"collect.rgw_user_stats":  []byte(`{"stats":{"size":1024,"num_objects":2},"last_stats_sync":"2026-09-14T00:00:00Z"}`),
 	}}}
 	rows := p.collectRGWOptional(context.Background(), ClusterAccess{}, time.Now())
@@ -743,7 +743,7 @@ func TestAccountRoleIdentity(t *testing.T) {
 func TestRGWUserRateLimitShape(t *testing.T) {
 	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rgw_user":           []byte(`["tenant$user"]`),
-		"collect.rgw_user_detail":    []byte(`{"user_id":"tenant$user"}`),
+		"collect.rgw_user_detail":    []byte(`{"full_user_id":"tenant$user","user_id":"user"}`),
 		"collect.rgw_user_ratelimit": []byte(`{"user_ratelimit":{"enabled":true,"max_read_ops":100,"max_write_ops":20,"max_read_bytes":1024,"max_write_bytes":512}}`),
 	}}}
 	for _, row := range p.collectRGWOptional(context.Background(), ClusterAccess{}, time.Now()) {

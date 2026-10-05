@@ -13,9 +13,9 @@ func TestRGWUserManagedPolicyCommandScope(t *testing.T) {
 		details string
 		want    bool
 	}{
-		{`{"account_id":"RGW123","type":"rgw"}`, true},
-		{`{"account_id":"RGW123","type":"root"}`, false},
-		{`{"account_id":"","type":"rgw"}`, false},
+		{`{"full_user_id":"tenant$user","account_id":"RGW123","type":"rgw"}`, true},
+		{`{"full_user_id":"tenant$user","account_id":"RGW123","type":"root"}`, false},
+		{`{"full_user_id":"tenant$user","account_id":"","type":"rgw"}`, false},
 	} {
 		var calls []executor.CommandSpec
 		p := NativeProvider{Executor: recordingExecutor{calls: &calls, base: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
@@ -60,7 +60,7 @@ func TestRGWUserManagedPolicies(t *testing.T) {
 			ctx := context.WithValue(context.Background(), collectionTraceKey{}, trace)
 			p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 				"collect.rgw_user":          []byte(`["tenant$user"]`),
-				"collect.rgw_user_detail":   []byte(`{"account_id":"RGW123","type":"rgw"}`),
+				"collect.rgw_user_detail":   []byte(`{"full_user_id":"tenant$user","account_id":"RGW123","type":"rgw"}`),
 				"collect.rgw_user_policies": []byte(tc.response),
 			}}}
 			found := false
