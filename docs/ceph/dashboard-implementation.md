@@ -29,6 +29,9 @@
 
 ### 增量实现与验证记录
 
+- **目标系统用户及 Token 密钥核验**：继续对齐参考 `_verify_user_and_daemons` → `check_user_in_second_cluster`。目标进程运行后，以 `radosgw-admin user info --access-key <token-access-key> --zone-id <verified-zone-id> --format json` 读取准确 Zone 的用户；依据 `radosgw-admin.cc::USER_INFO` 和 `RGWUser::init/info`，访问密钥可定位用户，无需额外传入容易错配的用户名。要求非空用户身份、system=true，且恰有一个匹配访问密钥，其 secret 与 Token 一致；允许其他独立密钥，不把用户名存在当作凭据一致。
+  - 原生未填充用户返回 EINVAL（22），按尚未核验处理、每五秒只读重查，最多五分钟；这不是缺失的确定证据，其他原生查找异常也可能折叠为该返回值。其他命令错误、异常 JSON、非系统用户或密钥冲突立即失败；等待支持取消，不重复导入。访问密钥参数标记敏感，原始 stdout/stderr 清理，成功只增加 `system_user_verified=true`，不持久化用户密钥或原始输出，不设置 Dashboard 凭据；原生进程参数仍存在系统特权进程可见风险。前端明确这不代表全部同步完成。新增身份/密钥/多密钥、失败脱敏、命令范围及取消回归；无真实集群或浏览器视觉验证。
+
 - **从 Zone 导入后的目标进程核验**：普通/归档导入及已有 Realm 跨集群入口共用新增等待链路。依据 `ServiceDescription.to_json` 的 `status.size/running/last_refresh` 与守护进程状态，部署后使用带 `--refresh` 的 `ceph orch ls --service-name ... --format json`（非 export）和 `ceph orch ps --service-name ... --format json`，要求稳定服务配置与已核验规格一致、运行数等于正的预期实例数、守护进程数量相符且全部运行并具备启动/刷新时间；显式 placement.count 也必须满足。空服务、部署中、实例不足或缺失状态不会提前成功；整段两分钟、单次命令 30 秒，取消/失败/超时停止并沿用不可自动重试的部分生效错误。
   - `cephadm/serve.py::_update_rgw_endpoints` 会清除 `update_endpoints`，因此不把该运行标志与引导 Token 当作稳定配置比较；仍核对 Realm/Zonegroup/Zone、端口及其余规格。成功结果新增 `daemons_verified=true`、`replication_verified=false`，两种前端入口同步说明进程运行不代表 HTTP/TLS 或复制完成。本项替代早期记录中“仅提交目标部署”的状态，未实现系统用户复制等待、模块自动启用或业务探测。新增原生命令/失败截断、规格变化、缺失/部分运行、数量、取消/超时回归；无真实集群或浏览器视觉验证。
 

@@ -86,7 +86,7 @@ func TestArchiveImportNativeSequence(t *testing.T) {
 			deploy = c
 		}
 	}
-	want := []string{"zones", "realms", "service_absence", "archive.pull", "archive.period", "archive.create", "archive.group", "archive.commit", "archive.realm_check", "archive.period_check", "archive.deploy", "realm_post_check", "zone_post_check", "period_post_check", "service_post_check", "deployment_service", "deployment_daemons"}
+	want := []string{"zones", "realms", "service_absence", "archive.pull", "archive.period", "archive.create", "archive.group", "archive.commit", "archive.realm_check", "archive.period_check", "archive.deploy", "realm_post_check", "zone_post_check", "period_post_check", "service_post_check", "deployment_service", "deployment_daemons", "system_user"}
 	if !reflect.DeepEqual(stages, want) {
 		t.Fatalf("unexpected stages %v", stages)
 	}

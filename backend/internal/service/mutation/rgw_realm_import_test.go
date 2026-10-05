@@ -29,7 +29,8 @@ func (e *realmImportExecutor) Run(_ context.Context, _ executor.ClusterAccess, s
 }
 func realmImportResponses() map[string]string {
 	return map[string]string{
-		"zones": `{"zones":[]}`, "realms": `{"realms":[]}`, "service_absence": `[]`,
+		"system_user": `{"user_id":"sys","system":true,"keys":[{"access_key":"fixture-access","secret_key":"fixture-secret"}]}`,
+		"zones":       `{"zones":[]}`, "realms": `{"realms":[]}`, "service_absence": `[]`,
 		"realm_post_check":   `{"id":"id","name":"realm","current_period":"period"}`,
 		"zone_post_check":    `{"id":"zone-id","name":"secondary","realm_id":"id"}`,
 		"period_post_check":  `{"id":"period","realm_id":"id","master_zonegroup":"zg","period_map":{"zonegroups":[{"id":"zg","name":"group","master_zone":"master","zones":[{"id":"zone-id","name":"secondary"}]}]}}`,
@@ -96,11 +97,18 @@ func TestRealmImportExecution(t *testing.T) {
 				t.Fatal("missing stdin")
 			}
 		}
-		if strings.Contains(strings.Join(spec.Args, " "), "fixture") {
+		if strings.HasSuffix(spec.ID, ".system_user") {
+			if spec.Mutating || !reflect.DeepEqual(spec.Args, []string{"user", "info", "--access-key", "fixture-access", "--zone-id", "zone-id", "--format", "json"}) {
+				t.Fatal("unscoped user query")
+			}
+			if _, ok := spec.SensitiveArgs[3]; !ok {
+				t.Fatal("unmarked access key")
+			}
+		} else if strings.Contains(strings.Join(spec.Args, " "), "fixture") {
 			t.Fatal("credential in argv")
 		}
 	}
-	if writes != 1 || len(e.specs) != 10 {
+	if writes != 1 || len(e.specs) != 11 {
 		t.Fatalf("commands=%d writes=%d", len(e.specs), writes)
 	}
 }
@@ -146,7 +154,7 @@ func TestRealmImportExistingRealmAndPlacement(t *testing.T) {
 	}
 }
 func TestRealmImportStopsAndSanitizesFailures(t *testing.T) {
-	for _, stage := range []string{"zones", "realms", "service_absence", "rgw_realm.import", "realm_post_check", "zone_post_check", "period_post_check", "service_post_check", "deployment_service", "deployment_daemons"} {
+	for _, stage := range []string{"zones", "realms", "service_absence", "rgw_realm.import", "realm_post_check", "zone_post_check", "period_post_check", "service_post_check", "deployment_service", "deployment_daemons", "system_user"} {
 		t.Run(stage, func(t *testing.T) {
 			s, _, cluster := newCephUserService(t)
 			e := &realmImportExecutor{responses: realmImportResponses(), fail: stage}
