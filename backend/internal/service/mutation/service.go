@@ -426,6 +426,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "rgw_user.caps" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "capability command failed; inspect user capabilities before any manual retry", Retryable: false}
 		}
+		if request.Action == "rgw_role.delete" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "role removal was not confirmed; inspect the scoped role before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_bucket.quota" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "bucket quota write was not confirmed; inspect current limits and activation before any manual retry", Retryable: false}
 		}
@@ -521,6 +524,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "rgw_role.delete" && (err != nil || !rgwRoleAbsent(request.Parameters, checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "role removal was accepted but absence from the scoped complete role list could not be verified; inspect role state before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_user.update" && (err != nil || !rgwUserUpdatePropertiesMatch(checked.Stdout, request.Parameters, last(resourceTail(request.ResourceKey)))) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "user update was accepted but requested properties or flags could not be verified; inspect user info before any manual retry", Retryable: false}
 		}
@@ -2613,11 +2619,15 @@ func build(request Request, p map[string]any) (command, error) {
 		return result, nil
 
 	case "rgw_role.delete":
-		name, err := required(p, "name")
+		name, err := rgwRoleDeleteName(p)
 		if err != nil {
 			return command{}, err
 		}
-		return rgw([]string{"role", "delete", "--role-name", name}, []string{"role", "list"}), nil
+		check := []string{"role", "list"}
+		if tenant, _, found := strings.Cut(name, "$"); found && optional(p, "account_id") == "" {
+			check = append(check, "--tenant", tenant)
+		}
+		return rgw([]string{"role", "delete", "--role-name", name}, check), nil
 	case "rgw_role.create":
 		name, err := required(p, "name")
 		if err != nil {
