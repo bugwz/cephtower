@@ -5,6 +5,28 @@ import (
 	"time"
 )
 
+func (h *Handler) GetRGWDaemonPerf(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	var input struct {
+		ClusterID    uint64 `json:"cluster_id"`
+		ServiceMapID string `json:"service_map_id"`
+	}
+	if !DecodeStrict(w, r, &input) {
+		return
+	}
+	annotateAudit(r, "rgw.daemon.perf", "rgw_daemon", input.ServiceMapID, "", &input.ClusterID)
+	if h.External == nil {
+		WriteError(w, r, 501, "capability_unavailable", "monitoring reader is unavailable", false, nil)
+		return
+	}
+	result, err := h.External.RGWPerf(r.Context(), input.ClusterID, input.ServiceMapID)
+	if err != nil {
+		writeActionError(w, r, err)
+		return
+	}
+	WriteSuccess(w, 200, "success", result)
+}
+
 func (h *Handler) GetRGWDaemonStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	var input struct {

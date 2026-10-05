@@ -97,7 +97,7 @@ func successResponseSchema(route router.Route) string {
 	switch key {
 	case "GET /rgw/encryption/configuration":
 		return "ConfigurationOptionResponse"
-	case "GET /rgw/daemons", "GET /rgw/daemon/status":
+	case "GET /rgw/daemons", "GET /rgw/daemon/status", "GET /rgw/daemon/perf":
 		return "ConfigurationOptionResponse"
 	case "GET /logs":
 		return "CephLogsResponse"
@@ -391,7 +391,7 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "name": stringField(true)}
 	case "GET /rgw/encryption/configuration":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "entity": stringField(true), "encryption_type": {Type: "string", Required: true, Enum: []string{"kms", "s3"}}, "provider": {Type: "string", Required: true, Enum: []string{"vault", "kmip"}}}
-	case "GET /rgw/daemon/status":
+	case "GET /rgw/daemon/status", "GET /rgw/daemon/perf":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "service_map_id": stringField(true)}
 	case "GET /manager/telemetry/report":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "mode": {Type: "string", Required: true, Enum: []string{"current", "preview"}}}

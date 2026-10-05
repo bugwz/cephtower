@@ -21367,6 +21367,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /rgw/daemon/perf:
+    get:
+      operationId: get_rgw_daemon_perf
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, service_map_id]
+              properties:
+                cluster_id:
+                  type: integer
+                service_map_id:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationOptionResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /rgw/daemon/status:
     get:
       operationId: get_rgw_daemon_status

@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### RGW 性能快照服务与 API
+
+新增 `GET /rgw/daemon/perf`，严格接收 cluster_id 与 service_map_id，复用集群 Prometheus 端点、TLS/认证及超时配置，调用固定实例查询。返回来源、实例身份、读取时间、原始序列及 available；空序列明确 available=false，不表示计数为零或 daemon 健康。查询错误使用固定诊断，接口禁用缓存并沿用认证/审计。生成 OpenAPI；服务测试覆盖成功样本精度、精确查询、非法身份零请求、缺失端点、空结果及错误不泄漏，路由测试覆盖严格输入、缺失端点和认证拒绝。后端全量测试与 OpenAPI 检查通过。前端快照展示尚待接入，当前不提供 Dashboard 内部历史速率，无真实集群验证。
+
 #### RGW Prometheus 实例快照查询基础
 
 核对 `mgr_module.py::_perfpath_to_path_labels` 与 Prometheus 模块 `get_perf_counters`，经典 mgr 导出的 RGW 指标使用服务映射 ID 对应的 instance_id 标签。新增内部固定查询 `ceph_rgw_.*` 并精确匹配该标签，不开放任意 PromQL；身份进行字符串转义，返回结果逐条验证指标前缀、实例标签及样本结构。保留各条采集序列和原始数值字符串，不合并重复采集、不转换大整数、不把空结果解释为零。

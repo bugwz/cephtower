@@ -7,6 +7,8 @@ import (
 	"cephtower/backend/internal/security"
 	clusterservice "cephtower/backend/internal/service/cluster"
 	"cephtower/backend/internal/service/clusterinspect"
+	endpointservice "cephtower/backend/internal/service/endpoint"
+	"cephtower/backend/internal/service/external"
 	"cephtower/backend/internal/store"
 	"context"
 	"encoding/json"
@@ -46,7 +48,7 @@ func TestRGWDaemonAPI(t *testing.T) {
 	runner := &daemonRouteExecutor{output: `{"services":{"rgw":{"daemons":{"summary":"","1":{"metadata":{"id":"a","frontend_config#0":"private-secret"}}}}}}`}
 	auth := false
 	mux := http.NewServeMux()
-	Register(mux, handler.New(handler.Dependencies{Database: database, Clusters: clusterservice.New(database, key, nil), Inspection: clusterinspect.New(clusterservice.New(database, key, nil), runner), AuthEnabled: func() bool { return auth }}))
+	Register(mux, handler.New(handler.Dependencies{Database: database, External: external.New(endpointservice.New(database, key), key, nil), Clusters: clusterservice.New(database, key, nil), Inspection: clusterinspect.New(clusterservice.New(database, key, nil), runner), AuthEnabled: func() bool { return auth }}))
 	path := "/api/v1/rgw/daemons"
 	send := func(body string) *httptest.ResponseRecorder {
 		r := httptest.NewRequest("GET", path, strings.NewReader(body))
@@ -113,7 +115,20 @@ func TestRGWDaemonAPI(t *testing.T) {
 	if w = send(statusBody); w.Code == 200 || strings.Contains(w.Body.String(), "private-") {
 		t.Fatal("status failure leaked")
 	}
+	path = "/api/v1/rgw/daemon/perf"
+	for _, body := range []string{`{}`, valid, `{"cluster_id":0,"service_map_id":"1"}`, strings.TrimSuffix(valid, "}") + `,"service_map_id":1}`, strings.TrimSuffix(statusBody, "}") + `,"query":"up"}`} {
+		if w = send(body); w.Code != 400 {
+			t.Fatal("invalid performance request accepted", w.Code)
+		}
+	}
+	if w = send(statusBody); w.Code != 501 || w.Header().Get("Cache-Control") != "no-store" {
+		t.Fatal("missing monitoring endpoint not reported", w.Code)
+	}
 	auth = true
+	if w = send(statusBody); w.Code != 401 {
+		t.Fatal("performance authentication bypass")
+	}
+	path = "/api/v1/rgw/daemon/status"
 	before := runner.calls
 	if w = send(statusBody); w.Code != 401 || runner.calls != before {
 		t.Fatal("authentication bypass")
