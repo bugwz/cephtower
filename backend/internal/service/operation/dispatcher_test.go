@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
@@ -241,13 +242,36 @@ func TestFilesystemRenameRefreshesAffectedStorage(t *testing.T) {
 	}
 }
 
-func TestBucketQuotaRefreshFailureDoesNotRepeatWrite(t *testing.T) {
-	mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{}}}
-	reconciler := &reconcileExecutorFake{err: errors.New("private refresh diagnostic")}
-	_, err := NewActionDispatcher(mutations, nil, reconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_bucket.quota", ResourceKind: "rgw_bucket"})
-	var failure *cephdomain.ActionError
-	if !errors.As(err, &failure) || failure.Code != "post_reconcile_failed" || failure.Retryable || reconciler.kind != "rgw_bucket" || len(reconciler.kinds) != 0 {
-		t.Fatalf("unsafe refresh failure: %v; reconciler=%+v", err, reconciler)
+func TestRGWLimitRefreshDoesNotRepeatWrite(t *testing.T) {
+	for _, action := range []string{"rgw_bucket.quota", "rgw_user.quota", "rgw_account.quota", "rgw_user.ratelimit", "rgw_bucket.ratelimit"} {
+		for _, stage := range []string{"success", "write", "refresh"} {
+			kind := strings.SplitN(action, ".", 2)[0]
+			mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{"verified": true}}}
+			reconciler := &reconcileExecutorFake{refreshResult: true}
+			if stage == "write" {
+				mutations.err = errors.New("write failed")
+			} else if stage == "refresh" {
+				reconciler.err = errors.New("private refresh diagnostic")
+			}
+			result, err := NewActionDispatcher(mutations, nil, reconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: action, ResourceKind: kind})
+			if stage == "write" {
+				if err != mutations.err || reconciler.kind != "" || len(reconciler.kinds) != 0 {
+					t.Fatalf("refreshed after failed write: %v %+v", err, reconciler)
+				}
+				continue
+			}
+			if reconciler.kind != kind || len(reconciler.kinds) != 0 {
+				t.Fatalf("wrong refresh scope: %+v", reconciler)
+			}
+			if stage == "refresh" {
+				var failure *cephdomain.ActionError
+				if !errors.As(err, &failure) || failure.Code != "post_reconcile_failed" || failure.Retryable || !strings.Contains(failure.Message, "without repeating") || strings.Contains(failure.Message, "private") {
+					t.Fatalf("unsafe refresh failure: %v", err)
+				}
+			} else if err != nil || result.Details.(map[string]any)["reconciled"] != true || result.Details.(map[string]any)["verified"] != true {
+				t.Fatalf("lost verified result: %+v %v", result, err)
+			}
+		}
 	}
 }
 

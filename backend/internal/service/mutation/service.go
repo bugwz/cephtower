@@ -429,6 +429,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "rgw_bucket.quota" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "bucket quota write was not confirmed; inspect current limits and activation before any manual retry", Retryable: false}
 		}
+		if request.Action == "rgw_user.quota" || request.Action == "rgw_account.quota" || request.Action == "rgw_user.ratelimit" || request.Action == "rgw_bucket.ratelimit" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "limit write was not confirmed; inspect current limits and activation before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_user.update" && !rgwUserAccountMigrationRequested(request) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "user update failed; inspect actual properties and flags before any manual retry", Retryable: false}
 		}

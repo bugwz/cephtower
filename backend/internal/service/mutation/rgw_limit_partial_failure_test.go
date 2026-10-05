@@ -13,16 +13,44 @@ import (
 )
 
 type limitPartialFailureExecutor struct {
-	specs   []executor.CommandSpec
-	failure error
+	specs     []executor.CommandSpec
+	failure   error
+	failFirst bool
 }
 
 func (e *limitPartialFailureExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.specs = append(e.specs, spec)
-	if len(e.specs) == 2 {
+	if e.failFirst || len(e.specs) == 2 {
 		return executor.CommandResult{}, e.failure
 	}
 	return executor.CommandResult{}, nil
+}
+
+func TestRGWLimitInitialWriteFailureStopsWithoutRetry(t *testing.T) {
+	for _, tc := range []struct{ action, scope string }{
+		{"rgw_user.quota", "user"}, {"rgw_user.quota", "bucket"},
+		{"rgw_account.quota", "account"}, {"rgw_account.quota", "bucket"},
+		{"rgw_bucket.quota", "bucket"},
+		{"rgw_user.ratelimit", "user"}, {"rgw_bucket.ratelimit", "bucket"},
+	} {
+		for _, enabled := range []bool{false, true} {
+			for _, failure := range []error{errors.New("private diagnostic"), context.DeadlineExceeded, context.Canceled} {
+				service, _, id := newCephUserService(t)
+				runner := &limitPartialFailureExecutor{failure: failure, failFirst: true}
+				service.executor = runner
+				params := map[string]any{"uid": "team$user", "account_id": "RGW123", "bucket_id": base64.RawURLEncoding.EncodeToString([]byte("team\x00photos")), "scope": tc.scope, "enabled": enabled,
+					"max_size": json.Number("1025"), "max_objects": json.Number("0"), "max_read_ops": json.Number("0"), "max_write_ops": json.Number("1"), "max_read_bytes": json.Number("1024"), "max_write_bytes": json.Number("2048")}
+				_, err := service.Execute(context.Background(), Request{ClusterID: id, Action: tc.action, Parameters: params})
+				var actionErr *cephdomain.ActionError
+				if !errors.As(err, &actionErr) || actionErr.Code != "ceph_command_failed" || actionErr.Retryable || strings.Contains(actionErr.Message, failure.Error()) || !strings.Contains(actionErr.Message, "inspect current limits and activation") {
+					t.Fatalf("%s/%s: unsafe error: %v", tc.action, tc.scope, err)
+				}
+				if len(runner.specs) != 1 || !runner.specs[0].Mutating || runner.specs[0].ID != tc.action {
+					t.Fatalf("unexpected continuation: %+v", runner.specs)
+				}
+			}
+		}
+	}
 }
 
 func TestRGWLimitPartialFailureStopsWithoutRetry(t *testing.T) {
