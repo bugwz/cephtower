@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### 已注册 Realm 用户汇总服务
+
+新增内部 RGWRealmUserCounts：读取 service map，按精确 Realm ID 分组，每组按 Zone ID、service_map_id 字典序选择代表，先核验 Zone/Realm，再枚举用户。避免同一 Realm 多 daemon 重复计数，不合并不同 Realm 的同名用户；总数和分项数量以十进制字符串返回，附代表身份、选择规则及起止时间。范围明确 registered_realms，不代表所有配置 Realm，也不证明 Zone 复制一致或在线健康。缺失/非法身份、同 Zone 对应不同 Realm 或任一读取失败均不返回部分汇总；两分钟总时限。新增去重、稳定选择、跨 Realm 同名身份、后续失败、异常注册和空注册范围测试，后端全量测试与 OpenAPI 检查通过。API/前端、未注册 Realm 及无 Realm 身份配置支持仍待补齐，无真实集群验证。
+
 #### 精确 Zone 用户计数基础
 
 核对 radosgw-admin 的 --realm-id/--zone-id 解析分支会设置 rgw_realm_id/rgw_zone_id，新增内部 RGWUserCountInZone：先用精确选择器读取 zone get，核对 id/realm_id，再将同一选择器传入完整 user list。拒绝缺失/非法身份、站点身份不符和两阶段命令失败，不回退默认站点；返回 zone 范围及明确身份、起止时间，不暴露用户列表。默认范围服务复用相同严格计数逻辑。新增精确命令、不同租户身份、身份拒绝零枚举和两阶段失败测试，后端全量测试及 OpenAPI 检查通过。此增量为跨 Realm 汇总提供选定站点读取基础，尚未实现 Realm 发现、代表站点选择与总览汇总；不保证不同 Zone 复制一致性，无真实集群验证。
