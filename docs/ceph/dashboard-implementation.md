@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- **Zone 精确池引用明细**：参考 Zonegroup 删除对话框的池清单展示，但不复制其字符串包含匹配及仅 STANDARD 类扫描。后端复用 `zone get --format json`，按 `RGWZoneParams::dump`、`RGWZonePlacementInfo::dump` 和 `RGWZoneStorageClass::dump` 提取顶层池、每个 placement 的索引/额外数据池及所有存储类别显式 data_pool。依据 `rgw_pool::to_str` 解析反斜线与冒号转义，分别输出精确池名、命名空间、字段路径、原始表示；非规范多冒号/错误转义拒绝解析而非截断。空字符串表示未配置；缺失或异常配置保留有效条目并标记不完整，未来顶层 *_pool 字段也纳入。Zone API 库存增加 pool_references/完整性/问题清单，前端展示表格并明确不是池存在性、共享关系或可删除证明，云分层与动态池不在完整性声明范围。新增解析、非 STANDARD 存储类、命名空间、异常/缺失证据、采集入口与前端绑定测试。Zonegroup 删除和可选池清理未因此完成，无真实集群验证。
+
 - **Realm 删除链路**：沿参考 `RgwRealmService.delete` → `delete_realm` → 原生 `REALM_DELETE`/`RadosRealmWriter::remove`，新增高风险、单次尝试的 `DELETE /rgw/realm`。确认 Realm ID、名称、当前 Period 与明确删除确认；先读取原生 Realm 列表/默认 ID 和目标详情，拒绝默认 Realm，要求先切换默认。按 ID 执行 `radosgw-admin realm rm --realm-id …`，不级联删除任何其他资源；写后要求按 ID 查询返回 ENOENT（2），名称索引恰好移除此项、其他名称集合和默认引用保持原样。命令/核验/库存刷新失败均不可自动重试，错误不回传原生命令输出。
   - 原生 RADOS 删除不清理默认指针、Period、Zonegroup/Zone 引用或服务，故界面明确提示先备份、停用依赖业务及残留引用可能导致网关/复制不可用；不是远端 Realm 删除或数据清理入口。前置身份/Period 检查不是跨进程 CAS，不检测同一 Period ID 的所有内部更改，失败可能部分生效；成功仅证明 Realm ID 与名称索引消失。增加精确命令、每阶段失败截断、默认/身份/Period 漂移、索引残留、错误退出码、队列风险与前端确认测试；无真实集群验证。
 

@@ -541,6 +541,9 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 					}
 				}
 			}
+			if resource.kind == "rgw_zone" {
+				attachRGWZonePoolReferences(details)
+			}
 			rows = append(rows, observation(resource.kind, name, name, "rgw_admin", details, now))
 		}
 	}

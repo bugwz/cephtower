@@ -6,6 +6,7 @@ import { RgwRealmToken } from './RgwRealmToken'
 import { realmDeleteBlocked, realmDeleteInput, realmDeleteConfirmation } from './rgwRealmDelete'
 import { RgwTopologyView } from './RgwTopology'
 import { RgwSyncStatus } from './RgwSyncStatus'
+import { RgwZonePoolReferences } from './RgwZonePoolReferences'
 import { RgwRealmTransfer } from './RgwRealmTransfer'
 import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
 import { zonegroupPipeZonesSelectionChanged } from './rgwZonegroupSyncGroup'
@@ -1340,6 +1341,7 @@ const definitions: Record<
       { key: 'realm_id', title: 'Realm ID' },
       { key: 'zonegroup_memberships', title: '所属 Zonegroup、端点与同步配置' },
       { key: 'placement_pools', title: '放置池与存储类别' },
+      { key: 'pool_references', title: '精确池引用明细', ellipsis: false, render: (_value, row) => <RgwZonePoolReferences row={row} /> },
       { key: 'domain_root', title: '元数据根池' },
       { key: 'control_pool', title: '控制池' },
       { key: 'gc_pool', title: '垃圾回收池' },
