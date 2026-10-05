@@ -228,7 +228,39 @@ func TestRGWDaemonAPI(t *testing.T) {
 		t.Fatal("failed realm registration accepted")
 	}
 	runner.exit = 0
+	path = "/api/v1/rgw/realms/buckets/usage"
+	runner.outputs["rgw.daemons.read"] = `{"services":{"rgw":{"daemons":{"1":{"metadata":{"id":"gateway","realm_id":"r","zone_id":"z"}}}}}}`
+	runner.outputs["rgw.usage.zone"] = `{"id":"z","realm_id":"r"}`
+	runner.outputs["rgw.usage.list"] = `["photos"]`
+	runner.outputs["rgw.usage.stats"] = `{"bucket":"photos","tenant":"","usage":{"rgw.main":{"num_objects":9007199254740993,"size_actual":18446744073709551615}}}`
+	if w = send(valid); w.Code != 200 || w.Header().Get("Cache-Control") != "no-store" || !strings.Contains(w.Body.String(), `"scope":"registered_realms"`) || !strings.Contains(w.Body.String(), `"bucket_count":"1"`) || !strings.Contains(w.Body.String(), `"object_count":"9007199254740993"`) || !strings.Contains(w.Body.String(), `"size_actual_bytes":"18446744073709551615"`) || !strings.Contains(w.Body.String(), `"zone_id":"z"`) {
+		t.Fatal("invalid realm bucket aggregate", w.Code)
+	}
+	count = runner.calls
+	for _, body := range []string{`{}`, `{"cluster_id":0}`, `{"cluster_id":"1"}`, strings.TrimSuffix(valid, "}") + `,"zone_id":"z"}`} {
+		if w = send(body); w.Code != 400 || runner.calls != count {
+			t.Fatal("invalid realm bucket scope executed")
+		}
+	}
+	runner.outputs["rgw.usage.stats"] = `{"bucket":"photos","tenant":""}`
+	if w = send(valid); w.Code != 502 || strings.Contains(w.Body.String(), `"bucket_count"`) {
+		t.Fatal("partial realm bucket totals")
+	}
+	runner.outputs["rgw.daemons.read"] = `{"services":{}}`
+	if w = send(valid); w.Code != 200 || !strings.Contains(w.Body.String(), `"items":[]`) || !strings.Contains(w.Body.String(), `"bucket_count":"0"`) {
+		t.Fatal("empty realm bucket scope lost")
+	}
+	runner.exit = 2
+	if w = send(valid); w.Code != 502 {
+		t.Fatal("failed realm bucket read accepted")
+	}
+	runner.exit = 0
 	auth = true
+	count = runner.calls
+	if w = send(valid); w.Code != 401 || runner.calls != count {
+		t.Fatal("realm bucket authentication bypass")
+	}
+	path = "/api/v1/rgw/realms/users/counts"
 	count = runner.calls
 	if w = send(valid); w.Code != 401 || runner.calls != count {
 		t.Fatal("realm counts authentication bypass")
