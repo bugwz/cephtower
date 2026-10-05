@@ -821,6 +821,10 @@ func (h *Handler) DeleteRGWRealm(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_realm", "rgw_realm.delete", "high")(w, r)
 }
 
+func (h *Handler) DeleteRGWZonegroup(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_zonegroup", "rgw_zonegroup.delete", "high")(w, r)
+}
+
 func (h *Handler) ImportRGWRealm(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_realm", "rgw_realm.import", "high")(w, r)
 }

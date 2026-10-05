@@ -55,6 +55,18 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	if deleteErr != nil || deleteOp.Action != "rgw_realm.delete" || deleteOp.Risk != "high" || deleteOp.MaxAttempts != 1 || deleteOp.ResourceKey != "rgw/realm/realm" {
 		t.Fatal("unsafe realm deletion operation")
 	}
+	groupDeleteBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"group","realm_id":"","expected_zones":[],"confirm_delete":true}`, cluster.ID)
+	groupDelete := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/zonegroup", groupDeleteBody, "zonegroup-delete")
+	if groupDelete.Code != http.StatusAccepted {
+		t.Fatal("zonegroup deletion not queued", groupDelete.Code)
+	}
+	groupDeleteOp, groupDeleteErr := db.FindOperation(context.Background(), operationIDFromResponse(t, groupDelete))
+	if groupDeleteErr != nil || groupDeleteOp.Action != "rgw_zonegroup.delete" || groupDeleteOp.Risk != "high" || groupDeleteOp.MaxAttempts != 1 {
+		t.Fatal("unsafe zonegroup deletion queue")
+	}
+	if bad := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/zonegroup", strings.TrimSuffix(groupDeleteBody, "}")+`,"delete_pools":true}`, "bad-zonegroup-delete"); bad.Code != http.StatusBadRequest {
+		t.Fatal("unimplemented pool cleanup accepted")
+	}
 	importBody := fmt.Sprintf(`{"cluster_id":%d,"name":"secondary","realm_token":"private-import-token","port":80,"placement":{},"confirm_import":true}`, cluster.ID)
 	importResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/realm/import", importBody, "realm-import")
 	if importResponse.Code != http.StatusAccepted || strings.Contains(importResponse.Body.String(), "private-import-token") {

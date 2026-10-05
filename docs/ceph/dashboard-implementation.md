@@ -29,6 +29,9 @@
 
 ### 增量实现与验证记录
 
+- **Zonegroup 删除（保留 Zone 与池）**：实现参考删除对话框默认不清理池的路径：新增高风险单次尝试 `DELETE /rgw/zonegroup`，显式确认 ID、名称、Realm 和成员 Zone ID 集合。原生列表/详情核对后拒绝唯一组、当前默认上下文组、主组及已发布 Period 的主组；验证仍有可用 Realm 主组，并在写前重读完整目标配置防止预检查期间变化。执行按 ID 的 `zonegroup delete`，核验 ID ENOENT、名称集合恰好移除目标及当前上下文默认值不变。有 Realm 时复用显式范围的 Period 提交/回读链，再验证已发布组清单无目标、无重复、主组仍存在；无 Realm 不提交。刷新 Realm/Zonegroup/Zone 库存以更新 Period 和成员关系，所有写后或刷新失败禁止自动重试。
+  - 界面明确保留 Zone、池、对象和服务，不重启网关；默认组信息仅覆盖当前默认 Realm 上下文，其他 Realm 默认引用可能残留，需事先核对。删除/发布非事务，可能发布其他待提交配置且部分生效；不声明远端已同步或可回滚。拒绝未实现的 delete_pools 参数，可选 Zone/池级联清理仍待继续。新增两种 Realm 归属、精确写命令、每阶段失败截断、成员/主组/身份漂移、已发布组残留、队列/刷新和前端确认测试；无真实集群验证。
+
 - **Zone 精确池引用明细**：参考 Zonegroup 删除对话框的池清单展示，但不复制其字符串包含匹配及仅 STANDARD 类扫描。后端复用 `zone get --format json`，按 `RGWZoneParams::dump`、`RGWZonePlacementInfo::dump` 和 `RGWZoneStorageClass::dump` 提取顶层池、每个 placement 的索引/额外数据池及所有存储类别显式 data_pool。依据 `rgw_pool::to_str` 解析反斜线与冒号转义，分别输出精确池名、命名空间、字段路径、原始表示；非规范多冒号/错误转义拒绝解析而非截断。空字符串表示未配置；缺失或异常配置保留有效条目并标记不完整，未来顶层 *_pool 字段也纳入。Zone API 库存增加 pool_references/完整性/问题清单，前端展示表格并明确不是池存在性、共享关系或可删除证明，云分层与动态池不在完整性声明范围。新增解析、非 STANDARD 存储类、命名空间、异常/缺失证据、采集入口与前端绑定测试。Zonegroup 删除和可选池清理未因此完成，无真实集群验证。
 
 - **Realm 删除链路**：沿参考 `RgwRealmService.delete` → `delete_realm` → 原生 `REALM_DELETE`/`RadosRealmWriter::remove`，新增高风险、单次尝试的 `DELETE /rgw/realm`。确认 Realm ID、名称、当前 Period 与明确删除确认；先读取原生 Realm 列表/默认 ID 和目标详情，拒绝默认 Realm，要求先切换默认。按 ID 执行 `radosgw-admin realm rm --realm-id …`，不级联删除任何其他资源；写后要求按 ID 查询返回 ENOENT（2），名称索引恰好移除此项、其他名称集合和默认引用保持原样。命令/核验/库存刷新失败均不可自动重试，错误不回传原生命令输出。

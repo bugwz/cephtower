@@ -74,6 +74,12 @@ func TestActionDispatcherReconcilesNativeMutation(t *testing.T) {
 }
 
 func TestActionDispatcherFailsWhenPostReconcileFails(t *testing.T) {
+	groupReconciler := &reconcileExecutorFake{err: errors.New("offline")}
+	_, groupErr := NewActionDispatcher(&mutationExecutorFake{}, nil, groupReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zonegroup.delete", ResourceKind: "rgw_zonegroup"})
+	var groupFailure *cephdomain.ActionError
+	if !errors.As(groupErr, &groupFailure) || groupFailure.Retryable || !reflect.DeepEqual(groupReconciler.kinds, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone"}) {
+		t.Fatal("unsafe zonegroup deletion refresh")
+	}
 	_, deleteErr := NewActionDispatcher(&mutationExecutorFake{}, nil, &reconcileExecutorFake{refreshResult: true, err: errors.New("offline")}).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_realm.delete", ResourceKind: "rgw_realm"})
 	var deleteFailure *cephdomain.ActionError
 	if !errors.As(deleteErr, &deleteFailure) || deleteFailure.Retryable {

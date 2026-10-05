@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import './test-rgw-realm-token.mjs'
 import './test-rgw-realm-delete.mjs'
+import './test-rgw-zonegroup-delete.mjs'
 import './test-rgw-sync-status.mjs'
 import './test-rgw-topology.mjs'
 import './test-rgw-zone-pools.mjs'
