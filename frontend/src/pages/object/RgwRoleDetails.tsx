@@ -2,6 +2,7 @@ import { Tabs } from 'antd'
 import type { ApiRecord } from '../../api/client'
 import { RgwPolicyDocument, RgwRoleManagedPolicies, RgwRolePolicyDetails } from './RgwRolePolicyDetails'
 import { RgwRoleTagsTable } from './RgwRoleTagsTable'
+import { RgwRoleSummary } from './RgwRoleSummary'
 
 export function RgwRoleDetails({ row }: { row: ApiRecord }) {
   return <div>
@@ -10,7 +11,8 @@ export function RgwRoleDetails({ row }: { row: ApiRecord }) {
       { key: 'trust', label: '信任策略', children: <RgwPolicyDocument value={row.AssumeRolePolicyDocument} /> },
       { key: 'inline', label: '内联权限策略', children: <RgwRolePolicyDetails value={row.PermissionPolicies} /> },
       { key: 'managed', label: '直接关联的托管策略', children: <RgwRoleManagedPolicies value={row.ManagedPermissionPolicies} /> },
-      { key: 'tags', label: '角色标签', children: <RgwRoleTagsTable value={row.Tags} /> }
+      { key: 'tags', label: '角色标签', children: <RgwRoleTagsTable value={row.Tags} /> },
+      { key: 'summary', label: '基本信息', children: <RgwRoleSummary row={row} /> }
     ]} />
   </div>
 }
