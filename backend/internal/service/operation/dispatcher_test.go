@@ -74,6 +74,12 @@ func TestActionDispatcherReconcilesNativeMutation(t *testing.T) {
 }
 
 func TestActionDispatcherFailsWhenPostReconcileFails(t *testing.T) {
+	aclReconciler := &reconcileExecutorFake{err: errors.New("offline")}
+	_, aclErr := NewActionDispatcher(&mutationExecutorFake{}, nil, aclReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zonegroup.cloud_acl", ResourceKind: "rgw_zonegroup"})
+	var aclFailure *cephdomain.ActionError
+	if !errors.As(aclErr, &aclFailure) || aclFailure.Retryable || !reflect.DeepEqual(aclReconciler.kinds, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone"}) {
+		t.Fatal("unsafe ACL refresh")
+	}
 	restoreReconciler := &reconcileExecutorFake{err: errors.New("offline")}
 	_, restoreErr := NewActionDispatcher(&mutationExecutorFake{}, nil, restoreReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zonegroup.cloud_restore", ResourceKind: "rgw_zonegroup"})
 	var restoreFailure *cephdomain.ActionError

@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 云分层 ACL 映射整表编辑
+
+接通上一轮核对的写入链路：组操作菜单选择已有云类，回填严格的 source_id/dest_id/type JSON 数组，支持新增、修改、移除及 `[]` 显式清空。`PATCH /rgw/zonegroup/placement/acl` 以高风险、单次尝试和组资源锁排队，要求预期旧 ACL、身份、Realm、类型和默认规则；仅已有 Realm 的非 STANDARD 云 S3/Glacier 类可操作，不隐式创建 Realm。
+后端构造 `zonegroup placement modify` 的 `--tier-config acls[i]...` 和 `--tier-config-rm acls[i].source_id...`，删除集合严格取旧来源减新来源。按来源唯一性、id/email/uri 类型、长度/总命令长度验证；原生参数解析会在逗号分隔且按花括号层级扫描，因此拒绝逗号、花括号和控制字符。`JSONFormattable::set` 会解析 JSON 值，故对身份/类型值显式 JSON 字符串编码，保留数字样式、布尔样式、引号、反斜杠及空目标身份。最多 256 条映射，单个身份最多 4096 字节，总命令最多 65536 字节；不支持的输入明确拒绝，不静默截断。
+预期旧清单必须与原生库存一致；重复、缺失、类型异常或 key/source_id 不一致拒绝写入，先重读再执行。写后完整配置比对保护端点、凭据、恢复设置及其他类，随后提交指定 Realm Period 并回读，刷新 Realm/组/Zone。清空必须额外确认；无变化拒绝提交；操作不直接重写已有对象 ACL，也不证明远端授权成功。失败可部分生效，不自动重试/回滚，Period 可能发布其他待提交变更。
+新增混合增改删、全部清空、Glacier 配置保留、字面字符串编码、逐阶段失败/退出码、旧快照冲突、异常身份、无变化及 API/前端回归；前端全量回归和构建、后端全量测试与 OpenAPI 一致性检查通过，补充的 ACL 大小边界专项测试通过。无真实集群或浏览器视觉验证。
+
 #### ACL 编辑链路源码核对（写入尚未接通）
 
 本次核对参考 `rgw-storage-class-form.component.ts::buildPlacementTargets`、`rgw_client.py::modify_placement_targets`、`radosgw-admin.cc` 的 placement modify 分支，以及 `driver/rados/rgw_zone.cc` 的 S3 参数更新/清除实现，明确下一步 ACL 编辑不能按普通数组替换处理：

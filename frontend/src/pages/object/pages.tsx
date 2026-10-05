@@ -20,6 +20,7 @@ import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwZonePoolReferences } from './RgwZonePoolReferences'
 import { RgwPlacementClasses } from './RgwPlacementClasses'
 import { RgwLocalClassDetails } from './RgwLocalClassDetails'
+import { cloudACLChanged, cloudACLInput, cloudACLConfirmation } from './rgwCloudACL'
 import { cloudRestoreBlocked, cloudRestoreTargets, cloudRestoreClasses, cloudRestoreLocalClasses, cloudRestoreChanged, cloudRestoreInput, cloudRestoreConfirmation } from './rgwCloudRestore'
 import { RgwRealmTransfer } from './RgwRealmTransfer'
 import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
@@ -1158,6 +1159,18 @@ const definitions: Record<
         {name:'confirm_restore',label:'变更与发布确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份并核对恢复类、头对象保留及 Realm 待发布变更'}]}
       ],
       buildBody:(values,clusterId,row)=>({cluster_id:clusterId,...cloudRestoreInput(values,row)})
+    }, {
+      title:'编辑云分层 ACL 映射',path:'/rgw/zonegroup/placement/acl',method:'PATCH',
+      successMessage:'云分层 ACL 配置和 Realm Period 已回读核验（未重写已有对象 ACL）',
+      disabledWhen:cloudRestoreBlocked,changedValues:cloudACLChanged,confirmation:cloudACLConfirmation,
+      fields:[
+        {name:'placement_id',label:'已有云分层目标',type:'select',required:true,optionsLoader:async (_clusterId,row)=>cloudRestoreTargets(row)},
+        {name:'storage_class',label:'已有云分层类',type:'select',required:true,optionsDependencies:['placement_id'],optionsLoader:async (_clusterId,row,values)=>cloudRestoreClasses(row,values?.placement_id)},
+        {name:'acls_json',label:'完整 ACL JSON 数组（source_id、dest_id、type；[] 清空）',type:'textarea',required:true},
+        {name:'confirm_clear',label:'清空全部映射确认（空目标身份不是删除）',type:'select',required:true,options:[{value:'no',label:'本次不清空全部映射'},{value:'acknowledged',label:'明确允许清空全部显式映射'}]},
+        {name:'confirm_acl',label:'变更与发布确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份并核对身份映射、权限影响和 Realm 待发布变更'}]}
+      ],
+      buildBody:(values,clusterId,row)=>({cluster_id:clusterId,...cloudACLInput(values,row)})
     }, {
       title: '声明 Zonegroup 存储类', path: '/rgw/zonegroup/storage/class', method: 'POST',
       successMessage: '组存储类声明已回读核验（未配置 Zone 池或发布 Period）',

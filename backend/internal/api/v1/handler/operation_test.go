@@ -132,6 +132,20 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	if restoreErr != nil || restoreOp.Action != "rgw_zonegroup.cloud_restore" || restoreOp.Risk != "high" || restoreOp.MaxAttempts != 1 || restoreOp.ResourceKey != "rgw/zonegroup/restore-group" {
 		t.Fatal("unsafe restore queue")
 	}
+	aclBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"acl-group","realm_id":"r","placement_id":"p","storage_class":"COLD","tier_type":"cloud-s3","expected_default_placement":"old","expected_acls":[],"acls":[{"source_id":"s","dest_id":"","type":"id"}],"confirm_acl":true,"confirm_clear":false}`, cluster.ID)
+	aclResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/acl", aclBody, "cloud-acl")
+	if aclResponse.Code != http.StatusAccepted {
+		t.Fatal(aclResponse.Code)
+	}
+	aclOp, aclErr := db.FindOperation(context.Background(), operationIDFromResponse(t, aclResponse))
+	if aclErr != nil || aclOp.Action != "rgw_zonegroup.cloud_acl" || aclOp.Risk != "high" || aclOp.MaxAttempts != 1 || aclOp.ResourceKey != "rgw/zonegroup/acl-group" {
+		t.Fatal("unsafe ACL queue")
+	}
+	for _, body := range []string{strings.ReplaceAll(aclBody, `"expected_acls":[],`, ""), strings.ReplaceAll(aclBody, `"type":"id"`, `"type":"unknown"`), strings.ReplaceAll(aclBody, `"dest_id":""`, `"dest_id":null`), strings.ReplaceAll(aclBody, `"type":"id"`, `"type":"id","secret":"private"`)} {
+		if response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/acl", body, "bad-acl"); response.Code != http.StatusBadRequest {
+			t.Fatal("invalid ACL contract accepted")
+		}
+	}
 	glacierBody := strings.TrimSuffix(strings.ReplaceAll(strings.ReplaceAll(restoreBody, "restore-group", "glacier-group"), `"tier_type":"cloud-s3"`, `"tier_type":"cloud-s3-glacier"`), "}") + `,"glacier_restore_days":0,"glacier_restore_tier_type":"Expedited"}`
 	if response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/restore", glacierBody, "glacier-restore"); response.Code != http.StatusAccepted {
 		t.Fatal("Glacier contract rejected", response.Code)
