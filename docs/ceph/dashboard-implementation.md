@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### MON 会话数精度与缺失值
+
+- 对照 `Monitor.cc` 的 `add_u64` 会话计数及参考 Monitor 页面，`tell mon.<name> perf dump` 的 `mon.num_sessions` 按 uint64 校验，再以十进制字符串写入 MON 及性能计数器库存，避免浏览器 JSON 数字精度损失。
+- 列表与详情按字符串显示完整计数，零值保持为零；缺失、错误类型、负数、非整数及溢出不伪装为有效会话数。页面明确标注采集时状态，不把单点数据称为历史趋势。
+- 新增原生采集到 JSON 序列化测试及前端边界测试，覆盖零、超 JavaScript 安全整数、uint64 上限与异常输入。`make test-backend`（含 OpenAPI 检查）及 `make test-frontend` 均通过；未进行真实集群联调。
+
 #### MON 完整公共地址列表
 
 - 对照参考 Monitor 页面、`ceph mon dump` 和 `msg_types.cc` 的地址输出，原采集仅使用 `public_addrs.addrvec` 首项，导致多协议地址不可见。现新增库存字段 `public_addresses`，保存每一项的原生 `type` 和 `addr`，通过现有 MON API 提供。

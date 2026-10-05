@@ -11,6 +11,7 @@ import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
 import { MonPublicAddresses } from './MonPublicAddresses'
+import { monSessionCount } from './monSessionCount'
 
 const { Text } = Typography
 const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
@@ -83,7 +84,7 @@ export function MonDetailPage() {
             <Descriptions.Item label="状态">
               <Tag color={mon.in_quorum === true ? 'success' : 'default'}>{mon.in_quorum === true ? '仲裁中' : '未加入仲裁'}</Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="Open sessions">{textValue(mon.open_sessions)}</Descriptions.Item>
+            <Descriptions.Item label="Open sessions（采集时）">{monSessionCount(mon.open_sessions)}</Descriptions.Item>
             <Descriptions.Item label="数据源">{textValue(mon.source)}</Descriptions.Item>
             <Descriptions.Item label="资源版本">{textValue(mon.resource_version)}</Descriptions.Item>
             <Descriptions.Item label="采集时间">{formatDateTime(mon.observed_at)}</Descriptions.Item>

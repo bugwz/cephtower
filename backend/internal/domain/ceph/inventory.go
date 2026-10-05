@@ -85,7 +85,7 @@ type Monitor struct {
 	Address         string           `json:"address"`
 	PublicAddresses []MonitorAddress `json:"public_addresses"`
 	InQuorum        bool             `json:"in_quorum"`
-	OpenSessions    any              `json:"open_sessions,omitempty"`
+	OpenSessions    *string          `json:"open_sessions"`
 }
 type MonitorAddress struct {
 	Type    string `json:"type"`

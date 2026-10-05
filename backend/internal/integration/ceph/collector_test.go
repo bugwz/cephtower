@@ -481,7 +481,7 @@ func TestCollectTopologyStoresMonitorStatusAndPerfCounters(t *testing.T) {
 	if status.FSID != "00000000-0000-0000-0000-000000000001" || status.Epoch != 5 || len(status.QuorumMon) != 2 {
 		t.Fatalf("monitor status = %#v", status)
 	}
-	if monitor.OpenSessions != json.Number("15") {
+	if monitor.OpenSessions == nil || *monitor.OpenSessions != "15" {
 		t.Fatalf("open sessions = %#v", monitor.OpenSessions)
 	}
 	latency := counters["paxos.commit_latency"]

@@ -38,6 +38,7 @@ import { HostDetailPage } from './HostDetailPage'
 import { formatBytes, HostPage } from './HostPage'
 import { MonDetailPage } from './MonDetailPage'
 import { MonPublicAddresses } from './MonPublicAddresses'
+import { monSessionCount } from './monSessionCount'
 import { PoolDetailPage } from './PoolDetailPage'
 import { PoolManagementPage } from './PoolManagementPage'
 import { ServicePage } from './ServicePage'
@@ -142,7 +143,7 @@ export function MonManagementPage() {
               title: '状态',
               render: (_, row) => <Tag color={row.in_quorum === true ? 'success' : 'default'}>{row.in_quorum === true ? '仲裁中' : '未加入仲裁'}</Tag>
             },
-            { key: 'open_sessions', title: 'Open sessions' },
+            { key: 'open_sessions', title: 'Open sessions（采集时）', render: (value) => monSessionCount(value) },
             {
               key: 'actions',
               title: '操作',

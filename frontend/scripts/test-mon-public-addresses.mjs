@@ -17,3 +17,7 @@ for (const file of ['pages.tsx', 'MonDetailPage.tsx']) {
   assert.ok(readFileSync(new URL(`../src/pages/cluster/${file}`, import.meta.url), 'utf8').includes('MonPublicAddresses'))
 }
 console.log('MON public address list preserves native protocols and IPv6 text')
+const counts = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/cluster/monSessionCount.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(counts)
+for (const value of ['0', '15', '9007199254740993', '18446744073709551615']) assert.equal(counts.monSessionCount(value), value)
+for (const value of [undefined, null, 0, false, {}, [], '01', '-1', '1.5', '1e3', '18446744073709551616']) assert.equal(counts.monSessionCount(value), '未返回或格式无效')

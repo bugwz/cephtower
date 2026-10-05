@@ -608,7 +608,7 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 		}
 		_, inQuorum := quorumSet[wire.Name]
 		var counters []Observation
-		var openSessions any
+		var openSessions *string
 		if perfAvailable {
 			counters, openSessions = p.collectMonitorPerfCounters(ctx, access, wire.Name, perfPriority, now)
 			rows = append(rows, counters...)
@@ -684,7 +684,7 @@ func (p *NativeProvider) collectMgrStatsThreshold(ctx context.Context, access Cl
 	return threshold, true
 }
 
-func (p *NativeProvider) collectMonitorPerfCounters(ctx context.Context, access ClusterAccess, monitor string, minimumPriority int, observedAt time.Time) ([]Observation, any) {
+func (p *NativeProvider) collectMonitorPerfCounters(ctx context.Context, access ClusterAccess, monitor string, minimumPriority int, observedAt time.Time) ([]Observation, *string) {
 	var schema map[string]map[string]perfCounterSchema
 	if err := p.runInto(ctx, access, "collect.mon_perf.schema", []string{"tell", "mon." + monitor, "perf", "schema", "--format", "json"}, &schema); err != nil {
 		return nil, nil
@@ -699,7 +699,7 @@ func (p *NativeProvider) collectMonitorPerfCounters(ctx context.Context, access 
 	}
 	sort.Strings(groups)
 	rows := make([]Observation, 0)
-	var openSessions any
+	var openSessions *string
 	for _, group := range groups {
 		names := make([]string, 0, len(schema[group]))
 		for name := range schema[group] {
@@ -715,13 +715,27 @@ func (p *NativeProvider) collectMonitorPerfCounters(ctx context.Context, access 
 			rawValue := dashboardPerfRawValue(values[group][name], definition)
 			qualifiedName := group + "." + name
 			if qualifiedName == "mon.num_sessions" {
-				openSessions = rawValue
+				openSessions = monitorSessionCount(rawValue)
+				rawValue = openSessions
 			}
 			payload := cephdomain.MonitorPerfCounter{Monitor: monitor, Name: qualifiedName, Description: definition.Description, Value: rawValue, RawValue: rawValue, Unit: dashboardPerfUnit(definition.Units, metricType), MetricType: metricType, ValueType: definition.ValueType, Priority: definition.Priority}
 			rows = append(rows, Observation{Kind: "mon_perf_counter", NaturalKey: monitor + ":" + qualifiedName, Name: qualifiedName, ParentKind: "mon", ParentKey: monitor, Source: "ceph_cli", Payload: payload, ObservedAt: observedAt})
 		}
 	}
 	return rows, openSessions
+}
+
+func monitorSessionCount(value any) *string {
+	number, ok := value.(json.Number)
+	if !ok {
+		return nil
+	}
+	count, err := strconv.ParseUint(number.String(), 10, 64)
+	if err != nil {
+		return nil
+	}
+	text := strconv.FormatUint(count, 10)
+	return &text
 }
 
 func dashboardPerfRawValue(value any, definition perfCounterSchema) any {
