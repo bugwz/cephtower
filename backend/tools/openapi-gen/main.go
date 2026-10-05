@@ -108,6 +108,8 @@ func successResponseSchema(route router.Route) string {
 		return "RBDMirrorBootstrapTokenResponse"
 	case "POST /rgw/realm/token":
 		return "RGWRealmTokenResponse"
+	case "POST /rgw/zone/sync/status":
+		return "RGWSyncStatusResponse"
 	case "GET /healthz", "GET /readyz":
 		return "HealthResponse"
 	case "GET /bootstrap":
@@ -211,6 +213,7 @@ func writeResponseSchemas(b *strings.Builder) {
 		{"CephKeyringResponse", "CephKeyring"},
 		{"RBDMirrorBootstrapTokenResponse", "RBDMirrorBootstrapToken"},
 		{"RGWRealmTokenResponse", "RGWRealmToken"},
+		{"RGWSyncStatusResponse", "RGWSyncStatus"},
 		{"CephLogsResponse", "CephLogs"}, {"ConfigurationOptionResponse", "JSONValue"},
 	}
 	for _, response := range responses {
@@ -396,6 +399,8 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		}
 	case "POST /rgw/realm/token":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "realm_id": stringField(true), "name": stringField(true)}
+	case "POST /rgw/zone/sync/status":
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "zone_id": stringField(true), "name": stringField(true)}
 	case "POST /rbd/mirroring/bootstrap/peer":
 		fields = map[string]handler.JSONField{
 			"cluster_id": integerField(true),
@@ -552,6 +557,7 @@ func isAsyncRoute(route router.Route) bool {
 		"POST /endpoint", "POST /role", "POST /role/binding", "POST /user",
 		"POST /rbd/mirroring/bootstrap/peer", "POST /rbd/mirroring/bootstrap/token",
 		"POST /rgw/realm/token",
+		"POST /rgw/zone/sync/status",
 		"PUT /credential":
 		return false
 	default:
@@ -1247,6 +1253,12 @@ const components = `components:
       required: [keyring]
       properties:
         keyring: {type: string, description: 'Selected Ceph entities in keyring format; contains secrets'}
+    RGWSyncStatus:
+      type: object
+      additionalProperties: false
+      required: [report]
+      properties:
+        report: {type: string, readOnly: true, description: 'Native zone-scoped radosgw-admin sync status text; successful retrieval does not imply synchronized data'}
     RGWRealmToken:
       type: object
       additionalProperties: false

@@ -25253,6 +25253,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /rgw/zone/sync/status:
+    post:
+      operationId: post_rgw_zone_sync_status
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, name, zone_id]
+              properties:
+                cluster_id:
+                  type: integer
+                name:
+                  type: string
+                zone_id:
+                  type: string
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RGWSyncStatusResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /rgw/zonegroup:
     patch:
       operationId: patch_rgw_zonegroup
@@ -30565,6 +30598,12 @@ components:
       required: [keyring]
       properties:
         keyring: {type: string, description: 'Selected Ceph entities in keyring format; contains secrets'}
+    RGWSyncStatus:
+      type: object
+      additionalProperties: false
+      required: [report]
+      properties:
+        report: {type: string, readOnly: true, description: 'Native zone-scoped radosgw-admin sync status text; successful retrieval does not imply synchronized data'}
     RGWRealmToken:
       type: object
       additionalProperties: false
@@ -30891,6 +30930,15 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/RGWRealmToken'
+    RGWSyncStatusResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          unevaluatedProperties: false
+          required: [data]
+          properties:
+            data:
+              $ref: '#/components/schemas/RGWSyncStatus'
     CephLogsResponse:
       allOf:
         - $ref: '#/components/schemas/APIResponse'

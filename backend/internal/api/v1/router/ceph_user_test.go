@@ -32,6 +32,8 @@ type authRouteExecutor struct{ specs []executor.CommandSpec }
 func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.specs = append(e.specs, spec)
 	switch spec.ID {
+	case "rgw_zone.sync.status":
+		return executor.CommandResult{Stdout: []byte("          realm realm-id (realm-a)\n      zonegroup group-id (group-a)\n           zone zone-id (zone-a)\n  metadata sync no sync (zone is master)\n")}, nil
 	case "rgw_realm.token.read":
 		token := base64.StdEncoding.EncodeToString([]byte(`{"realm_id":"realm-id","realm_name":"realm-a","endpoint":"https://rgw.example","access_key":"realm-access","secret":"realm-secret"}`))
 		raw, _ := json.Marshal([]map[string]string{{"realm": "realm-a", "token": token}})
@@ -264,6 +266,17 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 		t.Fatal("export did not return a no-store keyring")
 	}
 	send("POST", "/ceph/users/import", map[string]any{"keyring": "[client.imported]\nkey = sensitive-import-key\n"})
+	syncResponse := send("POST", "/rgw/zone/sync/status", map[string]any{"zone_id": "zone-id", "name": "zone-a"})
+	if syncResponse.Code != http.StatusOK || syncResponse.Header().Get("Cache-Control") != "no-store" || strings.Contains(syncResponse.Body.String(), "operation_id") || !strings.Contains(syncResponse.Body.String(), "metadata sync") {
+		t.Fatal("sync status was queued, cached or lost")
+	}
+	for _, body := range []string{`{"cluster_id":0,"zone_id":"zone-id","name":"zone-a"}`, fmt.Sprintf(`{"cluster_id":%d,"zone_id":"wrong","name":"zone-a"}`, cluster.ID), fmt.Sprintf(`{"cluster_id":%d,"zone_id":"zone-id","name":"zone-a","extra":true}`, cluster.ID)} {
+		bad := httptest.NewRecorder()
+		mux.ServeHTTP(bad, httptest.NewRequest("POST", "/api/v1/rgw/zone/sync/status", strings.NewReader(body)))
+		if bad.Code < 400 || bad.Header().Get("Cache-Control") != "no-store" || strings.Contains(bad.Body.String(), "metadata sync") {
+			t.Fatal("invalid sync scope accepted")
+		}
+	}
 	realmResponse := send("POST", "/rgw/realm/token", map[string]any{"realm_id": "realm-id", "name": "realm-a"})
 	if realmResponse.Code != http.StatusOK || realmResponse.Header().Get("Cache-Control") != "no-store" || strings.Contains(realmResponse.Body.String(), "operation_id") {
 		t.Fatal("realm token was cached or queued")

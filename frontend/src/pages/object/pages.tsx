@@ -3,6 +3,7 @@ import { rgwRealmImportAction } from './rgwRealmImport'
 import { rgwRealmSetupAction } from './rgwRealmSetup'
 import { rgwRealmMigrationAction } from './rgwRealmMigration'
 import { RgwRealmToken } from './RgwRealmToken'
+import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwRealmTransfer } from './RgwRealmTransfer'
 import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
 import { zonegroupPipeZonesSelectionChanged } from './rgwZonegroupSyncGroup'
@@ -1278,6 +1279,7 @@ const definitions: Record<
     title: 'RGW Zones',
     path: '/rgw/zones',
     requiredCapabilities: ['rgw_admin'],
+    detailContent: (row, clusterId) => <RgwSyncStatus key={`${clusterId}:${row.id}:${row.name}`} row={row} clusterId={clusterId} />,
     createAction: {
       title: '新建 Zone',
       buttonLabel: '新建 Zone',

@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### Zone 原生 Multisite 同步报告
+
+沿参考 Dashboard `rgw-multisite.service.ts::getSyncStatus` → `RgwMultisite.get_multisite_sync_status` → `radosgw-admin.cc::sync_status`，新增只读 `POST /rgw/zone/sync/status`，按 cluster_id 与 zone_id 执行 `radosgw-admin sync status --zone-id <id>`，不假设该命令支持 JSON 输出。校验原生报告的 Zone ID 和名称后返回完整文本，保留 Realm、Zonegroup、当前时间、特性、元数据同步、各来源分片进度、落后、恢复和来源错误；不从退出码、主 Zone 的 no sync 或缺失 data sync 段推导“同步完成”。读取有超时和输出上限，拒绝无效编码、身份漂移、非零退出和不完整报告；原始 stderr 不返回，响应禁止缓存，不创建持久化操作任务。
+
+Zone 详情提供按需读取入口，刷新先移除旧报告，以 React 文本安全渲染；切换集群、Zone、库存失效或卸载时丢弃过期响应，不自动轮询或写入同步配置。新增命令参数、原文保留、无数据来源、来源错误、非法报告、API 严格输入/no-store/非队列响应与前端请求竞态测试；全量后端测试、OpenAPI 一致性检查、前端回归、类型检查及生产构建通过。无真实 Ceph 集群或浏览器视觉验证；该功能仅报告当前本地 Zone 的原生观察，不承诺全站点一致性。
+
 - **迁移派生字段证据前置检查**：上项派生字段比较依赖旧成员的 `supported_features` 和 `log_data`。现在建立快照时即要求 features 为无重复的字符串数组、日志字段为布尔值；缺失或类型异常时，在 Realm 创建、重命名和任何其他写命令之前停止，避免已知不可验证的源状态进入非事务变更。增加完整执行入口的缺失、类型错误及重复值用例，逐条断言未执行 mutating 命令；未改变正常原生数据的迁移语义，无真实集群验证。
 
 - **迁移原生派生字段校验修复**：继续核对 `radosgw-admin.cc::ZONE_MODIFY` 与 `rgw_zone.cc::add_zone_to_group`，发现未显式传 feature 参数时原生命令会加入当前版本支持的 features，并按组内 Zone 数重新计算 `log_data`。将重命名阶段的严格保留检查与修改后的检查分开：重命名仍不允许这些字段改变；修改后只允许唯一字符串 feature 集合扩展（不可删除旧项），并要求单 Zone 的 `log_data=false`。池引用、其他成员字段及未知配置仍严格比较，拒绝把整条成员记录排除检查。补充阶段边界、feature 丢失/重复/类型错误、日志值及无关字段变化回归；无真实集群验证。
