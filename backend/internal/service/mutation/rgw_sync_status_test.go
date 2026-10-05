@@ -13,13 +13,17 @@ import (
 const syncReportFixture = "          realm realm-id (realm-a)\n      zonegroup group-id (group-a)\n           zone zone-id (zone-a)\n   current time 2026-10-05T00:00:00Z\nzonegroup features enabled: resharding\n  metadata sync no sync (zone is master)\n      data sync source: source-id (source-a)\n                       data is behind on 2 shards\n                       behind shards: [1,2]\n                       1 shards are recovering\n"
 
 type syncReportExecutor struct {
-	specs  []executor.CommandSpec
-	result executor.CommandResult
-	err    error
+	specs    []executor.CommandSpec
+	result   executor.CommandResult
+	err      error
+	afterRun func()
 }
 
 func (e *syncReportExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.specs = append(e.specs, spec)
+	if e.afterRun != nil {
+		e.afterRun()
+	}
 	return e.result, e.err
 }
 
@@ -52,6 +56,27 @@ func TestReadRGWSyncStatus(t *testing.T) {
 		if err == nil || got != "" || strings.Contains(err.Error(), "private diagnostic") {
 			t.Fatal("command failure accepted or exposed")
 		}
+	}
+}
+
+func TestReadRGWSyncStatusCancellation(t *testing.T) {
+	s, _, cluster := newCephUserService(t)
+	runner := &syncReportExecutor{}
+	s.executor = runner
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if report, err := s.ReadRGWSyncStatus(ctx, cluster, "zone-id", "zone-a"); !errors.Is(err, context.Canceled) || report != "" || len(runner.specs) != 0 {
+		t.Fatal("cancelled read executed or returned a report", err)
+	}
+	ctx, cancel = context.WithCancel(context.Background())
+	defer cancel()
+	runner.result = executor.CommandResult{Stdout: []byte(syncReportFixture), Stderr: []byte("private diagnostic")}
+	runner.afterRun = cancel
+	if report, err := s.ReadRGWSyncStatus(ctx, cluster, "zone-id", "zone-a"); !errors.Is(err, context.Canceled) || report != "" || len(runner.specs) != 1 {
+		t.Fatal("late command success escaped cancellation", err)
+	}
+	if strings.Trim(string(runner.result.Stdout), "\x00") != "" || strings.Trim(string(runner.result.Stderr), "\x00") != "" {
+		t.Fatal("cancelled command retained native buffers")
 	}
 }
 

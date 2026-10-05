@@ -16,16 +16,25 @@ func (s *Service) ReadRGWSyncStatus(ctx context.Context, clusterID uint64, zoneI
 	if clusterID == 0 || !syncFlowToken(zoneID) || !syncFlowToken(name) {
 		return "", invalid("cluster_id, zone_id and name are required")
 	}
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 	access, err := s.clusters.Access(ctx, clusterID)
 	if err != nil {
 		return "", err
 	}
 	defer func() { access.ClientKey = "" }()
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 	result, err := s.executor.Run(ctx, access, executor.CommandSpec{
 		ID: "rgw_zone.sync.status", Binary: executor.BinaryRGWAdmin,
 		Args: []string{"sync", "status", "--zone-id", zoneID}, Timeout: time.Minute, MaxOutput: 1 << 20,
 	})
 	defer func() { clear(result.Stdout); clear(result.Stderr) }()
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 	if err != nil || result.ExitCode != 0 {
 		return "", &cephdomain.ActionError{Code: "ceph_command_failed", Message: "Zone sync status read failed; check local zone configuration and cluster access"}
 	}
