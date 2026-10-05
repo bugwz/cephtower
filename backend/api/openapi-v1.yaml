@@ -21367,6 +21367,43 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /rgw/encryption/configuration:
+    get:
+      operationId: get_rgw_encryption_configuration
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, encryption_type, entity, provider]
+              properties:
+                cluster_id:
+                  type: integer
+                encryption_type:
+                  type: string
+                  enum: ["kms", "s3"]
+                entity:
+                  type: string
+                provider:
+                  type: string
+                  enum: ["kmip", "vault"]
+      responses:
+        '200':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigurationOptionResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /rgw/period/commit:
     post:
       operationId: post_rgw_period_commit

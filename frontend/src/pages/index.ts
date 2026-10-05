@@ -8,6 +8,7 @@ import { CrushMapPage } from './cluster/CrushMapPage'
 import { CephUsersPage } from './cluster/CephUsersPage'
 import { AuditPage } from './audit/AuditPage'
 import { RgwStorageClassesPage } from './object/RgwStorageClassesPage'
+import { RgwEncryptionPage } from './object/RgwEncryptionPage'
 import {
   ImageMirroringPage,
   IscsiPage,
@@ -142,6 +143,7 @@ export const pageComponents: Record<PageKey, ComponentType> = {
   rgwRoles: RgwRolesPage,
   rgwTopics: RgwTopicsPage,
   rgwStorageClasses: RgwStorageClassesPage,
+  rgwEncryption: RgwEncryptionPage,
   bucketManagement: BucketManagementPage,
   bucketPolicy: BucketPolicyPage,
   gatewayManagement: GatewayManagementPage,

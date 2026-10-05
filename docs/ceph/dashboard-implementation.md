@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+#### RGW 加密提供商只读 API 与配置页面
+
+将上一轮原生读取服务接入 `GET /rgw/encryption/configuration`：严格请求体指定 cluster_id、client.rgw 实体、encryption_type 和 provider，复用既有认证与审计，响应 no-store；新增路由和生成 OpenAPI。对象存储增加“服务端加密配置”（`/object/encryption`），显式选择 SSE-KMS Vault/KMIP 或 SSE-S3 Vault 后按需读取。前端按准确配置实体、组合、字段白名单及原生键校验完整返回，拒绝部分字段、重复字段和未脱敏密码；展示原生选项、值、读取时间与 Monitor 后端选择值，明确区分提供商配置和后端选择。
+页面保留空字符串/false，文件字段按路径展示，隐藏值与被净化地址标注原因。切换实体、组合、集群或卸载取消请求并隔离迟到响应、旧回调。提示 Monitor 默认/继承值不证明实际 RGW 存在、运行时生效、文件存在或远端可达；当前只读，不隐式开启加密、不修改 Bucket。增加 API 成功/非法输入/错误脱敏/未认证零命令、三种组合字段校验及前端作用域测试。`make test-backend`（含 OpenAPI 一致性）、`make test-frontend`（含 TypeScript 和生产构建）通过；无真实集群或浏览器视觉验证。提供商修改与完整迁移仍待继续。
+
 #### RGW 加密提供商原生读取基础（API 与页面待接入）
 
 本轮核对 `rgw-configuration-page` / `rgw-config-modal` → `RgwBucket.get_encryption_config` → `CephService._get_conf_keys`，确认本项目 Bucket 默认加密页面并不覆盖 RGW 的 Vault/KMIP 提供商配置。新增 `clusterinspect.RGWEncryptionConfiguration`，以明确 `client.rgw.<id>` 配置实体读取 SSE-KMS Vault/KMIP 或 SSE-S3 Vault 白名单字段。原生命令为逐项 `ceph config get ENTITY OPTION`：`ConfigMonitor.cc` 的单键分支输出原值加一个换行，即使指定 JSON 格式也不是 JSON，故使用有界纯文本解析，保留空值、false 和首尾空格，拒绝异常编码/控制字符及非零退出，不使用通用 JSON 读取器。
