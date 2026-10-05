@@ -74,6 +74,12 @@ func TestActionDispatcherReconcilesNativeMutation(t *testing.T) {
 }
 
 func TestActionDispatcherFailsWhenPostReconcileFails(t *testing.T) {
+	groupClassReconciler := &reconcileExecutorFake{err: errors.New("offline")}
+	_, groupClassErr := NewActionDispatcher(&mutationExecutorFake{}, nil, groupClassReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zonegroup.storage_class_create", ResourceKind: "rgw_zonegroup"})
+	var groupClassFailure *cephdomain.ActionError
+	if !errors.As(groupClassErr, &groupClassFailure) || groupClassFailure.Retryable || groupClassReconciler.kind != "rgw_zonegroup" {
+		t.Fatal("unsafe group class refresh")
+	}
 	classReconciler := &reconcileExecutorFake{err: errors.New("offline")}
 	_, classErr := NewActionDispatcher(&mutationExecutorFake{}, nil, classReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zone.storage_class_create", ResourceKind: "rgw_zone"})
 	var classFailure *cephdomain.ActionError

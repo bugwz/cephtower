@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- **Zonegroup 普通存储类声明**：沿参考控制器 storage_class → `add_placement_targets` 的普通类分支，新增高风险单次尝试 `POST /rgw/zonegroup/storage/class` 与组行操作。在已有 placement 中调用显式组 ID 的 `zonegroup placement add --placement-id … --storage-class …`，仅新增未声明的普通类，拒绝同名类/云分层冲突及带 `/` 的限定 placement 表示。按原生集合排序回读完整组，保留标签、已有类、云分层、成员、其他目标和配置；命令输出仅为 target map，因此不把它当作完整组的验证结果。原生在默认放置目标为空时会初始化为当前目标的 STANDARD，界面明确提示并提交 expected_default_placement，后端拒绝默认值漂移。写前重读、写后完整验证，刷新组库存，失败不自动重试。普通声明按参考语义不发布 Period，也不配置 Zone 池；可继续使用上一增量的 Zone 新增存储类，再单独评估 Period 发布。新增默认初始化/保留、声明冲突、范围/标签/成员保护、每阶段错误、API 风险/参数拒绝、刷新与表单测试；全新 placement、云分层及删除操作仍待继续，无真实集群验证。
+
 - **Zone 已有目标新增存储类**：对照 `RgwMultisite.add_storage_class_zone`，新增高风险单次尝试 `POST /rgw/zone/storage/class` 与 Zone 行操作。调用显式 Zone/Zonegroup ID 的 `zone placement add --placement-id … --storage-class … --data-pool … --compression …`；原生命令会更新已有类，因此新增入口要求该类在 Zone 中不存在，且在组目标中已声明、不是云分层类。已有 placement 必须具备规范索引池。写前重读完整 Zone 和组，写后完整核验只新增该类的数据池与压缩；不允许修改既有类、索引/额外池、其他 placement 或系统密钥。API 拒绝索引池等不属于新增类的参数。按参考新增类服务语义不提交 Period、不重启、不迁移数据、不创建池；刷新 Zone 库存，失败不自动重试。界面明确组声明、池可用性、部署算法支持及并发非原子限制。新增独立/有 Realm 命令链、逐阶段失败、覆盖拒绝、并发新增、组声明/云分层检查、其他字段保护、队列/刷新和表单测试。全新 placement 和组侧存储类声明的创建仍待继续；无真实集群或浏览器视觉验证。
 
 - **Zone 已有放置池与压缩编辑**：对照 `rgw-multisite-zone-form` 的 placement/storage class 表单和 `RgwMultisite.add_placement_targets_storage_class_zone`，新增高风险单次尝试 `PATCH /rgw/zone/placement`。界面从既有库存选择所属 Zonegroup、已有 placement 和存储类，加载索引池、额外数据池、所选类数据池与压缩算法。后端使用显式 Zone/Zonegroup ID 的 `zone placement modify`；不沿用参考服务重复传递 data-pool 参数的做法。核验身份、Realm、成员和组侧 target/class，拒绝云分层类；复用规范池引用解析，支持命名空间及转义，额外数据池可显式清空。修改前重读 Zone/组；修改输出与独立 Zone 回读必须完整匹配预期，仅允许目标池/压缩字段变化，保留其他类、placement、inline_data、index_type 和系统密钥。组配置必须保持不变。有 Realm 时按显式范围提交并回读 Period，无 Realm 不发布；刷新三类库存，写后失败禁止自动重试。

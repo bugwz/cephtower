@@ -837,6 +837,10 @@ func (h *Handler) CreateRGWZoneStorageClass(w http.ResponseWriter, r *http.Reque
 	h.MutateResource("rgw_zone", "rgw_zone.storage_class_create", "high")(w, r)
 }
 
+func (h *Handler) CreateRGWZonegroupStorageClass(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_zonegroup", "rgw_zonegroup.storage_class_create", "high")(w, r)
+}
+
 func (h *Handler) ImportRGWRealm(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_realm", "rgw_realm.import", "high")(w, r)
 }

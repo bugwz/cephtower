@@ -68,6 +68,18 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal("storage class creation not queued", storageResponse.Code)
 	}
 	storageOp, storageErr := db.FindOperation(context.Background(), operationIDFromResponse(t, storageResponse))
+	groupClassBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"class-group","realm_id":"r","placement_id":"p","storage_class":"COLD","expected_default_placement":"","confirm_create":true}`, cluster.ID)
+	groupClassResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/zonegroup/storage/class", groupClassBody, "group-class")
+	if groupClassResponse.Code != http.StatusAccepted {
+		t.Fatal("group class declaration not queued", groupClassResponse.Code)
+	}
+	groupClassOp, groupClassErr := db.FindOperation(context.Background(), operationIDFromResponse(t, groupClassResponse))
+	if groupClassErr != nil || groupClassOp.Action != "rgw_zonegroup.storage_class_create" || groupClassOp.Risk != "high" || groupClassOp.MaxAttempts != 1 || groupClassOp.ResourceKey != "rgw/zonegroup/class-group" {
+		t.Fatal("unsafe group class operation")
+	}
+	if response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/zonegroup/storage/class", strings.TrimSuffix(groupClassBody, "}")+`,"tier_type":"cloud-s3"}`, "bad-group-class"); response.Code != http.StatusBadRequest {
+		t.Fatal("cloud configuration accepted on ordinary class declaration")
+	}
 	if storageErr != nil || storageOp.Action != "rgw_zone.storage_class_create" || storageOp.MaxAttempts != 1 || storageOp.Risk != "high" || storageOp.ResourceKey != "rgw/zone/zone-class" {
 		t.Fatal("unsafe storage class operation")
 	}
