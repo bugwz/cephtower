@@ -92,7 +92,8 @@ new Function('exports', 'require', ts.transpileModule(bucketDetails, { compilerO
 const bucketRow = { index_type: 'Normal', explicit_placement: { data_pool: 'data' }, tagset: { team: 'storage' } }
 const tabs = detailsView.RgwBucketDetails({ row: bucketRow })
 assert.equal(tabs.type, 'Tabs')
-assert.deepEqual(tabs.props.items.map(item => item.key), ['index', 'placement', 'tags', 'quota', 'rate-limit', 'usage'])
+assert.deepEqual(tabs.props.items.map(item => item.key), ['index', 'placement', 'tags', 'quota', 'rate-limit', 'usage', 'summary'])
+assert.equal(tabs.props.items.find(item => item.key === 'summary').children.props.row, bucketRow)
 assert.equal(tabs.props.items[0].children.props.row, bucketRow)
 assert.equal(tabs.props.items[1].children.props.value, bucketRow.explicit_placement)
 assert.equal(tabs.props.items[2].children.props.value, bucketRow.tagset)
@@ -128,3 +129,4 @@ assert.deepEqual(times({ last_synced: 'sync', last_updated: 'update' }, true), {
 assert.equal(times({ last_synced: 'wrong scope' }).synced, '未返回或格式无效')
 for (const value of [null, undefined, '', 0, false, []]) assert.equal(times({ last_stats_sync: value }).synced, '未返回或格式无效')
 import './test-rgw-lifecycle-progress.mjs'
+import './test-rgw-bucket-summary.mjs'
