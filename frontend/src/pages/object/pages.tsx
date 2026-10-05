@@ -23,6 +23,7 @@ import { RgwLocalClassDetails } from './RgwLocalClassDetails'
 import { cloudACLChanged, cloudACLInput, cloudACLConfirmation } from './rgwCloudACL'
 import { cloudTargetChanged, cloudTargetInput, cloudTargetConfirmation, cloudTargetTextFields } from './rgwCloudTarget'
 import { cloudConnectionChanged, cloudConnectionInput, cloudConnectionConfirmation } from './rgwCloudConnection'
+import { cloudCreateTargets, cloudCreateBlocked, cloudCreateChanged, cloudCreateInput, cloudCreateConfirmation } from './rgwCloudCreate'
 import { cloudRestoreBlocked, cloudRestoreTargets, cloudRestoreClasses, cloudRestoreLocalClasses, cloudRestoreChanged, cloudRestoreInput, cloudRestoreConfirmation } from './rgwCloudRestore'
 import { RgwRealmTransfer } from './RgwRealmTransfer'
 import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
@@ -1144,6 +1145,35 @@ const definitions: Record<
         {name:'confirm_tags',label:'范围确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份，了解目标标签、默认值和发布范围'}]}
       ],
       buildBody:(values,clusterId,row) => ({cluster_id:clusterId,...groupPlacementTagsInput(values,row)})
+    }, {
+      title:'新建云分层存储类',path:'/rgw/zonegroup/storage/class/cloud',method:'POST',
+      successMessage:'云分层创建与 Realm Period 已回读核验（未迁移数据或测试远端）',
+      disabledWhen:cloudCreateBlocked,changedValues:cloudCreateChanged,confirmation:cloudCreateConfirmation,
+      fields:[
+        {name:'placement_id',label:'已有放置目标',type:'select',required:true,optionsLoader:async (_clusterId,row)=>cloudCreateTargets(row)},
+        {name:'storage_class',label:'尚未声明的新云类名称（非 STANDARD）',required:true},
+        {name:'tier_type',label:'云分层类型',type:'select',required:true,options:[{value:'cloud-s3',label:'S3'},{value:'cloud-s3-glacier',label:'S3 Glacier'}]},
+        {name:'endpoint',label:'远端 HTTP(S) 端点',required:true},
+        {name:'access_key',label:'远端已配置的 Access Key',type:'password',required:true},
+        {name:'secret',label:'远端已配置的 Secret',type:'password',required:true},
+        ...cloudTargetTextFields.flatMap(([key,label])=>[
+          {name:`${key}_mode`,label:`${label}取值`,type:'select' as const,required:true,options:[{value:'set',label:'设置非空值'},{value:'clear',label:'明确使用空值'}]},
+          {name:key,label,required:true,visibleWhen:(values:Record<string,any>)=>values[`${key}_mode`]==='set'}
+        ]),
+        {name:'host_style',label:'寻址方式',type:'select',required:true,options:[{value:'path',label:'path 路径式'},{value:'virtual',label:'virtual 虚拟主机式'}]},
+        {name:'multipart_sync_threshold',label:'分段同步阈值（字节，核对远端限制）',type:'number',required:true,min:0,max:Number.MAX_SAFE_INTEGER},
+        {name:'multipart_min_part_size',label:'最小分段大小（字节，核对远端限制）',type:'number',required:true,min:0,max:Number.MAX_SAFE_INTEGER},
+        {name:'acls_json',label:'ACL 映射 JSON 数组（source_id/dest_id/type，无映射填 []）',type:'textarea',required:true},
+        {name:'retain_head_object',label:'保留头对象',type:'select',required:true,options:[{value:'true',label:'是'},{value:'false',label:'否'}]},
+        {name:'allow_read_through',label:'允许读穿透（可能产生远端费用）',type:'select',required:true,options:[{value:'true',label:'是'},{value:'false',label:'否'}]},
+        {name:'read_through_restore_days',label:'读穿透恢复天数',type:'number',required:true,min:0,max:Number.MAX_SAFE_INTEGER},
+        {name:'restore_storage_class',label:'已有本地恢复类（请核对各 Zone 池映射）',type:'select',required:true,optionsDependencies:['placement_id'],optionsLoader:async (_clusterId,row,values)=>cloudRestoreLocalClasses(row,values?.placement_id)},
+        {name:'glacier_restore_days',label:'Glacier 恢复天数',type:'number',required:true,min:0,max:Number.MAX_SAFE_INTEGER,visibleWhen:values=>values.tier_type==='cloud-s3-glacier'},
+        {name:'glacier_restore_tier_type',label:'Glacier 恢复等级（核对时延和费用）',type:'select',required:true,options:[{value:'Standard',label:'Standard'},{value:'Expedited',label:'Expedited'}],visibleWhen:values=>values.tier_type==='cloud-s3-glacier'},
+        {name:'credentials_saved',label:'凭据确认',type:'select',required:true,options:[{value:'acknowledged',label:'远端凭据已配置并安全保存'}]},
+        {name:'confirm_create',label:'创建与发布确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份，核对远端及恢复池、进程参数可见性和 Period 发布风险'}]}
+      ],
+      buildBody:(values,clusterId,row)=>({cluster_id:clusterId,...cloudCreateInput(values,row)})
     }, {
       title:'编辑云分层恢复配置',path:'/rgw/zonegroup/placement/restore',method:'PATCH',
       successMessage:'云分层恢复配置及 Realm Period 已回读核验（未直接恢复对象）',

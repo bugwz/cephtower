@@ -15,10 +15,14 @@ export function cloudConnectionChanged(changed:Row) {
 export function cloudConnectionInput(values:Row,row?:Row) {
   if(!cloudRestoreTargets(row).some(t=>t.value===values.placement_id)||!cloudRestoreClasses(row,values.placement_id).some((c:Row)=>c.value===values.storage_class))throw new Error('请选择已有 Realm 中的云分层')
   const tier=row!.placement_targets.find((t:Row)=>t.name===values.placement_id).tier_targets.find((t:Row)=>t.key===values.storage_class).val
+  const connection=cloudConnectionValues(values)
+  if(values.credentials_saved!=='acknowledged'||values.confirm_connection!=='acknowledged')throw new Error('请确认已安全保存凭据、进程参数可见性及发布风险')
+  return {name:row!.name,zonegroup_id:row!.id,realm_id:row!.realm_id,placement_id:values.placement_id,storage_class:values.storage_class,tier_type:tier.tier_type,expected_default_placement:row!.default_placement,...connection,credentials_saved:true,confirm_connection:true}
+}
+export function cloudConnectionValues(values:Row) {
   const endpoint=cloudConnectionEndpoint(values.endpoint)
   for(const key of ['access_key','secret'])if(typeof values[key]!=='string'||!values[key].trim()||new TextEncoder().encode(values[key]).length>4096||values[key].includes('[REDACTED]')||/[\x00-\x1f\x7f-\x9f]/.test(values[key]))throw new Error('请重新输入远端已配置的非空凭据，不可使用脱敏值')
-  if(values.credentials_saved!=='acknowledged'||values.confirm_connection!=='acknowledged')throw new Error('请确认已安全保存凭据、进程参数可见性及发布风险')
-  return {name:row!.name,zonegroup_id:row!.id,realm_id:row!.realm_id,placement_id:values.placement_id,storage_class:values.storage_class,tier_type:tier.tier_type,expected_default_placement:row!.default_placement,endpoint,access_key:values.access_key,secret:values.secret,credentials_saved:true,confirm_connection:true}
+  return {endpoint,access_key:values.access_key as string,secret:values.secret as string}
 }
 export function cloudConnectionConfirmation(values:Row,row?:Row) {
   const p=cloudConnectionInput(values,row)

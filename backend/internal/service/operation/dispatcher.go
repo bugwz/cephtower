@@ -77,7 +77,7 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 	if request.Action == "rgw_realm.setup" || request.Action == "rgw_realm.migrate" {
 		_, err = d.reconciler.RefreshKinds(ctx, request.ClusterID, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone", "rgw_user", "pool", "service"})
 		refreshed = err == nil
-	} else if request.Action == "rgw_zonegroup.cloud_connection" || request.Action == "rgw_zonegroup.cloud_target" || request.Action == "rgw_zonegroup.cloud_acl" || request.Action == "rgw_zonegroup.cloud_restore" || request.Action == "rgw_zonegroup.delete" || request.Action == "rgw_zone.delete" || request.Action == "rgw_zone.placement" || request.Action == "rgw_zone.placement_create" || request.Action == "rgw_zonegroup.storage_class_delete" || request.Action == "rgw_zonegroup.storage_class_delete_local" {
+	} else if request.Action == "rgw_zonegroup.cloud_create" || request.Action == "rgw_zonegroup.cloud_connection" || request.Action == "rgw_zonegroup.cloud_target" || request.Action == "rgw_zonegroup.cloud_acl" || request.Action == "rgw_zonegroup.cloud_restore" || request.Action == "rgw_zonegroup.delete" || request.Action == "rgw_zone.delete" || request.Action == "rgw_zone.placement" || request.Action == "rgw_zone.placement_create" || request.Action == "rgw_zonegroup.storage_class_delete" || request.Action == "rgw_zonegroup.storage_class_delete_local" {
 		_, err = d.reconciler.RefreshKinds(ctx, request.ClusterID, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone"})
 		refreshed = err == nil
 	} else if request.Action == "rgw_realm.import" {
@@ -98,7 +98,7 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		refreshed, err = d.reconciler.RefreshKindIfSupported(ctx, request.ClusterID, request.ResourceKind)
 	}
 	if err != nil {
-		if request.Action == "rgw_zonegroup.cloud_connection" || request.Action == "rgw_zonegroup.cloud_target" || request.Action == "rgw_zonegroup.cloud_acl" || request.Action == "rgw_zonegroup.cloud_restore" || request.Action == "rgw_zonegroup.placement_default" || request.Action == "rgw_zonegroup.placement_tags" || request.Action == "rgw_zonegroup.storage_class_delete" || request.Action == "rgw_zonegroup.storage_class_delete_local" {
+		if request.Action == "rgw_zonegroup.cloud_create" || request.Action == "rgw_zonegroup.cloud_connection" || request.Action == "rgw_zonegroup.cloud_target" || request.Action == "rgw_zonegroup.cloud_acl" || request.Action == "rgw_zonegroup.cloud_restore" || request.Action == "rgw_zonegroup.placement_default" || request.Action == "rgw_zonegroup.placement_tags" || request.Action == "rgw_zonegroup.storage_class_delete" || request.Action == "rgw_zonegroup.storage_class_delete_local" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "placement configuration verified but inventory refresh failed; refresh without repeating the mutation", Retryable: false}
 		}
 		if request.Action == "rgw_zone.placement" || request.Action == "rgw_zone.placement_create" || request.Action == "rgw_zone.storage_class_create" || request.Action == "rgw_zonegroup.storage_class_create" || request.Action == "rgw_zonegroup.placement_create" {

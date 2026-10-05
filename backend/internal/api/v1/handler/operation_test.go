@@ -142,6 +142,29 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal("unsafe ACL queue")
 	}
 	targetFields := `{"region":"","host_style":"path","target_path":"old","target_storage_class":"","multipart_sync_threshold":0,"multipart_min_part_size":16}`
+	cloudCreateBody := fmt.Sprintf(`{"cluster_id":%d,"name":"new-cloud-group","zonegroup_id":"g","realm_id":"r","placement_id":"p","storage_class":"NEW","tier_type":"cloud-s3","expected_default_placement":"old","endpoint":"https://cloud.example","access_key":"create-cloud-access","secret":"create-cloud-secret","credentials_saved":true,"confirm_create":true,"target":%s,"acls":[],"retain_head_object":false,"allow_read_through":true,"read_through_restore_days":0,"restore_storage_class":"STANDARD"}`, cluster.ID, targetFields)
+	cloudCreateResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/zonegroup/storage/class/cloud", cloudCreateBody, "cloud-create")
+	if cloudCreateResponse.Code != http.StatusAccepted {
+		t.Fatal(cloudCreateResponse.Code)
+	}
+	cloudCreateOp, cloudCreateErr := db.FindOperation(context.Background(), operationIDFromResponse(t, cloudCreateResponse))
+	if cloudCreateErr != nil || cloudCreateOp.Action != "rgw_zonegroup.cloud_create" || cloudCreateOp.Risk != "high" || cloudCreateOp.MaxAttempts != 1 || cloudCreateOp.ResourceKey != "rgw/zonegroup/new-cloud-group" {
+		t.Fatal("unsafe cloud creation queue")
+	}
+	for _, secret := range []string{"create-cloud-access", "create-cloud-secret"} {
+		if strings.Contains(cloudCreateResponse.Body.String(), secret) || strings.Contains(cloudCreateOp.ParametersCiphertext, secret) {
+			t.Fatal("cloud creation credential exposed")
+		}
+	}
+	cloudCreatePlain, cloudCreateErr := security.Decrypt(cloudCreateOp.ParametersCiphertext, contractKey)
+	if cloudCreateErr != nil || !strings.Contains(string(cloudCreatePlain), "create-cloud-secret") {
+		t.Fatal("cloud creation encrypted credential lost")
+	}
+	for _, body := range []string{strings.ReplaceAll(cloudCreateBody, `"acls":[],`, ""), strings.ReplaceAll(cloudCreateBody, `"host_style":"path"`, `"host_style":"invalid"`), strings.ReplaceAll(cloudCreateBody, `"retain_head_object":false`, `"retain_head_object":"false"`), strings.ReplaceAll(cloudCreateBody, `"acls":[]`, `"acls":[{"source_id":"s","dest_id":"","type":"wrong"}]`)} {
+		if response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/zonegroup/storage/class/cloud", body, "bad-cloud-create"); response.Code != http.StatusBadRequest {
+			t.Fatal("invalid creation contract accepted")
+		}
+	}
 	connectionBody := fmt.Sprintf(`{"cluster_id":%d,"name":"connection-group","zonegroup_id":"g","realm_id":"r","placement_id":"p","storage_class":"COLD","tier_type":"cloud-s3","expected_default_placement":"old","endpoint":"https://cloud.example","access_key":"new-cloud-access","secret":"new-cloud-secret","credentials_saved":true,"confirm_connection":true}`, cluster.ID)
 	connectionResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/connection", connectionBody, "cloud-connection")
 	if connectionResponse.Code != http.StatusAccepted {

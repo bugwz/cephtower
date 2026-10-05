@@ -98,6 +98,7 @@ func rgwRoutes(h *handler.Handler) []Route {
 		{"PATCH", "/rgw/zonegroup/placement/acl", h.SetRGWCloudACL},
 		{"PATCH", "/rgw/zonegroup/placement/target", h.SetRGWCloudTarget},
 		{"PATCH", "/rgw/zonegroup/placement/connection", h.SetRGWCloudConnection},
+		{"POST", "/rgw/zonegroup/storage/class/cloud", h.CreateRGWCloudClass},
 		{"GET", "/rgw/zones", h.ListRGWZones},
 		{"POST", "/rgw/zone/sync/status", h.ReadRGWSyncStatus},
 		{"POST", "/rgw/zone", h.CreateRGWZone},

@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 已有目标中新建云分层存储类
+
+新增组操作“新建云分层存储类”与高风险 `POST /rgw/zonegroup/storage/class/cloud`，支持已有 Realm、已有目标内尚未声明的非 STANDARD S3/Glacier 类。对照原生 `ZONEGROUP_PLACEMENT_ADD`：add 和 modify 共用分支，已有键会被编辑，而非报重复，因此先核验新类既不在 storage_classes 也不在 tier_targets，明确拒绝覆盖。新类配置显式提交端点/两项凭据、六项目标参数、ACL 列表、头对象/读穿透/恢复参数和适用的 Glacier 字段，不依赖隐藏默认值。
+通过 `zonegroup placement add --tier-type ... --tier-config ...` 创建，凭据与所有文本采用已有双层编码，整个配置值标记敏感，命令总长限制 65536 字节。使用参考 `RGWZoneGroupPlacementTier::dump` / S3 dump 的结构生成完整预期配置，核验原生排序、新类、ACL key/val、空值和数字；保留已有类、标签及其他设置。恢复类必须为目标内已声明且非云分层的本地类；需要用户自行核对各 Zone 的实际池映射。不隐式创建目标/Realm、远端资源、生命周期规则或 Zone 池。
+写前完整重读、写后完整组核验，再指定 Realm Period 发布回读并刷新 Realm/组/Zone。空默认规则按原生初始化为当前目标 STANDARD，失败可部分生效，不自动重试或回滚。前端要求明确空文本、空 ACL、布尔值与精确数值；凭据不回填，确认弹窗不含密钥，提示进程参数可见性、HTTP 无 TLS、恢复费用、远端限制和 Period 可能包含其他待发布变更。不迁移对象、不测试远端连接或证明权限生效。
+新增 S3/Glacier、默认规则初始化、完整命令编码、ACL 空值、保留其他类、排序、已有类/孤立分层键/恢复类冲突、逐阶段失败、超长命令、API 严格契约/加密入库、刷新失败以及前端选择/确认回归。前后端全量测试、TypeScript/生产构建及 OpenAPI 一致性检查通过，OpenAPI 随新增写接口重新生成；无真实集群或浏览器视觉验证，整体迁移仍未完成。
+
 #### 已有云分层连接与凭据替换
 
 对照参考 `rgw-storage-class-form.component.ts::buildPlacementTargets` 的 endpoint/access_key/secret 三字段、`rgw_client.py::modify_placement_targets` 和 `RGWZoneGroupPlacementTierS3::update_params`，接通组操作菜单及高风险 `PATCH /rgw/zonegroup/placement/connection`。仅已有 Realm 内的非 STANDARD 云 S3/Glacier 类可选，不隐式创建 Realm。三项均重新输入，不回填脱敏库存；凭据使用密码控件，要求已在远端配置并安全保存，确认弹窗不包含密钥。
