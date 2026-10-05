@@ -966,19 +966,16 @@ func rbdSnapshotProtected(value any) (bool, bool) {
 
 func rgwRoleObservations(ctx context.Context, list any, account string, now time.Time) []Observation {
 	items, ok := list.([]any)
-	if !ok {
+	if !ok || items == nil {
 		markCollectionUnavailable(ctx, "collect.rgw_role")
 		return nil
 	}
 	var rows []Observation
 	for _, item := range items {
 		role, ok := item.(map[string]any)
-		if !ok || textField(role, "RoleName") == "" {
-			markCollectionUnavailable(ctx, "collect.rgw_role")
-			continue
-		}
-		name := textField(role, "RoleName")
-		if textField(role, "AccountId") != account {
+		name, validName := role["RoleName"].(string)
+		roleAccount, validAccount := role["AccountId"].(string)
+		if !ok || !validName || name == "" || !validAccount || roleAccount != account {
 			markCollectionUnavailable(ctx, "collect.rgw_role")
 			continue
 		}

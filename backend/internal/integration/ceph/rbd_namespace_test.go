@@ -716,7 +716,7 @@ func TestRGWAccountNativeFields(t *testing.T) {
 }
 
 func TestRGWRoleListUsesNativeObjects(t *testing.T) {
-	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.rgw_role": []byte(`[{"RoleName":"role-a","Arn":"arn:role-a","Path":"/","AssumeRolePolicyDocument":"{}"}]`)}}}
+	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.rgw_role": []byte(`[{"RoleName":"role-a","AccountId":"","Arn":"arn:role-a","Path":"/","AssumeRolePolicyDocument":"{}"}]`)}}}
 	for _, row := range p.collectRGWOptional(context.Background(), ClusterAccess{}, time.Now()) {
 		if row.Kind == "rgw_role" {
 			if row.NaturalKey != "role-a" || row.Payload.(map[string]any)["Arn"] != "arn:role-a" {
