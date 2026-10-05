@@ -9,6 +9,7 @@ import { CephUsersPage } from './cluster/CephUsersPage'
 import { AuditPage } from './audit/AuditPage'
 import { RgwStorageClassesPage } from './object/RgwStorageClassesPage'
 import { RgwEncryptionPage } from './object/RgwEncryptionPage'
+import { RgwDaemonsPage } from './object/RgwDaemonsPage'
 import {
   ImageMirroringPage,
   IscsiPage,
@@ -144,6 +145,7 @@ export const pageComponents: Record<PageKey, ComponentType> = {
   rgwTopics: RgwTopicsPage,
   rgwStorageClasses: RgwStorageClassesPage,
   rgwEncryption: RgwEncryptionPage,
+  rgwDaemons: RgwDaemonsPage,
   bucketManagement: BucketManagementPage,
   bucketPolicy: BucketPolicyPage,
   gatewayManagement: GatewayManagementPage,

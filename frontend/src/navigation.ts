@@ -48,6 +48,7 @@ export type PageKey =
   | 'rgwTopics'
   | 'rgwStorageClasses'
   | 'rgwEncryption'
+  | 'rgwDaemons'
   | 'bucketManagement'
   | 'bucketPolicy'
   | 'gatewayManagement'
@@ -251,6 +252,7 @@ export const NAV_SECTIONS: NavSectionDefinition[] = [
       { key: 'rgwTopics', label: '通知目标', path: '/object/topics', icon: 'object', permission: 'storage' },
       { key: 'rgwStorageClasses', label: '存储类', path: '/object/storage-class', icon: 'object', permission: 'storage' },
       { key: 'rgwEncryption', label: '服务端加密配置', path: '/object/encryption', icon: 'object', permission: 'storage' },
+      { key: 'rgwDaemons', label: '守护进程注册', path: '/object/daemons', icon: 'object', permission: 'storage' },
       {
         key: 'rgw-user-section',
         label: '用户管理',
