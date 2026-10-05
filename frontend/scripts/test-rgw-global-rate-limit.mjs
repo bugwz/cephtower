@@ -65,8 +65,21 @@ for (const value of [{}, { user_quota: { enabled: true, max_size: 0, max_objects
     const rows = item.children.type(item.children.props).props.items
     if (value[item.key] === undefined) assert.equal(rows[0].children, '配额信息不可用')
     else if (item.key === 'bucket_quota') assert.equal(rows[0].children, '未启用')
-    else assert.deepEqual(rows.map(row => row.children), ['已启用', '0', '无限制'])
+    else assert.deepEqual(rows.map(row => row.children), ['已启用', '0', '无限制', '未返回或未知（check_on_raw）'])
   }
 }
 assert.match(pages, /key: 'global_quota'[^\n]+render: \(value\) => <RgwGlobalQuota value=\{value\} \/>/)
 console.log('Global quota scope tabs preserve missing, disabled, zero and unlimited values')
+
+for (const enabled of [true, false, undefined]) {
+  for (const check_on_raw of [true, false, undefined, null, 0, 1, 'false']) {
+    const value = { enabled, max_size: 1024, max_objects: 0, check_on_raw }
+    const rows = quota.RgwQuota({ value }).props.items
+    const basis = rows.find(row => row.key === 'basis')
+    assert.equal(basis.label, '配置的容量统计口径')
+    assert.equal(basis.children, check_on_raw === true ? '原始字节（stats.size；非底层物理占用）' : check_on_raw === false ? '按对象取整的字节（stats.size_rounded）' : '未返回或未知（check_on_raw）')
+    if (enabled !== true) assert.equal(rows.some(row => row.key === 'size'), false)
+  }
+}
+for (const value of [undefined, null, [], '', false]) assert.equal(quota.RgwQuota({ value }).props.items.some(row => row.key === 'basis'), false)
+console.log('Quota capacity accounting preserves raw, rounded and unknown native flags')

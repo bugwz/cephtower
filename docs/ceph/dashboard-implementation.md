@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### 配额容量统计口径展示
+
+核对 rgw_quota.cc 的 RGWQuotaInfo::dump 和 RGWQuotaInfoApplier：check_on_raw=true 使用 stats.size，false 使用 stats.size_rounded；后者新增对象大小也按原生对象大小规则取整。现于复用配额详情中增加只读“配置的容量统计口径”，显示原始字节/按对象取整字节，明确原始字节不是底层物理占用。缺失或非布尔值显示未知，不推断为 false；关闭及未知启用状态仍仅展示配置口径，不展示或声称限制已生效。沿用已有配额对象采集/API，未增加写入参数。真实组件测试覆盖 true、false、缺失、非法类型及启用/关闭/未知状态组合；前端全量测试、类型检查及构建通过，无真实集群或浏览器视觉验证。
+
 #### 全局配额采集与概览详情
 
 补齐 RGW 全局配额的原生命令、库存/API 和前端链路：固定只读 radosgw-admin global quota get --format json，依据参考源码 GLOBAL_QUOTA_GET 将原生带空格的 user quota、bucket quota 归一化为 global_quota.user_quota/bucket_quota，随 RGWStatus 库存经 GET /rgw/status 返回。两个作用域必须为对象；命令或格式失败进入既有 rgw_status 采集失败记录，不制造关闭状态。概览增加用户/Bucket 配额详情页签，复用参考 Dashboard 的启用状态、零配额与负数无限制显示语义，明确默认 Realm/空 Realm 范围，不声称是全部 Realm 汇总或对象最终有效配额。新增固定只读命令、原生键映射、状态序列化、异常响应及前端作用域绑定测试。前后端全量测试、类型检查、构建和 OpenAPI 检查通过；未连接真实集群，未进行浏览器视觉验证。
