@@ -452,9 +452,12 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 						markCollectionUnavailable(ctx, "collect.rgw_user_stats")
 					}
 				}
-				details["stats_scope"] = "user"
-				if textField(details, "account_id") != "" {
-					details["stats_scope"] = "account"
+				details["stats_scope"] = nil
+				if accountID, ok := details["account_id"].(string); ok {
+					details["stats_scope"] = "user"
+					if accountID != "" {
+						details["stats_scope"] = "account"
+					}
 				}
 			}
 			rows = append(rows, observation(resource.kind, id, id, "rgw_admin", details, now))

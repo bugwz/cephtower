@@ -91,3 +91,41 @@ func TestRGWOwnerStatsRejectMalformedContainers(t *testing.T) {
 		}
 	}
 }
+
+func TestRGWUserStatsScopeRequiresExplicitAccountField(t *testing.T) {
+	for _, tc := range []struct {
+		account any
+		present bool
+		want    any
+	}{
+		{"", true, "user"}, {"RGW123", true, "account"},
+		{nil, false, nil}, {nil, true, nil}, {false, true, nil}, {123, true, nil}, {[]string{}, true, nil},
+	} {
+		detail := map[string]any{"full_user_id": "user", "user_id": "user"}
+		if tc.present {
+			detail["account_id"] = tc.account
+		}
+		raw, _ := json.Marshal(detail)
+		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+			"collect.rgw_user": []byte(`["user"]`), "collect.rgw_user_detail": raw,
+			"collect.rgw_user_stats": []byte(`{"stats":{"num_objects":0}}`),
+		}}}
+		found := false
+		for _, row := range p.collectRGWOptional(context.Background(), ClusterAccess{}, time.Now()) {
+			if row.Kind != "rgw_user" {
+				continue
+			}
+			found = true
+			payload := row.Payload.(map[string]any)
+			if scope, exists := payload["stats_scope"]; !exists || scope != tc.want {
+				t.Fatalf("wrong scope for %#v: %#v", tc.account, scope)
+			}
+			if payload["storage_stats"] == nil {
+				t.Fatal("discarded available statistics")
+			}
+		}
+		if !found {
+			t.Fatal("user missing")
+		}
+	}
+}
