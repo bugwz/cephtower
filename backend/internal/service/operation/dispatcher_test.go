@@ -243,7 +243,7 @@ func TestFilesystemRenameRefreshesAffectedStorage(t *testing.T) {
 }
 
 func TestRGWVerifiedChangeRefreshDoesNotRepeatWrite(t *testing.T) {
-	for _, action := range []string{"rgw_bucket.quota", "rgw_user.quota", "rgw_account.quota", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_account.create", "rgw_account.update", "rgw_account.delete", "rgw_role.delete", "rgw_role.policy"} {
+	for _, action := range []string{"rgw_bucket.quota", "rgw_user.quota", "rgw_account.quota", "rgw_user.ratelimit", "rgw_bucket.ratelimit", "rgw_account.create", "rgw_account.update", "rgw_account.delete", "rgw_role.delete", "rgw_role.policy", "rgw_role.update"} {
 		for _, stage := range []string{"success", "write", "refresh"} {
 			kind := strings.SplitN(action, ".", 2)[0]
 			mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{"verified": true}}}

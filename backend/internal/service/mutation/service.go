@@ -426,6 +426,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "rgw_user.caps" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "capability command failed; inspect user capabilities before any manual retry", Retryable: false}
 		}
+		if request.Action == "rgw_role.update" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "role update was not confirmed; inspect scoped trust policy and session duration before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_role.policy" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "role policy write was not confirmed; inspect scoped role policies before any manual retry", Retryable: false}
 		}
@@ -504,6 +507,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		stepID := fmt.Sprintf("%s.step%d", request.Action, index+2)
 		result, err = s.executor.Run(ctx, access, executor.CommandSpec{ID: stepID, Binary: followup.binary, Args: followup.args, Stdin: followup.stdin, Timeout: followup.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true, SensitiveArgs: followup.sensitive})
 		if err != nil {
+			if request.Action == "rgw_role.update" {
+				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "role trust policy may already have changed but session duration update failed; inspect both fields before any manual retry", Retryable: false}
+			}
 			if request.Action == "rgw_user.quota" || request.Action == "rgw_bucket.quota" {
 				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "quota limits may already have changed but disabling the quota was not confirmed; inspect current limits and activation before any manual retry", Retryable: false}
 			}
@@ -527,6 +533,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "rgw_role.update" && (err != nil || !rgwRoleUpdateMatches(request.Parameters, checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "role update was accepted but scoped trust policy or session duration could not be verified; inspect both fields before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_role.policy" && (err != nil || !rgwRolePolicyMatches(request.Parameters, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "role policy write was accepted but scoped policy state could not be verified; inspect role policies before any manual retry", Retryable: false}
 		}
