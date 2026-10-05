@@ -65,7 +65,7 @@ type command struct {
 }
 
 func Supports(action string) bool {
-	if action == "rgw_zone.placement" {
+	if action == "rgw_zone.placement" || action == "rgw_zone.storage_class_create" {
 		return true
 	}
 	switch action {
@@ -141,7 +141,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if request.Action == "rgw_zone.delete" {
 		return s.executeZoneDelete(ctx, access, request, spec)
 	}
-	if request.Action == "rgw_zone.placement" {
+	if request.Action == "rgw_zone.placement" || request.Action == "rgw_zone.storage_class_create" {
 		return s.executeZonePlacement(ctx, access, request, spec)
 	}
 	if request.Action == "rgw_realm.setup" || request.Action == "rgw_realm.migrate" {
@@ -674,6 +674,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 }
 
 func build(request Request, p map[string]any) (command, error) {
+	if request.Action == "rgw_zone.storage_class_create" {
+		return buildZonePlacementMode(p, true)
+	}
 	if request.Action == "rgw_zone.placement" {
 		return buildZonePlacement(p)
 	}

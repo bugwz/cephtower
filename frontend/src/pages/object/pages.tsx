@@ -7,6 +7,7 @@ import { realmDeleteBlocked, realmDeleteInput, realmDeleteConfirmation } from '.
 import { zonegroupDeleteBlocked, zonegroupDeleteInput, zonegroupDeleteConfirmation } from './rgwZonegroupDelete'
 import { zoneDeleteBlocked, zoneDeleteInput, zoneDeleteConfirmation } from './rgwZoneDelete'
 import { zonePlacementBlocked, zonePlacementGroups, zonePlacementOptions, zonePlacementClasses, zonePlacementChanged, zonePlacementInput, zonePlacementConfirmation, zonePlacementCompressions } from './rgwZonePlacement'
+import { zoneStorageClassInput, zoneStorageClassConfirmation } from './rgwZonePlacement'
 import { RgwTopologyView } from './RgwTopology'
 import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwZonePoolReferences } from './RgwZonePoolReferences'
@@ -1300,6 +1301,20 @@ const definitions: Record<
   },
   rgwZones: {
     extraActions: [{
+      title: '新增 Zone 存储类', path: '/rgw/zone/storage/class', method: 'POST',
+      successMessage: 'Zone 存储类新增已回读核验（未发布 Period 或迁移数据）',
+      disabledWhen: zonePlacementBlocked, confirmation: zoneStorageClassConfirmation,
+      changedValues: changed => Object.keys(changed).some(key => key !== 'confirm_placement') ? {confirm_placement:undefined} : {},
+      fields: [
+        { name: 'zonegroup_id', label: '所属 Zonegroup', type: 'select', required: true, optionsLoader: async (_clusterId, row) => zonePlacementGroups(row) },
+        { name: 'placement_id', label: '已有放置目标', type: 'select', required: true, optionsLoader: async (_clusterId, row) => zonePlacementOptions(row) },
+        { name: 'storage_class', label: '新存储类（须已在组目标声明，且此 Zone 尚未配置）', required: true },
+        { name: 'data_pool', label: '数据池引用（可含命名空间）', required: true },
+        { name: 'compression', label: '压缩算法', type: 'select', required: true, options: zonePlacementCompressions.map(value => ({value,label:value})) },
+        { name: 'confirm_placement', label: '风险确认', type: 'select', required: true, options: [{value:'acknowledged',label:'已备份并核对组声明和池配置，了解不迁移数据或发布 Period'}] }
+      ],
+      buildBody: (values, clusterId, row) => ({cluster_id:clusterId,...zoneStorageClassInput(values,row)})
+    }, {
       title: '编辑放置池与压缩', path: '/rgw/zone/placement', method: 'PATCH',
       successMessage: 'Zone 放置配置已回读核验（未迁移数据或重启网关）',
       disabledWhen: zonePlacementBlocked, confirmation: zonePlacementConfirmation,

@@ -62,6 +62,18 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal("placement update not queued", placementResponse.Code)
 	}
 	placementOp, placementErr := db.FindOperation(context.Background(), operationIDFromResponse(t, placementResponse))
+	storageBody := fmt.Sprintf(`{"cluster_id":%d,"zone_id":"z","name":"zone-class","realm_id":"r","zonegroup_id":"g","placement_id":"p","storage_class":"COLD","data_pool":"d","compression":"none","confirm_placement":true}`, cluster.ID)
+	storageResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/zone/storage/class", storageBody, "zone-class")
+	if storageResponse.Code != http.StatusAccepted {
+		t.Fatal("storage class creation not queued", storageResponse.Code)
+	}
+	storageOp, storageErr := db.FindOperation(context.Background(), operationIDFromResponse(t, storageResponse))
+	if storageErr != nil || storageOp.Action != "rgw_zone.storage_class_create" || storageOp.MaxAttempts != 1 || storageOp.Risk != "high" || storageOp.ResourceKey != "rgw/zone/zone-class" {
+		t.Fatal("unsafe storage class operation")
+	}
+	if response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/zone/storage/class", strings.TrimSuffix(storageBody, "}")+`,"index_pool":"changed"}`, "bad-zone-class"); response.Code != http.StatusBadRequest {
+		t.Fatal("shared pool mutation accepted on creation")
+	}
 	if placementErr != nil || placementOp.Action != "rgw_zone.placement" || placementOp.MaxAttempts != 1 || placementOp.Risk != "high" || placementOp.ResourceKey != "rgw/zone/zone-placement" {
 		t.Fatal("unsafe placement operation")
 	}

@@ -34,3 +34,16 @@ export function zonePlacementConfirmation(values: Row, row?: Row) {
   const p = zonePlacementInput(values,row)
   return `修改 Zone ${p.name}（${p.zone_id}）放置目标 ${p.placement_id} 的 ${p.storage_class} 存储类：索引池 ${p.index_pool}、数据池 ${p.data_pool}、额外数据池 ${p.data_extra_pool || '空（原生回退）'}、压缩 ${p.compression}。索引池和额外数据池影响整个放置目标，而非仅此存储类。此操作不搬迁现有数据；更换池可能使现有桶或对象不可访问，必须先备份并评估业务影响。配置写入成功不证明池存在、可用或支持 OMAP，请事先核对。压缩配置不重写已有对象，算法可用性取决于网关部署。${p.realm_id ? `将提交 Realm ${p.realm_id} 的 Period，可能发布其他待提交配置；不代表远端同步完成。` : '无 Realm，不发布 Period。'}不自动重启网关，不自动重试或回滚；分步执行可能部分生效，写前核验不是跨进程原子锁。`
 }
+
+export function zoneStorageClassInput(values: Row, row?: Row) {
+  const placement = placements(row).find(p => p.key === values.placement_id)
+  if (!placement || !token(values.storage_class) || Object.prototype.hasOwnProperty.call(placement.val.storage_classes, values.storage_class)) throw new Error('请选择已有放置目标，并输入该 Zone 尚未配置的存储类')
+  if (!zonePlacementGroups(row).some((g: Row) => g.value === values.zonegroup_id)) throw new Error('必须选择所属 Zonegroup')
+  if (typeof values.data_pool !== 'string' || !values.data_pool || /[\x00-\x1f\x7f]/.test(values.data_pool)) throw new Error('请输入有效数据池引用')
+  if (!zonePlacementCompressions.includes(values.compression) || values.confirm_placement !== 'acknowledged') throw new Error('请选择压缩算法并确认影响')
+  return {zone_id:row!.id,name:row!.name,realm_id:row!.realm_id,zonegroup_id:values.zonegroup_id,placement_id:values.placement_id,storage_class:values.storage_class,data_pool:values.data_pool,compression:values.compression,confirm_placement:true}
+}
+export function zoneStorageClassConfirmation(values: Row, row?: Row) {
+  const p = zoneStorageClassInput(values,row)
+  return `在 Zone ${p.name}（${p.zone_id}）的已有放置目标 ${p.placement_id} 中新增存储类 ${p.storage_class}：数据池 ${p.data_pool}，压缩 ${p.compression}。该类必须已在所选 Zonegroup 目标中声明且不是云分层类；后端将核验。保留所有既有类、索引池与额外数据池。不迁移已有数据、不自动创建池、不设置默认类、不发布 Period 或重启网关。配置成功不证明池存在或可用，压缩算法需部署支持。请先备份并评估使用此类的业务；写前检查不是跨进程原子锁，失败可能已部分生效，不自动重试或回滚。`
+}

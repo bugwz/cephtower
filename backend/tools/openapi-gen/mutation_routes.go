@@ -101,6 +101,7 @@ var mutationRouteActions = map[string]string{
 	"DELETE /rgw/zonegroup":                         "rgw_zonegroup.delete",
 	"DELETE /rgw/zone":                              "rgw_zone.delete",
 	"PATCH /rgw/zone/placement":                     "rgw_zone.placement",
+	"POST /rgw/zone/storage/class":                  "rgw_zone.storage_class_create",
 	"PATCH /rgw/role":                               "rgw_role.update",
 	"PATCH /rgw/user":                               "rgw_user.update",
 	"PATCH /rgw/user/key":                           "rgw_key.update",

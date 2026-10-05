@@ -12,6 +12,10 @@ import (
 )
 
 func buildZonePlacement(p map[string]any) (command, error) {
+	return buildZonePlacementMode(p, false)
+}
+
+func buildZonePlacementMode(p map[string]any, create bool) (command, error) {
 	for _, key := range []string{"zone_id", "name", "zonegroup_id", "placement_id", "storage_class"} {
 		if !syncFlowToken(syncGroupString(p, key)) {
 			return command{}, invalid("explicit Zone, group, placement and class identities required")
@@ -21,7 +25,11 @@ func buildZonePlacement(p map[string]any) (command, error) {
 	if !ok || realm != "" && !syncFlowToken(realm) || p["confirm_placement"] != true {
 		return command{}, invalid("explicit Realm and placement confirmation required")
 	}
-	for _, key := range []string{"index_pool", "data_pool", "data_extra_pool"} {
+	poolFields := []string{"data_pool"}
+	if !create {
+		poolFields = append(poolFields, "index_pool", "data_extra_pool")
+	}
+	for _, key := range poolFields {
 		value, ok := p[key].(string)
 		if !ok || value == "" && key != "data_extra_pool" || value != "" && !cephintegration.ValidRGWPoolReference(value) {
 			return command{}, invalid("canonical pool references required")
@@ -34,6 +42,9 @@ func buildZonePlacement(p map[string]any) (command, error) {
 		return command{}, invalid("unsupported compression algorithm")
 	}
 	args := []string{"zone", "placement", "modify", "--zone-id", syncGroupString(p, "zone_id"), "--zonegroup-id", syncGroupString(p, "zonegroup_id"), "--placement-id", syncGroupString(p, "placement_id"), "--storage-class", syncGroupString(p, "storage_class"), "--index-pool", syncGroupString(p, "index_pool"), "--data-pool", syncGroupString(p, "data_pool"), "--data-extra-pool", syncGroupString(p, "data_extra_pool"), "--compression", compression, "--format", "json"}
+	if create {
+		args = []string{"zone", "placement", "add", "--zone-id", syncGroupString(p, "zone_id"), "--zonegroup-id", syncGroupString(p, "zonegroup_id"), "--placement-id", syncGroupString(p, "placement_id"), "--storage-class", syncGroupString(p, "storage_class"), "--data-pool", syncGroupString(p, "data_pool"), "--compression", compression, "--format", "json"}
+	}
 	return command{binary: executor.BinaryRGWAdmin, args: args}, nil
 }
 
@@ -47,6 +58,7 @@ func (s *Service) executeZonePlacement(ctx context.Context, access executor.Clus
 		return periodDocument(result.Stdout), err == nil && result.ExitCode == 0
 	}
 	p := req.Parameters
+	create := req.Action == "rgw_zone.storage_class_create"
 	realm := syncGroupString(p, "realm_id")
 	zoneArgs := []string{"zone", "get", "--zone-id", syncGroupString(p, "zone_id"), "--format", "json"}
 	groupArgs := []string{"zonegroup", "get", "--zonegroup-id", syncGroupString(p, "zonegroup_id"), "--format", "json"}
@@ -58,12 +70,12 @@ func (s *Service) executeZonePlacement(ctx context.Context, access executor.Clus
 	if !ok || !zonePlacementGroupMatches(group, p) {
 		return fail("pre_check_failed")
 	}
-	expected, ok := zonePlacementExpected(zone, p)
+	expected, ok := zonePlacementExpected(zone, p, create)
 	if !ok {
 		return fail("pre_check_failed")
 	}
 	current := ""
-	if realm != "" {
+	if realm != "" && !create {
 		r, ok := run("realm_before", []string{"realm", "get", "--realm-id", realm, "--format", "json"}, false)
 		current = syncGroupString(r, "current_period")
 		if !ok || r["id"] != realm || !syncFlowToken(current) {
@@ -93,14 +105,14 @@ func (s *Service) executeZonePlacement(ctx context.Context, access executor.Clus
 	if !ok || !reflect.DeepEqual(checked, group) {
 		return fail("post_check_failed")
 	}
-	if realm != "" {
+	if realm != "" && !create {
 		commitReq := Request{Action: req.Action + ".period", Parameters: map[string]any{"realm_id": realm, "expected_current_period": current}}
 		commitSpec := command{args: []string{"period", "update", "--commit", "--realm-id", realm, "--format", "json"}, check: []string{"period", "get", "--realm-id", realm, "--format", "json"}}
 		if _, err := s.executePeriodCommit(ctx, access, commitReq, commitSpec); err != nil {
 			return fail("post_check_failed")
 		}
 	}
-	return cephdomain.ActionResult{Details: map[string]any{"zone_id": p["zone_id"], "placement_id": p["placement_id"], "storage_class": p["storage_class"], "placement_verified": true, "period_published": realm != "", "data_migrated": false}}, nil
+	return cephdomain.ActionResult{Details: map[string]any{"zone_id": p["zone_id"], "placement_id": p["placement_id"], "storage_class": p["storage_class"], "placement_verified": true, "storage_class_created": create, "period_published": realm != "" && !create, "data_migrated": false}}, nil
 }
 
 func zonePlacementGroupMatches(group, p map[string]any) bool {
@@ -166,7 +178,7 @@ func zonePlacementGroupMatches(group, p map[string]any) bool {
 	return found
 }
 
-func zonePlacementExpected(zone, p map[string]any) (map[string]any, bool) {
+func zonePlacementExpected(zone, p map[string]any, create bool) (map[string]any, bool) {
 	raw, err := json.Marshal(zone)
 	if err != nil {
 		return nil, false
@@ -197,11 +209,23 @@ func zonePlacementExpected(zone, p map[string]any) (map[string]any, bool) {
 		if !ok {
 			return nil, false
 		}
-		class, ok := classes[syncGroupString(p, "storage_class")].(map[string]any)
-		if !ok {
-			return nil, false
+		name := syncGroupString(p, "storage_class")
+		class, ok := classes[name].(map[string]any)
+		if create {
+			if _, exists := classes[name]; exists {
+				return nil, false
+			}
+			if !cephintegration.ValidRGWPoolReference(syncGroupString(info, "index_pool")) {
+				return nil, false
+			}
+			class = map[string]any{}
+			classes[name] = class
+		} else {
+			if !ok {
+				return nil, false
+			}
+			info["index_pool"], info["data_extra_pool"] = p["index_pool"], p["data_extra_pool"]
 		}
-		info["index_pool"], info["data_extra_pool"] = p["index_pool"], p["data_extra_pool"]
 		class["data_pool"], class["compression_type"] = p["data_pool"], p["compression"]
 		found = true
 	}
