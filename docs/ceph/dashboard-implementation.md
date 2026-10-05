@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### 配额与限流部分执行失败语义
+
+核对用户/Bucket 配额关闭的 set → disable 和限流的 set → enable/disable 命令链：原生各命令分别存储配置，不构成事务。第二步失败时旧处理经 normalize 返回 Retryable=true，可能由任务执行层重放整个操作。现改为不可自动重试的 ceph_command_failed，明确提示数值可能已经改变、目标启用状态未确认，需先检查实际状态；不透传底层诊断，不自动回滚或继续回读。离线执行测试覆盖用户两类配额、Bucket 配额、用户/Bucket 限流启用与关闭，以及普通错误、超时、取消，断言仅执行两次写命令且失败不可重试。后端全量测试和 OpenAPI 检查通过；无前端/API 结构改动，未连接真实集群。
+
 #### 用户与 Bucket 限流写后核验
 
 依据 radosgw-admin 的 show_user_ratelimit/show_bucket_ratelimit 与 RGWRateLimitInfo::dump，限流 get 返回 user_ratelimit 或 bucket_ratelimit 包装以及 enabled、四个整数限制值，不包含对象身份。现接入 set → enable/disable → get 的末次回读验证，要求指定作用域及五个字段全部匹配；身份范围由回读命令的完整 UID 或租户/桶名参数限定，不声称响应自身包含身份凭证。缺失、格式错误、错作用域、旧值或未生效状态返回不可自动重试的 post_check_failed。测试覆盖用户与带租户 Bucket、启用/关闭、零值、最大安全整数、异常字段和实际三步命令选择器。后端全量测试及 OpenAPI 检查通过；无前端/API 结构改动，未连接真实集群。

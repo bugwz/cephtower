@@ -483,6 +483,12 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		stepID := fmt.Sprintf("%s.step%d", request.Action, index+2)
 		result, err = s.executor.Run(ctx, access, executor.CommandSpec{ID: stepID, Binary: followup.binary, Args: followup.args, Stdin: followup.stdin, Timeout: followup.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true, SensitiveArgs: followup.sensitive})
 		if err != nil {
+			if request.Action == "rgw_user.quota" || request.Action == "rgw_bucket.quota" {
+				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "quota limits may already have changed but disabling the quota was not confirmed; inspect current limits and activation before any manual retry", Retryable: false}
+			}
+			if request.Action == "rgw_user.ratelimit" || request.Action == "rgw_bucket.ratelimit" {
+				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "rate limits may already have changed but the requested activation state was not confirmed; inspect current limits and activation before any manual retry", Retryable: false}
+			}
 			if request.Action == "rgw_user.update" {
 				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "user properties were modified but the following state change failed; inspect actual properties and suspension before any manual retry", Retryable: false}
 			}
