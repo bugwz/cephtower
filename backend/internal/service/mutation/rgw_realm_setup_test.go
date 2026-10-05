@@ -35,6 +35,7 @@ func setupResponses(t *testing.T) map[string]string {
 	zone := `{"id":"z","name":"primary","realm_id":"r","system_key":{"access_key":"generated-access","secret_key":"generated-secret"}}`
 	user := `{"user_id":"sys","system":true,"keys":[{"user":"sys","access_key":"generated-access","secret_key":"generated-secret"}]}`
 	return map[string]string{"realm_absence": `{"realms":[]}`, "zonegroup_absence": `{"zonegroups":[]}`, "zone_absence": `{"zones":[]}`,
+		"hosts":           `[]`,
 		"services_before": `[{"service_name":"rgw.gateway","service_type":"rgw"}]`, "services_check": `[{"service_name":"rgw.gateway","service_type":"rgw"}]`,
 		"realm_create": `{"id":"r","name":"realm"}`, "group_create": `{"id":"g","name":"group","realm_id":"r"}`, "zone_create": `{"id":"z","name":"primary","realm_id":"r"}`,
 		"initial_commit": period, "user_absence": `[]`, "user_create": user, "zone_credentials": zone, "commit": period,
@@ -102,14 +103,14 @@ func TestRealmSetupNativeSequence(t *testing.T) {
 				t.Fatal("wrong restart")
 			}
 		}
-		want := []string{"realm_absence", "zonegroup_absence", "zone_absence", "services_before", "realm_create", "group_create", "zone_create", "initial_commit", "user_absence", "user_create", "zone_credentials", "commit", "realm_check", "period_check", "realm_default", "zonegroup_default", "zone_default", "zone_check", "user_check", "services_check", "restart"}
+		want := []string{"realm_absence", "zonegroup_absence", "zone_absence", "services_before", "hosts", "realm_create", "group_create", "zone_create", "initial_commit", "user_absence", "user_create", "zone_credentials", "commit", "realm_check", "period_check", "realm_default", "zonegroup_default", "zone_default", "zone_check", "user_check", "services_check", "restart"}
 		if !reflect.DeepEqual(stages, want) {
 			t.Fatalf("unexpected sequence %v", stages)
 		}
 	}
 }
 func TestRealmSetupStopsAtEveryStage(t *testing.T) {
-	for _, stage := range []string{"realm_absence", "zonegroup_absence", "zone_absence", "services_before", "realm_create", "group_create", "zone_create", "initial_commit", "user_absence", "user_create", "zone_credentials", "commit", "realm_check", "period_check", "realm_default", "zonegroup_default", "zone_default", "zone_check", "user_check", "services_check", "restart"} {
+	for _, stage := range []string{"realm_absence", "zonegroup_absence", "zone_absence", "services_before", "hosts", "realm_create", "group_create", "zone_create", "initial_commit", "user_absence", "user_create", "zone_credentials", "commit", "realm_check", "period_check", "realm_default", "zonegroup_default", "zone_default", "zone_check", "user_check", "services_check", "restart"} {
 		t.Run(stage, func(t *testing.T) {
 			s, _, cluster := newCephUserService(t)
 			e := &realmSetupExecutor{responses: setupResponses(t), fail: stage}

@@ -142,6 +142,15 @@ func (s *Service) executeRealmSetup(ctx context.Context, access executor.Cluster
 	if !serviceScope("services_before") {
 		return fail()
 	}
+	hosts, ok := run("hosts", executor.BinaryCeph, []string{"orch", "host", "ls", "--format", "json"}, false)
+	resolved, resolveErr := resolveRealmSetupEndpoints(hosts, p)
+	clear(hosts)
+	if !ok || resolveErr != nil {
+		return fail()
+	}
+	p = resolved
+	groupEP, _ = realmSetupStrings(p["zonegroup_endpoints"])
+	zoneEP, _ = realmSetupStrings(p["zone_endpoints"])
 	realm, ok := admin("realm_create", true, "realm", "create", "--rgw-realm", realmName, "--default")
 	realmID := rawText(realm, "id")
 	if !ok || realm["name"] != realmName || !syncFlowToken(realmID) {
@@ -220,7 +229,7 @@ func (s *Service) executeRealmSetup(ctx context.Context, access executor.Cluster
 			return fail()
 		}
 	}
-	return cephdomain.ActionResult{Details: map[string]any{"realm_id": realmID, "zonegroup_id": groupID, "zone_id": zoneID, "restart_submitted": services, "daemons_verified": false, "replication_verified": false}}, nil
+	return cephdomain.ActionResult{Details: map[string]any{"realm_id": realmID, "zonegroup_id": groupID, "zone_id": zoneID, "zonegroup_endpoints": groupEP, "zone_endpoints": zoneEP, "restart_submitted": services, "daemons_verified": false, "replication_verified": false}}, nil
 }
 
 func realmSetupUserKey(user map[string]any, uid string) (string, string, bool) {

@@ -29,6 +29,9 @@
 
 ### 增量实现与验证记录
 
+- **主站点端点编排主机地址转换**：补齐参考 `rgw_client.py::get_updated_endpoints` 的主机映射，在任何初始化写入前读取 `ceph orch host ls --format json`，将 Zonegroup/Zone URL 中匹配编排主机名的主机部分替换为登记地址。支持 IPv4、IPv6 和 DNS 地址，保留端口、路径及转义；未知主机保持原值，不使用整串替换误改路径。拒绝异常主机清单、重复主机名及转换后重复端点，失败时不开始写入。转换使用参数副本，不改动原始请求；成功结果包含实际使用的端点，Period 校验也使用转换后的值。
+  - 表单及风险确认已说明自动转换与 HTTPS 证书要求；转换不等同于 DNS 解析、连通性或 TLS 验证。本项取代下方历史记录中“未实现主机替换”的状态；重启就绪等待及跨集群协调仍未完成。新增组件级 URL 转换、异常清单、写前截断及完整命令链回归；全量后端/OpenAPI 检查、前端回归/类型检查/生产构建均通过，无真实集群或浏览器视觉验证。
+
 - **本地主站点初始化与重启提交**：核对参考 `rgw-multisite-wizard` → `setup_multisite_replication` → `create_realm_and_zonegroup`/`create_zone_and_user`/`restart_daemons` 后确认，它不等同于 `ceph rgw realm bootstrap`。新增 Multisite 工具栏和高风险 `POST /rgw/realm/setup`，创建默认 Realm、默认主 Zonegroup、默认主 Zone（普通/归档）、按 Zone 隔离的新系统用户，绑定生成密钥并进行两次 scoped Period 发布；最后核验 Realm/Period、默认指针、主站身份、端点和密钥后，对明确确认的全部 RGW 服务提交 `ceph orch restart`。新服务不会自动部署，已有服务的显式 Realm/Zone 配置不会被改写，已有数据不会自动迁移；操作非事务，可能部分生效，失败及库存刷新失败均不自动重试。
   - 请求明确包含完整 `expected_services` 列表，与实时 `orch ls --service-type rgw --export --format json` 前后核对，避免自动重启用户未确认或中途新增的服务。参数入加密队列，系统密钥只在执行链路使用，敏感参数标记脱敏，固定错误及操作结果不包含密钥。初始化结果只报告 `restart_submitted`，`daemons_verified=false` 和 `replication_verified=false`，不将重启调度成功当作就绪验证；Token 仍使用已有详情按需读取入口，不混入持久化操作结果。
   - 端点表单接受实际 HTTP/HTTPS 地址（每行一个），按原生命令列表语义拒绝重复、凭据、查询、片段及分隔符。没有复制参考向导的自动 hostname→IP 替换，明确要求填写实际可达地址。本项目不依赖 Ceph Dashboard 的 Admin Ops 凭据，不写其 `RGW_API_ACCESS_KEY`/`RGW_API_SECRET_KEY` 设置。
