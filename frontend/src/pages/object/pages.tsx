@@ -11,6 +11,7 @@ import { zoneStorageClassInput, zoneStorageClassConfirmation } from './rgwZonePl
 import { zonePlacementCreateBlocked, zonePlacementCreateInput, zonePlacementCreateConfirmation } from './rgwZonePlacement'
 import { groupStorageClassBlocked, groupStorageClassOptions, groupStorageClassInput, groupStorageClassConfirmation } from './rgwZonegroupStorageClass'
 import { groupPlacementCreateBlocked, groupPlacementCreateInput, groupPlacementCreateConfirmation } from './rgwZonegroupStorageClass'
+import { groupPlacementDefaultClasses, groupPlacementDefaultInput, groupPlacementDefaultConfirmation } from './rgwZonegroupStorageClass'
 import { RgwTopologyView } from './RgwTopology'
 import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwZonePoolReferences } from './RgwZonePoolReferences'
@@ -1111,6 +1112,17 @@ const definitions: Record<
         { name: 'confirm_create', label: '范围确认', type: 'select', required: true, options: [{value:'acknowledged',label:'已备份，了解默认目标初始化、不配置 Zone 池和不发布 Period'}] }
       ],
       buildBody: (values,clusterId,row) => ({cluster_id:clusterId,...groupPlacementCreateInput(values,row)})
+    }, {
+      title: '设置默认放置规则', path: '/rgw/zonegroup/placement/default', method: 'PATCH',
+      successMessage: '默认放置规则已回读核验（未发布 Period）',
+      disabledWhen: groupStorageClassBlocked, confirmation: groupPlacementDefaultConfirmation,
+      changedValues: changed => ({...(Object.prototype.hasOwnProperty.call(changed,'placement_id') ? {storage_class:undefined} : {}),...(Object.keys(changed).some(key => key !== 'confirm_default') ? {confirm_default:undefined} : {})}),
+      fields: [
+        {name:'placement_id',label:'已有放置目标',type:'select',required:true,optionsLoader:async (_clusterId,row) => groupStorageClassOptions(row)},
+        {name:'storage_class',label:'已声明存储类',type:'select',required:true,optionsDependencies:['placement_id'],optionsLoader:async (_clusterId,row,values) => groupPlacementDefaultClasses(row,values?.placement_id)},
+        {name:'confirm_default',label:'范围确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份，了解默认行为变化与后续发布要求'}]}
+      ],
+      buildBody:(values,clusterId,row) => ({cluster_id:clusterId,...groupPlacementDefaultInput(values,row)})
     }, {
       title: '声明 Zonegroup 存储类', path: '/rgw/zonegroup/storage/class', method: 'POST',
       successMessage: '组存储类声明已回读核验（未配置 Zone 池或发布 Period）',

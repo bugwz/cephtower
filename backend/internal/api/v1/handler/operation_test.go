@@ -88,6 +88,20 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal("group class declaration not queued", groupClassResponse.Code)
 	}
 	groupClassOp, groupClassErr := db.FindOperation(context.Background(), operationIDFromResponse(t, groupClassResponse))
+	defaultBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"default-group","realm_id":"r","placement_id":"p","storage_class":"STANDARD","expected_default_placement":"old","confirm_default":true}`, cluster.ID)
+	defaultResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/default", defaultBody, "group-default")
+	if defaultResponse.Code != http.StatusAccepted {
+		t.Fatal(defaultResponse.Code)
+	}
+	defaultOp, defaultErr := db.FindOperation(context.Background(), operationIDFromResponse(t, defaultResponse))
+	if defaultErr != nil || defaultOp.Action != "rgw_zonegroup.placement_default" || defaultOp.Risk != "high" || defaultOp.MaxAttempts != 1 || defaultOp.ResourceKey != "rgw/zonegroup/default-group" {
+		t.Fatal("unsafe default placement queue")
+	}
+	for _, body := range []string{strings.Replace(defaultBody, `"expected_default_placement":"old",`, "", 1), strings.TrimSuffix(defaultBody, "}") + `,"tags":["change"]}`} {
+		if response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/default", body, "bad-group-default"); response.Code != http.StatusBadRequest {
+			t.Fatal("invalid default contract accepted")
+		}
+	}
 	groupPlacementBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"placement-group","realm_id":"r","placement_id":"new","tags":[],"expected_default_placement":"","confirm_create":true}`, cluster.ID)
 	groupPlacementResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/zonegroup/placement", groupPlacementBody, "group-placement")
 	if groupPlacementResponse.Code != http.StatusAccepted {

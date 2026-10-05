@@ -90,6 +90,7 @@ func rgwRoutes(h *handler.Handler) []Route {
 		{"POST", "/rgw/zone/storage/class", h.CreateRGWZoneStorageClass},
 		{"POST", "/rgw/zonegroup/storage/class", h.CreateRGWZonegroupStorageClass},
 		{"POST", "/rgw/zonegroup/placement", h.CreateRGWZonegroupPlacement},
+		{"PATCH", "/rgw/zonegroup/placement/default", h.SetRGWZonegroupPlacementDefault},
 		{"GET", "/rgw/zones", h.ListRGWZones},
 		{"POST", "/rgw/zone/sync/status", h.ReadRGWSyncStatus},
 		{"POST", "/rgw/zone", h.CreateRGWZone},

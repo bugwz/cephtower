@@ -25,3 +25,11 @@ assert.match(api.groupPlacementCreateConfirmation(create,{...row,default_placeme
 assert.match(api.groupPlacementCreateConfirmation(create,row),/不配置任何 Zone 池/)
 assert.match(readFileSync(new URL('../src/pages/object/pages.tsx',import.meta.url),'utf8'),/path: '\/rgw\/zonegroup\/placement'/)
 console.log('New group placements preserve explicit tags, STANDARD initialization and default scope')
+const defaultValues={placement_id:'p',storage_class:'STANDARD',confirm_default:'acknowledged'}
+assert.deepEqual(api.groupPlacementDefaultClasses(row,'p'),[{value:'STANDARD',label:'STANDARD'}])
+assert.equal(api.groupPlacementDefaultInput(defaultValues,row).expected_default_placement,'p')
+for(const change of [{placement_id:'missing'},{storage_class:'COLD'},{confirm_default:undefined}])assert.throws(()=>api.groupPlacementDefaultInput({...defaultValues,...change},row))
+assert.throws(()=>api.groupPlacementDefaultInput(defaultValues,{...row,stale:true}))
+assert.match(api.groupPlacementDefaultConfirmation(defaultValues,row),/不迁移已有桶或对象/)
+assert.match(api.groupPlacementDefaultConfirmation(defaultValues,row),/不自动发布 Period/)
+assert.match(readFileSync(new URL('../src/pages/object/pages.tsx',import.meta.url),'utf8'),/optionsDependencies:\['placement_id'\],optionsLoader:async .*groupPlacementDefaultClasses/)

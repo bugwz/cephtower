@@ -30,7 +30,7 @@ func buildZonegroupStorageClass(p map[string]any) (command, error) {
 
 func (s *Service) executeZonegroupStorageClass(ctx context.Context, access executor.ClusterAccess, req Request, spec command) (cephdomain.ActionResult, error) {
 	fail := func(code string) (cephdomain.ActionResult, error) {
-		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: code, Message: "Zonegroup storage class declaration could not be verified; inspect local configuration before retrying; no Period publication or Zone pool configuration performed", Retryable: false}
+		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: code, Message: "Zonegroup placement configuration could not be verified; inspect local configuration before retrying; no Period publication or Zone pool configuration performed", Retryable: false}
 	}
 	run := func(stage string, args []string, write bool) (map[string]any, bool) {
 		result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: req.Action + "." + stage, Binary: executor.BinaryRGWAdmin, Args: args, Mutating: write, Timeout: time.Minute, MaxOutput: executor.DefaultMaxOutput})
@@ -45,7 +45,9 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 	}
 	createTarget := req.Action == "rgw_zonegroup.placement_create"
 	var expected map[string]any
-	if createTarget {
+	if req.Action == "rgw_zonegroup.placement_default" {
+		expected, ok = zonegroupPlacementDefaultExpected(before, p)
+	} else if createTarget {
 		expected, ok = zonegroupPlacementCreateExpected(before, p)
 	} else {
 		expected, ok = zonegroupStorageClassExpected(before, p)
@@ -57,7 +59,8 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 	if !ok || !reflect.DeepEqual(checked, before) {
 		return fail("pre_check_failed")
 	}
-	// Native add emits a target map, not the whole group. Use an independent get.
+	// Native placement commands emit a target map, not the whole group.
+	// Use an independent get, including for default changes absent from that map.
 	if _, ok := run("add", spec.args, true); !ok {
 		return fail("command_failed")
 	}
@@ -68,6 +71,9 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 	class := p["storage_class"]
 	if createTarget {
 		class = "STANDARD"
+	}
+	if req.Action == "rgw_zonegroup.placement_default" {
+		return cephdomain.ActionResult{Details: map[string]any{"zonegroup_id": p["zonegroup_id"], "default_placement": expected["default_placement"], "default_placement_verified": true, "period_published": false, "data_migrated": false}}, nil
 	}
 	return cephdomain.ActionResult{Details: map[string]any{"zonegroup_id": p["zonegroup_id"], "placement_id": p["placement_id"], "storage_class": class, "placement_created": createTarget, "declaration_verified": true, "period_published": false, "zone_pools_configured": false, "default_placement_initialized": before["default_placement"] == ""}}, nil
 }

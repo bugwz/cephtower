@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### Zonegroup 默认放置规则切换
+
+在组放置配置能力上新增默认规则操作，使用 `radosgw-admin zonegroup placement default --zonegroup-id ... --placement-id ... --storage-class ...`，由高风险 `PATCH /rgw/zonegroup/placement/default` 入队。
+依据参考源码 `radosgw-admin.cc::ZONEGROUP_PLACEMENT_DEFAULT` 及 `rgw_placement_rule::to_str`：STANDARD 默认值仅序列化目标名，其他类为 `目标/类`；命令输出仅含目标表，不含默认规则，必须独立回读完整组。
+后端在原生命令的目标存在校验之上核验存储类已声明，核对旧默认值、组 ID/名称/Realm，写前重读、写后校验仅默认规则变化。界面联动加载存储类，切换目标清空旧选择与确认，说明不迁移对象、不配置 Zone 池、不自动发布 Period，需评估新请求默认行为与云分层限制。
+离线测试覆盖 STANDARD/非 STANDARD、声明缺失、并发变化、额外字段漂移、逐阶段失败与单次高风险入队；全量后端测试、OpenAPI 校验、前端回归与生产构建通过，尚无真实集群及浏览器视觉验证。
+
 #### Zone 新放置池配置
 
 Zone 列表新增放置池配置表单，接通高风险 `POST /rgw/zone/placement` 与

@@ -34,3 +34,16 @@ export function groupPlacementCreateConfirmation(values: Row,row?: Row) {
   const p = groupPlacementCreateInput(values,row)
   return `在 Zonegroup ${p.name}（${p.zonegroup_id}）新建放置目标 ${p.placement_id}，初始存储类 STANDARD，标签 ${JSON.stringify(p.tags)}。${p.expected_default_placement === '' ? '当前没有默认目标，原生操作会把新目标设为默认；请先评估新桶创建行为。' : `保留当前默认目标 ${p.expected_default_placement}。`}不覆盖已有目标，不配置任何 Zone 池，不迁移数据或自动发布 Period/重启网关。请先备份，并在发布前完成相关 Zone 的放置池配置。检查不是跨进程原子锁，分步核验失败可能已写入，不自动重试或回滚。`
 }
+
+export function groupPlacementDefaultClasses(row?: Row, placement?: unknown) {
+  return (targets(row).find(p => p.name === placement)?.storage_classes || []).map((value: string) => ({value,label:value}))
+}
+export function groupPlacementDefaultInput(values: Row,row?: Row) {
+  if (!groupStorageClassOptions(row).some(p => p.value === values.placement_id) || !groupPlacementDefaultClasses(row,values.placement_id).some((p: Row) => p.value === values.storage_class)) throw new Error('请选择已声明的目标与存储类')
+  if (values.confirm_default !== 'acknowledged') throw new Error('请确认默认规则变更范围')
+  return {zonegroup_id:row!.id,name:row!.name,realm_id:row!.realm_id,placement_id:values.placement_id,storage_class:values.storage_class,expected_default_placement:row!.default_placement,confirm_default:true}
+}
+export function groupPlacementDefaultConfirmation(values: Row,row?: Row) {
+  const p = groupPlacementDefaultInput(values,row)
+  return `将 Zonegroup ${p.name}（${p.zonegroup_id}）默认放置规则由 ${p.expected_default_placement || '未设置'} 改为目标 ${p.placement_id}、存储类 ${p.storage_class}。这会影响采用组默认值的新请求；不覆盖显式放置规则、不迁移已有桶或对象。保留目标、标签、全部存储类及 Zone 池配置。不自动发布 Period 或重启网关；请先核对相关 Zone 池及存储类用途（包括云分层限制），再单独评估发布。请备份；检查不是原子锁，失败可能已写入，不自动重试或回滚。`
+}
