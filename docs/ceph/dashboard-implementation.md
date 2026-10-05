@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### RGW 服务状态 API 与浏览器精度保护
+
+新增 `GET /rgw/daemon/status`，严格接收 cluster_id 与 service_map_id，接通原生状态读取，沿用认证和审计，设置 no-store；不存在状态记录返回 404，命令失败不透传诊断。状态 map 保持原生字符串信封：json 项先解析脱敏再重新编码为字符串，避免浏览器 JSON.parse 把嵌套大整数舍入；普通状态仍为脱敏文本，前端应直接展示而非再次解析数值。生成 OpenAPI 契约并增加实际路由测试，覆盖嵌套大整数字符串、敏感信息、未知字段/类型/缺失身份零命令、缺失状态、非零退出及认证。后端全量测试和 OpenAPI 检查通过，前端详情尚待接入，无真实集群验证。
+
 #### RGW 原生服务状态读取基础
 
 追踪 `DaemonServer.cc` 的 service status 输出，新增内部 `RGWDaemonStatus`，执行 `ceph service status --format json`，以精确 service_map_id 选取 rgw 下的记录，返回 status_stamp、last_beacon、状态字段与读取时间。参考 `rgw_sync_trace.cc` 上报 current_sync，故支持原生字符串状态，不只依赖 Dashboard 的 status.json；存在 json 字段时使用 RawMessage 严格解析和结构化脱敏，保留大整数。敏感字段名称和普通文本沿用安全脱敏，不透传命令错误，清理命令输出缓冲。缺失记录与非法结构均返回错误，不转为健康/空成功；时间仅表示原生报告，不计算存活结论。

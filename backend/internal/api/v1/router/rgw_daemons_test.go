@@ -9,6 +9,7 @@ import (
 	"cephtower/backend/internal/service/clusterinspect"
 	"cephtower/backend/internal/store"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -46,8 +47,9 @@ func TestRGWDaemonAPI(t *testing.T) {
 	auth := false
 	mux := http.NewServeMux()
 	Register(mux, handler.New(handler.Dependencies{Database: database, Clusters: clusterservice.New(database, key, nil), Inspection: clusterinspect.New(clusterservice.New(database, key, nil), runner), AuthEnabled: func() bool { return auth }}))
+	path := "/api/v1/rgw/daemons"
 	send := func(body string) *httptest.ResponseRecorder {
-		r := httptest.NewRequest("GET", "/api/v1/rgw/daemons", strings.NewReader(body))
+		r := httptest.NewRequest("GET", path, strings.NewReader(body))
 		r.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		mux.ServeHTTP(w, r)
@@ -77,9 +79,47 @@ func TestRGWDaemonAPI(t *testing.T) {
 	if w.Code == 200 || strings.Contains(w.Body.String(), "private-error") {
 		t.Fatal("command failure leaked")
 	}
+	path = "/api/v1/rgw/daemon/status"
+	runner.exit = 0
+	runner.output = `{"rgw":{"1":{"status_stamp":"stamp","last_beacon":"beacon","status":{"current_sync":"idle","password":"private-secret","json":"{\"count\":9007199254740993}"}}}}`
+	statusBody := strings.TrimSuffix(valid, "}") + `,"service_map_id":"1"}`
+	w = send(statusBody)
+	if w.Code != 200 || w.Header().Get("Cache-Control") != "no-store" || strings.Contains(w.Body.String(), "private-secret") || !strings.Contains(w.Body.String(), `9007199254740993`) {
+		t.Fatal("unsafe status", w.Code)
+	}
+	var envelope struct {
+		Data struct {
+			Status map[string]string `json:"status"`
+		} `json:"data"`
+	}
+	if json.Unmarshal(w.Body.Bytes(), &envelope) != nil || envelope.Data.Status["json"] != `{"count":9007199254740993}` {
+		t.Fatal("nested json lost string precision")
+	}
+	count := runner.calls
+	for _, body := range []string{valid, strings.TrimSuffix(valid, "}") + `,"service_map_id":1}`, strings.TrimSuffix(statusBody, "}") + `,"name":"unexpected"}`} {
+		if w = send(body); w.Code != 400 {
+			t.Fatal("invalid status request accepted")
+		}
+	}
+	if runner.calls != count {
+		t.Fatal("invalid status request ran command")
+	}
+	runner.output = `{"rgw":{}}`
+	if w = send(statusBody); w.Code != 404 {
+		t.Fatal("missing status not reported", w.Code)
+	}
+	runner.exit = 3
+	runner.output = "private-failure"
+	if w = send(statusBody); w.Code == 200 || strings.Contains(w.Body.String(), "private-") {
+		t.Fatal("status failure leaked")
+	}
 	auth = true
 	before := runner.calls
-	if w = send(valid); w.Code != 401 || runner.calls != before {
+	if w = send(statusBody); w.Code != 401 || runner.calls != before {
 		t.Fatal("authentication bypass")
+	}
+	path = "/api/v1/rgw/daemons"
+	if w = send(valid); w.Code != 401 || runner.calls != before {
+		t.Fatal("list authentication bypass")
 	}
 }

@@ -15,11 +15,11 @@ import (
 )
 
 type RGWDaemonStatus struct {
-	ServiceMapID string         `json:"service_map_id"`
-	StatusStamp  string         `json:"status_stamp"`
-	LastBeacon   string         `json:"last_beacon"`
-	Status       map[string]any `json:"status"`
-	ObservedAt   time.Time      `json:"observed_at"`
+	ServiceMapID string            `json:"service_map_id"`
+	StatusStamp  string            `json:"status_stamp"`
+	LastBeacon   string            `json:"last_beacon"`
+	Status       map[string]string `json:"status"`
+	ObservedAt   time.Time         `json:"observed_at"`
 }
 
 func (s *Service) RGWDaemonStatus(ctx context.Context, clusterID uint64, id string) (RGWDaemonStatus, error) {
@@ -79,7 +79,7 @@ func decodeRGWDaemonStatus(body []byte, id string) (RGWDaemonStatus, error) {
 	if json.Unmarshal(raw, &record) != nil || record.StatusStamp == nil || record.LastBeacon == nil || record.Status == nil {
 		return fail()
 	}
-	safe := map[string]any{}
+	safe := map[string]string{}
 	for key, value := range record.Status {
 		if security.IsSensitiveName(key) {
 			safe[key] = "[REDACTED]"
@@ -90,7 +90,12 @@ func decodeRGWDaemonStatus(body []byte, id string) (RGWDaemonStatus, error) {
 			if err != nil {
 				return fail()
 			}
-			safe[key] = decoded
+			encoded, err := json.Marshal(decoded)
+			if err != nil {
+				return fail()
+			}
+			// Keep the native string envelope so browser JSON parsing cannot round numbers.
+			safe[key] = string(encoded)
 		} else {
 			safe[key] = security.Redact(value)
 		}
