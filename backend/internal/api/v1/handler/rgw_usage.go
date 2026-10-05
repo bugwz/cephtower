@@ -24,5 +24,6 @@ func (h *Handler) GetRGWBucketUsage(w http.ResponseWriter, r *http.Request) {
 		writeActionError(w, r, err)
 		return
 	}
+	result["scope"] = "current_rgw_configuration"
 	WriteSuccess(w, 200, "success", result)
 }

@@ -5,7 +5,8 @@ const code=ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwBucke
 const ui={},states=[],refs=[],calls=[];let si=0,ri=0,deps,cleanup,pending
 const jsx=(type,props)=>({type,props}),react={useState:v=>{const i=si++;if(!(i in states))states[i]=v;return[states[i],v=>states[i]=v]},useRef:v=>refs[ri++]??(refs[ri-1]={current:v}),useEffect:(fn,next)=>{if(JSON.stringify(next)!==JSON.stringify(deps)){deps=next;pending=()=>{cleanup?.();cleanup=fn()}}}}
 new Function('exports','require',code)(ui,name=>name==='react'?react:name==='antd'?Object.fromEntries(['Alert','Button','Card','Descriptions','Space'].map(n=>[n,n])):name.includes('api/client')?{jsonInit:(method,body,opts)=>({method,body,...opts}),request:(path,init)=>new Promise((resolve,reject)=>calls.push({path,...init,resolve,reject}))}:{jsx,jsxs:jsx})
-const data={bucket_count:2,object_count:'18014398509481986',size_actual_bytes:'36893488147419103230',usage_category:'rgw.main',source:'radosgw-admin',started_at:'2026-01-01T00:00:00Z',observed_at:'2026-01-01T00:00:01Z'}
+const data={bucket_count:2,object_count:'18014398509481986',size_actual_bytes:'36893488147419103230',usage_category:'rgw.main',source:'radosgw-admin',scope:'current_rgw_configuration',started_at:'2026-01-01T00:00:00Z',observed_at:'2026-01-01T00:00:01Z'}
+for(const scope of [undefined,null,'all_realms',''])assert.throws(()=>ui.bucketUsageData({...data,scope}))
 assert.deepEqual(ui.bucketUsageData({...data,secret:'ignored'}),data)
 for(const bad of [null,{}, {...data,source:'other'},{...data,usage_category:'rgw.multimeta'},{...data,bucket_count:-1},{...data,bucket_count:2**53},{...data,bucket_count:1.1},{...data,bucket_count:'2'},{...data,bucket_count:0},{...data,observed_at:'bad'},{...data,started_at:'2027-01-01T00:00:00Z'}])assert.throws(()=>ui.bucketUsageData(bad))
 for(const key of ['object_count','size_actual_bytes'])for(const value of [null,undefined,0,9007199254740992,'','-1','1.2','1e2','01',' 1','NaN','<script>'])assert.throws(()=>ui.bucketUsageData({...data,[key]:value}))
@@ -19,6 +20,7 @@ function nodes(n){return Array.isArray(n)?n.flatMap(nodes):n&&typeof n==='object
 function render(id=7){si=ri=0;const tree=nodes(ui.RgwBucketUsageView({clusterId:id}));const effect=pending;pending=undefined;effect?.();return tree}
 const tick=()=>new Promise(r=>setTimeout(r,0))
 render();assert.equal(calls.length,0)
+assert.ok(render().some(n=>n.type==='Alert'&&n.props.message.includes('不是跨 Realm 总量')))
 const old=render().find(n=>n.type==='Button');old.props.onClick()
 assert.equal(calls[0].path,'/rgw/buckets/usage');assert.deepEqual(calls[0].body,{cluster_id:7});assert.equal(calls[0].method,'GET');assert.equal(calls[0].cache,'no-store')
 assert.equal(render().find(n=>n.type==='Button').props.disabled,true)

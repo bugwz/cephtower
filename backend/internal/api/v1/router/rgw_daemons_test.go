@@ -154,6 +154,9 @@ func TestRGWDaemonAPI(t *testing.T) {
 	if w.Code != 200 || w.Header().Get("Cache-Control") != "no-store" || !strings.Contains(w.Body.String(), `"object_count":"9007199254740993"`) || !strings.Contains(w.Body.String(), `"size_actual_bytes":"18446744073709551615"`) {
 		t.Fatal("usage precision lost", w.Code)
 	}
+	if !strings.Contains(w.Body.String(), `"scope":"current_rgw_configuration"`) {
+		t.Fatal("usage configuration scope missing")
+	}
 	count = runner.calls
 	for _, body := range []string{`{}`, `{"cluster_id":0}`, `{"cluster_id":"1"}`, strings.TrimSuffix(valid, "}") + `,"bucket":"photos"}`} {
 		if w = send(body); w.Code != 400 || runner.calls != count {
