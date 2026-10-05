@@ -33,3 +33,12 @@ assert.throws(()=>api.groupPlacementDefaultInput(defaultValues,{...row,stale:tru
 assert.match(api.groupPlacementDefaultConfirmation(defaultValues,row),/不迁移已有桶或对象/)
 assert.match(api.groupPlacementDefaultConfirmation(defaultValues,row),/不自动发布 Period/)
 assert.match(readFileSync(new URL('../src/pages/object/pages.tsx',import.meta.url),'utf8'),/optionsDependencies:\['placement_id'\],optionsLoader:async .*groupPlacementDefaultClasses/)
+const tagValues={placement_id:'p',storage_class:'STANDARD',tags_json:'[]',confirm_tags:'acknowledged'}
+assert.deepEqual(api.groupPlacementTagsInput(tagValues,row).tags,[])
+assert.deepEqual(api.groupPlacementTagsInput(tagValues,row).expected_tags,['restricted'])
+assert.deepEqual(api.groupPlacementTagsChanged({placement_id:'p'},tagValues,row),{storage_class:undefined,tags_json:'["restricted"]',confirm_tags:undefined})
+assert.deepEqual(api.groupPlacementTagsChanged({tags_json:'[]'},tagValues,row),{confirm_tags:undefined})
+for(const change of [{placement_id:'missing'},{storage_class:'missing'},{tags_json:'null'},{tags_json:'["a,b"]'},{tags_json:'["a","a"]'},{confirm_tags:undefined}])assert.throws(()=>api.groupPlacementTagsInput({...tagValues,...change},row))
+assert.match(api.groupPlacementTagsConfirmation(tagValues,row),/清空标签可能放宽/)
+assert.match(api.groupPlacementTagsConfirmation(tagValues,{...row,default_placement:''}),/STANDARD 设为默认/)
+assert.match(api.groupPlacementTagsConfirmation(tagValues,row),/不自动发布 Period/)

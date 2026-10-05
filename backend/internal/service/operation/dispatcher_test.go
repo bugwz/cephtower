@@ -74,6 +74,12 @@ func TestActionDispatcherReconcilesNativeMutation(t *testing.T) {
 }
 
 func TestActionDispatcherFailsWhenPostReconcileFails(t *testing.T) {
+	tagsReconciler := &reconcileExecutorFake{err: errors.New("offline")}
+	_, tagsErr := NewActionDispatcher(&mutationExecutorFake{}, nil, tagsReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zonegroup.placement_tags", ResourceKind: "rgw_zonegroup"})
+	var tagsFailure *cephdomain.ActionError
+	if !errors.As(tagsErr, &tagsFailure) || tagsFailure.Retryable || tagsReconciler.kind != "rgw_zonegroup" {
+		t.Fatal("unsafe placement tags refresh")
+	}
 	defaultReconciler := &reconcileExecutorFake{err: errors.New("offline")}
 	_, defaultErr := NewActionDispatcher(&mutationExecutorFake{}, nil, defaultReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zonegroup.placement_default", ResourceKind: "rgw_zonegroup"})
 	var defaultFailure *cephdomain.ActionError

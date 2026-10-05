@@ -26,6 +26,7 @@ func (e *placementExecutor) Run(_ context.Context, _ executor.ClusterAccess, c e
 	stage = strings.TrimPrefix(stage, "rgw_zonegroup.storage_class_create.")
 	stage = strings.TrimPrefix(stage, "rgw_zonegroup.placement_create.")
 	stage = strings.TrimPrefix(stage, "rgw_zonegroup.placement_default.")
+	stage = strings.TrimPrefix(stage, "rgw_zonegroup.placement_tags.")
 	if stage == e.fail {
 		return executor.CommandResult{}, errors.New("private key")
 	}

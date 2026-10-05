@@ -45,7 +45,9 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 	}
 	createTarget := req.Action == "rgw_zonegroup.placement_create"
 	var expected map[string]any
-	if req.Action == "rgw_zonegroup.placement_default" {
+	if req.Action == "rgw_zonegroup.placement_tags" {
+		expected, ok = zonegroupPlacementTagsExpected(before, p)
+	} else if req.Action == "rgw_zonegroup.placement_default" {
 		expected, ok = zonegroupPlacementDefaultExpected(before, p)
 	} else if createTarget {
 		expected, ok = zonegroupPlacementCreateExpected(before, p)
@@ -71,6 +73,9 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 	class := p["storage_class"]
 	if createTarget {
 		class = "STANDARD"
+	}
+	if req.Action == "rgw_zonegroup.placement_tags" {
+		return cephdomain.ActionResult{Details: map[string]any{"zonegroup_id": p["zonegroup_id"], "placement_id": p["placement_id"], "tags_verified": true, "period_published": false, "default_placement_initialized": before["default_placement"] == ""}}, nil
 	}
 	if req.Action == "rgw_zonegroup.placement_default" {
 		return cephdomain.ActionResult{Details: map[string]any{"zonegroup_id": p["zonegroup_id"], "default_placement": expected["default_placement"], "default_placement_verified": true, "period_published": false, "data_migrated": false}}, nil

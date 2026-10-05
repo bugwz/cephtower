@@ -47,3 +47,31 @@ export function groupPlacementDefaultConfirmation(values: Row,row?: Row) {
   const p = groupPlacementDefaultInput(values,row)
   return `将 Zonegroup ${p.name}（${p.zonegroup_id}）默认放置规则由 ${p.expected_default_placement || '未设置'} 改为目标 ${p.placement_id}、存储类 ${p.storage_class}。这会影响采用组默认值的新请求；不覆盖显式放置规则、不迁移已有桶或对象。保留目标、标签、全部存储类及 Zone 池配置。不自动发布 Period 或重启网关；请先核对相关 Zone 池及存储类用途（包括云分层限制），再单独评估发布。请备份；检查不是原子锁，失败可能已写入，不自动重试或回滚。`
 }
+
+function placementTags(value: unknown): string[] {
+  if (!Array.isArray(value) || value.some(t => !token(t) || t.includes(',')) || new Set(value).size !== value.length) throw new Error('标签必须是唯一非空字符串数组，不能含逗号或控制字符')
+  return [...value]
+}
+export function groupPlacementTagsChanged(changed: Row, _values: Row,row?: Row) {
+  if (Object.prototype.hasOwnProperty.call(changed,'placement_id')) {
+    const target=targets(row).find(p => p.name === changed.placement_id)
+    let tags_json: string | undefined
+    try { tags_json=JSON.stringify(placementTags(target?.tags)) } catch { tags_json=undefined }
+    return {storage_class:undefined,tags_json,confirm_tags:undefined}
+  }
+  return Object.keys(changed).some(key => key !== 'confirm_tags') ? {confirm_tags:undefined} : {}
+}
+export function groupPlacementTagsInput(values: Row,row?: Row) {
+  const target=targets(row).find(p => p.name === values.placement_id)
+  if (!target || target.name.includes('/') || !target.storage_classes.includes(values.storage_class)) throw new Error('请选择已有目标与存储类；标签影响整个目标')
+  const expected_tags=placementTags(target.tags)
+  let raw: unknown
+  try { raw=JSON.parse(String(values.tags_json ?? '')) } catch { throw new Error('标签请输入 JSON 字符串数组，清空填 []') }
+  const tags=placementTags(raw)
+  if (values.confirm_tags !== 'acknowledged') throw new Error('请确认标签及默认目标变化范围')
+  return {zonegroup_id:row!.id,name:row!.name,realm_id:row!.realm_id,placement_id:values.placement_id,storage_class:values.storage_class,expected_default_placement:row!.default_placement,expected_tags,tags,confirm_tags:true}
+}
+export function groupPlacementTagsConfirmation(values: Row,row?: Row) {
+  const p=groupPlacementTagsInput(values,row)
+  return `将 Zonegroup ${p.name}（${p.zonegroup_id}）目标 ${p.placement_id} 的标签从 ${JSON.stringify(p.expected_tags)} 替换为 ${JSON.stringify(p.tags)}。标签影响整个目标，不仅是所选存储类；请评估用户放置资格，清空标签可能放宽目标使用范围。保留全部存储类与分层配置，不搬迁对象、不修改 Zone 池。${p.expected_default_placement === '' ? '当前无默认目标，原生 modify 会将此目标的 STANDARD 设为默认。' : `保留默认规则 ${p.expected_default_placement}。`}不自动发布 Period 或重启网关，请备份并单独评估发布；检查不是原子锁，失败可能已写入，不自动重试或回滚。`
+}

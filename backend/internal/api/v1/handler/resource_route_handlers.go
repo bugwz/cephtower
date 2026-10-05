@@ -841,6 +841,10 @@ func (h *Handler) SetRGWZonegroupPlacementDefault(w http.ResponseWriter, r *http
 	h.MutateResource("rgw_zonegroup", "rgw_zonegroup.placement_default", "high")(w, r)
 }
 
+func (h *Handler) SetRGWZonegroupPlacementTags(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_zonegroup", "rgw_zonegroup.placement_tags", "high")(w, r)
+}
+
 func (h *Handler) CreateRGWZoneStorageClass(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_zone", "rgw_zone.storage_class_create", "high")(w, r)
 }

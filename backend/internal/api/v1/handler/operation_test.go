@@ -94,6 +94,20 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal(defaultResponse.Code)
 	}
 	defaultOp, defaultErr := db.FindOperation(context.Background(), operationIDFromResponse(t, defaultResponse))
+	tagsBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"tags-group","realm_id":"r","placement_id":"p","storage_class":"STANDARD","expected_default_placement":"old","expected_tags":["restricted"],"tags":[],"confirm_tags":true}`, cluster.ID)
+	tagsResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/tags", tagsBody, "group-tags")
+	if tagsResponse.Code != http.StatusAccepted {
+		t.Fatal(tagsResponse.Code)
+	}
+	tagsOp, tagsErr := db.FindOperation(context.Background(), operationIDFromResponse(t, tagsResponse))
+	if tagsErr != nil || tagsOp.Action != "rgw_zonegroup.placement_tags" || tagsOp.Risk != "high" || tagsOp.MaxAttempts != 1 || tagsOp.ResourceKey != "rgw/zonegroup/tags-group" {
+		t.Fatal("unsafe tags queue")
+	}
+	for _, body := range []string{strings.Replace(tagsBody, `"expected_tags":["restricted"],`, "", 1), strings.TrimSuffix(tagsBody, "}") + `,"tier_type":"cloud-s3"}`} {
+		if response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/tags", body, "bad-tags"); response.Code != http.StatusBadRequest {
+			t.Fatal("invalid tag contract accepted")
+		}
+	}
 	if defaultErr != nil || defaultOp.Action != "rgw_zonegroup.placement_default" || defaultOp.Risk != "high" || defaultOp.MaxAttempts != 1 || defaultOp.ResourceKey != "rgw/zonegroup/default-group" {
 		t.Fatal("unsafe default placement queue")
 	}

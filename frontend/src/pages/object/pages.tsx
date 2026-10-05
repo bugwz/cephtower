@@ -12,6 +12,7 @@ import { zonePlacementCreateBlocked, zonePlacementCreateInput, zonePlacementCrea
 import { groupStorageClassBlocked, groupStorageClassOptions, groupStorageClassInput, groupStorageClassConfirmation } from './rgwZonegroupStorageClass'
 import { groupPlacementCreateBlocked, groupPlacementCreateInput, groupPlacementCreateConfirmation } from './rgwZonegroupStorageClass'
 import { groupPlacementDefaultClasses, groupPlacementDefaultInput, groupPlacementDefaultConfirmation } from './rgwZonegroupStorageClass'
+import { groupPlacementTagsChanged, groupPlacementTagsInput, groupPlacementTagsConfirmation } from './rgwZonegroupStorageClass'
 import { RgwTopologyView } from './RgwTopology'
 import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwZonePoolReferences } from './RgwZonePoolReferences'
@@ -1123,6 +1124,17 @@ const definitions: Record<
         {name:'confirm_default',label:'范围确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份，了解默认行为变化与后续发布要求'}]}
       ],
       buildBody:(values,clusterId,row) => ({cluster_id:clusterId,...groupPlacementDefaultInput(values,row)})
+    }, {
+      title: '编辑放置目标标签', path: '/rgw/zonegroup/placement/tags', method: 'PATCH',
+      successMessage: '目标标签已回读核验（未发布 Period）',
+      disabledWhen: groupStorageClassBlocked, confirmation: groupPlacementTagsConfirmation, changedValues: groupPlacementTagsChanged,
+      fields: [
+        {name:'placement_id',label:'已有放置目标',type:'select',required:true,optionsLoader:async (_clusterId,row) => groupStorageClassOptions(row)},
+        {name:'storage_class',label:'已有类（命令使用；标签影响整个目标）',type:'select',required:true,optionsDependencies:['placement_id'],optionsLoader:async (_clusterId,row,values) => groupPlacementDefaultClasses(row,values?.placement_id)},
+        {name:'tags_json',label:'目标标签 JSON 数组（[] 清空，不能含逗号）',type:'textarea',required:true},
+        {name:'confirm_tags',label:'范围确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份，了解目标标签、默认值和发布范围'}]}
+      ],
+      buildBody:(values,clusterId,row) => ({cluster_id:clusterId,...groupPlacementTagsInput(values,row)})
     }, {
       title: '声明 Zonegroup 存储类', path: '/rgw/zonegroup/storage/class', method: 'POST',
       successMessage: '组存储类声明已回读核验（未配置 Zone 池或发布 Period）',

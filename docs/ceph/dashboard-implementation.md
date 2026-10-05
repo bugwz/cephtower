@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### Zonegroup 放置目标标签编辑与清空
+
+对照参考 Dashboard `RgwMultisite.modify_placement_targets` 与原生 `ZONEGROUP_PLACEMENT_MODIFY`，新增高风险 `PATCH /rgw/zonegroup/placement/tags` 及目标/存储类联动表单。标签属于目标而不是单个类；指定已有类防止 native modify 隐式新增 STANDARD。
+非空标签通过 `--tags=<列表>` 完整替换；原生忽略空 `--tags`，故清空时使用已核验旧集合生成 `--tags-rm=<列表>`，旧集合也为空时不传标签参数。显式 JSON 数组保留空格，不接受重复、空标签、控制字符及 CLI 无法无损表示的逗号。
+核验旧标签、旧默认规则、组身份及类声明，写前重读整个组，写后核验标签和适用的默认初始化，保留成员、其他目标、类及云分层字段。不自动发布 Period、不迁移数据；界面警示清空目标标签可能放宽用户放置资格（`RGWSI_Zone::select_new_bucket_location` 调用 `user_permitted`）。
+新增替换/清空、默认初始化、阶段错误、并发变化、字段漂移、非 STANDARD 与分层字段保留、API 严格契约及表单回归测试；全量后端/OpenAPI 检查、前端测试与构建通过，尚无真实集群或浏览器视觉验证。
+
 #### Zonegroup 默认放置规则切换
 
 在组放置配置能力上新增默认规则操作，使用 `radosgw-admin zonegroup placement default --zonegroup-id ... --placement-id ... --storage-class ...`，由高风险 `PATCH /rgw/zonegroup/placement/default` 入队。

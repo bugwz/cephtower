@@ -106,6 +106,7 @@ var mutationRouteActions = map[string]string{
 	"POST /rgw/zonegroup/storage/class":             "rgw_zonegroup.storage_class_create",
 	"POST /rgw/zonegroup/placement":                 "rgw_zonegroup.placement_create",
 	"PATCH /rgw/zonegroup/placement/default":        "rgw_zonegroup.placement_default",
+	"PATCH /rgw/zonegroup/placement/tags":           "rgw_zonegroup.placement_tags",
 	"PATCH /rgw/role":                               "rgw_role.update",
 	"PATCH /rgw/user":                               "rgw_user.update",
 	"PATCH /rgw/user/key":                           "rgw_key.update",
