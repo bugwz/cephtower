@@ -158,6 +158,9 @@ func (s *Service) readBinary(ctx context.Context, clusterID uint64, id string, b
 	if err != nil {
 		return &cephdomain.ActionError{Code: "ceph_command_failed", Message: security.Redact(err.Error()), Retryable: true}
 	}
+	if result.ExitCode != 0 {
+		return &cephdomain.ActionError{Code: "ceph_command_failed", Message: "Ceph inspection command exited unsuccessfully", Retryable: true}
+	}
 	decoder := json.NewDecoder(bytes.NewReader(result.Stdout))
 	decoder.UseNumber()
 	if err := decoder.Decode(out); err != nil {

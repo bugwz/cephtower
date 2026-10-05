@@ -12,6 +12,7 @@ import (
 type perfFixtureExecutor struct {
 	schema, dump string
 	specs        []executor.CommandSpec
+	failAt       string
 }
 
 func TestDaemonPerfRedactsCompositeValues(t *testing.T) {
@@ -33,7 +34,30 @@ func (e *perfFixtureExecutor) Run(_ context.Context, _ executor.ClusterAccess, s
 	if spec.ID == "daemon.perf.dump" {
 		output = e.dump
 	}
-	return executor.CommandResult{Stdout: []byte(output)}, nil
+	exit := 0
+	if spec.ID == e.failAt {
+		exit = 2
+	}
+	return executor.CommandResult{Stdout: []byte(output), ExitCode: exit, Stderr: []byte("private-diagnostic")}, nil
+}
+
+func TestDaemonPerfRejectsFailedCommandsWithValidJSON(t *testing.T) {
+	for _, stage := range []string{"daemon.perf.schema", "daemon.perf.dump"} {
+		s, _, id := testInspection(t)
+		e := &perfFixtureExecutor{schema: `{"osd":{"x":{}}}`, dump: `{"osd":{"x":123}}`, failAt: stage}
+		s.executor = e
+		result, err := s.DaemonPerf(context.Background(), id, "osd.1")
+		if result != nil || err == nil || strings.Contains(err.Error(), "private-diagnostic") {
+			t.Fatal("failed command became a snapshot or leaked diagnostics")
+		}
+		want := 1
+		if stage == "daemon.perf.dump" {
+			want = 2
+		}
+		if len(e.specs) != want {
+			t.Fatal("continued after failed command")
+		}
+	}
 }
 
 func TestDaemonPerfSnapshotPreservesNativeValues(t *testing.T) {
