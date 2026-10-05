@@ -4,6 +4,7 @@ import "cephtower/backend/internal/api/v1/handler"
 
 func rgwRoutes(h *handler.Handler) []Route {
 	return []Route{
+		{"PATCH", "/rgw/encryption/configuration", h.UpdateRGWEncryptionConfiguration},
 		{"GET", "/rgw/encryption/configuration", h.GetRGWEncryptionConfiguration},
 		{"GET", "/rgw/status", h.GetRGWStatus},
 		{"GET", "/rgw/users", h.ListRGWUsers},

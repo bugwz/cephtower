@@ -54,6 +54,17 @@ var mutationRequestContracts = buildMutationRequestContracts()
 
 func buildMutationRequestContracts() map[string]RequestContract {
 	contracts := map[string]RequestContract{}
+	encryptionValues := map[string]JSONField{"verify_ssl": boolField(false)}
+	for _, name := range []string{"addr", "auth", "prefix", "secret_engine", "namespace", "token_file", "ssl_cacert", "ssl_clientcert", "ssl_clientkey", "username", "client_cert", "client_key", "ca_path", "kms_key_template", "s3_key_template", "key_template"} {
+		encryptionValues[name] = stringField(false)
+	}
+	encryptionValues["password"] = JSONField{Type: "string", WriteOnly: true}
+	contracts["rgw_encryption.update"] = RequestContract{Required: true, Fields: map[string]JSONField{
+		"cluster_id": integerField(true), "entity": stringField(true),
+		"encryption_type": stringField(true, "kms", "s3"), "provider": stringField(true, "vault", "kmip"),
+		"expected_backend": stringField(true), "values": objectField(true, encryptionValues),
+		"confirm_disruption": boolField(true), "confirm_credentials_saved": boolField(false),
+	}}
 	add := func(actions []string, required bool, fields map[string]JSONField) {
 		for _, action := range actions {
 			copyFields := make(map[string]JSONField, len(fields)+len(routeIdentifierFields())+2)

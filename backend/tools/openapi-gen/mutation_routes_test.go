@@ -40,6 +40,16 @@ func TestMutationRouteActionsMatchHandlers(t *testing.T) {
 			actions[match[1]] = match[2]
 		}
 	}
+	// This handler validates native semantics and removes routing fields before enqueueing.
+	encryptionSource, err := os.ReadFile("../../internal/api/v1/handler/rgw_encryption.go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	encryptionAction := regexp.MustCompile(`Action:\s*"([^"]+)"`).FindStringSubmatch(string(encryptionSource))
+	if len(encryptionAction) != 2 {
+		t.Fatal("missing encryption enqueue action")
+	}
+	actions["UpdateRGWEncryptionConfiguration"] = encryptionAction[1]
 	expected := map[string]string{}
 	for _, source := range read("../../internal/api/v1/router/*.go") {
 		for _, match := range routes.FindAllStringSubmatch(source, -1) {

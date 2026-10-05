@@ -43,6 +43,52 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	h := handler.New(handler.Dependencies{Clusters: clusters, Endpoints: endpoints, Operations: operations, Database: database, AuthEnabled: func() bool { return false }})
 	mux := http.NewServeMux()
 	router.Register(mux, h)
+	encryptionBody := fmt.Sprintf(`{"cluster_id":%d,"entity":"client.rgw.a","encryption_type":"kms","provider":"kmip","expected_backend":"barbican","values":{"password":"private-kmip-password","username":""},"confirm_disruption":true,"confirm_credentials_saved":true}`, cluster.ID)
+	encryptionResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/encryption/configuration", encryptionBody, "encryption-update")
+	if encryptionResponse.Code != http.StatusAccepted {
+		t.Fatal("encryption patch not queued", encryptionResponse.Code, encryptionResponse.Body.String())
+	}
+	encryptionOp, encryptionErr := db.FindOperation(context.Background(), operationIDFromResponse(t, encryptionResponse))
+	if encryptionErr != nil || encryptionOp.Action != "rgw_encryption.update" || encryptionOp.Risk != "high" || encryptionOp.MaxAttempts != 1 || encryptionOp.ResourceKey != "rgw/encryption/client.rgw.a" || encryptionOp.LockKey != encryptionOp.ResourceKey {
+		t.Fatal("unsafe encryption operation")
+	}
+	if strings.Contains(encryptionResponse.Body.String(), "private-kmip-password") || strings.Contains(encryptionOp.ParametersCiphertext, "private-kmip-password") {
+		t.Fatal("encryption secret leaked")
+	}
+	encryptionPlain, encryptionErr := security.Decrypt(encryptionOp.ParametersCiphertext, contractKey)
+	var encryptionParams map[string]any
+	if encryptionErr != nil || json.Unmarshal([]byte(encryptionPlain), &encryptionParams) != nil || encryptionParams["cluster_id"] != nil || encryptionParams["values"].(map[string]any)["password"] != "private-kmip-password" {
+		t.Fatal("invalid encrypted patch")
+	}
+	replay := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/encryption/configuration", encryptionBody, "encryption-update")
+	if replay.Code != 202 || operationIDFromResponse(t, replay) != encryptionOp.ID {
+		t.Fatal("encryption replay not idempotent")
+	}
+	for _, profile := range []string{"kms", "s3"} {
+		body := fmt.Sprintf(`{"cluster_id":%d,"entity":"client.rgw.a","encryption_type":%q,"provider":"vault","expected_backend":"vault","values":{"verify_ssl":false},"confirm_disruption":true}`, cluster.ID, profile)
+		response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/encryption/configuration", body, "encryption-"+profile)
+		if response.Code != 202 {
+			t.Fatal("vault profile rejected", response.Code)
+		}
+		op, err := db.FindOperation(context.Background(), operationIDFromResponse(t, response))
+		if err != nil || op.LockKey != encryptionOp.LockKey {
+			t.Fatal("profile locks differ")
+		}
+	}
+	for _, body := range []string{
+		strings.Replace(encryptionBody, `"confirm_disruption":true`, `"confirm_disruption":false`, 1),
+		strings.Replace(encryptionBody, `"confirm_credentials_saved":true`, `"confirm_credentials_saved":false`, 1),
+		strings.Replace(encryptionBody, `"client.rgw.a"`, `"client.admin"`, 1),
+		strings.Replace(encryptionBody, `"kms"`, `"s3"`, 1),
+		strings.Replace(encryptionBody, `"username":""`, `"verify_ssl":false`, 1),
+		strings.Replace(encryptionBody, `"username":""`, `"unknown":""`, 1),
+		strings.TrimSuffix(encryptionBody, "}") + `,"name":"override"}`,
+	} {
+		response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/encryption/configuration", body, "invalid-encryption")
+		if response.Code != 400 || strings.Contains(response.Body.String(), "private-kmip-password") {
+			t.Fatal("invalid encryption patch accepted or leaked", response.Code)
+		}
+	}
 	if err := db.UpsertCapabilities(context.Background(), []store.CephClusterCapability{{ClusterID: cluster.ID, Name: "rgw_admin", Supported: true, ObservedAt: now, UpdatedAt: now}}); err != nil {
 		t.Fatal(err)
 	}

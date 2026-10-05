@@ -1,6 +1,47 @@
 package handler
 
-import "net/http"
+import (
+	"cephtower/backend/internal/service/mutation"
+	operationservice "cephtower/backend/internal/service/operation"
+	"net/http"
+)
+
+func (h *Handler) UpdateRGWEncryptionConfiguration(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	var body map[string]any
+	if !DecodeStrict(w, r, &body) {
+		return
+	}
+	if err := ValidateMutationRequest("rgw_encryption.update", body); err != nil {
+		WriteError(w, r, 400, "invalid_request", err.Error(), false, nil)
+		return
+	}
+	id, ok := requiredUintBody(w, r, body, "cluster_id")
+	if !ok {
+		return
+	}
+	delete(body, "cluster_id")
+	if err := mutation.ValidateRGWEncryptionUpdate(body); err != nil {
+		writeActionError(w, r, err)
+		return
+	}
+	if _, err := h.Clusters.Get(r.Context(), id); err != nil {
+		clusterError(w, r, err)
+		return
+	}
+	entity := body["entity"].(string)
+	key := "rgw/encryption/" + entity
+	annotateAudit(r, "rgw_encryption.update", "rgw_configuration", key, "high", &id)
+	op, err := h.enqueueOperation(r, operationservice.EnqueueRequest{
+		ClusterID: id, Action: "rgw_encryption.update", ResourceKind: "rgw_configuration",
+		ResourceKey: key, LockKey: key, Risk: "high", Parameters: body,
+	})
+	if err != nil {
+		writeOperationEnqueueError(w, r, err)
+		return
+	}
+	WriteSuccess(w, http.StatusAccepted, "accepted", toOperationDTO(op))
+}
 
 func (h *Handler) GetRGWEncryptionConfiguration(w http.ResponseWriter, r *http.Request) {
 	var request struct {

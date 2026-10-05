@@ -86,6 +86,13 @@ func TestRGWEncryptionConfigurationAPI(t *testing.T) {
 		t.Fatalf("failure: %d %s", w.Code, w.Body.String())
 	}
 	authEnabled = true
+	patchRequest := httptest.NewRequest("PATCH", "/api/v1/rgw/encryption/configuration", strings.NewReader(`{}`))
+	patchRequest.Header.Set("Content-Type", "application/json")
+	patchResponse := httptest.NewRecorder()
+	mux.ServeHTTP(patchResponse, patchRequest)
+	if patchResponse.Code != 401 {
+		t.Fatal("unauthenticated encryption write accepted")
+	}
 	before := runner.calls
 	if w := send(body); w.Code != 401 || runner.calls != before {
 		t.Fatal("unauthenticated read reached native command")

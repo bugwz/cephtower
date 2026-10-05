@@ -21404,6 +21404,95 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      operationId: patch_rgw_encryption_configuration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, confirm_disruption, encryption_type, entity, expected_backend, provider, values]
+              properties:
+                cluster_id:
+                  type: integer
+                confirm_credentials_saved:
+                  type: boolean
+                confirm_disruption:
+                  type: boolean
+                encryption_type:
+                  type: string
+                  enum: ["kms", "s3"]
+                entity:
+                  type: string
+                expected_backend:
+                  type: string
+                provider:
+                  type: string
+                  enum: ["kmip", "vault"]
+                values:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    addr:
+                      type: string
+                    auth:
+                      type: string
+                    ca_path:
+                      type: string
+                    client_cert:
+                      type: string
+                    client_key:
+                      type: string
+                    key_template:
+                      type: string
+                    kms_key_template:
+                      type: string
+                    namespace:
+                      type: string
+                    password:
+                      writeOnly: true
+                      type: string
+                    prefix:
+                      type: string
+                    s3_key_template:
+                      type: string
+                    secret_engine:
+                      type: string
+                    ssl_cacert:
+                      type: string
+                    ssl_clientcert:
+                      type: string
+                    ssl_clientkey:
+                      type: string
+                    token_file:
+                      type: string
+                    username:
+                      type: string
+                    verify_ssl:
+                      type: boolean
+      responses:
+        '202':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /rgw/period/commit:
     post:
       operationId: post_rgw_period_commit

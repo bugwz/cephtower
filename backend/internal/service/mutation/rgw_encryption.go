@@ -10,6 +10,12 @@ import (
 	"unicode/utf8"
 )
 
+// ValidateRGWEncryptionUpdate validates a patch without executing any native command.
+func ValidateRGWEncryptionUpdate(parameters map[string]any) error {
+	_, err := planRGWEncryption(parameters)
+	return err
+}
+
 type rgwEncryptionChange struct {
 	field, option, value string
 	command              command
