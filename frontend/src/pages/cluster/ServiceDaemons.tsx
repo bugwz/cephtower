@@ -56,7 +56,7 @@ export function ServiceDaemons({ clusterId, name }: { clusterId: number; name: s
       { key: 'memory_limit', title: '内存限制（字节）' }, { key: 'container_image_name', title: '容器镜像' },
       { key: 'last_refresh', title: 'Ceph 最近刷新' }, { key: 'events', title: '事件' },
       { key: 'performance', title: '性能', filterKey: false, render: (_, row) => <Button
-        disabled={typeof row.daemon_name !== 'string' || !/^(mon|mgr|mds|osd|rgw|rbd-mirror)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(row.daemon_name)}
+        disabled={typeof row.daemon_name !== 'string' || !/^(mon|mgr|mds|osd)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(row.daemon_name)}
         onClick={() => setPerf({ clusterId, service: name, daemon: String(row.daemon_name) })}>性能计数器</Button> },
       { key: 'runtime_details', title: '运行详情', filterKey: false, ellipsis: false, render: (_, row) => <DaemonRuntimeDetails row={row} /> },
     ]} />

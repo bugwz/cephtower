@@ -13,7 +13,7 @@ import (
 )
 
 func (s *Service) DaemonPerf(ctx context.Context, clusterID uint64, name string) (map[string]any, error) {
-	if !regexp.MustCompile(`^(mon|mgr|mds|osd|rgw|rbd-mirror)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$`).MatchString(name) {
+	if !regexp.MustCompile(`^(mon|mgr|mds|osd)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$`).MatchString(name) {
 		return nil, invalid("unsupported daemon identity for performance inspection")
 	}
 	var schema, values map[string]map[string]json.RawMessage

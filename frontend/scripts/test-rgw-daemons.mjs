@@ -3,6 +3,14 @@ import './test-rgw-daemon-status.mjs'
 import {readFileSync} from 'node:fs'
 import ts from 'typescript'
 const code=ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwDaemonsPage.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText
+for(const file of ['HostDetailPage','ServiceDaemons','ServicePage']){
+ const source=readFileSync(new URL(`../src/pages/cluster/${file}.tsx`,import.meta.url),'utf8')
+ const match=source.match(/\/\^\(mon\|mgr\|mds\|osd\)[^\n]*?\$\//)
+ assert.ok(match,`${file} must constrain native tell performance targets`)
+ const pattern=new RegExp(match[0].slice(1,-1))
+ for(const name of ['rgw.a','rgw.123','rbd-mirror.a','osd.','osd.*'])assert.equal(pattern.test(name),false)
+ for(const name of ['osd.1','mon.a','mgr.a','mds.fs.a'])assert.equal(pattern.test(name),true)
+}
 const ui={},states=[],refs=[],calls=[];let si=0,ri=0,deps,cleanup,pending
 const jsx=(type,props)=>({type,props}),react={useState:v=>{const i=si++;if(!(i in states))states[i]=v;return[states[i],v=>states[i]=v]},useRef:v=>refs[ri++]??(refs[ri-1]={current:v}),useEffect:(fn,next)=>{if(JSON.stringify(next)!==JSON.stringify(deps)){deps=next;pending=()=>{cleanup?.();cleanup=fn()}}}}
 new Function('exports','require',code)(ui,name=>name==='react'?react:name==='antd'?Object.fromEntries(['Alert','Button','Card','Input','Space','Table'].map(n=>[n,n])):name.includes('api/client')?{jsonInit:(method,body,opts)=>({method,body,...opts}),request:(path,init)=>new Promise((resolve,reject)=>calls.push({path,...init,resolve,reject}))}:name.includes('ClusterContext')?{useClusterContext:()=>({selectedClusterId:7})}:{jsx,jsxs:jsx})

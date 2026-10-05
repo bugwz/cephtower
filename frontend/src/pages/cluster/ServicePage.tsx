@@ -325,7 +325,7 @@ function ServicePageContent() {
                     { key: 'version', title: '版本' },
                     { key: 'container_image', title: '镜像' },
                     { key: 'actions', title: '操作', filterKey: false, render: (_, row) => <TableActions>
-                      <TableAction disabled={!selectedClusterId || !/^(mon|mgr|mds|osd|rgw|rbd-mirror)\./.test(textValue(row.name, ''))} onClick={() => { if (selectedClusterId) setPerfDetail({ clusterId: selectedClusterId, name: textValue(row.name, '') }) }}>性能计数器</TableAction>
+                      <TableAction disabled={!selectedClusterId || !/^(mon|mgr|mds|osd)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(textValue(row.name, ''))} onClick={() => { if (selectedClusterId) setPerfDetail({ clusterId: selectedClusterId, name: textValue(row.name, '') }) }}>性能计数器</TableAction>
                       {daemonActions.map((action) => <TableAction key={action.value} danger={action.value !== 'start'} disabled={loading || Boolean(error) || submitting || refreshingServices || !serviceWritable(row)} onClick={() => runDaemonAction(row, action.value)}>{action.label}</TableAction>)}
                     </TableActions> }
                   ]}

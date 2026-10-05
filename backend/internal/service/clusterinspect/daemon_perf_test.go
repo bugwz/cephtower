@@ -71,7 +71,7 @@ func TestDaemonPerfRejectsInvalidResponsesAndNames(t *testing.T) {
 	}
 	e := &perfFixtureExecutor{schema: `{}`, dump: `{}`}
 	s.executor = e
-	for _, name := range []string{"--help", "osd.", "osd.*", "grafana.node", "osd.1;stop"} {
+	for _, name := range []string{"--help", "osd.", "osd.*", "grafana.node", "osd.1;stop", "rgw.a", "rgw.123", "rbd-mirror.a"} {
 		if _, err := s.DaemonPerf(context.Background(), id, name); err == nil {
 			t.Fatalf("accepted %s", name)
 		}

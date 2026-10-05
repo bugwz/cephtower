@@ -426,7 +426,7 @@ function HostDaemonTable({ daemons, clusterId }: { daemons: ApiRecord[]; cluster
 }
 
 function hostDaemonSupportsPerf(name: unknown): name is string {
-  return typeof name === 'string' && /^(mon|mgr|mds|osd|rgw|rbd-mirror)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(name)
+  return typeof name === 'string' && /^(mon|mgr|mds|osd)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(name)
 }
 
 const hostPerformanceMetrics = [

@@ -103,8 +103,8 @@ console.log('Host deletion cannot submit or navigate from an inactive detail pag
 const hostPerfNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'hostDaemonSupportsPerf')
 const hostPerfCode = ts.transpileModule(hostPerfNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const hostPerfSupported = new Function(`${hostPerfCode}; return hostDaemonSupportsPerf`)()
-for (const name of ['osd.0', 'mon.a', 'mgr.a.x', 'mds.fs.a', 'rgw.store.a', 'rbd-mirror.a']) assert.equal(hostPerfSupported(name), true)
-for (const name of [null, '', 'osd.', 'prometheus.a', 'osd.*', 'osd.1;ls']) assert.equal(hostPerfSupported(name), false)
+for (const name of ['osd.0', 'mon.a', 'mgr.a.x', 'mds.fs.a']) assert.equal(hostPerfSupported(name), true)
+for (const name of [null, '', 'osd.', 'prometheus.a', 'osd.*', 'osd.1;ls', 'rgw.store.a', 'rbd-mirror.a']) assert.equal(hostPerfSupported(name), false)
 const hostDaemonTable = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'HostDaemonTable').getText(hostDetailTree)
 assert.ok(hostDetailTree.text.includes('HostDaemonTable key={`${clusterId}:${hostname}`}'))
 assert.ok(hostDaemonTable.includes('row.daemon_display === perfName'))
