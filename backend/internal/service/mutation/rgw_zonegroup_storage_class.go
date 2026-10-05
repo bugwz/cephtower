@@ -43,7 +43,13 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 	if !ok || before["id"] != p["zonegroup_id"] || before["name"] != p["name"] || before["realm_id"] != p["realm_id"] || before["default_placement"] != p["expected_default_placement"] {
 		return fail("pre_check_failed")
 	}
-	expected, ok := zonegroupStorageClassExpected(before, p)
+	createTarget := req.Action == "rgw_zonegroup.placement_create"
+	var expected map[string]any
+	if createTarget {
+		expected, ok = zonegroupPlacementCreateExpected(before, p)
+	} else {
+		expected, ok = zonegroupStorageClassExpected(before, p)
+	}
 	if !ok {
 		return fail("pre_check_failed")
 	}
@@ -59,7 +65,11 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 	if !ok || !reflect.DeepEqual(after, expected) {
 		return fail("post_check_failed")
 	}
-	return cephdomain.ActionResult{Details: map[string]any{"zonegroup_id": p["zonegroup_id"], "placement_id": p["placement_id"], "storage_class": p["storage_class"], "declaration_verified": true, "period_published": false, "zone_pools_configured": false, "default_placement_initialized": before["default_placement"] == ""}}, nil
+	class := p["storage_class"]
+	if createTarget {
+		class = "STANDARD"
+	}
+	return cephdomain.ActionResult{Details: map[string]any{"zonegroup_id": p["zonegroup_id"], "placement_id": p["placement_id"], "storage_class": class, "placement_created": createTarget, "declaration_verified": true, "period_published": false, "zone_pools_configured": false, "default_placement_initialized": before["default_placement"] == ""}}, nil
 }
 
 func zonegroupStorageClassExpected(group, p map[string]any) (map[string]any, bool) {

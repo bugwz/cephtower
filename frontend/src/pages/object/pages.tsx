@@ -9,6 +9,7 @@ import { zoneDeleteBlocked, zoneDeleteInput, zoneDeleteConfirmation } from './rg
 import { zonePlacementBlocked, zonePlacementGroups, zonePlacementOptions, zonePlacementClasses, zonePlacementChanged, zonePlacementInput, zonePlacementConfirmation, zonePlacementCompressions } from './rgwZonePlacement'
 import { zoneStorageClassInput, zoneStorageClassConfirmation } from './rgwZonePlacement'
 import { groupStorageClassBlocked, groupStorageClassOptions, groupStorageClassInput, groupStorageClassConfirmation } from './rgwZonegroupStorageClass'
+import { groupPlacementCreateBlocked, groupPlacementCreateInput, groupPlacementCreateConfirmation } from './rgwZonegroupStorageClass'
 import { RgwTopologyView } from './RgwTopology'
 import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwZonePoolReferences } from './RgwZonePoolReferences'
@@ -1098,6 +1099,18 @@ const definitions: Record<
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, name: text(row?.name), new_name: String(values.new_name ?? ''), realm_id: String(values.realm_id ?? ''), ...(values.endpoints ? { endpoints: String(values.endpoints) } : {}), add_zones: String(values.add_zones ?? '').split(',').map((zone) => zone.trim()).filter(Boolean), remove_zones: String(values.remove_zones ?? '').split(',').map((zone) => zone.trim()).filter(Boolean), master: Boolean(values.master), default: Boolean(values.default) })
     },
     extraActions: [{
+      title: '新建 Zonegroup 放置目标', path: '/rgw/zonegroup/placement', method: 'POST',
+      successMessage: '组放置目标创建已回读核验（未配置 Zone 池或发布 Period）',
+      disabledWhen: groupPlacementCreateBlocked, confirmation: groupPlacementCreateConfirmation,
+      initialValues: () => ({tags_json:'[]'}),
+      changedValues: changed => Object.keys(changed).some(key => key !== 'confirm_create') ? {confirm_create:undefined} : {},
+      fields: [
+        { name: 'placement_id', label: '新放置目标名称（初始类为 STANDARD）', required: true },
+        { name: 'tags_json', label: '目标标签 JSON 字符串数组（无标签填 []；标签不能含逗号）', type: 'textarea', required: true },
+        { name: 'confirm_create', label: '范围确认', type: 'select', required: true, options: [{value:'acknowledged',label:'已备份，了解默认目标初始化、不配置 Zone 池和不发布 Period'}] }
+      ],
+      buildBody: (values,clusterId,row) => ({cluster_id:clusterId,...groupPlacementCreateInput(values,row)})
+    }, {
       title: '声明 Zonegroup 存储类', path: '/rgw/zonegroup/storage/class', method: 'POST',
       successMessage: '组存储类声明已回读核验（未配置 Zone 池或发布 Period）',
       disabledWhen: groupStorageClassBlocked, confirmation: groupStorageClassConfirmation,

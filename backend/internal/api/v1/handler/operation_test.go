@@ -74,6 +74,18 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal("group class declaration not queued", groupClassResponse.Code)
 	}
 	groupClassOp, groupClassErr := db.FindOperation(context.Background(), operationIDFromResponse(t, groupClassResponse))
+	groupPlacementBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"placement-group","realm_id":"r","placement_id":"new","tags":[],"expected_default_placement":"","confirm_create":true}`, cluster.ID)
+	groupPlacementResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/zonegroup/placement", groupPlacementBody, "group-placement")
+	if groupPlacementResponse.Code != http.StatusAccepted {
+		t.Fatal("group placement creation not queued", groupPlacementResponse.Code)
+	}
+	groupPlacementOp, groupPlacementErr := db.FindOperation(context.Background(), operationIDFromResponse(t, groupPlacementResponse))
+	if groupPlacementErr != nil || groupPlacementOp.Action != "rgw_zonegroup.placement_create" || groupPlacementOp.Risk != "high" || groupPlacementOp.MaxAttempts != 1 || groupPlacementOp.ResourceKey != "rgw/zonegroup/placement-group" {
+		t.Fatal("unsafe group placement operation")
+	}
+	if response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/zonegroup/placement", strings.TrimSuffix(groupPlacementBody, "}")+`,"storage_class":"COLD"}`, "bad-group-placement"); response.Code != http.StatusBadRequest {
+		t.Fatal("nonstandard initial class accepted")
+	}
 	if groupClassErr != nil || groupClassOp.Action != "rgw_zonegroup.storage_class_create" || groupClassOp.Risk != "high" || groupClassOp.MaxAttempts != 1 || groupClassOp.ResourceKey != "rgw/zonegroup/class-group" {
 		t.Fatal("unsafe group class operation")
 	}

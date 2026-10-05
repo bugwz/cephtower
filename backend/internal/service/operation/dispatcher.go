@@ -98,7 +98,7 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		refreshed, err = d.reconciler.RefreshKindIfSupported(ctx, request.ClusterID, request.ResourceKind)
 	}
 	if err != nil {
-		if request.Action == "rgw_zone.placement" || request.Action == "rgw_zone.storage_class_create" || request.Action == "rgw_zonegroup.storage_class_create" {
+		if request.Action == "rgw_zone.placement" || request.Action == "rgw_zone.storage_class_create" || request.Action == "rgw_zonegroup.storage_class_create" || request.Action == "rgw_zonegroup.placement_create" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "placement update verified but inventory refresh failed; refresh without repeating the mutation", Retryable: false}
 		}
 		if request.Action == "rgw_realm.setup" || request.Action == "rgw_realm.migrate" {
