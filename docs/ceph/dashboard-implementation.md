@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- **Multisite 同步报告分区展示**：按照原生 `tab_dump` 固定标签列拆分站点身份/采样信息、元数据同步及各个数据来源，保留各来源错误、分片进度和超大计数原文，不推导百分比或全站点成功。无来源时明确提示不能证明同步完成；完整原文始终可展开，无法分区的报告直接展开原文。测试覆盖多来源、诊断中的 source 字样、超安全整数计数、无来源与元数据读取失败；无真实集群验证。
+
 #### Zone 原生 Multisite 同步报告
 
 沿参考 Dashboard `rgw-multisite.service.ts::getSyncStatus` → `RgwMultisite.get_multisite_sync_status` → `radosgw-admin.cc::sync_status`，新增只读 `POST /rgw/zone/sync/status`，按 cluster_id 与 zone_id 执行 `radosgw-admin sync status --zone-id <id>`，不假设该命令支持 JSON 输出。校验原生报告的 Zone ID 和名称后返回完整文本，保留 Realm、Zonegroup、当前时间、特性、元数据同步、各来源分片进度、落后、恢复和来源错误；不从退出码、主 Zone 的 no sync 或缺失 data sync 段推导“同步完成”。读取有超时和输出上限，拒绝无效编码、身份漂移、非零退出和不完整报告；原始 stderr 不返回，响应禁止缓存，不创建持久化操作任务。

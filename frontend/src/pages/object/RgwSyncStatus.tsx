@@ -1,6 +1,7 @@
 import { Alert, Button, Card, Space } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
+import { rgwSyncReportSections } from './rgwSyncReport'
 
 export function RgwSyncStatus({ row, clusterId }: { row: ApiRecord; clusterId?: number }) {
   const scope = JSON.stringify([clusterId, row.id, row.name, row.stale])
@@ -10,6 +11,7 @@ export function RgwSyncStatus({ row, clusterId }: { row: ApiRecord; clusterId?: 
   const locked = useRef(false)
   const [state, setState] = useState({ scope, report: '', error: '', busy: false })
   const scoped = state.scope === scope
+  const sections = scoped && state.report ? rgwSyncReportSections(state.report) : undefined
   const valid = !!clusterId && typeof row.id === 'string' && !!row.id && typeof row.name === 'string' && !!row.name && row.stale !== true
   useEffect(() => {
     sequence.current++
@@ -39,7 +41,13 @@ export function RgwSyncStatus({ row, clusterId }: { row: ApiRecord; clusterId?: 
       {!valid && <Alert type="warning" message="Zone 身份或库存状态不可用，请重新采集后再试" />}
       <Button disabled={!valid || !scoped || state.busy} loading={scoped && state.busy} onClick={() => void read()}>读取同步报告</Button>
       {scoped && state.error && <Alert type="error" message={state.error} />}
-      {scoped && state.report && <pre aria-label="Zone 原生同步报告" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 520, overflow: 'auto' }}>{state.report}</pre>}
+      {sections && <>
+        <Card size="small" title="站点身份与原生采样信息"><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{sections.identity}</pre></Card>
+        <Card size="small" title="元数据同步"><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{sections.metadata}</pre></Card>
+        {sections.sources.length === 0 && <Alert type="info" message="原生报告未列出数据同步来源；这不是同步完成的证明" />}
+        {sections.sources.map((source, index) => <Card key={index} size="small" title={`数据同步来源 ${index + 1}`}><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{source}</pre></Card>)}
+      </>}
+      {scoped && state.report && <details open={!sections}><summary>完整原生同步报告</summary><pre aria-label="Zone 原生同步报告" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 520, overflow: 'auto' }}>{state.report}</pre></details>}
     </Space>
   </Card>
 }

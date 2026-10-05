@@ -7,8 +7,19 @@ const hooks={useRef(v){const i=cursor++;return refs[i]??={current:v}},useState(v
 const calls=[]
 const client={jsonInit:(method,body,options)=>({method,body,...options}),request:(path,init)=>{calls.push({path,...init});return new Promise((yes,no)=>{resolve=yes;reject=no})}}
 const api={}
+const parser={}
+new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwSyncReport.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(parser)
+const native='          realm r (realm)\n      zonegroup g (group)\n           zone z (zone)\n   current time 2026-10-05T00:00:00Z\n  metadata sync syncing\n                full sync: 2/64 shards\n      data sync source: a (first)\n                       failed to fetch source: diagnostic\n                source: b (second)\n                       full sync: 9007199254740993 entries to sync\n'
+const parts=parser.rgwSyncReportSections(native)
+assert.equal(parts.sources.length,2)
+assert.match(parts.sources[0],/failed to fetch source: diagnostic/)
+assert.match(parts.sources[1],/9007199254740993/)
+assert.equal(parts.metadata,'syncing\nfull sync: 2/64 shards')
+assert.equal(parser.rgwSyncReportSections(native.split('      data sync')[0]).sources.length,0)
+assert.equal(parser.rgwSyncReportSections('unknown report'),undefined)
+assert.match(parser.rgwSyncReportSections(native.replace('syncing','failed to read sync status: Permission denied')).metadata,/Permission denied/)
 const code=ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwSyncStatus.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.React}}).outputText
-new Function('exports','require','React',code)(api,name=>name==='react'?hooks:name==='antd'?{Alert:'Alert',Button:'Button',Card:'Card',Space:'Space'}:client,{createElement:(type,props,...children)=>({type,props:{...props,children}})})
+new Function('exports','require','React',code)(api,name=>name==='react'?hooks:name==='antd'?{Alert:'Alert',Button:'Button',Card:'Card',Space:'Space'}:name==='./rgwSyncReport'?parser:client,{createElement:(type,props,...children)=>({type,props:{...props,children}})})
 let props={row:{id:'zone-id',name:'zone-a'},clusterId:7}
 function render(){cursor=0;const tree=api.RgwSyncStatus(props);pending.splice(0).forEach(fn=>fn());return tree}
 function nodes(node){return !node||typeof node!=='object'?[]:[node,...(node.props?.children??[]).flat(Infinity).flatMap(nodes)]}
@@ -20,6 +31,10 @@ click();click();assert.equal(calls.length,1)
 assert.deepEqual(calls[0],{path:'/rgw/zone/sync/status',method:'POST',body:{cluster_id:7,zone_id:'zone-id',name:'zone-a'},cache:'no-store',suppressErrorNotification:true})
 const report='metadata sync no sync (zone is master)\ndata sync source: a\nbehind on 2 shards\n<script>not html</script>'
 resolve({report});await settle();assert.deepEqual(find('pre').props.children,[report])
+find('Button').props.onClick();resolve({report:native});await settle()
+assert.equal(nodes(render()).filter(node=>node.type==='Card'&&String(node.props.title).startsWith('数据同步来源')).length,2)
+assert.equal(nodes(render()).find(node=>node.type==='pre'&&node.props['aria-label']==='Zone 原生同步报告').props.children[0],native)
+assert.equal(find('details').props.open,false)
 find('Button').props.onClick();assert.equal(find('pre'),undefined)
 const oldResolve=resolve
 props={...props,clusterId:8};render();oldResolve({report});await settle();assert.equal(find('pre'),undefined)
