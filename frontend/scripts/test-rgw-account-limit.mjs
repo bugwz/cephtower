@@ -23,6 +23,25 @@ assert.equal(pages.match(/render: rgwAccountLimit/g).length, 4)
 assert.ok(pages.includes("title: '每用户访问密钥上限'"))
 assert.ok(pages.includes('...rgwAccountLimitPatch(values, row)'))
 const source = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+let accountDeleteFound = false
+function checkAccountDelete(node) {
+  if (ts.isObjectLiteralExpression(node) && node.properties.some(property => ts.isPropertyAssignment(property) && property.name.getText(source) === 'action' && property.initializer.getText(source) === "'rgw_account.delete'")) {
+    accountDeleteFound = true
+    const action = new Function(`return (${node.getText(source)})`)()
+    for (const row of [{ account_id: 'RGW123', natural_key: 'wrong', account_name: 'same-name' }, { natural_key: 'RGW456' }]) {
+      const body = action.buildBody(row, 9)
+      const confirmation = action.confirmation(row)
+      assert.equal(body.cluster_id, 9)
+      assert.ok(confirmation.includes(JSON.stringify(body.account_id)))
+      assert.equal(action.resourceKey(row), `rgw/account/${body.account_id}`)
+      for (const text of ['不可恢复', '不会自动删除', '用户', 'Bucket', '角色', '用户组', 'OIDC Provider', '拒绝删除']) assert.ok(confirmation.includes(text))
+      assert.equal('purge_data' in body, false)
+    }
+  }
+  ts.forEachChild(node, checkAccountDelete)
+}
+checkAccountDelete(source)
+assert.equal(accountDeleteFound, true)
 let fieldsExpression
 let bodyExpression
 let createExpression

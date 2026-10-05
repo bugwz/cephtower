@@ -579,6 +579,7 @@ const definitions: Record<
     deleteAction: {
       title: '删除 RGW Account', path: '/rgw/account', action: 'rgw_account.delete', resourceKind: 'rgw_account',
       successMessage: 'RGW Account 删除执行成功',
+      confirmation: (row) => `删除账户 ${JSON.stringify(String(row.account_id ?? row.natural_key ?? ''))}？此操作不可恢复，不会自动删除所属资源或清理 Bucket 数据。Ceph 要求先移除账户中的用户、Bucket、角色、用户组及 OIDC Provider；任一仍存在时会拒绝删除。请先核对账户及其依赖。`,
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, account_id: String(row.account_id ?? row.natural_key ?? '') }),
       resourceKey: (row) => `rgw/account/${String(row.account_id ?? row.natural_key ?? '')}`
     },
