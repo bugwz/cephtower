@@ -19,26 +19,10 @@ func (s *Service) RGWUserCount(ctx context.Context, clusterID uint64) (map[strin
 // RGWUserCountInZone verifies the exact configured zone before enumerating users.
 // It does not discover realms or imply replication consistency between zones.
 func (s *Service) RGWUserCountInZone(ctx context.Context, clusterID uint64, realmID, zoneID string) (map[string]any, error) {
-	for _, id := range []string{realmID, zoneID} {
-		if id == "" || len(id) > 256 || strings.ContainsFunc(id, unicode.IsControl) {
-			return nil, invalid("realm_id and zone_id are required valid identities")
-		}
-	}
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 	started := time.Now().UTC()
-	selectors := []string{"--realm-id=" + realmID, "--zone-id=" + zoneID}
-	var zone struct {
-		ID      string `json:"id"`
-		RealmID string `json:"realm_id"`
-	}
-	args := append([]string{"zone", "get", "--format", "json"}, selectors...)
-	if err := s.readBinary(ctx, clusterID, "rgw.counts.user.zone", executor.BinaryRGWAdmin, args, &zone); err != nil {
+	selectors, err := s.rgwVerifiedZoneSelectors(ctx, clusterID, "rgw.counts.user.zone", realmID, zoneID)
+	if err != nil {
 		return nil, err
-	}
-	if zone.ID != zoneID || zone.RealmID != realmID {
-		return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "RGW zone identity does not match the requested realm"}
 	}
 	result, err := s.rgwUserCount(ctx, clusterID, selectors)
 	if err != nil {
@@ -47,6 +31,30 @@ func (s *Service) RGWUserCountInZone(ctx context.Context, clusterID uint64, real
 	result["realm_id"], result["zone_id"] = realmID, zoneID
 	result["scope"], result["started_at"] = "zone", started
 	return result, nil
+}
+
+func (s *Service) rgwVerifiedZoneSelectors(ctx context.Context, clusterID uint64, commandID, realmID, zoneID string) ([]string, error) {
+	for _, id := range []string{realmID, zoneID} {
+		if id == "" || len(id) > 256 || strings.ContainsFunc(id, unicode.IsControl) {
+			return nil, invalid("realm_id and zone_id are required valid identities")
+		}
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	selectors := []string{"--realm-id=" + realmID, "--zone-id=" + zoneID}
+	var zone struct {
+		ID      string `json:"id"`
+		RealmID string `json:"realm_id"`
+	}
+	args := append([]string{"zone", "get", "--format", "json"}, selectors...)
+	if err := s.readBinary(ctx, clusterID, commandID, executor.BinaryRGWAdmin, args, &zone); err != nil {
+		return nil, err
+	}
+	if zone.ID != zoneID || zone.RealmID != realmID {
+		return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "RGW zone identity does not match the requested realm"}
+	}
+	return selectors, nil
 }
 
 func (s *Service) rgwUserCount(ctx context.Context, clusterID uint64, selectors []string) (map[string]any, error) {

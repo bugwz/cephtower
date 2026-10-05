@@ -16,14 +16,41 @@ import (
 // Reads are sequential, not an atomic cluster snapshot; remote/indexless
 // buckets without usage make the aggregate unavailable rather than zero.
 func (s *Service) RGWBucketUsage(ctx context.Context, clusterID uint64) (map[string]any, error) {
+	return s.rgwBucketUsage(ctx, clusterID, nil)
+}
+
+// RGWBucketUsageInZone keeps enumeration and every bucket statistic in the
+// same explicitly verified zone. It does not claim cross-zone consistency.
+func (s *Service) RGWBucketUsageInZone(ctx context.Context, clusterID uint64, realmID, zoneID string) (map[string]any, error) {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
 	defer cancel()
+	started := time.Now().UTC()
+	selectors, err := s.rgwVerifiedZoneSelectors(ctx, clusterID, "rgw.usage.zone", realmID, zoneID)
+	if err != nil {
+		return nil, err
+	}
+	result, err := s.rgwBucketUsage(ctx, clusterID, selectors)
+	if err != nil {
+		return nil, err
+	}
+	result["realm_id"], result["zone_id"] = realmID, zoneID
+	result["scope"], result["started_at"] = "zone", started
+	return result, nil
+}
+
+func (s *Service) rgwBucketUsage(ctx context.Context, clusterID uint64, selectors []string) (map[string]any, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	started := time.Now().UTC()
 	bad := func() error {
 		return &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "complete RGW bucket usage is unavailable"}
 	}
 	var names []string
-	if err := s.readBinary(ctx, clusterID, "rgw.usage.list", executor.BinaryRGWAdmin, []string{"metadata", "list", "bucket", "--format", "json"}, &names); err != nil {
+	listArgs := append([]string{"metadata", "list", "bucket", "--format", "json"}, selectors...)
+	if err := s.readBinary(ctx, clusterID, "rgw.usage.list", executor.BinaryRGWAdmin, listArgs, &names); err != nil {
 		return nil, err
 	}
 	if names == nil {
@@ -53,6 +80,7 @@ func (s *Service) RGWBucketUsage(ctx context.Context, clusterID uint64) (map[str
 		if tenant != "" {
 			args = append(args, "--tenant="+tenant)
 		}
+		args = append(args, selectors...)
 		var stats struct {
 			Bucket *string                    `json:"bucket"`
 			Tenant *string                    `json:"tenant"`
