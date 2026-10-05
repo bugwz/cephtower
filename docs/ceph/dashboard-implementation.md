@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### 当前 RGW 配置用户数量 API
+
+新增 `GET /rgw/users/count`，严格接受 cluster_id，接入原生 user list 完整枚举计数服务，响应明确 scope=current_rgw_configuration，不宣称跨 Realm 总数。沿用认证、审计及 no-store；不返回用户身份，空列表为零，非法或失败读取不返回部分计数。新增成功、范围标记、身份不泄漏、严格参数零命令、有效零值、重复列表、命令失败和认证路由测试，并同步生成 OpenAPI。前端展示与跨 Realm 汇总仍待实现，无真实集群验证。
+
 #### RGW 当前配置范围用户计数服务
 
 核对参考 RgwBucketUi.buckets_and_users_count：它按 daemon 的不同 Realm 累计用户数，不能将单次默认站点 CLI 的结果冒充该跨 Realm 总数。新增内部 RGWUserCount，固定调用不带 account/max-entries 的 `radosgw-admin user list --format json`；原生 USER_LIST 分支循环元数据分页至结束并传播枚举错误。统计完整身份数组，保留租户区分，拒绝 null、重复、空/控制字符身份、畸形结构和非零退出；有效空数组为零，取消不返回计数。只返回数量、来源和读取起止时间，不泄漏用户身份。新增命令范围、有效零值、非法数据、命令失败及取消测试。此服务只覆盖当前 RGW 配置范围，API/前端及跨 Realm 汇总尚待实现，无真实集群验证。

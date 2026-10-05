@@ -97,7 +97,7 @@ func successResponseSchema(route router.Route) string {
 	switch key {
 	case "GET /rgw/encryption/configuration":
 		return "ConfigurationOptionResponse"
-	case "GET /rgw/buckets/usage", "GET /rgw/topology/counts", "GET /rgw/daemons", "GET /rgw/daemon/status", "GET /rgw/daemon/perf", "GET /rgw/daemon/perf/history":
+	case "GET /rgw/users/count", "GET /rgw/buckets/usage", "GET /rgw/topology/counts", "GET /rgw/daemons", "GET /rgw/daemon/status", "GET /rgw/daemon/perf", "GET /rgw/daemon/perf/history":
 		return "ConfigurationOptionResponse"
 	case "GET /logs":
 		return "CephLogsResponse"
@@ -395,7 +395,7 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "service_map_id": stringField(true)}
 	case "GET /manager/telemetry/report":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "mode": {Type: "string", Required: true, Enum: []string{"current", "preview"}}}
-	case "GET /rgw/buckets/usage", "GET /rgw/topology/counts", "GET /rgw/daemons", "GET /rbd/mirroring/schedule/status", "GET /rbd/mirroring/schedules", "GET /erasure/code/info", "GET /upgrade/versions", "GET /crush/map", "GET /manager/telemetry/status":
+	case "GET /rgw/users/count", "GET /rgw/buckets/usage", "GET /rgw/topology/counts", "GET /rgw/daemons", "GET /rbd/mirroring/schedule/status", "GET /rbd/mirroring/schedules", "GET /erasure/code/info", "GET /upgrade/versions", "GET /crush/map", "GET /manager/telemetry/status":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
 	case "GET /ceph/users/export":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "entities": stringArrayField(true)}

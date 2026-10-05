@@ -174,7 +174,37 @@ func TestRGWDaemonAPI(t *testing.T) {
 		t.Fatal("failed usage read accepted")
 	}
 	runner.exit = 0
+	path = "/api/v1/rgw/users/count"
+	runner.output = `["alice","tenant$alice"]`
+	if w = send(valid); w.Code != 200 || w.Header().Get("Cache-Control") != "no-store" || !strings.Contains(w.Body.String(), `"user_count":2`) || !strings.Contains(w.Body.String(), `"scope":"current_rgw_configuration"`) || strings.Contains(w.Body.String(), "alice") {
+		t.Fatal("invalid user count response", w.Code)
+	}
+	count = runner.calls
+	for _, body := range []string{`{}`, `{"cluster_id":0}`, `{"cluster_id":"1"}`, strings.TrimSuffix(valid, "}") + `,"realm":"other"}`} {
+		if w = send(body); w.Code != 400 || runner.calls != count {
+			t.Fatal("invalid user count scope executed")
+		}
+	}
+	runner.output = `[]`
+	if w = send(valid); w.Code != 200 || !strings.Contains(w.Body.String(), `"user_count":0`) {
+		t.Fatal("empty user count lost")
+	}
+	runner.output = `["a","a"]`
+	if w = send(valid); w.Code != 502 || strings.Contains(w.Body.String(), `"user_count"`) {
+		t.Fatal("invalid user count accepted")
+	}
+	runner.output = `[]`
+	runner.exit = 2
+	if w = send(valid); w.Code != 502 {
+		t.Fatal("failed user list accepted")
+	}
+	runner.exit = 0
 	auth = true
+	count = runner.calls
+	if w = send(valid); w.Code != 401 || runner.calls != count {
+		t.Fatal("user count authentication bypass")
+	}
+	path = "/api/v1/rgw/buckets/usage"
 	count = runner.calls
 	if w = send(valid); w.Code != 401 || runner.calls != count {
 		t.Fatal("usage authentication bypass")
