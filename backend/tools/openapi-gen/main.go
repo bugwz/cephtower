@@ -97,6 +97,8 @@ func successResponseSchema(route router.Route) string {
 	switch key {
 	case "GET /rgw/encryption/configuration":
 		return "ConfigurationOptionResponse"
+	case "GET /rgw/daemons":
+		return "ConfigurationOptionResponse"
 	case "GET /logs":
 		return "CephLogsResponse"
 	case "GET /rbd/mirroring/schedule/status", "GET /rbd/mirroring/schedules", "GET /erasure/code/info", "GET /upgrade/versions", "GET /crush/map", "GET /manager/telemetry/status", "GET /manager/telemetry/report", "GET /service/daemons", "GET /daemon/perf":
@@ -391,7 +393,7 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "entity": stringField(true), "encryption_type": {Type: "string", Required: true, Enum: []string{"kms", "s3"}}, "provider": {Type: "string", Required: true, Enum: []string{"vault", "kmip"}}}
 	case "GET /manager/telemetry/report":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "mode": {Type: "string", Required: true, Enum: []string{"current", "preview"}}}
-	case "GET /rbd/mirroring/schedule/status", "GET /rbd/mirroring/schedules", "GET /erasure/code/info", "GET /upgrade/versions", "GET /crush/map", "GET /manager/telemetry/status":
+	case "GET /rgw/daemons", "GET /rbd/mirroring/schedule/status", "GET /rbd/mirroring/schedules", "GET /erasure/code/info", "GET /upgrade/versions", "GET /crush/map", "GET /manager/telemetry/status":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true)}
 	case "GET /ceph/users/export":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "entities": stringArrayField(true)}

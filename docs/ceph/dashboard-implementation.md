@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### RGW 守护进程注册读取 API
+
+新增 `GET /rgw/daemons`，严格接收必需的 cluster_id，复用 service dump 读取服务并返回 items、observed_at 和固定 source=service_map；禁用缓存，沿用共享认证和审计。不依赖 S3 或 rgw-admin 端点，也不把注册记录解释为实时存活状态。OpenAPI 增加集群范围请求与成功响应定义；路由测试覆盖错误类型、缺失/零集群、未知参数零命令执行、白名单响应、空列表、命令失败不泄漏及未认证拒绝。后端全量测试和 OpenAPI 一致性通过，前端列表尚待接入，无真实集群验证。
+
 #### RGW 守护进程服务映射读取基础
 
 对照参考 `rgw-daemon-list`、`controllers/rgw.py::RgwDaemon.list`，追踪 `DaemonServer.cc` 的 `service dump` 分支及 `ServiceMap.cc` 的 Daemon/Service/ServiceMap 序列化。新增内部 `RGWDaemons`，执行 `ceph service dump --format json`；读取 services.rgw.daemons，跳过同层 summary 字符串，以 service_map_id 保留注册身份，逻辑 id 相同的多个注册不合并，按逻辑 id/映射 id 排序。只输出 ID、主机、版本、Realm/Zonegroup/Zone 名称及 Zonegroup ID，不透传任意 metadata、frontend_config 或 task_status，不推断 Dashboard 默认实例或实时健康状态。
