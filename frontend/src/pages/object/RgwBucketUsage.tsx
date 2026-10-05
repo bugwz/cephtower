@@ -2,6 +2,7 @@ import { Alert, Button, Card, Descriptions, Space } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { jsonInit, request } from '../../api/client'
 import { useClusterContext } from '../../state/ClusterContext'
+import { averageBucketObjectBytes } from './bucketUsageMath'
 
 type Usage = { bucket_count: number; object_count: string; size_actual_bytes: string; usage_category: 'rgw.main'; source: 'radosgw-admin'; scope: 'current_rgw_configuration'; started_at: string; observed_at: string }
 export function bucketUsageData(value: unknown): Usage {
@@ -11,13 +12,6 @@ export function bucketUsageData(value: unknown): Usage {
   if (!data || data.source !== 'radosgw-admin' || data.usage_category !== 'rgw.main' || !Number.isSafeInteger(data.bucket_count) || data.bucket_count < 0 || !decimal(data.object_count) || !decimal(data.size_actual_bytes) || typeof data.started_at !== 'string' || typeof data.observed_at !== 'string' || !Number.isFinite(Date.parse(data.started_at)) || !Number.isFinite(Date.parse(data.observed_at)) || Date.parse(data.started_at) > Date.parse(data.observed_at)) throw new Error('Invalid bucket usage')
   if (data.bucket_count === 0 && (data.object_count !== '0' || data.size_actual_bytes !== '0')) throw new Error('Invalid empty aggregate')
   return { bucket_count: data.bucket_count, object_count: data.object_count, size_actual_bytes: data.size_actual_bytes, usage_category: 'rgw.main', source: 'radosgw-admin', scope: data.scope, started_at: data.started_at, observed_at: data.observed_at }
-}
-export function averageBucketObjectBytes(data: Usage): string {
-  const count = BigInt(data.object_count)
-  if (count === 0n) return '不适用（对象数为 0）'
-  // Fixed-point integer division avoids rounding large totals through Number.
-  const hundredths = BigInt(data.size_actual_bytes) * 100n / count
-  return `${hundredths / 100n}.${String(hundredths % 100n).padStart(2, '0')} B/对象`
 }
 export function RgwBucketUsage() {
   const { selectedClusterId } = useClusterContext()

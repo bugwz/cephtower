@@ -2,6 +2,7 @@ import { Alert, Button, Card, Descriptions, Space, Table } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { jsonInit, request } from '../../api/client'
 import { useClusterContext } from '../../state/ClusterContext'
+import { averageBucketObjectBytes } from './bucketUsageMath'
 
 type Row = { realm_id: string; zone_id: string; service_map_id: string; bucket_count: string; object_count: string; size_actual_bytes: string; usage_category: 'rgw.main'; started_at: string; observed_at: string; scope: 'zone'; source: 'radosgw-admin' }
 type Counts = { scope: 'registered_realms'; source: 'service_map+radosgw-admin'; selection: 'lowest_zone_id_then_service_map_id'; realm_count: number; bucket_count: string; object_count: string; size_actual_bytes: string; usage_category: 'rgw.main'; started_at: string; observed_at: string; items: Row[] }
@@ -47,6 +48,7 @@ export function RgwRealmBucketUsageView({ clusterId }: { clusterId?: number }) {
   }
   const scoped = state.clusterId === clusterId ? state : undefined
   return <Card title="已注册 Realm Bucket 使用量汇总"><Space direction="vertical" style={{ width: '100%' }}>
+    <Alert type="info" message="平均对象大小 = 统计容量 ÷ 对象数，截断到两位小数；总平均值不取各 Realm 平均值的算术平均" />
     <Alert type="info" message="每个已注册 Realm 选取一个代表 Zone" description="按 Zone ID、服务映射 ID 字典序选择。只覆盖 service map 中身份完整的 Realm，不是所有配置 Realm；不表示在线健康或 Zone 复制一致。逐项读取非原子快照，最多两分钟，任一失败不展示部分总数。不同 Realm 的同名 Bucket 分别计数；rgw.main 的 size_actual 为取整统计容量，不是物理占用。" />
     <Button disabled={!clusterId || scoped?.busy} loading={scoped?.busy} onClick={() => void read()}>读取跨 Realm Bucket 汇总</Button>
     {!clusterId && <Alert type="info" message="请先选择集群" />}
@@ -58,6 +60,7 @@ export function RgwRealmBucketUsageView({ clusterId }: { clusterId?: number }) {
         { key: 'buckets', label: '范围内 Bucket 总数', children: scoped.data.bucket_count },
         { key: 'objects', label: '对象总数', children: scoped.data.object_count },
         { key: 'bytes', label: '统计容量（B）', children: scoped.data.size_actual_bytes },
+        { key: 'average', label: '平均对象大小', children: averageBucketObjectBytes(scoped.data) },
         { key: 'start', label: '读取开始', children: scoped.data.started_at },
         { key: 'end', label: '读取完成', children: scoped.data.observed_at },
       ]} />
@@ -65,6 +68,7 @@ export function RgwRealmBucketUsageView({ clusterId }: { clusterId?: number }) {
         { title: 'Realm ID', dataIndex: 'realm_id' }, { title: '代表 Zone ID', dataIndex: 'zone_id' },
         { title: '服务映射 ID', dataIndex: 'service_map_id' }, { title: 'Bucket 数', dataIndex: 'bucket_count' },
         { title: '对象数', dataIndex: 'object_count' }, { title: '统计容量（B）', dataIndex: 'size_actual_bytes' },
+        { title: '平均对象大小', key: 'average', render: (_: unknown, row: Row) => averageBucketObjectBytes(row) },
         { title: '读取开始', dataIndex: 'started_at' }, { title: '读取完成', dataIndex: 'observed_at' },
       ]} />
     </>}
