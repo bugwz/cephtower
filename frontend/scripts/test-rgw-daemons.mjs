@@ -23,7 +23,7 @@ for(const file of ['HostDetailPage','ServiceDaemons','ServicePage']){
 }
 const ui={},states=[],refs=[],calls=[];let si=0,ri=0,deps,cleanup,pending
 const jsx=(type,props)=>({type,props}),react={useState:v=>{const i=si++;if(!(i in states))states[i]=v;return[states[i],v=>states[i]=v]},useRef:v=>refs[ri++]??(refs[ri-1]={current:v}),useEffect:(fn,next)=>{if(JSON.stringify(next)!==JSON.stringify(deps)){deps=next;pending=()=>{cleanup?.();cleanup=fn()}}}}
-new Function('exports','require',code)(ui,name=>name==='react'?react:name==='antd'?Object.fromEntries(['Alert','Button','Card','Input','Space','Table'].map(n=>[n,n])):name.includes('api/client')?{jsonInit:(method,body,opts)=>({method,body,...opts}),request:(path,init)=>new Promise((resolve,reject)=>calls.push({path,...init,resolve,reject}))}:name.includes('ClusterContext')?{useClusterContext:()=>({selectedClusterId:7})}:{jsx,jsxs:jsx})
+new Function('exports','require',code)(ui,name=>name==='./RgwSyncStatus'?{RgwSyncStatus:'RgwSyncStatus'}:name==='react'?react:name==='antd'?Object.fromEntries(['Alert','Button','Card','Input','Select','Space','Table'].map(n=>[n,n])):name.includes('api/client')?{jsonInit:(method,body,opts)=>({method,body,...opts}),request:(path,init)=>new Promise((resolve,reject)=>calls.push({path,...init,resolve,reject}))}:name.includes('ClusterContext')?{useClusterContext:()=>({selectedClusterId:7})}:{jsx,jsxs:jsx})
 const row={service_map_id:'1',id:'rgw.a',hostname:'host',version:'ceph version',realm_name:'r',realm_id:'realm-id',zonegroup_name:'g',zonegroup_id:'gid',zone_name:'z',zone_id:'zone-id',metadata:{os:'Linux',num_handles:'9007199254740993'},listeners:[{frontend:'frontend_config#0',tls:true,port:443}],listeners_complete:true}
 const data={items:[row,{...row,service_map_id:'2'}],source:'service_map',observed_at:'now'}
 assert.equal(ui.daemonRegistrationData(data).items.length,2)
@@ -65,7 +65,18 @@ assert.ok(summary.some(n=>n.type==='Alert'&&n.props.description?.includes('不�
 const summaryButton=summary.find(n=>n.type==='Button')
 summaryButton.props.onClick();assert.deepEqual(calls[4].body,{cluster_id:9});calls[4].resolve(data);await tick()
 assert.ok(render(9,true).some(n=>n.type==='span'&&JSON.stringify(n.props.children)===JSON.stringify(['注册实例数：','2'])))
+const zoneSelector=render(9,true).find(n=>n.type==='Select')
+assert.equal(zoneSelector.props.options.length,2)
+assert.equal(render(9,true).some(n=>n.type==='RgwSyncStatus'),false)
+const beforeSelect=calls.length;zoneSelector.props.onChange('2');assert.equal(calls.length,beforeSelect)
+let sync=render(9,true).find(n=>n.type==='RgwSyncStatus')
+assert.deepEqual(sync.props.row,{id:'zone-id',name:'z'});assert.equal(sync.props.clusterId,9)
+zoneSelector.props.onChange(undefined);assert.equal(render(9,true).some(n=>n.type==='RgwSyncStatus'),false)
+zoneSelector.props.onChange('1')
 summaryButton.props.onClick();assert.equal(render(9,true).some(n=>n.type==='span'),false);calls[5].resolve({...data,items:[]});await tick()
+assert.equal(render(9,true).some(n=>n.type==='RgwSyncStatus'),false)
+assert.equal(render(9,true).find(n=>n.type==='Select').props.disabled,true)
+zoneSelector.props.onChange('2');assert.equal(states[2],undefined)
 assert.ok(render(9,true).some(n=>n.type==='span'&&JSON.stringify(n.props.children)===JSON.stringify(['注册实例数：','0'])))
 summaryButton.props.onClick();calls[6].resolve({...data,items:[row,row]});await tick();assert.ok(render(9,true).some(n=>n.type==='Alert'&&n.props.type==='error'))
 summaryButton.props.onClick();render(10,true);assert.equal(calls[7].signal.aborted,true);calls[7].resolve(data);await tick();assert.equal(render(10,true).some(n=>n.type==='span'),false)

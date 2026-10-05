@@ -1,9 +1,10 @@
-import { Alert, Button, Card, Input, Space, Table } from 'antd'
+import { Alert, Button, Card, Input, Select, Space, Table } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { jsonInit, request } from '../../api/client'
 import { useClusterContext } from '../../state/ClusterContext'
 import { RgwDaemonStatus } from './RgwDaemonStatus'
+import { RgwSyncStatus } from './RgwSyncStatus'
 
 const fields=['service_map_id','id','hostname','version','realm_name','realm_id','zonegroup_name','zonegroup_id','zone_name','zone_id'] as const
 type Daemon=Record<typeof fields[number],string>&{metadata:Record<string,string>;listeners:Array<{frontend:string;tls:boolean;port:number}>;listeners_complete:boolean}
@@ -26,13 +27,15 @@ export function RgwDaemonsPage(){const {selectedClusterId}=useClusterContext();r
 export function RgwDaemonCount(){const {selectedClusterId}=useClusterContext();return <RgwDaemonsView key={selectedClusterId??'none'} clusterId={selectedClusterId} summary/>}
 export function RgwDaemonsView({clusterId,summary=false}:{clusterId?:number;summary?:boolean}) {
   const [filter,setFilter]=useState(''),[state,setState]=useState<{clusterId?:number;busy:boolean;data?:ReturnType<typeof daemonRegistrationData>;error?:boolean}>({busy:false})
+  const [syncSelection,setSyncSelection]=useState<string>()
   const current=useRef(clusterId),mounted=useRef(true),sequence=useRef(0),abort=useRef<AbortController>()
   current.current=clusterId
-  useEffect(()=>{mounted.current=true;setFilter('');setState({clusterId,busy:false});return()=>{mounted.current=false;abort.current?.abort();sequence.current++}},[clusterId])
+  useEffect(()=>{mounted.current=true;setFilter('');setSyncSelection(undefined);setState({clusterId,busy:false});return()=>{mounted.current=false;abort.current?.abort();sequence.current++}},[clusterId])
   async function read(){
     if(!clusterId||!mounted.current||current.current!==clusterId)return
     abort.current?.abort();const controller=new AbortController();abort.current=controller;const ticket=++sequence.current
     setState({clusterId,busy:true})
+    setSyncSelection(undefined)
     try{
       const result=await request<unknown>('/rgw/daemons',jsonInit('GET',{cluster_id:clusterId},{signal:controller.signal,cache:'no-store',suppressErrorNotification:true}))
       if(mounted.current&&current.current===clusterId&&ticket===sequence.current&&!controller.signal.aborted)setState({clusterId,busy:false,data:daemonRegistrationData(result)})
@@ -42,12 +45,20 @@ export function RgwDaemonsView({clusterId,summary=false}:{clusterId?:number;summ
   const labels=['服务映射 ID','RGW ID','主机','版本','Realm','Realm ID','Zonegroup','Zonegroup ID','Zone','Zone ID']
   const rows=scoped?.data?.items.filter(row=>fields.some(key=>row[key].toLowerCase().includes(filter.toLowerCase())))
   const readSequence=sequence.current
+  const syncCandidates=scoped?.data?.items.filter(row=>row.zone_id&&row.zone_name)??[]
+  const syncDaemon=syncCandidates.find(row=>row.service_map_id===syncSelection)
   if(summary)return <Card title="RGW 注册实例数量"><Space direction="vertical" style={{width:'100%'}}>
     <Alert type="info" message="来自 ceph service dump 的服务映射记录数" description="每个服务映射 ID 计一次，同名 RGW ID 的不同注册分别计数。不是在线或健康实例数量，零记录不证明没有 RGW 进程。"/>
     <Space><Button disabled={!clusterId||scoped?.busy} loading={scoped?.busy} onClick={()=>void read()}>读取注册实例数量</Button><Link to="/object/daemons">查看注册明细</Link></Space>
     {!clusterId&&<Alert type="info" message="请先选择集群"/>}
     {scoped?.error&&<Alert type="error" message="读取失败或注册数据不完整，未展示旧值或部分计数"/>}
     {scoped?.data&&<><span>注册实例数：{String(scoped.data.items.length)}</span><span>读取时间：{scoped.data.observed_at}</span></>}
+    {scoped?.data&&<Card size="small" title="选择 Zone 查看多站点同步报告"><Space direction="vertical" style={{width:'100%'}}>
+      <Alert type="info" message="从注册记录选择站点，再手动读取同步报告" description="仅提供具有 Zone ID 和名称的注册记录；后端会核对原生报告中的 Zone 身份。注册不是健康证明，重新读取列表将清除选择和旧报告。"/>
+      {syncCandidates.length===0&&<Alert type="warning" message="没有具备完整 Zone 身份的注册记录，无法选择同步报告站点"/>}
+      <Select aria-label="同步报告 Zone" style={{width:'100%'}} allowClear placeholder="选择注册 Zone（不会自动读取）" value={syncSelection} disabled={!syncCandidates.length} options={syncCandidates.map(row=>({value:row.service_map_id,label:`${row.zone_name} (${row.zone_id}) · Realm ${row.realm_id||'未知'} · ${row.service_map_id}`}))} onChange={value=>{if(mounted.current&&current.current===clusterId&&sequence.current===readSequence)setSyncSelection(value)}}/>
+      {syncDaemon&&<RgwSyncStatus key={`${clusterId}/${readSequence}/${syncDaemon.service_map_id}`} clusterId={clusterId} row={{id:syncDaemon.zone_id,name:syncDaemon.zone_name}}/>}
+    </Space></Card>}
   </Space></Card>
   return <Card title="RGW 守护进程注册"><Space direction="vertical" style={{width:'100%'}}>
     <Alert type="info" message="来自 ceph service dump 的注册信息，不是实时健康探测" description="同一 RGW ID 的不同服务映射记录分别保留；未注册不等于进程不存在。端口从已注册 Beast frontend 配置提取，不证明监听成功、TLS 可用或网络可达；未知配置会明确标注。"/>
