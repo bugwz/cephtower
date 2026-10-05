@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+- **Realm Token 归档从 Zone 导入**：扩展同一导入表单和 `POST /rgw/realm/import`，可显式选择 `tier_type=archive`。依据 `rgwam_core.py::ZoneOp.create` 与 `radosgw-admin.cc::ZONE_CREATE`，使用 `realm pull` → 当前 Period/主 Zone 身份读取 → `zone create --tier-type archive --sync-from-all=false --sync-from <master-name>` → Zonegroup 回读 → `period update --commit` → Realm/完整当前 Period 回读 → `ceph orch apply -i -`，不先发布普通 Zone 再转换。归档属性位于 Zonegroup/Period 的 Zone 记录，而不是本地 ZoneParams；在发布前核验系统密钥、归档类型及唯一主源，部署前再次确认已发布状态、主 Zone 身份及完整 Period 一致性。主 Zone 名含原生命令列表分隔符时停止，不能将一个名称拆成多个同步源。
+  - 部署规范使用参考实现的 endpoint=null 次级 Token、`update_endpoints=true` 和准确的 Realm/Zonegroup/Zone、端口及放置策略；沿用新 Zone/服务不存在、已有 Realm 身份检查，以及部署后的公共回读和库存刷新。仅代表已提交部署，不代表守护进程就绪或同步完成。所有步骤失败即停止，分步归档链路不主动重试、也不自动回滚；拉取 Realm 自身会修改本地状态，后续失败可能已经部分生效。
+  - 凭据参数标记为敏感，原始输出不写入操作结果，部署 Token 通过 stdin 传递；但原生 `realm pull`/`zone create` 的系统密钥会存在于进程参数，普通导入的原生 mgr 内部也会调用这些工具。界面明确提示操作系统特权进程、Ceph 调试日志风险，不能把应用日志脱敏宣称为系统级保密。请求仍加密入队，不新增明文凭据存储。
+  - 增加完整命令顺序、每个阶段失败截断、错误脱敏、身份/密钥/归档策略/Period 不一致、次级 Token 部署参数、API 类型与表单选择测试；更新生成 OpenAPI，运行全量后端和前端检查。未连接真实 Ceph 集群或进行浏览器视觉验证。归档导入不再是待实现项；Realm bootstrap、迁移和其余覆盖仍继续。
+
 - **Realm Token 普通从 Zone 导入与部署**：接通 Multisite 工具栏 → 高风险 `POST /rgw/realm/import` → 加密操作队列 → `ceph rgw zone create -i -`，按参考 `_parse_rgw_specs` 用标准输入传递含 Token 的 RGWSpec，不将凭据放入命令参数。支持新 Zone 名称、端口、默认/主机/标签部署位置及实例数；表单密码遮罩、配置修改后清除风险确认，提交前说明远端可信来源、HTTP 风险、拉取 Realm、创建 Zone、发布整个 Period、提交部署及非事务副作用。
   - 导入前读取 Zone 列表、Realm 列表/已有 Realm 身份、目标服务导出，拒绝已存在 Zone、不同身份 Realm 或已有服务。命令后核验 Realm ID/名称、Zone ID/名称/Realm、当前已发布 Period 中主 Zonegroup 的从 Zone，以及 RGW 服务身份、Realm/Zonegroup/Zone、端口和指定放置字段。不把服务规格存在等同于守护进程就绪或数据同步完成。Token 内远端身份只能在原生拉取后回读核验，失败可能已经产生资源；本项目集群操作串行不能锁住远端或外部管理员。
   - 原始命令输出及错误不进入结果，失败使用固定信息并禁止应用级自动重试；Ceph 内部 Period 重试仍存在。成功后刷新 Realm、Zonegroup、Zone、服务库存，刷新失败也不可重试导入。增加命令/失败截断/敏感输出、加密队列与请求契约、刷新行为及表单测试，更新生成的 OpenAPI；运行全量前后端测试及构建。无真实集群或浏览器视觉验证。

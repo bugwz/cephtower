@@ -21766,6 +21766,9 @@ paths:
                   type: string
                 subvolume:
                   type: string
+                tier_type:
+                  type: string
+                  enum: ["archive"]
                 uid:
                   type: string
                 who:

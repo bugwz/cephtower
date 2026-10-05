@@ -13,11 +13,11 @@ import (
 
 var realmImportName = regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$`)
 
-// The mgr CLI accepts a single RGWSpec on stdin. tier_type is deliberately not
-// forwarded: it is a Python-only parameter in the reference mgr module.
+// The mgr CLI accepts a single RGWSpec on stdin. Archive imports use a separate
+// native chain because the mgr CLI cannot forward tier_type.
 func buildRealmImport(p map[string]any) (command, error) {
-	if _, present := p["tier_type"]; present {
-		return command{}, invalid("archive import is not supported by the native mgr CLI")
+	if tier, present := p["tier_type"]; present && tier != "archive" {
+		return command{}, invalid("unsupported import tier type")
 	}
 	if _, present := p["unmanaged"]; present {
 		return command{}, invalid("unmanaged import is not supported")
@@ -111,11 +111,18 @@ func (s *Service) executeRealmImport(ctx context.Context, access executor.Cluste
 	if !absent {
 		return fail(false)
 	}
-	written, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true})
-	clear(written.Stdout)
-	clear(written.Stderr)
-	if err != nil || written.ExitCode != 0 {
-		return fail(true)
+	archive := request.Parameters["tier_type"] == "archive"
+	if archive {
+		if !s.importArchiveZone(ctx, access, request, token, spec.stdin) {
+			return fail(true)
+		}
+	} else {
+		written, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true})
+		clear(written.Stdout)
+		clear(written.Stderr)
+		if err != nil || written.ExitCode != 0 {
+			return fail(true)
+		}
 	}
 	realm, ok := readAdmin("realm_post_check", "realm", "get", "--rgw-realm", token.RealmName)
 	if !ok || realm["id"] != token.RealmID || realm["name"] != token.RealmName || !syncFlowToken(rawText(realm, "current_period")) {
@@ -128,6 +135,9 @@ func (s *Service) executeRealmImport(ctx context.Context, access executor.Cluste
 	period, ok := readAdmin("period_post_check", "period", "get", "--realm-id", token.RealmID)
 	group, verified := realmImportPublishedZone(period, token.RealmID, rawText(realm, "current_period"), rawText(zone, "id"), name)
 	if !ok || !verified {
+		return fail(true)
+	}
+	if archive && !archiveZonePublished(period, token.RealmID, rawText(realm, "current_period"), rawText(zone, "id"), name) {
 		return fail(true)
 	}
 	raw, ok = run("service_post_check", executor.BinaryCeph, serviceArgs)

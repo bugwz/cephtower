@@ -4,7 +4,7 @@ import ts from 'typescript'
 const api = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwRealmImport.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(api)
 const action = api.rgwRealmImportAction
-const v = { name: 'secondary', realm_token: 'c2VjcmV0', port: 80, placement_mode: 'default', confirm_import: 'acknowledged' }
+const v = { name: 'secondary', realm_token: 'c2VjcmV0', port: 80, placement_mode: 'default', zone_mode: 'normal', confirm_import: 'acknowledged' }
 assert.deepEqual(action.buildBody(v, 7), { cluster_id: 7, name: 'secondary', realm_token: v.realm_token, port: 80, placement: {}, confirm_import: true })
 assert.deepEqual(action.buildBody({ ...v, placement_mode: 'hosts', hosts: 'host-a\nhost-b', label: 'ignored', count: 2 }, 7).placement, { hosts: ['host-a', 'host-b'], count: 2 })
 assert.deepEqual(action.buildBody({ ...v, placement_mode: 'label', label: 'rgw', hosts: 'ignored' }, 7).placement, { label: 'rgw' })
@@ -13,7 +13,10 @@ assert.deepEqual(action.changedValues({ name: 'next' }, v), { confirm_import: un
 assert.deepEqual(action.changedValues({ confirm_import: 'acknowledged' }, v), {})
 assert.equal(action.fields.find(f => f.name === 'realm_token').type, 'password')
 assert.match(action.confirmation(v), /非事务/)
-assert.match(action.confirmation(v), /尚不支持归档/)
+assert.equal(action.buildBody({ ...v, zone_mode: 'archive' }, 7).tier_type, 'archive')
+assert.throws(() => action.buildBody({ ...v, zone_mode: 'unknown' }, 7))
+assert.match(action.confirmation({ ...v, zone_mode: 'archive' }), /只从当前主 Zone 同步/)
+assert.match(action.confirmation(v), /特权进程/)
 assert.equal(action.path, '/rgw/realm/import')
 assert.match(readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8'), /toolbarActions: \[rgwRealmImportAction\]/)
 console.log('Realm token import form validates placement, credentials and explicit side effects')

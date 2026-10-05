@@ -60,7 +60,11 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	if importErr != nil || !strings.Contains(string(importPlain), "private-import-token") {
 		t.Fatal("encrypted import token lost")
 	}
-	for _, extra := range []string{`,"tier_type":"archive"}`, `,"unmanaged":true}`} {
+	archiveResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/realm/import", strings.TrimSuffix(importBody, "}")+`,"tier_type":"archive"}`, "archive-import")
+	if archiveResponse.Code != http.StatusAccepted {
+		t.Fatal("archive import rejected", archiveResponse.Code)
+	}
+	for _, extra := range []string{`,"tier_type":"unknown"}`, `,"unmanaged":true}`} {
 		bad := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/realm/import", strings.TrimSuffix(importBody, "}")+extra, "bad-realm-import-"+extra)
 		if bad.Code != http.StatusBadRequest {
 			t.Fatal("unsupported import option accepted")
