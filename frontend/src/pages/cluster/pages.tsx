@@ -40,6 +40,7 @@ import { MonDetailPage } from './MonDetailPage'
 import { MonPublicAddresses } from './MonPublicAddresses'
 import { monSessionCount } from './monSessionCount'
 import { MonQuorumState } from './MonQuorumState'
+import { monQuorumMembers, monQuorumLeader, monQuorumInteger } from './monQuorumSummary'
 import { PoolDetailPage } from './PoolDetailPage'
 import { PoolManagementPage } from './PoolManagementPage'
 import { ServicePage } from './ServicePage'
@@ -106,6 +107,10 @@ export function MonManagementPage() {
         >
           <Descriptions className="mon-status-descriptions" size="small" column={twoColumnDescriptions} bordered>
             <Descriptions.Item label="集群 ID">{textValue(data?.status?.fsid)}</Descriptions.Item>
+            <Descriptions.Item label="仲裁成员（采集时）">{monQuorumMembers(data?.status?.quorum_names)}</Descriptions.Item>
+            <Descriptions.Item label="Leader（采集时）">{monQuorumLeader(data?.status?.quorum_leader_name)}</Descriptions.Item>
+            <Descriptions.Item label="选举 epoch">{monQuorumInteger(data?.status?.election_epoch)}</Descriptions.Item>
+            <Descriptions.Item label="当前仲裁持续时间（采集时）">{monQuorumInteger(data?.status?.quorum_age, true)}</Descriptions.Item>
             <Descriptions.Item label="monmap 修改时间">{formatDateTime(data?.status?.modified)}</Descriptions.Item>
             <Descriptions.Item label="monmap epoch">{textValue(data?.status?.epoch)}</Descriptions.Item>
             <Descriptions.Item label="Quorum 连接特性">{textValue(data?.status?.quorum_con)}</Descriptions.Item>

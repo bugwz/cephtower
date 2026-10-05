@@ -92,13 +92,17 @@ type MonitorAddress struct {
 	Address string `json:"addr"`
 }
 type MonitorStatus struct {
-	FSID        string   `json:"fsid"`
-	Modified    string   `json:"modified"`
-	Epoch       int      `json:"epoch"`
-	QuorumCon   string   `json:"quorum_con"`
-	QuorumMon   []string `json:"quorum_mon"`
-	RequiredCon string   `json:"required_con"`
-	RequiredMon []string `json:"required_mon"`
+	QuorumNames      []string `json:"quorum_names"`
+	QuorumLeaderName *string  `json:"quorum_leader_name"`
+	ElectionEpoch    *string  `json:"election_epoch"`
+	QuorumAge        *string  `json:"quorum_age"`
+	FSID             string   `json:"fsid"`
+	Modified         string   `json:"modified"`
+	Epoch            int      `json:"epoch"`
+	QuorumCon        string   `json:"quorum_con"`
+	QuorumMon        []string `json:"quorum_mon"`
+	RequiredCon      string   `json:"required_con"`
+	RequiredMon      []string `json:"required_mon"`
 }
 type MonitorPerfCounter struct {
 	Monitor     string `json:"monitor"`

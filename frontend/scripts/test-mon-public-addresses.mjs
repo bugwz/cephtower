@@ -19,6 +19,21 @@ for (const file of ['pages.tsx', 'MonDetailPage.tsx']) {
   assert.ok(readFileSync(new URL(`../src/pages/cluster/${file}`, import.meta.url), 'utf8').includes('MonPublicAddresses'))
 }
 console.log('MON public address list preserves native protocols and IPv6 text')
+const summary = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/cluster/monQuorumSummary.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(summary)
+assert.equal(summary.monQuorumMembers([]), '无仲裁成员')
+assert.equal(summary.monQuorumMembers(['a', 'b']), 'a、b')
+assert.equal(summary.monQuorumLeader(''), '无 Leader')
+assert.equal(summary.monQuorumLeader('a'), 'a')
+assert.equal(summary.monQuorumInteger('0', true), '0 秒')
+assert.equal(summary.monQuorumInteger('18446744073709551615'), '18446744073709551615')
+for (const value of [undefined, null, {}, false, 0]) {
+  assert.equal(summary.monQuorumMembers(value), '未返回或格式无效')
+  assert.equal(summary.monQuorumLeader(value), '未返回或格式无效')
+  assert.equal(summary.monQuorumInteger(value), '未返回或格式无效')
+}
+for (const value of ['-1', '1.5', '01', '18446744073709551616']) assert.equal(summary.monQuorumInteger(value), '未返回或格式无效')
+for (const field of ['quorum_names', 'quorum_leader_name', 'election_epoch', 'quorum_age']) assert.ok(readFileSync(new URL('../src/pages/cluster/pages.tsx', import.meta.url), 'utf8').includes(`data?.status?.${field}`))
 const counter = {}
 new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/cluster/MonCounterValue.tsx', import.meta.url), 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX }

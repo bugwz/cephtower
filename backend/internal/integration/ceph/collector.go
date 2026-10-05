@@ -438,8 +438,11 @@ type monDumpWire struct {
 	} `json:"mons"`
 }
 type quorumWire struct {
-	QuorumNames []string `json:"quorum_names"`
-	Features    struct {
+	QuorumLeaderName *string  `json:"quorum_leader_name"`
+	ElectionEpoch    *uint64  `json:"election_epoch"`
+	QuorumAge        *uint64  `json:"quorum_age"`
+	QuorumNames      []string `json:"quorum_names"`
+	Features         struct {
 		QuorumCon   string        `json:"quorum_con"`
 		QuorumMon   []interface{} `json:"quorum_mon"`
 		RequiredCon string        `json:"required_con"`
@@ -450,6 +453,14 @@ type quorumWire struct {
 		Modified string `json:"modified"`
 		Epoch    int    `json:"epoch"`
 	} `json:"monmap"`
+}
+
+func monitorStatusInteger(value *uint64) *string {
+	if value == nil {
+		return nil
+	}
+	text := strconv.FormatUint(*value, 10)
+	return &text
 }
 
 type perfCounterSchema struct {
@@ -599,6 +610,8 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 		quorumSet[name] = struct{}{}
 	}
 	statusPayload := cephdomain.MonitorStatus{
+		QuorumNames: quorum.QuorumNames, QuorumLeaderName: quorum.QuorumLeaderName,
+		ElectionEpoch: monitorStatusInteger(quorum.ElectionEpoch), QuorumAge: monitorStatusInteger(quorum.QuorumAge),
 		FSID: quorum.MonMap.FSID, Modified: quorum.MonMap.Modified, Epoch: quorum.MonMap.Epoch,
 		QuorumCon: quorum.Features.QuorumCon, QuorumMon: interfaceStrings(quorum.Features.QuorumMon),
 		RequiredCon: quorum.Features.RequiredCon, RequiredMon: interfaceStrings(quorum.Features.RequiredMon),
