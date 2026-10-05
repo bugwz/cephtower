@@ -39,8 +39,16 @@ assert.equal(storageView.RgwStorage({ value: undefined }).props.children, '容�
 const emptyUsage = storageView.RgwStorage({ value: {}, categorized: true })
 assert.deepEqual(emptyUsage.props.children[0].props.dataSource, [])
 assert.equal(emptyUsage.props.children[0].props.locale.emptyText, '本次采集未返回用量分类')
-const zeroUsage = storageView.RgwStorage({ value: { main: { size: 0, size_actual: 0, size_utilized: 0, num_objects: 0 } }, categorized: true })
+const zeroUsage = storageView.RgwStorage({ value: { main: { size: '0', size_actual: '0', size_utilized: '0', num_objects: '0' } }, categorized: true })
 assert.equal(zeroUsage.props.children[0].props.dataSource[0].objects, '0')
+const preciseBucket = { 'rgw.main': { size: '18446744073709551615', size_actual: '9007199254740993', size_utilized: '0', num_objects: '9007199254740995' } }
+assert.deepEqual(storageView.RgwStorage({ value: preciseBucket, categorized: true }).props.children[0].props.dataSource, [
+  { category: 'rgw.main', size: '18446744073709551615', actual: '9007199254740993', utilized: '0', objects: '9007199254740995' }
+])
+for (const value of [undefined, null, 0, 1, false, {}, '', '-1', '01', '1.0', '1e3', '+1', ' 1', '18446744073709551616', '9'.repeat(100)]) {
+  const bad = rows({ main: { size: value, size_actual: value, size_utilized: value, num_objects: value } }, true)[0]
+  for (const key of ['size', 'actual', 'utilized', 'objects']) assert.equal(bad[key], '未返回或超出精确显示范围')
+}
 const tags = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketTags.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(tags)
 assert.deepEqual(tags.rgwBucketTags({}), [])
