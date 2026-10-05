@@ -7,6 +7,7 @@ import './test-rgw-topology-counts.mjs'
 import './test-rgw-bucket-usage.mjs'
 import './test-rgw-user-count.mjs'
 import './test-rgw-realm-user-counts.mjs'
+import './test-rgw-realm-bucket-usage.mjs'
 import {readFileSync} from 'node:fs'
 import ts from 'typescript'
 const code=ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwDaemonsPage.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText
