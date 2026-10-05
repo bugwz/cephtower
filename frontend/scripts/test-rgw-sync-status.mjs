@@ -26,6 +26,15 @@ for(const text of ['no sync (zone is master)','failed to fetch source sync statu
 const code=ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwSyncStatus.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.React}}).outputText
 new Function('exports','require','React',code)(api,name=>name==='react'?hooks:name==='antd'?{Alert:'Alert',Button:'Button',Card:'Card',Space:'Space',Descriptions:'Descriptions'}:name==='./rgwSyncReport'?parser:client,{createElement:(type,props,...children)=>({type,props:{...props,children}})})
 const counterItems=api.RgwSyncCounterDetails({section:counterText}).props.items
+const shardLines='behind shards: [0,2,10,9007199254740993]\nrecovering shards: [1,3]'
+assert.deepEqual(parser.rgwSyncCounters(shardLines),{behindShards:['0','2','10','9007199254740993'],recoveringShards:['1','3']})
+assert.deepEqual(parser.rgwSyncCounters('behind shards: []'),{behindShards:[]})
+for(const invalid of ['behind shards: [1,1]','behind shards: [10,2]','behind shards: [-1]','behind shards: [01]','behind shards: [1,]','diagnostic: behind shards: [1]','recovering shards: [0]\nrecovering shards: [1]'])assert.equal(parser.rgwSyncCounters(invalid),undefined)
+const shardItems=api.RgwSyncCounterDetails({section:shardLines}).props.items
+assert.equal(shardItems.find(item=>item.key==='behindShards').children,'0, 2, 10, 9007199254740993')
+assert.equal(shardItems.find(item=>item.key==='recoveringShards').children,'1, 3')
+assert.equal(api.RgwSyncCounterDetails({section:'behind shards: []'}).props.items[0].children,'[]（原生空列表）')
+assert.equal(counterItems.some(item=>item.key==='behindShards'),false)
 for (const timestamp of ['2026-10-06T12:34:56.123456+0800','2026-10-06T00:00:00.000001-0430']) {
   const line=`oldest incremental change not applied: ${timestamp} [9007199254740993]`
   assert.deepEqual(parser.rgwSyncCounters(line),{oldestChange:timestamp,oldestShard:'9007199254740993'})

@@ -1,6 +1,6 @@
 export type SyncReportSections = { identity: string; metadata: string; sources: string[] }
 
-export type SyncCounters = { full?: string; incremental?: string; total?: string; remaining?: string; remainingUnit?: 'entries' | 'buckets'; behind?: string; recovering?: string; oldestChange?: string; oldestShard?: string }
+export type SyncCounters = { full?: string; incremental?: string; total?: string; remaining?: string; remainingUnit?: 'entries' | 'buckets'; behind?: string; recovering?: string; oldestChange?: string; oldestShard?: string; behindShards?: string[]; recoveringShards?: string[] }
 // These are native phase counts, not completed-work percentages. Parse only
 // whole known lines and retain the original section for all diagnostics.
 export function rgwSyncCounters(section: string): SyncCounters | undefined {
@@ -11,6 +11,15 @@ export function rgwSyncCounters(section: string): SyncCounters | undefined {
   // Keep the native timestamp intact; Date would discard microseconds.
   const timestamp = '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{6}[+-][0-9]{4}'
   for (const line of section.split('\n').map(value => value.trim())) {
+    const shards = line.match(/^(behind|recovering) shards: \[((?:(?:0|[1-9][0-9]*)(?:,(?:0|[1-9][0-9]*))*)?)\]$/)
+    if (shards) {
+      const field = shards[1] === 'behind' ? 'behindShards' : 'recoveringShards'
+      const ids = shards[2] ? shards[2].split(',') : []
+      // Native std::set output is unique and numerically sorted, not lexical.
+      if (seen.has(field) || ids.some((id, index) => index > 0 && BigInt(ids[index - 1]) >= BigInt(id))) return undefined
+      seen.add(field); result[field] = ids
+      continue
+    }
     const oldest = line.match(new RegExp(`^oldest incremental change not applied: (${timestamp}) \\[${integer}\\]$`))
     if (oldest) {
       if (seen.has('oldestChange')) return undefined

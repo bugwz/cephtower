@@ -13,6 +13,8 @@ export function RgwSyncCounterDetails({ section }: { section: string }) {
     { key: 'remaining', label: counters.remainingUnit === 'buckets' ? '待同步桶数' : '待同步条目数', value: counters.remaining },
     { key: 'behind', label: '落后分片数', value: counters.behind },
     { key: 'recovering', label: '恢复中分片数', value: counters.recovering },
+    { key: 'behindShards', label: '原生报告列出的落后分片 ID', value: counters.behindShards?.join(', ') || (counters.behindShards ? '[]（原生空列表）' : undefined) },
+    { key: 'recoveringShards', label: '原生报告列出的恢复中分片 ID', value: counters.recoveringShards?.join(', ') || (counters.recoveringShards ? '[]（原生空列表）' : undefined) },
     { key: 'oldestChange', label: '最早未应用增量变更（原始时间与时区）', value: counters.oldestChange },
     { key: 'oldestShard', label: '最早未应用增量变更所在分片', value: counters.oldestShard },
   ].filter(item => item.value !== undefined).map(({ key, label, value }) => ({ key, label, children: value }))
