@@ -111,6 +111,7 @@ var mutationRouteActions = map[string]string{
 	"PATCH /rgw/zonegroup/placement/tags":           "rgw_zonegroup.placement_tags",
 	"PATCH /rgw/zonegroup/placement/restore":        "rgw_zonegroup.cloud_restore",
 	"PATCH /rgw/zonegroup/placement/acl":            "rgw_zonegroup.cloud_acl",
+	"PATCH /rgw/zonegroup/placement/target":         "rgw_zonegroup.cloud_target",
 	"PATCH /rgw/role":                               "rgw_role.update",
 	"PATCH /rgw/user":                               "rgw_user.update",
 	"PATCH /rgw/user/key":                           "rgw_key.update",

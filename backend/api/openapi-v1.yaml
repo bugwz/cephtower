@@ -26763,6 +26763,154 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /rgw/zonegroup/placement/target:
+    patch:
+      operationId: patch_rgw_zonegroup_placement_target
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [cluster_id, confirm_target, expected_default_placement, expected_target, name, placement_id, realm_id, storage_class, target, tier_type, zonegroup_id]
+              properties:
+                account_id:
+                  type: string
+                binding_id:
+                  type: integer
+                bucket_id:
+                  type: string
+                client_id:
+                  type: string
+                cluster_id:
+                  type: integer
+                code:
+                  type: string
+                confirm_target:
+                  type: boolean
+                device_id:
+                  type: string
+                endpoint_id:
+                  type: integer
+                expected_default_placement:
+                  type: string
+                expected_target:
+                  type: object
+                  additionalProperties: false
+                  required: [host_style, multipart_min_part_size, multipart_sync_threshold, region, target_path, target_storage_class]
+                  properties:
+                    host_style:
+                      type: string
+                      enum: ["path", "virtual"]
+                    multipart_min_part_size:
+                      type: integer
+                    multipart_sync_threshold:
+                      type: integer
+                    region:
+                      type: string
+                    target_path:
+                      type: string
+                    target_storage_class:
+                      type: string
+                export_id:
+                  type: string
+                fs:
+                  type: string
+                group:
+                  type: string
+                host:
+                  type: string
+                host_nqn:
+                  type: string
+                id:
+                  type: string
+                image_id:
+                  type: string
+                image_spec:
+                  type: string
+                iqn:
+                  type: string
+                listener_id:
+                  type: string
+                name:
+                  type: string
+                namespace:
+                  type: string
+                nqn:
+                  type: string
+                nsid:
+                  type: string
+                osd_id:
+                  type: string
+                placement_id:
+                  type: string
+                pool:
+                  type: string
+                realm_id:
+                  type: string
+                service_id:
+                  type: string
+                share_id:
+                  type: string
+                silence_id:
+                  type: string
+                snap:
+                  type: string
+                storage_class:
+                  type: string
+                subsystem_nqn:
+                  type: string
+                subvolume:
+                  type: string
+                target:
+                  type: object
+                  additionalProperties: false
+                  required: [host_style, multipart_min_part_size, multipart_sync_threshold, region, target_path, target_storage_class]
+                  properties:
+                    host_style:
+                      type: string
+                      enum: ["path", "virtual"]
+                    multipart_min_part_size:
+                      type: integer
+                    multipart_sync_threshold:
+                      type: integer
+                    region:
+                      type: string
+                    target_path:
+                      type: string
+                    target_storage_class:
+                      type: string
+                tier_type:
+                  type: string
+                  enum: ["cloud-s3", "cloud-s3-glacier"]
+                uid:
+                  type: string
+                who:
+                  type: string
+                zonegroup_id:
+                  type: string
+      responses:
+        '202':
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationResponse'
+        default:
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /rgw/zonegroup/replication/prepare:
     post:
       operationId: post_rgw_zonegroup_replication_prepare

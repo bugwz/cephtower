@@ -21,6 +21,7 @@ import { RgwZonePoolReferences } from './RgwZonePoolReferences'
 import { RgwPlacementClasses } from './RgwPlacementClasses'
 import { RgwLocalClassDetails } from './RgwLocalClassDetails'
 import { cloudACLChanged, cloudACLInput, cloudACLConfirmation } from './rgwCloudACL'
+import { cloudTargetChanged, cloudTargetInput, cloudTargetConfirmation, cloudTargetTextFields } from './rgwCloudTarget'
 import { cloudRestoreBlocked, cloudRestoreTargets, cloudRestoreClasses, cloudRestoreLocalClasses, cloudRestoreChanged, cloudRestoreInput, cloudRestoreConfirmation } from './rgwCloudRestore'
 import { RgwRealmTransfer } from './RgwRealmTransfer'
 import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
@@ -1171,6 +1172,23 @@ const definitions: Record<
         {name:'confirm_acl',label:'变更与发布确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份并核对身份映射、权限影响和 Realm 待发布变更'}]}
       ],
       buildBody:(values,clusterId,row)=>({cluster_id:clusterId,...cloudACLInput(values,row)})
+    }, {
+      title:'编辑云分层目标参数',path:'/rgw/zonegroup/placement/target',method:'PATCH',
+      successMessage:'目标参数和 Realm Period 已回读核验（未迁移数据或验证远端）',
+      disabledWhen:cloudRestoreBlocked,changedValues:cloudTargetChanged,confirmation:cloudTargetConfirmation,
+      fields:[
+        {name:'placement_id',label:'已有云分层目标',type:'select',required:true,optionsLoader:async (_clusterId,row)=>cloudRestoreTargets(row)},
+        {name:'storage_class',label:'已有云分层类',type:'select',required:true,optionsDependencies:['placement_id'],optionsLoader:async (_clusterId,row,values)=>cloudRestoreClasses(row,values?.placement_id)},
+        ...cloudTargetTextFields.flatMap(([key,label])=>[
+          {name:`${key}_mode`,label:`${label}操作`,type:'select' as const,required:true,options:[{value:'set',label:'设置非空值'},{value:'clear',label:'显式清空'}]},
+          {name:key,label,required:true,visibleWhen:(values:Record<string,any>)=>values[`${key}_mode`]==='set'}
+        ]),
+        {name:'host_style',label:'寻址方式',type:'select',required:true,options:[{value:'path',label:'path 路径式'},{value:'virtual',label:'virtual 虚拟主机式'}]},
+        {name:'multipart_sync_threshold',label:'分段同步阈值（字节，核对远端限制）',type:'number',required:true,min:0,max:Number.MAX_SAFE_INTEGER},
+        {name:'multipart_min_part_size',label:'最小分段大小（字节，核对远端限制）',type:'number',required:true,min:0,max:Number.MAX_SAFE_INTEGER},
+        {name:'confirm_target',label:'变更与发布确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份并核对远端参数、数据访问影响和 Realm 待发布变更'}]}
+      ],
+      buildBody:(values,clusterId,row)=>({cluster_id:clusterId,...cloudTargetInput(values,row)})
     }, {
       title: '声明 Zonegroup 存储类', path: '/rgw/zonegroup/storage/class', method: 'POST',
       successMessage: '组存储类声明已回读核验（未配置 Zone 池或发布 Period）',

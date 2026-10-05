@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 已有云分层目标参数编辑
+
+补齐参考存储类表单/`RGWZoneGroupPlacementTierS3::update_params` 的六项目标设置：region、host_style、target_path、target_storage_class、multipart_sync_threshold、multipart_min_part_size。组操作菜单选择已有 Realm 中的非 STANDARD 云 S3/Glacier 类，库存回填；三个可空文本字段分别提供设置/显式清空选择，字节数保留 0，不将缺失值当作默认值。
+新增高风险 `PATCH /rgw/zonegroup/placement/target`，提交严格的 expected_target/target 六字段对象，经 `zonegroup placement modify --tier-config ...` 写入。寻址方式仅 path/virtual；文本最多 4096 字节且不含控制字符，采用双层字符串编码；数值为前端精确范围内非负整数。无变化、未知类型、缺失旧配置或旧值冲突拒绝执行，不重传端点、密钥、ACL 或恢复参数。
+写前复核完整组，写后完整比对保留其他设置，随后指定 Realm Period 提交与回读，刷新 Realm/组/Zone，失败不自动重试/回滚。确认提示路径/目标类变化可能影响已有数据访问、0/空值为原生显式值、必须自行核对远端分段限制与费用；不迁移数据、不验证远端连通性，Period 可能包含其他待提交变更。端点与凭据编辑仍不在本入口内。
+新增六字段校验、清空/0、特殊字符命令、旧配置冲突、Glacier 保留、逐阶段失败、API 与前端回归。前端全量回归和构建、后端全量测试及 OpenAPI 一致性检查通过；无真实集群和浏览器视觉验证。
+
 #### 云分层字符串参数的双层编码修复
 
 从 ACL 命令解析审查延伸发现恢复类仍直接拼接到 `--tier-config`：原生 `parse_tier_config_param` 无视引号地计算花括号层级，随后 `JSONFormattable::set` 又解析值为 JSON。因此已声明的带引号、JSON 外形或不配对花括号的类名可能被改变或吞掉后续 Glacier 参数。

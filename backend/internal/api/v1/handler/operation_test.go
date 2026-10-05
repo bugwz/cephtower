@@ -141,6 +141,21 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	if aclErr != nil || aclOp.Action != "rgw_zonegroup.cloud_acl" || aclOp.Risk != "high" || aclOp.MaxAttempts != 1 || aclOp.ResourceKey != "rgw/zonegroup/acl-group" {
 		t.Fatal("unsafe ACL queue")
 	}
+	targetFields := `{"region":"","host_style":"path","target_path":"old","target_storage_class":"","multipart_sync_threshold":0,"multipart_min_part_size":16}`
+	targetBody := fmt.Sprintf(`{"cluster_id":%d,"name":"target-group","zonegroup_id":"g","realm_id":"r","placement_id":"p","storage_class":"COLD","tier_type":"cloud-s3","expected_default_placement":"old","expected_target":%s,"target":%s,"confirm_target":true}`, cluster.ID, targetFields, strings.ReplaceAll(targetFields, `"old"`, `"new"`))
+	targetResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/target", targetBody, "cloud-target")
+	if targetResponse.Code != http.StatusAccepted {
+		t.Fatal(targetResponse.Code)
+	}
+	targetOp, targetErr := db.FindOperation(context.Background(), operationIDFromResponse(t, targetResponse))
+	if targetErr != nil || targetOp.Action != "rgw_zonegroup.cloud_target" || targetOp.Risk != "high" || targetOp.MaxAttempts != 1 || targetOp.ResourceKey != "rgw/zonegroup/target-group" {
+		t.Fatal("unsafe target queue")
+	}
+	for _, body := range []string{strings.ReplaceAll(targetBody, `"host_style":"path"`, `"host_style":"other"`), strings.ReplaceAll(targetBody, `"region":"",`, ""), strings.ReplaceAll(targetBody, `"region":""`, `"region":"","secret":"private"`)} {
+		if response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/target", body, "bad-target"); response.Code != http.StatusBadRequest {
+			t.Fatal("invalid target contract accepted")
+		}
+	}
 	for _, body := range []string{strings.ReplaceAll(aclBody, `"expected_acls":[],`, ""), strings.ReplaceAll(aclBody, `"type":"id"`, `"type":"unknown"`), strings.ReplaceAll(aclBody, `"dest_id":""`, `"dest_id":null`), strings.ReplaceAll(aclBody, `"type":"id"`, `"type":"id","secret":"private"`)} {
 		if response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/acl", body, "bad-acl"); response.Code != http.StatusBadRequest {
 			t.Fatal("invalid ACL contract accepted")
