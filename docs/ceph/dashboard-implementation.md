@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### 用户与 Bucket 限流写后核验
+
+依据 radosgw-admin 的 show_user_ratelimit/show_bucket_ratelimit 与 RGWRateLimitInfo::dump，限流 get 返回 user_ratelimit 或 bucket_ratelimit 包装以及 enabled、四个整数限制值，不包含对象身份。现接入 set → enable/disable → get 的末次回读验证，要求指定作用域及五个字段全部匹配；身份范围由回读命令的完整 UID 或租户/桶名参数限定，不声称响应自身包含身份凭证。缺失、格式错误、错作用域、旧值或未生效状态返回不可自动重试的 post_check_failed。测试覆盖用户与带租户 Bucket、启用/关闭、零值、最大安全整数、异常字段和实际三步命令选择器。后端全量测试及 OpenAPI 检查通过；无前端/API 结构改动，未连接真实集群。
+
 #### 用户与账户配额写后核验
 
 补齐用户总配额、用户默认 Bucket 配额、账户总配额和账户默认 Bucket 配额的写后语义验证。依据 driver/rados/rgw_user.cc 的 full_user_id 与 rgw_common.cc 的 RGWAccountInfo::dump/id，要求原生 user info/account get 回读身份一致，且指定作用域的 enabled、max_size、max_objects 均明确返回并与请求一致；不接受其他作用域的匹配值。容量按原生命令向上取整至 KiB 后使用 int64 比较，保留 -1、0 和大整数区别。未确认时返回不可自动重试的 post_check_failed，提示先检查实际配额，避免把命令退出成功当作配置成功。测试覆盖四个作用域、启用/关闭执行链、身份与范围错配、状态或值未更新、缺失/非法字段及精度边界；后端全量测试与 OpenAPI 检查通过。无前端/API 结构改动，未连接真实集群。

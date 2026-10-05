@@ -1,13 +1,29 @@
 package mutation
 
 import (
+	"cephtower/backend/internal/integration/ceph/executor"
 	"context"
 	"reflect"
 	"testing"
 )
 
+type rateLimitExecutor struct {
+	specs    []executor.CommandSpec
+	response []byte
+}
+
+func (e *rateLimitExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
+	e.specs = append(e.specs, spec)
+	if spec.Mutating {
+		return executor.CommandResult{}, nil
+	}
+	return executor.CommandResult{Stdout: e.response}, nil
+}
+
 func TestRateLimitExecutesFinalReadback(t *testing.T) {
-	service, runner, id := newCephUserService(t)
+	service, _, id := newCephUserService(t)
+	runner := &rateLimitExecutor{response: []byte(`{"user_ratelimit":{"enabled":true,"max_read_ops":0,"max_write_ops":0,"max_read_bytes":0,"max_write_bytes":0}}`)}
+	service.executor = runner
 	_, err := service.Execute(context.Background(), Request{ClusterID: id, Action: "rgw_user.ratelimit", Parameters: map[string]any{"uid": "user", "enabled": true, "max_read_ops": float64(0), "max_write_ops": float64(0), "max_read_bytes": float64(0), "max_write_bytes": float64(0)}})
 	if err != nil {
 		t.Fatal(err)
