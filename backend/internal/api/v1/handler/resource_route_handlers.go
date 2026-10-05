@@ -857,6 +857,10 @@ func (h *Handler) SetRGWCloudTarget(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_zonegroup", "rgw_zonegroup.cloud_target", "high")(w, r)
 }
 
+func (h *Handler) SetRGWCloudConnection(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("rgw_zonegroup", "rgw_zonegroup.cloud_connection", "high")(w, r)
+}
+
 func (h *Handler) DeleteRGWZonegroupStorageClass(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("rgw_zonegroup", "rgw_zonegroup.storage_class_delete", "high")(w, r)
 }

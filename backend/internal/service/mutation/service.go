@@ -65,6 +65,9 @@ type command struct {
 }
 
 func Supports(action string) bool {
+	if action == "rgw_zonegroup.cloud_connection" {
+		return true
+	}
 	if action == "rgw_zonegroup.cloud_target" || action == "rgw_zonegroup.cloud_restore" || action == "rgw_zonegroup.cloud_acl" {
 		return true
 	}
@@ -153,7 +156,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if request.Action == "rgw_zone.delete" {
 		return s.executeZoneDelete(ctx, access, request, spec)
 	}
-	if request.Action == "rgw_zonegroup.cloud_target" || request.Action == "rgw_zonegroup.cloud_acl" || request.Action == "rgw_zonegroup.cloud_restore" || request.Action == "rgw_zonegroup.storage_class_create" || request.Action == "rgw_zonegroup.placement_create" || request.Action == "rgw_zonegroup.placement_default" || request.Action == "rgw_zonegroup.placement_tags" || request.Action == "rgw_zonegroup.storage_class_delete" || request.Action == "rgw_zonegroup.storage_class_delete_local" {
+	if request.Action == "rgw_zonegroup.cloud_connection" || request.Action == "rgw_zonegroup.cloud_target" || request.Action == "rgw_zonegroup.cloud_acl" || request.Action == "rgw_zonegroup.cloud_restore" || request.Action == "rgw_zonegroup.storage_class_create" || request.Action == "rgw_zonegroup.placement_create" || request.Action == "rgw_zonegroup.placement_default" || request.Action == "rgw_zonegroup.placement_tags" || request.Action == "rgw_zonegroup.storage_class_delete" || request.Action == "rgw_zonegroup.storage_class_delete_local" {
 		return s.executeZonegroupStorageClass(ctx, access, request, spec)
 	}
 	if request.Action == "rgw_zone.placement" || request.Action == "rgw_zone.storage_class_create" || request.Action == "rgw_zone.placement_create" {
@@ -689,6 +692,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 }
 
 func build(request Request, p map[string]any) (command, error) {
+	if request.Action == "rgw_zonegroup.cloud_connection" {
+		return buildCloudConnection(p)
+	}
 	if request.Action == "rgw_zonegroup.cloud_target" {
 		return buildCloudTarget(p)
 	}

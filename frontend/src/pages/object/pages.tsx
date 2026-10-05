@@ -22,6 +22,7 @@ import { RgwPlacementClasses } from './RgwPlacementClasses'
 import { RgwLocalClassDetails } from './RgwLocalClassDetails'
 import { cloudACLChanged, cloudACLInput, cloudACLConfirmation } from './rgwCloudACL'
 import { cloudTargetChanged, cloudTargetInput, cloudTargetConfirmation, cloudTargetTextFields } from './rgwCloudTarget'
+import { cloudConnectionChanged, cloudConnectionInput, cloudConnectionConfirmation } from './rgwCloudConnection'
 import { cloudRestoreBlocked, cloudRestoreTargets, cloudRestoreClasses, cloudRestoreLocalClasses, cloudRestoreChanged, cloudRestoreInput, cloudRestoreConfirmation } from './rgwCloudRestore'
 import { RgwRealmTransfer } from './RgwRealmTransfer'
 import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
@@ -1189,6 +1190,20 @@ const definitions: Record<
         {name:'confirm_target',label:'变更与发布确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份并核对远端参数、数据访问影响和 Realm 待发布变更'}]}
       ],
       buildBody:(values,clusterId,row)=>({cluster_id:clusterId,...cloudTargetInput(values,row)})
+    }, {
+      title:'替换云分层连接与凭据',path:'/rgw/zonegroup/placement/connection',method:'PATCH',
+      successMessage:'连接配置和 Realm Period 已回读核验（未测试远端连接）',
+      disabledWhen:cloudRestoreBlocked,changedValues:cloudConnectionChanged,confirmation:cloudConnectionConfirmation,
+      fields:[
+        {name:'placement_id',label:'已有云分层目标',type:'select',required:true,optionsLoader:async (_clusterId,row)=>cloudRestoreTargets(row)},
+        {name:'storage_class',label:'已有云分层类',type:'select',required:true,optionsDependencies:['placement_id'],optionsLoader:async (_clusterId,row,values)=>cloudRestoreClasses(row,values?.placement_id)},
+        {name:'endpoint',label:'重新输入完整 HTTP(S) 端点（不回填脱敏库存）',required:true},
+        {name:'access_key',label:'远端已配置的 Access Key（重新输入）',type:'password',required:true},
+        {name:'secret',label:'远端已配置的 Secret（重新输入）',type:'password',required:true},
+        {name:'credentials_saved',label:'凭据确认',type:'select',required:true,options:[{value:'acknowledged',label:'凭据已在远端配置并安全保存，非自动生成或脱敏值'}]},
+        {name:'confirm_connection',label:'变更与发布确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份，接受本机进程参数可见性、数据访问中断与 Period 发布风险'}]}
+      ],
+      buildBody:(values,clusterId,row)=>({cluster_id:clusterId,...cloudConnectionInput(values,row)})
     }, {
       title: '声明 Zonegroup 存储类', path: '/rgw/zonegroup/storage/class', method: 'POST',
       successMessage: '组存储类声明已回读核验（未配置 Zone 池或发布 Period）',

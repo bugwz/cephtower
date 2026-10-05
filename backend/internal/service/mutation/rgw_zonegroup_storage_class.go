@@ -34,8 +34,9 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 	cloudRestore := req.Action == "rgw_zonegroup.cloud_restore"
 	cloudACL := req.Action == "rgw_zonegroup.cloud_acl"
 	cloudTarget := req.Action == "rgw_zonegroup.cloud_target"
+	cloudConnection := req.Action == "rgw_zonegroup.cloud_connection"
 	fail := func(code string) (cephdomain.ActionResult, error) {
-		if cloudRestore || cloudACL || cloudTarget {
+		if cloudRestore || cloudACL || cloudTarget || cloudConnection {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: code, Message: "cloud tier configuration or Period publication could not be verified; inspect local and published state before retrying; no automatic rollback", Retryable: false}
 		}
 		if linkedDelete {
@@ -65,7 +66,9 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 	}
 	createTarget := req.Action == "rgw_zonegroup.placement_create"
 	var expected map[string]any
-	if cloudTarget {
+	if cloudConnection {
+		expected, ok = cloudConnectionExpected(before, p)
+	} else if cloudTarget {
 		expected, ok = cloudTargetExpected(before, p)
 	} else if cloudACL {
 		expected, ok = cloudACLExpected(before, p)
@@ -99,7 +102,7 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 	}
 	realm := syncGroupString(p, "realm_id")
 	current := ""
-	if (deleteClass || cloudRestore || cloudACL || cloudTarget) && realm != "" {
+	if (deleteClass || cloudRestore || cloudACL || cloudTarget || cloudConnection) && realm != "" {
 		r, valid := run("realm_before", []string{"realm", "get", "--realm-id", realm, "--format", "json"}, false)
 		current = syncGroupString(r, "current_period")
 		if !valid || r["id"] != realm || !syncFlowToken(current) {
@@ -144,7 +147,7 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 	if !ok || !reflect.DeepEqual(after, expected) {
 		return fail("post_check_failed")
 	}
-	if deleteClass || cloudRestore || cloudACL || cloudTarget {
+	if deleteClass || cloudRestore || cloudACL || cloudTarget || cloudConnection {
 		if linkedDelete {
 			checked, ok = run("zone_final", zoneArgs, false)
 			if !ok || !reflect.DeepEqual(checked, zoneExpected) {
@@ -157,6 +160,9 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 			if _, err := s.executePeriodCommit(ctx, access, commitReq, commitSpec); err != nil {
 				return fail("post_check_failed")
 			}
+		}
+		if cloudConnection {
+			return cephdomain.ActionResult{Details: map[string]any{"zonegroup_id": p["zonegroup_id"], "placement_id": p["placement_id"], "storage_class": p["storage_class"], "connection_configuration_verified": true, "period_published": true, "remote_connection_tested": false}}, nil
 		}
 		if cloudTarget {
 			return cephdomain.ActionResult{Details: map[string]any{"zonegroup_id": p["zonegroup_id"], "placement_id": p["placement_id"], "storage_class": p["storage_class"], "target_configuration_verified": true, "period_published": true, "data_migrated": false}}, nil

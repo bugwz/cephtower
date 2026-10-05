@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 已有云分层连接与凭据替换
+
+对照参考 `rgw-storage-class-form.component.ts::buildPlacementTargets` 的 endpoint/access_key/secret 三字段、`rgw_client.py::modify_placement_targets` 和 `RGWZoneGroupPlacementTierS3::update_params`，接通组操作菜单及高风险 `PATCH /rgw/zonegroup/placement/connection`。仅已有 Realm 内的非 STANDARD 云 S3/Glacier 类可选，不隐式创建 Realm。三项均重新输入，不回填脱敏库存；凭据使用密码控件，要求已在远端配置并安全保存，确认弹窗不包含密钥。
+端点仅接受显式 HTTP(S) 主机/有效端口，不含用户信息、查询、片段、空白或反斜杠；HTTP 明确提示无 TLS。凭据拒绝空白、脱敏占位符、控制字符和超长值，保留原始合法字面值。原生 `zonegroup placement modify --tier-config` 使用双层字符串编码，整个配置参数标记敏感；操作参数整体加密入库，OpenAPI 凭据字段 writeOnly。必须注意：原生参数仍可能被有权限的本机用户/进程监控读取，日志标记无法消除该限制。
+执行时核验身份、云类和原生字段形状，读前/写前完整组快照比对，写后仅允许三项及原生空默认规则初始化变化；随后指定 Realm Period 提交回读并刷新 Realm/组/Zone。未改变配置拒绝执行；高风险单次尝试、不自动回滚，失败可能已部分生效。确认提示已有数据访问中断与其他待发布变更风险；不迁移对象，也不证明远端连通性或授权。JSON 形状在 API 校验，具体值及确认在排队执行前校验。
+新增 S3/Glacier、字符串编码、敏感参数、逐阶段错误/退出码、并发变化、无变化、默认规则初始化、加密入库、严格 API 契约、刷新失败和前端清空/校验/无密钥确认测试。前后端全量测试、TypeScript/生产构建及 OpenAPI 一致性检查通过；未进行真实集群或浏览器视觉验证。新建云分层仍需后续实现，整体迁移未完成。
+
 #### 云分层敏感命令参数标记传递
 
 为后续端点与凭据编辑核对安全边界时，发现组 placement 共享执行器没有传递 command.sensitive。现仅向主 placement 写命令传递 SensitiveArgs，不将该命令的参数索引套用到读取、关联 Zone 写入或 Period 提交上。新增成功与主命令失败路径回归，验证标记与原始执行参数不变，其他阶段不携带这些索引。

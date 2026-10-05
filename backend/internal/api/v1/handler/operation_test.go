@@ -142,6 +142,31 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal("unsafe ACL queue")
 	}
 	targetFields := `{"region":"","host_style":"path","target_path":"old","target_storage_class":"","multipart_sync_threshold":0,"multipart_min_part_size":16}`
+	connectionBody := fmt.Sprintf(`{"cluster_id":%d,"name":"connection-group","zonegroup_id":"g","realm_id":"r","placement_id":"p","storage_class":"COLD","tier_type":"cloud-s3","expected_default_placement":"old","endpoint":"https://cloud.example","access_key":"new-cloud-access","secret":"new-cloud-secret","credentials_saved":true,"confirm_connection":true}`, cluster.ID)
+	connectionResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/connection", connectionBody, "cloud-connection")
+	if connectionResponse.Code != http.StatusAccepted {
+		t.Fatal(connectionResponse.Code)
+	}
+	connectionOp, connectionErr := db.FindOperation(context.Background(), operationIDFromResponse(t, connectionResponse))
+	if connectionErr != nil || connectionOp.Action != "rgw_zonegroup.cloud_connection" || connectionOp.Risk != "high" || connectionOp.MaxAttempts != 1 || connectionOp.ResourceKey != "rgw/zonegroup/connection-group" {
+		t.Fatal("unsafe connection queue")
+	}
+	for _, secret := range []string{"new-cloud-access", "new-cloud-secret"} {
+		if strings.Contains(connectionResponse.Body.String(), secret) || strings.Contains(connectionOp.ParametersCiphertext, secret) {
+			t.Fatal("plaintext cloud credential exposed")
+		}
+	}
+	connectionPlain, connectionErr := security.Decrypt(connectionOp.ParametersCiphertext, contractKey)
+	if connectionErr != nil || !strings.Contains(string(connectionPlain), "new-cloud-secret") {
+		t.Fatal("encrypted cloud credential lost")
+	}
+	// The API validates the JSON contract; semantic validation occurs in the
+	// queued mutation executor before any native command is run.
+	for _, body := range []string{strings.ReplaceAll(connectionBody, `"secret":"new-cloud-secret",`, ""), strings.ReplaceAll(connectionBody, `"credentials_saved":true`, `"credentials_saved":"yes"`), strings.ReplaceAll(connectionBody, `"confirm_connection":true`, `"confirm_connection":true,"unknown":"x"`)} {
+		if response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/connection", body, "bad-connection"); response.Code != http.StatusBadRequest {
+			t.Fatal("invalid connection accepted", response.Code)
+		}
+	}
 	targetBody := fmt.Sprintf(`{"cluster_id":%d,"name":"target-group","zonegroup_id":"g","realm_id":"r","placement_id":"p","storage_class":"COLD","tier_type":"cloud-s3","expected_default_placement":"old","expected_target":%s,"target":%s,"confirm_target":true}`, cluster.ID, targetFields, strings.ReplaceAll(targetFields, `"old"`, `"new"`))
 	targetResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/target", targetBody, "cloud-target")
 	if targetResponse.Code != http.StatusAccepted {

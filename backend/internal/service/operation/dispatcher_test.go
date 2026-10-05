@@ -74,6 +74,12 @@ func TestActionDispatcherReconcilesNativeMutation(t *testing.T) {
 }
 
 func TestActionDispatcherFailsWhenPostReconcileFails(t *testing.T) {
+	connectionReconciler := &reconcileExecutorFake{err: errors.New("offline")}
+	_, connectionErr := NewActionDispatcher(&mutationExecutorFake{}, nil, connectionReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zonegroup.cloud_connection", ResourceKind: "rgw_zonegroup"})
+	var connectionFailure *cephdomain.ActionError
+	if !errors.As(connectionErr, &connectionFailure) || connectionFailure.Retryable || !reflect.DeepEqual(connectionReconciler.kinds, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone"}) {
+		t.Fatal("unsafe connection refresh")
+	}
 	targetReconciler := &reconcileExecutorFake{err: errors.New("offline")}
 	_, targetErr := NewActionDispatcher(&mutationExecutorFake{}, nil, targetReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zonegroup.cloud_target", ResourceKind: "rgw_zonegroup"})
 	var targetFailure *cephdomain.ActionError
