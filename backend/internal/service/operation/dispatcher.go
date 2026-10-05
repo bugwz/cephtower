@@ -74,7 +74,10 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 	}
 	var refreshed bool
 	_, migration := request.Parameters["target_account_id"]
-	if request.Action == "rgw_realm.import" {
+	if request.Action == "rgw_realm.setup" {
+		_, err = d.reconciler.RefreshKinds(ctx, request.ClusterID, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone", "rgw_user", "pool", "service"})
+		refreshed = err == nil
+	} else if request.Action == "rgw_realm.import" {
 		_, err = d.reconciler.RefreshKinds(ctx, request.ClusterID, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone", "service"})
 		refreshed = err == nil
 	} else if request.Action == "rgw_user.update" && migration {
@@ -92,6 +95,9 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		refreshed, err = d.reconciler.RefreshKindIfSupported(ctx, request.ClusterID, request.ResourceKind)
 	}
 	if err != nil {
+		if request.Action == "rgw_realm.setup" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "primary setup completed but inventory refresh failed; refresh inventory without repeating setup", Retryable: false}
+		}
 		if request.Action == "rgw_realm.import" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "import was verified but inventory refresh failed; refresh inventory without repeating import", Retryable: false}
 		}

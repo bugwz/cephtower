@@ -1,5 +1,6 @@
 import type { ApiRecord } from '../../api/client'
 import { rgwRealmImportAction } from './rgwRealmImport'
+import { rgwRealmSetupAction } from './rgwRealmSetup'
 import { RgwRealmToken } from './RgwRealmToken'
 import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
 import { zonegroupPipeZonesSelectionChanged } from './rgwZonegroupSyncGroup'
@@ -996,7 +997,7 @@ const definitions: Record<
     ]
   },
   multisite: {
-    toolbarActions: [rgwRealmImportAction],
+    toolbarActions: [rgwRealmImportAction, rgwRealmSetupAction],
     title: 'RGW Multisite',
     detailContent: (row, clusterId) => <RgwRealmToken key={`${clusterId}:${row.id}:${row.name}`} row={row} clusterId={clusterId} />,
     path: '/rgw/realms',

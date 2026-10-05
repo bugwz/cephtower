@@ -101,6 +101,15 @@ func TestRealmImportRefreshDoesNotRetry(t *testing.T) {
 	}
 }
 
+func TestRealmSetupRefreshDoesNotRetry(t *testing.T) {
+	r := &reconcileExecutorFake{err: errors.New("offline")}
+	_, err := NewActionDispatcher(&mutationExecutorFake{}, nil, r).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_realm.setup", ResourceKind: "rgw_realm"})
+	var failure *cephdomain.ActionError
+	if !errors.As(err, &failure) || failure.Retryable || failure.Code != "post_reconcile_failed" || !reflect.DeepEqual(r.kinds, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone", "rgw_user", "pool", "service"}) {
+		t.Fatal("unsafe setup refresh")
+	}
+}
+
 func TestFilesystemRenameRefreshesAffectedStorage(t *testing.T) {
 	for _, fail := range []bool{false, true} {
 		mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{"native_output": "renamed"}}}

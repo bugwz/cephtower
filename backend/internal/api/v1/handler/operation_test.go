@@ -61,6 +61,19 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal("encrypted import token lost")
 	}
 	archiveResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/realm/import", strings.TrimSuffix(importBody, "}")+`,"tier_type":"archive"}`, "archive-import")
+	setupBody := fmt.Sprintf(`{"cluster_id":%d,"name":"realm","zonegroup":"group","zone":"primary","username":"sys","zonegroup_endpoints":["https://rgw.example"],"zone_endpoints":["https://rgw.example"],"expected_services":["rgw.gateway"],"confirm_setup":true}`, cluster.ID)
+	setupResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/realm/setup", setupBody, "realm-setup")
+	if setupResponse.Code != http.StatusAccepted {
+		t.Fatal("setup rejected", setupResponse.Code)
+	}
+	setupOp, setupErr := db.FindOperation(context.Background(), operationIDFromResponse(t, setupResponse))
+	if setupErr != nil || setupOp.Action != "rgw_realm.setup" || setupOp.Risk != "high" || setupOp.MaxAttempts != 1 {
+		t.Fatal("unsafe setup queue")
+	}
+	badSetup := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/realm/setup", strings.TrimSuffix(setupBody, "}")+`,"skip_realm_components":true}`, "bad-setup")
+	if badSetup.Code != http.StatusBadRequest {
+		t.Fatal("unsupported resume flag accepted")
+	}
 	if archiveResponse.Code != http.StatusAccepted {
 		t.Fatal("archive import rejected", archiveResponse.Code)
 	}

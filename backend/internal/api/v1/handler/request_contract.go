@@ -70,6 +70,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 		}
 	}
 	empty := map[string]JSONField{}
+	add([]string{"rgw_realm.setup"}, true, map[string]JSONField{"name": stringField(true), "zonegroup": stringField(true), "zone": stringField(true), "username": stringField(true), "tier_type": stringField(false, "archive"), "zonegroup_endpoints": stringsField(true), "zone_endpoints": stringsField(true), "expected_services": stringsField(true), "confirm_setup": boolField(true)})
 	add([]string{"rgw_realm.import"}, true, map[string]JSONField{"name": stringField(true), "tier_type": stringField(false, "archive"), "realm_token": {Type: "string", Required: true, WriteOnly: true}, "port": integerField(true), "confirm_import": boolField(true), "placement": objectField(true, map[string]JSONField{"hosts": stringsField(false), "label": stringField(false), "count": integerField(false)})})
 	add([]string{"smb_usersgroups.create", "smb_usersgroups.update"}, true, map[string]JSONField{"name": stringField(true), "users": objectArrayField(true, map[string]JSONField{"name": stringField(true), "password": {Type: "string", Required: true, WriteOnly: true}}), "groups": stringsField(true), "linked_to_cluster": stringField(false)})
 	add([]string{"smb_join_auth.create", "smb_join_auth.update"}, true, map[string]JSONField{"name": stringField(true), "username": stringField(true), "password": {Type: "string", Required: true, WriteOnly: true}, "linked_to_cluster": stringField(false)})
