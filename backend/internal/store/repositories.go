@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -536,17 +537,17 @@ func applyMonitorCounterRate(row *CephEntityRecord, previous *CephEntityRecord) 
 		return
 	}
 	currentRaw, ok := numericJSONValue(current["raw_value"])
-	if !ok {
-		return
-	}
-	rate := float64(0)
-	if previous != nil {
+	var rate any
+	if ok && currentRaw >= 0 && previous != nil && !row.ObservedAt.IsZero() && !previous.ObservedAt.IsZero() {
 		var prior map[string]any
-		if json.Unmarshal([]byte(previous.DiscoveredData), &prior) == nil {
+		if json.Unmarshal([]byte(previous.DiscoveredData), &prior) == nil && prior["metric_type"] == "counter" && monitorCounterUnitsMatch(current["unit"], prior["unit"]) {
 			priorRaw, priorOK := numericJSONValue(prior["raw_value"])
 			seconds := row.ObservedAt.Sub(previous.ObservedAt).Seconds()
-			if priorOK && seconds > 0 && currentRaw >= priorRaw {
-				rate = (currentRaw - priorRaw) / seconds
+			if priorOK && priorRaw >= 0 && seconds > 0 && currentRaw >= priorRaw {
+				computed := (currentRaw - priorRaw) / seconds
+				if !math.IsInf(computed, 0) && !math.IsNaN(computed) {
+					rate = computed
+				}
 			}
 		}
 	}
@@ -554,6 +555,15 @@ func applyMonitorCounterRate(row *CephEntityRecord, previous *CephEntityRecord) 
 	if encoded, err := json.Marshal(current); err == nil {
 		row.DiscoveredData = string(encoded)
 	}
+}
+
+func monitorCounterUnitsMatch(current, prior any) bool {
+	if current == nil && prior == nil {
+		return true
+	}
+	left, leftOK := current.(string)
+	right, rightOK := prior.(string)
+	return leftOK && rightOK && left == right
 }
 
 func numericJSONValue(value any) (float64, bool) {
