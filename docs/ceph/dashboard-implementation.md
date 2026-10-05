@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+#### RGW 原生服务状态读取基础
+
+追踪 `DaemonServer.cc` 的 service status 输出，新增内部 `RGWDaemonStatus`，执行 `ceph service status --format json`，以精确 service_map_id 选取 rgw 下的记录，返回 status_stamp、last_beacon、状态字段与读取时间。参考 `rgw_sync_trace.cc` 上报 current_sync，故支持原生字符串状态，不只依赖 Dashboard 的 status.json；存在 json 字段时使用 RawMessage 严格解析和结构化脱敏，保留大整数。敏感字段名称和普通文本沿用安全脱敏，不透传命令错误，清理命令输出缓冲。缺失记录与非法结构均返回错误，不转为健康/空成功；时间仅表示原生报告，不计算存活结论。
+新增身份选择、普通/嵌套状态、敏感字段、大整数、缺失/畸形数据、固定命令、非法输入零命令、非零退出和缓冲清理测试；后端全量测试及 OpenAPI 检查通过。API 与前端状态详情尚未接入，无真实集群验证。
+
 #### RGW endpoint 地址族解析修复
 
 再次核对原生 `parse_endpoint`：方括号分支调用 make_address_v6，非方括号分支调用 make_address_v4。修复端口投影原先通过通用 IP 解析和独立去括号而误接受 `[192.0.2.1]`、`[192.0.2.1]:80`、单边括号等情况的问题。现按地址族和括号结构解析，保留合法 IPv4-mapped IPv6；异常输入标记配置不完整而不伪造默认端口。新增对应回归测试，后端全量测试及 OpenAPI 检查通过，未修改前端，无真实集群验证。
