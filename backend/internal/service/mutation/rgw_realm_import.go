@@ -163,7 +163,10 @@ func (s *Service) executeRealmImport(ctx context.Context, access executor.Cluste
 			return fail(true)
 		}
 	}
-	return cephdomain.ActionResult{Details: map[string]any{"realm_id": token.RealmID, "zone_id": zone["id"], "service_name": serviceName, "deployment_submitted": true, "daemons_verified": false}}, nil
+	if !s.verifyRealmDeployment(ctx, access, request, services[0]) {
+		return fail(true)
+	}
+	return cephdomain.ActionResult{Details: map[string]any{"realm_id": token.RealmID, "zone_id": zone["id"], "service_name": serviceName, "deployment_submitted": true, "daemons_verified": true, "replication_verified": false}}, nil
 }
 
 func realmImportList(value any, name string, present bool) bool {

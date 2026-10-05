@@ -4,7 +4,7 @@ export const rgwRealmImportAction: ResourceFormAction = {
   title: '导入 Realm Token 并部署从 Zone',
   buttonLabel: '导入 Realm Token',
   path: '/rgw/realm/import', method: 'POST',
-  successMessage: '从 Zone 和 Period 已核验，RGW 部署已提交；不代表守护进程就绪或同步完成',
+  successMessage: '从 Zone、Period 和服务规格已核验，预期 RGW 进程已运行；不代表 HTTP/TLS 可用或同步完成',
   confirmation: v => `此操作会联系 Token 中的远端地址，使用系统密钥拉取 Realm、创建${v.zone_mode === 'archive' ? '归档从 Zone（只从当前主 Zone 同步）' : '普通从 Zone'}、发布整个 Period，并提交 RGW 部署。请核对可信来源；HTTP 端点不保证传输安全。操作非事务，失败可能部分生效，不自动重试；普通导入的 Ceph 管理模块内部可能重试 Period，归档分步导入不主动重试。原生工具会使用密钥参数，操作系统特权进程或 Ceph 调试日志可能读取凭据，应用日志脱敏不能消除此风险。请先备份并协调两端管理员，不能用于替换已有 Zone。确认执行？`,
   initialValues: { placement_mode: 'default', port: 80, zone_mode: 'normal' },
   changedValues: changed => 'confirm_import' in changed ? {} : ({ confirm_import: undefined }),

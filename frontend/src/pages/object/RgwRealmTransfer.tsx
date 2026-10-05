@@ -71,7 +71,7 @@ export function RgwRealmTransfer({ row, clusterId }: { row: ApiRecord; clusterId
         <Checkbox checked={acknowledged} disabled={busy || !valid} onChange={event => setAcknowledged(event.target.checked)}>已核对源 Realm、目标集群和部署参数，确认传递系统密钥并发布 Period、部署从 Zone</Checkbox>
         <div><Button htmlType="submit" danger disabled={!valid || busy || !acknowledged} loading={busy}>读取并导入目标集群</Button></div>
       </Form>
-      {outcome === 'success' && <Alert type="success" message="目标 Zone、Period 和服务规格已核验，部署已提交；不代表进程就绪或复制完成" />}
+      {outcome === 'success' && <Alert type="success" message="目标 Zone、Period 和服务规格已核验，预期 RGW 进程已运行；不代表 HTTP/TLS 可用或复制完成" />}
       {outcome === 'error' && <Alert type="error" message="跨集群导入未确认成功。可能已部分生效，请先检查目标操作记录和两端状态；不要直接重复提交。" />}
     </Space>
   </Card>

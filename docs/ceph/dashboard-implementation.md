@@ -29,6 +29,9 @@
 
 ### 增量实现与验证记录
 
+- **从 Zone 导入后的目标进程核验**：普通/归档导入及已有 Realm 跨集群入口共用新增等待链路。依据 `ServiceDescription.to_json` 的 `status.size/running/last_refresh` 与守护进程状态，部署后使用带 `--refresh` 的 `ceph orch ls --service-name ... --format json`（非 export）和 `ceph orch ps --service-name ... --format json`，要求稳定服务配置与已核验规格一致、运行数等于正的预期实例数、守护进程数量相符且全部运行并具备启动/刷新时间；显式 placement.count 也必须满足。空服务、部署中、实例不足或缺失状态不会提前成功；整段两分钟、单次命令 30 秒，取消/失败/超时停止并沿用不可自动重试的部分生效错误。
+  - `cephadm/serve.py::_update_rgw_endpoints` 会清除 `update_endpoints`，因此不把该运行标志与引导 Token 当作稳定配置比较；仍核对 Realm/Zonegroup/Zone、端口及其余规格。成功结果新增 `daemons_verified=true`、`replication_verified=false`，两种前端入口同步说明进程运行不代表 HTTP/TLS 或复制完成。本项替代早期记录中“仅提交目标部署”的状态，未实现系统用户复制等待、模块自动启用或业务探测。新增原生命令/失败截断、规格变化、缺失/部分运行、数量、取消/超时回归；无真实集群或浏览器视觉验证。
+
 - **已有 Realm 跨集群导入入口**：核对向导 `ConfigType.ExistingRealm` → `setup_multisite_replication`（跳过主站创建/重启）→ `export_and_import_realm`，在 Realm 详情加入目标集群、普通/归档从 Zone、端口、主机/标签及实例数表单。复用 `/rgw/realm/token` → `ceph rgw realm tokens` 和 `/rgw/realm/import` → 原生导入/归档分步命令链，不依赖远端 Dashboard HTTP 代理，也不新建明文凭据存储。目标写入仍经过既有后端权限、高风险加密队列、资源身份及 Period/服务规格回读；本次未修改后端契约。
   - 明确风险确认后才读取 Token，先校验全部部署参数；禁止同一集群 ID、同一 FSID、禁用或缺失身份。读取 Token 前后重新载入集群列表并核对两端 FSID、generation 和启用状态；表单修改清除确认，关闭/切换范围阻止未提交写入，重复点击受同步锁约束。Token 不进入表单、浏览器存储或展示，执行结束清除持有引用（不声称 JavaScript 字符串可安全擦除）。已提交操作不会因关页撤销，失败可能部分生效且不自动重试，应在目标操作记录检查。
   - 两端原生命令连接及 rgw 模块需预先配置。本入口不自动启用目标模块、不配置 Dashboard 系统用户、不等待目标进程/用户复制，不把部署规格核验当作复制成功，也不提供跨集群事务或持久化向导恢复。新 Realm 的一键跨集群串联、目标就绪核验与迁移仍待继续。新增顺序、参数复用、配置变化、范围失效、失败清理及界面绑定回归；无真实集群或浏览器视觉验证。

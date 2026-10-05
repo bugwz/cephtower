@@ -34,6 +34,8 @@ func realmImportResponses() map[string]string {
 		"zone_post_check":    `{"id":"zone-id","name":"secondary","realm_id":"id"}`,
 		"period_post_check":  `{"id":"period","realm_id":"id","master_zonegroup":"zg","period_map":{"zonegroups":[{"id":"zg","name":"group","master_zone":"master","zones":[{"id":"zone-id","name":"secondary"}]}]}}`,
 		"service_post_check": `[{"service_name":"rgw.realm.secondary","service_id":"realm.secondary","service_type":"rgw","spec":{"rgw_realm":"realm","rgw_zone":"secondary","rgw_zonegroup":"group","rgw_frontend_port":80}}]`,
+		"deployment_service": `[{"service_name":"rgw.realm.secondary","service_id":"realm.secondary","service_type":"rgw","spec":{"rgw_realm":"realm","rgw_zone":"secondary","rgw_zonegroup":"group","rgw_frontend_port":80},"status":{"size":1,"running":1,"last_refresh":"2026-01-01T00:03:00Z"}}]`,
+		"deployment_daemons": `[{"daemon_id":"realm.secondary.host.id","daemon_type":"rgw","service_name":"rgw.realm.secondary","hostname":"host","status":1,"started":"2026-01-01T00:02:00Z","last_refresh":"2026-01-01T00:03:00Z"}]`,
 	}
 }
 func realmImportParameters(t *testing.T) map[string]any {
@@ -71,11 +73,23 @@ func TestRealmImportExecution(t *testing.T) {
 		t.Fatal(err)
 	}
 	encoded, _ := json.Marshal(result)
+	if result.Details.(map[string]any)["daemons_verified"] != true || result.Details.(map[string]any)["replication_verified"] != false {
+		t.Fatal("incorrect readiness result")
+	}
 	if strings.Contains(string(encoded), "fixture-secret") || strings.Contains(string(encoded), "realm_token") {
 		t.Fatal("result leaks credentials")
 	}
 	writes := 0
 	for _, spec := range e.specs {
+		if strings.HasSuffix(spec.ID, ".deployment_service") || strings.HasSuffix(spec.ID, ".deployment_daemons") {
+			command := "ls"
+			if strings.HasSuffix(spec.ID, ".deployment_daemons") {
+				command = "ps"
+			}
+			if spec.Mutating || !reflect.DeepEqual(spec.Args, []string{"orch", command, "--service-name", "rgw.realm.secondary", "--refresh", "--format", "json"}) {
+				t.Fatal("invalid readiness query")
+			}
+		}
 		if spec.Mutating {
 			writes++
 			if len(spec.Stdin) == 0 {
@@ -86,7 +100,7 @@ func TestRealmImportExecution(t *testing.T) {
 			t.Fatal("credential in argv")
 		}
 	}
-	if writes != 1 || len(e.specs) != 8 {
+	if writes != 1 || len(e.specs) != 10 {
 		t.Fatalf("commands=%d writes=%d", len(e.specs), writes)
 	}
 }
@@ -132,7 +146,7 @@ func TestRealmImportExistingRealmAndPlacement(t *testing.T) {
 	}
 }
 func TestRealmImportStopsAndSanitizesFailures(t *testing.T) {
-	for _, stage := range []string{"zones", "realms", "service_absence", "rgw_realm.import", "realm_post_check", "zone_post_check", "period_post_check", "service_post_check"} {
+	for _, stage := range []string{"zones", "realms", "service_absence", "rgw_realm.import", "realm_post_check", "zone_post_check", "period_post_check", "service_post_check", "deployment_service", "deployment_daemons"} {
 		t.Run(stage, func(t *testing.T) {
 			s, _, cluster := newCephUserService(t)
 			e := &realmImportExecutor{responses: realmImportResponses(), fail: stage}
