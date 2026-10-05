@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import './test-rgw-realm-token.mjs'
+import './test-rgw-realm-transfer.mjs'
 import './test-rgw-realm-import.mjs'
 import './test-rgw-realm-setup.mjs'
 import { readFileSync } from 'node:fs'
