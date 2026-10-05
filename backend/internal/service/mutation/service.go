@@ -426,6 +426,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "rgw_user.caps" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "capability command failed; inspect user capabilities before any manual retry", Retryable: false}
 		}
+		if request.Action == "rgw_role.policy" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "role policy write was not confirmed; inspect scoped role policies before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_role.delete" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "role removal was not confirmed; inspect the scoped role before any manual retry", Retryable: false}
 		}
@@ -524,6 +527,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "rgw_role.policy" && (err != nil || !rgwRolePolicyMatches(request.Parameters, checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "role policy write was accepted but scoped policy state could not be verified; inspect role policies before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_role.delete" && (err != nil || !rgwRoleAbsent(request.Parameters, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "role removal was accepted but absence from the scoped complete role list could not be verified; inspect role state before any manual retry", Retryable: false}
 		}

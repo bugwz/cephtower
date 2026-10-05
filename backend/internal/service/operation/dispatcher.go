@@ -101,6 +101,9 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		refreshed, err = d.reconciler.RefreshKindIfSupported(ctx, request.ClusterID, request.ResourceKind)
 	}
 	if err != nil {
+		if request.Action == "rgw_role.policy" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "role policy change was verified but inventory refresh failed; refresh inventory without repeating the policy write", Retryable: false}
+		}
 		if request.Action == "rgw_role.delete" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "role removal was verified but inventory refresh failed; refresh role inventory without repeating deletion", Retryable: false}
 		}
