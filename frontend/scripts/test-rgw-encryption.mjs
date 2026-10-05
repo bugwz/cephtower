@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import './test-rgw-encryption-editor.mjs'
 import {readFileSync} from 'node:fs'
 import ts from 'typescript'
 const code=ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwEncryptionPage.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText
@@ -6,7 +7,7 @@ const ui={},states=[],refs=[],requests=[],jsx=(type,props)=>({type,props})
 let stateIndex=0,refIndex=0,effectDeps,cleanup,pendingEffect
 const react={useRef:v=>refs[refIndex++]??(refs[refIndex-1]={current:v}),useState:v=>{const i=stateIndex++;if(!(i in states))states[i]=v;return [states[i],next=>{states[i]=next}]},useEffect:(fn,deps)=>{if(JSON.stringify(deps)!==JSON.stringify(effectDeps)){effectDeps=deps;pendingEffect=()=>{cleanup?.();cleanup=fn()}}}}
 const client={jsonInit:(method,body,opts)=>({method,body,...opts}),request:(path,init)=>new Promise((resolve,reject)=>requests.push({path,...init,resolve,reject}))}
-new Function('exports','require',code)(ui,name=>name==='react'?react:name==='antd'?Object.fromEntries(['Alert','Button','Card','Descriptions','Input','Select','Space','Table'].map(n=>[n,n])):name.includes('api/client')?client:name.includes('ClusterContext')?{useClusterContext:()=>({selectedClusterId:7})}:{jsx,jsxs:jsx})
+new Function('exports','require',code)(ui,name=>name==='react'?react:name==='antd'?Object.fromEntries(['Alert','Button','Card','Descriptions','Input','Select','Space','Table'].map(n=>[n,n])):name.includes('api/client')?client:name.includes('RgwEncryptionEditor')?{RgwEncryptionEditor:'Editor'}:name.includes('ClusterContext')?{useClusterContext:()=>({selectedClusterId:7})}:{jsx,jsxs:jsx})
 const names=['addr','auth','prefix','secret_engine','namespace','token_file','ssl_cacert','ssl_clientcert','ssl_clientkey','verify_ssl']
 const data={entity:'client.rgw.a',encryption_type:'kms',provider:'vault',backend:'barbican',observed_at:'now',fields:names.map(name=>({name,option:`rgw_crypt_vault_${name}`,value:name==='verify_ssl'?'false':'',redacted:false}))}
 assert.deepEqual(ui.encryptionConfiguration(data,data.entity,'kms/vault'),data)
@@ -27,9 +28,11 @@ assert.equal(requests[0].path,'/rgw/encryption/configuration');assert.equal(requ
 assert.deepEqual(requests[0].body,{cluster_id:7,entity:data.entity,encryption_type:'kms',provider:'vault'})
 requests[0].resolve(data);await tick();tree=render()
 const table=tree.find(n=>n.type==='Table');assert.equal(table.props.dataSource.length,10)
+const editor=tree.find(n=>n.type==='Editor');assert.deepEqual(editor.props.configuration,data);assert.equal(editor.props.clusterId,7);assert.equal(editor.props.isCurrent(),true)
 assert.equal(table.props.columns[2].render(null,data.fields[9]).props.children,'"false"')
 assert.ok(tree.some(n=>n.type==='Alert'&&n.props.type==='warning'))
 tree.find(n=>n.type==='Button').props.onClick();tree.find(n=>n.type==='Select').props.onChange('kms/kmip');render()
+assert.equal(editor.props.isCurrent(),false)
 assert.equal(requests[1].signal.aborted,true);oldButton.props.onClick();assert.equal(requests.length,2)
 requests[1].resolve(data);await tick();assert.equal(render().some(n=>n.type==='Table'),false)
 render().find(n=>n.type==='Button').props.onClick();render(8)

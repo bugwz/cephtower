@@ -2,9 +2,10 @@ import { Alert, Button, Card, Descriptions, Input, Select, Space, Table } from '
 import { useEffect, useRef, useState } from 'react'
 import { jsonInit, request } from '../../api/client'
 import { useClusterContext } from '../../state/ClusterContext'
+import { RgwEncryptionEditor } from './RgwEncryptionEditor'
 
 const labels:Record<string,string>={addr:'服务地址',auth:'认证方式',prefix:'路径前缀',secret_engine:'Secret Engine',namespace:'命名空间',token_file:'Token 文件路径',ssl_cacert:'CA 证书路径',ssl_clientcert:'客户端证书路径',ssl_clientkey:'客户端私钥路径',verify_ssl:'校验 TLS 证书',username:'用户名',password:'密码',client_cert:'客户端证书路径',client_key:'客户端私钥路径',ca_path:'CA 路径',kms_key_template:'KMS Key 模板',s3_key_template:'S3 Key 模板',key_template:'SSE-S3 Key 模板'}
-type Configuration={entity:string;encryption_type:string;provider:string;backend:string;observed_at:string;fields:Array<{name:string;option:string;value:string;redacted:boolean}>}
+export type Configuration={entity:string;encryption_type:string;provider:string;backend:string;observed_at:string;fields:Array<{name:string;option:string;value:string;redacted:boolean}>}
 export function encryptionConfiguration(value:unknown,entity:string,profile:string):Configuration {
   if(!['kms/vault','kms/kmip','s3/vault'].includes(profile))throw new Error('Invalid encryption profile')
   const data=value as Configuration,[encryptionType,provider]=profile.split('/')
@@ -29,6 +30,7 @@ export function RgwEncryptionView({clusterId}:{clusterId?:number}) {
   const [state,setState]=useState<{scope:string;busy:boolean;data?:Configuration;error?:boolean}>({scope,busy:false})
   useEffect(()=>{mounted.current=true;abort.current?.abort();sequence.current++;setState({scope,busy:false});return()=>{mounted.current=false;abort.current?.abort();sequence.current++}},[scope])
   const data=state.scope===scope?state.data:undefined,busy=state.scope===scope&&state.busy
+  const readSequence=sequence.current
   const valid=!!clusterId&&/^client\.rgw\.[A-Za-z0-9][A-Za-z0-9_.-]{0,255}$/.test(entity)
   async function read() {
     if(!valid||current.current!==scope||!mounted.current)return
@@ -53,7 +55,8 @@ export function RgwEncryptionView({clusterId}:{clusterId?:number}) {
       <Descriptions column={1} items={[{key:'entity',label:'配置实体',children:data.entity},{key:'backend',label:'Monitor 后端选择值',children:JSON.stringify(data.backend)},{key:'time',label:'读取时间',children:data.observed_at}]}/>
       <Alert type={data.backend===data.provider?'info':'warning'} message={data.backend===data.provider?'Monitor 后端选择与所查看提供商一致（不代表运行时验证）':'所查看提供商不是 Monitor 当前选择值；以下仅为该提供商配置'}/>
       <Table size="small" rowKey="name" dataSource={data.fields} pagination={false} scroll={{x:800}} columns={[{title:'配置项',render:(_value:unknown,row:Configuration['fields'][number])=>labels[row.name]},{title:'原生选项',dataIndex:'option'},{title:'值',render:(_value:unknown,row:Configuration['fields'][number])=><span style={{whiteSpace:'pre-wrap'}}>{row.redacted?(row.value==='[REDACTED]'?'已隐藏':`${JSON.stringify(row.value)}（敏感部分已隐藏）`):JSON.stringify(row.value)}</span>}]}/>
-      <Alert type="info" message="文件字段是 RGW 主机上的路径，不是文件内容。密码始终隐藏，空字符串按原值展示；此页面尚不提供修改操作。"/>
+      <Alert type="info" message="文件字段是 RGW 主机上的路径，不是文件内容。密码始终隐藏，空字符串按原值展示。"/>
+      <RgwEncryptionEditor key={`${scope}/${readSequence}`} configuration={data} clusterId={clusterId!} labels={labels} isCurrent={()=>mounted.current&&current.current===scope&&sequence.current===readSequence}/>
     </>}
   </Space></Card>
 }
