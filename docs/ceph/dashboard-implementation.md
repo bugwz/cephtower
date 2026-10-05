@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### 已注册 Realm Bucket 使用量汇总服务
+
+新增内部 RGWRealmBucketUsage，复用已注册 Realm 发现及稳定代表 Zone 选择流程，逐 Realm 调用已核验站点的完整桶枚举与统计。桶数、对象数和 size_actual 容量均以任意精度累加、十进制字符串返回，附 rgw.main 类别、分项和代表身份。相同 Realm 多 daemon 不重复计数，不合并不同 Realm 的同名桶；任一站点缺失统计或失败不输出部分总量，整体两分钟时限。新增超 uint64 总和、同名桶/重复注册、代表身份、后续 Realm 三阶段失败、缺失统计及空注册范围测试；后端全量与 OpenAPI 检查通过，用户汇总回归通过。仅覆盖已注册 Realm，非原子快照且不表示物理容量；API/前端尚待接入，无真实集群验证。
+
 #### 精确 Zone Bucket 使用量基础
 
 新增内部 RGWBucketUsageInZone，复用 Zone/Realm 身份核验后，将同一 --realm-id/--zone-id 选择器传入 metadata list bucket 和每个 bucket stats，同时保留租户选择器。继续使用严格原生统计校验和任意精度求和，返回 zone 范围及明确身份；总时限包含身份读取，不回退默认站点。默认使用量入口复用统计实现，新增预取消检查。测试覆盖三个阶段精确参数、租户与大整数、身份不符零枚举、非法/取消零命令及各阶段失败；后端全量测试与 OpenAPI 检查通过。跨 Realm Bucket 汇总与展示尚待接通，无真实集群验证。
