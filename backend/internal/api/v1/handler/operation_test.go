@@ -67,6 +67,15 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal("setup rejected", setupResponse.Code)
 	}
 	setupOp, setupErr := db.FindOperation(context.Background(), operationIDFromResponse(t, setupResponse))
+	migrationBody := strings.TrimSuffix(setupBody, "}") + `,"confirm_migration":true,"expected_zonegroup_id":"g","expected_zone_id":"z"}`
+	migrationResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/realm/migrate", migrationBody, "realm-migrate")
+	if migrationResponse.Code != http.StatusAccepted {
+		t.Fatal("migration rejected", migrationResponse.Code)
+	}
+	migrationOp, migrationErr := db.FindOperation(context.Background(), operationIDFromResponse(t, migrationResponse))
+	if migrationErr != nil || migrationOp.Action != "rgw_realm.migrate" || migrationOp.Risk != "high" || migrationOp.MaxAttempts != 1 {
+		t.Fatal("unsafe migration queue")
+	}
 	if setupErr != nil || setupOp.Action != "rgw_realm.setup" || setupOp.Risk != "high" || setupOp.MaxAttempts != 1 {
 		t.Fatal("unsafe setup queue")
 	}

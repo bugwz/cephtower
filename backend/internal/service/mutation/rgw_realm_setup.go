@@ -74,6 +74,8 @@ func realmSetupStrings(value any) ([]string, bool) {
 
 func (s *Service) executeRealmSetup(ctx context.Context, access executor.ClusterAccess, request Request) (cephdomain.ActionResult, error) {
 	p := request.Parameters
+	migrating := request.Action == "rgw_realm.migrate"
+	var migrationSnapshot realmMigrationSnapshot
 	realmName, groupName, zoneName, uid := rawText(p, "name"), rawText(p, "zonegroup"), rawText(p, "zone"), rawText(p, "username")
 	groupEP, _ := realmSetupStrings(p["zonegroup_endpoints"])
 	zoneEP, _ := realmSetupStrings(p["zone_endpoints"])
@@ -138,6 +140,19 @@ func (s *Service) executeRealmSetup(ctx context.Context, access executor.Cluster
 		if !ok || !realmImportList(doc[target.kind+"s"], target.name, false) {
 			return fail()
 		}
+		if migrating {
+			values, valid := realmSetupStrings(doc[target.kind+"s"])
+			if !valid {
+				return fail()
+			}
+			if target.kind == "realm" {
+				if len(values) != 0 {
+					return fail()
+				}
+			} else if len(values) != 1 || values[0] != "default" || doc["default_info"] != p["expected_"+target.kind+"_id"] {
+				return fail()
+			}
+		}
 	}
 	if !serviceScope("services_before") {
 		return fail()
@@ -151,12 +166,40 @@ func (s *Service) executeRealmSetup(ctx context.Context, access executor.Cluster
 	p = resolved
 	groupEP, _ = realmSetupStrings(p["zonegroup_endpoints"])
 	zoneEP, _ = realmSetupStrings(p["zone_endpoints"])
+	if migrating {
+		oldGroup, groupOK := admin("migration_group", false, "zonegroup", "get", "--zonegroup-id", rawText(p, "expected_zonegroup_id"))
+		oldZone, zoneOK := admin("migration_zone", false, "zone", "get", "--zone-id", rawText(p, "expected_zone_id"))
+		var valid bool
+		migrationSnapshot, valid = newRealmMigrationSnapshot(oldGroup, oldZone, rawText(p, "expected_zonegroup_id"), rawText(p, "expected_zone_id"))
+		if !groupOK || !zoneOK || !valid {
+			return fail()
+		}
+		raw, ok := run("migration_user_absence", executor.BinaryRGWAdmin, []string{"user", "list", "--zone-id", rawText(p, "expected_zone_id"), "--format", "json"}, false)
+		var users []any
+		valid = ok && json.Unmarshal(raw, &users) == nil && realmImportList(users, uid, false)
+		clear(raw)
+		if !valid {
+			return fail()
+		}
+	}
 	realm, ok := admin("realm_create", true, "realm", "create", "--rgw-realm", realmName, "--default")
 	realmID := rawText(realm, "id")
 	if !ok || realm["name"] != realmName || !syncFlowToken(realmID) {
 		return fail()
 	}
-	group, ok := admin("group_create", true, "zonegroup", "create", "--realm-id", realmID, "--rgw-zonegroup", groupName, "--master", "--default", "--endpoints", strings.Join(groupEP, ","))
+	var group, zone map[string]any
+	if migrating {
+		group, zone, ok = migrateRealmTopology(admin, func(stage string, args ...string) bool {
+			raw, success := run(stage, executor.BinaryRGWAdmin, args, true)
+			clear(raw)
+			return success
+		}, migrationSnapshot, p, realmID, rawText(p, "expected_zonegroup_id"), rawText(p, "expected_zone_id"))
+		if !ok {
+			return fail()
+		}
+	} else {
+		group, ok = admin("group_create", true, "zonegroup", "create", "--realm-id", realmID, "--rgw-zonegroup", groupName, "--master", "--default", "--endpoints", strings.Join(groupEP, ","))
+	}
 	groupID := rawText(group, "id")
 	if !ok || group["name"] != groupName || group["realm_id"] != realmID || !syncFlowToken(groupID) {
 		return fail()
@@ -165,7 +208,9 @@ func (s *Service) executeRealmSetup(ctx context.Context, access executor.Cluster
 	if p["tier_type"] == "archive" {
 		args = append(args, "--tier-type", "archive")
 	}
-	zone, ok := admin("zone_create", true, args...)
+	if !migrating {
+		zone, ok = admin("zone_create", true, args...)
+	}
 	zoneID := rawText(zone, "id")
 	if !ok || zone["name"] != zoneName || zone["realm_id"] != realmID || !syncFlowToken(zoneID) {
 		return fail()
@@ -191,6 +236,13 @@ func (s *Service) executeRealmSetup(ctx context.Context, access executor.Cluster
 	if _, ok := admin("zone_credentials", true, "zone", "modify", "--realm-id", realmID, "--zonegroup-id", groupID, "--zone-id", zoneID, "--access-key", accessKey, "--secret", secret); !ok {
 		return fail()
 	}
+	if migrating {
+		g, gok := admin("migration_group_preserved", false, "zonegroup", "get", "--zonegroup-id", groupID)
+		z, zok := admin("migration_zone_preserved", false, "zone", "get", "--zone-id", zoneID)
+		if !gok || !zok || !migrationSnapshot.storagePreserved(g, z) || !migrationMemberMatches(g, zoneID, zoneName) {
+			return fail()
+		}
+	}
 	committed, ok := admin("commit", true, commitArgs...)
 	if !ok || !realmSetupPeriod(committed, p, realmID, groupID, zoneID) {
 		return fail()
@@ -213,6 +265,12 @@ func (s *Service) executeRealmSetup(ctx context.Context, access executor.Cluster
 	key, _ := zone["system_key"].(map[string]any)
 	if !ok || zone["id"] != zoneID || zone["name"] != zoneName || zone["realm_id"] != realmID || key["access_key"] != accessKey || key["secret_key"] != secret {
 		return fail()
+	}
+	if migrating {
+		group, ok := admin("migration_final_group", false, "zonegroup", "get", "--zonegroup-id", groupID)
+		if !ok || !migrationSnapshot.storagePreserved(group, zone) || !migrationMemberMatches(group, zoneID, zoneName) {
+			return fail()
+		}
 	}
 	user, ok = admin("user_check", false, "user", "info", "--zone-id", zoneID, "--uid", uid)
 	a, b, valid := realmSetupUserKey(user, uid)

@@ -3,6 +3,7 @@ import './test-rgw-realm-token.mjs'
 import './test-rgw-realm-transfer.mjs'
 import './test-rgw-realm-import.mjs'
 import './test-rgw-realm-setup.mjs'
+import './test-rgw-realm-migration.mjs'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 

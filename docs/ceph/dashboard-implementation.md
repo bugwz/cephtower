@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+- **默认单站点迁移入口与原生命令链**：新增高风险 `POST /rgw/realm/migrate`、Multisite 迁移表单及生成的 OpenAPI 契约，沿用加密队列与单次执行策略。要求尚无 Realm，唯一 Zonegroup/Zone 均名为 default，默认指针与显式填写的旧 ID 一致，旧 Zone 是该组唯一主成员，且新系统用户不存在；不会把新建主站当作已有数据迁移。按旧 ID 重命名，分别回读名称和组成员关系，再挂入新 Realm 并设置主/默认属性、端点和可选 archive tier。
+  - 深拷贝旧拓扑快照，比较嵌套 placement/pool 引用及未知字段，允许本操作明确改变的名称、Realm、端点、系统密钥与 tier 字段，其余存储与成员配置须保留。原生 rename 不要求 JSON 输出；即使退出码为零，成员名未更新也停止。首次发布前核验迁移后端点/类型和池引用，密钥绑定后及最终回读再核对池引用；随后复用两次 scoped Period 发布、默认指针/身份/密钥检查和显式服务集合重启核验。无网关时不宣称进程已核验。
+  - 表单明确旧身份、全量重启范围、维护/备份、非事务及部分生效风险；不是对象搬迁，不自动改写已有服务的显式 Realm/Zone 名称配置，不配置 Dashboard 密钥，不自动回滚或重试。刷新失败仍不可重试迁移。增加普通/归档完整链路、写前拒绝、失败截断、原生空输出与成员未更新、嵌套池漂移、API 队列/刷新策略及表单回归。无真实集群或浏览器视觉验证；原生 bootstrap 部署及完整新 Realm 跨集群一键编排等范围仍继续。
+
 - **默认单站点迁移调用链复核（尚未实现）**：检查 `rgw-multisite-migrate.component.ts` → `rgw-multisite.service.ts::migrate` → `controllers/rgw.py::migrate` → `rgw_client.py::migrate_to_multisite`。它不是新主站初始化，也不是 Token 导入；需要保留已有默认 Zone 的身份和存储池引用，不能调用现有 `rgw_realm.setup` 代替。参考迁移表单包含 Realm/Zonegroup/Zone 新名称、两类端点、系统用户名及归档选择；现有普通/归档主站创建不构成该入口的覆盖证据。
   - 原生顺序为 `realm create --default` → `zonegroup rename --rgw-zonegroup default --zonegroup-new-name ...` → `zone rename --rgw-zone default --zone-new-name ... --rgw-zonegroup ...` → `zonegroup modify --rgw-realm ... --master --default --endpoints ...` → `zone modify --rgw-realm ... --master --default --endpoints ...` → Period 发布 → 新系统用户及 Zone 密钥绑定（此时应用归档 tier）→ 再次发布 → 重启 RGW。参考最后设置 Dashboard 凭据，但 CephTower 不应为不使用的 Dashboard 配置写密钥。
   - `radosgw-admin.cc::ZONEGROUP_RENAME/ZONE_RENAME` 支持按 ID 定位且不输出资源 JSON。特别是 Zone 已重命名后，若 Zonegroup 读取失败或其中找不到原 Zone，`ZONE_RENAME` 会返回 `EXIT_SUCCESS`；因此不得套用“退出码成功即完成”，也不得套用要求每次命令都返回 JSON 的创建助手。必须回读 Zone/Zonegroup 的 ID、名称及成员记录，确认重命名未丢失关联。

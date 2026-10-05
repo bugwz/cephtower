@@ -21,6 +21,7 @@ type realmSetupExecutor struct {
 func (e *realmSetupExecutor) Run(_ context.Context, _ executor.ClusterAccess, c executor.CommandSpec) (executor.CommandResult, error) {
 	e.specs = append(e.specs, c)
 	stage := strings.TrimPrefix(c.ID, "rgw_realm.setup.")
+	stage = strings.TrimPrefix(stage, "rgw_realm.migrate.")
 	if stage == e.fail {
 		return executor.CommandResult{Stderr: []byte("generated-secret")}, errors.New("generated-secret")
 	}
