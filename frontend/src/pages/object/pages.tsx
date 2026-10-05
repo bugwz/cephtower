@@ -1,5 +1,6 @@
 import type { ApiRecord } from '../../api/client'
 import { RgwBucketConfigurationPanel } from './RgwBucketConfigurationPanel'
+import { RgwBucketLifecycleDocument } from './RgwBucketLifecycleDocument'
 import { RgwOverviewMetrics } from './RgwOverviewMetrics'
 import { RgwTopologyCounts } from './RgwTopologyCounts'
 import { RgwBucketUsage } from './RgwBucketUsage'
@@ -1840,7 +1841,7 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       { key: 'lifecycle_rules', title: '生命周期规则', ellipsis: false, render: (value, row) => row.kind === 'lifecycle' ? <RgwBucketLifecycleRules value={value} configured={row.configured} /> : '—' },
       { key: 'lifecycle_transitions', title: '生命周期分层', filterKey: false, ellipsis: false, render: (_value, row) => row.kind === 'lifecycle' ? <details><summary>查看转换动作（配置，不代表执行进度）</summary><RgwBucketLifecycleTransitions value={row.lifecycle_rules} configured={row.configured} /></details> : '—' },
       { key: 'content_type', title: '响应类型' },
-      { key: 'document', title: '原始配置文档', ellipsis: false, render: (value, row) => <pre style={{ whiteSpace: 'pre-wrap', maxHeight: 240, overflow: 'auto' }}>{row.configured === false ? '未配置，无配置文档' : typeof value === 'string' ? value : '配置文档不可用'}</pre> }
+      { key: 'document', title: '配置文档', ellipsis: false, render: (value, row) => row.kind === 'lifecycle' ? <RgwBucketLifecycleDocument document={value} rules={row.lifecycle_rules} configured={row.configured} /> : <pre style={{ whiteSpace: 'pre-wrap', maxHeight: 240, overflow: 'auto' }}>{row.configured === false ? '未配置，无配置文档' : typeof value === 'string' ? value : '配置文档不可用'}</pre> }
     ]
   }
 }
