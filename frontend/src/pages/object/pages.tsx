@@ -8,6 +8,7 @@ import { zonegroupDeleteBlocked, zonegroupDeleteInput, zonegroupDeleteConfirmati
 import { zoneDeleteBlocked, zoneDeleteInput, zoneDeleteConfirmation } from './rgwZoneDelete'
 import { zonePlacementBlocked, zonePlacementGroups, zonePlacementOptions, zonePlacementClasses, zonePlacementChanged, zonePlacementInput, zonePlacementConfirmation, zonePlacementCompressions } from './rgwZonePlacement'
 import { zoneStorageClassInput, zoneStorageClassConfirmation } from './rgwZonePlacement'
+import { zonePlacementCreateBlocked, zonePlacementCreateInput, zonePlacementCreateConfirmation } from './rgwZonePlacement'
 import { groupStorageClassBlocked, groupStorageClassOptions, groupStorageClassInput, groupStorageClassConfirmation } from './rgwZonegroupStorageClass'
 import { groupPlacementCreateBlocked, groupPlacementCreateInput, groupPlacementCreateConfirmation } from './rgwZonegroupStorageClass'
 import { RgwTopologyView } from './RgwTopology'
@@ -1326,6 +1327,22 @@ const definitions: Record<
   },
   rgwZones: {
     extraActions: [{
+      title: '新增 Zone 放置池配置', path: '/rgw/zone/placement', method: 'POST',
+      successMessage: 'Zone 新放置配置与适用的 Period 发布已核验（未迁移数据）',
+      disabledWhen: zonePlacementCreateBlocked, confirmation: zonePlacementCreateConfirmation,
+      initialValues: () => ({data_extra_pool:'',compression:'none'}),
+      changedValues: changed => Object.keys(changed).some(key => key !== 'confirm_placement') ? {confirm_placement:undefined} : {},
+      fields: [
+        { name: 'zonegroup_id', label: '所属 Zonegroup', type: 'select', required: true, optionsLoader: async (_clusterId,row) => zonePlacementGroups(row) },
+        { name: 'placement_id', label: '组中已声明、此 Zone 尚未配置的目标名称（STANDARD）', required: true },
+        { name: 'index_pool', label: '索引池引用', required: true },
+        { name: 'data_pool', label: 'STANDARD 数据池引用', required: true },
+        { name: 'data_extra_pool', label: '额外数据池（显式留空使用原生回退）' },
+        { name: 'compression', label: '压缩算法', type: 'select', required: true, options: zonePlacementCompressions.map(value => ({value,label:value})) },
+        { name: 'confirm_placement', label: '范围确认', type: 'select', required: true, options: [{value:'acknowledged',label:'已备份并核对组声明、池和全部相关 Zone，了解 Period 发布范围'}] }
+      ],
+      buildBody: (values,clusterId,row) => ({cluster_id:clusterId,...zonePlacementCreateInput(values,row)})
+    }, {
       title: '新增 Zone 存储类', path: '/rgw/zone/storage/class', method: 'POST',
       successMessage: 'Zone 存储类新增已回读核验（未发布 Period 或迁移数据）',
       disabledWhen: zonePlacementBlocked, confirmation: zoneStorageClassConfirmation,

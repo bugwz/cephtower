@@ -1,10 +1,10 @@
 type Row = Record<string, any>
 const token = (value: unknown): value is string => typeof value === 'string' && !!value && !value.startsWith('-') && !/[\x00-\x1f\x7f]/.test(value)
 export const zonePlacementCompressions = ['none', 'lz4', 'zlib', 'snappy', 'zstd', 'brotli']
-function placements(row?: Row) {
+function placements(row?: Row, allowEmpty = false) {
   if (!row || row.stale === true || !token(row.id) || !token(row.name) || typeof row.realm_id !== 'string') throw new Error('Zone 身份不完整或库存过期')
   const entries = row.placement_pools
-  if (!Array.isArray(entries) || !entries.length || entries.some(p => !token(p?.key) || !p.val || typeof p.val.storage_classes !== 'object' || Array.isArray(p.val.storage_classes) || !p.val.storage_classes) || new Set(entries.map(p => p.key)).size !== entries.length) throw new Error('放置配置不完整或有重复')
+  if (!Array.isArray(entries) || !allowEmpty && !entries.length || entries.some(p => !token(p?.key) || !p.val || typeof p.val.storage_classes !== 'object' || Array.isArray(p.val.storage_classes) || !p.val.storage_classes) || new Set(entries.map(p => p.key)).size !== entries.length) throw new Error('放置配置不完整或有重复')
   return entries as Array<{key: string; val: Row}>
 }
 export function zonePlacementBlocked(row: Row) { try { placements(row); if (!zonePlacementGroups(row).length) return '缺少同 Realm 的 Zonegroup 成员信息'; return undefined } catch (error) { return (error as Error).message } }
@@ -46,4 +46,18 @@ export function zoneStorageClassInput(values: Row, row?: Row) {
 export function zoneStorageClassConfirmation(values: Row, row?: Row) {
   const p = zoneStorageClassInput(values,row)
   return `在 Zone ${p.name}（${p.zone_id}）的已有放置目标 ${p.placement_id} 中新增存储类 ${p.storage_class}：数据池 ${p.data_pool}，压缩 ${p.compression}。该类必须已在所选 Zonegroup 目标中声明且不是云分层类；后端将核验。保留所有既有类、索引池与额外数据池。不迁移已有数据、不自动创建池、不设置默认类、不发布 Period 或重启网关。配置成功不证明池存在或可用，压缩算法需部署支持。请先备份并评估使用此类的业务；写前检查不是跨进程原子锁，失败可能已部分生效，不自动重试或回滚。`
+}
+
+export function zonePlacementCreateBlocked(row: Row) { try { placements(row,true); if (!zonePlacementGroups(row).length) return '缺少同 Realm 的组成员关系'; return undefined } catch (error) { return (error as Error).message } }
+export function zonePlacementCreateInput(values: Row,row?: Row) {
+  const entries = placements(row,true)
+  if (!token(values.placement_id) || entries.some(p => p.key === values.placement_id)) throw new Error('必须输入此 Zone 尚未配置的放置目标')
+  if (!zonePlacementGroups(row).some((g: Row) => g.value === values.zonegroup_id)) throw new Error('请选择所属 Zonegroup')
+  for (const key of ['index_pool','data_pool','data_extra_pool']) if (typeof values[key] !== 'string' || key !== 'data_extra_pool' && !values[key] || /[\x00-\x1f\x7f]/.test(values[key])) throw new Error('请输入规范池引用；额外数据池可显式留空')
+  if (!zonePlacementCompressions.includes(values.compression) || values.confirm_placement !== 'acknowledged') throw new Error('请选择压缩并确认范围')
+  return {zone_id:row!.id,name:row!.name,realm_id:row!.realm_id,zonegroup_id:values.zonegroup_id,placement_id:values.placement_id,index_pool:values.index_pool,data_pool:values.data_pool,data_extra_pool:values.data_extra_pool,compression:values.compression,confirm_placement:true}
+}
+export function zonePlacementCreateConfirmation(values: Row,row?: Row) {
+  const p = zonePlacementCreateInput(values,row)
+  return `在 Zone ${p.name}（${p.zone_id}）新增放置配置 ${p.placement_id}：索引池 ${p.index_pool}，STANDARD 数据池 ${p.data_pool}，额外数据池 ${p.data_extra_pool || '空（原生回退）'}，压缩 ${p.compression}。使用原生普通索引和 inline data=true；目标及 STANDARD 必须已在所属组中声明。保留全部已有放置配置，不迁移数据、不自动创建池或重启网关。写入成功不证明池存在或支持 OMAP，压缩算法依赖部署，请事先核对并备份。${p.realm_id ? `将提交 Realm ${p.realm_id} 的 Period，可能发布其他待提交配置；请确认所有相关 Zone 已准备好，成功不代表远端同步完成。` : '无 Realm，不提交 Period。'}检查不是跨进程原子锁，失败可能部分生效，不自动重试或回滚。`
 }

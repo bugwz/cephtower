@@ -77,7 +77,7 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 	if request.Action == "rgw_realm.setup" || request.Action == "rgw_realm.migrate" {
 		_, err = d.reconciler.RefreshKinds(ctx, request.ClusterID, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone", "rgw_user", "pool", "service"})
 		refreshed = err == nil
-	} else if request.Action == "rgw_zonegroup.delete" || request.Action == "rgw_zone.delete" || request.Action == "rgw_zone.placement" {
+	} else if request.Action == "rgw_zonegroup.delete" || request.Action == "rgw_zone.delete" || request.Action == "rgw_zone.placement" || request.Action == "rgw_zone.placement_create" {
 		_, err = d.reconciler.RefreshKinds(ctx, request.ClusterID, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone"})
 		refreshed = err == nil
 	} else if request.Action == "rgw_realm.import" {
@@ -98,7 +98,7 @@ func (d *ActionDispatcher) Execute(ctx context.Context, request ExecutionRequest
 		refreshed, err = d.reconciler.RefreshKindIfSupported(ctx, request.ClusterID, request.ResourceKind)
 	}
 	if err != nil {
-		if request.Action == "rgw_zone.placement" || request.Action == "rgw_zone.storage_class_create" || request.Action == "rgw_zonegroup.storage_class_create" || request.Action == "rgw_zonegroup.placement_create" {
+		if request.Action == "rgw_zone.placement" || request.Action == "rgw_zone.placement_create" || request.Action == "rgw_zone.storage_class_create" || request.Action == "rgw_zonegroup.storage_class_create" || request.Action == "rgw_zonegroup.placement_create" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_reconcile_failed", Message: "placement update verified but inventory refresh failed; refresh without repeating the mutation", Retryable: false}
 		}
 		if request.Action == "rgw_realm.setup" || request.Action == "rgw_realm.migrate" {

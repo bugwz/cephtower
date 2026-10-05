@@ -62,6 +62,20 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal("placement update not queued", placementResponse.Code)
 	}
 	placementOp, placementErr := db.FindOperation(context.Background(), operationIDFromResponse(t, placementResponse))
+	createPlacementBody := fmt.Sprintf(`{"cluster_id":%d,"zone_id":"z","name":"zone-new-placement","realm_id":"","zonegroup_id":"g","placement_id":"new","index_pool":"i","data_pool":"d","data_extra_pool":"","compression":"none","confirm_placement":true}`, cluster.ID)
+	createPlacementResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/zone/placement", createPlacementBody, "zone-new-placement")
+	if createPlacementResponse.Code != http.StatusAccepted {
+		t.Fatal(createPlacementResponse.Code)
+	}
+	createPlacementOp, createPlacementErr := db.FindOperation(context.Background(), operationIDFromResponse(t, createPlacementResponse))
+	if createPlacementErr != nil || createPlacementOp.Action != "rgw_zone.placement_create" || createPlacementOp.Risk != "high" || createPlacementOp.MaxAttempts != 1 || createPlacementOp.ResourceKey != "rgw/zone/zone-new-placement" {
+		t.Fatal("unsafe placement creation")
+	}
+	for _, body := range []string{strings.TrimSuffix(createPlacementBody, "}") + `,"storage_class":"COLD"}`, strings.Replace(createPlacementBody, `"index_pool":"i",`, "", 1)} {
+		if response := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/zone/placement", body, "bad-zone-placement"); response.Code != http.StatusBadRequest {
+			t.Fatal("invalid placement accepted")
+		}
+	}
 	storageBody := fmt.Sprintf(`{"cluster_id":%d,"zone_id":"z","name":"zone-class","realm_id":"r","zonegroup_id":"g","placement_id":"p","storage_class":"COLD","data_pool":"d","compression":"none","confirm_placement":true}`, cluster.ID)
 	storageResponse := sendOperationRequest(t, mux, http.MethodPost, "/api/v1/rgw/zone/storage/class", storageBody, "zone-class")
 	if storageResponse.Code != http.StatusAccepted {

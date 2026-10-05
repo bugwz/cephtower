@@ -29,6 +29,16 @@
 
 ### 增量实现与验证记录
 
+#### Zone 新放置池配置
+
+Zone 列表新增放置池配置表单，接通高风险 `POST /rgw/zone/placement` 与
+`radosgw-admin zone placement add`。显式选择所属组、已声明目标、索引池、数据池、额外数据池及压缩类型；初始类固定 STANDARD。
+参考 `radosgw-admin.cc` 的原生 ADD 分支及 `RGWZonePlacementInfo` 默认值：普通索引、inline data 开启。
+后端拒绝覆盖已有目标，校验组成员、Realm、目标与 STANDARD 声明及非 tier 状态；写前重读，写后核验完整 Zone，保留其他配置。
+有 Realm 时按参考 `add_placement_targets_storage_class_zone` 流程提交并回读 Period；刷新 Realm、组、Zone，失败不自动重试。
+界面说明 Period 可包含其他待发布配置、不搬迁对象、不创建池、不保证远端同步；原生 OMAP 检查不证明池存在，压缩插件仍取决于部署。
+新增命令、阶段失败、并发覆盖、字段漂移、API 契约及前端表单回归测试；全量后端/OpenAPI 检查、前端测试与构建通过。无真实集群或浏览器视觉验证。
+
 - **Zonegroup 新建放置目标**：新增高风险单次尝试 `POST /rgw/zonegroup/placement` 和组行操作。按参考 `add_placement_targets` 的普通目标语义，调用显式组 ID 的 `zonegroup placement add`，初始类固定 STANDARD；显式标签数组经原生逗号分隔参数写入，拒绝重复、空标签和分隔符/控制字符，不暗中拆分用户标签。支持空组首个目标和已有组新增目标；目标必须不存在，写前重读防止已观察到的并发创建。写后完整组只允许新增目标和原生必要的默认目标初始化，目标/标签按原生集合顺序核验；所有既有目标及配置保留。默认值通过 expected_default_placement 与确认文本绑定，变化时拒绝。只写组声明，不创建 Zone 池、不迁移、不自动发布 Period/重启；后续需配置各 Zone 放置池后再评估发布。新增命令、空/非空标签、首个/后续目标、覆盖/漂移/其他字段保护、各阶段失败、队列参数限制、刷新和前端测试。Zone 侧全新放置池配置、删除与云分层仍待继续；无真实集群或浏览器视觉验证。
 
 - **Zonegroup 普通存储类声明**：沿参考控制器 storage_class → `add_placement_targets` 的普通类分支，新增高风险单次尝试 `POST /rgw/zonegroup/storage/class` 与组行操作。在已有 placement 中调用显式组 ID 的 `zonegroup placement add --placement-id … --storage-class …`，仅新增未声明的普通类，拒绝同名类/云分层冲突及带 `/` 的限定 placement 表示。按原生集合排序回读完整组，保留标签、已有类、云分层、成员、其他目标和配置；命令输出仅为 target map，因此不把它当作完整组的验证结果。原生在默认放置目标为空时会初始化为当前目标的 STANDARD，界面明确提示并提交 expected_default_placement，后端拒绝默认值漂移。写前重读、写后完整验证，刷新组库存，失败不自动重试。普通声明按参考语义不发布 Period，也不配置 Zone 池；可继续使用上一增量的 Zone 新增存储类，再单独评估 Period 发布。新增默认初始化/保留、声明冲突、范围/标签/成员保护、每阶段错误、API 风险/参数拒绝、刷新与表单测试；全新 placement、云分层及删除操作仍待继续，无真实集群验证。

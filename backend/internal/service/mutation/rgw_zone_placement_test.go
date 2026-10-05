@@ -21,6 +21,7 @@ type placementExecutor struct {
 func (e *placementExecutor) Run(_ context.Context, _ executor.ClusterAccess, c executor.CommandSpec) (executor.CommandResult, error) {
 	e.calls = append(e.calls, c)
 	stage := strings.TrimPrefix(c.ID, "rgw_zone.placement.")
+	stage = strings.TrimPrefix(stage, "rgw_zone.placement_create.")
 	stage = strings.TrimPrefix(stage, "rgw_zone.storage_class_create.")
 	stage = strings.TrimPrefix(stage, "rgw_zonegroup.storage_class_create.")
 	stage = strings.TrimPrefix(stage, "rgw_zonegroup.placement_create.")

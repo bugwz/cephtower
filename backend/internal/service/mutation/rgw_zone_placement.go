@@ -58,6 +58,10 @@ func (s *Service) executeZonePlacement(ctx context.Context, access executor.Clus
 		return periodDocument(result.Stdout), err == nil && result.ExitCode == 0
 	}
 	p := req.Parameters
+	createPlacement := req.Action == "rgw_zone.placement_create"
+	if createPlacement {
+		p = zonePlacementCreateParams(p)
+	}
 	create := req.Action == "rgw_zone.storage_class_create"
 	realm := syncGroupString(p, "realm_id")
 	zoneArgs := []string{"zone", "get", "--zone-id", syncGroupString(p, "zone_id"), "--format", "json"}
@@ -70,7 +74,12 @@ func (s *Service) executeZonePlacement(ctx context.Context, access executor.Clus
 	if !ok || !zonePlacementGroupMatches(group, p) {
 		return fail("pre_check_failed")
 	}
-	expected, ok := zonePlacementExpected(zone, p, create)
+	var expected map[string]any
+	if createPlacement {
+		expected, ok = zonePlacementCreateExpected(zone, p)
+	} else {
+		expected, ok = zonePlacementExpected(zone, p, create)
+	}
 	if !ok {
 		return fail("pre_check_failed")
 	}
@@ -112,7 +121,7 @@ func (s *Service) executeZonePlacement(ctx context.Context, access executor.Clus
 			return fail("post_check_failed")
 		}
 	}
-	return cephdomain.ActionResult{Details: map[string]any{"zone_id": p["zone_id"], "placement_id": p["placement_id"], "storage_class": p["storage_class"], "placement_verified": true, "storage_class_created": create, "period_published": realm != "" && !create, "data_migrated": false}}, nil
+	return cephdomain.ActionResult{Details: map[string]any{"zone_id": p["zone_id"], "placement_id": p["placement_id"], "storage_class": p["storage_class"], "placement_verified": true, "placement_created": createPlacement, "storage_class_created": create, "period_published": realm != "" && !create, "data_migrated": false}}, nil
 }
 
 func zonePlacementGroupMatches(group, p map[string]any) bool {
