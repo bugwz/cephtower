@@ -42,9 +42,18 @@ function load(file, require = () => { throw new Error('unexpected dependency') }
 }
 const policies = load('rgwRolePolicies.ts')
 const identities = load('rgwUserIdentity.ts')
-const removal = load('rgwRoleDelete.ts')
+const roleIdentity = load('rgwRoleIdentity.ts')
+const removal = load('rgwRoleDelete.ts', name => {
+  if (name === './rgwRoleIdentity') return roleIdentity
+  throw new Error(name)
+})
+assert.ok(roleIdentity.rgwRoleMutationBlocked(undefined))
+assert.throws(() => roleIdentity.rgwRoleMutationIdentity(undefined))
+assert.equal(pages.match(/disabledWhen: rgwRoleMutationBlocked/g)?.length, 2)
+assert.equal(pages.match(/\.\.\.rgwRoleMutationIdentity\(row\)/g)?.length, 2)
 for (const row of [{ RoleName: 'reader', AccountId: '' }, { RoleName: 'team$reader', AccountId: '' }, { RoleName: 'reader', AccountId: 'RGW123' }]) {
   assert.equal(removal.rgwRoleDeleteBlocked(row), undefined)
+  assert.deepEqual(roleIdentity.rgwRoleMutationIdentity(row), removal.rgwRoleDeleteInput(row))
   assert.equal(removal.rgwRoleDeleteInput(row).name, row.RoleName)
   assert.equal(removal.rgwRoleDeleteResourceKey(row), `rgw/role/${row.AccountId ? `${row.AccountId}/` : ''}${row.RoleName}`)
   const confirmation = removal.rgwRoleDeleteConfirmation(row)
@@ -56,6 +65,8 @@ for (const row of [{ RoleName: 'reader', AccountId: '' }, { RoleName: 'team$read
 }
 for (const row of [{ natural_key: 'reader' }, { RoleName: 'reader' }, { RoleName: 123, AccountId: '' }, { RoleName: 'reader', AccountId: null }, { RoleName: '', AccountId: '' }, { RoleName: ' reader', AccountId: '' }, { RoleName: 'reader', AccountId: ' RGW123' }]) {
   assert.ok(removal.rgwRoleDeleteBlocked(row))
+  assert.ok(roleIdentity.rgwRoleMutationBlocked(row))
+  assert.throws(() => roleIdentity.rgwRoleMutationIdentity(row))
   assert.throws(() => removal.rgwRoleDeleteInput(row))
   assert.throws(() => removal.rgwRoleDeleteResourceKey(row))
 }

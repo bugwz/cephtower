@@ -49,6 +49,7 @@ import { topicCreateInput, topicCreateConfirmation } from './rgwTopicCreate'
 import { RgwTopicOptionsEditor } from './RgwTopicOptionsEditor'
 import { roleManagedPolicyBlocked, roleManagedPolicyInitial, roleManagedPolicyInput, roleManagedPolicyConfirmation, roleManagedPolicyOptions } from './rgwRoleManagedPolicy'
 import { rgwRoleDeleteBlocked, rgwRoleDeleteInput, rgwRoleDeleteConfirmation, rgwRoleDeleteResourceKey } from './rgwRoleDelete'
+import { rgwRoleMutationBlocked, rgwRoleMutationIdentity } from './rgwRoleIdentity'
 import { bucketReplicationFormBlocked, bucketReplicationFormInitial, bucketReplicationFormInput, bucketReplicationFormConfirmation } from './rgwBucketReplicationForm'
 import { useClusterContext } from '../../state/ClusterContext'
 import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
@@ -729,15 +730,17 @@ const definitions: Record<
     },
     updateAction: {
       title: '更新 RGW Role', path: '/rgw/role', method: 'PATCH', successMessage: 'RGW Role 更新执行成功',
+      disabledWhen: rgwRoleMutationBlocked,
       fields: [
         { name: 'assume_role_policy', label: '信任策略（JSON，留空不修改）', type: 'textarea' },
         { name: 'max_session_duration', label: '最大会话时长（秒，留空不修改）', type: 'number', min: 3600, max: 43200 }
       ],
       initialValues: (row) => rgwRoleInitial(row),
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...(row?.AccountId ? { account_id: String(row.AccountId) } : {}), name: String(row?.RoleName ?? row?.natural_key ?? ''), ...rgwRolePatch(values, row) })
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...rgwRoleMutationIdentity(row), ...rgwRolePatch(values, row) })
     },
     extraActions: [{
       title: '管理内联权限策略', path: '/rgw/role/policy', method: 'POST', successMessage: '角色权限策略操作执行成功',
+      disabledWhen: rgwRoleMutationBlocked,
       initialValues: { action: 'put' },
       changedValues: rgwPolicyChanged,
       fields: [
@@ -747,7 +750,7 @@ const definitions: Record<
         { name: 'policy_document', label: '权限策略（JSON）', type: 'textarea', required: true, visibleWhen: (values) => values.action === 'put' || values.action === 'edit' }
       ],
       confirmation: rgwPolicyConfirmation,
-      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...(row?.AccountId ? { account_id: String(row.AccountId) } : {}), name: String(row?.RoleName ?? row?.natural_key ?? ''), ...rgwPolicyMutation(values, row) })
+      buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...rgwRoleMutationIdentity(row), ...rgwPolicyMutation(values, row) })
     }, {
       title:'管理角色托管策略',buttonLabel:'管理托管策略',path:'/rgw/role/managed/policy',method:'PATCH',successMessage:'角色托管策略集合已回读核验',
       disabledWhen:roleManagedPolicyBlocked,initialValues:roleManagedPolicyInitial,confirmation:roleManagedPolicyConfirmation,
