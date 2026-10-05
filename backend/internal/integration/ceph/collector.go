@@ -431,9 +431,7 @@ type monDumpWire struct {
 		Name        string `json:"name"`
 		Rank        int    `json:"rank"`
 		PublicAddrs struct {
-			AddrVec []struct {
-				Addr string `json:"addr"`
-			} `json:"addrvec"`
+			AddrVec []cephdomain.MonitorAddress `json:"addrvec"`
 		} `json:"public_addrs"`
 		PublicAddr string `json:"public_addr"`
 		Addr       string `json:"addr"`
@@ -606,7 +604,7 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 			address = wire.Addr
 		}
 		if len(wire.PublicAddrs.AddrVec) > 0 {
-			address = wire.PublicAddrs.AddrVec[0].Addr
+			address = wire.PublicAddrs.AddrVec[0].Address
 		}
 		_, inQuorum := quorumSet[wire.Name]
 		var counters []Observation
@@ -615,7 +613,7 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 			counters, openSessions = p.collectMonitorPerfCounters(ctx, access, wire.Name, perfPriority, now)
 			rows = append(rows, counters...)
 		}
-		payload := cephdomain.Monitor{Name: wire.Name, Rank: wire.Rank, Address: address, InQuorum: inQuorum, OpenSessions: openSessions}
+		payload := cephdomain.Monitor{Name: wire.Name, Rank: wire.Rank, Address: address, PublicAddresses: wire.PublicAddrs.AddrVec, InQuorum: inQuorum, OpenSessions: openSessions}
 		status := "out_of_quorum"
 		if inQuorum {
 			status = "in_quorum"

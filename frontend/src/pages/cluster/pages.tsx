@@ -37,6 +37,7 @@ import { ClusterPage } from './ClusterPage'
 import { HostDetailPage } from './HostDetailPage'
 import { formatBytes, HostPage } from './HostPage'
 import { MonDetailPage } from './MonDetailPage'
+import { MonPublicAddresses } from './MonPublicAddresses'
 import { PoolDetailPage } from './PoolDetailPage'
 import { PoolManagementPage } from './PoolManagementPage'
 import { ServicePage } from './ServicePage'
@@ -135,6 +136,7 @@ export function MonManagementPage() {
             { key: 'name', title: '名称' },
             { key: 'rank', title: 'Rank' },
             { key: 'address', title: 'Public Addr' },
+            { key: 'public_addresses', title: '全部 Public 地址', filterKey: false, render: (value) => <MonPublicAddresses value={value} /> },
             {
               key: 'status',
               title: '状态',

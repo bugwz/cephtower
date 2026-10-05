@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### MON 完整公共地址列表
+
+- 对照参考 Monitor 页面、`ceph mon dump` 和 `msg_types.cc` 的地址输出，原采集仅使用 `public_addrs.addrvec` 首项，导致多协议地址不可见。现新增库存字段 `public_addresses`，保存每一项的原生 `type` 和 `addr`，通过现有 MON API 提供。
+- MON 列表及详情新增全部公共地址展示，保留 Messenger 协议与 IPv6 原文，不解析或裁剪冒号。区分未返回、空数组和异常结构；原有单地址字段仍用于既有地址搜索。
+- 新增实际拓扑采集及组件测试，覆盖 v1/v2、多地址、IPv6、空列表与缺失列表。`make test-backend`（含 OpenAPI 检查）和 `make test-frontend` 均通过；未进行浏览器视觉或真实集群验证。
+
 #### RGW 角色修改入口身份一致性
 
 - 角色编辑和内联策略操作不再把缺失账户当成默认账户，也不再回退到库存键推断角色名称；与删除操作共用原生 `RoleName`/`AccountId` 校验。

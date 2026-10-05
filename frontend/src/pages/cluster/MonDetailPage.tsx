@@ -10,6 +10,7 @@ import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
+import { MonPublicAddresses } from './MonPublicAddresses'
 
 const { Text } = Typography
 const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
@@ -78,6 +79,7 @@ export function MonDetailPage() {
             <Descriptions.Item label="名称">{textValue(mon.name ?? mon.natural_key)}</Descriptions.Item>
             <Descriptions.Item label="Rank">{textValue(mon.rank)}</Descriptions.Item>
             <Descriptions.Item label="Public Addr">{textValue(mon.address)}</Descriptions.Item>
+            <Descriptions.Item label="全部 Public 地址（协议 / 地址）"><MonPublicAddresses value={mon.public_addresses} /></Descriptions.Item>
             <Descriptions.Item label="状态">
               <Tag color={mon.in_quorum === true ? 'success' : 'default'}>{mon.in_quorum === true ? '仲裁中' : '未加入仲裁'}</Tag>
             </Descriptions.Item>

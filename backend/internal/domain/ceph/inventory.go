@@ -80,11 +80,16 @@ type Service struct {
 	Events             []string `json:"events"`
 }
 type Monitor struct {
-	Name         string `json:"name"`
-	Rank         int    `json:"rank"`
-	Address      string `json:"address"`
-	InQuorum     bool   `json:"in_quorum"`
-	OpenSessions any    `json:"open_sessions,omitempty"`
+	Name            string           `json:"name"`
+	Rank            int              `json:"rank"`
+	Address         string           `json:"address"`
+	PublicAddresses []MonitorAddress `json:"public_addresses"`
+	InQuorum        bool             `json:"in_quorum"`
+	OpenSessions    any              `json:"open_sessions,omitempty"`
+}
+type MonitorAddress struct {
+	Type    string `json:"type"`
+	Address string `json:"addr"`
 }
 type MonitorStatus struct {
 	FSID        string   `json:"fsid"`
