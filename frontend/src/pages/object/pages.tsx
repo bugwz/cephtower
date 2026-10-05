@@ -91,6 +91,7 @@ import { rgwDefaultRealm } from './rgwDefaultRealm'
 import { rgwQuotaConfirmation, rgwQuotaInitial, rgwQuotaInput } from './rgwQuotaForm'
 import { rgwRoleInitial, rgwRolePatch } from './rgwRoleEdit'
 import { RgwRoleTagsTable } from './RgwRoleTagsTable'
+import { RgwRoleDetails } from './RgwRoleDetails'
 import { RgwPolicyDocument, RgwRolePolicyDetails, RgwRoleManagedPolicies } from './RgwRolePolicyDetails'
 import { rgwPolicyChanged, rgwPolicyConfirmation, rgwPolicyDeleteOptions, rgwPolicyMutation } from './rgwRolePolicies'
 import { RgwUserDetails } from './RgwUserDetails'
@@ -700,6 +701,7 @@ const definitions: Record<
     title: 'RGW Roles',
     path: '/rgw/roles',
     requiredCapabilities: ['rgw_admin'],
+    detailContent: (row) => <RgwRoleDetails row={row} />,
     createAction: {
       title: '新建 RGW Role',
       buttonLabel: '新建 Role',

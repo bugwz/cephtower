@@ -161,3 +161,4 @@ assert.equal(times({ last_synced: 'wrong scope' }).synced, '未返回或格式�
 for (const value of [null, undefined, '', 0, false, []]) assert.equal(times({ last_stats_sync: value }).synced, '未返回或格式无效')
 import './test-rgw-lifecycle-progress.mjs'
 import './test-rgw-bucket-summary.mjs'
+import './test-rgw-role-details.mjs'
