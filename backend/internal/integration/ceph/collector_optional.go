@@ -475,7 +475,9 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 			if !p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_bucket_detail", args, &details) {
 				continue
 			}
-			if textField(details, "bucket") != bucket || textField(details, "tenant") != tenant {
+			observedBucket, bucketPresent := details["bucket"].(string)
+			observedTenant, tenantPresent := details["tenant"].(string)
+			if !bucketPresent || !tenantPresent || observedBucket != bucket || observedTenant != tenant {
 				markCollectionUnavailable(ctx, "collect.rgw_bucket_detail")
 				continue
 			}
