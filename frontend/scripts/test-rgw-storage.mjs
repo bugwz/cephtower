@@ -88,14 +88,31 @@ assert.ok(pages.includes('detailContent: (row, clusterId) => <RgwBucketDetails r
 assert.ok(pages.includes("key: 'index_type', title: '索引类型', render: rgwBucketIndexText"))
 assert.ok(pages.includes("key: 'num_shards', title: '索引分片数', render: rgwBucketIndexCount"))
 const detailsView = {}
-new Function('exports', 'require', ts.transpileModule(bucketDetails, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(detailsView, (name) => name === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : name === 'antd' ? { Tabs: 'Tabs' } : { RgwBucketIndexDetails: 'Index', RgwBucketPlacementDetails: 'Placement', RgwBucketTagsTable: 'Tags' })
+new Function('exports', 'require', ts.transpileModule(bucketDetails, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(detailsView, (name) => name === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : name === 'antd' ? { Tabs: 'Tabs' } : { RgwBucketIndexDetails: 'Index', RgwBucketPlacementDetails: 'Placement', RgwBucketTagsTable: 'Tags', RgwQuota: 'Quota', RgwRateLimit: 'RateLimit', RgwStorage: 'Storage' })
 const bucketRow = { index_type: 'Normal', explicit_placement: { data_pool: 'data' }, tagset: { team: 'storage' } }
 const tabs = detailsView.RgwBucketDetails({ row: bucketRow })
 assert.equal(tabs.type, 'Tabs')
-assert.deepEqual(tabs.props.items.map(item => item.key), ['index', 'placement', 'tags'])
+assert.deepEqual(tabs.props.items.map(item => item.key), ['index', 'placement', 'tags', 'quota', 'rate-limit', 'usage'])
 assert.equal(tabs.props.items[0].children.props.row, bucketRow)
 assert.equal(tabs.props.items[1].children.props.value, bucketRow.explicit_placement)
 assert.equal(tabs.props.items[2].children.props.value, bucketRow.tagset)
+for (const row of [{}, { bucket_quota: null, rate_limit: null, usage: null }, {
+  bucket_quota: { enabled: false, max_size: 0, max_objects: 0 },
+  rate_limit: { enabled: true, max_read_ops: 0 },
+  usage: { 'rgw.main': { size: 0, num_objects: 0 } }
+}]) {
+  const items = detailsView.RgwBucketDetails({ row }).props.items
+  assert.equal(items.find(item => item.key === 'quota').children.type, 'Quota')
+  assert.equal(items.find(item => item.key === 'quota').children.props.value, row.bucket_quota)
+  const rate = items.find(item => item.key === 'rate-limit')
+  assert.equal(rate.children.type, 'RateLimit')
+  assert.ok(rate.label.includes('每 RGW'))
+  assert.equal(rate.children.props.value, row.rate_limit)
+  const usage = items.find(item => item.key === 'usage').children
+  assert.equal(usage.type, 'Storage')
+  assert.equal(usage.props.value, row.usage)
+  assert.equal(usage.props.categorized, true)
+}
 const configuration={type:'BucketConfiguration'}
 assert.equal(detailsView.RgwBucketDetails({row:bucketRow,configuration}).props.items.find(item=>item.key==='configuration').children,configuration)
 const indexView = readFileSync(new URL('../src/pages/object/RgwBucketIndexDetails.tsx', import.meta.url), 'utf8')

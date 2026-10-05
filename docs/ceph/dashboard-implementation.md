@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### Bucket 详情配额、限流与用量页签
+
+对照参考 rgw-bucket-details 中配额和限流的详情展示，在本项目 Bucket 详情新增配额、每 RGW 限流、容量与对象统计三个页签。复用已有 RgwQuota/RgwRateLimit/RgwStorage 组件和 bucket stats、ratelimit get 采集后经库存 API 返回的 bucket_quota/rate_limit/usage 字段，不引入额外请求或把缺失数据补零。用量按原生分类展示，保留原有索引、放置、标签及实时配置入口。组件测试验证页签、数据绑定、分类模式、缺失/null/零值传递；前端全量测试、类型检查与构建通过，补充绑定断言后相关脚本再次通过。未进行浏览器视觉或真实集群验证。
+
 #### 账户增删改成功后的库存刷新失败防护
 
 账户 create/update/delete 已分别通过 account get 或完整 account list 核验，但调度器原先将后续库存刷新失败返回为可重试，可能重新执行已经生效的增删改。现为这三种动作返回不可自动重试的 post_reconcile_failed，明确提示仅刷新账户库存。扩展真实调度器测试，覆盖三种动作成功时保留核验结果、写失败时不刷新、刷新失败时固定 rgw_account 范围且不泄露底层诊断。后端全量测试和 OpenAPI 检查通过；无前端/API 结构改动，未连接真实集群。
