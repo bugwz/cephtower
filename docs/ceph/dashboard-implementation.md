@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### RGW 加密提供商原生读取基础（API 与页面待接入）
+
+本轮核对 `rgw-configuration-page` / `rgw-config-modal` → `RgwBucket.get_encryption_config` → `CephService._get_conf_keys`，确认本项目 Bucket 默认加密页面并不覆盖 RGW 的 Vault/KMIP 提供商配置。新增 `clusterinspect.RGWEncryptionConfiguration`，以明确 `client.rgw.<id>` 配置实体读取 SSE-KMS Vault/KMIP 或 SSE-S3 Vault 白名单字段。原生命令为逐项 `ceph config get ENTITY OPTION`：`ConfigMonitor.cc` 的单键分支输出原值加一个换行，即使指定 JSON 格式也不是 JSON，故使用有界纯文本解析，保留空值、false 和首尾空格，拒绝异常编码/控制字符及非零退出，不使用通用 JSON 读取器。
+原生 `rgw.yaml.in` 与 `rgw_kms.cc` 明确后端选择项分别为 `rgw_crypt_s3_kms_backend` / `rgw_crypt_sse_s3_backend`；不能将存在 Vault 配置等同于已选择 Vault。读取前后核对该值并单独返回；这不是全部字段的原子快照，也不证明配置实体对应运行中 RGW、进程已加载配置或密钥服务可达。SSE-S3 key template 使用真实 `rgw_crypt_sse_s3_key_template`，不套用 Vault 前缀；参考模型中的 backend/encryption_type/unique_id 展示字段不拼接为原生配置键。
+KMIP 密码始终隐藏，Vault 地址移除用户信息、查询和片段，异常地址整体隐藏；错误不返回原生命令的 stdout/stderr，任一阶段失败不返回部分配置。新增三个配置组合、准确命令与字段数、密码/地址保护、空值/false/空格、每阶段失败、退出码、编码/大小限制、后端漂移和取消测试。`make test-backend`（含 OpenAPI 一致性）通过；本轮仅完成内部只读服务，尚无新 API、前端入口或写操作，未重测前端，无真实集群验证。下一步仍需接通受权限保护的 API、实体/配置组合选择和详情，以及经完整核验的修改流程。
+
 #### Bucket 生命周期分层专用表格
 
 对照参考 `rgw-bucket-lifecycle-list.component.ts` 的 Tiering 表格，将转换动作从已有完整规则视图中额外投影为可展开的分层表格：逐项列出规则序号/ID、启用状态、当前/非当前版本、目标存储类、Days/Date/NoncurrentDays 时间条件与原生过滤条件；支持状态、版本范围、存储类筛选。不只取首个 Transition，也不丢弃同一规则的多条转换；空类名、缺失类名、异常时间组合、未配置与已配置但无转换分别展示，保持数字文本不发生精度损失。此视图是配置而不是处理进度，不修改规则或触发请求。
