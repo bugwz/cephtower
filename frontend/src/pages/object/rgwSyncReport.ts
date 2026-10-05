@@ -1,5 +1,17 @@
 export type SyncReportSections = { identity: string; metadata: string; sources: string[] }
 
+// Classify only native status lines, never zone names or diagnostic substrings.
+// Even "caught up" describes this sample/source, not overall replication health.
+export function rgwSyncNotice(section: string): { type: 'error' | 'warning' | 'info'; message: string; details: string[] } | undefined {
+  const lines = section.split('\n').map(line => line.trim())
+  const errors = lines.filter(line => line === 'zone not found' || /^(?:failed to retrieve sync info|failed to read sync status|failed read sync status|failed read recovering shards|failed to fetch source sync status|failed to fetch master sync status): .+$/.test(line))
+  if (errors.length) return { type: 'error', message: '原生报告包含同步读取错误，状态可能不完整', details: errors }
+  const warnings = lines.filter(line => /^(?:metadata|data) is behind on [1-9][0-9]* shards$/.test(line) || /^[1-9][0-9]* shards are recovering$/.test(line) || /^master is on a different period: master_period=.* local_period=.*$/.test(line))
+  if (warnings.length) return { type: 'warning', message: '原生报告存在同步落后、恢复或 Period 不一致', details: warnings }
+  const states = lines.filter(line => ['init', 'preparing for full sync', 'syncing', 'unknown', 'no sync (zone is master)', 'not syncing from zone', 'metadata is caught up with master', 'data is caught up with source'].includes(line))
+  return states.length ? { type: 'info', message: '原生采样状态（不代表整体同步健康）', details: states } : undefined
+}
+
 export type SyncCounters = { full?: string; incremental?: string; total?: string; remaining?: string; remainingUnit?: 'entries' | 'buckets'; behind?: string; recovering?: string; oldestChange?: string; oldestShard?: string; behindShards?: string[]; recoveringShards?: string[] }
 // These are native phase counts, not completed-work percentages. Parse only
 // whole known lines and retain the original section for all diagnostics.

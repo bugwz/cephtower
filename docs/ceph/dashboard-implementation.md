@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### 同步报告分段状态与错误提示
+
+对照参考 rgw-sync-data-info/rgw-sync-metadata-info 的错误突出显示，追踪 get_md_sync_status/get_data_sync_status 的原生状态和错误行，新增元数据及各来源独立状态提示。完整已知读取错误或 zone not found 优先显示错误；落后、恢复及 master/local Period 不一致显示警告，原始诊断保留。初始化、同步中、未同步和 caught up 只显示信息，不因报告返回成功、缺失时间或没有错误推断整体健康；来源名称中的 failed/error 不参与状态判断。复用已有命令/API，新增错误优先级、Period 差异、所有原生状态、名称误匹配和真实分段组件绑定测试。前端完整测试、类型检查和构建通过，无真实集群或浏览器视觉验证。
+
 #### 同步报告落后及恢复中分片列表
 
 参考 RGW 同步详情组件对 fullSyncStatus 的展示，追踪 radosgw-admin 的 behind shards/recovering shards 输出及 include/types.h 的 std::set 流格式，新增两类具体分片 ID 的结构化展示。复用已有 sync status 命令/API；按原生数字顺序解析唯一十进制 ID，保留超安全整数，不把缺失列表补为空或用列表长度替换报告计数。明确显示原生空列表，重复字段、重复/乱序 ID 不生成摘要，原文仍可查看。新增列表、空值、数字顺序、精度、异常与展示测试；前端完整测试、类型检查和构建通过，无真实集群或浏览器视觉验证。

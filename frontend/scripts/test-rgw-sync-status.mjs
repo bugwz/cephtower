@@ -26,6 +26,18 @@ for(const text of ['no sync (zone is master)','failed to fetch source sync statu
 const code=ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwSyncStatus.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.React}}).outputText
 new Function('exports','require','React',code)(api,name=>name==='react'?hooks:name==='antd'?{Alert:'Alert',Button:'Button',Card:'Card',Space:'Space',Descriptions:'Descriptions'}:name==='./rgwSyncReport'?parser:client,{createElement:(type,props,...children)=>({type,props:{...props,children}})})
 const counterItems=api.RgwSyncCounterDetails({section:counterText}).props.items
+const nativeErrors=['zone not found',...['failed to retrieve sync info','failed to read sync status','failed read sync status','failed read recovering shards','failed to fetch source sync status','failed to fetch master sync status'].map(prefix=>`${prefix}: Permission denied`)]
+for(const error of nativeErrors){
+  const section=`source: source-id (failed zone)\nsyncing\ndata is behind on 2 shards\n${error}\ndata is caught up with source`
+  assert.equal(parser.rgwSyncNotice(section).type,'error')
+  assert.deepEqual(parser.rgwSyncNotice(section).details,[error])
+  const alert=api.RgwSyncSectionNotice({section})
+  assert.equal(alert.props.type,'error')
+  assert.deepEqual(alert.props.description.props.children,[error])
+}
+for(const warning of ['data is behind on 2 shards','metadata is behind on 1 shards','1 shards are recovering','master is on a different period: master_period=a local_period=b'])assert.equal(parser.rgwSyncNotice(`syncing\n${warning}\ndata is caught up with source`).type,'warning')
+for(const state of ['init','preparing for full sync','syncing','unknown','no sync (zone is master)','not syncing from zone','metadata is caught up with master','data is caught up with source'])assert.equal(parser.rgwSyncNotice(state).type,'info')
+for(const text of ['source: failed (error)','source: syncing (zone not found)','unrecognized status','diagnostic: failed to read sync status: error','data is behind on 0 shards'])assert.equal(api.RgwSyncSectionNotice({section:text}),null)
 const shardLines='behind shards: [0,2,10,9007199254740993]\nrecovering shards: [1,3]'
 assert.deepEqual(parser.rgwSyncCounters(shardLines),{behindShards:['0','2','10','9007199254740993'],recoveringShards:['1','3']})
 assert.deepEqual(parser.rgwSyncCounters('behind shards: []'),{behindShards:[]})
@@ -62,6 +74,7 @@ const report='metadata sync no sync (zone is master)\ndata sync source: a\nbehin
 resolve({report});await settle();assert.deepEqual(find('pre').props.children,[report])
 find('Button').props.onClick();resolve({report:native});await settle()
 assert.equal(nodes(render()).filter(node=>node.type==='Card'&&String(node.props.title).startsWith('数据同步来源')).length,2)
+assert.deepEqual(nodes(render()).filter(node=>node.type===api.RgwSyncSectionNotice).map(node=>node.props.section),[parts.metadata,...parts.sources])
 assert.equal(nodes(render()).find(node=>node.type==='pre'&&node.props['aria-label']==='Zone 原生同步报告').props.children[0],native)
 assert.equal(find('details').props.open,false)
 find('Button').props.onClick();assert.equal(find('pre'),undefined)
