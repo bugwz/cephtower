@@ -476,6 +476,7 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 			}
 			var limits map[string]any
 			args = []string{"ratelimit", "get", "--bucket", bucket, "--ratelimit-scope", "bucket"}
+			preserveRGWBucketUsage(details)
 			if tenant != "" {
 				args = append(args, "--tenant", tenant)
 			}
