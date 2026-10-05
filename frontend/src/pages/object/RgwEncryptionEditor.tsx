@@ -8,7 +8,8 @@ export function RgwEncryptionEditor({configuration,clusterId,labels,isCurrent}:{
   const [confirmed,setConfirmed]=useState(false),[saved,setSaved]=useState(false)
   const [status,setStatus]=useState<'editing'|'running'|'done'|'error'>('editing')
   const mounted=useRef(true),submitted=useRef(false),revision=useRef(0)
-  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;revision.current++}},[])
+  // Effect replay does not change the draft; only edits and confirmations advance it.
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false}},[])
   const ticket=revision.current
   const editable=()=>mounted.current&&isCurrent()&&!submitted.current&&ticket===revision.current
   function change(name:string,value:string|boolean|undefined) {

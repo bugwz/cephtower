@@ -3,20 +3,31 @@ import {readFileSync} from 'node:fs'
 import ts from 'typescript'
 const code=ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwEncryptionEditor.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText
 function fixture(provider='vault',encryption_type='kms') {
- const states=[],refs=[],calls=[],exports={};let si=0,ri=0,cleanup,current=true
+ const states=[],refs=[],calls=[],exports={};let si=0,ri=0,cleanup,effect,current=true
  const jsx=(type,props)=>({type,props})
- const react={useState:v=>{const i=si++;if(!(i in states))states[i]=v;return[states[i],v=>states[i]=v]},useRef:v=>refs[ri++]??(refs[ri-1]={current:v}),useEffect:fn=>{if(!cleanup)cleanup=fn()}}
+ const react={useState:v=>{const i=si++;if(!(i in states))states[i]=v;return[states[i],v=>states[i]=v]},useRef:v=>refs[ri++]??(refs[ri-1]={current:v}),useEffect:fn=>{effect=fn}}
  new Function('exports','require',code)(exports,name=>name==='react'?react:name==='antd'?{...Object.fromEntries(['Alert','Button','Checkbox','Select','Space'].map(n=>[n,n])),Input:Object.assign(()=>{}, {Password:'Password'})}:name.includes('api/resource')?{mutateResource:(...args)=>new Promise((resolve,reject)=>calls.push({args,resolve,reject}))}:{jsx,jsxs:jsx})
  const names=provider==='kmip'?['addr','username','password','client_cert','client_key','ca_path','kms_key_template','s3_key_template']:['addr','auth','prefix','secret_engine','namespace','token_file','ssl_cacert','ssl_clientcert','ssl_clientkey','verify_ssl',...(encryption_type==='s3'?['key_template']:[])]
  const configuration={entity:'client.rgw.a',provider,encryption_type,backend:'barbican',fields:names.map(name=>({name,value:'[REDACTED]',redacted:true}))}
  function nodes(n){return Array.isArray(n)?n.flatMap(nodes):n&&typeof n==='object'?[n,...nodes(n.props?.children)]:[]}
- function render(){si=ri=0;return nodes(exports.RgwEncryptionEditor({configuration,clusterId:7,labels:{},isCurrent:()=>current}))}
+ function render(){si=ri=0;const tree=nodes(exports.RgwEncryptionEditor({configuration,clusterId:7,labels:{},isCurrent:()=>current}));if(!cleanup)cleanup=effect();return tree}
  const field=name=>render().find(n=>n.props?.['aria-label']===name)
  const checks=()=>render().filter(n=>n.type==='Checkbox'&&!n.props['aria-label'])
  const button=()=>render().find(n=>n.type==='Button')
- return {render,field,checks,button,calls,states,leave:()=>{current=false},unmount:()=>cleanup()}
+ return {render,field,checks,button,calls,states,leave:()=>{current=false},unmount:()=>cleanup(),replayEffect:()=>{cleanup();cleanup=effect()}}
 }
 const tick=()=>new Promise(r=>setTimeout(r,0))
+const strict=fixture()
+const initialField=strict.field('修改 namespace')
+strict.replayEffect()
+initialField.props.onChange({target:{checked:true}})
+assert.deepEqual(strict.states[0],{namespace:''},'effect replay must not invalidate current render handlers')
+strict.checks()[0].props.onChange({target:{checked:true}})
+const strictSubmit=strict.button()
+strictSubmit.props.onClick();strictSubmit.props.onClick()
+assert.equal(strict.calls.length,1)
+strict.calls[0].resolve({});await tick();assert.equal(strict.states[3],'done')
+const removed=fixture();const removedField=removed.field('修改 namespace');removed.unmount();removedField.props.onChange({target:{checked:true}});assert.deepEqual(removed.states[0],{})
 for(const [provider,type] of [['vault','kms'],['vault','s3'],['kmip','kms']]) {
  const f=fixture(provider,type)
  assert.equal(f.button().props.disabled,true)
