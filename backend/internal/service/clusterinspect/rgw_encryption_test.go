@@ -1,6 +1,7 @@
 package clusterinspect
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,6 +11,59 @@ import (
 
 	"cephtower/backend/internal/integration/ceph/executor"
 )
+
+func TestRGWEncryptionReadClearsCommandBuffers(t *testing.T) {
+	for _, mode := range []string{"success", "error", "exit", "invalid", "cancel"} {
+		t.Run(mode, func(t *testing.T) {
+			s, runner, id := testInspection(t)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			var buffers [][]byte
+			runner.run = func(spec executor.CommandSpec) (executor.CommandResult, error) {
+				// Each previous command must be cleared before another command starts.
+				for _, buffer := range buffers {
+					if !bytes.Equal(buffer, make([]byte, len(buffer))) {
+						t.Fatal("previous output retained")
+					}
+				}
+				value := "\n"
+				password := spec.Args[3] == "rgw_crypt_kmip_password"
+				if password {
+					value = "private-password\n"
+				}
+				if password && mode == "invalid" {
+					value = "private-password\x00\n"
+				}
+				result := executor.CommandResult{Stdout: []byte(value), Stderr: []byte("private-diagnostic")}
+				buffers = append(buffers, result.Stdout, result.Stderr)
+				if password {
+					switch mode {
+					case "error":
+						return result, errors.New("private-error")
+					case "exit":
+						result.ExitCode = 2
+					case "cancel":
+						cancel()
+					}
+				}
+				return result, nil
+			}
+			config, err := s.RGWEncryptionConfiguration(ctx, id, "client.rgw.a", "kms", "kmip")
+			if (err == nil) != (mode == "success") {
+				t.Fatal("unexpected outcome")
+			}
+			encoded, _ := json.Marshal(config)
+			if strings.Contains(string(encoded), "private-") || err != nil && strings.Contains(err.Error(), "private-") {
+				t.Fatal("private output leaked")
+			}
+			for _, buffer := range buffers {
+				if !bytes.Equal(buffer, make([]byte, len(buffer))) {
+					t.Fatal("command output retained")
+				}
+			}
+		})
+	}
+}
 
 func TestRGWEncryptionConfigurationProfiles(t *testing.T) {
 	for _, profile := range [][2]string{{"kms", "vault"}, {"kms", "kmip"}, {"s3", "vault"}} {

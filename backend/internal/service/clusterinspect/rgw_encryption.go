@@ -1,6 +1,7 @@
 package clusterinspect
 
 import (
+	"bytes"
 	"context"
 	"net/url"
 	"regexp"
@@ -50,6 +51,8 @@ func (s *Service) RGWEncryptionConfiguration(ctx context.Context, clusterID uint
 			return "", err
 		}
 		result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: "rgw.encryption.read", Binary: executor.BinaryCeph, Args: []string{"config", "get", entity, option}, Timeout: 20 * time.Second, MaxOutput: 16384})
+		defer clear(result.Stdout)
+		defer clear(result.Stderr)
 		if ctx.Err() != nil {
 			return "", ctx.Err()
 		}
@@ -57,14 +60,18 @@ func (s *Service) RGWEncryptionConfiguration(ctx context.Context, clusterID uint
 			return "", failed("ceph_command_failed")
 		}
 		// ConfigMonitor appends exactly one newline even for empty string options.
-		if len(result.Stdout) > 16384 || !utf8.Valid(result.Stdout) || !strings.HasSuffix(string(result.Stdout), "\n") {
+		if len(result.Stdout) > 16384 || !utf8.Valid(result.Stdout) || !bytes.HasSuffix(result.Stdout, []byte{'\n'}) {
 			return "", failed("invalid_ceph_response")
 		}
-		value := strings.TrimSuffix(string(result.Stdout), "\n")
-		if strings.ContainsFunc(value, unicode.IsControl) {
+		value := result.Stdout[:len(result.Stdout)-1]
+		if bytes.IndexFunc(value, unicode.IsControl) >= 0 {
 			return "", failed("invalid_ceph_response")
 		}
-		return value, nil
+		// Never copy the password into an immutable Go string or response field.
+		if option == "rgw_crypt_kmip_password" {
+			return "[REDACTED]", nil
+		}
+		return string(value), nil
 	}
 	backendKey, prefix := "rgw_crypt_s3_kms_backend", "rgw_crypt_"+provider+"_"
 	if encryptionType == "s3" {
