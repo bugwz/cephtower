@@ -49,3 +49,24 @@ for (const input of [value, {}, { ...value, anonymous_ratelimit: undefined }]) {
 const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
 assert.match(pages, /key: 'global_rate_limit'[^\n]+render: \(value\) => <RgwGlobalRateLimit value=\{value\} \/>/)
 console.log('Global RGW rate limit scopes preserve unavailable, disabled and exact values')
+
+const quotaDetails = load('rgwQuotaDetails.ts')
+const quota = load('RgwQuota.tsx', { './rgwQuotaDetails': quotaDetails })
+const { RgwGlobalQuota } = load('RgwGlobalQuota.tsx', { './RgwQuota': quota })
+for (const value of [undefined, null, [], false, '']) assert.equal(RgwGlobalQuota({ value }).props.type, 'warning')
+for (const value of [{}, { user_quota: { enabled: true, max_size: 0, max_objects: -1 }, bucket_quota: { enabled: false } }]) {
+  const [notice, tabs] = RgwGlobalQuota({ value }).props.children
+  assert.ok(notice.props.description.includes('空 Realm'))
+  assert.ok(notice.props.description.includes('不代表'))
+  assert.deepEqual(tabs.props.items.map(item => item.key), ['user_quota', 'bucket_quota'])
+  for (const item of tabs.props.items) {
+    assert.equal(item.children.type, quota.RgwQuota)
+    assert.equal(item.children.props.value, value[item.key])
+    const rows = item.children.type(item.children.props).props.items
+    if (value[item.key] === undefined) assert.equal(rows[0].children, '配额信息不可用')
+    else if (item.key === 'bucket_quota') assert.equal(rows[0].children, '未启用')
+    else assert.deepEqual(rows.map(row => row.children), ['已启用', '0', '无限制'])
+  }
+}
+assert.match(pages, /key: 'global_quota'[^\n]+render: \(value\) => <RgwGlobalQuota value=\{value\} \/>/)
+console.log('Global quota scope tabs preserve missing, disabled, zero and unlimited values')

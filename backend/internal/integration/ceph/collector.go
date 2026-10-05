@@ -48,6 +48,7 @@ var collectionFailureKinds = map[string][]string{
 	"collect.rbd_image_info":          {"rbd_image"},
 	"collect.rbd_image_usage":         {"rbd_image"},
 	"collect.rgw_global_ratelimit":    {"rgw_status"},
+	"collect.rgw_global_quota":        {"rgw_status"},
 	"collect.rgw_status":              {"rgw_status"},
 	"collect.nfs_cluster":             {"nfs_cluster", "nfs_export"},
 	"collect.smb_cluster":             {"smb_cluster", "smb_share"},
@@ -985,6 +986,16 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 	var realms rgwRealmWire
 	if err := p.runBinaryInto(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_status", []string{"realm", "list", "--format", "json"}, &realms); err == nil {
 		payload := cephdomain.RGWStatus{Realms: realms.Realms}
+		var quotas map[string]any
+		if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_global_quota", []string{"global", "quota", "get", "--format", "json"}, &quotas) {
+			user, userOK := quotas["user quota"].(map[string]any)
+			bucket, bucketOK := quotas["bucket quota"].(map[string]any)
+			if userOK && bucketOK {
+				payload.GlobalQuota = map[string]any{"user_quota": user, "bucket_quota": bucket}
+			} else {
+				markCollectionUnavailable(ctx, "collect.rgw_global_quota")
+			}
+		}
 		var limits map[string]any
 		if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_global_ratelimit", []string{"global", "ratelimit", "get", "--format", "json"}, &limits) {
 			valid := true

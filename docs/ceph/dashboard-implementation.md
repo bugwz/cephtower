@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### 全局配额采集与概览详情
+
+补齐 RGW 全局配额的原生命令、库存/API 和前端链路：固定只读 radosgw-admin global quota get --format json，依据参考源码 GLOBAL_QUOTA_GET 将原生带空格的 user quota、bucket quota 归一化为 global_quota.user_quota/bucket_quota，随 RGWStatus 库存经 GET /rgw/status 返回。两个作用域必须为对象；命令或格式失败进入既有 rgw_status 采集失败记录，不制造关闭状态。概览增加用户/Bucket 配额详情页签，复用参考 Dashboard 的启用状态、零配额与负数无限制显示语义，明确默认 Realm/空 Realm 范围，不声称是全部 Realm 汇总或对象最终有效配额。新增固定只读命令、原生键映射、状态序列化、异常响应及前端作用域绑定测试。前后端全量测试、类型检查、构建和 OpenAPI 检查通过；未连接真实集群，未进行浏览器视觉验证。
+
 #### 全局限流分作用域详情
 
 对照 Dashboard 的 rgw-rate-limit 全局限流提示及 rgw-rate-limit-details 展示，核查原生 global ratelimit get 的 user_ratelimit、bucket_ratelimit、anonymous_ratelimit 三类输出。后端已有固定命令采集并经 RGW 状态 API 提供，现将概览中的原始对象展示替换为用户、Bucket、匿名请求三个详情页签，复用已有启用状态与四项限流显示，注明默认 Realm 配置和每 RGW 每分钟语义，不将它当作特定对象的最终有效限流。缺失作用域显示不可用，不解释为未启用；沿用参考前端关闭时不展示限制值的行为。新增真实组件渲染测试，覆盖作用域绑定、缺失、未知状态、关闭、零值无限制和精确整数。前端全量测试、类型检查和构建通过；无后端/API 变更、真实集群或浏览器视觉验证。
