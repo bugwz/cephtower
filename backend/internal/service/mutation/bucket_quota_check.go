@@ -11,8 +11,8 @@ import (
 // Require the subsequent stats to contain the requested identity and quota.
 func bucketQuotaMatches(parameters map[string]any, data []byte) bool {
 	var actual struct {
-		Bucket string `json:"bucket"`
-		Tenant string `json:"tenant"`
+		Bucket *string `json:"bucket"`
+		Tenant *string `json:"tenant"`
 		Quota  *struct {
 			Enabled    *bool  `json:"enabled"`
 			MaxSize    *int64 `json:"max_size"`
@@ -24,7 +24,7 @@ func bucketQuotaMatches(parameters map[string]any, data []byte) bool {
 	}
 	raw, err := base64.RawURLEncoding.DecodeString(rawText(parameters, "bucket_id"))
 	parts := strings.SplitN(string(raw), "\x00", 2)
-	if err != nil || len(parts) != 2 || actual.Tenant != parts[0] || actual.Bucket != parts[1] {
+	if err != nil || len(parts) != 2 || actual.Tenant == nil || actual.Bucket == nil || *actual.Tenant != parts[0] || *actual.Bucket != parts[1] {
 		return false
 	}
 	enabled, ok := parameters["enabled"].(bool)

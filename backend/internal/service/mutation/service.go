@@ -426,6 +426,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "rgw_user.caps" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "capability command failed; inspect user capabilities before any manual retry", Retryable: false}
 		}
+		if request.Action == "rgw_bucket.quota" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "bucket quota write was not confirmed; inspect current limits and activation before any manual retry", Retryable: false}
+		}
 		if request.Action == "rgw_user.update" && !rgwUserAccountMigrationRequested(request) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "user update failed; inspect actual properties and flags before any manual retry", Retryable: false}
 		}
@@ -631,10 +634,13 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if (request.Action == "rgw_user.quota" || request.Action == "rgw_account.quota") && (err != nil || !rgwOwnerQuotaMatches(request.Action, request.Parameters, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "quota command was accepted but owner identity and scoped limits could not be verified; inspect quota state before retrying", Retryable: false}
 		}
+		if request.Action == "rgw_bucket.quota" && (err != nil || !bucketQuotaMatches(request.Parameters, checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "bucket quota commands were accepted but bucket identity, limits and activation could not be verified; inspect quota state before any manual retry", Retryable: false}
+		}
 		if request.Action == "rbd_mirroring.global_schedule" && (err != nil || !rbdMirrorScheduleReadbackMatches(request, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "global schedule command was accepted but its exact scope could not be verified; inspect schedules before retrying", Retryable: false}
 		}
-		if err != nil || ((request.Action == "cephfs_entry.create" || request.Action == "cephfs_entry.delete") && !cephFSDirectoryMutationMatches(request.Action, request.Parameters, checked.Stdout)) || (request.Action == "cephfs_entry.quota" && !cephFSEntryQuotaMatches(request.Parameters, checked.Stdout)) || (isCephFSEntrySnapshotMutation(request.Action) && !cephFSEntrySnapshotMatches(request.Action, request.Parameters, checked.Stdout)) || (request.Action == "rgw_bucket.quota" && !bucketQuotaMatches(request.Parameters, checked.Stdout)) || ((request.Action == "rgw_zone.update" || request.Action == "rgw_zone.create") && !zoneReadbackMatches(request.Parameters, checked.Stdout)) || (isRBDMirrorScheduleMutation(request.Parameters) && !rbdMirrorScheduleReadbackMatches(request, checked.Stdout)) {
+		if err != nil || ((request.Action == "cephfs_entry.create" || request.Action == "cephfs_entry.delete") && !cephFSDirectoryMutationMatches(request.Action, request.Parameters, checked.Stdout)) || (request.Action == "cephfs_entry.quota" && !cephFSEntryQuotaMatches(request.Parameters, checked.Stdout)) || (isCephFSEntrySnapshotMutation(request.Action) && !cephFSEntrySnapshotMatches(request.Action, request.Parameters, checked.Stdout)) || ((request.Action == "rgw_zone.update" || request.Action == "rgw_zone.create") && !zoneReadbackMatches(request.Parameters, checked.Stdout)) || (isRBDMirrorScheduleMutation(request.Parameters) && !rbdMirrorScheduleReadbackMatches(request, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "command was accepted but the expected state could not be verified", Retryable: true}
 		}
 		if request.Action == "upgrade.action" && optional(request.Parameters, "action") != "start" && !upgradeControlMatches(optional(request.Parameters, "action"), checked.Stdout) {

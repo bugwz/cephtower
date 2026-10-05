@@ -241,6 +241,16 @@ func TestFilesystemRenameRefreshesAffectedStorage(t *testing.T) {
 	}
 }
 
+func TestBucketQuotaRefreshFailureDoesNotRepeatWrite(t *testing.T) {
+	mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{}}}
+	reconciler := &reconcileExecutorFake{err: errors.New("private refresh diagnostic")}
+	_, err := NewActionDispatcher(mutations, nil, reconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_bucket.quota", ResourceKind: "rgw_bucket"})
+	var failure *cephdomain.ActionError
+	if !errors.As(err, &failure) || failure.Code != "post_reconcile_failed" || failure.Retryable || reconciler.kind != "rgw_bucket" || len(reconciler.kinds) != 0 {
+		t.Fatalf("unsafe refresh failure: %v; reconciler=%+v", err, reconciler)
+	}
+}
+
 func TestRGWAccountMigrationRefreshesAffectedResources(t *testing.T) {
 	for _, fail := range []bool{false, true} {
 		mutations := &mutationExecutorFake{result: cephdomain.ActionResult{Details: map[string]any{}}}
