@@ -5,6 +5,31 @@ import (
 	"time"
 )
 
+func (h *Handler) GetRGWTopologyCounts(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	var input struct {
+		ClusterID uint64 `json:"cluster_id"`
+	}
+	if !DecodeStrict(w, r, &input) {
+		return
+	}
+	if input.ClusterID == 0 {
+		WriteError(w, r, 400, "invalid_request", "cluster_id is required", false, nil)
+		return
+	}
+	annotateAudit(r, "rgw.topology.counts", "rgw_topology", "", "", &input.ClusterID)
+	if h.Inspection == nil {
+		WriteError(w, r, 501, "capability_unavailable", "cluster inspection is unavailable", false, nil)
+		return
+	}
+	result, err := h.Inspection.RGWTopologyCounts(r.Context(), input.ClusterID)
+	if err != nil {
+		writeActionError(w, r, err)
+		return
+	}
+	WriteSuccess(w, 200, "success", result)
+}
+
 func (h *Handler) GetRGWDaemonPerf(w http.ResponseWriter, r *http.Request) {
 	h.getRGWDaemonPerf(w, r, false)
 }

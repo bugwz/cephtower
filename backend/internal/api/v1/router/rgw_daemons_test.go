@@ -131,7 +131,24 @@ func TestRGWDaemonAPI(t *testing.T) {
 	if w = send(strings.TrimSuffix(statusBody, "}") + `,"start":"arbitrary"}`); w.Code != 400 {
 		t.Fatal("custom history window accepted")
 	}
+	path = "/api/v1/rgw/topology/counts"
+	runner.exit = 0
+	runner.output = `{"realms":[],"zonegroups":["g"],"zones":["z"]}`
+	if w = send(valid); w.Code != 200 || w.Header().Get("Cache-Control") != "no-store" || !strings.Contains(w.Body.String(), `"realm_count":0`) || !strings.Contains(w.Body.String(), `"zone_count":1`) {
+		t.Fatal("invalid topology count response", w.Code)
+	}
+	count = runner.calls
+	if w = send(`{"cluster_id":0}`); w.Code != 400 || runner.calls != count {
+		t.Fatal("invalid count scope executed")
+	}
+	if w = send(strings.TrimSuffix(valid, "}") + `,"realm":"other"}`); w.Code != 400 || runner.calls != count {
+		t.Fatal("unexpected count scope accepted")
+	}
 	auth = true
+	if w = send(valid); w.Code != 401 || runner.calls != count {
+		t.Fatal("counts authentication bypass")
+	}
+	path = "/api/v1/rgw/daemon/perf/history"
 	if w = send(statusBody); w.Code != 401 {
 		t.Fatal("history authentication bypass")
 	}
