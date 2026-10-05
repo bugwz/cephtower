@@ -2,6 +2,7 @@ import type { ApiRecord } from '../../api/client'
 import { RgwOverviewMetrics } from './RgwOverviewMetrics'
 import { RgwTopologyCounts } from './RgwTopologyCounts'
 import { RgwBucketUsage } from './RgwBucketUsage'
+import { RgwUserCount } from './RgwUserCount'
 import { rgwRealmImportAction } from './rgwRealmImport'
 import { rgwRealmSetupAction } from './rgwRealmSetup'
 import { rgwRealmMigrationAction } from './rgwRealmMigration'
@@ -140,7 +141,7 @@ import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUse
 import { rgwUserPlacementInput, rgwUserPlacementTagsInput } from './rgwUserPlacementForm'
 
 export function RgwOverviewPage() {
-  return <><RgwBucketUsage /><RgwTopologyCounts /><RgwOverviewMetrics /><ResourceListPage definition={definitions.rgwOverview} /></>
+  return <><RgwUserCount /><RgwBucketUsage /><RgwTopologyCounts /><RgwOverviewMetrics /><ResourceListPage definition={definitions.rgwOverview} /></>
 }
 
 export function RgwUsersPage() {
