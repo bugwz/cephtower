@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 放置存储类与云分层配置结构化展示
+
+对照参考 `rgw-storage-class-list.component.ts` 的类型/组/区域/端点列，以及 `BucketTieringUtils.filterAndMapTierTargets` 的本地类与分层映射，将本项目组 `placement_targets` 与 Zone `placement_pools` 原始对象列替换为可展开表格。沿用已存在的 `collector_optional.go` → `zonegroup/zone list/get --format json` → 库存 API 链路，不新增重复采集或伪造数据。
+组表展示目标、类（含 STANDARD）、本地/云 S3/Glacier/未知类型、声明缺失、目标区域与脱敏端点；展开列出原生保留头对象、读穿透、恢复类/天数、目标路径/类、分段参数、ACL key/val 映射及 Glacier 恢复参数。只取已知非凭据字段，URL 隐藏用户凭据/查询/片段，未知嵌套字段不透传。
+Zone 表展示数据池、压缩、索引类型、inline data 和额外数据池；依据 `RGWZonePlacementInfo::get_data_extra_pool` 标明空额外池回退 STANDARD 数据池，不把缺失压缩当作显式 none。缺失、重复、畸形配置显示警告，未知分层清单不能认定为本地类；快照不证明池存在、组与 Zone 配置一致或远端可达。
+新增字段、false/0、原生 ACL、Glacier、池回退、未知/重复数据、URL 与凭据隐藏及表格绑定测试；前端全量回归、TypeScript 与生产构建通过。本轮后端未改动，未重跑后端测试；未进行真实集群或浏览器视觉验证。
+
 #### 本地存储类 Zone 与 Zonegroup 联动删除
 
 补齐参考 `rgw-storage-class-list.component.ts::removeStorageClassModal` 本地类分支及 `delete_placement_targets` 指定 Zone 路径：组页面显式选择成员 Zone、已有目标和非 STANDARD 本地类，经高风险 `DELETE /rgw/zonegroup/storage/class/local` 执行。

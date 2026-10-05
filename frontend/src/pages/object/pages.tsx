@@ -18,6 +18,7 @@ import { groupLocalClassDeleteZones, groupLocalClassDeleteClasses, groupLocalCla
 import { RgwTopologyView } from './RgwTopology'
 import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwZonePoolReferences } from './RgwZonePoolReferences'
+import { RgwPlacementClasses } from './RgwPlacementClasses'
 import { RgwRealmTransfer } from './RgwRealmTransfer'
 import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
 import { zonegroupPipeZonesSelectionChanged } from './rgwZonegroupSyncGroup'
@@ -1365,7 +1366,7 @@ const definitions: Record<
       { key: 'master_zone', title: 'Master Zone' },
       { key: 'endpoints', title: '端点' },
       { key: 'zones', title: '成员 Zone' },
-      { key: 'placement_targets', title: '放置目标' },
+      { key: 'placement_targets', title: '放置目标与存储类', ellipsis: false, render: value => <RgwPlacementClasses value={value} /> },
       { key: 'default_placement', title: '默认放置目标' },
       { key: 'hostnames', title: '主机名' },
       { key: 'hostnames_s3website', title: '静态网站主机名' },
@@ -1480,7 +1481,7 @@ const definitions: Record<
       { key: 'is_default', title: '当前上下文默认' },
       { key: 'realm_id', title: 'Realm ID' },
       { key: 'zonegroup_memberships', title: '所属 Zonegroup、端点与同步配置' },
-      { key: 'placement_pools', title: '放置池与存储类别' },
+      { key: 'placement_pools', title: '放置池与存储类别', ellipsis: false, render: value => <RgwPlacementClasses value={value} zone /> },
       { key: 'pool_references', title: '精确池引用明细', ellipsis: false, render: (_value, row) => <RgwZonePoolReferences row={row} /> },
       { key: 'domain_root', title: '元数据根池' },
       { key: 'control_pool', title: '控制池' },
