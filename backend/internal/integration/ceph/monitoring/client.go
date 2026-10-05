@@ -40,6 +40,11 @@ type PrometheusResult struct {
 }
 
 var metricQueries = map[string]string{
+	"rgw_request_rate":      "sum(rate(ceph_rgw_req[1m]))",
+	"rgw_get_latency_ms":    "(sum(rate(ceph_rgw_op_get_obj_lat_sum[1m])) / sum(rate(ceph_rgw_op_get_obj_lat_count[1m]))) * 1000",
+	"rgw_put_latency_ms":    "(sum(rate(ceph_rgw_op_put_obj_lat_sum[1m])) / sum(rate(ceph_rgw_op_put_obj_lat_count[1m]))) * 1000",
+	"rgw_get_bytes_rate":    "sum(rate(ceph_rgw_op_get_obj_bytes[1m]))",
+	"rgw_put_bytes_rate":    "sum(rate(ceph_rgw_op_put_obj_bytes[1m]))",
 	"pool_read_bytes":       "sum by (pool_id) (rate(ceph_pool_rd_bytes[5m]))",
 	"pool_write_bytes":      "sum by (pool_id) (rate(ceph_pool_wr_bytes[5m]))",
 	"pool_read_ops":         "sum by (pool_id) (rate(ceph_pool_rd[5m]))",

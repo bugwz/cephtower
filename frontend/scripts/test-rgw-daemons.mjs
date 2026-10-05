@@ -5,6 +5,8 @@ import './test-rgw-daemon-history.mjs'
 import {readFileSync} from 'node:fs'
 import ts from 'typescript'
 const code=ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwDaemonsPage.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText
+const metricPage=readFileSync(new URL('../src/pages/monitoring/MetricPage.tsx',import.meta.url),'utf8')
+for(const id of ['rgw_request_rate','rgw_get_latency_ms','rgw_put_latency_ms','rgw_get_bytes_rate','rgw_put_bytes_rate'])assert.ok(metricPage.includes(`value: '${id}'`))
 for(const file of ['HostDetailPage','ServiceDaemons','ServicePage']){
  const source=readFileSync(new URL(`../src/pages/cluster/${file}.tsx`,import.meta.url),'utf8')
  const match=source.match(/\/\^\(mon\|mgr\|mds\|osd\)[^\n]*?\$\//)

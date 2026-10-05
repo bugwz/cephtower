@@ -30,6 +30,11 @@ interface MetricRow extends ApiRecord {
 }
 
 const metricOptions = [
+	{ label: 'RGW 请求率（请求/s）', value: 'rgw_request_rate', description: 'sum rate over 1m' },
+	{ label: 'RGW GET 平均延迟（ms）', value: 'rgw_get_latency_ms', description: 'weighted latency over 1m' },
+	{ label: 'RGW PUT 平均延迟（ms）', value: 'rgw_put_latency_ms', description: 'weighted latency over 1m' },
+	{ label: 'RGW GET 带宽（B/s）', value: 'rgw_get_bytes_rate', description: 'sum rate over 1m' },
+	{ label: 'RGW PUT 带宽（B/s）', value: 'rgw_put_bytes_rate', description: 'sum rate over 1m' },
   { label: '集群健康', value: 'cluster_health', description: 'ceph_health_status' },
   { label: '容量使用率', value: 'capacity_used_percent', description: 'used / total' },
   { label: '客户端读吞吐', value: 'client_read_bytes', description: 'pool read bytes rate' },
@@ -169,6 +174,7 @@ export function MetricPage() {
               </div>
             </Form>
 
+            <Alert type="info" message="RGW 指标使用一分钟速率窗口并聚合监控端点内的所有匹配序列。端点应仅包含当前集群且避免重复采集；无样本或 NaN 不代表零值。" />
             <Space wrap>
               <Tag color="blue">result_type: {result?.result_type ?? '-'}</Tag>
               <Tag>series: {rows.length}</Tag>
