@@ -65,7 +65,7 @@ type command struct {
 }
 
 func Supports(action string) bool {
-	if action == "rgw_zonegroup.placement_default" || action == "rgw_zonegroup.placement_tags" {
+	if action == "rgw_zonegroup.placement_default" || action == "rgw_zonegroup.placement_tags" || action == "rgw_zonegroup.storage_class_delete" {
 		return true
 	}
 	if action == "rgw_zonegroup.storage_class_create" || action == "rgw_zonegroup.placement_create" {
@@ -147,7 +147,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if request.Action == "rgw_zone.delete" {
 		return s.executeZoneDelete(ctx, access, request, spec)
 	}
-	if request.Action == "rgw_zonegroup.storage_class_create" || request.Action == "rgw_zonegroup.placement_create" || request.Action == "rgw_zonegroup.placement_default" || request.Action == "rgw_zonegroup.placement_tags" {
+	if request.Action == "rgw_zonegroup.storage_class_create" || request.Action == "rgw_zonegroup.placement_create" || request.Action == "rgw_zonegroup.placement_default" || request.Action == "rgw_zonegroup.placement_tags" || request.Action == "rgw_zonegroup.storage_class_delete" {
 		return s.executeZonegroupStorageClass(ctx, access, request, spec)
 	}
 	if request.Action == "rgw_zone.placement" || request.Action == "rgw_zone.storage_class_create" || request.Action == "rgw_zone.placement_create" {
@@ -683,6 +683,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 }
 
 func build(request Request, p map[string]any) (command, error) {
+	if request.Action == "rgw_zonegroup.storage_class_delete" {
+		return buildZonegroupStorageClassDelete(p)
+	}
 	if request.Action == "rgw_zonegroup.placement_tags" {
 		return buildZonegroupPlacementTags(p)
 	}

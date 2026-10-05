@@ -13,6 +13,7 @@ import { groupStorageClassBlocked, groupStorageClassOptions, groupStorageClassIn
 import { groupPlacementCreateBlocked, groupPlacementCreateInput, groupPlacementCreateConfirmation } from './rgwZonegroupStorageClass'
 import { groupPlacementDefaultClasses, groupPlacementDefaultInput, groupPlacementDefaultConfirmation } from './rgwZonegroupStorageClass'
 import { groupPlacementTagsChanged, groupPlacementTagsInput, groupPlacementTagsConfirmation } from './rgwZonegroupStorageClass'
+import { groupStorageClassDeleteInput, groupStorageClassDeleteConfirmation } from './rgwZonegroupStorageClass'
 import { RgwTopologyView } from './RgwTopology'
 import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwZonePoolReferences } from './RgwZonePoolReferences'
@@ -1146,6 +1147,17 @@ const definitions: Record<
         { name: 'confirm_create', label: '范围确认', type: 'select', required: true, options: [{value:'acknowledged',label:'已备份，了解默认目标初始化、不配置 Zone 池和不发布 Period'}] }
       ],
       buildBody: (values,clusterId,row) => ({cluster_id:clusterId,...groupStorageClassInput(values,row)})
+    }, {
+      title: '删除组存储类（保留 Zone 映射）', path: '/rgw/zonegroup/storage/class', method: 'DELETE',
+      successMessage: '组存储类删除与适用的 Period 发布已核验（未删除对象或 Zone 映射）',
+      disabledWhen: groupStorageClassBlocked, confirmation: groupStorageClassDeleteConfirmation,
+      changedValues: changed => ({...(Object.prototype.hasOwnProperty.call(changed,'placement_id') ? {storage_class:undefined} : {}),...(Object.keys(changed).some(key => key !== 'confirm_delete') ? {confirm_delete:undefined} : {})}),
+      fields: [
+        {name:'placement_id',label:'已有放置目标',type:'select',required:true,optionsLoader:async (_clusterId,row) => groupStorageClassOptions(row)},
+        {name:'storage_class',label:'待删除存储类（同时移除该类分层配置）',type:'select',required:true,optionsDependencies:['placement_id'],optionsLoader:async (_clusterId,row,values) => groupPlacementDefaultClasses(row,values?.placement_id)},
+        {name:'confirm_delete',label:'删除与发布确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份并核对数据依赖，了解默认类回退、Realm 发布与 Zone 映射保留'}]}
+      ],
+      buildBody:(values,clusterId,row) => ({cluster_id:clusterId,...groupStorageClassDeleteInput(values,row)})
     }, {
       title: '创建 Zonegroup 同步组', path: '/rgw/zonegroup/sync/group', method: 'POST',
       successMessage: 'Zonegroup 空同步组创建与适用的 Period 发布已核验',

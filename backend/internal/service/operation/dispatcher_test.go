@@ -74,6 +74,12 @@ func TestActionDispatcherReconcilesNativeMutation(t *testing.T) {
 }
 
 func TestActionDispatcherFailsWhenPostReconcileFails(t *testing.T) {
+	classDeleteReconciler := &reconcileExecutorFake{err: errors.New("offline")}
+	_, classDeleteErr := NewActionDispatcher(&mutationExecutorFake{}, nil, classDeleteReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zonegroup.storage_class_delete", ResourceKind: "rgw_zonegroup"})
+	var classDeleteFailure *cephdomain.ActionError
+	if !errors.As(classDeleteErr, &classDeleteFailure) || classDeleteFailure.Retryable || !reflect.DeepEqual(classDeleteReconciler.kinds, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone"}) {
+		t.Fatal("unsafe class deletion refresh")
+	}
 	tagsReconciler := &reconcileExecutorFake{err: errors.New("offline")}
 	_, tagsErr := NewActionDispatcher(&mutationExecutorFake{}, nil, tagsReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zonegroup.placement_tags", ResourceKind: "rgw_zonegroup"})
 	var tagsFailure *cephdomain.ActionError

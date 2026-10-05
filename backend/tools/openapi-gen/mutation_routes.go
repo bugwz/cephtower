@@ -104,6 +104,7 @@ var mutationRouteActions = map[string]string{
 	"POST /rgw/zone/placement":                      "rgw_zone.placement_create",
 	"POST /rgw/zone/storage/class":                  "rgw_zone.storage_class_create",
 	"POST /rgw/zonegroup/storage/class":             "rgw_zonegroup.storage_class_create",
+	"DELETE /rgw/zonegroup/storage/class":           "rgw_zonegroup.storage_class_delete",
 	"POST /rgw/zonegroup/placement":                 "rgw_zonegroup.placement_create",
 	"PATCH /rgw/zonegroup/placement/default":        "rgw_zonegroup.placement_default",
 	"PATCH /rgw/zonegroup/placement/tags":           "rgw_zonegroup.placement_tags",

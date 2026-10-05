@@ -88,6 +88,20 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 		t.Fatal("group class declaration not queued", groupClassResponse.Code)
 	}
 	groupClassOp, groupClassErr := db.FindOperation(context.Background(), operationIDFromResponse(t, groupClassResponse))
+	classDeleteBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"delete-class-group","realm_id":"r","placement_id":"p","storage_class":"COLD","expected_default_placement":"p/COLD","confirm_delete":true}`, cluster.ID)
+	classDeleteResponse := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/zonegroup/storage/class", classDeleteBody, "class-delete")
+	if classDeleteResponse.Code != http.StatusAccepted {
+		t.Fatal(classDeleteResponse.Code)
+	}
+	classDeleteOp, classDeleteErr := db.FindOperation(context.Background(), operationIDFromResponse(t, classDeleteResponse))
+	if classDeleteErr != nil || classDeleteOp.Action != "rgw_zonegroup.storage_class_delete" || classDeleteOp.Risk != "high" || classDeleteOp.MaxAttempts != 1 || classDeleteOp.ResourceKey != "rgw/zonegroup/delete-class-group" {
+		t.Fatal("unsafe class deletion queue")
+	}
+	for _, body := range []string{strings.Replace(classDeleteBody, `"storage_class":"COLD",`, "", 1), strings.TrimSuffix(classDeleteBody, "}") + `,"zone_name":"other"}`} {
+		if response := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/zonegroup/storage/class", body, "bad-class-delete"); response.Code != http.StatusBadRequest {
+			t.Fatal("invalid class deletion contract accepted")
+		}
+	}
 	defaultBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"default-group","realm_id":"r","placement_id":"p","storage_class":"STANDARD","expected_default_placement":"old","confirm_default":true}`, cluster.ID)
 	defaultResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/default", defaultBody, "group-default")
 	if defaultResponse.Code != http.StatusAccepted {

@@ -30,6 +30,9 @@ func buildZonegroupStorageClass(p map[string]any) (command, error) {
 
 func (s *Service) executeZonegroupStorageClass(ctx context.Context, access executor.ClusterAccess, req Request, spec command) (cephdomain.ActionResult, error) {
 	fail := func(code string) (cephdomain.ActionResult, error) {
+		if req.Action == "rgw_zonegroup.storage_class_delete" {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: code, Message: "storage class removal or Period publication could not be verified; inspect local and published configuration before retrying; no Zone pool mapping or objects are removed", Retryable: false}
+		}
 		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: code, Message: "Zonegroup placement configuration could not be verified; inspect local configuration before retrying; no Period publication or Zone pool configuration performed", Retryable: false}
 	}
 	run := func(stage string, args []string, write bool) (map[string]any, bool) {
@@ -45,7 +48,9 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 	}
 	createTarget := req.Action == "rgw_zonegroup.placement_create"
 	var expected map[string]any
-	if req.Action == "rgw_zonegroup.placement_tags" {
+	if req.Action == "rgw_zonegroup.storage_class_delete" {
+		expected, ok = zonegroupStorageClassDeleteExpected(before, p)
+	} else if req.Action == "rgw_zonegroup.placement_tags" {
 		expected, ok = zonegroupPlacementTagsExpected(before, p)
 	} else if req.Action == "rgw_zonegroup.placement_default" {
 		expected, ok = zonegroupPlacementDefaultExpected(before, p)
@@ -57,18 +62,41 @@ func (s *Service) executeZonegroupStorageClass(ctx context.Context, access execu
 	if !ok {
 		return fail("pre_check_failed")
 	}
+	realm := syncGroupString(p, "realm_id")
+	current := ""
+	if req.Action == "rgw_zonegroup.storage_class_delete" && realm != "" {
+		r, valid := run("realm_before", []string{"realm", "get", "--realm-id", realm, "--format", "json"}, false)
+		current = syncGroupString(r, "current_period")
+		if !valid || r["id"] != realm || !syncFlowToken(current) {
+			return fail("pre_check_failed")
+		}
+	}
 	checked, ok := run("recheck", args, false)
 	if !ok || !reflect.DeepEqual(checked, before) {
 		return fail("pre_check_failed")
 	}
 	// Native placement commands emit a target map, not the whole group.
 	// Use an independent get, including for default changes absent from that map.
-	if _, ok := run("add", spec.args, true); !ok {
+	writeStage := "add"
+	if req.Action == "rgw_zonegroup.storage_class_delete" {
+		writeStage = "remove"
+	}
+	if _, ok := run(writeStage, spec.args, true); !ok {
 		return fail("command_failed")
 	}
 	after, ok := run("after", args, false)
 	if !ok || !reflect.DeepEqual(after, expected) {
 		return fail("post_check_failed")
+	}
+	if req.Action == "rgw_zonegroup.storage_class_delete" {
+		if realm != "" {
+			commitReq := Request{Action: req.Action + ".period", Parameters: map[string]any{"realm_id": realm, "expected_current_period": current}}
+			commitSpec := command{args: []string{"period", "update", "--commit", "--realm-id", realm, "--format", "json"}, check: []string{"period", "get", "--realm-id", realm, "--format", "json"}}
+			if _, err := s.executePeriodCommit(ctx, access, commitReq, commitSpec); err != nil {
+				return fail("post_check_failed")
+			}
+		}
+		return cephdomain.ActionResult{Details: map[string]any{"zonegroup_id": p["zonegroup_id"], "placement_id": p["placement_id"], "storage_class": p["storage_class"], "class_removal_verified": true, "period_published": realm != "", "zone_mappings_removed": false, "objects_removed": false}}, nil
 	}
 	class := p["storage_class"]
 	if createTarget {

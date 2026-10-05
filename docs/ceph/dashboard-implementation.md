@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### Zonegroup 存储类删除（保留 Zone 映射）
+
+对照参考 `delete_placement_targets` 的未指定 Zone 分支，实现高风险 `DELETE /rgw/zonegroup/storage/class`、已有目标/类选择与显式确认。命令为 `radosgw-admin zonegroup placement rm --zonegroup-id ... --placement-id ... --storage-class ...`，显式组 ID 避免参考调用省略组范围时使用默认组。
+依据 `ZONEGROUP_PLACEMENT_RM` 删除所选类及对应 `tier_targets`，保留目标、标签、其他类/分层、成员、全部 Zone 映射与对象；当前默认类被删时默认规则回退 STANDARD。依据 `RGWZoneGroupPlacementTarget::decode`，类集合为空时读取自动补回 STANDARD；拒绝删除唯一 STANDARD，删除唯一非 STANDARD 时核验此原生回退。
+写前核验组身份、旧默认规则、类存在性并重读全组；写后独立回读完整组，Realm 存在时按参考删除流程提交并回读 Period，刷新 Realm/组/Zone。界面说明云恢复依赖、默认类回退、保留 Zone 映射及 Period 可能发布其他待提交配置；不自动重试或回滚。
+新增普通/分层类删除、独立组/Realm、默认回退、阶段错误、并发与回读漂移、API 契约及前端确认测试；全量后端/OpenAPI 检查、前端测试与构建通过。参考 `rgw-storage-class-list.component.ts::removeStorageClassModal` 对本地类选取 Zone 联动删除、对分层类只删除组声明；本次组级操作不包含前者，仍待补齐。尚无真实集群或浏览器视觉验证。
+
 #### Zonegroup 放置目标标签编辑与清空
 
 对照参考 Dashboard `RgwMultisite.modify_placement_targets` 与原生 `ZONEGROUP_PLACEMENT_MODIFY`，新增高风险 `PATCH /rgw/zonegroup/placement/tags` 及目标/存储类联动表单。标签属于目标而不是单个类；指定已有类防止 native modify 隐式新增 STANDARD。

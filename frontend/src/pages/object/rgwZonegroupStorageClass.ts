@@ -75,3 +75,15 @@ export function groupPlacementTagsConfirmation(values: Row,row?: Row) {
   const p=groupPlacementTagsInput(values,row)
   return `将 Zonegroup ${p.name}（${p.zonegroup_id}）目标 ${p.placement_id} 的标签从 ${JSON.stringify(p.expected_tags)} 替换为 ${JSON.stringify(p.tags)}。标签影响整个目标，不仅是所选存储类；请评估用户放置资格，清空标签可能放宽目标使用范围。保留全部存储类与分层配置，不搬迁对象、不修改 Zone 池。${p.expected_default_placement === '' ? '当前无默认目标，原生 modify 会将此目标的 STANDARD 设为默认。' : `保留默认规则 ${p.expected_default_placement}。`}不自动发布 Period 或重启网关，请备份并单独评估发布；检查不是原子锁，失败可能已写入，不自动重试或回滚。`
 }
+
+export function groupStorageClassDeleteInput(values: Row,row?: Row) {
+  const target=targets(row).find(p => p.name === values.placement_id)
+  if (!target || target.name.includes('/') || !target.storage_classes.includes(values.storage_class)) throw new Error('请选择已有目标与存储类')
+  if (values.storage_class === 'STANDARD' && target.storage_classes.length === 1) throw new Error('唯一 STANDARD 会被原生读取自动恢复，无法删除')
+  if (values.confirm_delete !== 'acknowledged') throw new Error('请确认存储类删除与发布风险')
+  return {zonegroup_id:row!.id,name:row!.name,realm_id:row!.realm_id,placement_id:values.placement_id,storage_class:values.storage_class,expected_default_placement:row!.default_placement,confirm_delete:true}
+}
+export function groupStorageClassDeleteConfirmation(values: Row,row?: Row) {
+  const p=groupStorageClassDeleteInput(values,row)
+  return `从 Zonegroup ${p.name}（${p.zonegroup_id}）的目标 ${p.placement_id} 删除存储类 ${p.storage_class} 及该类的云分层配置（若存在）。这是组级删除，保留目标、其他类、所有 Zone 池映射、RADOS 池及本地/云端对象；不会自动恢复、搬迁或清理数据。请先核对现有桶、生命周期、用户默认值及云对象恢复依赖，删除可能影响后续访问和恢复。若删除当前默认类，默认规则回退为此目标的 STANDARD；若类集合变空，原生读取会补回 STANDARD，需确认其 Zone 配置可用。${p.realm_id ? `将提交 Realm ${p.realm_id} 的 Period，可能同时发布其他待提交变更；不保证远端同步完成。` : '无 Realm，不发布 Period。'}请备份并确认无需同步删除 Zone 映射；检查不是原子锁，失败可能已部分生效，不自动重试或回滚。`
+}

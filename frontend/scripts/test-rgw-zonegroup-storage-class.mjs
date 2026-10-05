@@ -42,3 +42,12 @@ for(const change of [{placement_id:'missing'},{storage_class:'missing'},{tags_js
 assert.match(api.groupPlacementTagsConfirmation(tagValues,row),/清空标签可能放宽/)
 assert.match(api.groupPlacementTagsConfirmation(tagValues,{...row,default_placement:''}),/STANDARD 设为默认/)
 assert.match(api.groupPlacementTagsConfirmation(tagValues,row),/不自动发布 Period/)
+const deleteRow={...row,default_placement:'p/COLD',placement_targets:[{name:'p',storage_classes:['COLD','STANDARD'],tags:[]}]}
+const deleteValues={placement_id:'p',storage_class:'COLD',confirm_delete:'acknowledged'}
+assert.equal(api.groupStorageClassDeleteInput(deleteValues,deleteRow).expected_default_placement,'p/COLD')
+assert.throws(()=>api.groupStorageClassDeleteInput({...deleteValues,storage_class:'STANDARD'},row))
+for(const change of [{placement_id:'missing'},{storage_class:'missing'},{confirm_delete:undefined}])assert.throws(()=>api.groupStorageClassDeleteInput({...deleteValues,...change},deleteRow))
+assert.match(api.groupStorageClassDeleteConfirmation(deleteValues,deleteRow),/云分层配置/)
+assert.match(api.groupStorageClassDeleteConfirmation(deleteValues,deleteRow),/回退为此目标的 STANDARD/)
+assert.match(api.groupStorageClassDeleteConfirmation(deleteValues,deleteRow),/可能同时发布其他待提交/)
+assert.match(api.groupStorageClassDeleteConfirmation(deleteValues,{...deleteRow,realm_id:''}),/无 Realm，不发布 Period/)
