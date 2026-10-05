@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### 云分层 ACL 身份映射结构化详情
+
+对照参考存储类详情的 `groupedACLs` 类型分组和来源/目标展示，将原先 ACL JSON 字符串替换为类型排序、可筛选分页表格，显示 ID/EMAIL/URI、原生映射键、来源身份和远端目标身份。复用已有 `zonegroup get --format json` → 脱敏库存 → API 中的 `s3.acl_mappings`，不新增采集命令。
+原生 `std::map<string, RGWTierACLMapping>` 使用 key/val 数组；写入代码以 source_id 为键，因此不一致单独提示。重复键不合并、不猜测；类型未知、身份缺失、格式异常与真正空列表明确区分，保留无歧义记录并提示异常。字段白名单不透传秘密或未知嵌套内容，URI/HTML 样式文本不生成链接或原生 HTML；说明这不是对象权限列表，也不证明远端授权生效。
+新增三种类型、未知类型、重复/缺失字段、空与不可用状态、字段脱敏、表格/筛选和纯文本渲染回归；前端全量回归、TypeScript 与生产构建通过。本轮无后端修改，未重跑后端测试；无浏览器视觉或真实集群验证。
+
 #### Glacier 专有恢复参数编辑
 
 在已有云分层恢复操作中补齐参考存储类表单的 `glacier_restore_days` 与 `glacier_restore_tier_type`，选择 Glacier 类时回填并要求明确填写，切换普通 S3 类或目标时清除专有值。根据 `RGWZoneGroupTierS3Glacier::update_params`，只接受大小写准确的 `Standard` / `Expedited`，避免其他输入被原生静默转换为 Standard；非负天数限制在前端精确整数范围，保留显式 0，并与读穿透天数分别展示。

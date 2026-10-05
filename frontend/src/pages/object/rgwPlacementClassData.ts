@@ -1,5 +1,7 @@
 type Row = Record<string, any>
-export type PlacementClassRow = {key:string; placement:string; storageClass:string; type:string; declared:string; fields:Array<{name:string;value:string}>}
+export type TierACLRow={key:string;mappingKey:string;type:string;source:string;destination:string}
+export type TierACLDetails={rows:TierACLRow[];issues:string[];available:boolean}
+export type PlacementClassRow = {key:string; placement:string; storageClass:string; type:string; declared:string; fields:Array<{name:string;value:string}>;acl?:TierACLDetails}
 const object=(v:unknown):v is Row => !!v&&typeof v==='object'&&!Array.isArray(v)
 const name=(v:unknown):v is string => typeof v==='string'&&v.length>0
 export const placementText=(v:unknown) => typeof v==='string' ? v===''?'原生空值':v : typeof v==='boolean' ? v?'是':'否' : typeof v==='number'&&Number.isSafeInteger(v)?String(v):'未返回、格式异常或超出精确范围'
@@ -9,6 +11,21 @@ function endpoint(v:unknown) {
   try { const u=new URL(v);if(!['http:','https:'].includes(u.protocol))return '地址已隐藏（协议异常）';return `${u.origin}${u.pathname}${u.username||u.password||u.search||u.hash?'（凭据、查询及片段已隐藏）':''}` } catch {return '地址已隐藏（无法解析）'}
 }
 function duplicates(values:string[]) {return new Set(values.filter((v,i)=>values.indexOf(v)!==i))}
+export function tierACLDetails(value:unknown):TierACLDetails {
+  if(!Array.isArray(value))return {rows:[],issues:['ACL 映射未采集或格式异常，不能视为没有映射'],available:false}
+  const rows:TierACLRow[]=[],issues:string[]=[],duplicateKeys=duplicates(value.filter(object).map(v=>v.key).filter(v=>typeof v==='string'))
+  for(const [index,entry] of value.entries()) {
+    if(!object(entry)||typeof entry.key!=='string'||duplicateKeys.has(entry.key)||!object(entry.val)) {issues.push(`第 ${index+1} 条映射身份重复、缺失或格式异常，未展示歧义记录`);continue}
+    const val=entry.val
+    const type=val.type==='id'?'ID（规范用户）':val.type==='email'?'EMAIL（邮箱用户）':val.type==='uri'?'URI（组）':`未知类型：${placementText(val.type)}`
+    if(!['id','email','uri'].includes(val.type))issues.push(`映射 ${entry.key} 类型未知，未解释为用户 ID`)
+    if(typeof val.source_id!=='string'||typeof val.dest_id!=='string')issues.push(`映射 ${entry.key} 来源或目标身份缺失/异常`)
+    else if(entry.key!==val.source_id)issues.push(`映射 ${entry.key} 的原生键与来源身份不一致`)
+    rows.push({key:JSON.stringify([index,entry.key]),mappingKey:placementText(entry.key),type,source:typeof val.source_id==='string'?placementText(val.source_id):'未返回或格式异常',destination:typeof val.dest_id==='string'?placementText(val.dest_id):'未返回或格式异常'})
+  }
+  rows.sort((a,b)=>a.type.localeCompare(b.type)||a.mappingKey.localeCompare(b.mappingKey))
+  return {rows,issues,available:true}
+}
 function addFields(fields:PlacementClassRow['fields'],source:Row,labels:Record<string,string>) {
   for(const [key,label] of Object.entries(labels))fields.push({name:label,value:placementText(source[key])})
 }
@@ -30,6 +47,7 @@ export function groupPlacementClassRows(value:unknown) {
     for(const storageClass of all) {
       const tier=tierMap.get(storageClass)
       const fields:PlacementClassRow['fields']=[]
+      let acl:TierACLDetails|undefined
       const declared=validClasses?classes.includes(storageClass)?'已声明':'仅分层配置存在（声明缺失）':'声明不可用'
       if(declared!=='已声明')issues.push(`${target.name}/${storageClass}：${declared}`)
       let type=validTiers?'本地':'未知'
@@ -41,12 +59,10 @@ export function groupPlacementClassRows(value:unknown) {
         fields.push({name:'目标端点',value:endpoint(s3.endpoint)+(s3.endpoint_redacted===true?'（采集/API 已隐藏端点敏感部分）':'')})
         addFields(fields,s3,{region:'目标区域',host_style:'寻址方式',target_storage_class:'目标存储类',target_path:'目标路径',multipart_sync_threshold:'分段同步阈值（字节）',multipart_min_part_size:'最小分段大小（字节）'})
         if(tier.tier_type==='cloud-s3-glacier')addFields(fields,object(tier['s3-glacier'])?tier['s3-glacier']:{},{glacier_restore_days:'Glacier 恢复天数',glacier_restore_tier_type:'Glacier 恢复类型'})
-        if(Array.isArray(s3.acl_mappings)&&s3.acl_mappings.every((a:unknown)=>object(a)&&typeof a.key==='string'&&object(a.val))&&new Set(s3.acl_mappings.map((a:Row)=>a.key)).size===s3.acl_mappings.length) {
-          fields.push({name:'ACL 映射',value:JSON.stringify(s3.acl_mappings.map((a:Row)=>({key:a.key,type:placementText(a.val.type),source_id:placementText(a.val.source_id),dest_id:placementText(a.val.dest_id)})))})
-        } else fields.push({name:'ACL 映射',value:'未返回或格式异常'})
+        acl=tierACLDetails(s3.acl_mappings)
       }
       fields.push({name:'目标标签',value:Array.isArray(target.tags)&&target.tags.every(v=>typeof v==='string')?JSON.stringify(target.tags):'未返回或格式异常'})
-      rows.push({key:JSON.stringify([target.name,storageClass]),placement:target.name,storageClass,type,declared,fields})
+      rows.push({key:JSON.stringify([target.name,storageClass]),placement:target.name,storageClass,type,declared,fields,...(acl?{acl}:{})})
     }
   }
   return {rows,issues}
