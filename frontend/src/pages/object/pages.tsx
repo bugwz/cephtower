@@ -3,6 +3,7 @@ import { rgwRealmImportAction } from './rgwRealmImport'
 import { rgwRealmSetupAction } from './rgwRealmSetup'
 import { rgwRealmMigrationAction } from './rgwRealmMigration'
 import { RgwRealmToken } from './RgwRealmToken'
+import { RgwTopologyView } from './RgwTopology'
 import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwRealmTransfer } from './RgwRealmTransfer'
 import { bucketSyncPipeZonesSelectionChanged } from './rgwBucketSyncGroupForm'
@@ -148,7 +149,8 @@ export function GatewayManagementPage() {
 }
 
 export function MultisitePage() {
-  return <ResourceListPage definition={definitions.multisite} />
+  const { selectedClusterId } = useClusterContext()
+  return <><RgwTopologyView key={selectedClusterId ?? 'none'} clusterId={selectedClusterId} /><ResourceListPage definition={definitions.multisite} /></>
 }
 
 export function RgwZonegroupsPage() {
