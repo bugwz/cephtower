@@ -389,6 +389,8 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 				var stats map[string]any
 				if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_account_stats", []string{"account", "stats", "--account-id", id, "--format", "json"}, &stats) {
 					if stats != nil && stats["stats"] != nil {
+						counters, _ := stats["stats"].(map[string]any)
+						preserveRGWStorageCounters(counters)
 						details["storage_stats"] = stats
 					} else {
 						markCollectionUnavailable(ctx, "collect.rgw_account_stats")
@@ -432,6 +434,8 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 				var stats map[string]any
 				if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_user_stats", []string{"user", "stats", "--uid", id, "--format", "json"}, &stats) {
 					if stats != nil {
+						counters, _ := stats["stats"].(map[string]any)
+						preserveRGWStorageCounters(counters)
 						details["storage_stats"] = stats
 					} else {
 						markCollectionUnavailable(ctx, "collect.rgw_user_stats")

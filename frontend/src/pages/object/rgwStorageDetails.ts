@@ -24,12 +24,9 @@ export function rgwStorageRows(value: unknown, categorized = false) {
   const entries = categorized ? Object.entries(value) : [['汇总', value.stats] as const]
   if (entries.some(([, stats]) => !record(stats))) return undefined
   const count = (value: unknown) => {
-    // Bucket inventory preserves native uint64 counters as decimal strings.
-    // User/account aggregate responses still contain JSON numbers.
-    if (categorized) return typeof value === 'string' && /^(0|[1-9][0-9]{0,19})$/.test(value) && BigInt(value) <= 18446744073709551615n
+    // Inventory preserves native uint64 counters as decimal strings.
+    return typeof value === 'string' && /^(0|[1-9][0-9]{0,19})$/.test(value) && BigInt(value) <= 18446744073709551615n
       ? value : '未返回或超出精确显示范围'
-    return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
-      ? String(value) : '未返回或超出精确显示范围'
   }
   return entries.map(([category, raw]) => {
     const stats = raw as RecordValue
