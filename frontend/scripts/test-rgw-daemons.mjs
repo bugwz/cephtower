@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import './test-rgw-daemon-status.mjs'
 import {readFileSync} from 'node:fs'
 import ts from 'typescript'
 const code=ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwDaemonsPage.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText
@@ -18,10 +19,13 @@ render();let tree=render();const old=tree.find(n=>n.type==='Button');old.props.o
 assert.equal(calls[0].path,'/rgw/daemons');assert.deepEqual(calls[0].body,{cluster_id:7});assert.equal(calls[0].cache,'no-store')
 calls[0].resolve(data);await tick();tree=render();assert.equal(tree.find(n=>n.type==='Table').props.dataSource.length,2)
 const portColumn=tree.find(n=>n.type==='Table').props.columns.at(-1)
+const detail=tree.find(n=>n.type==='Table').props.expandable.expandedRowRender(row)
+assert.equal(detail.props.clusterId,7);assert.equal(detail.props.serviceMapId,'1');assert.equal(detail.props.isCurrent(),true)
 assert.ok(JSON.stringify(portColumn.render(null,row)).includes('HTTPS 443'))
 assert.ok(JSON.stringify(portColumn.render(null,{...row,listeners:[],listeners_complete:false})).includes('无法解析'))
 tree.find(n=>n.type==='Input').props.onChange({target:{value:'missing'}});assert.equal(render().find(n=>n.type==='Table').props.dataSource.length,0)
 old.props.onClick();render(8);assert.equal(calls[1].signal.aborted,true);old.props.onClick();assert.equal(calls.length,2);calls[1].resolve(data);await tick();assert.equal(render(8).some(n=>n.type==='Table'),false)
+assert.equal(detail.props.isCurrent(),false)
 render(8).find(n=>n.type==='Button').props.onClick();calls[2].reject(new Error('private-error'));await tick();assert.ok(render(8).some(n=>n.type==='Alert'&&n.props.type==='error'))
 const final=render(8).find(n=>n.type==='Button');final.props.onClick();cleanup();final.props.onClick();assert.equal(calls.length,4);assert.equal(calls[3].signal.aborted,true)
 calls[3].resolve(data);await tick();assert.equal(states[1].data,undefined)
