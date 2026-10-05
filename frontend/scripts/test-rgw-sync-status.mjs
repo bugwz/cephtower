@@ -28,7 +28,8 @@ const settle=async()=>{await Promise.resolve();await Promise.resolve()}
 render();assert.equal(calls.length,0)
 const click=find('Button').props.onClick
 click();click();assert.equal(calls.length,1)
-assert.deepEqual(calls[0],{path:'/rgw/zone/sync/status',method:'POST',body:{cluster_id:7,zone_id:'zone-id',name:'zone-a'},cache:'no-store',suppressErrorNotification:true})
+assert.deepEqual(calls[0],{path:'/rgw/zone/sync/status',method:'POST',body:{cluster_id:7,zone_id:'zone-id',name:'zone-a'},signal:calls[0].signal,cache:'no-store',suppressErrorNotification:true})
+assert.equal(calls[0].signal.aborted,false)
 const report='metadata sync no sync (zone is master)\ndata sync source: a\nbehind on 2 shards\n<script>not html</script>'
 resolve({report});await settle();assert.deepEqual(find('pre').props.children,[report])
 find('Button').props.onClick();resolve({report:native});await settle()
@@ -37,14 +38,22 @@ assert.equal(nodes(render()).find(node=>node.type==='pre'&&node.props['aria-labe
 assert.equal(find('details').props.open,false)
 find('Button').props.onClick();assert.equal(find('pre'),undefined)
 const oldResolve=resolve
-props={...props,clusterId:8};render();oldResolve({report});await settle();assert.equal(find('pre'),undefined)
+const clusterSignal=calls.at(-1).signal
+props={...props,clusterId:8};render();assert.equal(clusterSignal.aborted,true)
+let oldCount=calls.length;click();assert.equal(calls.length,oldCount)
+oldResolve({report});await settle();assert.equal(find('pre'),undefined)
 find('Button').props.onClick();reject(new Error('private diagnostics'));await settle();assert.ok(!JSON.stringify(render()).includes('private diagnostics'))
 for(const bad of [null,{}, {report:''},{report:3},{report:'x'.repeat(1048577)}]){
   find('Button').props.onClick();resolve(bad);await settle();assert.equal(find('pre'),undefined)
 }
-find('Button').props.onClick();const oldZoneResolve=resolve
-props={...props,row:{id:'other',name:'other'}};render();oldZoneResolve({report});await settle();assert.equal(find('pre'),undefined)
-find('Button').props.onClick();effects.forEach(effect=>effect?.cleanup?.());resolve({report});await settle();assert.equal(find('pre'),undefined)
+const zoneClick=find('Button').props.onClick;zoneClick();const oldZoneResolve=resolve,zoneSignal=calls.at(-1).signal
+props={...props,row:{id:'other',name:'other'}};render();assert.equal(zoneSignal.aborted,true)
+oldCount=calls.length;zoneClick();assert.equal(calls.length,oldCount)
+oldZoneResolve({report});await settle();assert.equal(find('pre'),undefined)
+const unmountClick=find('Button').props.onClick;unmountClick();const unmountSignal=calls.at(-1).signal
+effects.forEach(effect=>effect?.cleanup?.());assert.equal(unmountSignal.aborted,true)
+oldCount=calls.length;unmountClick();assert.equal(calls.length,oldCount)
+resolve({report});await settle();assert.equal(find('pre'),undefined)
 props={...props,row:{...props.row,stale:true}};render();assert.equal(find('Button').props.disabled,true)
 const before=calls.length;find('Button').props.onClick();assert.equal(calls.length,before)
 const pages=readFileSync(new URL('../src/pages/object/pages.tsx',import.meta.url),'utf8')

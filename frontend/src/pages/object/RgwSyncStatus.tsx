@@ -9,30 +9,36 @@ export function RgwSyncStatus({ row, clusterId }: { row: ApiRecord; clusterId?: 
   current.current = scope
   const sequence = useRef(0)
   const locked = useRef(false)
+  const mounted = useRef(true)
+  const abort = useRef<AbortController>()
   const [state, setState] = useState({ scope, report: '', error: '', busy: false })
   const scoped = state.scope === scope
   const sections = scoped && state.report ? rgwSyncReportSections(state.report) : undefined
   const valid = !!clusterId && typeof row.id === 'string' && !!row.id && typeof row.name === 'string' && !!row.name && row.stale !== true
   useEffect(() => {
+    mounted.current = true
     sequence.current++
     locked.current = false
     setState({ scope, report: '', error: '', busy: false })
-    return () => { sequence.current++ }
+    return () => { mounted.current = false; abort.current?.abort(); sequence.current++ }
   }, [scope])
   async function read() {
-    if (!valid || !scoped || locked.current) return
+    if (!valid || !scoped || locked.current || !mounted.current || current.current !== scope) return
     locked.current = true
+    abort.current?.abort()
+    const controller = new AbortController()
+    abort.current = controller
     const ticket = ++sequence.current
     setState({ scope, report: '', error: '', busy: true })
     try {
-      const result = await request<{ report: string }>('/rgw/zone/sync/status', jsonInit('POST', { cluster_id: clusterId, zone_id: row.id, name: row.name }, { cache: 'no-store', suppressErrorNotification: true }))
-      if (current.current !== scope || sequence.current !== ticket) return
+      const result = await request<{ report: string }>('/rgw/zone/sync/status', jsonInit('POST', { cluster_id: clusterId, zone_id: row.id, name: row.name }, { signal: controller.signal, cache: 'no-store', suppressErrorNotification: true }))
+      if (!mounted.current || controller.signal.aborted || current.current !== scope || sequence.current !== ticket) return
       if (typeof result?.report !== 'string' || !result.report.trim() || result.report.length > 1048576) throw new Error('invalid report')
       setState({ scope, busy: false, report: result.report, error: '' })
     } catch {
-      if (current.current === scope && sequence.current === ticket) setState({ scope, busy: false, report: '', error: '同步报告读取失败或 Zone 身份发生变化。请检查本地 Zone 配置、集群访问权限并重新采集。' })
+      if (mounted.current && !controller.signal.aborted && current.current === scope && sequence.current === ticket) setState({ scope, busy: false, report: '', error: '同步报告读取失败或 Zone 身份发生变化。请检查本地 Zone 配置、集群访问权限并重新采集。' })
     } finally {
-      if (current.current === scope && sequence.current === ticket) locked.current = false
+      if (mounted.current && current.current === scope && sequence.current === ticket) locked.current = false
     }
   }
   return <Card size="small" title="Multisite 同步状态">
