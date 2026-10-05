@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/big"
 	"sort"
 	"strconv"
 	"strings"
@@ -532,19 +533,21 @@ func applyMonitorCounterRate(row *CephEntityRecord, previous *CephEntityRecord) 
 	if row.Kind != "mon_perf_counter" {
 		return
 	}
-	var current map[string]any
-	if json.Unmarshal([]byte(row.DiscoveredData), &current) != nil || current["metric_type"] != "counter" {
+	current, valid := monitorCounterSample(row.DiscoveredData)
+	if !valid || current["metric_type"] != "counter" {
 		return
 	}
 	currentRaw, ok := numericJSONValue(current["raw_value"])
 	var rate any
-	if ok && currentRaw >= 0 && previous != nil && !row.ObservedAt.IsZero() && !previous.ObservedAt.IsZero() {
-		var prior map[string]any
-		if json.Unmarshal([]byte(previous.DiscoveredData), &prior) == nil && prior["metric_type"] == "counter" && monitorCounterUnitsMatch(current["unit"], prior["unit"]) {
+	if ok && currentRaw.Sign() >= 0 && previous != nil && !row.ObservedAt.IsZero() && !previous.ObservedAt.IsZero() {
+		prior, priorValid := monitorCounterSample(previous.DiscoveredData)
+		if priorValid && prior["metric_type"] == "counter" && monitorCounterUnitsMatch(current["unit"], prior["unit"]) {
 			priorRaw, priorOK := numericJSONValue(prior["raw_value"])
 			seconds := row.ObservedAt.Sub(previous.ObservedAt).Seconds()
-			if priorOK && priorRaw >= 0 && seconds > 0 && currentRaw >= priorRaw {
-				computed := (currentRaw - priorRaw) / seconds
+			if priorOK && priorRaw.Sign() >= 0 && seconds > 0 && currentRaw.Cmp(priorRaw) >= 0 {
+				delta := new(big.Rat).Sub(currentRaw, priorRaw)
+				elapsed := new(big.Rat).SetFrac(big.NewInt(row.ObservedAt.Sub(previous.ObservedAt).Nanoseconds()), big.NewInt(int64(time.Second)))
+				computed, _ := new(big.Rat).Quo(delta, elapsed).Float64()
 				if !math.IsInf(computed, 0) && !math.IsNaN(computed) {
 					rate = computed
 				}
@@ -566,16 +569,33 @@ func monitorCounterUnitsMatch(current, prior any) bool {
 	return leftOK && rightOK && left == right
 }
 
-func numericJSONValue(value any) (float64, bool) {
-	switch typed := value.(type) {
-	case float64:
-		return typed, true
-	case json.Number:
-		parsed, err := typed.Float64()
-		return parsed, err == nil
-	default:
-		return 0, false
+func monitorCounterSample(raw string) (map[string]any, bool) {
+	if !json.Valid([]byte(raw)) {
+		return nil, false
 	}
+	decoder := json.NewDecoder(strings.NewReader(raw))
+	decoder.UseNumber()
+	var sample map[string]any
+	err := decoder.Decode(&sample)
+	return sample, err == nil && sample != nil
+}
+
+func numericJSONValue(value any) (*big.Rat, bool) {
+	number, ok := value.(json.Number)
+	if !ok || len(number.String()) > 128 {
+		return nil, false
+	}
+	if index := strings.IndexAny(number.String(), "eE"); index >= 0 {
+		exponent, err := strconv.Atoi(number.String()[index+1:])
+		if err != nil || exponent < -400 || exponent > 400 {
+			return nil, false
+		}
+	}
+	finite, err := number.Float64()
+	if err != nil || math.IsInf(finite, 0) || math.IsNaN(finite) {
+		return nil, false
+	}
+	return new(big.Rat).SetString(number.String())
 }
 func (d *Database) MarkModuleResourcesStale(ctx context.Context, clusterID uint64, kinds []string, now time.Time) error {
 	return d.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
