@@ -21,13 +21,17 @@ import (
 )
 
 type daemonRouteExecutor struct {
-	calls  int
-	output string
-	exit   int
+	calls   int
+	output  string
+	exit    int
+	outputs map[string]string
 }
 
-func (e *daemonRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, _ executor.CommandSpec) (executor.CommandResult, error) {
+func (e *daemonRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
 	e.calls++
+	if output, ok := e.outputs[spec.ID]; ok {
+		return executor.CommandResult{Stdout: []byte(output), ExitCode: e.exit}, nil
+	}
 	return executor.CommandResult{Stdout: []byte(e.output), ExitCode: e.exit}, nil
 }
 
@@ -144,7 +148,38 @@ func TestRGWDaemonAPI(t *testing.T) {
 	if w = send(strings.TrimSuffix(valid, "}") + `,"realm":"other"}`); w.Code != 400 || runner.calls != count {
 		t.Fatal("unexpected count scope accepted")
 	}
+	path = "/api/v1/rgw/buckets/usage"
+	runner.outputs = map[string]string{"rgw.usage.list": `["photos"]`, "rgw.usage.stats": `{"bucket":"photos","tenant":"","usage":{"rgw.main":{"num_objects":9007199254740993,"size_actual":18446744073709551615}}}`}
+	w = send(valid)
+	if w.Code != 200 || w.Header().Get("Cache-Control") != "no-store" || !strings.Contains(w.Body.String(), `"object_count":"9007199254740993"`) || !strings.Contains(w.Body.String(), `"size_actual_bytes":"18446744073709551615"`) {
+		t.Fatal("usage precision lost", w.Code)
+	}
+	count = runner.calls
+	for _, body := range []string{`{}`, `{"cluster_id":0}`, `{"cluster_id":"1"}`, strings.TrimSuffix(valid, "}") + `,"bucket":"photos"}`} {
+		if w = send(body); w.Code != 400 || runner.calls != count {
+			t.Fatal("invalid usage scope executed")
+		}
+	}
+	runner.outputs["rgw.usage.list"] = `[]`
+	if w = send(valid); w.Code != 200 || !strings.Contains(w.Body.String(), `"object_count":"0"`) {
+		t.Fatal("empty aggregate lost")
+	}
+	runner.outputs["rgw.usage.list"] = `["photos"]`
+	runner.outputs["rgw.usage.stats"] = `{"bucket":"photos","tenant":""}`
+	if w = send(valid); w.Code != 502 || strings.Contains(w.Body.String(), `"bucket_count"`) {
+		t.Fatal("partial aggregate returned")
+	}
+	runner.exit = 2
+	if w = send(valid); w.Code != 502 {
+		t.Fatal("failed usage read accepted")
+	}
+	runner.exit = 0
 	auth = true
+	count = runner.calls
+	if w = send(valid); w.Code != 401 || runner.calls != count {
+		t.Fatal("usage authentication bypass")
+	}
+	path = "/api/v1/rgw/topology/counts"
 	if w = send(valid); w.Code != 401 || runner.calls != count {
 		t.Fatal("counts authentication bypass")
 	}
