@@ -13,6 +13,7 @@ import { formatDateTime } from '../../utils/time'
 import { MonPublicAddresses } from './MonPublicAddresses'
 import { monSessionCount } from './monSessionCount'
 import { MonQuorumState } from './MonQuorumState'
+import { MonCounterValue, monCounterType } from './MonCounterValue'
 
 const { Text } = Typography
 const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
@@ -110,7 +111,8 @@ export function MonDetailPage() {
           columns={[
             { key: 'name', title: '名称', filterKey: false },
             { key: 'description', title: '描述', filterKey: false },
-            { key: 'value', title: '值', filterKey: false }
+            { key: 'value', title: '值 / 单位', filterKey: false, render: (value, row) => <MonCounterValue value={value} unit={row.unit} /> },
+            { key: 'metric_type', title: '指标类型', filterKey: false, render: (value) => monCounterType(value) }
           ]}
         />
         </Card>

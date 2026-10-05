@@ -17,6 +17,18 @@ for (const file of ['pages.tsx', 'MonDetailPage.tsx']) {
   assert.ok(readFileSync(new URL(`../src/pages/cluster/${file}`, import.meta.url), 'utf8').includes('MonPublicAddresses'))
 }
 console.log('MON public address list preserves native protocols and IPv6 text')
+const counter = {}
+new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/cluster/MonCounterValue.tsx', import.meta.url), 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX }
+}).outputText)(counter, () => ({ jsx, jsxs: jsx }))
+assert.deepEqual(counter.MonCounterValue({ value: 12.5, unit: 'B/s' }).props.children, ['12.5', ' B/s'])
+assert.deepEqual(counter.MonCounterValue({ value: 0, unit: '/s' }).props.children, ['0', ' /s'])
+assert.deepEqual(counter.MonCounterValue({ value: '18446744073709551615', unit: undefined }).props.children, ['18446744073709551615', ''])
+for (const value of [null, undefined, false, {}, [], NaN, Infinity, '']) assert.equal(counter.MonCounterValue({ value, unit: 'B/s' }).props.children, '未返回或格式无效')
+assert.equal(counter.monCounterType('counter'), '采样间隔速率')
+assert.equal(counter.monCounterType('gauge'), '采集值')
+assert.equal(counter.monCounterType(undefined), '类型未知')
+assert.ok(readFileSync(new URL('../src/pages/cluster/MonDetailPage.tsx', import.meta.url), 'utf8').includes('<MonCounterValue value={value} unit={row.unit} />'))
 const quorum = {}
 new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/cluster/MonQuorumState.tsx', import.meta.url), 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX }
