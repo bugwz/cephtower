@@ -14,6 +14,13 @@ type rgwPoolReference struct {
 	Raw       string `json:"raw"`
 }
 
+// ValidRGWPoolReference reports whether a pool reference round-trips through
+// Ceph's canonical representation, including escaped pool/namespace separators.
+func ValidRGWPoolReference(raw string) bool {
+	_, _, ok := parseRGWPoolReference(raw)
+	return ok
+}
+
 // Match rgw_pool::to_str's canonical escaping, not substring pool-name matches.
 // Reject ambiguous input rather than copying from_str's truncation at a second
 // unescaped colon. This is configuration evidence, never a pool-delete allowlist.

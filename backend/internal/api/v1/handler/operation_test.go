@@ -57,6 +57,14 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	}
 	groupDeleteBody := fmt.Sprintf(`{"cluster_id":%d,"zonegroup_id":"g","name":"group","realm_id":"","expected_zones":[],"confirm_delete":true}`, cluster.ID)
 	zoneDeleteBody := fmt.Sprintf(`{"cluster_id":%d,"zone_id":"z","name":"zone","realm_id":"","confirm_delete":true}`, cluster.ID)
+	placementResponse := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zone/placement", fmt.Sprintf(`{"cluster_id":%d,"zone_id":"z","name":"zone-placement","realm_id":"","zonegroup_id":"g","placement_id":"p","storage_class":"COLD","index_pool":"i","data_pool":"d","data_extra_pool":"","compression":"none","confirm_placement":true}`, cluster.ID), "zone-placement")
+	if placementResponse.Code != http.StatusAccepted {
+		t.Fatal("placement update not queued", placementResponse.Code)
+	}
+	placementOp, placementErr := db.FindOperation(context.Background(), operationIDFromResponse(t, placementResponse))
+	if placementErr != nil || placementOp.Action != "rgw_zone.placement" || placementOp.MaxAttempts != 1 || placementOp.Risk != "high" || placementOp.ResourceKey != "rgw/zone/zone-placement" {
+		t.Fatal("unsafe placement operation")
+	}
 	zoneDelete := sendOperationRequest(t, mux, http.MethodDelete, "/api/v1/rgw/zone", zoneDeleteBody, "zone-delete")
 	if zoneDelete.Code != http.StatusAccepted {
 		t.Fatal("zone deletion not queued", zoneDelete.Code)

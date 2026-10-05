@@ -6,6 +6,7 @@ import { RgwRealmToken } from './RgwRealmToken'
 import { realmDeleteBlocked, realmDeleteInput, realmDeleteConfirmation } from './rgwRealmDelete'
 import { zonegroupDeleteBlocked, zonegroupDeleteInput, zonegroupDeleteConfirmation } from './rgwZonegroupDelete'
 import { zoneDeleteBlocked, zoneDeleteInput, zoneDeleteConfirmation } from './rgwZoneDelete'
+import { zonePlacementBlocked, zonePlacementGroups, zonePlacementOptions, zonePlacementClasses, zonePlacementChanged, zonePlacementInput, zonePlacementConfirmation, zonePlacementCompressions } from './rgwZonePlacement'
 import { RgwTopologyView } from './RgwTopology'
 import { RgwSyncStatus } from './RgwSyncStatus'
 import { RgwZonePoolReferences } from './RgwZonePoolReferences'
@@ -1298,6 +1299,23 @@ const definitions: Record<
     ]
   },
   rgwZones: {
+    extraActions: [{
+      title: '编辑放置池与压缩', path: '/rgw/zone/placement', method: 'PATCH',
+      successMessage: 'Zone 放置配置已回读核验（未迁移数据或重启网关）',
+      disabledWhen: zonePlacementBlocked, confirmation: zonePlacementConfirmation,
+      changedValues: zonePlacementChanged,
+      fields: [
+        { name: 'zonegroup_id', label: '所属 Zonegroup', type: 'select', required: true, optionsLoader: async (_clusterId, row) => zonePlacementGroups(row) },
+        { name: 'placement_id', label: '已有放置目标', type: 'select', required: true, optionsLoader: async (_clusterId, row) => zonePlacementOptions(row) },
+        { name: 'storage_class', label: '已有存储类', type: 'select', required: true, optionsDependencies: ['placement_id'], optionsLoader: async (_clusterId, row, values) => zonePlacementClasses(row, values?.placement_id) },
+        { name: 'index_pool', label: '索引池（影响整个放置目标）', required: true },
+        { name: 'data_pool', label: '所选存储类数据池', required: true },
+        { name: 'data_extra_pool', label: '额外数据池（留空使用原生回退；影响整个放置目标）' },
+        { name: 'compression', label: '压缩算法', type: 'select', required: true, options: zonePlacementCompressions.map(value => ({value,label:value})) },
+        { name: 'confirm_placement', label: '风险确认', type: 'select', required: true, options: [{value:'acknowledged',label:'已备份并评估更换池风险，了解不迁移数据及 Period 发布范围'}] }
+      ],
+      buildBody: (values, clusterId, row) => ({cluster_id:clusterId,...zonePlacementInput(values,row)})
+    }],
     deleteAction: {
       title: '删除 Zone（保留池）', path: '/rgw/zone', action: 'rgw_zone.delete', resourceKind: 'rgw_zone', risk: 'high',
       disabledWhen: zoneDeleteBlocked, confirmation: zoneDeleteConfirmation,

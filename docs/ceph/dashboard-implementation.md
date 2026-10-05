@@ -29,6 +29,9 @@
 
 ### 增量实现与验证记录
 
+- **Zone 已有放置池与压缩编辑**：对照 `rgw-multisite-zone-form` 的 placement/storage class 表单和 `RgwMultisite.add_placement_targets_storage_class_zone`，新增高风险单次尝试 `PATCH /rgw/zone/placement`。界面从既有库存选择所属 Zonegroup、已有 placement 和存储类，加载索引池、额外数据池、所选类数据池与压缩算法。后端使用显式 Zone/Zonegroup ID 的 `zone placement modify`；不沿用参考服务重复传递 data-pool 参数的做法。核验身份、Realm、成员和组侧 target/class，拒绝云分层类；复用规范池引用解析，支持命名空间及转义，额外数据池可显式清空。修改前重读 Zone/组；修改输出与独立 Zone 回读必须完整匹配预期，仅允许目标池/压缩字段变化，保留其他类、placement、inline_data、index_type 和系统密钥。组配置必须保持不变。有 Realm 时按显式范围提交并回读 Period，无 Realm 不发布；刷新三类库存，写后失败禁止自动重试。
+  - 界面说明索引/额外池影响整个 placement，不迁移或重写已有对象，不重启网关，换池可能影响既有数据访问；算法支持取决于部署。原生 `check_pool_support_omap` 会对池打开失败直接返回成功，因此不把配置成功作为池存在或 OMAP 能力证明。尚不包含 placement/存储类创建、删除或云分层配置。新增精确命令、空额外池、非 STANDARD 类、转义/非法池引用、云分层拒绝、字段保护、每阶段失败截断、Period 范围、API 队列、刷新和表单测试；无真实集群及浏览器视觉验证。
+
 - **Zone 删除的 Realm 拓扑前置校验**：依据原生 `update_period` 对同 Realm 所有组的验证，将无效主成员、空组、未知主组状态、多主组或无主组检查移到删除之前；不仅校验包含待删 Zone 的组。要求唯一主组及其主成员与已发布 Period 一致，禁止删除顺带触发未明确确认的主站迁移。其他 Realm 的主组配置不参与本 Realm 发布检查。新增集成测试证明同 Realm 未受影响组的错误会在任何写入前被拒绝，以及主站漂移、重复身份和合法多组测试；无真实集群验证。
 
 - **非主 Zone 删除（保留池）**：新增高风险单次尝试 `DELETE /rgw/zone` 和 Zone 列表删除入口，明确确认 ID、名称和 Realm。依据参考 `RgwMultisite.delete_zone` 与原生 `rgw_zone.cc::delete_zone/remove_zone_from_groups/remove_zone_from_group`，直接调用按 ID 的 `zone delete`，利用其原生全组成员移除，不重复调用单组 remove。执行前读取并校验所有本地 Zonegroup，拒绝主成员、跨 Realm 成员关系、唯一 Zone 与当前上下文默认 Zone；有 Realm 时拒绝已发布主 Zone。重读目标和全组配置、组清单及 Zone 清单/默认值后才写入。

@@ -65,6 +65,9 @@ type command struct {
 }
 
 func Supports(action string) bool {
+	if action == "rgw_zone.placement" {
+		return true
+	}
 	switch action {
 	case "rgw_realm.import", "rgw_realm.setup", "rgw_realm.migrate", "rgw_realm.delete", "rgw_zonegroup.delete", "rgw_zone.delete":
 		return true
@@ -137,6 +140,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if request.Action == "rgw_zone.delete" {
 		return s.executeZoneDelete(ctx, access, request, spec)
+	}
+	if request.Action == "rgw_zone.placement" {
+		return s.executeZonePlacement(ctx, access, request, spec)
 	}
 	if request.Action == "rgw_realm.setup" || request.Action == "rgw_realm.migrate" {
 		return s.executeRealmSetup(ctx, access, request)
@@ -668,6 +674,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 }
 
 func build(request Request, p map[string]any) (command, error) {
+	if request.Action == "rgw_zone.placement" {
+		return buildZonePlacement(p)
+	}
 	if request.Action == "rgw_zone.delete" {
 		return buildZoneDelete(p)
 	}

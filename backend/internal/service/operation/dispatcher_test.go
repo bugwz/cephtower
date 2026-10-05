@@ -74,6 +74,12 @@ func TestActionDispatcherReconcilesNativeMutation(t *testing.T) {
 }
 
 func TestActionDispatcherFailsWhenPostReconcileFails(t *testing.T) {
+	placementReconciler := &reconcileExecutorFake{err: errors.New("offline")}
+	_, placementErr := NewActionDispatcher(&mutationExecutorFake{}, nil, placementReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zone.placement", ResourceKind: "rgw_zone"})
+	var placementFailure *cephdomain.ActionError
+	if !errors.As(placementErr, &placementFailure) || placementFailure.Retryable || !reflect.DeepEqual(placementReconciler.kinds, []string{"rgw_realm", "rgw_zonegroup", "rgw_zone"}) {
+		t.Fatal("unsafe placement refresh")
+	}
 	zoneReconciler := &reconcileExecutorFake{err: errors.New("offline")}
 	_, zoneErr := NewActionDispatcher(&mutationExecutorFake{}, nil, zoneReconciler).Execute(context.Background(), ExecutionRequest{ClusterID: 7, Action: "rgw_zone.delete", ResourceKind: "rgw_zone"})
 	var zoneFailure *cephdomain.ActionError
