@@ -499,6 +499,16 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 	if err := p.runInto(ctx, access, "collect.quorum", []string{"quorum_status", "--format", "json"}, &quorum); err != nil {
 		return nil, err
 	}
+	if quorum.QuorumNames == nil {
+		return nil, fmt.Errorf("parse collect.quorum response: quorum_names must be an explicit array")
+	}
+	seenQuorumNames := make(map[string]bool, len(quorum.QuorumNames))
+	for _, name := range quorum.QuorumNames {
+		if name == "" || name != strings.TrimSpace(name) || seenQuorumNames[name] {
+			return nil, fmt.Errorf("parse collect.quorum response: quorum_names must contain unique nonempty names")
+		}
+		seenQuorumNames[name] = true
+	}
 	var managers mgrDumpWire
 	if err := p.runInto(ctx, access, "collect.mgr", []string{"mgr", "dump", "--format", "json"}, &managers); err != nil {
 		return nil, err
