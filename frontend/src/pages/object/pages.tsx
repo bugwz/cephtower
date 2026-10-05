@@ -709,8 +709,8 @@ const definitions: Record<
       method: 'POST',
       successMessage: 'RGW Role 创建执行成功',
       fields: [
-        { name: 'name', label: 'Role 名称', required: true },
-        { name: 'account_id', label: '账户 ID（留空使用默认租户）' },
+        { name: 'name', label: 'Role 名称（租户角色可用 tenant$role）', required: true },
+        { name: 'account_id', label: '账户 ID（留空使用名称中的租户；无前缀为默认租户）' },
         { name: 'path', label: 'Path' },
         { name: 'description', label: '描述', type: 'textarea' },
         { name: 'max_session_duration', label: '最大会话时长（秒，默认 3600）', type: 'number', min: 3600, max: 43200 },

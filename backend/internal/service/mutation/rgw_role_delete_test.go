@@ -63,14 +63,14 @@ func TestRGWRoleDeletionVerifiesScopedAbsence(t *testing.T) {
 	}
 }
 
-func TestRGWRoleDeleteNameValidation(t *testing.T) {
+func TestRGWRoleNameValidation(t *testing.T) {
 	for _, name := range []any{"", "$reader", "team$", "a$b$c", " reader", "reader\n", "a;rm", 123, nil} {
-		if _, err := rgwRoleDeleteName(map[string]any{"name": name}); err == nil {
+		if _, err := rgwRoleName(map[string]any{"name": name}); err == nil {
 			t.Fatalf("accepted invalid name: %v", name)
 		}
 	}
 	for _, name := range []string{"reader", "team$reader"} {
-		if got, err := rgwRoleDeleteName(map[string]any{"name": name}); err != nil || got != name {
+		if got, err := rgwRoleName(map[string]any{"name": name}); err != nil || got != name {
 			t.Fatalf("rejected name %q: %v", name, err)
 		}
 	}

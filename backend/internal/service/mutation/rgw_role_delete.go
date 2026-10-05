@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func rgwRoleDeleteName(parameters map[string]any) (string, error) {
+func rgwRoleName(parameters map[string]any) (string, error) {
 	name, ok := parameters["name"].(string)
 	if !ok || name != strings.TrimSpace(name) || len(name) > 512 {
 		return "", invalid("name is required or invalid")

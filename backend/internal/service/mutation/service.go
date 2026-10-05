@@ -2567,7 +2567,7 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		return rgw(args, []string{"account", "get", "--account-id", accountID}), nil
 	case "rgw_role.policy":
-		name, err := required(p, "name")
+		name, err := rgwRoleName(p)
 		if err != nil {
 			return command{}, err
 		}
@@ -2590,7 +2590,7 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		return rgw(args, []string{"role", "get", "--role-name", name}), nil
 	case "rgw_role.update":
-		name, err := required(p, "name")
+		name, err := rgwRoleName(p)
 		if err != nil {
 			return command{}, err
 		}
@@ -2619,7 +2619,7 @@ func build(request Request, p map[string]any) (command, error) {
 		return result, nil
 
 	case "rgw_role.delete":
-		name, err := rgwRoleDeleteName(p)
+		name, err := rgwRoleName(p)
 		if err != nil {
 			return command{}, err
 		}
@@ -2629,7 +2629,7 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		return rgw([]string{"role", "delete", "--role-name", name}, check), nil
 	case "rgw_role.create":
-		name, err := required(p, "name")
+		name, err := rgwRoleName(p)
 		if err != nil {
 			return command{}, err
 		}
