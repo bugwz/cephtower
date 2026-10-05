@@ -47,3 +47,47 @@ func TestRGWOwnerStorageCountersRemainExact(t *testing.T) {
 		}
 	}
 }
+
+func TestRGWOwnerStatsRejectMalformedContainers(t *testing.T) {
+	for _, kind := range []string{"rgw_user", "rgw_account"} {
+		for _, tc := range []struct {
+			raw   string
+			valid bool
+		}{
+			{`{"stats":{}}`, true}, {`{"stats":{"num_objects":0}}`, true},
+			{`{}`, false}, {`null`, false}, {`[]`, false}, {`broken`, false},
+			{`{"stats":null}`, false}, {`{"stats":[]}`, false},
+			{`{"stats":0}`, false}, {`{"stats":false}`, false}, {`{"stats":"empty"}`, false},
+		} {
+			t.Run(kind+"/"+tc.raw, func(t *testing.T) {
+				trace := &collectionTrace{unavailable: map[string]struct{}{}}
+				ctx := context.WithValue(context.Background(), collectionTraceKey{}, trace)
+				p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+					"collect." + kind:             []byte(`["owner"]`),
+					"collect." + kind + "_detail": []byte(`{"id":"owner","user_id":"owner","name":"owner"}`),
+					"collect." + kind + "_stats":  []byte(tc.raw),
+				}}}
+				found := false
+				for _, row := range p.collectRGWOptional(ctx, ClusterAccess{}, time.Now()) {
+					if row.Kind != kind {
+						continue
+					}
+					found = true
+					payload := row.Payload.(map[string]any)
+					_, present := payload["storage_stats"]
+					if present != tc.valid {
+						t.Fatalf("invalid stats availability: %+v", payload)
+					}
+				}
+				if !found {
+					t.Fatal("owner omitted")
+				}
+				if !tc.valid {
+					if _, marked := trace.unavailable[kind]; !marked {
+						t.Fatal("malformed stats did not mark inventory unavailable")
+					}
+				}
+			})
+		}
+	}
+}

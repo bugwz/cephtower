@@ -388,8 +388,7 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 				details["account_name"] = textField(details, "name")
 				var stats map[string]any
 				if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_account_stats", []string{"account", "stats", "--account-id", id, "--format", "json"}, &stats) {
-					if stats != nil && stats["stats"] != nil {
-						counters, _ := stats["stats"].(map[string]any)
+					if counters, ok := stats["stats"].(map[string]any); ok && counters != nil {
 						preserveRGWStorageCounters(counters)
 						details["storage_stats"] = stats
 					} else {
@@ -433,8 +432,7 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 				}
 				var stats map[string]any
 				if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_user_stats", []string{"user", "stats", "--uid", id, "--format", "json"}, &stats) {
-					if stats != nil {
-						counters, _ := stats["stats"].(map[string]any)
+					if counters, ok := stats["stats"].(map[string]any); ok && counters != nil {
 						preserveRGWStorageCounters(counters)
 						details["storage_stats"] = stats
 					} else {
