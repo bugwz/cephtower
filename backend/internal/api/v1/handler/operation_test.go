@@ -132,6 +132,15 @@ func TestMutationQueuesInspectableOperation(t *testing.T) {
 	if restoreErr != nil || restoreOp.Action != "rgw_zonegroup.cloud_restore" || restoreOp.Risk != "high" || restoreOp.MaxAttempts != 1 || restoreOp.ResourceKey != "rgw/zonegroup/restore-group" {
 		t.Fatal("unsafe restore queue")
 	}
+	glacierBody := strings.TrimSuffix(strings.ReplaceAll(strings.ReplaceAll(restoreBody, "restore-group", "glacier-group"), `"tier_type":"cloud-s3"`, `"tier_type":"cloud-s3-glacier"`), "}") + `,"glacier_restore_days":0,"glacier_restore_tier_type":"Expedited"}`
+	if response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/restore", glacierBody, "glacier-restore"); response.Code != http.StatusAccepted {
+		t.Fatal("Glacier contract rejected", response.Code)
+	}
+	for _, body := range []string{strings.ReplaceAll(glacierBody, `"Expedited"`, `"Bulk"`), strings.ReplaceAll(glacierBody, `"glacier_restore_days":0`, `"glacier_restore_days":0.5`)} {
+		if response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/restore", body, "invalid-glacier"); response.Code != http.StatusBadRequest {
+			t.Fatal("invalid Glacier contract accepted")
+		}
+	}
 	for _, body := range []string{strings.Replace(restoreBody, `"allow_read_through":true,`, "", 1), strings.TrimSuffix(restoreBody, "}") + `,"secret":"private"}`} {
 		if response := sendOperationRequest(t, mux, http.MethodPatch, "/api/v1/rgw/zonegroup/placement/restore", body, "bad-restore"); response.Code != http.StatusBadRequest {
 			t.Fatal("invalid restore contract accepted")

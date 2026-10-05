@@ -100,20 +100,26 @@ func TestCloudRestoreValidation(t *testing.T) {
 	}
 	p := cloudRestoreParams()
 	p["tier_type"] = "cloud-s3-glacier"
+	p["glacier_restore_days"], p["glacier_restore_tier_type"] = 0, "Expedited"
 	r := cloudRestoreFixture()
-	group := periodDocument([]byte(strings.ReplaceAll(r.bodies["before"], "cloud-s3", "cloud-s3-glacier")))
+	group := periodDocument([]byte(strings.ReplaceAll(r.bodies["before"], `"tier_type":"cloud-s3"`, `"s3-glacier":{"glacier_restore_days":7,"glacier_restore_tier_type":"Standard"},"tier_type":"cloud-s3-glacier"`)))
 	if _, ok := cloudRestoreExpected(group, p); !ok {
 		t.Fatal("Glacier rejected")
 	}
 }
 
-func TestCloudRestorePreservesGlacierAndInitializesDefault(t *testing.T) {
+func TestCloudRestoreUpdatesGlacierAndInitializesDefault(t *testing.T) {
 	s, _, cluster := newCephUserService(t)
 	p := cloudRestoreParams()
 	p["tier_type"], p["expected_default_placement"] = "cloud-s3-glacier", ""
+	p["glacier_restore_days"], p["glacier_restore_tier_type"] = 0, "Expedited"
 	r := cloudRestoreFixture()
 	for _, stage := range []string{"before", "recheck", "after"} {
-		r.bodies[stage] = strings.ReplaceAll(r.bodies[stage], `"tier_type":"cloud-s3"`, `"s3-glacier":{"glacier_restore_days":7,"glacier_restore_tier_type":"Bulk"},"tier_type":"cloud-s3-glacier"`)
+		glacier := `"s3-glacier":{"glacier_restore_days":7,"glacier_restore_tier_type":"Standard","future":"preserved"},"tier_type":"cloud-s3-glacier"`
+		if stage == "after" {
+			glacier = strings.ReplaceAll(strings.ReplaceAll(glacier, `:7`, `:0`), `"Standard"`, `"Expedited"`)
+		}
+		r.bodies[stage] = strings.ReplaceAll(r.bodies[stage], `"tier_type":"cloud-s3"`, glacier)
 		value := ""
 		if stage == "after" {
 			value = "p"
@@ -124,7 +130,38 @@ func TestCloudRestorePreservesGlacierAndInitializesDefault(t *testing.T) {
 	if _, err := s.Execute(context.Background(), Request{ClusterID: cluster, Action: "rgw_zonegroup.cloud_restore", Parameters: p}); err != nil {
 		t.Fatal(err)
 	}
+	if !strings.HasSuffix(r.calls[3].Args[len(r.calls[3].Args)-1], ",glacier_restore_days=0,glacier_restore_tier_type=Expedited") {
+		t.Fatal(r.calls[3])
+	}
 	if days, ok := cloudRestoreDays(9007199254740991); !ok || days != "9007199254740991" {
 		t.Fatal("exact day boundary rejected")
+	}
+}
+
+func TestGlacierRestoreValidation(t *testing.T) {
+	for _, level := range []any{"Bulk", "standard", "Expedited,secret=x", "", nil} {
+		p := cloudRestoreParams()
+		p["tier_type"] = "cloud-s3-glacier"
+		p["glacier_restore_days"] = 1
+		p["glacier_restore_tier_type"] = level
+		if _, err := buildCloudRestore(p); err == nil {
+			t.Fatal("invalid level accepted", level)
+		}
+	}
+	for _, days := range []any{nil, -1, 1.5, "1", 9007199254740992.0} {
+		p := cloudRestoreParams()
+		p["tier_type"] = "cloud-s3-glacier"
+		p["glacier_restore_days"] = days
+		p["glacier_restore_tier_type"] = "Standard"
+		if _, err := buildCloudRestore(p); err == nil {
+			t.Fatal("invalid days accepted", days)
+		}
+	}
+	for _, key := range []string{"glacier_restore_days", "glacier_restore_tier_type"} {
+		p := cloudRestoreParams()
+		p[key] = nil
+		if _, err := buildCloudRestore(p); err == nil {
+			t.Fatal("S3 accepted Glacier field")
+		}
 	}
 }

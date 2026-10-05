@@ -37,6 +37,20 @@ func buildCloudRestore(p map[string]any) (command, error) {
 	}
 	spec.args[2] = "modify"
 	spec.args = append(spec.args, "--tier-config", "retain_head_object="+strconv.FormatBool(retain)+",allow_read_through="+strconv.FormatBool(read)+",read_through_restore_days="+days+",restore_storage_class="+restore)
+	if p["tier_type"] == "cloud-s3-glacier" {
+		glacierDays, valid := cloudRestoreDays(p["glacier_restore_days"])
+		level := syncGroupString(p, "glacier_restore_tier_type")
+		if !valid || level != "Standard" && level != "Expedited" {
+			return command{}, invalid("explicit exact unsigned Glacier days and Standard or Expedited restore tier required")
+		}
+		spec.args[len(spec.args)-1] += ",glacier_restore_days=" + glacierDays + ",glacier_restore_tier_type=" + level
+	} else {
+		_, daysPresent := p["glacier_restore_days"]
+		_, levelPresent := p["glacier_restore_tier_type"]
+		if daysPresent || levelPresent {
+			return command{}, invalid("Glacier settings require a Glacier tier")
+		}
+	}
 	return spec, nil
 }
 
@@ -94,6 +108,15 @@ func cloudRestoreExpected(group, p map[string]any) (map[string]any, bool) {
 			selected[key] = p[key]
 		}
 		selected["read_through_restore_days"] = json.Number(days)
+		if p["tier_type"] == "cloud-s3-glacier" {
+			glacier, valid := selected["s3-glacier"].(map[string]any)
+			glacierDays, daysOK := cloudRestoreDays(p["glacier_restore_days"])
+			if !valid || !daysOK {
+				return nil, false
+			}
+			glacier["glacier_restore_days"] = json.Number(glacierDays)
+			glacier["glacier_restore_tier_type"] = p["glacier_restore_tier_type"]
+		}
 		return expected, true
 	}
 	return nil, false

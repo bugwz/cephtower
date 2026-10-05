@@ -22,12 +22,13 @@ export function cloudRestoreLocalClasses(row?:Row,placement?:unknown) {
   return (target?.storage_classes??[]).filter((c:string)=>!/[ ,=/\\]/.test(c)&&!(target?.tier_targets??[]).some((t:Row)=>t.key===c)).map((c:string)=>({value:c,label:c}))
 }
 export function cloudRestoreChanged(changed:Row,values:Row,row?:Row) {
-  const reset={retain_head_object:undefined,allow_read_through:undefined,read_through_restore_days:undefined,restore_storage_class:undefined,confirm_restore:undefined}
+  const reset={tier_type:undefined,glacier_restore_days:undefined,glacier_restore_tier_type:undefined,retain_head_object:undefined,allow_read_through:undefined,read_through_restore_days:undefined,restore_storage_class:undefined,confirm_restore:undefined}
   if(Object.prototype.hasOwnProperty.call(changed,'placement_id'))return {...reset,storage_class:undefined}
   if(Object.prototype.hasOwnProperty.call(changed,'storage_class')) {
     const tier=targets(row).find(t=>t.name===values.placement_id)?.tier_targets?.find((t:Row)=>t.key===values.storage_class)?.val
     if(!tier)return reset
-    return {...reset,retain_head_object:typeof tier.retain_head_object==='boolean'?String(tier.retain_head_object):undefined,allow_read_through:typeof tier.allow_read_through==='boolean'?String(tier.allow_read_through):undefined,read_through_restore_days:Number.isSafeInteger(tier.read_through_restore_days)&&tier.read_through_restore_days>=0?tier.read_through_restore_days:undefined,restore_storage_class:cloudRestoreLocalClasses(row,values.placement_id).some((c:Row)=>c.value===tier.restore_storage_class)?tier.restore_storage_class:undefined}
+    const glacier=tier.tier_type==='cloud-s3-glacier'&&object(tier['s3-glacier'])?tier['s3-glacier']:{}
+    return {...reset,tier_type:tier.tier_type,glacier_restore_days:Number.isSafeInteger(glacier.glacier_restore_days)&&glacier.glacier_restore_days>=0?glacier.glacier_restore_days:undefined,glacier_restore_tier_type:['Standard','Expedited'].includes(glacier.glacier_restore_tier_type)?glacier.glacier_restore_tier_type:undefined,retain_head_object:typeof tier.retain_head_object==='boolean'?String(tier.retain_head_object):undefined,allow_read_through:typeof tier.allow_read_through==='boolean'?String(tier.allow_read_through):undefined,read_through_restore_days:Number.isSafeInteger(tier.read_through_restore_days)&&tier.read_through_restore_days>=0?tier.read_through_restore_days:undefined,restore_storage_class:cloudRestoreLocalClasses(row,values.placement_id).some((c:Row)=>c.value===tier.restore_storage_class)?tier.restore_storage_class:undefined}
   }
   return Object.keys(changed).some(k=>k!=='confirm_restore')?{confirm_restore:undefined}:{}
 }
@@ -36,9 +37,14 @@ export function cloudRestoreInput(values:Row,row?:Row) {
   if(!['true','false'].includes(values.retain_head_object)||!['true','false'].includes(values.allow_read_through)||!Number.isSafeInteger(values.read_through_restore_days)||values.read_through_restore_days<0||!cloudRestoreLocalClasses(row,values.placement_id).some((c:Row)=>c.value===values.restore_storage_class))throw new Error('必须明确选择布尔值、非负精确天数及目标中的本地恢复类')
   if(values.confirm_restore!=='acknowledged')throw new Error('请确认恢复配置和 Period 发布风险')
   const tier=targets(row).find(t=>t.name===values.placement_id)!.tier_targets.find((t:Row)=>t.key===values.storage_class).val
-  return {name:row!.name,zonegroup_id:row!.id,realm_id:row!.realm_id,expected_default_placement:row!.default_placement,placement_id:values.placement_id,storage_class:values.storage_class,tier_type:tier.tier_type,retain_head_object:values.retain_head_object==='true',allow_read_through:values.allow_read_through==='true',read_through_restore_days:values.read_through_restore_days,restore_storage_class:values.restore_storage_class,confirm_restore:true}
+  const glacier: {glacier_restore_days?:number;glacier_restore_tier_type?:string}={}
+  if(tier.tier_type==='cloud-s3-glacier') {
+    if(!Number.isSafeInteger(values.glacier_restore_days)||values.glacier_restore_days<0||!['Standard','Expedited'].includes(values.glacier_restore_tier_type))throw new Error('Glacier 需要明确的非负精确天数及 Standard / Expedited 等级')
+    glacier.glacier_restore_days=values.glacier_restore_days;glacier.glacier_restore_tier_type=values.glacier_restore_tier_type
+  } else if(values.glacier_restore_days!==undefined||values.glacier_restore_tier_type!==undefined)throw new Error('普通 S3 分层不能提交 Glacier 参数')
+  return {name:row!.name,zonegroup_id:row!.id,realm_id:row!.realm_id,expected_default_placement:row!.default_placement,placement_id:values.placement_id,storage_class:values.storage_class,tier_type:tier.tier_type,retain_head_object:values.retain_head_object==='true',allow_read_through:values.allow_read_through==='true',read_through_restore_days:values.read_through_restore_days,restore_storage_class:values.restore_storage_class,...glacier,confirm_restore:true}
 }
 export function cloudRestoreConfirmation(values:Row,row?:Row) {
   const p=cloudRestoreInput(values,row)
-  return `修改组 ${p.name}（${p.zonegroup_id}）目标 ${p.placement_id} 的云分层 ${p.storage_class}：保留头对象=${p.retain_head_object}，读穿透=${p.allow_read_through}，恢复天数=${p.read_through_restore_days}，恢复类=${p.restore_storage_class}。改变头对象保留可能影响后续恢复，读穿透可能触发远端请求和费用；请核对各 Zone 的恢复类池映射。本次不直接恢复任何对象，不修改端点、凭据、ACL 或 Glacier 专有参数。${p.expected_default_placement===''?'原生操作会初始化默认目标为当前目标 STANDARD。':''}随后提交 Realm ${p.realm_id} 的 Period，可能一并发布其他待提交变更。请先备份；非原子事务，失败可能部分生效，不自动重试或回滚，不隐式新建 Realm 或重启服务。`
+  return `修改组 ${p.name}（${p.zonegroup_id}）目标 ${p.placement_id} 的云分层 ${p.storage_class}：保留头对象=${p.retain_head_object}，读穿透=${p.allow_read_through}，读穿透恢复天数=${p.read_through_restore_days}，恢复类=${p.restore_storage_class}。${p.tier_type==='cloud-s3-glacier'?`Glacier 恢复天数=${p.glacier_restore_days}，恢复等级=${p.glacier_restore_tier_type}；等级影响远端恢复时延和费用，需核对目标支持。`:''}改变头对象保留可能影响后续恢复，读穿透可能触发远端请求和费用；请核对各 Zone 的恢复类池映射。本次不直接恢复任何对象，不修改端点、凭据或 ACL。${p.expected_default_placement===''?'原生操作会初始化默认目标为当前目标 STANDARD。':''}随后提交 Realm ${p.realm_id} 的 Period，可能一并发布其他待提交变更。请先备份；非原子事务，失败可能部分生效，不自动重试或回滚，不隐式新建 Realm 或重启服务。`
 }

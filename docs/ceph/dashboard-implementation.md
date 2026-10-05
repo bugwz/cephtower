@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### Glacier 专有恢复参数编辑
+
+在已有云分层恢复操作中补齐参考存储类表单的 `glacier_restore_days` 与 `glacier_restore_tier_type`，选择 Glacier 类时回填并要求明确填写，切换普通 S3 类或目标时清除专有值。根据 `RGWZoneGroupTierS3Glacier::update_params`，只接受大小写准确的 `Standard` / `Expedited`，避免其他输入被原生静默转换为 Standard；非负天数限制在前端精确整数范围，保留显式 0，并与读穿透天数分别展示。
+API 的两个条件字段由后端按分层类型校验：Glacier 必须提供二者，普通 S3 不得携带；原生命令在同一 `--tier-config` 中追加两项，完整配置预期只更新 `s3-glacier` 对应字段，保留其他字段。沿用组回读和指定 Realm Period 发布核验，确认提示恢复等级可能影响远端恢复时延及费用；不直接恢复对象或声称远端可用。
+更新 OpenAPI 和回归，覆盖显式 0、等级白名单、畸形/超范围天数、跨类型拒绝、选择回填/清除、完整命令和未知字段保留。前端全量回归及生产构建、后端全量测试与 OpenAPI 一致性检查通过。无真实集群或浏览器视觉验证。
+
 #### 已有云分层恢复配置编辑
 
 补齐参考 `modify_placement_targets` 的云分层恢复字段路径：Zonegroup 操作菜单选择已有 `cloud-s3` / `cloud-s3-glacier` 非 STANDARD 类，回填并编辑保留头对象、允许读穿透、读穿透恢复天数和本地恢复类。`PATCH /rgw/zonegroup/placement/restore` 进入高风险单次操作，以 `zonegroup placement modify --zonegroup-id ... --placement-id ... --storage-class ... --tier-config retain_head_object=...,allow_read_through=...,read_through_restore_days=...,restore_storage_class=...` 执行，布尔值使用原生小写文本，天数保留 0 且限制在前端精确整数范围。

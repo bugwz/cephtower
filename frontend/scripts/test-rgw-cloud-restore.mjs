@@ -25,10 +25,24 @@ assert.deepEqual(data.cloudRestoreChanged({allow_read_through:'false'},values,ro
 assert.deepEqual(data.cloudRestoreChanged({confirm_restore:'acknowledged'},values,row),{})
 for(const changed of [{realm_id:''},{stale:true},{placement_targets:[{...row.placement_targets[0],tier_targets:null}]},{placement_targets:[{...row.placement_targets[0],tier_targets:[]}]}])assert.ok(data.cloudRestoreBlocked({...row,...changed}))
 for(const changed of [{storage_class:'STANDARD'},{restore_storage_class:'COLD'},{restore_storage_class:'missing'},{retain_head_object:false},{allow_read_through:undefined},{read_through_restore_days:-1},{read_through_restore_days:1.5},{read_through_restore_days:Number.MAX_SAFE_INTEGER+1},{read_through_restore_days:'1'},{confirm_restore:undefined}])assert.throws(()=>data.cloudRestoreInput({...values,...changed},row))
-const glacier={...row,placement_targets:[{...row.placement_targets[0],tier_targets:[{key:'COLD',val:{...tier,tier_type:'cloud-s3-glacier'}}]}]}
-assert.equal(data.cloudRestoreInput(values,glacier).tier_type,'cloud-s3-glacier')
+const glacier={...row,placement_targets:[{...row.placement_targets[0],tier_targets:[{key:'COLD',val:{...tier,tier_type:'cloud-s3-glacier','s3-glacier':{glacier_restore_days:0,glacier_restore_tier_type:'Standard'}}}]}]}
+const gv={...values,glacier_restore_days:0,glacier_restore_tier_type:'Expedited'}
+assert.equal(data.cloudRestoreInput(gv,glacier).tier_type,'cloud-s3-glacier')
+assert.equal(data.cloudRestoreInput(gv,glacier).glacier_restore_days,0)
+assert.match(data.cloudRestoreConfirmation(gv,glacier),/Glacier 恢复天数=0，恢复等级=Expedited/)
+const gi=data.cloudRestoreChanged({storage_class:'COLD'},values,glacier)
+assert.equal(gi.glacier_restore_days,0);assert.equal(gi.glacier_restore_tier_type,'Standard');assert.equal(gi.tier_type,'cloud-s3-glacier')
+assert.equal(data.cloudRestoreChanged({storage_class:'COLD'},gv,row).glacier_restore_days,undefined)
+const malformed={...glacier,placement_targets:[{...glacier.placement_targets[0],tier_targets:[{key:'COLD',val:{...tier,tier_type:'cloud-s3-glacier','s3-glacier':{glacier_restore_days:Number.MAX_SAFE_INTEGER+1,glacier_restore_tier_type:'Bulk'}}}]}]}
+const unknown=data.cloudRestoreChanged({storage_class:'COLD'},values,malformed)
+assert.equal(unknown.glacier_restore_days,undefined);assert.equal(unknown.glacier_restore_tier_type,undefined)
+assert.throws(()=>data.cloudRestoreInput(gv,row))
+assert.throws(()=>data.cloudRestoreInput(values,glacier))
+for(const changed of [{glacier_restore_tier_type:'Bulk'},{glacier_restore_tier_type:'standard'},{glacier_restore_days:-1},{glacier_restore_days:1.5},{glacier_restore_days:Number.MAX_SAFE_INTEGER+1}])assert.throws(()=>data.cloudRestoreInput({...gv,...changed},glacier))
 const source=readFileSync(new URL('../src/pages/object/pages.tsx',import.meta.url),'utf8')
 assert.match(source,/path:'\/rgw\/zonegroup\/placement\/restore',method:'PATCH'/)
 assert.match(source,/changedValues:cloudRestoreChanged/)
 assert.match(source,/cloudRestoreInput\(values,row\)/)
+assert.match(source,/name:'glacier_restore_days'.*visibleWhen:values=>values.tier_type==='cloud-s3-glacier'/)
+assert.match(source,/name:'glacier_restore_tier_type'.*visibleWhen:values=>values.tier_type==='cloud-s3-glacier'/)
 console.log('Cloud restore form preserves native false and zero, validates local restore classes and confirms Period scope')

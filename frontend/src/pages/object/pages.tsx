@@ -1148,10 +1148,13 @@ const definitions: Record<
       fields:[
         {name:'placement_id',label:'已有云分层目标',type:'select',required:true,optionsLoader:async (_clusterId,row)=>cloudRestoreTargets(row)},
         {name:'storage_class',label:'已有云分层类',type:'select',required:true,optionsDependencies:['placement_id'],optionsLoader:async (_clusterId,row,values)=>cloudRestoreClasses(row,values?.placement_id)},
+        {name:'tier_type',label:'原生分层类型（不可更改）',readOnly:true},
         {name:'retain_head_object',label:'保留头对象（影响后续恢复）',type:'select',required:true,options:[{value:'true',label:'是'},{value:'false',label:'否'}]},
         {name:'allow_read_through',label:'允许读穿透（可能产生远端请求及费用）',type:'select',required:true,options:[{value:'true',label:'是'},{value:'false',label:'否'}]},
         {name:'read_through_restore_days',label:'读穿透恢复天数（原生值）',type:'number',required:true,min:0,max:Number.MAX_SAFE_INTEGER},
         {name:'restore_storage_class',label:'恢复本地类（需自行核对各 Zone 池映射）',type:'select',required:true,optionsDependencies:['placement_id'],optionsLoader:async (_clusterId,row,values)=>cloudRestoreLocalClasses(row,values?.placement_id)},
+        {name:'glacier_restore_days',label:'Glacier 恢复天数（不同于读穿透天数）',type:'number',required:true,min:0,max:Number.MAX_SAFE_INTEGER,visibleWhen:values=>values.tier_type==='cloud-s3-glacier'},
+        {name:'glacier_restore_tier_type',label:'Glacier 恢复等级（核对目标支持和费用）',type:'select',required:true,visibleWhen:values=>values.tier_type==='cloud-s3-glacier',options:[{value:'Standard',label:'Standard'},{value:'Expedited',label:'Expedited'}]},
         {name:'confirm_restore',label:'变更与发布确认',type:'select',required:true,options:[{value:'acknowledged',label:'已备份并核对恢复类、头对象保留及 Realm 待发布变更'}]}
       ],
       buildBody:(values,clusterId,row)=>({cluster_id:clusterId,...cloudRestoreInput(values,row)})

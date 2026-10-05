@@ -26425,6 +26425,11 @@ paths:
                   type: string
                 fs:
                   type: string
+                glacier_restore_days:
+                  type: integer
+                glacier_restore_tier_type:
+                  type: string
+                  enum: ["Expedited", "Standard"]
                 group:
                   type: string
                 host:
