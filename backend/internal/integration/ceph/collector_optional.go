@@ -384,6 +384,10 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 				continue
 			}
 			if resource.kind == "rgw_account" {
+				if observedID, ok := details["id"].(string); !ok || observedID != id {
+					markCollectionUnavailable(ctx, "collect.rgw_account_detail")
+					continue
+				}
 				details["account_id"] = id
 				details["account_name"] = textField(details, "name")
 				var stats map[string]any
