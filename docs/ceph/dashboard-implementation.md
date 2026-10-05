@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+#### Bucket 生命周期分层专用表格
+
+对照参考 `rgw-bucket-lifecycle-list.component.ts` 的 Tiering 表格，将转换动作从已有完整规则视图中额外投影为可展开的分层表格：逐项列出规则序号/ID、启用状态、当前/非当前版本、目标存储类、Days/Date/NoncurrentDays 时间条件与原生过滤条件；支持状态、版本范围、存储类筛选。不只取首个 Transition，也不丢弃同一规则的多条转换；空类名、缺失类名、异常时间组合、未配置与已配置但无转换分别展示，保持数字文本不发生精度损失。此视图是配置而不是处理进度，不修改规则或触发请求。
+数据链路复用 `GET /rgw/bucket/policy` 的 lifecycle_rules：`external/service.go` 调用原生 S3 `GetBucketConfiguration` 后由 `s3.BucketLifecycle` 解析。参考 `RgwClient.get_lifecycle` 同样调用 `GET /{bucket_name}?lifecycle`，无需用不等价的 `lc list` 进度命令代替配置内容。既有完整规则编辑、候选选择、删除配置和 XML 原文保持可用。本轮新增投影/筛选/页面绑定回归并更新列清单断言；`make test-frontend` 全量回归、TypeScript 与生产构建通过。未修改或重测后端，无真实集群或浏览器视觉验证，整体迁移尚未完成。
+
 #### 成员 Zone 池映射读取取消与旧回调隔离
 
 继续核对参考存储类列表的 `getAllZonesInfo` 关联链路时，发现现有 `RgwLocalClassDetails` 仅忽略迟到结果，却没有终止离开详情后的 Zone 分页读取，旧按钮回调还可在新作用域启动读取。现为 `readLocalClassZones` 增加 AbortSignal 传递、每页请求前后取消检查和合法集群 ID 校验；切换组/集群或卸载详情取消请求，旧作用域和卸载后的回调拒绝发起读取。保留失败可重试、同作用域重复点击互斥和完整分页才展示的行为。

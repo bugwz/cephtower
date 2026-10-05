@@ -193,7 +193,7 @@ assert.ok(tagAction.confirmation(tagValues, tagRow).includes('整体替换'))
 assert.equal(typeof tagAction.fields.find(field => field.name === 'tag_set').renderControl, 'function')
 assert.equal(definition.buildQuery({ kind: 'cors' }).toString(), 'kind=cors')
 assert.deepEqual(definition.filterFields.find(field => field.name === 'kind').options, helpers.rgwBucketConfigurationReadOptions)
-assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'versioning', 'tags', 'encryption', 'object_lock', 'acl', 'replication', 'notifications', 'cors_rules', 'lifecycle_rules', 'content_type', 'document'])
+assert.deepEqual(definition.columns.map(column => column.key), ['bucket_id', 'kind', 'configured', 'versioning', 'tags', 'encryption', 'object_lock', 'acl', 'replication', 'notifications', 'cors_rules', 'lifecycle_rules', 'lifecycle_transitions', 'content_type', 'document'])
 const readonlyReplication = { bucket_id: 'AGJ1Y2tldA', kind: 'replication', configured: true, document: '<ReplicationConfiguration/>' }
 assert.ok(helpers.rgwBucketConfigurationEditBlocked(readonlyReplication))
 assert.ok(helpers.rgwBucketConfigurationDeleteBlocked(readonlyReplication))

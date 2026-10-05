@@ -124,6 +124,7 @@ import { bucketNotificationDeleteBlocked, bucketNotificationDeleteInitial, bucke
 import { bucketAclOptions, bucketAclFormBlocked, bucketAclFormInitial, bucketAclFormInput, bucketAclFormConfirmation } from './rgwBucketAclForm'
 import { objectLockFormInitial, objectLockFormBlocked, objectLockFormInput, objectLockFormConfirmation } from './rgwBucketObjectLockForm'
 import { RgwBucketLifecycleStorageEditor } from './RgwBucketLifecycleStorageEditor'
+import { RgwBucketLifecycleTransitions } from './RgwBucketLifecycleTransitions'
 import { lifecycleFormInitial, lifecycleFormBlocked, lifecycleFormInput, lifecycleFormConfirmation } from './rgwBucketLifecycleForm'
 import { RgwBucketCorsEditor } from './RgwBucketCorsEditor'
 import { corsFormInitial, corsFormBlocked, corsFormInput, corsFormConfirmation } from './rgwBucketCorsForm'
@@ -1829,6 +1830,7 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       { key: 'notifications', title: '事件通知规则', ellipsis: false, render: (value, row) => row.kind === 'notification' ? <RgwBucketNotifications value={value} configured={row.configured} /> : '—' },
       { key: 'cors_rules', title: 'CORS 规则', ellipsis: false, render: (value, row) => row.kind === 'cors' ? <RgwBucketCorsRules value={value} configured={row.configured} /> : '—' },
       { key: 'lifecycle_rules', title: '生命周期规则', ellipsis: false, render: (value, row) => row.kind === 'lifecycle' ? <RgwBucketLifecycleRules value={value} configured={row.configured} /> : '—' },
+      { key: 'lifecycle_transitions', title: '生命周期分层', filterKey: false, ellipsis: false, render: (_value, row) => row.kind === 'lifecycle' ? <details><summary>查看转换动作（配置，不代表执行进度）</summary><RgwBucketLifecycleTransitions value={row.lifecycle_rules} configured={row.configured} /></details> : '—' },
       { key: 'content_type', title: '响应类型' },
       { key: 'document', title: '原始配置文档', ellipsis: false, render: (value, row) => <pre style={{ whiteSpace: 'pre-wrap', maxHeight: 240, overflow: 'auto' }}>{row.configured === false ? '未配置，无配置文档' : typeof value === 'string' ? value : '配置文档不可用'}</pre> }
     ]
