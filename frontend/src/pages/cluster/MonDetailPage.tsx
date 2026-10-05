@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Button, Card, Descriptions, Input, Space, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Descriptions, Input, Space, Tag, Typography } from 'antd'
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { textValue } from '../../api/client'
@@ -33,11 +33,15 @@ function MonDetailContent({ selectedClusterId, monName }: { selectedClusterId?: 
     }
     const [payload, counters] = await Promise.all([
       listResource('/monitors', selectedClusterId, { name: monName }),
-      listMonitorPerfCounters(monName, selectedClusterId)
+      listMonitorPerfCounters(monName, selectedClusterId).then(
+        items => ({ items, error: '' }),
+        (err: unknown) => ({ items: [], error: err instanceof Error && err.message ? err.message : '性能计数器请求失败' })
+      )
     ])
     return {
       mon: payload.items.find((row) => textValue(row.name ?? row.natural_key, '') === monName) ?? null,
-      counters
+      counters: counters.items,
+      counterError: counters.error
     }
   }, [monName, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
@@ -109,7 +113,7 @@ function MonDetailContent({ selectedClusterId, monName }: { selectedClusterId?: 
         title={`性能计数器 · mon.${monName}`}
         extra={<Input.Search allowClear placeholder="搜索名称、描述或值" value={search} onChange={(event) => setSearch(event.target.value)} style={{ width: 280 }} />}
       >
-        <DataTable
+        {data?.counterError ? <Alert type="warning" showIcon message="性能计数器不可用" description={data.counterError} /> : <DataTable
           data={counters}
           rowKeyCandidates={['natural_key', 'name']}
           columns={[
@@ -118,7 +122,7 @@ function MonDetailContent({ selectedClusterId, monName }: { selectedClusterId?: 
             { key: 'value', title: '值 / 单位', filterKey: false, render: (value, row) => <MonCounterValue value={value} unit={row.unit} /> },
             { key: 'metric_type', title: '指标类型', filterKey: false, render: (value) => monCounterType(value) }
           ]}
-        />
+        />}
         </Card>
       </Space>
     </Page>

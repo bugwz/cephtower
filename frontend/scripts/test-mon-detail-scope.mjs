@@ -24,3 +24,16 @@ for (const [selectedClusterId, monName] of [[1, 'a'], [2, 'a'], [2, 'b'], [undef
   assert.deepEqual(calls, [{ path: '/monitors', cluster: selectedClusterId, options: { name: monName } }, { monitor: monName, cluster: selectedClusterId }])
 }
 console.log('MON detail state is keyed by cluster and monitor, with scoped reads')
+for (const failure of [new Error('counter page failed'), new Error(''), 'unstructured failure']) {
+  const load = new Function('selectedClusterId', 'monName', 'listResource', 'listMonitorPerfCounters', 'textValue', `${code}; return load`)(1, 'a',
+    async () => ({ items: [{ name: 'a', rank: 0 }] }), async () => { throw failure }, value => value)
+  const result = await load()
+  assert.equal(result.mon.rank, 0)
+  assert.deepEqual(result.counters, [])
+  assert.equal(result.counterError, failure instanceof Error && failure.message ? failure.message : '性能计数器请求失败')
+}
+const primaryFailure = new Function('selectedClusterId', 'monName', 'listResource', 'listMonitorPerfCounters', 'textValue', `${code}; return load`)(1, 'a',
+  async () => { throw new Error('monitor request failed') }, async () => [], value => value)
+await assert.rejects(primaryFailure(), /monitor request failed/)
+assert.ok(source.includes('data?.counterError ? <Alert'))
+assert.ok(source.includes('description={data.counterError}'))
