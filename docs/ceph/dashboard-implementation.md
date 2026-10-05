@@ -29,6 +29,9 @@
 
 ### 增量实现与验证记录
 
+- **跨集群导入前启用目标 RGW 模块**：对齐参考 `_enable_rgw_module`，在已有 Realm 跨集群表单增加显式选项。选择后先通过现有 `PATCH /manager/module` 加密操作队列执行 `ceph mgr module enable rgw`，并由后端 `mgr module ls --format json` 核验启用状态；不使用 force，不重复实现模块后端。完成后再次核对两端集群身份和当前表单范围，才读取敏感 Token 并导入。未选择时保留预先启用要求；源端模块不自动修改。
+  - 启用与导入是独立操作，界面明确可能发生 mgr 变化及模块已启用但导入未完成的部分状态。启用失败、回读未确认、配置变化或关页均不继续读取 Token/导入，不自动重试启用或回滚模块。新增明确选择、顺序、失败截断、范围失效、参数类型及不向导入 API 透传 UI 字段的回归；本次无后端契约变化，无真实集群或浏览器视觉验证。
+
 - **目标系统用户及 Token 密钥核验**：继续对齐参考 `_verify_user_and_daemons` → `check_user_in_second_cluster`。目标进程运行后，以 `radosgw-admin user info --access-key <token-access-key> --zone-id <verified-zone-id> --format json` 读取准确 Zone 的用户；依据 `radosgw-admin.cc::USER_INFO` 和 `RGWUser::init/info`，访问密钥可定位用户，无需额外传入容易错配的用户名。要求非空用户身份、system=true，且恰有一个匹配访问密钥，其 secret 与 Token 一致；允许其他独立密钥，不把用户名存在当作凭据一致。
   - 原生未填充用户返回 EINVAL（22），按尚未核验处理、每五秒只读重查，最多五分钟；这不是缺失的确定证据，其他原生查找异常也可能折叠为该返回值。其他命令错误、异常 JSON、非系统用户或密钥冲突立即失败；等待支持取消，不重复导入。访问密钥参数标记敏感，原始 stdout/stderr 清理，成功只增加 `system_user_verified=true`，不持久化用户密钥或原始输出，不设置 Dashboard 凭据；原生进程参数仍存在系统特权进程可见风险。前端明确这不代表全部同步完成。新增身份/密钥/多密钥、失败脱敏、命令范围及取消回归；无真实集群或浏览器视觉验证。
 

@@ -15,6 +15,7 @@ export async function transferRealm(input: {
 }, deps: {
   current: () => boolean
   clusters: () => Promise<TransferCluster[]>
+  enableTargetRgw: (clusterId: number) => Promise<unknown>
   token: (body: ApiRecord) => Promise<{ token: string }>
   importZone: (body: ApiRecord) => Promise<unknown>
 }) {
@@ -23,6 +24,7 @@ export async function transferRealm(input: {
   const values = { ...input.values }
   const build = (token: string) => rgwRealmImportAction.buildBody!({ ...values, realm_token: token }, target.id)
   build('cHJldmlldw==') // Validate deployment inputs before reading credentials.
+  if (values.enable_target_rgw !== undefined && typeof values.enable_target_rgw !== 'boolean') throw new Error('invalid module enable choice')
   const verify = async () => {
     const rows = await deps.clusters()
     if (!deps.current()) throw new Error('transfer scope changed')
@@ -32,6 +34,10 @@ export async function transferRealm(input: {
     }
   }
   await verify()
+  if (values.enable_target_rgw === true) {
+    await deps.enableTargetRgw(target.id)
+    await verify()
+  }
   const result = await deps.token({ cluster_id: source.id, realm_id: realmId, name: realmName })
   try {
     if (!deps.current()) throw new Error('transfer scope changed')

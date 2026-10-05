@@ -18,6 +18,7 @@ function harness() {
   const deps = {
     current: () => true,
     clusters: async () => { calls.push('clusters'); return [source, target] },
+    enableTargetRgw: async id => { calls.push(['enable', id]) },
     token: async body => { calls.push(['token', body]); return token },
     importZone: async body => { calls.push(['import', structuredClone(body)]); return { details: {} } }
   }
@@ -30,7 +31,22 @@ await transferRealm(input, h.deps)
 assert.deepEqual(h.calls, ['clusters', ['token', { cluster_id: 1, realm_id: 'realm-id', name: 'realm' }], 'clusters', ['import', { cluster_id: 2, name: 'secondary', realm_token: 'c2VjcmV0', port: 8080, placement: { hosts: ['node-a', 'node-b'], count: 2 }, confirm_import: true, tier_type: 'archive' }]])
 assert.equal(h.token.token, '')
 assert.equal(values.realm_token, undefined)
-for (const bad of [{ port: 0 }, { confirm_import: undefined }, { name: '-bad' }]) {
+h = harness()
+await transferRealm({ ...input, values: { ...values, enable_target_rgw: true } }, h.deps)
+assert.deepEqual(h.calls.slice(0, 4), ['clusters', ['enable', 2], 'clusters', ['token', { cluster_id: 1, realm_id: 'realm-id', name: 'realm' }]])
+assert.equal(h.calls.filter(c => c[0] === 'enable').length, 1)
+assert.equal(h.calls.at(-1)[1].enable_target_rgw, undefined)
+h = harness()
+h.deps.enableTargetRgw = async () => { throw new Error('module failure') }
+await assert.rejects(transferRealm({ ...input, values: { ...values, enable_target_rgw: true } }, h.deps))
+assert.equal(h.calls.some(c => c[0] === 'token' || c[0] === 'import'), false)
+h = harness()
+let enableScope = true
+h.deps.current = () => enableScope
+h.deps.enableTargetRgw = async () => { enableScope = false }
+await assert.rejects(transferRealm({ ...input, values: { ...values, enable_target_rgw: true } }, h.deps))
+assert.equal(h.calls.some(c => c[0] === 'token' || c[0] === 'import'), false)
+for (const bad of [{ port: 0 }, { confirm_import: undefined }, { name: '-bad' }, { enable_target_rgw: 'true' }]) {
   h = harness()
   await assert.rejects(transferRealm({ ...input, values: { ...values, ...bad } }, h.deps))
   assert.equal(h.calls.length, 0)
@@ -61,6 +77,8 @@ assert.match(ui, /locked\.current/)
 assert.match(ui, /sequence\.current\+\+; setAcknowledged\(false\)/)
 assert.match(ui, /cache: 'no-store'/)
 assert.match(ui, /不会撤销/)
+assert.match(ui, /setMgrModuleEnabled\(id, 'rgw', true\)/)
+assert.match(ui, /valuePropName="checked"/)
 assert.doesNotMatch(ui, /localStorage|sessionStorage|console\./)
 assert.match(readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8'), /<RgwRealmTransfer/)
 console.log('Existing realm transfer validates cluster identities and guards credential handoff')

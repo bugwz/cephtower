@@ -2,7 +2,7 @@ import { Alert, Button, Card, Checkbox, Form, Input, InputNumber, Select, Space 
 import { useEffect, useRef, useState } from 'react'
 import { listClusters } from '../../api/cluster'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
-import { mutateResource } from '../../api/resource'
+import { mutateResource, setMgrModuleEnabled } from '../../api/resource'
 import { useClusterContext } from '../../state/ClusterContext'
 import { rgwRealmImportAction } from './rgwRealmImport'
 import { transferRealm, validTransferPair } from './realmTransferWorkflow'
@@ -43,6 +43,7 @@ export function RgwRealmTransfer({ row, clusterId }: { row: ApiRecord; clusterId
       await transferRealm({ source, target, realmId: String(row.id), realmName: String(row.name), values: { ...values, confirm_import: 'acknowledged' } }, {
         current,
         clusters: listClusters,
+        enableTargetRgw: id => setMgrModuleEnabled(id, 'rgw', true),
         token: body => request('/rgw/realm/token', jsonInit('POST', body, { cache: 'no-store', suppressErrorNotification: true })),
         importZone: body => mutateResource('/rgw/realm/import', 'POST', body)
       })
@@ -56,11 +57,12 @@ export function RgwRealmTransfer({ row, clusterId }: { row: ApiRecord; clusterId
   }
   return <Card size="small" title="将已有 Realm 导入其他集群">
     <Space direction="vertical" style={{ width: '100%' }}>
-      <Alert type="warning" message={`源 Realm：${String(row.name ?? '')}；源集群：${source?.name ?? '不可用'}`} description="读取现有主站 Token 并提交到明确选择的目标集群，不重新初始化主站。两端需预先配置原生命令连接及 rgw 管理模块，不依赖或设置 Ceph Dashboard 凭据。关闭详情或切换范围会阻止尚未提交的导入；已提交操作不会撤销，请到目标集群操作记录查看。" />
+      <Alert type="warning" message={`源 Realm：${String(row.name ?? '')}；源集群：${source?.name ?? '不可用'}`} description="读取现有主站 Token 并提交到明确选择的目标集群，不重新初始化主站。两端需配置原生命令连接，源端需启用 rgw 模块；可明确选择启用目标 rgw 模块，不使用 force，不设置 Dashboard 凭据。模块启用与导入是独立操作，可能触发 mgr 变化，后续失败不会回滚模块状态。关闭详情或切换范围会阻止尚未提交的后续步骤；已提交操作不会撤销，请到目标集群操作记录查看。" />
       <Alert type="warning" message="跨集群操作不可回滚" description={rgwRealmImportAction.confirmation?.({ zone_mode: zoneMode })} />
       {!valid && <Alert type="info" message="源 Realm 或集群身份不可用，请刷新库存和集群列表" />}
       <Form form={form} layout="vertical" initialValues={{ zone_mode: 'normal', port: 80, placement_mode: 'default' }} disabled={busy || !valid} onValuesChange={() => { sequence.current++; setAcknowledged(false); setOutcome(undefined) }} onFinish={values => void submit(values)}>
         <Form.Item name="target_cluster" label="目标集群（禁止相同 FSID）" rules={[{ required: true }]}><Select options={clusters.filter(c => validTransferPair(source, c)).map(c => ({ value: c.id, label: `${c.name} — ${c.fsid}` }))} /></Form.Item>
+        <Form.Item name="enable_target_rgw" valuePropName="checked"><Checkbox>导入前启用并核验目标 rgw 管理模块（已启用也会核验；不勾选时需预先启用）</Checkbox></Form.Item>
         <Form.Item name="name" label="新的从 Zone 名称" rules={[{ required: true }, { pattern: /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$/ }]}><Input /></Form.Item>
         <Form.Item name="zone_mode" label="Zone 类型"><Select options={[{ value: 'normal', label: '普通从 Zone' }, { value: 'archive', label: '归档从 Zone（仅从主 Zone 同步）' }]} /></Form.Item>
         <Form.Item name="port" label="RGW 前端端口（非 TLS）" rules={[{ required: true }]}><InputNumber min={1} max={65535} precision={0} /></Form.Item>
