@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### RGW 加密提供商写入参数与命令构造基础
+
+对照 `rgw-config-modal.onSubmit`、`CephService.set_encryption_config` 与 `rgw.yaml.in`，新增内部 `planRGWEncryption`，为三种既有配置组合构造明确字段补丁。要求具体 client.rgw 实体、预期后端选择、影响确认；密码提交另需安全保存确认。未知字段、展示用 backend/encryption_type/unique_id、跨提供商字段、错误类型、控制字符、脱敏占位及超长值均拒绝；TLS 校验采用布尔值，Vault auth/secret engine 按支持值校验。SSE-S3 模板单独映射原生键，未提交字段不构造命令，选择提供商不隐式修改后端选择。
+复用原生 config set 的参数编码：普通值使用 `--value=...`，显式空值使用停止选项解析后的 `--value` 独立参数，保留空格和以连字符开头的模板。所有值参数均标记敏感，不只依赖字段名称启发式；此标记不消除本机进程参数可见性。Vault 地址禁止凭据/查询/片段及非法端口；参考 `rgw_kmip_client_impl.cc::get_kmip_handle` 在首个冒号分割地址，故此入口支持主机或主机加明确数字端口，拒绝不能按该实现正确解释的 IPv6 表示。证书和 Token 字段仍是 RGW 主机路径，不上传文件内容。
+新增各组合全部字段、补丁不扩展、空值/false/空格/模板、确认、敏感参数与非法输入测试；`make test-backend`（含 OpenAPI 一致性）通过，无真实集群验证，未改动或重测前端。本增量仅为命令计划，未注册可执行动作或写 API；预检/并发变化检查/逐项写后核验、不可自动重试的任务链和前端编辑仍必须继续接通，不能视为已可修改配置。
+
 #### RGW 加密提供商只读 API 与配置页面
 
 将上一轮原生读取服务接入 `GET /rgw/encryption/configuration`：严格请求体指定 cluster_id、client.rgw 实体、encryption_type 和 provider，复用既有认证与审计，响应 no-store；新增路由和生成 OpenAPI。对象存储增加“服务端加密配置”（`/object/encryption`），显式选择 SSE-KMS Vault/KMIP 或 SSE-S3 Vault 后按需读取。前端按准确配置实体、组合、字段白名单及原生键校验完整返回，拒绝部分字段、重复字段和未脱敏密码；展示原生选项、值、读取时间与 Monitor 后端选择值，明确区分提供商配置和后端选择。
