@@ -62,7 +62,7 @@ func migrateRealmTopology(admin migrationAdmin, rename migrationRename, snapshot
 		return fail()
 	}
 	group, ok = admin("group_migrated", false, "zonegroup", "get", "--zonegroup-id", groupID)
-	if !ok || group["id"] != groupID || group["name"] != groupName || group["realm_id"] != realmID || group["is_master"] != true || !migrationMemberMatches(group, zoneID, zoneName) || !snapshot.storagePreserved(group, zone) {
+	if !ok || group["id"] != groupID || group["name"] != groupName || group["realm_id"] != realmID || group["is_master"] != true || !migrationMemberMatches(group, zoneID, zoneName) || !snapshot.storagePreservedAfterModify(group, zone) {
 		return fail()
 	}
 	member := group["zones"].([]any)[0].(map[string]any)

@@ -239,7 +239,7 @@ func (s *Service) executeRealmSetup(ctx context.Context, access executor.Cluster
 	if migrating {
 		g, gok := admin("migration_group_preserved", false, "zonegroup", "get", "--zonegroup-id", groupID)
 		z, zok := admin("migration_zone_preserved", false, "zone", "get", "--zone-id", zoneID)
-		if !gok || !zok || !migrationSnapshot.storagePreserved(g, z) || !migrationMemberMatches(g, zoneID, zoneName) {
+		if !gok || !zok || !migrationSnapshot.storagePreservedAfterModify(g, z) || !migrationMemberMatches(g, zoneID, zoneName) {
 			return fail()
 		}
 	}
@@ -268,7 +268,7 @@ func (s *Service) executeRealmSetup(ctx context.Context, access executor.Cluster
 	}
 	if migrating {
 		group, ok := admin("migration_final_group", false, "zonegroup", "get", "--zonegroup-id", groupID)
-		if !ok || !migrationSnapshot.storagePreserved(group, zone) || !migrationMemberMatches(group, zoneID, zoneName) {
+		if !ok || !migrationSnapshot.storagePreservedAfterModify(group, zone) || !migrationMemberMatches(group, zoneID, zoneName) {
 			return fail()
 		}
 	}

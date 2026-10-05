@@ -63,12 +63,45 @@ func cloneMigrationValue(value any) any {
 }
 
 func (snapshot realmMigrationSnapshot) storagePreserved(group, zone map[string]any) bool {
+	return snapshot.storagePreservedAtPhase(group, zone, false)
+}
+
+func (snapshot realmMigrationSnapshot) storagePreservedAfterModify(group, zone map[string]any) bool {
+	return snapshot.storagePreservedAtPhase(group, zone, true)
+}
+
+func (snapshot realmMigrationSnapshot) storagePreservedAtPhase(group, zone map[string]any, modified bool) bool {
 	zones, ok := group["zones"].([]any)
 	if !ok || len(zones) != 1 {
 		return false
 	}
 	member, ok := zones[0].(map[string]any)
-	if !ok || !reflect.DeepEqual(snapshot.member, migrationUnchangedFields(member, "name", "endpoints", "tier_type")) {
+	if !ok {
+		return false
+	}
+	expectedMember := snapshot.member
+	actualMember := migrationUnchangedFields(member, "name", "endpoints", "tier_type")
+	if modified {
+		// Native zone modify adds supported features and recomputes log_data
+		// from the number of group members, even when no such flags are passed.
+		before, beforeOK := realmSetupStrings(snapshot.member["supported_features"])
+		after, afterOK := realmSetupStrings(member["supported_features"])
+		if !beforeOK || !afterOK || member["log_data"] != false {
+			return false
+		}
+		seen := map[string]bool{}
+		for _, feature := range after {
+			seen[feature] = true
+		}
+		for _, feature := range before {
+			if !seen[feature] {
+				return false
+			}
+		}
+		expectedMember = migrationUnchangedFields(expectedMember, "supported_features", "log_data")
+		actualMember = migrationUnchangedFields(actualMember, "supported_features", "log_data")
+	}
+	if !reflect.DeepEqual(expectedMember, actualMember) {
 		return false
 	}
 	return snapshot.group != nil && snapshot.zone != nil &&
