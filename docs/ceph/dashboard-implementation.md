@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+#### RGW 守护进程服务映射读取基础
+
+对照参考 `rgw-daemon-list`、`controllers/rgw.py::RgwDaemon.list`，追踪 `DaemonServer.cc` 的 `service dump` 分支及 `ServiceMap.cc` 的 Daemon/Service/ServiceMap 序列化。新增内部 `RGWDaemons`，执行 `ceph service dump --format json`；读取 services.rgw.daemons，跳过同层 summary 字符串，以 service_map_id 保留注册身份，逻辑 id 相同的多个注册不合并，按逻辑 id/映射 id 排序。只输出 ID、主机、版本、Realm/Zonegroup/Zone 名称及 Zonegroup ID，不透传任意 metadata、frontend_config 或 task_status，不推断 Dashboard 默认实例或实时健康状态。
+空 services 或无 RGW 服务返回空数组；缺失 services、非法 RGW 映射、缺失身份、字段类型错误和尾随 JSON 拒绝整批结果。命令错误、非零退出与取消不返回原始诊断，命令结果缓冲清理。新增投影、排序、同 ID 注册、空库存、畸形输出、固定命令、失败/取消及缓冲清理测试；后端全量测试和 OpenAPI 检查通过。该增量仅为内部读取服务，API、列表页面、端口及性能/状态详情尚待继续接入，无真实集群验证。
+
 #### RGW 加密配置读取敏感输出清理
 
 读取服务此前将 KMIP 密码输出转换为不可变字符串再做响应脱敏，且未清理原生命令结果缓冲。本次在每条 config get 完成后清零 stdout/stderr（含失败、非零退出、非法输出和取消路径），改为直接验证 UTF-8 字节、末尾换行与控制字符；密码通过验证后直接返回脱敏标记，不再将其复制为字符串。普通字段仍复制保留原始空格、false 和空值，随后清理命令缓冲。测试持有各次命令结果切片，检查下一条命令开始前及服务返回后均已清零，并验证响应/错误不泄漏密码。后端全量测试及 OpenAPI 检查通过；不声称清除执行器、操作系统或运行时的其他副本，无真实集群验证。
