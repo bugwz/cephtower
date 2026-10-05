@@ -39,7 +39,7 @@ func TestCloudRestoreChain(t *testing.T) {
 	if d["restore_configuration_verified"] != true || d["period_published"] != true || d["objects_restored"] != false {
 		t.Fatal(d)
 	}
-	if len(r.calls) != 9 || strings.Join(r.calls[3].Args, " ") != "zonegroup placement modify --zonegroup-id g --placement-id p --storage-class COLD --format json --tier-config retain_head_object=false,allow_read_through=true,read_through_restore_days=0,restore_storage_class=STANDARD" {
+	if len(r.calls) != 9 || strings.Join(r.calls[3].Args, " ") != `zonegroup placement modify --zonegroup-id g --placement-id p --storage-class COLD --format json --tier-config retain_head_object=false,allow_read_through=true,read_through_restore_days=0,restore_storage_class="STANDARD"` {
 		t.Fatal(r.calls)
 	}
 	for _, stage := range []string{"before", "realm_before", "recheck", "add", "after", "period.pre_check", "period.commit", "period.realm_post_check", "period.period_post_check"} {

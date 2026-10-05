@@ -36,7 +36,7 @@ func buildCloudRestore(p map[string]any) (command, error) {
 		return command{}, invalid("supported cloud tier required")
 	}
 	spec.args[2] = "modify"
-	spec.args = append(spec.args, "--tier-config", "retain_head_object="+strconv.FormatBool(retain)+",allow_read_through="+strconv.FormatBool(read)+",read_through_restore_days="+days+",restore_storage_class="+restore)
+	spec.args = append(spec.args, "--tier-config", "retain_head_object="+strconv.FormatBool(retain)+",allow_read_through="+strconv.FormatBool(read)+",read_through_restore_days="+days+",restore_storage_class="+tierConfigString(restore))
 	if p["tier_type"] == "cloud-s3-glacier" {
 		glacierDays, valid := cloudRestoreDays(p["glacier_restore_days"])
 		level := syncGroupString(p, "glacier_restore_tier_type")

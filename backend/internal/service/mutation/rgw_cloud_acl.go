@@ -69,7 +69,7 @@ func buildCloudACL(p map[string]any) (command, error) {
 	if len(desired) == 0 && p["confirm_clear"] != true {
 		return command{}, invalid("explicit ACL clear confirmation required")
 	}
-	quoted := func(s string) string { raw, _ := json.Marshal(s); return string(raw) }
+	quoted := tierConfigString
 	add, remove := []string{}, []string{}
 	sources := map[string]bool{}
 	for i, a := range desired {
