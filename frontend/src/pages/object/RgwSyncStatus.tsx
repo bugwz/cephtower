@@ -1,7 +1,21 @@
-import { Alert, Button, Card, Space } from 'antd'
+import { Alert, Button, Card, Descriptions, Space } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
-import { rgwSyncReportSections } from './rgwSyncReport'
+import { rgwSyncCounters, rgwSyncReportSections } from './rgwSyncReport'
+
+export function RgwSyncCounterDetails({ section }: { section: string }) {
+  const counters = rgwSyncCounters(section)
+  if (!counters) return null
+  const items = [
+    { key: 'full', label: '全量同步阶段分片数（非已完成）', value: counters.full },
+    { key: 'incremental', label: '增量同步阶段分片数', value: counters.incremental },
+    { key: 'total', label: '报告分片总数', value: counters.total },
+    { key: 'remaining', label: counters.remainingUnit === 'buckets' ? '待同步桶数' : '待同步条目数', value: counters.remaining },
+    { key: 'behind', label: '落后分片数', value: counters.behind },
+    { key: 'recovering', label: '恢复中分片数', value: counters.recovering },
+  ].filter(item => item.value !== undefined).map(({ key, label, value }) => ({ key, label, children: value }))
+  return <Descriptions column={1} size="small" items={items} />
+}
 
 export function RgwSyncStatus({ row, clusterId }: { row: ApiRecord; clusterId?: number }) {
   const scope = JSON.stringify([clusterId, row.id, row.name, row.stale])
@@ -49,9 +63,9 @@ export function RgwSyncStatus({ row, clusterId }: { row: ApiRecord; clusterId?: 
       {scoped && state.error && <Alert type="error" message={state.error} />}
       {sections && <>
         <Card size="small" title="站点身份与原生采样信息"><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{sections.identity}</pre></Card>
-        <Card size="small" title="元数据同步"><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{sections.metadata}</pre></Card>
+        <Card size="small" title="元数据同步"><RgwSyncCounterDetails section={sections.metadata}/><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{sections.metadata}</pre></Card>
         {sections.sources.length === 0 && <Alert type="info" message="原生报告未列出数据同步来源；这不是同步完成的证明" />}
-        {sections.sources.map((source, index) => <Card key={index} size="small" title={`数据同步来源 ${index + 1}`}><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{source}</pre></Card>)}
+        {sections.sources.map((source, index) => <Card key={index} size="small" title={`数据同步来源 ${index + 1}`}><RgwSyncCounterDetails section={source}/><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{source}</pre></Card>)}
       </>}
       {scoped && state.report && <details open={!sections}><summary>完整原生同步报告</summary><pre aria-label="Zone 原生同步报告" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 520, overflow: 'auto' }}>{state.report}</pre></details>}
     </Space>

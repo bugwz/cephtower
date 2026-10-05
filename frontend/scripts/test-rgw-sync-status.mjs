@@ -18,8 +18,17 @@ assert.equal(parts.metadata,'syncing\nfull sync: 2/64 shards')
 assert.equal(parser.rgwSyncReportSections(native.split('      data sync')[0]).sources.length,0)
 assert.equal(parser.rgwSyncReportSections('unknown report'),undefined)
 assert.match(parser.rgwSyncReportSections(native.replace('syncing','failed to read sync status: Permission denied')).metadata,/Permission denied/)
+const counterText='syncing\nfull sync: 2/64 shards\nfull sync: 9007199254740993 buckets to sync\nincremental sync: 62/64 shards\ndata is behind on 4 shards\n1 shards are recovering\nfailed to fetch source sync status: Permission denied'
+assert.deepEqual(parser.rgwSyncCounters(counterText),{full:'2',total:'64',remaining:'9007199254740993',remainingUnit:'buckets',incremental:'62',behind:'4',recovering:'1'})
+assert.deepEqual(parser.rgwSyncCounters('full sync: 0/0 shards\nincremental sync: 0/0 shards\nmetadata is behind on 0 shards'),{full:'0',total:'0',incremental:'0',behind:'0'})
+assert.deepEqual(parser.rgwSyncCounters('full sync: 18446744073709551615 entries to sync'),{remaining:'18446744073709551615',remainingUnit:'entries'})
+for(const text of ['no sync (zone is master)','failed to fetch source sync status: full sync: 1/2 shards','full sync: -1/2 shards','full sync: 3/2 shards','full sync: 1/2 shards\nincremental sync: 1/3 shards','full sync: 2/2 shards\nincremental sync: 1/2 shards','full sync: 1/2 shards\nfull sync: 1/2 shards','full sync: 1 entries to sync\nfull sync: 1 buckets to sync'])assert.equal(parser.rgwSyncCounters(text),undefined)
 const code=ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwSyncStatus.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.React}}).outputText
-new Function('exports','require','React',code)(api,name=>name==='react'?hooks:name==='antd'?{Alert:'Alert',Button:'Button',Card:'Card',Space:'Space'}:name==='./rgwSyncReport'?parser:client,{createElement:(type,props,...children)=>({type,props:{...props,children}})})
+new Function('exports','require','React',code)(api,name=>name==='react'?hooks:name==='antd'?{Alert:'Alert',Button:'Button',Card:'Card',Space:'Space',Descriptions:'Descriptions'}:name==='./rgwSyncReport'?parser:client,{createElement:(type,props,...children)=>({type,props:{...props,children}})})
+const counterItems=api.RgwSyncCounterDetails({section:counterText}).props.items
+assert.equal(counterItems.find(item=>item.key==='remaining').children,'9007199254740993')
+assert.match(counterItems.find(item=>item.key==='full').label,/非已完成/)
+assert.equal(api.RgwSyncCounterDetails({section:'no sync (zone is master)'}),null)
 let props={row:{id:'zone-id',name:'zone-a'},clusterId:7}
 function render(){cursor=0;const tree=api.RgwSyncStatus(props);pending.splice(0).forEach(fn=>fn());return tree}
 function nodes(node){return !node||typeof node!=='object'?[]:[node,...(node.props?.children??[]).flat(Infinity).flatMap(nodes)]}
