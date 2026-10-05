@@ -340,7 +340,7 @@ export async function getMonitorStatus(clusterId = requiredClusterId()): Promise
 }
 
 export function listMonitorPerfCounters(monitor: string, clusterId = requiredClusterId()): Promise<ApiRecord[]> {
-  return listResource('/monitor/perf/counters', clusterId, { limit: 500, body: { monitor } }).then((payload) => payload.items)
+  return listAllResources('/monitor/perf/counters', clusterId, { limit: 500, body: { monitor } }).then((payload) => payload.items)
 }
 
 export function listMgrModules(): Promise<ApiRecord[]> {
