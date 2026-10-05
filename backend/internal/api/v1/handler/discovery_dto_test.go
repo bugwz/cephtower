@@ -26,6 +26,16 @@ func TestResourceDTOUsesOnlyDiscoveredData(t *testing.T) {
 	assertInternalDiscoveryFieldsHidden(t, row)
 }
 
+func TestRGWInventoryEndpointResponseRedaction(t *testing.T) {
+	for _, kind := range []string{"rgw_zonegroup", "rgw_realm"} {
+		row := store.CephEntityRecord{Kind: kind, DiscoveredData: `{"name":"group","placement_targets":[{"name":"p","tier_targets":[{"key":"COLD","val":{"s3":{"endpoint":"https://user:private-pass@host.test/path?custom=private-query#private-fragment","secret":"private-secret","region":"region"}}}]}]}`}
+		payload, err := json.Marshal(toResourceDTO(row))
+		if err != nil || strings.Contains(string(payload), "private-") || !strings.Contains(string(payload), `"endpoint":"https://host.test/path"`) || !strings.Contains(string(payload), `"endpoint_redacted":true`) {
+			t.Fatal("unsafe inventory response")
+		}
+	}
+}
+
 func TestPoolResourceDTOPrefersDiscoveredClusterData(t *testing.T) {
 	now := time.Now().UTC()
 	configured := `{"quota_max_bytes":1024,"compression_mode":"passive","applications":["rbd"],"owner":"operator"}`

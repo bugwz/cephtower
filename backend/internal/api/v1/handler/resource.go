@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"cephtower/backend/internal/security"
 	operationservice "cephtower/backend/internal/service/operation"
 	"cephtower/backend/internal/store"
 )
@@ -389,6 +390,17 @@ func resourceLookupKey(kind, resourceKey string) string {
 func toResourceDTO(row store.CephEntityRecord) resourceDTO {
 	data := map[string]any{}
 	_ = json.Unmarshal([]byte(row.DiscoveredData), &data)
+	if row.Kind == "rgw_zonegroup" || row.Kind == "rgw_realm" {
+		// Inventory is a display boundary, never a source of reusable credentials.
+		visible, err := security.RedactJSON(data)
+		if err != nil {
+			data = map[string]any{}
+		} else if safe, ok := visible.(map[string]any); ok {
+			data = safe
+		} else {
+			data = map[string]any{}
+		}
+	}
 	return resourceDTO{Kind: row.Kind, NaturalKey: row.NaturalKey, Name: row.Name, Status: row.Status, ResourceVersion: row.ResourceVersion, Source: row.Source, ObservedAt: row.ObservedAt, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt, Stale: row.StaleAt != nil, Data: data}
 }
 

@@ -179,7 +179,17 @@ func redactJSONValue(value any, field string) any {
 	switch typed := value.(type) {
 	case map[string]any:
 		result := make(map[string]any, len(typed))
+		_, hasTierEndpoint := typed["endpoint"]
+		tierEndpoint := field == "s3" && hasTierEndpoint
+		if tierEndpoint {
+			visible, hidden := redactTierEndpoint(typed["endpoint"])
+			result["endpoint"] = visible
+			result["endpoint_redacted"] = hidden || typed["endpoint_redacted"] == true
+		}
 		for key, item := range typed {
+			if tierEndpoint && (key == "endpoint" || key == "endpoint_redacted") {
+				continue
+			}
 			// Configuration APIs represent credentials as {name: "...password", value: "..."}.
 			if name, ok := typed["name"].(string); key == "value" && ok && IsSensitiveName(name) {
 				result[key] = "[REDACTED]"

@@ -38,7 +38,7 @@ export function groupPlacementClassRows(value:unknown) {
         if(tier.storage_class!==storageClass)issues.push(`${target.name}/${storageClass}：分层键与声明名称不一致或缺失`)
         addFields(fields,tier,{tier_type:'原生分层类型',storage_class:'分层内部类名',retain_head_object:'保留头对象',allow_read_through:'允许读穿透',read_through_restore_days:'读穿透恢复天数',restore_storage_class:'恢复目标类'})
         const s3=object(tier.s3)?tier.s3:{}
-        fields.push({name:'目标端点',value:endpoint(s3.endpoint)})
+        fields.push({name:'目标端点',value:endpoint(s3.endpoint)+(s3.endpoint_redacted===true?'（采集/API 已隐藏端点敏感部分）':'')})
         addFields(fields,s3,{region:'目标区域',host_style:'寻址方式',target_storage_class:'目标存储类',target_path:'目标路径',multipart_sync_threshold:'分段同步阈值（字节）',multipart_min_part_size:'最小分段大小（字节）'})
         if(tier.tier_type==='cloud-s3-glacier')addFields(fields,object(tier['s3-glacier'])?tier['s3-glacier']:{},{glacier_restore_days:'Glacier 恢复天数',glacier_restore_tier_type:'Glacier 恢复类型'})
         if(Array.isArray(s3.acl_mappings)&&s3.acl_mappings.every((a:unknown)=>object(a)&&typeof a.key==='string'&&object(a.val))&&new Set(s3.acl_mappings.map((a:Row)=>a.key)).size===s3.acl_mappings.length) {

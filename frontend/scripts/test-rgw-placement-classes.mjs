@@ -17,6 +17,8 @@ assert.equal(field(cold,'Glacier 恢复类型'),'Expedited')
 assert.match(field(cold,'目标端点'),/^https:\/\/example.com\/path（/)
 assert.deepEqual(JSON.parse(field(cold,'ACL 映射')),[{key:'owner',type:'id',source_id:'source',dest_id:'dest'}])
 assert.doesNotMatch(JSON.stringify(result),/password|private|sensitive-|hidden-/)
+const projected=data.groupPlacementClassRows([{...targets[0],tier_targets:[{key:'COLD',val:{...tier,s3:{...tier.s3,endpoint:'https://example.com/path',endpoint_redacted:true}}}]}])
+assert.match(field(projected.rows[1],'目标端点'),/采集\/API 已隐藏/)
 for(const bad of ['javascript:private-secret','malformed-private-secret']) {
  const badTarget=[{...targets[0],tier_targets:[{key:'COLD',val:{...tier,s3:{...tier.s3,endpoint:bad}}}]}]
  const badRows=data.groupPlacementClassRows(badTarget)

@@ -141,6 +141,41 @@ func TestOptionalObservationIsStoredWithoutSecrets(t *testing.T) {
 	}
 }
 
+func TestTierEndpointObservationIsStoredWithoutURLCredentials(t *testing.T) {
+	db, err := store.Open(config.DatabaseConfig{EncryptionKey: reconcilerTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "tier.db"}}, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer store.Close(db)
+	encrypted, err := security.Encrypt([]byte("plain-ceph-key"), reconcilerTestKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	cluster := store.CephCluster{Name: "fixture", MonitorAddresses: "mon:6789", ClientUsername: "client.fixture", ClientKey: encrypted, CreatedAt: now, UpdatedAt: now}
+	if err := db.CreateCluster(context.Background(), &cluster); err != nil {
+		t.Fatal(err)
+	}
+	collector := &metadataCollectorFake{results: []cephprovider.CollectionResult{{Observations: []cephprovider.Observation{{
+		Kind: "rgw_zonegroup", NaturalKey: "group", ObservedAt: now,
+		Payload: map[string]any{"placement_targets": []any{map[string]any{"tier_targets": []any{map[string]any{"val": map[string]any{"s3": map[string]any{
+			"endpoint": "https://user:private-password@cloud.example/path?custom=private-query#private-fragment", "secret": "private-secret",
+		}}}}}}},
+	}}}}}
+	clusters := clusterservice.New(func() *store.Database { return db }, reconcilerTestKey, nil)
+	service := New(func() *store.Database { return db }, clusters, collector, Options{})
+	if err := service.Reconcile(context.Background(), cluster.ID, Module{Name: "storage", Kinds: []string{"rgw_zonegroup"}}); err != nil {
+		t.Fatal(err)
+	}
+	row, err := db.FindResource(context.Background(), cluster.ID, "rgw_zonegroup", "group")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(row.DiscoveredData, "private-") || !strings.Contains(row.DiscoveredData, `"endpoint":"https://cloud.example/path"`) || !strings.Contains(row.DiscoveredData, `"endpoint_redacted":true`) {
+		t.Fatalf("unsafe or incomplete tier projection persisted: %s", row.DiscoveredData)
+	}
+}
+
 func TestReconcileMarksSuccessfulEmptyKindsStaleButPreservesUnavailableKinds(t *testing.T) {
 	db, err := store.Open(config.DatabaseConfig{EncryptionKey: reconcilerTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "reconciler-stale.db"}}, t.TempDir())
 	if err != nil {

@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+#### 云分层端点库存与 API 脱敏
+
+依据 `RGWZoneGroupPlacementTierS3::dump` 的原生 `s3.endpoint` 字段，修复仅前端隐藏 URL 敏感部分而库存仍可能保存任意查询参数/片段的缺口。递归 JSON 脱敏在采集入库前移除 HTTP(S) 端点用户信息、全部查询参数与片段，异常类型、协议或畸形地址整体隐藏；嵌套 Realm Period 中的组配置同样处理。组与 Realm 库存 DTO 再次执行脱敏，保护尚未重新采集的数据返回，前端标明端点敏感部分已隐藏。
+该投影不改变原生 Ceph 配置或变更参数，重复脱敏保留标记。历史数据库内容不主动重写，需后续成功采集更新；本修复不宣称清除旧日志或备份。新增 URL 边界、嵌套与幂等性、实际 SQLite 入库、API 出口和前端提示回归。后端全量测试及 OpenAPI 一致性、前端全量回归、TypeScript 与生产构建通过；无真实集群或浏览器视觉验证。
+
 #### 放置存储类与云分层配置结构化展示
 
 对照参考 `rgw-storage-class-list.component.ts` 的类型/组/区域/端点列，以及 `BucketTieringUtils.filterAndMapTierTargets` 的本地类与分层映射，将本项目组 `placement_targets` 与 Zone `placement_pools` 原始对象列替换为可展开表格。沿用已存在的 `collector_optional.go` → `zonegroup/zone list/get --format json` → 库存 API 链路，不新增重复采集或伪造数据。
