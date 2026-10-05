@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### Bucket 完整枚举读取修复
+
+准备总览汇总时核对 `RGWBucketAdminOp::info`：全局 bucket list/stats 分支枚举失败可退出循环但仍返回 0，stats 还忽略逐桶错误，因此不可用来证明完整总量。现将库存枚举改为 `radosgw-admin metadata list bucket --format json`，参考 METADATA_LIST 分支未指定 max-entries 时循环至结束，初始化/分页错误会返回非零退出。严格要求原生字符串数组，拒绝 null、混合类型、空名称和重复名称，并标记 rgw_bucket 采集不可用而非成功空库存；逐桶 stats 保留原有身份核验。新增命令、严格列表与不可用标记回归测试。库存分页本身仍不提供全扫描原子快照证明，本轮未冒充实现集群容量总计；无真实集群验证。
+
 #### Bucket 使用量整数精度保护
 
 核对参考概览汇总的 usage.rgw.main 以及 `RGWStorageStats::dump`，发现现有 bucket stats 采集保留 JSON 数字，浏览器解析超过安全整数范围的计数时会失真。现于库存写入前将各 usage 类别的 size、size_actual、size_utilized、对应 size_kb 字段及 num_objects 保留为原始十进制字符串，不将缺失字段、空类别或 null 补零，也不改未知字段。新增实际原生采集链路到 JSON 输出的 uint64/超安全整数、零值、多类别及缺失字段回归测试。此修复为精确汇总提供数据基础，尚未实现总览 Bucket/对象/容量汇总，无真实集群验证。

@@ -446,14 +446,19 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 		}
 	}
 	var buckets any
-	if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_bucket", []string{"bucket", "list", "--format", "json"}, &buckets) {
+	if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_bucket", []string{"metadata", "list", "bucket", "--format", "json"}, &buckets) {
+		bucketNames, valid := rgwBucketNames(buckets)
+		if !valid {
+			markCollectionUnavailable(ctx, "collect.rgw_bucket")
+			bucketNames = nil
+		}
 		var progress any
 		progressAvailable := p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_lifecycle_progress", []string{"lc", "list", "--format", "json"}, &progress)
 		progressEntries, progressValid := rgwLifecycleProgress(progress)
 		if progressAvailable && !progressValid {
 			markCollectionUnavailable(ctx, "collect.rgw_lifecycle_progress")
 		}
-		for _, entry := range stringList(buckets, "buckets") {
+		for _, entry := range bucketNames {
 			tenant, bucket := "", entry
 			if prefix, name, found := strings.Cut(entry, "/"); found {
 				tenant, bucket = prefix, name
