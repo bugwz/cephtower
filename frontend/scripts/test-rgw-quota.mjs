@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import './test-rgw-limit-confirmation.mjs'
 import './test-rgw-realm-token.mjs'
 import './test-rgw-realm-delete.mjs'
 import './test-rgw-zonegroup-delete.mjs'

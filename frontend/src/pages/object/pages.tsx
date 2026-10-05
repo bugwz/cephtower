@@ -84,8 +84,8 @@ import { rgwAccountLimit, rgwAccountLimitPatch } from './rgwAccountLimit'
 import { rgwUserSuspension, rgwUserBooleanFlag } from './rgwUserFlags'
 import { rgwUserFlagPatch, rgwUserUpdateConfirmation } from './rgwUserFlagPatch'
 import { rgwUserEmailPatch } from './rgwUserEmailPatch'
-import { rgwRateLimitInitial, rgwRateLimitInput } from './rgwRateLimitForm'
-import { rgwQuotaInitial, rgwQuotaInput } from './rgwQuotaForm'
+import { rgwRateLimitConfirmation, rgwRateLimitInitial, rgwRateLimitInput } from './rgwRateLimitForm'
+import { rgwQuotaConfirmation, rgwQuotaInitial, rgwQuotaInput } from './rgwQuotaForm'
 import { rgwRoleInitial, rgwRolePatch } from './rgwRoleEdit'
 import { RgwRoleTagsTable } from './RgwRoleTagsTable'
 import { RgwPolicyDocument, RgwRolePolicyDetails, RgwRoleManagedPolicies } from './RgwRolePolicyDetails'
@@ -324,6 +324,7 @@ const definitions: Record<
         { name: 'max_objects', label: '对象数量上限（-1 为无限制）', type: 'number' as const, min: -1, max: Number.MAX_SAFE_INTEGER, required: true }
       ],
       initialValues: (row) => rgwQuotaInitial(row?.[scope === 'user' ? 'user_quota' : 'bucket_quota']),
+      confirmation: (values, row) => rgwQuotaConfirmation(values, `用户 ${JSON.stringify(userId(row))}`, scope === 'user' ? '用户总配额' : '默认 Bucket 配额'),
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), scope, ...rgwQuotaInput(values) })
     })),
       { title: '迁入账户（不可逆）', path: '/rgw/user', method: 'PATCH', successMessage: '迁入命令完成且用户账户归属已确认，请检查 Bucket 归属及访问策略',
@@ -380,6 +381,7 @@ const definitions: Record<
           ...['max_read_ops', 'max_write_ops', 'max_read_bytes', 'max_write_bytes'].map((name,index) => ({ name, label: ['读请求数', '写请求数', '读取字节数', '写入字节数'][index] + '（每 RGW 每分钟；0 为无限制）', type: 'number' as const, min: 0, max: Number.MAX_SAFE_INTEGER, required: true }))
         ],
         initialValues: (row) => rgwRateLimitInitial(row?.rate_limit),
+        confirmation: (values, row) => rgwRateLimitConfirmation(values, `用户 ${JSON.stringify(userId(row))}`),
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwRateLimitInput(values) })
       },
       { title: '管理用户托管策略', path: '/rgw/user/policy', method: 'POST', successMessage: '托管策略操作执行成功',
@@ -566,6 +568,7 @@ const definitions: Record<
         { name: 'max_objects', label: '对象数量上限（-1 为无限制）', type: 'number' as const, min: -1, max: Number.MAX_SAFE_INTEGER, required: true }
       ],
       initialValues: (row) => rgwQuotaInitial(row?.[scope === 'account' ? 'quota' : 'bucket_quota']),
+      confirmation: (values, row) => rgwQuotaConfirmation(values, `账户 ${JSON.stringify(String(row?.account_id ?? row?.natural_key ?? ''))}`, scope === 'account' ? '账户总配额' : '默认 Bucket 配额'),
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, account_id: String(row?.account_id ?? row?.natural_key ?? ''), scope, ...rgwQuotaInput(values) })
     })),
     deleteAction: {
@@ -972,6 +975,7 @@ const definitions: Record<
         { name: 'max_objects', label: '对象上限（-1 为无限制）', type: 'number', min: -1, max: Number.MAX_SAFE_INTEGER, required: true }
       ],
       initialValues: (row) => rgwQuotaInitial(row?.bucket_quota),
+      confirmation: (values, row) => rgwQuotaConfirmation(values, `Bucket ID ${JSON.stringify(bucketId(row))}`, 'Bucket 配额'),
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, bucket_id: bucketId(row), ...rgwQuotaInput(values) })
     }, { title: 'Bucket 限流设置', path: '/rgw/bucket/ratelimit', method: 'PUT', successMessage: 'Bucket 限流设置执行成功',
         fields: [
@@ -979,6 +983,7 @@ const definitions: Record<
           ...['max_read_ops', 'max_write_ops', 'max_read_bytes', 'max_write_bytes'].map((name,index) => ({ name, label: ['读请求数', '写请求数', '读取字节数', '写入字节数'][index] + '（每 RGW 每分钟；0 为无限制）', type: 'number' as const, min: 0, max: Number.MAX_SAFE_INTEGER, required: true }))
         ],
         initialValues: (row) => rgwRateLimitInitial(row?.rate_limit),
+        confirmation: (values, row) => rgwRateLimitConfirmation(values, `Bucket ID ${JSON.stringify(bucketId(row))}`),
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, bucket_id: bucketId(row), ...rgwRateLimitInput(values) })
       }],
     deleteAction: {

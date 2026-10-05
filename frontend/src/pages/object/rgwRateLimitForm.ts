@@ -16,3 +16,10 @@ export function rgwRateLimitInput(values: Record<string, unknown>) {
   }
   return { ...limits, enabled: values.enabled === 'enable' }
 }
+
+export function rgwRateLimitConfirmation(values: Record<string, unknown>, target: string) {
+  const limits = rgwRateLimitInput(values)
+  const labels = ['读请求数', '写请求数', '读取字节数', '写入字节数']
+  const summary = keys.map((key, index) => `${labels[index]}：${values[key] === 0 ? '无限制（0）' : values[key]}`).join('；')
+  return `确认整体更新 ${target} 的限流设置？状态：${limits.enabled ? '启用' : '关闭'}；${summary}。限制按每 RGW 每分钟计算，不是集群总限额。关闭时仍保存上述限制值，其他作用域限流仍独立生效。`
+}
