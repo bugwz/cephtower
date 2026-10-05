@@ -48,6 +48,7 @@ import { topicWritableOptions, topicOptionBlocked, topicOptionInitial, topicOpti
 import { topicCreateInput, topicCreateConfirmation } from './rgwTopicCreate'
 import { RgwTopicOptionsEditor } from './RgwTopicOptionsEditor'
 import { roleManagedPolicyBlocked, roleManagedPolicyInitial, roleManagedPolicyInput, roleManagedPolicyConfirmation, roleManagedPolicyOptions } from './rgwRoleManagedPolicy'
+import { rgwRoleDeleteBlocked, rgwRoleDeleteInput, rgwRoleDeleteConfirmation, rgwRoleDeleteResourceKey } from './rgwRoleDelete'
 import { bucketReplicationFormBlocked, bucketReplicationFormInitial, bucketReplicationFormInput, bucketReplicationFormConfirmation } from './rgwBucketReplicationForm'
 import { useClusterContext } from '../../state/ClusterContext'
 import { periodCommitInitial, periodCommitInput, periodCommitConfirmation, periodCommitBlocked } from './rgwPeriodCommit'
@@ -764,8 +765,9 @@ const definitions: Record<
     deleteAction: {
       title: '删除 RGW Role', path: '/rgw/role', action: 'rgw_role.delete',
       resourceKind: 'rgw_role', successMessage: 'RGW Role 删除执行成功',
-      buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...(row.AccountId ? { account_id: String(row.AccountId) } : {}), name: String(row.RoleName ?? row.natural_key ?? '') }),
-      resourceKey: (row) => `rgw/role/${row.AccountId ? `${String(row.AccountId)}/` : ''}${String(row.RoleName ?? row.natural_key ?? '')}`
+      disabledWhen: rgwRoleDeleteBlocked, confirmation: rgwRoleDeleteConfirmation,
+      buildBody: (row, clusterId) => ({ cluster_id: clusterId, ...rgwRoleDeleteInput(row) }),
+      resourceKey: rgwRoleDeleteResourceKey
     },
     columns: [
       { key: 'RoleName', title: 'Role' },

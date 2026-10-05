@@ -42,6 +42,25 @@ function load(file, require = () => { throw new Error('unexpected dependency') }
 }
 const policies = load('rgwRolePolicies.ts')
 const identities = load('rgwUserIdentity.ts')
+const removal = load('rgwRoleDelete.ts')
+for (const row of [{ RoleName: 'reader', AccountId: '' }, { RoleName: 'team$reader', AccountId: '' }, { RoleName: 'reader', AccountId: 'RGW123' }]) {
+  assert.equal(removal.rgwRoleDeleteBlocked(row), undefined)
+  assert.equal(removal.rgwRoleDeleteInput(row).name, row.RoleName)
+  assert.equal(removal.rgwRoleDeleteResourceKey(row), `rgw/role/${row.AccountId ? `${row.AccountId}/` : ''}${row.RoleName}`)
+  const confirmation = removal.rgwRoleDeleteConfirmation(row)
+  assert.ok(confirmation.includes(JSON.stringify(row.RoleName)))
+  assert.ok(confirmation.includes('不可恢复'))
+  assert.ok(confirmation.includes('不能据此保证已签发的临时凭据立即失效'))
+  if (row.AccountId) assert.ok(confirmation.includes(JSON.stringify(row.AccountId)))
+  else assert.equal(Object.hasOwn(removal.rgwRoleDeleteInput(row), 'account_id'), false)
+}
+for (const row of [{ natural_key: 'reader' }, { RoleName: 'reader' }, { RoleName: 123, AccountId: '' }, { RoleName: 'reader', AccountId: null }, { RoleName: '', AccountId: '' }, { RoleName: ' reader', AccountId: '' }, { RoleName: 'reader', AccountId: ' RGW123' }]) {
+  assert.ok(removal.rgwRoleDeleteBlocked(row))
+  assert.throws(() => removal.rgwRoleDeleteInput(row))
+  assert.throws(() => removal.rgwRoleDeleteResourceKey(row))
+}
+assert.ok(pages.includes('disabledWhen: rgwRoleDeleteBlocked, confirmation: rgwRoleDeleteConfirmation'))
+assert.ok(pages.includes('...rgwRoleDeleteInput(row)'))
 const summary = load('RgwRoleSummary.tsx', name => {
   if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx }
   if (name === 'antd') return { Descriptions: 'Descriptions' }
