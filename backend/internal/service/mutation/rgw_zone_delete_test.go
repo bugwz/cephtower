@@ -33,8 +33,8 @@ func (e *zoneDeleteExecutor) Run(_ context.Context, _ executor.ClusterAccess, sp
 }
 func zoneDeleteFixture(realm string) *zoneDeleteExecutor {
 	zone := `{"id":"z","name":"secondary","realm_id":"` + realm + `","system_key":{"secret_key":"private"}}`
-	group := `{"id":"g","name":"group","realm_id":"` + realm + `","master_zone":"primary","zones":[{"id":"primary","name":"primary","log_data":true},{"id":"z","name":"secondary","log_data":true}]}`
-	after := `{"id":"g","name":"group","realm_id":"` + realm + `","master_zone":"primary","zones":[{"id":"primary","name":"primary","log_data":false}]}`
+	group := `{"id":"g","name":"group","realm_id":"` + realm + `","is_master":true,"master_zone":"primary","zones":[{"id":"primary","name":"primary","log_data":true},{"id":"z","name":"secondary","log_data":true}]}`
+	after := `{"id":"g","name":"group","realm_id":"` + realm + `","is_master":true,"master_zone":"primary","zones":[{"id":"primary","name":"primary","log_data":false}]}`
 	period := `{"id":"new","realm_id":"r","epoch":2,"master_zone":"primary","master_zonegroup":"g","period_map":{"zonegroups":[` + after + `]}}`
 	groups := `{"zonegroups":["group"],"default_info":"g"}`
 	return &zoneDeleteExecutor{codes: map[string]int{"absence": 2}, outputs: map[string]string{
@@ -45,7 +45,7 @@ func zoneDeleteFixture(realm string) *zoneDeleteExecutor {
 		"groups_before": groups, "groups_recheck": groups, "groups_after": groups,
 		"group_before_0": group, "group_recheck_0": group, "group_after_0": after,
 		"realm_before":     `{"id":"r","current_period":"old"}`,
-		"period_before":    `{"id":"old","realm_id":"r","master_zone":"primary"}`,
+		"period_before":    `{"id":"old","realm_id":"r","master_zonegroup":"g","master_zone":"primary"}`,
 		"period.pre_check": `{"id":"r","current_period":"old"}`,
 		"period.commit":    period, "period.realm_post_check": `{"id":"r","current_period":"new"}`,
 		"period.period_post_check": period, "published": period,

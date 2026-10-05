@@ -95,6 +95,9 @@ func (s *Service) executeZoneDelete(ctx context.Context, access executor.Cluster
 		if !ok || p["id"] != current || p["realm_id"] != realm || !syncFlowToken(syncGroupString(p, "master_zone")) || p["master_zone"] == id {
 			return fail("pre_check_failed")
 		}
+		if !zoneDeleteRealmTopology(expected, realm, p) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "pre_check_failed", Message: "No Zone deletion submitted: every Realm group must have a valid master member and exactly one master group matching the published Period; resolve pending primary changes separately", Retryable: false}
+		}
 	}
 	checked, _, ok := run("identity_recheck", zoneArgs, false)
 	if !ok || !reflect.DeepEqual(zone, checked) {
@@ -220,4 +223,44 @@ func zoneDeletePublished(p map[string]any, realm, id string, expected []map[stri
 	}
 	masterID := syncGroupString(p, "master_zonegroup")
 	return len(seen) == len(want) && seen[masterID] && p["master_zone"] == want[masterID]["master_zone"]
+}
+
+// update_period validates every group in the Realm, not just affected groups.
+// Do not delete first and discover an invalid pending topology on publication.
+// Changing the published primary is a separate operation requiring explicit consent.
+func zoneDeleteRealmTopology(groups []map[string]any, realm string, published map[string]any) bool {
+	masterID, masterZone := "", ""
+	seenGroups := map[string]bool{}
+	for _, group := range groups {
+		if group["realm_id"] != realm {
+			continue
+		}
+		gid := syncGroupString(group, "id")
+		master := syncGroupString(group, "master_zone")
+		isMaster, valid := group["is_master"].(bool)
+		members, ok := group["zones"].([]any)
+		if !valid || !ok || !syncFlowToken(gid) || seenGroups[gid] || !syncFlowToken(master) {
+			return false
+		}
+		seenGroups[gid] = true
+		seen := map[string]bool{}
+		for _, raw := range members {
+			member, ok := raw.(map[string]any)
+			id := syncGroupString(member, "id")
+			if !ok || !syncFlowToken(id) || seen[id] {
+				return false
+			}
+			seen[id] = true
+		}
+		if !seen[master] {
+			return false
+		}
+		if isMaster {
+			if masterID != "" {
+				return false
+			}
+			masterID, masterZone = gid, master
+		}
+	}
+	return masterID != "" && published["master_zonegroup"] == masterID && published["master_zone"] == masterZone
 }

@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- **Zone 删除的 Realm 拓扑前置校验**：依据原生 `update_period` 对同 Realm 所有组的验证，将无效主成员、空组、未知主组状态、多主组或无主组检查移到删除之前；不仅校验包含待删 Zone 的组。要求唯一主组及其主成员与已发布 Period 一致，禁止删除顺带触发未明确确认的主站迁移。其他 Realm 的主组配置不参与本 Realm 发布检查。新增集成测试证明同 Realm 未受影响组的错误会在任何写入前被拒绝，以及主站漂移、重复身份和合法多组测试；无真实集群验证。
+
 - **非主 Zone 删除（保留池）**：新增高风险单次尝试 `DELETE /rgw/zone` 和 Zone 列表删除入口，明确确认 ID、名称和 Realm。依据参考 `RgwMultisite.delete_zone` 与原生 `rgw_zone.cc::delete_zone/remove_zone_from_groups/remove_zone_from_group`，直接调用按 ID 的 `zone delete`，利用其原生全组成员移除，不重复调用单组 remove。执行前读取并校验所有本地 Zonegroup，拒绝主成员、跨 Realm 成员关系、唯一 Zone 与当前上下文默认 Zone；有 Realm 时拒绝已发布主 Zone。重读目标和全组配置、组清单及 Zone 清单/默认值后才写入。
   - 写后核验 Zone ID ENOENT、名称索引和默认值、完整组清单以及所有组配置。受影响组只能移除目标，并按原生成员数量更新剩余成员 log_data；其他字段、其他组不允许变化，从而检测原生忽略的组写入失败。随后发布显式 Realm Period，回读所有该 Realm 组的成员和主成员；无 Realm 不发布。刷新三类 Multisite 库存，失败不自动重试。界面说明池/对象/服务保留、不自动重启、默认值仅当前上下文、非事务和可能发布其他待提交配置。主 Zone 的显式替换与可选池清理仍未实现，不宣称远端同步完成或具备跨进程原子锁。新增精确命令、每阶段错误/退出码截断、默认诊断、配置漂移、跨 Realm 未受影响组、log_data、成员残留、Period 回读、队列/刷新和前端确认测试；无真实集群验证。
 
