@@ -234,7 +234,7 @@ func (s *Service) executeRealmSetup(ctx context.Context, access executor.Cluster
 			return setupDaemonSnapshot(result.Stdout, name)
 		}
 		before, valid := readDaemons("daemons_before")
-		if !valid || len(before) == 0 {
+		if !valid || !setupRestartBaseline(before) {
 			cancel()
 			return fail()
 		}

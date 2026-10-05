@@ -31,7 +31,7 @@ func TestSetupRestartEvidence(t *testing.T) {
 			t.Fatal("insufficient restart evidence accepted")
 		}
 	}
-	for _, raw := range []string{`null`, `{}`, `[{}]`, strings.ReplaceAll(r["daemons_ready"], `rgw.gateway`, `rgw.other`), strings.ReplaceAll(r["daemons_ready"], `"status":1`, `"status":null`), strings.ReplaceAll(r["daemons_ready"], `2026-01-01T00:02:00Z`, `invalid`)} {
+	for _, raw := range []string{`null`, `{}`, `[{}]`, strings.ReplaceAll(r["daemons_ready"], `rgw.gateway`, `rgw.other`), strings.ReplaceAll(r["daemons_ready"], `2026-01-01T00:02:00Z`, `invalid`)} {
 		if _, valid := setupDaemonSnapshot([]byte(raw), "rgw.gateway"); valid {
 			t.Fatal("invalid daemon response accepted")
 		}
@@ -66,6 +66,35 @@ func TestSetupRestartEvidence(t *testing.T) {
 	stopCanceled()
 	if waitSetupRestart(canceled, time.Millisecond, before, func() (map[string]setupDaemon, bool) { t.Fatal("read after cancellation"); return after, true }) {
 		t.Fatal("cancellation reported success")
+	}
+}
+
+func TestSetupRestartWaitsForTransientMetadata(t *testing.T) {
+	r := setupResponses(t)
+	before, _ := setupDaemonSnapshot([]byte(r["daemons_before"]), "rgw.gateway")
+	ready, _ := setupDaemonSnapshot([]byte(r["daemons_ready"]), "rgw.gateway")
+	for _, pair := range [][2]string{
+		{`"status":1`, `"status":null`},
+		{`"started":"2026-01-01T00:02:00Z"`, `"started":null`},
+		{`"last_refresh":"2026-01-01T00:03:00Z"`, `"last_refresh":null`},
+	} {
+		pending, ok := setupDaemonSnapshot([]byte(strings.ReplaceAll(r["daemons_ready"], pair[0], pair[1])), "rgw.gateway")
+		if !ok || setupRestartBaseline(pending) || setupRestartReady(before, pending) || setupRestartReady(pending, ready) {
+			t.Fatal("transient metadata was rejected or accepted as restart evidence")
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		calls := 0
+		result := waitSetupRestart(ctx, time.Millisecond, before, func() (map[string]setupDaemon, bool) {
+			calls++
+			if calls == 1 {
+				return pending, true
+			}
+			return ready, true
+		})
+		cancel()
+		if !result || calls != 2 {
+			t.Fatal("did not wait for complete metadata")
+		}
 	}
 }
 

@@ -23,7 +23,7 @@ func setupDaemonSnapshot(raw []byte, service string) (map[string]setupDaemon, bo
 	}
 	out := map[string]setupDaemon{}
 	for _, d := range rows {
-		if d.ID == "" || d.Type != "rgw" || d.Service != service || d.Host == "" || d.Status == nil || d.Started.IsZero() || d.Refresh.IsZero() {
+		if d.ID == "" || d.Type != "rgw" || d.Service != service || d.Host == "" {
 			return nil, false
 		}
 		if _, exists := out[d.ID]; exists {
@@ -34,10 +34,22 @@ func setupDaemonSnapshot(raw []byte, service string) (map[string]setupDaemon, bo
 	return out, true
 }
 
+func setupRestartBaseline(snapshot map[string]setupDaemon) bool {
+	if len(snapshot) == 0 {
+		return false
+	}
+	for _, d := range snapshot {
+		if d.Status == nil || d.Started.IsZero() || d.Refresh.IsZero() {
+			return false
+		}
+	}
+	return true
+}
+
 // A refreshed running state alone can predate the asynchronous restart. Require
 // the same daemon identities and a newer native start time for each process.
 func setupRestartReady(before, after map[string]setupDaemon) bool {
-	if len(before) == 0 || len(before) != len(after) {
+	if !setupRestartBaseline(before) || len(before) != len(after) {
 		return false
 	}
 	for id, old := range before {
