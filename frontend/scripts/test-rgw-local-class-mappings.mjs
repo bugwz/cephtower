@@ -5,7 +5,7 @@ const compile=name=>ts.transpileModule(readFileSync(new URL(`../src/pages/object
 const placement={},data={},calls=[]
 let replies=[]
 new Function('exports',compile('rgwPlacementClassData.ts'))(placement)
-new Function('exports','require',compile('rgwLocalClassMappings.ts'))(data,name=>name==='./rgwPlacementClassData'?placement:{jsonInit:(...args)=>args,request:async(...args)=>{calls.push(args);const reply=replies.shift();if(reply instanceof Error)throw reply;return reply}})
+new Function('exports','require',compile('rgwLocalClassMappings.ts'))(data,name=>name==='./rgwPlacementClassData'?placement:{jsonInit:(...args)=>args,request:async(...args)=>{calls.push(args);const reply=replies.shift();if(reply instanceof Error)throw reply;return typeof reply==='function'?reply():reply}})
 const group={id:'g',realm_id:'r',zones:[{id:'z',name:'zone'},{id:'z2',name:'zone2'}],placement_targets:[{name:'p',storage_classes:['STANDARD','COLD'],tier_targets:[{key:'COLD',val:{storage_class:'COLD',tier_type:'cloud-s3'}}]}]}
 const zone={id:'z',name:'zone',realm_id:'r',observed_at:'2026-10-05',placement_pools:[{key:'p',val:{storage_classes:{STANDARD:{data_pool:'data:ns',compression_type:'zstd'}}}}],system_key:{secret_key:'private-secret'}}
 const mapped=data.localClassMappings(group,[zone,{...zone,id:'outside'}])
@@ -29,12 +29,24 @@ assert.equal(data.localClassMappings({...group,placement_targets:[{...group.plac
 assert.ok(data.localClassMappings({...group,zones:[]},[]).issues.length)
 const page=(items,next=null,stale=false)=>({items:items.map(data=>({data,stale:false,observed_at:'now'})),meta:{stale},pagination:{next_cursor:next}})
 replies=[page([zone],'next'),page([{...zone,id:'z2'}],null,true)]
-const inventory=await data.readLocalClassZones(42)
+const signal=new AbortController().signal
+const inventory=await data.readLocalClassZones(42,signal)
 assert.equal(inventory.rows.length,2);assert.equal(inventory.stale,true)
 assert.equal(calls[0][1][1].cluster_id,42);assert.equal(calls[0][1][2].cache,'no-store')
 assert.match(calls[1][0],/cursor=next/)
+assert.ok(calls.every(call=>call[1][2].signal===signal))
 for(const input of [[new Error('offline')],[{}],[page([],'same'),page([],'same')],[page([],'next'),new Error('page failure')],[{...page([]),items:[{data:zone}]}]]) {
  replies=input;await assert.rejects(data.readLocalClassZones(42))
+}
+let before=calls.length
+for(const id of [0,-1,1.5,NaN,Number.MAX_SAFE_INTEGER+1])await assert.rejects(data.readLocalClassZones(id))
+assert.equal(calls.length,before)
+const cancelled=new AbortController();cancelled.abort()
+await assert.rejects(data.readLocalClassZones(42,cancelled.signal));assert.equal(calls.length,before)
+for(const next of ['next',null]) {
+ const during=new AbortController();before=calls.length
+ replies=[()=>{during.abort();return page([zone],next)}]
+ await assert.rejects(data.readLocalClassZones(42,during.signal));assert.equal(calls.length,before+1)
 }
 const jsx=(type,props)=>({type,props}),ui={};let state
 new Function('exports','require',compile('RgwLocalClassDetails.tsx'))(ui,name=>name==='react'?{useEffect:()=>{},useRef:v=>({current:v}),useState:v=>[v,x=>{state=x}]}:name==='antd'?{Alert:'Alert',Button:'Button',Space:'Space',Table:'Table'}:name==='./rgwLocalClassMappings'?data:{jsx,jsxs:jsx})
@@ -44,18 +56,32 @@ replies=[page([zone])];button.props.onClick();await new Promise(resolve=>setTime
 assert.equal(state.data.rows[0].pool,'data:ns')
 assert.equal(nodes(ui.RgwLocalClassDetails({row:group})).find(n=>n.type==='Button').props.disabled,true)
 // Keep refs across renders to verify that a previous scope cannot publish a late result.
-const raceUI={},refs=[];let refIndex=0,raceState,cleanup,effectDeps,resolvePending
+const raceUI={},refs=[],requests=[];let refIndex=0,raceState,cleanup,effectDeps
 const react={useRef:v=>refs[refIndex++]??(refs[refIndex-1]={current:v}),useState:v=>[raceState??v,x=>{raceState=x}],useEffect:(fn,deps)=>{
  if(JSON.stringify(deps)!==JSON.stringify(effectDeps)){cleanup?.();cleanup=fn();effectDeps=deps}
 }}
-new Function('exports','require',compile('RgwLocalClassDetails.tsx'))(raceUI,name=>name==='react'?react:name==='antd'?{Alert:'Alert',Button:'Button',Space:'Space',Table:'Table'}:name==='./rgwLocalClassMappings'?{...data,readLocalClassZones:()=>new Promise(resolve=>{resolvePending=resolve})}:{jsx,jsxs:jsx})
-function render(clusterId){refIndex=0;return raceUI.RgwLocalClassDetails({row:group,clusterId})}
-nodes(render(1)).find(n=>n.type==='Button').props.onClick()
-render(2);resolvePending({rows:[zone],stale:false});await new Promise(resolve=>setTimeout(resolve,0))
+new Function('exports','require',compile('RgwLocalClassDetails.tsx'))(raceUI,name=>name==='react'?react:name==='antd'?{Alert:'Alert',Button:'Button',Space:'Space',Table:'Table'}:name==='./rgwLocalClassMappings'?{...data,readLocalClassZones:(clusterId,signal)=>new Promise((resolve,reject)=>{requests.push({clusterId,signal,resolve,reject})})}:{jsx,jsxs:jsx})
+function render(clusterId,row=group){refIndex=0;return raceUI.RgwLocalClassDetails({row,clusterId})}
+const tick=()=>new Promise(resolve=>setTimeout(resolve,0))
+const oldButton=nodes(render(1)).find(n=>n.type==='Button')
+oldButton.props.onClick();oldButton.props.onClick();assert.equal(requests.length,1)
+render(2);assert.equal(requests[0].signal.aborted,true)
+oldButton.props.onClick();assert.equal(requests.length,1)
+requests[0].resolve({rows:[zone],stale:false});await tick()
 assert.equal(raceState.data,undefined)
 assert.equal(JSON.parse(raceState.scope)[0],2)
-nodes(render(2)).find(n=>n.type==='Button').props.onClick()
-cleanup();resolvePending({rows:[zone],stale:false});await new Promise(resolve=>setTimeout(resolve,0))
+const groupButton=nodes(render(2)).find(n=>n.type==='Button');groupButton.props.onClick()
+const otherGroup={...group,id:'other'};render(2,otherGroup)
+assert.equal(requests[1].signal.aborted,true);groupButton.props.onClick();assert.equal(requests.length,2)
+requests[1].reject(new Error('aborted'));await tick();assert.equal(raceState.error,undefined)
+nodes(render(2,otherGroup)).find(n=>n.type==='Button').props.onClick()
+requests[2].reject(new Error('offline'));await tick();assert.equal(raceState.error,true)
+nodes(render(2,otherGroup)).find(n=>n.type==='Button').props.onClick()
+requests[3].resolve({rows:[zone],stale:false});await tick();assert.equal(raceState.data.rows[0].pool,'data:ns')
+const unmountedButton=nodes(render(2,otherGroup)).find(n=>n.type==='Button');unmountedButton.props.onClick()
+cleanup();assert.equal(requests[4].signal.aborted,true)
+unmountedButton.props.onClick();assert.equal(requests.length,5)
+requests[4].resolve({rows:[zone],stale:false});await tick()
 assert.equal(raceState.data,undefined)
 const source=readFileSync(new URL('../src/pages/object/pages.tsx',import.meta.url),'utf8')
 assert.match(source,/rgwZonegroups:\s*\{[\s\S]*?detailContent:.*RgwLocalClassDetails/)

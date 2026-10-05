@@ -6,18 +6,22 @@ import { localClassMappings, readLocalClassZones } from './rgwLocalClassMappings
 export function RgwLocalClassDetails({row,clusterId}:{row:ApiRecord;clusterId?:number}) {
   const scope=JSON.stringify([clusterId,row]),current=useRef(scope),sequence=useRef(0),locked=useRef(false)
   current.current=scope
+  const abort=useRef<AbortController>(),mounted=useRef(true)
   const [state,setState]=useState<{scope:string;busy:boolean;error?:boolean;data?:ReturnType<typeof localClassMappings>;stale?:boolean}>({scope,busy:false})
-  useEffect(()=>{sequence.current++;locked.current=false;setState({scope,busy:false});return()=>{sequence.current++}},[scope])
+  useEffect(()=>{mounted.current=true;abort.current?.abort();sequence.current++;locked.current=false;setState({scope,busy:false});return()=>{mounted.current=false;abort.current?.abort();sequence.current++}},[scope])
   const scoped=state.scope===scope
   async function read() {
-    if(!clusterId||!scoped||locked.current)return
+    if(!clusterId||!scoped||current.current!==scope||!mounted.current||locked.current)return
     locked.current=true;const ticket=++sequence.current
+    abort.current?.abort();const controller=new AbortController();abort.current=controller
     setState({scope,busy:true})
     try {
-      const zones=await readLocalClassZones(clusterId),data=localClassMappings(row,zones.rows)
-      if(current.current===scope&&sequence.current===ticket)setState({scope,busy:false,data,stale:zones.stale||row.stale===true})
+      const zones=await readLocalClassZones(clusterId,controller.signal)
+      if(controller.signal.aborted||current.current!==scope||sequence.current!==ticket)return
+      const data=localClassMappings(row,zones.rows)
+      setState({scope,busy:false,data,stale:zones.stale||row.stale===true})
     } catch {
-      if(current.current===scope&&sequence.current===ticket)setState({scope,busy:false,error:true})
+      if(!controller.signal.aborted&&current.current===scope&&sequence.current===ticket)setState({scope,busy:false,error:true})
     } finally {if(current.current===scope&&sequence.current===ticket)locked.current=false}
   }
   return <Space direction="vertical" style={{width:'100%'}}>

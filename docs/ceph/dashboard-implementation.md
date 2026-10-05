@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+#### 成员 Zone 池映射读取取消与旧回调隔离
+
+继续核对参考存储类列表的 `getAllZonesInfo` 关联链路时，发现现有 `RgwLocalClassDetails` 仅忽略迟到结果，却没有终止离开详情后的 Zone 分页读取，旧按钮回调还可在新作用域启动读取。现为 `readLocalClassZones` 增加 AbortSignal 传递、每页请求前后取消检查和合法集群 ID 校验；切换组/集群或卸载详情取消请求，旧作用域和卸载后的回调拒绝发起读取。保留失败可重试、同作用域重复点击互斥和完整分页才展示的行为。
+新增取消前零请求、取消后不再分页/不返回末页、每页信号传递、组与集群切换、旧回调、卸载、迟到失败和失败重试测试。`make test-frontend` 全量回归、TypeScript 与生产构建通过。本次未改动后端或 Ceph 命令，无真实集群或浏览器视觉验证，整体迁移继续。
+
 #### 生命周期转换动作的桶作用域存储类候选
 
 对照参考 `rgw-bucket-tiering-form.component.ts::loadStorageClass` 的存储类选择，为现有生命周期编辑器增加按需读取的库存候选。参考表单汇总所有组；本实现额外使用原生 `bucket stats` 的 zonegroup ID 和 placement_rule，将候选限定为该桶所属组与放置目标，避免跨组/目标同名类混淆。目标名按参考 `rgw_placement_rule::from_str` 的首个 `/` 分隔语义解析，不猜测空规则的默认目标。

@@ -5,12 +5,15 @@ const object=(v:unknown):v is ApiRecord=>!!v&&typeof v==='object'&&!Array.isArra
 const identity=(v:unknown):v is string=>typeof v==='string'&&v.length>0
 export type LocalClassMapping={key:string;placement:string;storageClass:string;zone:string;zoneId:string;status:string;pool:string;compression:string;observed:string}
 
-export async function readLocalClassZones(clusterId:number) {
+export async function readLocalClassZones(clusterId:number,signal?:AbortSignal) {
+  if(!Number.isSafeInteger(clusterId)||clusterId<=0)throw new Error('Invalid cluster identity')
   const rows:ApiRecord[]=[],seen=new Set<string>()
   let cursor='',stale=false
   for(let page=0;page<100;page++) {
+    if(signal?.aborted)throw new Error('Zone inventory read cancelled')
     const query=new URLSearchParams({limit:'500'});if(cursor)query.set('cursor',cursor)
-    const result=await request<ApiRecord>(`/rgw/zones?${query}`,jsonInit('GET',{cluster_id:clusterId},{suppressErrorNotification:true,cache:'no-store'}))
+    const result=await request<ApiRecord>(`/rgw/zones?${query}`,jsonInit('GET',{cluster_id:clusterId},{signal,suppressErrorNotification:true,cache:'no-store'}))
+    if(signal?.aborted)throw new Error('Zone inventory read cancelled')
     if(!object(result)||!Array.isArray(result.items)||!object(result.meta)||typeof result.meta.stale!=='boolean'||!object(result.pagination))throw new Error('Incomplete zone inventory')
     stale ||= result.meta.stale
     for(const item of result.items) {
