@@ -23,6 +23,14 @@ func newRealmMigrationSnapshot(group, zone map[string]any, groupID, zoneID strin
 	if !ok || member["id"] != zoneID || member["name"] != "default" || group["master_zone"] != zoneID {
 		return realmMigrationSnapshot{}, false
 	}
+	// These values are needed for the native modification transition check.
+	// Reject incomplete evidence before creating a realm or renaming resources.
+	if _, valid := realmSetupStrings(member["supported_features"]); !valid {
+		return realmMigrationSnapshot{}, false
+	}
+	if _, valid := member["log_data"].(bool); !valid {
+		return realmMigrationSnapshot{}, false
+	}
 	placements, ok := zone["placement_pools"].([]any)
 	if !ok || len(placements) == 0 || rawText(zone, "domain_root") == "" {
 		return realmMigrationSnapshot{}, false

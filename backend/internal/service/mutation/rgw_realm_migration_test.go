@@ -130,3 +130,34 @@ func TestRealmMigrationRequiresExplicitSource(t *testing.T) {
 		}
 	}
 }
+
+func TestRealmMigrationRejectsIncompleteTransitionEvidenceBeforeWrites(t *testing.T) {
+	for _, field := range []string{"supported_features", "log_data"} {
+		for _, value := range []any{nil, "unknown", []any{"duplicate", "duplicate"}} {
+			s, _, cluster := newCephUserService(t)
+			r := migrationResponses(t)
+			group := periodDocument([]byte(r["migration_group"]))
+			member := group["zones"].([]any)[0].(map[string]any)
+			if value == nil {
+				delete(member, field)
+			} else {
+				member[field] = value
+			}
+			raw, err := json.Marshal(group)
+			if err != nil {
+				t.Fatal(err)
+			}
+			r["migration_group"] = string(raw)
+			e := &realmSetupExecutor{responses: r}
+			s.executor = e
+			if _, err := s.Execute(context.Background(), Request{ClusterID: cluster, Action: "rgw_realm.migrate", Parameters: migrationParameters()}); err == nil {
+				t.Fatal("incomplete transition evidence accepted")
+			}
+			for _, spec := range e.specs {
+				if spec.Mutating {
+					t.Fatal("wrote before transition evidence was verified")
+				}
+			}
+		}
+	}
+}
