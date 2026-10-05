@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### Bucket 原生使用量汇总服务
+
+新增内部 RGWBucketUsage：完整 metadata list bucket 后逐桶以精确 tenant/bucket 调用 stats，核对返回身份，累计 rgw.main 的 num_objects 与 size_actual。每项按原生 uint64 范围校验，总和使用任意精度整数并返回十进制字符串，允许总和超过 uint64；同时返回 Bucket 数量、类别、来源及起止时间。原生 bucket_stats 仅在本地正常索引存在时输出 usage，因此缺失/null usage 报不可用，不能充作零；有效 usage 中无 rgw.main 表示该类别无统计项。失败、非法名称、重复枚举、身份不符或畸形计数不返回部分总数。扫描限制两分钟并尊重取消，顺序读取非原子快照，size_actual 是取整后的统计容量而非物理磁盘占用。新增租户命令、超 uint64 总和、有效零值、非法列表/统计及分阶段失败测试，后端全量测试和 OpenAPI 检查通过。API/前端尚待接入，无真实集群验证。
+
 #### Bucket 完整枚举读取修复
 
 准备总览汇总时核对 `RGWBucketAdminOp::info`：全局 bucket list/stats 分支枚举失败可退出循环但仍返回 0，stats 还忽略逐桶错误，因此不可用来证明完整总量。现将库存枚举改为 `radosgw-admin metadata list bucket --format json`，参考 METADATA_LIST 分支未指定 max-entries 时循环至结束，初始化/分页错误会返回非零退出。严格要求原生字符串数组，拒绝 null、混合类型、空名称和重复名称，并标记 rgw_bucket 采集不可用而非成功空库存；逐桶 stats 保留原有身份核验。新增命令、严格列表与不可用标记回归测试。库存分页本身仍不提供全扫描原子快照证明，本轮未冒充实现集群容量总计；无真实集群验证。
