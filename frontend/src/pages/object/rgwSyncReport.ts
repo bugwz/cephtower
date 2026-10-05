@@ -1,13 +1,22 @@
 export type SyncReportSections = { identity: string; metadata: string; sources: string[] }
 
-export type SyncCounters = { full?: string; incremental?: string; total?: string; remaining?: string; remainingUnit?: 'entries' | 'buckets'; behind?: string; recovering?: string }
+export type SyncCounters = { full?: string; incremental?: string; total?: string; remaining?: string; remainingUnit?: 'entries' | 'buckets'; behind?: string; recovering?: string; oldestChange?: string; oldestShard?: string }
 // These are native phase counts, not completed-work percentages. Parse only
 // whole known lines and retain the original section for all diagnostics.
 export function rgwSyncCounters(section: string): SyncCounters | undefined {
   const result: SyncCounters = {}
   const seen = new Set<string>()
   const integer = '(0|[1-9][0-9]*)'
+  // ceph::real_time streams local time with six fractional digits and %z.
+  // Keep the native timestamp intact; Date would discard microseconds.
+  const timestamp = '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{6}[+-][0-9]{4}'
   for (const line of section.split('\n').map(value => value.trim())) {
+    const oldest = line.match(new RegExp(`^oldest incremental change not applied: (${timestamp}) \\[${integer}\\]$`))
+    if (oldest) {
+      if (seen.has('oldestChange')) return undefined
+      seen.add('oldestChange'); result.oldestChange = oldest[1]; result.oldestShard = oldest[2]
+      continue
+    }
     let match = line.match(new RegExp(`^(full|incremental) sync: ${integer}/${integer} shards$`))
     if (match) {
       const field = match[1] === 'full' ? 'full' : 'incremental'

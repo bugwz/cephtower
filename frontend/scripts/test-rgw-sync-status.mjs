@@ -26,6 +26,16 @@ for(const text of ['no sync (zone is master)','failed to fetch source sync statu
 const code=ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwSyncStatus.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.React}}).outputText
 new Function('exports','require','React',code)(api,name=>name==='react'?hooks:name==='antd'?{Alert:'Alert',Button:'Button',Card:'Card',Space:'Space',Descriptions:'Descriptions'}:name==='./rgwSyncReport'?parser:client,{createElement:(type,props,...children)=>({type,props:{...props,children}})})
 const counterItems=api.RgwSyncCounterDetails({section:counterText}).props.items
+for (const timestamp of ['2026-10-06T12:34:56.123456+0800','2026-10-06T00:00:00.000001-0430']) {
+  const line=`oldest incremental change not applied: ${timestamp} [9007199254740993]`
+  assert.deepEqual(parser.rgwSyncCounters(line),{oldestChange:timestamp,oldestShard:'9007199254740993'})
+  const items=api.RgwSyncCounterDetails({section:line}).props.items
+  assert.equal(items.find(item=>item.key==='oldestChange').children,timestamp)
+  assert.equal(items.find(item=>item.key==='oldestShard').children,'9007199254740993')
+  assert.equal(parser.rgwSyncCounters(`${line}\n${line}`),undefined)
+  for(const invalid of [`diagnostic: ${line}`,line+' trailing',line.replace('[9007199254740993]','[-1]'),line.replace('T',' '),line.replace(/\.[0-9]{6}/,'.123')])assert.equal(parser.rgwSyncCounters(invalid),undefined)
+}
+assert.deepEqual(parser.rgwSyncCounters('oldest incremental change not applied: 2026-10-06T00:00:00.000000+0000 [0]'),{oldestChange:'2026-10-06T00:00:00.000000+0000',oldestShard:'0'})
 assert.equal(counterItems.find(item=>item.key==='remaining').children,'9007199254740993')
 assert.match(counterItems.find(item=>item.key==='full').label,/非已完成/)
 assert.equal(api.RgwSyncCounterDetails({section:'no sync (zone is master)'}),null)
