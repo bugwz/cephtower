@@ -1,6 +1,7 @@
 import { Alert, Button, Descriptions, Space, Table } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { jsonInit, request } from '../../api/client'
+import { RgwDaemonPerf } from './RgwDaemonPerf'
 
 type Status={service_map_id:string;status_stamp:string;last_beacon:string;observed_at:string;status:Record<string,string>}
 export function daemonStatusData(value:unknown,id:string):Status {
@@ -28,5 +29,6 @@ export function RgwDaemonStatus({clusterId,serviceMapId,isCurrent}:{clusterId:nu
     <Button loading={scoped?.busy} disabled={scoped?.busy} onClick={()=>void read()}>读取服务状态</Button>
     {scoped?.error&&<Alert type="error" message="状态不可用、记录已消失或响应无效，请刷新注册列表后重试"/>}
     {scoped?.data&&<><Descriptions column={1} items={[{key:'stamp',label:'状态时间',children:scoped.data.status_stamp||'未返回'},{key:'beacon',label:'最后 beacon',children:scoped.data.last_beacon||'未返回'},{key:'read',label:'读取时间',children:scoped.data.observed_at}]}/><Table size="small" rowKey="name" pagination={false} locale={{emptyText:'此记录未上报状态字段（不代表健康）'}} dataSource={Object.entries(scoped.data.status).map(([name,value])=>({name,value}))} columns={[{title:'状态字段',dataIndex:'name'},{title:'值',render:(_value:unknown,row:{value:string})=><pre style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere',margin:0}}>{row.value===''?'""':row.value}</pre>}]}/></>}
+    <RgwDaemonPerf clusterId={clusterId} serviceMapId={serviceMapId} isCurrent={isCurrent}/>
   </Space>
 }

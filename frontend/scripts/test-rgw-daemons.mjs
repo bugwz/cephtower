@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import './test-rgw-daemon-status.mjs'
+import './test-rgw-daemon-perf.mjs'
 import {readFileSync} from 'node:fs'
 import ts from 'typescript'
 const code=ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwDaemonsPage.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText
