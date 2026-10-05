@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### Bucket 索引详情重新分片诊断字段
+
+索引详情补充 reshard_status 与 judge_reshard_lock_time，沿用 bucket stats 采集及库存 API 的原生字段。核对 rgw_reshard.cc 设置时间、rgw_rados.cc::check_reshard_logrecord_status/recover_reshard_logrecord 使用并更新时间的路径，明确该时间用于检查间隔控制，不是任务开始/完成时间；状态注明采集时快照。组件测试覆盖三个已知阶段、未知/缺失状态、精确时间字符串及错误类型。前端全量测试、类型检查与构建通过；未进行浏览器视觉或真实集群验证。
+
 #### 用户与账户完整列表校验
 
 核对 radosgw-admin 的 USER_LIST/ACCOUNT_LIST 元数据枚举分支：不指定 max-entries 时遍历全部页并输出顶层键数组。用户、账户和 Bucket 元数据列表现共用严格解析，拒绝对象/分页包装、非法成员、空键和重复键，异常标记对应采集不可用且不发起详情查询；只有合法空数组表示权威空列表。删除账户列表 accounts 包装的旧假设，并修正相关测试样例。新增真实采集测试验证空列表与无效列表的区别及无分页上限的只读命令。后端全量测试和 OpenAPI 检查通过；未连接真实集群。

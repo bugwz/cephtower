@@ -130,6 +130,25 @@ const configuration={type:'BucketConfiguration'}
 assert.equal(detailsView.RgwBucketDetails({row:bucketRow,configuration}).props.items.find(item=>item.key==='configuration').children,configuration)
 const indexView = readFileSync(new URL('../src/pages/object/RgwBucketIndexDetails.tsx', import.meta.url), 'utf8')
 for (const field of ['index_type', 'index_generation', 'num_shards', 'ver', 'master_ver', 'marker', 'max_marker']) assert.ok(indexView.includes(`row.${field}`))
+const indexComponent = {}
+new Function('exports', 'require', ts.transpileModule(indexView, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(indexComponent, name => {
+  if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx }
+  if (name === 'antd') return { Descriptions: 'Descriptions' }
+  if (name === './rgwBucketIndex') return index
+  if (name === './rgwBucketState') return state
+  throw new Error(name)
+})
+for (const status of ['None', 'InLogrecord', 'InProgress', 'future', undefined, null]) {
+  const result = indexComponent.RgwBucketIndexDetails({ row: { reshard_status: status, judge_reshard_lock_time: '2026-10-06 12:00:00.123456Z' } })
+  const items = result.props.children[0].props.items
+  assert.equal(items.find(item => item.key === 'reshard').children, state.rgwBucketReshardState(status))
+  assert.equal(items.find(item => item.key === 'judge-time').children, '2026-10-06 12:00:00.123456Z')
+  assert.ok(result.props.children[2].props.children.props.children.includes('不代表任务开始或完成时间'))
+}
+for (const value of [undefined, null, 0, false, {}]) {
+  const items = indexComponent.RgwBucketIndexDetails({ row: { judge_reshard_lock_time: value } }).props.children[0].props.items
+  assert.equal(items.find(item => item.key === 'judge-time').children, '未返回或格式无效')
+}
 assert.equal(exports.rgwStorageScope('user', ''), '用户汇总')
 assert.ok(exports.rgwStorageScope('account', 'RGW123').includes('RGW123'))
 assert.ok(exports.rgwStorageScope('account', 'RGW123').includes('不可相加'))
