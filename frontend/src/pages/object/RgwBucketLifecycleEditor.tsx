@@ -1,7 +1,7 @@
 import { Alert, Button, Checkbox, Input, Select, Space } from 'antd'
 import { lifecycleActions, lifecycleFields, lifecycleDraft, lifecycleDocument, type LifecycleDraft, type LifecycleRule, type LifecycleSelector } from './rgwBucketLifecycleForm'
 
-export function RgwBucketLifecycleEditor({ value, onChange, disabled = false, id }: { value?: unknown; onChange?: (draft: LifecycleDraft) => void; disabled?: boolean; id?: string }) {
+export function RgwBucketLifecycleEditor({ value, onChange, disabled = false, id, storageClassOptions }: { value?: unknown; onChange?: (draft: LifecycleDraft) => void; disabled?: boolean; id?: string; storageClassOptions?:Array<{value:string;label:string}> }) {
   let draft: LifecycleDraft
   try { draft = lifecycleDraft(value) } catch { return <Alert type="error" message="规则不可用，请重新打开表单" /> }
   let warning: string | undefined
@@ -41,6 +41,7 @@ export function RgwBucketLifecycleEditor({ value, onChange, disabled = false, id
               const fields = (next: Record<string, string>) => update(index, { actions: rule.actions.map((entry, i) => i === position ? { ...entry, fields: next } : entry) })
               return <div key={key}>
                 <Checkbox aria-label={`规则 ${index + 1} 动作 ${position + 1} 设置 ${key}`} disabled={disabled} checked={present} onChange={event => { const next = { ...action.fields }; if (event.target.checked) next[key] = key === 'ExpiredObjectDeleteMarker' ? 'false' : ''; else delete next[key]; fields(next) }}>{lifecycleFields[key]}（{key}）</Checkbox>
+                {present&&key==='StorageClass'&&storageClassOptions&&<Select<string> aria-label={`规则 ${index + 1} 动作 ${position + 1} 库存转换类候选`} placeholder="选择此桶目标中的库存候选（不会自动选择）" style={{width:'100%'}} disabled={disabled||storageClassOptions.length===0} value={undefined} options={storageClassOptions} showSearch optionFilterProp="label" onChange={item=>{if(storageClassOptions.some(option=>option.value===item))fields({...action.fields,StorageClass:item})}}/>}
                 {present ? key === 'ExpiredObjectDeleteMarker'
                   ? <Select aria-label={`规则 ${index + 1} 动作 ${position + 1} ${key}`} disabled={disabled} value={action.fields[key]} options={[{ value: 'true', label: 'true' }, { value: 'false', label: 'false' }]} onChange={item => fields({ ...action.fields, [key]: item })} />
                   : <Input.TextArea aria-label={`规则 ${index + 1} 动作 ${position + 1} ${key}`} disabled={disabled} value={action.fields[key]} onChange={event => fields({ ...action.fields, [key]: event.target.value })} placeholder={key === 'Date' ? '例如 2030-01-01T00:00:00Z（UTC 午夜）' : undefined} /> : null}

@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 生命周期转换动作的桶作用域存储类候选
+
+对照参考 `rgw-bucket-tiering-form.component.ts::loadStorageClass` 的存储类选择，为现有生命周期编辑器增加按需读取的库存候选。参考表单汇总所有组；本实现额外使用原生 `bucket stats` 的 zonegroup ID 和 placement_rule，将候选限定为该桶所属组与放置目标，避免跨组/目标同名类混淆。目标名按参考 `rgw_placement_rule::from_str` 的首个 `/` 分隔语义解析，不猜测空规则的默认目标。
+复用 `GET /rgw/bucket`（验证 natural_key、kind、stale）和上一轮全分页组库存读取；对应后端已有 `bucket stats --bucket ... [--tenant ...]` 及 `zonegroup list/get` 采集链路，无新增原生命令或 API。仅提供已声明、类型已识别、云类内部名称一致的非 STANDARD 候选；过期、缺失、请求失败、身份冲突不回填。保留手工文本输入以维护现有原生值，不将候选关联当作池可用、远端授权、实时配置或生命周期执行成功的证明。
+当前版本和非当前版本转换均可选择候选，只替换当前动作的 StorageClass，不变更时间、过滤器、其他动作或规则；不自动选择、删除或迁移任何配置。读取过程、切换桶/集群和卸载取消旧请求，迟到响应与旧作用域编辑回调不能覆盖新表单。提交仍走已有完整生命周期 XML → 后端 S3 配置写入/回读核验链路，不把候选读取误当作写操作的最终校验。
+新增桶 ID/类型/过期/放置身份、跨组同名、未知/孤立/名称冲突排除、取消读取、作用域竞态、禁用控件及规则保留测试。前端全量回归、TypeScript 和生产构建通过；本轮未修改或重测后端，无真实集群或浏览器视觉验证，整体迁移仍未完成。
+
 #### 跨 Zonegroup 存储类列表页
 
 对照参考 `rgw-storage-class-list.component.ts::loadStorageClass` 的跨组列表，新增对象存储导航“存储类”（`/object/storage-class`）。从现有 `GET /rgw/zonegroups` 读取全部分页，复用后端 `collector_optional.go` 中 `radosgw-admin zonegroup list --format json` 与逐组 `zonegroup get --rgw-zonegroup NAME --format json` 的采集、库存脱敏与 API；本次无需增加原生命令或后端端点。

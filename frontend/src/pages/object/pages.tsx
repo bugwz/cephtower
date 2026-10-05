@@ -123,7 +123,7 @@ import { notificationFormBlocked, notificationFormInitial, notificationFormInput
 import { bucketNotificationDeleteBlocked, bucketNotificationDeleteInitial, bucketNotificationDeleteInput, bucketNotificationDeleteConfirmation } from './rgwBucketNotificationDelete'
 import { bucketAclOptions, bucketAclFormBlocked, bucketAclFormInitial, bucketAclFormInput, bucketAclFormConfirmation } from './rgwBucketAclForm'
 import { objectLockFormInitial, objectLockFormBlocked, objectLockFormInput, objectLockFormConfirmation } from './rgwBucketObjectLockForm'
-import { RgwBucketLifecycleEditor } from './RgwBucketLifecycleEditor'
+import { RgwBucketLifecycleStorageEditor } from './RgwBucketLifecycleStorageEditor'
 import { lifecycleFormInitial, lifecycleFormBlocked, lifecycleFormInput, lifecycleFormConfirmation } from './rgwBucketLifecycleForm'
 import { RgwBucketCorsEditor } from './RgwBucketCorsEditor'
 import { corsFormInitial, corsFormBlocked, corsFormInput, corsFormConfirmation } from './rgwBucketCorsForm'
@@ -1765,7 +1765,7 @@ const externalDefinitions: Record<'bucketPolicy', ExternalListPageDefinition> = 
       fields: [
         { name: 'bucket_id', label: 'Bucket ID（不可更改）', readOnly: true },
         { name: 'kind', label: '配置类型（不可更改）', readOnly: true },
-        { name: 'lifecycle_draft', label: '完整生命周期规则', required: true, renderControl: (disabled) => <RgwBucketLifecycleEditor disabled={disabled} /> }
+        { name: 'lifecycle_draft', label: '完整生命周期规则', required: true, renderControl: (disabled) => <RgwBucketLifecycleStorageEditor disabled={disabled} /> }
       ],
       buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, ...lifecycleFormInput(values, row) })
     }, {
