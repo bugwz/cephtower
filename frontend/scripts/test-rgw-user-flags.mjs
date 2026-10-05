@@ -26,6 +26,17 @@ const pages = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.
 const operationMask = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserOperationMask.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(operationMask)
 assert.equal(operationMask.rgwUserOperationMaskOptions.length, 7)
+for(const option of operationMask.rgwUserOperationMaskOptions){
+  const raw=option.value.replace(/,/g,', ')
+  assert.deepEqual(operationMask.rgwUserOperationMaskInitial({op_mask:raw}),{current_op_mask:raw,op_mask:option.value})
+  assert.equal(operationMask.rgwUserOperationMaskBlocked({op_mask:raw}),undefined)
+}
+assert.deepEqual(operationMask.rgwUserOperationMaskInitial({op_mask:'<none>'}),{current_op_mask:'<none>',op_mask:undefined})
+assert.throws(()=>operationMask.rgwUserOperationMaskInput(operationMask.rgwUserOperationMaskInitial({op_mask:'<none>'})))
+for(const row of [{},{op_mask:null},{op_mask:7},{op_mask:''},{op_mask:'*'},{op_mask:'read,write'},{op_mask:'future'},{op_mask:'read',stale:true}]){
+  assert.throws(()=>operationMask.rgwUserOperationMaskInitial(row))
+  assert.equal(typeof operationMask.rgwUserOperationMaskBlocked(row),'string')
+}
 for (const mask of ['read', 'write', 'delete', 'read,write', 'read,delete', 'write,delete', 'read,write,delete']) assert.deepEqual(operationMask.rgwUserOperationMaskInput({ op_mask: mask }), { op_mask: mask })
 for (const mask of [undefined, null, false, '', '*', 'none', 'read,read', 'read\n', 'read,unknown', ['read']]) assert.throws(() => operationMask.rgwUserOperationMaskInput({ op_mask: mask }))
 assert.ok(pages.includes('options: rgwUserOperationMaskOptions'))
@@ -77,9 +88,21 @@ for (const uid of ['user', 'tenant$user', 'tenant$namespace$user', '$namespace$u
 for (const uid of [' raw ', 'tenant/user', '-user']) assert.throws(() => userIDExports.userId({ uid }), /完整 UID/)
 for (const row of [undefined, {}, { user_id: 'local', tenant: 'tenant' }, { natural_key: 'tenant$user' }, { full_user_id: 'tenant$user' }, { name: 'user' }, ...[null, false, 1, '', ' ', 'bad\nuid', 'bad\0uid'].map(uid => ({ uid, user_id: 'local' }))]) assert.throws(() => userIDExports.userId(row), /完整 UID/)
 const placementActions = new Map()
+let operationMaskActionFound=false
 function findPlacementActions(node) {
   if (ts.isObjectLiteralExpression(node)) {
     const title = node.properties.find(property => ts.isPropertyAssignment(property) && property.name.getText(placementSource) === 'title')
+    if(title?.initializer.getText(placementSource)==="'设置用户操作掩码'"){
+      operationMaskActionFound=true
+      const env={...operationMask,userId:userIDExports.userId}
+      const action=new Function(...Object.keys(env),`return (${node.getText(placementSource)})`)(...Object.values(env))
+      const row={uid:'tenant$user',op_mask:'read, write'}
+      const initial=action.initialValues(row)
+      assert.equal(action.fields.find(field=>field.name==='current_op_mask').readOnly,true)
+      assert.equal(action.disabledWhen(row),undefined)
+      assert.deepEqual(action.buildBody(initial,7,row),{cluster_id:7,uid:row.uid,op_mask:'read,write'})
+      assert.equal(typeof action.disabledWhen({...row,stale:true}),'string')
+    }
     if (title && ["'设置用户默认放置'", "'替换用户放置标签'"].includes(title.initializer.getText(placementSource))) {
       const expression = node.getText(placementSource)
       const env={...placementForm,userId:userIDExports.userId}
@@ -89,6 +112,7 @@ function findPlacementActions(node) {
   ts.forEachChild(node, findPlacementActions)
 }
 findPlacementActions(placementSource)
+assert.equal(operationMaskActionFound,true)
 assert.equal(placementActions.size, 2)
 const tagsAction=placementActions.get('替换用户放置标签')
 const tagRow={uid:'tenant$user',placement_tags:['fast',' raw ']}

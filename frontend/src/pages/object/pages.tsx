@@ -91,7 +91,7 @@ import { RgwRoleTagsTable } from './RgwRoleTagsTable'
 import { RgwPolicyDocument, RgwRolePolicyDetails, RgwRoleManagedPolicies } from './RgwRolePolicyDetails'
 import { rgwPolicyChanged, rgwPolicyConfirmation, rgwPolicyDeleteOptions, rgwPolicyMutation } from './rgwRolePolicies'
 import { RgwUserDetails } from './RgwUserDetails'
-import { rgwUserOperationMaskInput, rgwUserOperationMaskOptions } from './rgwUserOperationMask'
+import { rgwUserOperationMaskInput, rgwUserOperationMaskOptions, rgwUserOperationMaskInitial, rgwUserOperationMaskBlocked } from './rgwUserOperationMask'
 import { rgwUserAccountRootBlocked, rgwUserAccountRootInput } from './rgwUserAccountRoot'
 import { rgwSubuserOptions, rgwSubuserInput, rgwSubuserPermissionOptions } from './rgwUserSubuser'
 import { rgwSubuserCreateInput } from './rgwSubuserCreate'
@@ -348,7 +348,9 @@ const definitions: Record<
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserAccountRootInput(values, row) })
       },
       { title: '设置用户操作掩码', path: '/rgw/user', method: 'PATCH', successMessage: '操作掩码设置执行成功',
-        fields: [{ name: 'op_mask', label: '允许的操作类别（整体替换，非完整有效权限）', type: 'select', required: true, options: rgwUserOperationMaskOptions }],
+        initialValues: rgwUserOperationMaskInitial,
+        disabledWhen: rgwUserOperationMaskBlocked,
+        fields: [{ name: 'current_op_mask', label: '当前操作掩码（原生值，<none> 表示零掩码）', readOnly: true }, { name: 'op_mask', label: '允许的操作类别（整体替换，非完整有效权限）', type: 'select', required: true, options: rgwUserOperationMaskOptions }],
         confirmation: (values, row) => `将用户 ${JSON.stringify(userId(row))} 的操作掩码整体替换为 ${JSON.stringify(rgwUserOperationMaskInput(values).op_mask)}，可能限制现有访问。ACL 和策略仍独立生效。`,
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserOperationMaskInput(values) })
       },
