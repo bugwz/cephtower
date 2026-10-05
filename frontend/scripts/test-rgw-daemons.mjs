@@ -15,9 +15,11 @@ for(const file of ['HostDetailPage','ServiceDaemons','ServicePage']){
 const ui={},states=[],refs=[],calls=[];let si=0,ri=0,deps,cleanup,pending
 const jsx=(type,props)=>({type,props}),react={useState:v=>{const i=si++;if(!(i in states))states[i]=v;return[states[i],v=>states[i]=v]},useRef:v=>refs[ri++]??(refs[ri-1]={current:v}),useEffect:(fn,next)=>{if(JSON.stringify(next)!==JSON.stringify(deps)){deps=next;pending=()=>{cleanup?.();cleanup=fn()}}}}
 new Function('exports','require',code)(ui,name=>name==='react'?react:name==='antd'?Object.fromEntries(['Alert','Button','Card','Input','Space','Table'].map(n=>[n,n])):name.includes('api/client')?{jsonInit:(method,body,opts)=>({method,body,...opts}),request:(path,init)=>new Promise((resolve,reject)=>calls.push({path,...init,resolve,reject}))}:name.includes('ClusterContext')?{useClusterContext:()=>({selectedClusterId:7})}:{jsx,jsxs:jsx})
-const row={service_map_id:'1',id:'rgw.a',hostname:'host',version:'ceph version',realm_name:'r',realm_id:'realm-id',zonegroup_name:'g',zonegroup_id:'gid',zone_name:'z',zone_id:'zone-id',listeners:[{frontend:'frontend_config#0',tls:true,port:443}],listeners_complete:true}
+const row={service_map_id:'1',id:'rgw.a',hostname:'host',version:'ceph version',realm_name:'r',realm_id:'realm-id',zonegroup_name:'g',zonegroup_id:'gid',zone_name:'z',zone_id:'zone-id',metadata:{os:'Linux',num_handles:'9007199254740993'},listeners:[{frontend:'frontend_config#0',tls:true,port:443}],listeners_complete:true}
 const data={items:[row,{...row,service_map_id:'2'}],source:'service_map',observed_at:'now'}
 assert.equal(ui.daemonRegistrationData(data).items.length,2)
+assert.deepEqual(ui.daemonRegistrationData({...data,items:[{...row,metadata:{...row.metadata,password:'private'}}]}).items[0].metadata,row.metadata)
+for(const metadata of [null,[],{os:1}])assert.throws(()=>ui.daemonRegistrationData({...data,items:[{...row,metadata}]}))
 assert.deepEqual(ui.daemonRegistrationData({...data,items:[{...row,password:'private'}]}).items,[row])
 for(const listeners of [null,[{frontend:'other',tls:true,port:443}],[{frontend:'frontend_config#0',tls:'true',port:443}],[{frontend:'frontend_config#0',tls:true,port:0}]])assert.throws(()=>ui.daemonRegistrationData({...data,items:[{...row,listeners}]}))
 for(const bad of [null,{}, {...data,source:'other'},{...data,items:[row,row]},{...data,items:[{...row,id:''}]},{...data,items:[{...row,hostname:null}]}])assert.throws(()=>ui.daemonRegistrationData(bad))
@@ -37,6 +39,7 @@ for(const field of ['realm_id','zone_id']){
 const portColumn=tree.find(n=>n.type==='Table').props.columns.at(-1)
 const detail=tree.find(n=>n.type==='Table').props.expandable.expandedRowRender(row)
 assert.equal(detail.props.clusterId,7);assert.equal(detail.props.serviceMapId,'1');assert.equal(detail.props.isCurrent(),true)
+assert.deepEqual(detail.props.metadata,row.metadata)
 assert.ok(JSON.stringify(portColumn.render(null,row)).includes('HTTPS 443'))
 assert.ok(JSON.stringify(portColumn.render(null,{...row,listeners:[],listeners_complete:false})).includes('无法解析'))
 tree.find(n=>n.type==='Input').props.onChange({target:{value:'missing'}});assert.equal(render().find(n=>n.type==='Table').props.dataSource.length,0)

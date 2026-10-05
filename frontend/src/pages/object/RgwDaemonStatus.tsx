@@ -9,7 +9,7 @@ export function daemonStatusData(value:unknown,id:string):Status {
   if(!data||data.service_map_id!==id||typeof data.status_stamp!=='string'||typeof data.last_beacon!=='string'||typeof data.observed_at!=='string'||!data.observed_at||!data.status||typeof data.status!=='object'||Array.isArray(data.status)||Object.values(data.status).some(value=>typeof value!=='string'))throw new Error('Invalid status')
   return {service_map_id:id,status_stamp:data.status_stamp,last_beacon:data.last_beacon,observed_at:data.observed_at,status:Object.fromEntries(Object.entries(data.status))}
 }
-export function RgwDaemonStatus({clusterId,serviceMapId,isCurrent}:{clusterId:number;serviceMapId:string;isCurrent:()=>boolean}) {
+export function RgwDaemonStatus({clusterId,serviceMapId,metadata,isCurrent}:{clusterId:number;serviceMapId:string;metadata:Record<string,string>;isCurrent:()=>boolean}) {
   const scope=JSON.stringify([clusterId,serviceMapId]),current=useRef(scope),mounted=useRef(true),sequence=useRef(0),abort=useRef<AbortController>()
   current.current=scope
   const [state,setState]=useState<{scope:string;busy:boolean;data?:Status;error?:boolean}>({scope,busy:false})
@@ -25,6 +25,8 @@ export function RgwDaemonStatus({clusterId,serviceMapId,isCurrent}:{clusterId:nu
   }
   const scoped=state.scope===scope?state:undefined
   return <Space direction="vertical" style={{width:'100%'}}>
+    <Descriptions title="注册元数据（非实时探测）" column={1} items={Object.entries(metadata).map(([key,value])=>({key,label:key,children:<span style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{value===''?'""':value}</span>}))}/>
+    {Object.keys(metadata).length===0&&<Alert type="info" message="未上报可展示的系统或容器元数据"/>}
     <Alert type="info" message={`服务映射 ${serviceMapId} 的原生状态`} description="状态时间与最后 beacon 为 Ceph 原始报告，不据此推断存活或健康。状态内容已由后端脱敏；JSON 状态按文本展示以保留大整数精度。"/>
     <Button loading={scoped?.busy} disabled={scoped?.busy} onClick={()=>void read()}>读取服务状态</Button>
     {scoped?.error&&<Alert type="error" message="状态不可用、记录已消失或响应无效，请刷新注册列表后重试"/>}

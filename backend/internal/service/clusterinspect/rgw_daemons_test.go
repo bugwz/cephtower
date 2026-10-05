@@ -80,3 +80,14 @@ func TestRGWDaemonMultisiteIdentity(t *testing.T) {
 		t.Fatal("identity not exposed")
 	}
 }
+
+func TestRGWDaemonSystemMetadata(t *testing.T) {
+	rows, err := decodeRGWDaemons([]byte(`{"services":{"rgw":{"daemons":{"1":{"metadata":{"id":"a","os":"Linux","kernel_version":"6.1","arch":"aarch64","pod_name":"rgw-pod","num_handles":"9007199254740993","password":"private","frontend_config#0":"private","unknown":"private"}},"2":{"metadata":{"id":"b"}}}}}}`))
+	if err != nil || len(rows) != 2 {
+		t.Fatal(err)
+	}
+	want := map[string]string{"os": "Linux", "kernel_version": "6.1", "arch": "aarch64", "pod_name": "rgw-pod", "num_handles": "9007199254740993"}
+	if !reflect.DeepEqual(rows[0].Metadata, want) || rows[1].Metadata == nil || len(rows[1].Metadata) != 0 {
+		t.Fatal("metadata projection failed")
+	}
+}

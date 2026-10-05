@@ -10,22 +10,24 @@ import (
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
 	"cephtower/backend/internal/integration/ceph/executor"
+	"cephtower/backend/internal/security"
 )
 
 // RGWDaemon describes service-map registration, not a live health probe.
 type RGWDaemon struct {
-	Listeners         []RGWListener `json:"listeners"`
-	ListenersComplete bool          `json:"listeners_complete"`
-	ServiceMapID      string        `json:"service_map_id"`
-	ID                string        `json:"id"`
-	Hostname          string        `json:"hostname"`
-	Version           string        `json:"version"`
-	RealmName         string        `json:"realm_name"`
-	RealmID           string        `json:"realm_id"`
-	ZonegroupName     string        `json:"zonegroup_name"`
-	ZonegroupID       string        `json:"zonegroup_id"`
-	ZoneName          string        `json:"zone_name"`
-	ZoneID            string        `json:"zone_id"`
+	Metadata          map[string]string `json:"metadata"`
+	Listeners         []RGWListener     `json:"listeners"`
+	ListenersComplete bool              `json:"listeners_complete"`
+	ServiceMapID      string            `json:"service_map_id"`
+	ID                string            `json:"id"`
+	Hostname          string            `json:"hostname"`
+	Version           string            `json:"version"`
+	RealmName         string            `json:"realm_name"`
+	RealmID           string            `json:"realm_id"`
+	ZonegroupName     string            `json:"zonegroup_name"`
+	ZonegroupID       string            `json:"zonegroup_id"`
+	ZoneName          string            `json:"zone_name"`
+	ZoneID            string            `json:"zone_id"`
 }
 
 func (s *Service) RGWDaemons(ctx context.Context, clusterID uint64) ([]RGWDaemon, error) {
@@ -92,6 +94,13 @@ func decodeRGWDaemons(body []byte) ([]RGWDaemon, error) {
 		// Do not forward arbitrary metadata: frontend configs can contain credentials.
 		rows = append(rows, RGWDaemon{ServiceMapID: key, ID: m["id"], Hostname: m["hostname"], Version: m["ceph_version"], RealmName: m["realm_name"], ZonegroupName: m["zonegroup_name"], ZonegroupID: m["zonegroup_id"], ZoneName: m["zone_name"]})
 		rows[len(rows)-1].Listeners = listeners
+		metadata := map[string]string{}
+		for _, field := range []string{"ceph_version_short", "ceph_release", "os", "kernel_version", "kernel_description", "arch", "pod_name", "container_name", "container_image", "container_hostname", "pod_namespace", "num_handles", "service_unique_id"} {
+			if value, exists := m[field]; exists {
+				metadata[field] = security.Redact(value)
+			}
+		}
+		rows[len(rows)-1].Metadata = metadata
 		rows[len(rows)-1].RealmID = m["realm_id"]
 		rows[len(rows)-1].ZoneID = m["zone_id"]
 		rows[len(rows)-1].ListenersComplete = complete

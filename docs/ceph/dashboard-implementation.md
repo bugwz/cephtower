@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### RGW 系统与容器注册元数据
+
+追踪 Dashboard `RgwDaemon.get` 的 rgw_metadata、librados `service_daemon_register` 调用 `collect_sys_info` 以及 RGWRados 的附加元数据，新增明确白名单：短版本、release、系统、内核版本/描述、架构、Pod/容器名称与镜像、容器主机、命名空间、num_handles 和 service_unique_id。通过现有 service dump/API 返回注册元数据，缺失字段不补造；保留字符串精度并对值脱敏，不透传 frontend 配置、未知字段或凭据。注册行展开详情展示文本键值与空数据提示，明确非实时探测。新增后端投影、缺失字段及大整数字符串测试，前端白名单、类型验证、详情传递与 HTML 文本渲染测试；前后端全量测试、OpenAPI、类型检查及构建通过。未做真实集群或浏览器视觉验证。
+
 #### RGW 注册多站点身份展示
 
 参考 Dashboard 的 metadata 详情及 `RGWRados::register_to_service_map` 上报字段，补齐此前白名单遗漏的 realm_id 与 zone_id。后端从 `ceph service dump` 原样投影，前端增加 Realm ID、Zone ID 列及搜索/排序，缺失值显示未知，不由同名 Realm/Zone 推断身份。新增同名不同 ID、缺失元数据、JSON 字段投影及前端字段验证/展示/搜索测试，前后端全量检查、OpenAPI、类型检查和构建通过。无真实集群或浏览器视觉验证。
