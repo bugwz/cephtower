@@ -223,13 +223,35 @@ func (s *Service) executeRealmSetup(ctx context.Context, access executor.Cluster
 		return fail()
 	}
 	for _, name := range services {
-		raw, ok := run("restart", executor.BinaryCeph, []string{"orch", "restart", name}, true)
-		clear(raw)
-		if !ok {
+		restartCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+		readDaemons := func(stage string) (map[string]setupDaemon, bool) {
+			result, err := s.executor.Run(restartCtx, access, executor.CommandSpec{ID: request.Action + "." + stage, Binary: executor.BinaryCeph, Args: []string{"orch", "ps", "--service-name", name, "--daemon-type", "rgw", "--refresh", "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+			defer clear(result.Stdout)
+			defer clear(result.Stderr)
+			if err != nil || result.ExitCode != 0 {
+				return nil, false
+			}
+			return setupDaemonSnapshot(result.Stdout, name)
+		}
+		before, valid := readDaemons("daemons_before")
+		if !valid || len(before) == 0 {
+			cancel()
+			return fail()
+		}
+		restarted, restartErr := s.executor.Run(restartCtx, access, executor.CommandSpec{ID: request.Action + ".restart", Binary: executor.BinaryCeph, Args: []string{"orch", "restart", name}, Mutating: true, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		clear(restarted.Stdout)
+		clear(restarted.Stderr)
+		if restartErr != nil || restarted.ExitCode != 0 {
+			cancel()
+			return fail()
+		}
+		ready := waitSetupRestart(restartCtx, time.Second, before, func() (map[string]setupDaemon, bool) { return readDaemons("daemons_ready") })
+		cancel()
+		if !ready {
 			return fail()
 		}
 	}
-	return cephdomain.ActionResult{Details: map[string]any{"realm_id": realmID, "zonegroup_id": groupID, "zone_id": zoneID, "zonegroup_endpoints": groupEP, "zone_endpoints": zoneEP, "restart_submitted": services, "daemons_verified": false, "replication_verified": false}}, nil
+	return cephdomain.ActionResult{Details: map[string]any{"realm_id": realmID, "zonegroup_id": groupID, "zone_id": zoneID, "zonegroup_endpoints": groupEP, "zone_endpoints": zoneEP, "restart_submitted": services, "daemons_verified": len(services) > 0, "replication_verified": false}}, nil
 }
 
 func realmSetupUserKey(user map[string]any, uid string) (string, string, bool) {

@@ -35,6 +35,8 @@ func setupResponses(t *testing.T) map[string]string {
 	zone := `{"id":"z","name":"primary","realm_id":"r","system_key":{"access_key":"generated-access","secret_key":"generated-secret"}}`
 	user := `{"user_id":"sys","system":true,"keys":[{"user":"sys","access_key":"generated-access","secret_key":"generated-secret"}]}`
 	return map[string]string{"realm_absence": `{"realms":[]}`, "zonegroup_absence": `{"zonegroups":[]}`, "zone_absence": `{"zones":[]}`,
+		"daemons_before":  `[{"daemon_id":"gateway.host.id","daemon_type":"rgw","service_name":"rgw.gateway","hostname":"host","status":1,"started":"2026-01-01T00:00:00Z","last_refresh":"2026-01-01T00:01:00Z"}]`,
+		"daemons_ready":   `[{"daemon_id":"gateway.host.id","daemon_type":"rgw","service_name":"rgw.gateway","hostname":"host","status":1,"started":"2026-01-01T00:02:00Z","last_refresh":"2026-01-01T00:03:00Z"}]`,
 		"hosts":           `[]`,
 		"services_before": `[{"service_name":"rgw.gateway","service_type":"rgw"}]`, "services_check": `[{"service_name":"rgw.gateway","service_type":"rgw"}]`,
 		"realm_create": `{"id":"r","name":"realm"}`, "group_create": `{"id":"g","name":"group","realm_id":"r"}`, "zone_create": `{"id":"z","name":"primary","realm_id":"r"}`,
@@ -78,6 +80,9 @@ func TestRealmSetupNativeSequence(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		if result.Details.(map[string]any)["daemons_verified"] != true || result.Details.(map[string]any)["replication_verified"] != false {
+			t.Fatal("incorrect verification result")
+		}
 		raw, _ := json.Marshal(result)
 		if strings.Contains(string(raw), "generated-") {
 			t.Fatal("secret leaked")
@@ -86,6 +91,11 @@ func TestRealmSetupNativeSequence(t *testing.T) {
 		for _, c := range e.specs {
 			stage := strings.TrimPrefix(c.ID, "rgw_realm.setup.")
 			stages = append(stages, stage)
+			if stage == "daemons_before" || stage == "daemons_ready" {
+				if c.Mutating || !reflect.DeepEqual(c.Args, []string{"orch", "ps", "--service-name", "rgw.gateway", "--daemon-type", "rgw", "--refresh", "--format", "json"}) {
+					t.Fatal("unscoped or cached daemon query")
+				}
+			}
 			for i, arg := range c.Args {
 				if strings.HasPrefix(arg, "generated-") {
 					if _, ok := c.SensitiveArgs[i]; !ok {
@@ -103,14 +113,14 @@ func TestRealmSetupNativeSequence(t *testing.T) {
 				t.Fatal("wrong restart")
 			}
 		}
-		want := []string{"realm_absence", "zonegroup_absence", "zone_absence", "services_before", "hosts", "realm_create", "group_create", "zone_create", "initial_commit", "user_absence", "user_create", "zone_credentials", "commit", "realm_check", "period_check", "realm_default", "zonegroup_default", "zone_default", "zone_check", "user_check", "services_check", "restart"}
+		want := []string{"realm_absence", "zonegroup_absence", "zone_absence", "services_before", "hosts", "realm_create", "group_create", "zone_create", "initial_commit", "user_absence", "user_create", "zone_credentials", "commit", "realm_check", "period_check", "realm_default", "zonegroup_default", "zone_default", "zone_check", "user_check", "services_check", "daemons_before", "restart", "daemons_ready"}
 		if !reflect.DeepEqual(stages, want) {
 			t.Fatalf("unexpected sequence %v", stages)
 		}
 	}
 }
 func TestRealmSetupStopsAtEveryStage(t *testing.T) {
-	for _, stage := range []string{"realm_absence", "zonegroup_absence", "zone_absence", "services_before", "hosts", "realm_create", "group_create", "zone_create", "initial_commit", "user_absence", "user_create", "zone_credentials", "commit", "realm_check", "period_check", "realm_default", "zonegroup_default", "zone_default", "zone_check", "user_check", "services_check", "restart"} {
+	for _, stage := range []string{"realm_absence", "zonegroup_absence", "zone_absence", "services_before", "hosts", "realm_create", "group_create", "zone_create", "initial_commit", "user_absence", "user_create", "zone_credentials", "commit", "realm_check", "period_check", "realm_default", "zonegroup_default", "zone_default", "zone_check", "user_check", "services_check", "daemons_before", "restart", "daemons_ready"} {
 		t.Run(stage, func(t *testing.T) {
 			s, _, cluster := newCephUserService(t)
 			e := &realmSetupExecutor{responses: setupResponses(t), fail: stage}
