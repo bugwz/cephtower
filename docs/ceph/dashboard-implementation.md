@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+- **默认单站点迁移调用链复核（尚未实现）**：检查 `rgw-multisite-migrate.component.ts` → `rgw-multisite.service.ts::migrate` → `controllers/rgw.py::migrate` → `rgw_client.py::migrate_to_multisite`。它不是新主站初始化，也不是 Token 导入；需要保留已有默认 Zone 的身份和存储池引用，不能调用现有 `rgw_realm.setup` 代替。参考迁移表单包含 Realm/Zonegroup/Zone 新名称、两类端点、系统用户名及归档选择；现有普通/归档主站创建不构成该入口的覆盖证据。
+  - 原生顺序为 `realm create --default` → `zonegroup rename --rgw-zonegroup default --zonegroup-new-name ...` → `zone rename --rgw-zone default --zone-new-name ... --rgw-zonegroup ...` → `zonegroup modify --rgw-realm ... --master --default --endpoints ...` → `zone modify --rgw-realm ... --master --default --endpoints ...` → Period 发布 → 新系统用户及 Zone 密钥绑定（此时应用归档 tier）→ 再次发布 → 重启 RGW。参考最后设置 Dashboard 凭据，但 CephTower 不应为不使用的 Dashboard 配置写密钥。
+  - `radosgw-admin.cc::ZONEGROUP_RENAME/ZONE_RENAME` 支持按 ID 定位且不输出资源 JSON。特别是 Zone 已重命名后，若 Zonegroup 读取失败或其中找不到原 Zone，`ZONE_RENAME` 会返回 `EXIT_SUCCESS`；因此不得套用“退出码成功即完成”，也不得套用要求每次命令都返回 JSON 的创建助手。必须回读 Zone/Zonegroup 的 ID、名称及成员记录，确认重命名未丢失关联。
+  - 后续实现验收条件：写前核验默认指针、完整旧资源快照、旧 Zone 与 Zonegroup 关联、无目标名称冲突、新系统用户不存在及明确的重启服务集合；按旧 ID 执行变更并在发布前核对存储池/placement 引用仍保留；核验新 Realm、默认指针、Period 主站身份、端点、系统密钥及重启结果。每个阶段失败都必须停止并报告可能部分生效，不自动回滚或重试，不将重命名描述为对象数据搬迁。需要独立迁移 API/表单、加密队列、刷新不可重试处理和故障截断测试；本轮仅完成源码分析，未新增迁移操作或开展实机验证。
+
 - **跨集群导入前启用目标 RGW 模块**：对齐参考 `_enable_rgw_module`，在已有 Realm 跨集群表单增加显式选项。选择后先通过现有 `PATCH /manager/module` 加密操作队列执行 `ceph mgr module enable rgw`，并由后端 `mgr module ls --format json` 核验启用状态；不使用 force，不重复实现模块后端。完成后再次核对两端集群身份和当前表单范围，才读取敏感 Token 并导入。未选择时保留预先启用要求；源端模块不自动修改。
   - 启用与导入是独立操作，界面明确可能发生 mgr 变化及模块已启用但导入未完成的部分状态。启用失败、回读未确认、配置变化或关页均不继续读取 Token/导入，不自动重试启用或回滚模块。新增明确选择、顺序、失败截断、范围失效、参数类型及不向导入 API 透传 UI 字段的回归；本次无后端契约变化，无真实集群或浏览器视觉验证。
 
