@@ -1,7 +1,7 @@
 package clusterinspect
 
 import (
-	"net"
+	"net/netip"
 	"sort"
 	"strconv"
 	"strings"
@@ -46,24 +46,11 @@ func rgwListeners(metadata map[string]string) ([]RGWListener, bool) {
 				continue
 			}
 			if strings.HasSuffix(name, "endpoint") {
-				host, port, err := net.SplitHostPort(value)
-				if err == nil && net.ParseIP(host) != nil {
-					value = port
-				} else {
-					address := strings.TrimSuffix(strings.TrimPrefix(value, "["), "]")
-					if net.ParseIP(address) == nil {
-						complete = false
-						continue
-					}
-					// Native unbracketed IPv6 is not supported by parse_endpoint.
-					if strings.Contains(address, ":") && (!strings.HasPrefix(value, "[") || !strings.HasSuffix(value, "]")) {
-						complete = false
-						continue
-					}
-					value = "80"
-					if tls {
-						value = "443"
-					}
+				var valid bool
+				value, valid = rgwEndpointPort(value, tls)
+				if !valid {
+					complete = false
+					continue
 				}
 			}
 			port, err := strconv.ParseUint(value, 10, 16)
@@ -78,4 +65,38 @@ func rgwListeners(metadata map[string]string) ([]RGWListener, bool) {
 		}
 	}
 	return result, complete
+}
+
+func rgwEndpointPort(value string, tls bool) (string, bool) {
+	fallback := "80"
+	if tls {
+		fallback = "443"
+	}
+	if strings.HasPrefix(value, "[") {
+		end := strings.IndexByte(value, ']')
+		if end < 0 {
+			return "", false
+		}
+		address, err := netip.ParseAddr(value[1:end])
+		if err != nil || !address.Is6() {
+			return "", false
+		}
+		tail := value[end+1:]
+		if tail == "" {
+			return fallback, true
+		}
+		if !strings.HasPrefix(tail, ":") {
+			return "", false
+		}
+		return tail[1:], true
+	}
+	host, port, explicit := strings.Cut(value, ":")
+	address, err := netip.ParseAddr(host)
+	if err != nil || !address.Is4() {
+		return "", false
+	}
+	if explicit {
+		return port, true
+	}
+	return fallback, true
 }

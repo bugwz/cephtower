@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### RGW endpoint 地址族解析修复
+
+再次核对原生 `parse_endpoint`：方括号分支调用 make_address_v6，非方括号分支调用 make_address_v4。修复端口投影原先通过通用 IP 解析和独立去括号而误接受 `[192.0.2.1]`、`[192.0.2.1]:80`、单边括号等情况的问题。现按地址族和括号结构解析，保留合法 IPv4-mapped IPv6；异常输入标记配置不完整而不伪造默认端口。新增对应回归测试，后端全量测试及 OpenAPI 检查通过，未修改前端，无真实集群验证。
+
 #### RGW 注册配置端口展示
 
 追踪 `RGWFrontendConfig::parse_config` 与 `rgw_asio_frontend.cc` 的 port/endpoint、ssl_port/ssl_endpoint 分支，解析服务映射中所有 frontend_config# 项，而非参考列表正则仅取第一项。对 Beast 配置投影 frontend 身份、HTTP/HTTPS 类型和端口，保留重复监听项及多 frontend；支持 IPv4、方括号 IPv6 与原生 endpoint 默认 80/443。未知框架、缺失/非法监听参数及无法确定的端口标记不完整，保留可识别部分，不回传原始配置或证书路径；不声称已绑定端口、TLS 可用或网络可达。前端新增端口列并严格验证响应类型、范围及不完整标志。后端与前端全量测试、OpenAPI、类型检查和构建通过，无真实集群或浏览器视觉验证；性能计数器与状态详情仍待继续接入。

@@ -18,6 +18,12 @@ func TestRGWListeners(t *testing.T) {
 		{"beast port=8080 port=8081", []uint16{8080, 8081}, []bool{false, false}, true},
 		{"beast port=0", nil, nil, false}, {"beast port=65536", nil, nil, false},
 		{"beast endpoint=host:80", nil, nil, false}, {"beast ssl_endpoint=::1", nil, nil, false},
+		{"beast endpoint=[192.0.2.1]:80", nil, nil, false},
+		{"beast endpoint=[192.0.2.1]", nil, nil, false},
+		{"beast endpoint=[192.0.2.1", nil, nil, false},
+		{"beast endpoint=192.0.2.1]", nil, nil, false},
+		{"beast endpoint=[::1]garbage", nil, nil, false},
+		{"beast endpoint=[::ffff:192.0.2.1]:8080", []uint16{8080}, []bool{false}, true},
 		{"beast port=80garbage", nil, nil, false}, {"civetweb port=80", nil, nil, false},
 		{"beast ssl_certificate=private", nil, nil, false}, {"beast port=8080 ssl_port=invalid", []uint16{8080}, []bool{false}, false},
 	} {
