@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 import './test-mon-counter-pagination.mjs'
+import './test-mon-detail-scope.mjs'
 
 const exports = {}
 const jsx = (type, props) => ({ type, props })

@@ -19,10 +19,14 @@ const { Text } = Typography
 const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
 
 export function MonDetailPage() {
-  const navigate = useNavigate()
   const { name = '' } = useParams()
   const { selectedClusterId } = useClusterContext()
   const monName = decodeRouteParam(name)
+  return <MonDetailContent key={JSON.stringify([selectedClusterId, monName])} selectedClusterId={selectedClusterId} monName={monName} />
+}
+
+function MonDetailContent({ selectedClusterId, monName }: { selectedClusterId?: number; monName: string }) {
+  const navigate = useNavigate()
   const loader = useCallback(async () => {
     if (!selectedClusterId || !monName) {
       return null
