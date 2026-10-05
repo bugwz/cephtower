@@ -143,7 +143,7 @@ import { bucketEncryptionFormInitial, bucketEncryptionFormBlocked, bucketEncrypt
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
-import { rgwUserPlacementInput, rgwUserPlacementTagsInput } from './rgwUserPlacementForm'
+import { rgwUserPlacementInput, rgwUserPlacementTagsInput, rgwUserPlacementInitial, rgwUserPlacementBlocked } from './rgwUserPlacementForm'
 
 export function RgwOverviewPage() {
   return <><RgwDaemonCount /><RgwRealmBucketUsage /><RgwRealmUserCounts /><RgwUserCount /><RgwBucketUsage /><RgwTopologyCounts /><RgwOverviewMetrics /><ResourceListPage definition={definitions.rgwOverview} /></>
@@ -353,6 +353,8 @@ const definitions: Record<
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserOperationMaskInput(values) })
       },
       { title: '设置用户默认放置', path: '/rgw/user', method: 'PATCH', successMessage: '默认放置设置执行成功',
+        initialValues: rgwUserPlacementInitial,
+        disabledWhen: rgwUserPlacementBlocked,
         fields: [
           { name: 'default_placement', label: '默认放置规则（必须存在，不支持清空）', required: true },
           { name: 'default_storage_class', label: '默认存储类（留空使用原生默认类）' }

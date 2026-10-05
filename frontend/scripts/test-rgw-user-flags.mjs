@@ -44,6 +44,14 @@ for (const value of [null, undefined, {}, [null], [''], [1]]) assert.equal(ident
 const userDetailsSource = readFileSync(new URL('../src/pages/object/RgwUserDetails.tsx', import.meta.url), 'utf8')
 const placementForm = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwUserPlacementForm.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(placementForm)
+for(const row of [{default_placement:'custom',default_storage_class:'ARCHIVE'},{default_placement:'',default_storage_class:''},{default_placement:' custom ',default_storage_class:' raw '}]){
+  assert.deepEqual(placementForm.rgwUserPlacementInitial(row),row)
+  assert.equal(placementForm.rgwUserPlacementBlocked(row),undefined)
+}
+for(const row of [{},{default_placement:'custom'},{default_placement:'custom',default_storage_class:null},{default_placement:'custom',default_storage_class:0},{default_placement:null,default_storage_class:''},{default_placement:'custom',default_storage_class:'ARCHIVE',stale:true},{default_placement:'bad\nvalue',default_storage_class:''}]){
+  assert.throws(()=>placementForm.rgwUserPlacementInitial(row))
+  assert.equal(typeof placementForm.rgwUserPlacementBlocked(row),'string')
+}
 for (const storage of [undefined, null, '', 'STANDARD', 'ARCHIVE']) assert.deepEqual(placementForm.rgwUserPlacementInput({ default_placement: 'custom', default_storage_class: storage }), { default_placement: 'custom', default_storage_class: storage ?? '' })
 for (const value of [undefined, null, '', false, 1, ' ', 'bad\nname']) assert.throws(() => placementForm.rgwUserPlacementInput({ default_placement: value }))
 for (const value of [false, 1, ' ', 'bad\nclass']) assert.throws(() => placementForm.rgwUserPlacementInput({ default_placement: 'custom', default_storage_class: value }))
@@ -66,13 +74,18 @@ function findPlacementActions(node) {
     const title = node.properties.find(property => ts.isPropertyAssignment(property) && property.name.getText(placementSource) === 'title')
     if (title && ["'设置用户默认放置'", "'替换用户放置标签'"].includes(title.initializer.getText(placementSource))) {
       const expression = node.getText(placementSource)
-      placementActions.set(title.initializer.text, new Function('rgwUserPlacementInput', 'rgwUserPlacementTagsInput', 'userId', `return (${expression})`)(placementForm.rgwUserPlacementInput, placementForm.rgwUserPlacementTagsInput, userIDExports.userId))
+      placementActions.set(title.initializer.text, new Function('rgwUserPlacementInput', 'rgwUserPlacementTagsInput', 'userId', 'rgwUserPlacementInitial', 'rgwUserPlacementBlocked', `return (${expression})`)(placementForm.rgwUserPlacementInput, placementForm.rgwUserPlacementTagsInput, userIDExports.userId, placementForm.rgwUserPlacementInitial, placementForm.rgwUserPlacementBlocked))
     }
   }
   ts.forEachChild(node, findPlacementActions)
 }
 findPlacementActions(placementSource)
 assert.equal(placementActions.size, 2)
+const placementAction=placementActions.get('设置用户默认放置')
+const existingPlacement={uid:'tenant$user',default_placement:'old',default_storage_class:'ARCHIVE'}
+assert.equal(placementAction.disabledWhen(existingPlacement),undefined)
+assert.deepEqual(placementAction.buildBody({...placementAction.initialValues(existingPlacement),default_placement:'new'},7,existingPlacement),{cluster_id:7,uid:'tenant$user',default_placement:'new',default_storage_class:'ARCHIVE'})
+assert.equal(typeof placementAction.disabledWhen({...existingPlacement,stale:true}),'string')
 const placementRow = { uid: 'tenant$user' }
 for (const [title, values] of [
   ['设置用户默认放置', { default_placement: ' custom ', default_storage_class: 'ARCHIVE' }],
