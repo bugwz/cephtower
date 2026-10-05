@@ -3,6 +3,7 @@ import { RgwOverviewMetrics } from './RgwOverviewMetrics'
 import { RgwTopologyCounts } from './RgwTopologyCounts'
 import { RgwBucketUsage } from './RgwBucketUsage'
 import { RgwUserCount } from './RgwUserCount'
+import { RgwRealmUserCounts } from './RgwRealmUserCounts'
 import { rgwRealmImportAction } from './rgwRealmImport'
 import { rgwRealmSetupAction } from './rgwRealmSetup'
 import { rgwRealmMigrationAction } from './rgwRealmMigration'
@@ -141,7 +142,7 @@ import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUse
 import { rgwUserPlacementInput, rgwUserPlacementTagsInput } from './rgwUserPlacementForm'
 
 export function RgwOverviewPage() {
-  return <><RgwUserCount /><RgwBucketUsage /><RgwTopologyCounts /><RgwOverviewMetrics /><ResourceListPage definition={definitions.rgwOverview} /></>
+  return <><RgwRealmUserCounts /><RgwUserCount /><RgwBucketUsage /><RgwTopologyCounts /><RgwOverviewMetrics /><ResourceListPage definition={definitions.rgwOverview} /></>
 }
 
 export function RgwUsersPage() {
