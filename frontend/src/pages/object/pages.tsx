@@ -1,4 +1,5 @@
 import type { ApiRecord } from '../../api/client'
+import { RgwBucketConfigurationPanel } from './RgwBucketConfigurationPanel'
 import { RgwOverviewMetrics } from './RgwOverviewMetrics'
 import { RgwTopologyCounts } from './RgwTopologyCounts'
 import { RgwBucketUsage } from './RgwBucketUsage'
@@ -769,7 +770,7 @@ const definitions: Record<
     path: '/rgw/buckets',
     requiredCapabilities: ['rgw_admin'],
     rowKeyCandidates: ['natural_key', 'bucket_id', 'name'],
-    detailContent: (row) => <RgwBucketDetails row={row} />,
+    detailContent: (row, clusterId) => <RgwBucketDetails row={row} configuration={<RgwBucketConfigurationPanel row={row} clusterId={clusterId} definition={externalDefinitions.bucketPolicy} />} />,
     createAction: {
       title: '新建 Bucket',
       buttonLabel: '新建 Bucket',

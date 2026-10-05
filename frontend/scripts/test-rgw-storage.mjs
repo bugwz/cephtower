@@ -84,7 +84,7 @@ for (const value of ['Normal', 'Indexless', 'future', '0#opaque,version']) asser
 assert.equal(index.rgwBucketIndexText(''), '（空字符串）')
 for (const value of [null, undefined, 0, {}]) assert.equal(index.rgwBucketIndexText(value), '未返回或格式无效')
 assert.ok(bucketDetails.includes('<RgwBucketIndexDetails row={row} />'))
-assert.ok(pages.includes('detailContent: (row) => <RgwBucketDetails row={row} />'))
+assert.ok(pages.includes('detailContent: (row, clusterId) => <RgwBucketDetails row={row} configuration={<RgwBucketConfigurationPanel row={row} clusterId={clusterId} definition={externalDefinitions.bucketPolicy} />} />'))
 assert.ok(pages.includes("key: 'index_type', title: '索引类型', render: rgwBucketIndexText"))
 assert.ok(pages.includes("key: 'num_shards', title: '索引分片数', render: rgwBucketIndexCount"))
 const detailsView = {}
@@ -96,6 +96,8 @@ assert.deepEqual(tabs.props.items.map(item => item.key), ['index', 'placement', 
 assert.equal(tabs.props.items[0].children.props.row, bucketRow)
 assert.equal(tabs.props.items[1].children.props.value, bucketRow.explicit_placement)
 assert.equal(tabs.props.items[2].children.props.value, bucketRow.tagset)
+const configuration={type:'BucketConfiguration'}
+assert.equal(detailsView.RgwBucketDetails({row:bucketRow,configuration}).props.items.find(item=>item.key==='configuration').children,configuration)
 const indexView = readFileSync(new URL('../src/pages/object/RgwBucketIndexDetails.tsx', import.meta.url), 'utf8')
 for (const field of ['index_type', 'index_generation', 'num_shards', 'ver', 'master_ver', 'marker', 'max_marker']) assert.ok(indexView.includes(`row.${field}`))
 assert.equal(exports.rgwStorageScope('user', ''), '用户汇总')
