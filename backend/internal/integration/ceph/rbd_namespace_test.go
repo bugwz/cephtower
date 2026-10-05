@@ -701,7 +701,7 @@ func TestRGWNullUserDetailsDoNotCreatePlaceholder(t *testing.T) {
 }
 
 func TestRGWAccountNativeFields(t *testing.T) {
-	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.rgw_account": []byte(`{"accounts":["RGW123"]}`), "collect.rgw_account_detail": []byte(`{"id":"RGW123","name":"Account One","max_users":100,"quota":{"enabled":true}}`), "collect.rgw_account_stats": []byte(`{"stats":{"size":12345,"num_objects":7},"last_synced":"2026-09-14T00:00:00Z"}`)}}}
+	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.rgw_account": []byte(`["RGW123"]`), "collect.rgw_account_detail": []byte(`{"id":"RGW123","name":"Account One","max_users":100,"quota":{"enabled":true}}`), "collect.rgw_account_stats": []byte(`{"stats":{"size":12345,"num_objects":7},"last_synced":"2026-09-14T00:00:00Z"}`)}}}
 	rows := p.collectRGWOptional(context.Background(), ClusterAccess{}, time.Now())
 	for _, row := range rows {
 		if row.Kind == "rgw_account" {

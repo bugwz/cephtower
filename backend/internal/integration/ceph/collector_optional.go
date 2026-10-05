@@ -355,8 +355,8 @@ func (p *NativeProvider) collectPoolMirroring(ctx context.Context, access Cluste
 func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterAccess, now time.Time) []Observation {
 	var rows []Observation
 	for _, resource := range []struct {
-		kind, noun, listKey, idFlag string
-	}{{"rgw_user", "user", "", "--uid"}, {"rgw_account", "account", "accounts", "--account-id"}, {"rgw_role", "role", "roles", "--role-name"}} {
+		kind, noun, idFlag string
+	}{{"rgw_user", "user", "--uid"}, {"rgw_account", "account", "--account-id"}, {"rgw_role", "role", "--role-name"}} {
 		var list any
 		if !p.optional(ctx, access, executor.BinaryRGWAdmin, "collect."+resource.kind, []string{resource.noun, "list", "--format", "json"}, &list) {
 			continue
@@ -370,7 +370,12 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 			continue
 		}
 
-		for _, id := range stringList(list, resource.listKey) {
+		ids, valid := rgwMetadataKeys(list)
+		if !valid {
+			markCollectionUnavailable(ctx, "collect."+resource.kind)
+			continue
+		}
+		for _, id := range ids {
 			var details map[string]any
 			verb := "info"
 			if resource.noun == "account" || resource.noun == "role" {
@@ -453,7 +458,7 @@ func (p *NativeProvider) collectRGWOptional(ctx context.Context, access ClusterA
 	}
 	var buckets any
 	if p.optional(ctx, access, executor.BinaryRGWAdmin, "collect.rgw_bucket", []string{"metadata", "list", "bucket", "--format", "json"}, &buckets) {
-		bucketNames, valid := rgwBucketNames(buckets)
+		bucketNames, valid := rgwMetadataKeys(buckets)
 		if !valid {
 			markCollectionUnavailable(ctx, "collect.rgw_bucket")
 			bucketNames = nil

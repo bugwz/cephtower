@@ -10,12 +10,12 @@ import (
 
 func TestRGWBucketNamesStrict(t *testing.T) {
 	for _, value := range []any{nil, map[string]any{"buckets": []any{}}, []any{nil}, []any{1}, []any{""}, []any{"a", "a"}} {
-		if _, ok := rgwBucketNames(value); ok {
+		if _, ok := rgwMetadataKeys(value); ok {
 			t.Fatal("invalid enumeration accepted")
 		}
 	}
 	for _, value := range [][]any{{}, {"team/photos", "photos"}} {
-		if names, ok := rgwBucketNames(value); !ok || len(names) != len(value) {
+		if names, ok := rgwMetadataKeys(value); !ok || len(names) != len(value) {
 			t.Fatal("valid enumeration rejected")
 		}
 	}

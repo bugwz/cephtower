@@ -1,8 +1,8 @@
 package ceph
 
-// metadata list bucket exhausts the native pages and reports enumeration errors.
-// Unlike bucket list, its global enumeration does not silently ignore errors.
-func rgwBucketNames(value any) ([]string, bool) {
+// Unbounded metadata, user and account lists exhaust native pages and return
+// a complete top-level key array, not a pagination wrapper.
+func rgwMetadataKeys(value any) ([]string, bool) {
 	items, ok := value.([]any)
 	if !ok || items == nil {
 		return nil, false
