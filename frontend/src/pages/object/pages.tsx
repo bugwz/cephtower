@@ -143,7 +143,7 @@ import { bucketEncryptionFormInitial, bucketEncryptionFormBlocked, bucketEncrypt
 import { rgwUserAccountMigrationBlocked, rgwUserAccountMigrationInput } from './rgwUserAccountMigration'
 import { loadRgwMigrationAccountOptions } from './rgwMigrationAccountOptions'
 import { loadRgwCreateAccountOptions, rgwUserCreateAccountInput } from './rgwUserCreateAccount'
-import { rgwUserPlacementInput, rgwUserPlacementTagsInput, rgwUserPlacementInitial, rgwUserPlacementBlocked } from './rgwUserPlacementForm'
+import { rgwUserPlacementInput, rgwUserPlacementTagsInput, rgwUserPlacementInitial, rgwUserPlacementBlocked, rgwUserPlacementTagsInitial, rgwUserPlacementTagsBlocked } from './rgwUserPlacementForm'
 
 export function RgwOverviewPage() {
   return <><RgwDaemonCount /><RgwRealmBucketUsage /><RgwRealmUserCounts /><RgwUserCount /><RgwBucketUsage /><RgwTopologyCounts /><RgwOverviewMetrics /><ResourceListPage definition={definitions.rgwOverview} /></>
@@ -366,6 +366,8 @@ const definitions: Record<
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserPlacementInput(values) })
       },
       { title: '替换用户放置标签', path: '/rgw/user', method: 'PATCH', successMessage: '放置标签替换执行成功',
+        initialValues: rgwUserPlacementTagsInitial,
+        disabledWhen: rgwUserPlacementTagsBlocked,
         fields: [{ name: 'placement_tags_csv', label: '完整标签列表（逗号分隔，不支持清空；空格属于标签）', required: true }],
         confirmation: (values, row) => `将整体替换用户 ${JSON.stringify(userId(row))} 的放置标签，可能改变可使用的放置目标；这不是追加操作。新列表：${JSON.stringify(rgwUserPlacementTagsInput(values).placement_tags_csv)}`,
         buildBody: (values, clusterId, row) => ({ cluster_id: clusterId, uid: userId(row), ...rgwUserPlacementTagsInput(values) })

@@ -19,6 +19,17 @@ export function rgwUserPlacementInput(values: Record<string, unknown>) {
   return { default_placement: placement, default_storage_class: storage }
 }
 
+export function rgwUserPlacementTagsInitial(row?: Record<string, unknown>) {
+  if (!row || row.stale === true || !Array.isArray(row.placement_tags)) throw new Error('用户放置标签未返回或库存过期，请重新采集')
+  const tags = row.placement_tags
+  if (tags.some(tag => typeof tag !== 'string' || !tag.trim() || /[,\0\r\n]/.test(tag))) throw new Error('现有放置标签无法由逗号分隔参数无损表达，请先核查原生配置')
+  return { placement_tags_csv: tags.join(',') }
+}
+
+export function rgwUserPlacementTagsBlocked(row: Record<string, unknown>) {
+  try { rgwUserPlacementTagsInitial(row); return undefined } catch (error) { return error instanceof Error ? error.message : '当前放置标签不可用' }
+}
+
 export function rgwUserPlacementTagsInput(values: Record<string, unknown>) {
   const tags = values.placement_tags_csv
   if (typeof tags !== 'string' || /[\0\r\n]/.test(tags) || tags.split(',').some(tag => tag.trim() === '')) {

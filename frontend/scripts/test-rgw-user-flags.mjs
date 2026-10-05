@@ -59,6 +59,14 @@ assert.ok(pages.includes('...rgwUserPlacementInput(values)'))
 for (const tags of ['fast', 'fast,archive', 'space tag, raw ', '--option=value']) assert.deepEqual(placementForm.rgwUserPlacementTagsInput({ placement_tags_csv: tags }), { placement_tags_csv: tags })
 for (const tags of [undefined, null, false, [], '', ' ', ',', 'a,', ',a', 'a,,b', 'a, ,b', 'a\nb', 'a\0b']) assert.throws(() => placementForm.rgwUserPlacementTagsInput({ placement_tags_csv: tags }))
 assert.ok(pages.includes('...rgwUserPlacementTagsInput(values)'))
+for(const tags of [[],['fast'],['fast',' raw ','fast'],['标签','--option=value']]){
+  assert.deepEqual(placementForm.rgwUserPlacementTagsInitial({placement_tags:tags}),{placement_tags_csv:tags.join(',')})
+  assert.equal(placementForm.rgwUserPlacementTagsBlocked({placement_tags:tags}),undefined)
+}
+for(const row of [{},{placement_tags:null},{placement_tags:'fast'},{placement_tags:[1]},{placement_tags:['']},{placement_tags:['a,b']},{placement_tags:['bad\nname']},{placement_tags:['fast'],stale:true}]){
+  assert.throws(()=>placementForm.rgwUserPlacementTagsInitial(row))
+  assert.equal(typeof placementForm.rgwUserPlacementTagsBlocked(row),'string')
+}
 assert.ok(pages.includes('JSON.stringify(rgwUserPlacementTagsInput(values).placement_tags_csv)'))
 const placementSource = ts.createSourceFile('pages.tsx', pages, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const userIDFunction = placementSource.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === 'userId')
@@ -74,13 +82,20 @@ function findPlacementActions(node) {
     const title = node.properties.find(property => ts.isPropertyAssignment(property) && property.name.getText(placementSource) === 'title')
     if (title && ["'设置用户默认放置'", "'替换用户放置标签'"].includes(title.initializer.getText(placementSource))) {
       const expression = node.getText(placementSource)
-      placementActions.set(title.initializer.text, new Function('rgwUserPlacementInput', 'rgwUserPlacementTagsInput', 'userId', 'rgwUserPlacementInitial', 'rgwUserPlacementBlocked', `return (${expression})`)(placementForm.rgwUserPlacementInput, placementForm.rgwUserPlacementTagsInput, userIDExports.userId, placementForm.rgwUserPlacementInitial, placementForm.rgwUserPlacementBlocked))
+      const env={...placementForm,userId:userIDExports.userId}
+      placementActions.set(title.initializer.text, new Function(...Object.keys(env), `return (${expression})`)(...Object.values(env)))
     }
   }
   ts.forEachChild(node, findPlacementActions)
 }
 findPlacementActions(placementSource)
 assert.equal(placementActions.size, 2)
+const tagsAction=placementActions.get('替换用户放置标签')
+const tagRow={uid:'tenant$user',placement_tags:['fast',' raw ']}
+const initialTags=tagsAction.initialValues(tagRow)
+assert.equal(tagsAction.disabledWhen(tagRow),undefined)
+assert.deepEqual(tagsAction.buildBody({placement_tags_csv:initialTags.placement_tags_csv+',new'},7,tagRow),{cluster_id:7,uid:tagRow.uid,placement_tags_csv:'fast, raw ,new'})
+assert.equal(typeof tagsAction.disabledWhen({uid:tagRow.uid}),'string')
 const placementAction=placementActions.get('设置用户默认放置')
 const existingPlacement={uid:'tenant$user',default_placement:'old',default_storage_class:'ARCHIVE'}
 assert.equal(placementAction.disabledWhen(existingPlacement),undefined)
