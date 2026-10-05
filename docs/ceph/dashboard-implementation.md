@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 跨 Zonegroup 存储类列表页
+
+对照参考 `rgw-storage-class-list.component.ts::loadStorageClass` 的跨组列表，新增对象存储导航“存储类”（`/object/storage-class`）。从现有 `GET /rgw/zonegroups` 读取全部分页，复用后端 `collector_optional.go` 中 `radosgw-admin zonegroup list --format json` 与逐组 `zonegroup get --rgw-zonegroup NAME --format json` 的采集、库存脱敏与 API；本次无需增加原生命令或后端端点。
+列表按组 ID、目标、类名构造独立身份，不合并跨组/跨目标同名类，展示类型、组名/ID、Realm、声明状态、区域、脱敏端点及采集时间。支持文本、组和类型筛选；包含 STANDARD、普通本地类、S3/Glacier 及异常/孤立分层记录。展开复用字段白名单与结构化 ACL 详情，不透传凭据或未知嵌套对象。创建、编辑、删除和 Zone 池操作链接到已有管理页面，并明确需要按组 ID 选择对应组，不假装跳转已选中某行。
+分页失败、循环游标、超出 100 页或组身份重复时不显示部分汇总；配置字段异常保留可解释记录并告警。过期状态、真正空库存与筛选无结果分别说明，重新读取不触发 Ceph 采集，也不证明远端可达、池存在或 Period 发布。切换集群、重读及卸载会取消旧请求，并阻止迟到响应覆盖当前页面。
+新增跨组/目标同名、异常声明、字段脱敏、筛选、完整分页/游标边界、取消读取、集群切换和卸载竞态测试。前端全量回归、TypeScript 检查及生产构建通过。本轮仅修改前端及现有记录文档，未修改或重测后端；无真实集群或浏览器视觉验证，整体迁移仍未完成。
+
 #### 已有目标中新建云分层存储类
 
 新增组操作“新建云分层存储类”与高风险 `POST /rgw/zonegroup/storage/class/cloud`，支持已有 Realm、已有目标内尚未声明的非 STANDARD S3/Glacier 类。对照原生 `ZONEGROUP_PLACEMENT_ADD`：add 和 modify 共用分支，已有键会被编辑，而非报重复，因此先核验新类既不在 storage_classes 也不在 tier_targets，明确拒绝覆盖。新类配置显式提交端点/两项凭据、六项目标参数、ACL 列表、头对象/读穿透/恢复参数和适用的 Glacier 字段，不依赖隐藏默认值。
