@@ -601,6 +601,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		if request.Action == "erasure_code_profile.delete" && (err != nil || !nameAbsent(last(resourceTail(request.ResourceKey)), checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "erasure code profile removal was accepted but absence could not be verified; inspect the profile before retrying", Retryable: false}
 		}
+		if (request.Action == "rgw_user.quota" || request.Action == "rgw_account.quota") && (err != nil || !rgwOwnerQuotaMatches(request.Action, request.Parameters, checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "quota command was accepted but owner identity and scoped limits could not be verified; inspect quota state before retrying", Retryable: false}
+		}
 		if request.Action == "rbd_mirroring.global_schedule" && (err != nil || !rbdMirrorScheduleReadbackMatches(request, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "global schedule command was accepted but its exact scope could not be verified; inspect schedules before retrying", Retryable: false}
 		}
