@@ -29,6 +29,18 @@
 
 ### 增量实现与验证记录
 
+#### ACL 编辑链路源码核对（写入尚未接通）
+
+本次核对参考 `rgw-storage-class-form.component.ts::buildPlacementTargets`、`rgw_client.py::modify_placement_targets`、`radosgw-admin.cc` 的 placement modify 分支，以及 `driver/rados/rgw_zone.cc` 的 S3 参数更新/清除实现，明确下一步 ACL 编辑不能按普通数组替换处理：
+
+- 表单新增/修改转为 `--tier-config` 中的 `acls[i].source_id`、`acls[i].dest_id`、`acls[i].type`；删除转为 `--tier-config-rm` 中的 `acls[i].source_id`。库存则来自 `s3.acl_mappings` 的 key/val 数组，二者字段路径不同，不能直接回传库存 JSON。
+- `RGWTierACLMapping::init` 只将 email/uri 特殊处理，其他类型落入 id。实现必须显式限制 id/email/uri，不能让拼写错误变成另一种授权身份类型。
+- 更新按 `acl_mappings[source_id] = mapping` 覆盖，来源为空时忽略。必须拒绝重复/空来源，不按索引判断身份；目标空字符串原生可以保存，不能擅自当成删除。
+- 同一条 placement 命令先 `update_params` 再 `clear_params`。整表编辑时删除清单应为“旧来源减新来源”，保留或更新的来源不能同时出现在删除清单中；改名等价于添加新来源并删除旧来源。空目标清单意味着删除全部已核验旧来源，不是传一个空 `acls` 参数。
+- 写入前需核验显式组/Realm/目标/云类及预期旧 ACL，原生键与 source_id 不一致或重复库存不得猜测修复；写前重读、写后完整配置比对必须保护端点、凭据、恢复参数和其他类，之后沿用指定 Realm Period 发布链路。
+
+当前已实现的是 ACL 只读结构化表格与通用/Glacier 恢复配置编辑；尚无 ACL 写入 API 或按钮。本次是源码分析增量，不是功能完成声明；后续需实现命令参数分隔符校验、差集构造、显式清空确认及逐阶段失败测试。没有修改运行时代码，因此未运行前后端构建；按 commit-convention 单独提交分析记录。
+
 #### 云分层 ACL 身份映射结构化详情
 
 对照参考存储类详情的 `groupedACLs` 类型分组和来源/目标展示，将原先 ACL JSON 字符串替换为类型排序、可筛选分页表格，显示 ID/EMAIL/URI、原生映射键、来源身份和远端目标身份。复用已有 `zonegroup get --format json` → 脱敏库存 → API 中的 `s3.acl_mappings`，不新增采集命令。
