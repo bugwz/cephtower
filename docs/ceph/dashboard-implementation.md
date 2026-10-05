@@ -29,6 +29,10 @@
 
 ### 增量实现与验证记录
 
+#### 同步报告 stderr 诊断存在性链路
+
+继续追踪 radosgw-admin 中读取 master/source 下一条日志及缺失远端分片状态的分支，发现部分失败只写 stderr，仍可能返回合法 stdout 和零退出码。ReadRGWSyncStatus 原先清除并完全忽略 stderr；现返回结构化 report 与必填 diagnostics_present，只传递非空白诊断存在性，不泄露诊断原文、不把日志存在等同故障。API 与 OpenAPI 同步更新，前端严格验证布尔值并展示报告可能不完整的警告；刷新、切换范围及迟到响应仍隔离。新增空/空白/错误/敏感日志、缓冲区清理、实际路由响应与前端提示生命周期测试。完整后端测试及 OpenAPI 检查、完整前端测试/类型检查/构建与补充定向测试通过。未进行真实集群或浏览器视觉验证。
+
 #### 同步报告分段状态与错误提示
 
 对照参考 rgw-sync-data-info/rgw-sync-metadata-info 的错误突出显示，追踪 get_md_sync_status/get_data_sync_status 的原生状态和错误行，新增元数据及各来源独立状态提示。完整已知读取错误或 zone not found 优先显示错误；落后、恢复及 master/local Period 不一致显示警告，原始诊断保留。初始化、同步中、未同步和 caught up 只显示信息，不因报告返回成功、缺失时间或没有错误推断整体健康；来源名称中的 failed/error 不参与状态判断。复用已有命令/API，新增错误优先级、Period 差异、所有原生状态、名称误匹配和真实分段组件绑定测试。前端完整测试、类型检查和构建通过，无真实集群或浏览器视觉验证。

@@ -1264,9 +1264,10 @@ const components = `components:
     RGWSyncStatus:
       type: object
       additionalProperties: false
-      required: [report]
+      required: [report, diagnostics_present]
       properties:
         report: {type: string, readOnly: true, description: 'Native zone-scoped radosgw-admin sync status text; successful retrieval does not imply synchronized data'}
+        diagnostics_present: {type: boolean, readOnly: true, description: 'The command emitted nonblank stderr; diagnostic contents are withheld and this flag is not a health verdict'}
     RGWRealmToken:
       type: object
       additionalProperties: false

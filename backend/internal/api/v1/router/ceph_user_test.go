@@ -33,7 +33,7 @@ func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spe
 	e.specs = append(e.specs, spec)
 	switch spec.ID {
 	case "rgw_zone.sync.status":
-		return executor.CommandResult{Stdout: []byte("          realm realm-id (realm-a)\n      zonegroup group-id (group-a)\n           zone zone-id (zone-a)\n  metadata sync no sync (zone is master)\n")}, nil
+		return executor.CommandResult{Stdout: []byte("          realm realm-id (realm-a)\n      zonegroup group-id (group-a)\n           zone zone-id (zone-a)\n  metadata sync no sync (zone is master)\n"), Stderr: []byte("private-sync-diagnostic")}, nil
 	case "rgw_realm.token.read":
 		token := base64.StdEncoding.EncodeToString([]byte(`{"realm_id":"realm-id","realm_name":"realm-a","endpoint":"https://rgw.example","access_key":"realm-access","secret":"realm-secret"}`))
 		raw, _ := json.Marshal([]map[string]string{{"realm": "realm-a", "token": token}})
@@ -267,6 +267,9 @@ func TestCephUserAPIEndToEndWithoutCluster(t *testing.T) {
 	}
 	send("POST", "/ceph/users/import", map[string]any{"keyring": "[client.imported]\nkey = sensitive-import-key\n"})
 	syncResponse := send("POST", "/rgw/zone/sync/status", map[string]any{"zone_id": "zone-id", "name": "zone-a"})
+	if !strings.Contains(syncResponse.Body.String(), `"diagnostics_present":true`) || strings.Contains(syncResponse.Body.String(), "private-sync-diagnostic") {
+		t.Fatal("sync diagnostics lost or exposed")
+	}
 	if syncResponse.Code != http.StatusOK || syncResponse.Header().Get("Cache-Control") != "no-store" || strings.Contains(syncResponse.Body.String(), "operation_id") || !strings.Contains(syncResponse.Body.String(), "metadata sync") {
 		t.Fatal("sync status was queued, cached or lost")
 	}

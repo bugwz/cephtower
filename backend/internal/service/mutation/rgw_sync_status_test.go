@@ -32,7 +32,7 @@ func TestReadRGWSyncStatus(t *testing.T) {
 	runner := &syncReportExecutor{result: executor.CommandResult{Stdout: []byte(syncReportFixture), Stderr: []byte("private diagnostic")}}
 	s.executor = runner
 	got, err := s.ReadRGWSyncStatus(context.Background(), cluster, "zone-id", "zone-a")
-	if err != nil || got != syncReportFixture {
+	if err != nil || got.Report != syncReportFixture || !got.DiagnosticsPresent {
 		t.Fatalf("native report lost: %v", err)
 	}
 	if len(runner.specs) != 1 || runner.specs[0].Mutating || runner.specs[0].Binary != executor.BinaryRGWAdmin || !reflect.DeepEqual(runner.specs[0].Args, []string{"sync", "status", "--zone-id", "zone-id"}) || runner.specs[0].Timeout <= 0 || runner.specs[0].MaxOutput != 1<<20 {
@@ -53,7 +53,7 @@ func TestReadRGWSyncStatus(t *testing.T) {
 		runner.result = executor.CommandResult{Stdout: []byte(syncReportFixture), Stderr: []byte("private diagnostic"), ExitCode: 1}
 		runner.err = commandErr
 		got, err := s.ReadRGWSyncStatus(context.Background(), cluster, "zone-id", "zone-a")
-		if err == nil || got != "" || strings.Contains(err.Error(), "private diagnostic") {
+		if err == nil || got != (RGWSyncStatus{}) || strings.Contains(err.Error(), "private diagnostic") {
 			t.Fatal("command failure accepted or exposed")
 		}
 	}
@@ -65,18 +65,33 @@ func TestReadRGWSyncStatusCancellation(t *testing.T) {
 	s.executor = runner
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if report, err := s.ReadRGWSyncStatus(ctx, cluster, "zone-id", "zone-a"); !errors.Is(err, context.Canceled) || report != "" || len(runner.specs) != 0 {
+	if report, err := s.ReadRGWSyncStatus(ctx, cluster, "zone-id", "zone-a"); !errors.Is(err, context.Canceled) || report != (RGWSyncStatus{}) || len(runner.specs) != 0 {
 		t.Fatal("cancelled read executed or returned a report", err)
 	}
 	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 	runner.result = executor.CommandResult{Stdout: []byte(syncReportFixture), Stderr: []byte("private diagnostic")}
 	runner.afterRun = cancel
-	if report, err := s.ReadRGWSyncStatus(ctx, cluster, "zone-id", "zone-a"); !errors.Is(err, context.Canceled) || report != "" || len(runner.specs) != 1 {
+	if report, err := s.ReadRGWSyncStatus(ctx, cluster, "zone-id", "zone-a"); !errors.Is(err, context.Canceled) || report != (RGWSyncStatus{}) || len(runner.specs) != 1 {
 		t.Fatal("late command success escaped cancellation", err)
 	}
 	if strings.Trim(string(runner.result.Stdout), "\x00") != "" || strings.Trim(string(runner.result.Stderr), "\x00") != "" {
 		t.Fatal("cancelled command retained native buffers")
+	}
+}
+
+func TestReadRGWSyncStatusDiagnostics(t *testing.T) {
+	s, _, cluster := newCephUserService(t)
+	for _, diagnostic := range []string{"", " \n\t", "ERROR: failed to fetch master next positions (Permission denied)", "private-token"} {
+		runner := &syncReportExecutor{result: executor.CommandResult{Stdout: []byte(syncReportFixture), Stderr: []byte(diagnostic)}}
+		s.executor = runner
+		got, err := s.ReadRGWSyncStatus(context.Background(), cluster, "zone-id", "zone-a")
+		if err != nil || got.Report != syncReportFixture || got.DiagnosticsPresent != (strings.TrimSpace(diagnostic) != "") {
+			t.Fatal("diagnostic presence lost", err)
+		}
+		if strings.Contains(got.Report, "private-token") || strings.Trim(string(runner.result.Stderr), "\x00") != "" {
+			t.Fatal("diagnostic text exposed or retained")
+		}
 	}
 }
 

@@ -22,5 +22,5 @@ func (h *Handler) ReadRGWSyncStatus(w http.ResponseWriter, r *http.Request) {
 		writeActionError(w, r, err)
 		return
 	}
-	WriteSuccess(w, http.StatusOK, "success", map[string]string{"report": report})
+	WriteSuccess(w, http.StatusOK, "success", report)
 }

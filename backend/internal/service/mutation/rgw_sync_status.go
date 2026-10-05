@@ -1,6 +1,7 @@
 package mutation
 
 import (
+	"bytes"
 	"context"
 	"strings"
 	"time"
@@ -10,22 +11,27 @@ import (
 	"cephtower/backend/internal/integration/ceph/executor"
 )
 
+type RGWSyncStatus struct {
+	Report             string `json:"report"`
+	DiagnosticsPresent bool   `json:"diagnostics_present"`
+}
+
 // ReadRGWSyncStatus returns the native text, not an inferred replication verdict.
 // Even exit status zero may include remote-source errors or recovering shards.
-func (s *Service) ReadRGWSyncStatus(ctx context.Context, clusterID uint64, zoneID, name string) (string, error) {
+func (s *Service) ReadRGWSyncStatus(ctx context.Context, clusterID uint64, zoneID, name string) (RGWSyncStatus, error) {
 	if clusterID == 0 || !syncFlowToken(zoneID) || !syncFlowToken(name) {
-		return "", invalid("cluster_id, zone_id and name are required")
+		return RGWSyncStatus{}, invalid("cluster_id, zone_id and name are required")
 	}
 	if err := ctx.Err(); err != nil {
-		return "", err
+		return RGWSyncStatus{}, err
 	}
 	access, err := s.clusters.Access(ctx, clusterID)
 	if err != nil {
-		return "", err
+		return RGWSyncStatus{}, err
 	}
 	defer func() { access.ClientKey = "" }()
 	if err := ctx.Err(); err != nil {
-		return "", err
+		return RGWSyncStatus{}, err
 	}
 	result, err := s.executor.Run(ctx, access, executor.CommandSpec{
 		ID: "rgw_zone.sync.status", Binary: executor.BinaryRGWAdmin,
@@ -33,12 +39,18 @@ func (s *Service) ReadRGWSyncStatus(ctx context.Context, clusterID uint64, zoneI
 	})
 	defer func() { clear(result.Stdout); clear(result.Stderr) }()
 	if err := ctx.Err(); err != nil {
-		return "", err
+		return RGWSyncStatus{}, err
 	}
 	if err != nil || result.ExitCode != 0 {
-		return "", &cephdomain.ActionError{Code: "ceph_command_failed", Message: "Zone sync status read failed; check local zone configuration and cluster access"}
+		return RGWSyncStatus{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "Zone sync status read failed; check local zone configuration and cluster access"}
 	}
-	return validateRGWSyncReport(result.Stdout, zoneID, name)
+	report, err := validateRGWSyncReport(result.Stdout, zoneID, name)
+	if err != nil {
+		return RGWSyncStatus{}, err
+	}
+	// Native sync helpers may log failures to stderr while returning exit zero.
+	// Expose presence, not potentially sensitive diagnostic text or a health verdict.
+	return RGWSyncStatus{Report: report, DiagnosticsPresent: len(bytes.TrimSpace(result.Stderr)) > 0}, nil
 }
 
 func validateRGWSyncReport(raw []byte, zoneID, name string) (string, error) {

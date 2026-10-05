@@ -34,7 +34,7 @@ export function RgwSyncStatus({ row, clusterId }: { row: ApiRecord; clusterId?: 
   const locked = useRef(false)
   const mounted = useRef(true)
   const abort = useRef<AbortController>()
-  const [state, setState] = useState({ scope, report: '', error: '', busy: false })
+  const [state, setState] = useState({ scope, report: '', error: '', busy: false, diagnostics: false })
   const scoped = state.scope === scope
   const sections = scoped && state.report ? rgwSyncReportSections(state.report) : undefined
   const valid = !!clusterId && typeof row.id === 'string' && !!row.id && typeof row.name === 'string' && !!row.name && row.stale !== true
@@ -42,7 +42,7 @@ export function RgwSyncStatus({ row, clusterId }: { row: ApiRecord; clusterId?: 
     mounted.current = true
     sequence.current++
     locked.current = false
-    setState({ scope, report: '', error: '', busy: false })
+    setState({ scope, report: '', error: '', busy: false, diagnostics: false })
     return () => { mounted.current = false; abort.current?.abort(); sequence.current++ }
   }, [scope])
   async function read() {
@@ -52,14 +52,14 @@ export function RgwSyncStatus({ row, clusterId }: { row: ApiRecord; clusterId?: 
     const controller = new AbortController()
     abort.current = controller
     const ticket = ++sequence.current
-    setState({ scope, report: '', error: '', busy: true })
+    setState({ scope, report: '', error: '', busy: true, diagnostics: false })
     try {
-      const result = await request<{ report: string }>('/rgw/zone/sync/status', jsonInit('POST', { cluster_id: clusterId, zone_id: row.id, name: row.name }, { signal: controller.signal, cache: 'no-store', suppressErrorNotification: true }))
+      const result = await request<{ report: string; diagnostics_present: boolean }>('/rgw/zone/sync/status', jsonInit('POST', { cluster_id: clusterId, zone_id: row.id, name: row.name }, { signal: controller.signal, cache: 'no-store', suppressErrorNotification: true }))
       if (!mounted.current || controller.signal.aborted || current.current !== scope || sequence.current !== ticket) return
-      if (typeof result?.report !== 'string' || !result.report.trim() || result.report.length > 1048576) throw new Error('invalid report')
-      setState({ scope, busy: false, report: result.report, error: '' })
+      if (typeof result?.report !== 'string' || !result.report.trim() || result.report.length > 1048576 || typeof result.diagnostics_present !== 'boolean') throw new Error('invalid report')
+      setState({ scope, busy: false, report: result.report, error: '', diagnostics: result.diagnostics_present })
     } catch {
-      if (mounted.current && !controller.signal.aborted && current.current === scope && sequence.current === ticket) setState({ scope, busy: false, report: '', error: '同步报告读取失败或 Zone 身份发生变化。请检查本地 Zone 配置、集群访问权限并重新采集。' })
+      if (mounted.current && !controller.signal.aborted && current.current === scope && sequence.current === ticket) setState({ scope, busy: false, report: '', diagnostics: false, error: '同步报告读取失败或 Zone 身份发生变化。请检查本地 Zone 配置、集群访问权限并重新采集。' })
     } finally {
       if (mounted.current && current.current === scope && sequence.current === ticket) locked.current = false
     }
@@ -70,6 +70,7 @@ export function RgwSyncStatus({ row, clusterId }: { row: ApiRecord; clusterId?: 
       {!valid && <Alert type="warning" message="Zone 身份或库存状态不可用，请重新采集后再试" />}
       <Button disabled={!valid || !scoped || state.busy} loading={scoped && state.busy} onClick={() => void read()}>读取同步报告</Button>
       {scoped && state.error && <Alert type="error" message={state.error} />}
+      {scoped && state.report && state.diagnostics && <Alert type="warning" message="命令输出了额外诊断，报告可能不完整" description="原生命令 stderr 非空，可能包含远端读取失败或其他日志；为避免泄露敏感信息，不返回诊断原文。请在集群侧核查日志，不能仅凭此报告判断同步健康。" />}
       {sections && <>
         <Card size="small" title="站点身份与原生采样信息"><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{sections.identity}</pre></Card>
         <Card size="small" title="元数据同步"><RgwSyncSectionNotice section={sections.metadata}/><RgwSyncCounterDetails section={sections.metadata}/><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{sections.metadata}</pre></Card>

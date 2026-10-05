@@ -71,30 +71,34 @@ click();click();assert.equal(calls.length,1)
 assert.deepEqual(calls[0],{path:'/rgw/zone/sync/status',method:'POST',body:{cluster_id:7,zone_id:'zone-id',name:'zone-a'},signal:calls[0].signal,cache:'no-store',suppressErrorNotification:true})
 assert.equal(calls[0].signal.aborted,false)
 const report='metadata sync no sync (zone is master)\ndata sync source: a\nbehind on 2 shards\n<script>not html</script>'
-resolve({report});await settle();assert.deepEqual(find('pre').props.children,[report])
-find('Button').props.onClick();resolve({report:native});await settle()
+resolve({report,diagnostics_present:false});await settle();assert.deepEqual(find('pre').props.children,[report])
+assert.equal(nodes(render()).some(node=>node.props.message==='命令输出了额外诊断，报告可能不完整'),false)
+find('Button').props.onClick();resolve({report:native,diagnostics_present:true});await settle()
+assert.equal(nodes(render()).find(node=>node.props.message==='命令输出了额外诊断，报告可能不完整').props.type,'warning')
 assert.equal(nodes(render()).filter(node=>node.type==='Card'&&String(node.props.title).startsWith('数据同步来源')).length,2)
 assert.deepEqual(nodes(render()).filter(node=>node.type===api.RgwSyncSectionNotice).map(node=>node.props.section),[parts.metadata,...parts.sources])
 assert.equal(nodes(render()).find(node=>node.type==='pre'&&node.props['aria-label']==='Zone 原生同步报告').props.children[0],native)
 assert.equal(find('details').props.open,false)
 find('Button').props.onClick();assert.equal(find('pre'),undefined)
+assert.equal(nodes(render()).some(node=>node.props.message==='命令输出了额外诊断，报告可能不完整'),false)
 const oldResolve=resolve
 const clusterSignal=calls.at(-1).signal
 props={...props,clusterId:8};render();assert.equal(clusterSignal.aborted,true)
 let oldCount=calls.length;click();assert.equal(calls.length,oldCount)
-oldResolve({report});await settle();assert.equal(find('pre'),undefined)
+oldResolve({report,diagnostics_present:true});await settle();assert.equal(find('pre'),undefined)
+assert.equal(nodes(render()).some(node=>node.props.message==='命令输出了额外诊断，报告可能不完整'),false)
 find('Button').props.onClick();reject(new Error('private diagnostics'));await settle();assert.ok(!JSON.stringify(render()).includes('private diagnostics'))
-for(const bad of [null,{}, {report:''},{report:3},{report:'x'.repeat(1048577)}]){
+for(const bad of [null,{}, {report:'',diagnostics_present:false},{report:3,diagnostics_present:false},{report:'x'.repeat(1048577),diagnostics_present:false},{report},{report,diagnostics_present:'true'},{report,diagnostics_present:null}]){
   find('Button').props.onClick();resolve(bad);await settle();assert.equal(find('pre'),undefined)
 }
 const zoneClick=find('Button').props.onClick;zoneClick();const oldZoneResolve=resolve,zoneSignal=calls.at(-1).signal
 props={...props,row:{id:'other',name:'other'}};render();assert.equal(zoneSignal.aborted,true)
 oldCount=calls.length;zoneClick();assert.equal(calls.length,oldCount)
-oldZoneResolve({report});await settle();assert.equal(find('pre'),undefined)
+oldZoneResolve({report,diagnostics_present:true});await settle();assert.equal(find('pre'),undefined)
 const unmountClick=find('Button').props.onClick;unmountClick();const unmountSignal=calls.at(-1).signal
 effects.forEach(effect=>effect?.cleanup?.());assert.equal(unmountSignal.aborted,true)
 oldCount=calls.length;unmountClick();assert.equal(calls.length,oldCount)
-resolve({report});await settle();assert.equal(find('pre'),undefined)
+resolve({report,diagnostics_present:true});await settle();assert.equal(find('pre'),undefined)
 props={...props,row:{...props.row,stale:true}};render();assert.equal(find('Button').props.disabled,true)
 const before=calls.length;find('Button').props.onClick();assert.equal(calls.length,before)
 const pages=readFileSync(new URL('../src/pages/object/pages.tsx',import.meta.url),'utf8')
