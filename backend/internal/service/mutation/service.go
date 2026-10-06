@@ -524,6 +524,12 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "SMB apply did not confirm a successful resource update"}
 		}
 	}
+	if request.Action == "host.action" && optional(request.Parameters, "action") == "rescan" {
+		ack := strings.TrimSpace(string(result.Stdout))
+		if !strings.HasPrefix(ack, "Ok. ") || strings.ContainsAny(ack, "\r\n") {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "host disk rescan was not fully confirmed; it may have partially completed, inspect host adapters and device inventory before any manual retry", Retryable: false}
+		}
+	}
 	checkSpec := spec
 	for index, followup := range spec.followups {
 		stepID := fmt.Sprintf("%s.step%d", request.Action, index+2)
