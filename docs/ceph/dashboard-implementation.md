@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD Lost 前端：详情提供独立标记 Lost 页，区分 Down/Destroy/移除，提示永久数据丢失风险。复用新鲜 Down 快照、UUID 与精确版本门禁，要求输入 mark lost osd.ID 及勾选风险确认；提交到原生 Lost API，成功说明 epoch 回读而非数据恢复，失败禁止原页直接重试。共享回归覆盖两种操作各自的 API/确认文本、双击、过期快照、失败和卸载保护；未操作真实集群。
+
 - OSD Lost 原生后端：增加高风险 POST /osd/lost，精确确认 mark lost osd.ID、UUID/Down 状态及 safe-to-destroy 安全检查后执行 osd lost --yes-i-really-mean-it。依据 OSDMonitor 原生语义，验证 lost_at 等于执行前 down_at，同时身份与 Down epoch 未变化；不伪造 lost 状态标记，异常禁止自动重试。测试覆盖安全门禁、身份变化、epoch 缺失/越界/重复、命令及回读失败。前端入口待接入，未进行真实集群操作。
 
 - OSD Destroy 前端：详情增加独立销毁页，明确保留 ID、移除密钥及数据永久不可读风险；仅新鲜、有效版本、非零 UUID、Down 且未销毁的快照允许操作。精确输入 destroy osd.ID 并勾选风险确认后携带 UUID 和无损 If-Match 提交；执行后需刷新重新打开，禁止原页直接重试，切换集群/目标后旧请求不更新界面。覆盖无效快照、确认不符、重复点击、失败和卸载场景；未在真实集群执行。
