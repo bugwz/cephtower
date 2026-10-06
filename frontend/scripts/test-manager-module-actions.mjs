@@ -60,3 +60,21 @@ for (const timing of ['before', 'write', 'collect']) {
   if (timing !== 'collect') assert.ok(!test.events.some((event) => event[0] === 'success'))
 }
 console.log('Manager module action scope and outcome checks passed')
+const selectionDeclaration = page.body.statements.flatMap(node => ts.isVariableStatement(node) ? [...node.declarationList.declarations] : []).find(node => node.name.getText(tree) === 'configModule')
+const readSelection = new Function('configSelection', 'scope', `return ${selectionDeclaration.initializer.getText(tree)}`)
+const firstScope = { clusterId: 1 }, secondScope = { clusterId: 2 }, returnedScope = { clusterId: 1 }
+const selection = { scope: firstScope, name: 'dashboard' }
+assert.equal(readSelection(selection, firstScope), 'dashboard')
+assert.equal(readSelection(selection, secondScope), '')
+assert.equal(readSelection(selection, returnedScope), '')
+assert.equal(readSelection(null, firstScope), '')
+const configSource = readFileSync(new URL('../src/pages/cluster/ConfigurationPage.tsx', import.meta.url), 'utf8')
+const configTree = ts.createSourceFile('config.tsx', configSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const configPage = configTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'ConfigurationPage')
+const effect = configPage.body.statements.find(node => ts.isExpressionStatement(node) && node.getText(configTree).includes('scopeRef.current = { ...scope }'))
+const effectJS = ts.transpileModule(effect.getText(configTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const scopeRef = { current: firstScope }; let cleanup
+const setupEffect = () => new Function('useEffect', 'scopeRef', 'scope', effectJS)(fn => { cleanup = fn() }, scopeRef, firstScope)
+setupEffect(); cleanup(); assert.notEqual(scopeRef.current, firstScope)
+setupEffect(); assert.equal(scopeRef.current, firstScope, 'strict effect replay restores live scope')
+scopeRef.current = secondScope; cleanup(); assert.equal(scopeRef.current, secondScope)

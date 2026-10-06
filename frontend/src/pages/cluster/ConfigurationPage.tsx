@@ -99,6 +99,12 @@ export function ConfigurationPage({ moduleName, optionNames }: { moduleName?: st
     scopeRef.current = { clusterId: selectedClusterId, moduleName, optionNames }
   }
   const scope = scopeRef.current
+  useEffect(() => {
+    scopeRef.current = scope
+    return () => {
+      if (scopeRef.current === scope) scopeRef.current = { ...scope }
+    }
+  }, [scope])
   const running = useRef(false)
   const metadataRequest = useRef<AbortController | null>(null)
   const [metadata, setMetadata] = useState<{ scope: typeof scope, items: Record<string, ApiRecord>, failed: string[] } | null>(null)

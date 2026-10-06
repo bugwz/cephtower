@@ -216,7 +216,8 @@ export function MgrManagementPage() {
   const [pendingModule, setPendingModule] = useState('')
   const [moduleSelection, setModuleSelection] = useState<{ scope: typeof scope, row: ApiRecord } | null>(null)
   const moduleDetails = moduleSelection?.scope === scope ? moduleSelection.row : null
-  const [configModule, setConfigModule] = useState('')
+  const [configSelection, setConfigSelection] = useState<{ scope: typeof scope, name: string } | null>(null)
+  const configModule = configSelection?.scope === scope ? configSelection.name : ''
   async function toggleModule(row: ApiRecord, enabled: boolean) {
     const name = textValue(row.name, '')
     if (!selectedClusterId || moduleScope.current !== scope || moduleRunning.current || loading || error || !name || row.stale !== false || typeof row.enabled !== 'boolean' || row.enabled === enabled || row.always_on !== false || (enabled && row.can_run !== true)) {
@@ -242,8 +243,8 @@ export function MgrManagementPage() {
 
   return (
     <Page title="MGR管理" loading={loading} error={error}>
-      <Modal open={Boolean(configModule)} onCancel={() => setConfigModule('')} footer={null} width="95vw" destroyOnClose>
-        {configModule && <ConfigurationPage key={configModule} moduleName={configModule} />}
+      <Modal open={Boolean(configModule)} onCancel={() => setConfigSelection(null)} footer={null} width="95vw" destroyOnClose>
+        {configModule && <ConfigurationPage key={`${selectedClusterId}:${configModule}`} moduleName={configModule} />}
       </Modal>
       <Modal title={`模块 ${textValue(moduleDetails?.name, '')}`} open={Boolean(moduleDetails)} onCancel={() => setModuleSelection(null)} footer={null} width="min(1200px, 95vw)" destroyOnClose>
         {moduleDetails && selectedClusterId && <ManagerModuleDetails key={`${selectedClusterId}:${String(moduleDetails.name)}`} record={moduleDetails} clusterId={selectedClusterId} />}
@@ -284,7 +285,7 @@ export function MgrManagementPage() {
                     { key: 'error_string', title: '加载错误' },
                     { key: 'force_disabled', title: '强制停用', render: (value) => value ? '是' : '否' },
                     { key: 'options', title: '配置项', render: (value, row) => <Button type="link" onClick={() => setModuleSelection({ scope, row })}>{managerOptionRows(value)?.length ?? '未采集'} 项 · 详情</Button> },
-                    { key: 'configure', title: '操作', render: (_, row) => <Button onClick={() => setConfigModule(textValue(row.name, ''))}>编辑配置</Button> }
+                    { key: 'configure', title: '操作', render: (_, row) => <Button onClick={() => setConfigSelection({ scope, name: textValue(row.name, '') })}>编辑配置</Button> }
                   ]}
                 />
                 </div>
