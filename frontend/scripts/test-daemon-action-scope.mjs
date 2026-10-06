@@ -7,9 +7,11 @@ const compile = source => ts.transpileModule(source, { compilerOptions: { target
 const source = read('../src/pages/cluster/pages.tsx'), tree = parse(source)
 const table = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'DaemonTable')
 const action = table.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'runAction').getText(tree)
+const versionSource = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'osdInventoryVersion').getText(tree)
+const version = new Function(`${compile(versionSource)}; return osdInventoryVersion`)()
 const apiTree = parse(read('../src/api/resource.ts'))
 const api = apiTree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'applyDaemonAction').getText(apiTree).replace('export ', '')
-for (const scenario of ['success', 'stale', 'unavailable', 'before', 'during', 'failure', 'no-cluster']) {
+for (const scenario of ['success', 'stale', 'unavailable', 'before', 'during', 'failure', 'no-cluster', 'unsafe-version', 'missing-version']) {
   const calls = [], messages = [], refreshes = []
   let finish
   const gate = new Promise(resolve => { finish = resolve })
@@ -21,11 +23,11 @@ for (const scenario of ['success', 'stale', 'unavailable', 'before', 'during', '
   const env = {
     clusterId: scenario === 'no-cluster' ? undefined : 7, active: { current: scenario !== 'before' }, running: { current: false },
     unavailable: scenario === 'unavailable', pendingDaemonAction: '', setPendingDaemonAction() {},
-    textValue: value => value || '', applyDaemonAction: apply, operationMutation: { run: fn => fn() },
+    textValue: value => value || '', osdInventoryVersion: version, applyDaemonAction: apply, operationMutation: { run: fn => fn() },
     message: { success: value => messages.push(value) }, refresh: () => refreshes.push(true)
   }
   const run = new Function(...Object.keys(env), `${compile(action)}; return runAction`)(...Object.values(env))
-  const row = { name: 'mds.fs.node1', stale: scenario === 'stale' }
+  const row = { name: 'mds.fs.node1', stale: scenario === 'stale', resource_version: scenario === 'unsafe-version' ? Number.MAX_SAFE_INTEGER + 1 : scenario === 'missing-version' ? undefined : '18446744073709551615' }
   const pending = run(row, 'restart')
   await run(row, 'restart')
   if (scenario === 'during') env.active.current = false
@@ -33,7 +35,7 @@ for (const scenario of ['success', 'stale', 'unavailable', 'before', 'during', '
   if (scenario === 'failure') await assert.rejects(pending, /failed/)
   else await pending
   const submitted = ['success', 'during', 'failure'].includes(scenario)
-  assert.deepEqual(calls, submitted ? [['/daemon/action', 'POST', { cluster_id: 7, name: 'mds.fs.node1', action: 'restart', force: true }]] : [])
+  assert.deepEqual(calls, submitted ? [['/daemon/action', 'POST', { cluster_id: 7, name: 'mds.fs.node1', action: 'restart' }, { ifMatch: '18446744073709551615' }]] : [])
   assert.equal(messages.length, scenario === 'success' ? 1 : 0)
   assert.equal(refreshes.length, scenario === 'success' ? 1 : 0)
   assert.equal(env.running.current, false)

@@ -1147,14 +1147,15 @@ function DaemonTable({
 
   async function runAction(row: ApiRecord, action: string) {
     const name = textValue(row.name, '')
+    const generation = osdInventoryVersion(row.resource_version)
     const pendingKey = `${name}:${action}`
-    if (!clusterId || !active.current || running.current || unavailable || row.stale !== false || !name || pendingDaemonAction) {
+    if (!clusterId || !active.current || running.current || unavailable || row.stale !== false || !generation || !name || pendingDaemonAction) {
       return
     }
     running.current = true
     setPendingDaemonAction(pendingKey)
     try {
-      await operationMutation.run(() => applyDaemonAction(name, action, clusterId, action === 'restart'), false)
+      await operationMutation.run(() => applyDaemonAction(name, action, clusterId, generation), false)
       if (active.current) {
         message.success(`Daemon ${action} 命令已执行，请刷新核对状态`)
         refresh()
@@ -1197,7 +1198,7 @@ function DaemonTable({
             filterKey: false,
             render: (_, row) => {
               const name = textValue(row.name, '')
-              const disabled = !clusterId || unavailable || row.stale !== false || Boolean(pendingDaemonAction)
+              const disabled = !clusterId || unavailable || row.stale !== false || !osdInventoryVersion(row.resource_version) || Boolean(pendingDaemonAction)
               return (
                 <TableActions>
                   <TableAction disabled={!clusterId || unavailable || !/^(mgr|mds)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(name)} onClick={() => openPerformance(row)}>性能计数器</TableAction>
