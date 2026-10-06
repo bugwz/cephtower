@@ -632,7 +632,25 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "configuration removal was accepted but scoped absence could not be verified; inspect configuration before retrying", Retryable: false}
 		}
 		if request.Action == "config_value.set" && (err != nil || !configurationSet(request.ResourceKey, checked.Stdout, request.Parameters)) {
-			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "configuration write was accepted but the exact scoped value could not be verified; native normalization may differ; inspect configuration before retrying", Retryable: false}
+			verified := false
+			if err == nil {
+				decoded, _ := base64.RawURLEncoding.Strict().DecodeString(strings.TrimPrefix(request.ResourceKey, "configuration/value/"))
+				parts := strings.Split(string(decoded), "\x00")
+				if len(parts) == 2 {
+					metadata, readErr := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".metadata", Binary: executor.BinaryCeph, Args: []string{"config", "help", parts[1], "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+					var help struct {
+						Name string `json:"name"`
+						Type string `json:"type"`
+					}
+					if readErr == nil && metadata.ExitCode == 0 && json.Unmarshal(metadata.Stdout, &help) == nil && help.Name == parts[1] {
+						value, ok := request.Parameters["value"].(string)
+						verified = ok && configurationMatchesType(request.ResourceKey, checked.Stdout, &value, help.Type)
+					}
+				}
+			}
+			if !verified {
+				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "configuration write was accepted but the scoped value could not be verified; inspect configuration before retrying", Retryable: false}
+			}
 		}
 		if request.Action == "rbd_image.action" && (optional(request.Parameters, "action") == "config-set" || optional(request.Parameters, "action") == "config-remove") && (err != nil || !rbdImageConfigurationMatches(request.Parameters, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "image configuration command was accepted but the value and source could not be verified; inspect image configuration before retrying", Retryable: false}

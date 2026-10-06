@@ -5,8 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
+	"math"
+	"math/big"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,6 +27,10 @@ func configurationSet(resource string, data []byte, parameters map[string]any) b
 }
 
 func configurationMatches(resource string, data []byte, expected *string) bool {
+	return configurationMatchesType(resource, data, expected, "")
+}
+
+func configurationMatchesType(resource string, data []byte, expected *string, kind string) bool {
 	decoded, err := base64.RawURLEncoding.Strict().DecodeString(strings.TrimPrefix(resource, "configuration/value/"))
 	parts := strings.Split(string(decoded), "\x00")
 	if err != nil || len(parts) != 2 || !configurationScope.MatchString(parts[0]) || !configurationName.MatchString(parts[1]) {
@@ -81,10 +88,68 @@ func configurationMatches(resource string, data []byte, expected *string) bool {
 		}
 		seen[key] = true
 		if who == configurationScopeKey(parts[0]) && row.Name == parts[1] {
-			matched = expected != nil && *row.Value == *expected
+			matched = expected != nil && configurationEquivalent(*expected, *row.Value, kind)
 		}
 	}
 	return matched
+}
+
+func configurationEquivalent(expected, actual, kind string) bool {
+	if expected == actual {
+		return true
+	}
+	// Option's double printer uses std::fixed with the default precision (6).
+	if kind == "float" {
+		value, err := strconv.ParseFloat(strings.TrimLeft(expected, "\t\n\r "), 64)
+		return err == nil && !math.IsNaN(value) && !math.IsInf(value, 0) && strconv.FormatFloat(value, 'f', 6, 64) == actual
+	}
+	normalize := func(value string) (string, bool) {
+		if kind == "bool" {
+			if strings.EqualFold(value, "true") {
+				return "true", true
+			}
+			if strings.EqualFold(value, "false") {
+				return "false", true
+			}
+			if !regexp.MustCompile(`^[\t\n\r ]*[+-]?[0-9]+$`).MatchString(value) {
+				return "", false
+			}
+			n, ok := new(big.Int).SetString(strings.TrimLeft(value, "\t\n\r "), 10)
+			if !ok || !n.IsInt64() || n.Int64() < -2147483648 || n.Int64() > 2147483647 {
+				return "", false
+			}
+			if n.Sign() == 0 {
+				return "false", true
+			}
+			return "true", true
+		}
+		pattern, base := `^[\t\n\r ]*([+-]?[0-9]+)([KMGTPE]?)$`, int64(1000)
+		if kind == "size" {
+			pattern, base = `^([+]?[0-9]+)([KMGTPE](?:i?B|i)?|B)?$`, 1024
+		}
+		if kind != "int" && kind != "uint" && kind != "size" {
+			return "", false
+		}
+		parts := regexp.MustCompile(pattern).FindStringSubmatch(value)
+		if parts == nil {
+			return "", false
+		}
+		n, ok := new(big.Int).SetString(parts[1], 10)
+		if !ok {
+			return "", false
+		}
+		if parts[2] != "" && parts[2] != "B" {
+			power := strings.IndexByte("KMGTPE", parts[2][0]) + 1
+			n.Mul(n, new(big.Int).Exp(big.NewInt(base), big.NewInt(int64(power)), nil))
+		}
+		if kind == "int" && !n.IsInt64() || kind != "int" && !n.IsUint64() {
+			return "", false
+		}
+		return n.String(), true
+	}
+	a, okA := normalize(expected)
+	b, okB := normalize(actual)
+	return okA && okB && a == b
 }
 
 func configurationScopeKey(who string) string {
