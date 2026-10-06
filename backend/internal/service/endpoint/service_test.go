@@ -13,6 +13,16 @@ import (
 
 const testKey = "0123456789abcdefghijklmnopqrstuv"
 
+func TestClusterFSIDRequiresDiscoveredIdentity(t *testing.T) {
+	s, _, cluster := testService(t)
+	if _, err := s.ClusterFSID(context.Background(), cluster.ID); err == nil {
+		t.Fatal("undiscovered cluster accepted")
+	}
+	if _, err := s.ClusterFSID(context.Background(), cluster.ID+1); err == nil {
+		t.Fatal("unknown cluster accepted")
+	}
+}
+
 func testService(t *testing.T) (*Service, *store.Database, store.CephCluster) {
 	t.Helper()
 	db, err := store.Open(config.DatabaseConfig{EncryptionKey: testKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "endpoint.db"}}, t.TempDir())

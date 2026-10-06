@@ -154,6 +154,18 @@ func (s *Service) decryptCredential(row store.CephClusterCredential, target any)
 func (s *Service) ListEndpoints(ctx context.Context, clusterID uint64) ([]store.CephClusterEndpoint, error) {
 	return s.database().ListEndpoints(ctx, clusterID)
 }
+
+// ClusterFSID returns the identity discovered during cluster probing, not user query input.
+func (s *Service) ClusterFSID(ctx context.Context, clusterID uint64) (string, error) {
+	cluster, err := s.database().FindCluster(ctx, clusterID)
+	if err != nil {
+		return "", err
+	}
+	if cluster.FSID == nil || strings.TrimSpace(*cluster.FSID) == "" {
+		return "", fmt.Errorf("cluster FSID is unavailable; probe the cluster first")
+	}
+	return *cluster.FSID, nil
+}
 func (s *Service) Endpoint(ctx context.Context, clusterID uint64, kind string) (store.CephClusterEndpoint, error) {
 	rows, err := s.database().ListEndpoints(ctx, clusterID)
 	if err != nil {

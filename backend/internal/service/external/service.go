@@ -177,7 +177,11 @@ func (s *Service) readMonitoring(ctx context.Context, clusterID uint64, kind str
 	case "alert":
 		items, err = api.Alerts(ctx)
 	case "alert_group":
-		items, err = api.AlertGroups(ctx)
+		fsid, lookupErr := s.endpoints.ClusterFSID(ctx, clusterID)
+		if lookupErr != nil {
+			return nil, failure("capability_unavailable", "cannot scope alert groups: "+lookupErr.Error(), false)
+		}
+		items, err = api.AlertGroups(ctx, fsid)
 	case "alert_rule":
 		var groups []monitoring.RuleGroup
 		groups, err = api.Rules(ctx)

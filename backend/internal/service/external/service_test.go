@@ -32,7 +32,8 @@ func externalTestService(t *testing.T) (*Service, *endpointservice.Service, stor
 	}
 	t.Cleanup(func() { _ = store.Close(db) })
 	now := time.Now().UTC()
-	cluster := store.CephCluster{Name: "test", MonitorAddresses: "mon:6789", ClientUsername: "client.test", ClientKey: "encrypted", CreatedAt: now, UpdatedAt: now}
+	fsid := "00000000-0000-0000-0000-000000000001"
+	cluster := store.CephCluster{Name: "test", FSID: &fsid, MonitorAddresses: "mon:6789", ClientUsername: "client.test", ClientKey: "encrypted", CreatedAt: now, UpdatedAt: now}
 	if err := db.CreateCluster(context.Background(), &cluster); err != nil {
 		t.Fatal(err)
 	}
@@ -134,6 +135,9 @@ func TestProtocolNativeHTTPReadsUseTypedAdapters(t *testing.T) {
 		case request.URL.Host == "alertmanager.example.test" && request.URL.Path == "/api/v2/alerts":
 			body = `[{"labels":{"alertname":"CephHealth"},"annotations":{},"status":{"state":"active"},"startsAt":"2026-07-26T00:00:00Z"}]`
 		case request.URL.Host == "alertmanager.example.test" && request.URL.Path == "/api/v2/alerts/groups":
+			if request.URL.Query().Get("filter") != `cluster="00000000-0000-0000-0000-000000000001"` {
+				t.Fatalf("missing cluster filter: %s", request.URL)
+			}
 			body = `[{"labels":{"cluster":"ceph"},"receiver":{"name":"email"},"alerts":[]}]`
 		case request.URL.Host == "alertmanager.example.test" && request.URL.Path == "/api/v2/silences":
 			body = `[]`

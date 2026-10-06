@@ -263,9 +263,13 @@ type AlertGroup struct {
 	Alerts []*Alert `json:"alerts"`
 }
 
-func (c *Client) AlertGroups(ctx context.Context) ([]AlertGroup, error) {
+func (c *Client) AlertGroups(ctx context.Context, fsid string) ([]AlertGroup, error) {
+	if strings.TrimSpace(fsid) == "" {
+		return nil, fmt.Errorf("cluster FSID is required for alert groups")
+	}
 	var groups []*AlertGroup
-	if err := c.get(ctx, "/api/v2/alerts/groups", &groups); err != nil {
+	query := url.Values{"filter": []string{"cluster=" + strconv.Quote(fsid)}}
+	if err := c.get(ctx, "/api/v2/alerts/groups?"+query.Encode(), &groups); err != nil {
 		return nil, err
 	}
 	if groups == nil {

@@ -22,7 +22,7 @@ export function PerformanceMetricsPage() {
 export function AlertListPage() {
   const [grouped, setGrouped] = useState(false)
   return <><Segmented aria-label="告警展示方式" options={[{ label: '告警实例', value: 'instances' }, { label: '原生分组', value: 'groups' }]} value={grouped ? 'groups' : 'instances'} onChange={value => setGrouped(value === 'groups')} />
-    {grouped && <Alert type="info" message="显示所选集群配置的 Alertmanager 端点返回的全部分组，未按 FSID 标签过滤；共享端点可能包含其他集群告警。" />}
+    {grouped && <Alert type="info" message="原生分组按所选集群的 FSID 精确匹配 cluster 标签；缺少该标签的告警不会显示。FSID 尚未探测时读取会失败，不退回共享端点的全部告警。" />}
     <ExternalListPage key={grouped ? 'groups' : 'instances'} definition={grouped ? alertGroupDefinition : externalDefinitions.alerts} /></>
 }
 

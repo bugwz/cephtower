@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 原生告警分组按已探测 FSID 过滤
+
+- 补齐参考 `prometheus.py#get_alertgroup(cluster_filter=True)` 的 `cluster` 标签过滤。分组读取从所选集群数据库记录获取 FSID，再调用 `/api/v2/alerts/groups?filter=cluster%3D...`；FSID 的既有获取链路为集群探测 → Ceph provider → `ceph fsid` → 保存集群记录。
+- FSID 缺失或集群不存在时明确失败，不退回未过滤查询；匹配值按字符串转义再 URL 编码，不接收调用方指定的 FSID 或任意 matcher。标签使用等值匹配，不使用正则。
+- 页面提示未带 `cluster=<FSID>` 标签的告警不会显示。此增量取代上一分组实现的共享端点全部返回行为；实例视图和静默关联告警目前仍沿用未加 FSID 过滤的旧读取链路，不能宣称整个告警模块已经统一隔离。
+- 新增缺失/未知集群身份、单一过滤参数、特殊字符转义与服务真实调用链的过滤断言；`make test-backend`（含 OpenAPI 校验）与 `make test-frontend` 通过，未进行真实 Ceph/Alertmanager 联调。
+
 #### Alertmanager 原生分组视图
 
 - 对照参考 `prometheus.service.ts#getGroupedAlerts`、`prometheus.py#get_alertgroup`，新增 GET `/alert/groups` → 外部服务 → Alertmanager GET `/api/v2/alerts/groups` 链路，包含端点依赖检查、集群作用域、审计与 OpenAPI 文档。
