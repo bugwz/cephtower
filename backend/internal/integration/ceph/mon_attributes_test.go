@@ -58,3 +58,46 @@ func TestMonitorPriorityAndWeight(t *testing.T) {
 		}
 	}
 }
+
+func TestMonitorCrushLocation(t *testing.T) {
+	for _, raw := range []string{`null`, `""`, `"[datacenter=dc1,rack=rack1]"`, `{}`, `[]`, `false`, `1`} {
+		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.mon": []byte(`{"mons":[{"name":"ceph-node-1","rank":0,"crush_location":` + raw + `}]}`)}}}
+		rows, err := p.Collect(context.Background(), ClusterAccess{}, "topology")
+		var expected *string
+		valid := json.Unmarshal([]byte(raw), &expected) == nil
+		if !valid {
+			if err == nil {
+				t.Fatalf("accepted invalid location %s", raw)
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for _, row := range rows {
+			if row.Kind != "mon" {
+				continue
+			}
+			found = true
+			got := row.Payload.(cephdomain.Monitor).CrushLocation
+			if (got == nil) != (expected == nil) || (got != nil && *got != *expected) {
+				t.Fatalf("location lost: %v expected %s", got, raw)
+			}
+			encoded, err := json.Marshal(row.Payload)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var fields map[string]json.RawMessage
+			if err := json.Unmarshal(encoded, &fields); err != nil {
+				t.Fatal(err)
+			}
+			if string(fields["crush_location"]) != raw {
+				t.Fatalf("location JSON changed: %s", encoded)
+			}
+		}
+		if !found {
+			t.Fatal("monitor missing")
+		}
+	}
+}

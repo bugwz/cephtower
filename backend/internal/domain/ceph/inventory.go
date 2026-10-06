@@ -88,6 +88,7 @@ type Monitor struct {
 	OpenSessions    *string          `json:"open_sessions"`
 	Priority        *uint16          `json:"priority"`
 	Weight          *uint16          `json:"weight"`
+	CrushLocation   *string          `json:"crush_location"`
 }
 type MonitorAddress struct {
 	Type    string `json:"type"`

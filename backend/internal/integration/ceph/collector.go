@@ -451,11 +451,12 @@ type serviceWire struct {
 }
 type monDumpWire struct {
 	Mons []struct {
-		Priority    *uint16 `json:"priority"`
-		Weight      *uint16 `json:"weight"`
-		Name        string  `json:"name"`
-		Rank        int     `json:"rank"`
-		PublicAddrs struct {
+		CrushLocation *string `json:"crush_location"`
+		Priority      *uint16 `json:"priority"`
+		Weight        *uint16 `json:"weight"`
+		Name          string  `json:"name"`
+		Rank          int     `json:"rank"`
+		PublicAddrs   struct {
 			AddrVec []cephdomain.MonitorAddress `json:"addrvec"`
 		} `json:"public_addrs"`
 		PublicAddr string `json:"public_addr"`
@@ -666,7 +667,7 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 			values := p.collectMonitorPerfValues(ctx, access, wire.Name)
 			openSessions = monitorSessionCount(values["mon"]["num_sessions"])
 		}
-		payload := cephdomain.Monitor{Name: wire.Name, Rank: wire.Rank, Address: address, PublicAddresses: wire.PublicAddrs.AddrVec, InQuorum: inQuorum, OpenSessions: openSessions, Priority: wire.Priority, Weight: wire.Weight}
+		payload := cephdomain.Monitor{Name: wire.Name, Rank: wire.Rank, Address: address, PublicAddresses: wire.PublicAddrs.AddrVec, InQuorum: inQuorum, OpenSessions: openSessions, Priority: wire.Priority, Weight: wire.Weight, CrushLocation: wire.CrushLocation}
 		status := "out_of_quorum"
 		if inQuorum {
 			status = "in_quorum"

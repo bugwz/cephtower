@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### MON 原生 CRUSH 位置
+
+- 补齐 `MonMap.cc::dump` 输出的 `crush_location`，沿现有 `ceph mon dump`、资源 API 到 MON 详情原样展示文本；不将流式文本误当作 JSON 对象或 CRUSH 树。
+- 可选字符串保留未知与空值的区别，错误 JSON 类型拒绝采集；回归覆盖 null、空文本、位置文本和非字符串输入，以及 API JSON 与页面字段绑定。
+- 本项只读，不修改 MON 位置，不推断故障域或可用性；尚未进行真实集群验证。
+
 #### monmap 版本与选举配置快照
 
 - 从现有 `ceph quorum_status` 的 monmap 保留最低 MON 版本编号/名称、原生选举策略编号、stretch_mode、tiebreaker_mon、disallowed_leaders 和 removed_ranks，接入 MON 状态页。

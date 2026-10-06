@@ -13,6 +13,7 @@ assert.ok(wrapper.getText(tree).includes('selectedClusterId={selectedClusterId} 
 assert.ok(content.getText(tree).includes("useState('')"))
 assert.ok(content.getText(tree).includes('useResource(loader)'))
 for (const field of ['priority', 'weight']) assert.ok(source.includes(`textValue(mon.${field})`))
+assert.ok(source.includes('monMapSetting(mon.crush_location)'))
 const loader = content.body.statements.find(node => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(tree) === 'loader').declarationList.declarations[0].initializer.arguments[0]
 const code = ts.transpileModule(`const load = ${loader.getText(tree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 for (const [selectedClusterId, monName] of [[1, 'a'], [2, 'a'], [2, 'b'], [undefined, 'a'], [1, '']]) {

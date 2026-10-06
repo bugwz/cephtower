@@ -12,6 +12,7 @@ import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
 import { message } from '../../utils/appMessage'
 import { MonPublicAddresses } from './MonPublicAddresses'
+import { monMapSetting } from './MonMapSettings'
 import { MonSessionHistory } from './MonSessionHistory'
 import { monSessionCount } from './monSessionCount'
 import { MonQuorumState } from './MonQuorumState'
@@ -101,6 +102,7 @@ function MonDetailContent({ selectedClusterId, monName }: { selectedClusterId?: 
             <Descriptions.Item label="Rank">{textValue(mon.rank)}</Descriptions.Item>
             <Descriptions.Item label="Priority（原生）">{textValue(mon.priority)}</Descriptions.Item>
             <Descriptions.Item label="Weight（原生）">{textValue(mon.weight)}</Descriptions.Item>
+            <Descriptions.Item label="CRUSH 位置（原生文本）" span={2}>{monMapSetting(mon.crush_location)}</Descriptions.Item>
             <Descriptions.Item label="Public Addr">{textValue(mon.address)}</Descriptions.Item>
             <Descriptions.Item label="全部 Public 地址（协议 / 地址）"><MonPublicAddresses value={mon.public_addresses} /></Descriptions.Item>
             <Descriptions.Item label="状态">
