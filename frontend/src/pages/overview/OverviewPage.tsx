@@ -173,9 +173,9 @@ function OverviewContent({ selectedClusterId }: { selectedClusterId: number | un
             ]} />
           </Card>
           <Card title="对象健康">
-            {objectHealth.known
+            {objectHealth.known && objectHealth.percent !== undefined
               ? <Progress percent={objectHealth.percent} status={objectHealth.affected > 0 ? 'exception' : 'normal'} />
-              : <Text type="secondary">对象副本统计暂不可用</Text>}
+              : <Text type="secondary">{objectHealth.known ? '当前没有对象副本，健康比例不适用' : '对象副本统计缺失或不一致，健康比例未知'}</Text>}
             <Descriptions column={1} size="small" bordered>
               <Descriptions.Item label="对象数">{formatCount(objectStats.objects)}</Descriptions.Item>
               <Descriptions.Item label="健康副本">{formatCount(objectHealth.healthy)}</Descriptions.Item>
@@ -299,8 +299,8 @@ function formatBytes(value: unknown) {
 }
 
 function formatCount(value: unknown) {
-  const count = numberValue(value)
-  return count === undefined ? '—' : Math.max(0, count).toLocaleString()
+  const count = nonNegativeQuantity(value)
+  return count === undefined || !Number.isSafeInteger(count) ? '—' : count.toLocaleString()
 }
 
 function formatDecimal(value: unknown) {
@@ -309,18 +309,18 @@ function formatDecimal(value: unknown) {
 }
 
 function objectHealthSummary(stats: ApiRecord) {
-  const rawCopies = numberValue(stats.copies)
-  const copies = Math.max(0, rawCopies ?? 0)
-  const degraded = Math.max(0, numberValue(stats.degraded) ?? 0)
-  const misplaced = Math.max(0, numberValue(stats.misplaced) ?? 0)
-  const unfound = Math.max(0, numberValue(stats.unfound) ?? 0)
+  const unknown = { known: false, affected: 0, healthy: undefined, percent: undefined }
+  const values = ['copies', 'degraded', 'misplaced', 'unfound'].map(key => nonNegativeQuantity(stats[key]))
+  if (values.some(value => value === undefined || !Number.isSafeInteger(value))) return unknown
+  const [copies, degraded, misplaced, unfound] = values as number[]
   const affected = degraded + misplaced + unfound
-  const healthy = Math.max(0, copies - affected)
+  if (!Number.isSafeInteger(affected) || affected > copies) return unknown
+  const healthy = copies - affected
   return {
-    known: rawCopies !== undefined,
+    known: true,
     affected,
-    healthy: rawCopies === undefined ? undefined : healthy,
-    percent: copies > 0 ? Math.round(healthy / copies * 1000) / 10 : 0
+    healthy,
+    percent: copies > 0 ? Math.round(healthy / copies * 1000) / 10 : undefined
   }
 }
 
