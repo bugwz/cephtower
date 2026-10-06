@@ -19,7 +19,7 @@ const js = ts.transpileModule(submit.getText(tree), { compilerOptions: { target:
 for (const scenario of ['ok', 'switched-before', 'switched-after', 'busy', 'invalid', 'failure']) {
   let current = scenario !== 'switched-before'
   const calls = [], running = { current: scenario === 'busy' }
-  const env = { running, isCurrent: () => current, clusterId: 7, osdID: '12',
+  const env = { running, isCurrent: () => current, clusterId: 7, osdID: '12', version: '18446744073709551615',
     setSubmitting: () => {}, message: { error: () => calls.push('error'), success: () => calls.push('success') },
     operationMutation: { run: fn => fn() },
     reweightOSD: async (...args) => { calls.push(args); if (scenario === 'switched-after') current = false; if (scenario === 'failure') throw new Error('failed') },
@@ -29,9 +29,16 @@ for (const scenario of ['ok', 'switched-before', 'switched-after', 'busy', 'inva
   if (scenario === 'failure') await assert.rejects(result, /failed/); else await result
   if (['switched-before', 'busy'].includes(scenario)) assert.deepEqual(calls, [])
   if (scenario === 'invalid') assert.deepEqual(calls, ['error'])
-  if (scenario === 'ok') assert.deepEqual(calls, [[7, '12', 0], 'success', { clusterId: 7, kind: 'osd' }, 'read'])
-  if (scenario === 'switched-after') assert.deepEqual(calls, [[7, '12', 0]])
+  if (scenario === 'ok') assert.deepEqual(calls, [[7, '12', 0, '18446744073709551615'], 'success', { clusterId: 7, kind: 'osd' }, 'read'])
+  if (scenario === 'switched-after') assert.deepEqual(calls, [[7, '12', 0, '18446744073709551615']])
 }
+const reweightNode = flagsTree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'reweightOSD')
+const reweightJS = ts.transpileModule(reweightNode.getText(flagsTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const reweightCalls = []
+await new Function('mutateResource', `${reweightJS}; return reweightOSD`)((...args) => reweightCalls.push(args))(7, '12', 0, '18446744073709551615')
+assert.deepEqual(reweightCalls, [['/osd/action', 'POST', { cluster_id: 7, osd_id: '12', action: 'reweight', weight: 0 }, { ifMatch: '18446744073709551615' }]])
+assert.ok(source.includes('version={expectedVersion}'))
+assert.ok(source.includes("row.stale === false ? osdInventoryVersion(row.resource_version) ?? undefined : undefined"))
 assert.ok(!component.getText(tree).includes('requiredClusterId'))
 assert.ok(!component.getText(tree).includes('Modal.destroyAll'))
 const initial = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'osdReweightInitial')

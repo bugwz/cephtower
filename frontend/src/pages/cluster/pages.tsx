@@ -383,10 +383,10 @@ export function OsdManagementPage() {
   async function runOSDAction(id: string, action: 'in' | 'out' | 'down' | 'scrub' | 'deep-scrub' | 'reweight', currentWeight?: unknown, expectedVersion?: string) {
     if (!selectedClusterId || osdScopeRef.current !== osdScope || osdActionRunning.current) return
     if (action === 'reweight') {
-      if (!selectedClusterId) return
+      if (loading || error || !expectedVersion) return
       Modal.confirm({
         title: `调整 OSD ${id} 权重`,
-        content: <ReweightForm currentWeight={currentWeight} clusterId={selectedClusterId} isCurrent={() => osdScopeRef.current === osdScope} osdID={id} refresh={refresh} />,
+        content: <ReweightForm currentWeight={currentWeight} version={expectedVersion} clusterId={selectedClusterId} isCurrent={() => osdScopeRef.current === osdScope} osdID={id} refresh={refresh} />,
         modalRender: draggableModalRender,
         icon: null,
         okButtonProps: { style: { display: 'none' } },
@@ -557,7 +557,7 @@ export function OsdManagementPage() {
                       <TableAction loading={pendingOSDAction === `${id}:out`} disabled={Boolean(pendingOSDAction) || row.in !== true || row.stale !== false || loading || Boolean(error)} onClick={() => confirmOSDState(row, 'out')}>Out</TableAction>
                       <TableAction danger disabled={Boolean(pendingOSDAction) || row.up !== true || row.stale !== false || loading || Boolean(error)} onClick={() => confirmOSDState(row, 'down')}>Down</TableAction>
                       <TableAction loading={pendingOSDAction === `${id}:scrub`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:scrub`} onClick={() => runOSDAction(id, 'scrub')}>Scrub</TableAction>
-                      <TableAction disabled={Boolean(pendingOSDAction)} onClick={() => runOSDAction(id, 'reweight', row.reweight)}>权重</TableAction>
+                      <TableAction disabled={Boolean(pendingOSDAction) || row.stale !== false || loading || Boolean(error) || !osdInventoryVersion(row.resource_version)} onClick={() => runOSDAction(id, 'reweight', row.reweight, row.stale === false ? osdInventoryVersion(row.resource_version) ?? undefined : undefined)}>权重</TableAction>
                       <TableAction danger disabled={Boolean(pendingOSDAction)} onClick={() => deleteOSD(row)}>删除</TableAction>
                       <TableAction danger disabled={Boolean(pendingOSDAction)} onClick={() => deleteOSD(row, true)}>替换（保留 ID）</TableAction>
                     </TableActions>
@@ -1093,7 +1093,7 @@ function osdReweightInitial(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1 ? value : undefined
 }
 
-function ReweightForm({ currentWeight, clusterId, isCurrent, osdID, refresh }: { currentWeight?: unknown; clusterId: number; isCurrent: () => boolean; osdID: string; refresh: (options?: { showLoading?: boolean }) => void }) {
+function ReweightForm({ currentWeight, version, clusterId, isCurrent, osdID, refresh }: { currentWeight?: unknown; version: string; clusterId: number; isCurrent: () => boolean; osdID: string; refresh: (options?: { showLoading?: boolean }) => void }) {
   const running = useRef(false)
   const [submitting, setSubmitting] = useState(false)
   const operationMutation = useMutationOperation()
@@ -1109,7 +1109,7 @@ function ReweightForm({ currentWeight, clusterId, isCurrent, osdID, refresh }: {
     running.current = true
     setSubmitting(true)
     try {
-      await operationMutation.run(() => reweightOSD(clusterId, osdID, values.weight), false)
+      await operationMutation.run(() => reweightOSD(clusterId, osdID, values.weight, version), false)
       if (!isCurrent()) return
       message.success('OSD 权重调整执行成功')
       await refreshResource({ clusterId, kind: 'osd' })
@@ -1122,7 +1122,7 @@ function ReweightForm({ currentWeight, clusterId, isCurrent, osdID, refresh }: {
 
   return (
     <Form layout="vertical" initialValues={{ weight: osdReweightInitial(currentWeight) }} onFinish={submit}>
-      <Typography.Paragraph>目标：集群 {clusterId} / OSD {osdID}。切换集群后请关闭并重新打开此表单。</Typography.Paragraph>
+      <Typography.Paragraph>目标：集群 {clusterId} / OSD {osdID}。调权可能触发数据迁移；这是 OSD 调权系数，不是 CRUSH 容量权重。版本冲突或切换集群后请重新采集并打开此表单。</Typography.Paragraph>
       <Form.Item name="weight" label="权重" rules={[{ required: true }]}>
         <InputNumber min={0} max={1} step={0.01} />
       </Form.Item>

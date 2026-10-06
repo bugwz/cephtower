@@ -267,8 +267,8 @@ export function markOSD(clusterId: number, id: string, action: string): Promise<
   return mutateResource('/osd/action', 'POST', { cluster_id: clusterId, osd_id: id, action })
 }
 
-export function reweightOSD(clusterId: number, id: string, weight: number): Promise<ActionResult> {
-  return mutateResource('/osd/action', 'POST', { cluster_id: clusterId, osd_id: id, action: 'reweight', weight })
+export function reweightOSD(clusterId: number, id: string, weight: number, version: string): Promise<ActionResult> {
+  return mutateResource('/osd/action', 'POST', { cluster_id: clusterId, osd_id: id, action: 'reweight', weight }, { ifMatch: version })
 }
 
 export function scrubOSD(clusterId: number, id: string, deep = false): Promise<ActionResult> {
