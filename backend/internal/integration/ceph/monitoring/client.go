@@ -28,6 +28,13 @@ func New(rawURL, token string, client *http.Client) (*Client, error) {
 	if client == nil {
 		client = &http.Client{Timeout: 15 * time.Second}
 	}
+	// Treat the configured path as a service root, not a replaceable file name.
+	if !strings.HasSuffix(base.Path, "/") {
+		base.Path += "/"
+		if base.RawPath != "" {
+			base.RawPath += "/"
+		}
+	}
 	return &Client{baseURL: base, http: client, token: strings.TrimSpace(token)}, nil
 }
 
@@ -285,7 +292,7 @@ func (c *Client) get(ctx context.Context, path string, out any) error {
 	return c.jsonRequest(ctx, http.MethodGet, path, nil, out)
 }
 func (c *Client) jsonRequest(ctx context.Context, method, path string, body, out any) error {
-	endpoint, err := c.baseURL.Parse(path)
+	endpoint, err := c.baseURL.Parse(strings.TrimPrefix(path, "/"))
 	if err != nil {
 		return err
 	}
