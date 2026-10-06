@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- 主机 NIC 数量：延续 HostDetails 原生摘要链路，保存 nic_count 的数值/未知标记并新增网卡数量列。明确区分 0 与未知，拒绝将缺失、N/A、负数、小数或不安全 JavaScript 数字解释为有效计数；十进制字符串不转 Number。覆盖原生采集与前端展示。
+
 - 主机原生硬件摘要端到端：依据 orchestrator HostDetails.to_json，将 orch host ls --detail 返回的顶层 server、cpu_summary、ram、hdd_summary、ssd_summary、os 保存为 native_summary 并在主机列表展示。保留原始单位与 N/A/短横线语义，不将格式化摘要解析为精确容量；缺失字段保持 null。通过采集器到 JSON 的完整链路验证字段保留。
 
 - 主机详情库存新鲜度：保留完整分页返回的设备/守护进程新鲜度和错误原因，分别展示过期或未知警告；即使列表为空也不把旧快照解释为当前没有设备/服务。新鲜快照不显示警告，新增新鲜、过期及缺失新鲜度回归。

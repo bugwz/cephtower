@@ -277,6 +277,7 @@ export function HostPage() {
             { key: 'labels', title: '标签', filterKey: false },
             { key: 'system_display', title: '系统', filterKey: 'system' },
             { key: 'kernel_display', title: '内核版本', filterKey: 'kernel_release' },
+            { key: 'nic_count_display', title: '网卡数量（原生）', filterKey: false, render: (_value, row) => hostNICCount(row) },
             ...['server', 'cpu_summary', 'ram', 'hdd_summary', 'ssd_summary', 'os'].map((key, index) => ({ key: `native_${key}`, title: ['服务器型号（原生）', 'CPU 核/线程（原生）', '内存摘要（原生）', 'HDD 摘要（原生）', 'SSD 摘要（原生）', '操作系统（原生）'][index], filterKey: false as const, render: (_value: unknown, row: ApiRecord) => isRecord(row.native_summary) ? textValue(row.native_summary[key]) : '-' })),
             { key: 'daemon_count_display', title: '守护进程', filterKey: false },
             { key: 'osd_count_display', title: 'OSD', filterKey: false },
@@ -559,6 +560,13 @@ export function normalizeHostRow(row: ApiRecord, daemons: ApiRecord[] = [], devi
 export function hostStatus(row: ApiRecord) {
   const status = textValue(row.status ?? row.status_desc ?? row.host_status, '')
   return status || '在线'
+}
+
+export function hostNICCount(row: ApiRecord): string {
+  const value = isRecord(row.native_summary) ? row.native_summary.nic_count : undefined
+  if (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0) return String(value)
+  if (typeof value === 'string' && /^(0|[1-9][0-9]*)$/.test(value)) return value
+  return '未知'
 }
 
 export function serviceInstanceRows(value: unknown): ApiRecord[] {

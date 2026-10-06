@@ -1,5 +1,7 @@
 package ceph
 
+import "encoding/json"
+
 type Host struct {
 	NativeSummary    HostNativeSummary `json:"native_summary"`
 	Hostname         string            `json:"hostname"`
@@ -22,12 +24,13 @@ type Host struct {
 
 // HostNativeSummary retains cephadm's formatted summaries without inferring raw units.
 type HostNativeSummary struct {
-	Server *string `json:"server"`
-	CPU    *string `json:"cpu_summary"`
-	RAM    *string `json:"ram"`
-	HDD    *string `json:"hdd_summary"`
-	SSD    *string `json:"ssd_summary"`
-	OS     *string `json:"os"`
+	NICCount json.RawMessage `json:"nic_count"`
+	Server   *string         `json:"server"`
+	CPU      *string         `json:"cpu_summary"`
+	RAM      *string         `json:"ram"`
+	HDD      *string         `json:"hdd_summary"`
+	SSD      *string         `json:"ssd_summary"`
+	OS       *string         `json:"os"`
 }
 
 type HostService struct {

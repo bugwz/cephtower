@@ -11,6 +11,9 @@ func TestHostNativeSummaries(t *testing.T) {
 	for _, raw := range []string{
 		`[{"hostname":"node1","server":"Vendor Model","cpu_summary":"64C/128T","ram":"256 GiB","hdd_summary":"12/120 TB","ssd_summary":"-","os":"Linux"}]`,
 		`[{"hostname":"node1"}]`,
+		`[{"hostname":"node1","nic_count":0}]`,
+		`[{"hostname":"node1","nic_count":4}]`,
+		`[{"hostname":"node1","nic_count":"N/A"}]`,
 	} {
 		provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.host": []byte(raw)}}}
 		rows, err := provider.Collect(context.Background(), ClusterAccess{}, "topology")
@@ -36,7 +39,7 @@ func TestHostNativeSummaries(t *testing.T) {
 			if err := json.Unmarshal(encoded, &summary); err != nil {
 				t.Fatal(err)
 			}
-			for _, key := range []string{"server", "cpu_summary", "ram", "hdd_summary", "ssd_summary", "os"} {
+			for _, key := range []string{"server", "cpu_summary", "ram", "hdd_summary", "ssd_summary", "os", "nic_count"} {
 				if summary[key] != input[0][key] {
 					t.Fatalf("%s: %v != %v", key, summary[key], input[0][key])
 				}

@@ -5,6 +5,13 @@ import ts from 'typescript'
 const source = readFileSync(new URL('../src/pages/cluster/HostPage.tsx', import.meta.url), 'utf8')
 const file = ts.createSourceFile('HostPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const page = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'HostPage')
+const nicNode = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'hostNICCount')
+const nicCode = ts.transpileModule(nicNode.getText(file).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const nicCount = new Function('isRecord', `${nicCode}; return hostNICCount`)(value => value !== null && typeof value === 'object' && !Array.isArray(value))
+for (const value of [0, 4, '0', '4', '18446744073709551615']) assert.equal(nicCount({ native_summary: { nic_count: value } }), String(value))
+for (const value of [null, undefined, 'N/A', '', -1, 1.5, Number.MAX_SAFE_INTEGER + 1, {}, [], true, '04']) assert.equal(nicCount({ native_summary: { nic_count: value } }), '未知')
+assert.equal(nicCount({}), '未知')
+assert.ok(source.includes('render: (_value, row) => hostNICCount(row)'))
 let nativeColumns
 function findColumns(node) {
   if (ts.isSpreadElement(node) && node.expression.getText(file).startsWith("['server', 'cpu_summary'")) nativeColumns = node.expression
