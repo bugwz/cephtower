@@ -40,4 +40,17 @@ for (const scenario of ['success', 'stale', 'unavailable', 'before', 'during', '
 }
 assert.equal(source.split('<DaemonTable key={selectedClusterId} clusterId={selectedClusterId}').length - 1, 2)
 assert.ok(table.getText(tree).includes('return () => { active.current = false }'))
+const openPerf = table.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'openPerformance').getText(tree)
+for (const name of ['mgr.a', 'mds.fs.node-1', 'osd.1', 'mgr.*', 'mds.', 'mgr.a;stop', '', null]) {
+  for (const state of ['active', 'inactive', 'unavailable', 'no-cluster']) {
+    const selections = []
+    const env = { clusterId: state === 'no-cluster' ? undefined : 7, active: { current: state !== 'inactive' }, unavailable: state === 'unavailable', setPerfSelection: value => selections.push(value) }
+    const open = new Function(...Object.keys(env), `${compile(openPerf)}; return openPerformance`)(...Object.values(env))
+    open({ name })
+    assert.deepEqual(selections, state === 'active' && ['mgr.a', 'mds.fs.node-1'].includes(name) ? [{ clusterId: 7, name }] : [])
+  }
+}
+assert.ok(table.getText(tree).includes('perfSelection?.clusterId === clusterId'))
+assert.ok(table.getText(tree).includes('key={JSON.stringify([visiblePerf.clusterId, visiblePerf.name])}'))
+assert.ok(table.getText(tree).includes('onCancel={() => setPerfSelection(null)}'))
 console.log('Daemon actions use explicit cluster scope and block duplicate or stale submissions')

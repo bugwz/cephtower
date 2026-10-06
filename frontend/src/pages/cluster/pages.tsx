@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { MonMapSettings } from './MonMapSettings'
 import { DeviceHardwareSummary } from './DeviceHardwareSummary'
 import { DaemonRuntimeDetails } from './ServiceDaemons'
+import { DaemonPerf } from './DaemonPerf'
 import { hostStorageCapacity } from './hostStorageCapacity'
 import { ManagerInventory } from './ManagerInventory'
 import { osdSnapshotValue } from './OSDUsage'
@@ -1094,6 +1095,8 @@ function DaemonTable({
   tableFilters?: ReturnType<typeof useResourceTableFilters>
 }) {
   const [pendingDaemonAction, setPendingDaemonAction] = useState('')
+  const [perfSelection, setPerfSelection] = useState<{ clusterId: number; name: string } | null>(null)
+  const visiblePerf = perfSelection?.clusterId === clusterId ? perfSelection : null
   const active = useRef(true)
   const running = useRef(false)
   useEffect(() => {
@@ -1101,6 +1104,11 @@ function DaemonTable({
     return () => { active.current = false }
   }, [])
   const operationMutation = useMutationOperation()
+
+  function openPerformance(row: ApiRecord) {
+    if (!clusterId || !active.current || unavailable || typeof row.name !== 'string' || !/^(mgr|mds)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(row.name)) return
+    setPerfSelection({ clusterId, name: row.name })
+  }
 
   async function runAction(row: ApiRecord, action: string) {
     const name = textValue(row.name, '')
@@ -1124,6 +1132,9 @@ function DaemonTable({
 
   return (
     <div className="embedded-panel">
+      <Modal title={visiblePerf ? `${visiblePerf.name} 性能计数器` : '性能计数器'} open={Boolean(visiblePerf)} onCancel={() => setPerfSelection(null)} footer={null} width="95vw" destroyOnClose>
+        {visiblePerf && <DaemonPerf key={JSON.stringify([visiblePerf.clusterId, visiblePerf.name])} clusterId={visiblePerf.clusterId} name={visiblePerf.name} />}
+      </Modal>
       <DataTable
         data={data}
         filterOptions={tableFilters?.filterOptions}
@@ -1154,6 +1165,7 @@ function DaemonTable({
               const disabled = !clusterId || unavailable || row.stale !== false || Boolean(pendingDaemonAction)
               return (
                 <TableActions>
+                  <TableAction disabled={!clusterId || unavailable || !/^(mgr|mds)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(name)} onClick={() => openPerformance(row)}>性能计数器</TableAction>
                   <TableAction loading={pendingDaemonAction === `${name}:restart`} disabled={disabled} onClick={() => runAction(row, 'restart')}>重启</TableAction>
                   <TableAction loading={pendingDaemonAction === `${name}:start`} disabled={disabled} onClick={() => runAction(row, 'start')}>启动</TableAction>
                   <TableAction danger loading={pendingDaemonAction === `${name}:stop`} disabled={disabled} onClick={() => runAction(row, 'stop')}>停止</TableAction>
