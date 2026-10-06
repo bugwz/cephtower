@@ -19,6 +19,7 @@ const page = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.tex
 const normalizeNode = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'normalizeHostRow')
 const normalizeCode = ts.transpileModule(normalizeNode.getText(file).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const normalizeEnv = {
+  hostStorageCapacity: () => '0 B',
   hostName: row => row.hostname, textValue: (v, fallback = '-') => v ?? fallback,
   serviceInstanceRows: () => [], serviceInstanceCount: () => undefined, daemonType: row => row.daemon_type,
   numberValue: v => typeof v === 'number' ? v : null, hostAddress: () => '-', hostStatus: () => '-',

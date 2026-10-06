@@ -2,6 +2,7 @@ import { InfoCircleOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/ic
 import { Alert, Button, Card, Checkbox, Collapse, Form, Input, InputNumber, Modal, Select, Space, Tag, Tooltip } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { HostHardware } from './HostHardware'
+import { hostStorageCapacity } from './hostStorageCapacity'
 import { useNavigate } from 'react-router-dom'
 import { isRecord, numberValue, textValue, type ApiRecord } from '../../api/client'
 import { getHostSSH, listAllResources, mutateResource, refreshResource, saveHostSSH, type HostSSHPayload } from '../../api/resource'
@@ -534,7 +535,6 @@ export function normalizeHostRow(row: ApiRecord, daemons: ApiRecord[], devices: 
     .filter(Boolean)
   const serviceInstances = serviceInstanceRows(row.service_instances)
   const osdCount = serviceInstanceCount(serviceInstances, 'osd') ?? hostDaemons.filter((daemon) => daemonType(daemon) === 'osd').length
-  const storageBytes = hostDevices.reduce((total, device) => total + (numberValue(device.size_bytes) ?? 0), 0)
 
   return {
     ...row,
@@ -552,7 +552,7 @@ export function normalizeHostRow(row: ApiRecord, daemons: ApiRecord[], devices: 
     daemon_count_display: hostDaemons.length,
     osd_count_display: osdCount,
     disk_count_display: hostDevices.length,
-    storage_display: storageBytes > 0 ? formatBytes(storageBytes) : '-',
+    storage_display: hostStorageCapacity(hostDevices),
     service_instances: serviceInstances.length ? serviceInstances : daemonNames
   }
 }

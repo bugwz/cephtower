@@ -6,6 +6,7 @@ import './test-host-create-batch.mjs'
 import './test-operation-wait.mjs'
 import './test-host-inventory-pages.mjs'
 import './test-host-native-summary.mjs'
+import './test-host-storage-capacity.mjs'
 
 const pgCategorySource = readFileSync(new URL('../src/pages/overview/pgCategory.ts', import.meta.url), 'utf8')
 const pgCategoryCode = ts.transpileModule(pgCategorySource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText
