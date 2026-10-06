@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 告警规则触发等待时长
+
+- 对照参考 `rules-list.component.ts` 的 DurationPipe 列，将原生规则 `duration` 展示为天、小时、分钟、秒，并同时保留原始秒数。
+- 列名明确为触发等待时间（for），不将规则等待阈值误称为告警已持续时长；零秒标记无等待，小数秒原样保留。
+- 继续使用现有 Prometheus 规则查询链路，不伪造 Ceph CLI 命令；缺失、负数、非有限和超安全整数输入显示未提供。
+- 前端回归覆盖单位边界、混合单位、零值、小数与异常输入；未连接真实 Prometheus 实例验证。
+
 #### Progress 任务耗时与剩余时间
 
 - 对照参考 Dashboard `services/progress.py`，已完成任务使用 `finished_at - started_at` 展示耗时。

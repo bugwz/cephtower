@@ -62,6 +62,10 @@ assert.equal(exports.alertRuleColumns.find(column => column.key === 'severity').
 assert.equal(exports.alertRuleColumns.find(column => column.key === 'summary').render(undefined, row), 'warning summary')
 assert.ok(page.includes("rowKeyCandidates: ['rule_key']"))
 assert.ok(page.includes('columns: alertRuleColumns'))
+const durationColumn = exports.alertRuleColumns.find(column => column.key === 'duration')
+for (const [seconds, expected] of [[0, '0 秒（无等待）'], [59, '59 秒（59 秒）'], [60, '1 分钟（60 秒）'], [3661, '1 小时 1 分钟 1 秒（3661 秒）'], [90000, '1 天 1 小时（90000 秒）'], [0.125, '0.125 秒']]) assert.equal(durationColumn.render(seconds, {}), expected)
+for (const invalid of [null, undefined, '', '60', -1, NaN, Infinity, {}, Number.MAX_SAFE_INTEGER + 1]) assert.equal(durationColumn.render(invalid, {}), '未提供')
+assert.ok(durationColumn.title.includes('for'))
 
 const actions = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/monitoring/silenceActions.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(actions)

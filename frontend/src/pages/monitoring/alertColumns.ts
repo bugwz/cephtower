@@ -6,6 +6,20 @@ export function alertField(value: unknown, key: string): string {
   return typeof field === 'string' ? field : '未提供'
 }
 
+export function ruleDuration(value: unknown): string {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > Number.MAX_SAFE_INTEGER) return '未提供'
+  if (value === 0) return '0 秒（无等待）'
+  let remaining = Math.floor(value)
+  const parts: string[] = []
+  for (const [unit, seconds] of [['天', 86400], ['小时', 3600], ['分钟', 60], ['秒', 1]] as const) {
+    const count = Math.floor(remaining / seconds)
+    if (count) parts.push(`${count} ${unit}`)
+    remaining %= seconds
+  }
+  if (!Number.isInteger(value)) return `${value} 秒`
+  return `${parts.join(' ')}（${value} 秒）`
+}
+
 export function alertFilter(parent: string, key: string, options: string[], defaultValues?: string[]): NonNullable<ExternalListColumn['localFilter']> {
   return { options, defaultValues, value: (row) => {
     const container = row[parent]
@@ -33,7 +47,7 @@ export const alertRuleColumns: ExternalListColumn[] = [
   { key: 'file', title: '规则文件' },
   { key: 'state', title: '状态' },
   { key: 'health', title: '健康状态' },
-  { key: 'duration', title: '持续时间（秒）' },
+  { key: 'duration', title: '触发等待时间（for）', render: ruleDuration },
   { key: 'query', title: '表达式' },
   { key: 'summary', title: '摘要', render: (_, row) => alertField(row.annotations, 'summary') }
 ]
