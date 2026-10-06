@@ -13,6 +13,7 @@ import { OSDDestroy } from './OSDDestroy'
 import { OSDLost } from './OSDLost'
 import { OSDPurge } from './OSDPurge'
 import { OSDIndividualFlags } from './OSDIndividualFlags'
+import { DeviceAssociationDetails } from './DeviceAssociationDetails'
 
 export function OSDInspection({ clusterId, osdId, record }: { clusterId: number; osdId: string; record: ApiRecord }) {
   return <Tabs items={[
@@ -87,6 +88,6 @@ function OSDDevices({ data }: { data: ApiRecord }) {
   if (!devices) return <Alert type="warning" message="关联设备响应无效，不能判断是否存在设备" />
   return <>
     <Alert type="info" message="来自 ceph device ls-by-daemon 的设备关联记录；没有记录不代表磁盘不存在或健康。寿命预测字段仅在原生响应提供时显示。" />
-    {devices.length === 0 ? <Alert type="info" message="本次未返回关联设备记录" /> : devices.map((device, index) => <Card key={`${index}-${device.devid}`} title={String(device.devid)}><RecordDetail record={device} /></Card>)}
+    {devices.length === 0 ? <Alert type="info" message="本次未返回关联设备记录" /> : devices.map((device, index) => <Card key={`${index}-${device.devid}`} title={String(device.devid)}><DeviceAssociationDetails device={device} /><details><summary>原始关联记录</summary><RecordDetail record={device} /></details></Card>)}
   </>
 }
