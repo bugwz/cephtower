@@ -350,6 +350,7 @@ export function OsdManagementPage() {
   }, [osdTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [pendingOSDAction, setPendingOSDAction] = useState('')
+  const osdActionRunning = useRef(false)
   const [deploymentOpen, setDeploymentOpen] = useState(false)
   const [osdInspection, setOSDInspection] = useState<{ scope: typeof osdScope; row: ApiRecord } | null>(null)
   const inspectedOSD = osdInspection?.scope === osdScope ? osdInspection.row : null
@@ -371,6 +372,7 @@ export function OsdManagementPage() {
   }
 
   async function runOSDAction(id: string, action: 'in' | 'out' | 'scrub' | 'deep-scrub' | 'reweight', currentWeight?: unknown) {
+    if (!selectedClusterId || osdScopeRef.current !== osdScope || osdActionRunning.current) return
     if (action === 'reweight') {
       if (!selectedClusterId) return
       Modal.confirm({
@@ -389,15 +391,19 @@ export function OsdManagementPage() {
       return
     }
     setPendingOSDAction(pendingKey)
+    osdActionRunning.current = true
     try {
       if (action === 'scrub' || action === 'deep-scrub') {
-        await operationMutation.run(() => scrubOSD(id, action === 'deep-scrub'), 'Scrub 执行成功')
+        await operationMutation.run(() => scrubOSD(selectedClusterId, id, action === 'deep-scrub'), false)
       } else {
-        await operationMutation.run(() => markOSD(id, action), `OSD ${action} 执行成功`)
+        await operationMutation.run(() => markOSD(selectedClusterId, id, action), false)
       }
-      if (selectedClusterId) await refreshResource({ clusterId: selectedClusterId, kinds: ['osd', 'osd_flag', 'osd_removal'] })
-      await refresh()
+      if (osdScopeRef.current !== osdScope) return
+      message.success(`OSD ${action} 命令已完成`)
+      await refreshResource({ clusterId: selectedClusterId, kinds: ['osd', 'osd_flag', 'osd_removal'] })
+      if (osdScopeRef.current === osdScope) await refresh()
     } finally {
+      osdActionRunning.current = false
       setPendingOSDAction('')
     }
   }
@@ -421,10 +427,12 @@ export function OsdManagementPage() {
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
+        if (osdScopeRef.current !== osdScope) throw new Error('集群已切换或页面已关闭，请重新确认 OSD 删除')
         await operationMutation.run(() => mutateResource('/osd', 'DELETE', parameters, { ifMatch: generation }), false)
+        if (osdScopeRef.current !== osdScope) return
         message.success('OSD 移除请求已提交')
         await refreshResource({ clusterId: selectedClusterId, kinds: ['osd', 'osd_removal'] })
-        await refresh({ showLoading: false })
+        if (osdScopeRef.current === osdScope) await refresh({ showLoading: false })
       }
     })
   }

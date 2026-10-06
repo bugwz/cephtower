@@ -42,3 +42,28 @@ assert.equal(readInspection(snapshot, returned), null)
 assert.equal(readInspection(null, first), null)
 assert.ok(page.getText(tree).includes('setOSDInspection({ scope: osdScope, row })'))
 assert.ok(page.getText(tree).includes('inspectedOSD && selectedClusterId && <OSDInspection'))
+const actionNode = page.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'runOSDAction')
+const actionJS = ts.transpileModule(actionNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
+for (const action of ['in', 'out', 'scrub', 'deep-scrub']) {
+ for (const timing of ['current', 'before', 'after']) {
+  const scope = {}, scopeRef = { current: scope }, calls = []
+  if (timing === 'before') scopeRef.current = {}
+  const write = async (...args) => { calls.push(args); if (timing === 'after') scopeRef.current = {} }
+  const env = { selectedClusterId: 7, osdScope: scope, osdScopeRef: scopeRef, osdActionRunning: { current: false }, pendingOSDAction: '', setPendingOSDAction: () => {}, operationMutation: { run: fn => fn() }, scrubOSD: write, markOSD: write, refreshResource: async () => calls.push('collect'), refresh: async () => calls.push('read'), message: { success: () => calls.push('success') } }
+  await new Function(...Object.keys(env), `${actionJS}; return runOSDAction`)(...Object.values(env))('12', action)
+  if (timing === 'before') assert.deepEqual(calls, [])
+  else {
+   assert.deepEqual(calls[0], [7, '12', action.includes('scrub') ? action === 'deep-scrub' : action])
+   assert.deepEqual(calls.slice(1), timing === 'after' ? [] : ['success', 'collect', 'read'])
+  }
+ }
+}
+const deleteNode = page.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'deleteOSD')
+const deleteJS = ts.transpileModule(deleteNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+let confirm
+const deleteScope = {}, deleteRef = { current: deleteScope }, writes = []
+const deleteEnv = { selectedClusterId: 7, osdScope: deleteScope, osdScopeRef: deleteRef, osdID: () => '0', Modal: { confirm: options => { confirm = options } }, operationMutation: { run: fn => fn() }, mutateResource: async (...args) => writes.push(args), message: { error: () => {}, success: () => {} }, refreshResource: async () => {}, refresh: async () => {} }
+await new Function(...Object.keys(deleteEnv), `${deleteJS}; return deleteOSD`)(...Object.values(deleteEnv))({ resource_version: 1 })
+deleteRef.current = {}
+await assert.rejects(confirm.onOk(), /集群已切换/)
+assert.deepEqual(writes, [])

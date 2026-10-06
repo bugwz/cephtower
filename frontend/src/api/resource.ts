@@ -269,16 +269,16 @@ export async function listOSDFlags(): Promise<string[]> {
   return []
 }
 
-export function markOSD(id: string, action: string): Promise<ActionResult> {
-  return mutateResource('/osd/action', 'POST', { cluster_id: requiredClusterId(), osd_id: id, action })
+export function markOSD(clusterId: number, id: string, action: string): Promise<ActionResult> {
+  return mutateResource('/osd/action', 'POST', { cluster_id: clusterId, osd_id: id, action })
 }
 
 export function reweightOSD(clusterId: number, id: string, weight: number): Promise<ActionResult> {
   return mutateResource('/osd/action', 'POST', { cluster_id: clusterId, osd_id: id, action: 'reweight', weight })
 }
 
-export function scrubOSD(id: string, deep = false): Promise<ActionResult> {
-  return mutateResource('/osd/action', 'POST', { cluster_id: requiredClusterId(), osd_id: id, action: deep ? 'deep-scrub' : 'scrub' })
+export function scrubOSD(clusterId: number, id: string, deep = false): Promise<ActionResult> {
+  return mutateResource('/osd/action', 'POST', { cluster_id: clusterId, osd_id: id, action: deep ? 'deep-scrub' : 'scrub' })
 }
 
 export function listDaemons(types?: string): Promise<ApiRecord[]> {
