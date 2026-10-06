@@ -6,6 +6,7 @@ import { MonMapSettings } from './MonMapSettings'
 import { DeviceHardwareSummary } from './DeviceHardwareSummary'
 import { DaemonRuntimeDetails } from './ServiceDaemons'
 import { DaemonPerf } from './DaemonPerf'
+import { ServiceInventoryDetails } from './ServiceInventoryDetails'
 import { hostStorageCapacity } from './hostStorageCapacity'
 import { ManagerInventory } from './ManagerInventory'
 import { osdSnapshotValue } from './OSDUsage'
@@ -1063,7 +1064,8 @@ export function MdsManagementPage() {
                     { key: 'name', title: '服务名' },
                     { key: 'placement', title: '放置策略', filterKey: false },
                     { key: 'running', title: '运行数' },
-                    { key: 'size', title: '目标数' }
+                    { key: 'size', title: '目标数' },
+                    { key: 'deployment_details', title: '部署详情', filterKey: false, ellipsis: false, render: (_, row) => <ServiceInventoryDetails row={row} /> }
                   ]}
                 />
                 </div>
