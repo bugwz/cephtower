@@ -140,7 +140,7 @@ function OverviewContent({ selectedClusterId }: { selectedClusterId: number | un
         >
           <Space direction="vertical" size={16} className="page-stack">
             <div className="metrics-grid">
-              <MetricCard icon={<DatabaseOutlined />} label="容量使用率" value={`${usedPercent}%`} detail={`${formatBytes(capacity.used_bytes)} / ${formatBytes(capacity.total_bytes)}`} />
+              <MetricCard icon={<DatabaseOutlined />} label="容量使用率" value={usedPercent === undefined ? '未知' : `${usedPercent}%`} detail={`${formatBytes(capacity.used_bytes)} / ${formatBytes(capacity.total_bytes)}`} />
               <MetricCard icon={<HddOutlined />} label="OSD" value={serviceValue(services.osd, 'up', 'total')} detail={`in ${servicePart(services.osd, 'in')}`} />
               <MetricCard icon={<ApiOutlined />} label="MON" value={serviceValue(services.mon, 'in_quorum', 'total')} detail="quorum / total" />
               <MetricCard icon={<SafetyCertificateOutlined />} label="能力" value={`${supportedCapabilities}/${data?.capabilities.length ?? 0}`} detail="supported capabilities" />
@@ -148,7 +148,7 @@ function OverviewContent({ selectedClusterId }: { selectedClusterId: number | un
               <MetricCard icon={<SyncOutlined />} label="恢复吞吐" value={`${formatBytes(clientIO.recovering_bytes_per_second)}/s`} detail={`scrub ${scrubStatusLabel(data?.overview.scrub_status)}`} />
             </div>
             <Card title="容量">
-              <Progress percent={usedPercent} strokeColor="#168766" />
+              {usedPercent === undefined ? <Alert type="warning" message="容量使用率不可用：数据缺失、总容量为零或数值不一致，不代表使用率为 0%。" /> : <Progress percent={usedPercent} strokeColor="#168766" />}
               <Descriptions size="small" column={{ xs: 1, sm: 3 }}>
                 <Descriptions.Item label="Total">{formatBytes(capacity.total_bytes)}</Descriptions.Item>
                 <Descriptions.Item label="Used">{formatBytes(capacity.used_bytes)}</Descriptions.Item>
@@ -271,13 +271,20 @@ function readRecord(value: unknown): ApiRecord {
 }
 
 function capacityPercent(capacity: ApiRecord) {
-  const used = numberValue(capacity.used_bytes)
-  const total = numberValue(capacity.total_bytes)
-  return used !== undefined && total ? Math.round((used / total) * 100) : 0
+  const used = nonNegativeQuantity(capacity.used_bytes)
+  const total = nonNegativeQuantity(capacity.total_bytes)
+  if (used === undefined || total === undefined || total <= 0 || used > total) return undefined
+  return Math.round((used / total) * 100)
+}
+
+function nonNegativeQuantity(value: unknown): number | undefined {
+  if (typeof value !== 'number' && (typeof value !== 'string' || !/^(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(value))) return undefined
+  const parsed = numberValue(value)
+  return parsed !== undefined && parsed >= 0 ? parsed : undefined
 }
 
 function formatBytes(value: unknown) {
-  const bytes = numberValue(value)
+  const bytes = nonNegativeQuantity(value)
   if (bytes === undefined) {
     return '-'
   }
