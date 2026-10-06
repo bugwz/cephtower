@@ -9,6 +9,7 @@ import { OSDScrubConfiguration } from './OSDScrubConfiguration'
 import { OSDRecoveryConfiguration } from './OSDRecoveryConfiguration'
 import { OSDGlobalFlags } from './OSDGlobalFlags'
 import { OSDRemovalStop } from './OSDRemovalStop'
+import { OSDRemovalDetails, removalBoolean } from './OSDRemovalDetails'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import {
   applyDaemonAction,
@@ -483,8 +484,11 @@ export function OsdManagementPage() {
             { key: 'hostname', title: '主机' },
             { key: 'drain_status', title: '排空状态' },
             { key: 'pg_count', title: '剩余 PG' },
-            { key: 'replace', title: '替换', render: (value) => value ? '是' : '否' },
-            { key: 'force', title: '强制', render: (value) => value ? '是' : '否' },
+            { key: 'replace', title: '替换', render: removalBoolean },
+            { key: 'force', title: '强制', render: removalBoolean },
+            { key: 'zap', title: '清盘', render: removalBoolean },
+            { key: 'drain_started_at', title: '排空开始', render: (value) => formatDateTime(value) },
+            { key: 'details', title: '详情', filterKey: false, render: (_, row) => selectedClusterId ? <OSDRemovalDetails key={`${selectedClusterId}:${row.osd_id}:details`} clusterId={selectedClusterId} record={row} /> : null },
             { key: 'process_started_at', title: '开始时间', render: (value) => formatDateTime(value) },
             { key: 'stop', title: '操作', filterKey: false, render: (_, row) => selectedClusterId ? <OSDRemovalStop key={`${selectedClusterId}:${row.osd_id}:${row.resource_version}`} clusterId={selectedClusterId} record={row} blocked={loading || Boolean(error) || data?.removalMeta?.stale !== false} onChanged={refresh} /> : null }
           ]} />
