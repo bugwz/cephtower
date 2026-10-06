@@ -6,6 +6,7 @@ import { MonMapSettings } from './MonMapSettings'
 import { ManagerInventory } from './ManagerInventory'
 import { osdSnapshotValue } from './OSDUsage'
 import { OSDScrubConfiguration } from './OSDScrubConfiguration'
+import { OSDRecoveryConfiguration } from './OSDRecoveryConfiguration'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import {
   applyDaemonAction,
@@ -358,6 +359,8 @@ export function OsdManagementPage() {
   const inspectedOSD = osdInspection?.scope === osdScope ? osdInspection.row : null
   const [scrubConfigScope, setScrubConfigScope] = useState<typeof osdScope | null>(null)
   const scrubConfigOpen = scrubConfigScope === osdScope
+  const [recoveryConfigScope, setRecoveryConfigScope] = useState<typeof osdScope | null>(null)
+  const recoveryConfigOpen = recoveryConfigScope === osdScope
   const [refreshingOSDs, setRefreshingOSDs] = useState(false)
   const operationMutation = useMutationOperation()
 
@@ -448,6 +451,9 @@ export function OsdManagementPage() {
 
   return (
     <Page title="OSD管理" loading={loading} error={error}>
+      <Modal open={recoveryConfigOpen} title={`集群 ${selectedClusterId} / 恢复速度与 QoS 配置`} onCancel={() => setRecoveryConfigScope(null)} footer={null} width="90vw" destroyOnClose>
+        {recoveryConfigOpen && selectedClusterId && <OSDRecoveryConfiguration key={selectedClusterId} />}
+      </Modal>
       <Modal open={scrubConfigOpen} title={`集群 ${selectedClusterId} / PG Scrub 配置`} onCancel={() => setScrubConfigScope(null)} footer={null} width="90vw" destroyOnClose>
         {scrubConfigOpen && selectedClusterId && <OSDScrubConfiguration key={selectedClusterId} />}
       </Modal>
@@ -461,6 +467,7 @@ export function OsdManagementPage() {
           <Space>
             <Button icon={<ReloadOutlined />} loading={refreshingOSDs} onClick={refreshOSDData}>刷新</Button>
             <Button disabled={!selectedClusterId} onClick={() => setScrubConfigScope(osdScope)}>PG Scrub 配置</Button>
+            <Button disabled={!selectedClusterId} onClick={() => setRecoveryConfigScope(osdScope)}>恢复速度 / QoS</Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={() => setDeploymentOpen(true)}>OSD 部署</Button>
           </Space>
         }
