@@ -15,4 +15,6 @@ for (const value of [undefined, null, -1, 0.1, {}, '', '01', '1e3', Number.MAX_S
 }
 const hostSource = readFileSync(new URL('../src/pages/cluster/HostPage.tsx', import.meta.url), 'utf8')
 assert.ok(hostSource.includes('storage_display: hostStorageCapacity(hostDevices)'))
+const clusterSource = readFileSync(new URL('../src/pages/cluster/pages.tsx', import.meta.url), 'utf8')
+assert.ok(clusterSource.includes('size_display: hostStorageCapacity([{ size_bytes: row.size_bytes ?? row.size }])'))
 console.log('Host storage totals retain exact bytes and reject incomplete capacity inputs')

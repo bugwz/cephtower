@@ -8,6 +8,7 @@ import { getHostDeviceInfo, getHostSMART, getOptionalResource, listAllResources,
 import type { ResourceDTO } from '../../api/types'
 import { DataTable } from '../../components/DataTable'
 import { HostHardware } from './HostHardware'
+import { hostStorageCapacity } from './hostStorageCapacity'
 import { HostNativeSummary } from './HostNativeSummary'
 import { hostInitialLocation } from './hostLocation'
 import { HostAddressEditor } from './HostAddressEditor'
@@ -650,7 +651,7 @@ function normalizeInventoryDeviceRow(row: ApiRecord, deviceInfo: ApiRecord[]): A
   const inferredType = rotational === true || rotational === '1' || rotational === 1 ? 'HDD'
     : rotational === false || rotational === '0' || rotational === 0 ? 'SSD' : '未知'
   const type = textValue(row.device_type ?? row.human_readable_type ?? row.type, '') || inferredType
-  const size = numberValue(row.size_bytes ?? row.size ?? sysAPI.size)
+  const size = row.size_bytes ?? row.size ?? sysAPI.size
   return {
     ...row,
     device_id: textValue(row.device_id ?? row.devid ?? row.id, ''),
@@ -662,7 +663,7 @@ function normalizeInventoryDeviceRow(row: ApiRecord, deviceInfo: ApiRecord[]): A
     vendor_display: textValue(row.vendor ?? sysAPI.vendor, ''),
     model_display: textValue(row.model ?? sysAPI.model, ''),
     serial_display: textValue(row.serial ?? lsmData.serialNum, ''),
-    size_display: size ? formatBytes(size) : '-',
+    size_display: hostStorageCapacity([{ size_bytes: size }]),
     osd_display: osdIDs,
     health_display: textValue(lsmData.health, '')
   }

@@ -234,10 +234,15 @@ const inventoryNode = hostDetailTree.statements.find((node) => ts.isFunctionDecl
 const inventoryCode = ts.transpileModule(inventoryNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const osdNamesNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'inventoryOSDNames')
 const osdNamesCode = ts.transpileModule(osdNamesNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-const normalizeInventory = new Function('isRecord', 'stringArray', 'textValue', 'numberValue', 'formatBytes', `${osdNamesCode}; ${inventoryCode}; return normalizeInventoryDeviceRow`)(
+const capacityModule = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/cluster/hostStorageCapacity.ts', import.meta.url), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText)(capacityModule)
+const normalizeInventory = new Function('isRecord', 'stringArray', 'textValue', 'numberValue', 'formatBytes', 'hostStorageCapacity', `${osdNamesCode}; ${inventoryCode}; return normalizeInventoryDeviceRow`)(
   (v) => v !== null && typeof v === 'object' && !Array.isArray(v),
   (v) => Array.isArray(v) ? v.filter((item) => typeof item === 'string') : [],
-  (v, fallback) => v ?? fallback, (v) => typeof v === 'number' ? v : undefined, String)
+  (v, fallback) => v ?? fallback, (v) => typeof v === 'number' ? v : undefined, String, capacityModule.hostStorageCapacity)
+assert.match(normalizeInventory({ size_bytes: '18446744073709551615' }, []).size_display, /18446744073709551615 B/)
+assert.equal(normalizeInventory({ size_bytes: '0' }, []).size_display, '0 B')
+assert.match(normalizeInventory({}, []).size_display, /未知/)
 for (const rotational of [undefined, null, '', 'unknown', 2]) {
   const row = normalizeInventory({ rotational }, [])
   assert.equal(row.type_display, '未知')

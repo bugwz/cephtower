@@ -3,6 +3,7 @@ import { Button, Card, Descriptions, Form, Input, InputNumber, Modal, Space, Swi
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { MonMapSettings } from './MonMapSettings'
+import { hostStorageCapacity } from './hostStorageCapacity'
 import { ManagerInventory } from './ManagerInventory'
 import { osdSnapshotValue } from './OSDUsage'
 import { OSDScrubConfiguration } from './OSDScrubConfiguration'
@@ -1231,7 +1232,7 @@ function normalizeDeviceRow(row: ApiRecord): ApiRecord {
     usage_state: usage.state,
     usage_label: usage.label,
     usage_notes: usage.notes,
-    size_display: formatBytes(numberValue(row.size_bytes ?? row.size))
+    size_display: hostStorageCapacity([{ size_bytes: row.size_bytes ?? row.size }])
   }
 }
 
