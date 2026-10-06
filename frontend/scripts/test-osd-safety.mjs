@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 import './test-osd-recovery-presets.mjs'
 import './test-osd-device-class.mjs'
+import './test-osd-individual-flags.mjs'
 const scrubSource = readFileSync(new URL('../src/pages/cluster/OSDScrubConfiguration.tsx', import.meta.url), 'utf8')
 const scrubTree = ts.createSourceFile('scrub.tsx', scrubSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const scrubOptionsNode = scrubTree.statements.find(n => ts.isVariableStatement(n))
