@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### MON 原生 Priority 与 Weight
+
+- 参考 Dashboard `controllers/monitor.py` 的 MON 元数据及 `MonMap.cc` dump，保留现有 `ceph mon dump` 返回的 priority、weight，并经资源 API 提供到 MON 详情。
+- 两字段按 `MonMap.h` 的 uint16 类型解析，缺失或 null 保留未知，有效零值不丢失；负数、小数、越界和错误 JSON 类型明确失败。
+- 此项仅展示原生值，不推断选举结果，不增加配置修改操作。回归覆盖采集链路、JSON 零/空值及字段绑定；真实集群未验证。
+
 #### MON 历史会话数语义校验
 
 - MON 会话数是非负整数，不再把通用指标解析接受的负数或小数绘制为有效会话数；异常点保留原值和状态，趋势在该处断线。

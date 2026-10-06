@@ -99,6 +99,8 @@ function MonDetailContent({ selectedClusterId, monName }: { selectedClusterId?: 
           <Descriptions className="host-detail-descriptions" size="small" column={twoColumnDescriptions} bordered>
             <Descriptions.Item label="名称">{textValue(mon.name ?? mon.natural_key)}</Descriptions.Item>
             <Descriptions.Item label="Rank">{textValue(mon.rank)}</Descriptions.Item>
+            <Descriptions.Item label="Priority（原生）">{textValue(mon.priority)}</Descriptions.Item>
+            <Descriptions.Item label="Weight（原生）">{textValue(mon.weight)}</Descriptions.Item>
             <Descriptions.Item label="Public Addr">{textValue(mon.address)}</Descriptions.Item>
             <Descriptions.Item label="全部 Public 地址（协议 / 地址）"><MonPublicAddresses value={mon.public_addresses} /></Descriptions.Item>
             <Descriptions.Item label="状态">
