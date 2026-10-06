@@ -2,6 +2,16 @@ package handler
 
 import "testing"
 
+func TestOSDRemovalPreserveIDContract(t *testing.T) {
+	for _, value := range []any{true, false, "true", float64(1), nil} {
+		err := ValidateMutationRequest("osd.delete", map[string]any{"cluster_id": float64(1), "osd_id": "0", "preserve_id": value})
+		_, valid := value.(bool)
+		if (err == nil) != valid {
+			t.Fatalf("preserve_id=%v err=%v", value, err)
+		}
+	}
+}
+
 func TestOSDRemovalStopIdentity(t *testing.T) {
 	body := map[string]any{"cluster_id": float64(1), "osd_id": "17"}
 	if err := ValidateMutationRequest("osd_removal.stop", body); err != nil {

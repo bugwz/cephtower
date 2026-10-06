@@ -1209,7 +1209,14 @@ func build(request Request, p map[string]any) (command, error) {
 		return ceph([]string{"orch", "osd", "rm", "stop", id}, []string{"orch", "osd", "rm", "status", "--format", "json"}), nil
 	case "osd.delete":
 		id := pathValue(tail, "osd")
+		n, err := strconv.ParseUint(id, 10, 31)
+		if err != nil || strconv.FormatUint(n, 10) != id {
+			return command{}, invalid("invalid OSD id")
+		}
 		args := []string{"orch", "osd", "rm", id}
+		if preserve, _ := p["preserve_id"].(bool); preserve {
+			args = append(args, "--replace")
+		}
 		if zap, _ := p["zap"].(bool); zap {
 			args = append(args, "--zap")
 		}
