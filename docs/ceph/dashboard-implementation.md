@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 所选集群告警快照统计
+
+- 参考 `prometheus-alert.service.ts` 的活动告警及 critical/warning 汇总，在实例列表补充活动实例及严重程度统计，同时展示 suppressed、unprocessed 和未知状态。
+- 基于现有后端 FSID 精确筛选后的 Alertmanager 实例 API；按实例计数，不复用参考实现合并路由组后的计数，不新增或伪造 Ceph 命令。
+- 统计完整查询快照而非表格筛选结果；加载、读取失败或无集群时不显示伪零，未知严重程度单独计数。
+- 离线回归覆盖空快照、未知状态、严重程度、抑制实例排除及不修改原始数据；尚无真实 Alertmanager 验证。
+
 #### 告警规则触发等待时长
 
 - 对照参考 `rules-list.component.ts` 的 DurationPipe 列，将原生规则 `duration` 展示为天、小时、分钟、秒，并同时保留原始秒数。

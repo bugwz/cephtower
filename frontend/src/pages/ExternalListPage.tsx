@@ -41,6 +41,7 @@ export interface ExternalListPageDefinition extends FeatureRequirements {
   extraActions?: Array<ResourceFormAction & { visibleWhen?: (row: ApiRecord) => boolean }>
   deleteAction?: ResourceDeleteAction
   detailContent?: (row: ApiRecord, clusterId: number) => ReactNode
+  summaryContent?: (rows: ApiRecord[] | undefined) => ReactNode
 }
 
 export function ExternalListPage({ definition, embedded = false }: { definition: ExternalListPageDefinition; embedded?: boolean }) {
@@ -294,12 +295,14 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
       scroll={{ x: true }}
     />
   )
-  const hasListExtras = hasFeatureRequirementAlert(featureStatus) || Boolean(filterFormContent) || Boolean(missingFilterAlert)
+  const summaryContent = definition.summaryContent?.(loading || error || !selectedClusterId ? undefined : data ?? undefined)
+  const hasListExtras = hasFeatureRequirementAlert(featureStatus) || Boolean(filterFormContent) || Boolean(missingFilterAlert) || Boolean(summaryContent)
   const listContent = hasListExtras ? (
     <Space direction="vertical" size={16} className="page-stack">
       {featureRequirementAlert}
       {filterFormContent}
       {missingFilterAlert}
+      {summaryContent}
       {externalTable}
     </Space>
   ) : externalTable
