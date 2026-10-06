@@ -245,6 +245,31 @@ func TestOSDInspectionCommandsAndFailures(t *testing.T) {
 	}
 }
 
+func TestOSDDeviceInspection(t *testing.T) {
+	service, runner, id := testInspection(t)
+	for _, raw := range []string{`[]`, `[{"devid":"disk-1","location":[{"host":"node-a","dev":"sda"}],"daemons":["osd.0"]}]`} {
+		runner.output = raw
+		result, err := service.OSDInspection(context.Background(), id, "0", "devices")
+		if err != nil || result["devices"] == nil {
+			t.Fatalf("result=%v err=%v", result, err)
+		}
+		spec := runner.specs[len(runner.specs)-1]
+		if spec.Mutating || !reflect.DeepEqual(spec.Args, []string{"device", "ls-by-daemon", "osd.0", "--format", "json"}) {
+			t.Fatalf("spec=%+v", spec)
+		}
+	}
+	for _, raw := range []string{`null`, `{}`, `[null]`, `[{}]`, `[{"devid":0}]`, `[{"devid":" "}]`} {
+		runner.output = raw
+		if _, err := service.OSDInspection(context.Background(), id, "0", "devices"); err == nil {
+			t.Fatalf("accepted %s", raw)
+		}
+	}
+	runner.fail = true
+	if _, err := service.OSDInspection(context.Background(), id, "0", "devices"); err == nil {
+		t.Fatal("command failure accepted")
+	}
+}
+
 func TestSnapshotScheduleStatusScopeAndFailures(t *testing.T) {
 	service, runner, id := testInspection(t)
 	runner.output = `[{"path":"/volumes/team/project","schedule":"1h","start":"2026-09-14T00:00:00","active":true,"created_count":4}]`

@@ -418,6 +418,13 @@ console.log('Native uint64 snapshot rate precision and reset checks passed')
 
 const osdSource = readFileSync(new URL('../src/pages/cluster/OSDInspection.tsx', import.meta.url), 'utf8')
 const osdTree = ts.createSourceFile('osd.tsx', osdSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const deviceNode = osdTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'osdDeviceRecords')
+const deviceCode = ts.transpileModule(deviceNode.getText(osdTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const deviceRecords = new Function(`${deviceCode}; return osdDeviceRecords`)()
+const nativeDevices = [{ devid: 'disk-1', location: [{ host: 'node-a', dev: 'sda', path: '/dev/sda' }], daemons: ['osd.0'], wear_level: 0 }]
+assert.equal(deviceRecords({ devices: nativeDevices }), nativeDevices)
+assert.deepEqual(deviceRecords({ devices: [] }), [])
+for (const devices of [undefined, null, {}, [null], [{}], [{ devid: 0 }], [{ devid: ' ' }]]) assert.equal(deviceRecords({ devices }), null)
 const osdNode = osdTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'OSDInspection')
 const osdCode = ts.transpileModule(osdNode.getText(osdTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
 const osdInspection = new Function('React', 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', 'Alert', 'Descriptions', 'osdHistoryEpoch', 'OSDNetwork', 'OSDUsage', `${osdCode}; return OSDInspection`)(
@@ -425,6 +432,10 @@ const osdInspection = new Function('React', 'Tabs', 'RecordDetail', 'Diagnostic'
 const perfKeys = new Set()
 for (const [clusterId, osdId] of [[1, '0'], [1, '12'], [2, '12']]) {
   const panel = osdInspection({ clusterId, osdId, record: {} })
+  const devices = panel.props.items.find((item) => item.key === 'devices')
+  assert.equal(devices.children.props.clusterId, clusterId)
+  assert.equal(devices.children.props.osdId, osdId)
+  assert.equal(devices.children.props.section, 'devices')
   const tab = panel.props.items.find((item) => item.key === 'perf')
   assert.equal(tab.children.component, 'DaemonPerf')
   assert.equal(tab.children.props.clusterId, clusterId)

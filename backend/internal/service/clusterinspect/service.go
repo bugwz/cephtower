@@ -99,8 +99,26 @@ func (s *Service) OSDInspection(ctx context.Context, clusterID uint64, id, secti
 		args = []string{"osd", "metadata", id, "--format", "json"}
 	case "histogram":
 		args = []string{"tell", "osd." + id, "perf", "histogram", "dump", "--format", "json"}
+	case "devices":
+		args = []string{"device", "ls-by-daemon", "osd." + id, "--format", "json"}
 	default:
 		return nil, invalid("invalid OSD inspection section")
+	}
+	if section == "devices" {
+		var devices []map[string]any
+		if err := s.read(ctx, clusterID, "osd.devices", args, &devices); err != nil {
+			return nil, err
+		}
+		if devices == nil {
+			return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph returned no device list"}
+		}
+		for _, device := range devices {
+			id, ok := device["devid"].(string)
+			if !ok || strings.TrimSpace(id) == "" {
+				return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph returned a device without an identifier"}
+			}
+		}
+		return map[string]any{"devices": devices}, nil
 	}
 	var result map[string]any
 	if err := s.read(ctx, clusterID, "osd."+section, args, &result); err != nil {

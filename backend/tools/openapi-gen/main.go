@@ -387,7 +387,7 @@ func requestSchema(route router.Route) (handler.RequestContract, bool) {
 	case "GET /filesystem/entry/snapshots":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "fs": stringField(true), "path": stringField(true)}
 	case "GET /osd/inspection":
-		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "osd_id": stringField(true), "section": {Type: "string", Required: true, Enum: []string{"metadata", "histogram"}}}
+		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "osd_id": stringField(true), "section": {Type: "string", Required: true, Enum: []string{"metadata", "histogram", "devices"}}}
 	case "GET /configuration/option", "GET /service/daemons", "GET /daemon/perf":
 		fields = map[string]handler.JSONField{"cluster_id": integerField(true), "name": stringField(true)}
 	case "GET /rgw/encryption/configuration":
