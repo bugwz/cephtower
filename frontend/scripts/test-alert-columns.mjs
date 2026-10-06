@@ -69,9 +69,17 @@ for (const invalid of [undefined, null, 0, '', '2026-10-06', '2026-10-06T00:00:0
 for (const invalidEnd of [start, '2026-10-06T08:00:00+08:00', '2026-10-05T23:59:59Z']) assert.throws(() => range(start, invalidEnd), /结束时间/)
 for (const candidate of [actions.silenceCreateAction, actions.silenceRecreateAction]) assert.throws(() => candidate.buildBody({ matchers_json: '[{"name":"alertname","value":"x","isRegex":false,"isEqual":true}]', startsAt: end, endsAt: start }, 1), /结束时间/)
 const name = 'Ceph[Warning].* "中文"'
-const input = { labels: { alertname: name, instance: 'host1' } }
+const clusterLabel = 'cluster[1].* "中文"'
+const input = { labels: { alertname: name, instance: 'host1', cluster: clusterLabel } }
 const initial = action.initialValues(input)
-assert.deepEqual(JSON.parse(initial.matchers_json), [{ name: 'alertname', value: name, isRegex: false, isEqual: true }])
+assert.deepEqual(JSON.parse(initial.matchers_json), [{ name: 'alertname', value: name, isRegex: false, isEqual: true }, { name: 'cluster', value: clusterLabel, isRegex: false, isEqual: true }])
+for (const cluster of [undefined, null, '', ' ', 1, false, [], {}]) {
+  const invalid = { labels: { alertname: name, cluster } }
+  assert.ok(action.disabledWhen(invalid))
+  assert.throws(() => action.initialValues(invalid))
+}
+assert.equal(action.buildBody(initial, 9, input).matchers[1].value, clusterLabel)
+assert.ok(action.confirmation().includes('其他集群'))
 assert.equal(Date.parse(initial.endsAt) - Date.parse(initial.startsAt), 7200000)
 assert.equal(action.disabledWhen(input), undefined)
 for (const labels of [undefined, null, [], {}, { alertname: '' }, { alertname: ' ' }, { alertname: 5 }]) assert.ok(action.disabledWhen({ labels }))

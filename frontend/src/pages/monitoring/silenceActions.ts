@@ -60,7 +60,33 @@ export const silenceCreateAction: ResourceFormAction = {
 
 export const silenceFromAlertAction: ResourceFormAction = {
   ...silenceCreateAction, title: '从告警创建静默', buttonLabel: '创建静默',
-  disabledWhen: (row) => alertSilenceName(row) === undefined ? '告警缺少有效的 alertname 标签，无法预填静默条件' : undefined
+  disabledWhen: (row) => {
+    if (alertSilenceName(row) === undefined) return '告警缺少有效的 alertname 标签，无法预填静默条件'
+    if (alertClusterName(row) === undefined) return '告警缺少有效的 cluster 标签，无法预填集群范围'
+    return undefined
+  },
+  initialValues: row => {
+    const name = alertSilenceName(row)
+    const cluster = alertClusterName(row)
+    if (name === undefined || cluster === undefined) throw new Error('告警名称或集群标签缺失，请刷新列表')
+    const start = new Date()
+    return {
+      matchers_json: JSON.stringify([
+        { name: 'alertname', value: name, isRegex: false, isEqual: true },
+        { name: 'cluster', value: cluster, isRegex: false, isEqual: true }
+      ], null, 2),
+      startsAt: start.toISOString(), endsAt: new Date(start.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+      createdBy: 'cephtower', comment: ''
+    }
+  },
+  confirmation: () => '默认同时匹配告警名与 cluster 标签，将影响该集群所有同名告警，不限于当前实例。表单条件可编辑，移除或放宽 cluster 条件可能影响其他集群；请确认最终匹配范围与时间。静默只暂停通知，不会修复告警原因。'
+}
+
+export function alertClusterName(row?: ApiRecord): string | undefined {
+  const labels = row?.labels
+  if (!labels || typeof labels !== 'object' || Array.isArray(labels)) return undefined
+  const cluster = (labels as ApiRecord).cluster
+  return typeof cluster === 'string' && cluster.trim() ? cluster : undefined
 }
 
 export function silenceRecreateBlocked(row: ApiRecord): string | undefined {
