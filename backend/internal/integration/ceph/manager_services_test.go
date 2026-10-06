@@ -80,3 +80,33 @@ func TestManagerAvailabilityRetainsUnknown(t *testing.T) {
 		}
 	}
 }
+
+func TestManagerServiceValuesRequireExplicitStrings(t *testing.T) {
+	for _, raw := range []string{`{"dashboard":null}`, `{"dashboard":false}`, `{"dashboard":1}`, `{"dashboard":{}}`, `{"":"https://host/"}`, `{" dashboard":"https://host/"}`, `{"dashboard":""}`} {
+		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.mgr": []byte(`{"active_name":"a","standbys":[],"services":` + raw + `}`)}}}
+		rows, err := p.Collect(context.Background(), ClusterAccess{}, "topology")
+		if raw != `{"dashboard":""}` {
+			if err == nil || len(rows) != 0 {
+				t.Fatalf("accepted invalid service %s: %v", raw, err)
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for _, row := range rows {
+			if row.Kind != "mgr" {
+				continue
+			}
+			value, exists := row.Payload.(cephdomain.Manager).Services["dashboard"]
+			if !exists || value != "" {
+				t.Fatal("lost explicit empty URI")
+			}
+			found = true
+		}
+		if !found {
+			t.Fatal("manager missing")
+		}
+	}
+}

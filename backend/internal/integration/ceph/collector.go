@@ -507,10 +507,10 @@ const (
 )
 
 type mgrDumpWire struct {
-	Services   map[string]string `json:"services"`
-	Available  *bool             `json:"available"`
-	ActiveName string            `json:"active_name"`
-	ActiveAddr string            `json:"active_addr"`
+	Services   map[string]*string `json:"services"`
+	Available  *bool              `json:"available"`
+	ActiveName string             `json:"active_name"`
+	ActiveAddr string             `json:"active_addr"`
 	Standbys   []struct {
 		Name string `json:"name"`
 	} `json:"standbys"`
@@ -561,6 +561,16 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 	var managers mgrDumpWire
 	if err := p.runInto(ctx, access, "collect.mgr", []string{"mgr", "dump", "--format", "json"}, &managers); err != nil {
 		return nil, err
+	}
+	var managerServices map[string]string
+	if managers.Services != nil {
+		managerServices = make(map[string]string, len(managers.Services))
+		for name, uri := range managers.Services {
+			if name == "" || name != strings.TrimSpace(name) || uri == nil {
+				return nil, fmt.Errorf("parse collect.mgr response: services require module names and string URIs")
+			}
+			managerServices[name] = *uri
+		}
 	}
 	factsByHost := p.collectDaemonHostFacts(ctx, access)
 	rows := make([]Observation, 0, len(hosts)+len(daemons)+len(services)+len(mons.Mons)+1+len(managers.Standbys))
@@ -684,7 +694,7 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 	}
 	if managers.ActiveName != "" {
 		address := managers.ActiveAddr
-		payload := cephdomain.Manager{Name: managers.ActiveName, Active: true, Address: &address, Available: managers.Available, Services: managers.Services}
+		payload := cephdomain.Manager{Name: managers.ActiveName, Active: true, Address: &address, Available: managers.Available, Services: managerServices}
 		rows = append(rows, Observation{Kind: "mgr", NaturalKey: managers.ActiveName, Name: managers.ActiveName, Status: "active", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	for _, wire := range managers.Standbys {
