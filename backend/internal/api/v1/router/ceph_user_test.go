@@ -94,6 +94,8 @@ func (e *authRouteExecutor) Run(_ context.Context, _ executor.ClusterAccess, spe
 		return executor.CommandResult{Stdout: []byte(`{"auth_dump":[{"entity":"client.backup","key":"sensitive-fixture-key","caps":{"mon":"allow r"}}]}`)}, nil
 	case "collect.config", "config_value.delete.post_check":
 		return executor.CommandResult{Stdout: []byte(`[]`)}, nil
+	case "config_value.set.post_check":
+		return executor.CommandResult{Stdout: []byte(`[{"section":"osd","mask":"host:node-a","name":"osd_memory_target","value":"4G"},{"section":"client.rgw","name":"rgw_keystone_admin_password","value":"sensitive-config-value"}]`)}, nil
 	case "ceph_user.export":
 		return executor.CommandResult{Stdout: []byte("[client.backup]\n key = sensitive-fixture-key\n")}, nil
 	default:

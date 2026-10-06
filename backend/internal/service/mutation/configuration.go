@@ -15,6 +15,15 @@ import (
 )
 
 func configurationDeleted(resource string, data []byte) bool {
+	return configurationMatches(resource, data, nil)
+}
+
+func configurationSet(resource string, data []byte, parameters map[string]any) bool {
+	value, ok := parameters["value"].(string)
+	return ok && configurationMatches(resource, data, &value)
+}
+
+func configurationMatches(resource string, data []byte, expected *string) bool {
 	decoded, err := base64.RawURLEncoding.Strict().DecodeString(strings.TrimPrefix(resource, "configuration/value/"))
 	parts := strings.Split(string(decoded), "\x00")
 	if err != nil || len(parts) != 2 || !configurationScope.MatchString(parts[0]) || !configurationName.MatchString(parts[1]) {
@@ -34,6 +43,7 @@ func configurationDeleted(resource string, data []byte) bool {
 		return false
 	}
 	seen := map[string]bool{}
+	matched := expected == nil
 	for _, row := range rows {
 		if row.Section == "" || row.Name == "" || row.Value == nil {
 			return false
@@ -71,10 +81,10 @@ func configurationDeleted(resource string, data []byte) bool {
 		}
 		seen[key] = true
 		if who == configurationScopeKey(parts[0]) && row.Name == parts[1] {
-			return false
+			matched = expected != nil && *row.Value == *expected
 		}
 	}
-	return true
+	return matched
 }
 
 func configurationScopeKey(who string) string {
