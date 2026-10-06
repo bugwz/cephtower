@@ -110,13 +110,49 @@ func TestHostMetricQueriesAreRegistered(t *testing.T) {
 }
 
 func TestRulesRejectUnavailableGroups(t *testing.T) {
-	for _, body := range []string{`{}`, `{"status":"error","data":{"groups":[]}}`, `{"status":"success","data":{"groups":null}}`, `{"status":"success","data":{"groups":[{"name":"a"}]}}`} {
+	for _, body := range []string{`{}`, `{"status":"error","data":{"groups":[]}}`, `{"status":"success","data":{"groups":null}}`, `{"status":"success","data":{"groups":[{"name":"a"}]}}`, `{"status":"success","data":{"groups":[null]}}`, `{"status":"success","data":{"groups":[{"name":"a","rules":[null]}]}}`, `{"status":"success","data":{"groups":[{"name":"a","rules":[{"name":"valid","type":"alerting"},null]}]}}`} {
 		client, err := New("https://prometheus.example.test", "", &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) { return jsonResponse(200, body), nil })})
 		if err != nil {
 			t.Fatal(err)
 		}
 		if _, err := client.Rules(context.Background()); err == nil {
 			t.Fatalf("accepted %s", body)
+		}
+	}
+}
+
+func TestRulesPreserveEmptyAndNativeFields(t *testing.T) {
+	for _, body := range []string{
+		`{"status":"success","data":{"groups":[]}}`,
+		`{"status":"success","data":{"groups":[{"name":"a","file":"rules.yml","rules":[]}]}}`,
+		`{"status":"success","data":{"groups":[{"name":"a","file":"rules.yml","rules":[{"name":"CephHealth","type":"alerting","query":"up == 0","duration":0,"health":"err","lastError":"evaluation failed","evaluationTime":0,"lastEvaluation":"2026-10-06T00:00:00Z","alerts":[],"labels":{"severity":"warning"},"annotations":{"summary":"Ceph warning"}}]}]}}`,
+	} {
+		client, err := New("https://prometheus.example.test", "", &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			if r.URL.Path != "/api/v1/rules" {
+				t.Fatalf("unexpected path: %s", r.URL.Path)
+			}
+			return jsonResponse(200, body), nil
+		})})
+		if err != nil {
+			t.Fatal(err)
+		}
+		groups, err := client.Rules(context.Background())
+		if err != nil || groups == nil {
+			t.Fatalf("groups=%#v err=%v", groups, err)
+		}
+		if len(groups) == 0 {
+			continue
+		}
+		group := groups[0]
+		if group.Name != "a" || group.File != "rules.yml" || group.Rules == nil {
+			t.Fatalf("invalid group: %#v", group)
+		}
+		if len(group.Rules) == 0 {
+			continue
+		}
+		rule := group.Rules[0]
+		if rule.Duration == nil || *rule.Duration != 0 || rule.EvaluationTime == nil || *rule.EvaluationTime != 0 || rule.LastEvaluation == nil || rule.LastError != "evaluation failed" || rule.Health != "err" || string(rule.Alerts) != "[]" || rule.Labels["severity"] != "warning" || rule.Annotations["summary"] != "Ceph warning" || rule.Query != "up == 0" {
+			t.Fatalf("native rule fields lost: %#v", rule)
 		}
 	}
 }

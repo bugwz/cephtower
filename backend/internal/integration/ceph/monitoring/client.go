@@ -190,10 +190,15 @@ func (c *Client) Alerts(ctx context.Context, fsid string) ([]Alert, error) {
 	return alerts, nil
 }
 func (c *Client) Rules(ctx context.Context) ([]RuleGroup, error) {
+	type nativeGroup struct {
+		Name  string  `json:"name"`
+		File  string  `json:"file"`
+		Rules []*Rule `json:"rules"`
+	}
 	var response struct {
 		Status string `json:"status"`
 		Data   struct {
-			Groups []RuleGroup `json:"groups"`
+			Groups []*nativeGroup `json:"groups"`
 		} `json:"data"`
 	}
 	if err := c.get(ctx, "/api/v1/rules", &response); err != nil {
@@ -202,12 +207,21 @@ func (c *Client) Rules(ctx context.Context) ([]RuleGroup, error) {
 	if response.Status != "success" || response.Data.Groups == nil {
 		return nil, fmt.Errorf("Prometheus rules query failed")
 	}
+	groups := make([]RuleGroup, 0, len(response.Data.Groups))
 	for _, group := range response.Data.Groups {
-		if group.Rules == nil {
+		if group == nil || group.Rules == nil {
 			return nil, fmt.Errorf("Prometheus returned a rule group without rules")
 		}
+		rules := make([]Rule, 0, len(group.Rules))
+		for _, rule := range group.Rules {
+			if rule == nil {
+				return nil, fmt.Errorf("Prometheus returned a null rule")
+			}
+			rules = append(rules, *rule)
+		}
+		groups = append(groups, RuleGroup{Name: group.Name, File: group.File, Rules: rules})
 	}
-	return response.Data.Groups, nil
+	return groups, nil
 }
 func (c *Client) Silences(ctx context.Context) ([]SilenceRecord, error) {
 	var result []*SilenceRecord
