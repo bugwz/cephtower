@@ -44,6 +44,24 @@ for (const scenario of ['fresh', 'stale', 'unknown', 'failure', 'no-cluster']) {
   }
 }
 assert.ok(page.getText(tree).includes('data?.inventoryWarnings.map'))
+const collect = page.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'collectMDSInventory').getText(tree)
+for (const scenario of ['success', 'failure', 'during', 'inactive', 'loading', 'no-cluster']) {
+  const calls = [], messages = [], refreshes = []
+  let finish
+  const gate = new Promise(resolve => { finish = resolve })
+  const scope = { active: scenario !== 'inactive', refreshing: false }
+  const env = { selectedClusterId: scenario === 'no-cluster' ? undefined : 7, serviceScope: scope, loading: scenario === 'loading', setRefreshingScope() {}, message: { success: value => messages.push(value), error: value => messages.push(value) }, refresh: async () => refreshes.push(true), refreshResource: async value => { calls.push(value); await gate; if (scenario === 'failure') throw new Error('failed') } }
+  const run = new Function(...Object.keys(env), `${compile(collect)}; return collectMDSInventory`)(...Object.values(env))
+  const pending = run()
+  await run()
+  if (scenario === 'during') scope.active = false
+  finish()
+  await pending
+  assert.deepEqual(calls, ['success', 'failure', 'during'].includes(scenario) ? [{ clusterId: 7, kinds: ['service', 'daemon'] }] : [])
+  assert.equal(refreshes.length, scenario === 'success' ? 1 : 0)
+  assert.equal(messages.length, ['success', 'failure'].includes(scenario) ? 1 : 0)
+  assert.equal(scope.refreshing, false)
+}
 let selectService
 function findSelection(node) {
   if (ts.isArrowFunction(node) && node.body.getText(tree).includes('setServiceSelection({ scope: serviceScope, name: row.name })') && !ts.isJsxElement(node.body)) selectService = node

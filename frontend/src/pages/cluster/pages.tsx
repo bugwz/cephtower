@@ -1010,7 +1010,13 @@ function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string
 
 export function MdsManagementPage() {
   const { selectedClusterId } = useClusterContext()
-  const serviceScope = useMemo(() => ({ clusterId: selectedClusterId }), [selectedClusterId])
+  const serviceScope = useMemo(() => ({ clusterId: selectedClusterId, active: true, refreshing: false }), [selectedClusterId])
+  useEffect(() => {
+    serviceScope.active = true
+    return () => { serviceScope.active = false }
+  }, [serviceScope])
+  const [refreshingScope, setRefreshingScope] = useState<typeof serviceScope | null>(null)
+  const refreshingInventory = refreshingScope === serviceScope
   const [serviceSelection, setServiceSelection] = useState<{ scope: typeof serviceScope; name: string } | null>(null)
   const visibleService = serviceSelection?.scope === serviceScope ? serviceSelection : null
   const serviceTableFilters = useResourceTableFilters({
@@ -1046,13 +1052,31 @@ export function MdsManagementPage() {
   }, [daemonTableFilters.filters, selectedClusterId, serviceTableFilters.filters])
   const { data, loading, error, refresh } = useResource(loader)
 
+  async function collectMDSInventory() {
+    if (!selectedClusterId || !serviceScope.active || serviceScope.refreshing || loading) return
+    serviceScope.refreshing = true
+    setRefreshingScope(serviceScope)
+    try {
+      await refreshResource({ clusterId: selectedClusterId, kinds: ['service', 'daemon'] })
+      if (serviceScope.active) {
+        message.success('服务与守护进程采集完成')
+        await refresh()
+      }
+    } catch {
+      if (serviceScope.active) message.error('采集未完成，请检查任务结果后重试')
+    } finally {
+      serviceScope.refreshing = false
+      if (serviceScope.active) setRefreshingScope(null)
+    }
+  }
+
   return (
     <Page title="MDS管理" loading={loading} error={error}>
       <Modal title={visibleService ? `${visibleService.name} 守护进程` : '服务守护进程'} open={Boolean(visibleService)} onCancel={() => setServiceSelection(null)} footer={null} width="95vw" destroyOnClose>
         {visibleService && selectedClusterId && <ServiceDaemons key={JSON.stringify([selectedClusterId, visibleService.name])} clusterId={selectedClusterId} name={visibleService.name} />}
       </Modal>
       {data?.inventoryWarnings.map(warning => <Alert key={warning} type="warning" showIcon message={warning} />)}
-      <Card className="page-surface-card" title="MDS管理">
+      <Card className="page-surface-card" title="MDS管理" extra={<Button icon={<ReloadOutlined />} disabled={!selectedClusterId || loading} loading={refreshingInventory} onClick={() => void collectMDSInventory()}>重新采集服务与守护进程</Button>}>
         <Tabs
           items={[
             {
