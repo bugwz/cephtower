@@ -8,10 +8,12 @@ import { OSDNetwork } from './OSDNetwork'
 import { OSDUsage } from './OSDUsage'
 import { SMARTDetails } from './SMARTDetails'
 import { OSDSafetyCheck } from './OSDSafetyCheck'
+import { OSDDeviceClass } from './OSDDeviceClass'
 
 export function OSDInspection({ clusterId, osdId, record }: { clusterId: number; osdId: string; record: ApiRecord }) {
   return <Tabs items={[
     { key: 'map', label: 'OSD 状态', children: <RecordDetail record={record} /> },
+    { key: 'device-class', label: '编辑设备类别', children: <OSDDeviceClass key={`${clusterId}:${osdId}:device-class`} clusterId={clusterId} osdId={osdId} record={record} /> },
     { key: 'safety', label: '安全销毁检查', children: <OSDSafetyCheck key={`${clusterId}:${osdId}:safety`} clusterId={clusterId} osdId={osdId} /> },
     { key: 'network', label: '网络地址', children: <OSDNetwork record={record} /> },
     { key: 'usage', label: '容量、PG 与延迟', children: <OSDUsage record={record} /> },
