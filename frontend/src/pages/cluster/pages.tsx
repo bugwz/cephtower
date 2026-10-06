@@ -756,6 +756,7 @@ export function DeviceManagementPage() {
             { key: 'size_display', title: '容量', filterKey: false },
             { key: 'device_type', title: '类型' },
             { key: 'usage_label', title: '状态', filterKey: false, render: (_, row) => renderDeviceUsage(row) },
+            { key: 'usage_notes', title: '拒绝原因 / 原生诊断', filterKey: false, ellipsis: false, render: (value) => renderDeviceNotes(value) },
             {
               key: 'actions',
               title: '操作',
@@ -1245,7 +1246,7 @@ function normalizeDeviceRow(row: ApiRecord): ApiRecord {
 function deviceUsage(row: ApiRecord) {
   const reasons = deviceReasonValues(row.rejected_reasons ?? row.reject_reasons ?? row.reasons)
   if (row.available === true) {
-    return { state: 'available' as DeviceScope, label: '空闲可用', notes: [] }
+    return { state: 'available' as DeviceScope, label: '空闲可用', notes: reasons.map(readableDeviceReason) }
   }
   if (row.available !== false) {
     return { state: 'unknown' as DeviceScope, label: '可用性未知', notes: reasons.map(readableDeviceReason) }
@@ -1285,6 +1286,11 @@ function isUsedDeviceReason(reason: string) {
 }
 
 function readableDeviceReason(reason: string) {
+  const summary = deviceReasonSummary(reason)
+  return summary === reason ? reason : `${summary}（原文：${reason}）`
+}
+
+function deviceReasonSummary(reason: string) {
   const normalized = reason.toLowerCase()
   if (normalized.includes('filesystem') || normalized.includes('file system')) {
     return '已有文件系统'

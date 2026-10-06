@@ -7,6 +7,7 @@ const node = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.tex
 const code = ts.transpileModule(node.getText(file), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const usage = new Function('deviceReasonValues', 'isUsedDeviceReason', 'readableDeviceReason', `${code}; return deviceUsage`)(v => v ?? [], v => v === 'LVM', v => v)
 assert.equal(usage({ available: true }).state, 'available')
+assert.deepEqual(usage({ available: true, rejected_reasons: ['native diagnostic'] }).notes, ['native diagnostic'])
 assert.equal(usage({ available: false }).state, 'unavailable')
 assert.equal(usage({ available: false, rejected_reasons: ['LVM'] }).state, 'used')
 for (const available of [undefined, null, 'false', 0, {}]) {
@@ -15,6 +16,11 @@ for (const available of [undefined, null, 'false', 0, {}]) {
   assert.deepEqual(result.notes, ['LVM'])
 }
 console.log('Device availability retains unknown native states and rejection diagnostics')
+const reasonCode = ts.transpileModule(file.statements.filter(n => ts.isFunctionDeclaration(n) && ['readableDeviceReason', 'deviceReasonSummary'].includes(n.name.text)).map(n => n.getText(file)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const reason = new Function(`${reasonCode}; return readableDeviceReason`)()
+for (const raw of ['LVM detected on /dev/sda', 'Insufficient space (<10 extents) on vgs', 'locked by process 12', 'unknown native reason']) assert.ok(reason(raw).includes(raw))
+assert.equal(reason('unknown native reason'), 'unknown native reason')
+assert.ok(source.includes("key: 'usage_notes', title: '拒绝原因 / 原生诊断'"))
 const page = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'DeviceManagementPage')
 const declarations = page.body.statements.filter(ts.isVariableStatement).flatMap(n => [...n.declarationList.declarations])
 const loader = declarations.find(n => n.name.getText(file) === 'loader').initializer.arguments[0]
