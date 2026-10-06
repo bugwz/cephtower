@@ -922,8 +922,8 @@ type osdDumpWire struct {
 	OSDs  []struct {
 		Weight *float64 `json:"weight"`
 		OSD    int      `json:"osd"`
-		Up     int      `json:"up"`
-		In     int      `json:"in"`
+		Up     *int     `json:"up"`
+		In     *int     `json:"in"`
 	} `json:"osds"`
 }
 type poolWire struct {
@@ -1022,14 +1022,25 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 	if err := p.runInto(ctx, access, "collect.osd_dump", []string{"osd", "dump", "--format", "json"}, &dump); err != nil {
 		return nil, err
 	}
-	states := map[int][2]bool{}
+	states := map[int][2]*bool{}
 	reweights := map[int]*float64{}
 	for _, osd := range dump.OSDs {
 		if osd.Weight != nil && (*osd.Weight < 0 || *osd.Weight > 1) {
 			return nil, fmt.Errorf("parse collect.osd_dump response: weight must be between zero and one")
 		}
 		reweights[osd.OSD] = osd.Weight
-		states[osd.OSD] = [2]bool{osd.Up == 1, osd.In == 1}
+		var state [2]*bool
+		for i, value := range []*int{osd.Up, osd.In} {
+			if value == nil {
+				continue
+			}
+			if *value != 0 && *value != 1 {
+				return nil, fmt.Errorf("parse collect.osd_dump response: up and in must be zero or one")
+			}
+			flag := *value == 1
+			state[i] = &flag
+		}
+		states[osd.OSD] = state
 	}
 	hosts := osdHosts(tree)
 	crushPaths := osdCrushPaths(tree)
@@ -1052,7 +1063,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		}
 		state := states[node.ID]
 		up, in := state[0], state[1]
-		payload := cephdomain.OSD{ID: node.ID, Name: node.Name, Status: node.Status, Up: &up, In: &in, Weight: node.CrushWeight, DeviceClass: node.DeviceClass, Host: hosts[node.ID], CrushPath: crushPaths[node.ID]}
+		payload := cephdomain.OSD{ID: node.ID, Name: node.Name, Status: node.Status, Up: up, In: in, Weight: node.CrushWeight, DeviceClass: node.DeviceClass, Host: hosts[node.ID], CrushPath: crushPaths[node.ID]}
 		payload.Reweight = reweights[node.ID]
 		rows = append(rows, Observation{Kind: "osd", NaturalKey: strconv.Itoa(node.ID), Name: node.Name, Status: node.Status, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
