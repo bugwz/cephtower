@@ -959,8 +959,11 @@ func (tree *osdTreeWire) UnmarshalJSON(data []byte) error {
 }
 
 type osdDumpWire struct {
-	Flags *string `json:"flags"`
-	OSDs  []struct {
+	Flags             *string  `json:"flags"`
+	NearfullRatio     *float64 `json:"nearfull_ratio"`
+	BackfillfullRatio *float64 `json:"backfillfull_ratio"`
+	FullRatio         *float64 `json:"full_ratio"`
+	OSDs              []struct {
 		State []string `json:"state"`
 		cephdomain.OSDMapHistory
 		cephdomain.OSDNetworkAddresses
@@ -1133,7 +1136,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 	if dump.Flags != nil {
 		flags = splitOSDFlags(*dump.Flags)
 	}
-	rows = append(rows, Observation{Kind: "osd_flag", NaturalKey: "flags", Name: "flags", Source: "ceph_cli", Payload: map[string]any{"flags": flags}, ObservedAt: now})
+	rows = append(rows, Observation{Kind: "osd_flag", NaturalKey: "flags", Name: "flags", Source: "ceph_cli", Payload: map[string]any{"flags": flags, "nearfull_ratio": osdCapacityRatio(dump.NearfullRatio), "backfillfull_ratio": osdCapacityRatio(dump.BackfillfullRatio), "full_ratio": osdCapacityRatio(dump.FullRatio)}, ObservedAt: now})
 	for _, node := range tree.Nodes {
 		if node.Type != "osd" {
 			continue

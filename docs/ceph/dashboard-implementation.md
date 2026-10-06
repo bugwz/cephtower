@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD 容量阈值展示：从原生 osd dump 采集 nearfull_ratio/backfillfull_ratio/full_ratio，通过现有 osd_flag 库存 API 提供并在 OSD 页只读展示原始比例和百分比。缺失、越界或非有限值保留未知，不填默认阈值；界面区分容量阈值和当前利用率，并显示过期/读取失败状态，支持重新采集。无真实集群测试。
+
 - OSD Purge 前端：详情增加独立清除入口，明确不保留 ID、移除密钥/CRUSH、不是 Zap 或编排器移除。支持 UUID 与 destroyed 状态一致的 Down 快照（包括已 Destroy 的零 UUID）；精确确认 purge osd.ID、风险勾选、无损版本及 UUID 提交，执行后需刷新重开。测试覆盖正常/已销毁身份、状态不一致及三种生命周期操作的提交保护；未操作真实集群。
 
 - 原生 OSD Purge 后端：新增高风险 POST /osd/purge，要求精确 purge osd.ID、UUID 与 Down 快照匹配以及原生 safe-to-destroy。允许已 Destroy 的零 UUID 目标，执行 purge-actual 后核验 OSD map 无目标、CRUSH 名称映射清除且 bucket 无目标引用；依据 CrushWrapper.dump 保留 deviceN 占位的语义，不错误要求设备编号从 dump 消失。无效/重复/缺失数据不当成已移除。覆盖正常和已销毁目标、安全拒绝、目标残留及畸形回读。前端待接入；未操作真实集群。
