@@ -1,6 +1,6 @@
 import { InfoCircleOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Checkbox, Collapse, Form, Input, InputNumber, Modal, Select, Space, Tag, Tooltip } from 'antd'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { HostHardware } from './HostHardware'
 import { useNavigate } from 'react-router-dom'
 import { isRecord, numberValue, textValue, type ApiRecord } from '../../api/client'
@@ -70,6 +70,18 @@ export function HostPage() {
   const [sshOpen, setSSHOpen] = useState(false)
   const [sshLoading, setSSHLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const createRunning = useRef(false)
+  const [createAttempted, setCreateAttempted] = useState(false)
+  const [createResults, setCreateResults] = useState<string[]>([])
+  const createScope = useMemo(() => ({ active: true }), [selectedClusterId])
+  useEffect(() => {
+    createScope.active = true
+    setCreateResults([])
+    setSubmitting(false)
+    setCreateAttempted(false)
+    setFormOpen(false)
+    return () => { createScope.active = false }
+  }, [createScope])
   const [sshSubmitting, setSSHSubmitting] = useState(false)
   const [editingHost, setEditingHost] = useState<ApiRecord | null>(null)
   const [refreshingHosts, setRefreshingHosts] = useState(false)
@@ -120,6 +132,8 @@ export function HostPage() {
   }
 
   function openCreate() {
+    if (createRunning.current) return
+    setCreateAttempted(false)
     form.resetFields()
     form.setFieldsValue({ labels: [], maintenance: false })
     setFormOpen(true)
@@ -161,9 +175,10 @@ export function HostPage() {
   }
 
   async function submitHost(values: HostFormValues) {
-    if (!selectedClusterId || submitting) {
+    if (!selectedClusterId || submitting || createRunning.current || createAttempted || !createScope.active) {
       return
     }
+    createRunning.current = true
     setSubmitting(true)
     try {
       const hostnames = expandHostnames(values.hostname)
@@ -171,18 +186,23 @@ export function HostPage() {
         form.setFields([{ name: 'hostname', errors: ['请输入有效的主机名或主机范围'] }])
         return
       }
-      await operationMutation.run(() => Promise.all(hostnames.map((hostname) => mutateResource('/host', 'POST', {
+      setCreateAttempted(true)
+      const results = await operationMutation.run(() => Promise.allSettled(hostnames.map((hostname) => mutateResource('/host', 'POST', {
         cluster_id: selectedClusterId,
         hostname,
         ...(hostnames.length === 1 && values.address?.trim() ? { address: values.address.trim() } : {}),
         labels: values.labels ?? [],
         maintenance: Boolean(values.maintenance)
       }))), false)
+      if (!createScope.active) return
+      setCreateResults(results.map((result, index) => `${hostnames[index]}：${result.status === 'fulfilled' ? '新增已确认' : '结果未确认，请核查主机库存后再决定是否重试'}`))
       setFormOpen(false)
-      message.success(hostnames.length > 1 ? `${hostnames.length} 台主机添加执行成功` : '主机添加执行成功')
+      if (results.every(result => result.status === 'fulfilled')) message.success('主机添加执行成功')
+      else message.warning('部分主机新增未确认，请核对逐台结果；不要直接重复提交整批主机')
       void refresh({ showLoading: false })
     } finally {
-      setSubmitting(false)
+      createRunning.current = false
+      if (createScope.active) setSubmitting(false)
     }
   }
 
@@ -232,6 +252,7 @@ export function HostPage() {
       loading={loading}
       error={error}
     >
+      {createResults.length > 0 && <Alert type="info" showIcon message="最近一次主机新增结果" description={<div>{createResults.map(result => <div key={result}>{result}</div>)}</div>} />}
       <Card
         className="page-surface-card"
         title="主机管理"
@@ -289,6 +310,7 @@ export function HostPage() {
         onOk={() => form.submit()}
         okText="提交"
         confirmLoading={submitting}
+        okButtonProps={{ disabled: createAttempted }}
         destroyOnClose
       >
         <Form form={form} layout="vertical" onFinish={submitHost}>
