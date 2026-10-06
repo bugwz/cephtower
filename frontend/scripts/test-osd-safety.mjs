@@ -1,6 +1,23 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
+const scrubSource = readFileSync(new URL('../src/pages/cluster/OSDScrubConfiguration.tsx', import.meta.url), 'utf8')
+const scrubTree = ts.createSourceFile('scrub.tsx', scrubSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const scrubOptionsNode = scrubTree.statements.find(n => ts.isVariableStatement(n))
+const scrubOptionsJS = ts.transpileModule(scrubOptionsNode.getText(scrubTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const scrubOptions = new Function(`${scrubOptionsJS}; return osdScrubOptions`)()
+assert.equal(scrubOptions.length, 31)
+assert.equal(new Set(scrubOptions).size, 31)
+for (const name of ['osd_scrub_during_recovery', 'osd_scrub_begin_week_day', 'osd_deep_scrub_interval', 'osd_scrub_sleep', 'osd_deep_scrub_large_omap_object_value_sum_threshold', 'osd_scrub_max_preemptions', 'osd_shallow_scrub_chunk_min']) assert.ok(scrubOptions.includes(name))
+const scrubPanelNode = scrubTree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'OSDScrubConfiguration')
+const scrubPanelJS = ts.transpileModule(scrubPanelNode.getText(scrubTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
+const scrubPanel = new Function('React', 'Alert', 'ConfigurationPage', 'osdScrubOptions', `${scrubPanelJS}; return OSDScrubConfiguration`)(
+  { createElement: (type, props, ...children) => ({ type, props, children }) }, 'Alert', 'ConfigurationPage', scrubOptions)()
+assert.equal(scrubPanel.children[1].props.optionNames, scrubOptions)
+const pagesSource = readFileSync(new URL('../src/pages/cluster/pages.tsx', import.meta.url), 'utf8')
+assert.ok(pagesSource.includes('const scrubConfigOpen = scrubConfigScope === osdScope'))
+assert.ok(pagesSource.includes('setScrubConfigScope(osdScope)'))
+assert.ok(pagesSource.includes('scrubConfigOpen && selectedClusterId && <OSDScrubConfiguration'))
 const source = readFileSync(new URL('../src/pages/cluster/OSDSafetyCheck.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('safety.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value)

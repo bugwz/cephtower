@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { MonMapSettings } from './MonMapSettings'
 import { ManagerInventory } from './ManagerInventory'
 import { osdSnapshotValue } from './OSDUsage'
+import { OSDScrubConfiguration } from './OSDScrubConfiguration'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import {
   applyDaemonAction,
@@ -355,6 +356,8 @@ export function OsdManagementPage() {
   const [deploymentOpen, setDeploymentOpen] = useState(false)
   const [osdInspection, setOSDInspection] = useState<{ scope: typeof osdScope; row: ApiRecord } | null>(null)
   const inspectedOSD = osdInspection?.scope === osdScope ? osdInspection.row : null
+  const [scrubConfigScope, setScrubConfigScope] = useState<typeof osdScope | null>(null)
+  const scrubConfigOpen = scrubConfigScope === osdScope
   const [refreshingOSDs, setRefreshingOSDs] = useState(false)
   const operationMutation = useMutationOperation()
 
@@ -445,6 +448,9 @@ export function OsdManagementPage() {
 
   return (
     <Page title="OSD管理" loading={loading} error={error}>
+      <Modal open={scrubConfigOpen} title={`集群 ${selectedClusterId} / PG Scrub 配置`} onCancel={() => setScrubConfigScope(null)} footer={null} width="90vw" destroyOnClose>
+        {scrubConfigOpen && selectedClusterId && <OSDScrubConfiguration key={selectedClusterId} />}
+      </Modal>
       <Modal open={Boolean(inspectedOSD)} title={`OSD ${osdID(inspectedOSD ?? {})} 详情`} onCancel={() => setOSDInspection(null)} footer={null} width="90vw" destroyOnClose>
         {inspectedOSD && selectedClusterId && <OSDInspection key={`${selectedClusterId}:${osdID(inspectedOSD)}`} clusterId={selectedClusterId} osdId={osdID(inspectedOSD)} record={inspectedOSD} />}
       </Modal>
@@ -454,6 +460,7 @@ export function OsdManagementPage() {
         extra={
           <Space>
             <Button icon={<ReloadOutlined />} loading={refreshingOSDs} onClick={refreshOSDData}>刷新</Button>
+            <Button disabled={!selectedClusterId} onClick={() => setScrubConfigScope(osdScope)}>PG Scrub 配置</Button>
             <Button type="primary" icon={<PlusOutlined />} onClick={() => setDeploymentOpen(true)}>OSD 部署</Button>
           </Space>
         }
