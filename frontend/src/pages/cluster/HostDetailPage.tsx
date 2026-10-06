@@ -8,6 +8,7 @@ import { getHostDeviceInfo, getHostSMART, getOptionalResource, listDaemons, list
 import type { ResourceDTO } from '../../api/types'
 import { DataTable } from '../../components/DataTable'
 import { HostHardware } from './HostHardware'
+import { HostAddressEditor } from './HostAddressEditor'
 import { SMARTDetails } from './SMARTDetails'
 import { DaemonPerf } from './DaemonPerf'
 import { DaemonRuntimeDetails } from './ServiceDaemons'
@@ -279,6 +280,7 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
 
         <Card className="page-surface-card" title="主机操作">
           <Space wrap>
+            {host && selectedClusterId && <HostAddressEditor key={`${selectedClusterId}:${hostName(host)}:${host.resource_version}`} clusterId={selectedClusterId} hostname={hostName(host)} currentAddress={textValue(host.address ?? host.addr, '')} version={hostDeleteVersion(host)} blocked={loading || Boolean(error) || Boolean(pendingAction) || submitting} />}
             <Button icon={<TagOutlined />} disabled={!host} onClick={openLabelModal}>标签</Button>
             <Button loading={pendingAction.endsWith(':maintenance_enter')} disabled={!host || Boolean(pendingAction)} onClick={() => runHostAction('maintenance_enter')}>维护</Button>
             <Button loading={pendingAction.endsWith(':maintenance_exit')} disabled={!host || Boolean(pendingAction)} onClick={() => runHostAction('maintenance_exit')}>退出维护</Button>

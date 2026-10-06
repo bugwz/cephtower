@@ -895,3 +895,4 @@ for (const fails of [false, true]) {
   assert.equal(h.render(q.loader).data, 'active strict effect')
 }
 console.log('Resource loading scope and request ordering checks passed')
+import './test-host-address-editor.mjs'
