@@ -277,6 +277,7 @@ export function HostPage() {
             { key: 'labels', title: '标签', filterKey: false },
             { key: 'system_display', title: '系统', filterKey: 'system' },
             { key: 'kernel_display', title: '内核版本', filterKey: 'kernel_release' },
+            ...['server', 'cpu_summary', 'ram', 'hdd_summary', 'ssd_summary', 'os'].map((key, index) => ({ key: `native_${key}`, title: ['服务器型号（原生）', 'CPU 核/线程（原生）', '内存摘要（原生）', 'HDD 摘要（原生）', 'SSD 摘要（原生）', '操作系统（原生）'][index], filterKey: false as const, render: (_value: unknown, row: ApiRecord) => isRecord(row.native_summary) ? textValue(row.native_summary[key]) : '-' })),
             { key: 'daemon_count_display', title: '守护进程', filterKey: false },
             { key: 'osd_count_display', title: 'OSD', filterKey: false },
             { key: 'storage_display', title: '磁盘容量', filterKey: false },

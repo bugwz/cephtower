@@ -5,6 +5,23 @@ import ts from 'typescript'
 const source = readFileSync(new URL('../src/pages/cluster/HostPage.tsx', import.meta.url), 'utf8')
 const file = ts.createSourceFile('HostPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const page = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'HostPage')
+let nativeColumns
+function findColumns(node) {
+  if (ts.isSpreadElement(node) && node.expression.getText(file).startsWith("['server', 'cpu_summary'")) nativeColumns = node.expression
+  ts.forEachChild(node, findColumns)
+}
+findColumns(file)
+assert.ok(nativeColumns)
+const columnCode = ts.transpileModule(`const columns = ${nativeColumns.getText(file)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const columns = new Function('isRecord', 'textValue', `${columnCode}; return columns`)(value => value !== null && typeof value === 'object' && !Array.isArray(value), value => value == null ? '-' : String(value))
+assert.equal(columns.length, 6)
+for (const column of columns) {
+  const key = column.key.replace('native_', '')
+  assert.equal(column.render(null, { native_summary: { [key]: '12/120 TB' } }), '12/120 TB')
+  assert.equal(column.render(null, { native_summary: { [key]: 'N/A' } }), 'N/A')
+  assert.equal(column.render(null, {}), '-')
+  assert.equal(column.filterKey, false)
+}
 const declaration = page.body.statements.filter(ts.isVariableStatement).flatMap(n => [...n.declarationList.declarations]).find(n => n.name.getText(file) === 'loader')
 const callback = declaration.initializer.arguments[0].getText(file)
 const resource = readFileSync(new URL('../src/api/resource.ts', import.meta.url), 'utf8')

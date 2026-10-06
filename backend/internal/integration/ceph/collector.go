@@ -394,6 +394,7 @@ func overviewScrubStatus(states []cephdomain.PGState, flags []string, flagsKnown
 }
 
 type hostWire struct {
+	cephdomain.HostNativeSummary
 	Hostname         string                       `json:"hostname"`
 	Addr             *string                      `json:"addr"`
 	Status           *string                      `json:"status"`
@@ -598,6 +599,7 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 		}
 		facts := mergeHostFacts(hostFactsFromMap(wire.Facts), factsByHost[wire.Hostname])
 		payload := cephdomain.Host{
+			NativeSummary:    wire.HostNativeSummary,
 			Hostname:         wire.Hostname,
 			Address:          wire.Addr,
 			Status:           wire.Status,

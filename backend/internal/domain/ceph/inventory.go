@@ -1,6 +1,7 @@
 package ceph
 
 type Host struct {
+	NativeSummary    HostNativeSummary `json:"native_summary"`
 	Hostname         string            `json:"hostname"`
 	Address          *string           `json:"address"`
 	Status           *string           `json:"status"`
@@ -17,6 +18,16 @@ type Host struct {
 	CPUModel         *string           `json:"cpu_model,omitempty"`
 	CPUCores         *int              `json:"cpu_cores,omitempty"`
 	MemoryBytes      *uint64           `json:"memory_bytes,omitempty"`
+}
+
+// HostNativeSummary retains cephadm's formatted summaries without inferring raw units.
+type HostNativeSummary struct {
+	Server *string `json:"server"`
+	CPU    *string `json:"cpu_summary"`
+	RAM    *string `json:"ram"`
+	HDD    *string `json:"hdd_summary"`
+	SSD    *string `json:"ssd_summary"`
+	OS     *string `json:"os"`
 }
 
 type HostService struct {
