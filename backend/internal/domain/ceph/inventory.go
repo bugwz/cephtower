@@ -94,6 +94,7 @@ type MonitorAddress struct {
 	Address string `json:"addr"`
 }
 type MonitorStatus struct {
+	MonitorMapSettings
 	QuorumNames      []string `json:"quorum_names"`
 	QuorumLeaderName *string  `json:"quorum_leader_name"`
 	ElectionEpoch    *string  `json:"election_epoch"`
@@ -105,6 +106,15 @@ type MonitorStatus struct {
 	QuorumMon        []string `json:"quorum_mon"`
 	RequiredCon      string   `json:"required_con"`
 	RequiredMon      []string `json:"required_mon"`
+}
+type MonitorMapSettings struct {
+	MinMonRelease     *uint32 `json:"min_mon_release"`
+	MinMonReleaseName *string `json:"min_mon_release_name"`
+	ElectionStrategy  *int32  `json:"election_strategy"`
+	StretchMode       *bool   `json:"stretch_mode"`
+	TiebreakerMon     *string `json:"tiebreaker_mon"`
+	DisallowedLeaders *string `json:"disallowed_leaders"`
+	RemovedRanks      *string `json:"removed_ranks"`
 }
 type MonitorPerfCounter struct {
 	Monitor     string `json:"monitor"`

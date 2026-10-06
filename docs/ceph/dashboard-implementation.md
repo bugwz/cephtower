@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### monmap 版本与选举配置快照
+
+- 从现有 `ceph quorum_status` 的 monmap 保留最低 MON 版本编号/名称、原生选举策略编号、stretch_mode、tiebreaker_mon、disallowed_leaders 和 removed_ranks，接入 MON 状态页。
+- 字段依据 `MonMap.cc::dump`，集合使用原生流式文本，不擅自解析成 JSON 数组；可选指针保留缺失/null，false、零和空字符串不混同未知。
+- 仅展示配置快照，不修改选举或 stretch 配置，也不推断 Leader 或健康结果；离线回归覆盖完整采集、API JSON 字段与前端展示，真实集群未验证。
+
 #### MON 原生 Priority 与 Weight
 
 - 参考 Dashboard `controllers/monitor.py` 的 MON 元数据及 `MonMap.cc` dump，保留现有 `ceph mon dump` 返回的 priority、weight，并经资源 API 提供到 MON 详情。

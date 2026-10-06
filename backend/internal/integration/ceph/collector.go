@@ -474,6 +474,7 @@ type quorumWire struct {
 		RequiredMon []interface{} `json:"required_mon"`
 	} `json:"features"`
 	MonMap struct {
+		cephdomain.MonitorMapSettings
 		FSID     string `json:"fsid"`
 		Modified string `json:"modified"`
 		Epoch    int    `json:"epoch"`
@@ -635,7 +636,8 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 		quorumSet[name] = struct{}{}
 	}
 	statusPayload := cephdomain.MonitorStatus{
-		QuorumNames: quorum.QuorumNames, QuorumLeaderName: quorum.QuorumLeaderName,
+		MonitorMapSettings: quorum.MonMap.MonitorMapSettings,
+		QuorumNames:        quorum.QuorumNames, QuorumLeaderName: quorum.QuorumLeaderName,
 		ElectionEpoch: monitorStatusInteger(quorum.ElectionEpoch), QuorumAge: monitorStatusInteger(quorum.QuorumAge),
 		FSID: quorum.MonMap.FSID, Modified: quorum.MonMap.Modified, Epoch: quorum.MonMap.Epoch,
 		QuorumCon: quorum.Features.QuorumCon, QuorumMon: interfaceStrings(quorum.Features.QuorumMon),

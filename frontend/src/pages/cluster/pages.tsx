@@ -2,6 +2,7 @@ import { ArrowLeftOutlined, BulbOutlined, DeleteOutlined, PlusOutlined, Poweroff
 import { Button, Card, Descriptions, Form, Input, InputNumber, Modal, Space, Switch, Tabs, Tag, Typography } from 'antd'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { MonMapSettings } from './MonMapSettings'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import {
   applyDaemonAction,
@@ -121,6 +122,7 @@ export function MonManagementPage() {
             <Descriptions.Item label="必需连接特性" span={2}>{textValue(data?.status?.required_con)}</Descriptions.Item>
             <Descriptions.Item label="必需 MON 特性" span={2}>{textValue(data?.status?.required_mon)}</Descriptions.Item>
           </Descriptions>
+          <MonMapSettings value={data?.status} />
         </Card>
         <Card
           className="page-surface-card"
