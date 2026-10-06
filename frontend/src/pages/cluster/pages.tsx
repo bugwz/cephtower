@@ -1093,6 +1093,13 @@ function osdReweightInitial(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1 ? value : undefined
 }
 
+function osdReweightPreview(value: unknown): string {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) return '请输入 0 到 1 之间的有限数值以查看原生权重。'
+  const effective = Math.trunc(value * 65536) / 65536
+  const summary = `Ceph 实际权重：${effective}（按 1/65536 精度截断）。`
+  return effective === 0 ? `${summary}注意：实际权重为零，OSD 将处于 Out，可能触发数据迁移。` : summary
+}
+
 function ReweightForm({ currentWeight, version, clusterId, isCurrent, osdID, refresh }: { currentWeight?: unknown; version: string; clusterId: number; isCurrent: () => boolean; osdID: string; refresh: (options?: { showLoading?: boolean }) => void }) {
   const running = useRef(false)
   const [submitting, setSubmitting] = useState(false)
@@ -1125,6 +1132,9 @@ function ReweightForm({ currentWeight, version, clusterId, isCurrent, osdID, ref
       <Typography.Paragraph>目标：集群 {clusterId} / OSD {osdID}。调权可能触发数据迁移；这是 OSD 调权系数，不是 CRUSH 容量权重。版本冲突或切换集群后请重新采集并打开此表单。</Typography.Paragraph>
       <Form.Item name="weight" label="权重" rules={[{ required: true }]}>
         <InputNumber min={0} max={1} step={0.01} />
+      </Form.Item>
+      <Form.Item noStyle shouldUpdate>
+        {({ getFieldValue }) => <Typography.Paragraph type="warning">{osdReweightPreview(getFieldValue('weight'))}</Typography.Paragraph>}
       </Form.Item>
       <Button type="primary" htmlType="submit" loading={submitting}>
         保存
