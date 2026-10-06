@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD 列表原生状态标记：修复列表读取 state 而库存未提供字段的问题，新增 `ceph osd dump` state 数组采集及 API/列表展示。保留树中的 status 独立语义，不由 up/in 拼造标记；区别 null 与空数组，拒绝空标记和错误类型。新增采集及前端显示回归。
+
 - OSD 网络地址页签改为按 public/cluster/heartbeat 分组的结构化表格，展示协议、原始地址、nonce；保持重复地址及原始顺序，明确区别未知列表和空列表，增加库存过期提示。地址仅作为文本展示，新增数组结构、nonce 边界和非链接展示回归。
 
 - OSD 网络地址：从 `ceph osd dump` 采集 public、cluster、heartbeat front/back 四组 addrvec，保留协议、原始地址及 uint32 nonce，通过库存 API 和详情“网络地址”页签展示。null 与显式空数组保持区分，不提供网页链接或声称连通性；增加四组映射、IPv6、v1/v2、零值及 nonce 边界回归。

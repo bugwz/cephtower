@@ -68,3 +68,37 @@ func TestOSDDumpRejectsAmbiguousIdentity(t *testing.T) {
 		}
 	}
 }
+
+func TestOSDNativeStateFlags(t *testing.T) {
+	for _, raw := range []string{`null`, `[]`, `["exists","up","autoout"]`, `[null]`, `[""]`, `[1]`} {
+		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+			"collect.osd_tree": []byte(`{"nodes":[{"id":0,"name":"osd.0","type":"osd","status":"up"}]}`),
+			"collect.osd_dump": []byte(`{"osds":[{"osd":0,"state":` + raw + `}]}`),
+		}}}
+		rows, err := p.Collect(context.Background(), ClusterAccess{}, "storage")
+		if raw == `[null]` || raw == `[""]` || raw == `[1]` {
+			if err == nil {
+				t.Fatal("invalid flags accepted")
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for _, row := range rows {
+			if row.Kind != "osd" {
+				continue
+			}
+			found = true
+			got := row.Payload.(cephdomain.OSD)
+			encoded, _ := json.Marshal(got.State)
+			if string(encoded) != raw || got.Status != "up" {
+				t.Fatalf("state=%s status=%s", encoded, got.Status)
+			}
+		}
+		if !found {
+			t.Fatal("OSD missing")
+		}
+	}
+}

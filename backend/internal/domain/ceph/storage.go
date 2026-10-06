@@ -1,6 +1,7 @@
 package ceph
 
 type OSD struct {
+	State []string `json:"state"`
 	OSDMapHistory
 	OSDNetworkAddresses
 	UUID            *string           `json:"uuid"`

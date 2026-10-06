@@ -920,6 +920,7 @@ type osdTreeWire struct {
 type osdDumpWire struct {
 	Flags *string `json:"flags"`
 	OSDs  []struct {
+		State []string `json:"state"`
 		cephdomain.OSDMapHistory
 		cephdomain.OSDNetworkAddresses
 		UUID            *string  `json:"uuid"`
@@ -1032,6 +1033,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 	uuids := map[int]*string{}
 	histories := map[int]cephdomain.OSDMapHistory{}
 	networks := map[int]cephdomain.OSDNetworkAddresses{}
+	stateFlags := map[int][]string{}
 	if dump.OSDs == nil {
 		return nil, fmt.Errorf("parse collect.osd_dump response: osds must be an explicit array")
 	}
@@ -1040,6 +1042,12 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 			return nil, fmt.Errorf("parse collect.osd_dump response: nonnegative OSD id required")
 		}
 		id := *osd.OSD
+		for _, flag := range osd.State {
+			if flag == "" || flag != strings.TrimSpace(flag) {
+				return nil, fmt.Errorf("parse collect.osd_dump response: nonempty state flags required")
+			}
+		}
+		stateFlags[id] = osd.State
 		histories[id] = osd.OSDMapHistory
 		networks[id] = osd.OSDNetworkAddresses
 		uuids[id] = osd.UUID
@@ -1094,6 +1102,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		payload.UUID = uuids[node.ID]
 		payload.OSDMapHistory = histories[node.ID]
 		payload.OSDNetworkAddresses = networks[node.ID]
+		payload.State = stateFlags[node.ID]
 		rows = append(rows, Observation{Kind: "osd", NaturalKey: strconv.Itoa(node.ID), Name: node.Name, Status: node.Status, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	poolPGStates := p.collectPoolPGStates(ctx, access)

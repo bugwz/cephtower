@@ -480,7 +480,7 @@ export function OsdManagementPage() {
             columns={[
               { key: 'id', title: 'ID' },
               { key: 'host', title: '主机' },
-              { key: 'state', title: '状态' },
+              { key: 'state', title: '原生状态标记', render: osdStateText },
               { key: 'up', title: 'Up' },
               { key: 'in', title: 'In' },
               { key: 'device_class', title: '设备类型' },
@@ -1020,6 +1020,11 @@ function DaemonTable({
       />
     </div>
   )
+}
+
+function osdStateText(value: unknown): string {
+  if (!Array.isArray(value) || value.some(flag => typeof flag !== 'string' || !flag.trim())) return '未采集或格式无效'
+  return value.length ? value.join('、') : '本次未返回状态标记'
 }
 
 function osdReweightInitial(value: unknown): number | undefined {
