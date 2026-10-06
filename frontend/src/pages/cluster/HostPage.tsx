@@ -558,8 +558,10 @@ export function normalizeHostRow(row: ApiRecord, daemons: ApiRecord[] = [], devi
 }
 
 export function hostStatus(row: ApiRecord) {
-  const status = textValue(row.status ?? row.status_desc ?? row.host_status, '')
-  return status || '在线'
+  const status = row.status
+  if (typeof status !== 'string' || status.trim() !== status) return '未知'
+  if (row.stale !== false) return status ? `${status}（快照，新鲜度未确认）` : '未知（快照，新鲜度未确认）'
+  return status === '' ? '在线' : status
 }
 
 export function hostNICCount(row: ApiRecord): string {

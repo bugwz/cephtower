@@ -5,6 +5,17 @@ import ts from 'typescript'
 const source = readFileSync(new URL('../src/pages/cluster/HostPage.tsx', import.meta.url), 'utf8')
 const file = ts.createSourceFile('HostPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const page = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'HostPage')
+const statusNode = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'hostStatus')
+const statusCode = ts.transpileModule(statusNode.getText(file).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const hostStatus = new Function(`${statusCode}; return hostStatus`)()
+assert.equal(hostStatus({ status: '', stale: false }), '在线')
+for (const status of ['maintenance', 'offline', 'new-state']) assert.equal(hostStatus({ status, stale: false }), status)
+for (const status of [undefined, null, 0, {}, ' ', ' maintenance']) assert.equal(hostStatus({ status, stale: false }), '未知')
+for (const stale of [true, undefined, null]) {
+  assert.match(hostStatus({ status: '', stale }), /未知.*快照/)
+  assert.match(hostStatus({ status: 'maintenance', stale }), /maintenance.*快照/)
+}
+assert.equal(hostStatus({ status_desc: 'online', stale: false }), '未知')
 const nicNode = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'hostNICCount')
 const nicCode = ts.transpileModule(nicNode.getText(file).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const nicCount = new Function('isRecord', `${nicCode}; return hostNICCount`)(value => value !== null && typeof value === 'object' && !Array.isArray(value))
