@@ -11,7 +11,7 @@ export function OSDInspection({ clusterId, osdId, record }: { clusterId: number;
   return <Tabs items={[
     { key: 'map', label: 'OSD 状态', children: <RecordDetail record={record} /> },
     { key: 'network', label: '网络地址', children: <OSDNetwork record={record} /> },
-    { key: 'usage', label: '容量与 PG', children: <OSDUsage record={record} /> },
+    { key: 'usage', label: '容量、PG 与延迟', children: <OSDUsage record={record} /> },
     { key: 'map-history', label: '状态历史 Epoch', children: <>
       <Alert type="info" message="来自 ceph osd dump 的 OSDMap 历史版本号，不是时间戳；不据此推断具体停机时间。" />
       <Descriptions bordered column={2}>{[['last_clean_begin', '上次 clean 区间起点'], ['last_clean_end', '上次 clean 区间终点'], ['up_from', '标记 up 的 Epoch'], ['up_thru', 'Up thru'], ['down_at', 'Down at'], ['lost_at', '标记丢失的 Epoch']].map(([key, label]) => <Descriptions.Item key={key} label={label}>{osdHistoryEpoch(record[key])}</Descriptions.Item>)}</Descriptions>

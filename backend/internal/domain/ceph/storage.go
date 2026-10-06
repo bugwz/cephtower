@@ -1,8 +1,9 @@
 package ceph
 
 type OSD struct {
-	Stats *OSDUsage `json:"stats"`
-	State []string  `json:"state"`
+	PerfStats *OSDPerfStats `json:"perf_stats"`
+	Stats     *OSDUsage     `json:"stats"`
+	State     []string      `json:"state"`
 	OSDMapHistory
 	OSDNetworkAddresses
 	UUID            *string           `json:"uuid"`
@@ -17,6 +18,10 @@ type OSD struct {
 	DeviceClass     *string           `json:"device_class"`
 	Host            *string           `json:"host"`
 	CrushPath       map[string]string `json:"crush_path,omitempty"`
+}
+type OSDPerfStats struct {
+	CommitLatencyMS *float64 `json:"commit_latency_ms"`
+	ApplyLatencyMS  *float64 `json:"apply_latency_ms"`
 }
 type OSDUsage struct {
 	KB          *string  `json:"kb"`

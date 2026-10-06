@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD 原生延迟：新增 `ceph osd perf --format json` 的 osd_perf_infos[].perf_stats 采集，按 ID 关联提交/应用延迟并在详情展示毫秒原值。来源为 PGMap::dump_osd_perf_stats，不将此快照冒充 Prometheus 一分钟平均或端到端延迟。缺失保留未知，拒绝重复 ID、负延迟和错误类型；增加离线回归。
+
 - OSD 容量/PG：新增 `ceph osd df --format json` 采集，按 ID 关联单 OSD 总量、已用、可用、data/omap/meta、PG 数和利用率；API 整数保留十进制字符串，详情新增“容量与 PG”页签（KiB）。缺失不补零，命令失败/格式异常标记 OSD 采集不可用，拒绝重复 ID、负容量和越界利用率。新增原生字段映射和大整数显示回归。
 
 - OSD 列表原生状态标记：修复列表读取 state 而库存未提供字段的问题，新增 `ceph osd dump` state 数组采集及 API/列表展示。保留树中的 status 独立语义，不由 up/in 拼造标记；区别 null 与空数组，拒绝空标记和错误类型。新增采集及前端显示回归。

@@ -102,3 +102,8 @@ const usageJS = ts.transpileModule(usageNode.getText(usageTree).replace('export 
 const usageInteger = new Function(`${usageJS}; return osdUsageInteger`)()
 for (const value of ['0', '9007199254740993', '18446744073709551615']) assert.equal(usageInteger(value), value)
 for (const value of [0, null, undefined, '-1', '1.5', '18446744073709551616']) assert.equal(usageInteger(value), '未采集或格式无效')
+const latencyNode = usageTree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'osdLatency')
+const latencyJS = ts.transpileModule(latencyNode.getText(usageTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const latency = new Function(`${latencyJS}; return osdLatency`)()
+for (const value of [0, 0.125, 25]) assert.equal(latency(value), String(value))
+for (const value of [null, undefined, -1, NaN, Infinity, '1']) assert.equal(latency(value), '未采集或格式无效')

@@ -103,6 +103,7 @@ var collectionFailureKinds = map[string][]string{
 	"collect.smb_share":               {"smb_share"},
 	"collect.osd_removal":             {"osd_removal"},
 	"collect.osd_usage":               {"osd"},
+	"collect.osd_perf":                {"osd"},
 	"collect.config_option":           {"config_option"},
 	"collect.mgr_module_metadata":     {"mgr_module"},
 	"collect.mgr_module":              {"mgr_module"},
@@ -1078,6 +1079,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 	}
 	hosts := osdHosts(tree)
 	osdUsage := p.collectOSDUsage(ctx, access)
+	osdPerf := p.collectOSDPerf(ctx, access)
 	crushPaths := osdCrushPaths(tree)
 	var pools []poolWire
 	if err := p.runInto(ctx, access, "collect.pool", []string{"osd", "pool", "ls", "detail", "--format", "json"}, &pools); err != nil {
@@ -1106,6 +1108,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		payload.OSDNetworkAddresses = networks[node.ID]
 		payload.State = stateFlags[node.ID]
 		payload.Stats = osdUsage[node.ID]
+		payload.PerfStats = osdPerf[node.ID]
 		rows = append(rows, Observation{Kind: "osd", NaturalKey: strconv.Itoa(node.ID), Name: node.Name, Status: node.Status, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	poolPGStates := p.collectPoolPGStates(ctx, access)
