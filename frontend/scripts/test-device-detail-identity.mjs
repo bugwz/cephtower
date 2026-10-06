@@ -5,6 +5,11 @@ import { matchRoutes } from 'react-router-dom'
 
 const source = readFileSync(new URL('../src/pages/cluster/pages.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('pages.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const wrapper = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'DeviceDetailPage')
+const queryIdentity = wrapper.body.statements.filter(ts.isVariableStatement).flatMap(n => [...n.declarationList.declarations]).find(n => n.name.getText(tree) === 'deviceId').initializer.getText(tree)
+const appSource = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8')
+assert.ok(appSource.includes('<Route path="/cluster/device/detail"'))
+assert.ok(!appSource.includes('/cluster/device/:deviceId'))
 const page = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'DeviceDetailContent')
 const loader = page.body.statements.find(n => ts.isVariableStatement(n) && n.declarationList.declarations[0].name.getText(tree) === 'loader').declarationList.declarations[0].initializer.arguments[0]
 const code = ts.transpileModule(`const loader = ${loader.getText(tree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
@@ -12,14 +17,15 @@ const identity = page.body.statements.filter(ts.isVariableStatement).flatMap(n =
 const pathNode = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'deviceDetailPath')
 const pathCode = ts.transpileModule(pathNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const pathFor = new Function(`${pathCode}; return deviceDetailPath`)()
-for (const original of ['disk%41', 'disk%20name', 'disk%25', 'disk%ZZ', '设备 A', 'node:/dev/sda']) {
+for (const original of ['disk%2Fpart', 'disk%2fpart', 'disk%252Fpart', 'disk/a?b#c&d=e+', 'disk%41', 'disk%20name', 'disk%25', 'disk%ZZ', '设备 A', 'node:/dev/sda']) {
   const url = pathFor(original, 'node 1', '/dev/disk%41')
   const params = new URL(url, 'http://localhost').searchParams
   const hostname = params.get('hostname'), path = params.get('path')
   assert.equal(hostname, 'node 1')
   assert.equal(path, '/dev/disk%41')
-  const matches = matchRoutes([{ path: '/cluster/device/:deviceId' }], url)
-  const deviceId = matches[0].params.deviceId
+  const matches = matchRoutes([{ path: '/cluster/device/detail' }], url)
+  assert.equal(matches.length, 1)
+  const deviceId = new Function('params', `return ${queryIdentity}`)(params)
   const decodedDeviceId = new Function('deviceId', `return ${identity}`)(deviceId)
   assert.equal(decodedDeviceId, original)
   const calls = [], target = { device_id: original, hostname, path }

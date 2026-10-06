@@ -790,8 +790,8 @@ export function DeviceManagementPage() {
 }
 
 export function DeviceDetailPage() {
-  const { deviceId = '' } = useParams()
   const [params] = useSearchParams()
+  const deviceId = params.get('device_id') ?? ''
   const hostname = params.get('hostname') ?? ''
   const path = params.get('path') ?? ''
   const { selectedClusterId } = useClusterContext()
@@ -1375,7 +1375,7 @@ function deviceID(row: ApiRecord) {
 }
 
 function deviceDetailPath(id: string, hostname: string, path: string) {
-  return `/cluster/device/${encodeURIComponent(id)}?${new URLSearchParams({ hostname, path }).toString()}`
+  return `/cluster/device/detail?${new URLSearchParams({ device_id: id, hostname, path }).toString()}`
 }
 
 function normalizeDeviceRow(row: ApiRecord): ApiRecord {
