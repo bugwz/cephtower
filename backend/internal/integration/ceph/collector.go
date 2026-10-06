@@ -922,7 +922,7 @@ type osdDumpWire struct {
 	OSDs  []struct {
 		PrimaryAffinity *float64 `json:"primary_affinity"`
 		Weight          *float64 `json:"weight"`
-		OSD             int      `json:"osd"`
+		OSD             *int     `json:"osd"`
 		Up              *int     `json:"up"`
 		In              *int     `json:"in"`
 	} `json:"osds"`
@@ -1026,15 +1026,25 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 	states := map[int][2]*bool{}
 	reweights := map[int]*float64{}
 	affinities := map[int]*float64{}
+	if dump.OSDs == nil {
+		return nil, fmt.Errorf("parse collect.osd_dump response: osds must be an explicit array")
+	}
 	for _, osd := range dump.OSDs {
+		if osd.OSD == nil || *osd.OSD < 0 {
+			return nil, fmt.Errorf("parse collect.osd_dump response: nonnegative OSD id required")
+		}
+		id := *osd.OSD
+		if _, exists := states[id]; exists {
+			return nil, fmt.Errorf("parse collect.osd_dump response: duplicate OSD id")
+		}
 		if osd.PrimaryAffinity != nil && (*osd.PrimaryAffinity < 0 || *osd.PrimaryAffinity > 1) {
 			return nil, fmt.Errorf("parse collect.osd_dump response: primary_affinity must be between zero and one")
 		}
-		affinities[osd.OSD] = osd.PrimaryAffinity
+		affinities[id] = osd.PrimaryAffinity
 		if osd.Weight != nil && (*osd.Weight < 0 || *osd.Weight > 1) {
 			return nil, fmt.Errorf("parse collect.osd_dump response: weight must be between zero and one")
 		}
-		reweights[osd.OSD] = osd.Weight
+		reweights[id] = osd.Weight
 		var state [2]*bool
 		for i, value := range []*int{osd.Up, osd.In} {
 			if value == nil {
@@ -1046,7 +1056,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 			flag := *value == 1
 			state[i] = &flag
 		}
-		states[osd.OSD] = state
+		states[id] = state
 	}
 	hosts := osdHosts(tree)
 	crushPaths := osdCrushPaths(tree)

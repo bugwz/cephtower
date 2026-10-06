@@ -58,3 +58,13 @@ func TestOSDStatesRetainUnknown(t *testing.T) {
 		}
 	}
 }
+
+func TestOSDDumpRejectsAmbiguousIdentity(t *testing.T) {
+	for _, raw := range []string{`{}`, `{"osds":null}`, `{"osds":[null]}`, `{"osds":[{}]}`, `{"osds":[{"osd":null}]}`, `{"osds":[{"osd":-1}]}`, `{"osds":[{"osd":0},{"osd":0}]}`} {
+		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.osd_dump": []byte(raw)}}}
+		rows, err := p.Collect(context.Background(), ClusterAccess{}, "storage")
+		if err == nil || len(rows) != 0 {
+			t.Fatalf("accepted ambiguous osd dump %s: %v", raw, err)
+		}
+	}
+}
