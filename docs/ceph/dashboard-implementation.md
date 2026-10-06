@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### MON 历史会话数语义校验
+
+- MON 会话数是非负整数，不再把通用指标解析接受的负数或小数绘制为有效会话数；异常点保留原值和状态，趋势在该处断线。
+- 有效零值、大整数原始字符串及科学记数法仍保留，非有限值继续明确标记，不补零。
+- 前端回归执行通用样本解析与 MON 专用校验，覆盖上述边界；实际图表仍为浮点近似，原值以表格为准。
+
 #### MON 会话数历史查询
 
 - 参考 `controllers/monitor.py` 的 `get_unlabeled_counter(mon, name, mon.num_sessions)` 与 MON sparkline。参考历史来自 MGR 内存；`ceph tell mon.<name> perf dump` 仅提供当前值，不能重建过去历史。

@@ -16,6 +16,20 @@ export function monSessionSeries(data: MetricResponse, name: string): ApiRecord[
   return data.series
 }
 
+export function monSessionSamples(row: ApiRecord) {
+  return metricSamples(row).map(sample => {
+    if (sample.status !== '有效值') return sample
+    const [mantissa, exponent = '0'] = sample.value.toLowerCase().split('e')
+    const digits = mantissa.replace(/^[+-]/, '').replace('.', '')
+    const fractionLength = mantissa.includes('.') ? mantissa.length - mantissa.indexOf('.') - 1 : 0
+    const decimalPlaces = fractionLength - Number(exponent)
+    const trailingZeros = /0*$/.exec(digits)![0].length
+    const zero = /^0+$/.test(digits)
+    const invalid = !zero && (mantissa.startsWith('-') || decimalPlaces > trailingZeros)
+    return invalid ? { ...sample, status: '会话数异常（应为非负整数）' } : sample
+  })
+}
+
 export function MonSessionHistory({ clusterId, monName }: { clusterId: number; monName: string }) {
   const [data, setData] = useState<MetricResponse | null>(null)
   const [error, setError] = useState('')
@@ -46,8 +60,8 @@ export function MonSessionHistory({ clusterId, monName }: { clusterId: number; m
       {data?.series.length === 0 && <Alert type="info" message="没有匹配的历史序列，不表示会话数为零。" />}
       {data?.series.map((row, index) => <div key={index}>
         <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(row.metric, null, 2)}</pre>
-        <MetricTrend samples={metricSamples(row)} meta={data.meta} name={`mon.${monName} 会话数`} />
-        <AppTable dataSource={metricSamples(row)} rowKey="index" size="small" pagination={{ defaultPageSize: 5 }} columns={[{ title: '评估时间 UTC', dataIndex: 'utc' }, { title: '原始值', dataIndex: 'value' }, { title: '样本状态', dataIndex: 'status' }]} />
+        <MetricTrend samples={monSessionSamples(row)} meta={data.meta} name={`mon.${monName} 会话数`} />
+        <AppTable dataSource={monSessionSamples(row)} rowKey="index" size="small" pagination={{ defaultPageSize: 5 }} columns={[{ title: '评估时间 UTC', dataIndex: 'utc' }, { title: '原始值', dataIndex: 'value' }, { title: '样本状态', dataIndex: 'status' }]} />
       </div>)}
     </Space>
   </Card>
