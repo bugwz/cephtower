@@ -31,11 +31,13 @@ type PGState struct {
 	Count uint64 `json:"count"`
 }
 type ClientIO struct {
-	ReadBytesPerSecond       *uint64 `json:"read_bytes_per_second"`
-	WriteBytesPerSecond      *uint64 `json:"write_bytes_per_second"`
-	ReadOpsPerSecond         *uint64 `json:"read_ops_per_second"`
-	WriteOpsPerSecond        *uint64 `json:"write_ops_per_second"`
-	RecoveringBytesPerSecond *uint64 `json:"recovering_bytes_per_second"`
+	ReadBytesPerSecond         *uint64 `json:"read_bytes_per_second"`
+	WriteBytesPerSecond        *uint64 `json:"write_bytes_per_second"`
+	ReadOpsPerSecond           *uint64 `json:"read_ops_per_second"`
+	WriteOpsPerSecond          *uint64 `json:"write_ops_per_second"`
+	RecoveringBytesPerSecond   *uint64 `json:"recovering_bytes_per_second"`
+	RecoveringObjectsPerSecond *uint64 `json:"recovering_objects_per_second"`
+	RecoveringKeysPerSecond    *uint64 `json:"recovering_keys_per_second"`
 }
 type ObjectStats struct {
 	Objects   *uint64 `json:"objects"`

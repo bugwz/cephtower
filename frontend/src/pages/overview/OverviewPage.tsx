@@ -191,6 +191,8 @@ function OverviewContent({ selectedClusterId }: { selectedClusterId: number | un
               <Descriptions.Item label="读取吞吐">{formatBytes(clientIO.read_bytes_per_second)}/s</Descriptions.Item>
               <Descriptions.Item label="写入吞吐">{formatBytes(clientIO.write_bytes_per_second)}/s</Descriptions.Item>
               <Descriptions.Item label="恢复吞吐">{formatBytes(clientIO.recovering_bytes_per_second)}/s</Descriptions.Item>
+              <Descriptions.Item label="恢复对象数 / 秒">{formatCount(clientIO.recovering_objects_per_second)}</Descriptions.Item>
+              <Descriptions.Item label="恢复键数 / 秒">{formatCount(clientIO.recovering_keys_per_second)}</Descriptions.Item>
               <Descriptions.Item label="Scrub 状态">{scrubStatusLabel(data?.overview.scrub_status)}</Descriptions.Item>
               <Descriptions.Item label="存储池">{formatCount(data?.overview.pool_count)}</Descriptions.Item>
               <Descriptions.Item label="平均 PG / OSD">{formatDecimal(data?.overview.pgs_per_osd)}</Descriptions.Item>

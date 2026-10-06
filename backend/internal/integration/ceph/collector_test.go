@@ -166,7 +166,7 @@ func TestCollectFastIncludesDashboardHealthMetrics(t *testing.T) {
 			"pgmap":{"num_pgs":4,"num_pools":2,"num_objects":100,
 				"pgs_by_state":[{"state_name":"active+clean","count":3},{"state_name":"active+scrubbing","count":1}],
 				"read_bytes_sec":10,"write_bytes_sec":20,"read_op_per_sec":1,"write_op_per_sec":2,
-				"recovering_bytes_per_sec":30},
+				"recovering_bytes_per_sec":30,"recovering_objects_per_sec":4,"recovering_keys_per_sec":0},
 			"mgrmap":{"available":true,"num_standbys":1},"fsmap":{"up":1,"standbys":[]}
 		}`),
 		"collect.overview_pg_summary": []byte(`{"pg_map":{"pg_stats_sum":{"stat_sum":{"num_objects":100,"num_object_copies":300,"num_objects_degraded":3,"num_objects_misplaced":2,"num_objects_unfound":1}}}}`),
@@ -194,6 +194,9 @@ func TestCollectFastIncludesDashboardHealthMetrics(t *testing.T) {
 	if overview.ClientIO.RecoveringBytesPerSecond == nil || *overview.ClientIO.RecoveringBytesPerSecond != 30 {
 		t.Fatalf("recovery throughput = %v", overview.ClientIO.RecoveringBytesPerSecond)
 	}
+	if overview.ClientIO.RecoveringObjectsPerSecond == nil || *overview.ClientIO.RecoveringObjectsPerSecond != 4 || overview.ClientIO.RecoveringKeysPerSecond == nil || *overview.ClientIO.RecoveringKeysPerSecond != 0 {
+		t.Fatalf("recovery rates = %+v", overview.ClientIO)
+	}
 	if overview.ScrubStatus == nil || *overview.ScrubStatus != "active" {
 		t.Fatalf("scrub status = %v", overview.ScrubStatus)
 	}
@@ -213,6 +216,25 @@ func TestCollectFastIncludesDashboardHealthMetrics(t *testing.T) {
 	if len(wantArgs) != 0 {
 		t.Fatalf("missing overview commands: %v", wantArgs)
 	}
+}
+
+func TestCollectMissingRecoveryRatesRemainUnknown(t *testing.T) {
+	provider := NativeProvider{Executor: fixtureExecutor{t}}
+	rows, err := provider.Collect(context.Background(), ClusterAccess{}, "fast")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range rows {
+		if row.Kind != "overview" {
+			continue
+		}
+		overview := row.Payload.(cephdomain.Overview)
+		if overview.ClientIO.RecoveringObjectsPerSecond != nil || overview.ClientIO.RecoveringKeysPerSecond != nil {
+			t.Fatalf("invented recovery rates: %+v", overview.ClientIO)
+		}
+		return
+	}
+	t.Fatal("overview not collected")
 }
 
 func TestOverviewScrubStatusMatchesDashboardSemantics(t *testing.T) {

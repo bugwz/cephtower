@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### 概览恢复对象与键速率
+
+- 参考 Dashboard 恢复卡片仅显示字节吞吐；参考 Ceph `src/mon/PGMap.cc` 的同一原生恢复统计还输出 `recovering_objects_per_sec` 和 `recovering_keys_per_sec`。本项目将二者补充到概览详情，不将其误称为参考卡片已有展示。
+- 链路为既有 `ceph status --format json` → `pgmap` 可空计数 → `Overview.ClientIO` → 概览资源 API → 前端“恢复对象数 / 秒”“恢复键数 / 秒”，不增加采集命令。API 字段分别为 `recovering_objects_per_second`、`recovering_keys_per_second`。
+- 原生字段缺失保持 null/未知，有效零保留为 0；页面沿用安全整数计数格式化，不将未提供字段视为无恢复活动。新增采集非零/零/缺失及展示绑定测试，`make test-backend`（含 OpenAPI 校验）与 `make test-frontend` 通过，未做真实 Ceph 或浏览器视觉联调。
+
 #### 对象健康比例的完整性校验
 
 - 对照参考 `health.component.ts#prepareObjects`，保持健康副本 = 总副本 − 错位 − 降级 − 未找到的计算口径；不再把缺失或负数异常计数默认成零，也不再把矛盾结果钳制成看似有效的健康数。

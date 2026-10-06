@@ -162,11 +162,13 @@ type statusWire struct {
 			StateName string  `json:"state_name"`
 			Count     *uint64 `json:"count"`
 		} `json:"pgs_by_state"`
-		ReadBytesSec          *uint64 `json:"read_bytes_sec"`
-		WriteBytesSec         *uint64 `json:"write_bytes_sec"`
-		ReadOpPerSec          *uint64 `json:"read_op_per_sec"`
-		WriteOpPerSec         *uint64 `json:"write_op_per_sec"`
-		RecoveringBytesPerSec *uint64 `json:"recovering_bytes_per_sec"`
+		ReadBytesSec            *uint64 `json:"read_bytes_sec"`
+		WriteBytesSec           *uint64 `json:"write_bytes_sec"`
+		ReadOpPerSec            *uint64 `json:"read_op_per_sec"`
+		WriteOpPerSec           *uint64 `json:"write_op_per_sec"`
+		RecoveringBytesPerSec   *uint64 `json:"recovering_bytes_per_sec"`
+		RecoveringObjectsPerSec *uint64 `json:"recovering_objects_per_sec"`
+		RecoveringKeysPerSec    *uint64 `json:"recovering_keys_per_sec"`
 	} `json:"pgmap"`
 	MgrMap struct {
 		Available   bool `json:"available"`
@@ -235,7 +237,7 @@ func (p *NativeProvider) collectFast(ctx context.Context, access ClusterAccess) 
 	if df.Stats.TotalBytes == nil || df.Stats.TotalUsedBytes == nil || df.Stats.TotalAvailBytes == nil {
 		return nil, fmt.Errorf("parse collect.df response: total byte fields are required")
 	}
-	overview := cephdomain.Overview{FSID: status.FSID, HealthStatus: status.Health.Status, Capacity: cephdomain.Capacity{TotalBytes: df.Stats.TotalBytes, UsedBytes: df.Stats.TotalUsedBytes, AvailableBytes: df.Stats.TotalAvailBytes}, Services: map[string]cephdomain.ServiceCount{"mon": {Total: &status.MonMap.NumMons, InQuorum: intPointer(len(status.MonMap.Quorum))}, "mgr": {Active: intPointer(boolInt(status.MgrMap.Available)), Standby: &status.MgrMap.NumStandbys}, "osd": {Total: &status.OSDMap.NumOSDs, Up: &status.OSDMap.NumUpOSDs, In: &status.OSDMap.NumInOSDs}, "mds": {Active: &status.FSMap.Up, Standby: intPointer(len(status.FSMap.Standbys))}}, PoolCount: status.PGMap.NumPools, ObjectStats: cephdomain.ObjectStats{Objects: status.PGMap.NumObjects}, ClientIO: cephdomain.ClientIO{ReadBytesPerSecond: status.PGMap.ReadBytesSec, WriteBytesPerSecond: status.PGMap.WriteBytesSec, ReadOpsPerSecond: status.PGMap.ReadOpPerSec, WriteOpsPerSecond: status.PGMap.WriteOpPerSec, RecoveringBytesPerSecond: status.PGMap.RecoveringBytesPerSec}, ObservedAt: now}
+	overview := cephdomain.Overview{FSID: status.FSID, HealthStatus: status.Health.Status, Capacity: cephdomain.Capacity{TotalBytes: df.Stats.TotalBytes, UsedBytes: df.Stats.TotalUsedBytes, AvailableBytes: df.Stats.TotalAvailBytes}, Services: map[string]cephdomain.ServiceCount{"mon": {Total: &status.MonMap.NumMons, InQuorum: intPointer(len(status.MonMap.Quorum))}, "mgr": {Active: intPointer(boolInt(status.MgrMap.Available)), Standby: &status.MgrMap.NumStandbys}, "osd": {Total: &status.OSDMap.NumOSDs, Up: &status.OSDMap.NumUpOSDs, In: &status.OSDMap.NumInOSDs}, "mds": {Active: &status.FSMap.Up, Standby: intPointer(len(status.FSMap.Standbys))}}, PoolCount: status.PGMap.NumPools, ObjectStats: cephdomain.ObjectStats{Objects: status.PGMap.NumObjects}, ClientIO: cephdomain.ClientIO{ReadBytesPerSecond: status.PGMap.ReadBytesSec, WriteBytesPerSecond: status.PGMap.WriteBytesSec, ReadOpsPerSecond: status.PGMap.ReadOpPerSec, WriteOpsPerSecond: status.PGMap.WriteOpPerSec, RecoveringBytesPerSecond: status.PGMap.RecoveringBytesPerSec, RecoveringObjectsPerSecond: status.PGMap.RecoveringObjectsPerSec, RecoveringKeysPerSecond: status.PGMap.RecoveringKeysPerSec}, ObservedAt: now}
 	if versions, err := p.run(ctx, access, "collect.versions", 30*time.Second, "versions", "--format", "json"); err == nil {
 		overview.CephVersion = cephVersionFromVersions(versions)
 	}
