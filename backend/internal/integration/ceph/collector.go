@@ -507,9 +507,10 @@ const (
 )
 
 type mgrDumpWire struct {
-	Available  bool   `json:"available"`
-	ActiveName string `json:"active_name"`
-	ActiveAddr string `json:"active_addr"`
+	Services   map[string]string `json:"services"`
+	Available  bool              `json:"available"`
+	ActiveName string            `json:"active_name"`
+	ActiveAddr string            `json:"active_addr"`
 	Standbys   []struct {
 		Name string `json:"name"`
 	} `json:"standbys"`
@@ -683,7 +684,7 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 	}
 	if managers.ActiveName != "" {
 		address := managers.ActiveAddr
-		payload := cephdomain.Manager{Name: managers.ActiveName, Active: true, Address: &address, Available: managers.Available}
+		payload := cephdomain.Manager{Name: managers.ActiveName, Active: true, Address: &address, Available: managers.Available, Services: managers.Services}
 		rows = append(rows, Observation{Kind: "mgr", NaturalKey: managers.ActiveName, Name: managers.ActiveName, Status: "active", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	for _, wire := range managers.Standbys {

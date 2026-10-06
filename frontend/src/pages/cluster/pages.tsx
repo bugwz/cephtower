@@ -3,6 +3,7 @@ import { Button, Card, Descriptions, Form, Input, InputNumber, Modal, Space, Swi
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { MonMapSettings } from './MonMapSettings'
+import { ManagerInventory } from './ManagerInventory'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import {
   applyDaemonAction,
@@ -293,6 +294,10 @@ export function MgrManagementPage() {
               key: 'daemons',
               label: '守护进程',
               children: <DaemonTable data={data?.daemons ?? []} refresh={refresh} tableFilters={daemonTableFilters} />
+            },
+            {
+              key: 'manager-inventory', label: '原生 MGR 清单',
+              children: selectedClusterId ? <ManagerInventory key={selectedClusterId} clusterId={selectedClusterId} /> : <Text>请先选择集群</Text>
             }
           ]}
         />

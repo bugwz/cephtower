@@ -129,10 +129,11 @@ type MonitorPerfCounter struct {
 	Priority    int    `json:"priority"`
 }
 type Manager struct {
-	Name      string  `json:"name"`
-	Active    bool    `json:"active"`
-	Address   *string `json:"address"`
-	Available bool    `json:"available"`
+	Services  map[string]string `json:"services"`
+	Name      string            `json:"name"`
+	Active    bool              `json:"active"`
+	Address   *string           `json:"address"`
+	Available bool              `json:"available"`
 }
 type MetadataServer struct {
 	Name       string `json:"name"`
