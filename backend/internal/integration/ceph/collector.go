@@ -508,7 +508,7 @@ const (
 
 type mgrDumpWire struct {
 	Services   map[string]string `json:"services"`
-	Available  bool              `json:"available"`
+	Available  *bool             `json:"available"`
 	ActiveName string            `json:"active_name"`
 	ActiveAddr string            `json:"active_addr"`
 	Standbys   []struct {

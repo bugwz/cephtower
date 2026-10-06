@@ -133,7 +133,7 @@ type Manager struct {
 	Name      string            `json:"name"`
 	Active    bool              `json:"active"`
 	Address   *string           `json:"address"`
-	Available bool              `json:"available"`
+	Available *bool             `json:"available"`
 }
 type MetadataServer struct {
 	Name       string `json:"name"`
