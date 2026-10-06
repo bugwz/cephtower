@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+#### Alertmanager 列表空响应语义
+
+- 告警和静默原生读取拒绝空响应体、JSON null 及数组中的 null 记录，避免成功解码后将不可用响应发布为空记录或有效数据；合法空数组仍返回 `items: []`。
+- 使用可空条目解码区分 null 与对象，任一 null 条目导致整次读取失败、不发布部分结果。服务层回归覆盖两种列表的空体、null、错误对象、混合 null 和合法空数组；`make test-backend` 与 OpenAPI 校验通过。未进行真实 Alertmanager 或 Ceph 集群验证。
+
 #### 静默当前关联告警
 
 - 静默详情新增当前关联告警面板，沿用 `/alert/alerts` 原生 Alertmanager 读取链路，以 status.silencedBy 对静默 ID 精确关联，展示名称、严重程度、摘要、状态、指纹和开始时间；提供独立刷新入口。

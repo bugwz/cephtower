@@ -162,9 +162,21 @@ type SilenceRecord struct {
 }
 
 func (c *Client) Alerts(ctx context.Context) ([]Alert, error) {
-	var result []Alert
-	err := c.get(ctx, "/api/v2/alerts", &result)
-	return result, err
+	var result []*Alert
+	if err := c.get(ctx, "/api/v2/alerts", &result); err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, fmt.Errorf("Alertmanager returned no alert array")
+	}
+	alerts := make([]Alert, 0, len(result))
+	for _, item := range result {
+		if item == nil {
+			return nil, fmt.Errorf("Alertmanager returned a null alert")
+		}
+		alerts = append(alerts, *item)
+	}
+	return alerts, nil
 }
 func (c *Client) Rules(ctx context.Context) ([]RuleGroup, error) {
 	var response struct {
@@ -187,9 +199,21 @@ func (c *Client) Rules(ctx context.Context) ([]RuleGroup, error) {
 	return response.Data.Groups, nil
 }
 func (c *Client) Silences(ctx context.Context) ([]SilenceRecord, error) {
-	var result []SilenceRecord
-	err := c.get(ctx, "/api/v2/silences", &result)
-	return result, err
+	var result []*SilenceRecord
+	if err := c.get(ctx, "/api/v2/silences", &result); err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, fmt.Errorf("Alertmanager returned no silence array")
+	}
+	silences := make([]SilenceRecord, 0, len(result))
+	for _, item := range result {
+		if item == nil {
+			return nil, fmt.Errorf("Alertmanager returned a null silence")
+		}
+		silences = append(silences, *item)
+	}
+	return silences, nil
 }
 func (c *Client) CreateSilence(ctx context.Context, silence Silence) (string, error) {
 	if !silence.EndsAt.After(silence.StartsAt) || len(silence.Matchers) == 0 {

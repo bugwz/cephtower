@@ -244,3 +244,26 @@ func TestSilenceExpiryUsesCompleteTarget(t *testing.T) {
 		t.Fatalf("expected one expiry, got %d", calls)
 	}
 }
+
+func TestAlertmanagerListsRejectAbsentAndNullData(t *testing.T) {
+	s, endpoints, cluster := externalTestService(t)
+	ctx := context.Background()
+	if _, err := endpoints.CreateEndpoint(ctx, cluster.ID, endpointservice.EndpointInput{Kind: "alertmanager", URL: "https://alertmanager.example.test"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, kind := range []string{"alert", "silence"} {
+		for _, body := range []string{"", "null", "{}", "[null]", "[{},null]", "[]"} {
+			s.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+				return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(body)), Request: r}, nil
+			})
+			result, err := s.Read(ctx, cluster.ID, kind, "", nil)
+			if body == "[]" {
+				if err != nil || !strings.Contains(toJSON(t, result), `"items":[]`) {
+					t.Fatalf("valid empty %s: %#v %v", kind, result, err)
+				}
+			} else if err == nil || result != nil {
+				t.Fatalf("accepted unavailable %s %q: %#v %v", kind, body, result, err)
+			}
+		}
+	}
+}
