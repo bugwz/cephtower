@@ -1,5 +1,5 @@
 import { CopyOutlined, DownloadOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Input, Select, Space, Switch, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Descriptions, Input, Select, Space, Switch, Tag, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { AppTable } from '../../components/AppTable'
@@ -10,6 +10,12 @@ import { message } from '../../utils/appMessage'
 
 export function runtimeLogsText(rows: ApiRecord[]): string {
   return rows.map((row) => `${row.stamp} [${row.channel}] ${row.priority} ${row.name}: ${row.message}`).join('\n')
+}
+
+export function runtimeLogDetails(row: ApiRecord) {
+  return [['name', '来源'], ['rank', '来源 Rank'], ['seq', '原生序列号'], ['stamp', '原生时间'], ['channel', '频道'], ['priority', '级别'], ['addrs', '来源地址'], ['message', '消息']].map(([key, label]) => ({
+    key, label, children: row[key] == null ? '未提供' : typeof row[key] === 'object' ? JSON.stringify(row[key], null, 2) : String(row[key])
+  }))
 }
 
 export async function copyRuntimeLogs(rows: ApiRecord[]): Promise<void> {
@@ -111,6 +117,7 @@ function RuntimeLogsContent({ compact, selectedClusterId }: { compact: boolean; 
         <ResourceMetaBar observedAt={observed} />
         {error && observed && <Alert type="warning" message="刷新失败，以下为上次成功获取的日志。" />}
         <AppTable<ApiRecord> size="small" loading={loading && !rows.length} dataSource={filtered}
+          expandable={{ expandedRowRender: (row) => <Descriptions size="small" bordered column={1} items={runtimeLogDetails(row)} style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }} /> }}
           rowKey={(row) => `${row.channel}/${row.name}/${row.rank}/${row.stamp}/${row.seq}`}
           pagination={{ defaultPageSize: 30, showSizeChanger: true }} columns={[
             { title: '时间', dataIndex: 'stamp', width: 230 },

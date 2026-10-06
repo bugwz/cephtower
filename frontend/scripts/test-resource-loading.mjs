@@ -464,6 +464,16 @@ assert.equal(managementMode(null), '未采集')
 
 const logsSource = readFileSync(new URL('../src/pages/monitoring/RuntimeLogsPage.tsx', import.meta.url), 'utf8')
 const logsTree = ts.createSourceFile('logs.tsx', logsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const logDetailsNode = logsTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'runtimeLogDetails')
+const detailExports = {}
+new Function('exports', ts.transpileModule(logDetailsNode.getText(logsTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(detailExports)
+const logDetails = detailExports.runtimeLogDetails({ rank: '0', seq: '18446744073709551615', message: '', addrs: { addrvec: [{ addr: '[::1]:3300', type: 'v2' }] } })
+assert.equal(logDetails.find(item => item.key === 'seq').children, '18446744073709551615')
+assert.equal(logDetails.find(item => item.key === 'rank').children, '0')
+assert.equal(logDetails.find(item => item.key === 'message').children, '')
+assert.equal(logDetails.find(item => item.key === 'channel').children, '未提供')
+assert.ok(logDetails.find(item => item.key === 'addrs').children.includes('[::1]:3300'))
+assert.ok(logsSource.includes('items={runtimeLogDetails(row)}'))
 const logCopyFunctions = logsTree.statements.filter(node => ts.isFunctionDeclaration(node) && ['runtimeLogsText', 'copyRuntimeLogs'].includes(node.name.text))
 const logCopyCode = ts.transpileModule(logCopyFunctions.map(node => node.getText(logsTree).replace('export ', '')).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const copied = []
