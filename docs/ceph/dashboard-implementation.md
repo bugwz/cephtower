@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 静默写入结果不确定时禁止自动重试
+
+- 对照参考 `prometheus.service.ts` 的创建与结束静默操作，继续使用 Alertmanager 原生 POST `/api/v2/silences` 与 DELETE `/api/v2/silence/{id}`，不虚构 Ceph CLI 替代接口。
+- 修复创建、结束静默请求失败被操作队列自动重发的问题：网络断开或远端错误不能证明写入未发生，统一返回不可重试错误，要求先刷新核实；编辑静默保持同样策略。编辑前只读检查失败仍可重试。
+- 新增真实服务调用链的离线传输测试，覆盖 POST/DELETE 的响应丢失、HTTP 503、POST 响应解析失败，以及 DELETE 成功时无需解析响应体的行为；断言错误不可重试且只发出一次写请求。
+- 验证：`make test-backend`（含 OpenAPI 校验）通过。本轮未改前端，未运行前端检查；没有真实 Alertmanager 联调，亦不宣称写入已做远端回读确认。
+
 #### 编辑已有静默
 
 - 对照参考表单编辑时携带 id 的原生语义，新增 PATCH `/alert/silence`、`silence.update` 操作及严格请求契约，接入统一操作调度后使用 Alertmanager POST `/api/v2/silences`。前端编辑表单保留原匹配器、起止时间、创建人和说明，目标 ID 与 expected_updated_at 来自选中记录，不由表单覆盖。

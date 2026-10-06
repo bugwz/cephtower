@@ -695,7 +695,7 @@ func (s *Service) alertmanager(ctx context.Context, clusterID uint64, request Re
 	}
 	if request.Action == "silence.delete" {
 		if err := api.DeleteSilence(ctx, silenceID); err != nil {
-			return cephdomain.ActionResult{}, failure("alertmanager_failed", err.Error(), true)
+			return cephdomain.ActionResult{}, failure("alertmanager_failed", "silence expiration outcome is uncertain; refresh before retrying: "+err.Error(), false)
 		}
 		return cephdomain.ActionResult{}, nil
 	}
@@ -733,10 +733,7 @@ func (s *Service) alertmanager(ctx context.Context, clusterID uint64, request Re
 	}
 	id, err := api.CreateSilence(ctx, silence)
 	if err != nil {
-		if request.Action == "silence.update" {
-			return cephdomain.ActionResult{}, failure("alertmanager_failed", "silence update outcome is uncertain; refresh before retrying: "+err.Error(), false)
-		}
-		return cephdomain.ActionResult{}, failure("alertmanager_failed", err.Error(), true)
+		return cephdomain.ActionResult{}, failure("alertmanager_failed", "silence write outcome is uncertain; refresh before retrying: "+err.Error(), false)
 	}
 	if strings.TrimSpace(id) == "" {
 		return cephdomain.ActionResult{}, failure("post_check_failed", "Alertmanager did not return a silence ID; refresh before retrying", false)
