@@ -109,6 +109,26 @@ for (const timing of ['current', 'before-confirm', 'during-request']) {
 assert.ok(hostDetailFn.getText(hostDetailTree).includes('deleteConfirmation.current?.destroy()'))
 console.log('Host deletion cannot submit or navigate from an inactive detail page')
 const hostActionNode = hostDetailFn.body.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'runHostAction')
+const hostLabelNode = hostDetailFn.body.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'submitHostLabel')
+const hostLabelCode = ts.transpileModule(hostLabelNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const scenario of ['add', 'rm', 'failure', 'unmounted', 'stale', 'running', 'no-version', 'invalid-action']) {
+  const calls = [], updates = [], active = { current: true }
+  const env = {
+    selectedClusterId: 3, host: { hostname: 'node1', stale: scenario === 'stale', resource_version: '18446744073709551615' },
+    active, hostName: row => row.hostname, hostDeleteVersion, submitting: false, loading: false, error: '',
+    labelRunning: { current: scenario === 'running' }, actionRunning: { current: false }, labelVersion: scenario === 'no-version' ? null : '18446744073709551614',
+    setSubmitting: value => updates.push(['busy', value]), setLabelVersion: value => updates.push(['version', value]),
+    setLabelModalOpen: value => updates.push(['open', value]), message: { error() {}, success() {} }, refresh: () => updates.push(['refresh']),
+    operationMutation: { run: fn => fn() }, mutateResource: async (...args) => { calls.push(args); if (scenario === 'unmounted') active.current = false; if (scenario === 'failure') throw new Error('failed') }
+  }
+  const save = new Function(...Object.keys(env), `${hostLabelCode}; return submitHostLabel`)(...Object.values(env))
+  const values = { label: ' custom ', action: scenario === 'rm' ? 'rm' : scenario === 'invalid-action' ? 'other' : 'add' }
+  if (scenario === 'failure') await assert.rejects(save(values), /failed/); else await save(values)
+  if (['stale', 'running', 'no-version', 'invalid-action'].includes(scenario)) { assert.deepEqual(calls, []); continue }
+  assert.deepEqual(calls, [['/host', 'PATCH', { cluster_id: 3, host: 'node1', labels_add: scenario === 'rm' ? [] : ['custom'], labels_remove: scenario === 'rm' ? ['custom'] : [] }, { ifMatch: '18446744073709551614' }]])
+  if (scenario === 'unmounted') assert.deepEqual(updates, [['busy', true]])
+  else assert.ok(updates.some(([key, value]) => key === 'version' && value === null))
+}
 const hostActionCode = ts.transpileModule(hostActionNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 for (const action of ['maintenance_enter', 'maintenance_exit', 'drain', 'stop_drain', 'rescan']) {
   for (const scenario of ['success', 'stale', 'loading', 'error', 'running', 'before-confirm', 'during-request', 'failure']) {

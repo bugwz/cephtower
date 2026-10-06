@@ -89,6 +89,8 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
   const host = data?.host
   const [labelForm] = Form.useForm<HostLabelFormValues>()
   const [labelModalOpen, setLabelModalOpen] = useState(false)
+  const [labelVersion, setLabelVersion] = useState<string | null>(null)
+  const labelRunning = useRef(false)
   const [submitting, setSubmitting] = useState(false)
   const [pendingAction, setPendingAction] = useState('')
   const actionRunning = useRef(false)
@@ -111,9 +113,12 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
   }
 
   function openLabelModal() {
-    if (!host) {
+    if (!host || !active.current || loading || error || actionRunning.current || labelRunning.current) {
       return
     }
+    const version = hostDeleteVersion(host)
+    if (!version) { message.error('主机库存过期或版本无效，请刷新后编辑标签'); return }
+    setLabelVersion(version)
     labelForm.resetFields()
     labelForm.setFieldsValue({
       action: 'add'
@@ -122,7 +127,7 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
   }
 
   async function submitHostLabel(values: HostLabelFormValues) {
-    if (!selectedClusterId || !host || submitting) {
+    if (!selectedClusterId || !host || !active.current || submitting || labelRunning.current || actionRunning.current || loading || error || !labelVersion || !hostDeleteVersion(host)) {
       return
     }
     const name = hostName(host)
@@ -131,10 +136,11 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
       message.error('无法识别主机名')
       return
     }
-    if (!label) {
+    if (!label || !['add', 'rm'].includes(values.action ?? '')) {
       message.error('请输入标签名称')
       return
     }
+    labelRunning.current = true
     setSubmitting(true)
     try {
       await operationMutation.run(() => mutateResource('/host', 'PATCH', {
@@ -142,13 +148,14 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
         host: name,
         labels_add: values.action === 'rm' ? [] : [label],
         labels_remove: values.action === 'rm' ? [label] : []
-      }, { ifMatch: Number(host.resource_version ?? 0) }), false)
+      }, { ifMatch: labelVersion }), false)
       if (!active.current) return
       setLabelModalOpen(false)
       message.success('主机标签更新成功')
       void refresh({ showLoading: false })
     } finally {
-      setSubmitting(false)
+      labelRunning.current = false
+      if (active.current) { setSubmitting(false); setLabelVersion(null) }
     }
   }
 
@@ -301,8 +308,11 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
         onOk={() => labelForm.submit()}
         okText="提交"
         confirmLoading={submitting}
+        okButtonProps={{ disabled: !labelVersion || loading || Boolean(error) }}
         destroyOnClose
       >
+        <Alert type="warning" message={`集群 ${selectedClusterId} / 主机 ${host ? hostName(host) : decodedName}：标签可能影响服务放置、调度及配置分发，特殊标签也有运行影响。`} />
+        {!labelVersion && <Alert type="info" message="本次编辑已提交或版本不可用。请关闭弹窗，刷新主机后重新打开，避免直接重试。" />}
         <Form form={labelForm} layout="vertical" onFinish={submitHostLabel}>
           <Form.Item name="label" label="标签名称" rules={[{ required: true, message: '请输入标签名称' }]}>
             <Input />
