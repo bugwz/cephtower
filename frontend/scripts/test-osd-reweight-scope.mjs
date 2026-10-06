@@ -24,3 +24,10 @@ for (const scenario of ['ok', 'switched-before', 'switched-after', 'busy', 'inva
 }
 assert.ok(!component.getText(tree).includes('requiredClusterId'))
 assert.ok(!component.getText(tree).includes('Modal.destroyAll'))
+const initial = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'osdReweightInitial')
+const initialJS = ts.transpileModule(initial.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const initialValue = new Function(`${initialJS}; return osdReweightInitial`)()
+for (const value of [0, 0.12345, 1]) assert.equal(initialValue(value), value)
+for (const value of [undefined, null, -1, 2, NaN, Infinity, '0.5']) assert.equal(initialValue(value), undefined)
+assert.ok(component.getText(tree).includes('weight: osdReweightInitial(currentWeight)'))
+assert.ok(!component.getText(tree).includes('precision={2}'))

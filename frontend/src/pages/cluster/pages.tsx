@@ -369,12 +369,12 @@ export function OsdManagementPage() {
     }
   }
 
-  async function runOSDAction(id: string, action: 'in' | 'out' | 'scrub' | 'deep-scrub' | 'reweight') {
+  async function runOSDAction(id: string, action: 'in' | 'out' | 'scrub' | 'deep-scrub' | 'reweight', currentWeight?: unknown) {
     if (action === 'reweight') {
       if (!selectedClusterId) return
       Modal.confirm({
         title: `调整 OSD ${id} 权重`,
-        content: <ReweightForm clusterId={selectedClusterId} isCurrent={() => osdScopeRef.current === osdScope} osdID={id} refresh={refresh} />,
+        content: <ReweightForm currentWeight={currentWeight} clusterId={selectedClusterId} isCurrent={() => osdScopeRef.current === osdScope} osdID={id} refresh={refresh} />,
         modalRender: draggableModalRender,
         icon: null,
         okButtonProps: { style: { display: 'none' } },
@@ -475,6 +475,7 @@ export function OsdManagementPage() {
               { key: 'up', title: 'Up' },
               { key: 'in', title: 'In' },
               { key: 'device_class', title: '设备类型' },
+              { key: 'reweight', title: 'OSD 调权系数', render: value => typeof value === 'number' ? value : '未采集' },
               { key: 'stats', title: '容量/统计' },
               {
                 key: 'actions',
@@ -489,7 +490,7 @@ export function OsdManagementPage() {
                       <TableAction loading={pendingOSDAction === `${id}:in`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:in`} onClick={() => runOSDAction(id, 'in')}>In</TableAction>
                       <TableAction loading={pendingOSDAction === `${id}:out`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:out`} onClick={() => runOSDAction(id, 'out')}>Out</TableAction>
                       <TableAction loading={pendingOSDAction === `${id}:scrub`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:scrub`} onClick={() => runOSDAction(id, 'scrub')}>Scrub</TableAction>
-                      <TableAction disabled={Boolean(pendingOSDAction)} onClick={() => runOSDAction(id, 'reweight')}>权重</TableAction>
+                      <TableAction disabled={Boolean(pendingOSDAction)} onClick={() => runOSDAction(id, 'reweight', row.reweight)}>权重</TableAction>
                       <TableAction danger disabled={Boolean(pendingOSDAction)} onClick={() => deleteOSD(row)}>删除</TableAction>
                     </TableActions>
                   )
@@ -1010,7 +1011,11 @@ function DaemonTable({
   )
 }
 
-function ReweightForm({ clusterId, isCurrent, osdID, refresh }: { clusterId: number; isCurrent: () => boolean; osdID: string; refresh: (options?: { showLoading?: boolean }) => void }) {
+function osdReweightInitial(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1 ? value : undefined
+}
+
+function ReweightForm({ currentWeight, clusterId, isCurrent, osdID, refresh }: { currentWeight?: unknown; clusterId: number; isCurrent: () => boolean; osdID: string; refresh: (options?: { showLoading?: boolean }) => void }) {
   const running = useRef(false)
   const [submitting, setSubmitting] = useState(false)
   const operationMutation = useMutationOperation()
@@ -1038,10 +1043,10 @@ function ReweightForm({ clusterId, isCurrent, osdID, refresh }: { clusterId: num
   }
 
   return (
-    <Form layout="vertical" initialValues={{ weight: 1 }} onFinish={submit}>
+    <Form layout="vertical" initialValues={{ weight: osdReweightInitial(currentWeight) }} onFinish={submit}>
       <Typography.Paragraph>目标：集群 {clusterId} / OSD {osdID}。切换集群后请关闭并重新打开此表单。</Typography.Paragraph>
       <Form.Item name="weight" label="权重" rules={[{ required: true }]}>
-        <InputNumber min={0} max={1} step={0.01} precision={2} />
+        <InputNumber min={0} max={1} step={0.01} />
       </Form.Item>
       <Button type="primary" htmlType="submit" loading={submitting}>
         保存

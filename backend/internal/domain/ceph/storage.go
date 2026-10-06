@@ -1,6 +1,7 @@
 package ceph
 
 type OSD struct {
+	Reweight    *float64          `json:"reweight"`
 	ID          int               `json:"id"`
 	Name        string            `json:"name"`
 	Status      string            `json:"status"`

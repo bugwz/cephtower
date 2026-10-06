@@ -7,6 +7,43 @@ import (
 	"testing"
 )
 
+func TestOSDReweightSeparateFromCrushWeight(t *testing.T) {
+	for _, raw := range []string{`null`, `0`, `0.12345`, `1`, `-1`, `2`} {
+		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+			"collect.osd_tree": []byte(`{"nodes":[{"id":0,"name":"osd.0","type":"osd","crush_weight":4}]}`),
+			"collect.osd_dump": []byte(`{"osds":[{"osd":0,"up":1,"in":1,"weight":` + raw + `}]}`),
+		}}}
+		rows, err := p.Collect(context.Background(), ClusterAccess{}, "storage")
+		if raw == `-1` || raw == `2` {
+			if err == nil {
+				t.Fatal("invalid weight accepted")
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for _, row := range rows {
+			if row.Kind != "osd" {
+				continue
+			}
+			found = true
+			got := row.Payload.(cephdomain.OSD)
+			if got.Weight == nil || *got.Weight != 4 {
+				t.Fatal("crush weight changed")
+			}
+			encoded, _ := json.Marshal(got.Reweight)
+			if string(encoded) != raw {
+				t.Fatalf("reweight %s != %s", encoded, raw)
+			}
+		}
+		if !found {
+			t.Fatal("OSD missing")
+		}
+	}
+}
+
 func TestManagerInventoryRejectsAmbiguousIdentities(t *testing.T) {
 	for _, raw := range []string{
 		`{}`, `{"active_name":null,"standbys":[]}`, `{"active_name":"a"}`,
