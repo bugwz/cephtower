@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### Progress 任务耗时与剩余时间
+
+- 对照参考 Dashboard `services/progress.py`，已完成任务使用 `finished_at - started_at` 展示耗时。
+- 进行中任务直接展示 `ceph progress json` 的原生 `duration` 和 `time_remaining` 秒数；明确标记为采集快照估计，不启动客户端倒计时。
+- 缺失、非数值、非有限或负耗时显示未知；有效零秒保留，缺失预计时间不伪装成零。
+- 前端回归覆盖原生持续时间、零值、异常输入和完成时间倒置；未连接真实 Ceph 集群验证。
+
 #### Progress 模块进行中与已完成任务
 
 - 对照参考 Dashboard `services/progress.py#get_progress_tasks` 和 Ceph `progress/module.py`，新增只读可选命令 `ceph progress json`；该命令返回同一 `_json()` 的 `events` 与 `completed`，接入概览 `progress_history`，无需依赖 Dashboard HTTP API。
