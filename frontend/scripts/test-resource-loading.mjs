@@ -61,8 +61,8 @@ const hostLoader = hostDetailFn.body.statements.find((node) => ts.isVariableStat
 const hostLoaderCode = ts.transpileModule(`const load = ${hostLoader.getText(hostDetailTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 for (const failed of ['none', 'device', 'smart', 'both']) {
   const env = {
-    selectedClusterId: 3, decodedName: 'node1', getOptionalResource: async () => ({ item: { hostname: 'node1' } }), listDaemons: async () => [],
-    listHostDevices: async () => [{ name: 'disk1' }], listResource: async () => ({ items: [] }),
+    selectedClusterId: 3, decodedName: 'node1', getOptionalResource: async () => ({ item: { hostname: 'node1' } }),
+    listAllResources: async (path, cluster) => { assert.equal(cluster, 3); return { items: path === '/devices' ? [{ name: 'disk1', hostname: 'node1' }, { name: 'disk2', hostname: 'node2' }] : [] } },
     getHostDeviceInfo: async () => { if (['device', 'both'].includes(failed)) throw new Error('device unavailable'); return [] },
     getHostSMART: async () => { if (['smart', 'both'].includes(failed)) throw new Error('smart unavailable'); return {} },
     normalizeHostRow: (row) => row, textValue: (value) => value, resourceToRecord: (row) => row, normalizeDaemonRow: (row) => row,

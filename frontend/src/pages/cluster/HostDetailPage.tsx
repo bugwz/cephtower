@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { isRecord, numberValue, textValue, type ApiRecord } from '../../api/client'
 import { queryMetric, type MetricResponse } from '../../api/external'
-import { getHostDeviceInfo, getHostSMART, getOptionalResource, listDaemons, listHostDevices, listResource, mutateResource, refreshResource } from '../../api/resource'
+import { getHostDeviceInfo, getHostSMART, getOptionalResource, listAllResources, mutateResource, refreshResource } from '../../api/resource'
 import type { ResourceDTO } from '../../api/types'
 import { DataTable } from '../../components/DataTable'
 import { HostHardware } from './HostHardware'
@@ -61,14 +61,8 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
     }
     const [hostPayload, daemons, devices, deviceInfo, smart] = await Promise.all([
       getOptionalResource('/host', selectedClusterId, { host: decodedName }),
-      listDaemons(),
-      listHostDevices(decodedName).then(async (items) => {
-        if (items.length > 0) {
-          return items
-        }
-        const payload = await listResource('/devices', selectedClusterId)
-        return payload.items.filter((device) => textValue(device.hostname ?? device.host, '') === decodedName)
-      }),
+      listAllResources('/daemons', selectedClusterId).then(payload => payload.items),
+      listAllResources('/devices', selectedClusterId).then(payload => payload.items.filter(device => textValue(device.hostname ?? device.host, '') === decodedName)),
       getHostDeviceInfo(decodedName, selectedClusterId).then((value) => ({ value, error: '' })).catch((err) => ({ value: [] as ApiRecord[], error: err instanceof Error ? err.message : '设备信息读取失败' })),
       getHostSMART(decodedName, selectedClusterId).then((value) => ({ value, error: '' })).catch((err) => ({ value: {} as ApiRecord, error: err instanceof Error ? err.message : 'SMART 信息读取失败' }))
     ])
