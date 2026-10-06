@@ -29,6 +29,12 @@ const listTree = ts.createSourceFile('ExternalListPage.tsx', listSource, ts.Scri
 const buildNode = listTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'buildColumns')
 const build = new Function(`${ts.transpileModule(buildNode.getText(listTree), { compilerOptions: { target: ts.ScriptTarget.ES2020, jsx: ts.JsxEmit.React } }).outputText}; return buildColumns`)()
 const tableColumns = build({ columns: exports.alertColumns }, () => {}, () => {}, () => {}, false)
+const multiFilter = build({ columns: [{ key: 'states', title: 'states', localFilter: { options: ['active', 'suppressed'], value: row => row.states } }] }, () => {}, () => {}, () => {}, false)[0]
+assert.equal(multiFilter.onFilter('active', { states: ['active', 'suppressed'] }), true)
+assert.equal(multiFilter.onFilter('suppressed', { states: ['active', 'suppressed'] }), true)
+assert.equal(multiFilter.onFilter('active', { states: [] }), false)
+assert.equal(multiFilter.onFilter('active', { states: undefined }), false)
+assert.equal(multiFilter.onFilter(true, { states: ['true'] }), false)
 const stateFilter = tableColumns.find(column => column.key === 'status')
 assert.deepEqual(stateFilter.defaultFilteredValue, ['active'])
 assert.deepEqual(stateFilter.filters.map(option => option.value), ['active', 'suppressed', 'unprocessed'])

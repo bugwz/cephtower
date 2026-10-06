@@ -24,7 +24,7 @@ import type { MutationFormField, MutationFormValues, ResourceDeleteAction, Resou
 const { Text } = Typography
 
 export interface ExternalListColumn extends FieldColumn {
-  localFilter?: { options: string[]; value: (row: ApiRecord) => string | undefined; defaultValues?: string[] }
+  localFilter?: { options: string[]; value: (row: ApiRecord) => string | string[] | undefined; defaultValues?: string[] }
 }
 
 export interface ExternalListPageDefinition extends FeatureRequirements {
@@ -393,7 +393,10 @@ function buildColumns(
     ...(column.localFilter ? {
       filters: column.localFilter.options.map(value => ({ text: value, value })),
       defaultFilteredValue: column.localFilter.defaultValues,
-      onFilter: (value: Key | boolean, row: ApiRecord) => column.localFilter!.value(row) === value
+      onFilter: (value: Key | boolean, row: ApiRecord) => {
+        const actual = column.localFilter!.value(row)
+        return Array.isArray(actual) ? typeof value === 'string' && actual.includes(value) : actual === value
+      }
     } : {}),
     render: (value, row) => column.render?.(value, row) ?? renderValue(value)
   }))
