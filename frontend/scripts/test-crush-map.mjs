@@ -80,6 +80,10 @@ for (const key of ['plugin', 'k', 'm', 'technique', 'l', 'c', 'd', 'scalar_mds',
 assert.equal(profileDetails.find((item) => item.key === 'l').children, '0')
 assert.equal(profileDetails.find((item) => item.key === 'crush-num-failure-domains').children, '0')
 assert.equal(profileDetails.find((item) => item.key === 'plugin').children, '未提供')
+const extraDetails = profileExports.erasureProfileDetails({ plugin: 'jerasure', w: '8', 'jerasure-per-chunk-alignment': 'true', custom: '', name: 'ec', natural_key: 'ec', source: 'ceph_cli', observed_at: '2026-10-06', status: '', resource_version: '3', stale: false })
+for (const [key, value] of [['w', '8'], ['jerasure-per-chunk-alignment', 'true'], ['custom', '']]) assert.equal(extraDetails.find(item => item.key === key).children, value)
+for (const key of ['name', 'natural_key', 'source', 'observed_at', 'status', 'resource_version', 'stale']) assert.equal(extraDetails.some(item => item.key === key), false)
+assert.equal(extraDetails.filter(item => item.key === 'plugin').length, 1)
 const advancedProfile = { plugin: 'lrc', mapping: 'DD__DD__', layers: '[ [ "DDc_DDc_", "" ], [ "DDDc____", "" ], [ "____DDDc", "" ] ]', 'crush-steps': '[ [ "choose", "rack", 2 ], [ "chooseleaf", "host", 4 ] ]' }
 const advancedDetails = profileExports.erasureProfileDetails(advancedProfile)
 for (const field of ['mapping', 'layers', 'crush-steps']) {

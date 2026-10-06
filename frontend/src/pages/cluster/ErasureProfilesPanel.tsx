@@ -32,7 +32,10 @@ export function erasureProfileDetails(row: ApiRecord) {
     ['mapping', 'LRC 原生分片映射'], ['layers', 'LRC 原生编码层'],
     ['crush-steps', 'LRC 原生放置步骤']
   ]
-  return fields.map(([key, label]) => ({ key, label: `${label} (${key})`, children: row[key] == null ? '未提供' : typeof row[key] === 'object' ? JSON.stringify(row[key]) : String(row[key]) }))
+  const reserved = new Set(['id', 'cluster_id', 'kind', 'natural_key', 'name', 'status', 'resource_version', 'source', 'observed_at', 'created_at', 'updated_at', 'stale', 'parent_kind', 'parent_key'])
+  const known = new Set(fields.map(([key]) => key))
+  const additional = Object.keys(row).filter(key => !known.has(key) && !reserved.has(key) && typeof row[key] === 'string').sort()
+  return [...fields, ...additional.map(key => [key, '其他原生参数'])].map(([key, label]) => ({ key, label: `${label} (${key})`, children: row[key] == null ? '未提供' : typeof row[key] === 'object' ? JSON.stringify(row[key]) : String(row[key]) }))
 }
 
 const definition: ResourceListPageDefinition = {
