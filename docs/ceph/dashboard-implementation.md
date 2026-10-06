@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD 诊断目标隔离：元数据、关联设备、SMART 与直方图组件按集群、OSD、section 设置独立 React key。切换目标立即重建诊断状态，不等待 effect 清理才隐藏旧结果；沿用 AbortController 拦截旧请求回写。新增所有诊断页的目标隔离回归。
+
 - OSD 设备健康：接入只读 `ceph device query-daemon-health-metrics osd.<id> --format json`，通过 inspection smart section 提供数据。新增 SMART 页，复用 ATA/SCSI/NVMe 详情；原生布尔健康状态严格区分通过、未通过、未知和读取失败。后端脱敏并将数值递归转为精确文本，补充大计数器、错误响应、目标绑定与状态回归，更新 OpenAPI。
 
 - OSD 关联设备：对照参考 Dashboard 的 devices 接口接入只读 `ceph device ls-by-daemon osd.<id> --format json`，通过 `/osd/inspection` 的 devices section 返回设备数组。详情新增关联设备页，完整展示原生位置、守护进程及可选寿命预测等属性；空列表与失败分开，不推断设备健康。补充命令、非法响应及页面目标绑定回归，并更新 OpenAPI。

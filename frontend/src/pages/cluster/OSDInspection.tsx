@@ -17,11 +17,11 @@ export function OSDInspection({ clusterId, osdId, record }: { clusterId: number;
       <Alert type="info" message="来自 ceph osd dump 的 OSDMap 历史版本号，不是时间戳；不据此推断具体停机时间。" />
       <Descriptions bordered column={2}>{[['last_clean_begin', '上次 clean 区间起点'], ['last_clean_end', '上次 clean 区间终点'], ['up_from', '标记 up 的 Epoch'], ['up_thru', 'Up thru'], ['down_at', 'Down at'], ['lost_at', '标记丢失的 Epoch']].map(([key, label]) => <Descriptions.Item key={key} label={label}>{osdHistoryEpoch(record[key])}</Descriptions.Item>)}</Descriptions>
     </> },
-    { key: 'metadata', label: '元数据', children: <Diagnostic clusterId={clusterId} osdId={osdId} section="metadata" /> },
-    { key: 'devices', label: '关联设备', children: <Diagnostic clusterId={clusterId} osdId={osdId} section="devices" /> },
-    { key: 'smart', label: '设备健康（SMART）', children: <Diagnostic clusterId={clusterId} osdId={osdId} section="smart" /> },
+    { key: 'metadata', label: '元数据', children: <Diagnostic key={`${clusterId}:${osdId}:metadata`} clusterId={clusterId} osdId={osdId} section="metadata" /> },
+    { key: 'devices', label: '关联设备', children: <Diagnostic key={`${clusterId}:${osdId}:devices`} clusterId={clusterId} osdId={osdId} section="devices" /> },
+    { key: 'smart', label: '设备健康（SMART）', children: <Diagnostic key={`${clusterId}:${osdId}:smart`} clusterId={clusterId} osdId={osdId} section="smart" /> },
     { key: 'perf', label: '性能计数器', children: <DaemonPerf key={`${clusterId}:osd.${osdId}`} clusterId={clusterId} name={`osd.${osdId}`} /> },
-    { key: 'histogram', label: '性能直方图', children: <Diagnostic clusterId={clusterId} osdId={osdId} section="histogram" /> }
+    { key: 'histogram', label: '性能直方图', children: <Diagnostic key={`${clusterId}:${osdId}:histogram`} clusterId={clusterId} osdId={osdId} section="histogram" /> }
   ]} />
 }
 

@@ -438,8 +438,14 @@ const osdCode = ts.transpileModule(osdNode.getText(osdTree).replace('export ', '
 const osdInspection = new Function('React', 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', 'Alert', 'Descriptions', 'osdHistoryEpoch', 'OSDNetwork', 'OSDUsage', `${osdCode}; return OSDInspection`)(
   { createElement: (component, props) => ({ component, props }) }, 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', 'Alert', { Item: 'Item' }, String, 'OSDNetwork', 'OSDUsage')
 const perfKeys = new Set()
+const diagnosticKeys = new Set()
 for (const [clusterId, osdId] of [[1, '0'], [1, '12'], [2, '12']]) {
   const panel = osdInspection({ clusterId, osdId, record: {} })
+  for (const section of ['metadata', 'devices', 'smart', 'histogram']) {
+    const diagnostic = panel.props.items.find(item => item.key === section).children
+    assert.equal(diagnostic.props.key, `${clusterId}:${osdId}:${section}`)
+    diagnosticKeys.add(diagnostic.props.key)
+  }
   const devices = panel.props.items.find((item) => item.key === 'devices')
   assert.equal(devices.children.props.clusterId, clusterId)
   assert.equal(devices.children.props.osdId, osdId)
@@ -455,6 +461,7 @@ for (const [clusterId, osdId] of [[1, '0'], [1, '12'], [2, '12']]) {
   perfKeys.add(tab.children.props.key)
 }
 assert.equal(perfKeys.size, 3, 'cluster or OSD changes must reset the performance baseline')
+assert.equal(diagnosticKeys.size, 12, 'each target and section must own a fresh diagnostic state')
 console.log('OSD performance navigation and snapshot scope checks passed')
 
 const gatewaySource = readFileSync(new URL('../src/pages/object/pages.tsx', import.meta.url), 'utf8')
