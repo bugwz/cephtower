@@ -1,7 +1,8 @@
 package ceph
 
 type OSD struct {
-	State []string `json:"state"`
+	Stats *OSDUsage `json:"stats"`
+	State []string  `json:"state"`
 	OSDMapHistory
 	OSDNetworkAddresses
 	UUID            *string           `json:"uuid"`
@@ -16,6 +17,16 @@ type OSD struct {
 	DeviceClass     *string           `json:"device_class"`
 	Host            *string           `json:"host"`
 	CrushPath       map[string]string `json:"crush_path,omitempty"`
+}
+type OSDUsage struct {
+	KB          *string  `json:"kb"`
+	KBUsed      *string  `json:"kb_used"`
+	KBAvailable *string  `json:"kb_avail"`
+	KBData      *string  `json:"kb_used_data"`
+	KBOmap      *string  `json:"kb_used_omap"`
+	KBMetadata  *string  `json:"kb_used_meta"`
+	PGs         *string  `json:"pgs"`
+	Utilization *float64 `json:"utilization"`
 }
 type OSDNetworkAddresses struct {
 	PublicAddrs         *OSDAddressVector `json:"public_addrs"`
