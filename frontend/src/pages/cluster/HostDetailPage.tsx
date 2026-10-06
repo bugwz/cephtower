@@ -29,6 +29,13 @@ interface HostLabelFormValues {
   action?: 'add' | 'rm'
 }
 
+export function hostDeleteVersion(host: ApiRecord | null | undefined): string | null {
+  if (!host || host.stale !== false) return null
+  const raw = host.resource_version
+  const version = typeof raw === 'string' ? raw : typeof raw === 'number' && Number.isSafeInteger(raw) ? String(raw) : ''
+  return /^[1-9][0-9]*$/.test(version) && BigInt(version) <= 18446744073709551615n ? version : null
+}
+
 export function HostDetailPage() {
   const { name = '' } = useParams()
   const { selectedClusterId } = useClusterContext()
@@ -170,7 +177,7 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
   }
 
   async function deleteHost() {
-    if (!selectedClusterId || !host) {
+    if (!selectedClusterId || !host || !active.current || loading || error || pendingAction) {
       message.error('请先选择集群')
       return
     }
@@ -179,16 +186,22 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
       message.error('无法识别主机名')
       return
     }
-    const generation = Number(host.resource_version ?? 0)
+    const generation = hostDeleteVersion(host)
+    if (!generation) {
+      message.error('主机库存过期或版本无效，请刷新后再删除')
+      return
+    }
+    let submitted = false
     deleteConfirmation.current?.destroy()
     deleteConfirmation.current = Modal.confirm({
-      title: `删除主机 ${name}`,
-      content: '该操作为高风险操作，确认后将直接执行删除操作。',
+      title: `集群 ${selectedClusterId} / 删除主机 ${name}`,
+      content: '将从编排器中移除该主机，不会自动迁移守护进程或清空磁盘。请先确认主机工作负载已妥善处理；失败后应刷新核对，不要直接重试。',
       okText: '提交删除',
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
-        if (!active.current) return
+        if (!active.current || submitted) return
+        submitted = true
         await operationMutation.run(() => mutateResource('/host', 'DELETE', {
           cluster_id: selectedClusterId,
           host: name
@@ -210,7 +223,7 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
             <Space className="host-detail-actions">
               <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/cluster/host')}>返回</Button>
               <Button icon={<ReloadOutlined />} loading={refreshing || loading} onClick={refreshHostDetail}>刷新</Button>
-              <Button danger icon={<DeleteOutlined />} disabled={!host} onClick={deleteHost}>删除</Button>
+              <Button danger icon={<DeleteOutlined />} disabled={!hostDeleteVersion(host) || loading || Boolean(error) || Boolean(pendingAction)} onClick={deleteHost}>删除</Button>
             </Space>
           }
         >

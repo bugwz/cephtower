@@ -79,22 +79,29 @@ for (const failed of ['none', 'device', 'smart', 'both']) {
 console.log('Host diagnostic failures remain distinct from empty responses')
 const deleteHostNode = hostDetailFn.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'deleteHost')
 const deleteHostCode = ts.transpileModule(deleteHostNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const hostVersionNode = hostDetailTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'hostDeleteVersion')
+const hostVersionCode = ts.transpileModule(hostVersionNode.getText(hostDetailTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const hostDeleteVersion = new Function(`${hostVersionCode}; return hostDeleteVersion`)()
+assert.equal(hostDeleteVersion({ stale: false, resource_version: '18446744073709551615' }), '18446744073709551615')
+for (const host of [null, {}, { stale: true, resource_version: 1 }, { stale: false, resource_version: 9007199254740992 }, { stale: false, resource_version: '01' }, { stale: false, resource_version: '18446744073709551616' }]) assert.equal(hostDeleteVersion(host), null)
 for (const timing of ['current', 'before-confirm', 'during-request']) {
   const active = { current: true }
   let confirmation
   let writes = 0
   let navigations = 0
   const env = {
-    selectedClusterId: 3, host: { hostname: 'node1', resource_version: 4 }, hostName: (row) => row.hostname,
+    selectedClusterId: 3, host: { hostname: 'node1', stale: false, resource_version: '18446744073709551615' }, hostName: (row) => row.hostname,
+    hostDeleteVersion, loading: false, error: '', pendingAction: '',
     message: { success() {}, error() {} }, active, deleteConfirmation: { current: null },
     Modal: { confirm(options) { confirmation = options; return { destroy() {} } } },
     operationMutation: { run: (fn) => fn() },
-    mutateResource: async () => { writes++; if (timing === 'during-request') active.current = false },
+    mutateResource: async (...args) => { assert.deepEqual(args, ['/host', 'DELETE', { cluster_id: 3, host: 'node1' }, { ifMatch: '18446744073709551615' }]); writes++; if (timing === 'during-request') active.current = false },
     navigate: () => { navigations++ },
   }
   const remove = new Function(...Object.keys(env), `${deleteHostCode}; return deleteHost`)(...Object.values(env))
   await remove()
   if (timing === 'before-confirm') active.current = false
+  await confirmation.onOk()
   await confirmation.onOk()
   assert.equal(writes, timing === 'before-confirm' ? 0 : 1)
   assert.equal(navigations, timing === 'current' ? 1 : 0)
