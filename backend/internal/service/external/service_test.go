@@ -136,7 +136,7 @@ func TestProtocolNativeHTTPReadsUseTypedAdapters(t *testing.T) {
 		case request.URL.Host == "alertmanager.example.test" && request.URL.Path == "/api/v2/silences":
 			body = `[]`
 		case request.URL.Host == "grafana.example.test" && request.URL.Path == "/api/search":
-			body = `[{"id":"1","uid":"ceph","title":"Ceph","url":"/d/ceph"}]`
+			body = `[{"id":1,"uid":"ceph","title":"Ceph","url":"/d/ceph"}]`
 		case request.URL.Host == "iscsi.example.test" && request.URL.Path == "/api/gateway":
 			body = `{"status":"ok"}`
 		case request.URL.Host == "iscsi.example.test" && request.URL.Path == "/api/target":

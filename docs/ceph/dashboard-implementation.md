@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### Grafana 原生看板响应解码修复
+
+- 修复 `/grafana` 调用 Grafana `/api/search?type=dash-db` 时将原生数字 `id` 解码为字符串而报错的问题；使用整数模型，不添加字符串兼容分支。
+- 对照 [Grafana 官方搜索 API](https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/folder_dashboard_search/) 保留 URI、标签、类型、文件夹 UID/名称/URL 与收藏状态；前端监控总览补充文件夹列，采用 UID 作为行标识。参考 Ceph 的 Grafana 控制器也依赖外部 Grafana，不以 Ceph CLI 伪造看板数据。
+- 无响应、null、非数组、空记录或缺失 UID 返回读取错误，合法空数组保留为空列表。新增原生数字 ID、字段保留、Bearer 请求及异常响应离线测试。
+- `make test-backend`（含 OpenAPI 校验）与 `make test-frontend` 通过。当前仍是既有单次搜索调用，未实现多页读取或嵌入看板，不宣称监控总览全部完成；未做真实 Grafana 或浏览器视觉联调。
+
 #### 告警通知路由与抑制详情
 
 - 对照参考 `prometheus-alerts.ts` 的静默、抑制与接收器字段，在告警详情中增加独立可读区域，展示原生 `status.silencedBy`、`status.inhibitedBy` 以及接收器名称并支持复制。

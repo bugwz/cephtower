@@ -235,16 +235,35 @@ func (c *Client) DeleteSilence(ctx context.Context, id string) error {
 }
 
 type Dashboard struct {
-	ID    string `json:"id"`
-	UID   string `json:"uid"`
-	Title string `json:"title"`
-	URL   string `json:"url"`
+	ID          int64    `json:"id"`
+	UID         string   `json:"uid"`
+	Title       string   `json:"title"`
+	URL         string   `json:"url"`
+	URI         string   `json:"uri,omitempty"`
+	Tags        []string `json:"tags"`
+	Type        string   `json:"type"`
+	FolderUID   string   `json:"folderUid,omitempty"`
+	FolderTitle string   `json:"folderTitle,omitempty"`
+	FolderURL   string   `json:"folderUrl,omitempty"`
+	IsStarred   bool     `json:"isStarred"`
 }
 
 func (c *Client) Dashboards(ctx context.Context) ([]Dashboard, error) {
-	var result []Dashboard
-	err := c.get(ctx, "/api/search?type=dash-db", &result)
-	return result, err
+	var rows []*Dashboard
+	if err := c.get(ctx, "/api/search?type=dash-db", &rows); err != nil {
+		return nil, err
+	}
+	if rows == nil {
+		return nil, fmt.Errorf("Grafana did not return a dashboard list")
+	}
+	result := make([]Dashboard, 0, len(rows))
+	for _, row := range rows {
+		if row == nil || strings.TrimSpace(row.UID) == "" {
+			return nil, fmt.Errorf("Grafana returned a dashboard without a UID")
+		}
+		result = append(result, *row)
+	}
+	return result, nil
 }
 
 func (c *Client) get(ctx context.Context, path string, out any) error {

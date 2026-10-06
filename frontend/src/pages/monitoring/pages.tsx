@@ -33,9 +33,11 @@ const externalDefinitions: Record<'grafana' | 'alerts' | 'rules' | 'silences', E
     title: '监控总览',
     path: '/grafana',
     requiredEndpoints: ['grafana'],
+    rowKeyCandidates: ['uid'],
     columns: [
       { key: 'title', title: '看板' },
       { key: 'uid', title: 'UID' },
+      { key: 'folderTitle', title: '文件夹' },
       { key: 'uri', title: 'URI' },
       { key: 'url', title: 'URL' },
       { key: 'tags', title: '标签' }
