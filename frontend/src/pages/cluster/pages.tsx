@@ -18,7 +18,6 @@ import {
   listResource,
   listAllResources,
   listOSDFlags,
-  markOSD,
   mutateResource,
   refreshResource,
   reweightOSD,
@@ -405,11 +404,9 @@ export function OsdManagementPage() {
     try {
       if (action === 'scrub' || action === 'deep-scrub') {
         await operationMutation.run(() => scrubOSD(selectedClusterId, id, action === 'deep-scrub'), false)
-      } else if (action === 'down') {
+      } else {
         if (!expectedVersion) throw new Error('请重新采集并确认 OSD 版本')
         await operationMutation.run(() => mutateResource('/osd/action', 'POST', { cluster_id: selectedClusterId, osd_id: id, action }, { ifMatch: expectedVersion }), false)
-      } else {
-        await operationMutation.run(() => markOSD(selectedClusterId, id, action), false)
       }
       if (osdScopeRef.current !== osdScope) return
       message.success(`OSD ${action} 命令已完成`)
@@ -421,18 +418,21 @@ export function OsdManagementPage() {
     }
   }
 
-  function confirmOSDDown(row: ApiRecord) {
-    if (!selectedClusterId || osdScopeRef.current !== osdScope || loading || error || row.stale !== false || row.up !== true || osdActionRunning.current) return
+  function confirmOSDState(row: ApiRecord, action: 'in' | 'out' | 'down') {
+    if (!selectedClusterId || osdScopeRef.current !== osdScope || loading || error || row.stale !== false || osdActionRunning.current) return
+    if (action === 'down' ? row.up !== true : action === 'in' ? row.in !== false : row.in !== true) return
     const id = osdID(row)
     const version = osdInventoryVersion(row.resource_version)
     if (!id || !version) { message.error('OSD 身份或版本无效，请重新采集'); return }
     Modal.confirm({
-      title: `标记集群 ${selectedClusterId} 的 OSD ${id} 为 Down`,
-      content: '这会修改 OSDMap 状态，可能触发故障处理和数据恢复；不会停止 OSD 进程，运行中的 OSD 可能再次被标记 Up。',
-      okText: '确认标记 Down', okType: 'danger', cancelText: '取消',
+      title: `标记集群 ${selectedClusterId} 的 OSD ${id} 为 ${action}`,
+      content: action === 'down'
+        ? '这会修改 OSDMap 状态，可能触发故障处理和数据恢复；不会停止 OSD 进程，运行中的 OSD 可能再次被标记 Up。'
+        : action === 'in' ? '将 OSD 标记 In，允许参与数据放置，可能触发数据重平衡；不会启动 OSD 进程。' : '将 OSD 标记 Out，数据可能迁移到其他 OSD 并增加恢复负载；不会停止或删除 OSD 进程。',
+      okText: `确认标记 ${action}`, okType: 'danger', cancelText: '取消',
       async onOk() {
         if (osdScopeRef.current !== osdScope) throw new Error('集群已切换或页面已关闭，请重新确认')
-        await runOSDAction(id, 'down', undefined, version)
+        await runOSDAction(id, action, undefined, version)
       }
     })
   }
@@ -553,9 +553,9 @@ export function OsdManagementPage() {
                     <TableActions>
                       <TableAction onClick={() => setOSDInspection({ scope: osdScope, row })}>详情</TableAction>
                       <TableAction disabled={Boolean(pendingOSDAction)} onClick={() => runOSDAction(id, 'deep-scrub')}>Deep scrub</TableAction>
-                      <TableAction loading={pendingOSDAction === `${id}:in`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:in`} onClick={() => runOSDAction(id, 'in')}>In</TableAction>
-                      <TableAction loading={pendingOSDAction === `${id}:out`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:out`} onClick={() => runOSDAction(id, 'out')}>Out</TableAction>
-                      <TableAction danger disabled={Boolean(pendingOSDAction) || row.up !== true || row.stale !== false || loading || Boolean(error)} onClick={() => confirmOSDDown(row)}>Down</TableAction>
+                      <TableAction loading={pendingOSDAction === `${id}:in`} disabled={Boolean(pendingOSDAction) || row.in !== false || row.stale !== false || loading || Boolean(error)} onClick={() => confirmOSDState(row, 'in')}>In</TableAction>
+                      <TableAction loading={pendingOSDAction === `${id}:out`} disabled={Boolean(pendingOSDAction) || row.in !== true || row.stale !== false || loading || Boolean(error)} onClick={() => confirmOSDState(row, 'out')}>Out</TableAction>
+                      <TableAction danger disabled={Boolean(pendingOSDAction) || row.up !== true || row.stale !== false || loading || Boolean(error)} onClick={() => confirmOSDState(row, 'down')}>Down</TableAction>
                       <TableAction loading={pendingOSDAction === `${id}:scrub`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:scrub`} onClick={() => runOSDAction(id, 'scrub')}>Scrub</TableAction>
                       <TableAction disabled={Boolean(pendingOSDAction)} onClick={() => runOSDAction(id, 'reweight', row.reweight)}>权重</TableAction>
                       <TableAction danger disabled={Boolean(pendingOSDAction)} onClick={() => deleteOSD(row)}>删除</TableAction>

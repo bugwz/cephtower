@@ -54,34 +54,46 @@ assert.ok(page.getText(tree).includes('setOSDInspection({ scope: osdScope, row }
 assert.ok(page.getText(tree).includes('inspectedOSD && selectedClusterId && <OSDInspection'))
 const actionNode = page.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'runOSDAction')
 const actionJS = ts.transpileModule(actionNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
-for (const action of ['in', 'out', 'scrub', 'deep-scrub']) {
+for (const action of ['in', 'out', 'down', 'scrub', 'deep-scrub']) {
  for (const timing of ['current', 'before', 'after']) {
   const scope = {}, scopeRef = { current: scope }, calls = []
   if (timing === 'before') scopeRef.current = {}
   const write = async (...args) => { calls.push(args); if (timing === 'after') scopeRef.current = {} }
-  const env = { selectedClusterId: 7, osdScope: scope, osdScopeRef: scopeRef, osdActionRunning: { current: false }, pendingOSDAction: '', setPendingOSDAction: () => {}, operationMutation: { run: fn => fn() }, scrubOSD: write, markOSD: write, refreshResource: async () => calls.push('collect'), refresh: async () => calls.push('read'), message: { success: () => calls.push('success') } }
-  await new Function(...Object.keys(env), `${actionJS}; return runOSDAction`)(...Object.values(env))('12', action)
+  const env = { selectedClusterId: 7, osdScope: scope, osdScopeRef: scopeRef, osdActionRunning: { current: false }, pendingOSDAction: '', setPendingOSDAction: () => {}, operationMutation: { run: fn => fn() }, scrubOSD: write, mutateResource: write, refreshResource: async () => calls.push('collect'), refresh: async () => calls.push('read'), message: { success: () => calls.push('success') } }
+  await new Function(...Object.keys(env), `${actionJS}; return runOSDAction`)(...Object.values(env))('12', action, undefined, '18446744073709551615')
   if (timing === 'before') assert.deepEqual(calls, [])
   else {
-   assert.deepEqual(calls[0], [7, '12', action.includes('scrub') ? action === 'deep-scrub' : action])
+   assert.deepEqual(calls[0], action.includes('scrub') ? [7, '12', action === 'deep-scrub'] : ['/osd/action', 'POST', { cluster_id: 7, osd_id: '12', action }, { ifMatch: '18446744073709551615' }])
    assert.deepEqual(calls.slice(1), timing === 'after' ? [] : ['success', 'collect', 'read'])
   }
  }
 }
 const deleteNode = page.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'deleteOSD')
-const downNode = page.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'confirmOSDDown')
+const downNode = page.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'confirmOSDState')
 const downJS = ts.transpileModule(downNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 for (const scenario of ['current', 'switched', 'stale', 'unknown', 'already-down']) {
   const scope = {}, ref = { current: scope }, calls = []
   let modal
   const env = { selectedClusterId: 7, osdScope: scope, osdScopeRef: ref, loading: false, error: '', osdActionRunning: { current: false }, osdID: () => '0', osdInventoryVersion: () => '18446744073709551615', message: { error: () => {} }, Modal: { confirm: v => { modal = v } }, runOSDAction: async (...args) => calls.push(args) }
-  new Function(...Object.keys(env), `${downJS}; return confirmOSDDown`)(...Object.values(env))({ stale: scenario === 'stale', up: scenario === 'unknown' ? null : scenario !== 'already-down' })
+  new Function(...Object.keys(env), `${downJS}; return confirmOSDState`)(...Object.values(env))({ stale: scenario === 'stale', up: scenario === 'unknown' ? null : scenario !== 'already-down' }, 'down')
   if (['stale', 'unknown', 'already-down'].includes(scenario)) { assert.equal(modal, undefined); continue }
   assert.ok(modal.content.includes('不会停止 OSD 进程'))
   if (scenario === 'switched') { ref.current = {}; await assert.rejects(modal.onOk(), /集群已切换/); assert.deepEqual(calls, []) }
   else { await modal.onOk(); assert.deepEqual(calls, [['0', 'down', undefined, '18446744073709551615']]) }
 }
 assert.ok(actionNode.getText(tree).includes("mutateResource('/osd/action', 'POST', { cluster_id: selectedClusterId, osd_id: id, action }, { ifMatch: expectedVersion })"))
+for (const action of ['in', 'out']) {
+  for (const state of [true, false, null, undefined]) {
+    const scope = {}, calls = []
+    let modal
+    const env = { selectedClusterId: 7, osdScope: scope, osdScopeRef: { current: scope }, loading: false, error: '', osdActionRunning: { current: false }, osdID: () => '0', osdInventoryVersion: () => '3', message: { error: () => {} }, Modal: { confirm: v => { modal = v } }, runOSDAction: async (...args) => calls.push(args) }
+    new Function(...Object.keys(env), `${downJS}; return confirmOSDState`)(...Object.values(env))({ stale: false, in: state }, action)
+    if (state === (action === 'out')) {
+      assert.ok(modal.title.includes(action)); await modal.onOk()
+      assert.deepEqual(calls, [['0', action, undefined, '3']])
+    } else assert.equal(modal, undefined)
+  }
+}
 const deleteJS = ts.transpileModule(deleteNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 let confirm
 const deleteScope = {}, deleteRef = { current: deleteScope }, writes = []
