@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### 从告警创建静默
+
+- 对照参考 `silence-form.component.ts::fillFormByAlert`，告警列表增加“创建静默”操作，默认以原始 alertname 生成 `isRegex:false`、`isEqual:true` 的精确匹配，预填两小时时间范围。缺少有效告警名称时禁用操作。
+- 与独立静默页共用可编辑表单及 `/alert/silence` → Alertmanager `/api/v2/silences` 写入链路；提交确认明确提示同名告警的影响范围及静默不修复故障，不在打开表单时执行写入。Matchers JSON 校验非空数组和字段类型，保留用户修改的匹配条件。
+- 回归覆盖特殊字符、缺失名称、默认时长、修改条件、非法匹配器及确认提示；`make test-frontend`（类型检查、生产构建）通过。未执行真实静默写入或浏览器交互验证。
+
 #### Alertmanager 告警原生详情贯通
 
 - 对照参考 `active-alert-list.component.ts` 与 `prometheus-alerts.ts`，修复告警列表错误读取顶层 `state`：名称、摘要、严重程度和状态分别取自原生 labels、annotations 与 status.state；使用 fingerprint 标识记录。

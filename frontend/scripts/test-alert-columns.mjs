@@ -19,3 +19,24 @@ const page = readFileSync(new URL('../src/pages/monitoring/pages.tsx', import.me
 assert.ok(page.includes("rowKeyCandidates: ['fingerprint']"))
 assert.ok(page.includes('columns: alertColumns'))
 console.log('Alert list columns read native nested state and labels')
+
+const actions = {}
+new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/monitoring/silenceActions.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(actions)
+const action = actions.silenceFromAlertAction
+const name = 'Ceph[Warning].* "中文"'
+const input = { labels: { alertname: name, instance: 'host1' } }
+const initial = action.initialValues(input)
+assert.deepEqual(JSON.parse(initial.matchers_json), [{ name: 'alertname', value: name, isRegex: false, isEqual: true }])
+assert.equal(Date.parse(initial.endsAt) - Date.parse(initial.startsAt), 7200000)
+assert.equal(action.disabledWhen(input), undefined)
+for (const labels of [undefined, null, [], {}, { alertname: '' }, { alertname: ' ' }, { alertname: 5 }]) assert.ok(action.disabledWhen({ labels }))
+assert.equal(action.path, '/alert/silence'); assert.equal(action.method, 'POST')
+assert.equal(action.buildBody(initial, 9, input).cluster_id, 9)
+assert.equal(action.buildBody(initial, 9, input).matchers[0].value, name)
+const changed = { ...initial, matchers_json: JSON.stringify([{ name: 'instance', value: 'host1', isRegex: false, isEqual: true }]) }
+assert.equal(action.buildBody(changed, 9, input).matchers[0].name, 'instance')
+for (const bad of ['null', '{}', '[]', '[null]', '[{"name":"a","value":"b"}]', '[{"name":"a","value":"b","isRegex":"false","isEqual":true}]']) assert.throws(() => actions.silenceMatchers(bad))
+assert.ok(action.confirmation().includes('所有同名告警'))
+assert.ok(page.includes('extraActions: [silenceFromAlertAction]'))
+assert.ok(page.includes('createAction: silenceCreateAction'))
+console.log('Create silence from alert prefills literal matchers and requires review')

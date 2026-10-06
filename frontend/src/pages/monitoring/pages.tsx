@@ -2,6 +2,7 @@ import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalLi
 export { RuntimeLogsPage } from './RuntimeLogsPage'
 import { MetricPage } from './MetricPage'
 import { alertColumns } from './alertColumns'
+import { silenceCreateAction, silenceFromAlertAction } from './silenceActions'
 
 export function MonitorOverviewPage() {
   return <ExternalListPage definition={externalDefinitions.grafana} />
@@ -42,7 +43,8 @@ const externalDefinitions: Record<'grafana' | 'alerts' | 'rules' | 'silences', E
     path: '/alert/alerts',
     requiredEndpoints: ['alertmanager'],
     rowKeyCandidates: ['fingerprint'],
-    columns: alertColumns
+    columns: alertColumns,
+    extraActions: [silenceFromAlertAction]
   },
   rules: {
     title: '告警规则',
@@ -61,39 +63,7 @@ const externalDefinitions: Record<'grafana' | 'alerts' | 'rules' | 'silences', E
     path: '/alert/silences',
     requiredEndpoints: ['alertmanager'],
     rowKeyCandidates: ['id', 'silence_id'],
-    createAction: {
-      title: '新建告警静默',
-      buttonLabel: '新建静默',
-      path: '/alert/silence',
-      method: 'POST',
-      successMessage: '告警静默创建执行成功',
-      fields: [
-        { name: 'matchers_json', label: 'Matchers JSON', type: 'textarea', required: true, placeholder: '[{"name":"alertname","value":"OSDNearFull","isRegex":false,"isEqual":true}]' },
-        { name: 'startsAt', label: '开始时间 RFC3339', required: true },
-        { name: 'endsAt', label: '结束时间 RFC3339', required: true },
-        { name: 'createdBy', label: '创建人', required: true },
-        { name: 'comment', label: '说明', type: 'textarea', required: true }
-      ],
-      initialValues: () => {
-        const start = new Date()
-        const end = new Date(start.getTime() + 2 * 60 * 60 * 1000)
-        return {
-          matchers_json: '[{"name":"alertname","value":"","isRegex":false,"isEqual":true}]',
-          startsAt: start.toISOString(),
-          endsAt: end.toISOString(),
-          createdBy: 'cephtower',
-          comment: ''
-        }
-      },
-      buildBody: (values, clusterId) => ({
-        cluster_id: clusterId,
-        matchers: parseJSONArray(values.matchers_json),
-        startsAt: String(values.startsAt ?? ''),
-        endsAt: String(values.endsAt ?? ''),
-        createdBy: String(values.createdBy ?? ''),
-        comment: String(values.comment ?? '')
-      })
-    },
+    createAction: silenceCreateAction,
     deleteAction: {
       title: '删除告警静默',
       path: '/alert/silence',
@@ -117,12 +87,4 @@ const externalDefinitions: Record<'grafana' | 'alerts' | 'rules' | 'silences', E
 
 function silenceId(row?: Record<string, unknown>) {
   return String(row?.id ?? row?.silence_id ?? '').trim()
-}
-
-function parseJSONArray(value: unknown) {
-  const parsed = JSON.parse(String(value ?? '[]'))
-  if (!Array.isArray(parsed)) {
-    throw new Error('JSON 字段必须是数组')
-  }
-  return parsed
 }
