@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, BulbOutlined, DeleteOutlined, PlusOutlined, PoweroffOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Button, Card, Descriptions, Form, Input, InputNumber, Modal, Select, Space, Switch, Tabs, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Descriptions, Form, Input, InputNumber, Modal, Select, Space, Switch, Tabs, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { MonMapSettings } from './MonMapSettings'
@@ -1011,25 +1011,30 @@ export function MdsManagementPage() {
   })
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
-      return { services: [], daemons: [] }
+      return { services: [], daemons: [], inventoryWarnings: [] }
     }
     const [services, daemons] = await Promise.all([
-      listResource('/services', selectedClusterId, {
+      listAllResources('/services', selectedClusterId, {
         filters: mergeResourceFilters({ service_type: ['mds'] }, serviceTableFilters.filters)
-      }).then((payload) => payload.items),
-      listResource('/daemons', selectedClusterId, {
+      }),
+      listAllResources('/daemons', selectedClusterId, {
         filters: mergeResourceFilters({ daemon_type: ['mds'] }, daemonTableFilters.filters)
-      }).then((payload) => payload.items)
+      })
     ])
     return {
-      services,
-      daemons
+      services: services.items,
+      daemons: daemons.items,
+      inventoryWarnings: [
+        services.stale !== false ? `MDS 服务库存：${services.staleReason || '已过期或新鲜度未知'}` : null,
+        daemons.stale !== false ? `MDS 守护进程库存：${daemons.staleReason || '已过期或新鲜度未知'}` : null
+      ].filter((value): value is string => value !== null)
     }
   }, [daemonTableFilters.filters, selectedClusterId, serviceTableFilters.filters])
   const { data, loading, error, refresh } = useResource(loader)
 
   return (
     <Page title="MDS管理" loading={loading} error={error}>
+      {data?.inventoryWarnings.map(warning => <Alert key={warning} type="warning" showIcon message={warning} />)}
       <Card className="page-surface-card" title="MDS管理">
         <Tabs
           items={[
