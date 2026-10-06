@@ -19,7 +19,7 @@ export function crushRuleSteps(value: unknown): ApiRecord[] | null {
 
 export function crushRuleDeleteBlocked(row: ApiRecord) {
   if (row.stale !== false) return '规则库存过期或状态未知，请重新采集'
-  if (typeof row.rule_name !== 'string' || !row.rule_name.trim()) return '规则名称不可用'
+  if (typeof row.rule_name !== 'string' || !row.rule_name || row.rule_name.trim() !== row.rule_name || /[/\x00\r\n]/.test(row.rule_name) || row.rule_name.startsWith('-')) return '规则名称不可用'
   return undefined
 }
 

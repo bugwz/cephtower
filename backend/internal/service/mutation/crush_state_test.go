@@ -58,6 +58,16 @@ func TestCrushRuleRenameReadback(t *testing.T) {
 	}
 }
 
+func TestCrushRuleMutationTargetValidation(t *testing.T) {
+	for _, action := range []string{"crush_rule.update", "crush_rule.delete"} {
+		for _, key := range []string{"", "a", "other/a", "crush-rule/", "crush-rule/parent/a", "crush-rule/a/", "/crush-rule/a", "crush-rule/ a", "crush-rule/a ", "crush-rule/--all"} {
+			if _, err := build(Request{Action: action, ResourceKey: key}, map[string]any{"new_name": "b"}); err == nil {
+				t.Fatalf("accepted %s target %q", action, key)
+			}
+		}
+	}
+}
+
 func TestCrushRuleDeletionReadback(t *testing.T) {
 	s, _, id := newCephUserService(t)
 	r := Request{ClusterID: id, Action: "crush_rule.delete", ResourceKey: "crush-rule/remove-me"}

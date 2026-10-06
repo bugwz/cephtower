@@ -1162,14 +1162,21 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		return ceph(args, []string{"osd", "crush", "rule", "dump", name, "--format", "json"}), nil
 	case "crush_rule.update":
-		old := last(tail)
+		old, err := crushRuleTarget(request.ResourceKey)
+		if err != nil {
+			return command{}, err
+		}
 		name, err := required(p, "new_name")
 		if err != nil {
 			return command{}, err
 		}
 		return ceph([]string{"osd", "crush", "rule", "rename", old, name}, []string{"osd", "crush", "rule", "ls", "--format", "json"}), nil
 	case "crush_rule.delete":
-		return ceph([]string{"osd", "crush", "rule", "rm", last(tail)}, []string{"osd", "crush", "rule", "ls", "--format", "json"}), nil
+		name, err := crushRuleTarget(request.ResourceKey)
+		if err != nil {
+			return command{}, err
+		}
+		return ceph([]string{"osd", "crush", "rule", "rm", name}, []string{"osd", "crush", "rule", "ls", "--format", "json"}), nil
 	case "erasure_code_profile.create":
 		name, err := required(p, "name")
 		if err != nil {

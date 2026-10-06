@@ -4,7 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"strings"
 )
+
+func crushRuleTarget(key string) (string, error) {
+	name, ok := strings.CutPrefix(key, "crush-rule/")
+	if !ok || name == "" || strings.TrimSpace(name) != name || strings.ContainsAny(name, "/\x00\r\n") || strings.HasPrefix(name, "-") {
+		return "", invalid("invalid crush rule resource key")
+	}
+	return name, nil
+}
 
 // nameAbsent verifies complete native JSON key lists, never paginated wrappers.
 func nameAbsent(name string, data []byte) bool {
