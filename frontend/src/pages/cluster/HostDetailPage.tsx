@@ -13,6 +13,7 @@ import { HostNativeSummary } from './HostNativeSummary'
 import { hostInitialLocation } from './hostLocation'
 import { HostAddressEditor } from './HostAddressEditor'
 import { SMARTDetails } from './SMARTDetails'
+import { DeviceAssociationDetails } from './DeviceAssociationDetails'
 import { DaemonPerf } from './DaemonPerf'
 import { DaemonRuntimeDetails } from './ServiceDaemons'
 import { DraggableModal } from '../../components/DraggableModal'
@@ -420,7 +421,8 @@ function HostDeviceInfoTable({ devices }: { devices: ApiRecord[] }) {
         { key: 'life_expectancy_display', title: '预计寿命' },
         { key: 'life_expectancy_stamp', title: '预测生成时间', render: (value) => formatDateTime(value) },
         { key: 'name_display', title: '设备名称' },
-        { key: 'daemons_display', title: '守护进程' }
+        { key: 'daemons_display', title: '守护进程' },
+        { key: 'association_details', title: '关联详情', ellipsis: false, filterKey: false, render: (_, row) => <details><summary>位置与寿命预测</summary><DeviceAssociationDetails device={row} /></details> }
       ]}
     />
   )
