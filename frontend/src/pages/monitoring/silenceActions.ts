@@ -16,6 +16,22 @@ export function alertSilenceName(row?: ApiRecord): string | undefined {
   return typeof name === 'string' && name.trim() ? name : undefined
 }
 
+export function silenceTimeRange(startsAt: unknown, endsAt: unknown) {
+  const parse = (value: unknown) => {
+    const parts = typeof value === 'string' ? /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,9}))?(Z|[+-](\d{2}):(\d{2}))$/.exec(value) : null
+    if (!parts || typeof value !== 'string') throw new Error('静默时间必须为包含时区的 RFC3339 格式')
+    const [year, month, day, hour, minute, second] = parts.slice(1, 7).map(Number)
+    const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)
+    const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    if (month < 1 || month > 12 || day < 1 || day > days[month - 1] || hour > 23 || minute > 59 || second > 59 || Number(parts[9] ?? 0) > 23 || Number(parts[10] ?? 0) > 59) throw new Error('静默时间无效')
+    const milliseconds = Date.parse(value)
+    if (!Number.isFinite(milliseconds)) throw new Error('静默时间无效')
+    return BigInt(Math.floor(milliseconds / 1000)) * BigInt(1000000000) + BigInt((parts[7] ?? '').padEnd(9, '0'))
+  }
+  if (parse(endsAt) <= parse(startsAt)) throw new Error('静默结束时间必须晚于开始时间')
+  return { startsAt: startsAt as string, endsAt: endsAt as string }
+}
+
 export const silenceCreateAction: ResourceFormAction = {
   title: '新建告警静默', buttonLabel: '新建静默', path: '/alert/silence', method: 'POST',
   successMessage: '告警静默创建执行成功',
@@ -37,7 +53,7 @@ export const silenceCreateAction: ResourceFormAction = {
   },
   buildBody: (values, clusterId) => ({
     cluster_id: clusterId, matchers: silenceMatchers(values.matchers_json),
-    startsAt: String(values.startsAt ?? ''), endsAt: String(values.endsAt ?? ''),
+    ...silenceTimeRange(values.startsAt, values.endsAt),
     createdBy: String(values.createdBy ?? ''), comment: String(values.comment ?? '')
   })
 }

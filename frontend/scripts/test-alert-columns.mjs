@@ -56,6 +56,15 @@ assert.ok(page.includes('columns: alertRuleColumns'))
 const actions = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/monitoring/silenceActions.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(actions)
 const action = actions.silenceFromAlertAction
+const range = actions.silenceTimeRange
+const start = '2026-10-06T00:00:00Z'
+const end = '2026-10-06T01:00:00Z'
+assert.deepEqual(range(start, end), { startsAt: start, endsAt: end })
+assert.doesNotThrow(() => range('2026-10-06T00:00:00.000000001Z', '2026-10-06T00:00:00.000000002Z'))
+assert.doesNotThrow(() => range('2024-02-29T00:00:00Z', end))
+for (const invalid of [undefined, null, 0, '', '2026-10-06', '2026-10-06T00:00:00', '2026-02-29T00:00:00Z', '2026-04-31T00:00:00Z', '2026-10-06T24:00:00Z', '2026-10-06T00:00:60Z', '2026-10-06T00:00:00+24:00']) assert.throws(() => range(invalid, end))
+for (const invalidEnd of [start, '2026-10-06T08:00:00+08:00', '2026-10-05T23:59:59Z']) assert.throws(() => range(start, invalidEnd), /结束时间/)
+for (const candidate of [actions.silenceCreateAction, actions.silenceRecreateAction]) assert.throws(() => candidate.buildBody({ matchers_json: '[{"name":"alertname","value":"x","isRegex":false,"isEqual":true}]', startsAt: end, endsAt: start }, 1), /结束时间/)
 const name = 'Ceph[Warning].* "中文"'
 const input = { labels: { alertname: name, instance: 'host1' } }
 const initial = action.initialValues(input)
@@ -120,6 +129,7 @@ assert.equal(editValues.startsAt, old.startsAt)
 assert.equal(editValues.endsAt, old.endsAt)
 assert.deepEqual(JSON.parse(editValues.matchers_json), old.matchers)
 const edited = edit.buildBody({ ...editValues, comment: 'changed', silence_id: 'other', expected_updated_at: 'other' }, 8, editable)
+assert.throws(() => edit.buildBody({ ...editValues, endsAt: editValues.startsAt }, 8, editable), /结束时间/)
 assert.equal(edited.silence_id, old.id)
 assert.equal(edited.expected_updated_at, old.updatedAt)
 assert.equal(edited.comment, 'changed')
