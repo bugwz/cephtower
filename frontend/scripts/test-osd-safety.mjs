@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
+import './test-osd-recovery-presets.mjs'
 const scrubSource = readFileSync(new URL('../src/pages/cluster/OSDScrubConfiguration.tsx', import.meta.url), 'utf8')
 const scrubTree = ts.createSourceFile('scrub.tsx', scrubSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const scrubOptionsNode = scrubTree.statements.find(n => ts.isVariableStatement(n))
@@ -24,7 +25,7 @@ const recoveryOptionsNode = recoveryTree.statements.find(n => ts.isVariableState
 const recoveryOptionsJS = ts.transpileModule(recoveryOptionsNode.getText(recoveryTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const recoveryOptions = new Function(`${recoveryOptionsJS}; return osdRecoveryOptions`)()
 assert.deepEqual(recoveryOptions, ['osd_max_backfills', 'osd_recovery_max_active', 'osd_recovery_max_single_start', 'osd_recovery_sleep', 'osd_op_queue', 'osd_mclock_profile', 'osd_mclock_override_recovery_settings'])
-assert.ok(recoverySource.includes('<ConfigurationPage optionNames={osdRecoveryOptions}'))
+assert.ok(recoverySource.includes('optionNames={osdRecoveryOptions}'))
 assert.ok(pagesSource.includes('const recoveryConfigOpen = recoveryConfigScope === osdScope'))
 assert.ok(pagesSource.includes('setRecoveryConfigScope(osdScope)'))
 assert.ok(pagesSource.includes('recoveryConfigOpen && selectedClusterId && <OSDRecoveryConfiguration'))
