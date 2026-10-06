@@ -237,17 +237,17 @@ export function MgrManagementPage() {
   const moduleDetails = moduleSelection?.scope === scope ? moduleSelection.row : null
   const [configSelection, setConfigSelection] = useState<{ scope: typeof scope, name: string } | null>(null)
   const configModule = configSelection?.scope === scope ? configSelection.name : ''
-  async function collectModules() {
+  async function collectManagerInventory() {
     if (!selectedClusterId || moduleScope.current !== scope || moduleRunning.current || loading) return
     moduleRunning.current = true
     setPendingModule('__collect__')
     try {
-      await refreshResource({ clusterId: selectedClusterId, kind: 'mgr_module' })
+      await refreshResource({ clusterId: selectedClusterId, kinds: ['mgr_module', 'daemon'] })
       if (moduleScope.current !== scope) return
-      message.success('MGR 模块采集完成，正在重新读取库存')
+      message.success('MGR 模块与守护进程采集完成，正在重新读取库存')
       await refresh()
     } catch (err) {
-      if (moduleScope.current === scope) message.error(err instanceof Error ? err.message : 'MGR 模块采集失败')
+      if (moduleScope.current === scope) message.error(err instanceof Error ? err.message : 'MGR 模块与守护进程采集失败')
     } finally {
       moduleRunning.current = false
       setPendingModule('')
@@ -285,7 +285,7 @@ export function MgrManagementPage() {
       <Modal title={`模块 ${textValue(moduleDetails?.name, '')}`} open={Boolean(moduleDetails)} onCancel={() => setModuleSelection(null)} footer={null} width="min(1200px, 95vw)" destroyOnClose>
         {moduleDetails && selectedClusterId && <ManagerModuleDetails key={`${selectedClusterId}:${String(moduleDetails.name)}`} record={moduleDetails} clusterId={selectedClusterId} />}
       </Modal>
-      <Card className="page-surface-card" title="MGR管理" extra={<Button disabled={!selectedClusterId || loading || Boolean(pendingModule)} loading={pendingModule === '__collect__'} onClick={() => void collectModules()}>重新采集模块</Button>}>
+      <Card className="page-surface-card" title="MGR管理" extra={<Button disabled={!selectedClusterId || loading || Boolean(pendingModule)} loading={pendingModule === '__collect__'} onClick={() => void collectManagerInventory()}>重新采集模块与守护进程</Button>}>
         <Tabs
           items={[
             {
