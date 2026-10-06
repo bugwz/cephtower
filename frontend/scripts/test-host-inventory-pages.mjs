@@ -16,6 +16,22 @@ assert.ok(detailSource.includes('不代表当前 CRUSH 树'))
 const source = readFileSync(new URL('../src/pages/cluster/HostPage.tsx', import.meta.url), 'utf8')
 const file = ts.createSourceFile('HostPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const page = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'HostPage')
+const normalizeNode = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'normalizeHostRow')
+const normalizeCode = ts.transpileModule(normalizeNode.getText(file).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const normalizeEnv = {
+  hostName: row => row.hostname, textValue: (v, fallback = '-') => v ?? fallback,
+  serviceInstanceRows: () => [], serviceInstanceCount: () => undefined, daemonType: row => row.daemon_type,
+  numberValue: v => typeof v === 'number' ? v : null, hostAddress: () => '-', hostStatus: () => '-',
+  hostSystem: () => '-', hostFact: () => undefined, hostKernel: () => '-', hostCPU: () => '-', formatBytes: () => '-'
+}
+const normalize = new Function(...Object.keys(normalizeEnv), `${normalizeCode}; return normalizeHostRow`)(...Object.values(normalizeEnv))
+const empty = normalize({ hostname: 'node1' }, [], [])
+for (const key of ['daemon_count_display', 'osd_count_display', 'disk_count_display']) assert.equal(empty[key], 0)
+const populated = normalize({ hostname: 'node1' }, [{ hostname: 'node1', daemon_type: 'osd' }, { hostname: 'node1', daemon_type: 'mgr' }, { hostname: 'node2', daemon_type: 'osd' }], [{ hostname: 'node1' }, { hostname: 'node2' }])
+assert.equal(populated.daemon_count_display, 2)
+assert.equal(populated.osd_count_display, 1)
+assert.equal(populated.disk_count_display, 1)
+assert.throws(() => normalize({ hostname: 'node1' }), TypeError)
 const statusNode = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'hostStatus')
 const statusCode = ts.transpileModule(statusNode.getText(file).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const hostStatus = new Function(`${statusCode}; return hostStatus`)()

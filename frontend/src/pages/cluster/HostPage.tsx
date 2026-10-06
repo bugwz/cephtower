@@ -525,7 +525,7 @@ export function hostAddress(row: ApiRecord) {
   return textValue(row.address ?? row.addr ?? row.ip ?? row.public_addr, '')
 }
 
-export function normalizeHostRow(row: ApiRecord, daemons: ApiRecord[] = [], devices: ApiRecord[] = []): ApiRecord {
+export function normalizeHostRow(row: ApiRecord, daemons: ApiRecord[], devices: ApiRecord[]): ApiRecord {
   const name = hostName(row)
   const hostDaemons = daemons.filter((daemon) => textValue(daemon.hostname ?? daemon.host, '') === name)
   const hostDevices = devices.filter((device) => textValue(device.hostname ?? device.host, '') === name)
@@ -549,9 +549,9 @@ export function normalizeHostRow(row: ApiRecord, daemons: ApiRecord[] = [], devi
     architecture_display: textValue(row.arch ?? hostFact(row, 'arch', 'machine')),
     cpu_display: hostCPU(row),
     memory_display: formatBytes(numberValue(row.memory_bytes ?? hostFact(row, 'memory_bytes', 'memory_total'))),
-    daemon_count_display: hostDaemons.length || daemonNames.length || '-',
-    osd_count_display: osdCount || '-',
-    disk_count_display: hostDevices.length || '-',
+    daemon_count_display: hostDaemons.length,
+    osd_count_display: osdCount,
+    disk_count_display: hostDevices.length,
     storage_display: storageBytes > 0 ? formatBytes(storageBytes) : '-',
     service_instances: serviceInstances.length ? serviceInstances : daemonNames
   }
