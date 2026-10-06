@@ -8,6 +8,7 @@ const helper = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.t
 const version = new Function(`${compile(helper)}; return osdClassVersion`)()
 const record = { stale: false, device_class: 'hdd', resource_version: '18446744073709551615' }
 assert.equal(version(record), record.resource_version)
+assert.equal(version({ ...record, device_class: '' }), record.resource_version)
 for (const row of [{ ...record, stale: true }, { ...record, device_class: null }, { ...record, resource_version: '18446744073709551616' }, { ...record, resource_version: 9007199254740992 }, { ...record, resource_version: '01' }]) assert.equal(version(row), null)
 const component = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'OSDDeviceClass')
 const save = component.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'save')

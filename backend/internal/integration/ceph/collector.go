@@ -928,7 +928,8 @@ func (tree *osdTreeWire) UnmarshalJSON(data []byte) error {
 	}
 	var identities struct {
 		Nodes []struct {
-			ID *int `json:"id"`
+			ID          *int            `json:"id"`
+			DeviceClass json.RawMessage `json:"device_class"`
 		} `json:"nodes"`
 	}
 	if err := json.Unmarshal(data, &identities); err != nil {
@@ -946,6 +947,12 @@ func (tree *osdTreeWire) UnmarshalJSON(data []byte) error {
 			return fmt.Errorf("OSD tree node identity is duplicated or invalid")
 		}
 		seen[node.ID] = true
+		// CrushTreeDumper omits this field when an OSD has no assigned class.
+		// Explicit null remains unknown rather than being treated as unclassified.
+		if node.Type == "osd" && len(identities.Nodes[i].DeviceClass) == 0 {
+			empty := ""
+			decoded.Nodes[i].DeviceClass = &empty
+		}
 	}
 	*tree = osdTreeWire(decoded)
 	return nil
