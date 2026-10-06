@@ -2,6 +2,7 @@ package ceph
 
 type OSD struct {
 	OSDMapHistory
+	OSDNetworkAddresses
 	UUID            *string           `json:"uuid"`
 	PrimaryAffinity *float64          `json:"primary_affinity"`
 	Reweight        *float64          `json:"reweight"`
@@ -14,6 +15,20 @@ type OSD struct {
 	DeviceClass     *string           `json:"device_class"`
 	Host            *string           `json:"host"`
 	CrushPath       map[string]string `json:"crush_path,omitempty"`
+}
+type OSDNetworkAddresses struct {
+	PublicAddrs         *OSDAddressVector `json:"public_addrs"`
+	ClusterAddrs        *OSDAddressVector `json:"cluster_addrs"`
+	HeartbeatBackAddrs  *OSDAddressVector `json:"heartbeat_back_addrs"`
+	HeartbeatFrontAddrs *OSDAddressVector `json:"heartbeat_front_addrs"`
+}
+type OSDAddressVector struct {
+	AddrVec []OSDNetworkAddress `json:"addrvec"`
+}
+type OSDNetworkAddress struct {
+	Type    *string `json:"type"`
+	Address *string `json:"addr"`
+	Nonce   *uint32 `json:"nonce"`
 }
 type OSDMapHistory struct {
 	LastCleanBegin *uint32 `json:"last_clean_begin"`

@@ -921,6 +921,7 @@ type osdDumpWire struct {
 	Flags *string `json:"flags"`
 	OSDs  []struct {
 		cephdomain.OSDMapHistory
+		cephdomain.OSDNetworkAddresses
 		UUID            *string  `json:"uuid"`
 		PrimaryAffinity *float64 `json:"primary_affinity"`
 		Weight          *float64 `json:"weight"`
@@ -1030,6 +1031,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 	affinities := map[int]*float64{}
 	uuids := map[int]*string{}
 	histories := map[int]cephdomain.OSDMapHistory{}
+	networks := map[int]cephdomain.OSDNetworkAddresses{}
 	if dump.OSDs == nil {
 		return nil, fmt.Errorf("parse collect.osd_dump response: osds must be an explicit array")
 	}
@@ -1039,6 +1041,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		}
 		id := *osd.OSD
 		histories[id] = osd.OSDMapHistory
+		networks[id] = osd.OSDNetworkAddresses
 		uuids[id] = osd.UUID
 		if _, exists := states[id]; exists {
 			return nil, fmt.Errorf("parse collect.osd_dump response: duplicate OSD id")
@@ -1090,6 +1093,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		payload.PrimaryAffinity = affinities[node.ID]
 		payload.UUID = uuids[node.ID]
 		payload.OSDMapHistory = histories[node.ID]
+		payload.OSDNetworkAddresses = networks[node.ID]
 		rows = append(rows, Observation{Kind: "osd", NaturalKey: strconv.Itoa(node.ID), Name: node.Name, Status: node.Status, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	poolPGStates := p.collectPoolPGStates(ctx, access)
