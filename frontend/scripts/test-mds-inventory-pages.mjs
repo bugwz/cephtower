@@ -26,7 +26,7 @@ for (const scenario of ['fresh', 'stale', 'unknown', 'failure', 'no-cluster']) {
     }
   }
   const loadAll = new Function('listResource', `${compile(all)}; return listAllResources`)(listResource)
-  const env = { selectedClusterId: scenario === 'no-cluster' ? undefined : 42, listAllResources: loadAll, mergeResourceFilters: mergeFilters, serviceTableFilters: { filters: { service_name: ['mds.fs'] } }, daemonTableFilters: { filters: { hostname: ['node1'] } } }
+  const env = { selectedClusterId: scenario === 'no-cluster' ? undefined : 42, listAllResources: loadAll, mergeResourceFilters: mergeFilters, serviceTableFilters: { filters: { name: ['mds.fs'], type: ['rgw'] } }, daemonTableFilters: { filters: { hostname: ['node1'], type: ['osd'] } } }
   const run = new Function(...Object.keys(env), `${compile(`const load = ${loader}`)}; return load`)(...Object.values(env))
   if (scenario === 'failure') await assert.rejects(run(), /second page failed/)
   else {
@@ -40,8 +40,21 @@ for (const scenario of ['fresh', 'stale', 'unknown', 'failure', 'no-cluster']) {
   assert.equal(calls.length, scenario === 'no-cluster' ? 0 : 4)
   for (const { path, cluster, options } of calls) {
     assert.equal(cluster, 42)
-    assert.deepEqual(options.filters, path === '/services' ? { service_type: ['mds'], service_name: ['mds.fs'] } : { daemon_type: ['mds'], hostname: ['node1'] })
+    assert.deepEqual(options.filters, path === '/services' ? { type: ['mds'], name: ['mds.fs'] } : { type: ['mds'], hostname: ['node1'] })
   }
 }
 assert.ok(page.getText(tree).includes('data?.inventoryWarnings.map'))
+for (const name of ['MdsManagementPage', 'MgrManagementPage', 'DaemonTable']) {
+  const node = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === name)
+  assert.doesNotMatch(node.getText(tree), /service_name|service_type|daemon_name|daemon_type|status_desc/)
+}
+const mgr = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'MgrManagementPage')
+const mgrLoader = mgr.body.statements.filter(ts.isVariableStatement).flatMap(n => [...n.declarationList.declarations]).find(n => n.name.getText(tree) === 'loader').initializer.arguments[0].getText(tree)
+const mgrCalls = []
+const list = async (...args) => { mgrCalls.push(args); return { items: [] } }
+const mgrEnv = { selectedClusterId: 9, listResource: list, listAllResources: list, mergeResourceFilters: mergeFilters, moduleTableFilters: { filters: {} }, daemonTableFilters: { filters: { type: ['osd'], name: ['mgr.a'] } } }
+await new Function(...Object.keys(mgrEnv), `${compile(`const load = ${mgrLoader}`)}; return load`)(...Object.values(mgrEnv))()
+assert.deepEqual(mgrCalls.find(call => call[0] === '/daemons'), ['/daemons', 9, { filters: { type: ['mgr'], name: ['mgr.a'] } }])
+const daemonTable = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'DaemonTable').getText(tree)
+for (const key of ['name', 'type', 'status', 'hostname', 'version']) assert.ok(daemonTable.includes(`key: '${key}'`))
 console.log('MDS inventories retain all pages, scope, errors and independent freshness warnings')

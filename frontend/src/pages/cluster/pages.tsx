@@ -206,7 +206,7 @@ export function MgrManagementPage() {
   })
   const daemonTableFilters = useResourceTableFilters({
     path: '/daemons',
-    fields: ['daemon_name', 'daemon_type', 'hostname', 'status_desc', 'version'],
+    fields: ['name', 'type', 'hostname', 'status', 'version'],
     clusterId: selectedClusterId
   })
   const loader = useCallback(async () => {
@@ -216,7 +216,7 @@ export function MgrManagementPage() {
     const [modules, daemons] = await Promise.all([
       listAllResources('/manager/modules', selectedClusterId, { filters: moduleTableFilters.filters }).then((payload) => payload.items),
       listResource('/daemons', selectedClusterId, {
-        filters: mergeResourceFilters({ daemon_type: ['mgr'] }, daemonTableFilters.filters)
+        filters: mergeResourceFilters(daemonTableFilters.filters, { type: ['mgr'] })
       }).then((payload) => payload.items)
     ])
     return { modules, daemons }
@@ -1001,12 +1001,12 @@ export function MdsManagementPage() {
   const { selectedClusterId } = useClusterContext()
   const serviceTableFilters = useResourceTableFilters({
     path: '/services',
-    fields: ['service_name', 'service_type', 'placement', 'status', 'running', 'size'],
+    fields: ['name', 'type', 'running', 'size'],
     clusterId: selectedClusterId
   })
   const daemonTableFilters = useResourceTableFilters({
     path: '/daemons',
-    fields: ['daemon_name', 'daemon_type', 'hostname', 'status_desc', 'version'],
+    fields: ['name', 'type', 'hostname', 'status', 'version'],
     clusterId: selectedClusterId
   })
   const loader = useCallback(async () => {
@@ -1015,10 +1015,10 @@ export function MdsManagementPage() {
     }
     const [services, daemons] = await Promise.all([
       listAllResources('/services', selectedClusterId, {
-        filters: mergeResourceFilters({ service_type: ['mds'] }, serviceTableFilters.filters)
+        filters: mergeResourceFilters(serviceTableFilters.filters, { type: ['mds'] })
       }),
       listAllResources('/daemons', selectedClusterId, {
-        filters: mergeResourceFilters({ daemon_type: ['mds'] }, daemonTableFilters.filters)
+        filters: mergeResourceFilters(daemonTableFilters.filters, { type: ['mds'] })
       })
     ])
     return {
@@ -1048,11 +1048,10 @@ export function MdsManagementPage() {
                   filterOptions={serviceTableFilters.filterOptions}
                   filteredValues={serviceTableFilters.filters}
                   onFilterChange={serviceTableFilters.handleFilterChange}
-                  rowKeyCandidates={['service_name', 'service_id', 'name']}
+                  rowKeyCandidates={['name']}
                   columns={[
-                    { key: 'service_name', title: '服务名' },
-                    { key: 'placement', title: '放置策略' },
-                    { key: 'status', title: '状态' },
+                    { key: 'name', title: '服务名' },
+                    { key: 'placement', title: '放置策略', filterKey: false },
                     { key: 'running', title: '运行数' },
                     { key: 'size', title: '目标数' }
                   ]}
@@ -1095,7 +1094,7 @@ function DaemonTable({
   const operationMutation = useMutationOperation()
 
   async function runAction(row: ApiRecord, action: string) {
-    const name = textValue(row.daemon_name || row.name, '')
+    const name = textValue(row.name, '')
     const pendingKey = `${name}:${action}`
     if (!clusterId || !active.current || running.current || unavailable || row.stale !== false || !name || pendingDaemonAction) {
       return
@@ -1121,19 +1120,19 @@ function DaemonTable({
         filterOptions={tableFilters?.filterOptions}
         filteredValues={tableFilters?.filters}
         onFilterChange={tableFilters?.handleFilterChange}
-        rowKeyCandidates={['daemon_name', 'name', 'hostname']}
+        rowKeyCandidates={['name']}
         columns={[
-          { key: 'daemon_name', title: 'Daemon' },
-          { key: 'daemon_type', title: '类型' },
+          { key: 'name', title: 'Daemon' },
+          { key: 'type', title: '类型' },
           { key: 'hostname', title: '主机' },
-          { key: 'status_desc', title: '状态' },
+          { key: 'status', title: '状态' },
           { key: 'version', title: '版本' },
           {
             key: 'actions',
             title: '操作',
             filterKey: false,
             render: (_, row) => {
-              const name = textValue(row.daemon_name || row.name, '')
+              const name = textValue(row.name, '')
               const disabled = !clusterId || unavailable || row.stale !== false || Boolean(pendingDaemonAction)
               return (
                 <TableActions>

@@ -25,7 +25,7 @@ for (const scenario of ['success', 'stale', 'unavailable', 'before', 'during', '
     message: { success: value => messages.push(value) }, refresh: () => refreshes.push(true)
   }
   const run = new Function(...Object.keys(env), `${compile(action)}; return runAction`)(...Object.values(env))
-  const row = { daemon_name: 'mds.fs.node1', stale: scenario === 'stale' }
+  const row = { name: 'mds.fs.node1', stale: scenario === 'stale' }
   const pending = run(row, 'restart')
   await run(row, 'restart')
   if (scenario === 'during') env.active.current = false
