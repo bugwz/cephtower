@@ -3,10 +3,16 @@ import { useEffect, useState } from 'react'
 import { listAllResources, type ResourceListResult } from '../../api/resource'
 
 export function erasureProfileUsage(profile: string, inventory: ResourceListResult) {
-  const stale = inventory.stale !== false || inventory.items.some((row) => row.stale !== false)
+  const validName = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.trim() === value
+  const stale = !validName(profile) || inventory.stale !== false || inventory.items.some((row) => {
+    if (row.stale !== false || !validName(row.name)) return true
+    if (row.type === 'replicated') return row.erasure_code_profile != null && row.erasure_code_profile !== ''
+    if (row.type === 'erasure') return !validName(row.erasure_code_profile)
+    return true
+  })
   const names = inventory.items.filter((row) => row.erasure_code_profile === profile)
-    .map((row) => row.name ?? row.pool_name ?? row.natural_key)
-    .filter((name): name is string => typeof name === 'string' && name.length > 0)
+    .map((row) => row.name)
+    .filter(validName)
   return { names: Array.from(new Set(names)), stale }
 }
 

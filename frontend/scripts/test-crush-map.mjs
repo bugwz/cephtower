@@ -62,7 +62,11 @@ const usageTree = ts.createSourceFile('usage.tsx', usageSource, ts.ScriptTarget.
 const usageFn = usageTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'erasureProfileUsage')
 const usageExports = {}
 new Function('exports', ts.transpileModule(usageFn.getText(usageTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(usageExports)
-assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: false, items: [{ name: 'a', erasure_code_profile: 'ec', stale: false }, { name: 'b', erasure_code_profile: 'other', stale: false }] }), { names: ['a'], stale: false })
+assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: false, items: [{ name: 'a', type: 'erasure', erasure_code_profile: 'ec', stale: false }, { name: 'b', type: 'erasure', erasure_code_profile: 'other', stale: false }] }), { names: ['a'], stale: false })
+for (const erasure_code_profile of [undefined, null, '', 3, {}, ' ec']) assert.equal(usageExports.erasureProfileUsage('ec', { stale: false, items: [{ name: 'broken', type: 'erasure', erasure_code_profile, stale: false }] }).stale, true)
+for (const erasure_code_profile of [undefined, null, '']) assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: false, items: [{ name: 'replica', type: 'replicated', erasure_code_profile, stale: false }] }), { names: [], stale: false })
+for (const row of [{ name: 'unknown', type: 'unknown' }, { name: '', type: 'erasure', erasure_code_profile: 'ec' }, { name: 'conflict', type: 'replicated', erasure_code_profile: 'ec' }]) assert.equal(usageExports.erasureProfileUsage('ec', { stale: false, items: [{ ...row, stale: false }] }).stale, true)
+assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: false, items: [{ name: 'visible', type: 'erasure', erasure_code_profile: 'ec', stale: false }, { name: 'incomplete', type: 'erasure', stale: false }] }), { names: ['visible'], stale: true })
 assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: true, items: [] }), { names: [], stale: true })
 assert.equal(usageExports.erasureProfileUsage('ec', { stale: false, items: [{ name: 'a' }] }).stale, true)
 assert.ok(usageSource.includes("listAllResources('/pools', clusterId)"))
