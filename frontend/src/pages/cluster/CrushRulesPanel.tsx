@@ -7,7 +7,9 @@ import { ResourceListPage, type ResourceListPageDefinition } from '../ResourceLi
 export function crushRuleType(value: unknown) {
   if (value === 1) return '复制 (1)'
   if (value === 3) return '纠删码 (3)'
-  return typeof value === 'number' ? `类型 ${value}` : '未知'
+  if (value === 4) return 'MSR firstn (4)'
+  if (value === 5) return 'MSR indep (5)'
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? `类型 ${value}` : '未知'
 }
 
 export function crushRuleSteps(value: unknown): ApiRecord[] | null {

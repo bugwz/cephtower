@@ -781,7 +781,10 @@ const rules = {}
 new Function('exports', ts.transpileModule(rulesFunctions.map((fn) => fn.getText(rulesTree)).join('\n'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(rules)
 assert.equal(rules.crushRuleType(1), '复制 (1)')
 assert.equal(rules.crushRuleType(3), '纠删码 (3)')
-assert.equal(rules.crushRuleType(5), '类型 5')
+assert.equal(rules.crushRuleType(4), 'MSR firstn (4)')
+assert.equal(rules.crushRuleType(5), 'MSR indep (5)')
+assert.equal(rules.crushRuleType(6), '类型 6')
+for (const invalid of [NaN, Infinity, -1, 1.5, '4', undefined, {}]) assert.equal(rules.crushRuleType(invalid), '未知')
 assert.equal(rules.crushRuleType(null), '未知')
 const steps = [{ op: 'take', item: -1, item_name: 'default' }, { op: 'chooseleaf_firstn', num: 0, type: 'host' }, { op: 'emit' }]
 const rendered = rules.crushRuleSteps(steps)
