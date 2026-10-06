@@ -69,6 +69,19 @@ for (const action of ['in', 'out', 'scrub', 'deep-scrub']) {
  }
 }
 const deleteNode = page.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'deleteOSD')
+const downNode = page.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'confirmOSDDown')
+const downJS = ts.transpileModule(downNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const scenario of ['current', 'switched', 'stale', 'unknown', 'already-down']) {
+  const scope = {}, ref = { current: scope }, calls = []
+  let modal
+  const env = { selectedClusterId: 7, osdScope: scope, osdScopeRef: ref, loading: false, error: '', osdActionRunning: { current: false }, osdID: () => '0', osdInventoryVersion: () => '18446744073709551615', message: { error: () => {} }, Modal: { confirm: v => { modal = v } }, runOSDAction: async (...args) => calls.push(args) }
+  new Function(...Object.keys(env), `${downJS}; return confirmOSDDown`)(...Object.values(env))({ stale: scenario === 'stale', up: scenario === 'unknown' ? null : scenario !== 'already-down' })
+  if (['stale', 'unknown', 'already-down'].includes(scenario)) { assert.equal(modal, undefined); continue }
+  assert.ok(modal.content.includes('不会停止 OSD 进程'))
+  if (scenario === 'switched') { ref.current = {}; await assert.rejects(modal.onOk(), /集群已切换/); assert.deepEqual(calls, []) }
+  else { await modal.onOk(); assert.deepEqual(calls, [['0', 'down', undefined, '18446744073709551615']]) }
+}
+assert.ok(actionNode.getText(tree).includes("mutateResource('/osd/action', 'POST', { cluster_id: selectedClusterId, osd_id: id, action }, { ifMatch: expectedVersion })"))
 const deleteJS = ts.transpileModule(deleteNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 let confirm
 const deleteScope = {}, deleteRef = { current: deleteScope }, writes = []

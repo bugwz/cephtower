@@ -381,7 +381,7 @@ export function OsdManagementPage() {
     }
   }
 
-  async function runOSDAction(id: string, action: 'in' | 'out' | 'scrub' | 'deep-scrub' | 'reweight', currentWeight?: unknown) {
+  async function runOSDAction(id: string, action: 'in' | 'out' | 'down' | 'scrub' | 'deep-scrub' | 'reweight', currentWeight?: unknown, expectedVersion?: string) {
     if (!selectedClusterId || osdScopeRef.current !== osdScope || osdActionRunning.current) return
     if (action === 'reweight') {
       if (!selectedClusterId) return
@@ -405,6 +405,9 @@ export function OsdManagementPage() {
     try {
       if (action === 'scrub' || action === 'deep-scrub') {
         await operationMutation.run(() => scrubOSD(selectedClusterId, id, action === 'deep-scrub'), false)
+      } else if (action === 'down') {
+        if (!expectedVersion) throw new Error('请重新采集并确认 OSD 版本')
+        await operationMutation.run(() => mutateResource('/osd/action', 'POST', { cluster_id: selectedClusterId, osd_id: id, action }, { ifMatch: expectedVersion }), false)
       } else {
         await operationMutation.run(() => markOSD(selectedClusterId, id, action), false)
       }
@@ -416,6 +419,22 @@ export function OsdManagementPage() {
       osdActionRunning.current = false
       setPendingOSDAction('')
     }
+  }
+
+  function confirmOSDDown(row: ApiRecord) {
+    if (!selectedClusterId || osdScopeRef.current !== osdScope || loading || error || row.stale !== false || row.up !== true || osdActionRunning.current) return
+    const id = osdID(row)
+    const version = osdInventoryVersion(row.resource_version)
+    if (!id || !version) { message.error('OSD 身份或版本无效，请重新采集'); return }
+    Modal.confirm({
+      title: `标记集群 ${selectedClusterId} 的 OSD ${id} 为 Down`,
+      content: '这会修改 OSDMap 状态，可能触发故障处理和数据恢复；不会停止 OSD 进程，运行中的 OSD 可能再次被标记 Up。',
+      okText: '确认标记 Down', okType: 'danger', cancelText: '取消',
+      async onOk() {
+        if (osdScopeRef.current !== osdScope) throw new Error('集群已切换或页面已关闭，请重新确认')
+        await runOSDAction(id, 'down', undefined, version)
+      }
+    })
   }
 
   async function deleteOSD(row: ApiRecord, preserveId = false) {
@@ -536,6 +555,7 @@ export function OsdManagementPage() {
                       <TableAction disabled={Boolean(pendingOSDAction)} onClick={() => runOSDAction(id, 'deep-scrub')}>Deep scrub</TableAction>
                       <TableAction loading={pendingOSDAction === `${id}:in`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:in`} onClick={() => runOSDAction(id, 'in')}>In</TableAction>
                       <TableAction loading={pendingOSDAction === `${id}:out`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:out`} onClick={() => runOSDAction(id, 'out')}>Out</TableAction>
+                      <TableAction danger disabled={Boolean(pendingOSDAction) || row.up !== true || row.stale !== false || loading || Boolean(error)} onClick={() => confirmOSDDown(row)}>Down</TableAction>
                       <TableAction loading={pendingOSDAction === `${id}:scrub`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:scrub`} onClick={() => runOSDAction(id, 'scrub')}>Scrub</TableAction>
                       <TableAction disabled={Boolean(pendingOSDAction)} onClick={() => runOSDAction(id, 'reweight', row.reweight)}>权重</TableAction>
                       <TableAction danger disabled={Boolean(pendingOSDAction)} onClick={() => deleteOSD(row)}>删除</TableAction>
