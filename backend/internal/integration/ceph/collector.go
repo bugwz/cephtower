@@ -533,6 +533,16 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 	if err := p.runInto(ctx, access, "collect.mon", []string{"mon", "dump", "--format", "json"}, &mons); err != nil {
 		return nil, err
 	}
+	if mons.Mons == nil {
+		return nil, fmt.Errorf("parse collect.mon response: mons must be an explicit array")
+	}
+	seenMonNames := make(map[string]bool, len(mons.Mons))
+	for _, mon := range mons.Mons {
+		if mon.Name == "" || mon.Name != strings.TrimSpace(mon.Name) || seenMonNames[mon.Name] {
+			return nil, fmt.Errorf("parse collect.mon response: mons must contain unique nonempty names")
+		}
+		seenMonNames[mon.Name] = true
+	}
 	var quorum quorumWire
 	if err := p.runInto(ctx, access, "collect.quorum", []string{"quorum_status", "--format", "json"}, &quorum); err != nil {
 		return nil, err
@@ -647,9 +657,6 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 	rows = append(rows, Observation{Kind: "mon_status", NaturalKey: "status", Name: "status", Source: "ceph_cli", Payload: statusPayload, ObservedAt: now})
 	perfPriority, perfAvailable := p.collectMgrStatsThreshold(ctx, access)
 	for _, wire := range mons.Mons {
-		if strings.TrimSpace(wire.Name) == "" {
-			return nil, fmt.Errorf("parse collect.mon response: monitor name is required")
-		}
 		address := wire.PublicAddr
 		if address == "" {
 			address = wire.Addr
