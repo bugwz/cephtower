@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import './test-silenced-alerts.mjs'
 import './test-rule-alerts.mjs'
 import './test-alert-routing.mjs'
+import './test-alert-auto-refresh.mjs'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 

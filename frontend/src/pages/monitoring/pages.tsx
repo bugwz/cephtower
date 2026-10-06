@@ -46,6 +46,7 @@ const externalDefinitions: Record<'grafana' | 'alerts' | 'rules' | 'silences', E
   alerts: {
     title: '告警列表',
     path: '/alert/alerts',
+    autoRefreshMs: 5000,
     requiredEndpoints: ['alertmanager'],
     rowKeyCandidates: ['fingerprint'],
     columns: alertColumns,

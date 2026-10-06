@@ -18,6 +18,7 @@ import { useFeatureRequirements, type FeatureRequirements } from '../hooks/useFe
 import { useMutationOperation } from '../hooks/useMutationOperation'
 import { useClusterContext } from '../state/ClusterContext'
 import { message } from '../utils/appMessage'
+import { startAutoRefresh } from './monitoring/autoRefresh'
 import type { MutationFormField, MutationFormValues, ResourceDeleteAction, ResourceFormAction } from './ResourceListPage'
 
 const { Text } = Typography
@@ -34,6 +35,7 @@ export interface ExternalListPageDefinition extends FeatureRequirements {
   filterFields?: MutationFormField[]
   columns: ExternalListColumn[]
   rowKeyCandidates?: string[]
+  autoRefreshMs?: number
   createAction?: ResourceFormAction
   updateAction?: ResourceFormAction
   extraActions?: Array<ResourceFormAction & { visibleWhen?: (row: ApiRecord) => boolean }>
@@ -51,6 +53,7 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
   const [formClusterId, setFormClusterId] = useState<number | undefined>()
   const [formGeneration, setFormGeneration] = useState<number | undefined>()
   const [refreshing, setRefreshing] = useState(false)
+  const [autoRefresh, setAutoRefresh] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
   const [activeAction, setActiveAction] = useState<ResourceFormAction | null>(null)
   const [activeRow, setActiveRow] = useState<ApiRecord | undefined>()
@@ -76,6 +79,12 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
   const { data, loading, error, refresh } = useResource(loader)
   const featureStatus = useFeatureRequirements(selectedClusterId, definition)
   const mutationBlocked = featureStatus.loading || featureStatus.blocked || Boolean(featureStatus.error)
+
+  useEffect(() => {
+    const delay = definition.autoRefreshMs
+    if (!delay || delay < 1000 || !autoRefresh || !selectedClusterId || loading || refreshing || formOpen || visibleDetail || submitting || mutationBlocked || missingRequiredFilters.length) return
+    return startAutoRefresh(() => refresh({ showLoading: false }), delay)
+  }, [definition.autoRefreshMs, autoRefresh, selectedClusterId, loading, refreshing, formOpen, visibleDetail, submitting, mutationBlocked, missingRequiredFilters.length, refresh])
 
   useEffect(() => {
     form.resetFields()
@@ -229,6 +238,7 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
   const tableColumns = buildColumns(definition, openForm, deleteRow, (row) => { setDetailGeneration(clusterGeneration.current); setDetailRow(row) }, mutationBlocked)
   const listActions = (
     <Space>
+      {definition.autoRefreshMs && <Switch checked={autoRefresh} onChange={setAutoRefresh} checkedChildren="自动刷新" unCheckedChildren="自动刷新已关闭" aria-label="自动刷新（打开表单或详情时暂停）" />}
       <Button icon={<ReloadOutlined />} loading={refreshing} onClick={reload}>刷新</Button>
       {definition.createAction ? (
         <Button
