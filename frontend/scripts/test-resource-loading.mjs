@@ -11,6 +11,7 @@ import './test-device-availability.mjs'
 import './test-device-zap-scope.mjs'
 import './test-device-identify-scope.mjs'
 import './test-device-detail-identity.mjs'
+import './test-device-hardware-summary.mjs'
 
 const pgCategorySource = readFileSync(new URL('../src/pages/overview/pgCategory.ts', import.meta.url), 'utf8')
 const pgCategoryCode = ts.transpileModule(pgCategorySource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText

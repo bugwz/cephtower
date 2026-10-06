@@ -3,6 +3,7 @@ import { Button, Card, Descriptions, Form, Input, InputNumber, Modal, Select, Sp
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { MonMapSettings } from './MonMapSettings'
+import { DeviceHardwareSummary } from './DeviceHardwareSummary'
 import { hostStorageCapacity } from './hostStorageCapacity'
 import { ManagerInventory } from './ManagerInventory'
 import { osdSnapshotValue } from './OSDUsage'
@@ -959,6 +960,8 @@ function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string
             <Text type="secondary">暂无设备详情</Text>
           )}
         </Card>
+
+        {device && <DeviceHardwareSummary device={device} stale={data?.stale} />}
 
         <Card className="page-surface-card" title="设备操作">
           <Space wrap>
