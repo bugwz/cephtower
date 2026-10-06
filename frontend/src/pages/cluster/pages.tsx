@@ -8,6 +8,7 @@ import { osdSnapshotValue } from './OSDUsage'
 import { OSDScrubConfiguration } from './OSDScrubConfiguration'
 import { OSDRecoveryConfiguration } from './OSDRecoveryConfiguration'
 import { OSDGlobalFlags } from './OSDGlobalFlags'
+import { OSDRemovalStop } from './OSDRemovalStop'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import {
   applyDaemonAction,
@@ -484,7 +485,8 @@ export function OsdManagementPage() {
             { key: 'pg_count', title: '剩余 PG' },
             { key: 'replace', title: '替换', render: (value) => value ? '是' : '否' },
             { key: 'force', title: '强制', render: (value) => value ? '是' : '否' },
-            { key: 'process_started_at', title: '开始时间', render: (value) => formatDateTime(value) }
+            { key: 'process_started_at', title: '开始时间', render: (value) => formatDateTime(value) },
+            { key: 'stop', title: '操作', filterKey: false, render: (_, row) => selectedClusterId ? <OSDRemovalStop key={`${selectedClusterId}:${row.osd_id}:${row.resource_version}`} clusterId={selectedClusterId} record={row} blocked={loading || Boolean(error) || data?.removalMeta?.stale !== false} onChanged={refresh} /> : null }
           ]} />
         </section>
         <section className="embedded-panel">
