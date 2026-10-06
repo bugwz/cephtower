@@ -213,16 +213,7 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 	}
 	rows = append(rows, p.collectRGWOptional(ctx, access, now)...)
 	rows = append(rows, p.collectGatewayOptional(ctx, access, now)...)
-	var removals any
-	if p.optional(ctx, access, executor.BinaryCeph, "collect.osd_removal", []string{"orch", "osd", "rm", "status", "--format", "json"}, &removals) {
-		for index, item := range objectList(removals) {
-			key := textField(item, "osd_id", "osd", "id")
-			if key == "" {
-				key = strconv.Itoa(index)
-			}
-			rows = append(rows, observation("osd_removal", key, key, "ceph_cli", item, now))
-		}
-	}
+	rows = append(rows, p.collectOSDRemovals(ctx, access, now)...)
 	return rows
 }
 
