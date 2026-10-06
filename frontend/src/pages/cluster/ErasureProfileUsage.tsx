@@ -1,5 +1,6 @@
 import { Alert, Button, Space, Spin, Tag } from 'antd'
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { listAllResources, type ResourceListResult } from '../../api/resource'
 
 export function erasureProfileUsage(profile: string, inventory: ResourceListResult) {
@@ -61,7 +62,7 @@ function PoolPlacementUsage({ clusterId, profile, ruleId }: { clusterId?: number
     <Button size="small" disabled={!clusterId} onClick={() => setRevision((value) => value + 1)}>重新读取存储池引用</Button>
     {error ? <Alert type="error" message={error} /> : !clusterId ? <Alert type="info" message="请先选择集群" /> : !result ? <Spin /> : <>
       {result.stale && <Alert type="warning" message="存储池库存过期、状态未知或引用字段异常，以下仅为可识别的采集引用，不能据此确认配置未被使用。" />}
-      {result.names.length ? <Space wrap>{result.names.map((name) => <Tag key={name}>{name}</Tag>)}</Space> : <Alert type="info" message={result.stale ? '暂无可确认的引用信息' : '当前采集库存中没有存储池使用此配置'} />}
+      {result.names.length ? <Space wrap>{result.names.map((name) => <Tag key={name}><Link to={`/cluster/pool/${encodeURIComponent(name)}`}>{name}</Link></Tag>)}</Space> : <Alert type="info" message={result.stale ? '暂无可确认的引用信息' : '当前采集库存中没有存储池使用此配置'} />}
     </>}
   </Space>
 }

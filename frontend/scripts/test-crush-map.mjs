@@ -70,6 +70,20 @@ assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: false, items: [
 assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: true, items: [] }), { names: [], stale: true })
 assert.equal(usageExports.erasureProfileUsage('ec', { stale: false, items: [{ name: 'a' }] }).stale, true)
 assert.ok(usageSource.includes("listAllResources('/pools', clusterId)"))
+let referenceLink
+function findReferenceLink(node) {
+  if (ts.isArrowFunction(node) && node.body.getText(usageTree).startsWith('<Tag key={name}><Link')) referenceLink = node
+  ts.forEachChild(node, findReferenceLink)
+}
+findReferenceLink(usageTree)
+assert.ok(referenceLink)
+const linkCode = ts.transpileModule(`const render = ${referenceLink.getText(usageTree)}`, { compilerOptions: { jsx: ts.JsxEmit.React } }).outputText
+const renderReference = new Function('React', 'Tag', 'Link', `${linkCode}; return render`)({ createElement: (type, props, ...children) => ({ type, props, children }) }, 'Tag', 'Link')
+for (const name of ['rbd', 'pool.with-dots', '池 A', 'pool/a?b#c%']) {
+  const rendered = renderReference(name)
+  assert.equal(rendered.children[0].props.to, `/cluster/pool/${encodeURIComponent(name)}`)
+  assert.equal(rendered.children[0].children[0], name)
+}
 const crushUsageFn = usageTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'crushRuleUsage')
 new Function('exports', ts.transpileModule(crushUsageFn.getText(usageTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(usageExports)
 assert.deepEqual(usageExports.crushRuleUsage(8, { stale: false, items: [{ name: 'by-id', crush_rule: 8, stale: false }, { name: 'by-name', crush_rule: 'ssd', stale: false }, { name: 'other', crush_rule: 0, stale: false }] }), { names: ['by-id'], stale: true })
