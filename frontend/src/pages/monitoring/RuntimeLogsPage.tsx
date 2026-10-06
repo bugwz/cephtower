@@ -12,6 +12,24 @@ export function runtimeLogsText(rows: ApiRecord[]): string {
   return rows.map((row) => `${row.stamp} [${row.channel}] ${row.priority} ${row.name}: ${row.message}`).join('\n')
 }
 
+export function runtimeLogHighlights(value: unknown, search: string): { text: string; match: boolean }[] {
+  const text = String(value ?? '')
+  if (!search) return [{ text, match: false }]
+  // Escape literal search input; RegExp offsets refer to the original string,
+  // unlike lowercasing Unicode text, which can change its length.
+  const pattern = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+  const parts: { text: string; match: boolean }[] = []
+  let cursor = 0
+  for (const match of text.matchAll(pattern)) {
+    const index = match.index!
+    if (index > cursor) parts.push({ text: text.slice(cursor, index), match: false })
+    parts.push({ text: match[0], match: true })
+    cursor = index + match[0].length
+  }
+  if (cursor < text.length || !parts.length) parts.push({ text: text.slice(cursor), match: false })
+  return parts
+}
+
 export function runtimeLogDetails(row: ApiRecord) {
   return [['name', '来源'], ['rank', '来源 Rank'], ['seq', '原生序列号'], ['stamp', '原生时间'], ['channel', '频道'], ['priority', '级别'], ['addrs', '来源地址'], ['message', '消息']].map(([key, label]) => ({
     key, label, children: row[key] == null ? '未提供' : typeof row[key] === 'object' ? JSON.stringify(row[key], null, 2) : String(row[key])
@@ -133,7 +151,7 @@ function RuntimeLogsContent({ compact, selectedClusterId }: { compact: boolean; 
             { title: '频道', dataIndex: 'channel', width: 100 },
             { title: '级别', dataIndex: 'priority', width: 85, render: (value) => <Tag color={String(value).includes('ERR') ? 'error' : String(value).includes('WRN') ? 'warning' : 'default'}>{String(value)}</Tag> },
             { title: '来源', dataIndex: 'name', width: 130 },
-            { title: '消息', dataIndex: 'message', render: (value) => <Typography.Text style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{String(value)}</Typography.Text> }
+            { title: '消息', dataIndex: 'message', render: (value) => <Typography.Text style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{runtimeLogHighlights(value, search).map((part, index) => part.match ? <mark key={index}>{part.text}</mark> : part.text)}</Typography.Text> }
           ]} />
       </Card>
     </Space>

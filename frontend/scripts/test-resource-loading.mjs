@@ -464,6 +464,25 @@ assert.equal(managementMode(null), '未采集')
 
 const logsSource = readFileSync(new URL('../src/pages/monitoring/RuntimeLogsPage.tsx', import.meta.url), 'utf8')
 const logsTree = ts.createSourceFile('logs.tsx', logsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const highlightNode = logsTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'runtimeLogHighlights')
+const highlightExports = {}
+new Function('exports', ts.transpileModule(highlightNode.getText(logsTree), { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText)(highlightExports)
+const highlightLogs = highlightExports.runtimeLogHighlights
+assert.deepEqual(highlightLogs('Error: ERROR', 'error'), [
+  { text: 'Error', match: true }, { text: ': ', match: false }, { text: 'ERROR', match: true }
+])
+for (const search of ['[ERR]', '.*', '\\', 'a+b?', '${x}', '(x)', '^$']) {
+  assert.deepEqual(highlightLogs(`before ${search} after`, search), [
+    { text: 'before ', match: false }, { text: search, match: true }, { text: ' after', match: false }
+  ])
+}
+for (const [text, search] of [['中文\n中文', '中文'], ['😀😀', '😀'], ['İ error', 'error'], ['<script>alert(1)</script>', 'script'], ['abc', 'missing'], ['', 'x'], ['abc', '']]) {
+  assert.equal(highlightLogs(text, search).map(part => part.text).join(''), text)
+}
+assert.deepEqual(highlightLogs('İ error', 'error'), [{ text: 'İ ', match: false }, { text: 'error', match: true }])
+assert.deepEqual(highlightLogs(null, 'x'), [{ text: '', match: false }])
+assert.ok(logsSource.includes('<mark key={index}>{part.text}</mark>'))
+assert.ok(!logsSource.includes('dangerouslySetInnerHTML'))
 const visibleLogsNode = logsTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'visibleRuntimeLogs')
 const visibleLogsExports = {}
 new Function('exports', ts.transpileModule(visibleLogsNode.getText(logsTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(visibleLogsExports)
