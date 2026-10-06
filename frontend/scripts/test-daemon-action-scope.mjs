@@ -60,7 +60,25 @@ for (const scenario of ['success', 'stale', 'inactive', 'during', 'failure', 'no
   await modal.onOk()
   assert.equal(calls.length, scenario === 'during' ? 0 : 1)
 }
-for (const action of ['start', 'stop', 'restart']) assert.ok(table.getText(tree).includes(`confirmAction(row, '${action}')`))
+for (const action of ['start', 'stop', 'restart', 'reconfig', 'redeploy', 'rotate-key']) {
+  assert.ok(table.getText(tree).includes(`confirmAction(row, '${action}')`))
+  let modal
+  const calls = []
+  const env = { clusterId: 7, active: { current: true }, running: { current: false }, unavailable: false, osdInventoryVersion: version, actionConfirmation: { current: null }, Modal: { confirm: value => { modal = value; return { destroy() {} } } }, runAction: async (...args) => calls.push(args) }
+  const confirm = new Function(...Object.keys(env), `${compile(confirmCode)}; return confirmAction`)(...Object.values(env))
+  const row = { name: 'mds.fs.a', stale: false, resource_version: '9' }
+  confirm(row, action)
+  assert.ok(!modal.title.includes('undefined'))
+  assert.equal(calls.length, 0)
+  await modal.onOk()
+  assert.deepEqual(calls, [[row, action]])
+  const requests = []
+  const apply = new Function('mutateResource', `${compile(api)}; return applyDaemonAction`)((...args) => requests.push(args))
+  apply(row.name, action, 7, '9')
+  assert.deepEqual(requests, [['/daemon/action', 'POST', { cluster_id: 7, name: row.name, action }, { ifMatch: '9' }]])
+}
+const services = read('../src/pages/cluster/ServicePage.tsx')
+for (const action of ['reconfig', 'redeploy', 'rotate-key']) assert.ok(services.includes(`value: '${action}'`))
 const openPerf = table.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'openPerformance').getText(tree)
 for (const name of ['mgr.a', 'mds.fs.node-1', 'osd.1', 'mgr.*', 'mds.', 'mgr.a;stop', '', null]) {
   for (const state of ['active', 'inactive', 'unavailable', 'no-cluster']) {

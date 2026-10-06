@@ -1142,9 +1142,9 @@ function DaemonTable({
   useEffect(() => () => { actionConfirmation.current?.destroy() }, [data, unavailable])
   const operationMutation = useMutationOperation()
 
-  function confirmAction(row: ApiRecord, action: 'start' | 'stop' | 'restart') {
+  function confirmAction(row: ApiRecord, action: 'start' | 'stop' | 'restart' | 'reconfig' | 'redeploy' | 'rotate-key') {
     if (!clusterId || !active.current || running.current || unavailable || row.stale !== false || !osdInventoryVersion(row.resource_version) || typeof row.name !== 'string' || !row.name) return
-    const label = { start: '启动', stop: '停止', restart: '重启' }[action]
+    const label = { start: '启动', stop: '停止', restart: '重启', reconfig: '重新配置', redeploy: '重新部署', 'rotate-key': '轮换密钥' }[action]
     let submitted = false
     actionConfirmation.current?.destroy()
     actionConfirmation.current = Modal.confirm({
@@ -1225,6 +1225,9 @@ function DaemonTable({
                   <TableAction loading={pendingDaemonAction === `${name}:restart`} disabled={disabled} onClick={() => confirmAction(row, 'restart')}>重启</TableAction>
                   <TableAction loading={pendingDaemonAction === `${name}:start`} disabled={disabled} onClick={() => confirmAction(row, 'start')}>启动</TableAction>
                   <TableAction danger loading={pendingDaemonAction === `${name}:stop`} disabled={disabled} onClick={() => confirmAction(row, 'stop')}>停止</TableAction>
+                  <TableAction danger loading={pendingDaemonAction === `${name}:reconfig`} disabled={disabled} onClick={() => confirmAction(row, 'reconfig')}>重新配置</TableAction>
+                  <TableAction danger loading={pendingDaemonAction === `${name}:redeploy`} disabled={disabled} onClick={() => confirmAction(row, 'redeploy')}>重新部署</TableAction>
+                  <TableAction danger loading={pendingDaemonAction === `${name}:rotate-key`} disabled={disabled} onClick={() => confirmAction(row, 'rotate-key')}>轮换密钥</TableAction>
                 </TableActions>
               )
             }

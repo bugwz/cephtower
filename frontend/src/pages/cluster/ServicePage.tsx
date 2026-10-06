@@ -26,6 +26,7 @@ interface ServiceFormValues {
 const daemonActions = [
   { value: 'start', label: '启动' }, { value: 'stop', label: '停止' },
   { value: 'restart', label: '重启' }, { value: 'redeploy', label: '重新部署' },
+  { value: 'reconfig', label: '重新配置' }, { value: 'rotate-key', label: '轮换密钥' },
 ] as const
 
 const serviceTypeOptions = [
