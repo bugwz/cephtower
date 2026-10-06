@@ -1,6 +1,7 @@
 import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { readExternalList } from '../api/external'
 import { mutateResource } from '../api/resource'
@@ -33,6 +34,7 @@ export interface ExternalListPageDefinition extends FeatureRequirements {
   updateAction?: ResourceFormAction
   extraActions?: Array<ResourceFormAction & { visibleWhen?: (row: ApiRecord) => boolean }>
   deleteAction?: ResourceDeleteAction
+  detailContent?: (row: ApiRecord, clusterId: number) => ReactNode
 }
 
 export function ExternalListPage({ definition, embedded = false }: { definition: ExternalListPageDefinition; embedded?: boolean }) {
@@ -49,6 +51,8 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
   const [activeAction, setActiveAction] = useState<ResourceFormAction | null>(null)
   const [activeRow, setActiveRow] = useState<ApiRecord | undefined>()
   const [detailRow, setDetailRow] = useState<ApiRecord | null>(null)
+  const [detailGeneration, setDetailGeneration] = useState<number>()
+  const visibleDetail = detailGeneration === clusterGeneration.current ? detailRow : null
   const [submitting, setSubmitting] = useState(false)
   const [queryBody, setQueryBody] = useState<ApiRecord>(definition.body ?? {})
   const [form] = Form.useForm<MutationFormValues>()
@@ -218,7 +222,7 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
     })
   }
 
-  const tableColumns = buildColumns(definition, openForm, deleteRow, (row) => setDetailRow(row), mutationBlocked)
+  const tableColumns = buildColumns(definition, openForm, deleteRow, (row) => { setDetailGeneration(clusterGeneration.current); setDetailRow(row) }, mutationBlocked)
   const listActions = (
     <Space>
       <Button icon={<ReloadOutlined />} loading={refreshing} onClick={reload}>刷新</Button>
@@ -333,12 +337,13 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
       </DraggableModal>
       <Drawer
         title={`${definition.title}详情`}
-        open={Boolean(detailRow)}
+        open={Boolean(visibleDetail)}
         onClose={() => setDetailRow(null)}
         width={720}
         destroyOnClose
       >
-        <RecordDetail record={detailRow} />
+        <RecordDetail record={visibleDetail} />
+        {visibleDetail && selectedClusterId && definition.detailContent?.(visibleDetail, selectedClusterId)}
       </Drawer>
     </Page>
   )
