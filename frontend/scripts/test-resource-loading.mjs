@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
+import './test-osd-safety.mjs'
 
 const pgCategorySource = readFileSync(new URL('../src/pages/overview/pgCategory.ts', import.meta.url), 'utf8')
 const pgCategoryCode = ts.transpileModule(pgCategorySource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText
@@ -435,12 +436,16 @@ assert.deepEqual(deviceRecords({ devices: [] }), [])
 for (const devices of [undefined, null, {}, [null], [{}], [{ devid: 0 }], [{ devid: ' ' }]]) assert.equal(deviceRecords({ devices }), null)
 const osdNode = osdTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'OSDInspection')
 const osdCode = ts.transpileModule(osdNode.getText(osdTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
-const osdInspection = new Function('React', 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', 'Alert', 'Descriptions', 'osdHistoryEpoch', 'OSDNetwork', 'OSDUsage', `${osdCode}; return OSDInspection`)(
-  { createElement: (component, props) => ({ component, props }) }, 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', 'Alert', { Item: 'Item' }, String, 'OSDNetwork', 'OSDUsage')
+const osdInspection = new Function('React', 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', 'Alert', 'Descriptions', 'osdHistoryEpoch', 'OSDNetwork', 'OSDUsage', 'OSDSafetyCheck', `${osdCode}; return OSDInspection`)(
+  { createElement: (component, props) => ({ component, props }) }, 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', 'Alert', { Item: 'Item' }, String, 'OSDNetwork', 'OSDUsage', 'OSDSafetyCheck')
 const perfKeys = new Set()
 const diagnosticKeys = new Set()
 for (const [clusterId, osdId] of [[1, '0'], [1, '12'], [2, '12']]) {
   const panel = osdInspection({ clusterId, osdId, record: {} })
+  const safety = panel.props.items.find(item => item.key === 'safety').children
+  assert.equal(safety.props.key, `${clusterId}:${osdId}:safety`)
+  assert.equal(safety.props.clusterId, clusterId)
+  assert.equal(safety.props.osdId, osdId)
   for (const section of ['metadata', 'devices', 'smart', 'histogram']) {
     const diagnostic = panel.props.items.find(item => item.key === section).children
     assert.equal(diagnostic.props.key, `${clusterId}:${osdId}:${section}`)
