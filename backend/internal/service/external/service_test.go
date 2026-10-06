@@ -84,6 +84,10 @@ func TestMetricRangeFailuresArePropagated(t *testing.T) {
 			if err != nil || result == nil {
 				t.Fatalf("valid empty result: %v", err)
 			}
+			meta := result.(map[string]any)["meta"].(map[string]any)
+			if meta["start"] != "2026-01-01T00:00:00Z" || meta["end"] != "2026-01-01T01:00:00Z" || meta["step_seconds"] != float64(30) {
+				t.Fatalf("missing evaluated range: %#v", meta)
+			}
 		} else if err == nil || result != nil {
 			t.Fatalf("failure lost for %s: %#v %v", tc.body, result, err)
 		}

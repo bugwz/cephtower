@@ -123,6 +123,7 @@ func (s *Service) readMetric(ctx context.Context, clusterID uint64, key string, 
 		return nil, failure("invalid_request", "metric_id is required", false)
 	}
 	var result monitoring.PrometheusResult
+	meta := map[string]any{}
 	if strings.Contains(key, "range") {
 		start, parseErr := time.Parse(time.RFC3339Nano, query.Get("start"))
 		if parseErr != nil {
@@ -137,6 +138,9 @@ func (s *Service) readMetric(ctx context.Context, clusterID uint64, key string, 
 			return nil, failure("invalid_request", "step must be a Go duration such as 30s", false)
 		}
 		result, err = api.QueryRange(ctx, metricID, start, end, step)
+		meta["start"] = start.UTC().Format(time.RFC3339Nano)
+		meta["end"] = end.UTC().Format(time.RFC3339Nano)
+		meta["step_seconds"] = step.Seconds()
 	} else {
 		var at *time.Time
 		if raw := query.Get("time"); raw != "" {
@@ -151,7 +155,10 @@ func (s *Service) readMetric(ctx context.Context, clusterID uint64, key string, 
 	if err != nil {
 		return nil, failure("prometheus_failed", err.Error(), true)
 	}
-	return map[string]any{"result_type": result.Data.ResultType, "series": result.Data.Result, "meta": observedMeta()}, nil
+	for key, value := range observedMeta() {
+		meta[key] = value
+	}
+	return map[string]any{"result_type": result.Data.ResultType, "series": result.Data.Result, "meta": meta}, nil
 }
 
 func (s *Service) readMonitoring(ctx context.Context, clusterID uint64, kind string) (any, error) {

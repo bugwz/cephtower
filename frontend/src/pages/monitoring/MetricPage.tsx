@@ -7,6 +7,7 @@ import { AppTable } from '../../components/AppTable'
 import { Page } from '../../components/Page'
 import { useFeatureRequirements } from '../../hooks/useFeatureRequirements'
 import { useClusterContext } from '../../state/ClusterContext'
+import { MetricTrend } from './MetricTrend'
 
 const { Text } = Typography
 
@@ -231,6 +232,7 @@ function MetricContent({ selectedClusterId }: { selectedClusterId?: number }) {
               loading={loading}
               dataSource={rows}
               expandable={{ expandedRowRender: (row) => <Space direction="vertical" style={{ width: '100%' }}>
+                {result?.result_type === 'matrix' && <MetricTrend samples={row.samples} meta={result.meta} name={row.metric_name} />}
                 <Text style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{row.labels}</Text>
                 <Text type="secondary">按接口返回顺序展示全部样本，时间以 UTC 显示；原始值不做浮点转换。非有限值不代表零。</Text>
                 <AppTable<MetricSample> size="small" rowKey="index" dataSource={row.samples} pagination={{ defaultPageSize: 20, showSizeChanger: true }} columns={[
