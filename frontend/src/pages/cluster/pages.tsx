@@ -418,7 +418,7 @@ export function OsdManagementPage() {
     }
   }
 
-  async function deleteOSD(row: ApiRecord) {
+  async function deleteOSD(row: ApiRecord, preserveId = false) {
     if (osdScopeRef.current !== osdScope || loading || error || row.stale !== false) {
       message.error('请先成功采集当前集群的 OSD 库存，再确认删除')
       return
@@ -434,18 +434,20 @@ export function OsdManagementPage() {
     }
     const generation = osdInventoryVersion(row.resource_version)
     if (generation === null) { message.error('库存版本无效，请重新采集后再确认删除'); return }
-    const parameters = { cluster_id: selectedClusterId, osd_id: id, zap: false }
+    const parameters = { cluster_id: selectedClusterId, osd_id: id, zap: false, preserve_id: preserveId }
     Modal.confirm({
-      title: `删除集群 ${selectedClusterId} 的 OSD ${id}`,
-      content: '该操作为高风险操作，确认后将直接执行删除操作。',
-      okText: '提交删除',
+      title: `${preserveId ? '替换（保留 ID）' : '移除'}集群 ${selectedClusterId} 的 OSD ${id}`,
+      content: preserveId
+        ? '将请求编排器排空并移除 OSD，保留 ID 用于后续替换。这不是立即部署替代 OSD，也不代表替换已完成。可能触发数据迁移；不会启用强制移除或清盘。'
+        : '将请求编排器排空并移除 OSD，不保留 ID 用于替换。可能触发数据迁移；不会启用强制移除或清盘。提交不代表移除已完成，请关注移除队列。',
+      okText: preserveId ? '提交保留 ID 的移除' : '提交移除',
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
         if (osdScopeRef.current !== osdScope) throw new Error('集群已切换或页面已关闭，请重新确认 OSD 删除')
         await operationMutation.run(() => mutateResource('/osd', 'DELETE', parameters, { ifMatch: generation }), false)
         if (osdScopeRef.current !== osdScope) return
-        message.success('OSD 移除请求已提交')
+        message.success(preserveId ? '保留 ID 的 OSD 移除请求已提交，请关注队列及后续替换' : 'OSD 移除请求已提交')
         await refreshResource({ clusterId: selectedClusterId, kinds: ['osd', 'osd_removal'] })
         if (osdScopeRef.current === osdScope) await refresh({ showLoading: false })
       }
@@ -537,6 +539,7 @@ export function OsdManagementPage() {
                       <TableAction loading={pendingOSDAction === `${id}:scrub`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:scrub`} onClick={() => runOSDAction(id, 'scrub')}>Scrub</TableAction>
                       <TableAction disabled={Boolean(pendingOSDAction)} onClick={() => runOSDAction(id, 'reweight', row.reweight)}>权重</TableAction>
                       <TableAction danger disabled={Boolean(pendingOSDAction)} onClick={() => deleteOSD(row)}>删除</TableAction>
+                      <TableAction danger disabled={Boolean(pendingOSDAction)} onClick={() => deleteOSD(row, true)}>替换（保留 ID）</TableAction>
                     </TableActions>
                   )
                 }

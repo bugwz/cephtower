@@ -87,7 +87,19 @@ for (const row of [{ stale: true, resource_version: 1 }, { resource_version: 1 }
 }
 await removeOSD({ stale: false, resource_version: '9007199254740993' })
 await confirm.onOk()
-assert.deepEqual(writes[0], ['/osd', 'DELETE', { cluster_id: 7, osd_id: '0', zap: false }, { ifMatch: '9007199254740993' }])
+assert.deepEqual(writes[0], ['/osd', 'DELETE', { cluster_id: 7, osd_id: '0', zap: false, preserve_id: false }, { ifMatch: '9007199254740993' }])
+assert.ok(confirm.content.includes('不保留 ID'))
+await removeOSD({ stale: false, resource_version: '18446744073709551615' }, true)
+assert.ok(confirm.title.includes('替换（保留 ID）'))
+assert.ok(confirm.content.includes('不代表替换已完成'))
+await confirm.onOk()
+assert.deepEqual(writes[1], ['/osd', 'DELETE', { cluster_id: 7, osd_id: '0', zap: false, preserve_id: true }, { ifMatch: '18446744073709551615' }])
+await removeOSD({ stale: false, resource_version: 1 }, true)
+deleteRef.current = {}
+await assert.rejects(confirm.onOk(), /集群已切换/)
+assert.equal(writes.length, 2)
+deleteRef.current = deleteScope
+assert.ok(source.includes('onClick={() => deleteOSD(row, true)}'))
 for (const value of [null, undefined, 0, -1, 1.5, '0', '1.5', '18446744073709551616']) assert.equal(osdInventoryVersion(value), null)
 assert.equal(osdInventoryVersion(1), '1')
 const inspectionSource = readFileSync(new URL('../src/pages/cluster/OSDInspection.tsx', import.meta.url), 'utf8')

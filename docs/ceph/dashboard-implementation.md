@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- 保留 OSD ID 的替换入口：OSD 列表新增独立“替换（保留 ID）”动作，通过同一库存版本与作用域校验提交 preserve_id=true；普通移除显式提交 false。确认框区分两种模式，说明排空、数据迁移、不会自动部署替代 OSD，不启用 force/zap；新增精确版本、请求模式与切换集群回归。
+
 - OSD 替换保留 ID 后端：对齐参考 Dashboard delete(preserve_id)→orchestrator replace，DELETE /osd 新增布尔 preserve_id，映射原生 orch osd rm --replace，可与显式 zap 组合，不添加强制移除。同步校验单 OSD ID，覆盖选项组合及请求类型；前端选择入口待接入，入队不等于已完成替换。
 
 - OSD 移除队列详情：依据 cephadm OSD.to_json 补齐开始/排空/停止、Block/DB/WAL 替换、强制及清盘标志、原始权重和四个流程时间。列表新增清盘及排空开始时间，修复缺失布尔值误显示“否”；详情保留原生时间精度与时区，明确 null 时间不等于已完成。新增显示和字段目录回归，未做真实集群验证。
