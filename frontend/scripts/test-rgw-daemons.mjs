@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import './test-metric-query-scope.mjs'
 import './test-rgw-daemon-status.mjs'
 import './test-rgw-daemon-perf.mjs'
 import './test-rgw-daemon-history.mjs'

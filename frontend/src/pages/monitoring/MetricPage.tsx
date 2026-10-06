@@ -1,6 +1,6 @@
 import { BarChartOutlined, LineChartOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Form, Input, Select, Segmented, Space, Statistic, Tag, Typography } from 'antd'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { queryMetric, queryMetricRange, type MetricResponse } from '../../api/external'
 import type { ApiRecord } from '../../api/client'
 import { AppTable } from '../../components/AppTable'
@@ -43,6 +43,16 @@ const metricOptions = [
 
 export function MetricPage() {
   const { selectedClusterId } = useClusterContext()
+  return <MetricContent key={selectedClusterId ?? 'none'} selectedClusterId={selectedClusterId} />
+}
+
+function MetricContent({ selectedClusterId }: { selectedClusterId?: number }) {
+  const active = useRef(true)
+  const pending = useRef<AbortController | null>(null)
+  useEffect(() => {
+    active.current = true
+    return () => { active.current = false; pending.current?.abort() }
+  }, [])
   const [form] = Form.useForm<MetricFormValues>()
   const [mode, setMode] = useState<MetricMode>('instant')
   const [loading, setLoading] = useState(false)
@@ -67,6 +77,7 @@ export function MetricPage() {
   const rows = useMemo(() => normalizeSeries(result?.series ?? []), [result])
 
   async function submit(values: MetricFormValues) {
+    if (!active.current) return
     if (!selectedClusterId) {
       setError('请先选择集群')
       return
@@ -75,8 +86,14 @@ export function MetricPage() {
       setError('当前集群未配置或未启用 prometheus endpoint')
       return
     }
+    pending.current?.abort()
+    const controller = new AbortController()
+    pending.current = controller
+    const current = () => active.current && pending.current === controller && !controller.signal.aborted
+    const init = { signal: controller.signal, suppressErrorNotification: true }
     setLoading(true)
     setError('')
+    setResult(null)
     try {
       const payload = values.mode === 'range'
         ? await queryMetricRange(selectedClusterId, {
@@ -84,16 +101,16 @@ export function MetricPage() {
           start: values.start ?? '',
           end: values.end ?? '',
           step: values.step ?? '30s'
-        })
+        }, init)
         : await queryMetric(selectedClusterId, {
           metricId: values.metric_id,
           time: values.time
-        })
-      setResult(payload)
+        }, init)
+      if (current()) setResult(payload)
     } catch (err) {
-      setError(err instanceof Error ? err.message : '指标查询失败')
+      if (current()) setError(err instanceof Error && err.message ? err.message : '指标查询失败')
     } finally {
-      setLoading(false)
+      if (current()) setLoading(false)
     }
   }
 
