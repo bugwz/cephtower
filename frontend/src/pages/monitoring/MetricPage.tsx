@@ -27,6 +27,33 @@ interface MetricRow extends ApiRecord {
   labels: string
   latest_value: string
   points: number
+  samples: MetricSample[]
+}
+
+interface MetricSample extends ApiRecord {
+  index: number
+  timestamp: string
+  utc: string
+  value: string
+  status: string
+}
+
+export function metricSamples(item: ApiRecord): MetricSample[] {
+  const samples = Array.isArray(item.values) ? item.values : Array.isArray(item.value) ? [item.value] : []
+  return samples.map((sample, index) => {
+    const tuple = Array.isArray(sample) ? sample : []
+    const timestamp = tuple[0]
+    const value = tuple[1]
+    const date = typeof timestamp === 'number' && Number.isFinite(timestamp) ? new Date(timestamp * 1000) : null
+    const validTime = date !== null && Number.isFinite(date.getTime())
+    const validValue = typeof value === 'string' && (/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value) || ['NaN', '+Inf', '-Inf', 'Inf'].includes(value))
+    return {
+      index, timestamp: timestamp == null ? '未提供' : String(timestamp),
+      utc: validTime ? date.toISOString() : '无效时间',
+      value: typeof value === 'string' ? value : '未提供或格式异常',
+      status: tuple.length !== 2 || !validTime || !validValue ? '格式异常' : Number.isFinite(Number(value)) ? '有效值' : '非有限值（不代表零）'
+    }
+  })
 }
 
 const metricOptions = [
@@ -203,6 +230,16 @@ function MetricContent({ selectedClusterId }: { selectedClusterId?: number }) {
               rowKey="row_id"
               loading={loading}
               dataSource={rows}
+              expandable={{ expandedRowRender: (row) => <Space direction="vertical" style={{ width: '100%' }}>
+                <Text style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{row.labels}</Text>
+                <Text type="secondary">按接口返回顺序展示全部样本，时间以 UTC 显示；原始值不做浮点转换。非有限值不代表零。</Text>
+                <AppTable<MetricSample> size="small" rowKey="index" dataSource={row.samples} pagination={{ defaultPageSize: 20, showSizeChanger: true }} columns={[
+                  { title: '时间（UTC）', dataIndex: 'utc' },
+                  { title: '原始时间戳（秒）', dataIndex: 'timestamp' },
+                  { title: '原始值', dataIndex: 'value' },
+                  { title: '样本状态', dataIndex: 'status' }
+                ]} />
+              </Space> }}
               pagination={{ defaultPageSize: 10, showSizeChanger: true }}
               scroll={{ x: 980 }}
               columns={[
@@ -222,15 +259,14 @@ function MetricContent({ selectedClusterId }: { selectedClusterId?: number }) {
 function normalizeSeries(series: ApiRecord[]): MetricRow[] {
   return series.map((item, index) => {
     const metric = readRecord(item.metric)
-    const values = Array.isArray(item.values) ? item.values : undefined
-    const value = Array.isArray(item.value) ? item.value : undefined
-    const latest = values?.[values.length - 1] ?? value
+    const samples = metricSamples(item)
     return {
       row_id: `${index}-${JSON.stringify(metric)}`,
       metric_name: String(metric.__name__ ?? metric.job ?? metric.instance ?? `series-${index + 1}`),
       labels: JSON.stringify(metric),
-      latest_value: Array.isArray(latest) ? String(latest[1] ?? latest[0] ?? '-') : '-',
-      points: values?.length ?? (value ? 1 : 0)
+      latest_value: samples[samples.length - 1]?.value ?? '-',
+      points: samples.length,
+      samples
     }
   })
 }

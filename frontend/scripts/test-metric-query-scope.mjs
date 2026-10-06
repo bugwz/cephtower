@@ -4,6 +4,28 @@ import ts from 'typescript'
 
 const source = readFileSync(new URL('../src/pages/monitoring/MetricPage.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('MetricPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const helpers = tree.statements.filter(node => ts.isFunctionDeclaration(node) && ['metricSamples', 'normalizeSeries', 'readRecord'].includes(node.name.text))
+const sampleExports = {}
+new Function('exports', ts.transpileModule(helpers.map(node => node.getText(tree)).join('\n') + '\nexports.normalizeSeries = normalizeSeries', { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(sampleExports)
+const samples = sampleExports.metricSamples({ values: [[0, '9007199254740993'], [1.125, '0'], [2, 'NaN'], [3, '+Inf'], [4, '-Inf'], [5, '1.2e-3']] })
+assert.equal(samples.length, 6)
+assert.equal(samples[0].utc, '1970-01-01T00:00:00.000Z')
+assert.equal(samples[0].value, '9007199254740993')
+assert.equal(samples[1].utc, '1970-01-01T00:00:01.125Z')
+assert.equal(samples[1].status, '有效值')
+for (const sample of samples.slice(2, 5)) assert.equal(sample.status, '非有限值（不代表零）')
+assert.equal(samples[5].status, '有效值')
+for (const value of [null, [], [1], ['1', '0'], [1, 0], [1, ''], [1, 'garbage'], [1e30, '1'], [1, '1', 'extra']]) {
+  assert.equal(sampleExports.metricSamples({ values: [value] })[0].status, '格式异常')
+}
+assert.equal(sampleExports.metricSamples({ value: [0, '-2'] })[0].value, '-2')
+assert.deepEqual(sampleExports.metricSamples({ values: [], value: [0, '1'] }), [])
+assert.deepEqual(sampleExports.metricSamples({}), [])
+const normalized = sampleExports.normalizeSeries([{ metric: { job: 'ceph' }, values: [[1, '1'], [2]] }])[0]
+assert.equal(normalized.latest_value, '未提供或格式异常', 'missing value must not display its timestamp as a measurement')
+assert.equal(normalized.points, 2)
+assert.equal(normalized.samples.length, 2)
+assert.ok(source.includes('dataSource={row.samples}'))
 const wrapper = tree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'MetricPage')
 const ui = {}
 let clusterId
