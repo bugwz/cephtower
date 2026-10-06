@@ -9,6 +9,7 @@ import { OSDScrubConfiguration } from './OSDScrubConfiguration'
 import { OSDRecoveryConfiguration } from './OSDRecoveryConfiguration'
 import { OSDGlobalFlags } from './OSDGlobalFlags'
 import { OSDCapacityThresholds } from './OSDCapacityThresholds'
+import { osdOperationalStatus } from './osdOperationalStatus'
 import { OSDRemovalStop } from './OSDRemovalStop'
 import { OSDRemovalDetails, removalBoolean } from './OSDRemovalDetails'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
@@ -532,6 +533,7 @@ export function OsdManagementPage() {
               { key: 'id', title: 'ID' },
               { key: 'host', title: '主机' },
               { key: 'state', title: '原生状态标记', render: osdStateText },
+              { key: 'operational_status', title: '运行管理状态', filterKey: false, render: (_, row) => osdOperationalStatus(row, osdID(row), data?.removals, data?.removalMeta?.stale, loading || Boolean(error)) },
               { key: 'up', title: 'Up' },
               { key: 'in', title: 'In' },
               { key: 'device_class', title: '设备类型' },
