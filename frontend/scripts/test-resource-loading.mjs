@@ -108,6 +108,34 @@ for (const timing of ['current', 'before-confirm', 'during-request']) {
 }
 assert.ok(hostDetailFn.getText(hostDetailTree).includes('deleteConfirmation.current?.destroy()'))
 console.log('Host deletion cannot submit or navigate from an inactive detail page')
+const hostActionNode = hostDetailFn.body.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'runHostAction')
+const hostActionCode = ts.transpileModule(hostActionNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const action of ['maintenance_enter', 'maintenance_exit', 'drain', 'stop_drain', 'rescan']) {
+  for (const scenario of ['success', 'stale', 'loading', 'error', 'running', 'before-confirm', 'during-request', 'failure']) {
+    const active = { current: true }, calls = [], updates = []
+    let confirmation
+    const env = {
+      selectedClusterId: 3, host: { hostname: 'node1', stale: scenario === 'stale', resource_version: '18446744073709551615' },
+      hostName: row => row.hostname, hostDeleteVersion, active, actionRunning: { current: scenario === 'running' },
+      pendingAction: '', loading: scenario === 'loading', error: scenario === 'error' ? 'offline' : '',
+      message: { error() {}, success: value => updates.push(value) }, deleteConfirmation: { current: null },
+      Modal: { confirm: options => { confirmation = options; return { destroy() {} } } },
+      setPendingAction: value => updates.push(value), operationMutation: { run: fn => fn() }, refresh: async () => updates.push('refresh'),
+      mutateResource: async (...args) => { calls.push(args); if (scenario === 'during-request') active.current = false; if (scenario === 'failure') throw new Error('failed') }
+    }
+    const run = new Function(...Object.keys(env), `${hostActionCode}; return runHostAction`)(...Object.values(env))
+    await run(action)
+    if (['stale', 'loading', 'error', 'running'].includes(scenario)) { assert.equal(confirmation, undefined); assert.deepEqual(calls, []); continue }
+    assert.ok(confirmation.title.includes('集群 3 / 主机 node1'))
+    assert.deepEqual(calls, [])
+    if (scenario === 'before-confirm') active.current = false
+    if (scenario === 'failure') await assert.rejects(confirmation.onOk(), /failed/); else await confirmation.onOk()
+    await confirmation.onOk()
+    assert.equal(calls.length, scenario === 'before-confirm' ? 0 : 1)
+    if (calls.length) assert.deepEqual(calls[0], ['/host/action', 'POST', { cluster_id: 3, host: 'node1', action }, { ifMatch: '18446744073709551615' }])
+    assert.equal(updates.includes('refresh'), scenario === 'success')
+  }
+}
 const hostPerfNode = hostDetailTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'hostDaemonSupportsPerf')
 const hostPerfCode = ts.transpileModule(hostPerfNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const hostPerfSupported = new Function(`${hostPerfCode}; return hostDaemonSupportsPerf`)()

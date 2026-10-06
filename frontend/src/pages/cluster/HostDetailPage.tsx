@@ -91,6 +91,7 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
   const [labelModalOpen, setLabelModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [pendingAction, setPendingAction] = useState('')
+  const actionRunning = useRef(false)
   const [refreshing, setRefreshing] = useState(false)
   const operationMutation = useMutationOperation()
 
@@ -152,7 +153,7 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
   }
 
   async function runHostAction(action: string) {
-    if (!selectedClusterId || !host || pendingAction) {
+    if (!selectedClusterId || !host || !active.current || pendingAction || actionRunning.current || loading || error) {
       return
     }
     const name = hostName(host)
@@ -160,20 +161,41 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
       message.error('无法识别主机名')
       return
     }
-    const pendingKey = `${name}:${action}`
-    setPendingAction(pendingKey)
-    try {
-      await operationMutation.run(() => mutateResource('/host/action', 'POST', {
-        cluster_id: selectedClusterId,
-        host: name,
-        action
-      }), false)
-      if (!active.current) return
-      message.success(`主机 ${action} 执行成功`)
-      await refresh()
-    } finally {
-      setPendingAction('')
+    const version = hostDeleteVersion(host)
+    const warnings: Record<string, string> = {
+      maintenance_enter: '进入维护将停止该主机上的 Ceph 守护进程，可能影响服务可用性。本操作不强制绕过安全检查。',
+      maintenance_exit: '退出维护将恢复该主机的守护进程管理，可能启动服务并触发恢复。',
+      drain: 'Drain 将排空该主机上的守护进程并调度 OSD 移除，可能触发大量数据迁移。命令接受不代表排空已完成。',
+      stop_drain: '停止 Drain 不会恢复已经移除的守护进程，也不能撤销已经发生的数据迁移。请另行核对 OSD 移除队列。',
+      rescan: '重新扫描主机设备，发现结果可能需要等待库存刷新；不会清空磁盘。'
     }
+    if (!version || !Object.keys(warnings).includes(action)) {
+      message.error('主机库存过期、版本无效或操作不支持，请刷新后再操作')
+      return
+    }
+    let submitted = false
+    deleteConfirmation.current?.destroy()
+    deleteConfirmation.current = Modal.confirm({
+      title: `集群 ${selectedClusterId} / 主机 ${name} / ${action}`,
+      content: warnings[action], okText: '确认执行', okType: 'danger', cancelText: '取消',
+      async onOk() {
+        if (!active.current || submitted || actionRunning.current) return
+        submitted = true
+        actionRunning.current = true
+        setPendingAction(`${name}:${action}`)
+        try {
+          await operationMutation.run(() => mutateResource('/host/action', 'POST', {
+            cluster_id: selectedClusterId, host: name, action
+          }, { ifMatch: version }), false)
+          if (!active.current) return
+          message.success(`主机 ${action} 命令已接受，请核对原生状态和队列`)
+          await refresh()
+        } finally {
+          actionRunning.current = false
+          if (active.current) setPendingAction('')
+        }
+      }
+    })
   }
 
   async function deleteHost() {
