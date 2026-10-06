@@ -24,6 +24,29 @@ for (const [selectedClusterId, monName] of [[1, 'a'], [2, 'a'], [2, 'b'], [undef
   assert.deepEqual(calls, [{ path: '/monitors', cluster: selectedClusterId, options: { name: monName } }, { monitor: monName, cluster: selectedClusterId }])
 }
 console.log('MON detail state is keyed by cluster and monitor, with scoped reads')
+
+const refreshNode = content.body.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'refreshMonDetail')
+const refreshJS = ts.transpileModule(refreshNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2020 } }).outputText
+for (const scenario of ['inactive', 'switched', 'current', 'failed']) {
+  const active = { current: scenario !== 'inactive' }
+  const calls = []
+  const mutation = { run: async (callback, success) => {
+    assert.equal(success, false)
+    await callback()
+    if (scenario === 'switched') active.current = false
+    if (scenario === 'failed') throw new Error('collection failed')
+  } }
+  const refreshMon = new Function('active', 'selectedClusterId', 'monName', 'refreshing', 'setRefreshing', 'operationMutation', 'refreshResource', 'refresh', 'message', `${refreshJS}; return refreshMonDetail`)(active, 7, 'mon-a', false, value => calls.push(['busy', value]), mutation, async body => calls.push(['collect', body.clusterId, body.kinds]), async () => calls.push(['reload']), { success: () => calls.push(['success']) })
+  if (scenario === 'failed') await assert.rejects(refreshMon, /collection failed/)
+  else await refreshMon()
+  const collect = ['collect', 7, ['mon', 'mon_status', 'mon_perf_counter']]
+  if (scenario === 'inactive') assert.deepEqual(calls, [])
+  if (scenario === 'switched') assert.deepEqual(calls, [['busy', true], collect])
+  if (scenario === 'current') assert.deepEqual(calls, [['busy', true], collect, ['success'], ['reload'], ['busy', false]])
+  if (scenario === 'failed') assert.deepEqual(calls, [['busy', true], collect, ['busy', false]])
+}
+assert.ok(source.includes('return () => { active.current = false }'))
+console.log('MON refresh stops follow-up work after leaving its mounted scope')
 for (const failure of [new Error('counter page failed'), new Error(''), 'unstructured failure']) {
   const load = new Function('selectedClusterId', 'monName', 'listResource', 'listMonitorPerfCounters', 'textValue', `${code}; return load`)(1, 'a',
     async () => ({ items: [{ name: 'a', rank: 0 }] }), async () => { throw failure }, value => value)

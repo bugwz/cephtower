@@ -1,6 +1,6 @@
 import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Descriptions, Input, Space, Typography } from 'antd'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { textValue } from '../../api/client'
 import { listMonitorPerfCounters, listResource, refreshResource } from '../../api/resource'
@@ -10,6 +10,7 @@ import { useResource } from '../../hooks'
 import { useMutationOperation } from '../../hooks/useMutationOperation'
 import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
+import { message } from '../../utils/appMessage'
 import { MonPublicAddresses } from './MonPublicAddresses'
 import { monSessionCount } from './monSessionCount'
 import { MonQuorumState } from './MonQuorumState'
@@ -27,6 +28,11 @@ export function MonDetailPage() {
 }
 
 function MonDetailContent({ selectedClusterId, monName }: { selectedClusterId?: number; monName: string }) {
+  const active = useRef(true)
+  useEffect(() => {
+    active.current = true
+    return () => { active.current = false }
+  }, [])
   const navigate = useNavigate()
   const loader = useCallback(async () => {
     if (!selectedClusterId || !monName) {
@@ -61,15 +67,17 @@ function MonDetailContent({ selectedClusterId, monName }: { selectedClusterId?: 
   const operationMutation = useMutationOperation()
 
   async function refreshMonDetail() {
-    if (!selectedClusterId || refreshing) {
+    if (!active.current || !selectedClusterId || !monName || refreshing) {
       return
     }
     setRefreshing(true)
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['mon', 'mon_status', 'mon_perf_counter'] }), '刷新成功')
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kinds: ['mon', 'mon_status', 'mon_perf_counter'] }), false)
+      if (!active.current) return
+      message.success('刷新成功')
       await refresh()
     } finally {
-      setRefreshing(false)
+      if (active.current) setRefreshing(false)
     }
   }
 
