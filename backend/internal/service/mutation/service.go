@@ -528,6 +528,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	for index, followup := range spec.followups {
 		stepID := fmt.Sprintf("%s.step%d", request.Action, index+2)
 		result, err = s.executor.Run(ctx, access, executor.CommandSpec{ID: stepID, Binary: followup.binary, Args: followup.args, Stdin: followup.stdin, Timeout: followup.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true, SensitiveArgs: followup.sensitive})
+		if request.Action == "host.update" && (err != nil || result.ExitCode != 0) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "host labels may be partially updated; inspect native labels before any manual retry", Retryable: false}
+		}
 		if err != nil {
 			if request.Action == "rgw_role.update" {
 				return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "role trust policy may already have changed but session duration update failed; inspect both fields before any manual retry", Retryable: false}
@@ -555,6 +558,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "host.update" && optional(request.Parameters, "address") == "" && (err != nil || checked.ExitCode != 0 || !hostLabelsMatch(checked.Stdout, last(resourceTail(request.ResourceKey)), request.Parameters)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "host label changes could not be verified; inspect native labels before any manual retry", Retryable: false}
+		}
 		if request.Action == "host.action" && slices.Contains([]string{"maintenance_enter", "maintenance_exit", "drain", "stop_drain"}, optional(request.Parameters, "action")) && (err != nil || checked.ExitCode != 0 || !hostActionStateMatches(checked.Stdout, pathValue(resourceTail(request.ResourceKey), "host"), optional(request.Parameters, "action"))) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "host command was issued but requested maintenance or drain control state was not verified; inspect native host and OSD queue state before retrying", Retryable: false}
 		}
@@ -3659,6 +3665,13 @@ func hostUpdate(p map[string]any, host string, wrap func([]string, []string) com
 	}
 	if p["labels_remove"] != nil && !removeOK {
 		return command{}, invalid("labels_remove is invalid")
+	}
+	seenLabels := map[string]bool{}
+	for _, label := range append(append([]string{}, labelsAdd...), labelsRemove...) {
+		if label == "" || strings.TrimSpace(label) != label || strings.HasPrefix(label, "-") || seenLabels[label] {
+			return command{}, invalid("host labels must be nonempty, unique and disjoint, without leading dashes or surrounding whitespace")
+		}
+		seenLabels[label] = true
 	}
 	commands := make([]command, 0, len(labelsAdd)+len(labelsRemove))
 	for _, label := range labelsAdd {
