@@ -46,3 +46,27 @@ export const silenceFromAlertAction: ResourceFormAction = {
   ...silenceCreateAction, title: '从告警创建静默', buttonLabel: '创建静默',
   disabledWhen: (row) => alertSilenceName(row) === undefined ? '告警缺少有效的 alertname 标签，无法预填静默条件' : undefined
 }
+
+export function silenceRecreateBlocked(row: ApiRecord): string | undefined {
+  const status = row.status
+  if (!status || typeof status !== 'object' || Array.isArray(status) || (status as ApiRecord).state !== 'expired') return '仅可重新创建原生状态为 expired 的静默'
+  try { silenceMatchers(JSON.stringify(row.matchers)) } catch { return '原静默的匹配条件缺失或格式异常，请手动新建' }
+  return undefined
+}
+
+export const silenceRecreateAction: ResourceFormAction = {
+  ...silenceCreateAction,
+  title: '重新创建已过期静默', buttonLabel: '重新创建',
+  successMessage: '新的告警静默创建执行成功，旧记录未修改',
+  disabledWhen: silenceRecreateBlocked,
+  initialValues: (row) => {
+    const start = new Date()
+    return {
+      matchers_json: JSON.stringify(row?.matchers ?? [], null, 2),
+      startsAt: start.toISOString(), endsAt: new Date(start.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+      createdBy: typeof row?.createdBy === 'string' ? row.createdBy : '',
+      comment: typeof row?.comment === 'string' ? row.comment : ''
+    }
+  },
+  confirmation: () => '将按当前表单条件与时间创建一条新的静默，不修改原已过期记录。匹配的告警通知将被暂停，请确认匹配范围、创建人、说明和新的时间范围。'
+}
