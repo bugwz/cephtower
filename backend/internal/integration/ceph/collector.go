@@ -1267,6 +1267,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 }
 
 type deviceWire struct {
+	LSMData         map[string]any    `json:"lsm_data"`
 	DeviceID        string            `json:"device_id"`
 	Hostname        string            `json:"hostname"`
 	Path            string            `json:"path"`
@@ -1295,6 +1296,7 @@ func (p *NativeProvider) collectInventory(ctx context.Context, access ClusterAcc
 	for _, wire := range devices {
 		key := wire.Hostname + ":" + wire.Path
 		payload := cephdomain.Device{ID: wire.DeviceID, Hostname: wire.Hostname, Path: wire.Path, Available: wire.Available, RejectedReasons: wire.RejectedReasons, DeviceType: wire.DeviceType, Model: wire.Model, Vendor: wire.Vendor, Serial: wire.Serial, SizeBytes: wire.SizeBytes, Rotational: wire.Rotational, Metadata: wire.Metadata}
+		payload.LSMData = wire.LSMData
 		rows = append(rows, Observation{Kind: "device", NaturalKey: key, ParentKind: "host", ParentKey: wire.Hostname, Name: key, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	return rows, nil
@@ -1378,6 +1380,7 @@ func buildDeviceWire(record map[string]any, host string) (deviceWire, bool) {
 		serial = firstStringPointer(sysAPI, "serial")
 	}
 	return deviceWire{
+		LSMData:         deviceLSMData(record["lsm_data"]),
 		DeviceID:        firstNonEmpty(firstString(record, "device_id", "id", "devid"), hostname+":"+path),
 		Hostname:        hostname,
 		Path:            path,

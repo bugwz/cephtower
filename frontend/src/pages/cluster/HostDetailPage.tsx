@@ -439,6 +439,11 @@ function HostPhysicalDiskTable({ devices }: { devices: ApiRecord[] }) {
         { key: 'model_display', title: '型号' },
         { key: 'serial_display', title: '序列号' },
         { key: 'health_display', title: 'LSM 健康状态' },
+        { key: 'transport_display', title: 'LSM 传输类型' },
+        { key: 'rpm_display', title: '转速（RPM）' },
+        { key: 'link_speed_display', title: '链路速率（LSM 原值）' },
+        { key: 'identify_led_display', title: '定位灯（支持 / 状态）' },
+        { key: 'fault_led_display', title: '故障灯（支持 / 状态）' },
         { key: 'rejected_reasons_display', title: '不可用原因', ellipsis: false },
         { key: 'size_display', title: '容量' },
         { key: 'osd_display', title: 'OSD' }
@@ -638,6 +643,7 @@ function normalizeCephDeviceRow(row: ApiRecord, hostname: string): ApiRecord {
 function normalizeInventoryDeviceRow(row: ApiRecord, deviceInfo: ApiRecord[]): ApiRecord {
   const sysAPI = isRecord(row.sys_api) ? row.sys_api : {}
   const lsmData = isRecord(row.lsm_data) ? row.lsm_data : {}
+  const leds = isRecord(lsmData.ledSupport) ? lsmData.ledSupport : {}
   const lvs = Array.isArray(row.lvs) ? row.lvs.filter(isRecord) : []
   const path = textValue(row.path ?? sysAPI.path ?? row.name, '')
   const deviceName = path.split('/').filter(Boolean).pop() ?? path
@@ -665,7 +671,12 @@ function normalizeInventoryDeviceRow(row: ApiRecord, deviceInfo: ApiRecord[]): A
     serial_display: textValue(row.serial ?? lsmData.serialNum, ''),
     size_display: hostStorageCapacity([{ size_bytes: size }]),
     osd_display: osdIDs,
-    health_display: textValue(lsmData.health, '')
+    health_display: textValue(lsmData.health, '未知'),
+    transport_display: textValue(lsmData.transport, '未知'),
+    rpm_display: textValue(lsmData.rpm, '未知'),
+    link_speed_display: textValue(lsmData.linkSpeed, '未知'),
+    identify_led_display: `${textValue(leds.IDENTsupport, '未知')} / ${textValue(leds.IDENTstatus, '未知')}`,
+    fault_led_display: `${textValue(leds.FAILsupport, '未知')} / ${textValue(leds.FAILstatus, '未知')}`
   }
 }
 

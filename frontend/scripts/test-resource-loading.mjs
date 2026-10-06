@@ -244,6 +244,13 @@ const normalizeInventory = new Function('isRecord', 'stringArray', 'textValue', 
 assert.match(normalizeInventory({ size_bytes: '18446744073709551615' }, []).size_display, /18446744073709551615 B/)
 assert.equal(normalizeInventory({ size_bytes: '0' }, []).size_display, '0 B')
 assert.match(normalizeInventory({}, []).size_display, /未知/)
+const lsmRow = normalizeInventory({ lsm_data: { health: 'Good', transport: 'SAS', rpm: '7200', linkSpeed: '12000', ledSupport: { IDENTsupport: 'Supported', IDENTstatus: 'Off', FAILsupport: 'Unsupported', FAILstatus: 'Unknown' } } }, [])
+assert.equal(lsmRow.rpm_display, '7200')
+assert.equal(lsmRow.link_speed_display, '12000')
+assert.equal(lsmRow.health_display, 'Good')
+assert.equal(lsmRow.identify_led_display, 'Supported / Off')
+assert.equal(lsmRow.fault_led_display, 'Unsupported / Unknown')
+assert.equal(normalizeInventory({}, []).identify_led_display, '未知 / 未知')
 for (const rotational of [undefined, null, '', 'unknown', 2]) {
   const row = normalizeInventory({ rotational }, [])
   assert.equal(row.type_display, '未知')

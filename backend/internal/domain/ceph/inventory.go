@@ -159,6 +159,7 @@ type MetadataServer struct {
 	Standby    bool   `json:"standby"`
 }
 type Device struct {
+	LSMData         map[string]any    `json:"lsm_data"`
 	ID              string            `json:"device_id"`
 	Hostname        string            `json:"hostname"`
 	Path            string            `json:"path"`
