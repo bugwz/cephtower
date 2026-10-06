@@ -7,6 +7,7 @@ import { ManagerInventory } from './ManagerInventory'
 import { osdSnapshotValue } from './OSDUsage'
 import { OSDScrubConfiguration } from './OSDScrubConfiguration'
 import { OSDRecoveryConfiguration } from './OSDRecoveryConfiguration'
+import { OSDGlobalFlags } from './OSDGlobalFlags'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import {
   applyDaemonAction,
@@ -489,6 +490,7 @@ export function OsdManagementPage() {
         <section className="embedded-panel">
           <div className="embedded-panel-title">OSD Flags</div>
           {data?.flags == null ? <span className="muted">OSD flags 未采集或格式无效</span> : data.flags.length ? data.flags.map((flag, index) => <Tag key={`${index}-${flag}`}>{flag}</Tag>) : <span className="muted">未设置 OSD flags</span>}
+          {selectedClusterId && <OSDGlobalFlags key={selectedClusterId} clusterId={selectedClusterId} />}
         </section>
         <section className="embedded-panel">
           <DataTable
