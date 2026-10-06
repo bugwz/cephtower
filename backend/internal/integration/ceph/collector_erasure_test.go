@@ -61,6 +61,9 @@ func TestErasureProfileCollectionCompleteness(t *testing.T) {
 		{`["ec"]`, `{"plugin":"isa","extra":null}`, false, 0},
 		{`["ec"]`, `{"plugin":"isa","":"x"}`, false, 0},
 		{`["ec"]`, `{"plugin":"isa","extra":""}`, true, 1},
+		{`["ec"]`, `{"plugin":"isa","plugin":"jerasure"}`, false, 0},
+		{`["ec"]`, `{"plugin":"isa","k":"2","k":"4"}`, false, 0},
+		{`["ec"]`, `{"plugin":"isa","extra":"","extra":""}`, false, 0},
 	} {
 		trace := &collectionTrace{unavailable: map[string]struct{}{}}
 		ctx := context.WithValue(context.Background(), collectionTraceKey{}, trace)
