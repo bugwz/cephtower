@@ -18,7 +18,8 @@ export function crushRuleUsage(id: number, inventory: ResourceListResult) {
 }
 
 export function ErasureProfileUsage({ clusterId, profile }: { clusterId?: number, profile: string }) {
-  return <PoolPlacementUsage clusterId={clusterId} profile={profile} />
+  if (!profile.trim()) return <Alert type="warning" message="纠删码配置名称缺失，无法确认存储池引用，请重新采集。" />
+  return <PoolPlacementUsage key={JSON.stringify([clusterId, 'profile', profile])} clusterId={clusterId} profile={profile} />
 }
 
 export function validCrushRuleID(value: unknown): value is number {
@@ -27,7 +28,7 @@ export function validCrushRuleID(value: unknown): value is number {
 
 export function CrushRuleUsage({ clusterId, name, id }: { clusterId?: number, name: string, id: unknown }) {
   if (!validCrushRuleID(id)) return <Alert type="warning" message="规则 ID 缺失或格式异常，无法确认存储池引用，请重新采集。" />
-  return <PoolPlacementUsage clusterId={clusterId} profile={name} ruleId={id} />
+  return <PoolPlacementUsage key={JSON.stringify([clusterId, 'rule', id])} clusterId={clusterId} profile={name} ruleId={id} />
 }
 
 function PoolPlacementUsage({ clusterId, profile, ruleId }: { clusterId?: number, profile: string, ruleId?: number }) {
@@ -37,7 +38,7 @@ function PoolPlacementUsage({ clusterId, profile, ruleId }: { clusterId?: number
   useEffect(() => {
     let active = true
     setResult(null); setError('')
-    if (!clusterId || !profile) return
+    if (!clusterId || (ruleId === undefined && !profile)) return
     void listAllResources('/pools', clusterId).then((inventory) => {
       if (active) setResult(ruleId === undefined ? erasureProfileUsage(profile, inventory) : crushRuleUsage(ruleId, inventory))
     }).catch((err) => { if (active) setError(err instanceof Error ? err.message : '引用读取失败') })
