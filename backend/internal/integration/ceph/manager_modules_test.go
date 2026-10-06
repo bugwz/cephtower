@@ -2,6 +2,7 @@ package ceph
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 )
@@ -29,6 +30,30 @@ func TestManagerModulesJoinActivationAndMetadata(t *testing.T) {
 		case "prometheus":
 			if value["enabled"] != false || value["can_run"] != false || value["error_string"] != "missing dependency" {
 				t.Fatalf("disabled module lost: %+v", value)
+			}
+		}
+	}
+}
+
+func TestManagerModulesRejectMalformedIdentityLists(t *testing.T) {
+	for _, field := range []string{"enabled_modules", "always_on_modules", "force_disabled_modules", "disabled_modules", "available_modules"} {
+		for _, raw := range []string{`[null]`, `[1]`, `[""]`, `[" a"]`, `["a","a"]`, `[{"name":"a"},null]`, `[{"name":"a"},{"name":"a"}]`, `[{"name":1}]`} {
+			states := map[string]any{"enabled_modules": []any{}, "always_on_modules": []any{}, "force_disabled_modules": []any{}, "disabled_modules": []any{}}
+			metadata := map[string]any{"available_modules": []any{map[string]any{"name": "dashboard"}}}
+			var invalid any
+			if err := json.Unmarshal([]byte(raw), &invalid); err != nil {
+				t.Fatal(err)
+			}
+			if field == "available_modules" {
+				metadata[field] = invalid
+			} else {
+				states[field] = invalid
+			}
+			stateJSON, _ := json.Marshal(states)
+			metaJSON, _ := json.Marshal(metadata)
+			p := NativeProvider{Executor: malformedExecutor{override: map[string][]byte{"collect.mgr_module": stateJSON, "collect.mgr_module_metadata": metaJSON}}}
+			if rows := p.collectManagerModules(context.Background(), ClusterAccess{}, time.Now()); len(rows) != 0 {
+				t.Fatalf("accepted %s=%s: %v", field, raw, rows)
 			}
 		}
 	}

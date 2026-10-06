@@ -2,6 +2,7 @@ package ceph
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"cephtower/backend/internal/integration/ceph/executor"
@@ -18,12 +19,28 @@ func (p *NativeProvider) collectManagerModules(ctx context.Context, access Clust
 		return nil
 	}
 	for _, key := range []string{"enabled_modules", "always_on_modules", "force_disabled_modules", "disabled_modules"} {
-		if _, ok := states[key].([]any); !ok {
+		items, ok := states[key].([]any)
+		if !ok {
 			markCollectionUnavailable(ctx, "collect.mgr_module")
 			return nil
 		}
+		seen := map[string]bool{}
+		for _, item := range items {
+			name, valid := item.(string)
+			if key == "disabled_modules" {
+				module, object := item.(map[string]any)
+				name, valid = module["name"].(string)
+				valid = valid && object
+			}
+			if !valid || name == "" || name != strings.TrimSpace(name) || seen[name] {
+				markCollectionUnavailable(ctx, "collect.mgr_module")
+				return nil
+			}
+			seen[name] = true
+		}
 	}
-	if _, ok := metadata["available_modules"].([]any); !ok {
+	available, ok := metadata["available_modules"].([]any)
+	if !ok {
 		markCollectionUnavailable(ctx, "collect.mgr_module_metadata")
 		return nil
 	}
@@ -36,12 +53,15 @@ func (p *NativeProvider) collectManagerModules(ctx context.Context, access Clust
 		return false
 	}
 	var rows []Observation
-	for _, module := range objectList(metadata["available_modules"]) {
-		name := textField(module, "name")
-		if name == "" {
+	seen := map[string]bool{}
+	for _, item := range available {
+		module, object := item.(map[string]any)
+		name, valid := module["name"].(string)
+		if !object || !valid || name == "" || name != strings.TrimSpace(name) || seen[name] {
 			markCollectionUnavailable(ctx, "collect.mgr_module_metadata")
 			return nil
 		}
+		seen[name] = true
 		if name == "selftest" {
 			continue
 		}
