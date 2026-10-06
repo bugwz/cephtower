@@ -18,6 +18,10 @@ export function runtimeLogDetails(row: ApiRecord) {
   }))
 }
 
+export function runtimeLogKey(row: ApiRecord): string {
+  return JSON.stringify([row.channel, row.name, row.rank, row.stamp, row.seq])
+}
+
 export async function copyRuntimeLogs(rows: ApiRecord[]): Promise<void> {
   if (!navigator.clipboard?.writeText) throw new Error('当前浏览器不支持剪贴板写入，请下载日志。')
   await navigator.clipboard.writeText(runtimeLogsText(rows))
@@ -118,7 +122,7 @@ function RuntimeLogsContent({ compact, selectedClusterId }: { compact: boolean; 
         {error && observed && <Alert type="warning" message="刷新失败，以下为上次成功获取的日志。" />}
         <AppTable<ApiRecord> size="small" loading={loading && !rows.length} dataSource={filtered}
           expandable={{ expandedRowRender: (row) => <Descriptions size="small" bordered column={1} items={runtimeLogDetails(row)} style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }} /> }}
-          rowKey={(row) => `${row.channel}/${row.name}/${row.rank}/${row.stamp}/${row.seq}`}
+          rowKey={runtimeLogKey}
           pagination={{ defaultPageSize: 30, showSizeChanger: true }} columns={[
             { title: '时间', dataIndex: 'stamp', width: 230 },
             { title: '频道', dataIndex: 'channel', width: 100 },

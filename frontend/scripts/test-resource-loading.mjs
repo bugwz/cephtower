@@ -464,6 +464,14 @@ assert.equal(managementMode(null), '未采集')
 
 const logsSource = readFileSync(new URL('../src/pages/monitoring/RuntimeLogsPage.tsx', import.meta.url), 'utf8')
 const logsTree = ts.createSourceFile('logs.tsx', logsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const logKeyNode = logsTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'runtimeLogKey')
+const keyExports = {}
+new Function('exports', ts.transpileModule(logKeyNode.getText(logsTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(keyExports)
+const keyRow = { channel: 'audit', name: 'client/a', rank: 'b', stamp: '2026-10-06', seq: '9007199254740993' }
+assert.notEqual(keyExports.runtimeLogKey(keyRow), keyExports.runtimeLogKey({ ...keyRow, name: 'client', rank: 'a/b' }))
+assert.notEqual(keyExports.runtimeLogKey(keyRow), keyExports.runtimeLogKey({ ...keyRow, seq: '9007199254740992' }))
+assert.equal(keyExports.runtimeLogKey(keyRow), keyExports.runtimeLogKey({ ...keyRow, message: 'updated text' }))
+assert.ok(logsSource.includes('rowKey={runtimeLogKey}'))
 const logDetailsNode = logsTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'runtimeLogDetails')
 const detailExports = {}
 new Function('exports', ts.transpileModule(logDetailsNode.getText(logsTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(detailExports)
