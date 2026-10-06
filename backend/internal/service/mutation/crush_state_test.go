@@ -59,6 +59,11 @@ func TestCrushRuleRenameReadback(t *testing.T) {
 }
 
 func TestCrushRuleMutationTargetValidation(t *testing.T) {
+	for _, name := range []any{"parent/new", "new/", " new", "new ", "--all", nil, 123} {
+		if _, err := build(Request{Action: "crush_rule.update", ResourceKey: "crush-rule/old"}, map[string]any{"new_name": name}); err == nil {
+			t.Fatalf("accepted unusable new rule name %#v", name)
+		}
+	}
 	for _, action := range []string{"crush_rule.update", "crush_rule.delete"} {
 		for _, key := range []string{"", "a", "other/a", "crush-rule/", "crush-rule/parent/a", "crush-rule/a/", "/crush-rule/a", "crush-rule/ a", "crush-rule/a ", "crush-rule/--all"} {
 			if _, err := build(Request{Action: action, ResourceKey: key}, map[string]any{"new_name": "b"}); err == nil {

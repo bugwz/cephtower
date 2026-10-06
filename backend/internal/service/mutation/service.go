@@ -1170,6 +1170,12 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
+		if raw, ok := p["new_name"].(string); !ok || raw != name {
+			return command{}, invalid("new_name must be an exact rule name")
+		}
+		if _, err := crushRuleTarget("crush-rule/" + name); err != nil {
+			return command{}, err
+		}
 		return ceph([]string{"osd", "crush", "rule", "rename", old, name}, []string{"osd", "crush", "rule", "ls", "--format", "json"}), nil
 	case "crush_rule.delete":
 		name, err := crushRuleTarget(request.ResourceKey)
