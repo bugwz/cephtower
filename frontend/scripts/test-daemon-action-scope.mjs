@@ -46,7 +46,7 @@ for (const scenario of ['success', 'stale', 'unavailable', 'before', 'during', '
 assert.equal(source.split('<DaemonTable key={selectedClusterId} clusterId={selectedClusterId}').length - 1, 2)
 assert.ok(table.getText(tree).includes('return () => { active.current = false; actionConfirmation.current?.destroy() }'))
 const confirmCode = table.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'confirmAction').getText(tree)
-for (const scenario of ['success', 'stale', 'inactive', 'during', 'failure', 'no-version']) {
+for (const scenario of ['success', 'stale', 'inactive', 'during', 'failure', 'no-version', 'cancelled', 'replaced', 'inventory-changed']) {
   let modal
   const calls = [], destroys = []
   const env = { clusterId: 7, active: { current: scenario !== 'inactive' }, running: { current: false }, unavailable: false, osdInventoryVersion: version, actionConfirmation: { current: null }, Modal: { confirm: value => { modal = value; return { destroy: () => destroys.push(true) } } }, runAction: async (...args) => { calls.push(args); if (scenario === 'failure') throw new Error('failed') } }
@@ -58,10 +58,41 @@ for (const scenario of ['success', 'stale', 'inactive', 'during', 'failure', 'no
   assert.match(modal.title, /mgr.a.*7/)
   assert.match(modal.content, /不会使用强制选项/)
   if (scenario === 'during') env.active.current = false
+  if (scenario === 'cancelled') modal.onCancel()
+  if (scenario === 'replaced') {
+    const old = modal
+    confirm(row, 'restart')
+    const current = env.actionConfirmation.current
+    modal = old
+    modal.onCancel()
+    assert.equal(env.actionConfirmation.current, current)
+  }
+  if (scenario === 'inventory-changed') {
+    const effect = table.body.statements.find(n => ts.isExpressionStatement(n) && ts.isCallExpression(n.expression) && n.expression.expression.getText(tree) === 'useEffect' && n.getText(tree).includes('[data, unavailable]')).expression.arguments[0]
+    const cleanup = new Function('actionConfirmation', `return (${effect.getText(tree)})()`)(env.actionConfirmation)
+    cleanup()
+    assert.equal(env.actionConfirmation.current, null)
+  }
   if (scenario === 'failure') await assert.rejects(modal.onOk(), /failed/)
   else await modal.onOk()
   await modal.onOk()
-  assert.equal(calls.length, scenario === 'during' ? 0 : 1)
+  assert.equal(calls.length, ['during', 'cancelled', 'replaced', 'inventory-changed'].includes(scenario) ? 0 : 1)
+}
+{
+  const dialogs = []
+  let release
+  const pending = new Promise(resolve => { release = resolve })
+  const env = { clusterId: 7, active: { current: true }, running: { current: false }, unavailable: false, osdInventoryVersion: version, actionConfirmation: { current: null }, Modal: { confirm: options => { const dialog = { options, destroyed: false, destroy() { this.destroyed = true } }; dialogs.push(dialog); return dialog } }, runAction: () => pending }
+  const confirm = new Function(...Object.keys(env), `${compile(confirmCode)}; return confirmAction`)(...Object.values(env))
+  const row = { name: 'mgr.a', stale: false, resource_version: '9' }
+  confirm(row, 'restart')
+  const completion = dialogs[0].options.onOk()
+  confirm(row, 'stop')
+  release()
+  await completion
+  assert.equal(dialogs[0].destroyed, true)
+  assert.equal(dialogs[1].destroyed, false)
+  assert.equal(env.actionConfirmation.current, dialogs[1])
 }
 for (const action of ['start', 'stop', 'restart', 'reconfig', 'redeploy', 'rotate-key']) {
   assert.ok(table.getText(tree).includes(`confirmAction(row, '${action}')`))

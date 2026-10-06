@@ -1154,7 +1154,7 @@ function DaemonTable({
     active.current = true
     return () => { active.current = false; actionConfirmation.current?.destroy() }
   }, [])
-  useEffect(() => () => { actionConfirmation.current?.destroy() }, [data, unavailable])
+  useEffect(() => () => { actionConfirmation.current?.destroy(); actionConfirmation.current = null }, [data, unavailable])
   const operationMutation = useMutationOperation()
 
   function confirmAction(row: ApiRecord, action: 'start' | 'stop' | 'restart' | 'reconfig' | 'redeploy' | 'rotate-key') {
@@ -1162,17 +1162,22 @@ function DaemonTable({
     const label = { start: '启动', stop: '停止', restart: '重启', reconfig: '重新配置', redeploy: '重新部署', 'rotate-key': '轮换密钥' }[action]
     let submitted = false
     actionConfirmation.current?.destroy()
-    actionConfirmation.current = Modal.confirm({
+    const confirmation = Modal.confirm({
       title: `${label} ${row.name}（集群 ${clusterId}）`,
       content: '操作可能中断依赖此守护进程的客户端或服务。不会使用强制选项绕过 Ceph 安全检查；命令接受不代表运行状态已经完成切换。',
       okText: `确认${label}`, cancelText: '取消', okType: action === 'start' ? 'primary' : 'danger',
+      onCancel() { if (actionConfirmation.current === confirmation) actionConfirmation.current = null },
       async onOk() {
-        if (submitted || !active.current || running.current) return
+        if (actionConfirmation.current !== confirmation || submitted || !active.current || running.current) return
         submitted = true
         try { await runAction(row, action) }
-        finally { actionConfirmation.current?.destroy() }
+        finally {
+          confirmation.destroy()
+          if (actionConfirmation.current === confirmation) actionConfirmation.current = null
+        }
       }
     })
+    actionConfirmation.current = confirmation
   }
 
   function openPerformance(row: ApiRecord) {
