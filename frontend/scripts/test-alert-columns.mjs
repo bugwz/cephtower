@@ -19,6 +19,11 @@ const page = readFileSync(new URL('../src/pages/monitoring/pages.tsx', import.me
 assert.ok(page.includes("rowKeyCandidates: ['fingerprint']"))
 assert.ok(page.includes('columns: alertColumns'))
 console.log('Alert list columns read native nested state and labels')
+for (const key of ['name', 'group', 'file', 'state', 'health', 'duration', 'query']) assert.ok(exports.alertRuleColumns.some(column => column.key === key))
+assert.equal(exports.alertRuleColumns.find(column => column.key === 'severity').render(undefined, row), 'warning')
+assert.equal(exports.alertRuleColumns.find(column => column.key === 'summary').render(undefined, row), 'warning summary')
+assert.ok(page.includes("rowKeyCandidates: ['rule_key']"))
+assert.ok(page.includes('columns: alertRuleColumns'))
 
 const actions = {}
 new Function('exports', ts.transpileModule(readFileSync(new URL('../src/pages/monitoring/silenceActions.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(actions)

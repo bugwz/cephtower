@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### 告警规则分组展开与原生详情
+
+- 对照参考 `prometheus-alert.service.ts::getRules` 及规则列表，修复当前后端返回规则组、前端却按单条规则展示的形状错配：筛选 alerting 规则并展开成列表，保留组名、文件和无歧义行标识，记录规则不混入告警规则页。
+- Prometheus `/api/v1/rules` 解码保留类型、活动告警、最近错误、最近评估时间及耗时；可空数值保留原生零值且不伪造缺失值。列表补齐严重程度、规则组、文件、健康状态、摘要及以秒标注的持续时间，已有详情入口可查看完整规则数据。
+- 原生响应状态、groups 和各组 rules 缺失时返回错误。回归覆盖组展开、同名规则、原生零值和详情、异常响应及前端字段绑定；`make test-backend`、OpenAPI 校验和 `make test-frontend`（类型检查、生产构建）通过。未进行真实 Prometheus / Ceph 集群或浏览器验证。
+
 #### 从告警创建静默
 
 - 对照参考 `silence-form.component.ts::fillFormByAlert`，告警列表增加“创建静默”操作，默认以原始 alertname 生成 `isRegex:false`、`isEqual:true` 的精确匹配，预填两小时时间范围。缺少有效告警名称时禁用操作。

@@ -16,3 +16,15 @@ export const alertColumns: FieldColumn[] = [
   { key: 'endsAt', title: '结束时间' },
   { key: 'generatorURL', title: '告警来源 URL' }
 ]
+
+export const alertRuleColumns: FieldColumn[] = [
+  { key: 'name', title: '名称' },
+  { key: 'severity', title: '严重程度', render: (_, row) => alertField(row.labels, 'severity') },
+  { key: 'group', title: '规则组' },
+  { key: 'file', title: '规则文件' },
+  { key: 'state', title: '状态' },
+  { key: 'health', title: '健康状态' },
+  { key: 'duration', title: '持续时间（秒）' },
+  { key: 'query', title: '表达式' },
+  { key: 'summary', title: '摘要', render: (_, row) => alertField(row.annotations, 'summary') }
+]

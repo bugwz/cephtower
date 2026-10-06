@@ -1,7 +1,7 @@
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 export { RuntimeLogsPage } from './RuntimeLogsPage'
 import { MetricPage } from './MetricPage'
-import { alertColumns } from './alertColumns'
+import { alertColumns, alertRuleColumns } from './alertColumns'
 import { silenceCreateAction, silenceFromAlertAction } from './silenceActions'
 
 export function MonitorOverviewPage() {
@@ -50,13 +50,8 @@ const externalDefinitions: Record<'grafana' | 'alerts' | 'rules' | 'silences', E
     title: '告警规则',
     path: '/alert/rules',
     requiredEndpoints: ['prometheus'],
-    columns: [
-      { key: 'name', title: '名称' },
-      { key: 'state', title: '状态' },
-      { key: 'query', title: '查询' },
-      { key: 'duration', title: '持续时间' },
-      { key: 'labels', title: 'Labels' }
-    ]
+    rowKeyCandidates: ['rule_key'],
+    columns: alertRuleColumns
   },
   silences: {
     title: '告警静默',

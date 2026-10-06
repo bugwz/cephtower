@@ -130,7 +130,7 @@ func TestProtocolNativeHTTPReadsUseTypedAdapters(t *testing.T) {
 		case request.URL.Host == "prometheus.example.test" && request.URL.Path == "/api/v1/query":
 			body = `{"status":"success","data":{"resultType":"vector","result":[{"metric":{"job":"ceph"},"value":[1,"1"]}]}}`
 		case request.URL.Host == "prometheus.example.test" && request.URL.Path == "/api/v1/rules":
-			body = `{"status":"success","data":{"groups":[{"name":"ceph","rules":[{"name":"CephHealth","query":"ceph_health_status"}]}]}}`
+			body = `{"status":"success","data":{"groups":[{"name":"ceph","rules":[{"type":"alerting","name":"CephHealth","query":"ceph_health_status"}]}]}}`
 		case request.URL.Host == "alertmanager.example.test" && request.URL.Path == "/api/v2/alerts":
 			body = `[{"labels":{"alertname":"CephHealth"},"annotations":{},"status":{"state":"active"},"startsAt":"2026-07-26T00:00:00Z"}]`
 		case request.URL.Host == "alertmanager.example.test" && request.URL.Path == "/api/v2/silences":
@@ -183,4 +183,34 @@ func toJSON(t *testing.T, value any) string {
 		t.Fatal(err)
 	}
 	return string(encoded)
+}
+
+func TestAlertRulesFlattenGroupsAndPreserveDetails(t *testing.T) {
+	s, endpoints, cluster := externalTestService(t)
+	ctx := context.Background()
+	if _, err := endpoints.CreateEndpoint(ctx, cluster.ID, endpointservice.EndpointInput{Kind: "prometheus", URL: "https://prometheus.example.test"}); err != nil {
+		t.Fatal(err)
+	}
+	const body = `{"status":"success","data":{"groups":[{"name":"ceph","file":"a.yml","rules":[{"type":"recording","name":"record","query":"sum(up)"},{"type":"alerting","name":"Health","query":"ceph_health_status > 0","duration":0,"labels":{"severity":"warning"},"annotations":{"summary":"bad health"},"health":"ok","state":"firing","alerts":[{"value":"9007199254740993","state":"firing"}],"lastError":"evaluation failed","lastEvaluation":"2026-01-01T00:00:00Z","evaluationTime":0}]},{"name":"ceph","file":"b.yml","rules":[{"type":"alerting","name":"Health","query":"up == 0"}]}]}}`
+	s.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+		if r.URL.Path != "/api/v1/rules" {
+			t.Fatalf("unexpected path: %s", r.URL)
+		}
+		return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(body)), Request: r}, nil
+	})
+	result, err := s.Read(ctx, cluster.ID, "alert_rule", "", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows := result.(map[string]any)["items"].([]alertRuleRow)
+	if len(rows) != 2 || rows[0].Group != "ceph" || rows[0].File != "a.yml" || rows[1].File != "b.yml" || rows[0].RuleKey == rows[1].RuleKey {
+		t.Fatalf("flattened rules: %#v", rows)
+	}
+	first := rows[0]
+	if first.Name != "Health" || first.State != "firing" || first.Health != "ok" || first.Duration == nil || *first.Duration != 0 || first.EvaluationTime == nil || *first.EvaluationTime != 0 || first.LastEvaluation == nil || first.LastError != "evaluation failed" {
+		t.Fatalf("lost rule fields: %#v", first)
+	}
+	if !strings.Contains(string(first.Alerts), "9007199254740993") || first.Annotations["summary"] != "bad health" || first.Labels["severity"] != "warning" {
+		t.Fatalf("lost details: %#v", first)
+	}
 }

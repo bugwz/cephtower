@@ -80,6 +80,18 @@ func TestHostMetricQueriesAreRegistered(t *testing.T) {
 	}
 }
 
+func TestRulesRejectUnavailableGroups(t *testing.T) {
+	for _, body := range []string{`{}`, `{"status":"error","data":{"groups":[]}}`, `{"status":"success","data":{"groups":null}}`, `{"status":"success","data":{"groups":[{"name":"a"}]}}`} {
+		client, err := New("https://prometheus.example.test", "", &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) { return jsonResponse(200, body), nil })})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := client.Rules(context.Background()); err == nil {
+			t.Fatalf("accepted %s", body)
+		}
+	}
+}
+
 func TestInstantMetricRejectsInvalidEnvelope(t *testing.T) {
 	for _, body := range []string{`{}`, `{"status":"error"}`, `{"status":"success","data":{"resultType":"matrix","result":[]}}`, `{"status":"success","data":{"resultType":"vector","result":null}}`} {
 		client, err := New("https://prometheus.example.test", "", &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) { return jsonResponse(200, body), nil })})

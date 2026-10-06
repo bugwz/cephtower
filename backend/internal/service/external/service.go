@@ -177,7 +177,19 @@ func (s *Service) readMonitoring(ctx context.Context, clusterID uint64, kind str
 	case "alert":
 		items, err = api.Alerts(ctx)
 	case "alert_rule":
-		items, err = api.Rules(ctx)
+		var groups []monitoring.RuleGroup
+		groups, err = api.Rules(ctx)
+		rules := make([]alertRuleRow, 0)
+		for groupIndex, group := range groups {
+			for ruleIndex, rule := range group.Rules {
+				if rule.Type != "alerting" {
+					continue
+				}
+				key, _ := json.Marshal([]any{group.File, group.Name, rule.Name, groupIndex, ruleIndex})
+				rules = append(rules, alertRuleRow{Rule: rule, Group: group.Name, File: group.File, RuleKey: string(key)})
+			}
+		}
+		items = rules
 	case "silence":
 		items, err = api.Silences(ctx)
 	case "grafana":
@@ -187,6 +199,13 @@ func (s *Service) readMonitoring(ctx context.Context, clusterID uint64, kind str
 		return nil, failure(endpointKind+"_failed", err.Error(), true)
 	}
 	return listResult(items), nil
+}
+
+type alertRuleRow struct {
+	monitoring.Rule
+	Group   string `json:"group"`
+	File    string `json:"file"`
+	RuleKey string `json:"rule_key"`
 }
 
 func (s *Service) readISCSI(ctx context.Context, clusterID uint64, kind, key string) (any, error) {

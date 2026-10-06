@@ -125,13 +125,18 @@ type RuleGroup struct {
 	Rules []Rule `json:"rules"`
 }
 type Rule struct {
-	Name        string            `json:"name"`
-	Query       string            `json:"query"`
-	Duration    float64           `json:"duration,omitempty"`
-	Labels      map[string]string `json:"labels,omitempty"`
-	Annotations map[string]string `json:"annotations,omitempty"`
-	State       string            `json:"state,omitempty"`
-	Health      string            `json:"health,omitempty"`
+	Name           string            `json:"name"`
+	Query          string            `json:"query"`
+	Duration       *float64          `json:"duration,omitempty"`
+	Labels         map[string]string `json:"labels,omitempty"`
+	Annotations    map[string]string `json:"annotations,omitempty"`
+	State          string            `json:"state,omitempty"`
+	Health         string            `json:"health,omitempty"`
+	Type           string            `json:"type"`
+	Alerts         json.RawMessage   `json:"alerts,omitempty"`
+	LastError      string            `json:"lastError,omitempty"`
+	LastEvaluation *time.Time        `json:"lastEvaluation,omitempty"`
+	EvaluationTime *float64          `json:"evaluationTime,omitempty"`
 }
 type Silence struct {
 	ID        string    `json:"id,omitempty"`
@@ -163,8 +168,13 @@ func (c *Client) Rules(ctx context.Context) ([]RuleGroup, error) {
 	if err := c.get(ctx, "/api/v1/rules", &response); err != nil {
 		return nil, err
 	}
-	if response.Status != "" && response.Status != "success" {
+	if response.Status != "success" || response.Data.Groups == nil {
 		return nil, fmt.Errorf("Prometheus rules query failed")
+	}
+	for _, group := range response.Data.Groups {
+		if group.Rules == nil {
+			return nil, fmt.Errorf("Prometheus returned a rule group without rules")
+		}
 	}
 	return response.Data.Groups, nil
 }
