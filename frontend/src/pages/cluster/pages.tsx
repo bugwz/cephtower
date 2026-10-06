@@ -1,7 +1,7 @@
 import { ArrowLeftOutlined, BulbOutlined, DeleteOutlined, PlusOutlined, PoweroffOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Descriptions, Form, Input, InputNumber, Modal, Select, Space, Switch, Tabs, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { MonMapSettings } from './MonMapSettings'
 import { DeviceHardwareSummary } from './DeviceHardwareSummary'
 import { DaemonRuntimeDetails, ServiceDaemons } from './ServiceDaemons'
@@ -777,7 +777,7 @@ export function DeviceManagementPage() {
                 const id = deviceID(row)
                 return (
                   <TableActions>
-                    <TableAction disabled={!id} onClick={() => navigate(deviceDetailPath(id))}>详情</TableAction>
+                    <TableAction disabled={!id || !deviceHost(row) || !devicePath(row)} onClick={() => navigate(deviceDetailPath(id, deviceHost(row), devicePath(row)))}>详情</TableAction>
                   </TableActions>
                 )
               }
@@ -791,11 +791,14 @@ export function DeviceManagementPage() {
 
 export function DeviceDetailPage() {
   const { deviceId = '' } = useParams()
+  const [params] = useSearchParams()
+  const hostname = params.get('hostname') ?? ''
+  const path = params.get('path') ?? ''
   const { selectedClusterId } = useClusterContext()
-  return <DeviceDetailContent key={JSON.stringify([selectedClusterId, deviceId])} deviceId={deviceId} selectedClusterId={selectedClusterId} />
+  return <DeviceDetailContent key={JSON.stringify([selectedClusterId, deviceId, hostname, path])} deviceId={deviceId} hostname={hostname} path={path} selectedClusterId={selectedClusterId} />
 }
 
-function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string; selectedClusterId?: number }) {
+function DeviceDetailContent({ deviceId, hostname, path, selectedClusterId }: { deviceId: string; hostname: string; path: string; selectedClusterId?: number }) {
   const navigate = useNavigate()
   const active = useRef(true)
   const zapRunning = useRef(false)
@@ -816,8 +819,9 @@ function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string
         staleReason: null
       }
     }
-    const payload = await listAllResources('/devices', selectedClusterId, { filters: { device_id: [decodedDeviceId] } })
-    const rows = payload.items.map(normalizeDeviceRow).filter((row) => deviceID(row) === decodedDeviceId)
+    if (!hostname || !path) throw new Error('设备主机或路径缺失，请从设备列表重新选择目标。')
+    const payload = await listAllResources('/devices', selectedClusterId, { filters: { device_id: [decodedDeviceId], hostname: [hostname], path: [path] } })
+    const rows = payload.items.map(normalizeDeviceRow).filter((row) => deviceID(row) === decodedDeviceId && deviceHost(row) === hostname && devicePath(row) === path)
     if (rows.length > 1) {
       throw new Error('设备 ID 对应多条库存记录，无法唯一确定主机和路径；已阻止设备操作，请核对库存。')
     }
@@ -827,7 +831,7 @@ function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string
       stale: payload.stale,
       staleReason: payload.staleReason
     }
-  }, [decodedDeviceId, selectedClusterId])
+  }, [decodedDeviceId, hostname, path, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const device = data?.device
   const currentDeviceHost = device ? deviceHost(device) : ''
@@ -1370,8 +1374,8 @@ function deviceID(row: ApiRecord) {
   return textValue(row.device_id ?? row.id ?? row.natural_key, '')
 }
 
-function deviceDetailPath(id: string) {
-  return `/cluster/device/${encodeURIComponent(id)}`
+function deviceDetailPath(id: string, hostname: string, path: string) {
+  return `/cluster/device/${encodeURIComponent(id)}?${new URLSearchParams({ hostname, path }).toString()}`
 }
 
 function normalizeDeviceRow(row: ApiRecord): ApiRecord {

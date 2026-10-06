@@ -29,6 +29,6 @@ for (const scenario of ['success', 'stale', 'unsafe', 'before', 'during', 'failu
   if (calls.length) assert.equal(calls[0][3].ifMatch, '18446744073709551615')
   assert.equal(refreshes.length, scenario === 'success' ? 1 : 0)
 }
-assert.ok(source.includes('key={JSON.stringify([selectedClusterId, deviceId])}'))
+assert.ok(source.includes('key={JSON.stringify([selectedClusterId, deviceId, hostname, path])}'))
 assert.ok(source.includes('zapConfirmation.current?.destroy()'))
 console.log('Device zap preserves exact versions, target lifetime and single submission')
