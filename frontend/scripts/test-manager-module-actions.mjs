@@ -60,6 +60,25 @@ for (const timing of ['before', 'write', 'collect']) {
   if (timing !== 'collect') assert.ok(!test.events.some((event) => event[0] === 'success'))
 }
 console.log('Manager module action scope and outcome checks passed')
+const collectNode = page.body.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'collectModules')
+const collectCode = ts.transpileModule(collectNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const scenario of ['success', 'failure', 'switch', 'busy', 'loading', 'no-cluster']) {
+  const scope = {}, moduleScope = { current: scope }, moduleRunning = { current: scenario === 'busy' }, calls = []
+  const env = { scope, moduleScope, moduleRunning, selectedClusterId: scenario === 'no-cluster' ? null : 7, loading: scenario === 'loading',
+    setPendingModule: value => calls.push(['pending', value]),
+    refreshResource: async body => { calls.push(['collect', body]); if (scenario === 'switch') moduleScope.current = {}; if (scenario === 'failure') throw new Error('offline') },
+    refresh: async () => calls.push(['read']), message: { success: () => calls.push(['success']), error: value => calls.push(['error', value]) }
+  }
+  const collect = new Function(...Object.keys(env), `${collectCode}; return collectModules`)(...Object.values(env))
+  await collect()
+  if (['busy', 'loading', 'no-cluster'].includes(scenario)) assert.deepEqual(calls, [])
+  else {
+    assert.deepEqual(calls[1], ['collect', { clusterId: 7, kind: 'mgr_module' }])
+    assert.equal(calls.some(c => c[0] === 'read'), scenario === 'success')
+    assert.equal(calls.some(c => c[0] === 'error'), scenario === 'failure')
+    assert.equal(moduleRunning.current, false)
+  }
+}
 const selectionDeclaration = page.body.statements.flatMap(node => ts.isVariableStatement(node) ? [...node.declarationList.declarations] : []).find(node => node.name.getText(tree) === 'configModule')
 const readSelection = new Function('configSelection', 'scope', `return ${selectionDeclaration.initializer.getText(tree)}`)
 const firstScope = { clusterId: 1 }, secondScope = { clusterId: 2 }, returnedScope = { clusterId: 1 }
