@@ -319,7 +319,7 @@ export function MgrManagementPage() {
             {
               key: 'daemons',
               label: '守护进程',
-              children: <DaemonTable data={data?.daemons ?? []} refresh={refresh} tableFilters={daemonTableFilters} />
+              children: <DaemonTable key={selectedClusterId} clusterId={selectedClusterId} unavailable={loading || Boolean(error)} data={data?.daemons ?? []} refresh={refresh} tableFilters={daemonTableFilters} />
             },
             {
               key: 'manager-inventory', label: '原生 MGR 清单',
@@ -1063,7 +1063,7 @@ export function MdsManagementPage() {
             {
               key: 'daemons',
               label: '守护进程',
-              children: <DaemonTable data={data?.daemons ?? []} refresh={refresh} tableFilters={daemonTableFilters} />
+              children: <DaemonTable key={selectedClusterId} clusterId={selectedClusterId} unavailable={loading || Boolean(error)} data={data?.daemons ?? []} refresh={refresh} tableFilters={daemonTableFilters} />
             }
           ]}
         />
@@ -1073,29 +1073,44 @@ export function MdsManagementPage() {
 }
 
 function DaemonTable({
+  clusterId,
+  unavailable,
   data,
   refresh,
   tableFilters
 }: {
+  clusterId?: number
+  unavailable: boolean
   data: ApiRecord[]
   refresh: () => void
   tableFilters?: ReturnType<typeof useResourceTableFilters>
 }) {
   const [pendingDaemonAction, setPendingDaemonAction] = useState('')
+  const active = useRef(true)
+  const running = useRef(false)
+  useEffect(() => {
+    active.current = true
+    return () => { active.current = false }
+  }, [])
   const operationMutation = useMutationOperation()
 
   async function runAction(row: ApiRecord, action: string) {
     const name = textValue(row.daemon_name || row.name, '')
     const pendingKey = `${name}:${action}`
-    if (!name || pendingDaemonAction) {
+    if (!clusterId || !active.current || running.current || unavailable || row.stale !== false || !name || pendingDaemonAction) {
       return
     }
+    running.current = true
     setPendingDaemonAction(pendingKey)
     try {
-      await operationMutation.run(() => applyDaemonAction(name, action, action === 'restart'), `Daemon ${action} 执行成功`)
-      refresh()
+      await operationMutation.run(() => applyDaemonAction(name, action, clusterId, action === 'restart'), false)
+      if (active.current) {
+        message.success(`Daemon ${action} 命令已执行，请刷新核对状态`)
+        refresh()
+      }
     } finally {
-      setPendingDaemonAction('')
+      running.current = false
+      if (active.current) setPendingDaemonAction('')
     }
   }
 
@@ -1119,11 +1134,12 @@ function DaemonTable({
             filterKey: false,
             render: (_, row) => {
               const name = textValue(row.daemon_name || row.name, '')
+              const disabled = !clusterId || unavailable || row.stale !== false || Boolean(pendingDaemonAction)
               return (
                 <TableActions>
-                  <TableAction loading={pendingDaemonAction === `${name}:restart`} disabled={Boolean(pendingDaemonAction) && pendingDaemonAction !== `${name}:restart`} onClick={() => runAction(row, 'restart')}>重启</TableAction>
-                  <TableAction loading={pendingDaemonAction === `${name}:start`} disabled={Boolean(pendingDaemonAction) && pendingDaemonAction !== `${name}:start`} onClick={() => runAction(row, 'start')}>启动</TableAction>
-                  <TableAction danger loading={pendingDaemonAction === `${name}:stop`} disabled={Boolean(pendingDaemonAction) && pendingDaemonAction !== `${name}:stop`} onClick={() => runAction(row, 'stop')}>停止</TableAction>
+                  <TableAction loading={pendingDaemonAction === `${name}:restart`} disabled={disabled} onClick={() => runAction(row, 'restart')}>重启</TableAction>
+                  <TableAction loading={pendingDaemonAction === `${name}:start`} disabled={disabled} onClick={() => runAction(row, 'start')}>启动</TableAction>
+                  <TableAction danger loading={pendingDaemonAction === `${name}:stop`} disabled={disabled} onClick={() => runAction(row, 'stop')}>停止</TableAction>
                 </TableActions>
               )
             }

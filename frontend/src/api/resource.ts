@@ -313,8 +313,8 @@ export function saveHostSSH(values: HostSSHPayload, clusterId = requiredClusterI
   }))
 }
 
-export function applyDaemonAction(name: string, action: string, force = false): Promise<ActionResult> {
-  return mutateResource('/daemon/action', 'POST', { cluster_id: requiredClusterId(), name, action, force })
+export function applyDaemonAction(name: string, action: string, clusterId: number, force = false): Promise<ActionResult> {
+  return mutateResource('/daemon/action', 'POST', { cluster_id: clusterId, name, action, force })
 }
 
 export function listServices(): Promise<ApiRecord[]> {
