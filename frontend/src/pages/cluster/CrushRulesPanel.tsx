@@ -28,7 +28,7 @@ const definition: ResourceListPageDefinition = {
   columns: [
     { key: 'rule_name', title: '规则名称' }, { key: 'rule_id', title: '规则 ID' },
     { key: 'type', title: '规则类型', render: crushRuleType },
-    { key: 'min_size', title: '最小副本/分片数' }, { key: 'max_size', title: '最大副本/分片数' }
+    { key: 'steps', title: '规则步骤数', filterKey: false, render: value => crushRuleSteps(value)?.length ?? '未知' }
   ],
   updateAction: {
     title: '重命名 CRUSH 规则', buttonLabel: '重命名', path: '/crush/rule', method: 'PATCH',
@@ -52,6 +52,7 @@ export function CrushRuleDetails({ row }: { row: ApiRecord }) {
     const steps = crushRuleSteps(row.steps)
     return <Space direction="vertical" style={{ width: '100%' }}>
       <Alert type="info" message="步骤按原生命令返回顺序展示；num 为 0 等值保留原义，不转换为实际副本数。" />
+      <Alert type="info" message="规则本身不提供有效的最小／最大副本数限制；请在引用此规则的存储池中查看 size、min_size 和纠删码配置。" />
       {steps ? <DataTable rowKeyCandidates={['sequence']} data={steps} columns={[{ key: 'sequence', title: '顺序' }, { key: 'op', title: '操作' }, { key: 'item', title: '节点 ID' }, { key: 'item_name', title: '节点名称' }, { key: 'type', title: '故障域' }, { key: 'num', title: '数量参数' }, { key: 'details', title: '原生步骤', render: (_value, step) => { const { sequence: _sequence, ...native } = step; return <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{JSON.stringify(native, null, 2)}</pre> } }]} /> : <Alert type="warning" message="规则步骤未提供或格式异常" />}
     </Space>
 }

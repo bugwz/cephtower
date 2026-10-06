@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+#### CRUSH 规则废弃容量字段清理
+
+- 对照 `CrushWrapper::dump_rule` 的实际输出与 `crush.h` 中的 deprecated 字段，移除规则列表的 min_size / max_size 列；当前原生命令不提供这些字段，不能把它们作为有效的副本／分片数限制。
+- 列表改为展示原生步骤数，详情提示在引用规则的存储池中查看 size、min_size 与纠删码配置。新增展示回归检查；`make test-frontend`（含类型检查和生产构建）通过。未进行真实集群或浏览器视觉验证。
+
 #### CRUSH MSR 规则类型展示
 
 - 对照 `src/crush/crush.h::crush_rule_type`，将已有原生 `osd crush rule dump` 数据中的类型 4、5 显示为 MSR firstn、MSR indep，保留原始类型编号；不将 MSR 类型误归为普通复制或纠删码。
