@@ -8,6 +8,7 @@ import { getHostDeviceInfo, getHostSMART, getOptionalResource, listAllResources,
 import type { ResourceDTO } from '../../api/types'
 import { DataTable } from '../../components/DataTable'
 import { HostHardware } from './HostHardware'
+import { HostNativeSummary } from './HostNativeSummary'
 import { hostInitialLocation } from './hostLocation'
 import { HostAddressEditor } from './HostAddressEditor'
 import { SMARTDetails } from './SMARTDetails'
@@ -282,6 +283,7 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
           )}
         </Card>
 
+        {host && <HostNativeSummary host={host} />}
         <Card className="page-surface-card" title="主机操作">
           <Space wrap>
             {host && selectedClusterId && <HostAddressEditor key={`${selectedClusterId}:${hostName(host)}:${host.resource_version}`} clusterId={selectedClusterId} hostname={hostName(host)} currentAddress={textValue(host.address ?? host.addr, '')} version={hostDeleteVersion(host)} blocked={loading || Boolean(error) || Boolean(pendingAction) || submitting} />}
