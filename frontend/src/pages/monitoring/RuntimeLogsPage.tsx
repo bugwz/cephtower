@@ -22,6 +22,11 @@ export function runtimeLogKey(row: ApiRecord): string {
   return JSON.stringify([row.channel, row.name, row.rank, row.stamp, row.seq])
 }
 
+interface RuntimeLogSnapshot { scope: string; rows: ApiRecord[]; observed?: string; error: string }
+export function visibleRuntimeLogs(snapshot: RuntimeLogSnapshot | null, scope: string): RuntimeLogSnapshot {
+  return snapshot?.scope === scope ? snapshot : { scope, rows: [], error: '' }
+}
+
 export async function copyRuntimeLogs(rows: ApiRecord[]): Promise<void> {
   if (!navigator.clipboard?.writeText) throw new Error('当前浏览器不支持剪贴板写入，请下载日志。')
   await navigator.clipboard.writeText(runtimeLogsText(rows))
@@ -54,9 +59,9 @@ function RuntimeLogsContent({ compact, selectedClusterId }: { compact: boolean; 
   const [auto, setAuto] = useState(true)
   const [revision, setRevision] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [rows, setRows] = useState<ApiRecord[]>([])
-  const [observed, setObserved] = useState<string>()
+  const scope = JSON.stringify([selectedClusterId, channel, level, limit])
+  const [snapshot, setSnapshot] = useState<RuntimeLogSnapshot | null>(null)
+  const { rows, observed, error } = visibleRuntimeLogs(snapshot, scope)
   const [search, setSearch] = useState('')
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
@@ -64,7 +69,7 @@ function RuntimeLogsContent({ compact, selectedClusterId }: { compact: boolean; 
   useEffect(() => {
     const abort = new AbortController()
     let timer: ReturnType<typeof setTimeout> | undefined
-    setRows([]); setObserved(undefined); setError(''); setLoading(Boolean(selectedClusterId))
+    setSnapshot(null); setLoading(Boolean(selectedClusterId))
     async function read() {
       if (!selectedClusterId) return
       setLoading(true)
@@ -72,9 +77,9 @@ function RuntimeLogsContent({ compact, selectedClusterId }: { compact: boolean; 
         const data = await request<{ items: ApiRecord[]; observed_at: string }>('/logs', jsonInit('GET', {
           cluster_id: selectedClusterId, channel, level, limit
         }, { signal: abort.signal, suppressErrorNotification: true }))
-        if (!abort.signal.aborted) { setRows(data.items); setObserved(data.observed_at); setError('') }
+        if (!abort.signal.aborted) setSnapshot({ scope, rows: data.items, observed: data.observed_at, error: '' })
       } catch (err) {
-        if (!abort.signal.aborted) setError(err instanceof Error ? err.message : '读取日志失败')
+        if (!abort.signal.aborted) setSnapshot(current => ({ ...visibleRuntimeLogs(current, scope), error: err instanceof Error && err.message ? err.message : '读取日志失败' }))
       } finally {
         if (!abort.signal.aborted) {
           setLoading(false)
@@ -84,7 +89,7 @@ function RuntimeLogsContent({ compact, selectedClusterId }: { compact: boolean; 
     }
     void read()
     return () => { abort.abort(); clearTimeout(timer) }
-  }, [selectedClusterId, channel, level, limit, auto, revision])
+  }, [selectedClusterId, channel, level, limit, auto, revision, scope])
   const invalidRange = Boolean(start && end && Date.parse(start) > Date.parse(end))
   const filtered = rows.filter((row) => runtimeLogMatches(row, search, start, end, priority))
   function download() {

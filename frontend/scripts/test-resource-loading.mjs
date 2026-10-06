@@ -464,6 +464,17 @@ assert.equal(managementMode(null), '未采集')
 
 const logsSource = readFileSync(new URL('../src/pages/monitoring/RuntimeLogsPage.tsx', import.meta.url), 'utf8')
 const logsTree = ts.createSourceFile('logs.tsx', logsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const visibleLogsNode = logsTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'visibleRuntimeLogs')
+const visibleLogsExports = {}
+new Function('exports', ts.transpileModule(visibleLogsNode.getText(logsTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(visibleLogsExports)
+const oldLogScope = JSON.stringify([1, 'cluster', 'debug', 100])
+const oldLogSnapshot = { scope: oldLogScope, rows: [{ message: 'old' }], observed: '2026-10-06', error: 'old error' }
+assert.equal(visibleLogsExports.visibleRuntimeLogs(oldLogSnapshot, oldLogScope), oldLogSnapshot)
+for (const scope of [[2, 'cluster', 'debug', 100], [1, 'audit', 'debug', 100], [1, 'cluster', 'info', 100], [1, 'cluster', 'debug', 30]].map(JSON.stringify)) {
+  assert.deepEqual(visibleLogsExports.visibleRuntimeLogs(oldLogSnapshot, scope), { scope, rows: [], error: '' })
+}
+assert.deepEqual(visibleLogsExports.visibleRuntimeLogs(null, oldLogScope).rows, [])
+assert.ok(logsSource.includes('const { rows, observed, error } = visibleRuntimeLogs(snapshot, scope)'))
 const logKeyNode = logsTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'runtimeLogKey')
 const keyExports = {}
 new Function('exports', ts.transpileModule(logKeyNode.getText(logsTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(keyExports)
