@@ -50,8 +50,9 @@ function configurationHelpDescription(help: ApiRecord): string {
 function configurationWriteBlocked(row: ApiRecord): string | undefined {
   if (row.stale !== false) return '配置库存已过期或新鲜度未知，请先刷新'
   if (typeof row.who !== 'string' || !row.who.trim() || typeof row.name !== 'string' || !row.name.trim()) return '配置作用域或名称未采集'
-  const version = typeof row.resource_version === 'number' || typeof row.resource_version === 'string' ? Number(row.resource_version) : NaN
-  if (!Number.isSafeInteger(version) || version <= 0) return '配置资源版本无效，请先刷新'
+  const raw = row.resource_version
+  const version = typeof raw === 'string' ? raw : typeof raw === 'number' && Number.isSafeInteger(raw) ? String(raw) : ''
+  if (!/^[1-9]\d*$/.test(version) || BigInt(version) > 18446744073709551615n) return '配置资源版本无效，请先刷新'
   return undefined
 }
 

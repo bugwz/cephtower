@@ -33,6 +33,8 @@ assert.equal(helpers.localizedConfigurationTarget('mgr/dashboard/a/server_port',
 const editable = { who: 'global', name: 'test', stale: false, resource_version: 3 }
 assert.equal(helpers.configurationWriteBlocked(editable), undefined)
 assert.equal(helpers.configurationWriteBlocked({ ...editable, resource_version: '3' }), undefined)
+for (const resource_version of ['9007199254740993', '18446744073709551615']) assert.equal(helpers.configurationWriteBlocked({ ...editable, resource_version }), undefined)
+for (const resource_version of ['18446744073709551616', '01', '+1', '1e3', ' 1', '1.0', '0']) assert.ok(helpers.configurationWriteBlocked({ ...editable, resource_version }))
 const invalidRows = [
   { ...editable, stale: true }, { ...editable, stale: undefined },
   { ...editable, who: '' }, { ...editable, name: undefined },
@@ -108,15 +110,16 @@ assert.ok(source.includes('filteredOptions.slice((currentPage - 1) * optionPageS
 
 const page = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ConfigurationPage')
 const mutationCode = ts.transpileModule(page.body.statements.filter((node) => ts.isFunctionDeclaration(node) && ['run', 'collect', 'refreshAfterMutation', 'save', 'remove'].includes(node.name.text)).map((node) => node.getText(tree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-for (const action of ['save', 'remove']) for (const timing of ['before', 'mutation', 'collection', 'unchanged']) {
+for (const version of [3, '9007199254740993', '18446744073709551615']) for (const action of ['save', 'remove']) for (const timing of ['before', 'mutation', 'collection', 'unchanged']) {
+  const target = { ...editable, resource_version: version }
   const scope = { clusterId: 7, moduleName: 'test' }, scopeRef = { current: scope }, events = []
   let modal, finishMutation, finishCollection
   const env = {
-    scope, scopeRef, selectedClusterId: 7, running: { current: false }, editing: editable,
+    scope, scopeRef, selectedClusterId: 7, running: { current: false }, editing: target,
     loading: false, error: null, configurationWriteBlocked: helpers.configurationWriteBlocked, help: null, configurationMonWriteBlocked: helpers.configurationMonWriteBlocked, localizedConfigurationTarget: helpers.localizedConfigurationTarget,
     setBusy: () => {}, setOpen: () => { events.push('close') }, message: { success: () => { events.push('success') } },
     mutateResource: async (path, method, body, options) => {
-      assert.equal(path, '/configuration/value'); assert.equal(body.cluster_id, 7); assert.equal(options.ifMatch, '3')
+      assert.equal(path, '/configuration/value'); assert.equal(body.cluster_id, 7); assert.equal(options.ifMatch, String(version))
       assert.equal(method, action === 'save' ? 'PUT' : 'DELETE')
       events.push('mutate'); await new Promise((resolve) => { finishMutation = resolve })
     },
@@ -127,7 +130,7 @@ for (const action of ['save', 'remove']) for (const timing of ['before', 'mutati
     refresh: async () => { events.push('read') }, Modal: { confirm: (options) => { modal = options } }
   }
   const functions = new Function('env', `const { ${Object.keys(env).join(', ')} } = env; ${mutationCode}; return { save, remove, run }`)(env)
-  if (action === 'remove') functions.remove(editable)
+  if (action === 'remove') functions.remove(target)
   const invoke = () => action === 'save' ? functions.save({ who: 'global', name: 'test', value: '0' }) : modal.onOk()
   if (timing === 'before') {
     scopeRef.current = { ...scope }
