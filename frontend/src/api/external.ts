@@ -44,7 +44,7 @@ export async function queryMetric(clusterId: number, input: MetricQueryInput, in
   if (input.time) {
     query.set('time', input.time)
   }
-  return readMetric(`/metric/query?${query}`, clusterId, init)
+  return readMetric(`/metric/query?${query}`, 'vector', clusterId, init)
 }
 
 export async function queryMetricRange(clusterId: number, input: MetricRangeInput, init?: ApiRequestInit) {
@@ -54,16 +54,16 @@ export async function queryMetricRange(clusterId: number, input: MetricRangeInpu
     end: input.end,
     step: input.step
   })
-  return readMetric(`/metric/range?${query}`, clusterId, init)
+  return readMetric(`/metric/range?${query}`, 'matrix', clusterId, init)
 }
 
-async function readMetric(path: string, clusterId?: number, init?: ApiRequestInit) {
+async function readMetric(path: string, resultType: 'vector' | 'matrix', clusterId?: number, init?: ApiRequestInit) {
   if (!clusterId) {
     throw new Error('请先选择集群')
   }
   const payload = await request<MetricResponse>(path, jsonInit('GET', { cluster_id: clusterId }, init))
-  return {
-    ...payload,
-    series: Array.isArray(payload.series) ? payload.series.filter((item): item is ApiRecord => typeof item === 'object' && item !== null && !Array.isArray(item)) : []
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload) || payload.result_type !== resultType || !Array.isArray(payload.series) || payload.series.some(item => !item || typeof item !== 'object' || Array.isArray(item))) {
+    throw new Error('指标响应格式异常，不能据此认定没有指标数据')
   }
+  return payload
 }
