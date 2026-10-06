@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- MGR/MDS 操作后重新采集：守护进程动作结束后先等待 service/daemon 联合原生采集，再读取库存，不再只重读缓存；动作失败也采集以便核对可能的部分执行。采集期间保持防重复锁，采集失败独立告警，不重发变更；切换页面停止后续 UI 更新。新增采集失败、采集中切换及失败后的读回回归。
+
 - 密钥轮换类型约束：核对 cephadm/module.py daemon_action 的原生白名单，后端在执行前拒绝 mon、node-exporter 等不支持轮换的类型，前端通用服务表隐藏对应入口并再次校验。修正原有测试错误接受 node-exporter rotate-key 的预期，新增八种支持类型及不支持类型零命令执行回归。
 
 - 守护进程完整维护入口：依据 orchestrator/module.py DaemonAction 与已有后端 daemon.action 映射，为 MGR/MDS 补齐 reconfig、redeploy、rotate-key，通用服务管理补齐 reconfig/rotate-key。均沿用目标确认、精确版本、集群作用域和单次提交机制，不增加强制绕过或镜像替换。新增六种动作确认与 API 参数回归；真实重配/部署/密钥轮换未执行。

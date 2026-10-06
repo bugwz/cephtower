@@ -11,8 +11,8 @@ const versionSource = tree.statements.find(n => ts.isFunctionDeclaration(n) && n
 const version = new Function(`${compile(versionSource)}; return osdInventoryVersion`)()
 const apiTree = parse(read('../src/api/resource.ts'))
 const api = apiTree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'applyDaemonAction').getText(apiTree).replace('export ', '')
-for (const scenario of ['success', 'stale', 'unavailable', 'before', 'during', 'failure', 'no-cluster', 'unsafe-version', 'missing-version']) {
-  const calls = [], messages = [], refreshes = []
+for (const scenario of ['success', 'stale', 'unavailable', 'before', 'during', 'failure', 'no-cluster', 'unsafe-version', 'missing-version', 'collection-failure', 'collection-switch']) {
+  const calls = [], messages = [], refreshes = [], collections = [], warnings = []
   let finish
   const gate = new Promise(resolve => { finish = resolve })
   const apply = new Function('mutateResource', `${compile(api)}; return applyDaemonAction`)(async (...args) => {
@@ -24,7 +24,8 @@ for (const scenario of ['success', 'stale', 'unavailable', 'before', 'during', '
     clusterId: scenario === 'no-cluster' ? undefined : 7, active: { current: scenario !== 'before' }, running: { current: false },
     unavailable: scenario === 'unavailable', pendingDaemonAction: '', setPendingDaemonAction() {},
     textValue: value => value || '', osdInventoryVersion: version, applyDaemonAction: apply, operationMutation: { run: fn => fn() },
-    message: { success: value => messages.push(value) }, refresh: () => refreshes.push(true)
+    message: { success: value => messages.push(value), warning: value => warnings.push(value) }, refresh: () => refreshes.push(true),
+    refreshResource: async value => { collections.push(value); assert.equal(env.running.current, true); if (scenario === 'collection-failure') throw new Error('collection failed'); if (scenario === 'collection-switch') env.active.current = false }
   }
   const run = new Function(...Object.keys(env), `${compile(action)}; return runAction`)(...Object.values(env))
   const row = { name: 'mds.fs.node1', stale: scenario === 'stale', resource_version: scenario === 'unsafe-version' ? Number.MAX_SAFE_INTEGER + 1 : scenario === 'missing-version' ? undefined : '18446744073709551615' }
@@ -34,10 +35,12 @@ for (const scenario of ['success', 'stale', 'unavailable', 'before', 'during', '
   finish()
   if (scenario === 'failure') await assert.rejects(pending, /failed/)
   else await pending
-  const submitted = ['success', 'during', 'failure'].includes(scenario)
+  const submitted = ['success', 'during', 'failure', 'collection-failure', 'collection-switch'].includes(scenario)
   assert.deepEqual(calls, submitted ? [['/daemon/action', 'POST', { cluster_id: 7, name: 'mds.fs.node1', action: 'restart' }, { ifMatch: '18446744073709551615' }]] : [])
-  assert.equal(messages.length, scenario === 'success' ? 1 : 0)
-  assert.equal(refreshes.length, scenario === 'success' ? 1 : 0)
+  assert.equal(messages.length, ['success', 'collection-failure', 'collection-switch'].includes(scenario) ? 1 : 0)
+  assert.equal(refreshes.length, ['success', 'failure', 'collection-failure'].includes(scenario) ? 1 : 0)
+  assert.deepEqual(collections, ['success', 'failure', 'collection-failure', 'collection-switch'].includes(scenario) ? [{ clusterId: 7, kinds: ['service', 'daemon'] }] : [])
+  assert.equal(warnings.length, scenario === 'collection-failure' ? 1 : 0)
   assert.equal(env.running.current, false)
 }
 assert.equal(source.split('<DaemonTable key={selectedClusterId} clusterId={selectedClusterId}').length - 1, 2)

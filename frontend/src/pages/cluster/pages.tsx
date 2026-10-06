@@ -1177,12 +1177,19 @@ function DaemonTable({
     try {
       await operationMutation.run(() => applyDaemonAction(name, action, clusterId, generation), false)
       if (active.current) {
-        message.success(`Daemon ${action} 命令已执行，请刷新核对状态`)
-        refresh()
+        message.success(`Daemon ${action} 命令已接受，正在重新采集状态`)
       }
     } finally {
-      running.current = false
-      if (active.current) setPendingDaemonAction('')
+      try {
+        if (active.current) {
+          try { await refreshResource({ clusterId, kinds: ['service', 'daemon'] }) }
+          catch { if (active.current) message.warning('操作后的重新采集失败，请核对实际状态，不要直接重复提交。') }
+          if (active.current) await refresh()
+        }
+      } finally {
+        running.current = false
+        if (active.current) setPendingDaemonAction('')
+      }
     }
   }
 
