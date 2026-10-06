@@ -760,6 +760,14 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		return cephdomain.ActionResult{Details: map[string]any{"check": report}}, nil
 	}
+	if request.Action == "osd.removal_check" {
+		ids, _ := stringSlice(request.Parameters["osd_ids"])
+		report, ok := osdRemovalReport(result.Stdout, ids)
+		if !ok {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph did not return a valid OSD safety report"}
+		}
+		return cephdomain.ActionResult{Details: map[string]any{"check": report}}, nil
+	}
 	if request.Action == "filesystem.rename" {
 		return cephdomain.ActionResult{Details: map[string]any{"exit_code": result.ExitCode, "duration_ms": result.Duration.Milliseconds(), "native_output": security.Redact(string(result.Stdout)), "native_warning": security.Redact(string(result.Stderr))}}, nil
 	}
@@ -1131,7 +1139,7 @@ func build(request Request, p map[string]any) (command, error) {
 			}
 			seen[id] = true
 		}
-		return ceph(append([]string{"osd", "safe-to-destroy"}, ids...), nil), nil
+		return ceph(append(append([]string{"osd", "safe-to-destroy"}, ids...), "--format", "json"), nil), nil
 	case "osd.delete":
 		id := pathValue(tail, "osd")
 		args := []string{"orch", "osd", "rm", id}
