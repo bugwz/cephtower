@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD 网络地址页签改为按 public/cluster/heartbeat 分组的结构化表格，展示协议、原始地址、nonce；保持重复地址及原始顺序，明确区别未知列表和空列表，增加库存过期提示。地址仅作为文本展示，新增数组结构、nonce 边界和非链接展示回归。
+
 - OSD 网络地址：从 `ceph osd dump` 采集 public、cluster、heartbeat front/back 四组 addrvec，保留协议、原始地址及 uint32 nonce，通过库存 API 和详情“网络地址”页签展示。null 与显式空数组保持区分，不提供网页链接或声称连通性；增加四组映射、IPv6、v1/v2、零值及 nonce 边界回归。
 
 - OSD 状态历史 Epoch：从 `ceph osd dump` / `osd_info_t::dump` 采集 last_clean_begin/end、up_from/thru、down_at、lost_at，API 保留可空 uint32，详情新增独立页签。明确其为 OSDMap 版本号而非时间戳，不推断停机时间；新增字段映射、零值、边界、非法数值及前端显示回归。

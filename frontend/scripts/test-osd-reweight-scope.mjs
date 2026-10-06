@@ -74,3 +74,18 @@ const epochJS = ts.transpileModule(epochNode.getText(inspectionTree).replace('ex
 const epoch = new Function(`${epochJS}; return osdHistoryEpoch`)()
 for (const value of [0, 1, 4294967295]) assert.equal(epoch(value), String(value))
 for (const value of [null, undefined, -1, 4294967296, 0.5, '1']) assert.equal(epoch(value), '未采集或格式无效')
+const networkSource = readFileSync(new URL('../src/pages/cluster/OSDNetwork.tsx', import.meta.url), 'utf8')
+const networkTree = ts.createSourceFile('network.tsx', networkSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const helpers = networkTree.statements.filter(n => ts.isFunctionDeclaration(n) && n.name.text.startsWith('osdAddress')).map(n => n.getText(networkTree).replace('export ', '')).join('\n')
+const networkJS = ts.transpileModule(helpers, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const { osdAddressRows, osdAddressText, osdAddressNonce } = new Function(`${networkJS}; return { osdAddressRows, osdAddressText, osdAddressNonce }`)()
+for (const value of [null, undefined, [], {}, { addrvec: null }, { addrvec: [null] }]) assert.equal(osdAddressRows(value), null)
+assert.deepEqual(osdAddressRows({ addrvec: [] }), [])
+const address = { type: 'v2', addr: '[::1]:3300', nonce: 0 }
+assert.deepEqual(osdAddressRows({ addrvec: [address, address] }), [{ ...address, index: 0 }, { ...address, index: 1 }])
+assert.equal(osdAddressText('javascript:alert(1)'), 'javascript:alert(1)')
+assert.equal(osdAddressText(''), '空字符串（原生）')
+assert.equal(osdAddressNonce(0), '0')
+assert.equal(osdAddressNonce(4294967295), '4294967295')
+for (const value of [null, -1, 4294967296, 1.5, '0']) assert.equal(osdAddressNonce(value), '未采集或格式无效')
+assert.ok(!networkSource.includes('href='))
