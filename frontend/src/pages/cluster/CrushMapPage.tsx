@@ -44,6 +44,10 @@ export function watchCrushMap(clusterId: number, automatic: boolean, onData: (va
 
 export function CrushMapPage() {
   const { selectedClusterId } = useClusterContext()
+  return <CrushMapContent key={selectedClusterId ?? 'no-cluster'} selectedClusterId={selectedClusterId} />
+}
+
+function CrushMapContent({ selectedClusterId }: { selectedClusterId?: number }) {
   const [data, setData] = useState<CrushMap | null>(null)
   const [selected, setSelected] = useState<ApiRecord | null>(null)
   const [error, setError] = useState('')

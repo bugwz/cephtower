@@ -4,6 +4,20 @@ import ts from 'typescript'
 
 const source = readFileSync(new URL('../src/pages/cluster/CrushMapPage.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('CrushMapPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const wrapper = tree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'CrushMapPage')
+const scopeExports = {}
+let currentCluster
+new Function('exports', 'require', 'useClusterContext', 'CrushMapContent', ts.transpileModule(wrapper.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(scopeExports, () => ({ jsx: (type, props, key) => ({ type, props, key }) }), () => ({ selectedClusterId: currentCluster }), 'CrushMapContent')
+const emptyScope = scopeExports.CrushMapPage()
+currentCluster = 1
+const firstScope = scopeExports.CrushMapPage()
+currentCluster = 2
+const secondScope = scopeExports.CrushMapPage()
+assert.notEqual(emptyScope.key, firstScope.key)
+assert.notEqual(firstScope.key, secondScope.key)
+assert.equal(firstScope.props.selectedClusterId, 1)
+assert.equal(secondScope.props.selectedClusterId, 2)
+assert.equal(wrapper.getText(tree).includes('useState'), false)
 const functions = tree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['crushTree', 'crushStatus'].includes(node.name.text))
 const exports = {}
 new Function('exports', ts.transpileModule(functions.map((fn) => fn.getText(tree)).join('\n'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
