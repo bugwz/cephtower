@@ -70,6 +70,7 @@ const profileGuard = profileTree.statements.find((node) => ts.isFunctionDeclarat
 const profileExports = {}
 new Function('exports', ts.transpileModule(profileGuard.getText(profileTree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(profileExports)
 assert.equal(profileExports.erasureProfileDeleteBlocked({ name: 'ec', stale: false }), undefined)
+for (const name of ['parent/ec', 'ec/', ' ec', 'ec ', '--all', 'ec\nother']) assert.ok(profileExports.erasureProfileDeleteBlocked({ name, stale: false }))
 for (const row of [{ name: 'ec' }, { name: 'ec', stale: true }, { name: '', stale: false }, { name: null, stale: false }]) assert.ok(profileExports.erasureProfileDeleteBlocked(row))
 assert.ok(profileSource.includes("path: '/erasure/code/profile'"))
 assert.ok(profileSource.includes("action: 'erasure_code_profile.delete'"))

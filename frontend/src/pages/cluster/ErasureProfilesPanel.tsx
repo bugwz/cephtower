@@ -16,7 +16,7 @@ export const erasureProfileColumns = [
 
 export function erasureProfileDeleteBlocked(row: ApiRecord) {
   if (row.stale !== false) return '配置库存过期或状态未知，请重新采集'
-  if (typeof row.name !== 'string' || !row.name.trim()) return '配置名称不可用'
+  if (typeof row.name !== 'string' || !row.name || row.name.trim() !== row.name || /[/\x00\r\n]/.test(row.name) || row.name.startsWith('-')) return '配置名称不可用'
   return undefined
 }
 

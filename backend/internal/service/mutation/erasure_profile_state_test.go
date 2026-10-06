@@ -50,6 +50,14 @@ func TestErasureProfileDeletionReadback(t *testing.T) {
 	}
 }
 
+func TestErasureProfileDeletionRejectsAmbiguousTarget(t *testing.T) {
+	for _, key := range []string{"", "ec", "other/ec", "erasure-code-profile/", "erasure-code-profile/parent/ec", "erasure-code-profile/ec/", "/erasure-code-profile/ec", "erasure-code-profile/ ec", "erasure-code-profile/ec ", "erasure-code-profile/--all"} {
+		if _, err := build(Request{Action: "erasure_code_profile.delete", ResourceKey: key}, nil); err == nil {
+			t.Fatalf("accepted ambiguous deletion target %q", key)
+		}
+	}
+}
+
 func TestErasureProfileReadbackRequiresUnambiguousStringFields(t *testing.T) {
 	args := []string{"osd", "erasure-code-profile", "set", "ec", "plugin=isa", "k=4", "m=2"}
 	for _, data := range []string{

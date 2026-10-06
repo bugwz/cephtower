@@ -1187,7 +1187,11 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		return ceph(args, []string{"osd", "erasure-code-profile", "get", name, "--format", "json"}), nil
 	case "erasure_code_profile.delete":
-		return ceph([]string{"osd", "erasure-code-profile", "rm", last(tail)}, []string{"osd", "erasure-code-profile", "ls", "--format", "json"}), nil
+		name, ok := strings.CutPrefix(request.ResourceKey, "erasure-code-profile/")
+		if !ok || name == "" || strings.TrimSpace(name) != name || strings.ContainsAny(name, "/\x00\r\n") || strings.HasPrefix(name, "-") {
+			return command{}, invalid("invalid erasure profile resource key")
+		}
+		return ceph([]string{"osd", "erasure-code-profile", "rm", name}, []string{"osd", "erasure-code-profile", "ls", "--format", "json"}), nil
 	case "pool.create":
 		name, err := required(p, "name")
 		if err != nil {
