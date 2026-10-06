@@ -15,6 +15,9 @@ func TestDaemonActionUsesNativeScopedQuery(t *testing.T) {
 	s, _, id := newCephUserService(t)
 	for _, name := range []string{"osd.1", "rgw.realm.zone.node1.abcdef", "node-exporter.node1"} {
 		for _, action := range []string{"start", "stop", "restart", "reconfig", "redeploy", "rotate-key"} {
+			if name == "node-exporter.node1" && action == "rotate-key" {
+				continue
+			}
 			typ, identifier, _ := strings.Cut(name, ".")
 			e := &directoryRenameExecutor{outputs: map[string]string{"daemon.action": "Scheduled to " + action + " " + name + " on host 'node1'", "daemon.action.post_check": fmt.Sprintf(`[{"daemon_name":%q,"daemon_type":%q,"daemon_id":%q}]`, name, typ, identifier)}}
 			s.executor = e
@@ -34,6 +37,24 @@ func TestDaemonActionUsesNativeScopedQuery(t *testing.T) {
 			if !e.specs[0].Mutating || !reflect.DeepEqual(e.specs[0].Args, []string{"orch", "daemon", action, name}) || e.specs[1].Mutating || !reflect.DeepEqual(e.specs[1].Args, []string{"orch", "ps", "--daemon-type", daemonType, "--daemon-id", daemonID, "--refresh", "--format", "json"}) {
 				t.Fatalf("unexpected command chain: %+v", e.specs)
 			}
+		}
+	}
+}
+
+func TestDaemonKeyRotationSupportedTypes(t *testing.T) {
+	s, _, id := newCephUserService(t)
+	for _, typ := range []string{"mgr", "osd", "mds", "rgw", "crash", "nfs", "rbd-mirror", "iscsi", "mon", "node-exporter", "prometheus", "grafana"} {
+		name := typ + ".a"
+		e := &directoryRenameExecutor{outputs: map[string]string{"daemon.action": "Scheduled to rotate-key " + name + " on host 'node1'", "daemon.action.post_check": fmt.Sprintf(`[{"daemon_name":%q,"daemon_type":%q,"daemon_id":"a"}]`, name, typ)}}
+		s.executor = e
+		_, err := s.Execute(context.Background(), Request{ClusterID: id, Action: "daemon.action", ResourceKey: "daemon/" + name + "/action", Parameters: map[string]any{"action": "rotate-key"}})
+		supported := typ != "mon" && typ != "node-exporter" && typ != "prometheus" && typ != "grafana"
+		if supported {
+			if err != nil || len(e.specs) != 2 {
+				t.Fatalf("supported type %s failed: %v %+v", typ, err, e.specs)
+			}
+		} else if err == nil || len(e.specs) != 0 {
+			t.Fatalf("unsupported type %s executed: %v %+v", typ, err, e.specs)
 		}
 	}
 }

@@ -78,6 +78,12 @@ for (const action of ['start', 'stop', 'restart', 'reconfig', 'redeploy', 'rotat
   assert.deepEqual(requests, [['/daemon/action', 'POST', { cluster_id: 7, name: row.name, action }, { ifMatch: '9' }]])
 }
 const services = read('../src/pages/cluster/ServicePage.tsx')
+const serviceTree = parse(services)
+const rotationSource = serviceTree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'daemonKeyRotationSupported').getText(serviceTree)
+const supportsRotation = new Function(`${compile(rotationSource)}; return daemonKeyRotationSupported`)()
+for (const type of ['mgr', 'osd', 'mds', 'rgw', 'crash', 'nfs', 'rbd-mirror', 'iscsi']) assert.equal(supportsRotation({ type, name: `${type}.a` }), true)
+for (const row of [{}, { type: 'mon', name: 'mon.a' }, { type: 'node-exporter', name: 'node-exporter.a' }, { type: 'mgr', name: 'osd.1' }, { type: 'mds', name: 'mds.' }]) assert.equal(supportsRotation(row), false)
+assert.ok(services.includes("if (action === 'rotate-key' && !daemonKeyRotationSupported(row)) return"))
 for (const action of ['reconfig', 'redeploy', 'rotate-key']) assert.ok(services.includes(`value: '${action}'`))
 const openPerf = table.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'openPerformance').getText(tree)
 for (const name of ['mgr.a', 'mds.fs.node-1', 'osd.1', 'mgr.*', 'mds.', 'mgr.a;stop', '', null]) {

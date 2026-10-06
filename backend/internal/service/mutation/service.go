@@ -1117,6 +1117,13 @@ func build(request Request, p map[string]any) (command, error) {
 		if err != nil {
 			return command{}, err
 		}
+		if verb == "rotate-key" {
+			switch daemonType {
+			case "mgr", "osd", "mds", "rgw", "crash", "nfs", "rbd-mirror", "iscsi":
+			default:
+				return command{}, invalid("key rotation is not supported for this daemon type")
+			}
+		}
 		return ceph([]string{"orch", "daemon", verb, name}, []string{"orch", "ps", "--daemon-type", daemonType, "--daemon-id", daemonID, "--refresh", "--format", "json"}), nil
 	case "upgrade.check":
 		target, err := upgradeTargetArgs(p)

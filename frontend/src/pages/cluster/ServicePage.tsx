@@ -214,6 +214,7 @@ function ServicePageContent() {
 
   async function runDaemonAction(row: ApiRecord, action: string) {
     if (!active.current || running.current || loading || error || !selectedClusterId || !serviceWritable(row)) return
+    if (action === 'rotate-key' && !daemonKeyRotationSupported(row)) return
     const selected = daemonActions.find((item) => item.value === action)
     if (!selected) return
     const parameters = { cluster_id: selectedClusterId, name: textValue(row.name, ''), action }
@@ -327,7 +328,7 @@ function ServicePageContent() {
                     { key: 'container_image', title: '镜像' },
                     { key: 'actions', title: '操作', filterKey: false, render: (_, row) => <TableActions>
                       <TableAction disabled={!selectedClusterId || !/^(mon|mgr|mds|osd)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(textValue(row.name, ''))} onClick={() => { if (selectedClusterId) setPerfDetail({ clusterId: selectedClusterId, name: textValue(row.name, '') }) }}>性能计数器</TableAction>
-                      {daemonActions.map((action) => <TableAction key={action.value} danger={action.value !== 'start'} disabled={loading || Boolean(error) || submitting || refreshingServices || !serviceWritable(row)} onClick={() => runDaemonAction(row, action.value)}>{action.label}</TableAction>)}
+                      {daemonActions.filter(action => action.value !== 'rotate-key' || daemonKeyRotationSupported(row)).map((action) => <TableAction key={action.value} danger={action.value !== 'start'} disabled={loading || Boolean(error) || submitting || refreshingServices || !serviceWritable(row)} onClick={() => runDaemonAction(row, action.value)}>{action.label}</TableAction>)}
                     </TableActions> }
                   ]}
                 />
@@ -403,4 +404,9 @@ function parsePlacement(value?: string): ApiRecord {
 
 function readObject(value: unknown): ApiRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value) ? value as ApiRecord : {}
+}
+
+function daemonKeyRotationSupported(row: ApiRecord): boolean {
+  return typeof row.type === 'string' && ['mgr', 'osd', 'mds', 'rgw', 'crash', 'nfs', 'rbd-mirror', 'iscsi'].includes(row.type)
+    && typeof row.name === 'string' && row.name.startsWith(`${row.type}.`) && row.name.length > row.type.length + 1
 }
