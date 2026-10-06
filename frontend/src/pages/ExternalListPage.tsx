@@ -1,7 +1,7 @@
 import { PlusOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Drawer, Form, Input, InputNumber, Modal, Select, Space, Switch, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { ReactNode } from 'react'
+import type { Key, ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { readExternalList } from '../api/external'
 import { mutateResource } from '../api/resource'
@@ -22,13 +22,17 @@ import type { MutationFormField, MutationFormValues, ResourceDeleteAction, Resou
 
 const { Text } = Typography
 
+export interface ExternalListColumn extends FieldColumn {
+  localFilter?: { options: string[]; value: (row: ApiRecord) => string | undefined; defaultValues?: string[] }
+}
+
 export interface ExternalListPageDefinition extends FeatureRequirements {
   title: string
   path: string
   body?: ApiRecord
   buildQuery?: (body: ApiRecord) => URLSearchParams
   filterFields?: MutationFormField[]
-  columns: FieldColumn[]
+  columns: ExternalListColumn[]
   rowKeyCandidates?: string[]
   createAction?: ResourceFormAction
   updateAction?: ResourceFormAction
@@ -271,6 +275,7 @@ export function ExternalListPage({ definition, embedded = false }: { definition:
   ) : null
   const externalTable = (
     <AppTable<ApiRecord>
+      key={JSON.stringify([selectedClusterId, definition.path])}
       size="middle"
       columns={tableColumns}
       dataSource={data ?? []}
@@ -375,6 +380,11 @@ function buildColumns(
     dataIndex: column.key,
     key: column.key,
     ellipsis: true,
+    ...(column.localFilter ? {
+      filters: column.localFilter.options.map(value => ({ text: value, value })),
+      defaultFilteredValue: column.localFilter.defaultValues,
+      onFilter: (value: Key | boolean, row: ApiRecord) => column.localFilter!.value(row) === value
+    } : {}),
     render: (value, row) => column.render?.(value, row) ?? renderValue(value)
   }))
 
