@@ -108,9 +108,16 @@ type Alert struct {
 	Labels      map[string]string `json:"labels"`
 	Annotations map[string]string `json:"annotations"`
 	Status      struct {
-		State string `json:"state"`
+		State       string   `json:"state"`
+		SilencedBy  []string `json:"silencedBy"`
+		InhibitedBy []string `json:"inhibitedBy"`
 	} `json:"status"`
-	StartsAt time.Time `json:"startsAt"`
+	StartsAt     time.Time       `json:"startsAt"`
+	EndsAt       *time.Time      `json:"endsAt,omitempty"`
+	UpdatedAt    *time.Time      `json:"updatedAt,omitempty"`
+	Fingerprint  string          `json:"fingerprint,omitempty"`
+	GeneratorURL string          `json:"generatorURL,omitempty"`
+	Receivers    json.RawMessage `json:"receivers,omitempty"`
 }
 type RuleGroup struct {
 	Name  string `json:"name"`

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -30,6 +31,37 @@ func TestPrometheusUsesRegisteredQueryAndBearerToken(t *testing.T) {
 	}
 	if _, err := client.Query(context.Background(), "arbitrary_promql", nil); err == nil {
 		t.Fatal("unregistered query accepted")
+	}
+}
+
+func TestAlertmanagerReadPreservesDashboardFields(t *testing.T) {
+	const body = `[{"labels":{"alertname":"CephHealth","severity":"warning"},"annotations":{"summary":"health warning","description":"details","impact":"degraded","fix":"inspect"},"status":{"state":"suppressed","silencedBy":["silence-1"],"inhibitedBy":["other-alert"]},"startsAt":"2026-01-01T00:00:00Z","endsAt":"2026-01-01T01:00:00Z","updatedAt":"2026-01-01T00:30:00Z","fingerprint":"001abc","generatorURL":"https://prometheus.example.test/graph?g0.expr=ceph_health_status","receivers":[{"name":"ceph"}]}]`
+	client, err := New("https://alertmanager.example.test", "", &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		if r.Method != http.MethodGet || r.URL.Path != "/api/v2/alerts" {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL)
+		}
+		return jsonResponse(200, body), nil
+	})})
+	if err != nil {
+		t.Fatal(err)
+	}
+	alerts, err := client.Alerts(context.Background())
+	if err != nil || len(alerts) != 1 {
+		t.Fatalf("alerts=%#v err=%v", alerts, err)
+	}
+	encoded, err := json.Marshal(alerts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var want, got any
+	if err := json.Unmarshal([]byte(body), &want); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(encoded, &got); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("dashboard fields lost: %s", encoded)
 	}
 }
 

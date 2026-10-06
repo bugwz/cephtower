@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### Alertmanager 告警原生详情贯通
+
+- 对照参考 `active-alert-list.component.ts` 与 `prometheus-alerts.ts`，修复告警列表错误读取顶层 `state`：名称、摘要、严重程度和状态分别取自原生 labels、annotations 与 status.state；使用 fingerprint 标识记录。
+- Alertmanager `/api/v2/alerts` 解码保留 fingerprint、endsAt、updatedAt、generatorURL、receivers、status.silencedBy 和 status.inhibitedBy，不再在后端丢弃详情。列表展示来源 URL 文本，完整标签、注释、静默／抑制关联及接收者可在已有详情面板查看。该链路使用原生 Alertmanager 协议，不以 Ceph CLI 假造外部监控数据。
+- HTTP 适配器回归验证上述完整字段往返保留，前端验证嵌套字段、缺失值及未知状态；`make test-backend`、OpenAPI 校验和 `make test-frontend`（类型检查、生产构建）通过。未进行真实 Alertmanager / Ceph 集群或浏览器验证。
+
 #### 性能指标范围趋势与查询元数据
 
 - 范围查询 API 返回实际传给 Prometheus 的 UTC 起止时间和秒步长，采集时间仍在请求完成后生成。前端每条矩阵序列的展开详情增加独立趋势图，沿用完整原始样本表；即时查询不误显示范围趋势。

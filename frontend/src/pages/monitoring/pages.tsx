@@ -1,6 +1,7 @@
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 export { RuntimeLogsPage } from './RuntimeLogsPage'
 import { MetricPage } from './MetricPage'
+import { alertColumns } from './alertColumns'
 
 export function MonitorOverviewPage() {
   return <ExternalListPage definition={externalDefinitions.grafana} />
@@ -40,13 +41,8 @@ const externalDefinitions: Record<'grafana' | 'alerts' | 'rules' | 'silences', E
     title: '告警列表',
     path: '/alert/alerts',
     requiredEndpoints: ['alertmanager'],
-    columns: [
-      { key: 'labels', title: 'Labels' },
-      { key: 'annotations', title: 'Annotations' },
-      { key: 'state', title: '状态' },
-      { key: 'startsAt', title: '开始时间' },
-      { key: 'endsAt', title: '结束时间' }
-    ]
+    rowKeyCandidates: ['fingerprint'],
+    columns: alertColumns
   },
   rules: {
     title: '告警规则',
