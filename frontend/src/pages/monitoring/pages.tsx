@@ -1,4 +1,7 @@
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
+import { useState } from 'react'
+import { Alert, Segmented } from 'antd'
+import { alertGroupDefinition } from './AlertGroups'
 export { RuntimeLogsPage } from './RuntimeLogsPage'
 import { MetricPage } from './MetricPage'
 import { SilencedAlerts } from './SilencedAlerts'
@@ -17,7 +20,10 @@ export function PerformanceMetricsPage() {
 
 
 export function AlertListPage() {
-  return <ExternalListPage definition={externalDefinitions.alerts} />
+  const [grouped, setGrouped] = useState(false)
+  return <><Segmented aria-label="告警展示方式" options={[{ label: '告警实例', value: 'instances' }, { label: '原生分组', value: 'groups' }]} value={grouped ? 'groups' : 'instances'} onChange={value => setGrouped(value === 'groups')} />
+    {grouped && <Alert type="info" message="显示所选集群配置的 Alertmanager 端点返回的全部分组，未按 FSID 标签过滤；共享端点可能包含其他集群告警。" />}
+    <ExternalListPage key={grouped ? 'groups' : 'instances'} definition={grouped ? alertGroupDefinition : externalDefinitions.alerts} /></>
 }
 
 export function AlertRulesPage() {

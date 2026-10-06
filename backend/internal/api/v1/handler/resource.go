@@ -126,7 +126,7 @@ func (h *Handler) ensureResourceCapability(w http.ResponseWriter, r *http.Reques
 	switch kind {
 	case "metric", "alert_rule":
 		endpointKind = "prometheus"
-	case "alert", "silence":
+	case "alert", "alert_group", "silence":
 		endpointKind = "alertmanager"
 	case "grafana":
 		endpointKind = "grafana"

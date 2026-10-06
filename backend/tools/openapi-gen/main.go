@@ -176,6 +176,7 @@ func successResponseSchema(route router.Route) string {
 	case strings.HasPrefix(route.Path, "/metric/"):
 		return "MetricResponse"
 	case route.Path == "/alert/alerts" ||
+		route.Path == "/alert/groups" ||
 		route.Path == "/alert/rules" ||
 		route.Path == "/alert/silences" ||
 		route.Path == "/grafana":

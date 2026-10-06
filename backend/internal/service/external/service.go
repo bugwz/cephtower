@@ -84,7 +84,7 @@ func (s *Service) Read(ctx context.Context, clusterID uint64, kind, key string, 
 	switch kind {
 	case "metric":
 		return s.readMetric(ctx, clusterID, key, query)
-	case "alert", "alert_rule", "silence", "grafana":
+	case "alert", "alert_group", "alert_rule", "silence", "grafana":
 		return s.readMonitoring(ctx, clusterID, kind)
 	case "iscsi_gateway", "iscsi_target":
 		return s.readISCSI(ctx, clusterID, kind, key)
@@ -176,6 +176,8 @@ func (s *Service) readMonitoring(ctx context.Context, clusterID uint64, kind str
 	switch kind {
 	case "alert":
 		items, err = api.Alerts(ctx)
+	case "alert_group":
+		items, err = api.AlertGroups(ctx)
 	case "alert_rule":
 		var groups []monitoring.RuleGroup
 		groups, err = api.Rules(ctx)

@@ -29,6 +29,14 @@
 
 ### 增量实现与验证记录
 
+#### Alertmanager 原生分组视图
+
+- 对照参考 `prometheus.service.ts#getGroupedAlerts`、`prometheus.py#get_alertgroup`，新增 GET `/alert/groups` → 外部服务 → Alertmanager GET `/api/v2/alerts/groups` 链路，包含端点依赖检查、集群作用域、审计与 OpenAPI 文档。
+- 告警页面可在实例和原生分组间切换；分组展示接收器、分组标签、实例数，详情中每个实例独立显示名称、严重程度、状态、描述和开始时间，并可展开完整原始字段。没有将首条实例状态复制为整个组的状态，也不按同名告警自行合并。
+- 分组视图支持既有自动刷新，切换视图重新挂载以清除表单与详情状态。原生空列表有效，null 分组/实例或缺失实例数组报错，不冒充空结果。
+- 当前返回所选集群所配置 Alertmanager 端点的全部分组，未加入参考实现的 FSID 标签过滤；共享端点可能包含其他集群告警，页面明确提示。分组视图只读，创建静默仍在实例视图操作。
+- 新增原生协议、服务分发、异常响应、前端实例解析与入口测试；`make test-backend`（含 OpenAPI 校验）与 `make test-frontend` 通过。未进行真实 Alertmanager 或浏览器交互联调。
+
 #### 告警列表可暂停自动刷新
 
 - 对照参考 `active-alert-list.component.ts` 中由通知组件每 5 秒刷新告警的机制，在本项目告警列表加入默认开启、可关闭的自动刷新开关，沿用 `/alert/alerts` 原生读取链路。

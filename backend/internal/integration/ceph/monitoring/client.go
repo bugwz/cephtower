@@ -255,6 +255,37 @@ type Dashboard struct {
 	IsStarred   bool     `json:"isStarred"`
 }
 
+type AlertGroup struct {
+	Labels   map[string]string `json:"labels"`
+	Receiver struct {
+		Name string `json:"name"`
+	} `json:"receiver"`
+	Alerts []*Alert `json:"alerts"`
+}
+
+func (c *Client) AlertGroups(ctx context.Context) ([]AlertGroup, error) {
+	var groups []*AlertGroup
+	if err := c.get(ctx, "/api/v2/alerts/groups", &groups); err != nil {
+		return nil, err
+	}
+	if groups == nil {
+		return nil, fmt.Errorf("Alertmanager did not return alert groups")
+	}
+	result := make([]AlertGroup, 0, len(groups))
+	for _, group := range groups {
+		if group == nil || group.Alerts == nil {
+			return nil, fmt.Errorf("Alertmanager returned an invalid alert group")
+		}
+		for _, alert := range group.Alerts {
+			if alert == nil {
+				return nil, fmt.Errorf("Alertmanager returned a null grouped alert")
+			}
+		}
+		result = append(result, *group)
+	}
+	return result, nil
+}
+
 func (c *Client) Dashboards(ctx context.Context) ([]Dashboard, error) {
 	const pageSize = 1000
 	const maxPages = 100

@@ -133,6 +133,8 @@ func TestProtocolNativeHTTPReadsUseTypedAdapters(t *testing.T) {
 			body = `{"status":"success","data":{"groups":[{"name":"ceph","rules":[{"type":"alerting","name":"CephHealth","query":"ceph_health_status"}]}]}}`
 		case request.URL.Host == "alertmanager.example.test" && request.URL.Path == "/api/v2/alerts":
 			body = `[{"labels":{"alertname":"CephHealth"},"annotations":{},"status":{"state":"active"},"startsAt":"2026-07-26T00:00:00Z"}]`
+		case request.URL.Host == "alertmanager.example.test" && request.URL.Path == "/api/v2/alerts/groups":
+			body = `[{"labels":{"cluster":"ceph"},"receiver":{"name":"email"},"alerts":[]}]`
 		case request.URL.Host == "alertmanager.example.test" && request.URL.Path == "/api/v2/silences":
 			body = `[]`
 		case request.URL.Host == "grafana.example.test" && request.URL.Path == "/api/search":
@@ -158,6 +160,7 @@ func TestProtocolNativeHTTPReadsUseTypedAdapters(t *testing.T) {
 	}{
 		{"metric", "metric/query", url.Values{"metric_id": []string{"cluster_health"}}, "result_type"},
 		{"alert", "", nil, "CephHealth"},
+		{"alert_group", "", nil, "email"},
 		{"alert_rule", "", nil, "ceph_health_status"},
 		{"silence", "", nil, "items"},
 		{"grafana", "", nil, "Ceph"},

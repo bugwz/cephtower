@@ -1149,6 +1149,10 @@ func (h *Handler) ListAlerts(w http.ResponseWriter, r *http.Request) {
 	h.ReadExternal("alert")(w, r)
 }
 
+func (h *Handler) ListAlertGroups(w http.ResponseWriter, r *http.Request) {
+	h.ReadExternal("alert_group")(w, r)
+}
+
 func (h *Handler) ListAlertRules(w http.ResponseWriter, r *http.Request) {
 	h.ReadExternal("alert_rule")(w, r)
 }
