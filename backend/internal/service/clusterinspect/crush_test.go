@@ -27,10 +27,20 @@ func TestCrushMap(t *testing.T) {
 		`{"nodes":[{"id":-1,"name":"a","type":"root","children":[3]}]}`,
 		`{"nodes":[{"id":-1,"name":"a","type":"root","children":null}]}`,
 		`{"nodes":[{"id":0,"name":"a","type":"osd"},{"id":0,"name":"b","type":"osd"}]}`,
+		`{"nodes":[{"id":-1,"name":"a","type":"root","children":[0,0]},{"id":0,"name":"osd.0","type":"osd"}]}`,
 	} {
 		runner.output = invalid
 		if _, err := s.CrushMap(context.Background(), id); err == nil {
 			t.Fatal("accepted", invalid)
 		}
+	}
+}
+
+func TestCrushMapAllowsSharedNodesAcrossDifferentParents(t *testing.T) {
+	s, runner, id := testInspection(t)
+	runner.output = `{"nodes":[{"id":-1,"name":"a","type":"root","children":[0]},{"id":-2,"name":"b","type":"root","children":[0]},{"id":0,"name":"osd.0","type":"osd"}]}`
+	result, err := s.CrushMap(context.Background(), id)
+	if err != nil || !reflect.DeepEqual(result.Roots, []int64{-1, -2}) {
+		t.Fatalf("valid shared placement rejected: %+v %v", result, err)
 	}
 }

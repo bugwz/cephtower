@@ -48,15 +48,17 @@ func (s *Service) CrushMap(ctx context.Context, clusterID uint64) (CrushMap, err
 			if !ok {
 				return bad()
 			}
+			childrenSeen := make(map[int64]bool, len(list))
 			for _, child := range list {
 				n, ok := child.(json.Number)
 				if !ok {
 					return bad()
 				}
 				childID, err := n.Int64()
-				if err != nil {
+				if err != nil || childrenSeen[childID] {
 					return bad()
 				}
+				childrenSeen[childID] = true
 				edges[id] = append(edges[id], childID)
 				parents[childID] = true
 			}
