@@ -987,6 +987,13 @@ func build(request Request, p map[string]any) (command, error) {
 			if !ok {
 				return command{}, invalid("labels are invalid")
 			}
+			seen := map[string]bool{}
+			for _, label := range labels {
+				if label == "" || strings.TrimSpace(label) != label || strings.Contains(label, ",") || strings.HasPrefix(label, "-") || seen[label] {
+					return command{}, invalid("host labels must be nonempty and unique, without commas, leading dashes or surrounding whitespace")
+				}
+				seen[label] = true
+			}
 			if len(labels) > 0 {
 				args = append(args, "--labels", strings.Join(labels, ","))
 			}
