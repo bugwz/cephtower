@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, BulbOutlined, DeleteOutlined, PlusOutlined, PoweroffOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Button, Card, Descriptions, Form, Input, InputNumber, Modal, Space, Switch, Tabs, Tag, Typography } from 'antd'
+import { Button, Card, Descriptions, Form, Input, InputNumber, Modal, Select, Space, Switch, Tabs, Tag, Typography } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { MonMapSettings } from './MonMapSettings'
@@ -692,9 +692,11 @@ function OSDDeploymentModal({ open, onClose, refresh }: { open: boolean; onClose
 export function DeviceManagementPage() {
   const navigate = useNavigate()
   const { selectedClusterId } = useClusterContext()
+  const [availabilityScope, setAvailabilityScope] = useState<DeviceScope | 'all'>('all')
+  useEffect(() => setAvailabilityScope('all'), [selectedClusterId])
   const deviceTableFilters = useResourceTableFilters({
     path: '/devices',
-    fields: ['hostname', 'path', 'device_id', 'size_display', 'device_type', 'usage_state'],
+    fields: ['hostname', 'path', 'device_id', 'device_type'],
     clusterId: selectedClusterId
   })
   const loader = useCallback(async () => {
@@ -706,14 +708,14 @@ export function DeviceManagementPage() {
         staleReason: null
       }
     }
-    return listResource('/devices', selectedClusterId, {
+    return listAllResources('/devices', selectedClusterId, {
       filters: deviceTableFilters.filters
     })
   }, [deviceTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [refreshingDevices, setRefreshingDevices] = useState(false)
   const operationMutation = useMutationOperation()
-  const deviceRows = useMemo(() => (data?.items ?? []).map(normalizeDeviceRow), [data?.items])
+  const deviceRows = useMemo(() => (data?.items ?? []).map(normalizeDeviceRow).filter(row => availabilityScope === 'all' || row.usage_state === availabilityScope), [data?.items, availabilityScope])
 
   async function refreshDeviceData() {
     if (!selectedClusterId) {
@@ -736,6 +738,10 @@ export function DeviceManagementPage() {
         title="设备管理"
         extra={<Button icon={<ReloadOutlined />} loading={refreshingDevices || loading} onClick={refreshDeviceData}>刷新</Button>}
       >
+        <Select aria-label="设备可用性筛选" value={availabilityScope} onChange={setAvailabilityScope} style={{ width: 180, marginBottom: 16 }} options={[
+            { value: 'all', label: '全部可用性状态' }, { value: 'available', label: '空闲可用' },
+            { value: 'used', label: '已占用' }, { value: 'unavailable', label: '不可用' }, { value: 'unknown', label: '可用性未知' }
+          ]} />
         <DataTable
           data={deviceRows}
           filterOptions={deviceTableFilters.filterOptions}
@@ -747,9 +753,9 @@ export function DeviceManagementPage() {
             { key: 'hostname', title: '主机' },
             { key: 'path', title: '路径' },
             { key: 'device_id', title: '设备 ID' },
-            { key: 'size_display', title: '容量', filterKey: 'size_display' },
+            { key: 'size_display', title: '容量', filterKey: false },
             { key: 'device_type', title: '类型' },
-            { key: 'usage_label', title: '状态', filterKey: 'usage_state', render: (_, row) => renderDeviceUsage(row) },
+            { key: 'usage_label', title: '状态', filterKey: false, render: (_, row) => renderDeviceUsage(row) },
             {
               key: 'actions',
               title: '操作',
