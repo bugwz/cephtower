@@ -212,15 +212,22 @@ export function MgrManagementPage() {
   })
   const loader = useCallback(async () => {
     if (!selectedClusterId) {
-      return { modules: [], daemons: [] }
+      return { modules: [], daemons: [], inventoryWarnings: [] }
     }
     const [modules, daemons] = await Promise.all([
-      listAllResources('/manager/modules', selectedClusterId, { filters: moduleTableFilters.filters }).then((payload) => payload.items),
-      listResource('/daemons', selectedClusterId, {
+      listAllResources('/manager/modules', selectedClusterId, { filters: moduleTableFilters.filters }),
+      listAllResources('/daemons', selectedClusterId, {
         filters: mergeResourceFilters(daemonTableFilters.filters, { type: ['mgr'] })
-      }).then((payload) => payload.items)
+      })
     ])
-    return { modules, daemons }
+    return {
+      modules: modules.items,
+      daemons: daemons.items,
+      inventoryWarnings: [
+        modules.stale !== false ? `MGR 模块库存：${modules.staleReason || '已过期或新鲜度未知'}` : null,
+        daemons.stale !== false ? `MGR 守护进程库存：${daemons.staleReason || '已过期或新鲜度未知'}` : null
+      ].filter((value): value is string => value !== null)
+    }
   }, [daemonTableFilters.filters, moduleTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const [pendingModule, setPendingModule] = useState('')
@@ -269,6 +276,7 @@ export function MgrManagementPage() {
 
   return (
     <Page title="MGR管理" loading={loading} error={error}>
+      {data?.inventoryWarnings.map(warning => <Alert key={warning} type="warning" showIcon message={warning} />)}
       <Modal open={Boolean(configModule)} onCancel={() => setConfigSelection(null)} footer={null} width="95vw" destroyOnClose>
         {configModule && <ConfigurationPage key={`${selectedClusterId}:${configModule}`} moduleName={configModule} />}
       </Modal>

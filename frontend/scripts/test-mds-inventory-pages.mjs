@@ -55,6 +55,38 @@ const list = async (...args) => { mgrCalls.push(args); return { items: [] } }
 const mgrEnv = { selectedClusterId: 9, listResource: list, listAllResources: list, mergeResourceFilters: mergeFilters, moduleTableFilters: { filters: {} }, daemonTableFilters: { filters: { type: ['osd'], name: ['mgr.a'] } } }
 await new Function(...Object.keys(mgrEnv), `${compile(`const load = ${mgrLoader}`)}; return load`)(...Object.values(mgrEnv))()
 assert.deepEqual(mgrCalls.find(call => call[0] === '/daemons'), ['/daemons', 9, { filters: { type: ['mgr'], name: ['mgr.a'] } }])
+for (const scenario of ['fresh', 'stale', 'unknown', 'failure', 'no-cluster']) {
+  const calls = []
+  const listResource = async (path, cluster, options) => {
+    calls.push({ path, cluster, options })
+    if (scenario === 'failure' && path === '/daemons' && options.cursor) throw new Error('mgr second page failed')
+    return {
+      items: [{ name: `${path}:${options.cursor || 'first'}` }], nextCursor: options.cursor ? null : 'second',
+      stale: scenario === 'unknown' ? undefined : scenario === 'stale' && Boolean(options.cursor),
+      staleReason: scenario === 'stale' && options.cursor ? `${path} snapshot expired` : null
+    }
+  }
+  const loadAll = new Function('listResource', `${compile(all)}; return listAllResources`)(listResource)
+  const env = { ...mgrEnv, listAllResources: loadAll, selectedClusterId: scenario === 'no-cluster' ? undefined : 9 }
+  const run = new Function(...Object.keys(env), `${compile(`const load = ${mgrLoader}`)}; return load`)(...Object.values(env))
+  if (scenario === 'failure') await assert.rejects(run(), /mgr second page failed/)
+  else {
+    const result = await run()
+    assert.equal(result.modules.length, scenario === 'no-cluster' ? 0 : 2)
+    assert.equal(result.daemons.length, scenario === 'no-cluster' ? 0 : 2)
+    assert.equal(result.inventoryWarnings.length, ['stale', 'unknown'].includes(scenario) ? 2 : 0)
+    if (scenario === 'stale') {
+      assert.match(result.inventoryWarnings[0], /\/manager\/modules snapshot expired/)
+      assert.match(result.inventoryWarnings[1], /\/daemons snapshot expired/)
+    }
+  }
+  assert.equal(calls.length, scenario === 'no-cluster' ? 0 : 4)
+  for (const { path, cluster, options } of calls) {
+    assert.equal(cluster, 9)
+    assert.deepEqual(options.filters, path === '/daemons' ? { type: ['mgr'], name: ['mgr.a'] } : {})
+  }
+}
+assert.ok(mgr.getText(tree).includes('data?.inventoryWarnings.map'))
 const daemonTable = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'DaemonTable').getText(tree)
 for (const key of ['name', 'type', 'status', 'hostname', 'version']) assert.ok(daemonTable.includes(`key: '${key}'`))
 console.log('MDS inventories retain all pages, scope, errors and independent freshness warnings')
