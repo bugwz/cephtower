@@ -113,7 +113,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"host.action"}, true, map[string]JSONField{
 		"action": stringField(true, "maintenance_enter", "maintenance_exit", "drain", "stop_drain", "rescan"), "force": boolField(false),
 	})
-	add([]string{"device.identify"}, true, map[string]JSONField{"device": stringField(true), "state": stringField(true, "on", "off"), "light": stringField(false, "ident", "fault")})
+	add([]string{"device.identify"}, true, map[string]JSONField{"host": stringField(true), "device_id": stringField(true), "device": stringField(true), "state": stringField(true, "on", "off"), "light": stringField(false, "ident", "fault")})
 	add([]string{"device.zap"}, true, map[string]JSONField{"host": stringField(true), "device": stringField(true)})
 	hostPattern := JSONField{OneOf: []JSONField{stringField(false), objectField(false, map[string]JSONField{"pattern": stringField(true), "pattern_type": stringField(false, "fnmatch", "regex")})}}
 	placement := objectField(false, map[string]JSONField{"count": integerField(false), "count_per_host": integerField(false), "host_pattern": hostPattern, "hosts": stringsField(false), "label": stringField(false)})

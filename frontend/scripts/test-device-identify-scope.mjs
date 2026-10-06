@@ -11,7 +11,7 @@ for (const scenario of ['success', 'stale', 'busy', 'before', 'during', 'failure
   const env = {
     selectedClusterId: 7, device: { stale: scenario === 'stale' }, active: { current: true }, loading: false, error: '', pendingDeviceAction: '',
     zapRunning: { current: scenario === 'busy' }, identifyRunning: { current: false }, zapConfirmation: { current: null }, identifyConfirmation: { current: null },
-    currentDeviceHost: 'node1', currentDevicePath: '/dev/sda', setPendingDeviceAction() {},
+    currentDeviceHost: 'node1', currentDevicePath: '/dev/sda', decodedDeviceId: 'serial-id', setPendingDeviceAction() {},
     Modal: { confirm: value => { modal = value; return { destroy() {} } } },
     operationMutation: { run: fn => fn() }, message: { success: value => messages.push(value) },
     mutateResource: async (...args) => { calls.push(args); if (scenario === 'during') env.active.current = false; if (scenario === 'failure') throw new Error('unconfirmed') },
@@ -24,7 +24,7 @@ for (const scenario of ['success', 'stale', 'busy', 'before', 'during', 'failure
   try { await modal.onOk() } catch { assert.equal(scenario, 'failure') }
   await modal.onOk()
   assert.equal(calls.length, scenario === 'before' ? 0 : 1)
-  if (calls.length) assert.deepEqual(calls[0], ['/device/identify', 'POST', { cluster_id: 7, host: 'node1', device: '/dev/sda', state: 'on', light: 'ident' }])
+  if (calls.length) assert.deepEqual(calls[0], ['/device/identify', 'POST', { cluster_id: 7, host: 'node1', device_id: 'serial-id', device: '/dev/sda', state: 'on', light: 'ident' }])
   assert.equal(refreshes.length, scenario === 'success' ? 1 : 0)
   assert.equal(messages.length, scenario === 'success' ? 1 : 0)
   assert.equal(env.identifyRunning.current, false)

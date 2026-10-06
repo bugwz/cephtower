@@ -147,6 +147,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if request.Parameters == nil {
 		request.Parameters = map[string]any{}
 	}
+	if request.Action == "device.identify" {
+		return s.executeDeviceIdentify(ctx, access, request)
+	}
 	if request.Action == "osd.device_class" {
 		return s.executeOSDDeviceClass(ctx, access, request)
 	}
@@ -1014,24 +1017,6 @@ func build(request Request, p map[string]any) (command, error) {
 		return hostUpdate(p, last(tail), ceph)
 	case "host.action":
 		return hostAction(p, pathValue(tail, "host"), ceph)
-	case "device.identify":
-		host := pathValue(tail, "host")
-		device, err := required(p, "device")
-		if err != nil {
-			return command{}, err
-		}
-		state, err := enum(p, "state", "on", "off")
-		if err != nil {
-			return command{}, err
-		}
-		light := optional(p, "light")
-		if light == "" {
-			light = "ident"
-		}
-		if light != "ident" && light != "fault" {
-			return command{}, invalid("light is not supported")
-		}
-		return ceph([]string{"device", "light", state, device, light, "--force"}, []string{"orch", "device", "ls", "--host", host, "--format", "json"}), nil
 	case "service.create", "service.update":
 		serviceType, err := enum(p, "service_type", "mon", "mgr", "mds", "rgw", "nfs", "smb", "prometheus", "alertmanager", "grafana", "node-exporter", "crash")
 		if err != nil {

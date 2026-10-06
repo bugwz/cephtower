@@ -27,7 +27,6 @@ func TestEveryNativeActionBuildsRegisteredCommand(t *testing.T) {
 		{"host.create", "host", map[string]any{"hostname": "node1", "address": "192.0.2.10", "labels": []any{"storage"}, "maintenance": true}},
 		{"host.update", "host/node1", map[string]any{"labels_add": []any{"storage"}, "labels_remove": []any{"old"}}},
 		{"host.delete", "host/node1", nil}, {"host.action", "host/node1/action", map[string]any{"action": "rescan"}},
-		{"device.identify", "host/node1/identify-device", map[string]any{"device": "/dev/sdb", "state": "on"}},
 		{"service.create", "service", map[string]any{"service_type": "mon"}},
 		{"service.update", "service/mon", map[string]any{"service_type": "mon"}}, {"service.delete", "service/mon", nil},
 		{"daemon.action", "daemon/osd.1/action", map[string]any{"action": "restart"}},

@@ -3188,7 +3188,7 @@ paths:
             schema:
               type: object
               additionalProperties: false
-              required: [cluster_id, device, state]
+              required: [cluster_id, device, device_id, host, state]
               properties:
                 account_id:
                   type: string

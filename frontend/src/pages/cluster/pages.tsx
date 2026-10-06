@@ -888,6 +888,7 @@ function DeviceDetailContent({ deviceId, hostname, path, selectedClusterId }: { 
       await operationMutation.run(() => mutateResource('/device/identify', 'POST', {
         cluster_id: selectedClusterId,
         host: currentDeviceHost,
+        device_id: decodedDeviceId,
         device: currentDevicePath,
         state,
         light
