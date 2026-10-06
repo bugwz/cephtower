@@ -1,9 +1,10 @@
 import { Alert, Button, Space, Typography } from 'antd'
-import { useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ApiRecord } from '../../api/client'
-import { listAllResources } from '../../api/resource'
+import { listAllResources, refreshResource } from '../../api/resource'
 import { AppTable } from '../../components/AppTable'
 import { useResource } from '../../hooks'
+import { message } from '../../utils/appMessage'
 
 export function managerServices(value: unknown): { name: string; uri: string }[] | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
@@ -13,11 +14,39 @@ export function managerServices(value: unknown): { name: string; uri: string }[]
 }
 
 export function ManagerInventory({ clusterId }: { clusterId: number }) {
+  const active = useRef(true)
+  const running = useRef(false)
+  const [collecting, setCollecting] = useState(false)
+  const [collectionError, setCollectionError] = useState('')
+  useEffect(() => {
+    active.current = true
+    return () => { active.current = false }
+  }, [])
   const loader = useCallback(() => listAllResources('/managers', clusterId), [clusterId])
   const { data, loading, error, refresh } = useResource(loader)
+  async function collect() {
+    if (!active.current || running.current) return
+    running.current = true
+    setCollecting(true); setCollectionError('')
+    try {
+      await refreshResource({ clusterId, kind: 'mgr' })
+      if (!active.current) return
+      message.success('MGR 采集完成，正在重新读取库存')
+      await refresh()
+    } catch (err) {
+      if (active.current) setCollectionError(err instanceof Error ? err.message : 'MGR 采集失败')
+    } finally {
+      running.current = false
+      if (active.current) setCollecting(false)
+    }
+  }
   return <Space direction="vertical" className="page-stack">
     <Alert type="info" message="来自 ceph mgr dump 的采集快照，不代表实时状态。服务 URI 由活动 MGR 发布，仅展示原文，不探测可达性；备用 MGR 不继承活动实例的服务。" />
-    <Button loading={loading} onClick={() => void refresh()}>重新读取库存</Button>
+    <Space>
+      <Button loading={loading} disabled={collecting} onClick={() => void refresh()}>重新读取库存</Button>
+      <Button loading={collecting} disabled={loading} onClick={() => void collect()}>重新采集 MGR</Button>
+    </Space>
+    {collectionError && <Alert type="error" message={`MGR 采集失败：${collectionError}`} />}
     {error && <Alert type="error" message={error} />}
     {data && (data.stale !== false || data.items.some(row => row.stale !== false)) && <Alert type="warning" message="MGR 库存已过期或新鲜度未知，请重新采集集群。" />}
     <AppTable<ApiRecord> dataSource={data?.items ?? []} loading={loading} rowKey="natural_key" pagination={{ defaultPageSize: 10 }} columns={[
