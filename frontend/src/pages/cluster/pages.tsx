@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { MonMapSettings } from './MonMapSettings'
 import { ManagerInventory } from './ManagerInventory'
+import { osdSnapshotValue } from './OSDUsage'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
 import {
   applyDaemonAction,
@@ -492,7 +493,13 @@ export function OsdManagementPage() {
               { key: 'reweight', title: 'OSD 调权系数', render: value => typeof value === 'number' ? value : '未采集' },
               { key: 'uuid', title: '实例 UUID', render: value => typeof value === 'string' ? value || '空字符串（原生）' : '未采集' },
               { key: 'primary_affinity', title: '主副本亲和度', render: value => typeof value === 'number' ? value : '未采集' },
-              { key: 'stats', title: '容量/统计' },
+              { key: 'capacity_total', title: '总容量（KiB）', filterKey: false, render: (_, row) => osdSnapshotValue(row, 'stats', 'kb') },
+              { key: 'capacity_used', title: '已用（KiB）', filterKey: false, render: (_, row) => osdSnapshotValue(row, 'stats', 'kb_used') },
+              { key: 'capacity_available', title: '可用（KiB）', filterKey: false, render: (_, row) => osdSnapshotValue(row, 'stats', 'kb_avail') },
+              { key: 'utilization', title: '利用率', filterKey: false, render: (_, row) => osdSnapshotValue(row, 'stats', 'utilization') },
+              { key: 'pgs', title: 'PG 数', filterKey: false, render: (_, row) => osdSnapshotValue(row, 'stats', 'pgs') },
+              { key: 'commit_latency', title: '提交延迟（ms）', filterKey: false, render: (_, row) => osdSnapshotValue(row, 'perf_stats', 'commit_latency_ms') },
+              { key: 'apply_latency', title: '应用延迟（ms）', filterKey: false, render: (_, row) => osdSnapshotValue(row, 'perf_stats', 'apply_latency_ms') },
               {
                 key: 'actions',
                 title: '操作',

@@ -120,3 +120,12 @@ const latencyJS = ts.transpileModule(latencyNode.getText(usageTree).replace('exp
 const latency = new Function(`${latencyJS}; return osdLatency`)()
 for (const value of [0, 0.125, 25]) assert.equal(latency(value), String(value))
 for (const value of [null, undefined, -1, NaN, Infinity, '1']) assert.equal(latency(value), '未采集或格式无效')
+const snapshotNode = usageTree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'osdSnapshotValue')
+const snapshotJS = ts.transpileModule(snapshotNode.getText(usageTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const snapshotValue = new Function('osdUsageInteger', 'osdLatency', `${snapshotJS}; return osdSnapshotValue`)(usageInteger, latency)
+assert.equal(snapshotValue({ stats: { kb: '9007199254740993' } }, 'stats', 'kb'), '9007199254740993')
+assert.equal(snapshotValue({ stats: { pgs: '0' } }, 'stats', 'pgs'), '0')
+assert.equal(snapshotValue({ stats: { utilization: 0 } }, 'stats', 'utilization'), '0%')
+assert.equal(snapshotValue({ perf_stats: { apply_latency_ms: 0.125 } }, 'perf_stats', 'apply_latency_ms'), '0.125')
+for (const stats of [null, undefined, [], { kb: 12 }, { kb: null }]) assert.equal(snapshotValue({ stats }, 'stats', 'kb'), '未采集或格式无效')
+for (const field of ['kb', 'kb_used', 'kb_avail', 'utilization', 'pgs', 'commit_latency_ms', 'apply_latency_ms']) assert.ok(page.getText(tree).includes(`'${field}')`))

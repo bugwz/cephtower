@@ -5,6 +5,15 @@ export function osdUsageInteger(value: unknown): string {
   return typeof value === 'string' && /^(0|[1-9]\d*)$/.test(value) && BigInt(value) <= 18446744073709551615n ? value : '未采集或格式无效'
 }
 
+export function osdSnapshotValue(record: ApiRecord, group: 'stats' | 'perf_stats', key: string): string {
+  const source = record[group]
+  if (!source || typeof source !== 'object' || Array.isArray(source)) return '未采集或格式无效'
+  const value = (source as ApiRecord)[key]
+  if (group === 'perf_stats') return osdLatency(value)
+  if (key === 'utilization') return typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100 ? `${value}%` : '未采集或格式无效'
+  return osdUsageInteger(value)
+}
+
 export function OSDUsage({ record }: { record: ApiRecord }) {
   const stats = record.stats && typeof record.stats === 'object' && !Array.isArray(record.stats) ? record.stats as ApiRecord : {}
   const utilization = stats.utilization
