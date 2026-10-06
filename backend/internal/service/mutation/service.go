@@ -555,6 +555,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "host.action" && slices.Contains([]string{"maintenance_enter", "maintenance_exit", "drain", "stop_drain"}, optional(request.Parameters, "action")) && (err != nil || checked.ExitCode != 0 || !hostActionStateMatches(checked.Stdout, pathValue(resourceTail(request.ResourceKey), "host"), optional(request.Parameters, "action"))) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "host command was issued but requested maintenance or drain control state was not verified; inspect native host and OSD queue state before retrying", Retryable: false}
+		}
 		if request.Action == "host.delete" && (err != nil || checked.ExitCode != 0 || !hostRemovalConfirmed(checked.Stdout, last(resourceTail(request.ResourceKey)))) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "host removal was issued but inventory absence could not be verified; inspect orchestrator hosts before any manual retry", Retryable: false}
 		}
