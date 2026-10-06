@@ -77,6 +77,11 @@ assert.deepEqual(usageExports.crushRuleUsage(8, { stale: true, items: [] }), { n
 assert.deepEqual(usageExports.crushRuleUsage(0, { stale: false, items: [{ name: 'zero', crush_rule: 0, stale: false }] }), { names: ['zero'], stale: false })
 assert.deepEqual(usageExports.crushRuleUsage(8, { stale: false, items: [{ name: 'other', crush_rule: 0, stale: false }] }), { names: [], stale: false })
 for (const crush_rule of [null, undefined, '8', -1, 1.5, NaN]) assert.deepEqual(usageExports.crushRuleUsage(8, { stale: false, items: [{ name: 'bad', crush_rule, stale: false }] }), { names: [], stale: true })
+for (const name of [null, undefined, '', ' pool', 0, {}]) {
+  assert.deepEqual(usageExports.crushRuleUsage(8, { stale: false, items: [{ name, pool_name: 'legacy-name', natural_key: 'legacy-key', crush_rule: 8, stale: false }] }), { names: [], stale: true })
+}
+assert.deepEqual(usageExports.crushRuleUsage(8, { stale: false, items: [{ name: 'pool', crush_rule: 8, stale: false }, { name: 'pool', crush_rule: 0, stale: false }] }), { names: ['pool'], stale: true })
+assert.deepEqual(usageExports.crushRuleUsage(8, { stale: false, items: [{ name: 'known', crush_rule: 8, stale: false }, { name: '', crush_rule: 0, stale: false }] }), { names: ['known'], stale: true })
 
 const watcher = tree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'watchCrushMap')
 const watcherExports = {}

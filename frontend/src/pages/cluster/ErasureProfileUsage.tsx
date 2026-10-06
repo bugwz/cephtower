@@ -18,9 +18,16 @@ export function erasureProfileUsage(profile: string, inventory: ResourceListResu
 
 export function crushRuleUsage(id: number, inventory: ResourceListResult) {
   const validId = Number.isSafeInteger(id) && id >= 0
+  const validName = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.trim() === value
   const matches = inventory.items.filter((row) => validId && row.crush_rule === id)
-  const names = matches.map((row) => row.name ?? row.pool_name ?? row.natural_key).filter((value): value is string => typeof value === 'string' && value.length > 0)
-  return { names: Array.from(new Set(names)), stale: !validId || inventory.stale !== false || inventory.items.some((row) => row.stale !== false || typeof row.crush_rule !== 'number' || !Number.isSafeInteger(row.crush_rule) || row.crush_rule < 0) }
+  const names = matches.map((row) => row.name).filter(validName)
+  const seen = new Set<string>()
+  const invalidRows = inventory.items.some((row) => {
+    if (row.stale !== false || !validName(row.name) || typeof row.crush_rule !== 'number' || !Number.isSafeInteger(row.crush_rule) || row.crush_rule < 0 || seen.has(row.name)) return true
+    seen.add(row.name)
+    return false
+  })
+  return { names: Array.from(new Set(names)), stale: !validId || inventory.stale !== false || invalidRows }
 }
 
 export function ErasureProfileUsage({ clusterId, profile }: { clusterId?: number, profile: string }) {
