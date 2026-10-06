@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- 原生 OSD Destroy 后端：新增高风险 POST /osd/destroy，要求 destroy osd.ID 精确确认及 expected_uuid；先核验唯一目标、Down、未销毁，再执行原生 safe-to-destroy，只有明确安全才调用 destroy-actual。回读 destroyed 和原生清空后的 UUID，失败禁止自动重试；保留 ID 但密钥会移除，数据可能永久不可读。前端入口及 Lost/Purge 仍待实现，未执行真实集群操作。
+
 - OSD 调权原生值预览：表单实时显示按 1/65536 截断后的实际权重，明确零权重（包括极小正数截断为零）会使 OSD 处于 Out 并可能触发数据迁移。保留用户输入精度，不自动四舍五入；新增端点、0.1、最小正刻度和非法输入回归。
 
 - OSD 调权原生回读确认：依据 OSDMonitor 的 int(65536×weight) 与 OSDMap.get_weightf，按 1/65536 精度截断后精确比对唯一目标的原生 weight，而非直接比较输入小数或使用宽松容差。覆盖 0/1/0.5、0.1 的量化值、极小权重归零、缺失/null/错误及重复目标；未达目标返回不可自动重试的未确认错误。

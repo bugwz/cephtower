@@ -162,6 +162,7 @@ var mutationRouteActions = map[string]string{
 	"PUT /osd/device/class":                         "osd.device_class",
 	"PATCH /osd/flag/individual":                    "osd.individual_flag",
 	"POST /osd/removal/stop":                        "osd_removal.stop",
+	"POST /osd/destroy":                             "osd.destroy",
 	"POST /osd/deployment":                          "osd_deployment.create",
 	"POST /osd/deployment/preview":                  "osd_deployment.preview",
 	"POST /osd/removal/check":                       "osd.removal_check",
