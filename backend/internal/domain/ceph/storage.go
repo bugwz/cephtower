@@ -1,6 +1,7 @@
 package ceph
 
 type OSD struct {
+	UUID            *string           `json:"uuid"`
 	PrimaryAffinity *float64          `json:"primary_affinity"`
 	Reweight        *float64          `json:"reweight"`
 	ID              int               `json:"id"`

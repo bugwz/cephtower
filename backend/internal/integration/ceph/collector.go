@@ -920,6 +920,7 @@ type osdTreeWire struct {
 type osdDumpWire struct {
 	Flags *string `json:"flags"`
 	OSDs  []struct {
+		UUID            *string  `json:"uuid"`
 		PrimaryAffinity *float64 `json:"primary_affinity"`
 		Weight          *float64 `json:"weight"`
 		OSD             *int     `json:"osd"`
@@ -1026,6 +1027,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 	states := map[int][2]*bool{}
 	reweights := map[int]*float64{}
 	affinities := map[int]*float64{}
+	uuids := map[int]*string{}
 	if dump.OSDs == nil {
 		return nil, fmt.Errorf("parse collect.osd_dump response: osds must be an explicit array")
 	}
@@ -1034,6 +1036,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 			return nil, fmt.Errorf("parse collect.osd_dump response: nonnegative OSD id required")
 		}
 		id := *osd.OSD
+		uuids[id] = osd.UUID
 		if _, exists := states[id]; exists {
 			return nil, fmt.Errorf("parse collect.osd_dump response: duplicate OSD id")
 		}
@@ -1082,6 +1085,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		payload := cephdomain.OSD{ID: node.ID, Name: node.Name, Status: node.Status, Up: up, In: in, Weight: node.CrushWeight, DeviceClass: node.DeviceClass, Host: hosts[node.ID], CrushPath: crushPaths[node.ID]}
 		payload.Reweight = reweights[node.ID]
 		payload.PrimaryAffinity = affinities[node.ID]
+		payload.UUID = uuids[node.ID]
 		rows = append(rows, Observation{Kind: "osd", NaturalKey: strconv.Itoa(node.ID), Name: node.Name, Status: node.Status, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	poolPGStates := p.collectPoolPGStates(ctx, access)
