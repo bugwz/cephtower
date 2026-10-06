@@ -778,9 +778,20 @@ export function DeviceManagementPage() {
 }
 
 export function DeviceDetailPage() {
-  const navigate = useNavigate()
   const { deviceId = '' } = useParams()
   const { selectedClusterId } = useClusterContext()
+  return <DeviceDetailContent key={JSON.stringify([selectedClusterId, deviceId])} deviceId={deviceId} selectedClusterId={selectedClusterId} />
+}
+
+function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string; selectedClusterId?: number }) {
+  const navigate = useNavigate()
+  const active = useRef(true)
+  const zapRunning = useRef(false)
+  const zapConfirmation = useRef<{ destroy: () => void } | null>(null)
+  useEffect(() => {
+    active.current = true
+    return () => { active.current = false; zapConfirmation.current?.destroy() }
+  }, [])
   const decodedDeviceId = safeDecodeRouteParam(deviceId)
   const loader = useCallback(async () => {
     if (!selectedClusterId || !decodedDeviceId) {
@@ -862,32 +873,41 @@ export function DeviceDetailPage() {
   }
 
   async function zap() {
-    if (!selectedClusterId || !device) {
-      message.error('请先选择集群')
+    if (!selectedClusterId || !device || !active.current || loading || error || pendingDeviceAction || zapRunning.current) {
       return
     }
-    const generation = Number(device.resource_version ?? 0)
+    const raw = device.resource_version
+    const generation = typeof raw === 'string' ? raw : typeof raw === 'number' && Number.isSafeInteger(raw) ? String(raw) : ''
+    if (device.stale !== false || !/^[1-9][0-9]*$/.test(generation) || BigInt(generation) > 18446744073709551615n || !currentDeviceHost || !currentDevicePath) {
+      message.error('设备身份或库存版本未确认，请刷新后再操作')
+      return
+    }
     const parameters = { cluster_id: selectedClusterId, host: currentDeviceHost, device: currentDevicePath }
     const pendingKey = `${currentDeviceHost}:${currentDevicePath}:zap`
-    Modal.confirm({
+    let submitted = false
+    zapConfirmation.current?.destroy()
+    zapConfirmation.current = Modal.confirm({
       title: `擦除设备 ${currentDeviceHost}:${currentDevicePath}`,
       content: `该操作会清理主机 ${currentDeviceHost} 的设备 ${currentDevicePath} 数据，为高风险操作，确认后将直接执行。`,
       okText: '提交擦除',
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
-        if (pendingDeviceAction) {
+        if (!active.current || submitted || zapRunning.current) {
           return
         }
+        submitted = true
+        zapRunning.current = true
         setPendingDeviceAction(pendingKey)
         try {
           await operationMutation.run(() => mutateResource('/device/zap', 'POST', parameters, { ifMatch: generation }), false)
-          window.setTimeout(() => {
-            message.success('设备擦除执行成功')
-            refresh({ showLoading: false })
-          })
+          if (active.current) {
+            message.success('擦除命令已执行，请刷新并核对设备状态')
+            await refresh({ showLoading: false })
+          }
         } finally {
-          setPendingDeviceAction('')
+          zapRunning.current = false
+          if (active.current) setPendingDeviceAction('')
         }
       }
     })
