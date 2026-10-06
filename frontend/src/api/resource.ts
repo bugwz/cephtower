@@ -199,6 +199,18 @@ export async function listResourceHistory<T = ApiRecord>(kind: 'overview' | 'hea
 
 async function waitForOperation(initial: Operation): Promise<ActionResult> {
   let operation = initial
+  const clusterId = initial?.cluster_id
+  const operationId = initial?.operation_id
+  function validateOperation() {
+    if (!Number.isSafeInteger(clusterId) || clusterId <= 0 || !Number.isSafeInteger(operationId) || operationId <= 0 ||
+      !operation || operation.cluster_id !== clusterId || operation.operation_id !== operationId ||
+      !['queued', 'running', 'succeeded', 'failed'].includes(operation.status)) {
+      const error = new ApiRequestError('操作状态或任务身份无法确认，请核查操作记录，不要直接重复提交', 502, 'operation_response_invalid')
+      notifyApiError(toApiErrorDetail(error, '/operation'))
+      throw error
+    }
+  }
+  validateOperation()
   const deadline = Date.now() + 15 * 60 * 1000
   let delay = 250
   while (operation.status === 'queued' || operation.status === 'running') {
@@ -209,9 +221,10 @@ async function waitForOperation(initial: Operation): Promise<ActionResult> {
     }
     await wait(delay)
     operation = await request<Operation>('/operation', jsonInit('GET', {
-      cluster_id: operation.cluster_id,
-      operation_id: operation.operation_id
+      cluster_id: clusterId,
+      operation_id: operationId
     }, { suppressErrorNotification: true }))
+    validateOperation()
     delay = Math.min(Math.round(delay * 1.5), 2000)
   }
   if (operation.status === 'failed') {
