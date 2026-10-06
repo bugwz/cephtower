@@ -787,10 +787,12 @@ function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string
   const navigate = useNavigate()
   const active = useRef(true)
   const zapRunning = useRef(false)
+  const identifyRunning = useRef(false)
+  const identifyConfirmation = useRef<{ destroy: () => void } | null>(null)
   const zapConfirmation = useRef<{ destroy: () => void } | null>(null)
   useEffect(() => {
     active.current = true
-    return () => { active.current = false; zapConfirmation.current?.destroy() }
+    return () => { active.current = false; zapConfirmation.current?.destroy(); identifyConfirmation.current?.destroy() }
   }, [])
   const decodedDeviceId = safeDecodeRouteParam(deviceId)
   const loader = useCallback(async () => {
@@ -833,30 +835,35 @@ function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string
   }
 
   function confirmIdentify(state: 'on' | 'off') {
-    if (!device) {
+    if (!device || !active.current || loading || error || device.stale !== false || zapRunning.current || identifyRunning.current) {
       return
     }
     const isOn = state === 'on'
-    Modal.confirm({
+    let submitted = false
+    identifyConfirmation.current?.destroy()
+    zapConfirmation.current?.destroy()
+    identifyConfirmation.current = Modal.confirm({
       title: `${isOn ? '点灯' : '关灯'}设备 ${currentDeviceHost}:${currentDevicePath}`,
       content: `确认后将对主机 ${currentDeviceHost} 的设备 ${currentDevicePath} 执行${isOn ? '点灯' : '关灯'}操作。`,
       okText: `确认${isOn ? '点灯' : '关灯'}`,
       cancelText: '取消',
       async onOk() {
+        if (submitted || !active.current || zapRunning.current || identifyRunning.current) return
+        submitted = true
         await identify(state)
       }
     })
   }
 
   async function identify(state: 'on' | 'off', light: 'ident' | 'fault' = 'ident') {
-    if (!selectedClusterId || !device) {
-      message.error('请先选择集群')
+    if (!selectedClusterId || !device || !active.current || loading || error || device.stale !== false || zapRunning.current || identifyRunning.current) {
       return
     }
     const pendingKey = `${currentDeviceHost}:${currentDevicePath}:identify:${state}:${light}`
     if (!currentDeviceHost || !currentDevicePath || pendingDeviceAction) {
       return
     }
+    identifyRunning.current = true
     setPendingDeviceAction(pendingKey)
     try {
       await operationMutation.run(() => mutateResource('/device/identify', 'POST', {
@@ -865,15 +872,19 @@ function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string
         device: currentDevicePath,
         state,
         light
-      }), state === 'on' ? '设备点灯执行成功' : '设备关灯执行成功')
-      await refresh({ showLoading: false })
+      }), false)
+      if (active.current) {
+        message.success('灯操作命令已执行，请核对实际灯状态')
+        await refresh({ showLoading: false })
+      }
     } finally {
-      setPendingDeviceAction('')
+      identifyRunning.current = false
+      if (active.current) setPendingDeviceAction('')
     }
   }
 
   async function zap() {
-    if (!selectedClusterId || !device || !active.current || loading || error || pendingDeviceAction || zapRunning.current) {
+    if (!selectedClusterId || !device || !active.current || loading || error || pendingDeviceAction || zapRunning.current || identifyRunning.current) {
       return
     }
     const raw = device.resource_version
@@ -886,6 +897,7 @@ function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string
     const pendingKey = `${currentDeviceHost}:${currentDevicePath}:zap`
     let submitted = false
     zapConfirmation.current?.destroy()
+    identifyConfirmation.current?.destroy()
     zapConfirmation.current = Modal.confirm({
       title: `擦除设备 ${currentDeviceHost}:${currentDevicePath}`,
       content: `该操作会清理主机 ${currentDeviceHost} 的设备 ${currentDevicePath} 数据，为高风险操作，确认后将直接执行。`,
@@ -893,7 +905,7 @@ function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string
       okType: 'danger',
       cancelText: '取消',
       async onOk() {
-        if (!active.current || submitted || zapRunning.current) {
+        if (!active.current || submitted || zapRunning.current || identifyRunning.current) {
           return
         }
         submitted = true

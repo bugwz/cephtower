@@ -11,7 +11,7 @@ for (const scenario of ['success', 'stale', 'unsafe', 'before', 'during', 'failu
   const calls = [], messages = [], refreshes = []
   const env = {
     selectedClusterId: 7, device: { stale: scenario === 'stale', resource_version: scenario === 'unsafe' ? Number.MAX_SAFE_INTEGER + 1 : '18446744073709551615' },
-    active: { current: true }, loading: false, error: '', pendingDeviceAction: '', zapRunning: { current: false }, zapConfirmation: { current: null },
+    active: { current: true }, loading: false, error: '', pendingDeviceAction: '', zapRunning: { current: false }, zapConfirmation: { current: null }, identifyRunning: { current: false }, identifyConfirmation: { current: null },
     currentDeviceHost: 'node1', currentDevicePath: '/dev/sda', setPendingDeviceAction() {},
     Modal: { confirm: options => { confirmation = options; return { destroy() {} } } },
     message: { error: value => messages.push(value), success: value => messages.push(value) },
