@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { HostHardware } from './HostHardware'
 import { useNavigate } from 'react-router-dom'
 import { isRecord, numberValue, textValue, type ApiRecord } from '../../api/client'
-import { getHostSSH, listDaemons, listResource, mutateResource, refreshResource, saveHostSSH, type HostSSHPayload } from '../../api/resource'
+import { getHostSSH, listAllResources, mutateResource, refreshResource, saveHostSSH, type HostSSHPayload } from '../../api/resource'
 import { DataTable } from '../../components/DataTable'
 import { DraggableModal } from '../../components/DraggableModal'
 import { Page } from '../../components/Page'
@@ -52,15 +52,15 @@ export function HostPage() {
       return { hosts: [], observedAt: null, stale: false, staleReason: null }
     }
     const [hostList, daemons, devices] = await Promise.all([
-      listResource('/hosts', selectedClusterId, { filters: hostTableFilters.filters }),
-      listDaemons(),
-      listResource('/devices', selectedClusterId).then((payload) => payload.items)
+      listAllResources('/hosts', selectedClusterId, { filters: hostTableFilters.filters }),
+      listAllResources('/daemons', selectedClusterId),
+      listAllResources('/devices', selectedClusterId)
     ])
     return {
-      hosts: hostList.items.map((host) => normalizeHostRow(host, daemons, devices)),
+      hosts: hostList.items.map((host) => normalizeHostRow(host, daemons.items, devices.items)),
       observedAt: hostList.observedAt,
-      stale: hostList.stale,
-      staleReason: hostList.staleReason
+      stale: hostList.stale || daemons.stale || devices.stale,
+      staleReason: [hostList.staleReason, daemons.staleReason, devices.staleReason].filter(Boolean).join('；') || null
     }
   }, [hostTableFilters.filters, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
