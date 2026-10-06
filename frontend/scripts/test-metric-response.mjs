@@ -24,4 +24,7 @@ for (const [type, query] of [
     await assert.rejects(query, /指标响应格式异常/)
   }
 }
+response = { result_type: 'matrix', series: [] }
+await exports.queryMetricRange(7, { metricId: 'mon_sessions', monName: 'a"&other=x', start: 'start', end: 'end', step: '30s' })
+assert.equal(new URL(lastRequest.path, 'https://example.test').searchParams.get('mon_name'), 'a"&other=x')
 console.log('Metric API rejects malformed envelopes without discarding native sample values')

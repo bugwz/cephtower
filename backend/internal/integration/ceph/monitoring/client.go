@@ -89,6 +89,18 @@ func (c *Client) QueryRange(ctx context.Context, metricID string, start, end tim
 	if !ok {
 		return PrometheusResult{}, fmt.Errorf("unsupported metric_id %q", metricID)
 	}
+	return c.queryRange(ctx, query, start, end, step)
+}
+
+func (c *Client) MonSessionsRange(ctx context.Context, fsid, name string, start, end time.Time, step time.Duration) (PrometheusResult, error) {
+	if strings.TrimSpace(fsid) == "" || strings.TrimSpace(name) == "" || name != strings.TrimSpace(name) {
+		return PrometheusResult{}, fmt.Errorf("cluster FSID and monitor name are required")
+	}
+	query := "ceph_mon_num_sessions{cluster=" + strconv.Quote(fsid) + ",ceph_daemon=" + strconv.Quote("mon."+name) + "}"
+	return c.queryRange(ctx, query, start, end, step)
+}
+
+func (c *Client) queryRange(ctx context.Context, query string, start, end time.Time, step time.Duration) (PrometheusResult, error) {
 	if !end.After(start) || end.Sub(start) > 31*24*time.Hour || step < time.Second {
 		return PrometheusResult{}, fmt.Errorf("invalid query range")
 	}

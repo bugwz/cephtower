@@ -110,7 +110,7 @@ func (s *Service) monitoringClient(ctx context.Context, clusterID uint64, endpoi
 }
 
 func (s *Service) readMetric(ctx context.Context, clusterID uint64, key string, query url.Values) (any, error) {
-	allowed := map[string]bool{"metric_id": true, "time": true, "start": true, "end": true, "step": true}
+	allowed := map[string]bool{"metric_id": true, "time": true, "start": true, "end": true, "step": true, "mon_name": true}
 	if err := validateQuery(query, allowed); err != nil {
 		return nil, err
 	}
@@ -121,6 +121,12 @@ func (s *Service) readMetric(ctx context.Context, clusterID uint64, key string, 
 	metricID := strings.TrimSpace(query.Get("metric_id"))
 	if metricID == "" {
 		return nil, failure("invalid_request", "metric_id is required", false)
+	}
+	if query.Has("mon_name") && metricID != "mon_sessions" {
+		return nil, failure("invalid_request", "mon_name is only supported for mon_sessions", false)
+	}
+	if metricID == "mon_sessions" && (!strings.Contains(key, "range") || strings.TrimSpace(query.Get("mon_name")) == "") {
+		return nil, failure("invalid_request", "mon_sessions requires a range and mon_name", false)
 	}
 	var result monitoring.PrometheusResult
 	meta := map[string]any{}
@@ -137,7 +143,17 @@ func (s *Service) readMetric(ctx context.Context, clusterID uint64, key string, 
 		if parseErr != nil {
 			return nil, failure("invalid_request", "step must be a Go duration such as 30s", false)
 		}
-		result, err = api.QueryRange(ctx, metricID, start, end, step)
+		if metricID == "mon_sessions" {
+			fsid, lookupErr := s.endpoints.ClusterFSID(ctx, clusterID)
+			if lookupErr != nil {
+				return nil, failure("capability_unavailable", "cannot scope monitor history: "+lookupErr.Error(), false)
+			}
+			result, err = api.MonSessionsRange(ctx, fsid, query.Get("mon_name"), start, end, step)
+			meta["cluster_fsid"] = fsid
+			meta["mon_name"] = query.Get("mon_name")
+		} else {
+			result, err = api.QueryRange(ctx, metricID, start, end, step)
+		}
 		meta["start"] = start.UTC().Format(time.RFC3339Nano)
 		meta["end"] = end.UTC().Format(time.RFC3339Nano)
 		meta["step_seconds"] = step.Seconds()

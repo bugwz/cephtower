@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### MON 会话数历史查询
+
+- 参考 `controllers/monitor.py` 的 `get_unlabeled_counter(mon, name, mon.num_sessions)` 与 MON sparkline。参考历史来自 MGR 内存；`ceph tell mon.<name> perf dump` 仅提供当前值，不能重建过去历史。
+- MON 详情新增最近一小时历史，复用 `/metric/range` 并增加 `metric_id=mon_sessions`、`mon_name`；后端固定查询 `ceph_mon_num_sessions`，使用数据库保存的 FSID 精确匹配 cluster 标签及 `mon.<name>` 精确匹配 ceph_daemon。参数经字符串转义，不接受自由 PromQL。
+- 需要 Prometheus 采集原生 MON 会话数指标并携带 cluster=FSID 标签；FSID 缺失时明确失败，不退回无集群筛选。展示各来源独立曲线和原始样本，不累加来源、不补零；30 秒为评估步长，不等同原始采样周期。
+- 页面按集群/MON 重建，离开时取消请求，旧响应不更新；空结果与读取失败分开显示。后端模拟 HTTP 验证精确查询、转义、缺失 FSID 和参数校验；前端验证范围隔离与原始值保留。尚未连接真实集群/Prometheus 或进行浏览器交互验证。
+
 #### 指标 API 异常响应不再伪装为空历史
 
 - 修复前端共用指标读取器把缺失序列改为空数组、静默过滤异常序列的问题；即时查询必须返回 vector，历史查询必须返回 matrix，数组缺失或包含非对象元素直接失败。

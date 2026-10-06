@@ -12,6 +12,7 @@ import { useClusterContext } from '../../state/ClusterContext'
 import { formatDateTime } from '../../utils/time'
 import { message } from '../../utils/appMessage'
 import { MonPublicAddresses } from './MonPublicAddresses'
+import { MonSessionHistory } from './MonSessionHistory'
 import { monSessionCount } from './monSessionCount'
 import { MonQuorumState } from './MonQuorumState'
 import { MonSnapshotState } from './MonSnapshotState'
@@ -133,6 +134,7 @@ function MonDetailContent({ selectedClusterId, monName }: { selectedClusterId?: 
           ]}
         />}
         </Card>
+        {selectedClusterId && monName && <MonSessionHistory key={JSON.stringify([selectedClusterId, monName])} clusterId={selectedClusterId} monName={monName} />}
       </Space>
     </Page>
   )

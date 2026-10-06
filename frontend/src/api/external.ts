@@ -8,6 +8,7 @@ export interface MetricQueryInput {
 
 export interface MetricRangeInput {
   metricId: string
+  monName?: string
   start: string
   end: string
   step: string
@@ -54,6 +55,7 @@ export async function queryMetricRange(clusterId: number, input: MetricRangeInpu
     end: input.end,
     step: input.step
   })
+  if (input.monName !== undefined) query.set('mon_name', input.monName)
   return readMetric(`/metric/range?${query}`, 'matrix', clusterId, init)
 }
 
