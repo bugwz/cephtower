@@ -214,8 +214,11 @@ func TestOSDInspectionCommandsAndFailures(t *testing.T) {
 		{"histogram", []string{"tell", "osd.0", "perf", "histogram", "dump", "--format", "json"}},
 	} {
 		runner.output = `{"osd":{"latency":{"axes":[],"values":[[1,2]]}}}`
+		if tc.section == "metadata" {
+			runner.output = `{"id":0,"hostname":"node1","osd_objectstore":"bluestore"}`
+		}
 		result, err := service.OSDInspection(context.Background(), id, "0", tc.section)
-		if err != nil || result["osd"] == nil {
+		if err != nil || (tc.section == "histogram" && result["osd"] == nil) || (tc.section == "metadata" && result["hostname"] != "node1") {
 			t.Fatalf("result=%v err=%v", result, err)
 		}
 		spec := runner.specs[len(runner.specs)-1]
@@ -242,6 +245,25 @@ func TestOSDInspectionCommandsAndFailures(t *testing.T) {
 	runner.fail = true
 	if _, err := service.OSDInspection(context.Background(), id, "0", "histogram"); err == nil {
 		t.Fatal("offline OSD reported success")
+	}
+}
+
+func TestOSDMetadataRequiresMatchingNativeIdentity(t *testing.T) {
+	service, runner, id := testInspection(t)
+	for _, output := range []string{`{}`, `{"hostname":"node1"}`, `{"id":1}`, `{"id":"0"}`, `{"id":null}`, `{"id":false}`, `{"id":0.0}`, `{"id":0e0}`, `{"id":-1}`, `[{"id":0}]`} {
+		runner.output = output
+		result, err := service.OSDInspection(context.Background(), id, "0", "metadata")
+		if err == nil || result != nil {
+			t.Fatalf("accepted mismatched metadata %s: %v", output, result)
+		}
+	}
+	runner.output = `{"id":42,"hostname":"node42","mem_total_kb":"18446744073709551615","bluefs":"1","custom":"kept"}`
+	result, err := service.OSDInspection(context.Background(), id, "42", "metadata")
+	if err != nil || result["hostname"] != "node42" || result["mem_total_kb"] != "18446744073709551615" || result["custom"] != "kept" {
+		t.Fatalf("matching metadata not preserved: %v %v", result, err)
+	}
+	if !reflect.DeepEqual(runner.specs[len(runner.specs)-1].Args, []string{"osd", "metadata", "42", "--format", "json"}) {
+		t.Fatal("wrong native target")
 	}
 }
 

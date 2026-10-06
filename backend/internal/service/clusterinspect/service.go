@@ -129,6 +129,12 @@ func (s *Service) OSDInspection(ctx context.Context, clusterID uint64, id, secti
 	if result == nil {
 		return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph returned empty OSD diagnostics"}
 	}
+	if section == "metadata" {
+		returnedID, ok := result["id"].(json.Number)
+		if !ok || returnedID.String() != id {
+			return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph metadata identity does not match the requested OSD"}
+		}
+	}
 	if section == "smart" {
 		redacted, err := security.RedactJSON(result)
 		if err != nil {
