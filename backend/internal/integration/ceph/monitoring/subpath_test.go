@@ -45,7 +45,7 @@ func TestMonitoringPreservesServiceRoot(t *testing.T) {
 			if _, err := client.Rules(ctx); err != nil {
 				t.Fatal(err)
 			}
-			if _, err := client.Alerts(ctx); err != nil {
+			if _, err := client.Alerts(ctx, "test-fsid"); err != nil {
 				t.Fatal(err)
 			}
 			if _, err := client.Silences(ctx); err != nil {

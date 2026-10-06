@@ -45,7 +45,7 @@ func TestAlertmanagerReadPreservesDashboardFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	alerts, err := client.Alerts(context.Background())
+	alerts, err := client.Alerts(context.Background(), "test-fsid")
 	if err != nil || len(alerts) != 1 {
 		t.Fatalf("alerts=%#v err=%v", alerts, err)
 	}

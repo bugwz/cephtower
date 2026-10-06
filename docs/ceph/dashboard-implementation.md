@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 告警实例与静默关联读取统一 FSID 范围
+
+- 将 `/alert/alerts` 与原生分组统一为后端已探测 FSID 的 `cluster` 等值 matcher；实例列表与静默详情均通过该接口读取，不再读取共享 Alertmanager 的全部实例。
+- FSID 缺失时在发起 HTTP 前失败，调用方提交 `fsid` 或 `filter` 不会替代存储身份。保留缺失标签不匹配的原生语义，页面明确告知相关可见性限制。
+- 静默详情只展示当前集群范围内的关联告警，不代表静默的全部影响范围；静默记录与修改操作未因此被隔离到单一集群，不能将此只读过滤视为远端权限控制。
+- 新增实例过滤、转义、缺失身份阻止网络调用及查询参数不能覆盖身份的测试；`make test-backend`（含 OpenAPI 校验）与 `make test-frontend` 通过，未进行真实 Ceph/Alertmanager 联调。
+
 #### 原生告警分组按已探测 FSID 过滤
 
 - 补齐参考 `prometheus.py#get_alertgroup(cluster_filter=True)` 的 `cluster` 标签过滤。分组读取从所选集群数据库记录获取 FSID，再调用 `/api/v2/alerts/groups?filter=cluster%3D...`；FSID 的既有获取链路为集群探测 → Ceph provider → `ceph fsid` → 保存集群记录。

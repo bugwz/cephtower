@@ -168,9 +168,13 @@ type SilenceRecord struct {
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
 
-func (c *Client) Alerts(ctx context.Context) ([]Alert, error) {
+func (c *Client) Alerts(ctx context.Context, fsid string) ([]Alert, error) {
+	if strings.TrimSpace(fsid) == "" {
+		return nil, fmt.Errorf("cluster FSID is required for alerts")
+	}
 	var result []*Alert
-	if err := c.get(ctx, "/api/v2/alerts", &result); err != nil {
+	query := url.Values{"filter": []string{"cluster=" + strconv.Quote(fsid)}}
+	if err := c.get(ctx, "/api/v2/alerts?"+query.Encode(), &result); err != nil {
 		return nil, err
 	}
 	if result == nil {

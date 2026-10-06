@@ -26,14 +26,19 @@ const externalTestKey = "0123456789abcdefghijklmnopqrstuv"
 
 func externalTestService(t *testing.T) (*Service, *endpointservice.Service, store.CephCluster) {
 	t.Helper()
+	fsid := "00000000-0000-0000-0000-000000000001"
+	return externalTestServiceWithFSID(t, &fsid)
+}
+
+func externalTestServiceWithFSID(t *testing.T, fsid *string) (*Service, *endpointservice.Service, store.CephCluster) {
+	t.Helper()
 	db, err := store.Open(config.DatabaseConfig{EncryptionKey: externalTestKey, Engine: store.EngineSQLite, SQLite: config.SQLiteConfig{Name: "external.db"}}, t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = store.Close(db) })
 	now := time.Now().UTC()
-	fsid := "00000000-0000-0000-0000-000000000001"
-	cluster := store.CephCluster{Name: "test", FSID: &fsid, MonitorAddresses: "mon:6789", ClientUsername: "client.test", ClientKey: "encrypted", CreatedAt: now, UpdatedAt: now}
+	cluster := store.CephCluster{Name: "test", FSID: fsid, MonitorAddresses: "mon:6789", ClientUsername: "client.test", ClientKey: "encrypted", CreatedAt: now, UpdatedAt: now}
 	if err := db.CreateCluster(context.Background(), &cluster); err != nil {
 		t.Fatal(err)
 	}
@@ -133,6 +138,9 @@ func TestProtocolNativeHTTPReadsUseTypedAdapters(t *testing.T) {
 		case request.URL.Host == "prometheus.example.test" && request.URL.Path == "/api/v1/rules":
 			body = `{"status":"success","data":{"groups":[{"name":"ceph","rules":[{"type":"alerting","name":"CephHealth","query":"ceph_health_status"}]}]}}`
 		case request.URL.Host == "alertmanager.example.test" && request.URL.Path == "/api/v2/alerts":
+			if request.URL.Query().Get("filter") != `cluster="00000000-0000-0000-0000-000000000001"` {
+				t.Fatalf("missing cluster filter: %s", request.URL)
+			}
 			body = `[{"labels":{"alertname":"CephHealth"},"annotations":{},"status":{"state":"active"},"startsAt":"2026-07-26T00:00:00Z"}]`
 		case request.URL.Host == "alertmanager.example.test" && request.URL.Path == "/api/v2/alerts/groups":
 			if request.URL.Query().Get("filter") != `cluster="00000000-0000-0000-0000-000000000001"` {

@@ -32,6 +32,31 @@ func TestAlertGroupFilterCannotBeBroadened(t *testing.T) {
 	}
 }
 
+func TestAlertInstanceFilterUsesExactCluster(t *testing.T) {
+	for _, fsid := range []string{"", " ", "test-fsid", `one",cluster=~".*`} {
+		calls := 0
+		client, err := New("https://alerts.example.test", "", &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			calls++
+			filters := r.URL.Query()["filter"]
+			if r.URL.Path != "/api/v2/alerts" || len(filters) != 1 || filters[0] != "cluster="+strconv.Quote(fsid) {
+				t.Fatalf("incorrect filter: %s", r.URL)
+			}
+			return jsonResponse(200, `[]`), nil
+		})})
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = client.Alerts(context.Background(), fsid)
+		if fsid == "" || fsid == " " {
+			if err == nil || calls != 0 {
+				t.Fatal("missing FSID was queried")
+			}
+		} else if err != nil || calls != 1 {
+			t.Fatalf("filter rejected: %v", err)
+		}
+	}
+}
+
 func TestNativeAlertGroups(t *testing.T) {
 	for _, body := range []string{`[]`, `[{"labels":{"cluster":"ceph"},"receiver":{"name":"email"},"alerts":[{"fingerprint":"a","status":{"state":"active"}},{"fingerprint":"b","status":{"state":"suppressed"}}]}]`, `null`, `[null]`, `[{}]`, `[{"alerts":[null]}]`} {
 		t.Run(body, func(t *testing.T) {

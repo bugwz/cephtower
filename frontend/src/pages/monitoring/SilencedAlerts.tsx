@@ -36,7 +36,7 @@ function SilencedAlertsContent({ clusterId, silenceId }: { clusterId: number; si
   }, [clusterId, silenceId, revision])
   return <Card title="当前关联告警" style={{ marginTop: 16 }} extra={<Button onClick={() => setRevision(value => value + 1)}>刷新关联</Button>}>
     <Space direction="vertical" style={{ width: '100%' }}>
-      <Alert type="info" message="仅展示 Alertmanager 当前 silencedBy 包含此静默 ID 的告警，不代表历史告警、未来匹配范围或静默效果预测。" />
+      <Alert type="info" message="仅展示所选集群 FSID 的 cluster 标签匹配且当前 silencedBy 包含此静默 ID 的告警；不包含其他集群、缺少 cluster 标签或历史告警，不代表未来匹配范围或静默效果预测。" />
       {error ? <Alert type="error" message={error} /> : !result ? <Spin /> : <>
         {result.incomplete && <Alert type="warning" message="部分告警缺少有效关联字段，以下结果不完整，不能据此认定没有关联告警。" />}
         <AppTable<ApiRecord> size="small" dataSource={result.items} rowKey={(row, index) => JSON.stringify([row.fingerprint, index])} pagination={{ defaultPageSize: 10 }} columns={[
