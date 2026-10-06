@@ -132,6 +132,12 @@ assert.equal(daemonExports.upgradeDaemonRows(daemonItems, ' NODE-A ').length, 1)
 assert.equal(daemonExports.upgradeDaemonRows(daemonItems, '20.2').length, 1)
 assert.equal(daemonExports.upgradeDaemonRows(daemonItems, 'missing').length, 0)
 assert.deepEqual(daemonExports.upgradeDaemonRows([], ''), [])
+const imageItems = [{ ...daemonItems[0], container_image_id: 'sha256:image-one', container_image_digests: ['quay.io/ceph/ceph@sha256:digest-one', 'registry/ceph@sha256:digest-two'] }, { ...daemonItems[0], name: 'mgr.b', container_image_id: 'sha256:image-two', container_image_digests: [] }]
+assert.equal(daemonExports.upgradeDaemonRows(imageItems, 'image-one')[0].image_id, 'sha256:image-one')
+assert.equal(daemonExports.upgradeDaemonRows(imageItems, 'DIGEST-TWO')[0].name, 'mgr.a')
+assert.equal(daemonExports.upgradeDaemonRows(imageItems, 'ceph:v20.2.2').length, 2)
+assert.equal(daemonExports.upgradeDaemonRows(imageItems, '')[1].image_digests, '未报告摘要')
+for (const value of [undefined, null, {}, 'digest', ['digest', 1], ['']]) assert.equal(daemonExports.upgradeDaemonRows([{ ...daemonItems[0], container_image_digests: value }], '')[0].image_digests, '未知')
 for (const type of ['mgr', 'mon', 'crash', 'osd', 'mds', 'rgw', 'rbd-mirror', 'cephfs-mirror', 'iscsi', 'nfs']) {
   assert.equal(daemonExports.upgradeDaemonRows([{ name: 'arbitrary', type }], '').length, 1)
 }
