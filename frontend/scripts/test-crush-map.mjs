@@ -69,6 +69,18 @@ for (const row of [{ name: 'unknown', type: 'unknown' }, { name: '', type: 'eras
 assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: false, items: [{ name: 'visible', type: 'erasure', erasure_code_profile: 'ec', stale: false }, { name: 'incomplete', type: 'erasure', stale: false }] }), { names: ['visible'], stale: true })
 assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: true, items: [] }), { names: [], stale: true })
 assert.equal(usageExports.erasureProfileUsage('ec', { stale: false, items: [{ name: 'a' }] }).stale, true)
+for (const other of [
+  { name: 'a', type: 'erasure', erasure_code_profile: 'ec', stale: false },
+  { name: 'a', type: 'erasure', erasure_code_profile: 'different', stale: false },
+  { name: 'a', type: 'replicated', stale: false }
+]) {
+  const target = { name: 'a', type: 'erasure', erasure_code_profile: 'ec', stale: false }
+  for (const items of [[target, other], [other, target]]) assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: false, items }), { names: ['a'], stale: true })
+}
+assert.deepEqual(usageExports.erasureProfileUsage('ec', { stale: false, items: [
+  { name: 'unrelated', type: 'replicated', stale: false },
+  { name: 'unrelated', type: 'replicated', stale: false }
+] }), { names: [], stale: true })
 assert.ok(usageSource.includes("listAllResources('/pools', clusterId)"))
 let referenceLink
 function findReferenceLink(node) {

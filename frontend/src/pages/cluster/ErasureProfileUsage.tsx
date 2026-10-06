@@ -5,8 +5,10 @@ import { listAllResources, type ResourceListResult } from '../../api/resource'
 
 export function erasureProfileUsage(profile: string, inventory: ResourceListResult) {
   const validName = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.trim() === value
+  const seen = new Set<string>()
   const stale = !validName(profile) || inventory.stale !== false || inventory.items.some((row) => {
-    if (row.stale !== false || !validName(row.name)) return true
+    if (row.stale !== false || !validName(row.name) || seen.has(row.name)) return true
+    seen.add(row.name)
     if (row.type === 'replicated') return row.erasure_code_profile != null && row.erasure_code_profile !== ''
     if (row.type === 'erasure') return !validName(row.erasure_code_profile)
     return true
