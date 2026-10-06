@@ -8,7 +8,7 @@ import {
   ThunderboltOutlined
 } from '@ant-design/icons'
 import { Alert, Button, Card, Descriptions, Form, Input, Progress, Space, Switch, Tag, Typography } from 'antd'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { listClusterCapabilities, type ClusterCapability } from '../../api/cluster'
 import { getOptionalResource, listResource, mutateResource, refreshResource } from '../../api/resource'
 import { numberValue, textValue, type ApiRecord } from '../../api/client'
@@ -38,6 +38,12 @@ interface OverviewData {
 
 export function OverviewPage() {
   const { selectedClusterId } = useClusterContext()
+  return <OverviewContent key={selectedClusterId ?? 'none'} selectedClusterId={selectedClusterId} />
+}
+
+function OverviewContent({ selectedClusterId }: { selectedClusterId: number | undefined }) {
+  const active = useRef(true)
+  useEffect(() => { active.current = true; return () => { active.current = false } }, [])
   const [refreshing, setRefreshing] = useState(false)
   const operationMutation = useMutationOperation()
   const [muteTarget, setMuteTarget] = useState<ApiRecord | null>(null)
@@ -77,33 +83,39 @@ export function OverviewPage() {
   const supportedCapabilities = data?.capabilities.filter((item) => item.supported).length ?? 0
 
   async function refreshAll() {
+    if (!active.current) return
     if (!selectedClusterId) {
       message.error('请先选择集群')
       return
     }
     setRefreshing(true)
     try {
-      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, scope: 'all' }), '刷新成功')
+      await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, scope: 'all' }), false)
+      if (!active.current) return
+      message.success('刷新成功')
       await refresh()
     } finally {
-      setRefreshing(false)
+      if (active.current) setRefreshing(false)
     }
   }
 
   async function toggleHealth(row: ApiRecord, muted: boolean, options: { ttl?: string; sticky?: boolean } = {}) {
-    if (!selectedClusterId || mutatingHealth) return
+    if (!active.current || !selectedClusterId || mutatingHealth) return
     const code = textValue(row.code ?? row.name ?? row.natural_key, '')
     setMutatingHealth(true)
     try {
       await operationMutation.run(() => mutateResource('/health/mute', muted ? 'DELETE' : 'POST', {
         cluster_id: selectedClusterId, code,
         ...(!muted ? { ...(options.ttl ? { ttl: options.ttl.trim() } : {}), sticky: Boolean(options.sticky) } : {})
-      }), muted ? '健康检查已取消静默' : '健康检查已静默')
+      }), false)
+      if (!active.current) return
+      message.success(muted ? '健康检查已取消静默' : '健康检查已静默')
       setMuteTarget(null)
       await operationMutation.run(() => refreshResource({ clusterId: selectedClusterId, kind: 'health_check' }), false)
+      if (!active.current) return
       await refresh()
     } finally {
-      setMutatingHealth(false)
+      if (active.current) setMutatingHealth(false)
     }
   }
 
