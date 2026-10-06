@@ -351,7 +351,8 @@ export function OsdManagementPage() {
   const { data, loading, error, refresh } = useResource(loader)
   const [pendingOSDAction, setPendingOSDAction] = useState('')
   const [deploymentOpen, setDeploymentOpen] = useState(false)
-  const [inspectedOSD, setInspectedOSD] = useState<ApiRecord | null>(null)
+  const [osdInspection, setOSDInspection] = useState<{ scope: typeof osdScope; row: ApiRecord } | null>(null)
+  const inspectedOSD = osdInspection?.scope === osdScope ? osdInspection.row : null
   const [refreshingOSDs, setRefreshingOSDs] = useState(false)
   const operationMutation = useMutationOperation()
 
@@ -430,7 +431,7 @@ export function OsdManagementPage() {
 
   return (
     <Page title="OSD管理" loading={loading} error={error}>
-      <Modal open={Boolean(inspectedOSD)} title={`OSD ${osdID(inspectedOSD ?? {})} 详情`} onCancel={() => setInspectedOSD(null)} footer={null} width="90vw" destroyOnClose>
+      <Modal open={Boolean(inspectedOSD)} title={`OSD ${osdID(inspectedOSD ?? {})} 详情`} onCancel={() => setOSDInspection(null)} footer={null} width="90vw" destroyOnClose>
         {inspectedOSD && selectedClusterId && <OSDInspection key={`${selectedClusterId}:${osdID(inspectedOSD)}`} clusterId={selectedClusterId} osdId={osdID(inspectedOSD)} record={inspectedOSD} />}
       </Modal>
       <Card
@@ -486,7 +487,7 @@ export function OsdManagementPage() {
                   const id = osdID(row)
                   return (
                     <TableActions>
-                      <TableAction onClick={() => setInspectedOSD(row)}>详情</TableAction>
+                      <TableAction onClick={() => setOSDInspection({ scope: osdScope, row })}>详情</TableAction>
                       <TableAction disabled={Boolean(pendingOSDAction)} onClick={() => runOSDAction(id, 'deep-scrub')}>Deep scrub</TableAction>
                       <TableAction loading={pendingOSDAction === `${id}:in`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:in`} onClick={() => runOSDAction(id, 'in')}>In</TableAction>
                       <TableAction loading={pendingOSDAction === `${id}:out`} disabled={Boolean(pendingOSDAction) && pendingOSDAction !== `${id}:out`} onClick={() => runOSDAction(id, 'out')}>Out</TableAction>
