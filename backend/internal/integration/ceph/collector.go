@@ -1270,7 +1270,7 @@ type deviceWire struct {
 	DeviceID        string            `json:"device_id"`
 	Hostname        string            `json:"hostname"`
 	Path            string            `json:"path"`
-	Available       bool              `json:"available"`
+	Available       *bool             `json:"available"`
 	RejectedReasons []string          `json:"rejected_reasons"`
 	DeviceType      *string           `json:"device_type"`
 	Model           *string           `json:"model"`
@@ -1339,6 +1339,10 @@ func normalizeDeviceRecord(record map[string]any, inheritedHost string) []device
 }
 
 func buildDeviceWire(record map[string]any, host string) (deviceWire, bool) {
+	var available *bool
+	if value, ok := record["available"].(bool); ok {
+		available = &value
+	}
 	sysAPI, _ := record["sys_api"].(map[string]any)
 	hostname := firstNonEmpty(firstString(record, "hostname", "host"), host)
 	path := firstNonEmpty(firstString(record, "path"), firstString(sysAPI, "path"))
@@ -1377,7 +1381,7 @@ func buildDeviceWire(record map[string]any, host string) (deviceWire, bool) {
 		DeviceID:        firstNonEmpty(firstString(record, "device_id", "id", "devid"), hostname+":"+path),
 		Hostname:        hostname,
 		Path:            path,
-		Available:       boolValue(record["available"]),
+		Available:       available,
 		RejectedReasons: stringSlice(record["rejected_reasons"]),
 		DeviceType:      deviceType,
 		Model:           model,

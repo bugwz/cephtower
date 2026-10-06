@@ -162,7 +162,7 @@ type Device struct {
 	ID              string            `json:"device_id"`
 	Hostname        string            `json:"hostname"`
 	Path            string            `json:"path"`
-	Available       bool              `json:"available"`
+	Available       *bool             `json:"available"`
 	RejectedReasons []string          `json:"rejected_reasons"`
 	DeviceType      *string           `json:"device_type,omitempty"`
 	Model           *string           `json:"model,omitempty"`

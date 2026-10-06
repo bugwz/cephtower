@@ -62,7 +62,7 @@ export { ClusterDetailPage, ClusterPage, HostDetailPage, HostPage, MonDetailPage
 const { Text } = Typography
 const twoColumnDescriptions = { xs: 1, sm: 2, md: 2, lg: 2, xl: 2, xxl: 2 }
 
-type DeviceScope = 'available' | 'used' | 'unavailable'
+type DeviceScope = 'available' | 'used' | 'unavailable' | 'unknown'
 
 export function MonManagementPage() {
   const navigate = useNavigate()
@@ -1241,6 +1241,9 @@ function deviceUsage(row: ApiRecord) {
   if (row.available === true) {
     return { state: 'available' as DeviceScope, label: '空闲可用', notes: [] }
   }
+  if (row.available !== false) {
+    return { state: 'unknown' as DeviceScope, label: '可用性未知', notes: reasons.map(readableDeviceReason) }
+  }
   if (reasons.some(isUsedDeviceReason)) {
     return { state: 'used' as DeviceScope, label: '已占用', notes: reasons.map(readableDeviceReason) }
   }
@@ -1310,6 +1313,7 @@ function renderDeviceUsage(row: ApiRecord) {
   const colors: Record<DeviceScope, string> = {
     available: 'success',
     used: 'processing',
+    unknown: 'warning',
     unavailable: 'default'
   }
   return <Tag color={colors[state] ?? 'default'}>{label}</Tag>
