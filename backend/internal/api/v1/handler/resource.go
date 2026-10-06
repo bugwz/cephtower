@@ -306,6 +306,8 @@ func resourceLookupKey(kind, resourceKey string) string {
 		return ""
 	}
 	switch kind {
+	case "osd_removal":
+		return after("osd-removal")
 	case "osd_flag":
 		return "flags"
 	case "config_value":
@@ -650,6 +652,8 @@ func resourceKey(kind, action string, r *http.Request, body map[string]any) stri
 		return "status"
 	case "osd_flag":
 		return "osd-flag"
+	case "osd_removal":
+		return segments("osd-removal", pathValue("osd_id"))
 	case "osd_deployment":
 		if strings.HasSuffix(action, ".preview") {
 			return "osd-deployment/preview"

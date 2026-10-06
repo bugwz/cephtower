@@ -281,6 +281,10 @@ func (h *Handler) CheckOSDRemoval(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("osd", "osd.removal_check", "low")(w, r)
 }
 
+func (h *Handler) StopOSDRemoval(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("osd_removal", "osd_removal.stop", "high")(w, r)
+}
+
 func (h *Handler) UpdateOSDDeviceClass(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("osd", "osd.device_class", "high")(w, r)
 }

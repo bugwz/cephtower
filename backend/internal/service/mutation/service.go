@@ -104,7 +104,7 @@ func Supports(action string) bool {
 		"host.create", "host.update", "host.delete", "host.action", "device.identify",
 		"service.create", "service.update", "service.delete", "daemon.action",
 		"upgrade.check", "upgrade.action", "manager.fail", "monitor.action", "manager_module.update",
-		"osd.action", "osd.device_class", "osd.individual_flag", "osd_flag.update", "osd.removal_check", "osd.delete",
+		"osd.action", "osd.device_class", "osd.individual_flag", "osd_flag.update", "osd.removal_check", "osd.delete", "osd_removal.stop",
 		"osd_deployment.preview", "osd_deployment.create", "device.zap",
 		"crush_rule.create", "crush_rule.update", "crush_rule.delete",
 		"erasure_code_profile.create", "erasure_code_profile.delete",
@@ -483,6 +483,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		return cephdomain.ActionResult{}, normalize(err)
 	}
+	if request.Action == "osd_removal.stop" && (result.ExitCode != 0 || strings.TrimSpace(string(result.Stdout)) != "Stopped OSD(s) removal") {
+		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "orchestrator did not confirm stopping OSD removal; inspect the queue before retrying", Retryable: false}
+	}
 	if request.Action == "service.create" || request.Action == "service.update" {
 		name := optional(request.Parameters, "service_type")
 		if id := optional(request.Parameters, "service_id"); id != "" {
@@ -540,6 +543,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "osd_removal.stop" && (err != nil || checked.ExitCode != 0 || !osdRemovalStopped(last(resourceTail(request.ResourceKey)), checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "OSD removal stop was accepted but queue absence is unconfirmed; inspect OSD and queue state before retrying", Retryable: false}
+		}
 		if request.Action == "osd_flag.update" && (err != nil || checked.ExitCode != 0 || !osdGlobalFlagMatches(request.Parameters, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "global OSD flag change could not be verified; inspect native cluster flags before retrying", Retryable: false}
 		}
@@ -1194,6 +1200,13 @@ func build(request Request, p map[string]any) (command, error) {
 			seen[id] = true
 		}
 		return ceph(append(append([]string{"osd", "safe-to-destroy"}, ids...), "--format", "json"), nil), nil
+	case "osd_removal.stop":
+		id := last(tail)
+		n, err := strconv.ParseUint(id, 10, 31)
+		if err != nil || strconv.FormatUint(n, 10) != id {
+			return command{}, invalid("invalid OSD id")
+		}
+		return ceph([]string{"orch", "osd", "rm", "stop", id}, []string{"orch", "osd", "rm", "status", "--format", "json"}), nil
 	case "osd.delete":
 		id := pathValue(tail, "osd")
 		args := []string{"orch", "osd", "rm", id}

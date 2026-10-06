@@ -102,6 +102,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"health.unmute", "host.delete", "service.delete", "manager.fail", "crush_rule.delete", "erasure_code_profile.delete", "pool.delete", "rbd_image.delete", "rbd_snapshot.delete", "rbd_namespace.delete", "rbd_trash.delete", "filesystem.delete", "subvolume_group.delete", "subvolume.delete", "cephfs_snapshot.delete", "cephfs_client.evict", "rgw_user.delete", "nfs_cluster.delete", "nfs_export.delete", "smb_cluster.delete", "smb_share.delete", "config_value.delete", "silence.delete", "rgw_bucket.delete", "iscsi_target.delete", "nvmeof_subsystem.delete"}, false, empty)
 	add([]string{"cluster.refresh"}, false, map[string]JSONField{"modules": stringsField(false)})
 	add([]string{"osd.delete"}, false, map[string]JSONField{"zap": boolField(false)})
+	add([]string{"osd_removal.stop"}, true, map[string]JSONField{"osd_id": stringField(true)})
 	add([]string{"host.create"}, true, map[string]JSONField{
 		"hostname": stringField(true), "address": stringField(false), "labels": stringsField(false), "maintenance": boolField(false),
 	})

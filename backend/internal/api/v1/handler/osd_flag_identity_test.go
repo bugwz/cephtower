@@ -2,6 +2,17 @@ package handler
 
 import "testing"
 
+func TestOSDRemovalStopIdentity(t *testing.T) {
+	body := map[string]any{"cluster_id": float64(1), "osd_id": "17"}
+	if err := ValidateMutationRequest("osd_removal.stop", body); err != nil {
+		t.Fatal(err)
+	}
+	key := resourceKey("osd_removal", "osd_removal.stop", nil, body)
+	if key != "osd-removal/17" || resourceLookupKey("osd_removal", key) != "17" {
+		t.Fatal("invalid queue identity", key)
+	}
+}
+
 func TestOSDFlagMutationUsesInventoryIdentity(t *testing.T) {
 	for _, verb := range []string{"set", "unset"} {
 		body := map[string]any{"cluster_id": float64(1), "action": verb, "flag": "noout"}
