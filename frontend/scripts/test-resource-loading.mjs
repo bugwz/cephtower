@@ -80,6 +80,18 @@ for (const failed of ['none', 'device', 'smart', 'both']) {
   assert.equal(missing.devices.length, 1)
 }
 console.log('Host diagnostic failures remain distinct from empty responses')
+for (const stale of [false, true, undefined]) {
+  const env = {
+    selectedClusterId: 3, decodedName: 'node1', getOptionalResource: async () => null,
+    listAllResources: async () => ({ items: [], stale, staleReason: stale ? 'collector offline' : null }),
+    getHostDeviceInfo: async () => [], getHostSMART: async () => ({}),
+    normalizeHostRow: row => row, textValue: value => value, resourceToRecord: row => row, normalizeDaemonRow: row => row
+  }
+  const result = await new Function(...Object.keys(env), `${hostLoaderCode}; return load`)(...Object.values(env))()
+  assert.equal(result.inventoryWarnings.length, stale === false ? 0 : 2)
+  if (stale) assert.ok(result.inventoryWarnings.every(warning => warning.includes('collector offline')))
+}
+assert.ok(hostDetailSource.includes('data?.inventoryWarnings.map'))
 const deleteHostNode = hostDetailFn.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'deleteHost')
 const deleteHostCode = ts.transpileModule(deleteHostNode.getText(hostDetailTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const hostVersionNode = hostDetailTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'hostDeleteVersion')

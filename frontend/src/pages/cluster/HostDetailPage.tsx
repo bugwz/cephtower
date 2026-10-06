@@ -57,19 +57,26 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
   const decodedName = name
   const loader = useCallback(async () => {
     if (!selectedClusterId || !decodedName) {
-      return { host: null, daemons: [], devices: [], deviceInfo: [], smart: {}, deviceInfoError: '', smartError: '' }
+      return { host: null, daemons: [], devices: [], deviceInfo: [], smart: {}, deviceInfoError: '', smartError: '', inventoryWarnings: [] as string[] }
     }
-    const [hostPayload, daemons, devices, deviceInfo, smart] = await Promise.all([
+    const [hostPayload, daemonInventory, deviceInventory, deviceInfo, smart] = await Promise.all([
       getOptionalResource('/host', selectedClusterId, { host: decodedName }),
-      listAllResources('/daemons', selectedClusterId).then(payload => payload.items),
-      listAllResources('/devices', selectedClusterId).then(payload => payload.items.filter(device => textValue(device.hostname ?? device.host, '') === decodedName)),
+      listAllResources('/daemons', selectedClusterId),
+      listAllResources('/devices', selectedClusterId),
       getHostDeviceInfo(decodedName, selectedClusterId).then((value) => ({ value, error: '' })).catch((err) => ({ value: [] as ApiRecord[], error: err instanceof Error ? err.message : '设备信息读取失败' })),
       getHostSMART(decodedName, selectedClusterId).then((value) => ({ value, error: '' })).catch((err) => ({ value: {} as ApiRecord, error: err instanceof Error ? err.message : 'SMART 信息读取失败' }))
     ])
+    const daemons = daemonInventory.items
+    const devices = deviceInventory.items.filter(device => textValue(device.hostname ?? device.host, '') === decodedName)
+    const inventoryWarnings: string[] = []
+    for (const [label, inventory] of [['守护进程', daemonInventory], ['设备', deviceInventory]] as const) {
+      if (inventory.stale !== false) inventoryWarnings.push(`${label}库存已过期或新鲜度未知：${inventory.staleReason || '请刷新后核对，当前列表不代表实时状态'}`)
+    }
     const host = hostPayload ? normalizeHostRow(resourceToRecord(hostPayload.item), daemons, devices) : null
     const name = textValue(host?.hostname ?? decodedName, '')
     return {
       host,
+      inventoryWarnings,
       daemons: daemons
         .filter((daemon) => textValue(daemon.hostname ?? daemon.host, '') === name)
         .map(normalizeDaemonRow),
@@ -239,6 +246,7 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
 
   return (
     <Page title="主机详情" loading={loading} error={error}>
+      {data?.inventoryWarnings.map(warning => <Alert key={warning} type="warning" showIcon message={warning} />)}
       <Space direction="vertical" size={16} className="page-stack">
         <Card
           className="page-surface-card"
