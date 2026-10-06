@@ -306,6 +306,8 @@ func resourceLookupKey(kind, resourceKey string) string {
 		return ""
 	}
 	switch kind {
+	case "osd_flag":
+		return "flags"
 	case "config_value":
 		decoded, err := base64.RawURLEncoding.Strict().DecodeString(strings.TrimPrefix(resourceKey, "configuration/value/"))
 		parts := strings.Split(string(decoded), "\x00")
