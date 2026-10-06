@@ -806,7 +806,7 @@ function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string
     active.current = true
     return () => { active.current = false; zapConfirmation.current?.destroy(); identifyConfirmation.current?.destroy() }
   }, [])
-  const decodedDeviceId = safeDecodeRouteParam(deviceId)
+  const decodedDeviceId = deviceId
   const loader = useCallback(async () => {
     if (!selectedClusterId || !decodedDeviceId) {
       return {
@@ -1372,14 +1372,6 @@ function deviceID(row: ApiRecord) {
 
 function deviceDetailPath(id: string) {
   return `/cluster/device/${encodeURIComponent(id)}`
-}
-
-function safeDecodeRouteParam(value: string) {
-  try {
-    return decodeURIComponent(value)
-  } catch {
-    return value
-  }
 }
 
 function normalizeDeviceRow(row: ApiRecord): ApiRecord {
