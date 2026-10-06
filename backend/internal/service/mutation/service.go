@@ -421,7 +421,7 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 			return cephdomain.ActionResult{}, invalid("SMB credential existence does not match the requested operation or could not be verified")
 		}
 	}
-	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: request.Action != "osd_deployment.preview", SensitiveArgs: spec.sensitive})
+	result, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Stdin: spec.stdin, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: request.Action != "osd_deployment.preview" && request.Action != "osd.removal_check", SensitiveArgs: spec.sensitive})
 	if err != nil {
 		if request.Action == "rgw_user.caps" {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "capability command failed; inspect user capabilities before any manual retry", Retryable: false}
@@ -1122,6 +1122,14 @@ func build(request Request, p map[string]any) (command, error) {
 		ids, ok := stringSlice(p["osd_ids"])
 		if !ok || len(ids) == 0 {
 			return command{}, invalid("osd_ids must be a non-empty array")
+		}
+		seen := make(map[string]bool, len(ids))
+		for _, id := range ids {
+			parsed, err := strconv.ParseUint(id, 10, 31)
+			if err != nil || strconv.FormatUint(parsed, 10) != id || seen[id] {
+				return command{}, invalid("osd_ids must contain unique canonical non-negative OSD ids")
+			}
+			seen[id] = true
 		}
 		return ceph(append([]string{"osd", "safe-to-destroy"}, ids...), nil), nil
 	case "osd.delete":
