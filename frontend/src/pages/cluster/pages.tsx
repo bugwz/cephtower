@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { MonMapSettings } from './MonMapSettings'
 import { DeviceHardwareSummary } from './DeviceHardwareSummary'
+import { DaemonRuntimeDetails } from './ServiceDaemons'
 import { hostStorageCapacity } from './hostStorageCapacity'
 import { ManagerInventory } from './ManagerInventory'
 import { osdSnapshotValue } from './OSDUsage'
@@ -1127,6 +1128,15 @@ function DaemonTable({
           { key: 'hostname', title: '主机' },
           { key: 'status', title: '状态' },
           { key: 'version', title: '版本' },
+          { key: 'cpu_percentage', title: 'CPU 用量（原值）', filterKey: false },
+          { key: 'memory_usage', title: '内存用量（精确字节）', filterKey: false },
+          { key: 'container_image', title: '容器镜像', filterKey: false },
+          { key: 'last_refresh', title: 'Ceph 最近刷新', filterKey: false },
+          { key: 'observed_at', title: '库存快照', filterKey: false, render: (_, row) => <Space direction="vertical">
+            <Text>{formatDateTime(row.observed_at)}</Text>
+            {row.stale !== false && <Text type="warning">已过期或新鲜度未知</Text>}
+          </Space> },
+          { key: 'runtime_details', title: '运行详情与事件', filterKey: false, ellipsis: false, render: (_, row) => <DaemonRuntimeDetails row={row} daemonType={row.type} /> },
           {
             key: 'actions',
             title: '操作',

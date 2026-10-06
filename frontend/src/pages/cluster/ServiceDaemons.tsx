@@ -26,11 +26,11 @@ function daemonDetailText(value: unknown): string {
   return String(value)
 }
 
-export function DaemonRuntimeDetails({ row }: { row: ApiRecord }) {
+export function DaemonRuntimeDetails({ row, daemonType = row.daemon_type }: { row: ApiRecord; daemonType?: unknown }) {
   return <details>
     <summary>展开运行详情</summary>
     <Descriptions bordered size="small" column={1} style={{ minWidth: 360 }} items={daemonDetailFields.map(([key, label]) => ({
-      key, label, children: <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{daemonDetailText(row[key])}</div>
+      key, label, children: <div style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{daemonDetailText(key === 'daemon_type' ? daemonType : row[key])}</div>
     }))} />
   </details>
 }
