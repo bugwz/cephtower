@@ -14,6 +14,7 @@ import { OSDLost } from './OSDLost'
 import { OSDPurge } from './OSDPurge'
 import { OSDIndividualFlags } from './OSDIndividualFlags'
 import { DeviceAssociationDetails } from './DeviceAssociationDetails'
+import { OSDMetadata } from './OSDMetadata'
 
 export function OSDInspection({ clusterId, osdId, record }: { clusterId: number; osdId: string; record: ApiRecord }) {
   return <Tabs items={[
@@ -58,7 +59,7 @@ function Diagnostic({ clusterId, osdId, section }: { clusterId: number; osdId: s
   }, [clusterId, osdId, section, revision])
   return <Card loading={loading} extra={<Button disabled={loading} onClick={() => setRevision((value) => value + 1)}>重新读取</Button>}>
     {error && <Alert type="error" message={error} />}
-    {data && (section === 'histogram' ? <OSDHistogram data={data} /> : section === 'devices' ? <OSDDevices data={data} /> : section === 'smart' ? <OSDSMART data={data} /> : <RecordDetail record={data} />)}
+    {data && (section === 'histogram' ? <OSDHistogram data={data} /> : section === 'devices' ? <OSDDevices data={data} /> : section === 'smart' ? <OSDSMART data={data} /> : section === 'metadata' ? <OSDMetadata data={data} /> : <RecordDetail record={data} />)}
   </Card>
 }
 

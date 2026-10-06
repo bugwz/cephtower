@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD 元数据摘要：在既有 `ceph osd metadata <ID> --format json` API 链路上增加主机、版本、系统、CPU、主机内存和 BlueFS/独立 DB/WAL 摘要，保留全部原始字段。对照 `collect_metadata` 的原生字符串与 0/1 标志，不将缺失值判为否；内存保留原始 KB 字符串并说明不是 OSD 实时用量。新增完整、缺失、布尔格式和大数字字符串渲染回归。
+
 - 关联设备磨损度：对照 devicehealth 的 ATA/NVMe 百分数除以 100 的实现，在主机及 OSD 共用详情中展示 `wear_level` 已使用寿命百分比和原始比例。复用现有 `device ls-by-host` / `device ls-by-daemon` 原生字段，不新增重复请求；零值有效，超过 100% 不截断，缺失或非法值不按零处理，并明确不代表剩余寿命或健康结论。新增比例换算与边界渲染回归。
 
 - 主机诊断退出码校验：`device ls-by-host` 与 `device query-daemon-health-metrics` 即使返回可解析 JSON，只要退出码非零也必须报错，不得将失败响应视为无设备或健康报告。新增设备列表失败、首个 SMART 查询失败及部分查询成功后失败的执行链路回归，确保不返回部分健康数据。
