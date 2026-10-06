@@ -388,7 +388,7 @@ function buildColumns(
           <TableAction key={action.title} disabled={mutationBlocked || Boolean(action.disabledWhen?.(row))} onClick={() => openForm(action, row)}>{action.buttonLabel ?? action.title}</TableAction>
         ))}
         {definition.deleteAction ? (
-          <TableAction danger disabled={mutationBlocked || Boolean(definition.deleteAction.disabledWhen?.(row))} onClick={() => deleteRow(row)}>删除</TableAction>
+          <TableAction danger disabled={mutationBlocked || Boolean(definition.deleteAction.disabledWhen?.(row))} onClick={() => deleteRow(row)}>{definition.deleteAction.buttonLabel ?? '删除'}</TableAction>
         ) : null}
       </TableActions>
     )

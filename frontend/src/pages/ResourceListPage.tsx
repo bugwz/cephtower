@@ -64,6 +64,7 @@ export interface ResourceFormAction {
 
 export interface ResourceDeleteAction {
   title: string
+  buttonLabel?: string
   confirmation?: (row: ApiRecord) => string
   path: string
   action: string

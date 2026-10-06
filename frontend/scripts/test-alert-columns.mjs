@@ -71,3 +71,18 @@ assert.equal(recreate.path, '/alert/silence'); assert.equal(recreate.method, 'PO
 assert.ok(recreate.confirmation().includes('不修改原已过期记录'))
 assert.ok(page.includes('extraActions: [silenceRecreateAction]'))
 console.log('Expired silence recreation preserves matchers and excludes old identity')
+
+const expire = actions.silenceExpireAction
+for (const state of ['active', 'pending']) assert.equal(expire.disabledWhen({ id: 'silence-a', status: { state } }), undefined)
+for (const state of ['expired', 'unknown', undefined]) assert.ok(expire.disabledWhen({ id: 'silence-a', status: { state } }))
+for (const id of [undefined, 0, '', 'a/b', ' a', 'a ', '.', '..', 'a\nb']) {
+  assert.throws(() => actions.silenceTarget({ id }))
+  assert.ok(expire.disabledWhen({ id, status: { state: 'active' } }))
+}
+assert.deepEqual(expire.buildBody({ id: 'silence-a' }, 7), { cluster_id: 7, silence_id: 'silence-a' })
+assert.equal(expire.resourceKey({ id: 'silence-a' }), 'silence/silence-a')
+assert.equal(expire.buttonLabel, '结束静默')
+assert.ok(expire.confirmation().includes('不删除历史记录'))
+assert.ok(page.includes('deleteAction: silenceExpireAction'))
+assert.ok(readFileSync(new URL('../src/pages/ExternalListPage.tsx', import.meta.url), 'utf8').includes("definition.deleteAction.buttonLabel ?? '删除'"))
+console.log('Silence expiry preserves full identity and describes native expiration')

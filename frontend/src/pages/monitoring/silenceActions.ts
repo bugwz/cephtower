@@ -1,5 +1,5 @@
 import type { ApiRecord } from '../../api/client'
-import type { ResourceFormAction } from '../ResourceListPage'
+import type { ResourceDeleteAction, ResourceFormAction } from '../ResourceListPage'
 
 export function silenceMatchers(value: unknown) {
   const parsed: unknown = JSON.parse(String(value ?? '[]'))
@@ -69,4 +69,25 @@ export const silenceRecreateAction: ResourceFormAction = {
     }
   },
   confirmation: () => '将按当前表单条件与时间创建一条新的静默，不修改原已过期记录。匹配的告警通知将被暂停，请确认匹配范围、创建人、说明和新的时间范围。'
+}
+
+export function silenceTarget(row?: ApiRecord): string {
+  const id = row?.id
+  if (typeof id !== 'string' || !id || id.trim() !== id || /[\/\x00-\x1f\x7f]/.test(id) || id === '.' || id === '..') throw new Error('静默 ID 无效，请刷新列表')
+  return id
+}
+
+export const silenceExpireAction: ResourceDeleteAction = {
+  title: '结束告警静默', buttonLabel: '结束静默', path: '/alert/silence',
+  action: 'silence.delete', resourceKind: 'silence', risk: 'medium',
+  successMessage: '静默结束请求执行成功，请刷新确认状态',
+  confirmation: () => '将使所选静默立即过期，不删除历史记录。告警若仍满足通知条件且未被其他静默或抑制规则覆盖，可能恢复通知。',
+  disabledWhen: (row) => {
+    try { silenceTarget(row) } catch { return '静默 ID 无效，请刷新列表' }
+    const status = row.status
+    const state = status && typeof status === 'object' && !Array.isArray(status) ? (status as ApiRecord).state : undefined
+    return state === 'active' || state === 'pending' ? undefined : '仅可结束 active 或 pending 状态的静默'
+  },
+  buildBody: (row, clusterId) => ({ cluster_id: clusterId, silence_id: silenceTarget(row) }),
+  resourceKey: (row) => `silence/${silenceTarget(row)}`
 }

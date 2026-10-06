@@ -214,3 +214,33 @@ func TestAlertRulesFlattenGroupsAndPreserveDetails(t *testing.T) {
 		t.Fatalf("lost details: %#v", first)
 	}
 }
+
+func TestSilenceExpiryUsesCompleteTarget(t *testing.T) {
+	s, endpoints, cluster := externalTestService(t)
+	ctx := context.Background()
+	if _, err := endpoints.CreateEndpoint(ctx, cluster.ID, endpointservice.EndpointInput{Kind: "alertmanager", URL: "https://alertmanager.example.test"}); err != nil {
+		t.Fatal(err)
+	}
+	calls := 0
+	s.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+		calls++
+		if r.Method != http.MethodDelete || r.URL.Path != "/api/v2/silence/silence-a" {
+			t.Fatalf("unexpected target: %s %s", r.Method, r.URL)
+		}
+		return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader("")), Request: r}, nil
+	})
+	for _, key := range []string{"silence-a", "other/silence-a", "silence/", "silence/parent/silence-a", "silence/ silence-a", "silence/silence-a ", "silence/.", "silence/..", "silence/a\nb"} {
+		if _, err := s.Execute(ctx, Request{ClusterID: cluster.ID, Action: "silence.delete", ResourceKey: key}); err == nil {
+			t.Fatalf("accepted %q", key)
+		}
+	}
+	if calls != 0 {
+		t.Fatalf("invalid target sent %d requests", calls)
+	}
+	if _, err := s.Execute(ctx, Request{ClusterID: cluster.ID, Action: "silence.delete", ResourceKey: "silence/silence-a"}); err != nil {
+		t.Fatal(err)
+	}
+	if calls != 1 {
+		t.Fatalf("expected one expiry, got %d", calls)
+	}
+}

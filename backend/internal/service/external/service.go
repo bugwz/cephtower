@@ -677,6 +677,14 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 	return cephdomain.ActionResult{ResourceURL: fmt.Sprintf("/api/v1/cluster/%d/rgw/bucket/%s", clusterID, encodedID)}, nil
 }
 func (s *Service) alertmanager(ctx context.Context, clusterID uint64, request Request, parameters map[string]any) (cephdomain.ActionResult, error) {
+	var silenceID string
+	if request.Action == "silence.delete" {
+		var found bool
+		silenceID, found = strings.CutPrefix(request.ResourceKey, "silence/")
+		if !found || silenceID == "" || strings.TrimSpace(silenceID) != silenceID || silenceID == "." || silenceID == ".." || strings.ContainsFunc(silenceID, func(r rune) bool { return r == '/' || r < 32 || r == 127 }) {
+			return cephdomain.ActionResult{}, failure("invalid_request", "invalid silence resource key", false)
+		}
+	}
 	endpoint, credential, client, err := s.httpClient(ctx, clusterID, "alertmanager")
 	if err != nil {
 		return cephdomain.ActionResult{}, err
@@ -686,7 +694,7 @@ func (s *Service) alertmanager(ctx context.Context, clusterID uint64, request Re
 		return cephdomain.ActionResult{}, err
 	}
 	if request.Action == "silence.delete" {
-		if err := api.DeleteSilence(ctx, last(request.ResourceKey)); err != nil {
+		if err := api.DeleteSilence(ctx, silenceID); err != nil {
 			return cephdomain.ActionResult{}, failure("alertmanager_failed", err.Error(), true)
 		}
 		return cephdomain.ActionResult{}, nil

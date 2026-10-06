@@ -2,7 +2,7 @@ import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalLi
 export { RuntimeLogsPage } from './RuntimeLogsPage'
 import { MetricPage } from './MetricPage'
 import { alertColumns, alertRuleColumns, silenceColumns } from './alertColumns'
-import { silenceCreateAction, silenceFromAlertAction, silenceRecreateAction } from './silenceActions'
+import { silenceCreateAction, silenceFromAlertAction, silenceRecreateAction, silenceExpireAction } from './silenceActions'
 
 export function MonitorOverviewPage() {
   return <ExternalListPage definition={externalDefinitions.grafana} />
@@ -60,20 +60,7 @@ const externalDefinitions: Record<'grafana' | 'alerts' | 'rules' | 'silences', E
     rowKeyCandidates: ['id', 'silence_id'],
     createAction: silenceCreateAction,
     extraActions: [silenceRecreateAction],
-    deleteAction: {
-      title: '删除告警静默',
-      path: '/alert/silence',
-      action: 'silence.delete',
-      resourceKind: 'silence',
-      risk: 'medium',
-      successMessage: '告警静默删除执行成功',
-      buildBody: (row, clusterId) => ({ cluster_id: clusterId, silence_id: silenceId(row) }),
-      resourceKey: (row) => `silence/${silenceId(row)}`
-    },
+    deleteAction: silenceExpireAction,
     columns: silenceColumns
   }
-}
-
-function silenceId(row?: Record<string, unknown>) {
-  return String(row?.id ?? row?.silence_id ?? '').trim()
 }
