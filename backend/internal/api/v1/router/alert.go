@@ -8,6 +8,7 @@ func alertRoutes(h *handler.Handler) []Route {
 		{"GET", "/alert/rules", h.ListAlertRules},
 		{"GET", "/alert/silences", h.ListSilences},
 		{"POST", "/alert/silence", h.CreateSilence},
+		{"PATCH", "/alert/silence", h.UpdateSilence},
 		{"DELETE", "/alert/silence", h.DeleteSilence},
 	}
 }

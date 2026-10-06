@@ -361,6 +361,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"config_value.set"}, true, map[string]JSONField{"value": stringField(true)})
 	matcher := map[string]JSONField{"name": stringField(true), "value": stringField(true), "isRegex": boolField(true), "isEqual": boolField(true)}
 	add([]string{"silence.create"}, true, map[string]JSONField{"matchers": objectArrayField(true, matcher), "startsAt": stringField(true), "endsAt": stringField(true), "createdBy": stringField(true), "comment": stringField(true)})
+	add([]string{"silence.update"}, true, map[string]JSONField{"silence_id": stringField(true), "expected_updated_at": stringField(true), "matchers": objectArrayField(true, matcher), "startsAt": stringField(true), "endsAt": stringField(true), "createdBy": stringField(true), "comment": stringField(true)})
 	add([]string{"rgw_bucket.create"}, true, map[string]JSONField{"name": stringField(true), "tenant": stringField(false)})
 	add([]string{"rgw_bucket.update"}, true, map[string]JSONField{"versioning": stringField(true, "enabled", "suspended")})
 	add([]string{"rgw_bucket.acl"}, true, map[string]JSONField{"bucket_id": stringField(true), "acl": stringField(true, "private", "public-read", "public-read-write", "authenticated-read")})

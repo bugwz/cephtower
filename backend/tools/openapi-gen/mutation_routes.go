@@ -126,6 +126,7 @@ var mutationRouteActions = map[string]string{
 	"PATCH /smb/share":                              "smb_share.update",
 	"PATCH /smb/usersgroup":                         "smb_usersgroups.update",
 	"POST /alert/silence":                           "silence.create",
+	"PATCH /alert/silence":                          "silence.update",
 	"POST /ceph/user":                               "ceph_user.create",
 	"POST /ceph/users/import":                       "ceph_user.import",
 	"POST /crush/rule":                              "crush_rule.create",

@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### 编辑已有静默
+
+- 对照参考表单编辑时携带 id 的原生语义，新增 PATCH `/alert/silence`、`silence.update` 操作及严格请求契约，接入统一操作调度后使用 Alertmanager POST `/api/v2/silences`。前端编辑表单保留原匹配器、起止时间、创建人和说明，目标 ID 与 expected_updated_at 来自选中记录，不由表单覆盖。
+- 后端校验完整资源键，写入前读取静默列表，要求唯一目标仍为 active/pending 且更新时间匹配；已变化、已过期、缺失、重复目标或读取失败均不写入。更新请求只携带原生字段；写入失败或缺少返回 ID 标记结果不确定且不可自动重试。创建入口拒绝携带已有 ID，避免把新建隐式变为更新。
+- 更新时间核对不是原子 CAS：Alertmanager 未提供本链路可用的条件更新，界面提醒避免并发编辑并刷新核验，未声称完成写后读回。测试覆盖上述冲突和失败场景、原生请求及前端字段保护；`make test-backend`、OpenAPI 生成／校验和 `make test-frontend`（类型检查、生产构建）通过。未执行真实静默编辑或浏览器验证。
+
 #### 告警状态与严重程度筛选
 
 - 对照参考 active-alert-list 的状态及严重程度过滤，告警列表增加原生 state 本地筛选，默认 active，可选择 suppressed/unprocessed；告警及规则列表增加 critical/warning/info 严重程度筛选，静默列表增加 active/pending/expired 筛选。

@@ -57,7 +57,7 @@ type httpCredential struct {
 
 func Supports(action string) bool {
 	switch action {
-	case "silence.create", "silence.delete",
+	case "silence.create", "silence.update", "silence.delete",
 		"rgw_role.managed_policy",
 		"rgw_bucket.mfa",
 		"rgw_bucket.notification_set",
@@ -678,7 +678,7 @@ func (s *Service) s3(ctx context.Context, clusterID uint64, request Request, par
 }
 func (s *Service) alertmanager(ctx context.Context, clusterID uint64, request Request, parameters map[string]any) (cephdomain.ActionResult, error) {
 	var silenceID string
-	if request.Action == "silence.delete" {
+	if request.Action == "silence.delete" || request.Action == "silence.update" {
 		var found bool
 		silenceID, found = strings.CutPrefix(request.ResourceKey, "silence/")
 		if !found || silenceID == "" || strings.TrimSpace(silenceID) != silenceID || silenceID == "." || silenceID == ".." || strings.ContainsFunc(silenceID, func(r rune) bool { return r == '/' || r < 32 || r == 127 }) {
@@ -704,9 +704,42 @@ func (s *Service) alertmanager(ctx context.Context, clusterID uint64, request Re
 	if err := json.Unmarshal(encoded, &silence); err != nil {
 		return cephdomain.ActionResult{}, failure("invalid_request", "invalid silence request", false)
 	}
+	if request.Action == "silence.update" {
+		expected, _ := parameters["expected_updated_at"].(string)
+		expectedTime, parseErr := time.Parse(time.RFC3339Nano, expected)
+		if parseErr != nil {
+			return cephdomain.ActionResult{}, failure("invalid_request", "expected_updated_at must be RFC3339", false)
+		}
+		current, readErr := api.Silences(ctx)
+		if readErr != nil {
+			return cephdomain.ActionResult{}, failure("alertmanager_failed", "cannot verify current silence: "+readErr.Error(), true)
+		}
+		matches := 0
+		for _, row := range current {
+			if row.ID != silenceID {
+				continue
+			}
+			matches++
+			if row.UpdatedAt == nil || !row.UpdatedAt.Equal(expectedTime) || row.Status == nil || (row.Status.State != "active" && row.Status.State != "pending") {
+				return cephdomain.ActionResult{}, failure("resource_conflict", "silence changed or is no longer editable; refresh before editing", false)
+			}
+		}
+		if matches != 1 {
+			return cephdomain.ActionResult{}, failure("resource_conflict", "silence target is missing or ambiguous", false)
+		}
+		silence.ID = silenceID
+	} else if silence.ID != "" {
+		return cephdomain.ActionResult{}, failure("invalid_request", "new silences must not include an existing id", false)
+	}
 	id, err := api.CreateSilence(ctx, silence)
 	if err != nil {
+		if request.Action == "silence.update" {
+			return cephdomain.ActionResult{}, failure("alertmanager_failed", "silence update outcome is uncertain; refresh before retrying: "+err.Error(), false)
+		}
 		return cephdomain.ActionResult{}, failure("alertmanager_failed", err.Error(), true)
+	}
+	if strings.TrimSpace(id) == "" {
+		return cephdomain.ActionResult{}, failure("post_check_failed", "Alertmanager did not return a silence ID; refresh before retrying", false)
 	}
 	return cephdomain.ActionResult{ResourceURL: fmt.Sprintf("/api/v1/cluster/%d/silence/%s", clusterID, id), Details: map[string]any{"silence_id": id}}, nil
 }

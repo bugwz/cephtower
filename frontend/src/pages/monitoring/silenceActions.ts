@@ -91,3 +91,31 @@ export const silenceExpireAction: ResourceDeleteAction = {
   buildBody: (row, clusterId) => ({ cluster_id: clusterId, silence_id: silenceTarget(row) }),
   resourceKey: (row) => `silence/${silenceTarget(row)}`
 }
+
+export function silenceUpdateBlocked(row: ApiRecord): string | undefined {
+  const blocked = silenceExpireAction.disabledWhen?.(row)
+  if (blocked) return blocked
+  for (const key of ['startsAt', 'endsAt', 'updatedAt']) {
+    if (typeof row[key] !== 'string' || !Number.isFinite(Date.parse(row[key]))) return '静默时间或更新时间缺失，请刷新后编辑'
+  }
+  try { silenceMatchers(JSON.stringify(row.matchers)) } catch { return '静默匹配条件异常，请刷新后编辑' }
+  return undefined
+}
+
+export const silenceUpdateAction: ResourceFormAction = {
+  ...silenceCreateAction, title: '编辑告警静默', method: 'PATCH',
+  successMessage: '静默更新请求执行成功，请刷新确认状态',
+  disabledWhen: silenceUpdateBlocked,
+  initialValues: (row) => ({
+    matchers_json: JSON.stringify(row?.matchers ?? [], null, 2),
+    startsAt: typeof row?.startsAt === 'string' ? row.startsAt : '', endsAt: typeof row?.endsAt === 'string' ? row.endsAt : '',
+    createdBy: typeof row?.createdBy === 'string' ? row.createdBy : '', comment: typeof row?.comment === 'string' ? row.comment : ''
+  }),
+  buildBody: (values, clusterId, row) => {
+    if (!row) throw new Error('静默记录缺失')
+    const blocked = silenceUpdateBlocked(row)
+    if (blocked) throw new Error(blocked)
+    return { ...silenceCreateAction.buildBody(values, clusterId), silence_id: silenceTarget(row), expected_updated_at: row.updatedAt }
+  },
+  confirmation: () => '将修改已有静默的匹配条件、时间与说明，可能改变告警通知范围。后端会先核对当前更新时间，但 Alertmanager 不提供原子条件更新；请避免并发编辑，并在提交后刷新确认。'
+}

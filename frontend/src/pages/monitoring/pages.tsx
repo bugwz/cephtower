@@ -3,7 +3,7 @@ export { RuntimeLogsPage } from './RuntimeLogsPage'
 import { MetricPage } from './MetricPage'
 import { SilencedAlerts } from './SilencedAlerts'
 import { alertColumns, alertRuleColumns, silenceColumns } from './alertColumns'
-import { silenceCreateAction, silenceFromAlertAction, silenceRecreateAction, silenceExpireAction } from './silenceActions'
+import { silenceCreateAction, silenceFromAlertAction, silenceRecreateAction, silenceExpireAction, silenceUpdateAction } from './silenceActions'
 
 export function MonitorOverviewPage() {
   return <ExternalListPage definition={externalDefinitions.grafana} />
@@ -60,6 +60,7 @@ const externalDefinitions: Record<'grafana' | 'alerts' | 'rules' | 'silences', E
     requiredEndpoints: ['alertmanager'],
     rowKeyCandidates: ['id', 'silence_id'],
     createAction: silenceCreateAction,
+    updateAction: silenceUpdateAction,
     detailContent: (row, clusterId) => <SilencedAlerts clusterId={clusterId} silenceId={row.id} />,
     extraActions: [silenceRecreateAction],
     deleteAction: silenceExpireAction,

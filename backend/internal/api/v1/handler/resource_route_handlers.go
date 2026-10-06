@@ -1161,6 +1161,10 @@ func (h *Handler) CreateSilence(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("silence", "silence.create", "medium")(w, r)
 }
 
+func (h *Handler) UpdateSilence(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("silence", "silence.update", "medium")(w, r)
+}
+
 func (h *Handler) DeleteSilence(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("silence", "silence.delete", "medium")(w, r)
 }
