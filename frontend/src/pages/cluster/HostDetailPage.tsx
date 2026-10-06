@@ -418,7 +418,7 @@ function HostDeviceInfoTable({ devices }: { devices: ApiRecord[] }) {
       columns={[
         { key: 'device_id_display', title: '设备 ID' },
         { key: 'health_display', title: '健康状态', render: (value) => renderDeviceHealth(value) },
-        { key: 'life_expectancy_display', title: '预计寿命' },
+        { key: 'life_expectancy_display', title: '寿命预测时间范围' },
         { key: 'life_expectancy_stamp', title: '预测生成时间', render: (value) => formatDateTime(value) },
         { key: 'name_display', title: '设备名称' },
         { key: 'daemons_display', title: '守护进程' },
@@ -758,13 +758,14 @@ function renderDeviceAvailability(row: ApiRecord) {
 }
 
 function formatLifeExpectancy(row: ApiRecord) {
-  const min = textValue(row.life_expectancy_min, '')
-  const max = textValue(row.life_expectancy_max, '')
-  const values = [min, max].filter((value) => value && value !== '0.000000')
-  if (!values.length) {
-    return 'n/a'
-  }
-  return values.map((value) => formatDateTime(value)).join(' ～ ')
+  const bounds = [row.life_expectancy_min, row.life_expectancy_max]
+  const missing = (value: unknown) => value === undefined || value === null || value === '' || value === '0.000000'
+  if (bounds.some(value => !missing(value) && (typeof value !== 'string' || value.trim() === ''))) return '预测格式无效，请查看关联详情'
+  const [min, max] = bounds.map(value => missing(value) ? '' : formatDateTime(value))
+  if (min && max) return `下界 ${min} ～ 上界 ${max}`
+  if (min) return `下界 ${min}（未报告上界）`
+  if (max) return `上界 ${max}（未报告下界）`
+  return '未报告寿命预测'
 }
 
 function stringArray(value: unknown) {

@@ -37,3 +37,16 @@ const detail = JSON.stringify(column.render(undefined, target))
 for (const value of ['host-device', '/dev/disk/by-id/host-device', 'node2', '/dev/sdb', '2026-10-07', '2027-01-01']) assert.ok(detail.includes(value), value)
 assert.ok(JSON.stringify(column.render(undefined, {})).includes('未返回或格式无效'))
 console.log('Host device table exposes full association details without truncating locations')
+
+const expectancyNode = hostTree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'formatLifeExpectancy')
+const expectancyCode = ts.transpileModule(expectancyNode.getText(hostTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const expectancy = new Function('formatDateTime', `${expectancyCode}; return formatLifeExpectancy`)(value => value)
+assert.equal(expectancy({ life_expectancy_min: '2026-10-07', life_expectancy_max: '2027-01-01' }), '下界 2026-10-07 ～ 上界 2027-01-01')
+assert.equal(expectancy({ life_expectancy_min: '2026-10-07', life_expectancy_max: '0.000000' }), '下界 2026-10-07（未报告上界）')
+assert.equal(expectancy({ life_expectancy_max: '2027-01-01' }), '上界 2027-01-01（未报告下界）')
+for (const value of [undefined, null, '', '0.000000']) assert.equal(expectancy({ life_expectancy_min: value, life_expectancy_max: value }), '未报告寿命预测')
+for (const value of [0, false, {}, [], ' ']) {
+  assert.equal(expectancy({ life_expectancy_min: value }), '预测格式无效，请查看关联详情')
+  assert.equal(expectancy({ life_expectancy_min: '2026-10-07', life_expectancy_max: value }), '预测格式无效，请查看关联详情')
+}
+console.log('Host life expectancy summary preserves one-sided prediction bounds')
