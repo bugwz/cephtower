@@ -67,3 +67,10 @@ await new Function(...Object.keys(deleteEnv), `${deleteJS}; return deleteOSD`)(.
 deleteRef.current = {}
 await assert.rejects(confirm.onOk(), /集群已切换/)
 assert.deepEqual(writes, [])
+const inspectionSource = readFileSync(new URL('../src/pages/cluster/OSDInspection.tsx', import.meta.url), 'utf8')
+const inspectionTree = ts.createSourceFile('inspection.tsx', inspectionSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const epochNode = inspectionTree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'osdHistoryEpoch')
+const epochJS = ts.transpileModule(epochNode.getText(inspectionTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const epoch = new Function(`${epochJS}; return osdHistoryEpoch`)()
+for (const value of [0, 1, 4294967295]) assert.equal(epoch(value), String(value))
+for (const value of [null, undefined, -1, 4294967296, 0.5, '1']) assert.equal(epoch(value), '未采集或格式无效')

@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD 状态历史 Epoch：从 `ceph osd dump` / `osd_info_t::dump` 采集 last_clean_begin/end、up_from/thru、down_at、lost_at，API 保留可空 uint32，详情新增独立页签。明确其为 OSDMap 版本号而非时间戳，不推断停机时间；新增字段映射、零值、边界、非法数值及前端显示回归。
+
 - OSD 实例 UUID：从原生 `OSDMap::dump_osd` 对应的 `ceph osd dump` uuid 字段按 OSD ID 关联到库存，API 和列表/详情保留原文；缺失为未知，空串与全零 UUID 不替换或伪造。增加记录匹配、缺失、空值和错误类型回归；不把 UUID 当作命令执行目标。
 
 - OSD dump 身份校验：要求明确的 osds 数组和非负、唯一的 osd ID，拒绝 null/缺失 ID、负数和重复记录，避免异常记录落到 OSD.0 或覆盖其状态、调权系数、主副本亲和度。显式空数组和 ID 0 继续有效，新增离线采集回归。

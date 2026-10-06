@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Tabs } from 'antd'
+import { Alert, Button, Card, Descriptions, Tabs } from 'antd'
 import { useEffect, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { RecordDetail } from '../../components/RecordDetail'
@@ -8,10 +8,18 @@ import { DaemonPerf } from './DaemonPerf'
 export function OSDInspection({ clusterId, osdId, record }: { clusterId: number; osdId: string; record: ApiRecord }) {
   return <Tabs items={[
     { key: 'map', label: 'OSD 状态', children: <RecordDetail record={record} /> },
+    { key: 'map-history', label: '状态历史 Epoch', children: <>
+      <Alert type="info" message="来自 ceph osd dump 的 OSDMap 历史版本号，不是时间戳；不据此推断具体停机时间。" />
+      <Descriptions bordered column={2}>{[['last_clean_begin', '上次 clean 区间起点'], ['last_clean_end', '上次 clean 区间终点'], ['up_from', '标记 up 的 Epoch'], ['up_thru', 'Up thru'], ['down_at', 'Down at'], ['lost_at', '标记丢失的 Epoch']].map(([key, label]) => <Descriptions.Item key={key} label={label}>{osdHistoryEpoch(record[key])}</Descriptions.Item>)}</Descriptions>
+    </> },
     { key: 'metadata', label: '元数据', children: <Diagnostic clusterId={clusterId} osdId={osdId} section="metadata" /> },
     { key: 'perf', label: '性能计数器', children: <DaemonPerf key={`${clusterId}:osd.${osdId}`} clusterId={clusterId} name={`osd.${osdId}`} /> },
     { key: 'histogram', label: '性能直方图', children: <Diagnostic clusterId={clusterId} osdId={osdId} section="histogram" /> }
   ]} />
+}
+
+export function osdHistoryEpoch(value: unknown): string {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 4294967295 ? String(value) : '未采集或格式无效'
 }
 
 function Diagnostic({ clusterId, osdId, section }: { clusterId: number; osdId: string; section: string }) {

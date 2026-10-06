@@ -1,6 +1,7 @@
 package ceph
 
 type OSD struct {
+	OSDMapHistory
 	UUID            *string           `json:"uuid"`
 	PrimaryAffinity *float64          `json:"primary_affinity"`
 	Reweight        *float64          `json:"reweight"`
@@ -13,6 +14,14 @@ type OSD struct {
 	DeviceClass     *string           `json:"device_class"`
 	Host            *string           `json:"host"`
 	CrushPath       map[string]string `json:"crush_path,omitempty"`
+}
+type OSDMapHistory struct {
+	LastCleanBegin *uint32 `json:"last_clean_begin"`
+	LastCleanEnd   *uint32 `json:"last_clean_end"`
+	UpFrom         *uint32 `json:"up_from"`
+	UpThru         *uint32 `json:"up_thru"`
+	DownAt         *uint32 `json:"down_at"`
+	LostAt         *uint32 `json:"lost_at"`
 }
 type Pool struct {
 	ClientIORate             *PoolClientIORate    `json:"client_io_rate"`

@@ -420,8 +420,8 @@ const osdSource = readFileSync(new URL('../src/pages/cluster/OSDInspection.tsx',
 const osdTree = ts.createSourceFile('osd.tsx', osdSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const osdNode = osdTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'OSDInspection')
 const osdCode = ts.transpileModule(osdNode.getText(osdTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
-const osdInspection = new Function('React', 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', `${osdCode}; return OSDInspection`)(
-  { createElement: (component, props) => ({ component, props }) }, 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf')
+const osdInspection = new Function('React', 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', 'Alert', 'Descriptions', 'osdHistoryEpoch', `${osdCode}; return OSDInspection`)(
+  { createElement: (component, props) => ({ component, props }) }, 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', 'Alert', { Item: 'Item' }, String)
 const perfKeys = new Set()
 for (const [clusterId, osdId] of [[1, '0'], [1, '12'], [2, '12']]) {
   const panel = osdInspection({ clusterId, osdId, record: {} })
