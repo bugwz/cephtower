@@ -103,7 +103,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"cluster.refresh"}, false, map[string]JSONField{"modules": stringsField(false)})
 	add([]string{"osd.delete"}, false, map[string]JSONField{"zap": boolField(false), "preserve_id": boolField(false)})
 	add([]string{"osd_removal.stop"}, true, map[string]JSONField{"osd_id": stringField(true)})
-	add([]string{"osd.destroy"}, true, map[string]JSONField{"osd_id": stringField(true), "expected_uuid": stringField(true), "confirmation": stringField(true)})
+	add([]string{"osd.destroy", "osd.lost"}, true, map[string]JSONField{"osd_id": stringField(true), "expected_uuid": stringField(true), "confirmation": stringField(true)})
 	add([]string{"host.create"}, true, map[string]JSONField{
 		"hostname": stringField(true), "address": stringField(false), "labels": stringsField(false), "maintenance": boolField(false),
 	})

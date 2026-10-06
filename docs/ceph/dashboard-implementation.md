@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD Lost 原生后端：增加高风险 POST /osd/lost，精确确认 mark lost osd.ID、UUID/Down 状态及 safe-to-destroy 安全检查后执行 osd lost --yes-i-really-mean-it。依据 OSDMonitor 原生语义，验证 lost_at 等于执行前 down_at，同时身份与 Down epoch 未变化；不伪造 lost 状态标记，异常禁止自动重试。测试覆盖安全门禁、身份变化、epoch 缺失/越界/重复、命令及回读失败。前端入口待接入，未进行真实集群操作。
+
 - OSD Destroy 前端：详情增加独立销毁页，明确保留 ID、移除密钥及数据永久不可读风险；仅新鲜、有效版本、非零 UUID、Down 且未销毁的快照允许操作。精确输入 destroy osd.ID 并勾选风险确认后携带 UUID 和无损 If-Match 提交；执行后需刷新重新打开，禁止原页直接重试，切换集群/目标后旧请求不更新界面。覆盖无效快照、确认不符、重复点击、失败和卸载场景；未在真实集群执行。
 
 - 原生 OSD Destroy 后端：新增高风险 POST /osd/destroy，要求 destroy osd.ID 精确确认及 expected_uuid；先核验唯一目标、Down、未销毁，再执行原生 safe-to-destroy，只有明确安全才调用 destroy-actual。回读 destroyed 和原生清空后的 UUID，失败禁止自动重试；保留 ID 但密钥会移除，数据可能永久不可读。前端入口及 Lost/Purge 仍待实现，未执行真实集群操作。

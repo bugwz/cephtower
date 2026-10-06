@@ -104,7 +104,7 @@ func Supports(action string) bool {
 		"host.create", "host.update", "host.delete", "host.action", "device.identify",
 		"service.create", "service.update", "service.delete", "daemon.action",
 		"upgrade.check", "upgrade.action", "manager.fail", "monitor.action", "manager_module.update",
-		"osd.action", "osd.device_class", "osd.destroy", "osd.individual_flag", "osd_flag.update", "osd.removal_check", "osd.delete", "osd_removal.stop",
+		"osd.action", "osd.device_class", "osd.destroy", "osd.lost", "osd.individual_flag", "osd_flag.update", "osd.removal_check", "osd.delete", "osd_removal.stop",
 		"osd_deployment.preview", "osd_deployment.create", "device.zap",
 		"crush_rule.create", "crush_rule.update", "crush_rule.delete",
 		"erasure_code_profile.create", "erasure_code_profile.delete",
@@ -152,6 +152,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if request.Action == "osd.destroy" {
 		return s.executeOSDDestroy(ctx, access, request)
+	}
+	if request.Action == "osd.lost" {
+		return s.executeOSDLost(ctx, access, request)
 	}
 	spec, err := build(request, request.Parameters)
 	if err != nil {
