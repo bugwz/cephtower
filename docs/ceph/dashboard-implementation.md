@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD 设备健康：接入只读 `ceph device query-daemon-health-metrics osd.<id> --format json`，通过 inspection smart section 提供数据。新增 SMART 页，复用 ATA/SCSI/NVMe 详情；原生布尔健康状态严格区分通过、未通过、未知和读取失败。后端脱敏并将数值递归转为精确文本，补充大计数器、错误响应、目标绑定与状态回归，更新 OpenAPI。
+
 - OSD 关联设备：对照参考 Dashboard 的 devices 接口接入只读 `ceph device ls-by-daemon osd.<id> --format json`，通过 `/osd/inspection` 的 devices section 返回设备数组。详情新增关联设备页，完整展示原生位置、守护进程及可选寿命预测等属性；空列表与失败分开，不推断设备健康。补充命令、非法响应及页面目标绑定回归，并更新 OpenAPI。
 
 - OSD 全局 flags 缺失值修复：原生 osd dump 未返回 flags 时保留 null，显式空字符串才表示无标记；前端拒绝畸形数组并区分未知与未设置，读取绑定当前集群 ID。新增后端完整采集和前端 API 转换回归。

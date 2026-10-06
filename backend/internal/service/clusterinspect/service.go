@@ -101,6 +101,8 @@ func (s *Service) OSDInspection(ctx context.Context, clusterID uint64, id, secti
 		args = []string{"tell", "osd." + id, "perf", "histogram", "dump", "--format", "json"}
 	case "devices":
 		args = []string{"device", "ls-by-daemon", "osd." + id, "--format", "json"}
+	case "smart":
+		args = []string{"device", "query-daemon-health-metrics", "osd." + id, "--format", "json"}
 	default:
 		return nil, invalid("invalid OSD inspection section")
 	}
@@ -127,7 +129,33 @@ func (s *Service) OSDInspection(ctx context.Context, clusterID uint64, id, secti
 	if result == nil {
 		return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph returned empty OSD diagnostics"}
 	}
+	if section == "smart" {
+		redacted, err := security.RedactJSON(result)
+		if err != nil {
+			return nil, err
+		}
+		return smartCounterText(redacted).(map[string]any), nil
+	}
 	return result, nil
+}
+
+func smartCounterText(value any) any {
+	switch value := value.(type) {
+	case json.Number:
+		return value.String()
+	case map[string]any:
+		for key, item := range value {
+			value[key] = smartCounterText(item)
+		}
+		return value
+	case []any:
+		for i, item := range value {
+			value[i] = smartCounterText(item)
+		}
+		return value
+	default:
+		return value
+	}
 }
 
 func (s *Service) ConfigurationOption(ctx context.Context, clusterID uint64, name string) (map[string]any, error) {

@@ -270,6 +270,37 @@ func TestOSDDeviceInspection(t *testing.T) {
 	}
 }
 
+func TestOSDSMARTInspection(t *testing.T) {
+	service, runner, id := testInspection(t)
+	runner.output = `{"disk-1":{"smart_status":{"passed":false},"counter":18446744073709551615,"password":"secret-fixture","nested":[9007199254740993]}}`
+	result, err := service.OSDInspection(context.Background(), id, "12", "smart")
+	if err != nil {
+		t.Fatal(err)
+	}
+	report := result["disk-1"].(map[string]any)
+	if report["counter"] != "18446744073709551615" || report["nested"].([]any)[0] != "9007199254740993" || report["smart_status"].(map[string]any)["passed"] != false || report["password"] == "secret-fixture" {
+		t.Fatalf("report=%v", report)
+	}
+	spec := runner.specs[len(runner.specs)-1]
+	if spec.Mutating || !reflect.DeepEqual(spec.Args, []string{"device", "query-daemon-health-metrics", "osd.12", "--format", "json"}) {
+		t.Fatalf("spec=%+v", spec)
+	}
+	runner.output = `{}`
+	if result, err := service.OSDInspection(context.Background(), id, "12", "smart"); err != nil || len(result) != 0 {
+		t.Fatalf("result=%v err=%v", result, err)
+	}
+	for _, raw := range []string{`null`, `[]`, `{} {}`} {
+		runner.output = raw
+		if _, err := service.OSDInspection(context.Background(), id, "12", "smart"); err == nil {
+			t.Fatalf("accepted %s", raw)
+		}
+	}
+	runner.fail = true
+	if _, err := service.OSDInspection(context.Background(), id, "12", "smart"); err == nil {
+		t.Fatal("failed command accepted")
+	}
+}
+
 func TestSnapshotScheduleStatusScopeAndFailures(t *testing.T) {
 	service, runner, id := testInspection(t)
 	runner.output = `[{"path":"/volumes/team/project","schedule":"1h","start":"2026-09-14T00:00:00","active":true,"created_count":4}]`

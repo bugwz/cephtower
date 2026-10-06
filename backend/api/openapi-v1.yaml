@@ -14289,7 +14289,7 @@ paths:
                   type: string
                 section:
                   type: string
-                  enum: ["devices", "histogram", "metadata"]
+                  enum: ["devices", "histogram", "metadata", "smart"]
       responses:
         '200':
           description: success

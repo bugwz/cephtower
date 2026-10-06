@@ -6,6 +6,7 @@ import { OSDHistogram } from './OSDHistogram'
 import { DaemonPerf } from './DaemonPerf'
 import { OSDNetwork } from './OSDNetwork'
 import { OSDUsage } from './OSDUsage'
+import { SMARTDetails } from './SMARTDetails'
 
 export function OSDInspection({ clusterId, osdId, record }: { clusterId: number; osdId: string; record: ApiRecord }) {
   return <Tabs items={[
@@ -18,6 +19,7 @@ export function OSDInspection({ clusterId, osdId, record }: { clusterId: number;
     </> },
     { key: 'metadata', label: '元数据', children: <Diagnostic clusterId={clusterId} osdId={osdId} section="metadata" /> },
     { key: 'devices', label: '关联设备', children: <Diagnostic clusterId={clusterId} osdId={osdId} section="devices" /> },
+    { key: 'smart', label: '设备健康（SMART）', children: <Diagnostic clusterId={clusterId} osdId={osdId} section="smart" /> },
     { key: 'perf', label: '性能计数器', children: <DaemonPerf key={`${clusterId}:osd.${osdId}`} clusterId={clusterId} name={`osd.${osdId}`} /> },
     { key: 'histogram', label: '性能直方图', children: <Diagnostic clusterId={clusterId} osdId={osdId} section="histogram" /> }
   ]} />
@@ -43,8 +45,24 @@ function Diagnostic({ clusterId, osdId, section }: { clusterId: number; osdId: s
   }, [clusterId, osdId, section, revision])
   return <Card loading={loading} extra={<Button disabled={loading} onClick={() => setRevision((value) => value + 1)}>重新读取</Button>}>
     {error && <Alert type="error" message={error} />}
-    {data && (section === 'histogram' ? <OSDHistogram data={data} /> : section === 'devices' ? <OSDDevices data={data} /> : <RecordDetail record={data} />)}
+    {data && (section === 'histogram' ? <OSDHistogram data={data} /> : section === 'devices' ? <OSDDevices data={data} /> : section === 'smart' ? <OSDSMART data={data} /> : <RecordDetail record={data} />)}
   </Card>
+}
+
+export function osdSMARTStatus(value: unknown): string {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return '报告无效，健康未知'
+  const report = value as ApiRecord
+  if ('error' in report) return '读取失败，健康未知'
+  const status = report.smart_status
+  const passed = status && typeof status === 'object' && !Array.isArray(status) ? (status as ApiRecord).passed : undefined
+  return passed === true ? '设备报告通过' : passed === false ? '设备报告未通过' : '未返回明确健康状态'
+}
+
+function OSDSMART({ data }: { data: ApiRecord }) {
+  return <>
+    <Alert type="info" message="来自 device query-daemon-health-metrics 的原生 SMART 报告。通过不代表没有故障风险；缺失数据不视为健康。" />
+    {Object.keys(data).length === 0 ? <Alert type="warning" message="未返回 SMART 报告，设备健康未知" /> : Object.entries(data).map(([device, report]) => <Card key={device} title={`${device}：${osdSMARTStatus(report)}`}><SMARTDetails data={report} /></Card>)}
+  </>
 }
 
 export function osdDeviceRecords(data: ApiRecord): ApiRecord[] | null {
