@@ -509,7 +509,7 @@ const (
 type mgrDumpWire struct {
 	Services   map[string]*string `json:"services"`
 	Available  *bool              `json:"available"`
-	ActiveName string             `json:"active_name"`
+	ActiveName *string            `json:"active_name"`
 	ActiveAddr string             `json:"active_addr"`
 	Standbys   []struct {
 		Name string `json:"name"`
@@ -563,6 +563,20 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 		return nil, err
 	}
 	var managerServices map[string]string
+	if managers.ActiveName == nil || managers.Standbys == nil {
+		return nil, fmt.Errorf("parse collect.mgr response: active_name and standbys are required")
+	}
+	activeName := *managers.ActiveName
+	if activeName != strings.TrimSpace(activeName) {
+		return nil, fmt.Errorf("parse collect.mgr response: invalid active name")
+	}
+	seenManagerNames := map[string]bool{activeName: true}
+	for _, standby := range managers.Standbys {
+		if standby.Name == "" || standby.Name != strings.TrimSpace(standby.Name) || seenManagerNames[standby.Name] {
+			return nil, fmt.Errorf("parse collect.mgr response: manager names must be unique and standby names nonempty")
+		}
+		seenManagerNames[standby.Name] = true
+	}
 	if managers.Services != nil {
 		managerServices = make(map[string]string, len(managers.Services))
 		for name, uri := range managers.Services {
@@ -692,10 +706,10 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 		}
 		rows = append(rows, Observation{Kind: "mon", NaturalKey: wire.Name, Name: wire.Name, Status: status, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
-	if managers.ActiveName != "" {
+	if activeName != "" {
 		address := managers.ActiveAddr
-		payload := cephdomain.Manager{Name: managers.ActiveName, Active: true, Address: &address, Available: managers.Available, Services: managerServices}
-		rows = append(rows, Observation{Kind: "mgr", NaturalKey: managers.ActiveName, Name: managers.ActiveName, Status: "active", Source: "ceph_cli", Payload: payload, ObservedAt: now})
+		payload := cephdomain.Manager{Name: activeName, Active: true, Address: &address, Available: managers.Available, Services: managerServices}
+		rows = append(rows, Observation{Kind: "mgr", NaturalKey: activeName, Name: activeName, Status: "active", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	for _, wire := range managers.Standbys {
 		payload := cephdomain.Manager{Name: wire.Name, Available: managers.Available}

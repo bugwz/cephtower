@@ -7,6 +7,33 @@ import (
 	"testing"
 )
 
+func TestManagerInventoryRejectsAmbiguousIdentities(t *testing.T) {
+	for _, raw := range []string{
+		`{}`, `{"active_name":null,"standbys":[]}`, `{"active_name":"a"}`,
+		`{"active_name":"a","standbys":null}`, `{"active_name":" a","standbys":[]}`,
+		`{"active_name":"a","standbys":[null]}`, `{"active_name":"a","standbys":[{}]}`,
+		`{"active_name":"a","standbys":[{"name":"a"}]}`,
+		`{"active_name":"a","standbys":[{"name":"b"},{"name":"b"}]}`,
+		`{"active_name":"a","standbys":[{"name":" b"}]}`,
+	} {
+		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.mgr": []byte(raw)}}}
+		rows, err := p.Collect(context.Background(), ClusterAccess{}, "topology")
+		if err == nil || len(rows) != 0 {
+			t.Fatalf("accepted ambiguous inventory %s: %v", raw, err)
+		}
+	}
+	p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.mgr": []byte(`{"active_name":"","standbys":[]}`)}}}
+	rows, err := p.Collect(context.Background(), ClusterAccess{}, "topology")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, row := range rows {
+		if row.Kind == "mgr" {
+			t.Fatal("invented manager for explicit empty inventory")
+		}
+	}
+}
+
 func TestManagerServicesRemainOnActiveInstance(t *testing.T) {
 	for _, field := range []string{``, `,"services":null`, `,"services":{}`, `,"services":{"dashboard":"https://mgr:8443/","prometheus":"http://mgr:9283/"}`} {
 		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.mgr": []byte(`{"available":true,"active_name":"a","active_addr":"v2:host:3300","standbys":[{"name":"b"}]` + field + `}`)}}}
