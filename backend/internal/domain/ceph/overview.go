@@ -47,6 +47,7 @@ type ObjectStats struct {
 	Unfound   *uint64 `json:"unfound"`
 }
 type Overview struct {
+	ProgressHistory *ProgressHistory          `json:"progress_history"`
 	ProgressEvents  map[string]*ProgressEvent `json:"progress_events"`
 	FSID            string                    `json:"fsid"`
 	CephVersion     string                    `json:"ceph_version,omitempty"`
@@ -60,6 +61,11 @@ type Overview struct {
 	ObjectStats     ObjectStats               `json:"object_stats"`
 	ScrubStatus     *string                   `json:"scrub_status"`
 	ObservedAt      time.Time                 `json:"observed_at"`
+}
+
+type ProgressHistory struct {
+	Events    []map[string]any `json:"events"`
+	Completed []map[string]any `json:"completed"`
 }
 
 type ProgressEvent struct {

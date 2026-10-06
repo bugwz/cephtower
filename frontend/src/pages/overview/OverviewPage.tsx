@@ -24,6 +24,7 @@ import { useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
 import { pgCategory, pgSummary } from './pgCategory'
 import { ProgressEvents } from './ProgressEvents'
+import { ProgressHistory } from './ProgressHistory'
 import { message } from '../../utils/appMessage'
 
 const { Text } = Typography
@@ -204,6 +205,7 @@ function OverviewContent({ selectedClusterId }: { selectedClusterId: number | un
         </div>
         <div className="content-grid">
           <ProgressEvents value={data?.overview.progress_events} />
+          <ProgressHistory value={data?.overview.progress_history} />
           <Card title="健康检查">
             <AppTable<ApiRecord>
               size="small"

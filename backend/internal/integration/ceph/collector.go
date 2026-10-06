@@ -297,6 +297,20 @@ func (p *NativeProvider) collectFast(ctx context.Context, access ClusterAccess) 
 }
 
 func (p *NativeProvider) collectOverviewDetails(ctx context.Context, access ClusterAccess, overview *cephdomain.Overview) {
+	var progress cephdomain.ProgressHistory
+	if p.optional(ctx, access, executor.BinaryCeph, "collect.overview_progress", []string{"progress", "json"}, &progress) && progress.Events != nil && progress.Completed != nil {
+		valid := true
+		for _, events := range [][]map[string]any{progress.Events, progress.Completed} {
+			for _, event := range events {
+				if event == nil {
+					valid = false
+				}
+			}
+		}
+		if valid {
+			overview.ProgressHistory = &progress
+		}
+	}
 	var pgSummary pgDumpSummaryWire
 	if p.optional(ctx, access, executor.BinaryCeph, "collect.overview_pg_summary", []string{"pg", "dump", "summary", "--format", "json"}, &pgSummary) {
 		stats := pgSummary.PGMap.PGStatsSum.StatSum

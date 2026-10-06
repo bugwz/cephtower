@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import './test-progress-history.mjs'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 const source = readFileSync(new URL('../src/pages/overview/ProgressEvents.tsx', import.meta.url), 'utf8')

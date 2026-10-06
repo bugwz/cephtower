@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### Progress 模块进行中与已完成任务
+
+- 对照参考 Dashboard `services/progress.py#get_progress_tasks` 和 Ceph `progress/module.py`，新增只读可选命令 `ceph progress json`；该命令返回同一 `_json()` 的 `events` 与 `completed`，接入概览 `progress_history`，无需依赖 Dashboard HTTP API。
+- 前端分“进行中”“已完成”展示 ID、描述、开始/结束 UTC 时间、原生失败标记/说明与进行中进度；展开保留原生 refs、duration 等完整元数据，不将模块事件冒充本项目操作记录。
+- 命令不可用或两数组结构无效时保持 null 并提示不可用，不返回伪造空历史；有效双空数组代表本次没有记录。历史受 Progress 模块保留上限约束，不能充当完整审计历史。本轮不自动启用模块、不清理历史、不映射 RBD 事件为本项目可执行任务。
+- 新增真实命令参数、采集空/异常/有效历史、引用与失败信息保留、时间与列表解析测试，`make test-backend`（含 OpenAPI 校验）与 `make test-frontend` 通过；未进行真实 Ceph 或浏览器视觉联调。
+
 #### Ceph 当前进度事件概览
 
 - 核对参考 `MgrMap.h#print_summary` 确认既有 MGR standby 计数映射正确，无需替换；同时对照 `Monitor.cc` 与 `mon_types.h#ProgressEvent`，接入原生 status 的 `progress_events`。
