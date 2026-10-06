@@ -1,6 +1,7 @@
 package ceph
 
 import (
+	cephdomain "cephtower/backend/internal/domain/ceph"
 	"context"
 	"encoding/json"
 	"testing"
@@ -36,6 +37,36 @@ func TestMonitorSessionsPreserveUnsignedCounts(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestMonitorSessionsSurvivePerfMetadataFailure(t *testing.T) {
+	for _, override := range []map[string][]byte{
+		{"collect.mon_perf.schema": []byte(`invalid`)},
+		{"collect.mon_perf.threshold": []byte(`invalid`)},
+	} {
+		override["collect.mon_perf.dump"] = []byte(`{"mon":{"num_sessions":17}}`)
+		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: override}}
+		rows, err := p.Collect(context.Background(), ClusterAccess{}, "topology")
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for _, row := range rows {
+			if row.Kind == "mon_perf_counter" {
+				t.Fatal("published counters without metadata")
+			}
+			if row.Kind == "mon" {
+				found = true
+				count := row.Payload.(cephdomain.Monitor).OpenSessions
+				if count == nil || *count != "17" {
+					t.Fatalf("lost available sessions: %v", count)
+				}
+			}
+		}
+		if !found {
+			t.Fatal("missing monitor")
+		}
 	}
 }
 

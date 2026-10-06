@@ -29,6 +29,11 @@
 
 ### 增量实现与验证记录
 
+#### MON 会话采集与性能元数据故障隔离
+
+- 原生 `perf dump` 读取抽为独立步骤；性能 schema 不可用时仍保留有效会话数，阈值配置不可用时仍采集节点会话数，但不发布缺少元数据的性能计数器。
+- 拓扑级测试覆盖非法 schema 与非法阈值两条链路，确认 MON 会话字段保留、性能列表不伪造；`make test-backend` 与 OpenAPI 校验通过。未进行真实集群验证。
+
 #### MON 会话数独立于性能表优先级
 
 - 参考 `controllers/monitor.py` 独立读取 `mon.num_sessions` 的逻辑，将会话数直接从原生 `tell mon.<name> perf dump --format json` 结果提取，不再受性能表 `mgr_stats_threshold` 过滤影响。

@@ -635,6 +635,9 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 		if perfAvailable {
 			counters, openSessions = p.collectMonitorPerfCounters(ctx, access, wire.Name, perfPriority, now)
 			rows = append(rows, counters...)
+		} else {
+			values := p.collectMonitorPerfValues(ctx, access, wire.Name)
+			openSessions = monitorSessionCount(values["mon"]["num_sessions"])
 		}
 		payload := cephdomain.Monitor{Name: wire.Name, Rank: wire.Rank, Address: address, PublicAddresses: wire.PublicAddrs.AddrVec, InQuorum: inQuorum, OpenSessions: openSessions}
 		status := "out_of_quorum"
@@ -707,14 +710,23 @@ func (p *NativeProvider) collectMgrStatsThreshold(ctx context.Context, access Cl
 	return threshold, true
 }
 
-func (p *NativeProvider) collectMonitorPerfCounters(ctx context.Context, access ClusterAccess, monitor string, minimumPriority int, observedAt time.Time) ([]Observation, *string) {
-	var schema map[string]map[string]perfCounterSchema
-	if err := p.runInto(ctx, access, "collect.mon_perf.schema", []string{"tell", "mon." + monitor, "perf", "schema", "--format", "json"}, &schema); err != nil {
-		return nil, nil
-	}
+func (p *NativeProvider) collectMonitorPerfValues(ctx context.Context, access ClusterAccess, monitor string) map[string]map[string]any {
 	var values map[string]map[string]any
 	if err := p.runInto(ctx, access, "collect.mon_perf.dump", []string{"tell", "mon." + monitor, "perf", "dump", "--format", "json"}, &values); err != nil {
+		return nil
+	}
+	return values
+}
+
+func (p *NativeProvider) collectMonitorPerfCounters(ctx context.Context, access ClusterAccess, monitor string, minimumPriority int, observedAt time.Time) ([]Observation, *string) {
+	values := p.collectMonitorPerfValues(ctx, access, monitor)
+	if values == nil {
 		return nil, nil
+	}
+	openSessions := monitorSessionCount(values["mon"]["num_sessions"])
+	var schema map[string]map[string]perfCounterSchema
+	if err := p.runInto(ctx, access, "collect.mon_perf.schema", []string{"tell", "mon." + monitor, "perf", "schema", "--format", "json"}, &schema); err != nil {
+		return nil, openSessions
 	}
 	groups := make([]string, 0, len(schema))
 	for group := range schema {
@@ -722,9 +734,6 @@ func (p *NativeProvider) collectMonitorPerfCounters(ctx context.Context, access 
 	}
 	sort.Strings(groups)
 	rows := make([]Observation, 0)
-	// Monitor overview sessions are independent of the performance table's
-	// priority threshold, as in Dashboard's get_unlabeled_counter lookup.
-	openSessions := monitorSessionCount(values["mon"]["num_sessions"])
 	for _, group := range groups {
 		names := make([]string, 0, len(schema[group]))
 		for name := range schema[group] {
