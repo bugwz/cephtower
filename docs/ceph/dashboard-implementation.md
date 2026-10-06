@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD 删除并发版本修复：不再将 resource_version 转为 Number，保留大整数版本的精确 If-Match；拒绝缺失/非法/已丢精度版本以及过期、加载失败库存。确认标题展示集群 ID 和 OSD ID，新增大版本、过期记录和无版本回归；未执行真实删除。
+
 - OSD 容量解析补强：拒绝 null、缺失 ID/类型及空白类型节点，防止畸形记录被当作非 OSD 节点静默跳过。新增完整 storage 采集链路验证，确认容量按 ID 而非数组位置关联，未匹配 OSD 保留未知且大整数/零 PG 不丢失。
 
 - OSD 原生延迟：新增 `ceph osd perf --format json` 的 osd_perf_infos[].perf_stats 采集，按 ID 关联提交/应用延迟并在详情展示毫秒原值。来源为 PGMap::dump_osd_perf_stats，不将此快照冒充 Prometheus 一分钟平均或端到端延迟。缺失保留未知，拒绝重复 ID、负延迟和错误类型；增加离线回归。

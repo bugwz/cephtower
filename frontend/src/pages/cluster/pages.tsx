@@ -409,6 +409,10 @@ export function OsdManagementPage() {
   }
 
   async function deleteOSD(row: ApiRecord) {
+    if (osdScopeRef.current !== osdScope || loading || error || row.stale !== false) {
+      message.error('请先成功采集当前集群的 OSD 库存，再确认删除')
+      return
+    }
     if (!selectedClusterId) {
       message.error('请先选择集群')
       return
@@ -418,10 +422,11 @@ export function OsdManagementPage() {
       message.error('无法识别 OSD ID')
       return
     }
-    const generation = Number(row.resource_version ?? 0)
+    const generation = osdInventoryVersion(row.resource_version)
+    if (generation === null) { message.error('库存版本无效，请重新采集后再确认删除'); return }
     const parameters = { cluster_id: selectedClusterId, osd_id: id, zap: false }
     Modal.confirm({
-      title: `删除 OSD ${id}`,
+      title: `删除集群 ${selectedClusterId} 的 OSD ${id}`,
       content: '该操作为高风险操作，确认后将直接执行删除操作。',
       okText: '提交删除',
       okType: 'danger',
@@ -1020,6 +1025,11 @@ function DaemonTable({
       />
     </div>
   )
+}
+
+function osdInventoryVersion(value: unknown): string | null {
+  if (typeof value === 'number') return Number.isSafeInteger(value) && value > 0 ? String(value) : null
+  return typeof value === 'string' && /^[1-9]\d*$/.test(value) && BigInt(value) <= 18446744073709551615n ? value : null
 }
 
 function osdStateText(value: unknown): string {

@@ -62,11 +62,24 @@ const deleteNode = page.body.statements.find(n => ts.isFunctionDeclaration(n) &&
 const deleteJS = ts.transpileModule(deleteNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 let confirm
 const deleteScope = {}, deleteRef = { current: deleteScope }, writes = []
-const deleteEnv = { selectedClusterId: 7, osdScope: deleteScope, osdScopeRef: deleteRef, osdID: () => '0', Modal: { confirm: options => { confirm = options } }, operationMutation: { run: fn => fn() }, mutateResource: async (...args) => writes.push(args), message: { error: () => {}, success: () => {} }, refreshResource: async () => {}, refresh: async () => {} }
-await new Function(...Object.keys(deleteEnv), `${deleteJS}; return deleteOSD`)(...Object.values(deleteEnv))({ resource_version: 1 })
+const versionNode = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'osdInventoryVersion')
+const versionJS = ts.transpileModule(versionNode.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const osdInventoryVersion = new Function(`${versionJS}; return osdInventoryVersion`)()
+const deleteEnv = { loading: false, error: '', osdInventoryVersion, selectedClusterId: 7, osdScope: deleteScope, osdScopeRef: deleteRef, osdID: () => '0', Modal: { confirm: options => { confirm = options } }, operationMutation: { run: fn => fn() }, mutateResource: async (...args) => writes.push(args), message: { error: () => {}, success: () => {} }, refreshResource: async () => {}, refresh: async () => {} }
+const removeOSD = new Function(...Object.keys(deleteEnv), `${deleteJS}; return deleteOSD`)(...Object.values(deleteEnv))
+await removeOSD({ resource_version: 1, stale: false })
 deleteRef.current = {}
 await assert.rejects(confirm.onOk(), /集群已切换/)
 assert.deepEqual(writes, [])
+deleteRef.current = deleteScope
+for (const row of [{ stale: true, resource_version: 1 }, { resource_version: 1 }, { stale: false }, { stale: false, resource_version: 9007199254740992 }]) {
+  confirm = null; await removeOSD(row); assert.equal(confirm, null)
+}
+await removeOSD({ stale: false, resource_version: '9007199254740993' })
+await confirm.onOk()
+assert.deepEqual(writes[0], ['/osd', 'DELETE', { cluster_id: 7, osd_id: '0', zap: false }, { ifMatch: '9007199254740993' }])
+for (const value of [null, undefined, 0, -1, 1.5, '0', '1.5', '18446744073709551616']) assert.equal(osdInventoryVersion(value), null)
+assert.equal(osdInventoryVersion(1), '1')
 const inspectionSource = readFileSync(new URL('../src/pages/cluster/OSDInspection.tsx', import.meta.url), 'utf8')
 const inspectionTree = ts.createSourceFile('inspection.tsx', inspectionSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const epochNode = inspectionTree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'osdHistoryEpoch')
