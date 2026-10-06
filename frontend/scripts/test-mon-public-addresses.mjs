@@ -7,6 +7,16 @@ import './test-mon-quorum-groups.mjs'
 
 const exports = {}
 const jsx = (type, props) => ({ type, props })
+const snapshot = {}
+new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/cluster/MonSnapshotState.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(snapshot, name => name === 'antd' ? { Space: 'Space', Tag: 'Tag', Typography: { Text: 'Text' } } : name.includes('utils/time') ? { formatDateTime: value => value } : { jsx, jsxs: jsx })
+for (const [stale, observedAt, expected] of [
+  [true, '2026-10-06T10:00:00Z', '历史快照，请重新采集'],
+  [false, '2026-10-06T10:00:00Z', '采集快照（非实时）'],
+  [undefined, '2026-10-06T10:00:00Z', '采集状态未知'],
+  ['false', '2026-10-06T10:00:00Z', '采集状态未知'],
+  [false, null, '采集状态未知'], [false, 'invalid', '采集状态未知']
+]) assert.equal(snapshot.MonSnapshotState({ stale, observedAt }).props.children[0].props.children, expected)
+for (const file of ['pages.tsx', 'MonDetailPage.tsx']) assert.ok(readFileSync(new URL(`../src/pages/cluster/${file}`, import.meta.url), 'utf8').includes('<MonSnapshotState observedAt='))
 new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/cluster/MonPublicAddresses.tsx', import.meta.url), 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX }
 }).outputText)(exports, () => ({ jsx, jsxs: jsx }))

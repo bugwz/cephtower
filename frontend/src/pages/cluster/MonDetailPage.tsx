@@ -1,5 +1,5 @@
 import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Descriptions, Input, Space, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Descriptions, Input, Space, Typography } from 'antd'
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { textValue } from '../../api/client'
@@ -13,6 +13,7 @@ import { formatDateTime } from '../../utils/time'
 import { MonPublicAddresses } from './MonPublicAddresses'
 import { monSessionCount } from './monSessionCount'
 import { MonQuorumState } from './MonQuorumState'
+import { MonSnapshotState } from './MonSnapshotState'
 import { MonCounterValue, monCounterType } from './MonCounterValue'
 
 const { Text } = Typography
@@ -101,7 +102,7 @@ function MonDetailContent({ selectedClusterId, monName }: { selectedClusterId?: 
             <Descriptions.Item label="更新时间">{formatDateTime(mon.updated_at)}</Descriptions.Item>
             <Descriptions.Item label="创建时间">{formatDateTime(mon.created_at)}</Descriptions.Item>
             <Descriptions.Item label="数据状态">
-              <Tag color={mon.stale === true ? 'warning' : 'success'}>{mon.stale === true ? '已过期' : '最新'}</Tag>
+              <MonSnapshotState observedAt={mon.observed_at} stale={mon.stale} />
             </Descriptions.Item>
           </Descriptions>
         ) : (

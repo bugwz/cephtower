@@ -40,6 +40,7 @@ import { MonDetailPage } from './MonDetailPage'
 import { MonPublicAddresses } from './MonPublicAddresses'
 import { monSessionCount } from './monSessionCount'
 import { MonQuorumState } from './MonQuorumState'
+import { MonSnapshotState } from './MonSnapshotState'
 import { monQuorumGroups } from './monQuorumGroups'
 import { monQuorumMembers, monQuorumLeader, monQuorumInteger } from './monQuorumSummary'
 import { PoolDetailPage } from './PoolDetailPage'
@@ -106,6 +107,7 @@ export function MonManagementPage() {
             </Button>
           }
         >
+          <MonSnapshotState observedAt={data?.status?.observed_at} stale={data?.status?.stale} />
           <Descriptions className="mon-status-descriptions" size="small" column={twoColumnDescriptions} bordered>
             <Descriptions.Item label="集群 ID">{textValue(data?.status?.fsid)}</Descriptions.Item>
             <Descriptions.Item label="仲裁成员（采集时）">{monQuorumMembers(data?.status?.quorum_names)}</Descriptions.Item>
@@ -155,6 +157,7 @@ export function MonManagementPage() {
               render: (_, row) => <MonQuorumState value={row.in_quorum} />
             },
             { key: 'open_sessions', title: 'Open sessions（采集时）', render: (value) => monSessionCount(value) },
+            { key: 'observed_at', title: '采集状态', filterKey: false, render: (_, row) => <MonSnapshotState observedAt={row.observed_at} stale={row.stale} /> },
             {
               key: 'actions',
               title: '操作',
