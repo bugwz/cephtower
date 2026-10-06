@@ -159,6 +159,7 @@ var mutationRouteActions = map[string]string{
 	"POST /nvmeof/subsystem/listener":               "nvmeof_listener.create",
 	"POST /nvmeof/subsystem/namespace":              "nvmeof_namespace.create",
 	"POST /osd/action":                              "osd.action",
+	"PUT /osd/device/class":                         "osd.device_class",
 	"POST /osd/deployment":                          "osd_deployment.create",
 	"POST /osd/deployment/preview":                  "osd_deployment.preview",
 	"POST /osd/removal/check":                       "osd.removal_check",

@@ -130,6 +130,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	add([]string{"osd.action"}, true, map[string]JSONField{"action": stringField(true, "in", "out", "down", "reweight", "scrub", "deep-scrub"), "weight": numberField(false)})
 	add([]string{"osd_flag.update"}, true, map[string]JSONField{"action": stringField(true, "set", "unset"), "flag": stringField(true)})
 	add([]string{"osd.removal_check"}, true, map[string]JSONField{"osd_ids": stringsField(true)})
+	add([]string{"osd.device_class"}, true, map[string]JSONField{"osd_id": stringField(true), "device_class": stringField(true), "expected_class": stringField(true)})
 	dataDevices := objectField(true, map[string]JSONField{"all": boolField(false), "paths": stringsField(false), "rotational": boolField(false), "model": stringField(false), "vendor": stringField(false), "size": stringField(false)})
 	add([]string{"osd_deployment.preview", "osd_deployment.create"}, true, map[string]JSONField{"service_id": stringField(false), "host_pattern": stringField(false), "data_devices": dataDevices})
 	add([]string{"crush_rule.create"}, true, map[string]JSONField{"name": stringField(true), "root": stringField(true), "failure_domain": stringField(false), "device_class": stringField(false)})
