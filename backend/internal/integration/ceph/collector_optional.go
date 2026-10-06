@@ -673,10 +673,18 @@ func (p *NativeProvider) collectErasureProfiles(ctx context.Context, access Clus
 				return nil
 			}
 			seen[name] = true
-			var details map[string]string
-			if !p.optional(ctx, access, executor.BinaryCeph, "collect.erasure_code_profile_detail", []string{"osd", "erasure-code-profile", "get", name, "--format", "json"}, &details) || strings.TrimSpace(details["plugin"]) == "" {
+			var native map[string]*string
+			if !p.optional(ctx, access, executor.BinaryCeph, "collect.erasure_code_profile_detail", []string{"osd", "erasure-code-profile", "get", name, "--format", "json"}, &native) || native["plugin"] == nil || strings.TrimSpace(*native["plugin"]) == "" {
 				markCollectionUnavailable(ctx, "collect.erasure_code_profile")
 				return nil
+			}
+			details := make(map[string]string, len(native))
+			for key, value := range native {
+				if strings.TrimSpace(key) == "" || value == nil {
+					markCollectionUnavailable(ctx, "collect.erasure_code_profile")
+					return nil
+				}
+				details[key] = *value
 			}
 			rows = append(rows, observation("erasure_code_profile", name, name, "ceph_cli", details, now))
 		}
