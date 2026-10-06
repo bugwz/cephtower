@@ -293,6 +293,10 @@ func (h *Handler) MarkOSDLost(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("osd", "osd.lost", "high")(w, r)
 }
 
+func (h *Handler) PurgeOSD(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("osd", "osd.purge", "high")(w, r)
+}
+
 func (h *Handler) UpdateOSDDeviceClass(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("osd", "osd.device_class", "high")(w, r)
 }

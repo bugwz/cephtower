@@ -18,6 +18,7 @@ func osdRoutes(h *handler.Handler) []Route {
 		{"POST", "/osd/removal/stop", h.StopOSDRemoval},
 		{"POST", "/osd/destroy", h.DestroyOSD},
 		{"POST", "/osd/lost", h.MarkOSDLost},
+		{"POST", "/osd/purge", h.PurgeOSD},
 		{"POST", "/osd/deployment/preview", h.PreviewOSDDeployment},
 		{"POST", "/osd/deployment", h.CreateOSDDeployment},
 	}

@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- 原生 OSD Purge 后端：新增高风险 POST /osd/purge，要求精确 purge osd.ID、UUID 与 Down 快照匹配以及原生 safe-to-destroy。允许已 Destroy 的零 UUID 目标，执行 purge-actual 后核验 OSD map 无目标、CRUSH 名称映射清除且 bucket 无目标引用；依据 CrushWrapper.dump 保留 deviceN 占位的语义，不错误要求设备编号从 dump 消失。无效/重复/缺失数据不当成已移除。覆盖正常和已销毁目标、安全拒绝、目标残留及畸形回读。前端待接入；未操作真实集群。
+
 - OSD Lost 前端：详情提供独立标记 Lost 页，区分 Down/Destroy/移除，提示永久数据丢失风险。复用新鲜 Down 快照、UUID 与精确版本门禁，要求输入 mark lost osd.ID 及勾选风险确认；提交到原生 Lost API，成功说明 epoch 回读而非数据恢复，失败禁止原页直接重试。共享回归覆盖两种操作各自的 API/确认文本、双击、过期快照、失败和卸载保护；未操作真实集群。
 
 - OSD Lost 原生后端：增加高风险 POST /osd/lost，精确确认 mark lost osd.ID、UUID/Down 状态及 safe-to-destroy 安全检查后执行 osd lost --yes-i-really-mean-it。依据 OSDMonitor 原生语义，验证 lost_at 等于执行前 down_at，同时身份与 Down epoch 未变化；不伪造 lost 状态标记，异常禁止自动重试。测试覆盖安全门禁、身份变化、epoch 缺失/越界/重复、命令及回读失败。前端入口待接入，未进行真实集群操作。

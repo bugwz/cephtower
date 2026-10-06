@@ -164,6 +164,7 @@ var mutationRouteActions = map[string]string{
 	"POST /osd/removal/stop":                        "osd_removal.stop",
 	"POST /osd/destroy":                             "osd.destroy",
 	"POST /osd/lost":                                "osd.lost",
+	"POST /osd/purge":                               "osd.purge",
 	"POST /osd/deployment":                          "osd_deployment.create",
 	"POST /osd/deployment/preview":                  "osd_deployment.preview",
 	"POST /osd/removal/check":                       "osd.removal_check",
