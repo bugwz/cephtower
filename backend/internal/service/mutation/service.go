@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/big"
 	pathpkg "path"
 	"regexp"
@@ -1127,6 +1128,10 @@ func build(request Request, p map[string]any) (command, error) {
 		return telemetryChannelCommand(p)
 	case "osd.action":
 		id := pathValue(tail, "osd")
+		parsedID, err := strconv.ParseUint(id, 10, 31)
+		if err != nil || strconv.FormatUint(parsedID, 10) != id {
+			return command{}, invalid("osd_id must be a canonical non-negative OSD id")
+		}
 		verb, err := enum(p, "action", "in", "out", "down", "reweight", "scrub", "deep-scrub")
 		if err != nil {
 			return command{}, err
@@ -1136,6 +1141,10 @@ func build(request Request, p map[string]any) (command, error) {
 			weight, err := required(p, "weight")
 			if err != nil {
 				return command{}, err
+			}
+			parsedWeight, err := strconv.ParseFloat(weight, 64)
+			if err != nil || math.IsNaN(parsedWeight) || math.IsInf(parsedWeight, 0) || parsedWeight < 0 || parsedWeight > 1 {
+				return command{}, invalid("weight must be a finite number between 0 and 1")
 			}
 			args = append(args, weight)
 		}
