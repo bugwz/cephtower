@@ -141,8 +141,9 @@ func (p *NativeProvider) Collect(ctx context.Context, access ClusterAccess, modu
 }
 
 type statusWire struct {
-	FSID   string `json:"fsid"`
-	Health struct {
+	ProgressEvents map[string]*cephdomain.ProgressEvent `json:"progress_events"`
+	FSID           string                               `json:"fsid"`
+	Health         struct {
 		Status string `json:"status"`
 	} `json:"health"`
 	MonMap struct {
@@ -243,6 +244,7 @@ func (p *NativeProvider) collectFast(ctx context.Context, access ClusterAccess) 
 		mon.InQuorum = intPointer(len(status.Quorum))
 		overview.Services["mon"] = mon
 	}
+	overview.ProgressEvents = status.ProgressEvents
 	if versions, err := p.run(ctx, access, "collect.versions", 30*time.Second, "versions", "--format", "json"); err == nil {
 		overview.CephVersion = cephVersionFromVersions(versions)
 	}

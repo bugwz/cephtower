@@ -47,16 +47,23 @@ type ObjectStats struct {
 	Unfound   *uint64 `json:"unfound"`
 }
 type Overview struct {
-	FSID            string                  `json:"fsid"`
-	CephVersion     string                  `json:"ceph_version,omitempty"`
-	HealthStatus    string                  `json:"health_status"`
-	Capacity        Capacity                `json:"capacity"`
-	Services        map[string]ServiceCount `json:"services"`
-	PlacementGroups []PGState               `json:"placement_groups"`
-	ClientIO        ClientIO                `json:"client_io"`
-	PoolCount       *uint64                 `json:"pool_count"`
-	PGsPerOSD       *float64                `json:"pgs_per_osd"`
-	ObjectStats     ObjectStats             `json:"object_stats"`
-	ScrubStatus     *string                 `json:"scrub_status"`
-	ObservedAt      time.Time               `json:"observed_at"`
+	ProgressEvents  map[string]*ProgressEvent `json:"progress_events"`
+	FSID            string                    `json:"fsid"`
+	CephVersion     string                    `json:"ceph_version,omitempty"`
+	HealthStatus    string                    `json:"health_status"`
+	Capacity        Capacity                  `json:"capacity"`
+	Services        map[string]ServiceCount   `json:"services"`
+	PlacementGroups []PGState                 `json:"placement_groups"`
+	ClientIO        ClientIO                  `json:"client_io"`
+	PoolCount       *uint64                   `json:"pool_count"`
+	PGsPerOSD       *float64                  `json:"pgs_per_osd"`
+	ObjectStats     ObjectStats               `json:"object_stats"`
+	ScrubStatus     *string                   `json:"scrub_status"`
+	ObservedAt      time.Time                 `json:"observed_at"`
+}
+
+type ProgressEvent struct {
+	Message         *string  `json:"message"`
+	Progress        *float64 `json:"progress"`
+	AddToCephStatus *bool    `json:"add_to_ceph_s"`
 }

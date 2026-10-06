@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### Ceph 当前进度事件概览
+
+- 核对参考 `MgrMap.h#print_summary` 确认既有 MGR standby 计数映射正确，无需替换；同时对照 `Monitor.cc` 与 `mon_types.h#ProgressEvent`，接入原生 status 的 `progress_events`。
+- 链路为既有 `ceph status --format json` → 可空事件映射 → 概览资源 API → 当前进度事件表，展示原始事件 ID、说明和 0..1 进度换算后的百分比；不额外发命令。
+- 缺失事件集合显示未知，合法空集合显示本次没有事件，null 事件和越界/缺失进度不伪装成有效进度。参考 Dashboard 的 `services/progress.py` 还有开始时间、完成历史与 RBD 任务映射，本轮 status 快照不提供这些信息，也不冒充本项目操作队列或远端完成确认。
+- 新增采集缺失/空/有效/null 事件、有效零进度、前端身份保留及异常比例测试；`make test-backend`（含 OpenAPI 校验）与 `make test-frontend` 通过。未进行浏览器视觉或真实 Ceph 联调。
+
 #### 修复概览 MON quorum 的原生字段位置
 
 - 对照参考 Ceph `src/mon/Monitor.cc` 的 status 输出，`quorum` 与 `fsid` 同为顶层字段，不在 `monmap` 内。修正 `statusWire` 及测试夹具，概览 MON 的 `in_quorum` 现在读取原生顶层数组长度。

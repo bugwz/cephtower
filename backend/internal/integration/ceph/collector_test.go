@@ -272,6 +272,45 @@ func TestOverviewUsesTopLevelQuorum(t *testing.T) {
 	}
 }
 
+func TestOverviewProgressEvents(t *testing.T) {
+	for _, field := range []string{"", `,"progress_events":{}`, `,"progress_events":{"recovery":{"message":"Recovering","progress":0.25,"add_to_ceph_s":true},"zero":{"progress":0},"unknown":null}`} {
+		provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.status": []byte(`{"fsid":"test","health":{"status":"HEALTH_OK"}` + field + `}`)}}}
+		rows, err := provider.Collect(context.Background(), ClusterAccess{}, "fast")
+		if err != nil {
+			t.Fatal(err)
+		}
+		found := false
+		for _, row := range rows {
+			if row.Kind != "overview" {
+				continue
+			}
+			found = true
+			events := row.Payload.(cephdomain.Overview).ProgressEvents
+			if field == "" {
+				if events != nil {
+					t.Fatal("missing events fabricated")
+				}
+				continue
+			}
+			if events == nil {
+				t.Fatal("provided events lost")
+			}
+			if len(events) == 0 {
+				if field != `,"progress_events":{}` {
+					t.Fatal("events lost")
+				}
+				continue
+			}
+			if len(events) != 3 || events["recovery"].Progress == nil || *events["recovery"].Progress != 0.25 || *events["recovery"].Message != "Recovering" || !*events["recovery"].AddToCephStatus || events["zero"].Progress == nil || *events["zero"].Progress != 0 || events["unknown"] != nil {
+				t.Fatalf("events %#v", events)
+			}
+		}
+		if !found {
+			t.Fatal("overview missing")
+		}
+	}
+}
+
 func TestOverviewScrubStatusMatchesDashboardSemantics(t *testing.T) {
 	tests := []struct {
 		name       string
