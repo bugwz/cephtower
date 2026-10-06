@@ -11,6 +11,7 @@ import { OSDSafetyCheck } from './OSDSafetyCheck'
 import { OSDDeviceClass } from './OSDDeviceClass'
 import { OSDDestroy } from './OSDDestroy'
 import { OSDLost } from './OSDLost'
+import { OSDPurge } from './OSDPurge'
 import { OSDIndividualFlags } from './OSDIndividualFlags'
 
 export function OSDInspection({ clusterId, osdId, record }: { clusterId: number; osdId: string; record: ApiRecord }) {
@@ -19,6 +20,7 @@ export function OSDInspection({ clusterId, osdId, record }: { clusterId: number;
     { key: 'device-class', label: '编辑设备类别', children: <OSDDeviceClass key={`${clusterId}:${osdId}:device-class`} clusterId={clusterId} osdId={osdId} record={record} /> },
     { key: 'destroy', label: '销毁 OSD', children: <OSDDestroy key={`${clusterId}:${osdId}:destroy`} clusterId={clusterId} osdId={osdId} record={record} /> },
     { key: 'lost', label: '标记 Lost', children: <OSDLost key={`${clusterId}:${osdId}:lost`} clusterId={clusterId} osdId={osdId} record={record} /> },
+    { key: 'purge', label: '清除 OSD（Purge）', children: <OSDPurge key={`${clusterId}:${osdId}:purge`} clusterId={clusterId} osdId={osdId} record={record} /> },
     { key: 'individual-flags', label: '单 OSD 标志', children: <OSDIndividualFlags key={`${clusterId}:${osdId}:individual-flags`} clusterId={clusterId} osdId={osdId} record={record} /> },
     { key: 'safety', label: '安全销毁检查', children: <OSDSafetyCheck key={`${clusterId}:${osdId}:safety`} clusterId={clusterId} osdId={osdId} /> },
     { key: 'network', label: '网络地址', children: <OSDNetwork record={record} /> },

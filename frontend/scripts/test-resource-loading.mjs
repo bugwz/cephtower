@@ -436,8 +436,8 @@ assert.deepEqual(deviceRecords({ devices: [] }), [])
 for (const devices of [undefined, null, {}, [null], [{}], [{ devid: 0 }], [{ devid: ' ' }]]) assert.equal(deviceRecords({ devices }), null)
 const osdNode = osdTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'OSDInspection')
 const osdCode = ts.transpileModule(osdNode.getText(osdTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
-const osdInspection = new Function('React', 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', 'Alert', 'Descriptions', 'osdHistoryEpoch', 'OSDNetwork', 'OSDUsage', 'OSDSafetyCheck', 'OSDDeviceClass', 'OSDIndividualFlags', 'OSDDestroy', 'OSDLost', `${osdCode}; return OSDInspection`)(
-  { createElement: (component, props) => ({ component, props }) }, 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', 'Alert', { Item: 'Item' }, String, 'OSDNetwork', 'OSDUsage', 'OSDSafetyCheck', 'OSDDeviceClass', 'OSDIndividualFlags', 'OSDDestroy', 'OSDLost')
+const osdInspection = new Function('React', 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', 'Alert', 'Descriptions', 'osdHistoryEpoch', 'OSDNetwork', 'OSDUsage', 'OSDSafetyCheck', 'OSDDeviceClass', 'OSDIndividualFlags', 'OSDDestroy', 'OSDLost', 'OSDPurge', `${osdCode}; return OSDInspection`)(
+  { createElement: (component, props) => ({ component, props }) }, 'Tabs', 'RecordDetail', 'Diagnostic', 'DaemonPerf', 'Alert', { Item: 'Item' }, String, 'OSDNetwork', 'OSDUsage', 'OSDSafetyCheck', 'OSDDeviceClass', 'OSDIndividualFlags', 'OSDDestroy', 'OSDLost', 'OSDPurge')
 const perfKeys = new Set()
 const diagnosticKeys = new Set()
 for (const [clusterId, osdId] of [[1, '0'], [1, '12'], [2, '12']]) {
