@@ -1,6 +1,16 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
+const flagsSource = readFileSync(new URL('../src/api/resource.ts', import.meta.url), 'utf8')
+const flagsTree = ts.createSourceFile('resource.ts', flagsSource, ts.ScriptTarget.Latest, true)
+const flagsNode = flagsTree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'listOSDFlags')
+const flagsJS = ts.transpileModule(flagsNode.getText(flagsTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const flags of [undefined, null, [], ['noout'], [''], [null], [1], 'noout', [' noout']]) {
+  const calls = []
+  const readFlags = new Function('getOptionalResource', 'toRecord', `${flagsJS}; return listOSDFlags`)(async (...args) => { calls.push(args); return { item: { data: { flags } } } }, value => value)
+  assert.deepEqual(await readFlags(17), Array.isArray(flags) && flags.every(f => typeof f === 'string' && f.length > 0 && f.trim() === f) ? flags : null)
+  assert.equal(calls[0][1], 17)
+}
 const source = readFileSync(new URL('../src/pages/cluster/pages.tsx', import.meta.url), 'utf8')
 const tree = ts.createSourceFile('page.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const component = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'ReweightForm')

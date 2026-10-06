@@ -253,20 +253,14 @@ export async function listOSDs(): Promise<ApiRecord[]> {
   return listResource('/osds').then((payload) => payload.items)
 }
 
-export async function listOSDFlags(): Promise<string[]> {
-  const payload = await getOptionalResource<ApiRecord>('/osd/flag', requiredClusterId(), {})
+export async function listOSDFlags(clusterId: number): Promise<string[] | null> {
+  const payload = await getOptionalResource<ApiRecord>('/osd/flag', clusterId, {})
   if (!payload) {
-    return []
+    return null
   }
   const data = toRecord(payload.item.data)
   const flags = data.flags
-  if (Array.isArray(flags)) {
-    return flags.map((flag) => textValue(flag, '')).filter(Boolean)
-  }
-  if (typeof flags === 'string') {
-    return flags.split(',').map((flag) => flag.trim()).filter(Boolean)
-  }
-  return []
+  return Array.isArray(flags) && flags.every(flag => typeof flag === 'string' && flag.length > 0 && flag.trim() === flag) ? flags : null
 }
 
 export function markOSD(clusterId: number, id: string, action: string): Promise<ActionResult> {

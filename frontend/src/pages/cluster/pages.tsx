@@ -344,7 +344,7 @@ export function OsdManagementPage() {
     }
     const [osds, flags, removalMeta] = await Promise.all([
       listAllResources('/osds', selectedClusterId, { filters: osdTableFilters.filters }).then((payload) => payload.items),
-      listOSDFlags(),
+      listOSDFlags(selectedClusterId),
       listAllResources('/osd/removals', selectedClusterId, { limit: 500 })
     ])
     return { osds, flags, removals: removalMeta.items, removalMeta }
@@ -474,7 +474,7 @@ export function OsdManagementPage() {
         </section>
         <section className="embedded-panel">
           <div className="embedded-panel-title">OSD Flags</div>
-          {(data?.flags ?? []).length ? data?.flags.map((flag) => <Tag key={flag}>{flag}</Tag>) : <span className="muted">未设置 OSD flags</span>}
+          {data?.flags == null ? <span className="muted">OSD flags 未采集或格式无效</span> : data.flags.length ? data.flags.map((flag, index) => <Tag key={`${index}-${flag}`}>{flag}</Tag>) : <span className="muted">未设置 OSD flags</span>}
         </section>
         <section className="embedded-panel">
           <DataTable

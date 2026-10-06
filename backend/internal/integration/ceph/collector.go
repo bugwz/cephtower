@@ -1090,7 +1090,11 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		return nil, err
 	}
 	rows := []Observation{}
-	rows = append(rows, Observation{Kind: "osd_flag", NaturalKey: "flags", Name: "flags", Source: "ceph_cli", Payload: map[string]any{"flags": splitOSDFlags(value(dump.Flags))}, ObservedAt: now})
+	var flags []string
+	if dump.Flags != nil {
+		flags = splitOSDFlags(*dump.Flags)
+	}
+	rows = append(rows, Observation{Kind: "osd_flag", NaturalKey: "flags", Name: "flags", Source: "ceph_cli", Payload: map[string]any{"flags": flags}, ObservedAt: now})
 	for _, node := range tree.Nodes {
 		if node.Type != "osd" {
 			continue
