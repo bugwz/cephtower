@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"cephtower/backend/internal/config"
+	cephdomain "cephtower/backend/internal/domain/ceph"
 	cephprovider "cephtower/backend/internal/integration/ceph"
 	"cephtower/backend/internal/integration/ceph/executor"
 	"cephtower/backend/internal/security"
@@ -23,6 +24,7 @@ type fakeExecutor struct {
 	args    [][]string
 	outputs [][]byte
 	failAt  map[int]error
+	exitAt  map[int]int
 }
 
 func (f *fakeExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec executor.CommandSpec) (executor.CommandResult, error) {
@@ -32,7 +34,28 @@ func (f *fakeExecutor) Run(_ context.Context, _ executor.ClusterAccess, spec exe
 	}
 	output := f.outputs[0]
 	f.outputs = f.outputs[1:]
-	return executor.CommandResult{Stdout: output}, nil
+	return executor.CommandResult{Stdout: output, ExitCode: f.exitAt[len(f.args)]}, nil
+}
+
+func TestHostDiagnosticsRejectFailedExitWithValidJSON(t *testing.T) {
+	for _, stage := range []int{1, 2, 3} {
+		service, runner, id := testService(t,
+			[]byte(`[{"devid":"disk-1","daemons":["osd.1","osd.2"]}]`),
+			[]byte(`{"disk-1":{"smart_status":{"passed":true}}}`),
+			[]byte(`{"disk-1":{"smart_status":{"passed":true}}}`),
+		)
+		runner.exitAt = map[int]int{stage: 1}
+		result, err := service.SMART(context.Background(), id, "node-1")
+		var actionErr *cephdomain.ActionError
+		if result != nil || !errors.As(err, &actionErr) || actionErr.Code != "ceph_command_failed" || len(runner.args) != stage {
+			t.Fatalf("stage=%d result=%v error=%v calls=%v", stage, result, err, runner.args)
+		}
+	}
+	service, runner, id := testService(t, []byte(`[]`))
+	runner.exitAt = map[int]int{1: 1}
+	if devices, err := service.Devices(context.Background(), id, "node-1"); err == nil || devices != nil {
+		t.Fatalf("failed inventory query accepted: %v %v", devices, err)
+	}
 }
 
 func TestSMARTDoesNotHideFailedDaemonQueries(t *testing.T) {
