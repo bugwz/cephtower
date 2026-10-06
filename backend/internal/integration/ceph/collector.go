@@ -146,9 +146,9 @@ type statusWire struct {
 		Status string `json:"status"`
 	} `json:"health"`
 	MonMap struct {
-		NumMons int   `json:"num_mons"`
-		Quorum  []int `json:"quorum"`
+		NumMons int `json:"num_mons"`
 	} `json:"monmap"`
+	Quorum []int `json:"quorum"`
 	OSDMap struct {
 		NumOSDs   int `json:"num_osds"`
 		NumUpOSDs int `json:"num_up_osds"`
@@ -237,7 +237,12 @@ func (p *NativeProvider) collectFast(ctx context.Context, access ClusterAccess) 
 	if df.Stats.TotalBytes == nil || df.Stats.TotalUsedBytes == nil || df.Stats.TotalAvailBytes == nil {
 		return nil, fmt.Errorf("parse collect.df response: total byte fields are required")
 	}
-	overview := cephdomain.Overview{FSID: status.FSID, HealthStatus: status.Health.Status, Capacity: cephdomain.Capacity{TotalBytes: df.Stats.TotalBytes, UsedBytes: df.Stats.TotalUsedBytes, AvailableBytes: df.Stats.TotalAvailBytes}, Services: map[string]cephdomain.ServiceCount{"mon": {Total: &status.MonMap.NumMons, InQuorum: intPointer(len(status.MonMap.Quorum))}, "mgr": {Active: intPointer(boolInt(status.MgrMap.Available)), Standby: &status.MgrMap.NumStandbys}, "osd": {Total: &status.OSDMap.NumOSDs, Up: &status.OSDMap.NumUpOSDs, In: &status.OSDMap.NumInOSDs}, "mds": {Active: &status.FSMap.Up, Standby: intPointer(len(status.FSMap.Standbys))}}, PoolCount: status.PGMap.NumPools, ObjectStats: cephdomain.ObjectStats{Objects: status.PGMap.NumObjects}, ClientIO: cephdomain.ClientIO{ReadBytesPerSecond: status.PGMap.ReadBytesSec, WriteBytesPerSecond: status.PGMap.WriteBytesSec, ReadOpsPerSecond: status.PGMap.ReadOpPerSec, WriteOpsPerSecond: status.PGMap.WriteOpPerSec, RecoveringBytesPerSecond: status.PGMap.RecoveringBytesPerSec, RecoveringObjectsPerSecond: status.PGMap.RecoveringObjectsPerSec, RecoveringKeysPerSecond: status.PGMap.RecoveringKeysPerSec}, ObservedAt: now}
+	overview := cephdomain.Overview{FSID: status.FSID, HealthStatus: status.Health.Status, Capacity: cephdomain.Capacity{TotalBytes: df.Stats.TotalBytes, UsedBytes: df.Stats.TotalUsedBytes, AvailableBytes: df.Stats.TotalAvailBytes}, Services: map[string]cephdomain.ServiceCount{"mon": {Total: &status.MonMap.NumMons}, "mgr": {Active: intPointer(boolInt(status.MgrMap.Available)), Standby: &status.MgrMap.NumStandbys}, "osd": {Total: &status.OSDMap.NumOSDs, Up: &status.OSDMap.NumUpOSDs, In: &status.OSDMap.NumInOSDs}, "mds": {Active: &status.FSMap.Up, Standby: intPointer(len(status.FSMap.Standbys))}}, PoolCount: status.PGMap.NumPools, ObjectStats: cephdomain.ObjectStats{Objects: status.PGMap.NumObjects}, ClientIO: cephdomain.ClientIO{ReadBytesPerSecond: status.PGMap.ReadBytesSec, WriteBytesPerSecond: status.PGMap.WriteBytesSec, ReadOpsPerSecond: status.PGMap.ReadOpPerSec, WriteOpsPerSecond: status.PGMap.WriteOpPerSec, RecoveringBytesPerSecond: status.PGMap.RecoveringBytesPerSec, RecoveringObjectsPerSecond: status.PGMap.RecoveringObjectsPerSec, RecoveringKeysPerSecond: status.PGMap.RecoveringKeysPerSec}, ObservedAt: now}
+	if status.Quorum != nil {
+		mon := overview.Services["mon"]
+		mon.InQuorum = intPointer(len(status.Quorum))
+		overview.Services["mon"] = mon
+	}
 	if versions, err := p.run(ctx, access, "collect.versions", 30*time.Second, "versions", "--format", "json"); err == nil {
 		overview.CephVersion = cephVersionFromVersions(versions)
 	}

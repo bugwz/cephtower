@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### 修复概览 MON quorum 的原生字段位置
+
+- 对照参考 Ceph `src/mon/Monitor.cc` 的 status 输出，`quorum` 与 `fsid` 同为顶层字段，不在 `monmap` 内。修正 `statusWire` 及测试夹具，概览 MON 的 `in_quorum` 现在读取原生顶层数组长度。
+- 缺失/null quorum 保持未知，明确空数组才产生 0；不添加旧嵌套字段回退。现有前端服务计数展示无需变更即可显示正确值或未知占位。
+- 新增真实采集链路的完整、部分、空、缺失和 null quorum 测试，并在嵌套字段存在时验证不会误用；`make test-backend`（含 OpenAPI 校验）通过。本轮未改前端，未进行真实 Ceph 联调。
+
 #### 概览恢复对象与键速率
 
 - 参考 Dashboard 恢复卡片仅显示字节吞吐；参考 Ceph `src/mon/PGMap.cc` 的同一原生恢复统计还输出 `recovering_objects_per_sec` 和 `recovering_keys_per_sec`。本项目将二者补充到概览详情，不将其误称为参考卡片已有展示。

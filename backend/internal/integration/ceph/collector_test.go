@@ -161,7 +161,7 @@ func TestCollectFastIncludesDashboardHealthMetrics(t *testing.T) {
 		"collect.status": []byte(`{
 			"fsid":"00000000-0000-0000-0000-000000000001",
 			"health":{"status":"HEALTH_WARN"},
-			"monmap":{"num_mons":3,"quorum":[0,1,2]},
+			"monmap":{"num_mons":3},"quorum":[0,1,2],
 			"osdmap":{"num_osds":3,"num_up_osds":3,"num_in_osds":3},
 			"pgmap":{"num_pgs":4,"num_pools":2,"num_objects":100,
 				"pgs_by_state":[{"state_name":"active+clean","count":3},{"state_name":"active+scrubbing","count":1}],
@@ -187,6 +187,9 @@ func TestCollectFastIncludesDashboardHealthMetrics(t *testing.T) {
 	}
 	if overview.PoolCount == nil || *overview.PoolCount != 2 || overview.PGsPerOSD == nil || *overview.PGsPerOSD != 4 {
 		t.Fatalf("overview density = pool count %v, PGs/OSD %v", overview.PoolCount, overview.PGsPerOSD)
+	}
+	if overview.Services["mon"].InQuorum == nil || *overview.Services["mon"].InQuorum != 3 {
+		t.Fatalf("MON quorum = %+v", overview.Services["mon"])
 	}
 	if overview.ObjectStats.Copies == nil || *overview.ObjectStats.Copies != 300 || overview.ObjectStats.Degraded == nil || *overview.ObjectStats.Degraded != 3 {
 		t.Fatalf("object stats = %+v", overview.ObjectStats)
@@ -235,6 +238,38 @@ func TestCollectMissingRecoveryRatesRemainUnknown(t *testing.T) {
 		return
 	}
 	t.Fatal("overview not collected")
+}
+
+func TestOverviewUsesTopLevelQuorum(t *testing.T) {
+	for _, tc := range []struct {
+		name, field string
+		want        *int
+	}{
+		{"missing", "", nil},
+		{"null", `"quorum":null,`, nil},
+		{"empty", `"quorum":[],`, intPointer(0)},
+		{"partial", `"quorum":[0,2],`, intPointer(2)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			body := `{"fsid":"test","health":{"status":"HEALTH_OK"},` + tc.field + `"monmap":{"num_mons":3,"quorum":[0,1,2]}}`
+			provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.status": []byte(body)}}}
+			rows, err := provider.Collect(context.Background(), ClusterAccess{}, "fast")
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, row := range rows {
+				if row.Kind != "overview" {
+					continue
+				}
+				got := row.Payload.(cephdomain.Overview).Services["mon"].InQuorum
+				if !reflect.DeepEqual(got, tc.want) {
+					t.Fatalf("quorum = %v, want %v", got, tc.want)
+				}
+				return
+			}
+			t.Fatal("overview missing")
+		})
+	}
 }
 
 func TestOverviewScrubStatusMatchesDashboardSemantics(t *testing.T) {
