@@ -1,16 +1,17 @@
 package ceph
 
 type OSD struct {
-	Reweight    *float64          `json:"reweight"`
-	ID          int               `json:"id"`
-	Name        string            `json:"name"`
-	Status      string            `json:"status"`
-	Up          *bool             `json:"up"`
-	In          *bool             `json:"in"`
-	Weight      *float64          `json:"weight"`
-	DeviceClass *string           `json:"device_class"`
-	Host        *string           `json:"host"`
-	CrushPath   map[string]string `json:"crush_path,omitempty"`
+	PrimaryAffinity *float64          `json:"primary_affinity"`
+	Reweight        *float64          `json:"reweight"`
+	ID              int               `json:"id"`
+	Name            string            `json:"name"`
+	Status          string            `json:"status"`
+	Up              *bool             `json:"up"`
+	In              *bool             `json:"in"`
+	Weight          *float64          `json:"weight"`
+	DeviceClass     *string           `json:"device_class"`
+	Host            *string           `json:"host"`
+	CrushPath       map[string]string `json:"crush_path,omitempty"`
 }
 type Pool struct {
 	ClientIORate             *PoolClientIORate    `json:"client_io_rate"`

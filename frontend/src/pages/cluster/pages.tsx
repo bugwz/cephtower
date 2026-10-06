@@ -476,6 +476,7 @@ export function OsdManagementPage() {
               { key: 'in', title: 'In' },
               { key: 'device_class', title: '设备类型' },
               { key: 'reweight', title: 'OSD 调权系数', render: value => typeof value === 'number' ? value : '未采集' },
+              { key: 'primary_affinity', title: '主副本亲和度', render: value => typeof value === 'number' ? value : '未采集' },
               { key: 'stats', title: '容量/统计' },
               {
                 key: 'actions',

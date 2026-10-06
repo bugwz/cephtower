@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD 主副本亲和度：新增 `ceph osd dump` osds[].primary_affinity → 库存 API → 列表及原始详情展示。来源为原生 `OSDMap::dump_osd`，与 CRUSH 权重、OSD reweight 分离；未知保留 null，显式零保留，越界和错误类型拒绝采集。增加独立采集回归；本次仅展示，不新增修改操作。
+
 - OSD up/in 状态采集修正：按原生 `OSDMap::dump_osd` 的 0/1 字段解析，缺失、null 或树节点未匹配 dump 记录时保留未知，不再生成 false（down/out）。非 0/1 数值和错误类型拒绝采集；新增完整采集链路离线回归。
 
 - OSD 调权初值对齐参考 Dashboard 的 currentWeight：新增 `ceph osd dump` osds[].weight → API reweight → 列表/表单链路，与原有 CRUSH weight 分离。表单使用采集值，不默认覆盖为 1；未知留空、零值保留、取消两位小数强制舍入。新增采集范围校验及原始 CRUSH 权重不受影响的离线回归。

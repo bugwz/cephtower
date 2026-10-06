@@ -920,10 +920,11 @@ type osdTreeWire struct {
 type osdDumpWire struct {
 	Flags *string `json:"flags"`
 	OSDs  []struct {
-		Weight *float64 `json:"weight"`
-		OSD    int      `json:"osd"`
-		Up     *int     `json:"up"`
-		In     *int     `json:"in"`
+		PrimaryAffinity *float64 `json:"primary_affinity"`
+		Weight          *float64 `json:"weight"`
+		OSD             int      `json:"osd"`
+		Up              *int     `json:"up"`
+		In              *int     `json:"in"`
 	} `json:"osds"`
 }
 type poolWire struct {
@@ -1024,7 +1025,12 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 	}
 	states := map[int][2]*bool{}
 	reweights := map[int]*float64{}
+	affinities := map[int]*float64{}
 	for _, osd := range dump.OSDs {
+		if osd.PrimaryAffinity != nil && (*osd.PrimaryAffinity < 0 || *osd.PrimaryAffinity > 1) {
+			return nil, fmt.Errorf("parse collect.osd_dump response: primary_affinity must be between zero and one")
+		}
+		affinities[osd.OSD] = osd.PrimaryAffinity
 		if osd.Weight != nil && (*osd.Weight < 0 || *osd.Weight > 1) {
 			return nil, fmt.Errorf("parse collect.osd_dump response: weight must be between zero and one")
 		}
@@ -1065,6 +1071,7 @@ func (p *NativeProvider) collectStorage(ctx context.Context, access ClusterAcces
 		up, in := state[0], state[1]
 		payload := cephdomain.OSD{ID: node.ID, Name: node.Name, Status: node.Status, Up: up, In: in, Weight: node.CrushWeight, DeviceClass: node.DeviceClass, Host: hosts[node.ID], CrushPath: crushPaths[node.ID]}
 		payload.Reweight = reweights[node.ID]
+		payload.PrimaryAffinity = affinities[node.ID]
 		rows = append(rows, Observation{Kind: "osd", NaturalKey: strconv.Itoa(node.ID), Name: node.Name, Status: node.Status, Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	poolPGStates := p.collectPoolPGStates(ctx, access)
