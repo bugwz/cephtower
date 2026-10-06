@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- 全局 OSD 标志回读确认：原有 set/unset 后仅执行 dump，现在验证 flags 是否包含/移除了目标；pause 按原生 pauserd/pausewr 两位确认，只有同时设置或同时清除才算成功。缺失/null/畸形/重复标志或状态不符返回不可自动重试的未确认错误，新增解析及完整执行回归。
+
 - 单 OSD 标志界面：详情新增 noout/noin/nodown/noup 直接状态及设置/取消入口，明确取消直接标志不等于清除全局/CRUSH 继承限制。显式风险确认、精确 If-Match、快照有效性和目标切换隔离；一次提交后要求刷新核对再操作。新增状态解析、版本精度、请求参数、卸载和失败回归，前端检查通过，未做真实集群验证。
 
 - 单 OSD 标志后端：新增 PATCH /osd/flag/individual，仅允许 noout/noin/nodown/noup 的 set/unset，通过原生 osd set-group/unset-group 精确传入一个 OSD ID；回读 osd dump 中该 OSD 的 state 确认，不使用全局 flags 推断。拒绝缺失/重复目标及不匹配结果，新增命令顺序、全部标志和非法输入测试。前端操作入口待接入。

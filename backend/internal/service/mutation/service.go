@@ -540,6 +540,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "osd_flag.update" && (err != nil || checked.ExitCode != 0 || !osdGlobalFlagMatches(request.Parameters, checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "global OSD flag change could not be verified; inspect native cluster flags before retrying", Retryable: false}
+		}
 		if request.Action == "osd.individual_flag" && (err != nil || checked.ExitCode != 0 || !osdIndividualFlagMatches(request, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "individual OSD flag change could not be verified; inspect native OSD state before retrying", Retryable: false}
 		}
