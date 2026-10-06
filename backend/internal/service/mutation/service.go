@@ -1052,7 +1052,18 @@ func build(request Request, p map[string]any) (command, error) {
 		}
 		return ceph(args, []string{"orch", "upgrade", "status", "--format", "json"}), nil
 	case "manager.fail":
-		return ceph([]string{"mgr", "fail", last(tail)}, []string{"mgr", "dump", "--format", "json"}), nil
+		parts := strings.Split(request.ResourceKey, "/")
+		if len(parts) != 3 || parts[0] != "manager" || parts[2] != "fail" {
+			return command{}, invalid("manager fail requires an exact manager target")
+		}
+		name := parts[1]
+		if name == "" || name != strings.TrimSpace(name) || strings.HasPrefix(name, "-") || strings.ContainsAny(name, "\x00\r\n\t") || name == "." || name == ".." {
+			return command{}, invalid("invalid manager fail target")
+		}
+		if supplied, exists := p["name"]; exists && supplied != name {
+			return command{}, invalid("manager fail target does not match name")
+		}
+		return ceph([]string{"mgr", "fail", name}, []string{"mgr", "dump", "--format", "json"}), nil
 	case "monitor.action":
 		verb, err := enum(p, "action", "scrub", "ok-to-stop")
 		if err != nil {
