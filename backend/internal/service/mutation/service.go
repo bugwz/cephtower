@@ -483,6 +483,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 		}
 		return cephdomain.ActionResult{}, normalize(err)
 	}
+	if request.Action == "osd.delete" && (result.ExitCode != 0 || !osdRemovalScheduled(request.Parameters, result.Stdout)) {
+		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "orchestrator did not confirm scheduling OSD removal; inspect OSD and queue state before retrying", Retryable: false}
+	}
 	if request.Action == "osd_removal.stop" && (result.ExitCode != 0 || strings.TrimSpace(string(result.Stdout)) != "Stopped OSD(s) removal") {
 		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "orchestrator did not confirm stopping OSD removal; inspect the queue before retrying", Retryable: false}
 	}

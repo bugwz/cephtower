@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD 移除提交确认：依据 cephadm remove_osds 的返回路径，拒绝退出码为零但返回“Unable to find OSDs”或未知文本的结果；仅匹配原生调度确认及对应 zap 选项的未清盘警告。对普通移除/保留 ID 两种模式覆盖完整执行测试，确认的是编排器已调度，不声称排空或销毁完成。
+
 - 保留 OSD ID 的替换入口：OSD 列表新增独立“替换（保留 ID）”动作，通过同一库存版本与作用域校验提交 preserve_id=true；普通移除显式提交 false。确认框区分两种模式，说明排空、数据迁移、不会自动部署替代 OSD，不启用 force/zap；新增精确版本、请求模式与切换集群回归。
 
 - OSD 替换保留 ID 后端：对齐参考 Dashboard delete(preserve_id)→orchestrator replace，DELETE /osd 新增布尔 preserve_id，映射原生 orch osd rm --replace，可与显式 zap 组合，不添加强制移除。同步校验单 OSD ID，覆盖选项组合及请求类型；前端选择入口待接入，入队不等于已完成替换。
