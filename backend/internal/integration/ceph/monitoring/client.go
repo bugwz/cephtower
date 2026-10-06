@@ -249,21 +249,36 @@ type Dashboard struct {
 }
 
 func (c *Client) Dashboards(ctx context.Context) ([]Dashboard, error) {
-	var rows []*Dashboard
-	if err := c.get(ctx, "/api/search?type=dash-db", &rows); err != nil {
-		return nil, err
-	}
-	if rows == nil {
-		return nil, fmt.Errorf("Grafana did not return a dashboard list")
-	}
-	result := make([]Dashboard, 0, len(rows))
-	for _, row := range rows {
-		if row == nil || strings.TrimSpace(row.UID) == "" {
-			return nil, fmt.Errorf("Grafana returned a dashboard without a UID")
+	const pageSize = 1000
+	const maxPages = 100
+	result := make([]Dashboard, 0)
+	seen := make(map[string]bool)
+	for page := 1; page <= maxPages; page++ {
+		if err := ctx.Err(); err != nil {
+			return nil, err
 		}
-		result = append(result, *row)
+		var rows []*Dashboard
+		if err := c.get(ctx, fmt.Sprintf("/api/search?type=dash-db&limit=%d&page=%d", pageSize, page), &rows); err != nil {
+			return nil, err
+		}
+		if rows == nil || len(rows) > pageSize {
+			return nil, fmt.Errorf("Grafana returned an invalid dashboard page")
+		}
+		for _, row := range rows {
+			if row == nil || strings.TrimSpace(row.UID) == "" {
+				return nil, fmt.Errorf("Grafana returned a dashboard without a UID")
+			}
+			if seen[row.UID] {
+				return nil, fmt.Errorf("Grafana dashboard pages overlap; refresh the list")
+			}
+			seen[row.UID] = true
+			result = append(result, *row)
+		}
+		if len(rows) < pageSize {
+			return result, nil
+		}
 	}
-	return result, nil
+	return nil, fmt.Errorf("Grafana dashboard pagination limit exceeded; full list could not be verified")
 }
 
 func (c *Client) get(ctx context.Context, path string, out any) error {
