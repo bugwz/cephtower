@@ -919,6 +919,38 @@ type osdTreeWire struct {
 		Children    []int    `json:"children"`
 	} `json:"nodes"`
 }
+
+func (tree *osdTreeWire) UnmarshalJSON(data []byte) error {
+	type plainTree osdTreeWire
+	var decoded plainTree
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+	var identities struct {
+		Nodes []struct {
+			ID *int `json:"id"`
+		} `json:"nodes"`
+	}
+	if err := json.Unmarshal(data, &identities); err != nil {
+		return err
+	}
+	if decoded.Nodes == nil {
+		return fmt.Errorf("OSD tree nodes must be an array")
+	}
+	seen := map[int]bool{}
+	for i, node := range decoded.Nodes {
+		if identities.Nodes[i].ID == nil || node.Type == "" || strings.TrimSpace(node.Type) != node.Type || strings.TrimSpace(node.Name) == "" {
+			return fmt.Errorf("OSD tree node identity, type and name are required")
+		}
+		if seen[node.ID] || (node.Type == "osd" && node.ID < 0) {
+			return fmt.Errorf("OSD tree node identity is duplicated or invalid")
+		}
+		seen[node.ID] = true
+	}
+	*tree = osdTreeWire(decoded)
+	return nil
+}
+
 type osdDumpWire struct {
 	Flags *string `json:"flags"`
 	OSDs  []struct {

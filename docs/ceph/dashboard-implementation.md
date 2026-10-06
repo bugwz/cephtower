@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- OSD tree 节点身份校验：原生树缺失 ID 不再被默认成 OSD 0；拒绝 null/缺失节点数组、空节点、重复 ID、无类型/名称及负 OSD ID。保留显式空树、合法 OSD 0 和负 CRUSH bucket ID；完整采集链路回归确认非法树不产生库存记录。
+
 - OSD 诊断目标隔离：元数据、关联设备、SMART 与直方图组件按集群、OSD、section 设置独立 React key。切换目标立即重建诊断状态，不等待 effect 清理才隐藏旧结果；沿用 AbortController 拦截旧请求回写。新增所有诊断页的目标隔离回归。
 
 - OSD 设备健康：接入只读 `ceph device query-daemon-health-metrics osd.<id> --format json`，通过 inspection smart section 提供数据。新增 SMART 页，复用 ATA/SCSI/NVMe 详情；原生布尔健康状态严格区分通过、未通过、未知和读取失败。后端脱敏并将数值递归转为精确文本，补充大计数器、错误响应、目标绑定与状态回归，更新 OpenAPI。
