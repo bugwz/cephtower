@@ -38,3 +38,22 @@ func TestMonitorSessionsPreserveUnsignedCounts(t *testing.T) {
 		})
 	}
 }
+
+func TestMonitorSessionsIndependentOfPerfThreshold(t *testing.T) {
+	for _, schema := range []string{
+		`{"mon":{"num_sessions":{"type":2,"priority":5,"value_type":"integer"}}}`,
+		`{}`,
+	} {
+		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
+			"collect.mon_perf.schema": []byte(schema),
+			"collect.mon_perf.dump":   []byte(`{"mon":{"num_sessions":9007199254740993}}`),
+		}}}
+		rows, count := p.collectMonitorPerfCounters(context.Background(), ClusterAccess{}, "a", 10, time.Now())
+		if len(rows) != 0 {
+			t.Fatal("performance threshold was ignored")
+		}
+		if count == nil || *count != "9007199254740993" {
+			t.Fatalf("lost independent session count: %v", count)
+		}
+	}
+}

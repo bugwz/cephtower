@@ -722,7 +722,9 @@ func (p *NativeProvider) collectMonitorPerfCounters(ctx context.Context, access 
 	}
 	sort.Strings(groups)
 	rows := make([]Observation, 0)
-	var openSessions *string
+	// Monitor overview sessions are independent of the performance table's
+	// priority threshold, as in Dashboard's get_unlabeled_counter lookup.
+	openSessions := monitorSessionCount(values["mon"]["num_sessions"])
 	for _, group := range groups {
 		names := make([]string, 0, len(schema[group]))
 		for name := range schema[group] {
@@ -738,7 +740,6 @@ func (p *NativeProvider) collectMonitorPerfCounters(ctx context.Context, access 
 			rawValue := dashboardPerfRawValue(values[group][name], definition)
 			qualifiedName := group + "." + name
 			if qualifiedName == "mon.num_sessions" {
-				openSessions = monitorSessionCount(rawValue)
 				rawValue = openSessions
 			}
 			payload := cephdomain.MonitorPerfCounter{Monitor: monitor, Name: qualifiedName, Description: definition.Description, Value: rawValue, RawValue: rawValue, Unit: dashboardPerfUnit(definition.Units, metricType), MetricType: metricType, ValueType: definition.ValueType, Priority: definition.Priority}

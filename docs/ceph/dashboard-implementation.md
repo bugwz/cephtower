@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### MON 会话数独立于性能表优先级
+
+- 参考 `controllers/monitor.py` 独立读取 `mon.num_sessions` 的逻辑，将会话数直接从原生 `tell mon.<name> perf dump --format json` 结果提取，不再受性能表 `mgr_stats_threshold` 过滤影响。
+- 性能列表仍遵守优先级阈值；会话数保留 uint64 十进制字符串精度，非法或缺失值仍为未知。
+- 新测试覆盖阈值高于会话计数器优先级、schema 无对应条目但 dump 有会话数的情况。`make test-backend` 与 OpenAPI 校验通过；未进行真实集群验证。
+
 #### MON 快照时间与未知状态提示
 
 - MON 概要、节点分组表和详情统一展示已有 API 的 `observed_at` / `stale` 元数据；明确区分历史快照、非实时采集快照与未知状态。
