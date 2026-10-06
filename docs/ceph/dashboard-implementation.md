@@ -29,6 +29,13 @@
 
 ### 增量实现与验证记录
 
+#### 告警规则详情的原生实例表
+
+- 参考 `rules-list.component.ts` 将规则 `alerts` 隐藏、在独立活动告警表展示的处理；本项目新增规则详情实例表，直接读取已有 `/alert/rules` → Prometheus `/api/v1/rules` 响应中的原生 `alerts`，不按名称跨数据源拼接，也不伪造 Ceph CLI 查询。
+- 展示每个实例的完整标签、注释、状态、激活时间和原始值字符串。明确这是规则查询快照，不等同于 Alertmanager 通知或静默状态；刷新列表并重开详情更新快照。
+- 缺失、非数组或包含无效记录的实例列表显示警告，不冒充零告警；有效空数组明确显示没有实例，重复标签实例不去重。
+- `make test-frontend` 通过，新增原始值、缺失/空列表、重复实例与页面入口测试。本轮不修改后端；未进行浏览器视觉验证或真实 Prometheus 联调。
+
 #### 静默写入结果不确定时禁止自动重试
 
 - 对照参考 `prometheus.service.ts` 的创建与结束静默操作，继续使用 Alertmanager 原生 POST `/api/v2/silences` 与 DELETE `/api/v2/silence/{id}`，不虚构 Ceph CLI 替代接口。

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import './test-silenced-alerts.mjs'
+import './test-rule-alerts.mjs'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 

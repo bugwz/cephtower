@@ -2,6 +2,7 @@ import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalLi
 export { RuntimeLogsPage } from './RuntimeLogsPage'
 import { MetricPage } from './MetricPage'
 import { SilencedAlerts } from './SilencedAlerts'
+import { RuleAlerts } from './RuleAlerts'
 import { alertColumns, alertRuleColumns, silenceColumns } from './alertColumns'
 import { silenceCreateAction, silenceFromAlertAction, silenceRecreateAction, silenceExpireAction, silenceUpdateAction } from './silenceActions'
 
@@ -52,6 +53,7 @@ const externalDefinitions: Record<'grafana' | 'alerts' | 'rules' | 'silences', E
     path: '/alert/rules',
     requiredEndpoints: ['prometheus'],
     rowKeyCandidates: ['rule_key'],
+    detailContent: row => <RuleAlerts row={row} />,
     columns: alertRuleColumns
   },
   silences: {
