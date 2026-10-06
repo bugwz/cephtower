@@ -73,6 +73,25 @@ func TestCrushRuleMutationTargetValidation(t *testing.T) {
 	}
 }
 
+func TestDeletionReadbackRejectsDuplicateNativeNames(t *testing.T) {
+	for _, action := range []struct{ action, key string }{
+		{"crush_rule.delete", "crush-rule/remove-me"},
+		{"erasure_code_profile.delete", "erasure-code-profile/remove-me"},
+	} {
+		s, _, id := newCephUserService(t)
+		r := Request{ClusterID: id, Action: action.action, ResourceKey: action.key}
+		s.executor = &directoryRenameExecutor{outputs: map[string]string{r.Action: "removed", r.Action + ".post_check": `["other","other"]`}}
+		_, err := s.Execute(context.Background(), r)
+		var failure *cephdomain.ActionError
+		if !errors.As(err, &failure) || failure.Code != "post_check_failed" || failure.Retryable {
+			t.Fatalf("accepted ambiguous %s readback: %v", action.action, err)
+		}
+	}
+	if !nameAbsent("deleted", []byte(`["a","b"]`)) || !nameAbsent("deleted", []byte(`[]`)) {
+		t.Fatal("valid unique lists rejected")
+	}
+}
+
 func TestCrushRuleDeletionReadback(t *testing.T) {
 	s, _, id := newCephUserService(t)
 	r := Request{ClusterID: id, Action: "crush_rule.delete", ResourceKey: "crush-rule/remove-me"}

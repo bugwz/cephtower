@@ -22,10 +22,12 @@ func nameAbsent(name string, data []byte) bool {
 	if name == "" || decoder.Decode(&names) != nil || decoder.Decode(new(any)) != io.EOF || names == nil {
 		return false
 	}
+	seen := make(map[string]bool, len(names))
 	for _, item := range names {
-		if item == "" || item == name {
+		if item == "" || item == name || seen[item] {
 			return false
 		}
+		seen[item] = true
 	}
 	return true
 }
