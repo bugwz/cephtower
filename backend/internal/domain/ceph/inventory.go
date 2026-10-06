@@ -168,7 +168,7 @@ type Device struct {
 	Model           *string           `json:"model,omitempty"`
 	Vendor          *string           `json:"vendor,omitempty"`
 	Serial          *string           `json:"serial,omitempty"`
-	SizeBytes       *uint64           `json:"size_bytes,omitempty"`
+	SizeBytes       *uint64           `json:"size_bytes,omitempty,string"`
 	Rotational      *bool             `json:"rotational,omitempty"`
 	Metadata        map[string]string `json:"metadata,omitempty"`
 }

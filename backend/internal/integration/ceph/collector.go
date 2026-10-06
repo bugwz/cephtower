@@ -1345,10 +1345,7 @@ func buildDeviceWire(record map[string]any, host string) (deviceWire, bool) {
 	if strings.TrimSpace(hostname) == "" || strings.TrimSpace(path) == "" {
 		return deviceWire{}, false
 	}
-	size := firstUintPointer(record, "size_bytes", "size")
-	if size == nil {
-		size = firstUintPointer(sysAPI, "size_bytes", "size")
-	}
+	size := deviceCapacity(record, sysAPI)
 	rotational := firstBoolPointer(record, "rotational")
 	if rotational == nil {
 		rotational = firstBoolPointer(sysAPI, "rotational")
