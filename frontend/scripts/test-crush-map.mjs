@@ -796,6 +796,20 @@ assert.deepEqual(rules.crushRuleSteps([]), [])
 for (const invalid of [null, {}, [null], [{ op: 3 }]]) assert.equal(rules.crushRuleSteps(invalid), null)
 console.log('CRUSH rule type and native step checks passed')
 assert.equal(rulesSource.includes("key: 'min_size'"), false)
+const usageGuard = {}
+const guardFunctions = usageTree.statements.filter(node => ts.isFunctionDeclaration(node) && ['validCrushRuleID', 'CrushRuleUsage'].includes(node.name.text))
+new Function('exports', 'require', ts.transpileModule(guardFunctions.map(node => node.getText(usageTree)).join('\n'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText.replace(/\bAlert\b/g, '"Alert"').replace(/\bPoolPlacementUsage\b/g, '"PoolPlacementUsage"'))(usageGuard, () => ({ jsx: (type, props) => ({ type, props }) }))
+for (const id of [null, undefined, '', '0', false, NaN, -1, 0.5, Number.MAX_SAFE_INTEGER + 1]) {
+  assert.equal(usageGuard.validCrushRuleID(id), false)
+  assert.equal(usageGuard.CrushRuleUsage({ clusterId: 1, name: 'a', id }).type, 'Alert')
+}
+for (const id of [0, 8]) {
+  const output = usageGuard.CrushRuleUsage({ clusterId: 1, name: 'a', id })
+  assert.equal(output.type, 'PoolPlacementUsage')
+  assert.equal(output.props.ruleId, id)
+}
+assert.ok(rulesSource.includes('id={row.rule_id}'))
+assert.equal(rulesSource.includes('id={Number(row.rule_id)}'), false)
 assert.equal(rulesSource.includes("key: 'max_size'"), false)
 assert.ok(rulesSource.includes("title: '规则步骤数'"))
 assert.ok(rulesSource.includes('请在引用此规则的存储池中查看'))

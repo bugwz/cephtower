@@ -20,7 +20,12 @@ export function ErasureProfileUsage({ clusterId, profile }: { clusterId?: number
   return <PoolPlacementUsage clusterId={clusterId} profile={profile} />
 }
 
-export function CrushRuleUsage({ clusterId, name, id }: { clusterId?: number, name: string, id: number }) {
+export function validCrushRuleID(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
+}
+
+export function CrushRuleUsage({ clusterId, name, id }: { clusterId?: number, name: string, id: unknown }) {
+  if (!validCrushRuleID(id)) return <Alert type="warning" message="规则 ID 缺失或格式异常，无法确认存储池引用，请重新采集。" />
   return <PoolPlacementUsage clusterId={clusterId} profile={name} ruleId={id} />
 }
 
