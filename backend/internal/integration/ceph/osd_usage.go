@@ -4,6 +4,7 @@ import (
 	cephdomain "cephtower/backend/internal/domain/ceph"
 	"cephtower/backend/internal/integration/ceph/executor"
 	"context"
+	"strings"
 )
 
 func (p *NativeProvider) collectOSDUsage(ctx context.Context, access ClusterAccess) map[int]*cephdomain.OSDUsage {
@@ -30,6 +31,9 @@ func (p *NativeProvider) collectOSDUsage(ctx context.Context, access ClusterAcce
 	}
 	result := map[int]*cephdomain.OSDUsage{}
 	for _, node := range wire.Nodes {
+		if node.ID == nil || node.Type == "" || node.Type != strings.TrimSpace(node.Type) {
+			return invalid()
+		}
 		if node.Type != "osd" {
 			continue
 		}
