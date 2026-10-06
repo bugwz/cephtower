@@ -804,10 +804,13 @@ function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string
         staleReason: null
       }
     }
-    const payload = await listResource('/devices', selectedClusterId, { filters: { device_id: [decodedDeviceId] } })
-    const rows = payload.items.map(normalizeDeviceRow)
+    const payload = await listAllResources('/devices', selectedClusterId, { filters: { device_id: [decodedDeviceId] } })
+    const rows = payload.items.map(normalizeDeviceRow).filter((row) => deviceID(row) === decodedDeviceId)
+    if (rows.length > 1) {
+      throw new Error('设备 ID 对应多条库存记录，无法唯一确定主机和路径；已阻止设备操作，请核对库存。')
+    }
     return {
-      device: rows.find((row) => deviceID(row) === decodedDeviceId) ?? null,
+      device: rows[0] ?? null,
       observedAt: payload.observedAt,
       stale: payload.stale,
       staleReason: payload.staleReason
