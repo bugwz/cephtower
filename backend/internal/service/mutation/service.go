@@ -558,6 +558,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "host.create" && (err != nil || checked.ExitCode != 0 || !hostCreationConfirmed(checked.Stdout, request.Parameters)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "host add was issued but identity, labels or maintenance state could not be verified; inspect inventory before any manual retry", Retryable: false}
+		}
 		if request.Action == "host.update" && (err != nil || checked.ExitCode != 0 || !hostUpdateMatches(checked.Stdout, last(resourceTail(request.ResourceKey)), request.Parameters)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "host address or label changes could not be verified; inspect native inventory before any manual retry", Retryable: false}
 		}
