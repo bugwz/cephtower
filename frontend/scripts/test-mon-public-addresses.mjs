@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 import './test-mon-counter-pagination.mjs'
 import './test-mon-detail-scope.mjs'
+import './test-mon-quorum-groups.mjs'
 
 const exports = {}
 const jsx = (type, props) => ({ type, props })

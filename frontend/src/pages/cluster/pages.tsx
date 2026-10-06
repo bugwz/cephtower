@@ -40,6 +40,7 @@ import { MonDetailPage } from './MonDetailPage'
 import { MonPublicAddresses } from './MonPublicAddresses'
 import { monSessionCount } from './monSessionCount'
 import { MonQuorumState } from './MonQuorumState'
+import { monQuorumGroups } from './monQuorumGroups'
 import { monQuorumMembers, monQuorumLeader, monQuorumInteger } from './monQuorumSummary'
 import { PoolDetailPage } from './PoolDetailPage'
 import { PoolManagementPage } from './PoolManagementPage'
@@ -133,8 +134,12 @@ export function MonManagementPage() {
             </Button>
           }
         >
+          <Text type="secondary">按采集时的仲裁状态分组；数量为当前筛选结果，不代表实时集群状态。</Text>
+          {monQuorumGroups(data?.mons ?? []).map(group => (
+          <section key={group.key} aria-label={group.label}>
+          <Typography.Title level={5}>{group.label}（{group.rows.length}）</Typography.Title>
           <DataTable
-            data={data?.mons ?? []}
+            data={group.rows}
           filterOptions={monTableFilters.filterOptions}
           filteredValues={monTableFilters.filters}
           onFilterChange={monTableFilters.handleFilterChange}
@@ -165,6 +170,8 @@ export function MonManagementPage() {
             }
           ]}
           />
+          </section>
+          ))}
         </Card>
       </Space>
     </Page>

@@ -29,6 +29,12 @@
 
 ### 增量实现与验证记录
 
+#### MON 仲裁分组列表
+
+- 对照参考 Dashboard `monitor.component.html` 的 In Quorum / Not In Quorum 分组，MON 页面按现有原生采集字段 `in_quorum` 展示两组节点，保留地址、会话数与详情入口；另列未知状态，不将缺失值误判为未加入仲裁。
+- 分组数量明确标注为当前筛选结果与采集时状态。节点 API 读取全部分页，保留集群与过滤条件，避免首页截断导致分组遗漏。
+- 离线测试覆盖布尔与未知状态分组、空列表、分页与过滤条件传递，以及页面数据绑定；`make test-frontend`（含类型检查与生产构建）通过。未进行真实集群或浏览器视觉验证。
+
 #### MON 仲裁概要原生采集与展示
 
 - 对照 `src/mon/Monitor.cc::_quorum_status` 与 `Monitor.h::quorum_age`，复用 `ceph quorum_status --format json` 链路，将仲裁成员、Leader、选举 epoch、当前仲裁持续秒数写入 `mon_status`，由现有 MON 状态 API 提供给页面。

@@ -315,7 +315,7 @@ export function listServices(): Promise<ApiRecord[]> {
 }
 
 export function listMonitors(clusterId = requiredClusterId(), filters?: Record<string, string[]>): Promise<ApiRecord[]> {
-  return listResource('/monitors', clusterId, { filters }).then((payload) => payload.items)
+  return listAllResources('/monitors', clusterId, { filters, limit: 500 }).then((payload) => payload.items)
 }
 
 export async function getMonitorStatus(clusterId = requiredClusterId()): Promise<ApiRecord | null> {
