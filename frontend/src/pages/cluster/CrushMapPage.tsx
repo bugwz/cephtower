@@ -24,6 +24,20 @@ export function crushTree(data: CrushMap): CrushTreeNode[] {
   return data.roots.map((id) => build(id, new Set(), String(id)))
 }
 
+export function crushSelection(data: CrushMap, key: string | null): { key: string; node: ApiRecord } | null {
+  if (key === null) return null
+  const find = (nodes: CrushTreeNode[]): CrushTreeNode | undefined => {
+    for (const node of nodes) {
+      if (node.key === key) return node
+      const child = find(node.children)
+      if (child) return child
+    }
+  }
+  const match = find(crushTree(data))
+  const node = match && data.nodes.find((item) => Number(item.id) === match.nodeId)
+  return node ? { key, node } : null
+}
+
 export function watchCrushMap(clusterId: number, automatic: boolean, onData: (value: CrushMap) => void, onError: (error: string) => void) {
   const abort = new AbortController()
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -49,28 +63,30 @@ export function CrushMapPage() {
 
 function CrushMapContent({ selectedClusterId }: { selectedClusterId?: number }) {
   const [data, setData] = useState<CrushMap | null>(null)
-  const [selected, setSelected] = useState<ApiRecord | null>(null)
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const selection = data ? crushSelection(data, selectedKey) : null
+  const selected = selection?.node
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [revision, setRevision] = useState(0)
   const [automatic, setAutomatic] = useState(true)
   useEffect(() => {
-    setData(null); setSelected(null); setError(''); setLoading(false)
+    setData(null); setSelectedKey(null); setError(''); setLoading(false)
     if (!selectedClusterId) return
     setLoading(true)
     return watchCrushMap(selectedClusterId, automatic, (value) => {
       setData(value); setError(''); setLoading(false)
-      setSelected((current) => current ? value.nodes.find((node) => node.id === current.id) ?? null : null)
-    }, (reason) => { setError(reason); setData(null); setSelected(null); setLoading(false) })
+      setSelectedKey((current) => crushSelection(value, current)?.key ?? null)
+    }, (reason) => { setError(reason); setData(null); setSelectedKey(null); setLoading(false) })
   }, [selectedClusterId, revision, automatic])
   return <><Card title="CRUSH 拓扑" loading={loading} extra={<Space><Switch checked={automatic} onChange={setAutomatic} checkedChildren="自动刷新" unCheckedChildren="已暂停" /><Button disabled={!selectedClusterId || loading} onClick={() => setRevision((value) => value + 1)}>刷新</Button></Space>}>
     {!selectedClusterId && <Alert type="info" message="请先选择集群" />}
     {error && <Alert type="error" message={error} />}
     {data && <Space direction="vertical" style={{ width: '100%' }}>
-      <Alert type="info" message="来自 ceph osd tree 的只读快照。自动刷新在每次请求结束 5 秒后读取拓扑；不刷新下方规则和配置库存。手动刷新清除选择，自动刷新同步所选节点详情。" />
+      <Alert type="info" message="来自 ceph osd tree 的只读快照。自动刷新在每次请求结束 5 秒后读取拓扑；不刷新下方规则和配置库存。手动刷新清除选择，自动刷新同步所选路径的节点详情；路径消失时清除选择。" />
       <Row gutter={[24, 16]} style={{ width: '100%' }}>
         <Col xs={24} lg={12}>
-          {data.nodes.length ? <Tree defaultExpandAll treeData={crushTree(data)} titleRender={(node) => <Space>{node.status !== undefined && <Tag color={crushStatus(node.status).color}>{crushStatus(node.status).label}</Tag>}<span>{node.title}</span></Space>} onSelect={(keys, info) => setSelected(keys.length ? data.nodes.find((node) => Number(node.id) === info.node.nodeId) ?? null : null)} /> : <Alert type="info" message="当前 CRUSH 树没有节点" />}
+          {data.nodes.length ? <Tree defaultExpandAll treeData={crushTree(data)} selectedKeys={selection ? [selection.key] : []} titleRender={(node) => <Space>{node.status !== undefined && <Tag color={crushStatus(node.status).color}>{crushStatus(node.status).label}</Tag>}<span>{node.title}</span></Space>} onSelect={(keys) => setSelectedKey(keys.length ? String(keys[0]) : null)} /> : <Alert type="info" message="当前 CRUSH 树没有节点" />}
         </Col>
         <Col xs={24} lg={12}>
           {selected ? <Descriptions title={String(selected.name)} bordered column={1} items={Object.entries(selected).map(([key, value]) => ({ key, label: key, children: <span style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{value == null ? '未提供' : typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}</span> }))} /> : <Alert type="info" message="选择节点查看详情" />}

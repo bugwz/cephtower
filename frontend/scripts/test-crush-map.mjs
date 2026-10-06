@@ -18,7 +18,7 @@ assert.notEqual(firstScope.key, secondScope.key)
 assert.equal(firstScope.props.selectedClusterId, 1)
 assert.equal(secondScope.props.selectedClusterId, 2)
 assert.equal(wrapper.getText(tree).includes('useState'), false)
-const functions = tree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['crushTree', 'crushStatus'].includes(node.name.text))
+const functions = tree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['crushTree', 'crushStatus', 'crushSelection'].includes(node.name.text))
 const exports = {}
 new Function('exports', ts.transpileModule(functions.map((fn) => fn.getText(tree)).join('\n'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exports)
 const nodes = [{ id: 0, name: 'osd.0', type: 'osd', status: 'up' }, { id: -1, name: 'default', type: 'root', children: [0] }]
@@ -38,6 +38,24 @@ assert.throws(() => exports.crushTree({ nodes, roots: [99] }))
 assert.throws(() => exports.crushTree({ nodes: [{ id: -1, name: 'root', type: 'root', children: [-1] }], roots: [-1] }))
 assert.equal(nodes[0].id, 0, 'must not reorder native metadata')
 console.log('CRUSH topology tree checks passed')
+
+const selectionMap = { nodes, roots: [-1] }
+assert.equal(exports.crushSelection(selectionMap, '-1/0').node, nodes[0])
+assert.equal(exports.crushSelection(selectionMap, '-1').node, nodes[1])
+assert.equal(exports.crushSelection(selectionMap, null), null)
+assert.equal(exports.crushSelection(selectionMap, '-2/0'), null)
+const updatedMap = { ...selectionMap, nodes: [{ ...nodes[0], status: 'down' }, nodes[1]] }
+assert.equal(exports.crushSelection(updatedMap, '-1/0').node.status, 'down')
+const sharedMap = { nodes: [...nodes, { id: -2, name: 'other', type: 'root', children: [0] }], roots: [-1, -2] }
+assert.equal(exports.crushSelection(sharedMap, '-2/0').key, '-2/0')
+const movedMap = { ...sharedMap, nodes: sharedMap.nodes.map(node => node.id === -1 ? { ...node, children: [] } : node) }
+assert.equal(exports.crushSelection(movedMap, '-1/0'), null, 'do not select the same OSD on another path')
+assert.equal(exports.crushSelection(movedMap, '-2/0').node.id, 0)
+assert.equal(exports.crushSelection({ nodes: [], roots: [] }, '-1/0'), null)
+assert.ok(source.includes('selectedKeys={selection ? [selection.key] : []}'))
+assert.ok(source.includes('setSelectedKey((current) => crushSelection(value, current)?.key ?? null)'))
+assert.ok(source.includes('onSelect={(keys) => setSelectedKey(keys.length ? String(keys[0]) : null)}'))
+console.log('CRUSH topology selection follows exact paths and current metadata')
 
 const usageSource = readFileSync(new URL('../src/pages/cluster/ErasureProfileUsage.tsx', import.meta.url), 'utf8')
 const usageTree = ts.createSourceFile('usage.tsx', usageSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
