@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- 单 OSD 标志后端：新增 PATCH /osd/flag/individual，仅允许 noout/noin/nodown/noup 的 set/unset，通过原生 osd set-group/unset-group 精确传入一个 OSD ID；回读 osd dump 中该 OSD 的 state 确认，不使用全局 flags 推断。拒绝缺失/重复目标及不匹配结果，新增命令顺序、全部标志和非法输入测试。前端操作入口待接入。
+
 - 单 OSD 动作输入约束：in/out/down/reweight/scrub/deep-scrub 后端仅接受规范非负 int32 OSD ID，拒绝 all/any/* 和选项形态目标，避免扩大操作范围；依据 MonCommands.h 的 reweight 0–1 范围拒绝越界、NaN、Infinity 与非数值。新增全部动作目标边界及权重边界回归。
 
 - 无设备类别 OSD 的编辑修复：核对原生 CrushTreeDumper 在没有类别时省略 device_class 的语义，将已核验 OSD 树节点中省略的类别映射为空字符串，使前端显示“无类别”并允许首次设置；显式 null 仍保留未知，桶节点不归一化。补充省略、空值、已分配、null 和桶节点回归及前端可编辑版本检查。

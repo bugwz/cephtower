@@ -104,7 +104,7 @@ func Supports(action string) bool {
 		"host.create", "host.update", "host.delete", "host.action", "device.identify",
 		"service.create", "service.update", "service.delete", "daemon.action",
 		"upgrade.check", "upgrade.action", "manager.fail", "monitor.action", "manager_module.update",
-		"osd.action", "osd.device_class", "osd_flag.update", "osd.removal_check", "osd.delete",
+		"osd.action", "osd.device_class", "osd.individual_flag", "osd_flag.update", "osd.removal_check", "osd.delete",
 		"osd_deployment.preview", "osd_deployment.create", "device.zap",
 		"crush_rule.create", "crush_rule.update", "crush_rule.delete",
 		"erasure_code_profile.create", "erasure_code_profile.delete",
@@ -540,6 +540,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	}
 	if len(checkSpec.check) > 0 {
 		checked, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + ".post_check", Binary: checkSpec.binary, Args: checkSpec.check, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+		if request.Action == "osd.individual_flag" && (err != nil || checked.ExitCode != 0 || !osdIndividualFlagMatches(request, checked.Stdout)) {
+			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "individual OSD flag change could not be verified; inspect native OSD state before retrying", Retryable: false}
+		}
 		if request.Action == "rgw_role.create" && (err != nil || !rgwRoleCreateMatches(request.Parameters, checked.Stdout)) {
 			return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "role creation was accepted but scoped role properties could not be verified; inspect role state before any manual retry", Retryable: false}
 		}
@@ -1149,6 +1152,21 @@ func build(request Request, p map[string]any) (command, error) {
 			args = append(args, weight)
 		}
 		return ceph(args, []string{"osd", "dump", "--format", "json"}), nil
+	case "osd.individual_flag":
+		id := last(tail)
+		n, err := strconv.ParseUint(id, 10, 31)
+		if err != nil || strconv.FormatUint(n, 10) != id {
+			return command{}, invalid("invalid OSD id")
+		}
+		verb, err := enum(p, "action", "set", "unset")
+		if err != nil {
+			return command{}, err
+		}
+		flag, err := enum(p, "flag", "noin", "noout", "nodown", "noup")
+		if err != nil {
+			return command{}, err
+		}
+		return ceph([]string{"osd", verb + "-group", flag, id}, []string{"osd", "dump", "--format", "json"}), nil
 	case "osd_flag.update":
 		verb, err := enum(p, "action", "set", "unset")
 		if err != nil {

@@ -9,6 +9,7 @@ func osdRoutes(h *handler.Handler) []Route {
 		{"GET", "/osd/inspection", h.GetOSDInspection},
 		{"GET", "/osd/flag", h.GetOSDFlag},
 		{"PATCH", "/osd/flag", h.UpdateOSDFlag},
+		{"PATCH", "/osd/flag/individual", h.UpdateOSDIndividualFlag},
 		{"POST", "/osd/action", h.RunOSDAction},
 		{"PUT", "/osd/device/class", h.UpdateOSDDeviceClass},
 		{"POST", "/osd/removal/check", h.CheckOSDRemoval},

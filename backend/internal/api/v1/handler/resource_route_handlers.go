@@ -285,6 +285,10 @@ func (h *Handler) UpdateOSDDeviceClass(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("osd", "osd.device_class", "high")(w, r)
 }
 
+func (h *Handler) UpdateOSDIndividualFlag(w http.ResponseWriter, r *http.Request) {
+	h.MutateResource("osd", "osd.individual_flag", "high")(w, r)
+}
+
 func (h *Handler) DeleteOSD(w http.ResponseWriter, r *http.Request) {
 	h.MutateResource("osd", "osd.delete", "high")(w, r)
 }
