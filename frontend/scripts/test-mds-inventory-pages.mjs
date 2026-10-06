@@ -44,6 +44,23 @@ for (const scenario of ['fresh', 'stale', 'unknown', 'failure', 'no-cluster']) {
   }
 }
 assert.ok(page.getText(tree).includes('data?.inventoryWarnings.map'))
+let selectService
+function findSelection(node) {
+  if (ts.isArrowFunction(node) && node.body.getText(tree).includes('setServiceSelection({ scope: serviceScope, name: row.name })') && !ts.isJsxElement(node.body)) selectService = node
+  ts.forEachChild(node, findSelection)
+}
+findSelection(page)
+assert.ok(selectService)
+for (const name of ['mds.fs', 'mds.fs-a.node', 'mds.', 'mds.*', 'mds.a;stop', 'rgw.a', null]) {
+  for (const state of ['ready', 'loading', 'error', 'no-cluster']) {
+    const selections = [], scope = { clusterId: 7 }
+    const env = { selectedClusterId: state === 'no-cluster' ? undefined : 7, loading: state === 'loading', error: state === 'error' ? 'failed' : '', row: { name }, serviceScope: scope, setServiceSelection: value => selections.push(value) }
+    new Function(...Object.keys(env), `${compile(`const select = ${selectService.getText(tree)}`)}; select()`)(...Object.values(env))
+    assert.deepEqual(selections, state === 'ready' && ['mds.fs', 'mds.fs-a.node'].includes(name) ? [{ scope, name }] : [])
+  }
+}
+assert.ok(page.getText(tree).includes('serviceSelection?.scope === serviceScope'))
+assert.ok(page.getText(tree).includes('<ServiceDaemons key={JSON.stringify([selectedClusterId, visibleService.name])} clusterId={selectedClusterId} name={visibleService.name} />'))
 for (const name of ['MdsManagementPage', 'MgrManagementPage', 'DaemonTable']) {
   const node = tree.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === name)
   assert.doesNotMatch(node.getText(tree), /service_name|service_type|daemon_name|daemon_type|status_desc/)

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { MonMapSettings } from './MonMapSettings'
 import { DeviceHardwareSummary } from './DeviceHardwareSummary'
-import { DaemonRuntimeDetails } from './ServiceDaemons'
+import { DaemonRuntimeDetails, ServiceDaemons } from './ServiceDaemons'
 import { DaemonPerf } from './DaemonPerf'
 import { ServiceInventoryDetails } from './ServiceInventoryDetails'
 import { hostStorageCapacity } from './hostStorageCapacity'
@@ -1010,6 +1010,9 @@ function DeviceDetailContent({ deviceId, selectedClusterId }: { deviceId: string
 
 export function MdsManagementPage() {
   const { selectedClusterId } = useClusterContext()
+  const serviceScope = useMemo(() => ({ clusterId: selectedClusterId }), [selectedClusterId])
+  const [serviceSelection, setServiceSelection] = useState<{ scope: typeof serviceScope; name: string } | null>(null)
+  const visibleService = serviceSelection?.scope === serviceScope ? serviceSelection : null
   const serviceTableFilters = useResourceTableFilters({
     path: '/services',
     fields: ['name', 'type', 'running', 'size'],
@@ -1045,6 +1048,9 @@ export function MdsManagementPage() {
 
   return (
     <Page title="MDS管理" loading={loading} error={error}>
+      <Modal title={visibleService ? `${visibleService.name} 守护进程` : '服务守护进程'} open={Boolean(visibleService)} onCancel={() => setServiceSelection(null)} footer={null} width="95vw" destroyOnClose>
+        {visibleService && selectedClusterId && <ServiceDaemons key={JSON.stringify([selectedClusterId, visibleService.name])} clusterId={selectedClusterId} name={visibleService.name} />}
+      </Modal>
       {data?.inventoryWarnings.map(warning => <Alert key={warning} type="warning" showIcon message={warning} />)}
       <Card className="page-surface-card" title="MDS管理">
         <Tabs
@@ -1065,7 +1071,10 @@ export function MdsManagementPage() {
                     { key: 'placement', title: '放置策略', filterKey: false },
                     { key: 'running', title: '运行数' },
                     { key: 'size', title: '目标数' },
-                    { key: 'deployment_details', title: '部署详情', filterKey: false, ellipsis: false, render: (_, row) => <ServiceInventoryDetails row={row} /> }
+                    { key: 'deployment_details', title: '部署详情', filterKey: false, ellipsis: false, render: (_, row) => <ServiceInventoryDetails row={row} /> },
+                    { key: 'service_daemons', title: '服务实例', filterKey: false, render: (_, row) => <TableAction
+                      disabled={!selectedClusterId || loading || Boolean(error) || typeof row.name !== 'string' || !/^mds\.[A-Za-z0-9_.-]{1,252}$/.test(row.name)}
+                      onClick={() => { if (selectedClusterId && !loading && !error && typeof row.name === 'string' && /^mds\.[A-Za-z0-9_.-]{1,252}$/.test(row.name)) setServiceSelection({ scope: serviceScope, name: row.name }) }}>查看守护进程</TableAction> }
                   ]}
                 />
                 </div>
