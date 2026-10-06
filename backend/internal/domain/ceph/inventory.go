@@ -3,6 +3,7 @@ package ceph
 import "encoding/json"
 
 type Host struct {
+	Location         map[string]string `json:"location"`
 	NativeSummary    HostNativeSummary `json:"native_summary"`
 	Hostname         string            `json:"hostname"`
 	Address          *string           `json:"address"`

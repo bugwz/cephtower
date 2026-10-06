@@ -2,6 +2,17 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 
+const locationSource = readFileSync(new URL('../src/pages/cluster/hostLocation.ts', import.meta.url), 'utf8')
+const locationExports = {}
+new Function('exports', 'require', ts.transpileModule(locationSource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText)(locationExports, () => ({ isRecord: value => value !== null && typeof value === 'object' && !Array.isArray(value) }))
+assert.equal(locationExports.hostInitialLocation({ root: 'default', rack: 'rack-a' }), 'rack=rack-a；root=default')
+assert.equal(locationExports.hostInitialLocation({}), '未设置')
+for (const value of [undefined, null, [], 'rack-a']) assert.equal(locationExports.hostInitialLocation(value), '未报告')
+for (const value of [{ rack: 0 }, { rack: null }, { rack: '' }, { ' rack': 'a' }]) assert.match(locationExports.hostInitialLocation(value), /无效/)
+const detailSource = readFileSync(new URL('../src/pages/cluster/HostDetailPage.tsx', import.meta.url), 'utf8')
+assert.ok(detailSource.includes('hostInitialLocation(host.location)'))
+assert.ok(detailSource.includes('不代表当前 CRUSH 树'))
+
 const source = readFileSync(new URL('../src/pages/cluster/HostPage.tsx', import.meta.url), 'utf8')
 const file = ts.createSourceFile('HostPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const page = file.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'HostPage')

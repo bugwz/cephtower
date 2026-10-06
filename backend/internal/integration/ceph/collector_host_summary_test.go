@@ -4,6 +4,7 @@ import (
 	cephdomain "cephtower/backend/internal/domain/ceph"
 	"context"
 	"encoding/json"
+	"reflect"
 	"testing"
 )
 
@@ -14,6 +15,8 @@ func TestHostNativeSummaries(t *testing.T) {
 		`[{"hostname":"node1","nic_count":0}]`,
 		`[{"hostname":"node1","nic_count":4}]`,
 		`[{"hostname":"node1","nic_count":"N/A"}]`,
+		`[{"hostname":"node1","location":{"root":"default","rack":"rack-a"}}]`,
+		`[{"hostname":"node1","location":{}}]`,
 	} {
 		provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.host": []byte(raw)}}}
 		rows, err := provider.Collect(context.Background(), ClusterAccess{}, "topology")
@@ -30,6 +33,17 @@ func TestHostNativeSummaries(t *testing.T) {
 			var input []map[string]any
 			if err := json.Unmarshal([]byte(raw), &input); err != nil {
 				t.Fatal(err)
+			}
+			locationJSON, err := json.Marshal(payload.Location)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var location any
+			if err := json.Unmarshal(locationJSON, &location); err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(location, input[0]["location"]) {
+				t.Fatalf("location lost: %v", location)
 			}
 			encoded, err := json.Marshal(payload.NativeSummary)
 			if err != nil {

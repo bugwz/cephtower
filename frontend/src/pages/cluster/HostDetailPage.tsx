@@ -8,6 +8,7 @@ import { getHostDeviceInfo, getHostSMART, getOptionalResource, listAllResources,
 import type { ResourceDTO } from '../../api/types'
 import { DataTable } from '../../components/DataTable'
 import { HostHardware } from './HostHardware'
+import { hostInitialLocation } from './hostLocation'
 import { HostAddressEditor } from './HostAddressEditor'
 import { SMARTDetails } from './SMARTDetails'
 import { DaemonPerf } from './DaemonPerf'
@@ -271,6 +272,7 @@ function HostDetailContent({ name, selectedClusterId }: { name: string; selected
               <Descriptions.Item label="硬盘">{textValue(host.disk_count_display)} 块 / {textValue(host.storage_display)}</Descriptions.Item>
               <Descriptions.Item label="内存">{textValue(host.memory_display)}</Descriptions.Item>
               <Descriptions.Item label="标签" span={2}>{renderHostLabels(host.labels)}</Descriptions.Item>
+              <Descriptions.Item label="初始 CRUSH 位置（主机规格）" span={2}>{hostInitialLocation(host.location)}<br /><Text type="secondary">这是编排器主机规格中的初始位置，不代表当前 CRUSH 树；请在 CRUSH 拓扑中核对实际位置。</Text></Descriptions.Item>
               <Descriptions.Item label="服务" span={2}>{renderServiceInstances(serviceRows(host, data?.daemons ?? []))}</Descriptions.Item>
               <Descriptions.Item label="创建时间">{formatDateTime(host.created_at)}</Descriptions.Item>
               <Descriptions.Item label="更新时间">{formatDateTime(host.updated_at)}</Descriptions.Item>
