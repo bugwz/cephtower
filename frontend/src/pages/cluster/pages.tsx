@@ -1,6 +1,6 @@
 import { ArrowLeftOutlined, BulbOutlined, DeleteOutlined, PlusOutlined, PoweroffOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button, Card, Descriptions, Form, Input, InputNumber, Modal, Space, Switch, Tabs, Tag, Typography } from 'antd'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { MonMapSettings } from './MonMapSettings'
 import { ManagerInventory } from './ManagerInventory'
@@ -325,6 +325,13 @@ export function MgrManagementPage() {
 
 export function OsdManagementPage() {
   const { selectedClusterId } = useClusterContext()
+  const osdScopeRef = useRef({ clusterId: selectedClusterId })
+  if (osdScopeRef.current.clusterId !== selectedClusterId) osdScopeRef.current = { clusterId: selectedClusterId }
+  const osdScope = osdScopeRef.current
+  useEffect(() => {
+    osdScopeRef.current = osdScope
+    return () => { if (osdScopeRef.current === osdScope) osdScopeRef.current = { ...osdScope } }
+  }, [osdScope])
   const osdTableFilters = useResourceTableFilters({
     path: '/osds',
     fields: ['id', 'host', 'state', 'up', 'in', 'device_class'],
@@ -364,9 +371,10 @@ export function OsdManagementPage() {
 
   async function runOSDAction(id: string, action: 'in' | 'out' | 'scrub' | 'deep-scrub' | 'reweight') {
     if (action === 'reweight') {
+      if (!selectedClusterId) return
       Modal.confirm({
         title: `调整 OSD ${id} 权重`,
-        content: <ReweightForm osdID={id} refresh={refresh} />,
+        content: <ReweightForm clusterId={selectedClusterId} isCurrent={() => osdScopeRef.current === osdScope} osdID={id} refresh={refresh} />,
         modalRender: draggableModalRender,
         icon: null,
         okButtonProps: { style: { display: 'none' } },
@@ -1002,29 +1010,36 @@ function DaemonTable({
   )
 }
 
-function ReweightForm({ osdID, refresh }: { osdID: string; refresh: (options?: { showLoading?: boolean }) => void }) {
-  const { selectedClusterId } = useClusterContext()
+function ReweightForm({ clusterId, isCurrent, osdID, refresh }: { clusterId: number; isCurrent: () => boolean; osdID: string; refresh: (options?: { showLoading?: boolean }) => void }) {
+  const running = useRef(false)
   const [submitting, setSubmitting] = useState(false)
   const operationMutation = useMutationOperation()
 
   async function submit(values: { weight: number }) {
-    if (submitting || !selectedClusterId) {
+    if (running.current || !isCurrent()) {
       return
     }
+    if (!Number.isFinite(values.weight) || values.weight < 0 || values.weight > 1) {
+      message.error('OSD 权重必须是 0 到 1 之间的有限数值')
+      return
+    }
+    running.current = true
     setSubmitting(true)
     try {
-      await operationMutation.run(() => reweightOSD(osdID, values.weight), false)
-      Modal.destroyAll()
+      await operationMutation.run(() => reweightOSD(clusterId, osdID, values.weight), false)
+      if (!isCurrent()) return
       message.success('OSD 权重调整执行成功')
-      await refreshResource({ clusterId: selectedClusterId, kind: 'osd' })
-      await refresh({ showLoading: false })
+      await refreshResource({ clusterId, kind: 'osd' })
+      if (isCurrent()) await refresh({ showLoading: false })
     } finally {
+      running.current = false
       setSubmitting(false)
     }
   }
 
   return (
     <Form layout="vertical" initialValues={{ weight: 1 }} onFinish={submit}>
+      <Typography.Paragraph>目标：集群 {clusterId} / OSD {osdID}。切换集群后请关闭并重新打开此表单。</Typography.Paragraph>
       <Form.Item name="weight" label="权重" rules={[{ required: true }]}>
         <InputNumber min={0} max={1} step={0.01} precision={2} />
       </Form.Item>
