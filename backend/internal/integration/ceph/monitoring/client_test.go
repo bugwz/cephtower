@@ -65,6 +65,35 @@ func TestAlertmanagerReadPreservesDashboardFields(t *testing.T) {
 	}
 }
 
+func TestSilenceReadPreservesStateWithoutChangingCreatePayload(t *testing.T) {
+	for _, state := range []string{"active", "pending", "expired", "future-state"} {
+		body := `[{"id":"silence-1","matchers":[{"name":"alertname","value":"CephHealth","isRegex":false,"isEqual":true}],"startsAt":"2026-01-01T00:00:00Z","endsAt":"2026-01-01T02:00:00Z","createdBy":"operator","comment":"maintenance","status":{"state":"` + state + `"},"updatedAt":"2026-01-01T00:30:00Z"}]`
+		client, err := New("https://alertmanager.example.test", "", &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+			if r.Method != http.MethodGet || r.URL.Path != "/api/v2/silences" {
+				t.Fatalf("unexpected request: %s %s", r.Method, r.URL)
+			}
+			return jsonResponse(200, body), nil
+		})})
+		if err != nil {
+			t.Fatal(err)
+		}
+		rows, err := client.Silences(context.Background())
+		if err != nil || len(rows) != 1 {
+			t.Fatalf("rows=%#v err=%v", rows, err)
+		}
+		if rows[0].Status == nil || rows[0].Status.State != state || rows[0].UpdatedAt == nil || rows[0].UpdatedAt.Format(time.RFC3339) != "2026-01-01T00:30:00Z" {
+			t.Fatalf("lost metadata: %#v", rows[0])
+		}
+		encoded, err := json.Marshal(rows[0].Silence)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(encoded), "status") || strings.Contains(string(encoded), "updatedAt") {
+			t.Fatalf("read fields leaked to write payload: %s", encoded)
+		}
+	}
+}
+
 func TestHostMetricQueriesAreRegistered(t *testing.T) {
 	for _, metricID := range []string{
 		"host_cpu_usage",

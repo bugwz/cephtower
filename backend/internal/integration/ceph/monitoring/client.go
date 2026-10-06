@@ -153,6 +153,14 @@ type Matcher struct {
 	IsEqual bool   `json:"isEqual"`
 }
 
+type SilenceRecord struct {
+	Silence
+	Status *struct {
+		State string `json:"state"`
+	} `json:"status,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+}
+
 func (c *Client) Alerts(ctx context.Context) ([]Alert, error) {
 	var result []Alert
 	err := c.get(ctx, "/api/v2/alerts", &result)
@@ -178,8 +186,8 @@ func (c *Client) Rules(ctx context.Context) ([]RuleGroup, error) {
 	}
 	return response.Data.Groups, nil
 }
-func (c *Client) Silences(ctx context.Context) ([]Silence, error) {
-	var result []Silence
+func (c *Client) Silences(ctx context.Context) ([]SilenceRecord, error) {
+	var result []SilenceRecord
 	err := c.get(ctx, "/api/v2/silences", &result)
 	return result, err
 }

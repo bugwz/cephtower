@@ -1,7 +1,7 @@
 import { ExternalListPage, type ExternalListPageDefinition } from '../ExternalListPage'
 export { RuntimeLogsPage } from './RuntimeLogsPage'
 import { MetricPage } from './MetricPage'
-import { alertColumns, alertRuleColumns } from './alertColumns'
+import { alertColumns, alertRuleColumns, silenceColumns } from './alertColumns'
 import { silenceCreateAction, silenceFromAlertAction } from './silenceActions'
 
 export function MonitorOverviewPage() {
@@ -69,14 +69,7 @@ const externalDefinitions: Record<'grafana' | 'alerts' | 'rules' | 'silences', E
       buildBody: (row, clusterId) => ({ cluster_id: clusterId, silence_id: silenceId(row) }),
       resourceKey: (row) => `silence/${silenceId(row)}`
     },
-    columns: [
-      { key: 'id', title: 'ID' },
-      { key: 'status', title: '状态' },
-      { key: 'matchers', title: 'Matchers' },
-      { key: 'startsAt', title: '开始时间' },
-      { key: 'endsAt', title: '结束时间' },
-      { key: 'createdBy', title: '创建人' }
-    ]
+    columns: silenceColumns
   }
 }
 

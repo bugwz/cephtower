@@ -28,3 +28,14 @@ export const alertRuleColumns: FieldColumn[] = [
   { key: 'query', title: '表达式' },
   { key: 'summary', title: '摘要', render: (_, row) => alertField(row.annotations, 'summary') }
 ]
+
+export const silenceColumns: FieldColumn[] = [
+  { key: 'id', title: 'ID' },
+  { key: 'status', title: '状态', render: (value) => alertField(value, 'state') },
+  { key: 'matchers', title: 'Matchers' },
+  { key: 'startsAt', title: '开始时间' },
+  { key: 'updatedAt', title: '更新时间' },
+  { key: 'endsAt', title: '结束时间' },
+  { key: 'createdBy', title: '创建人' },
+  { key: 'comment', title: '说明' }
+]
