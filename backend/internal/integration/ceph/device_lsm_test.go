@@ -4,6 +4,7 @@ import (
 	cephdomain "cephtower/backend/internal/domain/ceph"
 	"context"
 	"encoding/json"
+	"reflect"
 	"testing"
 )
 
@@ -36,5 +37,22 @@ func TestCollectDeviceLSMData(t *testing.T) {
 	}
 	if deviceLSMData(nil) != nil || len(deviceLSMData(map[string]any{"health": true})) != 0 {
 		t.Fatal("invalid LSM data accepted")
+	}
+}
+
+func TestDeviceLSMErrors(t *testing.T) {
+	for _, tc := range []struct {
+		input   any
+		want    []string
+		present bool
+	}{
+		{[]any{"query failed", "unsupported transport"}, []string{"query failed", "unsupported transport"}, true},
+		{[]any{}, []string{}, true}, {nil, nil, false}, {[]any{"query failed", 1}, nil, false}, {"failed", nil, false},
+	} {
+		data := deviceLSMData(map[string]any{"errors": tc.input})
+		value, present := data["errors"]
+		if present != tc.present || (present && !reflect.DeepEqual(value, tc.want)) {
+			t.Fatalf("%v -> %v", tc.input, data)
+		}
 	}
 }

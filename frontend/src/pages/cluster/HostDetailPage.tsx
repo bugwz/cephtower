@@ -444,6 +444,7 @@ function HostPhysicalDiskTable({ devices }: { devices: ApiRecord[] }) {
         { key: 'link_speed_display', title: '链路速率（LSM 原值）' },
         { key: 'identify_led_display', title: '定位灯（支持 / 状态）' },
         { key: 'fault_led_display', title: '故障灯（支持 / 状态）' },
+        { key: 'lsm_errors_display', title: 'LSM 查询错误', ellipsis: false },
         { key: 'rejected_reasons_display', title: '不可用原因', ellipsis: false },
         { key: 'size_display', title: '容量' },
         { key: 'osd_display', title: 'OSD' }
@@ -676,7 +677,10 @@ function normalizeInventoryDeviceRow(row: ApiRecord, deviceInfo: ApiRecord[]): A
     rpm_display: textValue(lsmData.rpm, '未知'),
     link_speed_display: textValue(lsmData.linkSpeed, '未知'),
     identify_led_display: `${textValue(leds.IDENTsupport, '未知')} / ${textValue(leds.IDENTstatus, '未知')}`,
-    fault_led_display: `${textValue(leds.FAILsupport, '未知')} / ${textValue(leds.FAILstatus, '未知')}`
+    fault_led_display: `${textValue(leds.FAILsupport, '未知')} / ${textValue(leds.FAILstatus, '未知')}`,
+    lsm_errors_display: Array.isArray(lsmData.errors) && lsmData.errors.every(item => typeof item === 'string')
+      ? lsmData.errors.length ? lsmData.errors.join('；') : '未报告查询错误（不代表健康）'
+      : '未报告'
   }
 }
 

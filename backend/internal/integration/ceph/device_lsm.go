@@ -8,6 +8,21 @@ func deviceLSMData(value any) map[string]any {
 		return nil
 	}
 	result := map[string]any{}
+	if errors, ok := source["errors"].([]any); ok {
+		messages := make([]string, 0, len(errors))
+		valid := true
+		for _, item := range errors {
+			message, ok := item.(string)
+			if !ok {
+				valid = false
+				break
+			}
+			messages = append(messages, message)
+		}
+		if valid {
+			result["errors"] = messages
+		}
+	}
 	for _, key := range []string{"serialNum", "transport", "mediaType", "health", "rpm", "linkSpeed"} {
 		switch v := source[key].(type) {
 		case string:
