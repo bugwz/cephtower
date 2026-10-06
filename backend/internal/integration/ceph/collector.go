@@ -507,12 +507,14 @@ const (
 )
 
 type mgrDumpWire struct {
+	ActiveGID  *uint64            `json:"active_gid"`
 	Services   map[string]*string `json:"services"`
 	Available  *bool              `json:"available"`
 	ActiveName *string            `json:"active_name"`
 	ActiveAddr string             `json:"active_addr"`
 	Standbys   []struct {
-		Name string `json:"name"`
+		GID  *uint64 `json:"gid"`
+		Name string  `json:"name"`
 	} `json:"standbys"`
 }
 
@@ -708,11 +710,11 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 	}
 	if activeName != "" {
 		address := managers.ActiveAddr
-		payload := cephdomain.Manager{Name: activeName, Active: true, Address: &address, Available: managers.Available, Services: managerServices}
+		payload := cephdomain.Manager{GID: managerGID(managers.ActiveGID), Name: activeName, Active: true, Address: &address, Available: managers.Available, Services: managerServices}
 		rows = append(rows, Observation{Kind: "mgr", NaturalKey: activeName, Name: activeName, Status: "active", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	for _, wire := range managers.Standbys {
-		payload := cephdomain.Manager{Name: wire.Name, Available: managers.Available}
+		payload := cephdomain.Manager{GID: managerGID(wire.GID), Name: wire.Name, Available: managers.Available}
 		rows = append(rows, Observation{Kind: "mgr", NaturalKey: wire.Name, Name: wire.Name, Status: "standby", Source: "ceph_cli", Payload: payload, ObservedAt: now})
 	}
 	var mds fsDumpWire
@@ -2007,6 +2009,14 @@ func value(v *string) string {
 	}
 	return *v
 }
+func managerGID(value *uint64) *string {
+	if value == nil {
+		return nil
+	}
+	text := strconv.FormatUint(*value, 10)
+	return &text
+}
+
 func boolInt(value *bool) *int {
 	if value == nil {
 		return nil

@@ -85,6 +85,7 @@ export function ManagerInventory({ clusterId }: { clusterId: number }) {
     {data && (data.stale !== false || data.items.some(row => row.stale !== false)) && <Alert type="warning" message="MGR 库存已过期或新鲜度未知，请重新采集集群。" />}
     <AppTable<ApiRecord> dataSource={data?.items ?? []} loading={loading} rowKey="natural_key" pagination={{ defaultPageSize: 10 }} columns={[
       { title: '名称', dataIndex: 'name' },
+      { title: '实例 GID（原生）', dataIndex: 'gid', render: value => typeof value === 'string' ? value : '未采集' },
       { title: '角色（采集时）', dataIndex: 'active', render: value => value === true ? '活动' : value === false ? '备用' : '未知' },
       { title: '活动 MGR 可用（原生）', dataIndex: 'available', render: value => value === true ? '是' : value === false ? '否' : '未知' },
       { title: '地址', dataIndex: 'address' },

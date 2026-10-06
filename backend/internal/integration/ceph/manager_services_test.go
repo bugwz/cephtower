@@ -34,6 +34,47 @@ func TestManagerInventoryRejectsAmbiguousIdentities(t *testing.T) {
 	}
 }
 
+func TestManagerGIDPreservesNativePrecision(t *testing.T) {
+	for _, raw := range []string{`null`, `0`, `9007199254740993`, `18446744073709551615`, `-1`, `1.5`, `"123"`, `true`} {
+		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.mgr": []byte(`{"active_name":"a","active_gid":` + raw + `,"standbys":[{"name":"b","gid":` + raw + `}]}`)}}}
+		rows, err := p.Collect(context.Background(), ClusterAccess{}, "topology")
+		if raw == `-1` || raw == `1.5` || raw == `"123"` || raw == `true` {
+			if err == nil || len(rows) != 0 {
+				t.Fatalf("invalid gid accepted: %s", raw)
+			}
+			continue
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		count := 0
+		for _, row := range rows {
+			if row.Kind != "mgr" {
+				continue
+			}
+			count++
+			encoded, err := json.Marshal(row.Payload)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var got map[string]any
+			if err := json.Unmarshal(encoded, &got); err != nil {
+				t.Fatal(err)
+			}
+			var want any
+			if raw != `null` {
+				want = raw
+			}
+			if got["gid"] != want {
+				t.Fatalf("gid changed: %s -> %s", raw, encoded)
+			}
+		}
+		if count != 2 {
+			t.Fatalf("managers = %d", count)
+		}
+	}
+}
+
 func TestManagerServicesRemainOnActiveInstance(t *testing.T) {
 	for _, field := range []string{``, `,"services":null`, `,"services":{}`, `,"services":{"dashboard":"https://mgr:8443/","prometheus":"http://mgr:9283/"}`} {
 		p := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{"collect.mgr": []byte(`{"available":true,"active_name":"a","active_addr":"v2:host:3300","standbys":[{"name":"b"}]` + field + `}`)}}}

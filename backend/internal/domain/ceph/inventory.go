@@ -129,6 +129,7 @@ type MonitorPerfCounter struct {
 	Priority    int    `json:"priority"`
 }
 type Manager struct {
+	GID       *string           `json:"gid"`
 	Services  map[string]string `json:"services"`
 	Name      string            `json:"name"`
 	Active    bool              `json:"active"`
