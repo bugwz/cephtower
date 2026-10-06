@@ -803,6 +803,7 @@ function DeviceDetailContent({ deviceId, hostname, path, selectedClusterId }: { 
   const active = useRef(true)
   const zapRunning = useRef(false)
   const identifyRunning = useRef(false)
+  const deviceConfirmationEpoch = useRef(0)
   const identifyConfirmation = useRef<{ destroy: () => void } | null>(null)
   const zapConfirmation = useRef<{ destroy: () => void } | null>(null)
   useEffect(() => {
@@ -834,6 +835,11 @@ function DeviceDetailContent({ deviceId, hostname, path, selectedClusterId }: { 
   }, [decodedDeviceId, hostname, path, selectedClusterId])
   const { data, loading, error, refresh } = useResource(loader)
   const device = data?.device
+  useEffect(() => () => {
+    deviceConfirmationEpoch.current += 1
+    zapConfirmation.current?.destroy()
+    identifyConfirmation.current?.destroy()
+  }, [data, loading, error])
   const currentDeviceHost = device ? deviceHost(device) : ''
   const currentDevicePath = device ? devicePath(device) : ''
   const [pendingDeviceAction, setPendingDeviceAction] = useState('')
@@ -858,6 +864,7 @@ function DeviceDetailContent({ deviceId, hostname, path, selectedClusterId }: { 
       return
     }
     const isOn = state === 'on'
+    const confirmationEpoch = ++deviceConfirmationEpoch.current
     let submitted = false
     identifyConfirmation.current?.destroy()
     zapConfirmation.current?.destroy()
@@ -866,8 +873,9 @@ function DeviceDetailContent({ deviceId, hostname, path, selectedClusterId }: { 
       content: `确认后将对主机 ${currentDeviceHost} 的设备 ${currentDevicePath} 执行${isOn ? '点灯' : '关灯'}操作。`,
       okText: `确认${isOn ? '点灯' : '关灯'}`,
       cancelText: '取消',
+      onCancel() { if (deviceConfirmationEpoch.current === confirmationEpoch) deviceConfirmationEpoch.current += 1 },
       async onOk() {
-        if (submitted || !active.current || zapRunning.current || identifyRunning.current) return
+        if (deviceConfirmationEpoch.current !== confirmationEpoch || submitted || !active.current || zapRunning.current || identifyRunning.current) return
         submitted = true
         await identify(state)
       }
@@ -915,6 +923,7 @@ function DeviceDetailContent({ deviceId, hostname, path, selectedClusterId }: { 
     }
     const parameters = { cluster_id: selectedClusterId, host: currentDeviceHost, device: currentDevicePath }
     const pendingKey = `${currentDeviceHost}:${currentDevicePath}:zap`
+    const confirmationEpoch = ++deviceConfirmationEpoch.current
     let submitted = false
     zapConfirmation.current?.destroy()
     identifyConfirmation.current?.destroy()
@@ -924,8 +933,9 @@ function DeviceDetailContent({ deviceId, hostname, path, selectedClusterId }: { 
       okText: '提交擦除',
       okType: 'danger',
       cancelText: '取消',
+      onCancel() { if (deviceConfirmationEpoch.current === confirmationEpoch) deviceConfirmationEpoch.current += 1 },
       async onOk() {
-        if (!active.current || submitted || zapRunning.current || identifyRunning.current) {
+        if (deviceConfirmationEpoch.current !== confirmationEpoch || !active.current || submitted || zapRunning.current || identifyRunning.current) {
           return
         }
         submitted = true
