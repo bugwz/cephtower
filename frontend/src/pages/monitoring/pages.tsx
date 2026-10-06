@@ -3,6 +3,7 @@ export { RuntimeLogsPage } from './RuntimeLogsPage'
 import { MetricPage } from './MetricPage'
 import { SilencedAlerts } from './SilencedAlerts'
 import { RuleAlerts } from './RuleAlerts'
+import { AlertRoutingDetails } from './AlertRoutingDetails'
 import { alertColumns, alertRuleColumns, silenceColumns } from './alertColumns'
 import { silenceCreateAction, silenceFromAlertAction, silenceRecreateAction, silenceExpireAction, silenceUpdateAction } from './silenceActions'
 
@@ -46,6 +47,7 @@ const externalDefinitions: Record<'grafana' | 'alerts' | 'rules' | 'silences', E
     requiredEndpoints: ['alertmanager'],
     rowKeyCandidates: ['fingerprint'],
     columns: alertColumns,
+    detailContent: row => <AlertRoutingDetails row={row} />,
     extraActions: [silenceFromAlertAction]
   },
   rules: {
