@@ -41,7 +41,26 @@ for (const scenario of ['success', 'stale', 'unavailable', 'before', 'during', '
   assert.equal(env.running.current, false)
 }
 assert.equal(source.split('<DaemonTable key={selectedClusterId} clusterId={selectedClusterId}').length - 1, 2)
-assert.ok(table.getText(tree).includes('return () => { active.current = false }'))
+assert.ok(table.getText(tree).includes('return () => { active.current = false; actionConfirmation.current?.destroy() }'))
+const confirmCode = table.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'confirmAction').getText(tree)
+for (const scenario of ['success', 'stale', 'inactive', 'during', 'failure', 'no-version']) {
+  let modal
+  const calls = [], destroys = []
+  const env = { clusterId: 7, active: { current: scenario !== 'inactive' }, running: { current: false }, unavailable: false, osdInventoryVersion: version, actionConfirmation: { current: null }, Modal: { confirm: value => { modal = value; return { destroy: () => destroys.push(true) } } }, runAction: async (...args) => { calls.push(args); if (scenario === 'failure') throw new Error('failed') } }
+  const confirm = new Function(...Object.keys(env), `${compile(confirmCode)}; return confirmAction`)(...Object.values(env))
+  const row = { name: 'mgr.a', stale: scenario === 'stale', resource_version: scenario === 'no-version' ? undefined : '18446744073709551615' }
+  confirm(row, 'stop')
+  assert.equal(calls.length, 0)
+  if (['stale', 'inactive', 'no-version'].includes(scenario)) { assert.equal(modal, undefined); continue }
+  assert.match(modal.title, /mgr.a.*7/)
+  assert.match(modal.content, /不会使用强制选项/)
+  if (scenario === 'during') env.active.current = false
+  if (scenario === 'failure') await assert.rejects(modal.onOk(), /failed/)
+  else await modal.onOk()
+  await modal.onOk()
+  assert.equal(calls.length, scenario === 'during' ? 0 : 1)
+}
+for (const action of ['start', 'stop', 'restart']) assert.ok(table.getText(tree).includes(`confirmAction(row, '${action}')`))
 const openPerf = table.body.statements.find(n => ts.isFunctionDeclaration(n) && n.name.text === 'openPerformance').getText(tree)
 for (const name of ['mgr.a', 'mds.fs.node-1', 'osd.1', 'mgr.*', 'mds.', 'mgr.a;stop', '', null]) {
   for (const state of ['active', 'inactive', 'unavailable', 'no-cluster']) {

@@ -1134,11 +1134,31 @@ function DaemonTable({
   const visiblePerf = perfSelection?.clusterId === clusterId ? perfSelection : null
   const active = useRef(true)
   const running = useRef(false)
+  const actionConfirmation = useRef<{ destroy: () => void } | null>(null)
   useEffect(() => {
     active.current = true
-    return () => { active.current = false }
+    return () => { active.current = false; actionConfirmation.current?.destroy() }
   }, [])
+  useEffect(() => () => { actionConfirmation.current?.destroy() }, [data, unavailable])
   const operationMutation = useMutationOperation()
+
+  function confirmAction(row: ApiRecord, action: 'start' | 'stop' | 'restart') {
+    if (!clusterId || !active.current || running.current || unavailable || row.stale !== false || !osdInventoryVersion(row.resource_version) || typeof row.name !== 'string' || !row.name) return
+    const label = { start: '启动', stop: '停止', restart: '重启' }[action]
+    let submitted = false
+    actionConfirmation.current?.destroy()
+    actionConfirmation.current = Modal.confirm({
+      title: `${label} ${row.name}（集群 ${clusterId}）`,
+      content: '操作可能中断依赖此守护进程的客户端或服务。不会使用强制选项绕过 Ceph 安全检查；命令接受不代表运行状态已经完成切换。',
+      okText: `确认${label}`, cancelText: '取消', okType: action === 'start' ? 'primary' : 'danger',
+      async onOk() {
+        if (submitted || !active.current || running.current) return
+        submitted = true
+        try { await runAction(row, action) }
+        finally { actionConfirmation.current?.destroy() }
+      }
+    })
+  }
 
   function openPerformance(row: ApiRecord) {
     if (!clusterId || !active.current || unavailable || typeof row.name !== 'string' || !/^(mgr|mds)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(row.name)) return
@@ -1202,9 +1222,9 @@ function DaemonTable({
               return (
                 <TableActions>
                   <TableAction disabled={!clusterId || unavailable || !/^(mgr|mds)\.[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(name)} onClick={() => openPerformance(row)}>性能计数器</TableAction>
-                  <TableAction loading={pendingDaemonAction === `${name}:restart`} disabled={disabled} onClick={() => runAction(row, 'restart')}>重启</TableAction>
-                  <TableAction loading={pendingDaemonAction === `${name}:start`} disabled={disabled} onClick={() => runAction(row, 'start')}>启动</TableAction>
-                  <TableAction danger loading={pendingDaemonAction === `${name}:stop`} disabled={disabled} onClick={() => runAction(row, 'stop')}>停止</TableAction>
+                  <TableAction loading={pendingDaemonAction === `${name}:restart`} disabled={disabled} onClick={() => confirmAction(row, 'restart')}>重启</TableAction>
+                  <TableAction loading={pendingDaemonAction === `${name}:start`} disabled={disabled} onClick={() => confirmAction(row, 'start')}>启动</TableAction>
+                  <TableAction danger loading={pendingDaemonAction === `${name}:stop`} disabled={disabled} onClick={() => confirmAction(row, 'stop')}>停止</TableAction>
                 </TableActions>
               )
             }
