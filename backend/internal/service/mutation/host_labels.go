@@ -5,9 +5,10 @@ import (
 	"strings"
 )
 
-func hostLabelsMatch(raw []byte, host string, parameters map[string]any) bool {
+func hostUpdateMatches(raw []byte, host string, parameters map[string]any) bool {
 	var rows []struct {
 		Hostname *string  `json:"hostname"`
+		Address  *string  `json:"addr"`
 		Labels   []string `json:"labels"`
 	}
 	if json.Unmarshal(raw, &rows) != nil || rows == nil || host == "" {
@@ -21,6 +22,15 @@ func hostLabelsMatch(raw []byte, host string, parameters map[string]any) bool {
 		}
 		seen[*row.Hostname] = true
 		if *row.Hostname != host {
+			continue
+		}
+		if address := optional(parameters, "address"); address != "" && (row.Address == nil || *row.Address != address) {
+			return false
+		}
+		add, _ := stringSlice(parameters["labels_add"])
+		remove, _ := stringSlice(parameters["labels_remove"])
+		if len(add) == 0 && len(remove) == 0 {
+			found = true
 			continue
 		}
 		if row.Labels == nil {
