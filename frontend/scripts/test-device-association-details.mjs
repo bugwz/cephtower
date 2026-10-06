@@ -7,6 +7,13 @@ const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTa
 const exports = {}
 new Function('exports', 'require', 'React', code)(exports, name => name === 'antd' ? { Alert: 'Alert', Descriptions: { Item: 'Item' }, Space: 'Space', Typography: { Text: 'Text' } } : { isRecord: value => value !== null && typeof value === 'object' && !Array.isArray(value) }, { createElement: (type, props, ...children) => ({ type, props, children }) })
 const render = device => JSON.stringify(exports.DeviceAssociationDetails({ device }))
+for (const [value, expected] of [[0, '约 0.00%（原始比例 0）'], [0.37, '约 37.00%（原始比例 0.37）'], [1, '约 100.00%（原始比例 1）'], [1.25, '约 125.00%（原始比例 1.25）']]) {
+  assert.equal(exports.deviceWearDisplay(value), expected)
+  assert.ok(render({ wear_level: value }).includes(expected))
+}
+for (const value of [undefined, null]) assert.equal(exports.deviceWearDisplay(value), '未报告')
+for (const value of [-1, Infinity, NaN, Number.MAX_VALUE, '0.37', true, {}, []]) assert.equal(exports.deviceWearDisplay(value), '格式无效')
+assert.ok(render({}).includes('不是剩余寿命或当前健康结论'))
 const full = render({ devid: 'serial', daemons: ['osd.1', 'osd.10'], location: [{ host: 'node1', dev: 'sda', path: '/dev/disk/by-id/serial' }, { host: 'node2', dev: 'sdb', path: '/dev/sdb' }], life_expectancy_min: '2026-10-07 00:00:00', life_expectancy_max: '2026-12-07 00:00:00', life_expectancy_stamp: '2026-10-06 00:00:00' })
 for (const text of ['serial', 'osd.1、osd.10', 'node1', 'node2', '/dev/disk/by-id/serial', '/dev/sdb', '2026-10-07 00:00:00', '2026-12-07 00:00:00', '2026-10-06 00:00:00', '不是保证寿命']) assert.ok(full.includes(text), text)
 for (const value of [undefined, null, {}, 'invalid', [null], [1]]) {
