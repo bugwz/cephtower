@@ -4,6 +4,7 @@ import { listAllResources, type ResourceListResult } from '../../api/resource'
 import type { ApiRecord } from '../../api/client'
 import { DataTable } from '../../components/DataTable'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
+import { formatDateTime } from '../../utils/time'
 
 export function upgradeDaemonRows(items: ApiRecord[], search: string) {
   const types = new Set(['mgr', 'mon', 'crash', 'osd', 'mds', 'rgw', 'rbd-mirror', 'cephfs-mirror', 'iscsi', 'nfs'])
@@ -13,8 +14,9 @@ export function upgradeDaemonRows(items: ApiRecord[], search: string) {
   return items.filter((item) => typeof item.type === 'string' && types.has(item.type)).map((item) => ({
     natural_key: item.natural_key,
     name: text(item.name), hostname: text(item.hostname), version: text(item.version),
+    status: text(item.status), last_refresh: text(item.last_refresh), observed_at: text(item.observed_at),
     image: text(item.container_image), image_id: text(item.container_image_id), image_digests: digests(item.container_image_digests), freshness: item.stale === true ? '已过期' : item.stale === false ? '有效' : '未知'
-  })).filter((item) => !query || [item.name, item.hostname, item.version, item.image, item.image_id, item.image_digests].some((value) => value.toLowerCase().includes(query)))
+  })).filter((item) => !query || [item.name, item.hostname, item.version, item.status, item.image, item.image_id, item.image_digests].some((value) => value.toLowerCase().includes(query)))
 }
 
 export function UpgradeDaemons({ clusterId, revision }: { clusterId: number; revision: number }) {
@@ -37,10 +39,16 @@ export function UpgradeDaemons({ clusterId, revision }: { clusterId: number; rev
       {data && <>
         <Alert type="info" message="仅展示 Dashboard 升级范围内的 mgr、mon、crash、osd、mds、rgw、rbd-mirror、cephfs-mirror、iscsi、nfs。其他类型及缺少类型的库存不纳入此版本表；可在服务页检查全部守护进程。" />
         <ResourceMetaBar observedAt={data.observedAt} stale={data.stale} staleReason={data.staleReason} />
-        {data.stale && <Alert type="warning" message="守护进程库存已过期，请重新采集后判断版本状态。" />}
+        {data.stale !== false && <Alert type="warning" message="守护进程库存已过期或新鲜度未知，请重新采集后判断版本状态。" />}
         <Alert type="info" message="镜像名称、ID 和摘要来自守护进程库存。相同标签不保证镜像内容相同；未报告摘要不代表镜像一致，也不代表升级已完成。" />
-        <Input.Search aria-label="搜索守护进程版本" placeholder="按名称、主机、版本或镜像信息搜索" value={search} onChange={(event) => setSearch(event.target.value)} allowClear />
-        <DataTable rowKeyCandidates={['natural_key']} data={upgradeDaemonRows(data.items, search)} columns={[{ key: 'name', title: '守护进程' }, { key: 'hostname', title: '主机' }, { key: 'version', title: '版本' }, { key: 'image', title: '容器镜像' }, { key: 'image_id', title: '镜像 ID', ellipsis: false }, { key: 'image_digests', title: '镜像摘要', ellipsis: false }, { key: 'freshness', title: '采集状态' }]} />
+        <Input.Search aria-label="搜索守护进程版本" placeholder="按名称、主机、版本、状态或镜像信息搜索" value={search} onChange={(event) => setSearch(event.target.value)} allowClear />
+        <DataTable rowKeyCandidates={['natural_key']} data={upgradeDaemonRows(data.items, search)} columns={[
+          { key: 'name', title: '守护进程' }, { key: 'hostname', title: '主机' }, { key: 'version', title: '版本' },
+          { key: 'status', title: '运行状态（快照）' }, { key: 'image', title: '容器镜像' },
+          { key: 'image_id', title: '镜像 ID', ellipsis: false }, { key: 'image_digests', title: '镜像摘要', ellipsis: false },
+          { key: 'last_refresh', title: 'Ceph 最近刷新', render: value => formatDateTime(value) },
+          { key: 'observed_at', title: '库存采集时间', render: value => formatDateTime(value) }, { key: 'freshness', title: '采集状态' }
+        ]} />
       </>}
     </Space>
   </Card>

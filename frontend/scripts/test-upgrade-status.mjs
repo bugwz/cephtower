@@ -132,6 +132,17 @@ assert.equal(daemonExports.upgradeDaemonRows(daemonItems, ' NODE-A ').length, 1)
 assert.equal(daemonExports.upgradeDaemonRows(daemonItems, '20.2').length, 1)
 assert.equal(daemonExports.upgradeDaemonRows(daemonItems, 'missing').length, 0)
 assert.deepEqual(daemonExports.upgradeDaemonRows([], ''), [])
+const stoppedDaemon = { ...daemonItems[0], status: 'stopped', last_refresh: '2026-10-06T01:02:03Z', observed_at: '2026-10-06T01:02:05Z' }
+const stoppedRow = daemonExports.upgradeDaemonRows([stoppedDaemon], 'STOPPED')[0]
+assert.equal(stoppedRow.status, 'stopped')
+assert.equal(stoppedRow.last_refresh, stoppedDaemon.last_refresh)
+assert.equal(stoppedRow.observed_at, stoppedDaemon.observed_at)
+for (const value of [undefined, null, '', false, 0, {}]) {
+  const unknown = daemonExports.upgradeDaemonRows([{ ...daemonItems[0], status: value, last_refresh: value, observed_at: value }], '')[0]
+  assert.equal(unknown.status, '未知')
+  assert.equal(unknown.last_refresh, '未知')
+  assert.equal(unknown.observed_at, '未知')
+}
 const imageItems = [{ ...daemonItems[0], container_image_id: 'sha256:image-one', container_image_digests: ['quay.io/ceph/ceph@sha256:digest-one', 'registry/ceph@sha256:digest-two'] }, { ...daemonItems[0], name: 'mgr.b', container_image_id: 'sha256:image-two', container_image_digests: [] }]
 assert.equal(daemonExports.upgradeDaemonRows(imageItems, 'image-one')[0].image_id, 'sha256:image-one')
 assert.equal(daemonExports.upgradeDaemonRows(imageItems, 'DIGEST-TWO')[0].name, 'mgr.a')
