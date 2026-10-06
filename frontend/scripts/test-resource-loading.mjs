@@ -464,6 +464,18 @@ assert.equal(managementMode(null), '未采集')
 
 const logsSource = readFileSync(new URL('../src/pages/monitoring/RuntimeLogsPage.tsx', import.meta.url), 'utf8')
 const logsTree = ts.createSourceFile('logs.tsx', logsSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const logCopyFunctions = logsTree.statements.filter(node => ts.isFunctionDeclaration(node) && ['runtimeLogsText', 'copyRuntimeLogs'].includes(node.name.text))
+const logCopyCode = ts.transpileModule(logCopyFunctions.map(node => node.getText(logsTree).replace('export ', '')).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const copied = []
+const logCopy = new Function('navigator', `${logCopyCode}; return { runtimeLogsText, copyRuntimeLogs }`)({ clipboard: { writeText: async text => copied.push(text) } })
+const copyRows = [{ stamp: '2026-10-06', channel: 'audit', priority: '[INF]', name: 'mon.a', message: '中文\nline two' }]
+assert.equal(logCopy.runtimeLogsText(copyRows), '2026-10-06 [audit] [INF] mon.a: 中文\nline two')
+await logCopy.copyRuntimeLogs(copyRows)
+assert.deepEqual(copied, [logCopy.runtimeLogsText(copyRows)])
+await assert.rejects(new Function('navigator', `${logCopyCode}; return copyRuntimeLogs`)({})(copyRows), /不支持剪贴板/)
+await assert.rejects(new Function('navigator', `${logCopyCode}; return copyRuntimeLogs`)({ clipboard: { writeText: async () => { throw new Error('permission denied') } } })(copyRows), /permission denied/)
+assert.ok(logsSource.includes('copyRuntimeLogs(filtered)'))
+assert.ok(logsSource.includes('const content = runtimeLogsText(filtered)'))
 const logsPanelNode = logsTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'RuntimeLogsPanel')
 const logsPanelCode = ts.transpileModule(logsPanelNode.getText(logsTree).replace('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.React } }).outputText
 for (const id of [undefined, 1, 2]) {
@@ -491,7 +503,7 @@ assert.equal(matchesLog(log, '', '', '', '[ERR]'), false)
 assert.equal(matchesLog({ ...log, message: '[ERR] in text' }, '[ERR]', '', '', '[ERR]'), false)
 assert.equal(matchesLog({ ...log, priority: '[NEW]' }, '', '', '', ''), true)
 assert.equal(matchesLog(log, '', '2026-10-04T00:00:00Z', '', '[INF]'), false)
-assert.ok(logsSource.includes('const content = filtered.map'))
+assert.ok(logsSource.includes('const content = runtimeLogsText(filtered)'))
 console.log('Runtime log time bounds and filtered download checks passed')
 
 const serviceSource = readFileSync(new URL('../src/pages/cluster/ServiceDaemons.tsx', import.meta.url), 'utf8')

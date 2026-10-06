@@ -1,4 +1,4 @@
-import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons'
+import { CopyOutlined, DownloadOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Input, Select, Space, Switch, Tag, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
@@ -6,6 +6,16 @@ import { AppTable } from '../../components/AppTable'
 import { Page } from '../../components/Page'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 import { useClusterContext } from '../../state/ClusterContext'
+import { message } from '../../utils/appMessage'
+
+export function runtimeLogsText(rows: ApiRecord[]): string {
+  return rows.map((row) => `${row.stamp} [${row.channel}] ${row.priority} ${row.name}: ${row.message}`).join('\n')
+}
+
+export async function copyRuntimeLogs(rows: ApiRecord[]): Promise<void> {
+  if (!navigator.clipboard?.writeText) throw new Error('当前浏览器不支持剪贴板写入，请下载日志。')
+  await navigator.clipboard.writeText(runtimeLogsText(rows))
+}
 
 function runtimeLogMatches(row: ApiRecord, search: string, start: string, end: string, priority = ''): boolean {
   if (priority && row.priority !== priority) return false
@@ -68,7 +78,7 @@ function RuntimeLogsContent({ compact, selectedClusterId }: { compact: boolean; 
   const invalidRange = Boolean(start && end && Date.parse(start) > Date.parse(end))
   const filtered = rows.filter((row) => runtimeLogMatches(row, search, start, end, priority))
   function download() {
-    const content = filtered.map((row) => `${row.stamp} [${row.channel}] ${row.priority} ${row.name}: ${row.message}`).join('\n')
+    const content = runtimeLogsText(filtered)
     const url = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }))
     const link = document.createElement('a'); link.href = url; link.download = `ceph-${channel === '*' ? 'all' : channel}.log`; link.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
@@ -87,6 +97,7 @@ function RuntimeLogsContent({ compact, selectedClusterId }: { compact: boolean; 
           <Switch checked={auto} onChange={setAuto} checkedChildren="自动刷新" unCheckedChildren="已暂停" />
           <Button icon={<ReloadOutlined />} loading={loading} disabled={!selectedClusterId} onClick={() => setRevision((n) => n + 1)}>刷新</Button>
           {!compact && <><Button icon={<DownloadOutlined />} disabled={!filtered.length} onClick={download}>下载当前结果</Button>
+          <Button icon={<CopyOutlined />} disabled={!filtered.length} onClick={() => { void copyRuntimeLogs(filtered).then(() => message.success('已复制当前筛选日志')).catch((err: unknown) => message.error(err instanceof Error ? err.message : '复制日志失败')) }}>复制当前结果</Button>
           <Input.Search allowClear placeholder="搜索消息、来源、时间、频道或级别" value={search} onChange={(event) => setSearch(event.target.value)} />
           <Select aria-label="精确日志级别" value={priority} onChange={setPriority} style={{ width: 170 }} options={[
             { value: '', label: '显示全部返回级别' }, ...['[DBG]', '[INF]', '[SEC]', '[WRN]', '[ERR]'].map((value) => ({ value, label: `仅显示 ${value}` }))
