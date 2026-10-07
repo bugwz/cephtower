@@ -796,6 +796,22 @@ for (const editing of [false, true]) for (const networks_change of [undefined, f
   assert.equal(Object.hasOwn(calls[0][2], 'networks'), sendsNetworks)
   if (sendsNetworks) assert.deepEqual(calls[0][2].networks, networks ?? [])
 }
+for (const editing of [false, true]) for (const placement_change of [undefined, false, true]) for (const placement_json of ['{}', '{"count":2}', 'invalid']) {
+  const calls = []
+  const env = {
+    active: { current: true }, running: { current: false }, selectedClusterId: 7, loading: false, error: '',
+    editingService: editing ? { name: 'rgw.a', resource_version: '12' } : null, serviceWritable: () => true,
+    setSubmitting: () => {}, setFormOpen: () => {}, parsePlacement: JSON.parse, serviceName: row => row.name,
+    message: { error: () => {}, warning: () => {}, success: () => {} }, refreshAfterMutation: async () => {},
+    mutateResource: async (...args) => { calls.push(args) }
+  }
+  const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
+  await submit({ service_type: 'rgw', service_id: 'a', placement_json, placement_change })
+  const sendsPlacement = !editing || placement_change === true
+  if (sendsPlacement && placement_json === 'invalid') { assert.equal(calls.length, 0); continue }
+  assert.equal(Object.hasOwn(calls[0][2], 'placement'), sendsPlacement)
+  if (sendsPlacement) assert.deepEqual(calls[0][2].placement, JSON.parse(placement_json))
+}
 for (const scenario of ['ok', 'inactive', 'unmount', 'stale', 'error']) {
   const calls = []
   let resolve, reject
@@ -810,7 +826,7 @@ for (const scenario of ['ok', 'inactive', 'unmount', 'stale', 'error']) {
   const pending = submit({ service_type: 'rgw', service_id: 'a', placement_json: '{}' })
   await submit({ service_type: 'rgw', service_id: 'a', placement_json: '{}' })
   if (['inactive', 'stale'].includes(scenario)) { await pending; assert.deepEqual(calls, []); continue }
-  assert.deepEqual(calls[0], ['/service', 'PATCH', { cluster_id: 7, name: 'rgw.a', service_type: 'rgw', service_id: 'a', placement: {} }, { ifMatch: '9007199254740993' }])
+  assert.deepEqual(calls[0], ['/service', 'PATCH', { cluster_id: 7, name: 'rgw.a', service_type: 'rgw', service_id: 'a' }, { ifMatch: '9007199254740993' }])
   assert.equal(calls.length, 1)
   if (scenario === 'unmount') env.active.current = false
   if (scenario === 'error') { reject(new Error('failure')); await assert.rejects(pending) } else { resolve(); await pending }

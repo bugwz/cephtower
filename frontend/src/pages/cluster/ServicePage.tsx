@@ -35,6 +35,7 @@ interface ServiceFormValues {
   interface_networks_change?: boolean
   networks?: string[]
   networks_change?: boolean
+  placement_change?: boolean
 }
 
 const daemonActions = [
@@ -102,6 +103,7 @@ function ServicePageContent() {
   const listenerChange = Form.useWatch('listener_change', form)
   const interfaceNetworksChange = Form.useWatch('interface_networks_change', form)
   const networksChange = Form.useWatch('networks_change', form)
+  const placementChange = Form.useWatch('placement_change', form)
   const requiresServiceID = ['mds', 'rgw', 'nfs', 'smb', 'ingress'].includes(selectedServiceType)
   const [formOpen, setFormOpen] = useState(false)
   useEffect(() => {
@@ -158,6 +160,7 @@ function ServicePageContent() {
       listener_change: false,
       interface_networks_change: false,
       networks_change: false,
+      placement_change: false,
       virtual_interface_networks: Array.isArray(ingress.virtual_interface_networks) ? ingress.virtual_interface_networks.filter((value): value is string => typeof value === 'string') : [],
       virtual_ip: typeof ingress.virtual_ip === 'string' ? ingress.virtual_ip : undefined,
       frontend_port: typeof ingress.frontend_port === 'number' ? ingress.frontend_port : undefined,
@@ -177,9 +180,9 @@ function ServicePageContent() {
     running.current = true; setSubmitting(true)
     let attempted = false
     try {
-      let placement: ApiRecord
+      let placement: ApiRecord | undefined
       try {
-        placement = parsePlacement(values.placement_json)
+        if (!editingService || values.placement_change === true) placement = parsePlacement(values.placement_json)
       } catch (err) {
         message.error(err instanceof Error ? err.message : 'Placement JSON 格式错误')
         return
@@ -198,7 +201,7 @@ function ServicePageContent() {
         ...(!editingService && values.service_type === 'ingress' && typeof values.ssl === 'boolean' ? { ssl: values.ssl, ...(values.ssl ? { ssl_cert: values.ssl_cert, ssl_key: values.ssl_key } : {}) } : {}),
         ...(editingService && values.service_type === 'ingress' ? values.tls_mode === 'replace' ? { ssl: true, ssl_cert: values.ssl_cert, ssl_key: values.ssl_key } : values.tls_mode === 'disable' ? { ssl: false } : {} : {}),
         ...(editingService && values.service_type === 'ingress' && values.listener_change === true ? { virtual_ip: values.virtual_ip, frontend_port: values.frontend_port, monitor_port: values.monitor_port } : {}),
-        placement
+        ...(placement !== undefined ? { placement } : {})
       }
       const successMessage = editingService ? '服务更新已安排，请核对刷新后的配置与运行状态。' : '服务创建已安排，请核对刷新后的配置与运行状态。'
       attempted = true
@@ -413,10 +416,11 @@ function ServicePageContent() {
           {(!editingService || networksChange === true) && <Form.Item name="networks" label="绑定网段" extra="输入 IPv4 或 IPv6 网段后按回车，可添加多个；清空将移除网络限制。网段语法及服务类型支持情况由 Ceph 校验，修改可能影响服务访问。">
             <Select mode="tags" tokenSeparators={[',']} placeholder="例如 192.0.2.0/24 或 2001:db8::/64" />
           </Form.Item>}
-          <Form.Item name="placement_json" label="Placement JSON" rules={[{ validator: async (_, value) => { parsePlacement(value) } }]} extra='支持 count、count_per_host、hosts、label 和 host_pattern。count 与 count_per_host 互斥；每主机数量必须指定主机选择条件。host_pattern 支持通配符字符串或 {"pattern":"node-[0-9]+","pattern_type":"regex"}，正则语法由 Ceph 校验。'>
+          {editingService && <Form.Item name="placement_change" label="修改放置策略" valuePropName="checked"><Switch /></Form.Item>}
+          {(!editingService || placementChange === true) && <><Form.Item name="placement_json" label="Placement JSON" rules={[{ validator: async (_, value) => { parsePlacement(value) } }]} extra='支持 count、count_per_host、hosts、label 和 host_pattern。count 与 count_per_host 互斥；每主机数量必须指定主机选择条件。host_pattern 支持通配符字符串或 {"pattern":"node-[0-9]+","pattern_type":"regex"}，正则语法由 Ceph 校验。'>
             <Input.TextArea rows={5} spellCheck={false} placeholder='{"count":1,"host_pattern":"*"}' />
           </Form.Item>
-          <ServicePlacementPreview value={placementDraft} unmanaged={unmanagedDraft} />
+          <ServicePlacementPreview value={placementDraft} unmanaged={unmanagedDraft} /></>}
           {selectedServiceType === 'ingress' && (editingService ? <>
             <Alert type="info" message="编辑保留已有 Ingress 后端。监听配置与 TLS 默认保持不变，已有证书和私钥不会回填。" />
             <Form.Item name="listener_change" label="修改 VIP 与监听端口" valuePropName="checked"><Switch /></Form.Item>
