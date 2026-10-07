@@ -89,6 +89,16 @@ export function metricPreset(value: string | null): string {
   return metricOptions.some(option => option.value === value) ? value! : 'cluster_health'
 }
 
+export function filterMetricRows<T extends { labels: string }>(rows: T[], key: string, value: string): T[] {
+  if (!key) return rows
+  return rows.filter(row => {
+    try {
+      const labels = JSON.parse(row.labels)
+      return labels !== null && typeof labels === 'object' && !Array.isArray(labels) && Object.prototype.hasOwnProperty.call(labels, key) && labels[key] === value
+    } catch { return false }
+  })
+}
+
 function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId?: number; initialMetric: string }) {
   const active = useRef(true)
   const pending = useRef<AbortController | null>(null)
@@ -101,6 +111,8 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<MetricResponse | null>(null)
+  const [labelKey, setLabelKey] = useState('')
+  const [labelValue, setLabelValue] = useState('')
   const featureStatus = useFeatureRequirements(selectedClusterId, { requiredEndpoints: ['prometheus'] })
   const blocked = featureStatus.loading || featureStatus.blocked || Boolean(featureStatus.error)
 
@@ -118,6 +130,7 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
   }, [initialMetric])
 
   const rows = useMemo(() => normalizeSeries(result?.series ?? []), [result])
+  const visibleRows = useMemo(() => filterMetricRows(rows, labelKey, labelValue), [rows, labelKey, labelValue])
 
   async function submit(values: MetricFormValues) {
     if (!active.current) return
@@ -240,13 +253,20 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
               <Tag color="blue">result_type: {result?.result_type ?? '-'}</Tag>
               <Tag>series: {rows.length}</Tag>
               <Tag>points: {rows.reduce((sum, row) => sum + row.points, 0)}</Tag>
+              <Tag>显示序列: {visibleRows.length}</Tag>
+            </Space>
+            <Space wrap>
+              <Input aria-label="精确标签名" placeholder="标签名，例如 instance / operation" value={labelKey} onChange={event => setLabelKey(event.target.value)} />
+              <Input aria-label="精确标签值" placeholder="标签值（精确匹配，区分大小写）" value={labelValue} onChange={event => setLabelValue(event.target.value)} />
+              <Button onClick={() => { setLabelKey(''); setLabelValue('') }}>清除标签筛选</Button>
+              <Text type="secondary">仅筛选已返回的序列，不改变查询或提供集群隔离；空标签名显示全部，空标签值匹配已存在的空值。</Text>
             </Space>
 
             <AppTable<MetricRow>
               size="middle"
               rowKey="row_id"
               loading={loading}
-              dataSource={rows}
+              dataSource={visibleRows}
               expandable={{ expandedRowRender: (row) => <Space direction="vertical" style={{ width: '100%' }}>
                 {result?.result_type === 'matrix' && <MetricTrend samples={row.samples} meta={result.meta} name={row.metric_name} />}
                 <Text style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{row.labels}</Text>

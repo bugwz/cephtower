@@ -9,6 +9,16 @@ const source = readFileSync(new URL('../src/pages/monitoring/MetricPage.tsx', im
 const tree = ts.createSourceFile('MetricPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const optionsNode = tree.statements.filter(ts.isVariableStatement).flatMap(node => [...node.declarationList.declarations]).find(node => node.name.getText(tree) === 'metricOptions')
 const options = new Function(`return ${optionsNode.initializer.getText(tree)}`)()
+const filterNode = tree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'filterMetricRows')
+const filterExports = {}
+new Function('exports', ts.transpileModule(filterNode.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(filterExports)
+const labelRows = [{ labels: '{"instance":"node.1","operation":"read","empty":""}' }, { labels: '{"instance":"nodeX1","operation":"write"}' }, { labels: '{"instance":"Node.1"}' }, { labels: 'null' }, { labels: 'invalid' }]
+assert.equal(filterExports.filterMetricRows(labelRows, '', ''), labelRows)
+assert.deepEqual(filterExports.filterMetricRows(labelRows, 'instance', 'node.1'), [labelRows[0]])
+assert.deepEqual(filterExports.filterMetricRows(labelRows, 'empty', ''), [labelRows[0]])
+assert.deepEqual(filterExports.filterMetricRows(labelRows, 'toString', ''), [])
+assert.deepEqual(filterExports.filterMetricRows(labelRows, 'operation', 'write'), [labelRows[1]])
+assert.deepEqual(filterExports.filterMetricRows(labelRows, 'instance', '.*'), [])
 const presetNode = tree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'metricPreset')
 const presetCode = ts.transpileModule(presetNode.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
 const presetExports = {}
