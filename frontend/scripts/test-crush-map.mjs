@@ -488,6 +488,15 @@ const points = history.points(response, 7)
 assert.deepEqual(points, [{ time: 1000000, value: 0 }, { time: 1030000, value: 1.5 }, { time: 1090000, value: 2 }])
 assert.deepEqual(history.points(response, 9), [])
 assert.equal((history.path(points).match(/M/g) ?? []).length, 2, 'missing samples must break the chart line')
+for (const value of ['0x10', '0b10', '0o10', ' 1 ', '1\n', '', ' ', 'NaN', '+Inf', '-Inf', '1e999', '1e-999', '-1e-999', '-1', null, 1]) {
+  assert.deepEqual(history.points({ result_type: 'matrix', series: [{ metric: { pool_id: '7' }, values: [[1000, value]] }] }, 7), [], `invalid pool sample: ${value}`)
+}
+for (const time of [1e30, -1e30, Infinity, NaN]) {
+  assert.deepEqual(history.points({ result_type: 'matrix', series: [{ metric: { pool_id: '7' }, values: [[time, '1']] }] }, 7), [])
+}
+for (const [raw, value] of [['0', 0], ['-0', -0], ['1.5', 1.5], ['.5', 0.5], ['1.', 1], ['+2e3', 2000], ['1e-3', 0.001]]) {
+  assert.deepEqual(history.points({ result_type: 'matrix', series: [{ metric: { pool_id: '7' }, values: [[1000.125, raw]] }] }, 7), [{ time: 1000125, value }])
+}
 assert.throws(() => history.points({ result_type: 'vector', series: [] }, 7), /时间序列/)
 assert.throws(() => history.points({ ...response, series: [response.series[0], response.series[0]] }, 7), /重复历史序列/)
 assert.throws(() => history.points({ result_type: 'matrix', series: [{ metric: { pool_id: '7' }, values: [[1, '2'], [1, '3']] }] }, 7), /重复时间戳/)

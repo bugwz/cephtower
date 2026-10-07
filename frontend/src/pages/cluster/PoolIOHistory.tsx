@@ -21,9 +21,11 @@ export function poolHistoryPoints(response: MetricResponse, poolId: number): Poi
   const result: Point[] = []
   for (const sample of series[0].values) {
     if (!Array.isArray(sample) || sample.length !== 2 || typeof sample[0] !== 'number' || !Number.isFinite(sample[0])) continue
-    if (typeof sample[1] !== 'string' || !sample[1].trim()) continue
+    if (!Number.isFinite(new Date(sample[0] * 1000).getTime())) continue
+    if (typeof sample[1] !== 'string' || sample[1].trim() !== sample[1] || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(sample[1])) continue
     const value = Number(sample[1])
     if (!Number.isFinite(value) || value < 0) continue
+    if (value === 0 && /[1-9]/.test(sample[1].split(/[eE]/)[0])) continue
     result.push({ time: sample[0] * 1000, value })
   }
   result.sort((a, b) => a.time - b.time)
