@@ -9,6 +9,12 @@ const source = readFileSync(new URL('../src/pages/monitoring/MetricPage.tsx', im
 const tree = ts.createSourceFile('MetricPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const optionsNode = tree.statements.filter(ts.isVariableStatement).flatMap(node => [...node.declarationList.declarations]).find(node => node.name.getText(tree) === 'metricOptions')
 const options = new Function(`return ${optionsNode.initializer.getText(tree)}`)()
+const presetNode = tree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'metricPreset')
+const presetCode = ts.transpileModule(presetNode.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+const presetExports = {}
+new Function('exports', 'metricOptions', presetCode)(presetExports, options)
+for (const value of [null, '', 'sum(secret)', 'unknown']) assert.equal(presetExports.metricPreset(value), 'cluster_health')
+for (const option of options) assert.equal(presetExports.metricPreset(option.value), option.value)
 assert.equal(options.filter(option => option.value === 'smb_request_duration_rate').length, 1)
 assert.ok(options.find(option => option.value === 'smb_request_duration_rate').label.includes('µs/s'))
 assert.ok(options.find(option => option.value === 'smb_request_duration_rate').description.includes('非单请求平均延迟'))
@@ -38,10 +44,14 @@ assert.ok(source.includes('dataSource={row.samples}'))
 const wrapper = tree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'MetricPage')
 const ui = {}
 let clusterId
-new Function('exports', 'require', 'useClusterContext', 'MetricContent', ts.transpileModule(wrapper.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(ui, () => ({ jsx: (type, props, key) => ({ type, props, key }) }), () => ({ selectedClusterId: clusterId }), 'MetricContent')
+let metricParam = 'smb_metrics_status'
+new Function('exports', 'require', 'useClusterContext', 'MetricContent', 'useSearchParams', 'metricPreset', ts.transpileModule(wrapper.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX } }).outputText)(ui, () => ({ jsx: (type, props, key) => ({ type, props, key }) }), () => ({ selectedClusterId: clusterId }), 'MetricContent', () => [new URLSearchParams({ metric: metricParam })], presetExports.metricPreset)
 const scopes = [undefined, 1, 2].map(id => { clusterId = id; return ui.MetricPage() })
 assert.equal(new Set(scopes.map(item => item.key)).size, 3)
 assert.equal(scopes[2].props.selectedClusterId, 2)
+assert.equal(scopes[2].props.initialMetric, 'smb_metrics_status')
+metricParam = 'smb_sessions'
+assert.notEqual(ui.MetricPage().key, scopes[2].key)
 const content = tree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'MetricContent')
 const submit = content.body.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'submit')
 const code = ts.transpileModule(submit.getText(tree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText

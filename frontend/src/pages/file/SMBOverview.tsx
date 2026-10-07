@@ -1,5 +1,6 @@
 import { Alert, Button, Card, Space } from 'antd'
 import { useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { readExternalList } from '../../api/external'
 import { isRecord } from '../../api/client'
 import { useResource } from '../../hooks'
@@ -15,6 +16,7 @@ export function smbOverviewURL(value: unknown): string | undefined {
 }
 
 export function SMBOverview() {
+  const navigate = useNavigate()
   const { selectedClusterId } = useClusterContext()
   const loader = useCallback(async () => {
     if (!selectedClusterId) return undefined
@@ -34,6 +36,7 @@ export function SMBOverview() {
       <Space>
         <Button disabled={!selectedClusterId} loading={loading} onClick={() => void refresh()}>重新读取监控入口</Button>
         <Button disabled={!ready} href={ready ? data ?? undefined : undefined} target="_blank" rel="noopener noreferrer">打开 SMB 看板</Button>
+        <Button disabled={!selectedClusterId} onClick={() => navigate('/monitoring/metric?metric=smb_metrics_status')}>本项目内查询 SMB 指标</Button>
       </Space>
     </Space>
   </Card>

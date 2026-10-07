@@ -5,8 +5,10 @@ const source = readFileSync(new URL('../src/pages/file/SMBOverview.tsx', import.
 const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 } }).outputText
 let state = { data: 'https://grafana.test/d/feem6ehrmi2o0b/smb-overview', loading: false, error: '' }, cluster = 7, loader
 const calls = [], exports = {}
+const navigation = []
 new Function('exports', 'require', 'React', code)(exports, name => ({
   antd: { Alert: 'Alert', Button: 'Button', Card: 'Card', Space: 'Space' }, react: { useCallback: fn => fn },
+  'react-router-dom': { useNavigate: () => path => navigation.push(path) },
   '../../api/client': { isRecord: v => v !== null && typeof v === 'object' && !Array.isArray(v) },
   '../../api/external': { readExternalList: async (...args) => { calls.push(args); return { meta: { smb_overview_url: state.data } } } },
   '../../hooks': { useResource: fn => { loader = fn; return { ...state, refresh: async () => {} } } },
@@ -18,10 +20,13 @@ assert.equal(await loader(), state.data)
 assert.deepEqual(calls, [['/grafana', 7]])
 assert.equal(buttons(tree)[1].props.href, state.data)
 assert.equal(buttons(tree)[1].props.rel, 'noopener noreferrer')
+buttons(tree)[2].props.onClick()
+assert.deepEqual(navigation, ['/monitoring/metric?metric=smb_metrics_status'])
 for (const value of ['', null, '/relative', 'javascript:alert(1)', 'https://user:pass@grafana.test', 'ftp://grafana.test']) assert.equal(exports.smbOverviewURL(value), undefined)
 for (const patch of [{ loading: true }, { error: 'failure' }, { data: undefined }]) {
   const saved = state; state = { ...state, ...patch }
   tree = exports.SMBOverview(); assert.equal(buttons(tree)[1].props.disabled, true); assert.equal(buttons(tree)[1].props.href, undefined)
+  assert.equal(buttons(tree)[2].props.disabled, false)
   state = saved
 }
 cluster = undefined; exports.SMBOverview(); assert.equal(await loader(), undefined); assert.equal(calls.length, 1)

@@ -1,6 +1,7 @@
 import { BarChartOutlined, LineChartOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Card, Form, Input, Select, Segmented, Space, Statistic, Tag, Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { queryMetric, queryMetricRange, type MetricResponse } from '../../api/external'
 import type { ApiRecord } from '../../api/client'
 import { AppTable } from '../../components/AppTable'
@@ -79,10 +80,16 @@ const metricOptions = [
 
 export function MetricPage() {
   const { selectedClusterId } = useClusterContext()
-  return <MetricContent key={selectedClusterId ?? 'none'} selectedClusterId={selectedClusterId} />
+  const [params] = useSearchParams()
+  const initialMetric = metricPreset(params.get('metric'))
+  return <MetricContent key={`${selectedClusterId ?? 'none'}:${initialMetric}`} selectedClusterId={selectedClusterId} initialMetric={initialMetric} />
 }
 
-function MetricContent({ selectedClusterId }: { selectedClusterId?: number }) {
+export function metricPreset(value: string | null): string {
+  return metricOptions.some(option => option.value === value) ? value! : 'cluster_health'
+}
+
+function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId?: number; initialMetric: string }) {
   const active = useRef(true)
   const pending = useRef<AbortController | null>(null)
   useEffect(() => {
@@ -102,13 +109,13 @@ function MetricContent({ selectedClusterId }: { selectedClusterId?: number }) {
     const start = new Date(end.getTime() - 60 * 60 * 1000)
     return {
       mode: 'instant' as MetricMode,
-      metric_id: 'cluster_health',
+      metric_id: initialMetric,
       time: end.toISOString(),
       start: start.toISOString(),
       end: end.toISOString(),
       step: '30s'
     }
-  }, [])
+  }, [initialMetric])
 
   const rows = useMemo(() => normalizeSeries(result?.series ?? []), [result])
 
