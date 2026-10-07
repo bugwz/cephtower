@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { isRecord, numberValue, textValue, type ApiRecord } from '../../api/client'
 import { queryMetric, type MetricResponse } from '../../api/external'
+import { MetricNotices } from '../monitoring/MetricNotices'
 import { getHostDeviceInfo, getHostSMART, getOptionalResource, listAllResources, mutateResource, refreshResource } from '../../api/resource'
 import type { ResourceDTO } from '../../api/types'
 import { DataTable } from '../../components/DataTable'
@@ -534,6 +535,7 @@ function HostPerformancePanel({ hostname, address, clusterId }: { hostname: stri
   const featureStatus = useFeatureRequirements(clusterId, { requiredEndpoints: ['prometheus'] })
   const [loading, setLoading] = useState(false)
   const [values, setValues] = useState<Record<string, number | undefined>>({})
+  const [notices, setNotices] = useState<Record<string, ApiRecord | undefined>>({})
   const [queryError, setQueryError] = useState('')
 
   useEffect(() => {
@@ -543,6 +545,7 @@ function HostPerformancePanel({ hostname, address, clusterId }: { hostname: stri
     let cancelled = false
     setLoading(true)
     setQueryError('')
+    setNotices({})
     Promise.allSettled(hostPerformanceMetrics.map((metric) => queryMetric(
       clusterId,
       { metricId: metric.metricId },
@@ -553,12 +556,15 @@ function HostPerformancePanel({ hostname, address, clusterId }: { hostname: stri
           return
         }
         const nextValues: Record<string, number | undefined> = {}
+        const nextNotices: Record<string, ApiRecord | undefined> = {}
         results.forEach((result, index) => {
           if (result.status === 'fulfilled') {
             nextValues[hostPerformanceMetrics[index].key] = metricValueForHost(result.value, hostname, address)
+            nextNotices[hostPerformanceMetrics[index].key] = result.value.meta
           }
         })
         setValues(nextValues)
+        setNotices(nextNotices)
         if (results.every((result) => result.status === 'rejected')) {
           setQueryError('主机性能指标查询失败')
         }
@@ -592,6 +598,7 @@ function HostPerformancePanel({ hostname, address, clusterId }: { hostname: stri
             <Col key={metric.key} xs={24} sm={12} xl={8}>
               <Card size="small" className="host-performance-card">
                 <Statistic title={metric.title} value={value === undefined ? '—' : metric.format(value)} />
+                <MetricNotices meta={notices[metric.key]} source={metric.title} />
               </Card>
             </Col>
           )

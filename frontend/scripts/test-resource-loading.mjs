@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import './test-ingress-settings.mjs'
 import './test-service-placement-view.mjs'
+import './test-host-metric-notices.mjs'
 import './test-smb-overview.mjs'
 import './test-grafana-logs.mjs'
 import './test-log-service-status.mjs'
