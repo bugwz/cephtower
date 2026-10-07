@@ -2,6 +2,7 @@ import { Alert, Button, Card, Empty, Space, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { isRecord } from '../../api/client'
 import { queryMetricRange, type MetricResponse } from '../../api/external'
+import { MetricNotices } from '../monitoring/MetricNotices'
 
 interface Point { time: number; value: number }
 const metrics = [
@@ -39,7 +40,7 @@ export function poolHistoryPath(points: Point[]): string {
 }
 
 export function PoolIOHistory({ clusterId, poolId }: { clusterId: number; poolId: number }) {
-  const [data, setData] = useState<Point[][] | null>(null)
+  const [data, setData] = useState<{ points: Point[]; meta?: MetricResponse['meta'] }[] | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const controller = useRef<AbortController | null>(null)
@@ -55,9 +56,12 @@ export function PoolIOHistory({ clusterId, poolId }: { clusterId: number; poolId
     const end = new Date()
     const start = new Date(end.getTime() - 3600000)
     try {
-      const results = await Promise.all(metrics.map(async (metric) => poolHistoryPoints(await queryMetricRange(clusterId, {
-        metricId: metric.id, start: start.toISOString(), end: end.toISOString(), step: '30s'
-      }, { signal: active.signal, suppressErrorNotification: true }), poolId)))
+      const results = await Promise.all(metrics.map(async (metric) => {
+        const result = await queryMetricRange(clusterId, {
+          metricId: metric.id, start: start.toISOString(), end: end.toISOString(), step: '30s'
+        }, { signal: active.signal, suppressErrorNotification: true })
+        return { points: poolHistoryPoints(result, poolId), meta: result.meta }
+      }))
       if (!active.signal.aborted) setData(results)
     } catch (err) {
       if (!active.signal.aborted) setError(err instanceof Error ? err.message : '历史查询失败')
@@ -70,8 +74,9 @@ export function PoolIOHistory({ clusterId, poolId }: { clusterId: number; poolId
       <Typography.Text type="secondary">需要当前集群配置 Prometheus，并采集 Ceph pool 指标。曲线为 5 分钟窗口平均速率，每 30 秒一个点；不使用 CLI 快照拼造历史，缺失样本不补零。</Typography.Text>
       {error && <Alert type="warning" showIcon message="无法读取池历史指标" description={error} />}
       {!data && !error && <Typography.Text>点击查询读取历史样本。</Typography.Text>}
-      {data?.map((points, index) => <div key={metrics[index].id}>
+      {data?.map(({ points, meta }, index) => <div key={metrics[index].id}>
         <Typography.Text>{metrics[index].title} · {metrics[index].unit}</Typography.Text>
+        <MetricNotices meta={meta} source={metrics[index].title} />
         {!points.length ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="此池没有有效历史样本" /> : <>
           <Typography.Paragraph>最新样本：{new Date(points[points.length - 1].time).toLocaleString()} · {points[points.length - 1].value.toLocaleString(undefined, { maximumFractionDigits: 2 })} {metrics[index].unit}；图中最大值 {Math.max(...points.map((point) => point.value)).toLocaleString()}</Typography.Paragraph>
           <svg viewBox="0 0 800 145" width="100%" role="img" aria-label={`${metrics[index].title}历史曲线`}>

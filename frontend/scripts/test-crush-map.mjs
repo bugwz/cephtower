@@ -900,3 +900,4 @@ assert.ok(rulesSource.includes('请在引用此规则的存储池中查看'))
 assert.equal(rules.crushRuleDeleteBlocked({ rule_name: 'a', stale: false }), undefined)
 for (const rule_name of ['parent/a', 'a/', ' a', 'a ', '--all', 'a\nother']) assert.ok(rules.crushRuleDeleteBlocked({ rule_name, stale: false }))
 for (const row of [{ rule_name: 'a', stale: true }, { rule_name: 'a' }, { stale: false }, { rule_name: '', stale: false }]) assert.ok(rules.crushRuleDeleteBlocked(row))
+import './test-pool-history-notices.mjs'
