@@ -138,6 +138,12 @@ new Function('exports', 'require', ts.transpileModule(indexView, { compilerOptio
   if (name === './rgwBucketState') return state
   throw new Error(name)
 })
+for (const value of [0, 1, Number.MAX_SAFE_INTEGER, undefined, null, -1, 1.5, 2 ** 53, '5', false, {}]) {
+  const result = indexComponent.RgwBucketIndexDetails({ row: { read_tracker: value } })
+  const item = result.props.children[0].props.items.find(item => item.key === 'read-tracker')
+  assert.equal(item.children, typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? String(value) : '未返回或超出安全整数范围')
+  assert.match(JSON.stringify(result), /不是索引版本.*resource_version.*不能据此判断同步完成/)
+}
 for (const status of ['None', 'InLogrecord', 'InProgress', 'future', undefined, null]) {
   const result = indexComponent.RgwBucketIndexDetails({ row: { reshard_status: status, judge_reshard_lock_time: '2026-10-06 12:00:00.123456Z' } })
   const items = result.props.children[0].props.items
