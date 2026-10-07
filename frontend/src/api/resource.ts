@@ -98,9 +98,14 @@ export async function listResource<T = ApiRecord>(path: string, clusterId = requ
     }
     throw err
   }
-  const resourceItems = 'items' in payload ? payload.items ?? [] : [payload]
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new Error('资源响应格式无效，请重新读取')
+  const resourceItems = 'items' in payload ? payload.items : [payload]
+  if (!Array.isArray(resourceItems) || resourceItems.some(item => !item || typeof item !== 'object' || Array.isArray(item))) {
+    throw new Error('资源列表格式无效，不能判断资源是否存在')
+  }
   const meta = 'items' in payload ? payload.meta : undefined
   const pagination = 'items' in payload ? payload.pagination : undefined
+  if (pagination?.next_cursor != null && typeof pagination.next_cursor !== 'string') throw new Error('资源分页游标格式无效，无法确认完整库存')
   const items = resourceItems.map((item) => {
     const data = toRecord(item.data)
     return {

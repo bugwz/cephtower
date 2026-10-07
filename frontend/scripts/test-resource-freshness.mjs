@@ -27,3 +27,11 @@ for (const badPage of [0, 1]) {
 const fresh = await create([{ items: [row(false)], meta: { stale: false }, pagination: { next_cursor: 'next' } }, { items: [], meta: { stale: false } }]).listAllResources('/pools', 7)
 assert.equal(fresh.stale, false)
 console.log('Resource freshness requires explicit page and row evidence and survives pagination')
+for (const payload of [null, [], 'invalid', 1]) await assert.rejects(create([payload]).listResource('/pools', 7), /资源响应格式无效/)
+for (const items of [null, undefined, {}, 'invalid', [null], [false], [[]], [row(false), 1]]) {
+  await assert.rejects(create([{ items, meta: { stale: false } }]).listResource('/pools', 7), /资源列表格式无效/)
+  await assert.rejects(create([{ items: [row(false)], meta: { stale: false }, pagination: { next_cursor: 'next' } }, { items, meta: { stale: false } }]).listAllResources('/pools', 7), /资源列表格式无效/)
+}
+for (const next_cursor of [0, 1, false, {}, []]) await assert.rejects(create([{ items: [], meta: { stale: false }, pagination: { next_cursor } }]).listAllResources('/pools', 7), /资源分页游标格式无效/)
+for (const next_cursor of [undefined, null, '']) assert.equal((await create([{ items: [], meta: { stale: false }, pagination: { next_cursor } }]).listAllResources('/pools', 7)).items.length, 0)
+console.log('Malformed resource responses are rejected rather than presented as empty or complete inventory')
