@@ -49,6 +49,16 @@ type PrometheusResult struct {
 }
 
 var metricQueries = map[string]string{
+	"rgw_user_get_ops_total":      "ceph_rgw_op_per_user_get_obj_ops",
+	"rgw_user_put_ops_total":      "ceph_rgw_op_per_user_put_obj_ops",
+	"rgw_user_delete_ops_total":   "ceph_rgw_op_per_user_del_obj_ops",
+	"rgw_user_copy_ops_total":     "ceph_rgw_op_per_user_copy_obj_ops",
+	"rgw_user_list_ops_total":     "ceph_rgw_op_per_user_list_obj_ops",
+	"rgw_user_get_bytes_total":    "ceph_rgw_op_per_user_get_obj_bytes",
+	"rgw_user_put_bytes_total":    "ceph_rgw_op_per_user_put_obj_bytes",
+	"rgw_user_delete_bytes_total": "ceph_rgw_op_per_user_del_obj_bytes",
+	"rgw_user_copy_bytes_total":   "ceph_rgw_op_per_user_copy_obj_bytes",
+
 	"rgw_bucket_get_ops_total":      "ceph_rgw_op_per_bucket_get_obj_ops",
 	"rgw_bucket_put_ops_total":      "ceph_rgw_op_per_bucket_put_obj_ops",
 	"rgw_bucket_delete_ops_total":   "ceph_rgw_op_per_bucket_del_obj_ops",

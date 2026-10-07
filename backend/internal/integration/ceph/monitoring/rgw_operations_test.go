@@ -10,7 +10,16 @@ import (
 
 func TestRGWOperationCounters(t *testing.T) {
 	for id, counter := range map[string]string{
-		"rgw_bucket_get_ops_total": "per_bucket_get_obj_ops", "rgw_bucket_put_ops_total": "per_bucket_put_obj_ops",
+		"rgw_user_get_ops_total":      "per_user_get_obj_ops",
+		"rgw_user_put_ops_total":      "per_user_put_obj_ops",
+		"rgw_user_delete_ops_total":   "per_user_del_obj_ops",
+		"rgw_user_copy_ops_total":     "per_user_copy_obj_ops",
+		"rgw_user_list_ops_total":     "per_user_list_obj_ops",
+		"rgw_user_get_bytes_total":    "per_user_get_obj_bytes",
+		"rgw_user_put_bytes_total":    "per_user_put_obj_bytes",
+		"rgw_user_delete_bytes_total": "per_user_del_obj_bytes",
+		"rgw_user_copy_bytes_total":   "per_user_copy_obj_bytes",
+		"rgw_bucket_get_ops_total":    "per_bucket_get_obj_ops", "rgw_bucket_put_ops_total": "per_bucket_put_obj_ops",
 		"rgw_bucket_delete_ops_total": "per_bucket_del_obj_ops", "rgw_bucket_copy_ops_total": "per_bucket_copy_obj_ops", "rgw_bucket_list_ops_total": "per_bucket_list_obj_ops",
 		"rgw_bucket_get_bytes_total": "per_bucket_get_obj_bytes", "rgw_bucket_put_bytes_total": "per_bucket_put_obj_bytes",
 		"rgw_bucket_delete_bytes_total": "per_bucket_del_obj_bytes", "rgw_bucket_copy_bytes_total": "per_bucket_copy_obj_bytes",
@@ -23,6 +32,9 @@ func TestRGWOperationCounters(t *testing.T) {
 	} {
 		for _, history := range []bool{false, true} {
 			labels := `"instance_id":"rgw.a"`
+			if strings.HasPrefix(counter, "per_user_") {
+				labels += `,"user":"shared-name","tenant":"tenant-a"`
+			}
 			if strings.HasPrefix(counter, "per_bucket_") {
 				labels += `,"bucket":"shared-name","tenant":"tenant-a"`
 			}

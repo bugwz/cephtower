@@ -12,6 +12,13 @@ const optionsNode = tree.statements.filter(ts.isVariableStatement).flatMap(node 
 const options = new Function(`return ${optionsNode.initializer.getText(tree)}`)()
 for (const operation of ['get', 'put', 'delete', 'copy', 'list']) {
   for (const kind of operation === 'list' ? ['ops'] : ['ops', 'bytes']) {
+    const id = `rgw_user_${operation}_${kind}_total`
+    assert.equal(options.filter(option => option.value === id).length, 1)
+    assert.ok(options.find(option => option.value === id).label.includes('按用户'))
+  }
+}
+for (const operation of ['get', 'put', 'delete', 'copy', 'list']) {
+  for (const kind of operation === 'list' ? ['ops'] : ['ops', 'bytes']) {
     const id = `rgw_bucket_${operation}_${kind}_total`
     assert.equal(options.filter(option => option.value === id).length, 1)
     assert.ok(options.find(option => option.value === id).label.includes('按桶'))
