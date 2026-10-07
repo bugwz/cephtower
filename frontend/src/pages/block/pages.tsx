@@ -13,6 +13,7 @@ import { RbdMirrorDaemons, RbdMirrorLeaderCounts } from './RbdMirrorDaemons'
 import { RbdMirrorImages } from './RbdMirrorImages'
 import { RbdMirrorSummary } from './RbdMirrorSummary'
 import { RbdMirrorPeers, rbdMirrorPeerOptions, rbdMirrorPeerIdentity } from './RbdMirrorPeers'
+import { mirrorPoolIdentity, mirrorPoolModeBody } from './rbdMirrorPoolMode'
 import { rbdUsageText } from './rbdUsage'
 import { rbdSnapshotLimitText } from './rbdSnapshotLimit'
 import { rbdMirrorRoleReason } from './rbdMirrorRole'
@@ -540,11 +541,12 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
         return {cluster_id:clusterId,action:String(values.action),...(interval ? {interval:String(interval)} : {}),...(interval && values.start_time ? {start_time:String(values.start_time)} : {})}
       }
     }],
-    createAction:{
+    updateAction:{
       title:'设置池同步模式',buttonLabel:'设置同步模式',path:'/rbd/mirroring',method:'PATCH',successMessage:'池同步模式已更新并回读核验；镜像同步状态需另行检查',
-      confirmation:(values) => values.mode === 'disabled' ? `停用池 ${String(values.pool)} 的 RBD 同步？` : undefined,
-      fields:[{name:'pool',label:'Pool',required:true},{name:'mode',label:'同步模式',type:'select',required:true,options:[{label:'禁用',value:'disabled'},{label:'按镜像启用',value:'image'},{label:'全池启用',value:'pool'}]}],
-      buildBody:(values,clusterId) => ({cluster_id:clusterId,pool:String(values.pool),mode:String(values.mode)})
+      confirmation:(values,row) => `将池 ${mirrorPoolIdentity(row)} 的同步模式设置为 ${String(values.mode)}？${values.mode === 'disabled' ? '禁用前必须移除 Peer。' : '配置变更可能影响池内镜像。'}库存不是实时状态，以原生命令校验结果为准。`,
+      initialValues:row=>({pool:mirrorPoolIdentity(row),mode:typeof row?.mode === 'string' && ['disabled','image','pool'].includes(row.mode) ? row.mode : undefined}),
+      fields:[{name:'pool',label:'Pool（当前行）',readOnly:true,required:true},{name:'mode',label:'同步模式',type:'select',required:true,options:[{label:'禁用（须先移除 Peer）',value:'disabled'},{label:'按镜像启用',value:'image'},{label:'全池启用',value:'pool'}]}],
+      buildBody:mirrorPoolModeBody
     },
     extraActions:[{
       title:'池镜像快照调度',buttonLabel:'池快照调度',path:'/rbd/mirroring/schedule',method:'POST',successMessage:'池调度已更新并核验',
