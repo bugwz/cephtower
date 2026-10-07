@@ -11,6 +11,7 @@ import { RbdTrashStatus, rbdTrashRestoreReason } from './RbdTrashStatus'
 import { RbdChildren, rbdSnapshotDeleteReason } from './RbdChildren'
 import { RbdMirrorDaemons } from './RbdMirrorDaemons'
 import { RbdMirrorImages } from './RbdMirrorImages'
+import { RbdMirrorSummary } from './RbdMirrorSummary'
 import { rbdUsageText } from './rbdUsage'
 import { rbdSnapshotLimitText } from './rbdSnapshotLimit'
 import { rbdMirrorRoleReason } from './rbdMirrorRole'
@@ -599,7 +600,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
     }],
     columns: [
       { key: 'name', title: '名称' },
-      { key: 'summary', title: '同步健康与镜像状态' },
+      { key: 'summary', title: '同步健康与镜像状态', ellipsis: false, render: (value, row) => <RbdMirrorSummary value={value} mode={row.mode} /> },
       { key: 'mode', title: '模式' },
       { key: 'site_name', title: '本站点名称' },
       { key: 'mirror_uuid', title: '同步 UUID' },
