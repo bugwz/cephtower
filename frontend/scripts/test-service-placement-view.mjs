@@ -34,5 +34,21 @@ for (const value of [undefined, '', '{}', JSON.stringify(placement)]) {
   assert.deepEqual(detail.props.placement, value ? JSON.parse(value) : {})
   assert.equal(detail.props.unmanaged, true)
 }
-assert.ok(page.includes('<ServicePlacementPreview value={placementDraft} unmanaged={unmanagedDraft} />'))
+const pageTree = ts.createSourceFile('ServicePage.tsx', page, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+let previewMode
+function visit(node) {
+  if (ts.isJsxSelfClosingElement(node) && node.tagName.getText(pageTree) === 'ServicePlacementPreview') {
+    previewMode = node.attributes.properties.find(prop => prop.name?.text === 'unmanaged').initializer.expression.getText(pageTree)
+  }
+  ts.forEachChild(node, visit)
+}
+visit(pageTree)
+assert.ok(previewMode)
+const resolveMode = new Function('editingService', 'managementMode', 'unmanagedDraft', `return ${previewMode}`)
+for (const current of [undefined, false, true]) for (const draft of [undefined, false, true]) {
+  assert.equal(resolveMode(null, 'unmanaged', draft), draft)
+  assert.equal(resolveMode({ unmanaged: current }, 'preserve', draft), current)
+  assert.equal(resolveMode({ unmanaged: current }, 'managed', draft), false)
+  assert.equal(resolveMode({ unmanaged: current }, 'unmanaged', draft), true)
+}
 assert.ok(page.includes('validator: async (_, value) => { parsePlacement(value) }'))

@@ -22,6 +22,7 @@ interface ServiceFormValues {
   service_id?: string
   placement_json?: string
   unmanaged?: boolean
+  management_mode?: 'preserve' | 'managed' | 'unmanaged'
   backend_service?: string
   virtual_ip?: string
   frontend_port?: number
@@ -98,6 +99,7 @@ function ServicePageContent() {
   const selectedServiceType = Form.useWatch('service_type', form)
   const placementDraft = Form.useWatch('placement_json', form)
   const unmanagedDraft = Form.useWatch('unmanaged', form)
+  const managementMode = Form.useWatch('management_mode', form)
   const ingressTLS = Form.useWatch('ssl', form)
   const tlsMode = Form.useWatch('tls_mode', form)
   const listenerChange = Form.useWatch('listener_change', form)
@@ -161,6 +163,7 @@ function ServicePageContent() {
       interface_networks_change: false,
       networks_change: false,
       placement_change: false,
+      management_mode: 'preserve',
       virtual_interface_networks: Array.isArray(ingress.virtual_interface_networks) ? ingress.virtual_interface_networks.filter((value): value is string => typeof value === 'string') : [],
       virtual_ip: typeof ingress.virtual_ip === 'string' ? ingress.virtual_ip : undefined,
       frontend_port: typeof ingress.frontend_port === 'number' ? ingress.frontend_port : undefined,
@@ -192,7 +195,8 @@ function ServicePageContent() {
         ...(editingService ? { name: serviceName(editingService) } : {}),
         service_type: values.service_type,
         ...(values.service_id ? { service_id: values.service_id } : {}),
-        ...(typeof values.unmanaged === 'boolean' ? { unmanaged: values.unmanaged } : {}),
+        ...(!editingService && typeof values.unmanaged === 'boolean' ? { unmanaged: values.unmanaged } : {}),
+        ...(editingService && ['managed', 'unmanaged'].includes(values.management_mode ?? '') ? { unmanaged: values.management_mode === 'unmanaged' } : {}),
         ...(!editingService && Array.isArray(values.networks) ? { networks: values.networks } : {}),
         ...(editingService && values.networks_change === true ? { networks: values.networks ?? [] } : {}),
         ...(!editingService && values.service_type === 'ingress' ? { backend_service: values.backend_service, virtual_ip: values.virtual_ip, frontend_port: values.frontend_port, monitor_port: values.monitor_port } : {}),
@@ -409,9 +413,9 @@ function ServicePageContent() {
           <Form.Item name="service_id" label="Service ID" rules={[{ required: requiresServiceID, message: '此服务类型必须填写 Service ID' }, { pattern: /^[a-zA-Z0-9_.-]+$/, message: '仅允许字母、数字、下划线、点和连字符' }]} extra={requiresServiceID ? '填写服务 ID，不包含服务类型前缀。' : '此服务类型不使用 Service ID。'}>
             <Input disabled={Boolean(editingService) || !requiresServiceID} />
           </Form.Item>
-          <Form.Item name="unmanaged" label="非托管" valuePropName="checked" extra="启用后 Ceph 编排器停止自动部署和移除该服务的守护进程；关闭后恢复自动管理，并可能按放置策略调整守护进程。">
+          {editingService ? <Form.Item name="management_mode" label="管理模式变更" extra="非托管会停止自动部署和移除守护进程；恢复管理可能按放置策略调整守护进程。默认保留 Ceph 当前设置。"><Select options={[{ value: 'preserve', label: '保留当前管理模式' }, { value: 'managed', label: '恢复编排器管理' }, { value: 'unmanaged', label: '切换为非托管' }]} /></Form.Item> : <Form.Item name="unmanaged" label="非托管" valuePropName="checked" extra="启用后 Ceph 编排器停止自动部署和移除该服务的守护进程；关闭后恢复自动管理，并可能按放置策略调整守护进程。">
             <Switch />
-          </Form.Item>
+          </Form.Item>}
           {editingService && <Form.Item name="networks_change" label="修改绑定网段" valuePropName="checked"><Switch /></Form.Item>}
           {(!editingService || networksChange === true) && <Form.Item name="networks" label="绑定网段" extra="输入 IPv4 或 IPv6 网段后按回车，可添加多个；清空将移除网络限制。网段语法及服务类型支持情况由 Ceph 校验，修改可能影响服务访问。">
             <Select mode="tags" tokenSeparators={[',']} placeholder="例如 192.0.2.0/24 或 2001:db8::/64" />
@@ -420,7 +424,7 @@ function ServicePageContent() {
           {(!editingService || placementChange === true) && <><Form.Item name="placement_json" label="Placement JSON" rules={[{ validator: async (_, value) => { parsePlacement(value) } }]} extra='支持 count、count_per_host、hosts、label 和 host_pattern。count 与 count_per_host 互斥；每主机数量必须指定主机选择条件。host_pattern 支持通配符字符串或 {"pattern":"node-[0-9]+","pattern_type":"regex"}，正则语法由 Ceph 校验。'>
             <Input.TextArea rows={5} spellCheck={false} placeholder='{"count":1,"host_pattern":"*"}' />
           </Form.Item>
-          <ServicePlacementPreview value={placementDraft} unmanaged={unmanagedDraft} /></>}
+          <ServicePlacementPreview value={placementDraft} unmanaged={editingService ? managementMode === 'unmanaged' ? true : managementMode === 'managed' ? false : editingService.unmanaged : unmanagedDraft} /></>}
           {selectedServiceType === 'ingress' && (editingService ? <>
             <Alert type="info" message="编辑保留已有 Ingress 后端。监听配置与 TLS 默认保持不变，已有证书和私钥不会回填。" />
             <Form.Item name="listener_change" label="修改 VIP 与监听端口" valuePropName="checked"><Switch /></Form.Item>

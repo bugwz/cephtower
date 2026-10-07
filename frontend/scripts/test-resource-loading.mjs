@@ -812,6 +812,21 @@ for (const editing of [false, true]) for (const placement_change of [undefined, 
   assert.equal(Object.hasOwn(calls[0][2], 'placement'), sendsPlacement)
   if (sendsPlacement) assert.deepEqual(calls[0][2].placement, JSON.parse(placement_json))
 }
+for (const editing of [false, true]) for (const management_mode of [undefined, 'preserve', 'managed', 'unmanaged']) for (const unmanaged of [undefined, false, true]) {
+  const calls = []
+  const env = {
+    active: { current: true }, running: { current: false }, selectedClusterId: 7, loading: false, error: '',
+    editingService: editing ? { name: 'rgw.a', resource_version: '12' } : null, serviceWritable: () => true,
+    setSubmitting: () => {}, setFormOpen: () => {}, parsePlacement: JSON.parse, serviceName: row => row.name,
+    message: { error: () => {}, warning: () => {}, success: () => {} }, refreshAfterMutation: async () => {},
+    mutateResource: async (...args) => { calls.push(args) }
+  }
+  const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
+  await submit({ service_type: 'rgw', service_id: 'a', placement_json: '{}', management_mode, unmanaged })
+  const sendsMode = editing ? ['managed', 'unmanaged'].includes(management_mode) : typeof unmanaged === 'boolean'
+  assert.equal(Object.hasOwn(calls[0][2], 'unmanaged'), sendsMode)
+  if (sendsMode) assert.equal(calls[0][2].unmanaged, editing ? management_mode === 'unmanaged' : unmanaged)
+}
 for (const scenario of ['ok', 'inactive', 'unmount', 'stale', 'error']) {
   const calls = []
   let resolve, reject
