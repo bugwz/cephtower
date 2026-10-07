@@ -10,6 +10,10 @@ import (
 
 func TestRGWOperationCounters(t *testing.T) {
 	for id, counter := range map[string]string{
+		"rgw_bucket_get_ops_total": "per_bucket_get_obj_ops", "rgw_bucket_put_ops_total": "per_bucket_put_obj_ops",
+		"rgw_bucket_delete_ops_total": "per_bucket_del_obj_ops", "rgw_bucket_copy_ops_total": "per_bucket_copy_obj_ops", "rgw_bucket_list_ops_total": "per_bucket_list_obj_ops",
+		"rgw_bucket_get_bytes_total": "per_bucket_get_obj_bytes", "rgw_bucket_put_bytes_total": "per_bucket_put_obj_bytes",
+		"rgw_bucket_delete_bytes_total": "per_bucket_del_obj_bytes", "rgw_bucket_copy_bytes_total": "per_bucket_copy_obj_bytes",
 		"rgw_get_bytes_total": "get_obj_bytes", "rgw_put_bytes_total": "put_obj_bytes",
 		"rgw_copy_bytes_total": "copy_obj_bytes", "rgw_delete_bytes_total": "del_obj_bytes",
 		"rgw_get_ops_total": "get_obj_ops", "rgw_put_ops_total": "put_obj_ops",
@@ -18,6 +22,10 @@ func TestRGWOperationCounters(t *testing.T) {
 		"rgw_delete_buckets_total": "del_bucket_ops",
 	} {
 		for _, history := range []bool{false, true} {
+			labels := `"instance_id":"rgw.a"`
+			if strings.HasPrefix(counter, "per_bucket_") {
+				labels += `,"bucket":"shared-name","tenant":"tenant-a"`
+			}
 			client, err := New("https://prometheus.test/prefix", "", &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
 				path, kind, sample := "/prefix/api/v1/query", "vector", `"value":[3600,"9007199254740993"]`
 				if history {
@@ -26,7 +34,7 @@ func TestRGWOperationCounters(t *testing.T) {
 				if r.URL.Path != path || r.URL.Query().Get("query") != "ceph_rgw_op_"+counter {
 					t.Fatalf("wrong query: %s", r.URL)
 				}
-				return jsonResponse(200, `{"status":"success","data":{"resultType":"`+kind+`","result":[{"metric":{"instance_id":"rgw.a"},`+sample+`}]}}`), nil
+				return jsonResponse(200, `{"status":"success","data":{"resultType":"`+kind+`","result":[{"metric":{`+labels+`},`+sample+`}]}}`), nil
 			})})
 			if err != nil {
 				t.Fatal(err)
@@ -40,7 +48,7 @@ func TestRGWOperationCounters(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if len(result.Data.Result) != 1 || !strings.Contains(string(result.Data.Result[0]), `"instance_id":"rgw.a"`) || !strings.Contains(string(result.Data.Result[0]), `"9007199254740993"`) {
+			if len(result.Data.Result) != 1 || !strings.Contains(string(result.Data.Result[0]), labels) || !strings.Contains(string(result.Data.Result[0]), `"9007199254740993"`) {
 				t.Fatalf("lost raw counter: %+v", result)
 			}
 		}

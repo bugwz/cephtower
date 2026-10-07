@@ -49,6 +49,16 @@ type PrometheusResult struct {
 }
 
 var metricQueries = map[string]string{
+	"rgw_bucket_get_ops_total":      "ceph_rgw_op_per_bucket_get_obj_ops",
+	"rgw_bucket_put_ops_total":      "ceph_rgw_op_per_bucket_put_obj_ops",
+	"rgw_bucket_delete_ops_total":   "ceph_rgw_op_per_bucket_del_obj_ops",
+	"rgw_bucket_copy_ops_total":     "ceph_rgw_op_per_bucket_copy_obj_ops",
+	"rgw_bucket_list_ops_total":     "ceph_rgw_op_per_bucket_list_obj_ops",
+	"rgw_bucket_get_bytes_total":    "ceph_rgw_op_per_bucket_get_obj_bytes",
+	"rgw_bucket_put_bytes_total":    "ceph_rgw_op_per_bucket_put_obj_bytes",
+	"rgw_bucket_delete_bytes_total": "ceph_rgw_op_per_bucket_del_obj_bytes",
+	"rgw_bucket_copy_bytes_total":   "ceph_rgw_op_per_bucket_copy_obj_bytes",
+
 	"rgw_delete_latency_ms":         "1000 * sum(rate(ceph_rgw_op_del_obj_lat_sum[1m])) / sum(rate(ceph_rgw_op_del_obj_lat_count[1m]))",
 	"rgw_copy_latency_ms":           "1000 * sum(rate(ceph_rgw_op_copy_obj_lat_sum[1m])) / sum(rate(ceph_rgw_op_copy_obj_lat_count[1m]))",
 	"rgw_list_objects_latency_ms":   "1000 * sum(rate(ceph_rgw_op_list_obj_lat_sum[1m])) / sum(rate(ceph_rgw_op_list_obj_lat_count[1m]))",

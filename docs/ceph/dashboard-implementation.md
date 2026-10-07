@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- S3 按桶统计：依据参考分析看板和 `rgw_perf_counters.cc::get/create_rgw_op_counters`，新增 GET/PUT/DELETE/COPY/列举对象五类按桶累计操作数及四类累计操作字节，保留 bucket、tenant 和实例原生标签，不跨租户同名桶聚合。依赖 RGW 的 rgw_bucket_counters_cache 与 exporter 采集，缓存淘汰/重建或进程重启可能重置，不能作为持久审计统计。现有 API 提供即时/历史查询，前端预设可查看原始样本与趋势。客户端回归验证九项表达式、路径、租户标签与原始大整数；无实机验证。
+
 - S3 累计操作字节：依据参考分析看板与 `rgw_perf_counters.cc`、`rgw_op.cc` 的实际累加位置，新增 GET/PUT/COPY/DELETE 对象累计字节查询，保留各实例原始标签，支持即时与历史样本。界面注明单位 B 而非 B/s，不代表桶容量；COPY 不代表网络流量，DELETE 不代表实际回收物理空间。扩展七类操作计数的客户端回归覆盖四类字节指标的表达式、历史/即时路径、大整数原文、标签和前端预设。无真实集群验证。
 
 - S3 其余操作平均延迟：依据 `rgw_perf_counters.cc` 的五类 add_time_avg 计数器补齐 DELETE 对象、COPY、列举对象、列举桶、删除桶的即时与历史查询。使用一分钟 sum(rate(lat_sum)) / sum(rate(lat_count)) × 1000，按操作数量加权，非参考分析看板直接累加 lat_sum 的累计耗时；与已有 GET/PUT 一样聚合端点内匹配序列，依赖集群独立端点。前端明确毫秒单位与平均语义，零请求 NaN 原样保留；表达式、HTTP 路径、非有限值透传及预设回归覆盖，无实机验证。

@@ -10,6 +10,13 @@ const source = readFileSync(new URL('../src/pages/monitoring/MetricPage.tsx', im
 const tree = ts.createSourceFile('MetricPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const optionsNode = tree.statements.filter(ts.isVariableStatement).flatMap(node => [...node.declarationList.declarations]).find(node => node.name.getText(tree) === 'metricOptions')
 const options = new Function(`return ${optionsNode.initializer.getText(tree)}`)()
+for (const operation of ['get', 'put', 'delete', 'copy', 'list']) {
+  for (const kind of operation === 'list' ? ['ops'] : ['ops', 'bytes']) {
+    const id = `rgw_bucket_${operation}_${kind}_total`
+    assert.equal(options.filter(option => option.value === id).length, 1)
+    assert.ok(options.find(option => option.value === id).label.includes('按桶'))
+  }
+}
 for (const id of ['rgw_get_bytes_total', 'rgw_put_bytes_total', 'rgw_copy_bytes_total', 'rgw_delete_bytes_total']) {
   assert.equal(options.filter(option => option.value === id).length, 1)
   assert.ok(options.find(option => option.value === id).label.includes('累计字节（B）'))

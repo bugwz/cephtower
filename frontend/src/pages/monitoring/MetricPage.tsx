@@ -60,6 +60,15 @@ export function metricSamples(item: ApiRecord): MetricSample[] {
 }
 
 const metricOptions = [
+  { label: 'RGW 按桶 GET 累计操作数', value: 'rgw_bucket_get_ops_total', description: '保留 bucket、tenant 与实例标签；缓存计数，非库存' },
+  { label: 'RGW 按桶 PUT 累计操作数', value: 'rgw_bucket_put_ops_total', description: '保留 bucket、tenant 与实例标签；缓存计数，非库存' },
+  { label: 'RGW 按桶 DELETE 累计操作数', value: 'rgw_bucket_delete_ops_total', description: '保留 bucket、tenant 与实例标签；缓存计数，非库存' },
+  { label: 'RGW 按桶 COPY 累计操作数', value: 'rgw_bucket_copy_ops_total', description: '保留 bucket、tenant 与实例标签；缓存计数，非库存' },
+  { label: 'RGW 按桶 列举对象 累计操作数', value: 'rgw_bucket_list_ops_total', description: '保留 bucket、tenant 与实例标签；缓存计数，非库存' },
+  { label: 'RGW 按桶 GET 累计字节（B）', value: 'rgw_bucket_get_bytes_total', description: '缓存累计操作字节，非带宽、桶容量或回收空间' },
+  { label: 'RGW 按桶 PUT 累计字节（B）', value: 'rgw_bucket_put_bytes_total', description: '缓存累计操作字节，非带宽、桶容量或回收空间' },
+  { label: 'RGW 按桶 DELETE 累计字节（B）', value: 'rgw_bucket_delete_bytes_total', description: '缓存累计操作字节，非带宽、桶容量或回收空间' },
+  { label: 'RGW 按桶 COPY 累计字节（B）', value: 'rgw_bucket_copy_bytes_total', description: '缓存累计操作字节，非带宽、桶容量或回收空间' },
   { label: 'RGW GET 累计字节（B）', value: 'rgw_get_bytes_total', description: '各原生序列累计操作字节，非 B/s 或桶容量' },
   { label: 'RGW PUT 累计字节（B）', value: 'rgw_put_bytes_total', description: '各原生序列累计操作字节，非 B/s 或桶容量' },
   { label: 'RGW COPY 累计字节（B）', value: 'rgw_copy_bytes_total', description: '累计复制对象字节，不代表网络流量或当前容量' },
@@ -233,6 +242,7 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
     <Page title="性能指标">
       <Alert type="info" showIcon message="SMB 指标需要 Prometheus 采集 SMB exporter。各实例指标保留原始标签；集群指标按 netbiosname 聚合，均值不是总数。关联要求每个 instance 对应唯一状态序列，重复采集会导致查询失败；共享 endpoint 的同名 SMB 集群可能被合并，请核对部署范围。无数据不代表零，速率使用固定 5 分钟窗口。" />
       <Alert type="info" showIcon message="RGW 累计操作数保留原始实例标签，未跨实例求和；它们不是库存对象数、请求速率或所选时间段内的操作总数。重启或计数器重置会使数值下降，共享端点不提供集群隔离。" />
+      <Alert type="info" showIcon message="按桶指标依赖 rgw_bucket_counters_cache 与 exporter 采集。缓存淘汰、重建或重启可能重置计数，不能作为持久审计记录；无数据不代表没有请求。请同时核对 bucket、tenant 和实例标签，不能只按桶名判断归属。" />
       <Space direction="vertical" size={16} className="page-stack">
         <div className="metrics-grid metric-preset-grid">
           {metricOptions.map((item) => (
