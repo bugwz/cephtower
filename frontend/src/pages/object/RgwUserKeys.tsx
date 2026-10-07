@@ -9,7 +9,8 @@ export function RgwUserKeyTable({ value, protocol }: { value: unknown; protocol:
     pagination={rows.length > 5 ? { pageSize: 5 } : false}
     locale={{ emptyText: `未配置 ${protocol} 密钥` }} columns={[
       { title: '所属用户 / 子用户（命令原值）', dataIndex: 'user' },
-      { title: '密钥状态', dataIndex: 'state' }
+      { title: '密钥状态', dataIndex: 'state' },
+      { title: '创建时间（命令原值）', dataIndex: 'created' }
     ]} />
 }
 

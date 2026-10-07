@@ -9,7 +9,9 @@ const rows = model.rgwUserKeyRows
 assert.deepEqual(rows([]), [])
 for (const value of [undefined, null, {}, '', [null], [[]], [false]]) assert.equal(rows(value), undefined)
 const input = [{ user: 'tenant$user:sub', active: false, access_key: 'must-not-render-access', secret_key: 'must-not-render-secret' }]
-assert.deepEqual(rows(input), [{ key: 0, user: 'tenant$user:sub', state: '未启用' }])
+assert.deepEqual(rows(input), [{ key: 0, user: 'tenant$user:sub', state: '未启用', created: '创建时间未返回或无效' }])
+for (const create_date of [undefined, null, false, 0, {}, [], '', '  ']) assert.equal(rows([{ create_date }])[0].created, '创建时间未返回或无效')
+for (const create_date of ['2026-10-07T01:02:03.123456Z', '1970-01-01T00:00:00Z', '<date>', ' date ']) assert.equal(rows([{ create_date }])[0].created, create_date)
 assert.ok(!JSON.stringify(rows(input)).includes('must-not-render'))
 assert.equal(rows([{ user: 'test', active: true }])[0].state, '已启用')
 for (const active of [undefined, null, 0, 1, 'false', 'true']) assert.equal(rows([{ user: 'test', active }])[0].state, '启用状态未返回或无效')
@@ -29,7 +31,10 @@ for (const protocol of ['S3', 'Swift']) {
   assert.equal(empty.props.pagination, false)
   const table = view.RgwUserKeyTable({ protocol, value: input })
   assert.deepEqual(table.props.dataSource, rows(input))
-  assert.deepEqual(table.props.columns.map(column => column.dataIndex), ['user', 'state'])
+  assert.deepEqual(table.props.columns.map(column => column.dataIndex), ['user', 'state', 'created'])
+  const dated = view.RgwUserKeyTable({ protocol, value: [{ ...input[0], create_date: '2026-10-07T01:02:03Z' }] })
+  assert.equal(dated.props.dataSource[0].created, '2026-10-07T01:02:03Z')
+  assert.ok(!JSON.stringify(dated).includes('must-not-render'))
   assert.deepEqual(view.RgwUserKeyTable({ protocol, value: Array(6).fill(input[0]) }).props.pagination, { pageSize: 5 })
 }
 const row = { keys: input, swift_keys: [] }
