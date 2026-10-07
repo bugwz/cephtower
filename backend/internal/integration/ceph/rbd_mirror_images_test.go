@@ -17,6 +17,7 @@ func TestMirrorImageSiteStatusPreserved(t *testing.T) {
 	if err := decoder.Decode(&expected); err != nil {
 		t.Fatal(err)
 	}
+	expected["summary"].(map[string]any)["states"] = map[string]any{"replaying": "0", "unknown (42)": "2"}
 	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rbd_mirroring":        []byte(`{"mode":"image","peers":[]}`),
 		"collect.rbd_mirroring_status": []byte(raw),

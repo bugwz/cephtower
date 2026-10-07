@@ -194,6 +194,7 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 				mirroring["leader_counts_status"] = "unavailable"
 				var status map[string]any
 				if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_mirroring_status", []string{"mirror", "pool", "status", pool.PoolName, "--verbose", "--format", "json"}, &status) {
+					enrichMirrorStateCounts(status["summary"])
 					mirroring["summary"] = status["summary"]
 					mirroring["daemons"] = status["daemons"]
 					if !mirrorServiceStatusRead {
