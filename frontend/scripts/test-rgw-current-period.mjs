@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 const api={}
 const jsx=(type,props)=>({type,props})
-new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwCurrentPeriod.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText)(api,name=>name==='antd'?{Table:'Table'}:{jsx,jsxs:jsx})
+new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwCurrentPeriod.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText)(api,name=>name==='antd'?{Table:'Table'}:name==='./RgwPlacementClasses'?{RgwPlacementClasses:'PlacementClasses'}:{jsx,jsxs:jsx})
 const period={id:'p',realm_id:'r',epoch:2,realm_epoch:1,master_zone:'<zone>',period_map:{zonegroups:[{id:'g',name:'<name>',master_zone:'z',zones:[],sync_policy:{groups:[]}}]}}
 const props={value:period,realm:'r',current:'p'}
 function nodes(node){if(Array.isArray(node))return node.flatMap(nodes);if(!node||typeof node!=='object')return [];return [node,...nodes(node.props?.children)]}
@@ -26,6 +26,11 @@ for(const key of ['endpoints','hostnames','hostnames_s3website','enabled_feature
   for(const value of [undefined,null,'',{},[1]]) assert.equal(groupCell(key,value),'未返回或类型异常')
 }
 assert.equal(groupCell('default_placement','default/ARCHIVE'),'"default/ARCHIVE"')
+const targets=[{name:'default',storage_classes:['STANDARD'],tags:[]}]
+const placement=nodes(groupCell('placement_targets',targets)).find(node=>node.type==='PlacementClasses')
+assert.equal(placement.props.value,targets)
+assert.equal(placement.props.period,true)
+assert.equal(placement.props.zone,undefined)
 assert.match(JSON.stringify(view),/不是待提交配置差异/)
 assert.ok(nodes(view).every(n=>!n.props?.dangerouslySetInnerHTML))
 for(const groups of [null,{},[null],[{id:'g'}],[{id:'g',name:'a'},{id:'g',name:'b'}]])assert.match(JSON.stringify(api.RgwCurrentPeriod({...props,value:{...period,period_map:{zonegroups:groups}}})),/列表不可用/)

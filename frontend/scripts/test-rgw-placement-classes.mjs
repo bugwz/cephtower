@@ -48,6 +48,9 @@ assert.ok(data.zonePlacementClassRows([{key:'p',val:{storage_classes:null}}]).is
 assert.match(data.placementText(Number.MAX_SAFE_INTEGER+1),/精确范围/)
 function nodes(node){return Array.isArray(node)?node.flatMap(nodes):node&&typeof node==='object'?[node,...nodes(node.props?.children)]:[]}
 const view=ui.RgwPlacementClasses({value:targets})
+const periodView=ui.RgwPlacementClasses({value:targets,period:true})
+assert.match(JSON.stringify(periodView),/当前 Period 的只读快照/)
+assert.ok(!JSON.stringify(periodView).includes('请在组/Zone 操作菜单中管理配置'))
 const table=nodes(view).find(n=>n.type==='Table')
 assert.equal(table.props.dataSource.length,3)
 assert.ok(table.props.expandable.expandedRowRender(cold))

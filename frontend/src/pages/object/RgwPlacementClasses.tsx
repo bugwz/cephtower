@@ -15,11 +15,11 @@ export function renderPlacementClassDetails(row:PlacementClassRow) {
   </div>
 }
 
-export function RgwPlacementClasses({value,zone=false}:{value:unknown;zone?:boolean}) {
+export function RgwPlacementClasses({value,zone=false,period=false}:{value:unknown;zone?:boolean;period?:boolean}) {
   const {rows,issues}=zone?zonePlacementClassRows(value):groupPlacementClassRows(value)
   const field=(row:PlacementClassRow,name:string)=>row.fields.find(f=>f.name===name)?.value??(['本地','本地映射'].includes(row.type)?'不适用':'未返回或不可用')
   return <div>
-    <p>{zone?'Zone 池映射快照，不证明组已声明此类、池存在或数据可访问。':'Zonegroup 类声明与分层配置快照，包含 STANDARD；不证明各 Zone 已配置池或远端目标可达。'} 仅展示已识别字段，凭据与未知嵌套字段不展示；请在组/Zone 操作菜单中管理配置。</p>
+    <p>{zone?'Zone 池映射快照，不证明组已声明此类、池存在或数据可访问。':'Zonegroup 类声明与分层配置快照，包含 STANDARD；不证明各 Zone 已配置池或远端目标可达。'} 仅展示已识别字段，凭据与未知嵌套字段不展示；{period?'此处为 Realm 当前 Period 的只读快照，可能不同于本地待提交配置，不代表远端已同步。':'请在组/Zone 操作菜单中管理配置。'}</p>
     {issues.length>0&&<Alert type="warning" message="部分配置无法确定，不能将缺失视为空配置" description={issues.join('；')}/>}
     <Table size="small" rowKey="key" dataSource={rows} pagination={rows.length>8?{pageSize:8}:false} scroll={{x:700}}
       locale={{emptyText:issues.length?'暂无可可靠展示的记录':'本次配置中无存储类记录'}}

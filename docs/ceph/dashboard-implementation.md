@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- RGW Period 放置目标：对照 `RGWZoneGroupPlacementTarget::dump`，将 period get 已采集的 placement_targets 接入现有存储类/分层详情组件，可展开查看目标、类声明、分层参数及 ACL 映射。复用既有字段白名单和凭据过滤，不再仅依赖原始 JSON；增加只读 Period 语境，明确可能不同于本地待提交配置，不表示远端已同步。新增真实列参数传递与快照提示回归；无后端变化，无实机或浏览器视觉验证。
+
 - RGW Period Zonegroup 配置展示：对照 `RGWZoneGroup::dump`，将已由 period get 采集并进入库存的 API 名称、主组配置标志、端点、S3/静态网站域名、默认放置规则和启用特性加入当前 Period 表格，避免只能翻阅原始 JSON。保留 false、空列表、缺失和异常类型的差异，不将配置主标志解读为健康；仍明确 Period 快照与本地待提交配置不同。新增列绑定与异常值回归；无后端变化，无实机或浏览器视觉验证。
 
 - RGW 当前覆盖复核（不是完成验收）：重新对照参考 `rgw-user-details.component.html`，确认用户身份、暂停/系统标志、Bucket 上限、MFA、子用户、caps 及关联账户在当前 `RgwUserDetails.tsx`、`RgwUserIdentityDetails.tsx`、`RgwPermissions.tsx`、`RgwUserAccountDetails.tsx` 已有入口。关联账户按账户 ID 读取采集库存，不是实时 account get；子用户与 caps 写入在 mutation/service.go 有写前身份校验及写后匹配。另确认 pages.tsx 的 CORS 专用动作已接入 `RgwBucketCorsEditor` 和 `rgwBucketCorsForm.ts`，历史“专用 CORS 编辑器仍待实现”仅描述当时状态，不应据此重复实现。本轮仅更新审计证据，不宣称 RGW 全覆盖；剩余审计应转向多站点、Bucket 配置及其真实交互/错误分支，而非继续依据历史待办推断缺口。无实机或浏览器视觉验证。

@@ -1,4 +1,5 @@
 import { Table } from 'antd'
+import { RgwPlacementClasses } from './RgwPlacementClasses'
 
 function record(value: unknown): value is Record<string, unknown> { return !!value && typeof value === 'object' && !Array.isArray(value) }
 const raw = (v: unknown) => v === undefined ? '未返回' : JSON.stringify(v)
@@ -54,6 +55,7 @@ export function RgwCurrentPeriod({ value, realm, current }: { value: unknown; re
       { title: 'S3 访问域名', dataIndex: 'hostnames', render: names },
       { title: '静态网站域名', dataIndex: 'hostnames_s3website', render: names },
       { title: '默认放置规则（原值）', dataIndex: 'default_placement', render: raw },
+      { title: '放置目标与存储类', dataIndex: 'placement_targets', render: (targets: unknown) => <details><summary>查看 Period 放置配置</summary><RgwPlacementClasses value={targets} period /></details> },
       { title: '启用特性', dataIndex: 'enabled_features', render: names },
       { title: '主 Zone', dataIndex: 'master_zone', render: raw },
       { title: '成员 Zone', dataIndex: 'zones', render: (zones: unknown, group: Record<string, unknown>) => <details><summary>查看成员配置</summary><RgwPeriodZones value={zones} master={group.master_zone} /></details> },
