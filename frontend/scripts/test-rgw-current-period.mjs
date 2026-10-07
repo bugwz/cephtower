@@ -3,7 +3,9 @@ import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 const api={}
 const jsx=(type,props)=>({type,props})
-new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwCurrentPeriod.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText)(api,name=>name==='antd'?{Table:'Table'}:name==='./RgwPlacementClasses'?{RgwPlacementClasses:'PlacementClasses'}:{jsx,jsxs:jsx})
+const policyApi={}
+new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketSyncPolicy.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(policyApi)
+new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwCurrentPeriod.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText)(api,name=>name==='antd'?{Table:'Table'}:name==='./RgwPlacementClasses'?{RgwPlacementClasses:'PlacementClasses'}:name==='./RgwBucketSyncFlows'?{RgwBucketSyncFlows:'Flows'}:name==='./RgwBucketSyncPipes'?{RgwBucketSyncPipes:'Pipes'}:name==='./rgwBucketSyncPolicy'?policyApi:{jsx,jsxs:jsx})
 const period={id:'p',realm_id:'r',epoch:2,realm_epoch:1,master_zone:'<zone>',period_map:{zonegroups:[{id:'g',name:'<name>',master_zone:'z',zones:[],sync_policy:{groups:[]}}]}}
 const props={value:period,realm:'r',current:'p'}
 function nodes(node){if(Array.isArray(node))return node.flatMap(nodes);if(!node||typeof node!=='object')return [];return [node,...nodes(node.props?.children)]}
@@ -31,6 +33,18 @@ const placement=nodes(groupCell('placement_targets',targets)).find(node=>node.ty
 assert.equal(placement.props.value,targets)
 assert.equal(placement.props.period,true)
 assert.equal(placement.props.zone,undefined)
+const policy={groups:[{id:'g',status:'enabled',data_flow:{},pipes:[]}]}
+const policyView=groupCell('sync_policy',policy)
+for(const type of ['Flows','Pipes']) {
+  const child=nodes(policyView).find(node=>node.type===type)
+  assert.equal(child.props.value,policy)
+  assert.equal(child.props.scope,'period')
+}
+assert.match(JSON.stringify(policyView),/已启用/)
+assert.match(JSON.stringify(policyView),/当前 Period 的只读快照/)
+assert.doesNotMatch(JSON.stringify(policyView),/不代表已提交到当前 period/)
+assert.match(policyApi.rgwBucketSyncPolicy(null,'period'),/Period Zonegroup.*不可用/)
+assert.match(policyApi.rgwBucketSyncPolicy({groups:[]},'period'),/空策略不代表停止全部复制/)
 assert.match(JSON.stringify(view),/不是待提交配置差异/)
 assert.ok(nodes(view).every(n=>!n.props?.dangerouslySetInnerHTML))
 for(const groups of [null,{},[null],[{id:'g'}],[{id:'g',name:'a'},{id:'g',name:'b'}]])assert.match(JSON.stringify(api.RgwCurrentPeriod({...props,value:{...period,period_map:{zonegroups:groups}}})),/列表不可用/)

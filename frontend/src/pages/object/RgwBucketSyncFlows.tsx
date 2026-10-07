@@ -40,14 +40,15 @@ export function bucketSyncFlows(value: unknown): GroupFlows[] | undefined {
   return result
 }
 
-export function RgwBucketSyncFlows({ value, scope = 'bucket' }: { value: unknown; scope?: 'bucket' | 'zonegroup' }) {
-  const label = scope === 'zonegroup' ? 'Zonegroup' : '桶本地'
+export function RgwBucketSyncFlows({ value, scope = 'bucket' }: { value: unknown; scope?: 'bucket' | 'zonegroup' | 'period' }) {
+  const label = scope === 'period' ? 'Period Zonegroup' : scope === 'zonegroup' ? 'Zonegroup' : '桶本地'
   const groups = bucketSyncFlows(value)
   if (!groups) return <span>{label}数据流不可用</span>
   return <div>
     <p>采集时的{label}数据流配置；Zone 使用原生标识，不推断名称。是否实际复制仍取决于组状态、管道和上层策略，不代表运行状态或同步进度。</p>
     {scope === 'zonegroup' && <p>Zonegroup get 返回 Zone ID；不转换为默认 Zonegroup 的名称，不推断当前 period 已发布此配置。</p>}
-    {!groups.length && <p>{scope === 'zonegroup' ? '无 Zonegroup 同步组（不代表停止默认复制行为）' : '无桶本地同步组（不代表不存在继承的复制策略）'}</p>}
+    {scope === 'period' && <p>当前 Period 的只读快照，Zone 为原生 ID；不是本地待提交配置，不代表远端已同步。</p>}
+    {!groups.length && <p>{scope !== 'bucket' ? '无 Zonegroup 同步组（不代表停止默认复制行为）' : '无桶本地同步组（不代表不存在继承的复制策略）'}</p>}
     {groups.map(group => <section key={group.id}>
       <h4>同步组 {exact(group.id)}</h4>
       {group.unavailable && <p>部分数据流格式不可用；以下仅展示可识别项，请检查原生策略。</p>}

@@ -54,13 +54,13 @@ export function bucketPipeParameters(value: unknown): string {
     `目标 ACL 转换：${raw(dest.acl_translation)}`, `目标存储类：${raw(dest.storage_class)}`
   ].join('\n')
 }
-export function RgwBucketSyncPipes({ value, scope = 'bucket' }: { value: unknown; scope?: 'bucket' | 'zonegroup' }) {
-  const label = scope === 'zonegroup' ? 'Zonegroup' : '桶本地'
+export function RgwBucketSyncPipes({ value, scope = 'bucket' }: { value: unknown; scope?: 'bucket' | 'zonegroup' | 'period' }) {
+  const label = scope === 'period' ? 'Period Zonegroup' : scope === 'zonegroup' ? 'Zonegroup' : '桶本地'
   const groups = bucketSyncPipes(value)
   if (!groups) return <span>{label}管道配置不可用</span>
   return <div>
-    <p>采集时的{label}管道配置，不代表有效复制链路、访问权限或同步进度。桶键按原生值显示，* 为通配选择；{scope === 'zonegroup' ? 'Zone 为 zonegroup get 返回的 ID，不推断已提交到当前 period。' : 'Zone 显示值可能是名称或未解析的 ID。'}</p>
-    {!groups.length && <p>{scope === 'zonegroup' ? '无 Zonegroup 同步组（不推断默认复制停止）' : '无桶本地同步组（不推断继承策略）'}</p>}
+    <p>采集时的{label}管道配置，不代表有效复制链路、访问权限或同步进度。桶键按原生值显示，* 为通配选择；{scope === 'period' ? '当前 Period 的只读快照，Zone 为原生 ID；不是本地待提交配置，不代表远端已同步。' : scope === 'zonegroup' ? 'Zone 为 zonegroup get 返回的 ID，不推断已提交到当前 period。' : 'Zone 显示值可能是名称或未解析的 ID。'}</p>
+    {!groups.length && <p>{scope !== 'bucket' ? '无 Zonegroup 同步组（不推断默认复制停止）' : '无桶本地同步组（不推断继承策略）'}</p>}
     {groups.map(group => <section key={group.id}>
       <h4>同步组 {raw(group.id)}</h4>
       {group.unavailable && <p>部分管道数据不可用或 ID 重复；以下仅展示可识别项，请检查原生策略。</p>}

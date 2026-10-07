@@ -1,5 +1,8 @@
 import { Table } from 'antd'
 import { RgwPlacementClasses } from './RgwPlacementClasses'
+import { RgwBucketSyncFlows } from './RgwBucketSyncFlows'
+import { RgwBucketSyncPipes } from './RgwBucketSyncPipes'
+import { rgwBucketSyncPolicy } from './rgwBucketSyncPolicy'
 
 function record(value: unknown): value is Record<string, unknown> { return !!value && typeof value === 'object' && !Array.isArray(value) }
 const raw = (v: unknown) => v === undefined ? '未返回' : JSON.stringify(v)
@@ -59,7 +62,7 @@ export function RgwCurrentPeriod({ value, realm, current }: { value: unknown; re
       { title: '启用特性', dataIndex: 'enabled_features', render: names },
       { title: '主 Zone', dataIndex: 'master_zone', render: raw },
       { title: '成员 Zone', dataIndex: 'zones', render: (zones: unknown, group: Record<string, unknown>) => <details><summary>查看成员配置</summary><RgwPeriodZones value={zones} master={group.master_zone} /></details> },
-      { title: '同步策略', dataIndex: 'sync_policy', render: (policy: unknown) => <pre>{raw(policy)}</pre> }
+      { title: '同步策略', dataIndex: 'sync_policy', render: (policy: unknown) => <details><summary>查看 Period 同步策略</summary><p>{rgwBucketSyncPolicy(policy, 'period')}</p><RgwBucketSyncFlows value={policy} scope="period" /><RgwBucketSyncPipes value={policy} scope="period" /><details><summary>查看原生策略</summary><pre>{raw(policy)}</pre></details></details> }
     ]} />}
     <details><summary>查看原生 Period（含配置与同步标记）</summary><pre>{JSON.stringify(value, null, 2)}</pre></details>
   </div>
