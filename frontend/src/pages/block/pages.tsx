@@ -12,6 +12,7 @@ import { RbdChildren, rbdSnapshotDeleteReason } from './RbdChildren'
 import { RbdMirrorDaemons } from './RbdMirrorDaemons'
 import { RbdMirrorImages } from './RbdMirrorImages'
 import { RbdMirrorSummary } from './RbdMirrorSummary'
+import { RbdMirrorPeers, rbdMirrorPeerOptions, rbdMirrorPeerIdentity } from './RbdMirrorPeers'
 import { rbdUsageText } from './rbdUsage'
 import { rbdSnapshotLimitText } from './rbdSnapshotLimit'
 import { rbdMirrorRoleReason } from './rbdMirrorRole'
@@ -588,15 +589,17 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       buildBody:(values,clusterId,row)=>({cluster_id:clusterId,pool:String(row?.pool ?? row?.name),action:'add',remote_cluster:String(values.remote_cluster),remote_client:String(values.remote_client),direction:String(values.direction)})
     },{
       title:'编辑远端站点',buttonLabel:'编辑 Peer',path:'/rbd/mirroring/peer',method:'POST',successMessage:'远端站点已更新',
-      fields:[{name:'uuid',label:'Peer UUID（见 Peers 列）',required:true},
+      disabledWhen:row=>rbdMirrorPeerOptions(row).length ? undefined : '没有唯一有效的 Peer 库存，请先重新采集',
+      fields:[{name:'uuid',label:'当前池 Peer（不是 Mirror UUID）',type:'select',required:true,optionsLoader:async(_clusterId,row)=>rbdMirrorPeerOptions(row)},
         {name:'field',label:'配置项',type:'select',required:true,options:[{label:'站点名称',value:'site-name'},{label:'客户端名称',value:'client'},{label:'远端 Monitor 地址',value:'mon-host'},{label:'同步方向',value:'direction'}]},
         {name:'value',label:'新值（方向：rx-only / tx-only / rx-tx）',required:true}],
-      buildBody:(values,clusterId,row)=>({cluster_id:clusterId,pool:String(row?.pool ?? row?.name),action:'set',uuid:String(values.uuid),field:String(values.field),value:String(values.value)})
+      buildBody:(values,clusterId,row)=>({cluster_id:clusterId,pool:String(row?.pool ?? row?.name),action:'set',uuid:rbdMirrorPeerIdentity(values,row),field:String(values.field),value:String(values.value)})
     },{
       title:'删除远端站点',buttonLabel:'删除 Peer',path:'/rbd/mirroring/peer',method:'POST',successMessage:'远端站点已删除',
-      fields:[{name:'uuid',label:'Peer UUID（见 Peers 列）',required:true}],
-      confirmation:(values,row)=>`删除池 ${String(row?.pool ?? row?.name)} 的远端站点 ${String(values.uuid)}，停止与该站点同步？`,
-      buildBody:(values,clusterId,row)=>({cluster_id:clusterId,pool:String(row?.pool ?? row?.name),action:'remove',uuid:String(values.uuid)})
+      disabledWhen:row=>rbdMirrorPeerOptions(row).length ? undefined : '没有唯一有效的 Peer 库存，请先重新采集',
+      fields:[{name:'uuid',label:'当前池 Peer（不是 Mirror UUID）',type:'select',required:true,optionsLoader:async(_clusterId,row)=>rbdMirrorPeerOptions(row)}],
+      confirmation:(values,row)=>`删除池 ${String(row?.pool ?? row?.name)} 的远端站点 ${rbdMirrorPeerIdentity(values,row)}，停止与该站点同步？`,
+      buildBody:(values,clusterId,row)=>({cluster_id:clusterId,pool:String(row?.pool ?? row?.name),action:'remove',uuid:rbdMirrorPeerIdentity(values,row)})
     }],
     columns: [
       { key: 'name', title: '名称' },
@@ -607,7 +610,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'snapshot_schedules_status', title: '调度读取状态', render: (value) => value === 'available' ? '已读取' : '不可用或尚未采集' },
       { key: 'snapshot_schedules', title: '镜像快照调度', ellipsis: false, render: (value, row) => <MirrorSchedules value={value} status={row.snapshot_schedules_status} /> },
       { key: 'remote_namespace', title: '远端命名空间' },
-      { key: 'peers', title: 'Peers' },
+      { key: 'peers', title: 'Peers', ellipsis: false, render: value => <RbdMirrorPeers value={value} /> },
       { key: 'daemons', title: '同步守护进程', ellipsis: false, render: value => <RbdMirrorDaemons value={value} /> },
       { key: 'images', title: '镜像同步详情', ellipsis: false, render: value => <RbdMirrorImages value={value} /> },
       { key: 'resource_version', title: '版本' }

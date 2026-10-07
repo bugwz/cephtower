@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import './test-rbd-mirror-daemons.mjs'
 import './test-rbd-mirror-images.mjs'
 import './test-rbd-mirror-summary.mjs'
+import './test-rbd-mirror-peers.mjs'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 
