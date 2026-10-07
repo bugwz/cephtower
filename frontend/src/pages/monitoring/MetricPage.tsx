@@ -60,6 +60,9 @@ export function metricSamples(item: ApiRecord): MetricSample[] {
 }
 
 const metricOptions = [
+  { label: 'RGW 来源 Zone 复制吞吐率（B/s）', value: 'rgw_sync_bytes_rate', description: '按 source_zone 聚合，一分钟 rate' },
+  { label: 'RGW 来源 Zone 复制对象速率（对象/s）', value: 'rgw_sync_objects_rate', description: '按 source_zone 聚合，一分钟 rate' },
+  { label: 'RGW 来源 Zone 复制失败速率（次/s）', value: 'rgw_sync_errors_rate', description: '按 source_zone 聚合，一分钟 rate；非累计失败数' },
   { label: 'SMB 集群节点指标数', value: 'smb_cluster_nodes', description: '按 netbiosname 统计匹配的会话指标序列，不是编排器主机库存' },
   { label: 'SMB 集群会话均值', value: 'smb_cluster_sessions_mean', description: '按 netbiosname：会话数 × 采集状态的序列均值，非总数' },
   { label: 'SMB 集群用户均值', value: 'smb_cluster_users_mean', description: '按 netbiosname：用户数 × 采集状态的序列均值，非总数' },
@@ -277,7 +280,7 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
               </div>
             </Form>
 
-            <Alert type="info" message="RGW 指标使用一分钟速率窗口并聚合监控端点内的所有匹配序列。端点应仅包含当前集群且避免重复采集；无样本或 NaN 不代表零值。" />
+            <Alert type="info" message="RGW 指标使用一分钟速率窗口并聚合监控端点内的所有匹配序列。同步指标按 source_zone 分组；共享端点的同名来源 Zone 会被合并，不代表目的 Zone 隔离。端点应仅包含当前集群且避免重复采集；无样本或 NaN 不代表零值。" />
             <Space wrap>
               <Tag color="blue">result_type: {result?.result_type ?? '-'}</Tag>
               <Tag>series: {rows.length}</Tag>

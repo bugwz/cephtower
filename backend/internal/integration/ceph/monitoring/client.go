@@ -49,6 +49,9 @@ type PrometheusResult struct {
 }
 
 var metricQueries = map[string]string{
+	"rgw_sync_bytes_rate":       "sum by (source_zone) (rate(ceph_data_sync_from_zone_fetch_bytes_sum[1m]))",
+	"rgw_sync_objects_rate":     "sum by (source_zone) (rate(ceph_data_sync_from_zone_fetch_bytes_count[1m]))",
+	"rgw_sync_errors_rate":      "sum by (source_zone) (rate(ceph_data_sync_from_zone_fetch_errors[1m]))",
 	"smb_cluster_nodes":         "count by (netbiosname) (smb_sessions_total * on (instance) group_left (netbiosname) smb_metrics_status)",
 	"smb_cluster_sessions_mean": "avg by (netbiosname) (smb_sessions_total * on (instance) group_left (netbiosname) smb_metrics_status)",
 	"smb_cluster_users_mean":    "avg by (netbiosname) (smb_users_total * on (instance) group_left (netbiosname) smb_metrics_status)",
