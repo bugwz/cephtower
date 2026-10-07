@@ -581,7 +581,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       initialValues:(row)=>({site_name:String(row?.site_name ?? ''),direction:'rx-tx',token:''}),
       buildBody:(values,clusterId,row)=>({cluster_id:clusterId,pool:String(row?.pool ?? row?.name),site_name:String(values.site_name),direction:String(values.direction),token:String(values.token)})
     },{
-      title:'添加远端站点',buttonLabel:'添加 Peer',path:'/rbd/mirroring/peer',method:'POST',successMessage:'远端站点已添加',
+      title:'添加远端站点',buttonLabel:'添加 Peer',path:'/rbd/mirroring/peer',method:'POST',successMessage:'远端站点已添加并回读核验；连接与同步状态需另行检查',
       fields:[{name:'remote_cluster',label:'远端集群名称（需已有连接配置）',required:true},
         {name:'remote_client',label:'远端客户端',required:true,placeholder:'client.rbd-mirror'},
         {name:'direction',label:'同步方向',type:'select',required:true,options:[{label:'仅接收',value:'rx-only'},{label:'双向',value:'rx-tx'}]}],

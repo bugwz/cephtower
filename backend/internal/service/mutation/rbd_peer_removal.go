@@ -3,6 +3,7 @@ package mutation
 import (
 	"context"
 	"encoding/json"
+	"regexp"
 	"strings"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 	"cephtower/backend/internal/integration/ceph/executor"
 )
 
-func rbdPeerPresence(data []byte, target string, present bool) bool {
+func rbdPeerIDs(data []byte) map[string]bool {
 	var info struct {
 		Mode  string `json:"mode"`
 		Peers []struct {
@@ -18,17 +19,52 @@ func rbdPeerPresence(data []byte, target string, present bool) bool {
 		} `json:"peers"`
 	}
 	if json.Unmarshal(data, &info) != nil || info.Peers == nil || (info.Mode != "image" && info.Mode != "pool" && info.Mode != "init-only" && info.Mode != "disabled") {
-		return false
+		return nil
 	}
 	seen := map[string]bool{}
 	for _, peer := range info.Peers {
 		id := strings.ToLower(peer.UUID)
 		if id == "" || strings.TrimSpace(id) != id || seen[id] {
-			return false
+			return nil
 		}
 		seen[id] = true
 	}
-	return seen[strings.ToLower(target)] == present
+	return seen
+}
+
+func rbdPeerPresence(data []byte, target string, present bool) bool {
+	seen := rbdPeerIDs(data)
+	return seen != nil && seen[strings.ToLower(target)] == present
+}
+
+var rbdAddedPeerUUID = regexp.MustCompile(`(?i)^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)
+
+func (s *Service) executeRBDPeerAddition(ctx context.Context, access executor.ClusterAccess, request Request, spec command) (cephdomain.ActionResult, error) {
+	pool := optional(request.Parameters, "pool")
+	read := func(suffix string) (executor.CommandResult, error) {
+		return s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action + suffix, Binary: executor.BinaryRBD, Args: []string{"mirror", "pool", "info", pool, "--format", "json"}, Timeout: 30 * time.Second, MaxOutput: executor.DefaultMaxOutput})
+	}
+	before, err := read(".pre_check")
+	ids := rbdPeerIDs(before.Stdout)
+	if err != nil || ids == nil {
+		return cephdomain.ActionResult{}, invalid("peer inventory could not be verified; refresh inventory before adding a peer")
+	}
+	written, err := s.executor.Run(ctx, access, executor.CommandSpec{ID: request.Action, Binary: spec.binary, Args: spec.args, Timeout: spec.timeout, MaxOutput: executor.DefaultMaxOutput, Mutating: true})
+	if err != nil {
+		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "ceph_command_failed", Message: "peer addition outcome is uncertain; inspect the pool before any manual retry", Retryable: false}
+	}
+	// Native peer add prints only the new UUID and a newline. Do not infer an ID
+	// from a list difference: another operator may have changed the pool.
+	id := strings.TrimSuffix(string(written.Stdout), "\n")
+	after, err := read(".post_check")
+	matched := rbdAddedPeerUUID.MatchString(id) && !ids[strings.ToLower(id)] &&
+		rbdPeerFieldMatches(after.Stdout, id, "site-name", optional(request.Parameters, "remote_cluster")) &&
+		rbdPeerFieldMatches(after.Stdout, id, "client", optional(request.Parameters, "remote_client")) &&
+		rbdPeerFieldMatches(after.Stdout, id, "direction", optional(request.Parameters, "direction"))
+	if err != nil || !matched {
+		return cephdomain.ActionResult{}, &cephdomain.ActionError{Code: "post_check_failed", Message: "peer addition was not confirmed by readback; inspect the pool before any manual retry", Retryable: false}
+	}
+	return cephdomain.ActionResult{Details: map[string]any{"pool": pool, "peer_uuid": id, "created": true, "verified": true}}, nil
 }
 
 func rbdPeerFieldMatches(data []byte, target, field, value string) bool {
