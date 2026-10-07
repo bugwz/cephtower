@@ -9,6 +9,7 @@ import { RbdImageFlags } from './RbdImageFlags'
 import { RbdSnapshotProtection } from './RbdSnapshotProtection'
 import { RbdTrashStatus, rbdTrashRestoreReason } from './RbdTrashStatus'
 import { RbdChildren, rbdSnapshotDeleteReason } from './RbdChildren'
+import { RbdMirrorDaemons } from './RbdMirrorDaemons'
 import { rbdUsageText } from './rbdUsage'
 import { rbdSnapshotLimitText } from './rbdSnapshotLimit'
 import { rbdMirrorRoleReason } from './rbdMirrorRole'
@@ -605,7 +606,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'snapshot_schedules', title: '镜像快照调度', ellipsis: false, render: (value, row) => <MirrorSchedules value={value} status={row.snapshot_schedules_status} /> },
       { key: 'remote_namespace', title: '远端命名空间' },
       { key: 'peers', title: 'Peers' },
-      { key: 'daemons', title: '同步守护进程' },
+      { key: 'daemons', title: '同步守护进程', ellipsis: false, render: value => <RbdMirrorDaemons value={value} /> },
       { key: 'images', title: '镜像同步详情' },
       { key: 'resource_version', title: '版本' }
     ]

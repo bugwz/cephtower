@@ -389,7 +389,7 @@ func TestNamespaceGroupsIncludeMembersAndSnapshots(t *testing.T) {
 func TestMirroringProducesIndependentPoolRowsWithStatus(t *testing.T) {
 	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rbd_mirroring":        []byte(`{"mode":"image","peers":[]}`),
-		"collect.rbd_mirroring_status": []byte(`{"summary":{"health":"OK","states":{"replaying":1}},"daemons":[{"hostname":"mirror-host"}],"images":[{"name":"image"}]}`),
+		"collect.rbd_mirroring_status": []byte(`{"summary":{"health":"OK","states":{"replaying":1}},"daemons":[{"service_id":"svc","instance_id":"9007199254740993","client_id":"client.mirror","hostname":"mirror-host","ceph_version":"ceph version 20","leader":false,"health":"WARNING","callouts":["lagging","<native text>"]}],"images":[{"name":"image"}]}`),
 	}}}
 	rows := provider.collectStorageOptional(context.Background(), ClusterAccess{}, []poolWire{{PoolName: "pool-a"}, {PoolName: "pool-b"}}, fsDumpWire{}, time.Now())
 	seen := map[string]bool{}
@@ -400,6 +400,20 @@ func TestMirroringProducesIndependentPoolRowsWithStatus(t *testing.T) {
 		payload := row.Payload.(map[string]any)
 		if payload["pool"] != row.NaturalKey || payload["mode"] != "image" || payload["summary"] == nil || payload["daemons"] == nil || payload["images"] == nil {
 			t.Fatalf("incomplete mirroring row: %+v", row)
+		}
+		daemons, ok := payload["daemons"].([]any)
+		if !ok || len(daemons) != 1 {
+			t.Fatalf("missing daemon rows: %#v", payload["daemons"])
+		}
+		daemon := daemons[0].(map[string]any)
+		for key, want := range map[string]any{"service_id": "svc", "instance_id": "9007199254740993", "client_id": "client.mirror", "hostname": "mirror-host", "ceph_version": "ceph version 20", "leader": false, "health": "WARNING"} {
+			if daemon[key] != want {
+				t.Fatalf("daemon %s = %#v, want %#v", key, daemon[key], want)
+			}
+		}
+		callouts := daemon["callouts"].([]any)
+		if len(callouts) != 2 || callouts[0] != "lagging" || callouts[1] != "<native text>" {
+			t.Fatalf("changed callouts: %#v", callouts)
 		}
 		seen[row.NaturalKey] = true
 	}
