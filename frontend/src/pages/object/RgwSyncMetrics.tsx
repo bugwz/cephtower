@@ -1,7 +1,7 @@
-import { Alert, Button, Card, Space, Table } from 'antd'
+import { Alert, AutoComplete, Button, Card, Space, Table } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { queryMetricRange, type MetricResponse } from '../../api/external'
-import { metricSamples } from '../monitoring/MetricPage'
+import { filterMetricRows, metricLabelOptions, metricSamples } from '../monitoring/MetricPage'
 import { MetricTrend } from '../monitoring/MetricTrend'
 import { MetricNotices } from '../monitoring/MetricNotices'
 import { rgwSyncMetrics } from './RgwSyncMetricLinks'
@@ -12,9 +12,13 @@ export function RgwSyncMetrics({ clusterId }: { clusterId?: number }) {
   const current = useRef(clusterId), mounted = useRef(true), sequence = useRef(0), abort = useRef<AbortController>()
   current.current = clusterId
   const [state, setState] = useState<{ clusterId?: number; busy: boolean; rows?: Result[] }>({ busy: false })
+  const [labelKey, setLabelKey] = useState('')
+  const [labelValue, setLabelValue] = useState('')
   useEffect(() => {
     mounted.current = true
     setState({ clusterId, busy: false })
+    setLabelKey('')
+    setLabelValue('')
     return () => { mounted.current = false; abort.current?.abort(); sequence.current++ }
   }, [clusterId])
   async function read() {
@@ -34,15 +38,24 @@ export function RgwSyncMetrics({ clusterId }: { clusterId?: number }) {
     if (mounted.current && current.current === clusterId && sequence.current === ticket && !controller.signal.aborted) setState({ clusterId, busy: false, rows })
   }
   const scoped = state.clusterId === clusterId ? state : undefined
+  const labeledRows = scoped?.rows?.map(row => (row.response?.series ?? []).map((series, index) => ({ series, index, labels: JSON.stringify(series.metric) ?? '' }))) ?? []
+  const allSeries = labeledRows.flat()
   return <Card size="small" title="RGW 同步趋势（最近一小时）">
     <Space direction="vertical" style={{ width: '100%' }}>
       <Alert type="info" message="按需读取 Prometheus，60 秒评估步长" description="四类来源指标使用一分钟速率或加权平均延迟；分片时差为原始秒数。未按当前 Zone 过滤，同名来源 Zone 可能在共享端点内合并，请核对全部标签。时差仅由增量同步更新，不证明同步完成；无数据不代表零。" />
       <Button disabled={!clusterId || scoped?.busy} loading={scoped?.busy} onClick={() => void read()}>读取同步趋势总览</Button>
+      {scoped?.rows && <Space wrap>
+        <AutoComplete aria-label="同步指标精确标签名" style={{ minWidth: 220 }} value={labelKey} options={metricLabelOptions(allSeries)} onChange={value => { setLabelKey(value); setLabelValue('') }} placeholder="精确标签名" />
+        <AutoComplete aria-label="同步指标精确标签值" style={{ minWidth: 220 }} value={labelValue} options={metricLabelOptions(allSeries, labelKey)} onChange={setLabelValue} placeholder="精确标签值（可为空字符串）" />
+        <Button onClick={() => { setLabelKey(''); setLabelValue('') }}>清除标签筛选</Button>
+        <span>仅筛选已返回的序列，不改变查询范围或提供集群隔离；空标签名显示全部。</span>
+      </Space>}
       {scoped?.rows?.map((row, index) => <Card size="small" key={rgwSyncMetrics[index].id} title={`${rgwSyncMetrics[index].title} · ${rgwSyncMetrics[index].unit}`}>
         {row.error && <Alert type="warning" message={row.error} />}
         <MetricNotices source={rgwSyncMetrics[index].title} meta={row.response?.meta} />
         {row.response?.series.length === 0 && <Alert type="info" message="无样本（不代表零或同步健康）" />}
-        {row.response?.series.map((series, seriesIndex) => {
+        {row.response && <div>匹配序列：{filterMetricRows(labeledRows[index], labelKey, labelValue).length} / {row.response.series.length}</div>}
+        {filterMetricRows(labeledRows[index], labelKey, labelValue).map(({ series, index: seriesIndex }) => {
           const samples = metricSamples(series)
           return <div key={seriesIndex}>
             <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{JSON.stringify(series.metric)}</pre>
