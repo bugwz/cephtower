@@ -172,6 +172,9 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if request.Action == "rbd_mirroring.peer" && optional(request.Parameters, "action") == "add" {
 		return s.executeRBDPeerAddition(ctx, access, request, spec)
 	}
+	if request.Action == "rbd_mirroring.update" {
+		return s.executeRBDPoolMode(ctx, access, request, spec)
+	}
 	if request.Action == "rgw_realm.import" {
 		return s.executeRealmImport(ctx, access, request, spec)
 	}

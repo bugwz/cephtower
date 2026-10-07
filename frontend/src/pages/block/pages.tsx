@@ -541,7 +541,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       }
     }],
     createAction:{
-      title:'设置池同步模式',buttonLabel:'设置同步模式',path:'/rbd/mirroring',method:'PATCH',successMessage:'池同步模式已更新',
+      title:'设置池同步模式',buttonLabel:'设置同步模式',path:'/rbd/mirroring',method:'PATCH',successMessage:'池同步模式已更新并回读核验；镜像同步状态需另行检查',
       confirmation:(values) => values.mode === 'disabled' ? `停用池 ${String(values.pool)} 的 RBD 同步？` : undefined,
       fields:[{name:'pool',label:'Pool',required:true},{name:'mode',label:'同步模式',type:'select',required:true,options:[{label:'禁用',value:'disabled'},{label:'按镜像启用',value:'image'},{label:'全池启用',value:'pool'}]}],
       buildBody:(values,clusterId) => ({cluster_id:clusterId,pool:String(values.pool),mode:String(values.mode)})
