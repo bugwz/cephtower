@@ -4,6 +4,7 @@ import { readExternalList } from '../../api/external'
 import { isRecord } from '../../api/client'
 import { useResource } from '../../hooks'
 import { useClusterContext } from '../../state/ClusterContext'
+import { LogServiceStatus } from './LogServiceStatus'
 
 export function safeGrafanaLogsURL(value: unknown): string | undefined {
   if (typeof value !== 'string' || !value) return undefined
@@ -33,6 +34,7 @@ export function GrafanaLogsPanel() {
         <Button disabled={!selectedClusterId} loading={loading} onClick={() => void refresh()}>重新读取入口</Button>
         <Button type="primary" href={selectedClusterId && !loading && !error ? data ?? undefined : undefined} disabled={!selectedClusterId || loading || Boolean(error) || !data} target="_blank" rel="noopener noreferrer">打开 Grafana Explore</Button>
       </Space>
+      <LogServiceStatus />
     </Space>
   </Card>
 }

@@ -12,6 +12,7 @@ const exports = {}
 new Function('exports', 'require', 'React', code)(exports, name => ({
   antd: { Alert: 'Alert', Button: 'Button', Card: 'Card', Space: 'Space' },
   react: { useCallback: fn => fn },
+  './LogServiceStatus': { LogServiceStatus: 'LogServiceStatus' },
   '../../api/client': { isRecord: value => value !== null && typeof value === 'object' && !Array.isArray(value) },
   '../../hooks': { useResource: fn => { loader = fn; return { ...state, refresh: async () => {} } } },
   '../../state/ClusterContext': { useClusterContext: () => ({ selectedClusterId: clusterId }) },
