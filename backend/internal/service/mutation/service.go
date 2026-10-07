@@ -1049,11 +1049,11 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("service id may contain only letters, digits, underscores, dots, and hyphens")
 		}
 		spec := map[string]any{"service_type": serviceType}
-		ingress, err := ingressCreateSpec(p, serviceType, action)
+		ingress, err := ingressServiceSpec(p, serviceType, action)
 		if err != nil {
 			return command{}, err
 		}
-		if ingress != nil {
+		if len(ingress) > 0 {
 			spec["spec"] = ingress
 		}
 		if raw, exists := p["networks"]; exists {

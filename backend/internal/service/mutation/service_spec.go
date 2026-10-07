@@ -58,5 +58,29 @@ func mergeServiceSpec(exported, patch []byte, name string) ([]byte, error) {
 	if networks, exists := changes["networks"]; exists {
 		current["networks"] = networks
 	}
+	if patch, exists := changes["spec"]; exists {
+		var proposed map[string]any
+		var original map[string]json.RawMessage
+		if currentType != "ingress" || json.Unmarshal(patch, &proposed) != nil || proposed == nil || json.Unmarshal(current["spec"], &original) != nil || original == nil {
+			return nil, invalid("cannot safely merge ingress TLS settings")
+		}
+		for key := range proposed {
+			if key != "ssl" && key != "ssl_cert" && key != "ssl_key" {
+				return nil, invalid("unsupported ingress spec update")
+			}
+		}
+		validated, err := ingressTLSParameters(proposed, map[string]any{})
+		if err != nil {
+			return nil, err
+		}
+		if validated["ssl"] == false {
+			delete(original, "ssl_cert")
+			delete(original, "ssl_key")
+		}
+		for key, value := range validated {
+			original[key], _ = json.Marshal(value)
+		}
+		current["spec"], _ = json.Marshal(original)
+	}
 	return json.Marshal(current)
 }

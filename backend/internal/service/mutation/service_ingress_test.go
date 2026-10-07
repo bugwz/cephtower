@@ -75,10 +75,10 @@ func TestIngressInterfaceNetworks(t *testing.T) {
 				t.Fatal(string(cmd.stdin))
 			}
 		}
-		if _, err := ingressCreateSpec(p, "rgw", "service.create"); err == nil {
+		if _, err := ingressServiceSpec(p, "rgw", "service.create"); err == nil {
 			t.Fatal("ingress networks accepted for another service")
 		}
-		if _, err := ingressCreateSpec(p, "ingress", "service.update"); err == nil {
+		if _, err := ingressServiceSpec(p, "ingress", "service.update"); err == nil {
 			t.Fatal("unsupported network edits accepted")
 		}
 	}

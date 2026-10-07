@@ -30657,6 +30657,12 @@ paths:
                   type: string
                 snap:
                   type: string
+                ssl:
+                  type: boolean
+                ssl_cert:
+                  type: string
+                ssl_key:
+                  type: string
                 subsystem_nqn:
                   type: string
                 subvolume:

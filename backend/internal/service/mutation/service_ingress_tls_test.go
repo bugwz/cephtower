@@ -1,12 +1,14 @@
 package mutation
 
 import (
+	"context"
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"math/big"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -28,6 +30,58 @@ func ingressTestKeyPair(t *testing.T) (string, string) {
 		t.Fatal(err)
 	}
 	return string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})), string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: key}))
+}
+
+func TestIngressTLSUpdateChain(t *testing.T) {
+	cert, key := ingressTestKeyPair(t)
+	current := `[{"service_name":"ingress.rgw.a","service_type":"ingress","service_id":"rgw.a","spec":{"backend_service":"rgw.a","virtual_ip":"192.0.2.10/24","frontend_port":443,"ssl":true,"ssl_cert":"old-cert","ssl_key":"old-key","future":18446744073709551615}}]`
+	for _, mode := range []string{"preserve", "replace", "disable"} {
+		p := map[string]any{"service_type": "ingress"}
+		if mode == "replace" {
+			p["ssl"], p["ssl_cert"], p["ssl_key"] = true, cert, key
+		}
+		if mode == "disable" {
+			p["ssl"] = false
+		}
+		s, _, id := newCephUserService(t)
+		e := &directoryRenameExecutor{outputs: map[string]string{"service.update.pre_check": current, "service.update": "Scheduled ingress.rgw.a update..."}}
+		s.executor = e
+		if _, err := s.Execute(context.Background(), Request{ClusterID: id, Action: "service.update", ResourceKey: "service/ingress.rgw.a", Parameters: p}); err != nil {
+			t.Fatal(err)
+		}
+		if len(e.specs) != 3 || e.specs[0].Mutating || !e.specs[1].Mutating || !reflect.DeepEqual(e.specs[1].Args, []string{"orch", "apply", "-i", "-"}) {
+			t.Fatal("wrong TLS update command chain")
+		}
+		var outer map[string]json.RawMessage
+		var spec map[string]json.RawMessage
+		json.Unmarshal(e.specs[1].Stdin, &outer)
+		json.Unmarshal(outer["spec"], &spec)
+		if string(spec["future"]) != "18446744073709551615" || string(spec["backend_service"]) != `"rgw.a"` || string(spec["virtual_ip"]) != `"192.0.2.10/24"` || string(spec["frontend_port"]) != "443" {
+			t.Fatal("unrelated ingress settings changed")
+		}
+		switch mode {
+		case "preserve":
+			if string(spec["ssl_key"]) != `"old-key"` {
+				t.Fatal("default changed credentials")
+			}
+		case "disable":
+			if string(spec["ssl"]) != "false" || spec["ssl_key"] != nil || spec["ssl_cert"] != nil {
+				t.Fatal("TLS disable retained credentials")
+			}
+		case "replace":
+			var saved string
+			json.Unmarshal(spec["ssl_key"], &saved)
+			if saved != key {
+				t.Fatal("replacement key lost")
+			}
+		}
+	}
+	for _, raw := range []string{`null`, `[]`, `"invalid"`} {
+		broken := strings.Replace(current, `{"backend_service":"rgw.a","virtual_ip":"192.0.2.10/24","frontend_port":443,"ssl":true,"ssl_cert":"old-cert","ssl_key":"old-key","future":18446744073709551615}`, raw, 1)
+		if _, err := mergeServiceSpec([]byte(broken), []byte(`{"service_type":"ingress","service_id":"rgw.a","spec":{"ssl":false}}`), "ingress.rgw.a"); err == nil {
+			t.Fatal("invalid export accepted for TLS edit")
+		}
+	}
 }
 
 func TestIngressTLSCreation(t *testing.T) {

@@ -128,6 +128,9 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	contracts["service.create"].Fields["ssl"] = boolField(false)
 	contracts["service.create"].Fields["ssl_cert"] = stringField(false)
 	contracts["service.create"].Fields["ssl_key"] = stringField(false)
+	contracts["service.update"].Fields["ssl"] = boolField(false)
+	contracts["service.update"].Fields["ssl_cert"] = stringField(false)
+	contracts["service.update"].Fields["ssl_key"] = stringField(false)
 	for _, action := range []string{"service.create", "service.update"} {
 		contracts[action].Fields["unmanaged"] = boolField(false)
 		contracts[action].Fields["networks"] = stringsField(false)

@@ -7,8 +7,16 @@ import (
 	"regexp"
 )
 
-func ingressCreateSpec(p map[string]any, serviceType, action string) (map[string]any, error) {
+func ingressServiceSpec(p map[string]any, serviceType, action string) (map[string]any, error) {
 	fields := []string{"backend_service", "virtual_ip", "frontend_port", "monitor_port", "virtual_interface_networks", "ssl", "ssl_cert", "ssl_key"}
+	if serviceType == "ingress" && action == "service.update" {
+		for _, field := range fields[:5] {
+			if _, exists := p[field]; exists {
+				return nil, invalid("ingress listener edits are not supported")
+			}
+		}
+		return ingressTLSParameters(p, map[string]any{})
+	}
 	if serviceType != "ingress" || action != "service.create" {
 		for _, key := range fields {
 			if _, exists := p[key]; exists {
@@ -53,6 +61,10 @@ func ingressCreateSpec(p map[string]any, serviceType, action string) (map[string
 		}
 		spec["virtual_interface_networks"] = networks
 	}
+	return ingressTLSParameters(p, spec)
+}
+
+func ingressTLSParameters(p, spec map[string]any) (map[string]any, error) {
 	if value, exists := p["ssl"]; exists {
 		enabled, ok := value.(bool)
 		if !ok {
