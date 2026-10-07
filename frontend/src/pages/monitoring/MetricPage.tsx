@@ -59,6 +59,10 @@ export function metricSamples(item: ApiRecord): MetricSample[] {
 }
 
 const metricOptions = [
+  { label: 'SMB 集群节点指标数', value: 'smb_cluster_nodes', description: '按 netbiosname 统计匹配的会话指标序列，不是编排器主机库存' },
+  { label: 'SMB 集群会话均值', value: 'smb_cluster_sessions_mean', description: '按 netbiosname：会话数 × 采集状态的序列均值，非总数' },
+  { label: 'SMB 集群用户均值', value: 'smb_cluster_users_mean', description: '按 netbiosname：用户数 × 采集状态的序列均值，非总数' },
+  { label: 'SMB 集群共享活动均值', value: 'smb_cluster_shares_mean', description: '按 netbiosname：共享活动 × 采集状态的序列均值，非总数' },
   { label: 'SMB2 请求累计耗时速率（µs/s）', value: 'smb_request_duration_rate', description: '各操作 5 分钟累计耗时 rate，非单请求平均延迟' },
   { label: 'SMB 指标采集状态（各实例）', value: 'smb_metrics_status', description: 'smb_metrics_status：0 Down / 1 Up' },
   { label: 'SMB 会话数（各实例）', value: 'smb_sessions', description: 'smb_sessions_total' },
@@ -205,7 +209,7 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
 
   return (
     <Page title="性能指标">
-      <Alert type="info" showIcon message="SMB 指标需要 Prometheus 采集 SMB exporter；保留原始实例和操作标签，不汇总为集群总数。共享 endpoint 可能包含多个集群，请核对结果标签；无数据不代表零。速率使用固定 5 分钟窗口。" />
+      <Alert type="info" showIcon message="SMB 指标需要 Prometheus 采集 SMB exporter。各实例指标保留原始标签；集群指标按 netbiosname 聚合，均值不是总数。关联要求每个 instance 对应唯一状态序列，重复采集会导致查询失败；共享 endpoint 的同名 SMB 集群可能被合并，请核对部署范围。无数据不代表零，速率使用固定 5 分钟窗口。" />
       <Space direction="vertical" size={16} className="page-stack">
         <div className="metrics-grid metric-preset-grid">
           {metricOptions.map((item) => (

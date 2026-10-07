@@ -9,6 +9,7 @@ const source = readFileSync(new URL('../src/pages/monitoring/MetricPage.tsx', im
 const tree = ts.createSourceFile('MetricPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const optionsNode = tree.statements.filter(ts.isVariableStatement).flatMap(node => [...node.declarationList.declarations]).find(node => node.name.getText(tree) === 'metricOptions')
 const options = new Function(`return ${optionsNode.initializer.getText(tree)}`)()
+for (const id of ['smb_cluster_nodes', 'smb_cluster_sessions_mean', 'smb_cluster_users_mean', 'smb_cluster_shares_mean']) assert.equal(options.filter(option => option.value === id).length, 1)
 const filterNode = tree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'filterMetricRows')
 const filterExports = {}
 const labelOptionsNode = tree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'metricLabelOptions')

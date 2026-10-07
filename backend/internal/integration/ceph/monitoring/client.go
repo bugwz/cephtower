@@ -47,6 +47,10 @@ type PrometheusResult struct {
 }
 
 var metricQueries = map[string]string{
+	"smb_cluster_nodes":         "count by (netbiosname) (smb_sessions_total * on (instance) group_left (netbiosname) smb_metrics_status)",
+	"smb_cluster_sessions_mean": "avg by (netbiosname) (smb_sessions_total * on (instance) group_left (netbiosname) smb_metrics_status)",
+	"smb_cluster_users_mean":    "avg by (netbiosname) (smb_users_total * on (instance) group_left (netbiosname) smb_metrics_status)",
+	"smb_cluster_shares_mean":   "avg by (netbiosname) (smb_share_activity * on (instance) group_left (netbiosname) smb_metrics_status)",
 	"smb_request_duration_rate": "rate(smb_smb2_request_duration_microseconds_sum[5m])",
 	"smb_metrics_status":        "smb_metrics_status",
 	"smb_sessions":              "smb_sessions_total",
