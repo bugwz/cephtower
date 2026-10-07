@@ -771,6 +771,7 @@ for (const editing of [false, true]) for (const ssl of [false, true, undefined])
   }
   const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
   await submit({ service_type: 'ingress', service_id: 'rgw.a', placement_json: '{}', backend_service: 'rgw.a', virtual_ip: '2001:db8::10/64', frontend_port: 8080, monitor_port: 9000, virtual_interface_networks: ['192.0.2.0/24', '2001:db8::/64'], ssl, tls_mode, listener_change, interface_networks_change, ssl_cert: 'cert-fixture', ssl_key: 'key-fixture' })
+  if (editing && !['replace', 'disable'].includes(tls_mode) && listener_change !== true && interface_networks_change !== true) { assert.equal(calls.length, 0); assert.equal(env.running.current, false); continue }
   assert.equal('ssl' in calls[0][2], editing ? ['replace', 'disable'].includes(tls_mode) : ssl !== undefined)
   for (const key of ['ssl_cert', 'ssl_key']) assert.equal(key in calls[0][2], editing ? tls_mode === 'replace' : ssl === true)
   if (editing && tls_mode === 'disable') assert.equal(calls[0][2].ssl, false)
@@ -793,6 +794,7 @@ for (const editing of [false, true]) for (const networks_change of [undefined, f
   const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
   await submit({ service_type: 'rgw', service_id: 'a', placement_json: '{}', networks_change, networks })
   const sendsNetworks = editing ? networks_change === true : Array.isArray(networks)
+  if (editing && !sendsNetworks) { assert.equal(calls.length, 0); continue }
   assert.equal(Object.hasOwn(calls[0][2], 'networks'), sendsNetworks)
   if (sendsNetworks) assert.deepEqual(calls[0][2].networks, networks ?? [])
 }
@@ -809,6 +811,7 @@ for (const editing of [false, true]) for (const placement_change of [undefined, 
   await submit({ service_type: 'rgw', service_id: 'a', placement_json, placement_change })
   const sendsPlacement = !editing || placement_change === true
   if (sendsPlacement && placement_json === 'invalid') { assert.equal(calls.length, 0); continue }
+  if (editing && !sendsPlacement) { assert.equal(calls.length, 0); continue }
   assert.equal(Object.hasOwn(calls[0][2], 'placement'), sendsPlacement)
   if (sendsPlacement) assert.deepEqual(calls[0][2].placement, JSON.parse(placement_json))
 }
@@ -824,8 +827,23 @@ for (const editing of [false, true]) for (const management_mode of [undefined, '
   const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
   await submit({ service_type: 'rgw', service_id: 'a', placement_json: '{}', management_mode, unmanaged })
   const sendsMode = editing ? ['managed', 'unmanaged'].includes(management_mode) : typeof unmanaged === 'boolean'
+  if (editing && !sendsMode) { assert.equal(calls.length, 0); continue }
   assert.equal(Object.hasOwn(calls[0][2], 'unmanaged'), sendsMode)
   if (sendsMode) assert.equal(calls[0][2].unmanaged, editing ? management_mode === 'unmanaged' : unmanaged)
+}
+{
+  const effects = []
+  const env = {
+    active: { current: true }, running: { current: false }, selectedClusterId: 7, loading: false, error: '',
+    editingService: { name: 'rgw.a', resource_version: '12' }, serviceWritable: () => true,
+    setSubmitting: value => effects.push(value), setFormOpen: () => effects.push('close'), parsePlacement: JSON.parse, serviceName: row => row.name,
+    message: { error: () => effects.push('error'), warning: () => effects.push('warning'), success: () => effects.push('success') },
+    refreshAfterMutation: async () => effects.push('refresh'), mutateResource: async () => effects.push('mutate')
+  }
+  const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
+  await submit({ service_type: 'rgw', service_id: 'a', management_mode: 'preserve', placement_json: 'invalid' })
+  assert.deepEqual(effects, [true, 'warning', false])
+  assert.equal(env.running.current, false)
 }
 for (const scenario of ['ok', 'inactive', 'unmount', 'stale', 'error']) {
   const calls = []
@@ -838,10 +856,10 @@ for (const scenario of ['ok', 'inactive', 'unmount', 'stale', 'error']) {
     mutateResource: (...args) => { calls.push(args); return new Promise((yes, no) => { resolve = yes; reject = no }) },
   }
   const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
-  const pending = submit({ service_type: 'rgw', service_id: 'a', placement_json: '{}' })
-  await submit({ service_type: 'rgw', service_id: 'a', placement_json: '{}' })
+  const pending = submit({ service_type: 'rgw', service_id: 'a', placement_json: '{}', placement_change: true })
+  await submit({ service_type: 'rgw', service_id: 'a', placement_json: '{}', placement_change: true })
   if (['inactive', 'stale'].includes(scenario)) { await pending; assert.deepEqual(calls, []); continue }
-  assert.deepEqual(calls[0], ['/service', 'PATCH', { cluster_id: 7, name: 'rgw.a', service_type: 'rgw', service_id: 'a' }, { ifMatch: '9007199254740993' }])
+  assert.deepEqual(calls[0], ['/service', 'PATCH', { cluster_id: 7, name: 'rgw.a', service_type: 'rgw', service_id: 'a', placement: {} }, { ifMatch: '9007199254740993' }])
   assert.equal(calls.length, 1)
   if (scenario === 'unmount') env.active.current = false
   if (scenario === 'error') { reject(new Error('failure')); await assert.rejects(pending) } else { resolve(); await pending }

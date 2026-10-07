@@ -207,6 +207,10 @@ function ServicePageContent() {
         ...(editingService && values.service_type === 'ingress' && values.listener_change === true ? { virtual_ip: values.virtual_ip, frontend_port: values.frontend_port, monitor_port: values.monitor_port } : {}),
         ...(placement !== undefined ? { placement } : {})
       }
+      if (editingService && !Object.keys(body).some(key => !['cluster_id', 'name', 'service_type', 'service_id'].includes(key))) {
+        message.warning('尚未选择要修改的配置，未提交服务更新。')
+        return
+      }
       const successMessage = editingService ? '服务更新已安排，请核对刷新后的配置与运行状态。' : '服务创建已安排，请核对刷新后的配置与运行状态。'
       attempted = true
       await mutateResource('/service', editingService ? 'PATCH' : 'POST', body, editingService ? { ifMatch: String(editingService.resource_version) } : undefined)
