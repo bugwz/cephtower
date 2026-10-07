@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- 原生库存 JSON 边界核验：公共 `runBinaryInto` 在解码前验证完整响应，拒绝合法 JSON 后追加诊断文本、第二个 JSON、截断或畸形数字，避免把有效前缀当作成功库存；失败沿用资源采集不完整标记且不返回原始输出。保留空白尾部和 `UseNumber` 大整数语义，新增 Leader 服务状态调用的边界与失败分类回归。无实机验证。
+
 - RBD Leader 计数采集状态：补齐 `collect.rbd_mirror_service_status` 的资源失败分类，命令/解析失败标记同步库存采集不完整。新增 `leader_counts_status` 区分禁用未查询、已读取与未取得身份一致计数；前端依据状态展示，禁止显示与禁用或失败状态冲突的旧计数。新增实际采集上下文失败标记、禁用不调用、成功/身份不符状态和前端回归；无实机验证。
 
 - RBD Leader 镜像计数：参考 Dashboard 池列表的 Leader/Local/Remote 展示，依据当前 `ServiceDaemon.cc` 与 `NamespaceReplayer.cc`，每轮只读取一次 `ceph service status --format json`，从池 ID 下的 `namespaces` 提取各命名空间计数，不使用旧版池级字段。与池状态中的唯一 Leader 服务及实例身份交叉核对，并核对池名；缺失、身份冲突、异常计数不补零。库存 API 新增 `leader_counts`，前端按命名空间显示本地/远端数，保留 uint64 精度并明确非同步完成指标。新增跨池隔离、单次命令、零值、大整数及异常展示测试；无实机或浏览器视觉验证。

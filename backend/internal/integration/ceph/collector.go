@@ -2113,6 +2113,12 @@ func (p *NativeProvider) runBinaryInto(ctx context.Context, access ClusterAccess
 		return err
 	}
 	decoder := json.NewDecoder(bytes.NewReader(result.Stdout))
+	// CLI inventory responses must be one complete JSON document. Decoder.Decode
+	// alone accepts a valid prefix followed by diagnostics or another document.
+	if !json.Valid(result.Stdout) {
+		markCollectionUnavailable(ctx, id)
+		return fmt.Errorf("parse %s response: expected one complete JSON document", id)
+	}
 	decoder.UseNumber()
 	if err := decoder.Decode(out); err != nil {
 		markCollectionUnavailable(ctx, id)
