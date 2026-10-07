@@ -166,8 +166,8 @@ func (s *Service) Execute(ctx context.Context, request Request) (cephdomain.Acti
 	if err != nil {
 		return cephdomain.ActionResult{}, err
 	}
-	if request.Action == "rbd_mirroring.peer" && optional(request.Parameters, "action") == "remove" {
-		return s.executeRBDPeerRemoval(ctx, access, request, spec)
+	if request.Action == "rbd_mirroring.peer" && (optional(request.Parameters, "action") == "remove" || optional(request.Parameters, "action") == "set") {
+		return s.executeRBDPeerMutation(ctx, access, request, spec)
 	}
 	if request.Action == "rgw_realm.import" {
 		return s.executeRealmImport(ctx, access, request, spec)

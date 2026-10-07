@@ -588,7 +588,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       initialValues:{direction:'rx-tx'},
       buildBody:(values,clusterId,row)=>({cluster_id:clusterId,pool:String(row?.pool ?? row?.name),action:'add',remote_cluster:String(values.remote_cluster),remote_client:String(values.remote_client),direction:String(values.direction)})
     },{
-      title:'编辑远端站点',buttonLabel:'编辑 Peer',path:'/rbd/mirroring/peer',method:'POST',successMessage:'远端站点已更新',
+      title:'编辑远端站点',buttonLabel:'编辑 Peer',path:'/rbd/mirroring/peer',method:'POST',successMessage:'远端站点字段已更新并回读核验',
       disabledWhen:row=>rbdMirrorPeerOptions(row).length ? undefined : '没有唯一有效的 Peer 库存，请先重新采集',
       fields:[{name:'uuid',label:'当前池 Peer（不是 Mirror UUID）',type:'select',required:true,optionsLoader:async(_clusterId,row)=>rbdMirrorPeerOptions(row)},
         {name:'field',label:'配置项',type:'select',required:true,options:[{label:'站点名称',value:'site-name'},{label:'客户端名称',value:'client'},{label:'远端 Monitor 地址',value:'mon-host'},{label:'同步方向',value:'direction'}]},
