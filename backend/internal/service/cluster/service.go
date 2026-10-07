@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	cephdomain "cephtower/backend/internal/domain/ceph"
@@ -29,10 +30,26 @@ type Service struct {
 	database      func() *store.Database
 	encryptionKey string
 	provider      cephprovider.ClusterProvider
+	probeContext  context.Context
+	probeCancel   context.CancelFunc
+	probeMu       sync.Mutex
+	probeStopped  bool
+	probeWorkers  sync.WaitGroup
 }
 
 func New(database func() *store.Database, encryptionKey string, provider cephprovider.ClusterProvider) *Service {
-	return &Service{database: database, encryptionKey: encryptionKey, provider: provider}
+	ctx, cancel := context.WithCancel(context.Background())
+	return &Service{database: database, encryptionKey: encryptionKey, provider: provider, probeContext: ctx, probeCancel: cancel}
+}
+
+// Stop cancels scheduled discovery and waits for its database writes to finish.
+// Callers must stop request producers before closing the database.
+func (s *Service) Stop() {
+	s.probeMu.Lock()
+	s.probeStopped = true
+	s.probeCancel()
+	s.probeMu.Unlock()
+	s.probeWorkers.Wait()
 }
 func (s *Service) List(ctx context.Context, filter store.ClusterFilter) ([]store.CephCluster, error) {
 	return s.database().ListClusters(ctx, filter)
@@ -205,8 +222,15 @@ func (s *Service) applyProbe(ctx context.Context, row, candidate store.CephClust
 }
 
 func (s *Service) scheduleProbe(row store.CephCluster) {
+	s.probeMu.Lock()
+	defer s.probeMu.Unlock()
+	if s.probeStopped {
+		return
+	}
+	s.probeWorkers.Add(1)
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), asyncProbeTimeout)
+		defer s.probeWorkers.Done()
+		ctx, cancel := context.WithTimeout(s.probeContext, asyncProbeTimeout)
 		defer cancel()
 		_, _ = s.applyProbe(ctx, row, row, false)
 	}()

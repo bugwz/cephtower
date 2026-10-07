@@ -36,6 +36,7 @@ type App struct {
 	config     config.Config
 	apiServer  *api.API
 	database   *store.Manager
+	clusters   *clusterservice.Service
 	reconciler *reconcilerservice.Service
 	operations *operationservice.Service
 	httpServer *http.Server
@@ -107,7 +108,7 @@ func New(configPath string) (*App, error) {
 	handler := v1handler.New(v1handler.Dependencies{Inspection: clusterinspect.New(clusters, runner), Auth: auth, Clusters: clusters, Endpoints: endpoints, External: external, HostDetails: hostDetails, HostProfiles: hostProfiles, Mutations: mutations, Operations: operations, Reconciler: reconciler, Setup: setup, Database: manager.Current, AuthEnabled: authEnabled})
 	apiServer := api.NewAPI(handler)
 	server := &http.Server{Addr: net.JoinHostPort(cfg.Server.Address, strconv.Itoa(cfg.Server.Port)), Handler: apiServer.Routes(), ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 2 * time.Minute}
-	return &App{config: cfg, apiServer: apiServer, database: manager, reconciler: reconciler, operations: operations, httpServer: server, closeLog: closeLog}, nil
+	return &App{config: cfg, apiServer: apiServer, database: manager, clusters: clusters, reconciler: reconciler, operations: operations, httpServer: server, closeLog: closeLog}, nil
 }
 func (a *App) Run(ctx context.Context) error {
 	if a.database != nil && a.database.Current() != nil {
@@ -154,6 +155,9 @@ func (a *App) Close(ctx context.Context) error {
 		}
 		if a.reconciler != nil {
 			a.reconciler.Stop()
+		}
+		if a.clusters != nil {
+			a.clusters.Stop()
 		}
 		if a.database != nil {
 			if err := a.database.Close(); err != nil {

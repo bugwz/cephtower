@@ -44,6 +44,7 @@ func TestClusterContractEncryptsWriteOnlyKeyAndUsesEnvelope(t *testing.T) {
 		t.Fatal(err)
 	}
 	clusters := clusterservice.New(func() *store.Database { return db }, contractKey, unusedProvider{})
+	defer clusters.Stop()
 	h := handler.New(handler.Dependencies{Auth: auth, Clusters: clusters, Database: func() *store.Database { return db }})
 	mux := http.NewServeMux()
 	router.Register(mux, h)
@@ -145,6 +146,7 @@ func TestAuthenticatedRouteCreatesAuditEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 	clusters := clusterservice.New(func() *store.Database { return db }, contractKey, unusedProvider{})
+	defer clusters.Stop()
 	h := handler.New(handler.Dependencies{Auth: auth, Clusters: clusters, Database: func() *store.Database { return db }})
 	mux := http.NewServeMux()
 	router.Register(mux, h)
@@ -173,6 +175,7 @@ func TestAuthDisabledAllowsProtectedRouteWithoutBearerToken(t *testing.T) {
 	}
 	defer store.Close(db)
 	clusters := clusterservice.New(func() *store.Database { return db }, contractKey, unusedProvider{})
+	defer clusters.Stop()
 	h := handler.New(handler.Dependencies{
 		Clusters:    clusters,
 		Database:    func() *store.Database { return db },
@@ -212,6 +215,7 @@ func contractServer(t *testing.T) (*http.ServeMux, string) {
 	_ = auth.EnsureRoles(context.Background())
 	_, _ = auth.CreateUser(context.Background(), authservice.CreateUserInput{Username: "admin", DisplayName: "Admin", Password: "password-123", Role: "cluster-admin"})
 	clusters := clusterservice.New(func() *store.Database { return db }, contractKey, unusedProvider{})
+	t.Cleanup(clusters.Stop)
 	h := handler.New(handler.Dependencies{Auth: auth, Clusters: clusters, Database: func() *store.Database { return db }})
 	mux := http.NewServeMux()
 	router.Register(mux, h)

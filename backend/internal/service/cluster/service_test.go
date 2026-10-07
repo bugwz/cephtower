@@ -53,7 +53,9 @@ func clusterTestServices(t *testing.T, provider cephprovider.ClusterProvider) (*
 	if err := db.CreateCluster(context.Background(), &row); err != nil {
 		t.Fatal(err)
 	}
-	return New(func() *store.Database { return db }, clusterTestKey, provider), db, row
+	service := New(func() *store.Database { return db }, clusterTestKey, provider)
+	t.Cleanup(service.Stop)
+	return service, db, row
 }
 
 func TestUpdatePersistsBeforeAsyncProbe(t *testing.T) {
