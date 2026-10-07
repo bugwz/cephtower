@@ -174,6 +174,8 @@ func (s *Service) readMetric(ctx context.Context, clusterID uint64, key string, 
 	for key, value := range observedMeta() {
 		meta[key] = value
 	}
+	meta["warnings"] = result.Warnings
+	meta["infos"] = result.Infos
 	return map[string]any{"result_type": result.Data.ResultType, "series": result.Data.Result, "meta": meta}, nil
 }
 

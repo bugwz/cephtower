@@ -9,6 +9,7 @@ import { Page } from '../../components/Page'
 import { useFeatureRequirements } from '../../hooks/useFeatureRequirements'
 import { useClusterContext } from '../../state/ClusterContext'
 import { MetricTrend } from './MetricTrend'
+import { MetricNotices } from './MetricNotices'
 
 const { Text } = Typography
 
@@ -283,6 +284,7 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
               <Tag>points: {rows.reduce((sum, row) => sum + row.points, 0)}</Tag>
               <Tag>显示序列: {visibleRows.length}</Tag>
             </Space>
+            <MetricNotices meta={result?.meta} />
             <Space wrap>
               <AutoComplete aria-label="精确标签名" style={{ minWidth: 260 }} options={labelNames} placeholder="标签名，例如 instance / operation" value={labelKey} onChange={value => { setLabelKey(value); setLabelValue('') }} />
               <AutoComplete aria-label="精确标签值" style={{ minWidth: 260 }} options={labelValues} placeholder="标签值（精确匹配，区分大小写）" value={labelValue} onChange={setLabelValue} />

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import './test-metric-response.mjs'
+import './test-metric-notices.mjs'
 import './test-alert-columns.mjs'
 import './test-metric-trend.mjs'
 import { readFileSync } from 'node:fs'

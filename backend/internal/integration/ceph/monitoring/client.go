@@ -39,8 +39,10 @@ func New(rawURL, token string, client *http.Client) (*Client, error) {
 }
 
 type PrometheusResult struct {
-	Status string `json:"status"`
-	Data   struct {
+	Warnings []string `json:"warnings,omitempty"`
+	Infos    []string `json:"infos,omitempty"`
+	Status   string   `json:"status"`
+	Data     struct {
 		ResultType string            `json:"resultType"`
 		Result     []json.RawMessage `json:"result"`
 	} `json:"data"`

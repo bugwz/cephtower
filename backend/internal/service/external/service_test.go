@@ -100,6 +100,36 @@ func TestMetricRangeFailuresArePropagated(t *testing.T) {
 	}
 }
 
+func TestMetricNotices(t *testing.T) {
+	s, endpoints, cluster := externalTestService(t)
+	ctx := context.Background()
+	if _, err := endpoints.CreateEndpoint(ctx, cluster.ID, endpointservice.EndpointInput{Kind: "prometheus", URL: "https://prometheus.test"}); err != nil {
+		t.Fatal(err)
+	}
+	for _, history := range []bool{false, true} {
+		kind, key := "vector", "metric/query"
+		query := url.Values{"metric_id": {"smb_metrics_status"}}
+		if history {
+			kind, key = "matrix", "metric/range"
+			query.Set("start", "2026-01-01T00:00:00Z")
+			query.Set("end", "2026-01-01T01:00:00Z")
+			query.Set("step", "30s")
+		}
+		s.transport = externalRoundTripFunc(func(r *http.Request) (*http.Response, error) {
+			body := `{"status":"success","warnings":["partial data"],"infos":["sample omitted"],"data":{"resultType":"` + kind + `","result":[]}}`
+			return &http.Response{StatusCode: 200, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(body))}, nil
+		})
+		result, err := s.readMetric(ctx, cluster.ID, key, query)
+		if err != nil {
+			t.Fatal(err)
+		}
+		meta := result.(map[string]any)["meta"].(map[string]any)
+		if meta["warnings"].([]string)[0] != "partial data" || meta["infos"].([]string)[0] != "sample omitted" {
+			t.Fatal("lost query notices")
+		}
+	}
+}
+
 func TestHTTPClientRejectsMalformedConfiguredCredential(t *testing.T) {
 	_, endpoints, cluster := externalTestService(t)
 	if _, err := endpoints.CreateEndpoint(context.Background(), cluster.ID, endpointservice.EndpointInput{Kind: "alertmanager", URL: "https://alertmanager.example.test"}); err != nil {
