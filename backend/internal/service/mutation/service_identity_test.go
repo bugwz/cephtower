@@ -42,7 +42,7 @@ func TestServiceUpdatePreservesIdentity(t *testing.T) {
 }
 
 func TestServiceCreationNativeIdentityRequirements(t *testing.T) {
-	for _, kind := range []string{"mds", "rgw", "nfs", "smb", "mon", "mgr", "prometheus", "alertmanager", "grafana", "node-exporter", "crash"} {
+	for _, kind := range []string{"mds", "rgw", "nfs", "smb", "mon", "mgr", "prometheus", "alertmanager", "grafana", "loki", "promtail", "node-exporter", "crash"} {
 		requires := kind == "mds" || kind == "rgw" || kind == "nfs" || kind == "smb"
 		for _, id := range []string{"", "realm.zone-1_a", "bad id", "bad/id", "bad:id"} {
 			_, err := build(Request{Action: "service.create"}, map[string]any{"service_type": kind, "service_id": id})

@@ -723,6 +723,10 @@ assert.ok(readFileSync(new URL('../src/pages/index.ts', import.meta.url), 'utf8'
 console.log('Service daemon request and navigation checks passed')
 
 const servicePageTree = ts.createSourceFile('ServicePage.tsx', servicePage, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+const serviceOptionsNode = servicePageTree.statements.find(node => ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText(servicePageTree) === 'serviceTypeOptions')
+const serviceOptionsCode = ts.transpileModule(serviceOptionsNode.getText(servicePageTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+const serviceOptions = new Function(`${serviceOptionsCode}; return serviceTypeOptions`)()
+for (const kind of ['loki', 'promtail']) assert.deepEqual(serviceOptions.find(option => option.value === kind), { label: kind, value: kind })
 const identityCode = ts.transpileModule(servicePageTree.statements.filter((node) => ts.isFunctionDeclaration(node) && ['serviceName', 'serviceType', 'serviceId'].includes(node.name.text)).map((node) => node.getText(servicePageTree)).join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
 const serviceId = new Function('textValue', `${identityCode}; return serviceId`)((value, fallback) => typeof value === 'string' ? value : fallback)
 for (const [name, type, id] of [['mon', 'mon', ''], ['rgw.foo', 'rgw', 'foo'], ['rgw.realm.zone', 'rgw', 'realm.zone'], ['mds.fs', 'mds', 'fs']]) assert.equal(serviceId({ name, type }), id)

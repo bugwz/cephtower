@@ -1018,7 +1018,7 @@ func build(request Request, p map[string]any) (command, error) {
 	case "host.action":
 		return hostAction(p, pathValue(tail, "host"), ceph)
 	case "service.create", "service.update":
-		serviceType, err := enum(p, "service_type", "mon", "mgr", "mds", "rgw", "nfs", "smb", "prometheus", "alertmanager", "grafana", "node-exporter", "crash")
+		serviceType, err := enum(p, "service_type", "mon", "mgr", "mds", "rgw", "nfs", "smb", "prometheus", "alertmanager", "grafana", "loki", "promtail", "node-exporter", "crash")
 		if err != nil {
 			return command{}, err
 		}

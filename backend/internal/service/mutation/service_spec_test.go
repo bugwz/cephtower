@@ -53,6 +53,45 @@ func TestServiceUpdateMergesExportedSpec(t *testing.T) {
 	}
 }
 
+func TestLogServiceApplyChain(t *testing.T) {
+	for _, kind := range []string{"loki", "promtail"} {
+		for _, action := range []string{"service.create", "service.update"} {
+			s, _, id := newCephUserService(t)
+			e := &directoryRenameExecutor{outputs: map[string]string{
+				action:                     "Scheduled " + kind + " update...",
+				"service.update.pre_check": `[{"service_name":"` + kind + `","service_type":"` + kind + `","spec":{"port":9999},"placement":{"count":1}}]`,
+			}}
+			s.executor = e
+			_, err := s.Execute(context.Background(), Request{ClusterID: id, Action: action, ResourceKey: "service/" + kind, Parameters: map[string]any{"service_type": kind, "placement": map[string]any{"count": 2}, "unmanaged": false}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			index := 0
+			args := []string{"orch", "apply", "-i", "-", "--no-overwrite"}
+			if action == "service.update" {
+				index = 1
+				args = args[:4]
+				if !reflect.DeepEqual(e.specs[0].Args, []string{"orch", "ls", "--service-name", kind, "--export", "--format", "json"}) || e.specs[0].Mutating {
+					t.Fatalf("wrong export: %+v", e.specs)
+				}
+			}
+			if len(e.specs) != index+2 || !reflect.DeepEqual(e.specs[index].Args, args) || !e.specs[index].Mutating || e.specs[index+1].Mutating {
+				t.Fatalf("wrong apply chain: %+v", e.specs)
+			}
+			var spec map[string]any
+			if err := json.Unmarshal(e.specs[index].Stdin, &spec); err != nil {
+				t.Fatal(err)
+			}
+			if spec["service_type"] != kind || spec["service_id"] != nil || spec["unmanaged"] != false || spec["placement"].(map[string]any)["count"] != float64(2) {
+				t.Fatalf("wrong native spec: %v", spec)
+			}
+			if action == "service.update" && spec["spec"].(map[string]any)["port"] != float64(9999) {
+				t.Fatalf("lost native log service settings: %v", spec)
+			}
+		}
+	}
+}
+
 func TestServiceCreationNeverOverwritesExistingSpec(t *testing.T) {
 	s, _, id := newCephUserService(t)
 	for _, output := range []string{"Scheduled rgw.a update...", "Skipped rgw.a service spec. To change rgw.a spec omit --no-overwrite flag", "", "Scheduled rgw.other update...", "Failed to apply spec"} {

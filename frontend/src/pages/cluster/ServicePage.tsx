@@ -39,6 +39,8 @@ const serviceTypeOptions = [
   'prometheus',
   'alertmanager',
   'grafana',
+  'loki',
+  'promtail',
   'node-exporter',
   'crash'
 ].map((value) => ({ label: value, value }))

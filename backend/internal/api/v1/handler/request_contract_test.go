@@ -11,6 +11,17 @@ import (
 	"testing"
 )
 
+func TestLogServiceRequestContracts(t *testing.T) {
+	for _, action := range []string{"service.create", "service.update"} {
+		for _, kind := range []string{"loki", "promtail"} {
+			fields := map[string]any{"cluster_id": float64(1), "service_type": kind, "placement": map[string]any{"count": float64(2)}}
+			if err := ValidateMutationRequest(action, fields); err != nil {
+				t.Fatalf("%s %s: %v", action, kind, err)
+			}
+		}
+	}
+}
+
 func TestBucketConfigurationContractRequiresRawDocument(t *testing.T) {
 	for _, kind := range []string{"policy", "cors", "lifecycle", "encryption", "tagging"} {
 		if err := ValidateMutationRequest("rgw_bucket_policy.update", map[string]any{"cluster_id": float64(1), "bucket_id": "AGJ1Y2tldA", "kind": kind, "document": "raw document"}); err != nil {
