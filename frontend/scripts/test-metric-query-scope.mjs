@@ -10,6 +10,11 @@ const source = readFileSync(new URL('../src/pages/monitoring/MetricPage.tsx', im
 const tree = ts.createSourceFile('MetricPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const optionsNode = tree.statements.filter(ts.isVariableStatement).flatMap(node => [...node.declarationList.declarations]).find(node => node.name.getText(tree) === 'metricOptions')
 const options = new Function(`return ${optionsNode.initializer.getText(tree)}`)()
+for (const scope of ['bucket', 'user']) for (const operation of ['get', 'put', 'delete', 'copy', 'list']) {
+  const id = `rgw_${scope}_${operation}_latency_ms`
+  assert.equal(options.filter(option => option.value === id).length, 1)
+  assert.ok(options.find(option => option.value === id).description.includes('保留身份与实例标签'))
+}
 for (const operation of ['get', 'put', 'delete', 'copy', 'list']) {
   for (const kind of operation === 'list' ? ['ops'] : ['ops', 'bytes']) {
     const id = `rgw_user_${operation}_${kind}_total`

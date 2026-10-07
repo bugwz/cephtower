@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- S3 身份级操作延迟：补齐参考看板的按桶/按用户 GET、PUT、DELETE、COPY、列举对象十项延迟查询，使用各原生序列一分钟 lat_sum rate / lat_count rate × 1000，保留身份、租户和实例，不将各实例平均值直接相加。复用既有缓存依赖说明与即时/历史展示，无请求 NaN 不补零。新增十项表达式、标签与非有限值透传及前端预设回归；无实机验证。
+
 - S3 按用户统计：依据参考分析看板与 `rgw_perf_counters.cc::get`，新增五类操作数和四类操作字节累计查询，保留 user、tenant、实例标签；user 是原生 ID 部分，不是完整租户身份或账户聚合。界面说明 rgw_user_counters_cache/exporter 依赖、缓存重置和匿名请求覆盖限制，复用即时/历史 API、样本和趋势展示。新增九项表达式、用户/租户标签透传与前端预设回归，无实机验证。
 
 - S3 按桶统计：依据参考分析看板和 `rgw_perf_counters.cc::get/create_rgw_op_counters`，新增 GET/PUT/DELETE/COPY/列举对象五类按桶累计操作数及四类累计操作字节，保留 bucket、tenant 和实例原生标签，不跨租户同名桶聚合。依赖 RGW 的 rgw_bucket_counters_cache 与 exporter 采集，缓存淘汰/重建或进程重启可能重置，不能作为持久审计统计。现有 API 提供即时/历史查询，前端预设可查看原始样本与趋势。客户端回归验证九项表达式、路径、租户标签与原始大整数；无实机验证。

@@ -60,6 +60,16 @@ export function metricSamples(item: ApiRecord): MetricSample[] {
 }
 
 const metricOptions = [
+  { label: 'RGW 按桶 GET 平均延迟（ms）', value: 'rgw_bucket_get_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
+  { label: 'RGW 按桶 PUT 平均延迟（ms）', value: 'rgw_bucket_put_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
+  { label: 'RGW 按桶 DELETE 平均延迟（ms）', value: 'rgw_bucket_delete_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
+  { label: 'RGW 按桶 COPY 平均延迟（ms）', value: 'rgw_bucket_copy_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
+  { label: 'RGW 按桶 列举对象 平均延迟（ms）', value: 'rgw_bucket_list_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
+  { label: 'RGW 按用户 GET 平均延迟（ms）', value: 'rgw_user_get_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
+  { label: 'RGW 按用户 PUT 平均延迟（ms）', value: 'rgw_user_put_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
+  { label: 'RGW 按用户 DELETE 平均延迟（ms）', value: 'rgw_user_delete_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
+  { label: 'RGW 按用户 COPY 平均延迟（ms）', value: 'rgw_user_copy_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
+  { label: 'RGW 按用户 列举对象 平均延迟（ms）', value: 'rgw_user_list_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
   { label: 'RGW 按用户 GET 累计操作数', value: 'rgw_user_get_ops_total', description: '保留 user、tenant 与实例标签；缓存计数，非审计记录' },
   { label: 'RGW 按用户 PUT 累计操作数', value: 'rgw_user_put_ops_total', description: '保留 user、tenant 与实例标签；缓存计数，非审计记录' },
   { label: 'RGW 按用户 DELETE 累计操作数', value: 'rgw_user_delete_ops_total', description: '保留 user、tenant 与实例标签；缓存计数，非审计记录' },
