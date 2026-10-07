@@ -60,6 +60,13 @@ export function metricSamples(item: ApiRecord): MetricSample[] {
 }
 
 const metricOptions = [
+  { label: 'RGW GET 累计操作数', value: 'rgw_get_ops_total', description: '各原生序列累计计数，不是当前对象数或请求/s' },
+  { label: 'RGW PUT 累计操作数', value: 'rgw_put_ops_total', description: '各原生序列累计计数，不是当前对象数或请求/s' },
+  { label: 'RGW DELETE 对象累计操作数', value: 'rgw_delete_ops_total', description: '各原生序列累计计数，重启或计数器重置可下降' },
+  { label: 'RGW COPY 累计操作数', value: 'rgw_copy_ops_total', description: '各原生序列累计计数，重启或计数器重置可下降' },
+  { label: 'RGW 列举对象累计操作数', value: 'rgw_list_objects_total', description: '各原生序列累计计数，不是列出的对象数量' },
+  { label: 'RGW 列举桶累计操作数', value: 'rgw_list_buckets_total', description: '各原生序列累计计数，不是列出的桶数量' },
+  { label: 'RGW 删除桶累计操作数', value: 'rgw_delete_buckets_total', description: '各原生序列累计计数，重启或计数器重置可下降' },
   { label: 'RGW 分片同步时差（秒）', value: 'rgw_sync_delta_seconds', description: '原始 gauge，保留分片和源/本地 Zone 标签；不是 rate 或整体同步完成度' },
   { label: 'RGW 来源 Zone 轮询平均延迟（ms）', value: 'rgw_sync_poll_latency_ms', description: '按 source_zone：一分钟 sum rate / count rate × 1000；无请求时可能为 NaN' },
   { label: 'RGW 来源 Zone 复制吞吐率（B/s）', value: 'rgw_sync_bytes_rate', description: '按 source_zone 聚合，一分钟 rate' },
@@ -216,6 +223,7 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
   return (
     <Page title="性能指标">
       <Alert type="info" showIcon message="SMB 指标需要 Prometheus 采集 SMB exporter。各实例指标保留原始标签；集群指标按 netbiosname 聚合，均值不是总数。关联要求每个 instance 对应唯一状态序列，重复采集会导致查询失败；共享 endpoint 的同名 SMB 集群可能被合并，请核对部署范围。无数据不代表零，速率使用固定 5 分钟窗口。" />
+      <Alert type="info" showIcon message="RGW 累计操作数保留原始实例标签，未跨实例求和；它们不是库存对象数、请求速率或所选时间段内的操作总数。重启或计数器重置会使数值下降，共享端点不提供集群隔离。" />
       <Space direction="vertical" size={16} className="page-stack">
         <div className="metrics-grid metric-preset-grid">
           {metricOptions.map((item) => (
