@@ -781,6 +781,21 @@ for (const editing of [false, true]) for (const ssl of [false, true, undefined])
   if (!editing) assert.deepEqual(calls[0][2].virtual_interface_networks, ['192.0.2.0/24', '2001:db8::/64'])
   if (!editing) assert.equal(calls[0][2].virtual_ip, '2001:db8::10/64')
 }
+for (const editing of [false, true]) for (const networks_change of [undefined, false, true]) for (const networks of [undefined, [], ['192.0.2.0/24', '2001:db8::/64']]) {
+  const calls = []
+  const env = {
+    active: { current: true }, running: { current: false }, selectedClusterId: 7, loading: false, error: '',
+    editingService: editing ? { name: 'rgw.a', resource_version: '12' } : null, serviceWritable: () => true,
+    setSubmitting: () => {}, setFormOpen: () => {}, parsePlacement: JSON.parse, serviceName: row => row.name,
+    message: { error: () => {}, warning: () => {}, success: () => {} }, refreshAfterMutation: async () => {},
+    mutateResource: async (...args) => { calls.push(args) }
+  }
+  const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
+  await submit({ service_type: 'rgw', service_id: 'a', placement_json: '{}', networks_change, networks })
+  const sendsNetworks = editing ? networks_change === true : Array.isArray(networks)
+  assert.equal(Object.hasOwn(calls[0][2], 'networks'), sendsNetworks)
+  if (sendsNetworks) assert.deepEqual(calls[0][2].networks, networks ?? [])
+}
 for (const scenario of ['ok', 'inactive', 'unmount', 'stale', 'error']) {
   const calls = []
   let resolve, reject

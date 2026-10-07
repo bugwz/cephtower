@@ -34,6 +34,7 @@ interface ServiceFormValues {
   listener_change?: boolean
   interface_networks_change?: boolean
   networks?: string[]
+  networks_change?: boolean
 }
 
 const daemonActions = [
@@ -100,6 +101,7 @@ function ServicePageContent() {
   const tlsMode = Form.useWatch('tls_mode', form)
   const listenerChange = Form.useWatch('listener_change', form)
   const interfaceNetworksChange = Form.useWatch('interface_networks_change', form)
+  const networksChange = Form.useWatch('networks_change', form)
   const requiresServiceID = ['mds', 'rgw', 'nfs', 'smb', 'ingress'].includes(selectedServiceType)
   const [formOpen, setFormOpen] = useState(false)
   useEffect(() => {
@@ -155,6 +157,7 @@ function ServicePageContent() {
       tls_mode: 'preserve',
       listener_change: false,
       interface_networks_change: false,
+      networks_change: false,
       virtual_interface_networks: Array.isArray(ingress.virtual_interface_networks) ? ingress.virtual_interface_networks.filter((value): value is string => typeof value === 'string') : [],
       virtual_ip: typeof ingress.virtual_ip === 'string' ? ingress.virtual_ip : undefined,
       frontend_port: typeof ingress.frontend_port === 'number' ? ingress.frontend_port : undefined,
@@ -187,7 +190,8 @@ function ServicePageContent() {
         service_type: values.service_type,
         ...(values.service_id ? { service_id: values.service_id } : {}),
         ...(typeof values.unmanaged === 'boolean' ? { unmanaged: values.unmanaged } : {}),
-        ...(Array.isArray(values.networks) ? { networks: values.networks } : {}),
+        ...(!editingService && Array.isArray(values.networks) ? { networks: values.networks } : {}),
+        ...(editingService && values.networks_change === true ? { networks: values.networks ?? [] } : {}),
         ...(!editingService && values.service_type === 'ingress' ? { backend_service: values.backend_service, virtual_ip: values.virtual_ip, frontend_port: values.frontend_port, monitor_port: values.monitor_port } : {}),
         ...(!editingService && values.service_type === 'ingress' && Array.isArray(values.virtual_interface_networks) ? { virtual_interface_networks: values.virtual_interface_networks } : {}),
         ...(editingService && values.service_type === 'ingress' && values.interface_networks_change === true ? { virtual_interface_networks: values.virtual_interface_networks ?? [] } : {}),
@@ -405,9 +409,10 @@ function ServicePageContent() {
           <Form.Item name="unmanaged" label="非托管" valuePropName="checked" extra="启用后 Ceph 编排器停止自动部署和移除该服务的守护进程；关闭后恢复自动管理，并可能按放置策略调整守护进程。">
             <Switch />
           </Form.Item>
-          <Form.Item name="networks" label="绑定网段" extra="输入 IPv4 或 IPv6 网段后按回车，可添加多个；清空将移除网络限制。网段语法及服务类型支持情况由 Ceph 校验，修改可能影响服务访问。">
+          {editingService && <Form.Item name="networks_change" label="修改绑定网段" valuePropName="checked"><Switch /></Form.Item>}
+          {(!editingService || networksChange === true) && <Form.Item name="networks" label="绑定网段" extra="输入 IPv4 或 IPv6 网段后按回车，可添加多个；清空将移除网络限制。网段语法及服务类型支持情况由 Ceph 校验，修改可能影响服务访问。">
             <Select mode="tags" tokenSeparators={[',']} placeholder="例如 192.0.2.0/24 或 2001:db8::/64" />
-          </Form.Item>
+          </Form.Item>}
           <Form.Item name="placement_json" label="Placement JSON" rules={[{ validator: async (_, value) => { parsePlacement(value) } }]} extra='支持 count、count_per_host、hosts、label 和 host_pattern。count 与 count_per_host 互斥；每主机数量必须指定主机选择条件。host_pattern 支持通配符字符串或 {"pattern":"node-[0-9]+","pattern_type":"regex"}，正则语法由 Ceph 校验。'>
             <Input.TextArea rows={5} spellCheck={false} placeholder='{"count":1,"host_pattern":"*"}' />
           </Form.Item>
