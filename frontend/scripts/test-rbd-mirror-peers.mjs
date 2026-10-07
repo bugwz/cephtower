@@ -31,15 +31,29 @@ visit(ast)
 assert.equal(actions.length,2)
 for(const node of actions){
   const exports={}
-  new Function('exports','rbdMirrorPeerOptions','rbdMirrorPeerIdentity',ts.transpileModule(`export const action=${node.getText(ast)}`,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(exports,ui.rbdMirrorPeerOptions,ui.rbdMirrorPeerIdentity)
+  new Function('exports','rbdMirrorPeerOptions','rbdMirrorPeerIdentity','rbdMirrorPeerEditValue',ts.transpileModule(`export const action=${node.getText(ast)}`,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(exports,ui.rbdMirrorPeerOptions,ui.rbdMirrorPeerIdentity,ui.rbdMirrorPeerEditValue)
   const action=exports.action, scoped={...row,pool:'pool-a'}
   assert.equal(action.disabledWhen(scoped),undefined)
   assert.ok(action.disabledWhen({peers:[]}))
   assert.deepEqual(await action.fields[0].optionsLoader(7,scoped),ui.rbdMirrorPeerOptions(scoped))
-  const body=action.buildBody({uuid,field:'direction',value:'rx-only'},7,scoped)
+  const body=action.buildBody({uuid,field:'direction',direction:'rx-only',value:'stale text'},7,scoped)
   assert.equal(body.uuid,uuid);assert.equal(body.pool,'pool-a');assert.equal(body.cluster_id,7)
   assert.throws(()=>action.buildBody({uuid:mirror},7,scoped))
   assert.throws(()=>action.buildBody({uuid},7,{pool:'pool-b',peers:[]}))
-  if(action.confirmation) assert.ok(action.confirmation({uuid},scoped).includes(uuid))
+  if(action.confirmation) assert.ok(action.confirmation({uuid,field:'direction',direction:'rx-only'},scoped).includes(uuid))
+  if(body.action==='set') {
+    assert.equal(body.value,'rx-only')
+    assert.equal(action.fields.find(field=>field.name==='direction').visibleWhen({field:'direction'}),true)
+    assert.equal(action.fields.find(field=>field.name==='value').visibleWhen({field:'direction'}),false)
+    assert.equal(action.buildBody({uuid,field:'site-name',direction:'rx-only',value:'new-site'},7,scoped).value,'new-site')
+    assert.throws(()=>action.buildBody({uuid,field:'direction',value:'rx-only'},7,scoped))
+  }
 }
+for(const direction of ['rx-only','tx-only','rx-tx']) assert.equal(ui.rbdMirrorPeerEditValue({field:'direction',direction}),direction)
+for(const direction of [undefined,'','future',true,['rx-only']]) assert.throws(()=>ui.rbdMirrorPeerEditValue({field:'direction',direction}))
+for(const field of ['site-name','client','mon-host']) {
+  assert.equal(ui.rbdMirrorPeerEditValue({field,value:'new-value'}),'new-value')
+  for(const value of [undefined,'','  ','-option','bad\nvalue']) assert.throws(()=>ui.rbdMirrorPeerEditValue({field,value}))
+}
+assert.throws(()=>ui.rbdMirrorPeerEditValue({field:'key',value:'secret'}))
 console.log('RBD peer inventory keeps peer UUID distinct and rejects ambiguous selections')

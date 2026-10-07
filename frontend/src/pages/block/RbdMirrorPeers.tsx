@@ -1,5 +1,15 @@
 import { Alert, Space, Table } from 'antd'
 
+export function rbdMirrorPeerEditValue(values: Record<string, unknown>): string {
+  if (values.field === 'direction') {
+    if (typeof values.direction !== 'string' || !['rx-only', 'tx-only', 'rx-tx'].includes(values.direction)) throw new Error('请选择有效的同步方向')
+    return values.direction
+  }
+  if (typeof values.field !== 'string' || !['site-name', 'client', 'mon-host'].includes(values.field)) throw new Error('请选择有效的配置项')
+  if (typeof values.value !== 'string' || !values.value.trim() || values.value.startsWith('-') || /[\r\n\0]/.test(values.value)) throw new Error('请输入有效的新值')
+  return values.value
+}
+
 function peerRows(value: unknown): Record<string, unknown>[] | undefined {
   return Array.isArray(value) && value.every(item => item && typeof item === 'object' && !Array.isArray(item)) ? value : undefined
 }
