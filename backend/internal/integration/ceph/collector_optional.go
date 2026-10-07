@@ -14,6 +14,8 @@ import (
 
 func (p *NativeProvider) collectStorageOptional(ctx context.Context, access ClusterAccess, pools []poolWire, fs fsDumpWire, now time.Time) []Observation {
 	var rows []Observation
+	var mirrorServiceStatus map[string]any
+	mirrorServiceStatusRead := false
 	for _, pool := range pools {
 		var mirrorImageMetadata []cephdomain.RBDImage
 		var namespaces []string
@@ -192,6 +194,15 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 				if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_mirroring_status", []string{"mirror", "pool", "status", pool.PoolName, "--verbose", "--format", "json"}, &status) {
 					mirroring["summary"] = status["summary"]
 					mirroring["daemons"] = status["daemons"]
+					if !mirrorServiceStatusRead {
+						mirrorServiceStatusRead = true
+						if !p.optional(ctx, access, executor.BinaryCeph, "collect.rbd_mirror_service_status", []string{"service", "status", "--format", "json"}, &mirrorServiceStatus) {
+							mirrorServiceStatus = nil
+						}
+					}
+					if counts := mirrorLeaderCounts(mirrorServiceStatus, pool, status["daemons"]); counts != nil {
+						mirroring["leader_counts"] = counts
+					}
 					enrichMirrorReplayMetrics(status["images"])
 					enrichMirrorImageMetadata(status["images"], mirrorImageMetadata)
 					mirroring["images"] = status["images"]

@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- RBD Leader 镜像计数：参考 Dashboard 池列表的 Leader/Local/Remote 展示，依据当前 `ServiceDaemon.cc` 与 `NamespaceReplayer.cc`，每轮只读取一次 `ceph service status --format json`，从池 ID 下的 `namespaces` 提取各命名空间计数，不使用旧版池级字段。与池状态中的唯一 Leader 服务及实例身份交叉核对，并核对池名；缺失、身份冲突、异常计数不补零。库存 API 新增 `leader_counts`，前端按命名空间显示本地/远端数，保留 uint64 精度并明确非同步完成指标。新增跨池隔离、单次命令、零值、大整数及异常展示测试；无实机或浏览器视觉验证。
+
 - RBD 重放统计适用性：对照参考 `image-list.component.html::entriesBehindPrimaryTpl`，本地 snapshot 镜像的落后主端条目数显示“不适用”，journal 模式保留原始计数（含零和大整数），缺失模式不猜测。使用已按身份关联的本地模式，不将本地模式套用于远端站点统计；新增组件适用性与参数传递回归。无后端协议变更，无实机或浏览器视觉验证。
 
 - RBD 镜像同步配置详情：参考 Dashboard `_get_mirror_mode` 与 `Info.cc` 原生 `mirroring` 字段，将已有 `rbd info` 采集的 journal/snapshot 模式、主端/非主端角色和配置状态关联到同步详情。仅使用同池默认命名空间且名称、非空全局 ID 一致的唯一记录，拒绝同名重建、重复或缺失身份关联；不额外调用命令。前端显示三列并区分配置与运行状态，未知值不推断为禁用或非主端。新增采集链路、身份隔离及前端字段回归；无实机或浏览器视觉验证。
