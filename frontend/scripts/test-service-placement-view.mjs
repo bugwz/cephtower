@@ -22,3 +22,17 @@ assert.deepEqual(exports.servicePlacementFields({ count: 0, label: '', hosts: []
 const page = readFileSync(new URL('../src/pages/cluster/ServicePage.tsx', import.meta.url), 'utf8')
 assert.ok(page.includes('<ServicePlacement placement={value} unmanaged={row.unmanaged} />'))
 console.log('Service placement details retain native host specs, regex patterns and unknown fields')
+for (const value of ['{', 'null', '[]', '"node1"', 'false', '1']) {
+  const preview = JSON.stringify(exports.ServicePlacementPreview({ value, unmanaged: false }))
+  assert.ok(preview.includes('当前内容不能提交'))
+  assert.ok(!preview.includes('待提交配置预览'))
+}
+for (const value of [undefined, '', '{}', JSON.stringify(placement)]) {
+  const preview = exports.ServicePlacementPreview({ value, unmanaged: true })
+  assert.ok(JSON.stringify(preview).includes('不是 Ceph 部署预演'))
+  const detail = preview.children.find(child => child?.type === exports.ServicePlacement)
+  assert.deepEqual(detail.props.placement, value ? JSON.parse(value) : {})
+  assert.equal(detail.props.unmanaged, true)
+}
+assert.ok(page.includes('<ServicePlacementPreview value={placementDraft} unmanaged={unmanagedDraft} />'))
+assert.ok(page.includes('validator: async (_, value) => { parsePlacement(value) }'))

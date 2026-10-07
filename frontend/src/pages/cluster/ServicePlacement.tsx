@@ -17,3 +17,17 @@ export function ServicePlacement({ placement, unmanaged }: { placement: unknown;
     {isRecord(placement) && <details><summary>原始放置配置</summary><pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{JSON.stringify(placement, null, 2)}</pre></details>}
   </Space>
 }
+
+export function ServicePlacementPreview({ value, unmanaged }: { value?: string; unmanaged: unknown }) {
+  let placement: unknown
+  try {
+    placement = JSON.parse(value || '{}')
+    if (!isRecord(placement)) throw new Error('not an object')
+  } catch {
+    return <Alert type="error" message="放置配置必须是有效的 JSON 对象，当前内容不能提交。" />
+  }
+  return <Space direction="vertical">
+    <Alert type="info" message="待提交配置预览：空内容将提交空放置配置。此处仅解析配置，不是 Ceph 部署预演；主机匹配结果及配置约束仍需后端和 Ceph 校验。" />
+    <ServicePlacement placement={placement} unmanaged={unmanaged} />
+  </Space>
+}

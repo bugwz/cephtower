@@ -12,7 +12,7 @@ import { useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 import { ServiceDaemons } from './ServiceDaemons'
-import { ServicePlacement } from './ServicePlacement'
+import { ServicePlacement, ServicePlacementPreview } from './ServicePlacement'
 import { DaemonPerf } from './DaemonPerf'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 
@@ -81,6 +81,8 @@ function ServicePageContent() {
   const { data, loading, error, refresh } = useResource(loader)
   const [form] = Form.useForm<ServiceFormValues>()
   const selectedServiceType = Form.useWatch('service_type', form)
+  const placementDraft = Form.useWatch('placement_json', form)
+  const unmanagedDraft = Form.useWatch('unmanaged', form)
   const requiresServiceID = ['mds', 'rgw', 'nfs', 'smb'].includes(selectedServiceType)
   const [formOpen, setFormOpen] = useState(false)
   const [detail, setDetail] = useState<{ clusterId: number; name: string } | null>(null)
@@ -371,9 +373,10 @@ function ServicePageContent() {
           <Form.Item name="networks" label="绑定网段" extra="输入 IPv4 或 IPv6 网段后按回车，可添加多个；清空将移除网络限制。网段语法及服务类型支持情况由 Ceph 校验，修改可能影响服务访问。">
             <Select mode="tags" tokenSeparators={[',']} placeholder="例如 192.0.2.0/24 或 2001:db8::/64" />
           </Form.Item>
-          <Form.Item name="placement_json" label="Placement JSON" extra='支持 count、count_per_host、hosts、label 和 host_pattern。count 与 count_per_host 互斥；每主机数量必须指定主机选择条件。host_pattern 支持通配符字符串或 {"pattern":"node-[0-9]+","pattern_type":"regex"}，正则语法由 Ceph 校验。'>
+          <Form.Item name="placement_json" label="Placement JSON" rules={[{ validator: async (_, value) => { parsePlacement(value) } }]} extra='支持 count、count_per_host、hosts、label 和 host_pattern。count 与 count_per_host 互斥；每主机数量必须指定主机选择条件。host_pattern 支持通配符字符串或 {"pattern":"node-[0-9]+","pattern_type":"regex"}，正则语法由 Ceph 校验。'>
             <Input.TextArea rows={5} spellCheck={false} placeholder='{"count":1,"host_pattern":"*"}' />
           </Form.Item>
+          <ServicePlacementPreview value={placementDraft} unmanaged={unmanagedDraft} />
         </Form>
       </DraggableModal>
     </Page>
