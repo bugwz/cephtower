@@ -14,14 +14,16 @@ type redactionRule struct {
 }
 
 var secretPatterns = []redactionRule{
+	{regexp.MustCompile(`(?s)-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----.*?(?:-----END [A-Z0-9 ]*PRIVATE KEY-----|$)`), `[REDACTED PRIVATE KEY]`},
+	{regexp.MustCompile(`(?i)("ssl_(?:key|cert)"\s*:\s*)"(?:\\.|[^"\\])*"`), `${1}"[REDACTED]"`},
 	{regexp.MustCompile(`(?im)(^\s*key\s*=\s*)([^\s]+)`), `${1}[REDACTED]`},
-	{regexp.MustCompile(`(?i)(password|passphrase|token|secret|keyring|client_key|authorization|access_key|secret_key)(\s*[=:]\s*)([^\s,;]+)`), `${1}${2}[REDACTED]`},
+	{regexp.MustCompile(`(?i)(password|passphrase|token|secret|keyring|client_key|ssl_key|ssl_cert|authorization|access_key|secret_key)(\s*[=:]\s*)([^\s,;]+)`), `${1}${2}[REDACTED]`},
 	{regexp.MustCompile(`(?i)(client\.[a-z0-9_.-]+\s*\{[^}]*?\bkey\s*=\s*)([^}\s]+)`), `${1}[REDACTED]`},
 	{regexp.MustCompile(`(?i)(https?://)[^/@\s]+@`), `${1}[REDACTED]@`},
 	{regexp.MustCompile(`\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b`), `[REDACTED]`},
 }
 
-var secretFieldPattern = regexp.MustCompile(`(?i)(^|_)(password|passphrase|token|secret|client_key|keyring|authorization|private_key|access_key|secret_key|credential|certificate_key)($|_)`)
+var secretFieldPattern = regexp.MustCompile(`(?i)(^|_)(password|passphrase|token|secret|client_key|ssl_key|ssl_cert|keyring|authorization|private_key|access_key|secret_key|credential|certificate_key)($|_)`)
 
 // IsSensitiveName identifies configuration names whose values contain credentials.
 func IsSensitiveName(name string) bool { return secretFieldPattern.MatchString(name) }

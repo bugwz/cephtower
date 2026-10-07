@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- Ingress TLS 接入前置防护：将 ssl_key / ssl_cert（可能含合并 PEM 私钥）纳入现有敏感参数加密与 JSON 脱敏规则，文本错误中的 PEM 私钥及 TLS JSON 字段同样脱敏；保留 ssl 开关与端口等非敏感字段。新增嵌套加密/解密、大小写字段、截断 PEM 与脱敏幂等回归。本项先修复凭据保护，尚未开放 TLS 创建表单。
+
 - Ingress 虚拟接口候选网段：对齐参考表单 virtual_interface_networks，将 IPv4/IPv6 CIDR 数组贯通创建表单、请求契约和原生 spec；保留空数组及网段顺序，拒绝非数组/非法 CIDR，仅在 Ingress 创建时提交。界面区分候选接口网段与服务绑定 networks，不声称已匹配实际接口；新增编码、非法值和前端创建/编辑隔离回归。
 
 - 基础 Ingress 服务部署：服务表单与 API 支持 RGW/NFS 后端、带前缀长度的 IPv4/IPv6 VIP、前端及监控端口，经校验编码为原生 IngressSpec 的 spec，通过 orch apply --no-overwrite 创建。编辑仅支持通用服务配置，导出合并保留原有 Ingress/TLS 设置，拒绝不支持的监听参数修改；新增原生命令链、非法参数及配置保留回归。TLS 和高级 Keepalived 表单尚未实现，部署后的网络可达性需真实集群验证。
