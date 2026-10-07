@@ -1018,7 +1018,7 @@ func build(request Request, p map[string]any) (command, error) {
 	case "host.action":
 		return hostAction(p, pathValue(tail, "host"), ceph)
 	case "service.create", "service.update":
-		serviceType, err := enum(p, "service_type", "mon", "mgr", "mds", "rbd-mirror", "cephfs-mirror", "rgw", "nfs", "smb", "prometheus", "alertmanager", "grafana", "loki", "promtail", "node-exporter", "crash")
+		serviceType, err := enum(p, "service_type", "mon", "mgr", "mds", "rbd-mirror", "cephfs-mirror", "rgw", "nfs", "ingress", "smb", "prometheus", "alertmanager", "grafana", "loki", "promtail", "node-exporter", "crash")
 		if err != nil {
 			return command{}, err
 		}
@@ -1038,7 +1038,7 @@ func build(request Request, p map[string]any) (command, error) {
 			}
 			serviceID = expectedID
 		}
-		requiresID := serviceType == "mds" || serviceType == "rgw" || serviceType == "nfs" || serviceType == "smb"
+		requiresID := serviceType == "mds" || serviceType == "rgw" || serviceType == "nfs" || serviceType == "smb" || serviceType == "ingress"
 		if requiresID && serviceID == "" {
 			return command{}, invalid("this service type requires a service id")
 		}
@@ -1049,6 +1049,13 @@ func build(request Request, p map[string]any) (command, error) {
 			return command{}, invalid("service id may contain only letters, digits, underscores, dots, and hyphens")
 		}
 		spec := map[string]any{"service_type": serviceType}
+		ingress, err := ingressCreateSpec(p, serviceType, action)
+		if err != nil {
+			return command{}, err
+		}
+		if ingress != nil {
+			spec["spec"] = ingress
+		}
 		if raw, exists := p["networks"]; exists {
 			encoded, err := json.Marshal(raw)
 			var networks []string

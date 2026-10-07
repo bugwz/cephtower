@@ -735,7 +735,7 @@ const serviceId = new Function('textValue', `${identityCode}; return serviceId`)
 for (const [name, type, id] of [['mon', 'mon', ''], ['rgw.foo', 'rgw', 'foo'], ['rgw.realm.zone', 'rgw', 'realm.zone'], ['mds.fs', 'mds', 'fs']]) assert.equal(serviceId({ name, type }), id)
 assert.ok(servicePage.includes('<Select disabled={Boolean(editingService)} options={serviceTypeOptions}'))
 console.log('Service edit identity checks passed')
-assert.ok(servicePage.includes("['mds', 'rgw', 'nfs', 'smb'].includes(selectedServiceType)"))
+assert.ok(servicePage.includes("['mds', 'rgw', 'nfs', 'smb', 'ingress'].includes(selectedServiceType)"))
 assert.ok(servicePage.includes("onChange={() => form.setFieldValue('service_id', undefined)}"))
 assert.ok(servicePage.includes('name="unmanaged" label="非托管" valuePropName="checked"'))
 assert.ok(servicePage.includes("typeof values.unmanaged === 'boolean' ? { unmanaged: values.unmanaged } : {}"))
@@ -752,6 +752,21 @@ console.log('Service runtime metadata and stale inventory bindings passed')
 const serviceContent = servicePageTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ServicePageContent')
 const submitServiceNode = serviceContent.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submitService')
 const submitServiceCode = ts.transpileModule(submitServiceNode.getText(servicePageTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const editing of [false, true]) {
+  const calls = []
+  const env = {
+    active: { current: true }, running: { current: false }, selectedClusterId: 7, loading: false, error: '',
+    editingService: editing ? { name: 'ingress.rgw.a', resource_version: '12' } : null, serviceWritable: () => true,
+    setSubmitting: () => {}, setFormOpen: () => {}, parsePlacement: JSON.parse, serviceName: row => row.name,
+    message: { error: () => {}, warning: () => {}, success: () => {} }, refreshAfterMutation: async () => {},
+    mutateResource: async (...args) => { calls.push(args) }
+  }
+  const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
+  await submit({ service_type: 'ingress', service_id: 'rgw.a', placement_json: '{}', backend_service: 'rgw.a', virtual_ip: '2001:db8::10/64', frontend_port: 8080, monitor_port: 9000 })
+  assert.equal(calls[0][1], editing ? 'PATCH' : 'POST')
+  for (const key of ['backend_service', 'virtual_ip', 'frontend_port', 'monitor_port']) assert.equal(key in calls[0][2], !editing)
+  if (!editing) assert.equal(calls[0][2].virtual_ip, '2001:db8::10/64')
+}
 for (const scenario of ['ok', 'inactive', 'unmount', 'stale', 'error']) {
   const calls = []
   let resolve, reject

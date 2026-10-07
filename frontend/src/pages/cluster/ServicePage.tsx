@@ -1,5 +1,5 @@
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Form, Input, Modal, Select, Space, Switch, Tabs } from 'antd'
+import { Alert, Button, Card, Form, Input, InputNumber, Modal, Select, Space, Switch, Tabs } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { textValue, type ApiRecord } from '../../api/client'
 import { listAllResources, mutateResource, refreshResource } from '../../api/resource'
@@ -21,6 +21,10 @@ interface ServiceFormValues {
   service_id?: string
   placement_json?: string
   unmanaged?: boolean
+  backend_service?: string
+  virtual_ip?: string
+  frontend_port?: number
+  monitor_port?: number
   networks?: string[]
 }
 
@@ -38,6 +42,7 @@ const serviceTypeOptions = [
   'cephfs-mirror',
   'rgw',
   'nfs',
+  'ingress',
   'smb',
   'prometheus',
   'alertmanager',
@@ -83,7 +88,7 @@ function ServicePageContent() {
   const selectedServiceType = Form.useWatch('service_type', form)
   const placementDraft = Form.useWatch('placement_json', form)
   const unmanagedDraft = Form.useWatch('unmanaged', form)
-  const requiresServiceID = ['mds', 'rgw', 'nfs', 'smb'].includes(selectedServiceType)
+  const requiresServiceID = ['mds', 'rgw', 'nfs', 'smb', 'ingress'].includes(selectedServiceType)
   const [formOpen, setFormOpen] = useState(false)
   const [detail, setDetail] = useState<{ clusterId: number; name: string } | null>(null)
   const [perfDetail, setPerfDetail] = useState<{ clusterId: number; name: string } | null>(null)
@@ -160,6 +165,7 @@ function ServicePageContent() {
         ...(values.service_id ? { service_id: values.service_id } : {}),
         ...(typeof values.unmanaged === 'boolean' ? { unmanaged: values.unmanaged } : {}),
         ...(Array.isArray(values.networks) ? { networks: values.networks } : {}),
+        ...(!editingService && values.service_type === 'ingress' ? { backend_service: values.backend_service, virtual_ip: values.virtual_ip, frontend_port: values.frontend_port, monitor_port: values.monitor_port } : {}),
         placement
       }
       const successMessage = editingService ? '服务更新已安排，请核对刷新后的配置与运行状态。' : '服务创建已安排，请核对刷新后的配置与运行状态。'
@@ -377,6 +383,13 @@ function ServicePageContent() {
             <Input.TextArea rows={5} spellCheck={false} placeholder='{"count":1,"host_pattern":"*"}' />
           </Form.Item>
           <ServicePlacementPreview value={placementDraft} unmanaged={unmanagedDraft} />
+          {selectedServiceType === 'ingress' && (editingService ? <Alert type="info" message="编辑保留已有 Ingress 后端、虚拟 IP、监听端口及 TLS 配置；此表单仅修改通用服务配置。" /> : <>
+            <Alert type="warning" message="基础 Ingress 部署：需已有 RGW/NFS 后端及可用虚拟 IP。本表单不配置 TLS，Ceph 接受配置不代表网络可达或部署完成。" />
+            <Form.Item name="backend_service" label="后端服务" rules={[{ required: true }, { pattern: /^(rgw|nfs)\.[a-zA-Z0-9_.-]+$/, message: '填写完整 RGW/NFS 服务名' }]}><Input placeholder="rgw.example" /></Form.Item>
+            <Form.Item name="virtual_ip" label="虚拟 IP（含前缀长度）" rules={[{ required: true }]}><Input placeholder="192.0.2.10/24 或 2001:db8::10/64" /></Form.Item>
+            <Form.Item name="frontend_port" label="前端端口" rules={[{ required: true }]}><InputNumber min={1} max={65535} precision={0} /></Form.Item>
+            <Form.Item name="monitor_port" label="监控端口" rules={[{ required: true }]}><InputNumber min={1} max={65535} precision={0} /></Form.Item>
+          </>)}
         </Form>
       </DraggableModal>
     </Page>

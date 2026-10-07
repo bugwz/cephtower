@@ -22,6 +22,16 @@ func TestIDLessServiceRequestContracts(t *testing.T) {
 	}
 }
 
+func TestIngressServiceContract(t *testing.T) {
+	fields := map[string]any{"cluster_id": float64(1), "service_type": "ingress", "service_id": "rgw.a", "backend_service": "rgw.a", "virtual_ip": "192.0.2.10/24", "frontend_port": float64(8080), "monitor_port": float64(9000)}
+	if err := ValidateMutationRequest("service.create", fields); err != nil {
+		t.Fatal(err)
+	}
+	if err := ValidateMutationRequest("service.update", fields); err == nil {
+		t.Fatal("unsupported ingress field update accepted")
+	}
+}
+
 func TestBucketConfigurationContractRequiresRawDocument(t *testing.T) {
 	for _, kind := range []string{"policy", "cors", "lifecycle", "encryption", "tagging"} {
 		if err := ValidateMutationRequest("rgw_bucket_policy.update", map[string]any{"cluster_id": float64(1), "bucket_id": "AGJ1Y2tldA", "kind": kind, "document": "raw document"}); err != nil {

@@ -30650,7 +30650,7 @@ paths:
                   type: string
                 service_type:
                   type: string
-                  enum: ["alertmanager", "cephfs-mirror", "crash", "grafana", "loki", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "promtail", "rbd-mirror", "rgw", "smb"]
+                  enum: ["alertmanager", "cephfs-mirror", "crash", "grafana", "ingress", "loki", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "promtail", "rbd-mirror", "rgw", "smb"]
                 share_id:
                   type: string
                 silence_id:
@@ -30701,6 +30701,8 @@ paths:
               properties:
                 account_id:
                   type: string
+                backend_service:
+                  type: string
                 binding_id:
                   type: integer
                 bucket_id:
@@ -30717,6 +30719,8 @@ paths:
                   type: integer
                 export_id:
                   type: string
+                frontend_port:
+                  type: integer
                 fs:
                   type: string
                 group:
@@ -30735,6 +30739,8 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                monitor_port:
+                  type: integer
                 name:
                   type: string
                 namespace:
@@ -30783,7 +30789,7 @@ paths:
                   type: string
                 service_type:
                   type: string
-                  enum: ["alertmanager", "cephfs-mirror", "crash", "grafana", "loki", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "promtail", "rbd-mirror", "rgw", "smb"]
+                  enum: ["alertmanager", "cephfs-mirror", "crash", "grafana", "ingress", "loki", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "promtail", "rbd-mirror", "rgw", "smb"]
                 share_id:
                   type: string
                 silence_id:
@@ -30798,6 +30804,8 @@ paths:
                   type: string
                 unmanaged:
                   type: boolean
+                virtual_ip:
+                  type: string
                 who:
                   type: string
       responses:
