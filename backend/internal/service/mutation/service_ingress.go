@@ -10,7 +10,7 @@ import (
 func ingressServiceSpec(p map[string]any, serviceType, action string) (map[string]any, error) {
 	fields := []string{"backend_service", "virtual_ip", "frontend_port", "monitor_port", "virtual_interface_networks", "ssl", "ssl_cert", "ssl_key"}
 	if serviceType == "ingress" && action == "service.update" {
-		for _, field := range []string{"backend_service", "virtual_interface_networks"} {
+		for _, field := range []string{"backend_service"} {
 			if _, exists := p[field]; exists {
 				return nil, invalid("ingress listener edits are not supported")
 			}
@@ -19,7 +19,7 @@ func ingressServiceSpec(p map[string]any, serviceType, action string) (map[strin
 		if err != nil {
 			return nil, err
 		}
-		return ingressTLSParameters(p, spec)
+		return ingressOptionalParameters(p, spec)
 	}
 	if serviceType != "ingress" || action != "service.create" {
 		for _, key := range fields {
@@ -52,6 +52,10 @@ func ingressServiceSpec(p map[string]any, serviceType, action string) (map[strin
 	if spec["frontend_port"] == spec["monitor_port"] {
 		return nil, invalid("frontend_port and monitor_port must differ")
 	}
+	return ingressOptionalParameters(p, spec)
+}
+
+func ingressOptionalParameters(p, spec map[string]any) (map[string]any, error) {
 	if value, exists := p["virtual_interface_networks"]; exists {
 		encoded, err := json.Marshal(value)
 		var networks []string

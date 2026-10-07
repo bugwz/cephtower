@@ -32,6 +32,7 @@ interface ServiceFormValues {
   ssl_key?: string
   tls_mode?: 'preserve' | 'replace' | 'disable'
   listener_change?: boolean
+  interface_networks_change?: boolean
   networks?: string[]
 }
 
@@ -98,6 +99,7 @@ function ServicePageContent() {
   const ingressTLS = Form.useWatch('ssl', form)
   const tlsMode = Form.useWatch('tls_mode', form)
   const listenerChange = Form.useWatch('listener_change', form)
+  const interfaceNetworksChange = Form.useWatch('interface_networks_change', form)
   const requiresServiceID = ['mds', 'rgw', 'nfs', 'smb', 'ingress'].includes(selectedServiceType)
   const [formOpen, setFormOpen] = useState(false)
   useEffect(() => {
@@ -152,6 +154,8 @@ function ServicePageContent() {
       service_type: serviceType(row),
       tls_mode: 'preserve',
       listener_change: false,
+      interface_networks_change: false,
+      virtual_interface_networks: Array.isArray(ingress.virtual_interface_networks) ? ingress.virtual_interface_networks.filter((value): value is string => typeof value === 'string') : [],
       virtual_ip: typeof ingress.virtual_ip === 'string' ? ingress.virtual_ip : undefined,
       frontend_port: typeof ingress.frontend_port === 'number' ? ingress.frontend_port : undefined,
       monitor_port: typeof ingress.monitor_port === 'number' ? ingress.monitor_port : undefined,
@@ -186,6 +190,7 @@ function ServicePageContent() {
         ...(Array.isArray(values.networks) ? { networks: values.networks } : {}),
         ...(!editingService && values.service_type === 'ingress' ? { backend_service: values.backend_service, virtual_ip: values.virtual_ip, frontend_port: values.frontend_port, monitor_port: values.monitor_port } : {}),
         ...(!editingService && values.service_type === 'ingress' && Array.isArray(values.virtual_interface_networks) ? { virtual_interface_networks: values.virtual_interface_networks } : {}),
+        ...(editingService && values.service_type === 'ingress' && values.interface_networks_change === true ? { virtual_interface_networks: values.virtual_interface_networks ?? [] } : {}),
         ...(!editingService && values.service_type === 'ingress' && typeof values.ssl === 'boolean' ? { ssl: values.ssl, ...(values.ssl ? { ssl_cert: values.ssl_cert, ssl_key: values.ssl_key } : {}) } : {}),
         ...(editingService && values.service_type === 'ingress' ? values.tls_mode === 'replace' ? { ssl: true, ssl_cert: values.ssl_cert, ssl_key: values.ssl_key } : values.tls_mode === 'disable' ? { ssl: false } : {} : {}),
         ...(editingService && values.service_type === 'ingress' && values.listener_change === true ? { virtual_ip: values.virtual_ip, frontend_port: values.frontend_port, monitor_port: values.monitor_port } : {}),
@@ -410,6 +415,8 @@ function ServicePageContent() {
           {selectedServiceType === 'ingress' && (editingService ? <>
             <Alert type="info" message="编辑保留已有 Ingress 后端。监听配置与 TLS 默认保持不变，已有证书和私钥不会回填。" />
             <Form.Item name="listener_change" label="修改 VIP 与监听端口" valuePropName="checked"><Switch /></Form.Item>
+            <Form.Item name="interface_networks_change" label="修改虚拟接口候选网段" valuePropName="checked"><Switch /></Form.Item>
+            {interfaceNetworksChange === true && <Form.Item name="virtual_interface_networks" label="虚拟接口候选网段" extra="清空将移除候选网段。Ceph 在 VIP 无法直接匹配接口时使用这些网段；修改可能影响服务网络，不会修改主机网络配置。"><Select mode="tags" tokenSeparators={[',']} /></Form.Item>}
             {listenerChange === true && <>
               <Alert type="warning" message="提交会替换 VIP 和两个端口，可能中断客户端连接。请核对库存回填的配置；Keepalived-only 或多 VIP 服务不支持此编辑流程。" />
               <Form.Item name="virtual_ip" label="虚拟 IP（含前缀长度）" rules={[{ required: true }]}><Input /></Form.Item>

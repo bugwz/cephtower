@@ -132,6 +132,7 @@ func buildMutationRequestContracts() map[string]RequestContract {
 	contracts["service.update"].Fields["ssl_cert"] = stringField(false)
 	contracts["service.update"].Fields["ssl_key"] = stringField(false)
 	contracts["service.update"].Fields["virtual_ip"] = stringField(false)
+	contracts["service.update"].Fields["virtual_interface_networks"] = stringsField(false)
 	contracts["service.update"].Fields["frontend_port"] = integerField(false)
 	contracts["service.update"].Fields["monitor_port"] = integerField(false)
 	for _, action := range []string{"service.create", "service.update"} {

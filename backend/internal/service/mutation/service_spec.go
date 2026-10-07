@@ -65,7 +65,7 @@ func mergeServiceSpec(exported, patch []byte, name string) ([]byte, error) {
 			return nil, invalid("cannot safely merge ingress settings")
 		}
 		for key := range proposed {
-			if key != "ssl" && key != "ssl_cert" && key != "ssl_key" && key != "virtual_ip" && key != "frontend_port" && key != "monitor_port" {
+			if key != "ssl" && key != "ssl_cert" && key != "ssl_key" && key != "virtual_ip" && key != "frontend_port" && key != "monitor_port" && key != "virtual_interface_networks" {
 				return nil, invalid("unsupported ingress spec update")
 			}
 		}
@@ -82,7 +82,7 @@ func mergeServiceSpec(exported, patch []byte, name string) ([]byte, error) {
 				return nil, invalid("listener editing is not supported for keepalive-only or multiple-VIP services")
 			}
 		}
-		validated, err := ingressTLSParameters(proposed, listener)
+		validated, err := ingressOptionalParameters(proposed, listener)
 		if err != nil {
 			return nil, err
 		}

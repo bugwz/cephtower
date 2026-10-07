@@ -760,7 +760,7 @@ for (const formOpen of [false, true]) {
 }
 const submitServiceNode = serviceContent.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submitService')
 const submitServiceCode = ts.transpileModule(submitServiceNode.getText(servicePageTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-for (const editing of [false, true]) for (const ssl of [false, true, undefined]) for (const tls_mode of [undefined, 'preserve', 'replace', 'disable']) for (const listener_change of [undefined, false, true]) {
+for (const editing of [false, true]) for (const ssl of [false, true, undefined]) for (const tls_mode of [undefined, 'preserve', 'replace', 'disable']) for (const listener_change of [undefined, false, true]) for (const interface_networks_change of [undefined, false, true]) {
   const calls = []
   const env = {
     active: { current: true }, running: { current: false }, selectedClusterId: 7, loading: false, error: '',
@@ -770,12 +770,13 @@ for (const editing of [false, true]) for (const ssl of [false, true, undefined])
     mutateResource: async (...args) => { calls.push(args) }
   }
   const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
-  await submit({ service_type: 'ingress', service_id: 'rgw.a', placement_json: '{}', backend_service: 'rgw.a', virtual_ip: '2001:db8::10/64', frontend_port: 8080, monitor_port: 9000, virtual_interface_networks: ['192.0.2.0/24', '2001:db8::/64'], ssl, tls_mode, listener_change, ssl_cert: 'cert-fixture', ssl_key: 'key-fixture' })
+  await submit({ service_type: 'ingress', service_id: 'rgw.a', placement_json: '{}', backend_service: 'rgw.a', virtual_ip: '2001:db8::10/64', frontend_port: 8080, monitor_port: 9000, virtual_interface_networks: ['192.0.2.0/24', '2001:db8::/64'], ssl, tls_mode, listener_change, interface_networks_change, ssl_cert: 'cert-fixture', ssl_key: 'key-fixture' })
   assert.equal('ssl' in calls[0][2], editing ? ['replace', 'disable'].includes(tls_mode) : ssl !== undefined)
   for (const key of ['ssl_cert', 'ssl_key']) assert.equal(key in calls[0][2], editing ? tls_mode === 'replace' : ssl === true)
   if (editing && tls_mode === 'disable') assert.equal(calls[0][2].ssl, false)
   assert.equal(calls[0][1], editing ? 'PATCH' : 'POST')
-  for (const key of ['backend_service', 'virtual_interface_networks']) assert.equal(key in calls[0][2], !editing)
+  assert.equal('backend_service' in calls[0][2], !editing)
+  assert.equal('virtual_interface_networks' in calls[0][2], !editing || interface_networks_change === true)
   for (const key of ['virtual_ip', 'frontend_port', 'monitor_port']) assert.equal(key in calls[0][2], !editing || listener_change === true)
   if (!editing) assert.deepEqual(calls[0][2].virtual_interface_networks, ['192.0.2.0/24', '2001:db8::/64'])
   if (!editing) assert.equal(calls[0][2].virtual_ip, '2001:db8::10/64')
