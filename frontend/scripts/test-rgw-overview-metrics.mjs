@@ -35,6 +35,25 @@ const start=Date.parse(windows[0])/1000
 historyCalls.forEach(call=>call.resolve(history([[start,'0'],[start+60,'NaN'],[start+120,'2']])));await tick()
 assert.equal(render(9).filter(n=>n.type==='svg').length,5);assert.equal(render(9).find(n=>n.type==='Table').props.dataSource[1].raw,'NaN')
 assert.ok(render(9).filter(n=>n.type==='MetricNotices').every(n=>n.props.meta.infos[0]==='sample omitted'))
+const analyticsIds=['rgw_s3_put_bytes_total','rgw_s3_get_bytes_total','rgw_s3_put_ops_total','rgw_put_mean_bytes']
+for(const historical of [false,true]){
+  const offset=calls.length
+  render(9).find(n=>n.type==='Button'&&n.props.children===(historical?'读取 S3 累计一小时趋势':'读取 S3 累计概览')).props.onClick()
+  const batch=calls.slice(offset)
+  assert.deepEqual(batch.map(call=>new URLSearchParams(call.path.split('?')[1]).get('metric_id')),analyticsIds)
+  assert.ok(batch.every(call=>call.path.startsWith(historical?'/metric/range?':'/metric/query?')))
+  assert.equal(new Set(batch.map(call=>new URLSearchParams(call.path.split('?')[1]).get(historical?'start':'time'))).size,1)
+  batch.forEach(call=>{
+    const t=Date.parse(new URLSearchParams(call.path.split('?')[1]).get('start'))/1000
+    call.resolve(historical?history([[t,'9007199254740993'],[t+60,'0']]):sample('9007199254740993'))
+  })
+  await tick()
+  const rendered=render(9)
+  assert.equal(rendered.filter(n=>n.type==='MetricNotices').length,4)
+  const rows=rendered.find(n=>n.type==='Table').props.dataSource
+  assert.equal(historical?rows[0].raw:rows[0].value,'9007199254740993')
+  assert.ok(rendered.some(n=>n.type==='Alert'&&n.props.description?.includes('PUT 次数不是当前对象数')))
+}
 cleanup()
 assert.match(readFileSync(new URL('../src/pages/object/pages.tsx',import.meta.url),'utf8'),/<RgwOverviewMetrics \/>/)
 console.log('RGW overview metrics preserve independent states and isolate cluster reads')

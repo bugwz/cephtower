@@ -11,6 +11,12 @@ const metrics=[
   {id:'rgw_get_latency_ms',name:'GET 平均延迟',unit:'ms'},
   {id:'rgw_put_latency_ms',name:'PUT 平均延迟',unit:'ms'},
 ]
+const analyticsMetrics=[
+  {id:'rgw_s3_put_bytes_total',name:'累计 PUT 字节',unit:'B'},
+  {id:'rgw_s3_get_bytes_total',name:'累计 GET 字节',unit:'B'},
+  {id:'rgw_s3_put_ops_total',name:'累计 PUT 操作',unit:'次'},
+  {id:'rgw_put_mean_bytes',name:'累计 PUT 平均操作字节',unit:'B/次'},
+]
 type Value={value?:string;timestamp?:number;status:string;meta?:ApiRecord}
 type Point={time:number;raw:string;value?:number}
 export function overviewHistoryPoints(value:unknown,start:number,end:number):Point[] {
@@ -55,12 +61,12 @@ export function RgwOverviewMetricsView({clusterId}:{clusterId?:number}) {
   current.current=clusterId
   const [state,setState]=useState<{clusterId?:number;busy:boolean;time?:string;start?:number;end?:number;history?:boolean;rows?:Array<typeof metrics[number]&Value&{points?:Point[]}>}>({busy:false})
   useEffect(()=>{mounted.current=true;setState({clusterId,busy:false});return()=>{mounted.current=false;abort.current?.abort();sequence.current++}},[clusterId])
-  async function read(history=false){
+  async function read(history=false,analytics=false){
     if(!clusterId||!mounted.current||current.current!==clusterId)return
     abort.current?.abort();const controller=new AbortController();abort.current=controller;const ticket=++sequence.current,time=new Date().toISOString()
     setState({clusterId,busy:true})
     const end=Math.floor(Date.parse(time)/1000),start=end-3600
-    const rows=await Promise.all(metrics.map(async metric=>{
+    const rows=await Promise.all((analytics?analyticsMetrics:metrics).map(async metric=>{
       try{
         const params=new URLSearchParams(history?{metric_id:metric.id,start:new Date(start*1000).toISOString(),end:new Date(end*1000).toISOString(),step:'60s'}:{metric_id:metric.id,time})
         const result=await request<unknown>(`/metric/${history?'range':'query'}?${params}`,jsonInit('GET',{cluster_id:clusterId},{signal:controller.signal,cache:'no-store',suppressErrorNotification:true}))
@@ -77,6 +83,11 @@ export function RgwOverviewMetricsView({clusterId}:{clusterId?:number}) {
     <Alert type="info" message="Prometheus 一分钟速率窗口" description="聚合端点内所有匹配 RGW 序列；端点必须限定当前集群并避免重复采集。平均延迟按操作计数加权；无样本或不可计算不表示零值，也不表示健康。"/>
     <Button disabled={!clusterId||scoped?.busy} loading={scoped?.busy} onClick={()=>void read()}>读取性能概览</Button>
     <Button disabled={!clusterId||scoped?.busy} loading={scoped?.busy} onClick={()=>void read(true)}>读取一小时趋势</Button>
+    <Alert type="info" message="S3 累计操作分析" description="按端点内全部匹配序列聚合原生累计计数器，重启、序列消失或计数重置会改变结果，不代表所选时段增量。PUT 次数不是当前对象数，GET/PUT 字节不是桶容量；平均值为总 PUT 字节除以总 PUT 次数，不是当前对象平均大小。无操作时均值可能不可计算。"/>
+    <Space wrap>
+      <Button disabled={!clusterId||scoped?.busy} loading={scoped?.busy} onClick={()=>void read(false,true)}>读取 S3 累计概览</Button>
+      <Button disabled={!clusterId||scoped?.busy} loading={scoped?.busy} onClick={()=>void read(true,true)}>读取 S3 累计一小时趋势</Button>
+    </Space>
     {!clusterId&&<Alert type="info" message="请先选择集群"/>}
     {scoped?.rows?.map(row=><MetricNotices key={`notices-${row.id}`} source={row.name} meta={row.meta}/>)}
     {scoped?.rows&&<><span>查询时间：{scoped.time}</span>{scoped.history?<>
