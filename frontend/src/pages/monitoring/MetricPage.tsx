@@ -60,6 +60,8 @@ export function metricSamples(item: ApiRecord): MetricSample[] {
 }
 
 const metricOptions = [
+  { label: 'RGW 分片同步时差（秒）', value: 'rgw_sync_delta_seconds', description: '原始 gauge，保留分片和源/本地 Zone 标签；不是 rate 或整体同步完成度' },
+  { label: 'RGW 来源 Zone 轮询平均延迟（ms）', value: 'rgw_sync_poll_latency_ms', description: '按 source_zone：一分钟 sum rate / count rate × 1000；无请求时可能为 NaN' },
   { label: 'RGW 来源 Zone 复制吞吐率（B/s）', value: 'rgw_sync_bytes_rate', description: '按 source_zone 聚合，一分钟 rate' },
   { label: 'RGW 来源 Zone 复制对象速率（对象/s）', value: 'rgw_sync_objects_rate', description: '按 source_zone 聚合，一分钟 rate' },
   { label: 'RGW 来源 Zone 复制失败速率（次/s）', value: 'rgw_sync_errors_rate', description: '按 source_zone 聚合，一分钟 rate；非累计失败数' },
@@ -280,7 +282,7 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
               </div>
             </Form>
 
-            <Alert type="info" message="RGW 指标使用一分钟速率窗口并聚合监控端点内的所有匹配序列。同步指标按 source_zone 分组；共享端点的同名来源 Zone 会被合并，不代表目的 Zone 隔离。端点应仅包含当前集群且避免重复采集；无样本或 NaN 不代表零值。" />
+            <Alert type="info" message="RGW 速率和平均延迟使用一分钟窗口，来源 Zone 指标按 source_zone 聚合；共享端点的同名来源 Zone 会被合并，不代表目的 Zone 隔离。分片同步时差保留原始 gauge 和标签，不计算 rate，仅在原生增量同步更新时产生，不能据此断言当前已同步完成。端点应仅包含当前集群且避免重复采集；无样本或 NaN 不代表零值。" />
             <Space wrap>
               <Tag color="blue">result_type: {result?.result_type ?? '-'}</Tag>
               <Tag>series: {rows.length}</Tag>

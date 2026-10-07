@@ -49,6 +49,8 @@ type PrometheusResult struct {
 }
 
 var metricQueries = map[string]string{
+	"rgw_sync_delta_seconds":    "ceph_rgw_sync_delta_sync_delta",
+	"rgw_sync_poll_latency_ms":  "1000 * sum by (source_zone) (rate(ceph_data_sync_from_zone_poll_latency_sum[1m])) / sum by (source_zone) (rate(ceph_data_sync_from_zone_poll_latency_count[1m]))",
 	"rgw_sync_bytes_rate":       "sum by (source_zone) (rate(ceph_data_sync_from_zone_fetch_bytes_sum[1m]))",
 	"rgw_sync_objects_rate":     "sum by (source_zone) (rate(ceph_data_sync_from_zone_fetch_bytes_count[1m]))",
 	"rgw_sync_errors_rate":      "sum by (source_zone) (rate(ceph_data_sync_from_zone_fetch_errors[1m]))",

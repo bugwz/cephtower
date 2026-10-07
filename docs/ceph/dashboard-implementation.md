@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- RGW 同步时差与轮询延迟：补齐参考同步总览剩余两类数据。依据 `rgw_sync_counters.cc::add_time/add_time_avg`、`rgw_data_sync.cc::store_marker` 与 mgr Prometheus 的 sum/count 导出语义，分片时差直接读取秒 gauge（保留原生标签，不照搬参考图表的 rate），轮询延迟按来源 Zone 使用一分钟 sum rate / count rate × 1000 得到毫秒加权均值。界面明确时差仅由增量同步更新、不证明同步完成，零请求 NaN 不补零。后端即时/历史表达式与前端预设回归覆盖；暂无实机验证。
+
 - RGW 来源 Zone 复制指标：依据参考 `monitoring/ceph-mixin/dashboards/rgw.libsonnet` 的同步总览，新增复制字节、对象、失败计数的一分钟 rate，按 source_zone 聚合，通过现有受控指标 API 提供即时和历史查询，前端可选并展示原始样本/趋势。明确共享端点同名来源 Zone 合并、非目的 Zone 隔离、无样本不是零；不使用 CLI 快照伪造速率。新增真实客户端 HTTP 查询参数/标签透传及前端预设回归，无真实集群验证。
 
 - 池 I/O 历史查询提示：四类吞吐率和 IOPS 曲线保留各自 Prometheus meta，并显示对应指标来源；无样本时仍展示警告，重新查询清除旧数据和提示，取消后的响应不更新状态。新增实际查询与组件渲染回归。
