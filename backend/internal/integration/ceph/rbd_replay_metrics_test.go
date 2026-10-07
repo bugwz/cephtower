@@ -13,6 +13,10 @@ func TestMirrorReplayMetrics(t *testing.T) {
 		raw  string
 		want map[string]string
 	}{
+		{`{"replay_state":"idle","bytes_per_second":0}`, map[string]string{"replay_state": "idle", "bytes_per_second": "0"}},
+		{`{"replay_state":"syncing"}`, map[string]string{"replay_state": "syncing"}},
+		{`{"replay_state":"future"}`, map[string]string{}},
+		{`{"replay_state":false}`, map[string]string{}},
 		{`{"bytes_per_second":0,"syncing_percent":100,"seconds_until_synced":18446744073709551615,"entries_behind_primary":9007199254740993}`, map[string]string{"bytes_per_second": "0", "syncing_percent": "100", "seconds_until_synced": "18446744073709551615", "entries_behind_primary": "9007199254740993"}},
 		{`{"bytes_per_second":1.25e3,"syncing_percent":0.5}`, map[string]string{"bytes_per_second": "1.25e3", "syncing_percent": "0.5"}},
 		{`{"bytes_per_second":-1,"syncing_percent":100.000000000000000001,"seconds_until_synced":1.5,"entries_behind_primary":18446744073709551616}`, map[string]string{}},
@@ -36,7 +40,7 @@ func TestMirrorReplayMetrics(t *testing.T) {
 }
 
 func TestCollectMirrorReplayMetrics(t *testing.T) {
-	image := map[string]any{"name": "image", "state": "up+replaying", "description": `replaying, {"bytes_per_second":0}`, "peer_sites": []any{map[string]any{"state": "up+replaying", "description": `replaying, {"entries_behind_primary":9007199254740993}`}}}
+	image := map[string]any{"name": "image", "state": "up+replaying", "description": `replaying, {"bytes_per_second":0,"replay_state":"idle"}`, "peer_sites": []any{map[string]any{"state": "up+replaying", "description": `replaying, {"entries_behind_primary":9007199254740993,"replay_state":"syncing"}`}}}
 	raw, _ := json.Marshal(map[string]any{"images": []any{image}})
 	provider := NativeProvider{Executor: malformedExecutor{base: fixtureExecutor{t}, override: map[string][]byte{
 		"collect.rbd_mirroring": []byte(`{"mode":"image","peers":[]}`), "collect.rbd_mirroring_status": raw,
@@ -50,6 +54,9 @@ func TestCollectMirrorReplayMetrics(t *testing.T) {
 			t.Fatalf("local metrics: %#v", got)
 		}
 		peer := got["peer_sites"].([]any)[0].(map[string]any)
+		if got["replay_metrics"].(map[string]string)["replay_state"] != "idle" || peer["replay_metrics"].(map[string]string)["replay_state"] != "syncing" {
+			t.Fatalf("mixed local and peer replay states: %#v", got)
+		}
 		if peer["replay_metrics"].(map[string]string)["entries_behind_primary"] != "9007199254740993" {
 			t.Fatalf("remote metrics: %#v", peer)
 		}

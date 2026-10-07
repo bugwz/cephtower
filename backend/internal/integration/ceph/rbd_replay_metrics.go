@@ -40,6 +40,10 @@ func mirrorReplayMetrics(row map[string]any) map[string]string {
 		return nil
 	}
 	result := map[string]string{}
+	var replayState string
+	if json.Unmarshal(data["replay_state"], &replayState) == nil && (replayState == "idle" || replayState == "syncing") {
+		result["replay_state"] = replayState
+	}
 	for _, key := range []string{"bytes_per_second", "seconds_until_synced", "syncing_percent", "entries_behind_primary"} {
 		raw := string(data[key])
 		if len(raw) > 128 || !replayNumber.MatchString(raw) {

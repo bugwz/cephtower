@@ -43,7 +43,10 @@ assert.ok(missing.slice(0,2).every(node => node.type === 'Alert'))
 const empty = table.props.expandable.expandedRowRender(ui.rbdMirrorImageRows([{peer_sites:[]}])[0]).props.children
 assert.equal(empty[1].props.message, '远端站点状态列表为空')
 const metrics = {bytes_per_second:'0', seconds_until_synced:'18446744073709551615', syncing_percent:'0.5', entries_behind_primary:'9007199254740993'}
-assert.deepEqual(ui.RbdReplayMetrics({value:metrics}).props.items.map(item=>item.children), Object.values(metrics))
+assert.deepEqual(ui.RbdReplayMetrics({value:metrics}).props.items.map(item=>item.children), [...Object.values(metrics),'未返回有效值'])
+assert.equal(ui.RbdReplayMetrics({value:{replay_state:'idle'}}).props.items.at(-1).children,'idle（快照重放空闲，不代表所有站点同步完成）')
+assert.equal(ui.rbdReplayStateText('syncing'),'syncing（快照复制中）')
+for(const value of [undefined,null,true,0,'future','IDLE','idle ']) assert.equal(ui.rbdReplayStateText(value),'未返回有效值')
 assert.ok(ui.RbdReplayMetrics({value:undefined}).props.items.every(item=>item.children==='未返回有效值'))
 const enriched = ui.rbdMirrorImageRows([{...sample,replay_metrics:metrics,peer_sites:[{...peer,replay_metrics:{bytes_per_second:'1'}}]}])[0]
 const details = table.props.expandable.expandedRowRender(enriched).props.children

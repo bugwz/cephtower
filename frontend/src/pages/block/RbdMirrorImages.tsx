@@ -48,8 +48,14 @@ export function RbdBootstrapProgress({ value }: { value: unknown }) {
 export function RbdReplayMetrics({ value }: { value: unknown }) {
   return <Descriptions size="small" column={2} title="描述中的重放统计（采集快照，非实时速率；预计时间不保证完成）" items={[
     ['bytes_per_second', '速率（B/s）'], ['seconds_until_synced', '预计剩余秒数'],
-    ['syncing_percent', '同步百分比（%）'], ['entries_behind_primary', '落后主端条目数']
-  ].map(([key, label]) => ({ key, label, children: record(value) && typeof value[key] === 'string' ? value[key] as string : '未返回有效值' }))} />
+    ['syncing_percent', '同步百分比（%）'], ['entries_behind_primary', '落后主端条目数'], ['replay_state', '快照重放子状态']
+  ].map(([key, label]) => ({ key, label, children: key === 'replay_state' ? rbdReplayStateText(record(value) ? value[key] : undefined) : record(value) && typeof value[key] === 'string' ? value[key] as string : '未返回有效值' }))} />
+}
+
+export function rbdReplayStateText(value: unknown): string {
+  if (value === 'idle') return 'idle（快照重放空闲，不代表所有站点同步完成）'
+  if (value === 'syncing') return 'syncing（快照复制中）'
+  return '未返回有效值'
 }
 
 export function RbdMirrorImages({ value }: { value: unknown }) {

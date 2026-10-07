@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- RBD 快照重放子状态：对应参考 Dashboard 的 Idle 处理，依据 snapshot `Replayer.cc` 的 `replay_state=idle/syncing`，在已有描述解析与库存 API 中分别保留本地、远端子状态，并在统计详情展示。仅接受当前原生枚举及 `up+replaying`，日志模式未返回时不默认 Idle，未知值不猜测；保留主状态与描述，不将快照空闲解释为全部站点同步完成。补充解析、采集链及组件测试，无实机或浏览器视觉验证。
+
 - RBD 池同步健康汇总：依据 `MirrorPool.cc` 原生 summary，复用现有采集/API 链路，将原始对象展示替换为池、守护进程、镜像三类健康与状态计数表。保留未知状态和原生健康文本，区分停用未查询、缺失、空计数与合法零；不从详情列表长度推算原生统计、不将状态数解释为主副角色或远端数量。补充采集字段保留与组件回归，无实机或浏览器视觉验证。
 
 - RBD 引导复制进度：追踪 `ImageReplayer::BootstrapProgressContext`、`ImageSync::update_progress/handle_copy_image_update_progress`，当前输出为 `bootstrapping, IMAGE_SYNC/COPY_IMAGE N%`，并非参考前端旧正则的 `IMAGE_COPY/COPY_OBJECT`。后端仅对 `up+syncing` 的当前格式提取 0–100 整数百分比，经库存 API 展示本地和远端进度；不匹配其他阶段、不补零、不添加旧格式兼容。100% 明确仅表示引导复制阶段，不代表整体同步完成。补充状态/格式/范围边界、采集链与组件测试，无实机或浏览器视觉验证。
