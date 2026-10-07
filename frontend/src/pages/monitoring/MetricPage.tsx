@@ -1,5 +1,5 @@
 import { BarChartOutlined, LineChartOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Form, Input, Select, Segmented, Space, Statistic, Tag, Typography } from 'antd'
+import { Alert, AutoComplete, Button, Card, Form, Input, Select, Segmented, Space, Statistic, Tag, Typography } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { queryMetric, queryMetricRange, type MetricResponse } from '../../api/external'
@@ -99,6 +99,22 @@ export function filterMetricRows<T extends { labels: string }>(rows: T[], key: s
   })
 }
 
+export function metricLabelOptions(rows: { labels: string }[], key?: string) {
+  const values = new Set<string>()
+  for (const row of rows) {
+    try {
+      const labels = JSON.parse(row.labels)
+      if (!labels || typeof labels !== 'object' || Array.isArray(labels)) continue
+      for (const [name, value] of Object.entries(labels)) {
+        if (typeof value !== 'string') continue
+        if (key === undefined) values.add(name)
+        else if (name === key) values.add(value)
+      }
+    } catch { /* Malformed labels do not supply suggestions. */ }
+  }
+  return [...values].sort().map(value => ({ value, label: value === '' ? '空字符串' : value }))
+}
+
 function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId?: number; initialMetric: string }) {
   const active = useRef(true)
   const pending = useRef<AbortController | null>(null)
@@ -131,6 +147,8 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
 
   const rows = useMemo(() => normalizeSeries(result?.series ?? []), [result])
   const visibleRows = useMemo(() => filterMetricRows(rows, labelKey, labelValue), [rows, labelKey, labelValue])
+  const labelNames = useMemo(() => metricLabelOptions(rows), [rows])
+  const labelValues = useMemo(() => metricLabelOptions(rows, labelKey), [rows, labelKey])
 
   async function submit(values: MetricFormValues) {
     if (!active.current) return
@@ -256,8 +274,8 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
               <Tag>显示序列: {visibleRows.length}</Tag>
             </Space>
             <Space wrap>
-              <Input aria-label="精确标签名" placeholder="标签名，例如 instance / operation" value={labelKey} onChange={event => setLabelKey(event.target.value)} />
-              <Input aria-label="精确标签值" placeholder="标签值（精确匹配，区分大小写）" value={labelValue} onChange={event => setLabelValue(event.target.value)} />
+              <AutoComplete aria-label="精确标签名" style={{ minWidth: 260 }} options={labelNames} placeholder="标签名，例如 instance / operation" value={labelKey} onChange={value => { setLabelKey(value); setLabelValue('') }} />
+              <AutoComplete aria-label="精确标签值" style={{ minWidth: 260 }} options={labelValues} placeholder="标签值（精确匹配，区分大小写）" value={labelValue} onChange={setLabelValue} />
               <Button onClick={() => { setLabelKey(''); setLabelValue('') }}>清除标签筛选</Button>
               <Text type="secondary">仅筛选已返回的序列，不改变查询或提供集群隔离；空标签名显示全部，空标签值匹配已存在的空值。</Text>
             </Space>

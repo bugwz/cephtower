@@ -11,6 +11,15 @@ const optionsNode = tree.statements.filter(ts.isVariableStatement).flatMap(node 
 const options = new Function(`return ${optionsNode.initializer.getText(tree)}`)()
 const filterNode = tree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'filterMetricRows')
 const filterExports = {}
+const labelOptionsNode = tree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'metricLabelOptions')
+const labelOptionsExports = {}
+new Function('exports', ts.transpileModule(labelOptionsNode.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText)(labelOptionsExports)
+const optionRows = [{ labels: '{"instance":"a","empty":"","count":2}' }, { labels: '{"instance":"a"}' }, { labels: '{"instance":"A"}' }, { labels: 'null' }, { labels: '[]' }, { labels: 'bad' }]
+assert.deepEqual(labelOptionsExports.metricLabelOptions(optionRows), [{ value: 'empty', label: 'empty' }, { value: 'instance', label: 'instance' }])
+assert.deepEqual(labelOptionsExports.metricLabelOptions(optionRows, 'instance'), [{ value: 'A', label: 'A' }, { value: 'a', label: 'a' }])
+assert.deepEqual(labelOptionsExports.metricLabelOptions(optionRows, 'empty'), [{ value: '', label: '空字符串' }])
+assert.deepEqual(labelOptionsExports.metricLabelOptions(optionRows, 'missing'), [])
+assert.deepEqual(labelOptionsExports.metricLabelOptions([]), [])
 new Function('exports', ts.transpileModule(filterNode.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(filterExports)
 const labelRows = [{ labels: '{"instance":"node.1","operation":"read","empty":""}' }, { labels: '{"instance":"nodeX1","operation":"write"}' }, { labels: '{"instance":"Node.1"}' }, { labels: 'null' }, { labels: 'invalid' }]
 assert.equal(filterExports.filterMetricRows(labelRows, '', ''), labelRows)
