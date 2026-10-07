@@ -1,6 +1,8 @@
 import { Alert, Space, Table } from 'antd'
 
-export function RbdMirrorLeaderCounts({ value }: { value: unknown }) {
+export function RbdMirrorLeaderCounts({ value, status }: { value: unknown; status?: unknown }) {
+  if (status === 'disabled') return <Alert type="info" message="池同步已禁用，未查询 Leader 计数" />
+  if (status !== 'available') return <Alert type="warning" message="Leader 计数未读取或身份未核实，请检查采集状态；不代表镜像数为零" />
   if (!value || typeof value !== 'object' || Array.isArray(value)) return <Alert type="info" message="未取得身份一致的 Leader 计数，不代表镜像数为零" />
   const data = value as Record<string, unknown>
   if (typeof data.instance_id !== 'string' || !data.instance_id || !Array.isArray(data.namespaces) || data.namespaces.some(row => !row || typeof row !== 'object' || typeof row.namespace !== 'string')) return <Alert type="warning" message="Leader 计数格式无效" />

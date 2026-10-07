@@ -110,6 +110,8 @@ var collectionFailureKinds = map[string][]string{
 	"collect.crush_rule":              {"crush_rule"},
 	"collect.erasure_code_profile":    {"erasure_code_profile"},
 	"collect.mon_perf":                {"mon_perf_counter"},
+
+	"collect.rbd_mirror_service_status": {"rbd_mirroring"},
 }
 
 func (p *NativeProvider) CollectWithMetadata(ctx context.Context, access ClusterAccess, module string) (CollectionResult, error) {
