@@ -121,7 +121,7 @@ export async function listResource<T = ApiRecord>(path: string, clusterId = requ
     items,
     nextCursor: pagination?.next_cursor,
     observedAt: meta?.observed_at ?? resourceItems[0]?.observed_at,
-    stale: Boolean(meta?.stale ?? resourceItems.some((item) => item.stale)),
+    stale: ('items' in payload && meta?.stale !== false) || resourceItems.some((item) => item.stale !== false),
     staleReason: meta?.stale_reason
   } satisfies ResourceListResult<T>
 }
