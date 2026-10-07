@@ -5,6 +5,7 @@ import { queryMetricRange, type MetricResponse } from '../../api/external'
 import { AppTable } from '../../components/AppTable'
 import { metricSamples } from '../monitoring/MetricPage'
 import { MetricTrend } from '../monitoring/MetricTrend'
+import { MetricNotices } from '../monitoring/MetricNotices'
 
 export function monSessionSeries(data: MetricResponse, name: string): ApiRecord[] {
   const fsid = data.meta?.cluster_fsid
@@ -56,6 +57,7 @@ export function MonSessionHistory({ clusterId, monName }: { clusterId: number; m
     <Space direction="vertical" className="page-stack">
       <Alert type="info" message="使用 Prometheus 的 ceph_mon_num_sessions，非 MGR 内存历史或 CLI 快照。需配置 Prometheus 并采集该指标，cluster 标签必须为集群 FSID。按 MON 精确筛选，不合并不同采集来源；30 秒评估步长可能复用最近抓取值，缺失不补零。" />
       {error && <Alert type="warning" message={error} />}
+      <MetricNotices meta={data?.meta} />
       {!data && !error && <span>点击查询读取历史。</span>}
       {data?.series.length === 0 && <Alert type="info" message="没有匹配的历史序列，不表示会话数为零。" />}
       {data?.series.map((row, index) => <div key={index}>
