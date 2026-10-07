@@ -1,5 +1,5 @@
 import { CopyOutlined, DownloadOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Descriptions, Input, Select, Space, Switch, Tag, Typography } from 'antd'
+import { Alert, Button, Card, Descriptions, Input, Select, Space, Switch, Tabs, Tag, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { AppTable } from '../../components/AppTable'
@@ -7,6 +7,7 @@ import { Page } from '../../components/Page'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
+import { GrafanaLogsPanel } from './GrafanaLogsPanel'
 
 export function runtimeLogsText(rows: ApiRecord[]): string {
   return rows.map((row) => `${row.stamp} [${row.channel}] ${row.priority} ${row.name}: ${row.message}`).join('\n')
@@ -62,7 +63,10 @@ function runtimeLogMatches(row: ApiRecord, search: string, start: string, end: s
 }
 
 export function RuntimeLogsPage() {
-  return <RuntimeLogsPanel />
+  return <Tabs items={[
+    { key: 'mon', label: '集群 / 审计日志', children: <RuntimeLogsPanel /> },
+    { key: 'daemon', label: '守护进程历史日志', children: <GrafanaLogsPanel /> }
+  ]} />
 }
 
 export function RuntimeLogsPanel({ compact = false }: { compact?: boolean }) {

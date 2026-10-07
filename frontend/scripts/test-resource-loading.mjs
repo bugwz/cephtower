@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import './test-grafana-logs.mjs'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 import './test-osd-safety.mjs'

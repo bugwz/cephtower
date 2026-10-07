@@ -222,7 +222,31 @@ func (s *Service) readMonitoring(ctx context.Context, clusterID uint64, kind str
 	if err != nil {
 		return nil, failure(endpointKind+"_failed", err.Error(), true)
 	}
-	return listResult(items), nil
+	result := listResult(items)
+	if kind == "grafana" {
+		endpoint, lookupErr := s.endpoints.Endpoint(ctx, clusterID, "grafana")
+		if lookupErr != nil {
+			return nil, lookupErr
+		}
+		result["meta"].(map[string]any)["logs_explore_url"] = grafanaLogsURL(endpoint.URL)
+	}
+	return result, nil
+}
+
+// Open an empty Explore query, as Dashboard does. Do not imply that a shared
+// Loki source is cluster-scoped or send server credentials to the browser.
+func grafanaLogsURL(base string) string {
+	u, err := url.Parse(base)
+	if err != nil || u.Host == "" || u.User != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return ""
+	}
+	u.Path = strings.TrimRight(u.Path, "/") + "/explore"
+	u.RawPath, u.Fragment, u.RawFragment = "", "", ""
+	q := url.Values{}
+	q.Set("orgId", "1")
+	q.Set("left", `{"datasource":"Loki","queries":[{"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`)
+	u.RawQuery = q.Encode()
+	return u.String()
 }
 
 type alertRuleRow struct {
