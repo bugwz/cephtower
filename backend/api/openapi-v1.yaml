@@ -30650,7 +30650,7 @@ paths:
                   type: string
                 service_type:
                   type: string
-                  enum: ["alertmanager", "crash", "grafana", "loki", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "promtail", "rgw", "smb"]
+                  enum: ["alertmanager", "cephfs-mirror", "crash", "grafana", "loki", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "promtail", "rbd-mirror", "rgw", "smb"]
                 share_id:
                   type: string
                 silence_id:
@@ -30783,7 +30783,7 @@ paths:
                   type: string
                 service_type:
                   type: string
-                  enum: ["alertmanager", "crash", "grafana", "loki", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "promtail", "rgw", "smb"]
+                  enum: ["alertmanager", "cephfs-mirror", "crash", "grafana", "loki", "mds", "mgr", "mon", "nfs", "node-exporter", "prometheus", "promtail", "rbd-mirror", "rgw", "smb"]
                 share_id:
                   type: string
                 silence_id:

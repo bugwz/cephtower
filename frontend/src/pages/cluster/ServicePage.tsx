@@ -33,6 +33,8 @@ const serviceTypeOptions = [
   'mon',
   'mgr',
   'mds',
+  'rbd-mirror',
+  'cephfs-mirror',
   'rgw',
   'nfs',
   'smb',

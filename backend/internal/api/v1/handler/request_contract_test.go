@@ -11,9 +11,9 @@ import (
 	"testing"
 )
 
-func TestLogServiceRequestContracts(t *testing.T) {
+func TestIDLessServiceRequestContracts(t *testing.T) {
 	for _, action := range []string{"service.create", "service.update"} {
-		for _, kind := range []string{"loki", "promtail"} {
+		for _, kind := range []string{"loki", "promtail", "rbd-mirror", "cephfs-mirror"} {
 			fields := map[string]any{"cluster_id": float64(1), "service_type": kind, "placement": map[string]any{"count": float64(2)}}
 			if err := ValidateMutationRequest(action, fields); err != nil {
 				t.Fatalf("%s %s: %v", action, kind, err)

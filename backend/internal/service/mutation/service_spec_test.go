@@ -53,13 +53,17 @@ func TestServiceUpdateMergesExportedSpec(t *testing.T) {
 	}
 }
 
-func TestLogServiceApplyChain(t *testing.T) {
-	for _, kind := range []string{"loki", "promtail"} {
+func TestIDLessServiceApplyChain(t *testing.T) {
+	for _, kind := range []string{"loki", "promtail", "rbd-mirror", "cephfs-mirror"} {
 		for _, action := range []string{"service.create", "service.update"} {
 			s, _, id := newCephUserService(t)
+			extra := `"extra_container_args":["--cpus=2"]`
+			if kind == "loki" || kind == "promtail" {
+				extra += `,"spec":{"port":9999}`
+			}
 			e := &directoryRenameExecutor{outputs: map[string]string{
 				action:                     "Scheduled " + kind + " update...",
-				"service.update.pre_check": `[{"service_name":"` + kind + `","service_type":"` + kind + `","spec":{"port":9999},"placement":{"count":1}}]`,
+				"service.update.pre_check": `[{"service_name":"` + kind + `","service_type":"` + kind + `",` + extra + `,"placement":{"count":1}}]`,
 			}}
 			s.executor = e
 			_, err := s.Execute(context.Background(), Request{ClusterID: id, Action: action, ResourceKey: "service/" + kind, Parameters: map[string]any{"service_type": kind, "placement": map[string]any{"count": 2}, "unmanaged": false}})
@@ -85,8 +89,11 @@ func TestLogServiceApplyChain(t *testing.T) {
 			if spec["service_type"] != kind || spec["service_id"] != nil || spec["unmanaged"] != false || spec["placement"].(map[string]any)["count"] != float64(2) {
 				t.Fatalf("wrong native spec: %v", spec)
 			}
-			if action == "service.update" && spec["spec"].(map[string]any)["port"] != float64(9999) {
-				t.Fatalf("lost native log service settings: %v", spec)
+			if action == "service.update" && !reflect.DeepEqual(spec["extra_container_args"], []any{"--cpus=2"}) {
+				t.Fatalf("lost native service settings: %v", spec)
+			}
+			if action == "service.update" && (kind == "loki" || kind == "promtail") && spec["spec"].(map[string]any)["port"] != float64(9999) {
+				t.Fatalf("lost native log service port: %v", spec)
 			}
 		}
 	}
