@@ -762,9 +762,10 @@ for (const editing of [false, true]) {
     mutateResource: async (...args) => { calls.push(args) }
   }
   const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
-  await submit({ service_type: 'ingress', service_id: 'rgw.a', placement_json: '{}', backend_service: 'rgw.a', virtual_ip: '2001:db8::10/64', frontend_port: 8080, monitor_port: 9000 })
+  await submit({ service_type: 'ingress', service_id: 'rgw.a', placement_json: '{}', backend_service: 'rgw.a', virtual_ip: '2001:db8::10/64', frontend_port: 8080, monitor_port: 9000, virtual_interface_networks: ['192.0.2.0/24', '2001:db8::/64'] })
   assert.equal(calls[0][1], editing ? 'PATCH' : 'POST')
-  for (const key of ['backend_service', 'virtual_ip', 'frontend_port', 'monitor_port']) assert.equal(key in calls[0][2], !editing)
+  for (const key of ['backend_service', 'virtual_ip', 'frontend_port', 'monitor_port', 'virtual_interface_networks']) assert.equal(key in calls[0][2], !editing)
+  if (!editing) assert.deepEqual(calls[0][2].virtual_interface_networks, ['192.0.2.0/24', '2001:db8::/64'])
   if (!editing) assert.equal(calls[0][2].virtual_ip, '2001:db8::10/64')
 }
 for (const scenario of ['ok', 'inactive', 'unmount', 'stale', 'error']) {

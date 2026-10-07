@@ -30804,6 +30804,10 @@ paths:
                   type: string
                 unmanaged:
                   type: boolean
+                virtual_interface_networks:
+                  type: array
+                  items:
+                    type: string
                 virtual_ip:
                   type: string
                 who:

@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- Ingress 虚拟接口候选网段：对齐参考表单 virtual_interface_networks，将 IPv4/IPv6 CIDR 数组贯通创建表单、请求契约和原生 spec；保留空数组及网段顺序，拒绝非数组/非法 CIDR，仅在 Ingress 创建时提交。界面区分候选接口网段与服务绑定 networks，不声称已匹配实际接口；新增编码、非法值和前端创建/编辑隔离回归。
+
 - 基础 Ingress 服务部署：服务表单与 API 支持 RGW/NFS 后端、带前缀长度的 IPv4/IPv6 VIP、前端及监控端口，经校验编码为原生 IngressSpec 的 spec，通过 orch apply --no-overwrite 创建。编辑仅支持通用服务配置，导出合并保留原有 Ingress/TLS 设置，拒绝不支持的监听参数修改；新增原生命令链、非法参数及配置保留回归。TLS 和高级 Keepalived 表单尚未实现，部署后的网络可达性需真实集群验证。
 
 - 服务放置编辑预览：表单随 placement_json 与非托管开关实时显示待提交配置，并在表单校验阶段拒绝非对象或非法 JSON；明确清空会提交空对象，不是保留原值。预览只解析配置，不伪装成 Ceph dry-run 或保证主机匹配成功；新增非法输入、空对象、复杂主机规则和非托管状态回归。

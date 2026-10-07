@@ -7,7 +7,7 @@ import (
 )
 
 func ingressCreateSpec(p map[string]any, serviceType, action string) (map[string]any, error) {
-	fields := []string{"backend_service", "virtual_ip", "frontend_port", "monitor_port"}
+	fields := []string{"backend_service", "virtual_ip", "frontend_port", "monitor_port", "virtual_interface_networks"}
 	if serviceType != "ingress" || action != "service.create" {
 		for _, key := range fields {
 			if _, exists := p[key]; exists {
@@ -28,7 +28,7 @@ func ingressCreateSpec(p map[string]any, serviceType, action string) (map[string
 		return nil, invalid("virtual_ip must be an IPv4 or IPv6 address with a prefix length")
 	}
 	spec := map[string]any{"backend_service": backend, "virtual_ip": vip}
-	for _, key := range fields[2:] {
+	for _, key := range fields[2:4] {
 		encoded, err := json.Marshal(p[key])
 		var port *int
 		if err != nil || json.Unmarshal(encoded, &port) != nil || port == nil || *port < 1 || *port > 65535 {
@@ -38,6 +38,19 @@ func ingressCreateSpec(p map[string]any, serviceType, action string) (map[string
 	}
 	if spec["frontend_port"] == spec["monitor_port"] {
 		return nil, invalid("frontend_port and monitor_port must differ")
+	}
+	if value, exists := p["virtual_interface_networks"]; exists {
+		encoded, err := json.Marshal(value)
+		var networks []string
+		if err != nil || json.Unmarshal(encoded, &networks) != nil || networks == nil {
+			return nil, invalid("virtual_interface_networks must be an array of CIDR strings")
+		}
+		for _, network := range networks {
+			if _, err := netip.ParsePrefix(network); err != nil {
+				return nil, invalid("virtual_interface_networks entries must be IPv4 or IPv6 CIDRs")
+			}
+		}
+		spec["virtual_interface_networks"] = networks
 	}
 	return spec, nil
 }

@@ -58,3 +58,28 @@ func TestIngressServiceCreation(t *testing.T) {
 		t.Fatalf("lost ingress settings: %s %v", merged, err)
 	}
 }
+
+func TestIngressInterfaceNetworks(t *testing.T) {
+	for _, value := range []any{[]any{}, []any{"192.0.2.0/24", "2001:db8::/64"}, nil, "192.0.2.0/24", []any{1}, []any{""}, []any{"192.0.2.1"}, []any{"2001:db8::/129"}} {
+		p := map[string]any{"service_type": "ingress", "service_id": "rgw.a", "backend_service": "rgw.a", "virtual_ip": "192.0.2.10/24", "frontend_port": 8080, "monitor_port": 9000, "virtual_interface_networks": value}
+		cmd, err := build(Request{Action: "service.create"}, p)
+		networks, array := value.([]any)
+		valid := array && (len(networks) == 0 || reflect.DeepEqual(networks, []any{"192.0.2.0/24", "2001:db8::/64"}))
+		if (err == nil) != valid {
+			t.Fatalf("networks %v: %v", value, err)
+		}
+		if valid {
+			var spec map[string]any
+			json.Unmarshal(cmd.stdin, &spec)
+			if !reflect.DeepEqual(spec["spec"].(map[string]any)["virtual_interface_networks"], value) {
+				t.Fatal(string(cmd.stdin))
+			}
+		}
+		if _, err := ingressCreateSpec(p, "rgw", "service.create"); err == nil {
+			t.Fatal("ingress networks accepted for another service")
+		}
+		if _, err := ingressCreateSpec(p, "ingress", "service.update"); err == nil {
+			t.Fatal("unsupported network edits accepted")
+		}
+	}
+}

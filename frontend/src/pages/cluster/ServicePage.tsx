@@ -25,6 +25,7 @@ interface ServiceFormValues {
   virtual_ip?: string
   frontend_port?: number
   monitor_port?: number
+  virtual_interface_networks?: string[]
   networks?: string[]
 }
 
@@ -166,6 +167,7 @@ function ServicePageContent() {
         ...(typeof values.unmanaged === 'boolean' ? { unmanaged: values.unmanaged } : {}),
         ...(Array.isArray(values.networks) ? { networks: values.networks } : {}),
         ...(!editingService && values.service_type === 'ingress' ? { backend_service: values.backend_service, virtual_ip: values.virtual_ip, frontend_port: values.frontend_port, monitor_port: values.monitor_port } : {}),
+        ...(!editingService && values.service_type === 'ingress' && Array.isArray(values.virtual_interface_networks) ? { virtual_interface_networks: values.virtual_interface_networks } : {}),
         placement
       }
       const successMessage = editingService ? '服务更新已安排，请核对刷新后的配置与运行状态。' : '服务创建已安排，请核对刷新后的配置与运行状态。'
@@ -389,6 +391,7 @@ function ServicePageContent() {
             <Form.Item name="virtual_ip" label="虚拟 IP（含前缀长度）" rules={[{ required: true }]}><Input placeholder="192.0.2.10/24 或 2001:db8::10/64" /></Form.Item>
             <Form.Item name="frontend_port" label="前端端口" rules={[{ required: true }]}><InputNumber min={1} max={65535} precision={0} /></Form.Item>
             <Form.Item name="monitor_port" label="监控端口" rules={[{ required: true }]}><InputNumber min={1} max={65535} precision={0} /></Form.Item>
+            <Form.Item name="virtual_interface_networks" label="虚拟接口候选网段" extra="可选：当 VIP 网段不能直接确定接口时，提供用于选择承载接口的 IPv4/IPv6 网段。不是服务绑定网段，也不会修改主机网络；接口选择由 Ceph 完成。"><Select mode="tags" tokenSeparators={[',']} placeholder="例如 192.0.2.0/24 或 2001:db8::/64" /></Form.Item>
           </>)}
         </Form>
       </DraggableModal>

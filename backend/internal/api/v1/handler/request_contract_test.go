@@ -24,6 +24,7 @@ func TestIDLessServiceRequestContracts(t *testing.T) {
 
 func TestIngressServiceContract(t *testing.T) {
 	fields := map[string]any{"cluster_id": float64(1), "service_type": "ingress", "service_id": "rgw.a", "backend_service": "rgw.a", "virtual_ip": "192.0.2.10/24", "frontend_port": float64(8080), "monitor_port": float64(9000)}
+	fields["virtual_interface_networks"] = []any{"192.0.2.0/24", "2001:db8::/64"}
 	if err := ValidateMutationRequest("service.create", fields); err != nil {
 		t.Fatal(err)
 	}
