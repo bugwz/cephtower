@@ -435,12 +435,13 @@ type daemonWire struct {
 	LastRefresh        *string `json:"last_refresh"`
 }
 type serviceWire struct {
-	Networks    []string `json:"networks"`
-	ServiceName string   `json:"service_name"`
-	ServiceType string   `json:"service_type"`
-	Placement   any      `json:"placement"`
-	Unmanaged   bool     `json:"unmanaged"`
-	Events      []string `json:"events"`
+	Spec        json.RawMessage `json:"spec"`
+	Networks    []string        `json:"networks"`
+	ServiceName string          `json:"service_name"`
+	ServiceType string          `json:"service_type"`
+	Placement   any             `json:"placement"`
+	Unmanaged   bool            `json:"unmanaged"`
+	Events      []string        `json:"events"`
 	Status      struct {
 		ContainerImageName *string `json:"container_image_name"`
 		ContainerImageID   *string `json:"container_image_id"`
@@ -664,6 +665,18 @@ func (p *NativeProvider) collectTopology(ctx context.Context, access ClusterAcce
 			}
 		}
 		payload := cephdomain.Service{Name: wire.ServiceName, Type: wire.ServiceType, Running: wire.Status.Running, Size: wire.Status.Size, Placement: wire.Placement, Unmanaged: wire.Unmanaged, LastRefresh: wire.Status.LastRefresh, Ports: wire.Status.Ports, Events: wire.Events}
+		if wire.ServiceType == "ingress" && len(wire.Spec) > 0 {
+			if err := json.Unmarshal(wire.Spec, &payload.Ingress); err != nil {
+				return nil, fmt.Errorf("parse collect.service response: invalid ingress settings")
+			}
+			if payload.Ingress != nil {
+				for _, port := range []*int{payload.Ingress.FrontendPort, payload.Ingress.MonitorPort} {
+					if port != nil && (*port < 1 || *port > 65535) {
+						return nil, fmt.Errorf("parse collect.service response: invalid ingress port")
+					}
+				}
+			}
+		}
 		payload.ContainerImageName = wire.Status.ContainerImageName
 		payload.Networks = wire.Networks
 		if payload.Networks == nil {

@@ -13,6 +13,7 @@ import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 import { ServiceDaemons } from './ServiceDaemons'
 import { ServicePlacement, ServicePlacementPreview } from './ServicePlacement'
+import { IngressSettings } from './IngressSettings'
 import { DaemonPerf } from './DaemonPerf'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 
@@ -312,6 +313,7 @@ function ServicePageContent() {
                     { key: 'ports', title: '端口', filterKey: false },
                     { key: 'service_url', title: '服务访问地址', filterKey: false },
                     { key: 'virtual_ip', title: '虚拟 IP', filterKey: false },
+                    { key: 'ingress', title: 'Ingress 配置', filterKey: false, ellipsis: false, render: (value, row) => row.type === 'ingress' ? <IngressSettings value={value} /> : '不适用' },
                     { key: 'container_image_name', title: '容器镜像', filterKey: false },
                     { key: 'container_image_id', title: '镜像 ID', filterKey: false },
                     { key: 'ceph_created_at', title: 'Ceph 服务创建时间', filterKey: false },

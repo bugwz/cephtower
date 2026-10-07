@@ -78,21 +78,33 @@ type DaemonRuntime struct {
 	Events                []string `json:"events,omitempty"`
 }
 type Service struct {
-	Networks           []string `json:"networks"`
-	ContainerImageName *string  `json:"container_image_name"`
-	ContainerImageID   *string  `json:"container_image_id"`
-	ServiceURL         *string  `json:"service_url"`
-	VirtualIP          *string  `json:"virtual_ip"`
-	CephCreatedAt      *string  `json:"ceph_created_at"`
-	Name               string   `json:"name"`
-	Type               string   `json:"type"`
-	Running            *int     `json:"running"`
-	Size               *int     `json:"size"`
-	Placement          any      `json:"placement,omitempty"`
-	Unmanaged          bool     `json:"unmanaged"`
-	LastRefresh        *string  `json:"last_refresh"`
-	Ports              []int    `json:"ports"`
-	Events             []string `json:"events"`
+	Ingress            *IngressSettings `json:"ingress,omitempty"`
+	Networks           []string         `json:"networks"`
+	ContainerImageName *string          `json:"container_image_name"`
+	ContainerImageID   *string          `json:"container_image_id"`
+	ServiceURL         *string          `json:"service_url"`
+	VirtualIP          *string          `json:"virtual_ip"`
+	CephCreatedAt      *string          `json:"ceph_created_at"`
+	Name               string           `json:"name"`
+	Type               string           `json:"type"`
+	Running            *int             `json:"running"`
+	Size               *int             `json:"size"`
+	Placement          any              `json:"placement,omitempty"`
+	Unmanaged          bool             `json:"unmanaged"`
+	LastRefresh        *string          `json:"last_refresh"`
+	Ports              []int            `json:"ports"`
+	Events             []string         `json:"events"`
+}
+
+// IngressSettings deliberately excludes certificate, key and password material.
+type IngressSettings struct {
+	BackendService           *string  `json:"backend_service"`
+	VirtualIP                *string  `json:"virtual_ip"`
+	FrontendPort             *int     `json:"frontend_port"`
+	MonitorPort              *int     `json:"monitor_port"`
+	SSL                      *bool    `json:"ssl"`
+	KeepaliveOnly            *bool    `json:"keepalive_only"`
+	VirtualInterfaceNetworks []string `json:"virtual_interface_networks"`
 }
 type Monitor struct {
 	Name            string           `json:"name"`
