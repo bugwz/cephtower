@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- RBD 镜像同步详情结构化展示：对应参考 `mirroring/image-list`，沿用 `rbd mirror pool status --verbose --format json` 采集与 `/rbd/mirroring` 库存 API，展示名称、全局 ID、本地状态/描述/更新时间，展开查看关联 daemon_service 和 peer_sites 各站点状态。字段映射依据 `MirrorPool.cc` 与 `MirrorDaemonServiceInfo.cc::dump_image`；保留原生状态和时间，不把 replaying 判作完成，不从缺少 daemon/peer_sites 推断进程停止或 Peer 未配置。新增组件与原生字段保留回归；本项未实现参考界面的描述派生速率/进度分组，不是同步全功能完成声明，无实机或浏览器视觉验证。
+
 - RBD 同步守护进程结构化展示：对应参考 `mirroring/daemon-list`，复用已有 `rbd mirror pool status <pool> --verbose --format json` → `rbd_mirroring` 库存 → `/rbd/mirroring` 链路，将原始对象列替换为分页表格，展示实例/服务/客户端 ID、主机、版本、本池 Leader、原生健康与 callouts。字段依据 `src/tools/rbd/action/MirrorPool.cc`，明确 CLI 是池范围、不等同参考控制器的跨池 daemon 健康汇总；未知、空数组、缺失和 false 分开处理，不将缺失解释为健康。补充原生采集字段保留及实际组件渲染回归，无实机或浏览器视觉验证。
 
 - RGW S3 累计概览：对照 `rgw-s3-analytics.libsonnet` 的四项概览，增加 GET/PUT 累计字节、PUT 累计次数总和白名单查询，复用加权 PUT 平均操作字节查询；在 RGW 概览提供即时和最近一小时历史批量读取。纠正参考面板“Total Objects”的含义：PUT 次数不是存量对象数，累计字节不是桶容量或时间段增量。保留原始数值、采集提示、独立错误与集群切换取消；增加四项两种查询模式回归。数据沿用 Ceph exporter → Prometheus → 后端白名单 API 链路，不以 CLI 当前快照伪造历史；无真实集群验证。
