@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- RBD 重放统计链路：依据 journal `ReplayStatusFormatter.cc`、snapshot `Replayer.cc` 及参考控制器 `_update_syncing_image_data`，在原生池状态采集时提取 `up+replaying` 描述中的 B/s、预计剩余秒数、同步百分比和落后主端条目数，通过库存 API 提供本地和远端站点详情。后端逐字段校验、保留数值文本和原始描述，不对缺失/错误格式补零，不展示 down 状态的历史描述统计；前端明确是采集快照、预计时间不保证完成。覆盖精确 uint64、零值、分数、百分比越界、错误类型与真实采集路径。引导复制阶段的文本百分比尚未提取，无实机或浏览器视觉验证。
+
 - RBD 镜像同步状态分类：依据 `Utils.cc::mirror_image_site_status_state` 的 `up/down+state` 枚举与参考 Dashboard 分类，增加本地状态计数和本地/远端分类筛选。将停止中/已停止单独列出，不沿用容易误解的 Ready；down 与 error 提示关注，缺失、未来状态和格式异常归为未知，原生文本始终保留。本地统计只覆盖当前池返回的镜像、在筛选前计数，不混入远端状态。补充全部原生状态及异常边界回归，无实机或浏览器视觉验证。
 
 - RBD 镜像同步详情结构化展示：对应参考 `mirroring/image-list`，沿用 `rbd mirror pool status --verbose --format json` 采集与 `/rbd/mirroring` 库存 API，展示名称、全局 ID、本地状态/描述/更新时间，展开查看关联 daemon_service 和 peer_sites 各站点状态。字段映射依据 `MirrorPool.cc` 与 `MirrorDaemonServiceInfo.cc::dump_image`；保留原生状态和时间，不把 replaying 判作完成，不从缺少 daemon/peer_sites 推断进程停止或 Peer 未配置。新增组件与原生字段保留回归；本项未实现参考界面的描述派生速率/进度分组，不是同步全功能完成声明，无实机或浏览器视觉验证。

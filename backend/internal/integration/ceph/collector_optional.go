@@ -188,6 +188,7 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 				if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_mirroring_status", []string{"mirror", "pool", "status", pool.PoolName, "--verbose", "--format", "json"}, &status) {
 					mirroring["summary"] = status["summary"]
 					mirroring["daemons"] = status["daemons"]
+					enrichMirrorReplayMetrics(status["images"])
 					mirroring["images"] = status["images"]
 				}
 			}

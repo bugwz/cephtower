@@ -34,13 +34,20 @@ assert.equal(classification.onFilter('同步或重放中', rows[0]), true)
 const summary = ui.RbdMirrorImages({value:[sample,{}, {state:'up+stopped'}, {state:'down+error'}]}).props.children[1].props.children.join('')
 assert.ok(summary.includes('需关注 1；同步或重放中 1；停止中或已停止 1；未知或无效 1'))
 const expanded = table.props.expandable.expandedRowRender(rows[0]).props.children
-assert.equal(expanded[1].props.columns.at(-1).onFilter('需关注', rows[0].peers[0]), true)
+assert.equal(expanded[1].props.columns.find(column => column.dataIndex === 'category').onFilter('需关注', rows[0].peers[0]), true)
 assert.deepEqual(expanded[0].props.items.map(item => item.children.props.children), Object.values(daemon))
 assert.equal(expanded[1].props.columns[0].render(''), '名称未解析')
 assert.equal(expanded[1].props.columns[3].render(peer.description).props.children, peer.description)
 const missing = table.props.expandable.expandedRowRender(rows[1]).props.children
-assert.ok(missing.every(node => node.type === 'Alert'))
+assert.ok(missing.slice(0,2).every(node => node.type === 'Alert'))
 const empty = table.props.expandable.expandedRowRender(ui.rbdMirrorImageRows([{peer_sites:[]}])[0]).props.children
 assert.equal(empty[1].props.message, '远端站点状态列表为空')
+const metrics = {bytes_per_second:'0', seconds_until_synced:'18446744073709551615', syncing_percent:'0.5', entries_behind_primary:'9007199254740993'}
+assert.deepEqual(ui.RbdReplayMetrics({value:metrics}).props.items.map(item=>item.children), Object.values(metrics))
+assert.ok(ui.RbdReplayMetrics({value:undefined}).props.items.every(item=>item.children==='未返回有效值'))
+const enriched = ui.rbdMirrorImageRows([{...sample,replay_metrics:metrics,peer_sites:[{...peer,replay_metrics:{bytes_per_second:'1'}}]}])[0]
+const details = table.props.expandable.expandedRowRender(enriched).props.children
+assert.equal(details[2].props.value,metrics)
+assert.equal(details[1].props.columns.at(-1).render(enriched.peers[0].metrics).props.value.bytes_per_second,'1')
 assert.ok(readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8').includes('<RbdMirrorImages value={value} />'))
 console.log('RBD mirror image local, remote, and daemon fields preserve native states')
