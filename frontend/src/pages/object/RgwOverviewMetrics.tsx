@@ -1,6 +1,7 @@
 import { Alert, Button, Card, Space, Table } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { jsonInit, request } from '../../api/client'
+import { jsonInit, request, type ApiRecord } from '../../api/client'
+import { MetricNotices } from '../monitoring/MetricNotices'
 import { useClusterContext } from '../../state/ClusterContext'
 
 const metrics=[
@@ -10,7 +11,7 @@ const metrics=[
   {id:'rgw_get_latency_ms',name:'GET 平均延迟',unit:'ms'},
   {id:'rgw_put_latency_ms',name:'PUT 平均延迟',unit:'ms'},
 ]
-type Value={value?:string;timestamp?:number;status:string}
+type Value={value?:string;timestamp?:number;status:string;meta?:ApiRecord}
 type Point={time:number;raw:string;value?:number}
 export function overviewHistoryPoints(value:unknown,start:number,end:number):Point[] {
   const data=value as {result_type:string;series:Array<{metric:Record<string,string>;values:Array<[number,string]>}>}
@@ -63,8 +64,10 @@ export function RgwOverviewMetricsView({clusterId}:{clusterId?:number}) {
       try{
         const params=new URLSearchParams(history?{metric_id:metric.id,start:new Date(start*1000).toISOString(),end:new Date(end*1000).toISOString(),step:'60s'}:{metric_id:metric.id,time})
         const result=await request<unknown>(`/metric/${history?'range':'query'}?${params}`,jsonInit('GET',{cluster_id:clusterId},{signal:controller.signal,cache:'no-store',suppressErrorNotification:true}))
-        if(history){const points=overviewHistoryPoints(result,start,end);return {...metric,points,status:points.some(point=>point.value!==undefined)?'已读取':'无可绘制样本'}}
-        return {...metric,...overviewMetricValue(result)}
+        const metadata=(result as {meta?:unknown})?.meta
+        const meta=metadata&&typeof metadata==='object'&&!Array.isArray(metadata)?metadata as ApiRecord:undefined
+        if(history){const points=overviewHistoryPoints(result,start,end);return {...metric,meta,points,status:points.some(point=>point.value!==undefined)?'已读取':'无可绘制样本'}}
+        return {...metric,meta,...overviewMetricValue(result)}
       }catch{return {...metric,status:'读取失败或响应无效'}}
     }))
     if(mounted.current&&current.current===clusterId&&ticket===sequence.current&&!controller.signal.aborted)setState({clusterId,busy:false,time,rows,history,start,end})
@@ -75,6 +78,7 @@ export function RgwOverviewMetricsView({clusterId}:{clusterId?:number}) {
     <Button disabled={!clusterId||scoped?.busy} loading={scoped?.busy} onClick={()=>void read()}>读取性能概览</Button>
     <Button disabled={!clusterId||scoped?.busy} loading={scoped?.busy} onClick={()=>void read(true)}>读取一小时趋势</Button>
     {!clusterId&&<Alert type="info" message="请先选择集群"/>}
+    {scoped?.rows?.map(row=><div key={`notices-${row.id}`} aria-label={`${row.name}查询提示`}><MetricNotices meta={row.meta}/></div>)}
     {scoped?.rows&&<><span>查询时间：{scoped.time}</span>{scoped.history?<>
       <Alert type="info" message="60 秒评估步长；缺失点和不可计算值处断线，不补零。图形使用浮点近似，各图独立纵轴；展开查看原始数值。"/>
       {scoped.rows.map(row=><Card key={row.id} size="small" title={`${row.name} · ${row.unit}`}>
