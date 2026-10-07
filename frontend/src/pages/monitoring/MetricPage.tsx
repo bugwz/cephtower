@@ -60,6 +60,14 @@ export function metricSamples(item: ApiRecord): MetricSample[] {
 }
 
 const metricOptions = [
+  { label: 'RGW 桶 GET 累计操作数 Top 5 序列', value: 'rgw_bucket_get_ops_top5', description: '原生序列排行，保留租户/实例；非时间段增量或跨实例汇总' },
+  { label: 'RGW 桶 GET 累计字节（B） Top 5 序列', value: 'rgw_bucket_get_bytes_top5', description: '原生序列排行，保留租户/实例；非时间段增量或跨实例汇总' },
+  { label: 'RGW 桶 PUT 累计操作数 Top 5 序列', value: 'rgw_bucket_put_ops_top5', description: '原生序列排行，保留租户/实例；非时间段增量或跨实例汇总' },
+  { label: 'RGW 桶 PUT 累计字节（B） Top 5 序列', value: 'rgw_bucket_put_bytes_top5', description: '原生序列排行，保留租户/实例；非时间段增量或跨实例汇总' },
+  { label: 'RGW 用户 GET 累计操作数 Top 5 序列', value: 'rgw_user_get_ops_top5', description: '原生序列排行，保留租户/实例；非时间段增量或跨实例汇总' },
+  { label: 'RGW 用户 GET 累计字节（B） Top 5 序列', value: 'rgw_user_get_bytes_top5', description: '原生序列排行，保留租户/实例；非时间段增量或跨实例汇总' },
+  { label: 'RGW 用户 PUT 累计操作数 Top 5 序列', value: 'rgw_user_put_ops_top5', description: '原生序列排行，保留租户/实例；非时间段增量或跨实例汇总' },
+  { label: 'RGW 用户 PUT 累计字节（B） Top 5 序列', value: 'rgw_user_put_bytes_top5', description: '原生序列排行，保留租户/实例；非时间段增量或跨实例汇总' },
   { label: 'RGW 累计 PUT 平均操作字节（B/次）', value: 'rgw_put_mean_bytes', description: '累计 PUT 字节总和 / 次数总和，非当前对象平均大小；重置会改变统计范围' },
   { label: 'RGW 按桶 GET 平均延迟（ms）', value: 'rgw_bucket_get_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
   { label: 'RGW 按桶 PUT 平均延迟（ms）', value: 'rgw_bucket_put_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
@@ -271,6 +279,7 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
       <Alert type="info" showIcon message="RGW 累计操作数保留原始实例标签，未跨实例求和；它们不是库存对象数、请求速率或所选时间段内的操作总数。重启或计数器重置会使数值下降，共享端点不提供集群隔离。" />
       <Alert type="info" showIcon message="按桶指标依赖 rgw_bucket_counters_cache 与 exporter 采集。缓存淘汰、重建或重启可能重置计数，不能作为持久审计记录；无数据不代表没有请求。请同时核对 bucket、tenant 和实例标签，不能只按桶名判断归属。" />
       <Alert type="info" showIcon message="按用户指标依赖 rgw_user_counters_cache 与 exporter 采集，同样可能因缓存淘汰而重置。user 标签是原生用户 ID 部分，必须结合 tenant 与实例核对；不等同于账户统计，也不保证包含匿名请求。" />
+      <Alert type="info" showIcon message="Top 5 按原生累计计数器序列排序，不合并同一桶或用户的多个实例。历史查询逐个评估时间点选取前五，整个范围可能返回超过五条序列；落榜或缺失不是零，标签筛选仅作用于已返回排行。" />
       <Space direction="vertical" size={16} className="page-stack">
         <Input.Search aria-label="搜索指标预设" placeholder="搜索指标名称、ID 或说明" allowClear value={presetSearch} onChange={event => setPresetSearch(event.target.value)} />
         <Text type="secondary">匹配预设：{visiblePresets.length} / {metricOptions.length}；搜索只筛选预设，不修改当前指标或查询结果。</Text>

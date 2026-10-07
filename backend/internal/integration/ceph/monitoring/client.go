@@ -49,6 +49,15 @@ type PrometheusResult struct {
 }
 
 var metricQueries = map[string]string{
+	"rgw_bucket_get_ops_top5":   "topk(5, ceph_rgw_op_per_bucket_get_obj_ops)",
+	"rgw_bucket_get_bytes_top5": "topk(5, ceph_rgw_op_per_bucket_get_obj_bytes)",
+	"rgw_bucket_put_ops_top5":   "topk(5, ceph_rgw_op_per_bucket_put_obj_ops)",
+	"rgw_bucket_put_bytes_top5": "topk(5, ceph_rgw_op_per_bucket_put_obj_bytes)",
+	"rgw_user_get_ops_top5":     "topk(5, ceph_rgw_op_per_user_get_obj_ops)",
+	"rgw_user_get_bytes_top5":   "topk(5, ceph_rgw_op_per_user_get_obj_bytes)",
+	"rgw_user_put_ops_top5":     "topk(5, ceph_rgw_op_per_user_put_obj_ops)",
+	"rgw_user_put_bytes_top5":   "topk(5, ceph_rgw_op_per_user_put_obj_bytes)",
+
 	"rgw_put_mean_bytes": "sum(ceph_rgw_op_put_obj_bytes) / sum(ceph_rgw_op_put_obj_ops)",
 
 	"rgw_bucket_get_latency_ms":    "1000 * rate(ceph_rgw_op_per_bucket_get_obj_lat_sum[1m]) / rate(ceph_rgw_op_per_bucket_get_obj_lat_count[1m])",
