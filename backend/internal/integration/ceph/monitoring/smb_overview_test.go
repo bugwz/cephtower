@@ -9,6 +9,7 @@ import (
 
 func TestSMBOverviewQueries(t *testing.T) {
 	queries := map[string]string{
+		"smb_request_duration_rate": "rate(smb_smb2_request_duration_microseconds_sum[5m])",
 		"smb_metrics_status": "smb_metrics_status", "smb_sessions": "smb_sessions_total", "smb_users": "smb_users_total", "smb_share_activity": "smb_share_activity",
 		"smb_in_bytes_rate": "rate(smb_smb2_request_inbytes[5m])", "smb_out_bytes_rate": "rate(smb_smb2_request_outbytes[5m])", "smb_request_rate": "rate(smb_smb2_request_total[5m])",
 	}

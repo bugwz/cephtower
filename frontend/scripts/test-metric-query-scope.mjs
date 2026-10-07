@@ -9,6 +9,9 @@ const source = readFileSync(new URL('../src/pages/monitoring/MetricPage.tsx', im
 const tree = ts.createSourceFile('MetricPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const optionsNode = tree.statements.filter(ts.isVariableStatement).flatMap(node => [...node.declarationList.declarations]).find(node => node.name.getText(tree) === 'metricOptions')
 const options = new Function(`return ${optionsNode.initializer.getText(tree)}`)()
+assert.equal(options.filter(option => option.value === 'smb_request_duration_rate').length, 1)
+assert.ok(options.find(option => option.value === 'smb_request_duration_rate').label.includes('µs/s'))
+assert.ok(options.find(option => option.value === 'smb_request_duration_rate').description.includes('非单请求平均延迟'))
 for (const id of ['smb_metrics_status', 'smb_sessions', 'smb_users', 'smb_share_activity', 'smb_in_bytes_rate', 'smb_out_bytes_rate', 'smb_request_rate']) assert.equal(options.filter(option => option.value === id).length, 1)
 const helpers = tree.statements.filter(node => ts.isFunctionDeclaration(node) && ['metricSamples', 'normalizeSeries', 'readRecord'].includes(node.name.text))
 const sampleExports = {}

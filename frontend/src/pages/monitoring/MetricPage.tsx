@@ -58,6 +58,7 @@ export function metricSamples(item: ApiRecord): MetricSample[] {
 }
 
 const metricOptions = [
+  { label: 'SMB2 请求累计耗时速率（µs/s）', value: 'smb_request_duration_rate', description: '各操作 5 分钟累计耗时 rate，非单请求平均延迟' },
   { label: 'SMB 指标采集状态（各实例）', value: 'smb_metrics_status', description: 'smb_metrics_status：0 Down / 1 Up' },
   { label: 'SMB 会话数（各实例）', value: 'smb_sessions', description: 'smb_sessions_total' },
   { label: 'SMB 用户数（各实例）', value: 'smb_users', description: 'smb_users_total' },
