@@ -45,9 +45,16 @@ export function RgwCurrentPeriod({ value, realm, current }: { value: unknown; re
   return <div>
     <p>{summary}</p>
     <p>采集时 Realm 指向的 Period 快照，不是待提交配置差异，不代表各远端已同步；与 Zonegroup 当前本地配置可能不同。</p>
-    {!valid ? <p>Period Zonegroup 列表不可用（不推断为空）</p> : <Table size="small" rowKey="id" dataSource={groups} pagination={groups.length > 5 ? { pageSize: 5 } : false} scroll={{ x: 600 }} locale={{ emptyText: '此 Period 的 Zonegroup 列表为空' }} columns={[
+    {!valid ? <p>Period Zonegroup 列表不可用（不推断为空）</p> : <Table size="small" rowKey="id" dataSource={groups} pagination={groups.length > 5 ? { pageSize: 5 } : false} scroll={{ x: 1800 }} locale={{ emptyText: '此 Period 的 Zonegroup 列表为空' }} columns={[
       { title: 'Zonegroup ID', dataIndex: 'id', render: raw },
       { title: '名称', dataIndex: 'name', render: raw },
+      { title: 'API 名称', dataIndex: 'api_name', render: raw },
+      { title: '主组配置标志', dataIndex: 'is_master', render: flag },
+      { title: '端点', dataIndex: 'endpoints', render: names },
+      { title: 'S3 访问域名', dataIndex: 'hostnames', render: names },
+      { title: '静态网站域名', dataIndex: 'hostnames_s3website', render: names },
+      { title: '默认放置规则（原值）', dataIndex: 'default_placement', render: raw },
+      { title: '启用特性', dataIndex: 'enabled_features', render: names },
       { title: '主 Zone', dataIndex: 'master_zone', render: raw },
       { title: '成员 Zone', dataIndex: 'zones', render: (zones: unknown, group: Record<string, unknown>) => <details><summary>查看成员配置</summary><RgwPeriodZones value={zones} master={group.master_zone} /></details> },
       { title: '同步策略', dataIndex: 'sync_policy', render: (policy: unknown) => <pre>{raw(policy)}</pre> }
