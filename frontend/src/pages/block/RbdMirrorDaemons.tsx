@@ -1,4 +1,14 @@
-import { Alert, Space, Table } from 'antd'
+import { Alert, Space, Table, Tag } from 'antd'
+
+export function rbdDaemonHealthCategory(value: unknown): string {
+  return value === 'OK' || value === 'WARNING' || value === 'ERROR' ? value : '未知或无效'
+}
+
+export function RbdDaemonHealth({ value }: { value: unknown }) {
+  const category = rbdDaemonHealthCategory(value)
+  const color = category === 'OK' ? 'green' : category === 'WARNING' ? 'orange' : category === 'ERROR' ? 'red' : 'default'
+  return <Tag color={color}>{typeof value === 'string' && value ? value : '未返回或无效'}</Tag>
+}
 
 export function RbdMirrorLeaderCounts({ value, status }: { value: unknown; status?: unknown }) {
   if (status === 'disabled') return <Alert type="info" message="池同步已禁用，未查询 Leader 计数" />
@@ -40,8 +50,8 @@ export function RbdMirrorDaemons({ value }: { value: unknown }) {
     <Table size="small" rowKey="index" pagination={{ pageSize: 5 }} scroll={{ x: 1100 }} dataSource={rows} columns={[
       { title: '实例 ID', dataIndex: 'instance' }, { title: '服务 ID', dataIndex: 'service' },
       { title: '客户端 ID', dataIndex: 'client' }, { title: '主机', dataIndex: 'hostname' },
-      { title: 'Ceph 版本', dataIndex: 'version' }, { title: '本池 Leader', dataIndex: 'leader' },
-      { title: '原生健康状态', dataIndex: 'health' },
+      { title: 'Ceph 版本', dataIndex: 'version' }, { title: '本池 Leader', dataIndex: 'leader', filters: ['是','否','未返回或无效'].map(value=>({text:value,value})), onFilter:(value,row)=>row.leader===value },
+      { title: '原生健康状态', dataIndex: 'health', render: value => <RbdDaemonHealth value={value} />, filters:['OK','WARNING','ERROR','未知或无效'].map(value=>({text:value,value})), onFilter:(value,row)=>rbdDaemonHealthCategory(row.health)===value },
       { title: '原生提示', dataIndex: 'callouts', render: (text: string) => <span style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{text}</span> }
     ]} />
   </Space>

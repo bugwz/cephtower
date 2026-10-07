@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 const source = readFileSync(new URL('../src/pages/block/RbdMirrorDaemons.tsx', import.meta.url), 'utf8')
 const ui = {}, jsx = (type, props) => ({ type, props })
-new Function('exports', 'require', ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText)(ui, name => name === 'antd' ? { Alert: 'Alert', Space: 'Space', Table: 'Table' } : { jsx, jsxs: jsx })
+new Function('exports', 'require', ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText)(ui, name => name === 'antd' ? { Alert: 'Alert', Space: 'Space', Table: 'Table', Tag:'Tag' } : { jsx, jsxs: jsx })
 const sample = { service_id: 'svc', instance_id: '9007199254740993', client_id: 'client.mirror', hostname: 'host', ceph_version: 'ceph version 20', leader: false, health: 'WARNING', callouts: ['<script>bad</script>', 'lagging'] }
 assert.deepEqual(ui.rbdMirrorDaemonRows([sample])[0], { index: 0, service: 'svc', instance: '9007199254740993', client: 'client.mirror', hostname: 'host', version: 'ceph version 20', leader: '否', health: 'WARNING', callouts: '<script>bad</script>\nlagging' })
 for (const bad of [undefined, null, {}, [null], [[]], ['bad']]) {
@@ -23,6 +23,27 @@ const rendered = ui.RbdMirrorDaemons({ value: [sample, sample] })
 const table = rendered.props.children.find(node => node.type === 'Table')
 assert.deepEqual(table.props.dataSource.map(row => row.index), [0, 1])
 assert.equal(table.props.columns.length, 8)
+for(const [value,color] of [['OK','green'],['WARNING','orange'],['ERROR','red']]) {
+  assert.equal(ui.rbdDaemonHealthCategory(value),value)
+  assert.equal(ui.RbdDaemonHealth({value}).props.color,color)
+  assert.equal(ui.RbdDaemonHealth({value}).props.children,value)
+}
+for(const value of [undefined,null,0,'','ok','OK ','FUTURE','<script>']) {
+  assert.equal(ui.rbdDaemonHealthCategory(value),'未知或无效')
+  assert.equal(ui.RbdDaemonHealth({value}).props.color,'default')
+}
+assert.equal(ui.RbdDaemonHealth({value:'<script>'}).props.children,'<script>')
+const healthColumn=table.props.columns.find(column=>column.dataIndex==='health')
+assert.equal(healthColumn.filters.length,4)
+assert.equal(healthColumn.onFilter('WARNING',ui.rbdMirrorDaemonRows([sample])[0]),true)
+assert.equal(healthColumn.onFilter('OK',rows[0]),false)
+assert.equal(healthColumn.onFilter('未知或无效',rows[1]),true)
+assert.equal(healthColumn.render('WARNING').props.value,'WARNING')
+const leaderColumn=table.props.columns.find(column=>column.dataIndex==='leader')
+assert.equal(leaderColumn.filters.length,3)
+assert.equal(leaderColumn.onFilter('是',rows[1]),true)
+assert.equal(leaderColumn.onFilter('否',rows[2]),false)
+assert.equal(leaderColumn.onFilter('未返回或无效',rows[2]),true)
 assert.equal(table.props.columns.at(-1).render('<img>').props.children, '<img>')
 assert.ok(rendered.props.children[0].props.children.includes('仅针对本池'))
 assert.ok(readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8').includes('<RbdMirrorDaemons value={value} />'))
