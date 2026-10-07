@@ -595,7 +595,7 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
         {name:'value',label:'新值（方向：rx-only / tx-only / rx-tx）',required:true}],
       buildBody:(values,clusterId,row)=>({cluster_id:clusterId,pool:String(row?.pool ?? row?.name),action:'set',uuid:rbdMirrorPeerIdentity(values,row),field:String(values.field),value:String(values.value)})
     },{
-      title:'删除远端站点',buttonLabel:'删除 Peer',path:'/rbd/mirroring/peer',method:'POST',successMessage:'远端站点已删除',
+      title:'删除远端站点',buttonLabel:'删除 Peer',path:'/rbd/mirroring/peer',method:'POST',successMessage:'远端站点已删除并回读确认；请检查受影响的同步关系',
       disabledWhen:row=>rbdMirrorPeerOptions(row).length ? undefined : '没有唯一有效的 Peer 库存，请先重新采集',
       fields:[{name:'uuid',label:'当前池 Peer（不是 Mirror UUID）',type:'select',required:true,optionsLoader:async(_clusterId,row)=>rbdMirrorPeerOptions(row)}],
       confirmation:(values,row)=>`删除池 ${String(row?.pool ?? row?.name)} 的远端站点 ${rbdMirrorPeerIdentity(values,row)}，停止与该站点同步？`,
