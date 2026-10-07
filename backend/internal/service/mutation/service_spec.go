@@ -62,14 +62,27 @@ func mergeServiceSpec(exported, patch []byte, name string) ([]byte, error) {
 		var proposed map[string]any
 		var original map[string]json.RawMessage
 		if currentType != "ingress" || json.Unmarshal(patch, &proposed) != nil || proposed == nil || json.Unmarshal(current["spec"], &original) != nil || original == nil {
-			return nil, invalid("cannot safely merge ingress TLS settings")
+			return nil, invalid("cannot safely merge ingress settings")
 		}
 		for key := range proposed {
-			if key != "ssl" && key != "ssl_cert" && key != "ssl_key" {
+			if key != "ssl" && key != "ssl_cert" && key != "ssl_key" && key != "virtual_ip" && key != "frontend_port" && key != "monitor_port" {
 				return nil, invalid("unsupported ingress spec update")
 			}
 		}
-		validated, err := ingressTLSParameters(proposed, map[string]any{})
+		listener, err := ingressListenerParameters(proposed)
+		if err != nil {
+			return nil, err
+		}
+		if len(listener) > 0 {
+			var keepaliveOnly bool
+			if raw, exists := original["keepalive_only"]; exists && (json.Unmarshal(raw, &keepaliveOnly) != nil || string(raw) == "null") {
+				return nil, invalid("invalid ingress mode")
+			}
+			if keepaliveOnly || (original["virtual_ips_list"] != nil && string(original["virtual_ips_list"]) != "null") {
+				return nil, invalid("listener editing is not supported for keepalive-only or multiple-VIP services")
+			}
+		}
+		validated, err := ingressTLSParameters(proposed, listener)
 		if err != nil {
 			return nil, err
 		}

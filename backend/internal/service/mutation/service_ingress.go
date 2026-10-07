@@ -10,12 +10,16 @@ import (
 func ingressServiceSpec(p map[string]any, serviceType, action string) (map[string]any, error) {
 	fields := []string{"backend_service", "virtual_ip", "frontend_port", "monitor_port", "virtual_interface_networks", "ssl", "ssl_cert", "ssl_key"}
 	if serviceType == "ingress" && action == "service.update" {
-		for _, field := range fields[:5] {
+		for _, field := range []string{"backend_service", "virtual_interface_networks"} {
 			if _, exists := p[field]; exists {
 				return nil, invalid("ingress listener edits are not supported")
 			}
 		}
-		return ingressTLSParameters(p, map[string]any{})
+		spec, err := ingressListenerParameters(p)
+		if err != nil {
+			return nil, err
+		}
+		return ingressTLSParameters(p, spec)
 	}
 	if serviceType != "ingress" || action != "service.create" {
 		for _, key := range fields {
@@ -62,6 +66,36 @@ func ingressServiceSpec(p map[string]any, serviceType, action string) (map[strin
 		spec["virtual_interface_networks"] = networks
 	}
 	return ingressTLSParameters(p, spec)
+}
+
+func ingressListenerParameters(p map[string]any) (map[string]any, error) {
+	spec := map[string]any{}
+	_, vipSet := p["virtual_ip"]
+	_, frontSet := p["frontend_port"]
+	_, monitorSet := p["monitor_port"]
+	if !vipSet && !frontSet && !monitorSet {
+		return spec, nil
+	}
+	vip, err := required(p, "virtual_ip")
+	if err != nil {
+		return nil, err
+	}
+	if _, err := netip.ParsePrefix(vip); err != nil {
+		return nil, invalid("virtual_ip must contain a valid prefix length")
+	}
+	spec["virtual_ip"] = vip
+	for _, key := range []string{"frontend_port", "monitor_port"} {
+		encoded, err := json.Marshal(p[key])
+		var port *int
+		if err != nil || json.Unmarshal(encoded, &port) != nil || port == nil || *port < 1 || *port > 65535 {
+			return nil, invalid("listener updates require both ports between 1 and 65535")
+		}
+		spec[key] = *port
+	}
+	if spec["frontend_port"] == spec["monitor_port"] {
+		return nil, invalid("frontend and monitor ports must differ")
+	}
+	return spec, nil
 }
 
 func ingressTLSParameters(p, spec map[string]any) (map[string]any, error) {

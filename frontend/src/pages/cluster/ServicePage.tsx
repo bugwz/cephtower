@@ -31,6 +31,7 @@ interface ServiceFormValues {
   ssl_cert?: string
   ssl_key?: string
   tls_mode?: 'preserve' | 'replace' | 'disable'
+  listener_change?: boolean
   networks?: string[]
 }
 
@@ -96,6 +97,7 @@ function ServicePageContent() {
   const unmanagedDraft = Form.useWatch('unmanaged', form)
   const ingressTLS = Form.useWatch('ssl', form)
   const tlsMode = Form.useWatch('tls_mode', form)
+  const listenerChange = Form.useWatch('listener_change', form)
   const requiresServiceID = ['mds', 'rgw', 'nfs', 'smb', 'ingress'].includes(selectedServiceType)
   const [formOpen, setFormOpen] = useState(false)
   useEffect(() => {
@@ -145,9 +147,14 @@ function ServicePageContent() {
     if (!active.current || running.current || loading || error || !serviceWritable(row)) return
     setEditingService(row)
     form.resetFields()
+    const ingress = readObject(row.ingress)
     form.setFieldsValue({
       service_type: serviceType(row),
       tls_mode: 'preserve',
+      listener_change: false,
+      virtual_ip: typeof ingress.virtual_ip === 'string' ? ingress.virtual_ip : undefined,
+      frontend_port: typeof ingress.frontend_port === 'number' ? ingress.frontend_port : undefined,
+      monitor_port: typeof ingress.monitor_port === 'number' ? ingress.monitor_port : undefined,
       service_id: serviceId(row),
       unmanaged: typeof row.unmanaged === 'boolean' ? row.unmanaged : undefined,
       networks: Array.isArray(row.networks) ? row.networks.map(String) : undefined,
@@ -181,6 +188,7 @@ function ServicePageContent() {
         ...(!editingService && values.service_type === 'ingress' && Array.isArray(values.virtual_interface_networks) ? { virtual_interface_networks: values.virtual_interface_networks } : {}),
         ...(!editingService && values.service_type === 'ingress' && typeof values.ssl === 'boolean' ? { ssl: values.ssl, ...(values.ssl ? { ssl_cert: values.ssl_cert, ssl_key: values.ssl_key } : {}) } : {}),
         ...(editingService && values.service_type === 'ingress' ? values.tls_mode === 'replace' ? { ssl: true, ssl_cert: values.ssl_cert, ssl_key: values.ssl_key } : values.tls_mode === 'disable' ? { ssl: false } : {} : {}),
+        ...(editingService && values.service_type === 'ingress' && values.listener_change === true ? { virtual_ip: values.virtual_ip, frontend_port: values.frontend_port, monitor_port: values.monitor_port } : {}),
         placement
       }
       const successMessage = editingService ? '服务更新已安排，请核对刷新后的配置与运行状态。' : '服务创建已安排，请核对刷新后的配置与运行状态。'
@@ -400,7 +408,14 @@ function ServicePageContent() {
           </Form.Item>
           <ServicePlacementPreview value={placementDraft} unmanaged={unmanagedDraft} />
           {selectedServiceType === 'ingress' && (editingService ? <>
-            <Alert type="info" message="编辑保留已有 Ingress 后端、虚拟 IP 和监听端口。TLS 默认保持不变，已有证书和私钥不会回填。" />
+            <Alert type="info" message="编辑保留已有 Ingress 后端。监听配置与 TLS 默认保持不变，已有证书和私钥不会回填。" />
+            <Form.Item name="listener_change" label="修改 VIP 与监听端口" valuePropName="checked"><Switch /></Form.Item>
+            {listenerChange === true && <>
+              <Alert type="warning" message="提交会替换 VIP 和两个端口，可能中断客户端连接。请核对库存回填的配置；Keepalived-only 或多 VIP 服务不支持此编辑流程。" />
+              <Form.Item name="virtual_ip" label="虚拟 IP（含前缀长度）" rules={[{ required: true }]}><Input /></Form.Item>
+              <Form.Item name="frontend_port" label="前端端口" rules={[{ required: true }]}><InputNumber min={1} max={65535} precision={0} /></Form.Item>
+              <Form.Item name="monitor_port" label="监控端口" rules={[{ required: true }]}><InputNumber min={1} max={65535} precision={0} /></Form.Item>
+            </>}
             <Form.Item name="tls_mode" label="TLS 变更"><Select onChange={() => form.setFieldsValue({ ssl_cert: undefined, ssl_key: undefined })} options={[{ value: 'preserve', label: '保留现有 TLS 设置' }, { value: 'replace', label: '启用 TLS / 替换证书与私钥' }, { value: 'disable', label: '关闭 TLS 并移除证书与私钥' }]} /></Form.Item>
             {tlsMode === 'disable' && <Alert type="warning" message="提交将关闭 TLS 并移除原生服务配置中的证书和私钥，可能中断 HTTPS 访问或使流量不再加密。" />}
           </> : <>

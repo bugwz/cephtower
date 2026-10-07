@@ -30584,6 +30584,8 @@ paths:
                   type: integer
                 export_id:
                   type: string
+                frontend_port:
+                  type: integer
                 fs:
                   type: string
                 group:
@@ -30602,6 +30604,8 @@ paths:
                   type: string
                 listener_id:
                   type: string
+                monitor_port:
+                  type: integer
                 name:
                   type: string
                 namespace:
@@ -30671,6 +30675,8 @@ paths:
                   type: string
                 unmanaged:
                   type: boolean
+                virtual_ip:
+                  type: string
                 who:
                   type: string
       responses:

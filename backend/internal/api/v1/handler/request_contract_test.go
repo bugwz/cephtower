@@ -23,6 +23,9 @@ func TestIDLessServiceRequestContracts(t *testing.T) {
 }
 
 func TestIngressServiceContract(t *testing.T) {
+	if err := ValidateMutationRequest("service.update", map[string]any{"cluster_id": float64(1), "service_type": "ingress", "virtual_ip": "192.0.2.10/24", "frontend_port": float64(443), "monitor_port": float64(9000)}); err != nil {
+		t.Fatal(err)
+	}
 	if err := ValidateMutationRequest("service.update", map[string]any{"cluster_id": float64(1), "service_type": "ingress", "ssl": true, "ssl_cert": "certificate fixture", "ssl_key": "key fixture"}); err != nil {
 		t.Fatal(err)
 	}
