@@ -615,9 +615,9 @@ const resourceDefinitions: Record<'blockPools' | 'rbdImages' | 'rbdSnapshots' | 
       { key: 'snapshot_schedules', title: '镜像快照调度', ellipsis: false, render: (value, row) => <MirrorSchedules value={value} status={row.snapshot_schedules_status} /> },
       { key: 'remote_namespace', title: '远端命名空间' },
       { key: 'peers', title: 'Peers', ellipsis: false, render: value => <RbdMirrorPeers value={value} /> },
-      { key: 'daemons', title: '同步守护进程', ellipsis: false, render: value => <RbdMirrorDaemons value={value} /> },
+      { key: 'daemons', title: '同步守护进程', ellipsis: false, render: (value, row) => <RbdMirrorDaemons value={value} mode={row.mode} /> },
       { key: 'leader_counts', title: 'Leader 镜像计数', ellipsis: false, render: (value, row) => <RbdMirrorLeaderCounts value={value} status={row.leader_counts_status} /> },
-      { key: 'images', title: '镜像同步详情', ellipsis: false, render: value => <RbdMirrorImages value={value} /> },
+      { key: 'images', title: '镜像同步详情', ellipsis: false, render: (value, row) => <RbdMirrorImages value={value} mode={row.mode} /> },
       { key: 'resource_version', title: '版本' }
     ]
   }

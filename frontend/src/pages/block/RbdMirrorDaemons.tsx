@@ -41,7 +41,8 @@ export function rbdMirrorDaemonRows(value: unknown) {
   })
 }
 
-export function RbdMirrorDaemons({ value }: { value: unknown }) {
+export function RbdMirrorDaemons({ value, mode }: { value: unknown; mode?: unknown }) {
+  if (mode === 'disabled') return <Alert type="info" message="池同步已禁用，未查询本池同步守护进程状态" />
   const rows = rbdMirrorDaemonRows(value)
   if (!rows) return <Alert type="warning" message="同步守护进程信息不可用或格式无效" />
   if (!rows.length) return <Alert type="info" message="本次池状态未返回同步守护进程，不代表同步健康" />

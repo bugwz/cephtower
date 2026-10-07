@@ -82,5 +82,7 @@ for(const value of [undefined,null,0,'','101','-1','50.5',' 50','50\n']) assert.
 const bootstrap = ui.rbdMirrorImageRows([{...sample,bootstrap_percent:'0',peer_sites:[{...peer,bootstrap_percent:'100'}]}])[0]
 assert.equal(table.props.columns.find(column=>column.dataIndex==='bootstrap').render(bootstrap.bootstrap).props.value,'0')
 assert.equal(details[1].props.columns.find(column=>column.dataIndex==='bootstrap').render(bootstrap.peers[0].bootstrap).props.value,'100')
-assert.ok(readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8').includes('<RbdMirrorImages value={value} />'))
+assert.ok(readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8').includes('<RbdMirrorImages value={value} mode={row.mode} />'))
+for(const value of [undefined,[],[sample]]) assert.equal(ui.RbdMirrorImages({value,mode:'disabled'}).props.message,'池同步已禁用，未查询镜像同步运行状态；不代表池内没有镜像')
+for(const mode of [undefined,'image','pool','init-only','future']) assert.equal(ui.RbdMirrorImages({value:undefined,mode}).props.type,'warning')
 console.log('RBD mirror image local, remote, and daemon fields preserve native states')

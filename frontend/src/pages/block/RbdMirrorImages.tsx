@@ -61,7 +61,8 @@ export function rbdReplayStateText(value: unknown): string {
   return '未返回有效值'
 }
 
-export function RbdMirrorImages({ value }: { value: unknown }) {
+export function RbdMirrorImages({ value, mode }: { value: unknown; mode?: unknown }) {
+  if (mode === 'disabled') return <Alert type="info" message="池同步已禁用，未查询镜像同步运行状态；不代表池内没有镜像" />
   const rows = rbdMirrorImageRows(value)
   if (!rows) return <Alert type="warning" message="镜像同步详情不可用或格式无效" />
   if (!rows.length) return <Alert type="info" message="本次池状态未返回镜像，不代表同步完成" />
