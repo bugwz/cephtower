@@ -6,6 +6,16 @@ export function mirrorStateCount(value: unknown): string {
   if (typeof value === 'string' && value.trim() === value && /^(0|[1-9][0-9]*)$/.test(value)) return value
   return '未返回有效数量'
 }
+export function mirrorStateTotal(value: unknown): string {
+  if (!isRecord(value)) return '不可计算（状态计数未返回）'
+  let total = 0n
+  for (const raw of Object.values(value)) {
+    const count = mirrorStateCount(raw)
+    if (count === '未返回有效数量') return '不可计算（存在无效计数）'
+    total += BigInt(count)
+  }
+  return total.toString()
+}
 export function mirrorHealth(value: unknown) {
   const label = typeof value === 'string' && value !== '' ? value : '未返回或无效'
   const color = label === 'OK' ? 'green' : label === 'WARNING' ? 'orange' : label === 'ERROR' ? 'red' : 'default'
@@ -24,5 +34,6 @@ export function RbdMirrorSummary({ value, mode }: { value: unknown; mode: unknow
     {!states ? <Alert type="warning" message="镜像状态数量不可用" /> : !states.length ? <Alert type="info" message="本次汇总未返回状态计数" /> : <Table size="small" rowKey="state" pagination={{ pageSize: 5 }} dataSource={states} columns={[
       { title: '原生镜像状态', dataIndex: 'state' }, { title: '镜像数量', dataIndex: 'count' }
     ]} />}
+    <span>本次原生状态计数合计：{mirrorStateTotal(value.states)}（不包含其他命名空间，不等于远端数量）</span>
   </Space>
 }
