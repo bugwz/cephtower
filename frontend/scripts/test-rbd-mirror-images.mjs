@@ -18,7 +18,7 @@ for (const value of [null, undefined, {}, [null], [[]]]) assert.equal(ui.RbdMirr
 assert.equal(ui.RbdMirrorImages({ value: [] }).props.type, 'info')
 for (const peers of [null, {}, [null], [[]]]) assert.equal(ui.rbdMirrorImageRows([{ peer_sites: peers }])[0].peers, undefined)
 const table = ui.RbdMirrorImages({ value: [sample] }).props.children.find(node => node.type === 'Table')
-assert.equal(table.props.columns.length, 6)
+assert.equal(table.props.columns.length, 7)
 for (const state of ['syncing', 'starting_replay', 'replaying']) assert.equal(ui.rbdMirrorStateCategory(`up+${state}`), '同步或重放中')
 for (const state of ['stopping_replay', 'stopped']) assert.equal(ui.rbdMirrorStateCategory(`up+${state}`), '停止中或已停止')
 for (const state of ['unknown', 'unknown (42)', 'error', 'syncing', 'starting_replay', 'replaying', 'stopping_replay', 'stopped']) assert.equal(ui.rbdMirrorStateCategory(`down+${state}`), '需关注')
@@ -27,7 +27,7 @@ for (const state of [undefined, null, 0, '', 'up+unknown', 'up+unknown (42)', 'u
 assert.equal(rows[0].category, '同步或重放中')
 assert.equal(rows[0].peers[0].category, '需关注')
 assert.equal(rows[1].category, '未知或无效')
-const classification = table.props.columns.at(-1)
+const classification = table.props.columns.find(column => column.dataIndex === 'category')
 assert.equal(classification.filters.length, 4)
 assert.equal(classification.onFilter('需关注', rows[0]), false)
 assert.equal(classification.onFilter('同步或重放中', rows[0]), true)
@@ -48,6 +48,11 @@ assert.ok(ui.RbdReplayMetrics({value:undefined}).props.items.every(item=>item.ch
 const enriched = ui.rbdMirrorImageRows([{...sample,replay_metrics:metrics,peer_sites:[{...peer,replay_metrics:{bytes_per_second:'1'}}]}])[0]
 const details = table.props.expandable.expandedRowRender(enriched).props.children
 assert.equal(details[2].props.value,metrics)
-assert.equal(details[1].props.columns.at(-1).render(enriched.peers[0].metrics).props.value.bytes_per_second,'1')
+assert.equal(details[1].props.columns.find(column=>column.dataIndex==='metrics').render(enriched.peers[0].metrics).props.value.bytes_per_second,'1')
+for(const value of ['0','50','100']) assert.equal(ui.RbdBootstrapProgress({value}).props.children,`${value}%（引导复制阶段，不代表整体同步完成）`)
+for(const value of [undefined,null,0,'','101','-1','50.5',' 50','50\n']) assert.equal(ui.RbdBootstrapProgress({value}).props.children,'未返回有效复制阶段进度')
+const bootstrap = ui.rbdMirrorImageRows([{...sample,bootstrap_percent:'0',peer_sites:[{...peer,bootstrap_percent:'100'}]}])[0]
+assert.equal(table.props.columns.find(column=>column.dataIndex==='bootstrap').render(bootstrap.bootstrap).props.value,'0')
+assert.equal(details[1].props.columns.find(column=>column.dataIndex==='bootstrap').render(bootstrap.peers[0].bootstrap).props.value,'100')
 assert.ok(readFileSync(new URL('../src/pages/block/pages.tsx', import.meta.url), 'utf8').includes('<RbdMirrorImages value={value} />'))
 console.log('RBD mirror image local, remote, and daemon fields preserve native states')

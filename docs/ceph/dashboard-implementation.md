@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- RBD 引导复制进度：追踪 `ImageReplayer::BootstrapProgressContext`、`ImageSync::update_progress/handle_copy_image_update_progress`，当前输出为 `bootstrapping, IMAGE_SYNC/COPY_IMAGE N%`，并非参考前端旧正则的 `IMAGE_COPY/COPY_OBJECT`。后端仅对 `up+syncing` 的当前格式提取 0–100 整数百分比，经库存 API 展示本地和远端进度；不匹配其他阶段、不补零、不添加旧格式兼容。100% 明确仅表示引导复制阶段，不代表整体同步完成。补充状态/格式/范围边界、采集链与组件测试，无实机或浏览器视觉验证。
+
 - RBD 重放统计链路：依据 journal `ReplayStatusFormatter.cc`、snapshot `Replayer.cc` 及参考控制器 `_update_syncing_image_data`，在原生池状态采集时提取 `up+replaying` 描述中的 B/s、预计剩余秒数、同步百分比和落后主端条目数，通过库存 API 提供本地和远端站点详情。后端逐字段校验、保留数值文本和原始描述，不对缺失/错误格式补零，不展示 down 状态的历史描述统计；前端明确是采集快照、预计时间不保证完成。覆盖精确 uint64、零值、分数、百分比越界、错误类型与真实采集路径。引导复制阶段的文本百分比尚未提取，无实机或浏览器视觉验证。
 
 - RBD 镜像同步状态分类：依据 `Utils.cc::mirror_image_site_status_state` 的 `up/down+state` 枚举与参考 Dashboard 分类，增加本地状态计数和本地/远端分类筛选。将停止中/已停止单独列出，不沿用容易误解的 Ready；down 与 error 提示关注，缺失、未来状态和格式异常归为未知，原生文本始终保留。本地统计只覆盖当前池返回的镜像、在筛选前计数，不混入远端状态。补充全部原生状态及异常边界回归，无实机或浏览器视觉验证。

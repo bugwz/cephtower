@@ -26,17 +26,24 @@ export function rbdMirrorImageRows(value: unknown) {
     index, name: text(row, 'name'), globalId: text(row, 'global_id'), state: text(row, 'state'),
     category: rbdMirrorStateCategory(row.state),
     metrics: row.replay_metrics,
+    bootstrap: row.bootstrap_percent,
     description: text(row, 'description'), updated: text(row, 'last_update'),
     daemon: record(row.daemon_service) ? row.daemon_service : undefined,
     peers: Array.isArray(row.peer_sites) && row.peer_sites.every(record) ? row.peer_sites.map((peer, index) => ({
       index, name: text(peer, 'site_name'), uuid: text(peer, 'mirror_uuid'), state: text(peer, 'state'),
       category: rbdMirrorStateCategory(peer.state),
       metrics: peer.replay_metrics,
+      bootstrap: peer.bootstrap_percent,
       description: text(peer, 'description'), updated: text(peer, 'last_update')
     })) : undefined
   }))
 }
 const longText = (value: string) => <span style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{value}</span>
+
+export function RbdBootstrapProgress({ value }: { value: unknown }) {
+  const valid = typeof value === 'string' && value.trim() === value && /^(0|[1-9][0-9]?|100)$/.test(value)
+  return <span>{valid ? `${value}%（引导复制阶段，不代表整体同步完成）` : '未返回有效复制阶段进度'}</span>
+}
 
 export function RbdReplayMetrics({ value }: { value: unknown }) {
   return <Descriptions size="small" column={2} title="描述中的重放统计（采集快照，非实时速率；预计时间不保证完成）" items={[
@@ -55,7 +62,8 @@ export function RbdMirrorImages({ value }: { value: unknown }) {
     <Table size="small" rowKey="index" pagination={{ pageSize: 5 }} scroll={{ x: 950 }} dataSource={rows} columns={[
       { title: '镜像', dataIndex: 'name' }, { title: '全局 ID', dataIndex: 'globalId' },
       { title: '本地原生状态', dataIndex: 'state' }, { title: '本地描述', dataIndex: 'description', render: longText },
-      { title: '本地更新时间（原文）', dataIndex: 'updated' }, categoryColumn
+      { title: '本地更新时间（原文）', dataIndex: 'updated' }, categoryColumn,
+      { title: '本地引导复制进度', dataIndex: 'bootstrap', render: value => <RbdBootstrapProgress value={value} /> }
     ]} expandable={{ expandedRowRender: row => <Space direction="vertical" style={{ width: '100%' }}>
       {row.daemon ? <Descriptions size="small" bordered column={2} items={[
         ['service_id', '服务 ID'], ['instance_id', '实例 ID'], ['daemon_id', '守护进程 ID'], ['hostname', '主机']
@@ -64,7 +72,8 @@ export function RbdMirrorImages({ value }: { value: unknown }) {
         { title: '远端站点名称', dataIndex: 'name', render: value => value === '' ? '名称未解析' : value },
         { title: 'Mirror UUID', dataIndex: 'uuid' }, { title: '原生状态', dataIndex: 'state' },
         { title: '描述', dataIndex: 'description', render: longText }, { title: '更新时间（原文）', dataIndex: 'updated' }, categoryColumn,
-        { title: '远端重放统计', dataIndex: 'metrics', render: value => <RbdReplayMetrics value={value} /> }
+        { title: '远端重放统计', dataIndex: 'metrics', render: value => <RbdReplayMetrics value={value} /> },
+        { title: '远端引导复制进度', dataIndex: 'bootstrap', render: value => <RbdBootstrapProgress value={value} /> }
       ]} />}
       <RbdReplayMetrics value={row.metrics} />
     </Space> }} />

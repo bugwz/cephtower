@@ -10,6 +10,23 @@ import (
 )
 
 var replayNumber = regexp.MustCompile(`^(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?$`)
+var bootstrapProgress = regexp.MustCompile(`^bootstrapping, IMAGE_SYNC/COPY_IMAGE (0|[1-9][0-9]{0,2})%$`)
+
+func mirrorBootstrapPercent(row map[string]any) string {
+	if row["state"] != "up+syncing" {
+		return ""
+	}
+	description, _ := row["description"].(string)
+	match := bootstrapProgress.FindStringSubmatch(description)
+	if len(match) != 2 {
+		return ""
+	}
+	percent, err := strconv.Atoi(match[1])
+	if err != nil || percent > 100 {
+		return ""
+	}
+	return match[1]
+}
 
 // Descriptions originate from journal/ReplayStatusFormatter and snapshot/Replayer.
 // Keep validated numbers as text so inventory clients do not round uint64 values.
@@ -58,6 +75,9 @@ func enrichMirrorReplayMetrics(value any) {
 		}
 		if metrics := mirrorReplayMetrics(row); len(metrics) > 0 {
 			row["replay_metrics"] = metrics
+		}
+		if percent := mirrorBootstrapPercent(row); percent != "" {
+			row["bootstrap_percent"] = percent
 		}
 		enrichMirrorReplayMetrics(row["peer_sites"])
 	}
