@@ -48,11 +48,11 @@ export function RbdBootstrapProgress({ value }: { value: unknown }) {
   return <span>{valid ? `${value}%（引导复制阶段，不代表整体同步完成）` : '未返回有效复制阶段进度'}</span>
 }
 
-export function RbdReplayMetrics({ value }: { value: unknown }) {
+export function RbdReplayMetrics({ value, mode }: { value: unknown; mode?: unknown }) {
   return <Descriptions size="small" column={2} title="描述中的重放统计（采集快照，非实时速率；预计时间不保证完成）" items={[
     ['bytes_per_second', '速率（B/s）'], ['seconds_until_synced', '预计剩余秒数'],
     ['syncing_percent', '同步百分比（%）'], ['entries_behind_primary', '落后主端条目数'], ['replay_state', '快照重放子状态']
-  ].map(([key, label]) => ({ key, label, children: key === 'replay_state' ? rbdReplayStateText(record(value) ? value[key] : undefined) : record(value) && typeof value[key] === 'string' ? value[key] as string : '未返回有效值' }))} />
+  ].map(([key, label]) => ({ key, label, children: key === 'entries_behind_primary' && mode === 'snapshot' ? '不适用（快照同步模式）' : key === 'replay_state' ? rbdReplayStateText(record(value) ? value[key] : undefined) : record(value) && typeof value[key] === 'string' ? value[key] as string : '未返回有效值' }))} />
 }
 
 export function rbdReplayStateText(value: unknown): string {
@@ -85,7 +85,7 @@ export function RbdMirrorImages({ value }: { value: unknown }) {
         { title: '远端重放统计', dataIndex: 'metrics', render: value => <RbdReplayMetrics value={value} /> },
         { title: '远端引导复制进度', dataIndex: 'bootstrap', render: value => <RbdBootstrapProgress value={value} /> }
       ]} />}
-      <RbdReplayMetrics value={row.metrics} />
+      <RbdReplayMetrics value={row.metrics} mode={row.mode} />
     </Space> }} />
   </Space>
 }

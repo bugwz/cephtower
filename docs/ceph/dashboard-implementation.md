@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- RBD 重放统计适用性：对照参考 `image-list.component.html::entriesBehindPrimaryTpl`，本地 snapshot 镜像的落后主端条目数显示“不适用”，journal 模式保留原始计数（含零和大整数），缺失模式不猜测。使用已按身份关联的本地模式，不将本地模式套用于远端站点统计；新增组件适用性与参数传递回归。无后端协议变更，无实机或浏览器视觉验证。
+
 - RBD 镜像同步配置详情：参考 Dashboard `_get_mirror_mode` 与 `Info.cc` 原生 `mirroring` 字段，将已有 `rbd info` 采集的 journal/snapshot 模式、主端/非主端角色和配置状态关联到同步详情。仅使用同池默认命名空间且名称、非空全局 ID 一致的唯一记录，拒绝同名重建、重复或缺失身份关联；不额外调用命令。前端显示三列并区分配置与运行状态，未知值不推断为禁用或非主端。新增采集链路、身份隔离及前端字段回归；无实机或浏览器视觉验证。
 
 - RBD 池同步模式核验：对照 Dashboard `set_pool_mirror_mode` 与原生 `MirrorPool.cc::execute_enable_disable`，对禁用、按镜像、全池模式执行对应命令后，以 `mirror pool info --format json` 的 `mode` 精确回读确认。缺失、异常类型、损坏输出、模式不一致或执行失败不报告成功且不可自动重试；结果仅返回池、模式和核验标识。前端区分模式配置成功与实际镜像同步健康，新增三类模式的命令与异常分支测试；无实机验证。

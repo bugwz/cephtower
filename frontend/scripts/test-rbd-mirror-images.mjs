@@ -65,6 +65,17 @@ assert.ok(ui.RbdReplayMetrics({value:undefined}).props.items.every(item=>item.ch
 const enriched = ui.rbdMirrorImageRows([{...sample,replay_metrics:metrics,peer_sites:[{...peer,replay_metrics:{bytes_per_second:'1'}}]}])[0]
 const details = table.props.expandable.expandedRowRender(enriched).props.children
 assert.equal(details[2].props.value,metrics)
+const lag = (value, mode) => ui.RbdReplayMetrics({value,mode}).props.items.find(item=>item.key==='entries_behind_primary').children
+assert.equal(lag(metrics,'snapshot'),'不适用（快照同步模式）')
+assert.equal(lag(undefined,'snapshot'),'不适用（快照同步模式）')
+assert.equal(lag(metrics,'journal'),'9007199254740993')
+assert.equal(lag({entries_behind_primary:'0'},'journal'),'0')
+assert.equal(lag(undefined,'journal'),'未返回有效值')
+for(const mode of [undefined,null,'future','Snapshot']) assert.equal(lag(undefined,mode),'未返回有效值')
+const snapshotRow = ui.rbdMirrorImageRows([{...sample,mirror_mode:'snapshot',replay_metrics:metrics}])[0]
+const snapshotDetails = table.props.expandable.expandedRowRender(snapshotRow).props.children
+assert.equal(snapshotDetails[2].props.mode,'snapshot')
+assert.equal(snapshotDetails[1].props.columns.find(column=>column.dataIndex==='metrics').render(metrics).props.mode,undefined)
 assert.equal(details[1].props.columns.find(column=>column.dataIndex==='metrics').render(enriched.peers[0].metrics).props.value.bytes_per_second,'1')
 for(const value of ['0','50','100']) assert.equal(ui.RbdBootstrapProgress({value}).props.children,`${value}%（引导复制阶段，不代表整体同步完成）`)
 for(const value of [undefined,null,0,'','101','-1','50.5',' 50','50\n']) assert.equal(ui.RbdBootstrapProgress({value}).props.children,'未返回有效复制阶段进度')
