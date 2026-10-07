@@ -5,6 +5,7 @@ import type { ApiRecord } from '../../api/client'
 import { DataTable } from '../../components/DataTable'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 import { formatDateTime } from '../../utils/time'
+import { DaemonRuntimeDetails } from './ServiceDaemons'
 
 export function upgradeDaemonRows(items: ApiRecord[], search: string) {
   const types = new Set(['mgr', 'mon', 'crash', 'osd', 'mds', 'rgw', 'rbd-mirror', 'cephfs-mirror', 'iscsi', 'nfs'])
@@ -12,7 +13,7 @@ export function upgradeDaemonRows(items: ApiRecord[], search: string) {
   const digests = (value: unknown) => Array.isArray(value) && value.every(item => typeof item === 'string' && item.trim() !== '') ? (value.length ? value.join('、') : '未报告摘要') : '未知'
   const query = search.trim().toLowerCase()
   return items.filter((item) => typeof item.type === 'string' && types.has(item.type)).map((item) => ({
-    natural_key: item.natural_key,
+    ...item,
     name: text(item.name), hostname: text(item.hostname), version: text(item.version),
     status: text(item.status), last_refresh: text(item.last_refresh), observed_at: text(item.observed_at),
     image: text(item.container_image), image_id: text(item.container_image_id), image_digests: digests(item.container_image_digests), freshness: item.stale === true ? '已过期' : item.stale === false ? '有效' : '未知'
@@ -47,7 +48,8 @@ export function UpgradeDaemons({ clusterId, revision }: { clusterId: number; rev
           { key: 'status', title: '运行状态（快照）' }, { key: 'image', title: '容器镜像' },
           { key: 'image_id', title: '镜像 ID', ellipsis: false }, { key: 'image_digests', title: '镜像摘要', ellipsis: false },
           { key: 'last_refresh', title: 'Ceph 最近刷新', render: value => formatDateTime(value) },
-          { key: 'observed_at', title: '库存采集时间', render: value => formatDateTime(value) }, { key: 'freshness', title: '采集状态' }
+          { key: 'observed_at', title: '库存采集时间', render: value => formatDateTime(value) }, { key: 'freshness', title: '采集状态' },
+          { key: 'runtime_details', title: '运行详情', filterKey: false, ellipsis: false, render: (_, row) => <DaemonRuntimeDetails row={row} daemonType={row.type} /> }
         ]} />
       </>}
     </Space>
