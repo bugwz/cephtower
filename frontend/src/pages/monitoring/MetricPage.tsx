@@ -60,6 +60,7 @@ export function metricSamples(item: ApiRecord): MetricSample[] {
 }
 
 const metricOptions = [
+  { label: 'RGW 累计 PUT 平均操作字节（B/次）', value: 'rgw_put_mean_bytes', description: '累计 PUT 字节总和 / 次数总和，非当前对象平均大小；重置会改变统计范围' },
   { label: 'RGW 按桶 GET 平均延迟（ms）', value: 'rgw_bucket_get_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
   { label: 'RGW 按桶 PUT 平均延迟（ms）', value: 'rgw_bucket_put_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },
   { label: 'RGW 按桶 DELETE 平均延迟（ms）', value: 'rgw_bucket_delete_latency_ms', description: '一分钟 sum rate / count rate；保留身份与实例标签，不跨实例平均' },

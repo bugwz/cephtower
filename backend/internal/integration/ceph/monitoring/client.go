@@ -49,6 +49,8 @@ type PrometheusResult struct {
 }
 
 var metricQueries = map[string]string{
+	"rgw_put_mean_bytes": "sum(ceph_rgw_op_put_obj_bytes) / sum(ceph_rgw_op_put_obj_ops)",
+
 	"rgw_bucket_get_latency_ms":    "1000 * rate(ceph_rgw_op_per_bucket_get_obj_lat_sum[1m]) / rate(ceph_rgw_op_per_bucket_get_obj_lat_count[1m])",
 	"rgw_bucket_put_latency_ms":    "1000 * rate(ceph_rgw_op_per_bucket_put_obj_lat_sum[1m]) / rate(ceph_rgw_op_per_bucket_put_obj_lat_count[1m])",
 	"rgw_bucket_delete_latency_ms": "1000 * rate(ceph_rgw_op_per_bucket_del_obj_lat_sum[1m]) / rate(ceph_rgw_op_per_bucket_del_obj_lat_count[1m])",

@@ -10,6 +10,8 @@ const source = readFileSync(new URL('../src/pages/monitoring/MetricPage.tsx', im
 const tree = ts.createSourceFile('MetricPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const optionsNode = tree.statements.filter(ts.isVariableStatement).flatMap(node => [...node.declarationList.declarations]).find(node => node.name.getText(tree) === 'metricOptions')
 const options = new Function(`return ${optionsNode.initializer.getText(tree)}`)()
+assert.equal(options.filter(option => option.value === 'rgw_put_mean_bytes').length, 1)
+assert.ok(options.find(option => option.value === 'rgw_put_mean_bytes').description.includes('非当前对象平均大小'))
 const searchNode = tree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'metricPresetMatches')
 const searchExports = {}
 new Function('exports', ts.transpileModule(searchNode.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(searchExports)
