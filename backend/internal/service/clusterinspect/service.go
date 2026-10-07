@@ -114,10 +114,27 @@ func (s *Service) OSDInspection(ctx context.Context, clusterID uint64, id, secti
 		if devices == nil {
 			return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph returned no device list"}
 		}
+		seen := make(map[string]bool, len(devices))
 		for _, device := range devices {
-			id, ok := device["devid"].(string)
-			if !ok || strings.TrimSpace(id) == "" {
+			deviceID, ok := device["devid"].(string)
+			if !ok || strings.TrimSpace(deviceID) == "" {
 				return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph returned a device without an identifier"}
+			}
+			if seen[deviceID] {
+				return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph returned duplicate device identifiers"}
+			}
+			seen[deviceID] = true
+			daemons, ok := device["daemons"].([]any)
+			matched := false
+			for _, value := range daemons {
+				daemon, valid := value.(string)
+				if !valid || strings.TrimSpace(daemon) == "" {
+					return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph returned invalid device daemon associations"}
+				}
+				matched = matched || daemon == "osd."+id
+			}
+			if !ok || !matched {
+				return nil, &cephdomain.ActionError{Code: "invalid_ceph_response", Message: "Ceph device does not reference the requested OSD"}
 			}
 		}
 		return map[string]any{"devices": devices}, nil

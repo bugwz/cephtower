@@ -292,6 +292,35 @@ func TestOSDDeviceInspection(t *testing.T) {
 	}
 }
 
+func TestOSDDeviceAssociations(t *testing.T) {
+	service, runner, id := testInspection(t)
+	for _, raw := range []string{
+		`[{"devid":"disk"}]`,
+		`[{"devid":"disk","daemons":null}]`,
+		`[{"devid":"disk","daemons":"osd.0"}]`,
+		`[{"devid":"disk","daemons":[]}]`,
+		`[{"devid":"disk","daemons":["osd.10","mon.0"]}]`,
+		`[{"devid":"disk","daemons":["osd.0",null]}]`,
+		`[{"devid":"disk","daemons":["osd.0",""]}]`,
+		`[{"devid":"disk","daemons":["osd.0"]},{"devid":"disk","daemons":["osd.0"]}]`,
+	} {
+		runner.output = raw
+		result, err := service.OSDInspection(context.Background(), id, "0", "devices")
+		if err == nil || result != nil {
+			t.Fatalf("accepted ambiguous associations %s: %v", raw, result)
+		}
+	}
+	runner.output = `[{"devid":"disk","daemons":["osd.10","osd.0","mon.a"],"wear_level":0.4,"custom":"retained"},{"devid":"disk2","daemons":["osd.0"]}]`
+	result, err := service.OSDInspection(context.Background(), id, "0", "devices")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows := result["devices"].([]map[string]any)
+	if len(rows) != 2 || rows[0]["custom"] != "retained" || len(rows[0]["daemons"].([]any)) != 3 {
+		t.Fatalf("native device details lost: %v", result)
+	}
+}
+
 func TestOSDSMARTInspection(t *testing.T) {
 	service, runner, id := testInspection(t)
 	runner.output = `{"disk-1":{"smart_status":{"passed":false},"counter":18446744073709551615,"password":"secret-fixture","nested":[9007199254740993]}}`
