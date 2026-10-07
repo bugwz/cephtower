@@ -13,6 +13,30 @@ assert.equal(rows([{ type: 'users', perm: '' }])[0].permission, '未指定权限
 assert.deepEqual(rows([]), [])
 for (const value of [undefined, null, {}, [null], [[]], [{}], [{ type: '', perm: '*' }], [{ type: 'users', perm: null }]]) assert.equal(rows(value), undefined)
 assert.equal(rows([{ type: 'users', perm: '*' }], true), undefined)
+const view = {}
+const jsx = (type, props) => ({ type, props })
+new Function('exports', 'require', ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwPermissions.tsx', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText)(view, name => {
+  if (name === 'antd') return { Table: 'Table' }
+  if (name === './rgwPermissionRows') return exports
+  if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx }
+  throw new Error(name)
+})
+for (const subusers of [false, true]) {
+  const value = subusers ? [{ id: 'z', permissions: 'future' }, { id: 'a', permissions: 'read' }, { id: 'b', permissions: 'read' }]
+    : [{ type: 'z', perm: 'future' }, { type: 'a', perm: 'read' }, { type: 'b', perm: 'read' }]
+  const snapshot = JSON.stringify(value)
+  const table = view.RgwPermissions({ value, subusers })
+  const [identity, permission] = table.props.columns
+  assert.equal(identity.defaultSortOrder, 'ascend')
+  assert.ok(identity.sorter(table.props.dataSource[0], table.props.dataSource[1]) > 0)
+  assert.equal(identity.sorter(table.props.dataSource[0], table.props.dataSource[0]), 0)
+  assert.deepEqual(permission.filters, [{ text: 'future', value: 'future' }, { text: 'read', value: 'read' }])
+  assert.equal(permission.onFilter('future', table.props.dataSource[0]), true)
+  assert.equal(permission.onFilter('read', table.props.dataSource[0]), false)
+  assert.equal(permission.onFilter('READ', table.props.dataSource[1]), false)
+  assert.equal(JSON.stringify(value), snapshot)
+  assert.deepEqual(view.RgwPermissions({ value: [], subusers }).props.columns[1].filters, [])
+}
 const pages = readFileSync(new URL('../src/pages/object/RgwUserDetails.tsx', import.meta.url), 'utf8')
 assert.ok(pages.includes('<RgwPermissions value={row.caps} />'))
 assert.ok(pages.includes('<RgwPermissions value={row.subusers} subusers />'))
