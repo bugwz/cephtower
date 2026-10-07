@@ -851,7 +851,7 @@ const definitions: Record<
       successMessage: 'SMB 集群创建执行成功',
       fields: [
         { name: 'name', label: '集群 ID', required: true, pattern: /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,16}[a-zA-Z0-9])?$/, patternMessage: '1–18 个英文字母、数字或连字符，首尾必须为字母或数字' },
-        { name: 'count', label: 'SMB 实例数量（可选）', type: 'number', min: 1, placeholder: '留空使用 Ceph 默认部署数量' },
+        { name: 'count', label: 'SMB 实例数量（可选）', type: 'number', min: 1, max: Number.MAX_SAFE_INTEGER, placeholder: '留空使用 Ceph 默认部署数量' },
         { name: 'clustering', label: '集群协作模式（CTDB）', type: 'select', placeholder: '留空使用 Ceph 默认值', options: [{ label: '自动（单实例时关闭）', value: 'default' }, { label: '始终启用', value: 'always' }, { label: '始终禁用', value: 'never' }] },
         { name: 'smb_hosts', label: '部署主机（可选）', type: 'select', multiple: true, optionsLoader: smbHostOptions, placeholder: '选择当前集群主机；留空由 Ceph 选择' },
         { name: 'smb_label', label: '部署主机标签（与主机列表二选一）', type: 'select', optionsLoader: smbLabelOptions, placeholder: '选择当前集群主机标签' },
@@ -891,7 +891,7 @@ const definitions: Record<
       method: 'PATCH',
       successMessage: 'SMB 集群更新执行成功',
       fields: [
-        { name: 'count', label: 'SMB 实例数量', type: 'number', placeholder: '留空保留；只修改数量，保留主机和标签约束' },
+        { name: 'count', label: 'SMB 实例数量', type: 'number', min: 1, max: Number.MAX_SAFE_INTEGER, placeholder: '留空保留；只修改数量，保留主机和标签约束' },
         { name: 'clustering', label: '集群协作模式（CTDB）', type: 'select', placeholder: '留空保留原配置', options: [{ label: '自动（单实例时关闭）', value: 'default' }, { label: '始终启用', value: 'always' }, { label: '始终禁用', value: 'never' }] },
         { name: 'replace_smb_hosts', label: '替换部署主机（移除已有标签及主机模式约束）', type: 'boolean' },
         { name: 'replace_smb_label', label: '替换部署标签（移除已有主机及主机模式约束）', type: 'boolean' },

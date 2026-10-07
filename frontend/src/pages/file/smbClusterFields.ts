@@ -19,8 +19,8 @@ export function smbClusterInitialValues(row?: ApiRecord) {
 
 export function smbClusterCountBody(values: ApiRecord) {
   if (values.count === undefined || values.count === null || values.count === '') return {}
-  const count = Number(values.count)
-  if (!Number.isSafeInteger(count) || count < 1) throw new Error('实例数量必须为正整数')
+  const count = values.count
+  if (typeof count !== 'number' || !Number.isSafeInteger(count) || count < 1) throw new Error('实例数量必须为正整数')
   return { count }
 }
 
