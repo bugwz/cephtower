@@ -79,6 +79,7 @@ for (const scenario of ['late-success', 'late-failure', 'unmount', 'failure']) {
   const active = { current: true }, pending = { current: null }
   const query = (id, input, init) => new Promise((resolve, reject) => calls.push({ id, input, init, resolve, reject }))
   const env = { active, pending, selectedClusterId: 7, blocked: false, queryMetric: query, queryMetricRange: query,
+    queriedMetric: { current: 'cluster_health' }, setLabelKey: value => updates.push(['labelKey', value]), setLabelValue: value => updates.push(['labelValue', value]),
     setLoading: value => updates.push(['loading', value]), setResult: value => updates.push(['result', value]), setError: value => updates.push(['error', value]) }
   const run = new Function(...Object.keys(env), `${code}; return submit`)(...Object.values(env))
   const first = run({ mode: 'instant', metric_id: 'cluster_health' })
@@ -86,6 +87,8 @@ for (const scenario of ['late-success', 'late-failure', 'unmount', 'failure']) {
   assert.equal(calls[0].init.suppressErrorNotification, true)
   if (scenario.startsWith('late')) {
     const second = run({ mode: 'range', metric_id: 'client_read_bytes', start: 'start', end: 'end', step: '30s' })
+    assert.equal(env.queriedMetric.current, 'client_read_bytes')
+    assert.deepEqual(updates.filter(([kind]) => kind.startsWith('label')), [['labelKey', ''], ['labelValue', '']])
     assert.equal(calls[0].init.signal.aborted, true)
     assert.deepEqual(calls[1].input, { metricId: 'client_read_bytes', start: 'start', end: 'end', step: '30s' })
     calls[1].resolve({ series: ['new'] }); await second
@@ -102,6 +105,7 @@ for (const scenario of ['late-success', 'late-failure', 'unmount', 'failure']) {
     assert.equal(calls.length, 1)
     assert.deepEqual(updates, before)
   } else {
+    assert.equal(updates.some(([kind]) => kind.startsWith('label')), false)
     calls[0].reject(new Error('')); await first
     assert.deepEqual(updates, [['loading', true], ['error', ''], ['result', null], ['error', '指标查询失败'], ['loading', false]])
   }

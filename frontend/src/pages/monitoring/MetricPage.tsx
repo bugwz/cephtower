@@ -118,6 +118,7 @@ export function metricLabelOptions(rows: { labels: string }[], key?: string) {
 function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId?: number; initialMetric: string }) {
   const active = useRef(true)
   const pending = useRef<AbortController | null>(null)
+  const queriedMetric = useRef<string | undefined>(undefined)
   useEffect(() => {
     active.current = true
     return () => { active.current = false; pending.current?.abort() }
@@ -159,6 +160,11 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
     if (blocked) {
       setError('当前集群未配置或未启用 prometheus endpoint')
       return
+    }
+    if (queriedMetric.current !== values.metric_id) {
+      setLabelKey('')
+      setLabelValue('')
+      queriedMetric.current = values.metric_id
     }
     pending.current?.abort()
     const controller = new AbortController()
