@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import './test-service-placement-view.mjs'
 import './test-grafana-logs.mjs'
 import './test-log-service-status.mjs'
 import { readFileSync } from 'node:fs'

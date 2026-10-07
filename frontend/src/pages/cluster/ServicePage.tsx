@@ -12,6 +12,7 @@ import { useResourceTableFilters } from '../../hooks/useResourceTableFilters'
 import { useClusterContext } from '../../state/ClusterContext'
 import { message } from '../../utils/appMessage'
 import { ServiceDaemons } from './ServiceDaemons'
+import { ServicePlacement } from './ServicePlacement'
 import { DaemonPerf } from './DaemonPerf'
 import { ResourceMetaBar } from '../../components/ResourceMetaBar'
 
@@ -280,7 +281,7 @@ function ServicePageContent() {
                   columns={[
                     { key: 'name', title: '服务名' },
                     { key: 'type', title: '类型' },
-                    { key: 'placement', title: '放置策略' },
+                    { key: 'placement', title: '放置策略', filterKey: false, ellipsis: false, render: (value, row) => <ServicePlacement placement={value} unmanaged={row.unmanaged} /> },
                     { key: 'networks', title: '绑定网段', filterKey: false },
                     { key: 'unmanaged', title: '管理模式', filterKey: false, render: (value) => value === true ? '非托管' : value === false ? '编排器管理' : '未采集' },
                     { key: 'running', title: '运行数' },
