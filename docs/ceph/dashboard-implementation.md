@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- RGW 当前覆盖复核（不是完成验收）：重新对照参考 `rgw-user-details.component.html`，确认用户身份、暂停/系统标志、Bucket 上限、MFA、子用户、caps 及关联账户在当前 `RgwUserDetails.tsx`、`RgwUserIdentityDetails.tsx`、`RgwPermissions.tsx`、`RgwUserAccountDetails.tsx` 已有入口。关联账户按账户 ID 读取采集库存，不是实时 account get；子用户与 caps 写入在 mutation/service.go 有写前身份校验及写后匹配。另确认 pages.tsx 的 CORS 专用动作已接入 `RgwBucketCorsEditor` 和 `rgwBucketCorsForm.ts`，历史“专用 CORS 编辑器仍待实现”仅描述当时状态，不应据此重复实现。本轮仅更新审计证据，不宣称 RGW 全覆盖；剩余审计应转向多站点、Bucket 配置及其真实交互/错误分支，而非继续依据历史待办推断缺口。无实机或浏览器视觉验证。
+
 - RBD 禁用状态展示一致性：后端对 disabled 池不执行 `mirror pool status`，前端镜像详情与守护进程列表现按池模式明确显示“禁用，未查询”，不将预期缺失当作故障，也不显示与禁用模式冲突的旧运行数据。未知/启用模式仍保留数据不可用告警，禁用不推断池内没有镜像。新增模式传递、旧数据抑制与未知状态回归；无后端变化，无浏览器视觉验证。
 
 - RBD 原生状态计数合计：依据 `MirrorPool.cc::get_mirror_image_status` 对状态数量求和的方式，在池摘要展示本次计数合计，使用 BigInt 避免精度损失；未知状态名称参与求和，任一计数无效时不展示部分合计，缺失状态集合与有效空集合区分。明确默认命名空间及非远端计数的范围。新增大整数、零、未知状态及异常计数回归；无后端变化，无浏览器视觉验证。
