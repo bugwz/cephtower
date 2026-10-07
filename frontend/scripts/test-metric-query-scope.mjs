@@ -10,6 +10,20 @@ const source = readFileSync(new URL('../src/pages/monitoring/MetricPage.tsx', im
 const tree = ts.createSourceFile('MetricPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const optionsNode = tree.statements.filter(ts.isVariableStatement).flatMap(node => [...node.declarationList.declarations]).find(node => node.name.getText(tree) === 'metricOptions')
 const options = new Function(`return ${optionsNode.initializer.getText(tree)}`)()
+const searchNode = tree.statements.find(node => ts.isFunctionDeclaration(node) && node.name.text === 'metricPresetMatches')
+const searchExports = {}
+new Function('exports', ts.transpileModule(searchNode.getText(tree), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(searchExports)
+const matches = searchExports.metricPresetMatches
+assert.ok(options.every(option => matches(option, '  ')))
+assert.deepEqual(options.filter(option => matches(option, ' RGW_USER_GET_LATENCY_MS ')).map(option => option.value), ['rgw_user_get_latency_ms'])
+assert.ok(options.filter(option => matches(option, '按桶')).every(option => option.label.includes('按桶')))
+assert.ok(matches({ description: '缓存计数' }, '缓存'))
+assert.equal(matches({ label: 'abc' }, 'a.*'), false)
+assert.equal(matches({ label: 123, value: null }, '123'), false)
+assert.equal(options.filter(option => matches(option, '不存在的指标')).length, 0)
+assert.ok(source.includes('metricPresetMatches(option, input)'))
+assert.ok(source.includes('visiblePresets.map((item)'))
+assert.ok(source.includes('onChange={event => setPresetSearch(event.target.value)}'))
 for (const scope of ['bucket', 'user']) for (const operation of ['get', 'put', 'delete', 'copy', 'list']) {
   const id = `rgw_${scope}_${operation}_latency_ms`
   assert.equal(options.filter(option => option.value === id).length, 1)

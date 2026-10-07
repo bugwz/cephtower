@@ -143,6 +143,11 @@ export function metricPreset(value: string | null): string {
   return metricOptions.some(option => option.value === value) ? value! : 'cluster_health'
 }
 
+export function metricPresetMatches(item: { label?: unknown; value?: unknown; description?: unknown }, search: string): boolean {
+  const needle = search.trim().toLowerCase()
+  return !needle || [item.label, item.value, item.description].some(value => typeof value === 'string' && value.toLowerCase().includes(needle))
+}
+
 export function filterMetricRows<T extends { labels: string }>(rows: T[], key: string, value: string): T[] {
   if (!key) return rows
   return rows.filter(row => {
@@ -184,6 +189,8 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
   const [result, setResult] = useState<MetricResponse | null>(null)
   const [labelKey, setLabelKey] = useState('')
   const [labelValue, setLabelValue] = useState('')
+  const [presetSearch, setPresetSearch] = useState('')
+  const visiblePresets = metricOptions.filter(item => metricPresetMatches(item, presetSearch))
   const featureStatus = useFeatureRequirements(selectedClusterId, { requiredEndpoints: ['prometheus'] })
   const blocked = featureStatus.loading || featureStatus.blocked || Boolean(featureStatus.error)
 
@@ -264,8 +271,11 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
       <Alert type="info" showIcon message="按桶指标依赖 rgw_bucket_counters_cache 与 exporter 采集。缓存淘汰、重建或重启可能重置计数，不能作为持久审计记录；无数据不代表没有请求。请同时核对 bucket、tenant 和实例标签，不能只按桶名判断归属。" />
       <Alert type="info" showIcon message="按用户指标依赖 rgw_user_counters_cache 与 exporter 采集，同样可能因缓存淘汰而重置。user 标签是原生用户 ID 部分，必须结合 tenant 与实例核对；不等同于账户统计，也不保证包含匿名请求。" />
       <Space direction="vertical" size={16} className="page-stack">
+        <Input.Search aria-label="搜索指标预设" placeholder="搜索指标名称、ID 或说明" allowClear value={presetSearch} onChange={event => setPresetSearch(event.target.value)} />
+        <Text type="secondary">匹配预设：{visiblePresets.length} / {metricOptions.length}；搜索只筛选预设，不修改当前指标或查询结果。</Text>
+        {visiblePresets.length === 0 && <Alert type="info" message="没有匹配的指标预设，请修改或清除搜索" />}
         <div className="metrics-grid metric-preset-grid">
-          {metricOptions.map((item) => (
+          {visiblePresets.map((item) => (
             <Card key={item.value} className="metric-preset-card" hoverable onClick={() => applyPreset(item.value)}>
               <Statistic title={item.label} value={item.description} prefix={<LineChartOutlined />} />
               <Text type="secondary">{item.value}</Text>
@@ -302,7 +312,7 @@ function MetricContent({ selectedClusterId, initialMetric }: { selectedClusterId
                   />
                 </Form.Item>
                 <Form.Item name="metric_id" label="指标" rules={[{ required: true }]}>
-                  <Select options={metricOptions} optionRender={(option) => (
+                  <Select showSearch filterOption={(input, option) => !!option && metricPresetMatches(option, input)} options={metricOptions} optionRender={(option) => (
                     <Space direction="vertical" size={0}>
                       <Text>{option.label}</Text>
                       <Text type="secondary">{option.value}</Text>
