@@ -7,6 +7,12 @@ export function deviceWearDisplay(value: unknown): string {
   return `约 ${(value * 100).toFixed(2)}%（原始比例 ${value}）`
 }
 
+export function devicePredictionTime(value: unknown): string {
+  if (value === undefined || value === null || value === '') return '未报告'
+  if (value === '0.000000') return '未报告（原始零时间 0.000000）'
+  return typeof value === 'string' && value.trim() !== '' ? value : '格式无效'
+}
+
 export function DeviceAssociationDetails({ device }: { device: ApiRecord }) {
   const text = (value: unknown) => typeof value === 'string' && value.trim() !== '' ? value : '未返回或格式无效'
   const locations = Array.isArray(device.location) && device.location.every(isRecord) ? device.location : null
@@ -15,9 +21,9 @@ export function DeviceAssociationDetails({ device }: { device: ApiRecord }) {
     <Descriptions bordered size="small" column={{ xs: 1, sm: 2 }}>
       <Descriptions.Item label="设备 ID">{text(device.devid)}</Descriptions.Item>
       <Descriptions.Item label="关联守护进程">{daemons === null ? '未返回或格式无效' : daemons.length === 0 ? '本次未报告关联进程' : daemons.join('、')}</Descriptions.Item>
-      <Descriptions.Item label="寿命预测下界（原始时间）">{text(device.life_expectancy_min)}</Descriptions.Item>
-      <Descriptions.Item label="寿命预测上界（原始时间）">{text(device.life_expectancy_max)}</Descriptions.Item>
-      <Descriptions.Item label="预测生成时间">{text(device.life_expectancy_stamp)}</Descriptions.Item>
+      <Descriptions.Item label="寿命预测下界（原始时间）">{devicePredictionTime(device.life_expectancy_min)}</Descriptions.Item>
+      <Descriptions.Item label="寿命预测上界（原始时间）">{devicePredictionTime(device.life_expectancy_max)}</Descriptions.Item>
+      <Descriptions.Item label="预测生成时间">{devicePredictionTime(device.life_expectancy_stamp)}</Descriptions.Item>
       <Descriptions.Item label="已使用寿命（wear_level）">{deviceWearDisplay(device.wear_level)}</Descriptions.Item>
     </Descriptions>
     <Typography.Text type="secondary">寿命预测是原生报告的预计时间范围，不是保证寿命，也不代表当前健康状态；未返回字段不按零或健康处理。</Typography.Text>

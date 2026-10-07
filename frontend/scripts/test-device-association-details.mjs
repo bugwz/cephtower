@@ -7,6 +7,13 @@ const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTa
 const exports = {}
 new Function('exports', 'require', 'React', code)(exports, name => name === 'antd' ? { Alert: 'Alert', Descriptions: { Item: 'Item' }, Space: 'Space', Typography: { Text: 'Text' } } : { isRecord: value => value !== null && typeof value === 'object' && !Array.isArray(value) }, { createElement: (type, props, ...children) => ({ type, props, children }) })
 const render = device => JSON.stringify(exports.DeviceAssociationDetails({ device }))
+for (const field of ['life_expectancy_min', 'life_expectancy_max', 'life_expectancy_stamp']) {
+  const rendered = exports.DeviceAssociationDetails({ device: { [field]: '0.000000' } })
+  assert.ok(JSON.stringify(rendered).includes('未报告（原始零时间 0.000000）'))
+}
+for (const value of [undefined, null, '']) assert.equal(exports.devicePredictionTime(value), '未报告')
+for (const value of [0, false, {}, [], ' ']) assert.equal(exports.devicePredictionTime(value), '格式无效')
+assert.equal(exports.devicePredictionTime('2026-10-07 12:34:56.123456+0800'), '2026-10-07 12:34:56.123456+0800')
 for (const [value, expected] of [[0, '约 0.00%（原始比例 0）'], [0.37, '约 37.00%（原始比例 0.37）'], [1, '约 100.00%（原始比例 1）'], [1.25, '约 125.00%（原始比例 1.25）']]) {
   assert.equal(exports.deviceWearDisplay(value), expected)
   assert.ok(render({ wear_level: value }).includes(expected))
