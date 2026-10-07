@@ -10,6 +10,8 @@ import (
 
 func TestRGWOperationCounters(t *testing.T) {
 	for id, counter := range map[string]string{
+		"rgw_get_bytes_total": "get_obj_bytes", "rgw_put_bytes_total": "put_obj_bytes",
+		"rgw_copy_bytes_total": "copy_obj_bytes", "rgw_delete_bytes_total": "del_obj_bytes",
 		"rgw_get_ops_total": "get_obj_ops", "rgw_put_ops_total": "put_obj_ops",
 		"rgw_delete_ops_total": "del_obj_ops", "rgw_copy_ops_total": "copy_obj_ops",
 		"rgw_list_objects_total": "list_obj_ops", "rgw_list_buckets_total": "list_buckets_ops",

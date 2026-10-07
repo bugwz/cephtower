@@ -56,6 +56,10 @@ var metricQueries = map[string]string{
 	"rgw_delete_buckets_latency_ms": "1000 * sum(rate(ceph_rgw_op_del_bucket_lat_sum[1m])) / sum(rate(ceph_rgw_op_del_bucket_lat_count[1m]))",
 
 	"rgw_get_ops_total":         "ceph_rgw_op_get_obj_ops",
+	"rgw_get_bytes_total":       "ceph_rgw_op_get_obj_bytes",
+	"rgw_put_bytes_total":       "ceph_rgw_op_put_obj_bytes",
+	"rgw_copy_bytes_total":      "ceph_rgw_op_copy_obj_bytes",
+	"rgw_delete_bytes_total":    "ceph_rgw_op_del_obj_bytes",
 	"rgw_put_ops_total":         "ceph_rgw_op_put_obj_ops",
 	"rgw_delete_ops_total":      "ceph_rgw_op_del_obj_ops",
 	"rgw_copy_ops_total":        "ceph_rgw_op_copy_obj_ops",

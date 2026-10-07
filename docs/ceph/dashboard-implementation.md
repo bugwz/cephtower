@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- S3 累计操作字节：依据参考分析看板与 `rgw_perf_counters.cc`、`rgw_op.cc` 的实际累加位置，新增 GET/PUT/COPY/DELETE 对象累计字节查询，保留各实例原始标签，支持即时与历史样本。界面注明单位 B 而非 B/s，不代表桶容量；COPY 不代表网络流量，DELETE 不代表实际回收物理空间。扩展七类操作计数的客户端回归覆盖四类字节指标的表达式、历史/即时路径、大整数原文、标签和前端预设。无真实集群验证。
+
 - S3 其余操作平均延迟：依据 `rgw_perf_counters.cc` 的五类 add_time_avg 计数器补齐 DELETE 对象、COPY、列举对象、列举桶、删除桶的即时与历史查询。使用一分钟 sum(rate(lat_sum)) / sum(rate(lat_count)) × 1000，按操作数量加权，非参考分析看板直接累加 lat_sum 的累计耗时；与已有 GET/PUT 一样聚合端点内匹配序列，依赖集群独立端点。前端明确毫秒单位与平均语义，零请求 NaN 原样保留；表达式、HTTP 路径、非有限值透传及预设回归覆盖，无实机验证。
 
 - RGW S3 操作计数：依据参考 `rgw-s3-analytics.libsonnet` 与 `rgw_perf_counters.cc::add_rgw_op_counters`，接入七类 GET/PUT/DELETE/COPY/列举对象/列举桶/删除桶累计计数，保留原生序列标签，通过现有白名单 API 支持即时和历史查询。前端提供预设、原始样本及趋势，明确累计数不等于对象库存、速率或查询时间段总数，重置可下降；不照搬参考 GET 面板混用 per-bucket 数据的表达式。测试覆盖全部 Prometheus 表达式、HTTP 路径、实例标签、大整数响应原文与前端预设。无真实集群验证。

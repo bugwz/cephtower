@@ -60,6 +60,10 @@ export function metricSamples(item: ApiRecord): MetricSample[] {
 }
 
 const metricOptions = [
+  { label: 'RGW GET 累计字节（B）', value: 'rgw_get_bytes_total', description: '各原生序列累计操作字节，非 B/s 或桶容量' },
+  { label: 'RGW PUT 累计字节（B）', value: 'rgw_put_bytes_total', description: '各原生序列累计操作字节，非 B/s 或桶容量' },
+  { label: 'RGW COPY 累计字节（B）', value: 'rgw_copy_bytes_total', description: '累计复制对象字节，不代表网络流量或当前容量' },
+  { label: 'RGW DELETE 对象累计字节（B）', value: 'rgw_delete_bytes_total', description: '累计删除操作对象字节，不代表实际回收物理空间' },
   { label: 'RGW DELETE 对象平均延迟（ms）', value: 'rgw_delete_latency_ms', description: '一分钟操作数加权平均；不是累计耗时' },
   { label: 'RGW COPY 平均延迟（ms）', value: 'rgw_copy_latency_ms', description: '一分钟操作数加权平均；不是累计耗时' },
   { label: 'RGW 列举对象平均延迟（ms）', value: 'rgw_list_objects_latency_ms', description: '一分钟操作数加权平均；不是累计耗时' },
