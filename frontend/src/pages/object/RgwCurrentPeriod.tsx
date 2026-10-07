@@ -15,6 +15,17 @@ export function periodZoneRole(id: unknown, master: unknown) {
   return typeof master === 'string' && master && typeof id === 'string' && id ? id === master ? '主 Zone' : '非主 Zone' : '主 Zone 信息不可用'
 }
 
+export function RgwPeriodSyncMarkers({ value }: { value: unknown }) {
+  if (!Array.isArray(value) || !value.every(marker => typeof marker === 'string')) return <p>Period 元数据同步标记不可用（不推断同步完成）</p>
+  return <div>
+    <p>Period 保存的元数据同步分片标记，不是实时同步进度或远端健康状态。空标记可能来自 epoch 过滤或强制提升时的旧同步状态，不代表已追平。</p>
+    <Table size="small" rowKey="shard" dataSource={value.map((marker, shard) => ({ shard, marker }))} pagination={value.length > 5 ? { pageSize: 5 } : false} locale={{ emptyText: '此 Period 未保存同步标记（不推断同步完成）' }} columns={[
+      { title: '分片索引', dataIndex: 'shard' },
+      { title: '原生标记', dataIndex: 'marker', render: (marker: string) => marker === '' ? '空标记' : JSON.stringify(marker) }
+    ]} />
+  </div>
+}
+
 export function RgwPeriodZones({ value, master }: { value: unknown; master: unknown }) {
   if (!Array.isArray(value) || !value.every(zone => record(zone) && typeof zone.id === 'string' && !!zone.id && typeof zone.name === 'string' && !!zone.name) || new Set(value.map(zone => zone.id)).size !== value.length) return <p>成员 Zone 列表不可用（不推断为空）</p>
   return <div>
@@ -51,6 +62,7 @@ export function RgwCurrentPeriod({ value, realm, current }: { value: unknown; re
     <p>{summary}</p>
     <p>采集时 Realm 指向的 Period 快照，不是待提交配置差异，不代表各远端已同步；与 Zonegroup 当前本地配置可能不同。</p>
     <details><summary>查看 Period 配额与限流</summary><RgwPeriodConfig value={value.period_config} /></details>
+    <details><summary>查看 Period 元数据同步标记</summary><RgwPeriodSyncMarkers value={value.sync_status} /></details>
     {!valid ? <p>Period Zonegroup 列表不可用（不推断为空）</p> : <Table size="small" rowKey="id" dataSource={groups} pagination={groups.length > 5 ? { pageSize: 5 } : false} scroll={{ x: 1800 }} locale={{ emptyText: '此 Period 的 Zonegroup 列表为空' }} columns={[
       { title: 'Zonegroup ID', dataIndex: 'id', render: raw },
       { title: '名称', dataIndex: 'name', render: raw },
