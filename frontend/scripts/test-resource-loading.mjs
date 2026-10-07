@@ -750,9 +750,16 @@ assert.ok(servicePage.includes('data?.daemonMeta?.stale && <Alert'))
 console.log('Service runtime metadata and stale inventory bindings passed')
 
 const serviceContent = servicePageTree.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'ServicePageContent')
+const tlsCleanupNode = serviceContent.body.statements.find(node => ts.isExpressionStatement(node) && ts.isCallExpression(node.expression) && node.expression.expression.getText(servicePageTree) === 'useEffect' && node.getText(servicePageTree).includes('ssl_cert'))
+const tlsCleanupCode = ts.transpileModule(`const clear = ${tlsCleanupNode.expression.arguments[0].getText(servicePageTree)}`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
+for (const formOpen of [false, true]) {
+  const cleared = []
+  new Function('formOpen', 'form', `${tlsCleanupCode}; clear()`)(formOpen, { setFieldsValue: value => cleared.push(value) })
+  assert.deepEqual(cleared, formOpen ? [] : [{ ssl_cert: undefined, ssl_key: undefined }])
+}
 const submitServiceNode = serviceContent.body.statements.find((node) => ts.isFunctionDeclaration(node) && node.name.text === 'submitService')
 const submitServiceCode = ts.transpileModule(submitServiceNode.getText(servicePageTree), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText
-for (const editing of [false, true]) {
+for (const editing of [false, true]) for (const ssl of [false, true, undefined]) {
   const calls = []
   const env = {
     active: { current: true }, running: { current: false }, selectedClusterId: 7, loading: false, error: '',
@@ -762,7 +769,9 @@ for (const editing of [false, true]) {
     mutateResource: async (...args) => { calls.push(args) }
   }
   const submit = new Function(...Object.keys(env), `${submitServiceCode}; return submitService`)(...Object.values(env))
-  await submit({ service_type: 'ingress', service_id: 'rgw.a', placement_json: '{}', backend_service: 'rgw.a', virtual_ip: '2001:db8::10/64', frontend_port: 8080, monitor_port: 9000, virtual_interface_networks: ['192.0.2.0/24', '2001:db8::/64'] })
+  await submit({ service_type: 'ingress', service_id: 'rgw.a', placement_json: '{}', backend_service: 'rgw.a', virtual_ip: '2001:db8::10/64', frontend_port: 8080, monitor_port: 9000, virtual_interface_networks: ['192.0.2.0/24', '2001:db8::/64'], ssl, ssl_cert: 'cert-fixture', ssl_key: 'key-fixture' })
+  assert.equal('ssl' in calls[0][2], !editing && ssl !== undefined)
+  for (const key of ['ssl_cert', 'ssl_key']) assert.equal(key in calls[0][2], !editing && ssl === true)
   assert.equal(calls[0][1], editing ? 'PATCH' : 'POST')
   for (const key of ['backend_service', 'virtual_ip', 'frontend_port', 'monitor_port', 'virtual_interface_networks']) assert.equal(key in calls[0][2], !editing)
   if (!editing) assert.deepEqual(calls[0][2].virtual_interface_networks, ['192.0.2.0/24', '2001:db8::/64'])

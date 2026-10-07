@@ -26,6 +26,9 @@ interface ServiceFormValues {
   frontend_port?: number
   monitor_port?: number
   virtual_interface_networks?: string[]
+  ssl?: boolean
+  ssl_cert?: string
+  ssl_key?: string
   networks?: string[]
 }
 
@@ -89,8 +92,12 @@ function ServicePageContent() {
   const selectedServiceType = Form.useWatch('service_type', form)
   const placementDraft = Form.useWatch('placement_json', form)
   const unmanagedDraft = Form.useWatch('unmanaged', form)
+  const ingressTLS = Form.useWatch('ssl', form)
   const requiresServiceID = ['mds', 'rgw', 'nfs', 'smb', 'ingress'].includes(selectedServiceType)
   const [formOpen, setFormOpen] = useState(false)
+  useEffect(() => {
+    if (!formOpen) form.setFieldsValue({ ssl_cert: undefined, ssl_key: undefined })
+  }, [formOpen, form])
   const [detail, setDetail] = useState<{ clusterId: number; name: string } | null>(null)
   const [perfDetail, setPerfDetail] = useState<{ clusterId: number; name: string } | null>(null)
   const visiblePerf = perfDetail?.clusterId === selectedClusterId ? perfDetail : null
@@ -168,6 +175,7 @@ function ServicePageContent() {
         ...(Array.isArray(values.networks) ? { networks: values.networks } : {}),
         ...(!editingService && values.service_type === 'ingress' ? { backend_service: values.backend_service, virtual_ip: values.virtual_ip, frontend_port: values.frontend_port, monitor_port: values.monitor_port } : {}),
         ...(!editingService && values.service_type === 'ingress' && Array.isArray(values.virtual_interface_networks) ? { virtual_interface_networks: values.virtual_interface_networks } : {}),
+        ...(!editingService && values.service_type === 'ingress' && typeof values.ssl === 'boolean' ? { ssl: values.ssl, ...(values.ssl ? { ssl_cert: values.ssl_cert, ssl_key: values.ssl_key } : {}) } : {}),
         placement
       }
       const successMessage = editingService ? '服务更新已安排，请核对刷新后的配置与运行状态。' : '服务创建已安排，请核对刷新后的配置与运行状态。'
@@ -386,11 +394,17 @@ function ServicePageContent() {
           </Form.Item>
           <ServicePlacementPreview value={placementDraft} unmanaged={unmanagedDraft} />
           {selectedServiceType === 'ingress' && (editingService ? <Alert type="info" message="编辑保留已有 Ingress 后端、虚拟 IP、监听端口及 TLS 配置；此表单仅修改通用服务配置。" /> : <>
-            <Alert type="warning" message="基础 Ingress 部署：需已有 RGW/NFS 后端及可用虚拟 IP。本表单不配置 TLS，Ceph 接受配置不代表网络可达或部署完成。" />
+            <Alert type="warning" message="Ingress 部署需要已有 RGW/NFS 后端及可用虚拟 IP。Ceph 接受配置不代表网络可达或部署完成。" />
             <Form.Item name="backend_service" label="后端服务" rules={[{ required: true }, { pattern: /^(rgw|nfs)\.[a-zA-Z0-9_.-]+$/, message: '填写完整 RGW/NFS 服务名' }]}><Input placeholder="rgw.example" /></Form.Item>
             <Form.Item name="virtual_ip" label="虚拟 IP（含前缀长度）" rules={[{ required: true }]}><Input placeholder="192.0.2.10/24 或 2001:db8::10/64" /></Form.Item>
             <Form.Item name="frontend_port" label="前端端口" rules={[{ required: true }]}><InputNumber min={1} max={65535} precision={0} /></Form.Item>
             <Form.Item name="monitor_port" label="监控端口" rules={[{ required: true }]}><InputNumber min={1} max={65535} precision={0} /></Form.Item>
+            <Form.Item name="ssl" label="启用 TLS" valuePropName="checked"><Switch onChange={() => form.setFieldsValue({ ssl_cert: undefined, ssl_key: undefined })} /></Form.Item>
+            {ingressTLS === true && <>
+              <Alert type="info" message="提供匹配的 PEM 证书与私钥，每项最多 64 KiB。后端检查格式与配对，不证明证书受信任、域名匹配或未过期；关闭表单会清除敏感输入。" />
+              <Form.Item name="ssl_cert" label="TLS 证书（PEM）" preserve={false} rules={[{ required: true }]}><Input.TextArea rows={4} spellCheck={false} autoComplete="off" /></Form.Item>
+              <Form.Item name="ssl_key" label="TLS 私钥（PEM）" preserve={false} rules={[{ required: true }]}><Input.TextArea rows={4} spellCheck={false} autoComplete="off" /></Form.Item>
+            </>}
             <Form.Item name="virtual_interface_networks" label="虚拟接口候选网段" extra="可选：当 VIP 网段不能直接确定接口时，提供用于选择承载接口的 IPv4/IPv6 网段。不是服务绑定网段，也不会修改主机网络；接口选择由 Ceph 完成。"><Select mode="tags" tokenSeparators={[',']} placeholder="例如 192.0.2.0/24 或 2001:db8::/64" /></Form.Item>
           </>)}
         </Form>

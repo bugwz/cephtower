@@ -1,13 +1,14 @@
 package mutation
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"net/netip"
 	"regexp"
 )
 
 func ingressCreateSpec(p map[string]any, serviceType, action string) (map[string]any, error) {
-	fields := []string{"backend_service", "virtual_ip", "frontend_port", "monitor_port", "virtual_interface_networks"}
+	fields := []string{"backend_service", "virtual_ip", "frontend_port", "monitor_port", "virtual_interface_networks", "ssl", "ssl_cert", "ssl_key"}
 	if serviceType != "ingress" || action != "service.create" {
 		for _, key := range fields {
 			if _, exists := p[key]; exists {
@@ -51,6 +52,30 @@ func ingressCreateSpec(p map[string]any, serviceType, action string) (map[string
 			}
 		}
 		spec["virtual_interface_networks"] = networks
+	}
+	if value, exists := p["ssl"]; exists {
+		enabled, ok := value.(bool)
+		if !ok {
+			return nil, invalid("ssl must be a boolean")
+		}
+		spec["ssl"] = enabled
+		if enabled {
+			cert, certOK := p["ssl_cert"].(string)
+			key, keyOK := p["ssl_key"].(string)
+			if !certOK || !keyOK || len(cert) == 0 || len(key) == 0 || len(cert) > 64<<10 || len(key) > 64<<10 {
+				return nil, invalid("TLS requires a PEM certificate and private key of at most 64 KiB each")
+			}
+			if _, err := tls.X509KeyPair([]byte(cert), []byte(key)); err != nil {
+				return nil, invalid("TLS certificate and private key must be valid matching PEM data")
+			}
+			spec["ssl_cert"], spec["ssl_key"] = cert, key
+			return spec, nil
+		}
+	}
+	for _, field := range []string{"ssl_cert", "ssl_key"} {
+		if _, exists := p[field]; exists {
+			return nil, invalid("TLS material requires ssl=true")
+		}
 	}
 	return spec, nil
 }
