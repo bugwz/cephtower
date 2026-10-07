@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { jsonInit, request, type ApiRecord } from '../../api/client'
 import { rgwSyncCounters, rgwSyncNotice, rgwSyncReportSections } from './rgwSyncReport'
 import { RgwSyncMetricLinks } from './RgwSyncMetricLinks'
+import { RgwSyncMetrics } from './RgwSyncMetrics'
 
 export function RgwSyncSectionNotice({ section }: { section: string }) {
   const notice = rgwSyncNotice(section)
@@ -68,6 +69,7 @@ export function RgwSyncStatus({ row, clusterId }: { row: ApiRecord; clusterId?: 
   return <Card size="small" title="Multisite 同步状态">
     <Space direction="vertical" style={{ width: '100%' }}>
       <RgwSyncMetricLinks clusterId={clusterId} />
+      <RgwSyncMetrics key={clusterId ?? 'none'} clusterId={clusterId} />
       <Alert type="info" message="按需读取此 Zone 的原生同步报告" description="展示 Realm、Zonegroup、元数据同步及各来源的数据分片进度、落后和恢复信息。报告读取成功不代表所有数据已同步；主 Zone 的 no sync 只表示不接收元数据同步。无来源的数据段不代表双向同步已完成。不会触发同步、修改配置或自动轮询。" />
       {!valid && <Alert type="warning" message="Zone 身份或库存状态不可用，请重新采集后再试" />}
       <Button disabled={!valid || !scoped || state.busy} loading={scoped && state.busy} onClick={() => void read()}>读取同步报告</Button>
