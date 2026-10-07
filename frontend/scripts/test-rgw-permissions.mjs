@@ -9,7 +9,7 @@ assert.deepEqual(rows([{ type: 'users', perm: '*' }, { type: 'future', perm: 're
   { key: 0, identity: 'users', permission: '*' }, { key: 1, identity: 'future', permission: 'read, write' }
 ])
 assert.deepEqual(rows([{ id: 'tenant$user:sub', permissions: 'full-control' }], true), [{ key: 0, identity: 'tenant$user:sub', permission: 'full-control' }])
-assert.equal(rows([{ type: 'users', perm: '' }])[0].permission, '未指定权限')
+assert.equal(rows([{ type: 'users', perm: '' }])[0].permission, '')
 assert.deepEqual(rows([]), [])
 for (const value of [undefined, null, {}, [null], [[]], [{}], [{ type: '', perm: '*' }], [{ type: 'users', perm: null }]]) assert.equal(rows(value), undefined)
 assert.equal(rows([{ type: 'users', perm: '*' }], true), undefined)
@@ -30,12 +30,21 @@ for (const subusers of [false, true]) {
   assert.equal(identity.defaultSortOrder, 'ascend')
   assert.ok(identity.sorter(table.props.dataSource[0], table.props.dataSource[1]) > 0)
   assert.equal(identity.sorter(table.props.dataSource[0], table.props.dataSource[0]), 0)
-  assert.deepEqual(permission.filters, [{ text: 'future', value: 'future' }, { text: 'read', value: 'read' }])
+  assert.deepEqual(permission.filters, [{ text: '"future"', value: 'future' }, { text: '"read"', value: 'read' }])
   assert.equal(permission.onFilter('future', table.props.dataSource[0]), true)
   assert.equal(permission.onFilter('read', table.props.dataSource[0]), false)
   assert.equal(permission.onFilter('READ', table.props.dataSource[1]), false)
   assert.equal(JSON.stringify(value), snapshot)
   assert.deepEqual(view.RgwPermissions({ value: [], subusers }).props.columns[1].filters, [])
+  const raw = ['', '未指定权限', ' read ', 'read']
+  const edge = view.RgwPermissions({ value: raw.map((p, i) => subusers ? { id: String(i), permissions: p } : { type: String(i), perm: p }), subusers })
+  const column = edge.props.columns[1]
+  assert.equal(column.filters.length, 4)
+  assert.equal(new Set(column.filters.map(item => item.text)).size, 4)
+  assert.equal(column.render(''), '未指定权限（空字符串）')
+  assert.equal(column.render('未指定权限'), '"未指定权限"')
+  assert.equal(column.render(' read '), '" read "')
+  for (const [index, p] of raw.entries()) assert.deepEqual(edge.props.dataSource.filter(row => column.onFilter(p, row)).map(row => row.key), [index])
 }
 const pages = readFileSync(new URL('../src/pages/object/RgwUserDetails.tsx', import.meta.url), 'utf8')
 assert.ok(pages.includes('<RgwPermissions value={row.caps} />'))

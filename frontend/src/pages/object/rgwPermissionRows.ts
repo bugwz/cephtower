@@ -6,5 +6,5 @@ export function rgwPermissionRows(value: unknown, subusers = false) {
     || typeof row[identity] !== 'string' || row[identity].length === 0
     || typeof row[permission] !== 'string')) return undefined
   return value.map((row, index) => ({ key: index, identity: row[identity] as string,
-    permission: row[permission] === '' ? '未指定权限' : row[permission] as string }))
+    permission: row[permission] as string }))
 }
