@@ -10,6 +10,11 @@ const source = readFileSync(new URL('../src/pages/monitoring/MetricPage.tsx', im
 const tree = ts.createSourceFile('MetricPage.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 const optionsNode = tree.statements.filter(ts.isVariableStatement).flatMap(node => [...node.declarationList.declarations]).find(node => node.name.getText(tree) === 'metricOptions')
 const options = new Function(`return ${optionsNode.initializer.getText(tree)}`)()
+for (const id of ['rgw_delete_latency_ms', 'rgw_copy_latency_ms', 'rgw_list_objects_latency_ms', 'rgw_list_buckets_latency_ms', 'rgw_delete_buckets_latency_ms']) {
+  assert.equal(options.filter(option => option.value === id).length, 1)
+  assert.ok(options.find(option => option.value === id).description.includes('操作数加权平均'))
+  assert.ok(options.find(option => option.value === id).label.includes('ms'))
+}
 for (const id of ['rgw_get_ops_total', 'rgw_put_ops_total', 'rgw_delete_ops_total', 'rgw_copy_ops_total', 'rgw_list_objects_total', 'rgw_list_buckets_total', 'rgw_delete_buckets_total']) {
   assert.equal(options.filter(option => option.value === id).length, 1)
   assert.ok(options.find(option => option.value === id).label.includes('累计操作数'))

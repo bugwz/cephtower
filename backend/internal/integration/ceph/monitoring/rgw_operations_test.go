@@ -44,3 +44,40 @@ func TestRGWOperationCounters(t *testing.T) {
 		}
 	}
 }
+
+func TestRGWOperationLatencies(t *testing.T) {
+	for id, operation := range map[string]string{
+		"rgw_delete_latency_ms": "del_obj", "rgw_copy_latency_ms": "copy_obj",
+		"rgw_list_objects_latency_ms": "list_obj", "rgw_list_buckets_latency_ms": "list_buckets",
+		"rgw_delete_buckets_latency_ms": "del_bucket",
+	} {
+		for _, history := range []bool{false, true} {
+			client, err := New("https://prometheus.test/prefix", "", &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+				path, kind, sample := "/prefix/api/v1/query", "vector", `"value":[3600,"NaN"]`
+				if history {
+					path, kind, sample = "/prefix/api/v1/query_range", "matrix", `"values":[[3600,"NaN"],[3660,"1.25"]]`
+				}
+				query := "1000 * sum(rate(ceph_rgw_op_" + operation + "_lat_sum[1m])) / sum(rate(ceph_rgw_op_" + operation + "_lat_count[1m]))"
+				if r.URL.Path != path || r.URL.Query().Get("query") != query {
+					t.Fatalf("wrong query: %s", r.URL)
+				}
+				return jsonResponse(200, `{"status":"success","data":{"resultType":"`+kind+`","result":[{"metric":{},`+sample+`}]}}`), nil
+			})})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var result PrometheusResult
+			if history {
+				result, err = client.QueryRange(context.Background(), id, time.Unix(3600, 0), time.Unix(7200, 0), time.Minute)
+			} else {
+				result, err = client.Query(context.Background(), id, nil)
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(result.Data.Result) != 1 || !strings.Contains(string(result.Data.Result[0]), `"NaN"`) {
+				t.Fatalf("unavailable latency changed: %+v", result)
+			}
+		}
+	}
+}

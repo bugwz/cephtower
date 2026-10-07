@@ -60,6 +60,11 @@ export function metricSamples(item: ApiRecord): MetricSample[] {
 }
 
 const metricOptions = [
+  { label: 'RGW DELETE 对象平均延迟（ms）', value: 'rgw_delete_latency_ms', description: '一分钟操作数加权平均；不是累计耗时' },
+  { label: 'RGW COPY 平均延迟（ms）', value: 'rgw_copy_latency_ms', description: '一分钟操作数加权平均；不是累计耗时' },
+  { label: 'RGW 列举对象平均延迟（ms）', value: 'rgw_list_objects_latency_ms', description: '一分钟操作数加权平均；不是累计耗时' },
+  { label: 'RGW 列举桶平均延迟（ms）', value: 'rgw_list_buckets_latency_ms', description: '一分钟操作数加权平均；不是累计耗时' },
+  { label: 'RGW 删除桶平均延迟（ms）', value: 'rgw_delete_buckets_latency_ms', description: '一分钟操作数加权平均；不是累计耗时' },
   { label: 'RGW GET 累计操作数', value: 'rgw_get_ops_total', description: '各原生序列累计计数，不是当前对象数或请求/s' },
   { label: 'RGW PUT 累计操作数', value: 'rgw_put_ops_total', description: '各原生序列累计计数，不是当前对象数或请求/s' },
   { label: 'RGW DELETE 对象累计操作数', value: 'rgw_delete_ops_total', description: '各原生序列累计计数，重启或计数器重置可下降' },
