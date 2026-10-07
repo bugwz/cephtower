@@ -15,6 +15,7 @@ import (
 func (p *NativeProvider) collectStorageOptional(ctx context.Context, access ClusterAccess, pools []poolWire, fs fsDumpWire, now time.Time) []Observation {
 	var rows []Observation
 	for _, pool := range pools {
+		var mirrorImageMetadata []cephdomain.RBDImage
 		var namespaces []string
 		var namespaceRows []namedWire
 		if p.optional(ctx, access, executor.BinaryRBD, "collect.rbd_namespace", []string{"namespace", "list", pool.PoolName, "--format", "json"}, &namespaceRows) {
@@ -55,6 +56,9 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 					imageKey := base64.RawURLEncoding.EncodeToString([]byte(spec))
 					payload := cephdomain.RBDImage{ImagePath: spec, ImageSpec: imageKey, Pool: pool.PoolName, Namespace: namespace, Name: image.Name, SizeBytes: image.Size, Format: image.Format}
 					p.enrichRBDImage(ctx, access, spec, &payload)
+					if namespace == "" {
+						mirrorImageMetadata = append(mirrorImageMetadata, payload)
+					}
 					imageRowIndex := len(rows)
 					rows = append(rows, observation("rbd_image", imageKey, image.Name, "rbd_cli", payload, now))
 					var snapshots []map[string]any
@@ -189,6 +193,7 @@ func (p *NativeProvider) collectStorageOptional(ctx context.Context, access Clus
 					mirroring["summary"] = status["summary"]
 					mirroring["daemons"] = status["daemons"]
 					enrichMirrorReplayMetrics(status["images"])
+					enrichMirrorImageMetadata(status["images"], mirrorImageMetadata)
 					mirroring["images"] = status["images"]
 				}
 			}

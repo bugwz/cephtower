@@ -25,6 +25,9 @@ export function rbdMirrorImageRows(value: unknown) {
   return value.map((row, index) => ({
     index, name: text(row, 'name'), globalId: text(row, 'global_id'), state: text(row, 'state'),
     category: rbdMirrorStateCategory(row.state),
+    mode: row.mirror_mode === 'journal' || row.mirror_mode === 'snapshot' ? row.mirror_mode : '未返回有效模式',
+    role: row.mirror_primary === true ? '主端' : row.mirror_primary === false ? '非主端' : '未返回有效角色',
+    mirrorState: typeof row.mirror_image_state === 'string' && ['enabled', 'disabling', 'creating'].includes(row.mirror_image_state) ? row.mirror_image_state : '未返回有效配置状态',
     metrics: row.replay_metrics,
     bootstrap: row.bootstrap_percent,
     description: text(row, 'description'), updated: text(row, 'last_update'),
@@ -63,10 +66,11 @@ export function RbdMirrorImages({ value }: { value: unknown }) {
   if (!rows) return <Alert type="warning" message="镜像同步详情不可用或格式无效" />
   if (!rows.length) return <Alert type="info" message="本次池状态未返回镜像，不代表同步完成" />
   return <Space direction="vertical" style={{ minWidth: 640, width: '100%' }}>
-    <span>来源：rbd mirror pool status --verbose。状态与时间保留原文；本地和各远端分别报告，不推断同步已完成。展开镜像查看站点及守护进程。</span>
+    <span>来源：rbd mirror pool status --verbose；模式、角色和配置状态关联同池默认命名空间的 rbd info（名称及全局 ID 一致）。均为采集快照，不推断同步已完成。展开镜像查看站点及守护进程。</span>
     <span>本池已返回镜像的本地状态（筛选前）：{categories.map(category => `${category} ${rows.filter(row => row.category === category).length}`).join('；')}。停止不表示同步成功；远端分类单独展示。</span>
     <Table size="small" rowKey="index" pagination={{ pageSize: 5 }} scroll={{ x: 950 }} dataSource={rows} columns={[
       { title: '镜像', dataIndex: 'name' }, { title: '全局 ID', dataIndex: 'globalId' },
+      { title: '镜像同步模式', dataIndex: 'mode' }, { title: '本地角色', dataIndex: 'role' }, { title: '同步配置状态', dataIndex: 'mirrorState' },
       { title: '本地原生状态', dataIndex: 'state' }, { title: '本地描述', dataIndex: 'description', render: longText },
       { title: '本地更新时间（原文）', dataIndex: 'updated' }, categoryColumn,
       { title: '本地引导复制进度', dataIndex: 'bootstrap', render: value => <RbdBootstrapProgress value={value} /> }

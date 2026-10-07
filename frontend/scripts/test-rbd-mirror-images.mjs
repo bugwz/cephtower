@@ -18,7 +18,21 @@ for (const value of [null, undefined, {}, [null], [[]]]) assert.equal(ui.RbdMirr
 assert.equal(ui.RbdMirrorImages({ value: [] }).props.type, 'info')
 for (const peers of [null, {}, [null], [[]]]) assert.equal(ui.rbdMirrorImageRows([{ peer_sites: peers }])[0].peers, undefined)
 const table = ui.RbdMirrorImages({ value: [sample] }).props.children.find(node => node.type === 'Table')
-assert.equal(table.props.columns.length, 7)
+assert.equal(table.props.columns.length, 10)
+for (const mode of ['journal', 'snapshot']) {
+  const row = ui.rbdMirrorImageRows([{mirror_mode:mode, mirror_primary:false, mirror_image_state:'enabled'}])[0]
+  assert.equal(row.mode,mode)
+  assert.equal(row.role,'非主端')
+  assert.equal(row.mirrorState,'enabled')
+}
+assert.equal(ui.rbdMirrorImageRows([{mirror_primary:true}])[0].role,'主端')
+for(const state of ['creating','disabling']) assert.equal(ui.rbdMirrorImageRows([{mirror_image_state:state}])[0].mirrorState,state)
+for (const value of [undefined,null,0,'false',{},[]]) {
+  const row = ui.rbdMirrorImageRows([{mirror_mode:value,mirror_primary:value,mirror_image_state:value}])[0]
+  assert.equal(row.mode,'未返回有效模式')
+  assert.equal(row.role,'未返回有效角色')
+  assert.equal(row.mirrorState,'未返回有效配置状态')
+}
 for (const state of ['syncing', 'starting_replay', 'replaying']) assert.equal(ui.rbdMirrorStateCategory(`up+${state}`), '同步或重放中')
 for (const state of ['stopping_replay', 'stopped']) assert.equal(ui.rbdMirrorStateCategory(`up+${state}`), '停止中或已停止')
 for (const state of ['unknown', 'unknown (42)', 'error', 'syncing', 'starting_replay', 'replaying', 'stopping_replay', 'stopped']) assert.equal(ui.rbdMirrorStateCategory(`down+${state}`), '需关注')
