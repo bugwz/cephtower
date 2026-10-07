@@ -229,12 +229,23 @@ func (s *Service) readMonitoring(ctx context.Context, clusterID uint64, kind str
 			return nil, lookupErr
 		}
 		result["meta"].(map[string]any)["logs_explore_url"] = grafanaLogsURL(endpoint.URL)
+		result["meta"].(map[string]any)["smb_overview_url"] = grafanaSMBURL(endpoint.URL)
 	}
 	return result, nil
 }
 
-// Open an empty Explore query, as Dashboard does. Do not imply that a shared
-// Loki source is cluster-scoped or send server credentials to the browser.
+// Dashboard's SMB overview uses this Grafana dashboard UID.
+func grafanaSMBURL(base string) string {
+	u, err := url.Parse(base)
+	if err != nil || u.Host == "" || u.User != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return ""
+	}
+	u.Path = strings.TrimRight(u.Path, "/") + "/d/feem6ehrmi2o0b/smb-overview"
+	u.RawPath, u.RawQuery, u.Fragment, u.RawFragment = "", "", "", ""
+	return u.String()
+}
+
+// Open an empty Explore query without claiming shared Loki data is cluster-scoped.
 func grafanaLogsURL(base string) string {
 	u, err := url.Parse(base)
 	if err != nil || u.Host == "" || u.User != nil || (u.Scheme != "http" && u.Scheme != "https") {

@@ -50,7 +50,21 @@ func TestGrafanaReadIncludesLogsEntry(t *testing.T) {
 		t.Fatal(err)
 	}
 	meta := result.(map[string]any)["meta"].(map[string]any)
+	if meta["smb_overview_url"] != "https://grafana.test/prefix/d/feem6ehrmi2o0b/smb-overview" {
+		t.Fatal("missing SMB dashboard entry")
+	}
 	if meta["logs_explore_url"] != grafanaLogsURL("https://grafana.test/prefix") {
 		t.Fatalf("missing selected cluster entry: %v", meta)
+	}
+}
+
+func TestGrafanaSMBURL(t *testing.T) {
+	if got := grafanaSMBURL("https://grafana.test/prefix/?secret=value#fragment"); got != "https://grafana.test/prefix/d/feem6ehrmi2o0b/smb-overview" {
+		t.Fatal(got)
+	}
+	for _, base := range []string{"/relative", "javascript:alert(1)", "https://user:secret@grafana.test", "ftp://grafana.test", "%"} {
+		if grafanaSMBURL(base) != "" {
+			t.Fatal("unsafe URL accepted")
+		}
 	}
 }

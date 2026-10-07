@@ -3,6 +3,7 @@ import { smbUsersImport } from './smbUsersImport'
 import { NFSExportDetails } from './NFSExportDetails'
 import { NFSClusterDetails } from './NFSClusterDetails'
 import { SMBClusterDetails } from './SMBClusterDetails'
+import { SMBOverview } from './SMBOverview'
 import { SMBLoginControlEditor, smbLoginControlBody } from './SMBLoginControlEditor'
 import { SMBUsersEditor, smbUsersBody, smbUsersInitialValues, smbUpdateGroupsBody } from './SMBUsersEditor'
 import { smbClusterInitialValues, smbClusterDNSBody, smbClusterUserGroupsBody, smbClusterDomainBody, smbClusterCountBody, smbClusterHostsBody, smbClusterUpdateHostsBody, smbClusterClusteringBody, smbClusterPublicAddressesBody, smbClusterUpdatePublicAddressesBody } from './smbClusterFields'
@@ -73,7 +74,7 @@ export function NfsPage() {
 }
 
 export function SmbClustersPage() {
-  return <ResourceListPage definition={definitions.smbClusters} />
+  return <><SMBOverview /><ResourceListPage definition={definitions.smbClusters} /></>
 }
 
 export function SmbPage() {
