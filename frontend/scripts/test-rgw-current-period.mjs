@@ -5,7 +5,7 @@ const api={}
 const jsx=(type,props)=>({type,props})
 const policyApi={}
 new Function('exports',ts.transpileModule(readFileSync(new URL('../src/pages/object/rgwBucketSyncPolicy.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText)(policyApi)
-new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwCurrentPeriod.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText)(api,name=>name==='antd'?{Table:'Table'}:name==='./RgwPlacementClasses'?{RgwPlacementClasses:'PlacementClasses'}:name==='./RgwBucketSyncFlows'?{RgwBucketSyncFlows:'Flows'}:name==='./RgwBucketSyncPipes'?{RgwBucketSyncPipes:'Pipes'}:name==='./rgwBucketSyncPolicy'?policyApi:{jsx,jsxs:jsx})
+new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwCurrentPeriod.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText)(api,name=>name==='antd'?{Table:'Table'}:name==='./RgwPlacementClasses'?{RgwPlacementClasses:'PlacementClasses'}:name==='./RgwBucketSyncFlows'?{RgwBucketSyncFlows:'Flows'}:name==='./RgwBucketSyncPipes'?{RgwBucketSyncPipes:'Pipes'}:name==='./RgwPeriodConfig'?{RgwPeriodConfig:'PeriodConfig'}:name==='./rgwBucketSyncPolicy'?policyApi:{jsx,jsxs:jsx})
 const period={id:'p',realm_id:'r',epoch:2,realm_epoch:1,master_zone:'<zone>',period_map:{zonegroups:[{id:'g',name:'<name>',master_zone:'z',zones:[],sync_policy:{groups:[]}}]}}
 const props={value:period,realm:'r',current:'p'}
 function nodes(node){if(Array.isArray(node))return node.flatMap(nodes);if(!node||typeof node!=='object')return [];return [node,...nodes(node.props?.children)]}
@@ -14,6 +14,23 @@ for(const value of [null,{}, {...period,realm_id:'other'},{...period,id:'other'}
 assert.match(api.currentPeriodSummary({...period,epoch:2**53},'r','p'),/非精确/)
 const view=api.RgwCurrentPeriod(props)
 const table=nodes(view).find(n=>n.type==='Table')
+const configApi={}
+new Function('exports','require',ts.transpileModule(readFileSync(new URL('../src/pages/object/RgwPeriodConfig.tsx',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText)(configApi,name=>name==='antd'?{Alert:'Alert',Tabs:'Tabs'}:name==='./RgwQuota'?{RgwQuota:'Quota'}:name==='./RgwRateLimit'?{RgwRateLimit:'RateLimit'}:{jsx,jsxs:jsx})
+const config={user_quota:{enabled:true,max_size:0,max_objects:-1},bucket_quota:{enabled:false},user_ratelimit:{enabled:true,max_read_ops:0},bucket_ratelimit:null,anonymous_ratelimit:{enabled:false}}
+const configView=configApi.RgwPeriodConfig({value:config})
+const configTabs=nodes(configView).find(node=>node.type==='Tabs').props.items
+assert.equal(configTabs.length,5)
+for(const [key,value] of Object.entries(config)) {
+  const tab=configTabs.find(item=>item.key===key)
+  assert.equal(tab.children.props.value,value)
+  assert.equal(tab.children.type,key.endsWith('_quota')?'Quota':'RateLimit')
+}
+assert.match(JSON.stringify(configView),/不是默认 Realm.*最终有效配额.*每个 RGW 每分钟/)
+for(const value of [undefined,null,[],false,0,'']) assert.match(configApi.RgwPeriodConfig({value}).props.message,/不可用.*不推断未启用/)
+assert.ok(nodes(configApi.RgwPeriodConfig({value:{}})).find(node=>node.type==='Tabs').props.items.every(item=>item.children.props.value===undefined))
+assert.equal(nodes(api.RgwCurrentPeriod({...props,value:{...period,period_config:config}})).find(node=>node.type==='PeriodConfig').props.value,config)
+assert.equal(nodes(view).find(node=>node.type==='PeriodConfig').props.value,undefined)
+assert.ok(!nodes(api.RgwCurrentPeriod({...props,realm:'other'})).some(node=>node.type==='PeriodConfig'))
 assert.equal(table.props.dataSource[0].name,'<name>')
 const groupCell=(key,value)=>table.props.columns.find(column=>column.dataIndex===key).render(value)
 assert.equal(groupCell('api_name','<api>'),'"<api>"')

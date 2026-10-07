@@ -3,6 +3,7 @@ import { RgwPlacementClasses } from './RgwPlacementClasses'
 import { RgwBucketSyncFlows } from './RgwBucketSyncFlows'
 import { RgwBucketSyncPipes } from './RgwBucketSyncPipes'
 import { rgwBucketSyncPolicy } from './rgwBucketSyncPolicy'
+import { RgwPeriodConfig } from './RgwPeriodConfig'
 
 function record(value: unknown): value is Record<string, unknown> { return !!value && typeof value === 'object' && !Array.isArray(value) }
 const raw = (v: unknown) => v === undefined ? '未返回' : JSON.stringify(v)
@@ -49,6 +50,7 @@ export function RgwCurrentPeriod({ value, realm, current }: { value: unknown; re
   return <div>
     <p>{summary}</p>
     <p>采集时 Realm 指向的 Period 快照，不是待提交配置差异，不代表各远端已同步；与 Zonegroup 当前本地配置可能不同。</p>
+    <details><summary>查看 Period 配额与限流</summary><RgwPeriodConfig value={value.period_config} /></details>
     {!valid ? <p>Period Zonegroup 列表不可用（不推断为空）</p> : <Table size="small" rowKey="id" dataSource={groups} pagination={groups.length > 5 ? { pageSize: 5 } : false} scroll={{ x: 1800 }} locale={{ emptyText: '此 Period 的 Zonegroup 列表为空' }} columns={[
       { title: 'Zonegroup ID', dataIndex: 'id', render: raw },
       { title: '名称', dataIndex: 'name', render: raw },

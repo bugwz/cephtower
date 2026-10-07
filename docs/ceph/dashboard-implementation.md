@@ -29,6 +29,8 @@
 
 ### 增量实现与验证记录
 
+- Period 配额与限流：对照 `RGWPeriod::dump`、`RGWPeriodConfig::dump`，将现有指定 Realm/Period 的 `period get` 返回值中的 `period_config` 接入五类结构化视图（用户/Bucket 配额及用户/Bucket/匿名限流）。复用现有精确数值与缺失状态展示，不将默认 Realm 本地配置等同于当前 Realm Period 快照，不宣称最终有效限制或远端已同步。回归覆盖五类字段传递、缺失与异常容器、Realm 身份不匹配时不显示配置；前端全量测试与构建通过。无后端变化，无实机或浏览器视觉验证。
+
 - 当前 Period 的 Zonegroup 同步策略增加同步组状态、对称/定向数据流与管道结构化展示，复用现有严格解析和异常提示。依据 `rgw_zone.cc::RGWZoneGroup::dump` 与 `rgw_sync_policy.cc`，数据来自现有带 Realm/Period 身份校验的 `radosgw-admin period get` 采集链路；无需新增后端命令。新增 period 展示范围，明确只读快照、非本地待提交配置、非远端同步确认，空组不推断停止默认复制。测试覆盖实际列绑定、范围传递、状态摘要和复用表格内容；前端全量测试、类型检查及构建通过。无后端变更，无实机或浏览器视觉验证。
 
 - RGW Period 放置目标：对照 `RGWZoneGroupPlacementTarget::dump`，将 period get 已采集的 placement_targets 接入现有存储类/分层详情组件，可展开查看目标、类声明、分层参数及 ACL 映射。复用既有字段白名单和凭据过滤，不再仅依赖原始 JSON；增加只读 Period 语境，明确可能不同于本地待提交配置，不表示远端已同步。新增真实列参数传递与快照提示回归；无后端变化，无实机或浏览器视觉验证。
