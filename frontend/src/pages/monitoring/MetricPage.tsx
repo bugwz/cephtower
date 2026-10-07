@@ -58,6 +58,13 @@ export function metricSamples(item: ApiRecord): MetricSample[] {
 }
 
 const metricOptions = [
+  { label: 'SMB 指标采集状态（各实例）', value: 'smb_metrics_status', description: 'smb_metrics_status：0 Down / 1 Up' },
+  { label: 'SMB 会话数（各实例）', value: 'smb_sessions', description: 'smb_sessions_total' },
+  { label: 'SMB 用户数（各实例）', value: 'smb_users', description: 'smb_users_total' },
+  { label: 'SMB 共享活动（各实例）', value: 'smb_share_activity', description: 'smb_share_activity' },
+  { label: 'SMB2 接收速率（B/s）', value: 'smb_in_bytes_rate', description: '各序列 5 分钟 rate' },
+  { label: 'SMB2 发送速率（B/s）', value: 'smb_out_bytes_rate', description: '各序列 5 分钟 rate' },
+  { label: 'SMB2 请求率（请求/s）', value: 'smb_request_rate', description: '各序列 5 分钟 rate' },
 	{ label: 'RGW 请求率（请求/s）', value: 'rgw_request_rate', description: 'sum rate over 1m' },
 	{ label: 'RGW GET 平均延迟（ms）', value: 'rgw_get_latency_ms', description: 'weighted latency over 1m' },
 	{ label: 'RGW PUT 平均延迟（ms）', value: 'rgw_put_latency_ms', description: 'weighted latency over 1m' },
@@ -153,6 +160,7 @@ function MetricContent({ selectedClusterId }: { selectedClusterId?: number }) {
 
   return (
     <Page title="性能指标">
+      <Alert type="info" showIcon message="SMB 指标需要 Prometheus 采集 SMB exporter；保留原始实例和操作标签，不汇总为集群总数。共享 endpoint 可能包含多个集群，请核对结果标签；无数据不代表零。速率使用固定 5 分钟窗口。" />
       <Space direction="vertical" size={16} className="page-stack">
         <div className="metrics-grid metric-preset-grid">
           {metricOptions.map((item) => (

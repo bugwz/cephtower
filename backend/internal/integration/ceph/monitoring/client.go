@@ -47,6 +47,13 @@ type PrometheusResult struct {
 }
 
 var metricQueries = map[string]string{
+	"smb_metrics_status":    "smb_metrics_status",
+	"smb_sessions":          "smb_sessions_total",
+	"smb_users":             "smb_users_total",
+	"smb_share_activity":    "smb_share_activity",
+	"smb_in_bytes_rate":     "rate(smb_smb2_request_inbytes[5m])",
+	"smb_out_bytes_rate":    "rate(smb_smb2_request_outbytes[5m])",
+	"smb_request_rate":      "rate(smb_smb2_request_total[5m])",
 	"rgw_request_rate":      "sum(rate(ceph_rgw_req[1m]))",
 	"rgw_get_latency_ms":    "(sum(rate(ceph_rgw_op_get_obj_lat_sum[1m])) / sum(rate(ceph_rgw_op_get_obj_lat_count[1m]))) * 1000",
 	"rgw_put_latency_ms":    "(sum(rate(ceph_rgw_op_put_obj_lat_sum[1m])) / sum(rate(ceph_rgw_op_put_obj_lat_count[1m]))) * 1000",
