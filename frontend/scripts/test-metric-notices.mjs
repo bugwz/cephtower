@@ -10,3 +10,6 @@ const notices = render({ warnings: ['partial data', '<script>not executed</scrip
 assert.deepEqual(notices.map(item => item.props.type), ['warning', 'warning', 'info'])
 assert.deepEqual(notices.map(item => item.props.description), ['partial data', '<script>not executed</script>', 'sample omitted'])
 assert.ok(notices[0].props.message.includes('不完整'))
+const named = exports.MetricNotices({ source: 'GET 带宽', meta: { warnings: ['partial'], infos: ['hint'] } }).children.flat()
+assert.ok(named.every(item => item.props.message.startsWith('GET 带宽 · Prometheus')))
+assert.deepEqual(named.map(item => item.props.description), ['partial', 'hint'])

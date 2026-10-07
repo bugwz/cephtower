@@ -25,6 +25,7 @@ calls[0].resolve(sample('0'));calls[1].reject(new Error('private'));calls[2].res
 const table=render().find(n=>n.type==='Table');assert.deepEqual(table.props.dataSource.map(row=>row.status),['已读取','读取失败或响应无效','无样本','不可计算','已读取'])
 assert.equal(table.props.columns[1].render('0'),'0')
 assert.deepEqual(render().filter(n=>n.type==='MetricNotices')[0].props.meta,{warnings:['partial data']})
+assert.deepEqual(render().filter(n=>n.type==='MetricNotices').map(n=>n.props.source),table.props.dataSource.map(row=>row.name))
 old.props.onClick();render(8);assert.ok(calls.slice(5).every(call=>call.signal.aborted));old.props.onClick();assert.equal(calls.length,10);calls.slice(5).forEach(call=>call.resolve(sample('1')));await tick();assert.equal(render(8).some(n=>n.type==='Table'),false)
 render(8).find(n=>n.type==='Button').props.onClick();cleanup();assert.ok(calls.slice(10).every(call=>call.signal.aborted));calls.slice(10).forEach(call=>call.resolve(sample('2')));await tick();assert.equal(states[0].rows,undefined)
 render(9);render(9).find(n=>n.type==='Button'&&n.props.children==='读取一小时趋势').props.onClick()

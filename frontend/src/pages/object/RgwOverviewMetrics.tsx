@@ -78,7 +78,7 @@ export function RgwOverviewMetricsView({clusterId}:{clusterId?:number}) {
     <Button disabled={!clusterId||scoped?.busy} loading={scoped?.busy} onClick={()=>void read()}>读取性能概览</Button>
     <Button disabled={!clusterId||scoped?.busy} loading={scoped?.busy} onClick={()=>void read(true)}>读取一小时趋势</Button>
     {!clusterId&&<Alert type="info" message="请先选择集群"/>}
-    {scoped?.rows?.map(row=><div key={`notices-${row.id}`} aria-label={`${row.name}查询提示`}><MetricNotices meta={row.meta}/></div>)}
+    {scoped?.rows?.map(row=><MetricNotices key={`notices-${row.id}`} source={row.name} meta={row.meta}/>)}
     {scoped?.rows&&<><span>查询时间：{scoped.time}</span>{scoped.history?<>
       <Alert type="info" message="60 秒评估步长；缺失点和不可计算值处断线，不补零。图形使用浮点近似，各图独立纵轴；展开查看原始数值。"/>
       {scoped.rows.map(row=><Card key={row.id} size="small" title={`${row.name} · ${row.unit}`}>
