@@ -118,7 +118,7 @@ func successResponseSchema(route router.Route) string {
 		return "HealthResponse"
 	case "GET /bootstrap":
 		return "BootstrapResponse"
-	case "POST /bootstrap/run", "POST /user":
+	case "POST /bootstrap/run", "POST /user", "GET /auth/me":
 		return "UserResponse"
 	case "POST /auth/login":
 		return "LoginResponse"
@@ -595,7 +595,8 @@ func isClusterScopedRoute(route router.Route) bool {
 		return false
 	}
 	switch key {
-	case "GET /clusters",
+	case "GET /auth/me",
+		"GET /clusters",
 		"POST /cluster",
 		"GET /user",
 		"POST /user",

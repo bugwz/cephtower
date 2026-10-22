@@ -70,7 +70,6 @@ interface LoginResponse {
 }
 
 const authBaseUrl = '/api/v1'
-const storedUserKey = 'cephtower.auth.user'
 
 export async function login(username: string, password: string): Promise<LoginResponse> {
   return requestPublic<LoginResponse>('/auth/login', {
@@ -80,22 +79,12 @@ export async function login(username: string, password: string): Promise<LoginRe
   }).then((payload) => {
     payload.user = normalizeUser(payload.user)
     setAuthToken(payload.token)
-    storeCurrentUser(payload.user)
     return payload
   })
 }
 
 export async function currentUser(): Promise<UserAccount> {
-  const stored = readStoredUser()
-  if (stored) {
-    return stored
-  }
-  const users = await listUsers()
-  if (users.length > 0) {
-    storeCurrentUser(users[0])
-    return users[0]
-  }
-  throw new Error('当前登录用户不存在')
+  return normalizeUser(await request<UserAccount>('/auth/me', { method: 'GET', suppressErrorNotification: true }))
 }
 
 export async function setupStatus(): Promise<SetupStatus> {
@@ -197,11 +186,6 @@ export async function confirmPasswordReset(payload: {
 
 export function logout() {
   setAuthToken('')
-  try {
-    localStorage.removeItem(storedUserKey)
-  } catch {
-    // Ignore storage failures during logout.
-  }
 }
 
 export function hasStoredToken() {
@@ -287,23 +271,6 @@ function permissionsForRole(role: UserRole) {
     return ['cluster:read', 'storage:read']
   }
   return ['cluster:read']
-}
-
-function storeCurrentUser(user: UserAccount) {
-  try {
-    localStorage.setItem(storedUserKey, JSON.stringify(user))
-  } catch {
-    // Ignore storage failures; token auth remains the source of truth.
-  }
-}
-
-function readStoredUser() {
-  try {
-    const value = localStorage.getItem(storedUserKey)
-    return value ? normalizeUser(JSON.parse(value)) : null
-  } catch {
-    return null
-  }
 }
 
 function defaultSetupDatabase(): SetupDatabaseConfig {

@@ -173,3 +173,13 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 func toUserDTO(user store.User) userDTO {
 	return userDTO{ID: user.ID, Username: user.Username, DisplayName: user.DisplayName, Email: user.Email, Status: user.Status, LastLoginAt: user.LastLoginAt, CreatedAt: user.CreatedAt, UpdatedAt: user.UpdatedAt}
 }
+
+// Me returns the identity authenticated by the request token.
+func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
+	user, ok := CurrentUser(r)
+	if !ok {
+		WriteError(w, r, http.StatusUnauthorized, "authentication_required", "authentication required", false, nil)
+		return
+	}
+	WriteSuccess(w, http.StatusOK, "success", toUserDTO(user))
+}

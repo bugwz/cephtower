@@ -254,3 +254,37 @@ func assertEnvelope(t *testing.T, data []byte) {
 		t.Fatalf("data missing: %s", data)
 	}
 }
+
+func TestCurrentUserRequiresValidSession(t *testing.T) {
+	mux, token := contractServer(t)
+	for _, tc := range []struct {
+		token  string
+		status int
+	}{{"", 401}, {"invalid-token", 401}, {token, 200}} {
+		request := httptest.NewRequest(http.MethodGet, "/api/v1/auth/me", nil)
+		if tc.token != "" {
+			request.Header.Set("Authorization", "Bearer "+tc.token)
+		}
+		response := httptest.NewRecorder()
+		mux.ServeHTTP(response, request)
+		if response.Code != tc.status {
+			t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
+		}
+		if tc.status == 200 {
+			var envelope struct {
+				Data struct {
+					Username string `json:"username"`
+				} `json:"data"`
+			}
+			if err := json.Unmarshal(response.Body.Bytes(), &envelope); err != nil {
+				t.Fatal(err)
+			}
+			if envelope.Data.Username != "admin" {
+				t.Fatalf("unexpected identity: %s", response.Body.String())
+			}
+			if strings.Contains(response.Body.String(), "password") {
+				t.Fatal("response exposes password")
+			}
+		}
+	}
+}

@@ -8,6 +8,7 @@ func authRoutes(h *handler.Handler) []Route {
 		{"POST", "/bootstrap/dbtest", h.TestBootstrapDatabase},
 		{"POST", "/bootstrap/run", h.BootstrapRun},
 		{"POST", "/auth/login", h.Login},
+		{"GET", "/auth/me", h.Me},
 		{"GET", "/user", h.ListUsers},
 		{"POST", "/user", h.CreateUser},
 	}
