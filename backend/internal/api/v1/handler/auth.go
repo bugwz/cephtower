@@ -75,7 +75,11 @@ func (h *Handler) BootstrapRun(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, status, code, err.Error(), false, nil)
 		return
 	}
-	WriteSuccess(w, http.StatusCreated, "success", toUserDTO(row))
+	view, ok := h.userView(w, r, row)
+	if !ok {
+		return
+	}
+	WriteSuccess(w, http.StatusCreated, "success", view)
 }
 
 func (h *Handler) TestBootstrapDatabase(w http.ResponseWriter, r *http.Request) {
@@ -99,6 +103,8 @@ func (h *Handler) TestBootstrapDatabase(w http.ResponseWriter, r *http.Request) 
 }
 
 type userDTO struct {
+	Role        string     `json:"role"`
+	Permissions []string   `json:"permissions"`
 	ID          uint64     `json:"id"`
 	Username    string     `json:"username"`
 	DisplayName string     `json:"display_name"`
@@ -127,7 +133,11 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, status, "invalid_credentials", err.Error(), false, nil)
 		return
 	}
-	WriteSuccess(w, http.StatusOK, "success", map[string]any{"token": result.Token, "expires_at": result.ExpiresAt, "user": toUserDTO(result.User)})
+	view, ok := h.userView(w, r, result.User)
+	if !ok {
+		return
+	}
+	WriteSuccess(w, http.StatusOK, "success", map[string]any{"token": result.Token, "expires_at": result.ExpiresAt, "user": view})
 }
 
 func (request setupDatabaseRequest) toConfig() config.DatabaseConfig {
@@ -156,7 +166,11 @@ func (h *Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	items := make([]userDTO, 0, len(rows))
 	for _, row := range rows {
-		items = append(items, toUserDTO(row))
+		view, ok := h.userView(w, r, row)
+		if !ok {
+			return
+		}
+		items = append(items, view)
 	}
 	WriteSuccess(w, 200, "success", map[string]any{"items": items, "pagination": map[string]any{"next_cursor": nil}, "meta": map[string]string{"request_id": RequestID(r)}})
 }
@@ -171,7 +185,11 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, 400, "invalid_request", err.Error(), false, nil)
 		return
 	}
-	WriteSuccess(w, 201, "success", toUserDTO(row))
+	view, ok := h.userView(w, r, row)
+	if !ok {
+		return
+	}
+	WriteSuccess(w, 201, "success", view)
 }
 
 func toUserDTO(user store.User) userDTO {
@@ -185,5 +203,30 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, http.StatusUnauthorized, "authentication_required", "authentication required", false, nil)
 		return
 	}
-	WriteSuccess(w, http.StatusOK, "success", toUserDTO(user))
+	view, ok := h.userView(w, r, user)
+	if !ok {
+		return
+	}
+	WriteSuccess(w, http.StatusOK, "success", view)
+}
+
+func (h *Handler) userView(w http.ResponseWriter, r *http.Request, user store.User) (userDTO, bool) {
+	bindings, err := h.Database().ListUserRoleBindings(r.Context(), user.ID)
+	if err != nil {
+		WriteError(w, r, 500, "store_error", "could not read user roles", false, nil)
+		return userDTO{}, false
+	}
+	if user.ID == 0 && !h.RequireAuth() {
+		bindings = []store.UserRoleBinding{{Role: store.Role{Name: "cluster-admin"}}}
+	}
+	view := toUserDTO(user)
+	view.Role = authservice.GlobalRole(bindings)
+	view.Permissions = []string{}
+	if authservice.Allows(bindings, 0, authservice.ReadCluster) {
+		view.Permissions = append(view.Permissions, "cluster:read", "storage:read")
+	}
+	if authservice.Allows(bindings, 0, authservice.ManageSecurity) {
+		view.Permissions = append(view.Permissions, "system:read")
+	}
+	return view, true
 }

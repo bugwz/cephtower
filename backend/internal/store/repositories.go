@@ -19,6 +19,7 @@ import (
 )
 
 type ClusterFilter struct {
+	IDs             []uint64 // nil means unrestricted; an empty slice matches no clusters.
 	Names           []string
 	ClientUsernames []string
 }
@@ -27,6 +28,9 @@ type ClusterFilterOptions map[string][]string
 
 func (d *Database) ListClusters(ctx context.Context, filter ClusterFilter) ([]CephCluster, error) {
 	query := d.db.WithContext(ctx)
+	if filter.IDs != nil {
+		query = query.Where("id IN ?", filter.IDs)
+	}
 	if len(filter.Names) > 0 {
 		query = query.Where("name IN ?", filter.Names)
 	}
@@ -885,3 +889,9 @@ func createAuditEvent(tx *gorm.DB, row *AuditEvent) error {
 	return tx.Model(&Setting{}).Where("key = ?", headKey).Updates(map[string]any{"value": row.EventHash, "updated_at": now}).Error
 }
 func fmtUint(value uint64) string { return strconv.FormatUint(value, 10) }
+
+func (d *Database) ListUserRoleBindings(ctx context.Context, userID uint64) ([]UserRoleBinding, error) {
+	var rows []UserRoleBinding
+	err := d.db.WithContext(ctx).Preload("Role").Where("user_id = ?", userID).Find(&rows).Error
+	return rows, err
+}

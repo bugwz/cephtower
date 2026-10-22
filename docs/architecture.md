@@ -134,3 +134,30 @@ Creation, administrator updates, and password resets use the same hashing policy
 They are independent of the database encryption key used for Ceph and endpoint secrets.
 Previously encrypted login passwords are not accepted; development accounts must be
 reinitialized or have their passwords reset before login.
+
+## Request authorization
+
+With authentication enabled, every protected route checks current database role bindings
+before invoking its handler. Global bindings apply to every cluster; cluster bindings apply
+only to their exact cluster and cannot grant global user administration or cluster creation.
+Bindings are read for each request, so revocation takes effect without issuing a new token.
+Unknown custom role names grant no permissions.
+
+| Role | Allowed actions within its binding scope |
+| --- | --- |
+| viewer | Read cluster observations and ordinary resource lists |
+| operator | Viewer actions, resource refresh, health muting, and alert silences |
+| storage-admin | Operator actions plus Pool, RBD, CephFS, NFS, SMB, RGW, iSCSI, NVMe-oF mutations |
+| security-admin | Read observations and manage credentials, SSH profiles, CephX, role bindings, and audit access |
+| cluster-admin | All actions within scope |
+
+User and role administration require a global security-admin or cluster-admin binding.
+Creating a cluster requires global cluster-admin. CephFS authorization management is a
+security action, not an ordinary filesystem mutation. The cluster list and its filter
+options expose only clusters the caller may read. Authenticated users may always read
+`/auth/me`, whose identity and global role are resolved by the server. The user DTO role is
+a display label; authorization evaluates all applicable bindings rather than that label.
+When `server.auth` is false, authorization is intentionally bypassed as configured.
+
+Bootstrap initialization and database probes are rejected once initialization completes.
+Concurrent bootstrap attempts are serialized within the application instance.

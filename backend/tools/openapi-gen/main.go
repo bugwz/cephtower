@@ -786,11 +786,15 @@ const components = `components:
     User:
       type: object
       additionalProperties: false
-      required: [id, username, display_name, email, status, last_login_at, created_at, updated_at]
+      required: [id, username, display_name, email, role, permissions, status, last_login_at, created_at, updated_at]
       properties:
         id: {type: integer, minimum: 1}
         username: {type: string}
         display_name: {type: string}
+        role: {type: string, enum: [viewer, operator, storage-admin, cluster-admin, security-admin]}
+        permissions:
+          type: array
+          items: {type: string}
         email: {type: [string, 'null']}
         status: {type: string}
         last_login_at: {type: [string, 'null'], format: date-time}

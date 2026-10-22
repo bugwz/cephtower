@@ -69,7 +69,13 @@ func (h *Handler) PrepareRoute(next http.Handler) http.Handler {
 		}
 		ctx = WithUser(r.Context(), user)
 		r = r.WithContext(ctx)
-		h.auditRequest(next, w, r, body, started)
+		recorder := &auditResponseRecorder{ResponseWriter: w}
+		authorized, ok := h.authorizeRoute(recorder, r, body)
+		if !ok {
+			h.recordAuditEvent(r, recorder, body, started)
+			return
+		}
+		h.auditRequest(next, w, authorized, body, started)
 	})
 }
 

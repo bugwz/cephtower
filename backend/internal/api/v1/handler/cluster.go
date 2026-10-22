@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -64,18 +65,34 @@ type capabilityDTO struct {
 }
 
 func (h *Handler) ListClusters(w http.ResponseWriter, r *http.Request) {
+	filter := clusterFilters(r)
 	if r.URL.Query().Get("filter_options") == "1" {
-		options, err := h.Clusters.FilterOptions(r.Context(), clusterFilterOptionFields(r))
-		if err != nil {
-			WriteError(w, r, 500, "store_error", err.Error(), false, nil)
-			return
-		}
-		WriteSuccess(w, 200, "success", map[string]any{"filter_options": options})
-		return
+		filter = store.ClusterFilter{}
 	}
-	rows, err := h.Clusters.List(r.Context(), clusterFilters(r))
+	rows, err := h.Clusters.List(r.Context(), h.scopeClusterFilter(r, filter))
 	if err != nil {
 		WriteError(w, r, 500, "store_error", err.Error(), false, nil)
+		return
+	}
+	if r.URL.Query().Get("filter_options") == "1" {
+		options := store.ClusterFilterOptions{}
+		for _, field := range clusterFilterOptionFields(r) {
+			seen := map[string]bool{}
+			values := []string{}
+			for _, row := range rows {
+				value := row.Name
+				if field == "client_username" {
+					value = row.ClientUsername
+				}
+				if !seen[value] {
+					seen[value] = true
+					values = append(values, value)
+				}
+			}
+			sort.Strings(values)
+			options[field] = values
+		}
+		WriteSuccess(w, 200, "success", map[string]any{"filter_options": options})
 		return
 	}
 	items := make([]clusterDTO, 0, len(rows))
