@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	"cephtower/backend/internal/config"
 	authservice "cephtower/backend/internal/service/auth"
@@ -16,6 +17,7 @@ type Status struct {
 }
 
 type Service struct {
+	mu            sync.Mutex
 	Manager       *store.Manager
 	CurrentConfig func() config.Config
 	UpdateConfig  func(config.Config)
@@ -37,6 +39,11 @@ func (s *Service) Status(ctx context.Context) (Status, error) {
 func (s *Service) Initialize(ctx context.Context, database config.DatabaseConfig, admin authservice.CreateUserInput) (store.User, error) {
 	if s == nil || s.Manager == nil {
 		return store.User{}, fmt.Errorf("setup service is unavailable")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.currentConfig().Server.Bootstrap || (s.Manager != nil && s.Manager.Current() != nil) {
+		return store.User{}, ErrAlreadyInitialized
 	}
 	current := s.currentConfig()
 	if strings.TrimSpace(database.EncryptionKey) == "" {
@@ -98,6 +105,14 @@ func (s *Service) Initialize(ctx context.Context, database config.DatabaseConfig
 }
 
 func (s *Service) TestDatabase(ctx context.Context, database config.DatabaseConfig) error {
+	if s == nil {
+		return fmt.Errorf("setup service is unavailable")
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.currentConfig().Server.Bootstrap || (s.Manager != nil && s.Manager.Current() != nil) {
+		return ErrAlreadyInitialized
+	}
 	current := s.currentConfig()
 	if strings.TrimSpace(database.EncryptionKey) == "" {
 		database.EncryptionKey = current.Database.EncryptionKey

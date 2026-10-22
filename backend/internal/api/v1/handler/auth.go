@@ -88,6 +88,10 @@ func (h *Handler) TestBootstrapDatabase(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if err := h.Setup.TestDatabase(r.Context(), request.toConfig()); err != nil {
+		if errors.Is(err, authservice.ErrAlreadyInitialized) {
+			WriteError(w, r, http.StatusConflict, "already_initialized", err.Error(), false, nil)
+			return
+		}
 		WriteError(w, r, http.StatusBadRequest, "database_unavailable", err.Error(), false, nil)
 		return
 	}
