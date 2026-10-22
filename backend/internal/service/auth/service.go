@@ -2,9 +2,7 @@ package auth
 
 import (
 	"context"
-	"crypto/hmac"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -13,8 +11,8 @@ import (
 	"time"
 
 	"cephtower/backend/internal/config"
-	"cephtower/backend/internal/security"
 	"cephtower/backend/internal/store"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const sessionTTL = 12 * time.Hour
@@ -54,12 +52,7 @@ func (s *Service) Login(ctx context.Context, username, password string) (LoginRe
 	if user.Status != "active" {
 		return LoginResult{}, ErrUserDisabled
 	}
-	plain, err := security.Decrypt(user.Password, s.currentConfig().Database.EncryptionKey)
-	if err != nil {
-		return LoginResult{}, ErrInvalidCredentials
-	}
-	defer zero(plain)
-	if !hmac.Equal(plain, []byte(password)) {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		return LoginResult{}, ErrInvalidCredentials
 	}
 	token, err := randomToken()
@@ -122,7 +115,7 @@ func (s *Service) createUser(ctx context.Context, input CreateUserInput) (store.
 	if username == "" || display == "" || len(input.Password) < 8 {
 		return store.User{}, fmt.Errorf("username, display_name and password of at least 8 characters are required")
 	}
-	encrypted, err := security.Encrypt([]byte(input.Password), s.currentConfig().Database.EncryptionKey)
+	passwordHash, err := hashPassword(input.Password)
 	if err != nil {
 		return store.User{}, err
 	}
@@ -135,7 +128,7 @@ func (s *Service) createUser(ctx context.Context, input CreateUserInput) (store.
 	if value := strings.TrimSpace(input.Email); value != "" {
 		email = &value
 	}
-	user := store.User{Username: username, DisplayName: display, Email: email, Password: encrypted, Status: status, CreatedAt: now, UpdatedAt: now}
+	user := store.User{Username: username, DisplayName: display, Email: email, Password: passwordHash, Status: status, CreatedAt: now, UpdatedAt: now}
 	if err := s.database().Transaction(func(tx *store.Database) error {
 		if err := tx.CreateUser(ctx, &user); err != nil {
 			return err
@@ -176,11 +169,11 @@ func (s *Service) UpdateUser(ctx context.Context, id uint64, input UpdateUserInp
 		if len(*input.Password) < 8 {
 			return store.User{}, fmt.Errorf("password must be at least 8 characters")
 		}
-		encrypted, err := security.Encrypt([]byte(*input.Password), s.currentConfig().Database.EncryptionKey)
+		passwordHash, err := hashPassword(*input.Password)
 		if err != nil {
 			return store.User{}, err
 		}
-		updates["password"] = encrypted
+		updates["password"] = passwordHash
 	}
 	if input.Enabled != nil {
 		if *input.Enabled {
@@ -234,11 +227,11 @@ func (s *Service) ConfirmPasswordReset(ctx context.Context, account, code, newPa
 	if err != nil {
 		return ErrInvalidResetCode
 	}
-	encrypted, err := security.Encrypt([]byte(newPassword), s.currentConfig().Database.EncryptionKey)
+	passwordHash, err := hashPassword(newPassword)
 	if err != nil {
 		return err
 	}
-	return s.database().CompletePasswordReset(ctx, user.ID, reset.ID, encrypted, time.Now().UTC())
+	return s.database().CompletePasswordReset(ctx, user.ID, reset.ID, passwordHash, time.Now().UTC())
 }
 
 func randomToken() (string, error) {
@@ -266,10 +259,10 @@ func uuid() string {
 	data[8] = (data[8] & 0x3f) | 0x80
 	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x", data[:4], data[4:6], data[6:8], data[8:10], data[10:])
 }
-func zero(value []byte) {
-	for i := range value {
-		value[i] = 0
+func hashPassword(password string) (string, error) {
+	if len(password) < 8 || len(password) > 72 {
+		return "", fmt.Errorf("password must be between 8 and 72 bytes")
 	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(hash), err
 }
-
-var _ = sha256.Size

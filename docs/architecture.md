@@ -126,3 +126,11 @@ The versioned API uses standard HTTP status codes (for example 201, 400, 404 and
 returns the same status in its JSON error envelope. Routes in `internal/api/v1/router` and
 DTO/response mapping in `internal/api/v1/handler` jointly define the API contract; no legacy
 transport or DTO compatibility package is retained.
+
+## Password storage
+
+User login passwords are salted bcrypt hashes and must contain 8–72 UTF-8 bytes.
+Creation, administrator updates, and password resets use the same hashing policy.
+They are independent of the database encryption key used for Ceph and endpoint secrets.
+Previously encrypted login passwords are not accepted; development accounts must be
+reinitialized or have their passwords reset before login.
